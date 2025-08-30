@@ -1,0 +1,22 @@
+# clusters/vixens/argocd/apps/metallb-config.yaml
+apiVersion: argroj.io/v1alpha1
+kind: Application
+metadata:
+  name: metallb-config
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/charchess/vixens.git # Pointe vers votre dépôt
+    targetRevision: HEAD
+    path: base/metallb # Pointe vers le dossier avec notre config.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: metallb-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      
