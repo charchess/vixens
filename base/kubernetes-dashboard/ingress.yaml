@@ -1,0 +1,34 @@
+# base/kubernetes-dashboard/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubernetes-dashboard-ingress
+  namespace: kubernetes-dashboard
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    # --- Annotation importante ---
+    # Le service du dashboard écoute en HTTPS.
+    # Il faut dire à Traefik de communiquer avec lui en HTTPS.
+    traefik.ingress.kubernetes.io/service.scheme: https
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - dashboard.truxonline.com # Adaptez si vous voulez un autre sous-domaine
+      secretName: kubernetes-dashboard-tls
+  rules:
+    - host: dashboard.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                # Le nom du service créé par le chart Helm
+                name: kubernetes-dashboard
+                port:
+                  # Le port HTTPS du service
+                  number: 443
+                  
+                  

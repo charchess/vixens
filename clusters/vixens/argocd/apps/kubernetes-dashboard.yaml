@@ -1,0 +1,50 @@
+# clusters/vixens/argocd/apps/kubernetes-dashboard.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubernetes-dashboard
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: vixens
+  source:
+    repoURL: https://kubernetes.github.io/dashboard/
+    chart: kubernetes-dashboard
+    targetRevision: "7.4.0" # Version récente et stable du chart
+    helm:
+      values: |
+        # Configuration pour le mode "insecure" et le déploiement
+        rbac:
+          create: true
+          # Donne au dashboard les droits d'admin du cluster.
+          # ATTENTION : À n'utiliser que sur un cluster de dev/perso.
+          clusterAdminRole: true
+        
+        # Arguments pour désactiver la page de login
+        extraArgs:
+          - --enable-insecure-login=true
+          - --disable-settings-authorizer=true
+
+        # Le service sera de type ClusterIP, Traefik s'occupe de l'exposer
+        service:
+          type: ClusterIP
+          externalPort: 443
+
+        # On ajoute les tolérances pour vos nœuds control-plane
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Exists"
+            effect: "NoSchedule"
+  destination:
+    server: https://kubernetes.default.svc
+    # Le chart déploie par défaut dans ce namespace
+    namespace: kubernetes-dashboard
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      
+      
