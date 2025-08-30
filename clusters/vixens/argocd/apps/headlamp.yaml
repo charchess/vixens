@@ -5,16 +5,15 @@ metadata:
   name: headlamp
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argoj.io
+    - resources-finalizer.argocd.argoj.io # <--- CORRIGÉ : argoproj, pas argoj
 spec:
   project: vixens
   source:
     repoURL: https://headlamp.github.io/headlamp
     chart: headlamp
-    targetRevision: "0.22.0" # Version stable et récente
+    targetRevision: "0.22.0"
     helm:
       values: |
-        # On ajoute les tolérances pour vos nœuds
         tolerations:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Exists"
@@ -28,5 +27,4 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      
       

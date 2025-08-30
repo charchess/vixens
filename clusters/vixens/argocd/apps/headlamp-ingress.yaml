@@ -5,7 +5,7 @@ metadata:
   name: headlamp-ingress
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argoj.io
+    - resources-finalizer.argocd.argoj.io # <--- CORRIGÉ : argoproj, pas argoj
 spec:
   project: vixens
   source:
@@ -19,4 +19,7 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    # --- AJOUT DE CE BLOC ---
+    syncOptions:
+      - CreateNamespace=true
       
