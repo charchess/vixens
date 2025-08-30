@@ -1,0 +1,43 @@
+# clusters/vixens/argocd/apps/argocd.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd # L'application elle-même vit dans le namespace 'argocd'
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default # Violation temporaire également
+  source:
+    repoURL: https://argoproj.github.io/argo-helm # Le repo du Chart Helm officiel d'Argo CD
+    chart: argo-cd
+    targetRevision: "7.3.1" # Utilisons une version de chart récente et pinée
+    helm:
+      # Nous pourrions externaliser ces valeurs dans un 'values.yaml' dans le dossier 'releases/',
+      # mais pour le bootstrap, les garder ici est acceptable.
+      values: |
+        server:
+          # Active l'Ingress pour accéder à l'UI d'Argo CD
+          ingress:
+            enabled: true
+            ingressClassName: traefik
+            hostname: argocd.truxonline.com # A adapter à votre nom de domaine
+            annotations:
+              cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
+              traefik.ingress.kubernetes.io/router.entrypoints: websecure
+              traefik.ingress.kubernetes.io/router.tls: "true"
+        # --- ATTENTION : GESTION DES SECRETS EN CLAIR (TEMPORAIRE) ---
+        # Voici le genre de configuration que nous devrons migrer vers External Secrets Operator.
+        # Pour l'instant, nous laissons Argo CD générer le mot de passe initial.
+        # Vous le récupérerez avec la commande kubectl une fois le pod lancé.
+        # argo-cd.configs.secret.create: false
+        # argo-cd.secret.credential: <valeur issue d'ESO>
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd # Déploie Argo CD dans son propre namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

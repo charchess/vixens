@@ -1,0 +1,25 @@
+# clusters/vixens/argocd/01-root-app.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd # Important: sera créé par le Helm Chart d'Argo CD lui-même
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default # Violation temporaire de la règle #8, que nous corrigerons via GitOps
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: HEAD # ou 'main' si vous préférez pointer sur une branche spécifique
+    path: clusters/vixens/argocd/apps # Ce 'root-app' surveille ce dossier pour y trouver d'autres 'Application'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default # Ce namespace est symbolique pour le root-app, les apps enfants définiront leur propre namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      
+      
