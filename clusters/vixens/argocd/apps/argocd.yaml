@@ -15,6 +15,14 @@ spec:
     helm:
       values: |
         server:
+          # --- NOUVELLE SECTION POUR CONTRÔLER LE SERVICE LUI-MÊME ---
+          service:
+            # Nous définissons le port principal du service sur 80 (HTTP)
+            port: 80
+            # Nous désactivons le port HTTPS en lui donnant une valeur vide.
+            # Le chart ne créera ainsi pas de port 443 sur le service.
+            httpsPort: ""
+
           ingress:
             enabled: true
             ingressClassName: traefik
@@ -23,19 +31,9 @@ spec:
               cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
               traefik.ingress.kubernetes.io/router.entrypoints: websecure
               traefik.ingress.kubernetes.io/router.tls: "true"
-            
-            # --- LA CORRECTION EST ICI ---
-            # 'paths' est une clé au même niveau que 'annotations', et non pas 'http'.
-            # Le bloc 'http' est implicite dans la définition du template de l'Ingress du chart.
-            paths:
-              - path: /
-                pathType: Prefix
-                backend:
-                  service:
-                    name: argocd-server
-                    port:
-                      # Le nom du port du service que nous voulons cibler.
-                      name: http
+            # Nous ne spécifions PLUS les paths ici.
+            # Le chart va intelligemment utiliser le seul port disponible sur le service,
+            # celui que nous avons défini ci-dessus.
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
@@ -45,3 +43,5 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      
+      
