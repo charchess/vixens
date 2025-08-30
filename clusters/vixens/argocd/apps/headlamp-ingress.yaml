@@ -1,23 +1,22 @@
-# clusters/vixens/argocd/apps/kubernetes-dashboard-ingress.yaml
+# clusters/vixens/argocd/apps/headlamp-ingress.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kubernetes-dashboard-ingress
+  name: headlamp-ingress
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argoproj.io
+    - resources-finalizer.argocd.argoj.io
 spec:
   project: vixens
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: HEAD
-    path: base/kubernetes-dashboard
+    path: base/headlamp
   destination:
     server: https://kubernetes.default.svc
-    namespace: kubernetes-dashboard
+    namespace: headlamp
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
-      
       

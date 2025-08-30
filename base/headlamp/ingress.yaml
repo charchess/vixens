@@ -1,20 +1,18 @@
-# base/kubernetes-dashboard/ingress.yaml
+# base/headlamp/ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: kubernetes-dashboard-ingress
-  namespace: kubernetes-dashboard
+  name: headlamp-ingress
+  namespace: headlamp
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    # --- AJOUT DE CETTE LIGNE POUR RÉSOUDRE L'ERREUR DE PARSING ---
-    traefik.ingress.kubernetes.io/buffering.enabled: "false"
 spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - k8s.truxonline.com
-      secretName: kubernetes-dashboard-tls
+        - k8s.truxonline.com # On réutilise la même URL
+      secretName: headlamp-tls
   rules:
     - host: k8s.truxonline.com
       http:
@@ -23,6 +21,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: kubernetes-dashboard-web
+                name: headlamp
                 port:
-                  number: 8000
+                  name: http
+                  

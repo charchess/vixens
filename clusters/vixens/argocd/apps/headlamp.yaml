@@ -1,0 +1,32 @@
+# clusters/vixens/argocd/apps/headlamp.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: headlamp
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoj.io
+spec:
+  project: vixens
+  source:
+    repoURL: https://headlamp.github.io/headlamp
+    chart: headlamp
+    targetRevision: "0.22.0" # Version stable et récente
+    helm:
+      values: |
+        # On ajoute les tolérances pour vos nœuds
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Exists"
+            effect: "NoSchedule"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: headlamp
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      
+      
