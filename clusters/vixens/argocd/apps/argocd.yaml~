@@ -24,16 +24,9 @@ spec:
             httpsPort: ""
 
           ingress:
-            enabled: true
-            ingressClassName: traefik
-            hostname: argocd.truxonline.com
-            annotations:
-              cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
-              traefik.ingress.kubernetes.io/router.entrypoints: websecure
-              traefik.ingress.kubernetes.io/router.tls: "true"
-            # Nous ne spécifions PLUS les paths ici.
-            # Le chart va intelligemment utiliser le seul port disponible sur le service,
-            # celui que nous avons défini ci-dessus.
+            enabled: false
+
+
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
