@@ -14,6 +14,8 @@ spec:
     targetRevision: "7.4.0" # Version récente et stable du chart
     helm:
       values: |
+        kong:
+          enabled: false
         # Configuration pour le mode "insecure" et le déploiement
         tls:
           enabled: false
