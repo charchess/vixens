@@ -1,0 +1,29 @@
+# base/traefik/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traefik-dashboard
+  namespace: traefik # L'Ingress doit être dans le même namespace que le service
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - traefik.truxonline.com
+      secretName: traefik-dashboard-tls
+  rules:
+    - host: traefik.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                # Le service créé par le chart Helm
+                name: traefik
+                port:
+                  # Le port que nous avons exposé à l'étape 1
+                  name: dashboard
+                  
