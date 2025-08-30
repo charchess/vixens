@@ -5,7 +5,7 @@ metadata:
   name: argocd-ingress
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argroj.io
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: vixens
   source:
