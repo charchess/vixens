@@ -16,12 +16,11 @@ spec:
   - 'https://helm.traefik.io/traefik'
   - 'https://metallb.github.io/metallb'
   - 'https://charts.longhorn.io'
+  - 'https://helm.cilium.io/' # <--- AJOUT : Autoriser le repo Helm de Cilium
 
   # La destination est le cluster local
   destinations:
   - server: https://kubernetes.default.svc
-    # --- LA PARTIE IMPORTANTE ---
-    # Nous autorisons explicitement le déploiement dans ces namespaces
     namespace: argocd
   - server: https://kubernetes.default.svc
     namespace: traefik
@@ -29,6 +28,8 @@ spec:
     namespace: metallb-system
   - server: https://kubernetes.default.svc
     namespace: longhorn-system
+  - server: https://kubernetes.default.svc
+    namespace: kube-system # <--- AJOUT : Autoriser le déploiement dans kube-system
     
   # Autoriser tous les types de ressources
   clusterResourceWhitelist:
