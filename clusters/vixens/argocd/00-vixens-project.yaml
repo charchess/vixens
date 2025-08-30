@@ -11,26 +11,26 @@ spec:
   
   # La source de vérité est notre dépôt Git
   sourceRepos:
-  - 'https://github.com/charchess/vixens.git'
-  - 'https://argoproj.github.io/argo-helm'
-  - 'https://helm.traefik.io/traefik'
-  - 'https://metallb.github.io/metallb'
-  - 'https://charts.longhorn.io'
-  - 'https://helm.cilium.io/'
+#  - 'https://github.com/charchess/vixens.git'
+#  - 'https://argoproj.github.io/argo-helm'
+#  - 'https://helm.traefik.io/traefik'
+#  - 'https://metallb.github.io/metallb'
+#  - 'https://charts.longhorn.io'
+#  - 'https://helm.cilium.io/'
   - '*'
 
   # La destination est le cluster local
   destinations:
-  - server: https://kubernetes.default.svc
-    namespace: argocd
-  - server: https://kubernetes.default.svc
-    namespace: traefik
-  - server: https://kubernetes.default.svc
-    namespace: metallb-system
-  - server: https://kubernetes.default.svc
-    namespace: longhorn-system
-  - server: https://kubernetes.default.svc
-    namespace: kube-system
+#  - server: https://kubernetes.default.svc
+#    namespace: argocd
+#  - server: https://kubernetes.default.svc
+#    namespace: traefik
+#  - server: https://kubernetes.default.svc
+#    namespace: metallb-system
+#  - server: https://kubernetes.default.svc
+#    namespace: longhorn-system
+#  - server: https://kubernetes.default.svc
+#    namespace: kube-system
   - server: '*'
     namespace: '*'
     
