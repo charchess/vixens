@@ -1,5 +1,5 @@
 # base/kubernetes-dashboard/transport.yaml
-apiVersion: traefik.io/v1alpha4
+apiVersion: traefik.io/v1alpha1
 kind: ServersTransport
 metadata:
   name: kubernetes-dashboard-transport
