@@ -3,44 +3,42 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: argocd
-  namespace: argocd # L'application elle-même vit dans le namespace 'argocd'
+  namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: default # Violation temporaire également
+  project: default
   source:
-    repoURL: https://argoproj.github.io/argo-helm # Le repo du Chart Helm officiel d'Argo CD
+    repoURL: https://argoproj.github.io/argo-helm
     chart: argo-cd
-    targetRevision: "7.3.1" # Utilisons une version de chart récente et pinée
+    targetRevision: "7.3.1"
     helm:
-      # Nous pourrions externaliser ces valeurs dans un 'values.yaml' dans le dossier 'releases/',
-      # mais pour le bootstrap, les garder ici est acceptable.
       values: |
         server:
-          # Active l'Ingress pour accéder à l'UI d'Argo CD
           ingress:
             enabled: true
             ingressClassName: traefik
-            hostname: argocd.truxonline.com # A adapter à votre nom de domaine
+            hostname: argocd.truxonline.com
             annotations:
               cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
               traefik.ingress.kubernetes.io/router.entrypoints: websecure
               traefik.ingress.kubernetes.io/router.tls: "true"
-            http:
-              paths:
-                - path: /
-                  pathType: Prefix
+            
+            # --- LA CORRECTION EST ICI ---
+            # 'paths' est une clé au même niveau que 'annotations', et non pas 'http'.
+            # Le bloc 'http' est implicite dans la définition du template de l'Ingress du chart.
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
                   service:
-                    port: http
-        # --- ATTENTION : GESTION DES SECRETS EN CLAIR (TEMPORAIRE) ---
-        # Voici le genre de configuration que nous devrons migrer vers External Secrets Operator.
-        # Pour l'instant, nous laissons Argo CD générer le mot de passe initial.
-        # Vous le récupérerez avec la commande kubectl une fois le pod lancé.
-        # argo-cd.configs.secret.create: false
-        # argo-cd.secret.credential: <valeur issue d'ESO>
+                    name: argocd-server
+                    port:
+                      # Le nom du port du service que nous voulons cibler.
+                      name: http
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd # Déploie Argo CD dans son propre namespace
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true
