@@ -15,10 +15,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - dashboard.truxonline.com # Adaptez si vous voulez un autre sous-domaine
+        - k8s.truxonline.com # Adaptez si vous voulez un autre sous-domaine
       secretName: kubernetes-dashboard-tls
   rules:
-    - host: dashboard.truxonline.com
+    - host: k8s.truxonline.com
       http:
         paths:
           - path: /
