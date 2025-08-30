@@ -1,0 +1,22 @@
+# clusters/vixens/argocd/apps/external-services-synelia.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-services-synelia
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoj.io
+spec:
+  project: vixens
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: HEAD
+    path: base/external-services
+  destination:
+    server: https://kubernetes.default.svc
+    # La destination est le namespace où vivent les CRDs Traefik
+    namespace: traefik
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
