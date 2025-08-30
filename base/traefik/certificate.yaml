@@ -1,0 +1,40 @@
+Mes excuses, je vous ai induit en erreur sur la manière dont IngressRoute interagit avec cert-manager. C'est une erreur de ma part. Le 404 est résolu, mais la configuration TLS que je vous ai donnée est incorrecte.
+
+Voici l'explication et la correction :
+
+Votre IngressRoute contient la ligne certResolver: letsencrypt-gandi-prod. Cette syntaxe demande à Traefik lui-même de contacter Let's Encrypt en utilisant un "résolveur de certificat" interne à Traefik. Or, toute notre infrastructure est basée sur cert-manager qui gère le ClusterIssuer du même nom. Les deux systèmes ne se parlaient pas.
+
+La bonne méthode est de séparer clairement les deux tâches :
+
+    Nous allons créer un objet Certificate pour commander le certificat à cert-manager.
+
+    Nous allons dire à l'IngressRoute d'utiliser le certificat (stocké dans un Secret) une fois qu'il sera prêt.
+
+Cette approche est plus déclarative et robuste.
+
+Étape 1 : Créer un objet Certificate pour commander le certificat
+
+Nous allons ajouter un fichier dans notre dossier base/traefik. Ce fichier sera la "commande" officielle du certificat.
+
+Créez le fichier base/traefik/certificate.yaml :
+YAML
+
+# base/traefik/certificate.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: traefik-dashboard-cert
+  namespace: traefik
+spec:
+  # Le nom du Secret où le certificat sera stocké
+  secretName: traefik-dashboard-tls
+  
+  # Le nom de domaine(s) pour le certificat
+  dnsNames:
+  - traefik.truxonline.com
+  
+  # L'issuer que cert-manager doit utiliser
+  issuerRef:
+    name: letsencrypt-gandi-prod
+    kind: ClusterIssuer
+    

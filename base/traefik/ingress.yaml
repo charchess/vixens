@@ -17,4 +17,4 @@ spec:
   # Pour un IngressRoute, on dit à Traefik d'utiliser le "résolveur de certificats"
   # que cert-manager a configuré.
   tls:
-    certResolver: letsencrypt-gandi-prod 
+    secretName: traefik-dashboard-tls
