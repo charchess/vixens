@@ -16,31 +16,31 @@ spec:
       values: |
         kong:
           enabled: false
-        # Configuration pour le mode "insecure" et le déploiement
-        tls:
-          enabled: false
-          autoGenerate: false
+
+        # Les paramètres du dashboard se trouvent sous la clé "web"
+        web:
+          # On désactive le TLS natif du dashboard
+          tls:
+            enabled: false
+          # On configure le service pour exposer le port HTTP
+          service:
+            port: 80
+            targetPort: 9090
+
+        # On garde les permissions admin et le login "insecure"
         rbac:
           create: true
-          # Donne au dashboard les droits d'admin du cluster.
-          # ATTENTION : À n'utiliser que sur un cluster de dev/perso.
           clusterAdminRole: true
-        
-        # Arguments pour désactiver la page de login
         extraArgs:
           - --enable-insecure-login=true
           - --disable-settings-authorizer=true
 
-        # Le service sera de type ClusterIP, Traefik s'occupe de l'exposer
-        service:
-          type: ClusterIP
-          externalPort: 443
-
-        # On ajoute les tolérances pour vos nœuds control-plane
+        # On garde les tolérances pour vos nœuds
         tolerations:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Exists"
             effect: "NoSchedule"
+            
   destination:
     server: https://kubernetes.default.svc
     # Le chart déploie par défaut dans ce namespace
