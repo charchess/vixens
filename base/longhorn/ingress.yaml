@@ -1,0 +1,25 @@
+# base/longhorn/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: longhorn-ingress
+  namespace: longhorn-system
+  annotations:
+    # Vos annotations pour cert-manager, etc.
+    cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: longhorn.truxonline.com # Adaptez le nom d'hôte
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: longhorn-frontend # Le service de l'UI Longhorn
+            port:
+              number: 80
+              

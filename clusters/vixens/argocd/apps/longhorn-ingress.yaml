@@ -1,0 +1,23 @@
+# clusters/vixens/argocd/apps/longhorn-ingress.yaml
+apiVersion: argroj.io/v1alpha1
+kind: Application
+metadata:
+  name: longhorn-ingress
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/charchess/vixens.git # Votre dépôt
+    targetRevision: HEAD
+    path: base/longhorn # Le dossier avec votre Ingress custom
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: longhorn-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      
+      
