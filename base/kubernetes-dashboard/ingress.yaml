@@ -7,7 +7,7 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    # On supprime l'annotation 'service.scheme: https' car le backend est maintenant HTTP
+    # L'annotation 'service.scheme' n'est plus nécessaire car le backend est HTTP
 spec:
   ingressClassName: traefik
   tls:
@@ -22,9 +22,10 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: kubernetes-dashboard
+                # --- CORRECTION DU NOM DU SERVICE ---
+                name: kubernetes-dashboard-web
                 port:
-                  # On pointe vers le nouveau port HTTP du service
-                  number: 80
+                  # --- CORRECTION DU PORT ---
+                  number: 8000
                   
                   
