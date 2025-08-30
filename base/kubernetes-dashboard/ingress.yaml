@@ -7,16 +7,12 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    # --- Annotation importante ---
-    # Le service du dashboard écoute en HTTPS.
-    # Il faut dire à Traefik de communiquer avec lui en HTTPS.
-    traefik.ingress.kubernetes.io/service.scheme: https
-    traefik.ingress.kubernetes.io/service.serverstransport: kubernetes-dashboard-transport@kubernetescrd
+    # On supprime l'annotation 'service.scheme: https' car le backend est maintenant HTTP
 spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - k8s.truxonline.com # Adaptez si vous voulez un autre sous-domaine
+        - k8s.truxonline.com
       secretName: kubernetes-dashboard-tls
   rules:
     - host: k8s.truxonline.com
@@ -26,10 +22,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                # Le nom du service créé par le chart Helm
                 name: kubernetes-dashboard
                 port:
-                  # Le port HTTPS du service
-                  number: 443
+                  # On pointe vers le nouveau port HTTP du service
+                  number: 80
                   
                   

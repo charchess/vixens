@@ -15,6 +15,9 @@ spec:
     helm:
       values: |
         # Configuration pour le mode "insecure" et le déploiement
+        tls:
+          enabled: false
+          autoGenerate: false
         rbac:
           create: true
           # Donne au dashboard les droits d'admin du cluster.
