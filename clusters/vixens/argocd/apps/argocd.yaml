@@ -26,6 +26,12 @@ spec:
               cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
               traefik.ingress.kubernetes.io/router.entrypoints: websecure
               traefik.ingress.kubernetes.io/router.tls: "true"
+            http:
+              paths:
+                - path: /
+                  pathType: Prefix
+                  service:
+                    port: http
         # --- ATTENTION : GESTION DES SECRETS EN CLAIR (TEMPORAIRE) ---
         # Voici le genre de configuration que nous devrons migrer vers External Secrets Operator.
         # Pour l'instant, nous laissons Argo CD générer le mot de passe initial.
