@@ -1,0 +1,57 @@
+# clusters/vixens/argocd/apps/traefik.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://helm.traefik.io/traefik  # Repo Helm officiel de Traefik
+    chart: traefik
+    targetRevision: "34.0.0" # On garde la version exacte que vous utilisiez
+    helm:
+      values: |
+        # --- Contenu de votre ancien values.yaml ---
+        service:
+          type: LoadBalancer
+          loadBalancerIP: "192.168.200.70"
+          annotations:
+            metallb.universe.tf/address-pool: ingress-pool
+
+        additionalArguments:
+          - "--providers.kubernetescrd.allowExternalNameServices=true"
+
+        # Note: 'dashboard' est déprécié dans les versions récentes du chart au profit de 'providers.kubernetesCRD.dashboard'.
+        # Je laisse votre configuration, mais si elle ne fonctionne pas, il faudra l'adapter.
+        dashboard:
+          enabled: true
+
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Exists"
+            effect: "NoSchedule"
+
+        podSecurityContext:
+          seccompProfile:
+            type: RuntimeDefault
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          runAsNonRoot: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik # Déploie Traefik dans son propre namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      
+      
