@@ -15,7 +15,8 @@ spec:
     helm:
       values: |
         server:
-          # --- NOUVELLE SECTION POUR CONTRÔLER LE SERVICE LUI-MÊME ---
+          extraArgs:
+            - --insecure
           service:
             # Nous définissons le port principal du service sur 80 (HTTP)
             port: 80

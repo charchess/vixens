@@ -1,0 +1,38 @@
+# clusters/vixens/argocd/00-vixens-project.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: vixens
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: "Project for the vixens cluster applications"
+  
+  # La source de vérité est notre dépôt Git
+  sourceRepos:
+  - 'https://github.com/charchess/vixens.git'
+  - 'https://argoproj.github.io/argo-helm'
+  - 'https://helm.traefik.io/traefik'
+  - 'https://metallb.github.io/metallb'
+  - 'https://charts.longhorn.io'
+
+  # La destination est le cluster local
+  destinations:
+  - server: https://kubernetes.default.svc
+    # --- LA PARTIE IMPORTANTE ---
+    # Nous autorisons explicitement le déploiement dans ces namespaces
+    namespace: argocd
+  - server: https://kubernetes.default.svc
+    namespace: traefik
+  - server: https://kubernetes.default.svc
+    namespace: metallb-system
+  - server: https://kubernetes.default.svc
+    namespace: longhorn-system
+    
+  # Autoriser tous les types de ressources
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+    
+    
