@@ -1,0 +1,38 @@
+# clusters/vixens/argocd/apps/cilium.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cilium
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: vixens
+  source:
+    repoURL: https://helm.cilium.io/
+    chart: cilium
+    targetRevision: "1.18.1" # Utilisez une version récente et compatible avec votre cluster
+    helm:
+      values: |
+        # --- AJOUT DE CETTE SECTION POUR HUBBLE ---
+        hubble:
+          enabled: true
+          ui:
+            enabled: true
+            # Cette section garantit que le service pour l'UI est créé
+            # et que l'Ingress pourra le trouver.
+            service:
+              type: ClusterIP
+              # Le port par défaut est 80. L'ingress s'y connectera.
+        
+        # --- VOS AUTRES VALEURS CILIUM ---
+        # Si vous aviez une configuration personnalisée pour Cilium,
+        # ajoutez-la ici. Sinon, ceci est un bon point de départ.
+        
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system # Cilium est généralement installé dans kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
