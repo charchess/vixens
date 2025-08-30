@@ -9,12 +9,13 @@ metadata:
 spec:
   project: vixens
   source:
-    # --- LA CORRECTION EST ICI ---
-    repoURL: https://headlamp-k8s.github.io/headlamp
+    # --- LA CORRECTION FINALE BASÉE SUR LA DOCUMENTATION OFFICIELLE ---
+    repoURL: https://kubernetes-sigs.github.io/headlamp/
     chart: headlamp
     targetRevision: "0.34.0"
     helm:
       values: |
+        # On garde les tolérances pour vos nœuds control-plane
         tolerations:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Exists"
@@ -28,3 +29,4 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      
