@@ -11,6 +11,7 @@ metadata:
     # Le service du dashboard écoute en HTTPS.
     # Il faut dire à Traefik de communiquer avec lui en HTTPS.
     traefik.ingress.kubernetes.io/service.scheme: https
+    traefik.ingress.kubernetes.io/service.serverstransport: kubernetes-dashboard-transport@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
