@@ -5,13 +5,14 @@ metadata:
   name: headlamp
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argoj.io # <--- CORRIGÉ : argoproj, pas argoj
+    - resources-finalizer.argoproj.io
 spec:
   project: vixens
   source:
-    repoURL: https://headlamp.github.io/headlamp
+    # --- LA CORRECTION EST ICI ---
+    repoURL: https://headlamp-k8s.github.io/headlamp
     chart: headlamp
-    targetRevision: "0.22.0"
+    targetRevision: "0.34.0"
     helm:
       values: |
         tolerations:
@@ -27,4 +28,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      
