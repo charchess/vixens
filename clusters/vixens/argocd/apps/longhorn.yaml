@@ -14,11 +14,9 @@ spec:
     targetRevision: "1.9.1"
     helm:
       values: |
-        # Désactivation explicite du job de pré-mise-à-jour
         preUpgrade:
-          enabled: false
+          enabled: true
 
-        # On s'assure que l'ingress du chart est bien désactivé
         ingress:
           enabled: false
 
