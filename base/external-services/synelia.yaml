@@ -1,5 +1,5 @@
 # base/external-services/synelia.yaml
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.containo.us/v1alpha1
 kind: ServersTransport
 metadata:
   name: synelia-transport
@@ -8,7 +8,7 @@ metadata:
 spec:
   insecureSkipVerify: true
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.containo.us/v1alpha1
 kind: TraefikService
 metadata:
   name: synelia-https
@@ -21,7 +21,7 @@ spec:
     # On utilise le transport créé ci-dessus
     serversTransport: synelia-transport
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: synelia-routes
