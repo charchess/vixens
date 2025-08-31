@@ -1,0 +1,25 @@
+# base/external-synelia/backend.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: synelia-ext
+  # Nous les mettons dans le namespace 'default' pour rester simple et cohérent
+  namespace: default
+spec:
+  ports:
+    - protocol: TCP
+      port: 5100
+      targetPort: 5100
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: synelia-ext
+  namespace: default
+subsets:
+  - addresses:
+      # L'adresse IP de votre NAS Synelia
+      - ip: 192.168.204.69
+    ports:
+      - port: 5100
+      
