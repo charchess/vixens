@@ -10,6 +10,7 @@ metadata:
     # --- ANNOTATION TRÈS IMPORTANTE ---
     # Indique à Traefik de communiquer avec le backend en HTTPS
     traefik.ingress.kubernetes.io/service.scheme: https
+    traefik.ingress.kubernetes.io/service.serverstransport: synelia-transport@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
