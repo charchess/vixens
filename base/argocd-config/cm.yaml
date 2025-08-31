@@ -1,0 +1,20 @@
+# base/argocd-config/cm.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # C'est ici qu'on définit la liste des exclusions.
+  # Notez l'absence de 'Endpoints' et 'EndpointSlices'.
+  resource.exclusions: |
+    - apiGroups:
+      - cilium.io
+      kinds:
+      - CiliumEndpoint
+      clusters:
+      - '*'
+      
