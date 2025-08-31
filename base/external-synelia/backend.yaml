@@ -1,0 +1,23 @@
+# base/external-synelia/backend.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: synelia-ext
+  namespace: default
+spec:
+  ports:
+    - protocol: TCP
+      port: 5000 # <-- CHANGEMENT
+      targetPort: 5000 # <-- CHANGEMENT
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: synelia-ext
+  namespace: default
+subsets:
+  - addresses:
+      - ip: 192.168.204.69
+    ports:
+      - port: 5000
+      
