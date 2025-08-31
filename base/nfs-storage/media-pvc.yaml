@@ -1,0 +1,29 @@
+# base/nfs-storage/media-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-downloads-pvc
+  # On déploiera ces PVC dans un namespace dédié à vos applications media
+  namespace: media-stack 
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Ti
+  volumeName: nfs-downloads # On lie cette demande au PV 'nfs-downloads'
+  storageClassName: ""
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-content-pvc
+  namespace: media-stack
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Ti
+  volumeName: nfs-content
+  storageClassName: ""
