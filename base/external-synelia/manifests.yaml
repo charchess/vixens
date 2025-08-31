@@ -1,46 +1,32 @@
 # base/external-synelia/manifests.yaml
-# --- OBJET 1 : Le Transport pour ignorer le certificat auto-signé ---
-apiVersion: traefik.containo.us/v1alpha1
-kind: ServersTransport
-metadata:
-  name: synelia-transport
-  # Les CRDs Traefik doivent vivre dans le même namespace que l'IngressRoute
-  namespace: default
-spec:
-  insecureSkipVerify: true
----
-# --- OBJET 2 : Le pointeur vers le service externe AVEC health check ---
+
+# --- OBJET 1 : Le pointeur vers le service externe en HTTP ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: TraefikService
 metadata:
-  name: synelia-https
+  name: synelia-http-service
   namespace: default
 spec:
   loadBalancer:
     servers:
-    - address: "192.168.204.69:5100"
-    serversTransport: synelia-transport
-    # --- AJOUT CRUCIAL : Configuration du Health Check ---
-    # On dit à Traefik de considérer le service comme sain s'il répond
-    # sur le chemin "/" avec le protocole HTTPS.
-    healthCheck:
-      path: /
-      scheme: https
+    - address: "192.168.204.69:5000" # La nouvelle adresse HTTP
 ---
-# --- OBJET 3 : La route d'entrée ---
+# --- OBJET 2 : La route d'entrée standard ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: synelia-routes
+  name: synelia-http-routes
   namespace: default
 spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`mail.truxonline.com`) || Host(`contacts.truxonline.com`) || Host(`photos.truxonline.com`) || Host(`notes.truxonline.com`) || Host(`surveillance.truxonline.com`) || Host(`synelia.truxonline.com`)
-      kind: Rule
-      services:
-        - name: synelia-https
-          kind: TraefikService
+  - match: Host(`mail.truxonline.com`, `contacts.truxonline.com`, `photos.truxonline.com`, `notes.truxonline.com`, `surveillance.truxonline.com`, `synelia.truxonline.com`)
+    kind: Rule
+    services:
+      - name: synelia-http-service
+        kind: TraefikService
   tls:
-    secretName: synelia-tls
+    # Traefik gère le certificat Let's Encrypt pour la connexion externe
+    certResolver: letsencrypt-gandi-prod
+    
