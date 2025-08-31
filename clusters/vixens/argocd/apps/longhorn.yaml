@@ -45,8 +45,6 @@ spec:
               operator: "Exists"
               effect: "NoSchedule"
         defaultSettings:
-          systemManagedComponentsNodeSelector:
-            kubernetes.io/os: linux
           systemManagedComponentsTolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
