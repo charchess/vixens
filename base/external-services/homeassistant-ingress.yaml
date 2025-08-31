@@ -1,0 +1,27 @@
+# base/external-services/homeassistant-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homeassistant-https
+  namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - homeassistant.truxonline.com
+    secretName: homeassistant-tls # Nom du secret pour le certificat
+  rules:
+  - host: homeassistant.truxonline.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: homeassistant-ext
+            port:
+              number: 8123
+              
