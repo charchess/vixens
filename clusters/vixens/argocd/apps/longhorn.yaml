@@ -48,7 +48,9 @@ spec:
               operator: "Exists"
               effect: "NoSchedule"
         defaultSettings:
-            backupTarget: "nfs://192.168.111.69:/volume3/Backups/vixens/longhorn"
+          backupTarget: "nfs://192.168.111.69:/volume3/Backups/vixens/longhorn"
+          backupTargetCredentialSecret: ""
+          defaultDataPath: /var/lib/longhorn
             systemManagedComponentsTolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
