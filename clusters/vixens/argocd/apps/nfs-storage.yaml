@@ -1,0 +1,26 @@
+# clusters/vixens/argocd/apps/nfs-storage.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nfs-storage
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argoproj.io
+spec:
+  project: vixens
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: HEAD
+    path: base/nfs-storage
+  destination:
+    server: https://kubernetes.default.svc
+    # La destination est le namespace de vos applications media
+    namespace: media-stack
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      
+      
