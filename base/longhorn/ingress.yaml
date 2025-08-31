@@ -1,43 +1,29 @@
 # base/longhorn/ingress.yaml
-
-# --- OBJET 1 : La commande du certificat à cert-manager ---
-apiVersion: cert-manager.io/v1
-kind: Certificate
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: longhorn-ui-cert
-  # Le certificat doit vivre dans le namespace de Longhorn
+  name: longhorn-ui-ingress
   namespace: longhorn-system
+  annotations:
+    # On utilise les annotations standards qui fonctionnent
+    cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
-  # Le nom du Secret où le certificat sera stocké
-  secretName: longhorn-ui-tls
-  
-  # Le nom de domaine pour le certificat
-  dnsNames:
-  - longhorn.truxonline.com
-  
-  # L'issuer que cert-manager doit utiliser
-  issuerRef:
-    name: letsencrypt-gandi-prod
-    kind: ClusterIssuer
----
-# --- OBJET 2 : La route d'entrée pour Traefik ---
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
-metadata:
-  name: longhorn-ui-route
-  namespace: longhorn-system
-spec:
-  entryPoints:
-    - websecure
-  routes:
-  - match: Host(`longhorn.truxonline.com`)
-    kind: Rule
-    services:
-    - name: longhorn-frontend # Cible le service que vous avez décrit
-      kind: Service
-      port: 80 # Cible le port 80 du service
+  ingressClassName: traefik
+  # Le bloc tls indique à cert-manager de créer le secret
   tls:
-    # On dit à Traefik d'utiliser le Secret créé par cert-manager
-    # C'est cette ligne qui active la terminaison TLS et désactive le passthrough
-    secretName: longhorn-ui-tls
-    
+    - hosts:
+        - longhorn.truxonline.com
+      secretName: longhorn-ui-tls
+  rules:
+    - host: longhorn.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: longhorn-frontend # Le service qui marche
+                port:
+                  number: 80 
+                  
