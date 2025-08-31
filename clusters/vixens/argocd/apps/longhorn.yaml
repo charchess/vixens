@@ -20,6 +20,9 @@ spec:
         ingress:
           enabled: false
 
+        longhornDriver:
+          kubeletRootDir: /var/lib/kubelet
+
         # Vos tolérances
         longhornManager:
           tolerations:
