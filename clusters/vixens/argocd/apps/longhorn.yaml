@@ -5,20 +5,24 @@ metadata:
   name: longhorn
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argoproj.io
+    - resources-finalizer.argoproj.io
 spec:
   project: vixens
   source:
     repoURL: https://charts.longhorn.io
     chart: longhorn
-    targetRevision: "1.9.1" # On garde votre version exacte
+    targetRevision: "1.9.1"
     helm:
       values: |
-        # --- Contenu de votre ancien values.yaml ---
-        ingress:
-          enabled: false
+        # Désactivation explicite du job de pré-mise-à-jour
         preUpgrade:
           enabled: false
+
+        # On s'assure que l'ingress du chart est bien désactivé
+        ingress:
+          enabled: false
+
+        # Vos tolérances
         longhornManager:
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
@@ -27,7 +31,6 @@ spec:
             - key: "node-role.kubernetes.io/master"
               operator: "Exists"
               effect: "NoSchedule"
-
         longhornDriver:
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
@@ -43,7 +46,6 @@ spec:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
               effect: "NoSchedule"
-
         defaultSettings:
           systemManagedComponentsNodeSelector:
             kubernetes.io/os: linux
@@ -63,4 +65,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      
