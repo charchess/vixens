@@ -14,6 +14,18 @@ spec:
     targetRevision: "8.3.1"
     helm:
       values: |
+        configs:
+          cm:
+            # On surcharge la liste des exclusions par défaut pour
+            # ne plus y inclure les Endpoints.
+            # On garde juste l'exclusion pour Cilium qui est une bonne pratique.
+            resource.exclusions: |
+              - apiGroups:
+                - cilium.io
+                kinds:
+                - CiliumEndpoint
+                clusters:
+                - '*'
         server:
           extraArgs:
             - --insecure
