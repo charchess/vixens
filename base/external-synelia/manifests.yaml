@@ -1,0 +1,46 @@
+# base/external-synelia/manifests.yaml
+# --- OBJET 1 : Le Transport pour ignorer le certificat auto-signé ---
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: synelia-transport
+  # Les CRDs Traefik doivent vivre dans le même namespace que l'IngressRoute
+  namespace: default
+spec:
+  insecureSkipVerify: true
+---
+# --- OBJET 2 : Le pointeur vers le service externe AVEC health check ---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: synelia-https
+  namespace: default
+spec:
+  loadBalancer:
+    servers:
+    - address: "192.168.204.69:5100"
+    serversTransport: synelia-transport
+    # --- AJOUT CRUCIAL : Configuration du Health Check ---
+    # On dit à Traefik de considérer le service comme sain s'il répond
+    # sur le chemin "/" avec le protocole HTTPS.
+    healthCheck:
+      path: /
+      scheme: https
+---
+# --- OBJET 3 : La route d'entrée ---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: synelia-routes
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`mail.truxonline.com`) || Host(`contacts.truxonline.com`) || Host(`photos.truxonline.com`) || Host(`notes.truxonline.com`) || Host(`surveillance.truxonline.com`) || Host(`synelia.truxonline.com`)
+      kind: Rule
+      services:
+        - name: synelia-https
+          kind: TraefikService
+  tls:
+    secretName: synelia-tls
