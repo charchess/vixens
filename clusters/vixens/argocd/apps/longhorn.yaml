@@ -17,7 +17,8 @@ spec:
         # --- Contenu de votre ancien values.yaml ---
         ingress:
           enabled: false
-
+        preUpgrade:
+          enabled: false
         longhornManager:
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
