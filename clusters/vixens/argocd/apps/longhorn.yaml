@@ -49,6 +49,7 @@ spec:
               effect: "NoSchedule"
         defaultSettings:
           backupTarget: "nfs://192.168.111.69:/volume3/Backups/vixens/longhorn"
+          backupTargetMountOptions: "nfsvers=4,resvport"
           backupTargetCredentialSecret: ""
           defaultDataPath: /var/lib/longhorn
             systemManagedComponentsTolerations:
