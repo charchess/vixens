@@ -35,7 +35,7 @@ spec:
     services:
     - name: longhorn-frontend # Cible le service que vous avez décrit
       kind: Service
-      port: 8000 # Cible le port 80 du service
+      port: 80 # Cible le port 80 du service
   tls:
     # On dit à Traefik d'utiliser le Secret créé par cert-manager
     # C'est cette ligne qui active la terminaison TLS et désactive le passthrough
