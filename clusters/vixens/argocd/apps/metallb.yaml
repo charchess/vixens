@@ -25,6 +25,15 @@ spec:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
               effect: "NoSchedule"
+  ignoreDifferences:
+    - group: metallb.io
+      kind: BGPAdvertisement
+      jsonPointers:
+        - /webhooks/clientConfig/caBundle
+    - group: metallb.io
+      kind: BGPPeer
+      jsonPointers:
+        - /spec/caBundle
   destination:
     server: https://kubernetes.default.svc
     namespace: metallb-system
