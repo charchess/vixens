@@ -19,7 +19,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                # --- CORRECTION ICI ---
                 name: grafana
                 port:
                   number: 80
@@ -44,7 +43,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                # --- CORRECTION ICI ---
                 name: prometheus-server
                 port:
                   number: 80
