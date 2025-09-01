@@ -1,4 +1,5 @@
 # base/nfs-storage/media-pv.yaml
+---
 apiVersion: v1
 kind: PersistentVolume
 metadata:

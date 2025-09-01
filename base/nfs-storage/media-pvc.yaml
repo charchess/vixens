@@ -1,4 +1,5 @@
 # base/nfs-storage/media-pvc.yaml
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

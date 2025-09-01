@@ -1,4 +1,5 @@
 # base/external-synelia/backend.yaml
+---
 apiVersion: v1
 kind: Service
 metadata:
