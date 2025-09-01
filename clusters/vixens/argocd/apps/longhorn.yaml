@@ -20,10 +20,9 @@ spec:
         ingress:
           enabled: false
 
-#        csi:
-#          enabled: true
+        csi:
+          enabled: true
 
-        # Fusion de vos deux sections 'longhornDriver'
         longhornDriver:
           kubeletRootDir: /var/lib/kubelet
           tolerations:
@@ -31,7 +30,6 @@ spec:
               operator: "Exists"
               effect: "NoSchedule"
 
-        # Vos tolérances granulaires
         longhornManager:
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
@@ -50,15 +48,14 @@ spec:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
               effect: "NoSchedule"
-        
+
         # Vos paramètres globaux
         defaultSettings:
           backupTarget: "nfs://192.168.111.69:/volume3/Backups/vixens/longhorn"
           backupTargetMountOptions: "nfsvers=4,resvport"
           backupTargetCredentialSecret: ""
           defaultDataPath: /var/lib/longhorn
-#          enableIscsiSupport: true
-          # L'indentation de cette clé est maintenant correcte
+          # enableIscsiSupport: true
           systemManagedComponentsTolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
@@ -76,5 +73,3 @@ spec:
     syncOptions:
       # On laisse notre manifeste 'namespace.yaml' gérer la création
       - CreateNamespace=false
-      
-      
