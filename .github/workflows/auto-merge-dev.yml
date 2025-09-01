@@ -1,0 +1,98 @@
+# .github/workflows/auto-merge-dev.yml
+#!/usr/bin/env bash
+# ~/bin/gp  (chmod +x)
+set -euo pipefail
+
+# ---------- Config ----------
+YAMLLINT_CONFIG="${YAMLLINT_CONFIG:-yamllint-config.yml}"
+K8S_VERSION="${K8S_VERSION:-1.30.0}"
+SKIP_KINDS="${SKIP_KINDS:-Application,AppProject,CustomResourceDefinition}"
+
+# ---------- Couleurs ----------
+R=$(tput setaf 1); G=$(tput setaf 2); Y=$(tput setaf 3); B=$(tput setaf 4); N=$(tput sgr0)
+
+# ---------- Parse options ----------
+FORCE=false
+QUIET=false
+DRY=false
+GIT_ARGS=()
+for arg in "$@"; do
+  case $arg in
+    --force)  FORCE=true ;;
+    --quiet)  QUIET=true ;;
+    --dry-run) DRY=true ;;
+    *) GIT_ARGS+=("$arg") ;;
+  esac
+done
+
+log()  { [[ $QUIET == false ]] && echo -e "$*"; }
+warn() { log "${Y}⚠️  $*${N}"; }
+err()  { log "${R}❌ $*${N}"; }
+ok()   { log "${G}✅ $*${N}"; }
+
+# ---------- Helpers ----------
+git_root=$(git rev-parse --show-toplevel)
+
+# Liste des YAML modifiés / ajoutés
+mapfile -t files < <(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(yaml|yml)$' || true)
+
+if [[ ${#files[@]} -eq 0 ]]; then
+  ok "Aucun YAML à valider → push direct."
+  [[ $DRY == false ]] && git push "${GIT_ARGS[@]}"
+  exit 0
+fi
+
+log "${B}📁 Fichiers à contrôler :${N}"
+printf '    %s\n' "${files[@]}"
+
+# ---------- Auto-fix fin de fichier ----------
+log "\n${B}🔧 Nettoyage fins de fichier…${N}"
+for f in "${files[@]}"; do
+  path="${git_root}/${f}"
+  # retire espaces/tab et lignes vides en fin, ajoute un unique \n
+  perl -0777 -pe 's/[ \t]+\n?/\n/g; s/\n*\z/\n/' -i "${path}"
+done
+git add "${files[@]}"
+
+# ---------- Vérif 1ʳᵉ ligne ----------
+log "\n${B}🔍 Vérification 1ʳᵉ ligne…${N}"
+errors=0
+for f in "${files[@]}"; do
+  path="${git_root}/${f}"
+  expected="# ${f}"
+  first=$(head -n1 "${path}")
+  if [[ "$first" != "$expected" ]]; then
+    err "1ʳᵉ ligne incorrecte dans ${f}"
+    log "   Attendu : ${expected}"
+    log "   Trouvé  : ${first}"
+    ((errors++))
+  fi
+done
+[[ $errors -gt 0 && $FORCE == false ]] && exit 1
+
+# ---------- Yamllint ----------
+log "\n${B}🔍 Yamllint…${N}"
+if ! yamllint -c "${git_root}/${YAMLLINT_CONFIG}" "${files[@]}"; then
+  err "Yamllint a retourné des erreurs."
+  [[ $FORCE == false ]] && exit 1
+fi
+
+# ---------- Kubeval ----------
+log "\n${B}🔍 Kubeval…${N}"
+if ! kubeval \
+     --ignore-missing-schemas \
+     --kubernetes-version "${K8S_VERSION}" \
+     --strict \
+     --skip-kinds "${SKIP_KINDS}" \
+     "${files[@]}"; then
+  err "Kubeval a retourné des erreurs."
+  [[ $FORCE == false ]] && exit 1
+fi
+
+# ---------- Push ----------
+if [[ $DRY == true ]]; then
+  ok "Dry-run terminé. Aucune action réalisée."
+else
+  ok "Tous les checks passent → push en cours…"
+  git push "${GIT_ARGS[@]}"
+fi
