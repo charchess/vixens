@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: https://wekan.github.io/charts
     chart: wekan
-    targetRevision: "0.8.0" # Version stable du chart
+    targetRevision: "7.94.0" # Version stable du chart
     helm:
       values: |
         # Configuration Générale de Wekan
