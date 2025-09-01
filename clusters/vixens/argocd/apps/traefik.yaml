@@ -20,7 +20,12 @@ spec:
           loadBalancerIP: "192.168.200.70"
           annotations:
             metallb.universe.tf/address-pool: ingress-pool
-
+          additionalPorts:
+            - name: dashboard
+              port: 9000
+              targetPort: 9000
+              protocol: TCP
+      
         ports:
           dashboard:
             port: 9000
