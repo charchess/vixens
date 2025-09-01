@@ -1,0 +1,15 @@
+# .github/workflows/validate.yaml
+name: Validate Manifests
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate K8s manifests
+        uses: instrumenta/kubeval-action@master
+      - name: Validate Kustomize
+        run: |
+          find . -name kustomization.yaml -exec kustomize build {} \;
+          

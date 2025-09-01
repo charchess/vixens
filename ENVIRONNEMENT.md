@@ -59,6 +59,100 @@
 ArgoCD: argocd.truxonline.com
 Longhorn UI: ?
 
-# Diagnostic
-kubectl get nodes -o wide --show-labels
-kubectl get svc -A | grep LoadBalancer
+# 🏠 Environnement Vixens - Infrastructure GitOps
+> **Note IA-Ready** : Fichier autonome pour déploiement 100 % GitOps via ArgoCD.
+
+---
+
+## 🌐 Topologie Réseau
+- **Interne (non routé)** : `192.168.111.0/24`
+- **Externe** : `192.168.200.0/24`
+- **Poste de gestion** : `grenat 192.168.111.64`
+- **Nodes** :
+  - `jade 192.168.111.63` (controlplane)
+  - `ruby 192.168.111.66` (controlplane)
+  - `emy 192.168.111.65` (controlplane)
+- **NAS** : `synology 192.168.111.69`
+
+---
+
+## ⚙️ Stack
+- **OS** : Talos v1.10.7
+- **K8s** : v1.30.0
+- **CNI** : Cilium v1.18.1 (manuel)
+- **LB** : MetalLB v0.14.5 / L2 / `192.168.200.70-80`
+- **Ingress** : Traefik v3.1.2
+- **Storage** : Longhorn v1.7.1
+- **GitOps** : ArgoCD (App-of-Apps, Helm uniquement pour ArgoCD)
+
+---
+
+## 📁 Structure du dépôt
+
+vixens/
+├── ENVIRONNEMENT.md
+├── base/                 # Manifestes natifs YAML
+│   ├── argocd/
+│   ├── metallb/
+│   ├── traefik/
+│   ├── longhorn/
+│   ├── monitoring/
+│   └── ...
+├── clusters/
+│   └── vixens/
+│       └── root-app.yaml   # Seul point d’entrée
+└── scripts/
+├── validate-yaml.sh
+└── generate-config.sh
+Copy
+
+
+---
+
+## 🧩 Flux GitOps (App-of-Apps)
+1. **Un seul `kubectl apply` initial** :
+   ```bash
+   kubectl apply -f clusters/vixens/root-app.yaml
+
+    Tout le reste est géré par ArgoCD (aucune commande manuelle).
+
+📍 Index des fichiers clés
+Table
+Copy
+Rôle	Chemin complet	Notes
+Application racine	clusters/vixens/root-app.yaml	Unique point d’entrée
+Namespace ArgoCD	base/argocd/namespace.yaml	Déployé via ArgoCD
+Config MetalLB	base/metallb/configmap.yaml	Pool IP externe
+RBAC Traefik	base/traefik/rbac.yaml	ClusterRole + Binding
+DaemonSet Longhorn	base/longhorn/daemonset.yaml	hostPath requis
+🔐 Placeholders à remplacer
+Table
+Copy
+Variable	Fichier	Exemple
+TODO@example.com	base/traefik/deployment.yaml	admin@vixens.local
+192.168.200.70-80	base/metallb/configmap.yaml	192.168.200.70-192.168.200.80
+🛠️ Diagnostics
+bash
+Copy
+
+# Vérifier le sync ArgoCD
+argocd app list
+kubectl get applications -n argocd
+kubectl get events --sort-by='.lastTimestamp'
+
+✅ Scripts de validation IA-ready
+bash
+Copy
+
+# Syntaxe YAML
+find . -name "*.yaml" -o -name "*.yml" | xargs yq eval '.' > /dev/null
+
+# Chemins référencés existants
+grep -r "path:" clusters/ | cut -d'"' -f2 | xargs ls -la
+
+🎯 TODO
+
+    Intégrer cert-manager et Cilium en GitOps
+    Configurer les pools de stockage Longhorn
+    Sécuriser les dashboards (à venir)
+

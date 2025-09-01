@@ -1,1 +1,19 @@
+# Emacs/Vim temp files
 *~
+*.swp
+*.swo
+
+# Kustomize build artifacts
+kustomize.build.*
+
+# Kubernetes secrets (déjà chiffrés)
+*.secret.yaml
+!*.enc.yaml
+
+# IDE
+.idea/
+.vscode/
+
+*.old
+*.good
+*.backup
