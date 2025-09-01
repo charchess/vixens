@@ -104,7 +104,7 @@ vixens/
 └── scripts/
 ├── validate-yaml.sh
 └── generate-config.sh
-Copy
+
 
 
 ---
@@ -118,7 +118,7 @@ Copy
 
 📍 Index des fichiers clés
 Table
-Copy
+
 Rôle	Chemin complet	Notes
 Application racine	clusters/vixens/root-app.yaml	Unique point d’entrée
 Namespace ArgoCD	base/argocd/namespace.yaml	Déployé via ArgoCD
@@ -127,13 +127,13 @@ RBAC Traefik	base/traefik/rbac.yaml	ClusterRole + Binding
 DaemonSet Longhorn	base/longhorn/daemonset.yaml	hostPath requis
 🔐 Placeholders à remplacer
 Table
-Copy
+
 Variable	Fichier	Exemple
 TODO@example.com	base/traefik/deployment.yaml	admin@vixens.local
 192.168.200.70-80	base/metallb/configmap.yaml	192.168.200.70-192.168.200.80
 🛠️ Diagnostics
 bash
-Copy
+
 
 # Vérifier le sync ArgoCD
 argocd app list
@@ -142,7 +142,7 @@ kubectl get events --sort-by='.lastTimestamp'
 
 ✅ Scripts de validation IA-ready
 bash
-Copy
+
 
 # Syntaxe YAML
 find . -name "*.yaml" -o -name "*.yml" | xargs yq eval '.' > /dev/null
