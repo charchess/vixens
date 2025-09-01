@@ -20,6 +20,12 @@ spec:
           annotations:
             metallb.universe.tf/address-pool: ingress-pool
 
+        ports:
+          dashboard:
+            port: 9000
+            expose: true
+            protocol: TCP
+
         additionalArguments:
           - "--providers.kubernetescrd.allowExternalNameServices=true"
 
