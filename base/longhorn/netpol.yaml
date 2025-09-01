@@ -1,23 +1,42 @@
 # base/longhorn/netpol.yaml
 ---
+# base/longhorn/netpol.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-all-longhorn-internal
+  name: allow-longhorn-all
   namespace: longhorn-system
 spec:
-  # Cette politique s'applique à TOUS les pods dans le namespace
+  # Cette politique s'applique à TOUS les pods dans le namespace longhorn-system
   podSelector: {}
   policyTypes:
-    - Ingress
-    - Egress
+  - Ingress
+  - Egress
   # Règle Ingress: autoriser TOUT le trafic entrant...
   ingress:
   # ...qui vient de N'IMPORTE QUEL pod dans le même namespace
-    - from:
-        - podSelector: {}
-  # Règle Egress: autoriser TOUT le trafic sortant...
+  - from:
+    - podSelector: {}
+  # Règle Egress: autoriser le trafic sortant...
   egress:
   # ...vers N'IMPORTE QUEL pod dans le même namespace
-    - to:
-        - podSelector: {}
+  - to:
+    - podSelector: {}
+  # --- AJOUT CRUCIAL : AUTORISER LA COMMUNICATION AVEC KUBERNETES ---
+  # On autorise la sortie vers le service DNS
+  - to:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+  # On autorise la sortie vers l'API Server de Kubernetes
+  # (cette règle est plus complexe mais permet au pod de contacter l'API)
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - protocol: TCP
+      port: 6443 # Le port de l'API server Talos
