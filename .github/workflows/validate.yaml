@@ -7,9 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-  # 1️⃣ Validation YAML avec yamllint simple
+  # 1️⃣ Validation YAML robuste
   yaml-lint:
-    name: YAML Lint
+    name: YAML Syntax & Style
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -39,98 +39,144 @@ jobs:
               level: error
             comments:
               min-spaces-from-content: 1
+            brackets:
+              level: warning
+            empty-lines:
+              max: 2
           EOF
           
-          # Valider les fichiers YAML
+          # Valider tous les fichiers YAML pertinents
           find base clusters -name "*.yaml" -o -name "*.yml" | \
-            xargs yamllint -c yamllint-config.yml || true
+            xargs yamllint -c yamllint-config.yml
 
-  # 2️⃣ Validation Kubernetes avec kubectl
-  kubectl-validate:
-    name: kubectl validate
+  # 2️⃣ Validation structurelle Kubernetes
+  kube-structure:
+    name: Kubernetes Structure
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'v1.30.0'
-
-      - name: Validate manifests
+      - name: Setup kubeval (sans kubectl)
         run: |
-          echo "🔍 Validation des manifests Kubernetes"
-          
-          # Valider les dossiers pertinents
-          for dir in base clusters; do
-            if [ -d "$dir" ]; then
-              echo "📁 Validation de $dir/"
-              
-              # Valider chaque fichier individuellement
-              find "$dir" -name "*.yaml" -type f | while read file; do
-                echo "  📄 $(basename "$file")"
-                
-                # Ignorer les fichiers de workflow GitHub
-                if [[ "$file" == *".github"* ]]; then
-                  echo "    ⚠️ Fichier GitHub ignoré"
-                  continue
-                fi
-                
-                # Validation avec kubectl
-                kubectl apply --dry-run=client -f "$file" || {
-                  echo "    ❌ Erreur dans $file"
-                  exit 1
-                }
-              done
-            fi
-          done
+          # Installation de kubeval avec schémas complets
+          wget https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
+          tar xf kubeval-linux-amd64.tar.gz
+          sudo cp kubeval /usr/local/bin/
 
-  # 3️⃣ Validation structurelle rapide
-  structure-check:
-    name: Structure Check
+      - name: Validate with kubeval (CRDs ignorées)
+        run: |
+          echo "🔍 Validation structure Kubernetes"
+          
+          # Valider uniquement les ressources standards
+          kubeval \
+            --ignore-missing-schemas \
+            --kubernetes-version 1.30.0 \
+            --strict \
+            --skip-kinds Application,AppProject,CustomResourceDefinition \
+            base/ clusters/
+
+  # 3️⃣ Validation spécifique ArgoCD
+  argocd-validate:
+    name: ArgoCD Structure
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup yq
-        run: |
-          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
-          chmod +x /usr/local/bin/yq
+        uses: mikefarah/yq@v4.44.1
 
-      - name: Validate structure
+      - name: Validate ArgoCD applications
         run: |
-          echo "🔍 Validation structurelle"
+          echo "🔍 Validation Applications ArgoCD"
           
-          # Vérifier les Applications ArgoCD
+          # Validation complète des Applications
           find clusters -name "*.yaml" -type f | while read file; do
             if [ "$(yq eval '.kind' "$file" 2>/dev/null)" = "Application" ]; then
-              echo "  ✅ ArgoCD Application: $(basename "$file")"
+              echo "📋 Validation: $(basename "$file")"
               
-              # Vérification basique
+              # Vérification détaillée
               yq eval '
-                .metadata.name and
-                .spec.project and
-                .spec.source.repoURL
-              ' "$file" >/dev/null || {
-                echo "    ❌ Structure invalide: $file"
+                .apiVersion == "argoproj.io/v1alpha1" and
+                .kind == "Application" and
+                .metadata.name != null and
+                .metadata.name != "" and
+                .spec.project != null and
+                .spec.project != "" and
+                .spec.source.repoURL != null and
+                .spec.source.repoURL != "" and
+                .spec.source.path != null and
+                .spec.source.path != "" and
+                .spec.destination.server != null and
+                .spec.destination.server != "" and
+                .spec.destination.namespace != null and
+                .spec.destination.namespace != ""
+              ' "$file" || {
+                echo "❌ Structure ArgoCD invalide: $file"
+                yq eval '.' "$file"  # Afficher le contenu pour debugging
                 exit 1
               }
             fi
           done
 
-  # 4️⃣ Rapport simple
-  summary:
-    name: Summary
+  # 4️⃣ Validation de sécurité
+  security-scan:
+    name: Security Best Practices
     runs-on: ubuntu-latest
-    needs: [yaml-lint, kubectl-validate, structure-check]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Security checks
+        run: |
+          echo "🔍 Vérification sécurité"
+          
+          # Installation de checkov
+          pip3 install checkov
+          
+          # Scan des bonnes pratiques
+          checkov --directory . --framework kubernetes --compact --quiet || true
+
+      - name: Check security patterns
+        run: |
+          echo "🔍 Recherche de patterns de sécurité"
+          
+          # Vérification des patterns dangereux
+          find base clusters -name "*.yaml" -type f | while read file; do
+            echo "  📄 $(basename "$file")"
+            
+            # Recherche de patterns problématiques
+            if grep -q "privileged: true" "$file"; then
+              echo "    ⚠️ Privilèges élevés détectés"
+            fi
+            
+            if grep -q "runAsUser: 0\|runAsRoot: true" "$file"; then
+              echo "    ⚠️ Exécution en root détectée"
+            fi
+            
+            if grep -q "allowPrivilegeEscalation: true" "$file"; then
+              echo "    ⚠️ Élévation de privilèges autorisée"
+            fi
+          done
+
+  # 5️⃣ Résumé final
+  validation-summary:
+    name: Validation Summary
+    runs-on: ubuntu-latest
+    needs: [yaml-lint, kube-structure, argocd-validate, security-scan]
     if: always()
     steps:
       - name: Create summary
         run: |
           echo "## ✅ Validation Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- YAML Lint: ${{ needs.yaml-lint.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- kubectl Validation: ${{ needs.kubectl-validate.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Structure Check: ${{ needs.structure-check.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| YAML Lint | ${{ needs.yaml-lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| K8s Structure | ${{ needs.kube-structure.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ArgoCD Apps | ${{ needs.argocd-validate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Check | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+
