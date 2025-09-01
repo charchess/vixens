@@ -37,5 +37,5 @@ spec:
 
   # Autoriser tous les types de ressources
   clusterResourceWhitelist:
-  - group: '*'
-    kind: '*'
+    - group: '*'
+      kind: '*'

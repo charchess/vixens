@@ -11,16 +11,16 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-      - homeassistant.truxonline.com
+        - homeassistant.truxonline.com
       secretName: homeassistant-tls # Nom du secret pour le certificat
   rules:
     - host: homeassistant.truxonline.com
       http:
         paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: homeassistant-ext
-              port:
-                number: 8123
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homeassistant-ext
+                port:
+                  number: 8123
