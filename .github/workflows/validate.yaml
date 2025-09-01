@@ -69,13 +69,13 @@ jobs:
           echo "🔍 Validation structure Kubernetes"
 
           # Valider uniquement les ressources standards
-          kubeval \
+          find base clusters -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 |
+            xargs -0 kubeval \
             --ignore-missing-schemas \
             --kubernetes-version 1.30.0 \
             --strict \
-            --skip-kinds Application,AppProject,CustomResourceDefinition \
-            base/ clusters/
-
+            --skip-kinds Application,AppProject,CustomResourceDefinition
+    
   # 3️⃣ Validation spécifique ArgoCD
   argocd-validate:
     name: ArgoCD Structure
