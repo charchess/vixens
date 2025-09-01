@@ -1,0 +1,30 @@
+# clusters/vixens/argocd/apps/prometheus.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prometheus
+  namespace: argocd
+spec:
+  project: vixens
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: prometheus
+    targetRevision: "25.20.0" # Version stable du chart Prometheus
+    helm:
+      values: |
+        server:
+          # On désactive la persistance comme demandé
+          persistentVolume:
+            enabled: false
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      
