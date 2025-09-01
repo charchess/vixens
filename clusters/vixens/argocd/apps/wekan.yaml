@@ -15,7 +15,8 @@ spec:
         # Configuration Générale de Wekan
         # On définit l'URL via laquelle on accèdera à Wekan
         env:
-          ROOT_URL: "https://wekan.truxonline.com"
+          - name: ROOT_URL
+            value: "https://wekan.truxonline.com"
 
         # On active la persistance pour les données de Wekan (ex: uploads)
         persistence:
