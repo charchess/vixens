@@ -14,6 +14,10 @@ spec:
     targetRevision: "58.1.0" # Version stable et récente
     helm:
       values: |
+        crds:
+          annotations:
+            argocd.argoproj.io/sync-options: ServerSideApply=true
+
         # Configuration Générale
         # On désactive les Ingress du chart pour les gérer nous-mêmes
         grafana:
