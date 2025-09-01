@@ -12,7 +12,7 @@ spec:
   tls:
     - hosts:
       - homeassistant.truxonline.com
-        secretName: homeassistant-tls # Nom du secret pour le certificat
+      secretName: homeassistant-tls # Nom du secret pour le certificat
   rules:
     - host: homeassistant.truxonline.com
       http:

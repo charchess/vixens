@@ -20,16 +20,16 @@ spec:
         - synelia.truxonline.com
       secretName: synelia-tls
   rules:
-  - host: mail.truxonline.com
-    http: &synelia-backend
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: synelia-ext
-            port:
-              number: 5000 # <-- CHANGEMENT
+    - host: mail.truxonline.com
+      http: &synelia-backend
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: synelia-ext
+                port:
+                  number: 5000 # <-- CHANGEMENT
   - host: contacts.truxonline.com
     http: *synelia-backend
   # ... (etc. pour les autres hôtes)

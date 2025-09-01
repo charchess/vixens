@@ -14,9 +14,9 @@ spec:
   ingress:
   # ...qui vient de N'IMPORTE QUEL pod dans le même namespace
     - from:
-      - podSelector: {}
+        - podSelector: {}
   # Règle Egress: autoriser TOUT le trafic sortant...
   egress:
   # ...vers N'IMPORTE QUEL pod dans le même namespace
     - to:
-      - podSelector: {}
+        - podSelector: {}
