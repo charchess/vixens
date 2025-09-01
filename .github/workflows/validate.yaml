@@ -2,9 +2,8 @@ name: Validate & Security
 
 on:
   push:
-    branches: [ main ]
+    branches: [ dev,main ]
   pull_request:
-    branches: [ main ]
 
 jobs:
   # 1️⃣ Validation YAML robuste
