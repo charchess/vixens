@@ -51,6 +51,7 @@ spec:
           backupTargetMountOptions: "nfsvers=4,resvport"
           backupTargetCredentialSecret: ""
           defaultDataPath: /var/lib/longhorn
+          enableIscsiSupport: true
           systemManagedComponentsTolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
