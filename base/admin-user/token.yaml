@@ -30,4 +30,3 @@ subjects:
 - kind: ServiceAccount
   name: admin-user
   namespace: kube-system
-  

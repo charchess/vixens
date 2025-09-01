@@ -31,7 +31,7 @@ spec:
             enabled: true
             storageClassName: longhorn-replicated # On utilise Longhorn !
             size: 8Gi
-        
+
         # Tolérances pour que les pods Wekan et MongoDB
         # puissent s'exécuter sur vos nœuds control-plane.
         tolerations:
@@ -47,5 +47,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      
-      

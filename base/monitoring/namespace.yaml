@@ -6,4 +6,3 @@ metadata:
   labels:
     # On applique la politique de sécurité la plus permissive à ce namespace
     pod-security.kubernetes.io/enforce: privileged
-    

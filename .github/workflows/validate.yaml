@@ -22,11 +22,11 @@ jobs:
       - name: Validate YAML syntax
         run: |
           echo "🔍 Validation YAML syntax"
-          
+
           # Configuration yamllint inline
           cat > yamllint-config.yml << 'EOF'
           extends: default
-          
+
           rules:
             line-length:
               max: 120
@@ -44,7 +44,7 @@ jobs:
             empty-lines:
               max: 2
           EOF
-          
+
           # Valider tous les fichiers YAML pertinents
           find base clusters -name "*.yaml" -o -name "*.yml" | \
             xargs yamllint -c yamllint-config.yml
@@ -67,7 +67,7 @@ jobs:
       - name: Validate with kubeval (CRDs ignorées)
         run: |
           echo "🔍 Validation structure Kubernetes"
-          
+
           # Valider uniquement les ressources standards
           kubeval \
             --ignore-missing-schemas \
@@ -90,12 +90,12 @@ jobs:
       - name: Validate ArgoCD applications
         run: |
           echo "🔍 Validation Applications ArgoCD"
-          
+
           # Validation complète des Applications
           find clusters -name "*.yaml" -type f | while read file; do
             if [ "$(yq eval '.kind' "$file" 2>/dev/null)" = "Application" ]; then
               echo "📋 Validation: $(basename "$file")"
-              
+
               # Vérification détaillée
               yq eval '
                 .apiVersion == "argoproj.io/v1alpha1" and
@@ -131,30 +131,30 @@ jobs:
       - name: Security checks
         run: |
           echo "🔍 Vérification sécurité"
-          
+
           # Installation de checkov
           pip3 install checkov
-          
+
           # Scan des bonnes pratiques
           checkov --directory . --framework kubernetes --compact --quiet || true
 
       - name: Check security patterns
         run: |
           echo "🔍 Recherche de patterns de sécurité"
-          
+
           # Vérification des patterns dangereux
           find base clusters -name "*.yaml" -type f | while read file; do
             echo "  📄 $(basename "$file")"
-            
+
             # Recherche de patterns problématiques
             if grep -q "privileged: true" "$file"; then
               echo "    ⚠️ Privilèges élevés détectés"
             fi
-            
+
             if grep -q "runAsUser: 0\|runAsRoot: true" "$file"; then
               echo "    ⚠️ Exécution en root détectée"
             fi
-            
+
             if grep -q "allowPrivilegeEscalation: true" "$file"; then
               echo "    ⚠️ Élévation de privilèges autorisée"
             fi
@@ -179,4 +179,3 @@ jobs:
           echo "| K8s Structure | ${{ needs.kube-structure.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ArgoCD Apps | ${{ needs.argocd-validate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Security Check | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-

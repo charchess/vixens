@@ -22,4 +22,3 @@ spec:
     # --- AJOUT DE CE BLOC ---
     syncOptions:
       - CreateNamespace=true
-      

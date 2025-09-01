@@ -24,11 +24,11 @@ spec:
             service:
               type: ClusterIP
               # Le port par défaut est 80. L'ingress s'y connectera.
-        
+
         # --- VOS AUTRES VALEURS CILIUM ---
         # Si vous aviez une configuration personnalisée pour Cilium,
         # ajoutez-la ici. Sinon, ceci est un bon point de départ.
-        
+
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system # Cilium est généralement installé dans kube-system

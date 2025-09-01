@@ -48,4 +48,3 @@ spec:
                 name: prometheus-server
                 port:
                   number: 80
-                  

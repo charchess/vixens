@@ -26,4 +26,3 @@ spec:
                 port:
                   # Sur le port 'dashboard' que nous avons configuré
                   name: dashboard
-                  

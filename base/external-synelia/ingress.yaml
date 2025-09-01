@@ -35,5 +35,3 @@ spec:
   # ... (etc. pour les autres hôtes)
   - host: synelia.truxonline.com
     http: *synelia-backend
-    
-    

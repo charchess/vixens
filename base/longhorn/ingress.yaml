@@ -25,5 +25,4 @@ spec:
               service:
                 name: longhorn-frontend # Le service qui marche
                 port:
-                  number: 80 
-                  
+                  number: 80

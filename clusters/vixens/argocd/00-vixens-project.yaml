@@ -8,7 +8,7 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   description: "Project for the vixens cluster applications"
-  
+
   # La source de vérité est notre dépôt Git
   sourceRepos:
 #  - 'https://github.com/charchess/vixens.git'
@@ -33,11 +33,9 @@ spec:
 #    namespace: kube-system
   - server: '*'
     namespace: '*'
-    
-    
+
+
   # Autoriser tous les types de ressources
   clusterResourceWhitelist:
   - group: '*'
     kind: '*'
-    
-    

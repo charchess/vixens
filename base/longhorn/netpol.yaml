@@ -8,16 +8,15 @@ spec:
   # Cette politique s'applique à TOUS les pods dans le namespace
   podSelector: {}
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   # Règle Ingress: autoriser TOUT le trafic entrant...
   ingress:
   # ...qui vient de N'IMPORTE QUEL pod dans le même namespace
-  - from:
-    - podSelector: {}
+    - from:
+      - podSelector: {}
   # Règle Egress: autoriser TOUT le trafic sortant...
   egress:
   # ...vers N'IMPORTE QUEL pod dans le même namespace
-  - to:
-    - podSelector: {}
-    
+    - to:
+      - podSelector: {}

@@ -4,7 +4,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: nfs-downloads-pvc
   # On déploiera ces PVC dans un namespace dédié à vos applications media
-  namespace: media-stack 
+  namespace: media-stack
 spec:
   accessModes:
     - ReadWriteMany

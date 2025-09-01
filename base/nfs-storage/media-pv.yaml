@@ -38,4 +38,3 @@ spec:
   mountOptions:
     - nfsvers=4.1
     - resvport
-    

@@ -27,4 +27,3 @@ spec:
                 port:
                   # Le port exposé par le service hubble-ui
                   number: 80
-                  
