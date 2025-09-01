@@ -46,6 +46,8 @@ spec:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
               effect: "NoSchedule"
+        csi:
+          enableIscsiSupport: true 
         defaultSettings:
           backupTarget: "nfs://192.168.111.69:/volume3/Backups/vixens/longhorn"
           backupTargetMountOptions: "nfsvers=4,resvport"
