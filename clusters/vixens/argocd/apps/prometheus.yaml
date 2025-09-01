@@ -9,17 +9,41 @@ spec:
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: prometheus
-    targetRevision: "25.20.0" # Version stable du chart Prometheus
+    targetRevision: "25.20.0" # Version récente, compatible K8s 1.33
     helm:
       values: |
+        # On active l'opérateur et les CRDs, qui sont inclus dans ce chart
+        operator:
+          enabled: true
+          crds:
+            enabled: true
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
+
+        # Configuration du serveur Prometheus lui-même
         server:
-          # On désactive la persistance comme demandé
           persistentVolume:
             enabled: false
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
               effect: "NoSchedule"
+
+        # Configuration des autres composants
+        kube-state-metrics:
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
+        nodeExporter:
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
+        alertmanager:
+          enabled: false # On le désactive pour l'instant pour simplifier
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
@@ -27,4 +51,7 @@ spec:
     automated:
       prune: true
       selfHeal: true
-      
+    syncOptions:
+      - CreateNamespace=true
+      # On garde cette option qui est une bonne pratique pour les CRDs
+      - ServerSideApply=true
