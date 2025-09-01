@@ -47,6 +47,7 @@ spec:
               operator: "Exists"
               effect: "NoSchedule"
         csi:
+          enabled: true
           enableIscsiSupport: true 
         defaultSettings:
           backupTarget: "nfs://192.168.111.69:/volume3/Backups/vixens/longhorn"
