@@ -1,0 +1,25 @@
+# base/longhorn/netpol.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-internal-longhorn
+  namespace: longhorn-system
+spec:
+  # Cette politique s'applique à TOUS les pods dans le namespace longhorn-system
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  # Règle d'Ingress (trafic entrant)
+  ingress:
+  # On autorise les connexions qui viennent de N'IMPORTE QUEL pod
+  # dans le même namespace (longhorn-system)
+  - from:
+    - podSelector: {}
+  # Règle d'Egress (trafic sortant)
+  egress:
+  # On autorise les connexions qui vont vers N'IMPORTE QUEL pod
+  # dans le même namespace (longhorn-system)
+  - to:
+    - podSelector: {}
+    
