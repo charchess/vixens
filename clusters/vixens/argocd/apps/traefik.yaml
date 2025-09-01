@@ -25,7 +25,7 @@ spec:
               port: 9000
               targetPort: 9000
               protocol: TCP
-      
+
         ports:
           dashboard:
             port: 9000
@@ -35,8 +35,6 @@ spec:
         additionalArguments:
           - "--providers.kubernetescrd.allowExternalNameServices=true"
 
-        # Note: 'dashboard' est déprécié dans les versions récentes du chart au profit de 'providers.kubernetesCRD.dashboard'.
-        # Je laisse votre configuration, mais si elle ne fonctionne pas, il faudra l'adapter.
         dashboard:
           enabled: true
 
