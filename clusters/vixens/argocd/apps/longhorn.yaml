@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://charts.longhorn.io
     chart: longhorn
-    targetRevision: "1.9.1"
+    targetRevision: "1.6.0" # Version LTS stable et récente
     helm:
       values: |
         preUpgradeChecker:
@@ -20,20 +20,24 @@ spec:
         ingress:
           enabled: false
 
-        # Vos tolérances
+        csi:
+          enabled: true
+
+        # Fusion de vos deux sections 'longhornDriver'
+        longhornDriver:
+          kubeletRootDir: /var/lib/kubelet
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
+
+        # Vos tolérances granulaires
         longhornManager:
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
               effect: "NoSchedule"
             - key: "node-role.kubernetes.io/master"
-              operator: "Exists"
-              effect: "NoSchedule"
-
-        longhornDriver:
-          kubeletRootDir: /var/lib/kubelet
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
               effect: "NoSchedule"
         longhornUI:
@@ -46,15 +50,15 @@ spec:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
               effect: "NoSchedule"
-        csi:
-          enabled: true
-          enableIscsiSupport: true 
+        
+        # Vos paramètres globaux
         defaultSettings:
           backupTarget: "nfs://192.168.111.69:/volume3/Backups/vixens/longhorn"
           backupTargetMountOptions: "nfsvers=4,resvport"
           backupTargetCredentialSecret: ""
           defaultDataPath: /var/lib/longhorn
           enableIscsiSupport: true
+          # L'indentation de cette clé est maintenant correcte
           systemManagedComponentsTolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
@@ -70,5 +74,7 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
+      # On laisse notre manifeste 'namespace.yaml' gérer la création
       - CreateNamespace=false
+      
       
