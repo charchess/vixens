@@ -1,0 +1,51 @@
+# clusters/vixens/argocd/apps/wekan.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wekan
+  namespace: argocd
+spec:
+  project: vixens
+  source:
+    repoURL: https://wekan.github.io/charts
+    chart: wekan
+    targetRevision: "0.8.0" # Version stable du chart
+    helm:
+      values: |
+        # Configuration Générale de Wekan
+        # On définit l'URL via laquelle on accèdera à Wekan
+        env:
+          ROOT_URL: "https://wekan.truxonline.com"
+
+        # On active la persistance pour les données de Wekan (ex: uploads)
+        persistence:
+          enabled: true
+          storageClassName: longhorn-replicated # On utilise Longhorn !
+          size: 5Gi
+
+        # Configuration de la base de données MongoDB (déployée en subchart)
+        mongodb:
+          enabled: true
+          # On active la persistance pour la base de données
+          persistence:
+            enabled: true
+            storageClassName: longhorn-replicated # On utilise Longhorn !
+            size: 8Gi
+        
+        # Tolérances pour que les pods Wekan et MongoDB
+        # puissent s'exécuter sur vos nœuds control-plane.
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Exists"
+            effect: "NoSchedule"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tools
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      
+      

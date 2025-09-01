@@ -1,0 +1,28 @@
+# base/wekan/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wekan-ingress
+  namespace: tools
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - wekan.truxonline.com
+      secretName: wekan-tls
+  rules:
+    - host: wekan.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                # Le service est préfixé par le nom de la release Helm
+                name: wekan
+                port:
+                  number: 80
+                  

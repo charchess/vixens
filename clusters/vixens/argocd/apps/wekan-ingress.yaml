@@ -1,0 +1,22 @@
+# clusters/vixens/argocd/apps/wekan-ingress.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wekan-ingress
+  namespace: argocd
+spec:
+  project: vixens
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: HEAD
+    path: base/wekan
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tools
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      
