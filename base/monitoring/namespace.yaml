@@ -1,0 +1,9 @@
+# base/monitoring/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    # On applique la politique de sécurité la plus permissive à ce namespace
+    pod-security.kubernetes.io/enforce: privileged
+    

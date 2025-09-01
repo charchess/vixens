@@ -52,6 +52,6 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
+      - CreateNamespace=false
       # On garde cette option qui est une bonne pratique pour les CRDs
       - ServerSideApply=true
