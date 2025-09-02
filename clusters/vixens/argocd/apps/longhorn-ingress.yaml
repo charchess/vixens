@@ -12,7 +12,7 @@ spec:
   project: vixens
   source:
     repoURL: https://github.com/charchess/vixens.git # Votre dépôt
-    targetRevision: HEAD
+    targetRevision: dev
     path: base/longhorn # Le dossier avec votre Ingress custom
   destination:
     server: https://kubernetes.default.svc
