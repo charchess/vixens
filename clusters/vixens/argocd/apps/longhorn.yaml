@@ -27,6 +27,15 @@ spec:
         #   enabled: true
 
         longhornDriver:
+          podSecurityContext:
+            seccompProfile:
+              type: RuntimeDefault
+          securityContext:
+            privileged: true
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop: []
+            runAsNonRoot: false
           kubeletRootDir: /var/lib/kubelet
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
@@ -34,6 +43,15 @@ spec:
               effect: "NoSchedule"
 
         longhornManager:
+          podSecurityContext:
+            seccompProfile:
+              type: RuntimeDefault
+          securityContext:
+            privileged: true
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop: []
+            runAsNonRoot: false
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
@@ -41,12 +59,15 @@ spec:
             - key: "node-role.kubernetes.io/master"
               operator: "Exists"
               effect: "NoSchedule"
+
         longhornUI:
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
               effect: "NoSchedule"
         global:
+          cattle:
+            systemDefaultRegistry: ""
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
