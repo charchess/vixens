@@ -11,6 +11,7 @@ metadata:
 spec:
   project: vixens
   source:
+    path: base/longhorn
     repoURL: https://charts.longhorn.io
     chart: longhorn
     targetRevision: "1.9.1"
