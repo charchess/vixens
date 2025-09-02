@@ -23,8 +23,8 @@ spec:
         ingress:
           enabled: false
 
-        csi:
-          enabled: true
+        # csi:
+        #   enabled: true
 
         longhornDriver:
           kubeletRootDir: /var/lib/kubelet
