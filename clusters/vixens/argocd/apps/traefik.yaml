@@ -21,6 +21,12 @@ spec:
           annotations:
             metallb.universe.tf/address-pool: ingress-pool
         ports:
+          web:
+            port: 80
+            expose: true
+          websecure:
+            port: 443
+            expose: true
           traefik:
             port: 9000
             expose: true
@@ -28,6 +34,13 @@ spec:
         ingressRoute:
           dashboard:
             enabled: true
+            matchRule: Host(`traefik.truxonline.com`) && PathPrefix(`/`)
+            entryPoints: ["websecure"]
+            tls:
+              certResolver: letsencrypt-gandi-prod
+            services:
+              - name: api@internal
+                kind: TraefikService
 
         additionalArguments:
           - "--providers.kubernetescrd.allowExternalNameServices=true"
