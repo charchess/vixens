@@ -41,7 +41,7 @@ spec:
             services:
               - name: api@internal
                 kind: TraefikService
-                
+
         additionalArguments:
           - "--providers.kubernetescrd.allowExternalNameServices=true"
 
