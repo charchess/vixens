@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: longhorn-ui-ingress
+  name: longhorn-ingress
   namespace: longhorn-system
   annotations:
     # On utilise les annotations standards qui fonctionnent
@@ -13,8 +13,8 @@ spec:
   # Le bloc tls indique à cert-manager de créer le secret
   tls:
     - hosts:
-        - longhorn.truxonline.com
-      secretName: longhorn-ui-tls
+        - [ "longhorn.truxonline.com" ]
+      secretName: longhorn-tls
   rules:
     - host: longhorn.truxonline.com
       http:
