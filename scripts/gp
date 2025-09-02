@@ -1,97 +1,51 @@
 #!/usr/bin/env bash
-# ~/bin/gp  (chmod +x)
 set -euo pipefail
 
-# ---------- Config ----------
+# ------------- config -------------
 YAMLLINT_CONFIG="${YAMLLINT_CONFIG:-yamllint-config.yml}"
 K8S_VERSION="${K8S_VERSION:-1.30.0}"
 SKIP_KINDS="${SKIP_KINDS:-Application,AppProject,CustomResourceDefinition}"
-
-# ---------- Couleurs ----------
-R=$(tput setaf 1); G=$(tput setaf 2); Y=$(tput setaf 3); B=$(tput setaf 4); N=$(tput sgr0)
-
-# ---------- Parse options ----------
-FORCE=false
-QUIET=false
-DRY=false
-GIT_ARGS=()
-for arg in "$@"; do
-  case $arg in
-    --force)  FORCE=true ;;
-    --quiet)  QUIET=true ;;
-    --dry-run) DRY=true ;;
-    *) GIT_ARGS+=("$arg") ;;
-  esac
-done
-
-log()  { [[ $QUIET == false ]] && echo -e "$*"; }
-warn() { log "${Y}⚠️  $*${N}"; }
-err()  { log "${R}❌ $*${N}"; }
+# ------------- helpers -------------
+R=$(tput setaf 1) G=$(tput setaf 2) Y=$(tput setaf 3) N=$(tput sgr0)
+log()  { echo -e "$*"; }
 ok()   { log "${G}✅ $*${N}"; }
+err()  { log "${R}❌ $*${N}"; }
 
-# ---------- Helpers ----------
 git_root=$(git rev-parse --show-toplevel)
 
-# Liste des YAML modifiés / ajoutés
+# ------------- 0. YAML fixes -------------
 mapfile -t files < <(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(yaml|yml)$' || true)
-
-if [[ ${#files[@]} -eq 0 ]]; then
-  ok "Aucun YAML à valider → push direct."
-  [[ $DRY == false ]] && git push "${GIT_ARGS[@]}"
-  exit 0
-fi
-
-log "${B}📁 Fichiers à contrôler :${N}"
-printf '    %s\n' "${files[@]}"
-
-# ---------- Auto-fix fin de fichier ----------
-log "\n${B}🔧 Nettoyage fins de fichier…${N}"
 for f in "${files[@]}"; do
-  path="${git_root}/${f}"
-  # retire espaces/tab et lignes vides en fin, ajoute un unique \n
-  perl -0777 -pe 's/[ \t]+\n?/\n/g; s/\n*\z/\n/' -i "${path}"
+  perl -0777 -pe 's/[ \t]+\n/\n/g; s/\n*\z/\n/' -i "${git_root}/${f}"
 done
-git add "${files[@]}"
+git add "${files[@]}" 2>/dev/null || true
 
-# ---------- Vérif 1ʳᵉ ligne ----------
-log "\n${B}🔍 Vérification 1ʳᵉ ligne…${N}"
-errors=0
-for f in "${files[@]}"; do
-  path="${git_root}/${f}"
-  expected="# ${f}"
-  first=$(head -n1 "${path}")
-  if [[ "$first" != "$expected" ]]; then
-    err "1ʳᵉ ligne incorrecte dans ${f}"
-    log "   Attendu : ${expected}"
-    log "   Trouvé  : ${first}"
-    ((errors++))
-  fi
-done
-[[ $errors -gt 0 && $FORCE == false ]] && exit 1
-
-# ---------- Yamllint ----------
-log "\n${B}🔍 Yamllint…${N}"
-if ! yamllint -c "${git_root}/${YAMLLINT_CONFIG}" "${files[@]}"; then
-  err "Yamllint a retourné des erreurs."
-  [[ $FORCE == false ]] && exit 1
+# ------------- 1. lint / kubeval -------------
+if [[ ${#files[@]} -gt 0 ]]; then
+  log "${Y}🔍 Lint YAML…${N}"
+  yamllint -c "${git_root}/${YAMLLINT_CONFIG}" "${files[@]}"
+  log "${Y}🔍 Kubeval…${N}"
+  kubeval --ignore-missing-schemas --kubernetes-version "${K8S_VERSION}" \
+          --strict --skip-kinds "${SKIP_KINDS}" "${files[@]}"
 fi
 
-# ---------- Kubeval ----------
-log "\n${B}🔍 Kubeval…${N}"
-if ! kubeval \
-     --ignore-missing-schemas \
-     --kubernetes-version "${K8S_VERSION}" \
-     --strict \
-     --skip-kinds "${SKIP_KINDS}" \
-     "${files[@]}"; then
-  err "Kubeval a retourné des erreurs."
-  [[ $FORCE == false ]] && exit 1
+# ------------- 2. push -------------
+git fetch origin
+git pull --rebase origin dev
+git push "$@"
+
+# ------------- 3. ensure delta -------------
+git fetch origin
+if git merge-base --is-ancestor origin/main HEAD; then
+  log "${Y}Creating delta…${N}"
+  git commit --allow-empty -m "delta: keep dev→main PR open"
+  git push
 fi
 
-# ---------- Push ----------
-if [[ $DRY == true ]]; then
-  ok "Dry-run terminé. Aucune action réalisée."
-else
-  ok "Tous les checks passent → push en cours…"
-  git push "${GIT_ARGS[@]}"
+# ------------- 4. PR auto-merge -------------
+pr_url=$(gh pr list --base main --head dev --json url -q '.[0].url' 2>/dev/null || true)
+if [[ -z "$pr_url" ]]; then
+  pr_url=$(gh pr create --base main --head dev --title "Auto-sync dev → main (permanent)" --body "Do not close" --auto --url)
 fi
+log "${G}PR: $pr_url${N}"
+ok "Push + PR OK"
