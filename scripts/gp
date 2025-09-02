@@ -43,9 +43,11 @@ if git merge-base --is-ancestor origin/main HEAD; then
 fi
 
 # ------------- 4. PR auto-merge -------------
-pr_url=$(gh pr list --base main --head dev --json url -q '.[0].url' 2>/dev/null || true)
-if [[ -z "$pr_url" ]]; then
-  pr_url=$(gh pr create --base main --head dev --title "Auto-sync dev → main (permanent)" --body "Do not close" --auto --url)
+# --- PR + auto-merge ---
+if ! gh pr view dev >/dev/null 2>&1; then
+  gh pr create --base main --head dev \
+               --title "Auto-sync dev → main (permanent)" \
+               --body "Do not close"
 fi
-log "${G}PR: $pr_url${N}"
+gh pr merge dev --auto --merge 2>/dev/null || true
 ok "Push + PR OK"
