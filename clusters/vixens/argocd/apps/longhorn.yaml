@@ -6,88 +6,39 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argoproj.io
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
 spec:
   project: vixens
   source:
-    path: base/longhorn
     repoURL: https://charts.longhorn.io
     chart: longhorn
-    targetRevision: "1.9.1"
+    targetRevision: "1.6.0" # Version LTS stable
     helm:
       values: |
+        # On garde uniquement les tolérances globales.
+        # C'est la configuration qui a prouvé sa stabilité.
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Exists"
+            effect: "NoSchedule"
+          - key: "node-role.kubernetes.io/master"
+            operator: "Exists"
+            effect: "NoSchedule"
+
+        # Le correctif indispensable pour Talos
+        longhornDriver:
+          kubeletRootDir: /var/lib/kubelet
+
+        # La désactivation du job de pré-installation
         preUpgradeChecker:
           jobEnabled: false
 
+        # La désactivation de l'ingress du chart
         ingress:
           enabled: false
 
-        # csi:
-        #   enabled: true
-
-        longhornDriver:
-          podSecurityContext:
-            seccompProfile:
-              type: RuntimeDefault
-          securityContext:
-            privileged: true
-            allowPrivilegeEscalation: true
-            capabilities:
-              drop: []
-            runAsNonRoot: false
-          kubeletRootDir: /var/lib/kubelet
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
-
-        longhornManager:
-          podSecurityContext:
-            seccompProfile:
-              type: RuntimeDefault
-          securityContext:
-            privileged: true
-            allowPrivilegeEscalation: true
-            capabilities:
-              drop: []
-            runAsNonRoot: false
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
-            - key: "node-role.kubernetes.io/master"
-              operator: "Exists"
-              effect: "NoSchedule"
-
-        longhornUI:
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
-        global:
-          cattle:
-            systemDefaultRegistry: ""
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
-        serviceAccount:
-          automountServiceAccountToken: true
-        # Vos paramètres globaux
+        # La configuration de la sauvegarde qui fonctionnait
         defaultSettings:
           backupTarget: "nfs://192.168.111.69:/volume3/Backups/vixens/longhorn"
-          backupTargetMountOptions: "nfsvers=4,resvport"
-          backupTargetCredentialSecret: ""
-          defaultDataPath: /var/lib/longhorn
-          # enableIscsiSupport: true
-          systemManagedComponentsTolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
-            - key: "node-role.kubernetes.io/master"
-              operator: "Exists"
-              effect: "NoSchedule"
   destination:
     server: https://kubernetes.default.svc
     namespace: longhorn-system
@@ -96,5 +47,4 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      # On laisse notre manifeste 'namespace.yaml' gérer la création
-      - CreateNamespace=false
+      - CreateNamespace: true
