@@ -10,7 +10,7 @@ spec:
   project: vixens
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: HEAD
+    targetRevision: dev
     path: base/nfs-storage
   destination:
     server: https://kubernetes.default.svc

@@ -8,7 +8,7 @@ spec:
   project: vixens
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: HEAD
+    targetRevision: dev
     path: base/wekan
   destination:
     server: https://kubernetes.default.svc
