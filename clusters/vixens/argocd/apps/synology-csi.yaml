@@ -4,26 +4,26 @@ kind: Application
 metadata:
   name: synology-csi
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argoproj.io
+  annotations:
+    # On exécute cette application après que la config (secret) soit en place
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: vixens
   source:
-    # On pointe directement vers le dépôt Git qui contient le chart
+    # On pointe directement vers le Chart Helm dans le dépôt pour Talos
     repoURL: https://github.com/zebernst/synology-csi-talos.git
     targetRevision: main
-    # On indique le chemin vers le chart à l'intérieur du dépôt
-    path: charts/synology-csi
+    path: deploy/helm/charts/synology-csi
     helm:
       values: |
-        # On configure le secret directement via les values
+        # On dit au chart d'utiliser notre secret créé de manière déclarative
         secret:
-          create: true
-          clientInfo:
-            - address: "192.168.111.69"
-              # Remplacez ces valeurs
-              username: "VOTRE_USER_SYNOLOGY"
-              password: "zNi2M.N}nUM%G*7"
-
-        # On ajoute les tolerations pour que les pods puissent tourner
+          create: false
+          name: client-info-secret
+        
+        # On ajoute les tolérances nécessaires
         controller:
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
