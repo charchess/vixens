@@ -1,4 +1,3 @@
-# clusters/vixens/argocd/apps/longhorn.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -6,6 +5,7 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argoproj.io
+  # --- AJOUT DE LA SYNC WAVE ---
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
@@ -13,11 +13,16 @@ spec:
   source:
     repoURL: https://charts.longhorn.io
     chart: longhorn
-    targetRevision: "1.9.1"
+    targetRevision: "1.9.1" # On garde votre version cible
     helm:
+      # J'ai repris le contenu validé de votre fichier sur GitHub
       values: |
-        # On garde uniquement les tolérances globales.
-        # C'est la configuration qui a prouvé sa stabilité.
+        preUpgradeChecker:
+          jobEnabled: false
+        ingress:
+          enabled: false
+        longhornDriver:
+          kubeletRootDir: /var/lib/kubelet
         tolerations:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Exists"
@@ -25,22 +30,6 @@ spec:
           - key: "node-role.kubernetes.io/master"
             operator: "Exists"
             effect: "NoSchedule"
-
-        # Le correctif indispensable pour Talos
-        longhornDriver:
-          kubeletRootDir: /var/lib/kubelet
-
-        # La désactivation du job de pré-installation
-        preUpgradeChecker:
-          jobEnabled: false
-
-        # La désactivation de l'ingress du chart
-        ingress:
-          enabled: false
-
-        # La configuration de la sauvegarde qui fonctionnait
-        defaultSettings:
-          backupTarget: "nfs://192.168.111.69:/volume3/Backups/vixens/longhorn"
   destination:
     server: https://kubernetes.default.svc
     namespace: longhorn-system
