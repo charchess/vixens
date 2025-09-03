@@ -27,6 +27,8 @@ spec:
           - key: "node-role.kubernetes.io/master"
             operator: "Exists"
             effect: "NoSchedule"
+        defaultSettings:
+          backupTarget: "nfs://192.168.111.69:/volume3/Backups/vixens/longhorn"
   destination:
     server: https://kubernetes.default.svc
     namespace: longhorn-system

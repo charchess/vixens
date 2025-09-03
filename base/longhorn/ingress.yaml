@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: longhorn-ingress
+  name: longhorn-ui-ingress
   namespace: longhorn-system
   annotations:
     # On utilise les annotations standards qui fonctionnent
@@ -10,11 +10,11 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   ingressClassName: traefik
-  # Le bloc tls indique à cert-manager de créer le secret
+  # Ce bloc indique à cert-manager de créer le secret 'longhorn-ui-tls'
   tls:
     - hosts:
         - longhorn.truxonline.com
-      secretName: longhorn-tls
+      secretName: longhorn-ui-tls
   rules:
     - host: longhorn.truxonline.com
       http:
@@ -25,4 +25,4 @@ spec:
               service:
                 name: longhorn-frontend # Le service qui marche
                 port:
-                  number: 80
+                  number: 80 # Le port qui marche
