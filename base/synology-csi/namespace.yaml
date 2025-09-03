@@ -1,0 +1,8 @@
+# base/synology-csi/namespace.yaml
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: synology-csi
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
