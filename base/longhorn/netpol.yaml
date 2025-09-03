@@ -1,42 +1,36 @@
 # base/longhorn/netpol.yaml
----
-# base/longhorn/netpol.yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
 metadata:
   name: allow-longhorn-all
   namespace: longhorn-system
 spec:
-  # Cette politique s'applique à TOUS les pods dans le namespace longhorn-system
-  podSelector: {}
-  policyTypes:
-    - Ingress
-    - Egress
-  # Règle Ingress: autoriser TOUT le trafic entrant...
-  ingress:
-  # ...qui vient de N'IMPORTE QUEL pod dans le même namespace
-    - from:
-        - podSelector: {}
-  # Règle Egress: autoriser le trafic sortant...
+  # Cette politique s'applique à tous les pods dans le namespace longhorn
+  endpointSelector: {}
+  # Règle Egress (trafic sortant)
   egress:
-  # ...vers N'IMPORTE QUEL pod dans le même namespace
-    - to:
-        - podSelector: {}
-  # --- AJOUT CRUCIAL : AUTORISER LA COMMUNICATION AVEC KUBERNETES ---
-  # On autorise la sortie vers le service DNS
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              k8s-app: kube-dns
-      ports:
-        - protocol: UDP
-          port: 53
+  # On autorise la sortie vers n'importe quel pod dans le même namespace
+  - toEndpoints:
+    - matchLabels:
+        "k8s:io.kubernetes.pod.namespace": longhorn-system
+  # On autorise la sortie vers les pods kube-dns pour la résolution de noms
+  - toEndpoints:
+    - matchLabels:
+        "k8s:io.kubernetes.pod.namespace": kube-system
+        "k8s:k8s-app": kube-dns
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+  # --- RÈGLE CRUCIALE ---
   # On autorise la sortie vers l'API Server de Kubernetes
-  # (cette règle est plus complexe mais permet au pod de contacter l'API)
-    - to:
-        - ipBlock:
-            cidr: 0.0.0.0/0
-      ports:
-        - protocol: TCP
-          port: 6443 # Le port de l'API server Talos
+  - toEndpoints:
+    - matchLabels:
+        "k8s:io.kubernetes.pod.namespace": kube-system
+        "k8s:k8s-app": kube-apiserver
+  # Règle Ingress (trafic entrant)
+  ingress:
+  # On autorise l'entrée depuis n'importe quel pod dans le même namespace
+  - fromEndpoints:
+    - matchLabels:
+        "k8s:io.kubernetes.pod.namespace": longhorn-system
