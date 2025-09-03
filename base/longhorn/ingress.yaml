@@ -13,7 +13,7 @@ spec:
   # Le bloc tls indique à cert-manager de créer le secret
   tls:
     - hosts:
-        - [ "longhorn.truxonline.com" ]
+        - longhorn.truxonline.com
       secretName: longhorn-tls
   rules:
     - host: longhorn.truxonline.com
