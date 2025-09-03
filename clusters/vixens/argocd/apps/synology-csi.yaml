@@ -1,5 +1,6 @@
 # clusters/vixens/argocd/apps/synology-csi.yaml
 ---
+# clusters/vixens/argocd/apps/synology-csi.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -13,14 +14,16 @@ spec:
       targetRevision: dev
       path: base/synology-csi
 
-    # 2. Chart Helm (sans secret ni namespace)
+    # 2. Chart Helm brut depuis Git (pas de `chart:`)
     - repoURL: https://github.com/zebernst/synology-csi-talos.git
       targetRevision: main
-      chart: charts/synology-csi
+      path: charts/synology-csi
       helm:
+        valueFiles:
+          - values.yaml  # si besoin
         values: |
           secret:
-            create: false  # On le gère nous-mêmes
+            create: false
           storageClass:
             create: true
             name: synology-iscsi-sc
