@@ -4,12 +4,16 @@ kind: Application
 metadata:
   name: synology-csi
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argoproj.io
 spec:
+  # On utilise notre projet avec les bonnes permissions
   project: vixens
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
-    path: base/synology-csi # <-- Pointez ici
+    # On pointe vers le dossier qui contient notre kustomization.yaml
+    path: base/synology-csi
   destination:
     server: https://kubernetes.default.svc
     namespace: synology-csi
@@ -17,5 +21,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    # On dit à Argo CD de créer le namespace s'il n'existe pas
     syncOptions:
       - CreateNamespace=true
