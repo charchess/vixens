@@ -58,10 +58,6 @@ spec:
     spec:
       hostPID: true
       serviceAccount: csi-node-sa
-      tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
       hostNetwork: true
       containers:
         - name: csi-driver-registrar
