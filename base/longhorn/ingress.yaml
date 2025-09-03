@@ -1,4 +1,5 @@
 # base/longhorn/ingress.yaml
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -23,6 +24,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: longhorn-frontend # Le service qui marche
+                name: longhorn-frontend
                 port:
-                  number: 80 # Le port qui marche
+                  number: 80

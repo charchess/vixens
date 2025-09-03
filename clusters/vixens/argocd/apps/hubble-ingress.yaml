@@ -1,4 +1,5 @@
 # clusters/vixens/argocd/apps/hubble-ingress.yaml
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -11,7 +12,7 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
-    path: base/hubble # Pointe vers le dossier avec notre Ingress
+    path: base/hubble
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
