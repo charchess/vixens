@@ -1,0 +1,29 @@
+# base/synology-csi/configs.yaml
+# --- OBJET 1 : Le Secret pour les identifiants du NAS ---
+apiVersion: v1
+kind: Secret
+metadata:
+  # Le nom doit correspondre à ce que le chart attend : 'client-info-secret'
+  name: client-info-secret
+  namespace: synology-csi
+stringData:
+  # La clé doit être 'client-info.yml'
+  client-info.yml: |
+    # Remplacez ces valeurs par les vôtres
+    - address: "192.168.111.69"
+      username: "talos_csi"
+      password: "zNi2M.N}nUM%G*7"
+---
+# --- OBJET 2 : La StorageClass pour utiliser le driver ---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: synology-iscsi-sc
+provisioner: csi.synology.com
+parameters:
+  # Note: les secrets sont maintenant gérés par le driver lui-même
+  # via son ServiceAccount, pas besoin de les spécifier ici.
+  protocol: iscsi
+  fsType: ext4
+# On garde cette option cruciale pour le mapping "un disque par noeud"
+volumeBindingMode: WaitForFirstConsumer
