@@ -1,4 +1,5 @@
 # base/headlamp/ingress.yaml
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -11,7 +12,7 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - k8s.truxonline.com # On réutilise la même URL
+        - k8s.truxonline.com
       secretName: headlamp-tls
   rules:
     - host: k8s.truxonline.com

@@ -1,3 +1,5 @@
+# clusters/vixens/argocd/apps/longhorn.yaml
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -10,9 +12,8 @@ spec:
   source:
     repoURL: https://charts.longhorn.io
     chart: longhorn
-    targetRevision: "1.9.1" # On garde votre version cible
+    targetRevision: "1.9.1"
     helm:
-      # J'ai repris le contenu validé de votre fichier sur GitHub
       values: |
         preUpgradeChecker:
           jobEnabled: false

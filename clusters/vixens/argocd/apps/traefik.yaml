@@ -10,9 +10,9 @@ metadata:
 spec:
   project: vixens
   source:
-    repoURL: https://helm.traefik.io/traefik  # Repo Helm officiel de Traefik
+    repoURL: https://helm.traefik.io/traefik
     chart: traefik
-    targetRevision: "34.0.0" # On garde la version exacte que vous utilisiez
+    targetRevision: "34.0.0"
     helm:
       values: |
         service:
@@ -65,7 +65,7 @@ spec:
           runAsNonRoot: true
   destination:
     server: https://kubernetes.default.svc
-    namespace: traefik # Déploie Traefik dans son propre namespace
+    namespace: traefik
   syncPolicy:
     automated:
       prune: true
