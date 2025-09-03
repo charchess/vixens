@@ -2,35 +2,16 @@
 apiVersion: "cilium.io/v2"
 kind: CiliumNetworkPolicy
 metadata:
-  name: allow-longhorn-all
+  name: allow-all-within-longhorn-system
   namespace: longhorn-system
 spec:
-  # Cette politique s'applique à tous les pods dans le namespace longhorn
+  # On applique cette règle à tous les pods du namespace
   endpointSelector: {}
-  # Règle Egress (trafic sortant)
+  
+  # On autorise TOUT le trafic sortant (egress)
   egress:
-  # On autorise la sortie vers n'importe quel pod dans le même namespace
-  - toEndpoints:
-    - matchLabels:
-        "k8s:io.kubernetes.pod.namespace": longhorn-system
-  # On autorise la sortie vers les pods kube-dns pour la résolution de noms
-  - toEndpoints:
-    - matchLabels:
-        "k8s:io.kubernetes.pod.namespace": kube-system
-        "k8s:k8s-app": kube-dns
-    toPorts:
-    - ports:
-      - port: "53"
-        protocol: UDP
-  # --- RÈGLE CRUCIALE ---
-  # On autorise la sortie vers l'API Server de Kubernetes
-  - toEndpoints:
-    - matchLabels:
-        "k8s:io.kubernetes.pod.namespace": kube-system
-        "k8s:k8s-app": kube-apiserver
-  # Règle Ingress (trafic entrant)
+  - {}
+
+  # On autorise TOUT le trafic entrant (ingress)
   ingress:
-  # On autorise l'entrée depuis n'importe quel pod dans le même namespace
-  - fromEndpoints:
-    - matchLabels:
-        "k8s:io.kubernetes.pod.namespace": longhorn-system
+  - {}
