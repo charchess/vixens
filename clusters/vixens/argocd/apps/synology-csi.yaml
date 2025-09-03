@@ -4,23 +4,37 @@ kind: Application
 metadata:
   name: synology-csi
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: vixens
   source:
     repoURL: https://github.com/zebernst/synology-csi-talos.git
     targetRevision: main
-    # --- LE CHEMIN FINAL ET CORRECT QUE VOUS AVEZ TROUVÉ ---
     path: charts/synology-csi
     helm:
       values: |
-        # On dit au chart d'utiliser notre secret créé de manière déclarative
+        # On configure le secret directement via les values
         secret:
-          create: false
+          create: true
           name: client-info-secret
-        
-        # On ajoute les tolérances nécessaires
+          clientInfo:
+            - address: "192.168.111.69"
+              # Remplacez ces valeurs
+              username: "talos-csi"
+              password: "zNi2M.N}nUM%G*7"
+
+        # --- AJOUT DE LA CONFIGURATION DE LA STORAGECLASS ---
+        storageClass:
+          create: true
+          name: synology-iscsi-sc
+          # Ne pas la mettre par défaut pour ne pas interférer avec Longhorn
+          isDefaultClass: false 
+          reclaimPolicy: Delete
+          volumeBindingMode: WaitForFirstConsumer
+          parameters:
+            protocol: iscsi
+            fsType: ext4
+
+        # On ajoute les tolerations nécessaires
         controller:
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
