@@ -1,4 +1,5 @@
 # clusters/vixens/argocd/apps/synology-csi.yaml
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -27,7 +28,7 @@ spec:
           create: true
           name: synology-iscsi-sc
           # Ne pas la mettre par défaut pour ne pas interférer avec Longhorn
-          isDefaultClass: false 
+          isDefaultClass: false
           reclaimPolicy: Delete
           volumeBindingMode: WaitForFirstConsumer
           parameters:

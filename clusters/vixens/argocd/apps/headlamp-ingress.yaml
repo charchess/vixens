@@ -1,11 +1,12 @@
 # clusters/vixens/argocd/apps/headlamp-ingress.yaml
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: headlamp-ingress
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argoj.io # <--- CORRIGÉ : argoproj, pas argoj
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: vixens
   source:
@@ -19,6 +20,5 @@ spec:
     automated:
       prune: true
       selfHeal: true
-    # --- AJOUT DE CE BLOC ---
     syncOptions:
       - CreateNamespace=true

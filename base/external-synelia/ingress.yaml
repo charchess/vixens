@@ -30,9 +30,8 @@ spec:
               service:
                 name: synelia-ext
                 port:
-                  number: 5000 # <-- CHANGEMENT
+                  number: 5000
     - host: contacts.truxonline.com
       http: *synelia-backend
-  # ... (etc. pour les autres hôtes)
     - host: synelia.truxonline.com
       http: *synelia-backend

@@ -8,8 +8,8 @@ metadata:
 spec:
   ports:
     - protocol: TCP
-      port: 5000 # <-- CHANGEMENT
-      targetPort: 5000 # <-- CHANGEMENT
+      port: 5000
+      targetPort: 5000
 ---
 apiVersion: v1
 kind: Endpoints

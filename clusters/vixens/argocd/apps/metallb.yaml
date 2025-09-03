@@ -1,4 +1,5 @@
 # clusters/vixens/argocd/apps/metallb.yaml
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -11,7 +12,7 @@ spec:
   source:
     repoURL: https://metallb.github.io/metallb
     chart: metallb
-    targetRevision: "0.14.5" # On garde la version que vous utilisiez
+    targetRevision: "0.14.5"
     helm:
       values: |
         # Vos tolerations pour que les pods tournent sur les control-planes

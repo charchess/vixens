@@ -1,4 +1,5 @@
 # clusters/vixens/argocd/apps/prometheus.yaml
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -9,7 +10,7 @@ spec:
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: prometheus
-    targetRevision: "25.20.0" # Version récente, compatible K8s 1.33
+    targetRevision: "25.20.0"
     helm:
       values: |
         # On active l'opérateur et les CRDs, qui sont inclus dans ce chart
@@ -43,7 +44,7 @@ spec:
               operator: "Exists"
               effect: "NoSchedule"
         alertmanager:
-          enabled: false # On le désactive pour l'instant pour simplifier
+          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

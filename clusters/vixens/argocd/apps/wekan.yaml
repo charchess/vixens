@@ -1,4 +1,5 @@
 # clusters/vixens/argocd/apps/wekan.yaml
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -9,7 +10,7 @@ spec:
   source:
     repoURL: https://wekan.github.io/charts
     chart: wekan
-    targetRevision: "7.94.0" # Version stable du chart
+    targetRevision: "7.94.0"
     helm:
       values: |
         # Configuration Générale de Wekan

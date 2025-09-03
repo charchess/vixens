@@ -1,4 +1,5 @@
 # clusters/vixens/argocd/apps/traefik-ingress.yaml
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -11,7 +12,7 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
-    path: base/traefik # Pointe vers le dossier avec notre Ingress
+    path: base/traefik
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik

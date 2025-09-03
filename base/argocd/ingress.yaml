@@ -1,4 +1,5 @@
 # base/argocd/ingress.yaml
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -12,13 +13,16 @@ metadata:
 spec:
   ingressClassName: traefik
   # --- AJOUT : Le bloc TLS crucial ---
-  # Ce bloc fait le lien entre le nom d'hôte et le Secret qui contiendra le certificat.
-  # Cert-manager lira cette section pour savoir quel certificat créer et où le stocker.
-  # Traefik lira cette section pour savoir quel certificat utiliser pour le HTTPS.
+  # Ce bloc fait le lien entre le nom d'hôte et le Secret
+  # qui contiendra le certificat.
+  # Cert-manager lira cette section pour savoir quel
+  # certificat créer et où le stocker.
+  # Traefik lira cette section pour savoir
+  # quel certificat utiliser pour le HTTPS.
   tls:
     - hosts:
         - argocd.truxonline.com
-      secretName: argocd-tls # Nom du Secret qui sera créé par cert-manager
+      secretName: argocd-tls  # Nom du Secret qui sera créé par cert-manager
   rules:
     - host: argocd.truxonline.com
       http:

@@ -1,4 +1,5 @@
 # clusters/vixens/argocd/apps/external-homeassistant.yaml
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -11,7 +12,7 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
-    path: base/external-homeassistant # Pointe vers son dossier dédié
+    path: base/external-homeassistant
   destination:
     server: https://kubernetes.default.svc
     namespace: default

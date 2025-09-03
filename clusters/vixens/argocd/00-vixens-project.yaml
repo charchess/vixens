@@ -10,7 +10,7 @@ metadata:
     - resources-finalizer.argoproj.io
 spec:
   description: "Project for the vixens cluster applications"
-  
+
   # La source de vérité est notre dépôt Git
   sourceRepos:
     - '*'
