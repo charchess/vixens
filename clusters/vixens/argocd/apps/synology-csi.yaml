@@ -1,5 +1,4 @@
 # clusters/vixens/argocd/apps/synology-csi.yaml
----
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -7,46 +6,45 @@ metadata:
   namespace: argocd
 spec:
   project: vixens
-  sources:
-    - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: dev
-      path: base/synology-csi
-    - repoURL: https://github.com/zebernst/synology-csi-talos.git
-      targetRevision: main
-      path: charts/synology-csi
-      helm:
-        values: |
-          secret:
-            create: true
-            name: client-info-secret
-            clientInfo:
-              - address: "192.168.111.69"
-                # Remplacez ces valeurs
-                username: "REDACTED"
-                password: "zNi2M.N}nUM%G*7"
+  source:
+    repoURL: https://github.com/zebernst/synology-csi-talos.git
+    targetRevision: main
+    path: charts/synology-csi
+    helm:
+      values: |
+        # On dit au chart de créer le secret pour nous
+        secret:
+          create: true
+          name: client-info-secret
+          # On fournit le contenu du secret directement ici
+          # Remplacez les valeurs ci-dessous
+          clientInfo:
+            - address: "192.168.111.69"
+              username: "talos-cli"
+              password: "zNi2M.N}nUM%G*7"
 
-          storageClass:
-            create: true
-            name: synology-iscsi-sc
-            # Ne pas la mettre par défaut pour ne pas interférer avec Longhorn
-            isDefaultClass: false
-            reclaimPolicy: Delete
-            volumeBindingMode: WaitForFirstConsumer
-            parameters:
-              protocol: iscsi
-              fsType: ext4
+        # On dit au chart de créer la StorageClass pour nous
+        storageClass:
+          create: true
+          name: synology-iscsi-sc
+          isDefaultClass: false
+          reclaimPolicy: Delete
+          volumeBindingMode: WaitForFirstConsumer
+          parameters:
+            protocol: iscsi
+            fsType: ext4
 
-          # On ajoute les tolerations nécessaires
-          controller:
-            tolerations:
-              - key: "node-role.kubernetes.io/control-plane"
-                operator: "Exists"
-                effect: "NoSchedule"
-          node:
-            tolerations:
-              - key: "node-role.kubernetes.io/control-plane"
-                operator: "Exists"
-                effect: "NoSchedule"
+        # On ajoute les tolerations nécessaires
+        controller:
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
+        node:
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
   destination:
     server: https://kubernetes.default.svc
     namespace: synology-csi
