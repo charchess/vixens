@@ -4,16 +4,28 @@ kind: Application
 metadata:
   name: synology-csi
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "2" # S'exécute après la config
 spec:
-  # On utilise notre projet avec les bonnes permissions
   project: vixens
   source:
-    repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
-    # On pointe vers le dossier qui contient notre kustomization.yaml
-    path: base/synology-csi
+    # On pointe directement vers le Chart Helm dans le dépôt pour Talos
+    repoURL: https://github.com/zebernst/synology-csi-talos.git
+    targetRevision: main
+    path: deploy/helm/charts/synology-csi
+    helm:
+      values: |
+        # On ajoute les tolérances nécessaires
+        controller:
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
+        node:
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
   destination:
     server: https://kubernetes.default.svc
     namespace: synology-csi
@@ -21,6 +33,3 @@ spec:
     automated:
       prune: true
       selfHeal: true
-    # On dit à Argo CD de créer le namespace s'il n'existe pas
-    syncOptions:
-      - CreateNamespace=true

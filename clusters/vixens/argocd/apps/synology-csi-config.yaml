@@ -1,0 +1,23 @@
+# clusters/vixens/argocd/apps/synology-csi-config.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: synology-csi-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" # S'exécute en premier
+spec:
+  project: vixens
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+    path: base/synology-csi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: synology-csi
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
