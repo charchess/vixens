@@ -1,4 +1,5 @@
 # clusters/vixens/argocd/apps/synology-csi.yaml
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -6,45 +7,39 @@ metadata:
   namespace: argocd
 spec:
   project: vixens
-  source:
-    repoURL: https://github.com/zebernst/synology-csi-talos.git
-    targetRevision: main
-    path: charts/synology-csi
-    helm:
-      values: |
-        # On dit au chart de créer le secret pour nous
-        secret:
-          create: true
-          name: client-info-secret
-          # On fournit le contenu du secret directement ici
-          # Remplacez les valeurs ci-dessous
-          clientInfo:
-            - address: "192.168.111.69"
-              username: "talos-cli"
-              password: "zNi2M.N}nUM%G*7"
+  sources:
+    # 1. Namespace + Secret (ton dossier base)
+    - repoURL: https://github.com/charchess/vixens
+      targetRevision: dev
+      path: base/synology-csi
 
-        # On dit au chart de créer la StorageClass pour nous
-        storageClass:
-          create: true
-          name: synology-iscsi-sc
-          isDefaultClass: false
-          reclaimPolicy: Delete
-          volumeBindingMode: WaitForFirstConsumer
-          parameters:
-            protocol: iscsi
-            fsType: ext4
-
-        # On ajoute les tolerations nécessaires
-        controller:
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
-        node:
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
+    # 2. Chart Helm (sans secret ni namespace)
+    - repoURL: https://github.com/zebernst/synology-csi-talos.git
+      targetRevision: main
+      chart: charts/synology-csi
+      helm:
+        values: |
+          secret:
+            create: false  # On le gère nous-mêmes
+          storageClass:
+            create: true
+            name: synology-iscsi-sc
+            isDefaultClass: false
+            reclaimPolicy: Delete
+            volumeBindingMode: WaitForFirstConsumer
+            parameters:
+              protocol: iscsi
+              fsType: ext4
+          controller:
+            tolerations:
+              - key: "node-role.kubernetes.io/control-plane"
+                operator: "Exists"
+                effect: "NoSchedule"
+          node:
+            tolerations:
+              - key: "node-role.kubernetes.io/control-plane"
+                operator: "Exists"
+                effect: "NoSchedule"
   destination:
     server: https://kubernetes.default.svc
     namespace: synology-csi
@@ -52,5 +47,3 @@ spec:
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
