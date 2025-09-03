@@ -5,9 +5,6 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argoproj.io
-  # --- AJOUT DE LA SYNC WAVE ---
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
 spec:
   project: vixens
   source:
