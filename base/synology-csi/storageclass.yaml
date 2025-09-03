@@ -11,6 +11,7 @@ parameters:
   dsm: "192.168.111.69"
   protocol: "iscsi"
   fsType: "ext4"
+  location: "/volume3"
 reclaimPolicy: Delete
 allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
