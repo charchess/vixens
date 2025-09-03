@@ -4,18 +4,15 @@ kind: Application
 metadata:
   name: synology-csi
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argoproj.io
   annotations:
-    # On exécute cette application après que la config (secret) soit en place
     argocd.argoproj.io/sync-wave: "2"
 spec:
   project: vixens
   source:
-    # On pointe directement vers le Chart Helm dans le dépôt pour Talos
     repoURL: https://github.com/zebernst/synology-csi-talos.git
     targetRevision: main
-    path: deploy/helm/charts/synology-csi
+    # --- LE CHEMIN FINAL ET CORRECT QUE VOUS AVEZ TROUVÉ ---
+    path: charts/synology-csi
     helm:
       values: |
         # On dit au chart d'utiliser notre secret créé de manière déclarative
