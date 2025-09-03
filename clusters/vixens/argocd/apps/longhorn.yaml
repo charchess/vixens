@@ -29,11 +29,10 @@ spec:
           - key: "node-role.kubernetes.io/master"
             operator: "Exists"
             effect: "NoSchedule"
-        defaultBackupStore:
-          backupTarget: "nfs://192.168.111.69:/volume3/Backups/vixens/longhorn"
-          backupTargetMountOptions: "nfsvers=4,resvport"
-          backupTargetCredentialSecret: ""
         defaultSettings:
+          backupTarget: "nfs://192.168.111.69:/volume3/Backups/vixens/longhorn"
+          backupTargetCredentialSecret: ""
+          backupTargetMountOptions: "nfsvers=4,resvport"
           defaultDataPath: /var/lib/longhorn
           enableIscsiSupport: true
           systemManagedComponentsTolerations:
