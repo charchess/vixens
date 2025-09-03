@@ -18,6 +18,8 @@ spec:
           jobEnabled: false
         ingress:
           enabled: false
+        csi:
+          enabled: true
         longhornDriver:
           kubeletRootDir: /var/lib/kubelet
         tolerations:
@@ -29,10 +31,17 @@ spec:
             effect: "NoSchedule"
         defaultSettings:
           backupTarget: "nfs://192.168.111.69:/volume3/Backups/vixens/longhorn"
-          enableIscsiSupport: true
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: longhorn-system
+          backupTargetMountOptions: "nfsvers=4,resvport"
+          backupTargetCredentialSecret: ""
+          defaultDataPath: /var/lib/longhorn
+            systemManagedComponentsTolerations:
+              - key: "node-role.kubernetes.io/control-plane"
+                operator: "Exists"
+                effect: "NoSchedule"
+              - key: "node-role.kubernetes.io/master"
+                operator: "Exists"
+                effect: "NoSchedule"
+            enableIscsiSupport: true
   syncPolicy:
     automated:
       prune: true
