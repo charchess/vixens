@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://github.com/<to-org>/gitops
     targetRevision: HEAD
-    path: synology-csi
+    path: base/synology-csi
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:
