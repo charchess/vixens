@@ -2,18 +2,14 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# On dit à Kustomize de prendre comme base les manifestes du dépôt pour Talos
-# Le '?ref=main' à la fin spécifie la branche
-resources:
-  - https://github.com/zebernst/synology-csi-talos/deploy/kubernetes/latest/snapshot-v1?ref=main
-
-# On ajoute notre secret par-dessus
-# Kustomize va fusionner les deux
-secretGenerator:
-  - name: synology-csi-secret
-    namespace: synology-csi
-    # On ne met pas le contenu ici, il le prendra du fichier secret.yaml
-    # Assurez-vous que le nom du secret correspond
-
-# On s'assure que toutes les ressources sont déployées dans le bon namespace
+# On s'assure que toutes les ressources sont bien déployées dans ce namespace
 namespace: synology-csi
+
+# On liste toutes les ressources à déployer.
+# Kustomize va les fusionner en un seul grand manifeste.
+resources:
+  # 1. Notre secret local, qui doit se trouver dans le même dossier
+  - secret.yaml
+  
+  # 2. L'ensemble des manifestes du dépôt distant (avec le chemin corrigé)
+  - https://github.com/zebernst/synology-csi-talos/deploy/kubernetes?ref=main
