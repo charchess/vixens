@@ -29,6 +29,7 @@ spec:
             effect: "NoSchedule"
         defaultSettings:
           backupTarget: "nfs://192.168.111.69:/volume3/Backups/vixens/longhorn"
+          enableIscsiSupport: true
   destination:
     server: https://kubernetes.default.svc
     namespace: longhorn-system
