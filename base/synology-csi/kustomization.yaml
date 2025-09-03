@@ -2,13 +2,14 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+# On s'assure que toutes les ressources sont bien déployées dans ce namespace
 namespace: synology-csi
 
+# On liste tous les fichiers et dossiers YAML (maintenant locaux) à inclure
 resources:
   - secret.yaml
   - rbac.yaml
   - controller.yaml
   - node.yaml
-  # --- AJOUT IMPORTANT ---
-  # On dit à Kustomize de lire aussi le contenu de ce dossier
+  # Kustomize va lire et appliquer le contenu du dossier 'snapshotter'
   - snapshotter
