@@ -48,7 +48,7 @@ spec:
           persistentVolume:
             enabled: true
             persistence:
-              storageClass: synelia-iscsi-sc
+              storageClass: synelia-iscsi
           # On ajoute les tolérances nécessaires
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
