@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nfs-downloads-pvc
+  name: synelia-downloads-pvc
   namespace: media-stack
 spec:
   accessModes:
@@ -11,13 +11,13 @@ spec:
   resources:
     requests:
       storage: 1Ti
-  volumeName: nfs-downloads
+  volumeName: synelia-downloads
   storageClassName: ""
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nfs-content-pvc
+  name: synelia-content-pvc
   namespace: media-stack
 spec:
   accessModes:
@@ -25,5 +25,5 @@ spec:
   resources:
     requests:
       storage: 1Ti
-  volumeName: nfs-content
+  volumeName: synelia-content
   storageClassName: ""
