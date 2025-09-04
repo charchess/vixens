@@ -1,0 +1,13 @@
+# base/synology-csi/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: synology-csi        # tous les res. iront dans ce ns
+
+# on part des manifests upstream
+resources:
+- https://github.com/zebernst/synology-csi-talos//deploy/kubernetes/base?ref=main
+
+# on remplace le secret généré par le script
+patchesStrategicMerge:
+- client-info-secret.yaml
