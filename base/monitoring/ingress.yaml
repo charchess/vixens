@@ -1,16 +1,19 @@
 # base/monitoring/ingress.yaml
 ---
+# --- Ingress pour Grafana ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: grafana-ingress
   namespace: monitoring
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
+    cert-manager.io-cluster-issuer: "letsencrypt-gandi-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   ingressClassName: traefik
   tls:
-    - hosts: ["grafana.truxonline.com"]
+    - hosts:
+        - grafana.truxonline.com
       secretName: grafana-tls
   rules:
     - host: grafana.truxonline.com
@@ -20,10 +23,12 @@ spec:
             pathType: Prefix
             backend:
               service:
+                # Le nom correct, validé par votre commande
                 name: grafana
                 port:
                   number: 80
 ---
+# --- Ingress pour Prometheus ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -31,10 +36,12 @@ metadata:
   namespace: monitoring
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   ingressClassName: traefik
   tls:
-    - hosts: ["prometheus.truxonline.com"]
+    - hosts:
+        - prometheus.truxonline.com
       secretName: prometheus-tls
   rules:
     - host: prometheus.truxonline.com
@@ -44,6 +51,7 @@ spec:
             pathType: Prefix
             backend:
               service:
+                # Le nom correct, validé par votre commande
                 name: prometheus-server
                 port:
                   number: 80
