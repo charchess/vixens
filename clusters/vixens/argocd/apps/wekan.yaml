@@ -22,16 +22,17 @@ spec:
         # On active la persistance pour les données de Wekan (ex: uploads)
         persistence:
           enabled: true
-          storageClassName: longhorn-replicated # On utilise Longhorn !
+          storageClassName: synelia-iscsi
           size: 5Gi
 
         # Configuration de la base de données MongoDB (déployée en subchart)
         mongodb:
+          architecture: standalone
           enabled: true
           # On active la persistance pour la base de données
           persistence:
             enabled: true
-            storageClassName: longhorn-replicated # On utilise Longhorn !
+            storageClassName: synelia-iscsi
             size: 8Gi
 
         # Tolérances pour que les pods Wekan et MongoDB
