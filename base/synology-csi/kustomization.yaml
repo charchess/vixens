@@ -9,8 +9,7 @@ resources:
 - upstream/controller.yml
 - upstream/node.yml
 - upstream/storage-class.yml
-- upstream/snapshotter/rbac.yaml
-- upstream/snapshotter/snapshotter.yaml
+- upstream/snapshotter/   # décommente si tu veux le snapshotter
 - namespace.yaml            # ton propre namespace
 - client-info-secret.yaml   # ton secret DSM
 
