@@ -7,10 +7,13 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: https://github.com/charchess/vixens.git        # ton repo
-    targetRevision: dev
-    path: base/synology-csi                        # dossier kustomize ci-dessus
+  sources:                       # sources multiples
+  - repoURL: https://github.com/zebernst/synology-csi-talos
+    targetRevision: main
+    ref: upstream                 # nom de référence
+  - repoURL: https://github.com/<toi>/vixens.git
+    targetRevision: main
+    path: base/synology-csi-talos  # contient uniquement l’overlay
   destination:
     server: https://kubernetes.default.svc
     namespace: synology-csi
