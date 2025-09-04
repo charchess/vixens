@@ -5,7 +5,7 @@ kind: Kustomization
 namespace: synology-csi
 
 resources:
-- $upstream/deploy/kubernetes/base   # variable résolue par ArgoCD
+- upstream          # répertoire local
 - namespace.yaml
 
 patches:
