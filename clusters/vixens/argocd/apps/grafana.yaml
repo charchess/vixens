@@ -13,6 +13,9 @@ spec:
     targetRevision: "9.4.4"
     helm:
       values: |
+        admin:
+          user: admin
+          password: "admin"
         persistence:
           enabled: true
           # On spécifie notre StorageClass Synology iSCSI
