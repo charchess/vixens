@@ -126,7 +126,7 @@ stringData:
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: synology-iscsi
+  name: synelia-iscsi
 provisioner: csi.san.synology.com
 parameters:
   protocol: iscsi

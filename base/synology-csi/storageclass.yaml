@@ -3,7 +3,7 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: synology-iscsi-sc
+  name: synology-iscsi
   annotations:
     storageclass.kubernetes.io/is-default-class: "false"
 provisioner: csi.san.synology.com
