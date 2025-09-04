@@ -5,8 +5,8 @@ kind: Kustomization
 namespace: synology-csi
 
 resources:
-- namespace.yaml               # <-- le Namespace manquant
-- $upstream/deploy/kubernetes/base
+- $upstream/deploy/kubernetes/base   # variable résolue par ArgoCD
+- namespace.yaml
 
 patches:
 - path: client-info-secret.yaml
