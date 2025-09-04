@@ -47,7 +47,7 @@ spec:
           enabled: true
           # On désactive la persistance comme pour le reste
           persistentVolume:
-            enabled: false
+            enabled: true
             persistence:
               storageClass: synelia-iscsi-sc
           # On ajoute les tolérances nécessaires
