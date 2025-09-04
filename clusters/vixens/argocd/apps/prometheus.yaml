@@ -15,7 +15,7 @@ spec:
         server:
           persistentVolume:
             enabled: true
-            storageClass: synelia-iscsi-sc   # <-- serveur Prometheus
+            storageClass: synelia-iscsi
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
@@ -25,7 +25,7 @@ spec:
           enabled: true
           persistentVolume:
             enabled: true
-            storageClass: synelia-iscsi-sc   # <-- alertmanager
+            storageClass: synelia-iscsi
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
