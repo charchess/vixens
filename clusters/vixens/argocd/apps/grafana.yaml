@@ -14,7 +14,13 @@ spec:
     helm:
       values: |
         persistence:
-          enabled: false
+          enabled: true
+          # On spécifie notre StorageClass Synology iSCSI
+          storageClassName: "synology-iscsi-sc"
+          accessModes:
+            - ReadWriteOnce
+          # Taille du volume pour les données de Grafana
+          size: 5Gi
         tolerations:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Exists"
