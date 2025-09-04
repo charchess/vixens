@@ -5,7 +5,6 @@ kind: Kustomization
 namespace: synology-csi
 
 resources:
-- upstream/namespace.yml
 - upstream/csi-driver.yml
 - upstream/controller.yml
 - upstream/node.yml
