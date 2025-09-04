@@ -27,3 +27,30 @@ spec:
                 port:
                   # Le port doit être EXACTEMENT ce numéro
                   number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: monitoring
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - grafana.truxonline.com
+      secretName: grafana-tls
+  rules:
+    - host: grafana.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                # Le nom de service simple et correct
+                name: grafana
+                port:
+                  number: 80
