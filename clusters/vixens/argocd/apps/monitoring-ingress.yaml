@@ -1,0 +1,23 @@
+# clusters/vixens/argocd/apps/monitoring-ingress.yaml
+---
+apiVersion: argoproj.io/vicontrollalpha1
+kind: Application
+metadata:
+  name: monitoring-ingress
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argoproj.io
+spec:
+  project: vixens
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+    # On pointe vers le dossier contenant nos Ingress
+    path: base/monitoring
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
