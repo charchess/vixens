@@ -5,8 +5,14 @@ kind: Kustomization
 namespace: synology-csi
 
 resources:
-- upstream          # répertoire local
-- namespace.yaml
+- upstream/namespace.yml
+- upstream/csi-driver.yml
+- upstream/controller.yml
+- upstream/node.yml
+- upstream/storage-class.yml
+# - upstream/snapshotter/   # décommente si tu veux le snapshotter
+- namespace.yaml            # ton propre namespace
+- client-info-secret.yaml   # ton secret DSM
 
 patches:
 - path: client-info-secret.yaml
