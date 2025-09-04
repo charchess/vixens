@@ -5,7 +5,8 @@ kind: Kustomization
 namespace: synology-csi
 
 resources:
-- $upstream/deploy/kubernetes/base   # utilise la ref déclarée plus haut
+- namespace.yaml               # <-- le Namespace manquant
+- $upstream/deploy/kubernetes/base
 
 patches:
 - path: client-info-secret.yaml
