@@ -8,8 +8,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/<to-org>/gitops
-    targetRevision: HEAD
+    repoURL: https://github.com/charchess/vixens
+    targetRevision: dev
     path: base/synology-csi
   destination:
     server: https://kubernetes.default.svc
