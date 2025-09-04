@@ -1,5 +1,4 @@
 # clusters/vixens/argocd/apps/prometheus.yaml
----
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -13,20 +12,20 @@ spec:
     targetRevision: "25.20.0"
     helm:
       values: |
-        # On active l'opérateur et les CRDs, qui sont inclus dans ce chart
-        operator:
-          enabled: true
-          crds:
+        server:
+          persistentVolume:
             enabled: true
+            storageClass: synelia-iscsi-sc   # <-- serveur Prometheus
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
               effect: "NoSchedule"
 
-        # Configuration du serveur Prometheus lui-même
-        server:
+        alertmanager:
+          enabled: true
           persistentVolume:
             enabled: true
+            storageClass: synelia-iscsi-sc   # <-- alertmanager
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
