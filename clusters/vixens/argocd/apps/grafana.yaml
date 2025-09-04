@@ -19,7 +19,7 @@ spec:
         persistence:
           enabled: true
           # On spécifie notre StorageClass Synology iSCSI
-          storageClassName: "synology-iscsi-sc"
+          storageClassName: "synelia-iscsi-sc"
           accessModes:
             - ReadWriteOnce
           # Taille du volume pour les données de Grafana
