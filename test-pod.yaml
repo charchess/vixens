@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: iscsi-test-pvc
+  namespace: media-stack
+spec:
+  # On utilise la StorageClass que nous avons créée
+  storageClassName: synelia-iscsi
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# --- OBJET 2 : Le Pod de test qui utilise TOUS les volumes ---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: storage-test-pod
+  namespace: media-stack
+spec:
+  tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+  volumes:
+    # Les deux volumes NFS existants
+    - name: downloads-volume
+      persistentVolumeClaim:
+        claimName: synelia-downloads-pvc
+    - name: content-volume
+      persistentVolumeClaim:
+        claimName: synelia-content-pvc
+    # --- AJOUT : Le nouveau volume iSCSI ---
+    - name: iscsi-volume
+      persistentVolumeClaim:
+        claimName: iscsi-test-pvc
+
+  containers:
+    - name: test-container
+      image: alpine:latest
+      command: ["sleep", "infinity"]
+      volumeMounts:
+        # Les deux montages NFS existants
+        - name: downloads-volume
+          mountPath: /downloads
+        - name: content-volume
+          mountPath: /content
+        # --- AJOUT : Le nouveau montage iSCSI ---
+        - name: iscsi-volume
+          mountPath: /iscsi-data
