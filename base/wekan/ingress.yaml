@@ -22,7 +22,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                # Le service est préfixé par le nom de la release Helm
                 name: wekan
                 port:
-                  number: 80
+                  number: 8080
