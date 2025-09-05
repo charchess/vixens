@@ -14,12 +14,15 @@ spec:
     helm:
       values: |
         env:
-          ROOT_URL: "https://wekan.truxonline.com"
-
+          - name: ROOT_URL
+            value: "https://wekan.truxonline.com"
+          - name: MONGO_URL
+            value: "mongodb://wekan-mongodb:27017/wekan"
+            
         # Persistance pour Wekan via le driver Synology
         persistence:
           enabled: true
-          storageClassName: synology-iscsi-sc
+          storageClassName: synology-iscsi
           size: 5Gi
 
         # Déploiement de MongoDB en mode standalone
@@ -29,7 +32,7 @@ spec:
           # Persistance pour MongoDB via le driver Synology
           persistence:
             enabled: true
-            storageClassName: synology-iscsi-sc
+            storageClassName: synology-iscsi
             size: 8Gi
 
         # Tolérances pour les nœuds control-plane
