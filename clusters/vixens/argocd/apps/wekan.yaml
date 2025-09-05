@@ -10,33 +10,29 @@ spec:
   source:
     repoURL: https://wekan.github.io/charts
     chart: wekan
-    targetRevision: "7.94.0"
+    targetRevision: "0.8.0"
     helm:
       values: |
-        # Configuration Générale de Wekan
-        # On définit l'URL via laquelle on accèdera à Wekan
         env:
-          - name: ROOT_URL
-            value: "https://wekan.truxonline.com"
+          ROOT_URL: "https://wekan.truxonline.com"
 
-        # On active la persistance pour les données de Wekan (ex: uploads)
+        # Persistance pour Wekan via le driver Synology
         persistence:
           enabled: true
-          storageClassName: synelia-iscsi
+          storageClassName: synology-iscsi-sc
           size: 5Gi
 
-        # Configuration de la base de données MongoDB (déployée en subchart)
+        # Déploiement de MongoDB en mode standalone
         mongodb:
-          architecture: standalone
           enabled: true
-          # On active la persistance pour la base de données
+          architecture: standalone
+          # Persistance pour MongoDB via le driver Synology
           persistence:
             enabled: true
-            storageClassName: synelia-iscsi
+            storageClassName: synology-iscsi-sc
             size: 8Gi
 
-        # Tolérances pour que les pods Wekan et MongoDB
-        # puissent s'exécuter sur vos nœuds control-plane.
+        # Tolérances pour les nœuds control-plane
         tolerations:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Exists"
