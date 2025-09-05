@@ -22,6 +22,10 @@ spec:
             enabled: true
             service:
               enabled: true
+              annotations:
+                prometheus.io/scrape: "true"
+                prometheus.io/port: "8083"
+                prometheus.io/path: "/metrics"
             serviceMonitor:
               enabled: true
               namespace: monitoring
@@ -31,6 +35,10 @@ spec:
         server:
           metrics:
             enabled: true
+              annotations:
+                prometheus.io/scrape: "true"
+                prometheus.io/port: "8082"
+                prometheus.io/path: "/metrics"
             service:
               enabled: true
             serviceMonitor:
@@ -44,6 +52,10 @@ spec:
             enabled: true
             service:
               enabled: true
+              annotations:
+                prometheus.io/scrape: "true"
+                prometheus.io/port: "8084"
+                prometheus.io/path: "/metrics"
             serviceMonitor:
               enabled: true
               namespace: monitoring
