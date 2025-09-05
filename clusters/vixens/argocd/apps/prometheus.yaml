@@ -20,6 +20,59 @@ spec:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
               effect: "NoSchedule"
+          # Configuration supplémentaire pour le scraping
+          extraScrapeConfigs: |
+            - job_name: 'argocd-server'
+              kubernetes_sd_configs:
+                - role: service
+                  namespaces:
+                    names:
+                      - argocd
+              relabel_configs:
+                - source_labels: [__meta_kubernetes_service_name]
+                  action: keep
+                  regex: argocd-server-metrics
+                - source_labels: [__meta_kubernetes_service_port_name]
+                  action: keep
+                  regex: metrics
+                - source_labels: [__meta_kubernetes_service_name]
+                  target_label: service
+                - source_labels: [__meta_kubernetes_namespace]
+                  target_label: namespace
+            - job_name: 'argocd-repo-server'
+              kubernetes_sd_configs:
+                - role: service
+                  namespaces:
+                    names:
+                      - argocd
+              relabel_configs:
+                - source_labels: [__meta_kubernetes_service_name]
+                  action: keep
+                  regex: argocd-repo-server-metrics
+                - source_labels: [__meta_kubernetes_service_port_name]
+                  action: keep
+                  regex: metrics
+                - source_labels: [__meta_kubernetes_service_name]
+                  target_label: service
+                - source_labels: [__meta_kubernetes_namespace]
+                  target_label: namespace
+            - job_name: 'argocd-application-controller'
+              kubernetes_sd_configs:
+                - role: service
+                  namespaces:
+                    names:
+                      - argocd
+              relabel_configs:
+                - source_labels: [__meta_kubernetes_service_name]
+                  action: keep
+                  regex: argocd-application-controller-metrics
+                - source_labels: [__meta_kubernetes_service_port_name]
+                  action: keep
+                  regex: metrics
+                - source_labels: [__meta_kubernetes_service_name]
+                  target_label: service
+                - source_labels: [__meta_kubernetes_namespace]
+                  target_label: namespace
 
         alertmanager:
           enabled: true
@@ -31,7 +84,6 @@ spec:
               operator: "Exists"
               effect: "NoSchedule"
 
-        # Configuration des autres composants
         kube-state-metrics:
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
@@ -42,31 +94,6 @@ spec:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
               effect: "NoSchedule"
-        alertmanager:
-          enabled: true
-          # On désactive la persistance comme pour le reste
-          persistentVolume:
-            enabled: true
-            persistence:
-              storageClass: synelia-iscsi
-          # On ajoute les tolérances nécessaires
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
-          # Configuration de base pour qu'Alertmanager démarre sainement.
-          # Par défaut, toutes les alertes sont envoyées vers un "trou noir".
-          config:
-            global:
-              resolve_timeout: 5m
-            route:
-              group_by: ['job']
-              group_wait: 30s
-              group_interval: 5m
-              repeat_interval: 12h
-              receiver: 'null'
-            receivers:
-            - name: 'null'
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
@@ -75,5 +102,4 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      # On garde cette option qui est une bonne pratique pour les CRDs
       - ServerSideApply=true
