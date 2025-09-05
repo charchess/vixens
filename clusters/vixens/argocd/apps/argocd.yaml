@@ -15,6 +15,18 @@ spec:
     targetRevision: "8.3.1"
     helm:
       values: |
+        metrics:
+          enabled: true
+          # On dit au chart de créer un Service pour les métriques
+          service:
+            enabled: true
+          # On dit au chart de créer LUI-MÊME le ServiceMonitor
+          serviceMonitor:
+            enabled: true
+            # On ajoute le label que notre Prometheus recherche
+            # pour qu'il le découvre automatiquement.
+            labels:
+              release: prometheus
         server:
           extraArgs:
             - --insecure
