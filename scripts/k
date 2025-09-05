@@ -1,0 +1,50 @@
+#!/bin/bash
+set -euo pipefail
+
+K_NAMESPACE_FILE="${HOME}/.k_namespace"
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
+# ── Helpers ────────────────────────────────────────────────────────────
+
+current_ns() {
+  [[ -f "$K_NAMESPACE_FILE" ]] && cat "$K_NAMESPACE_FILE" || echo "default"
+}
+
+save_ns() {
+  local ns="$1"
+  if kubectl get namespace "$ns" &>/dev/null; then
+    echo "$ns" > "$K_NAMESPACE_FILE"
+    echo -e "${GREEN}Namespace défini → $ns${NC}"
+  else
+    echo -e "${RED}Namespace inconnu : $ns${NC}" >&2
+    exit 1
+  fi
+}
+
+# ── Commands ────────────────────────────────────────────────────────────
+
+case "${1:-}" in
+  set)
+    [[ -z "${2:-}" ]] && { echo -e "${RED}Usage: k set <namespace>${NC}" >&2; exit 1; }
+    save_ns "$2"
+    ;;
+  ns|current)
+    echo -e "${GREEN}Namespace actuel : $(current_ns)${NC}"
+    ;;
+  reset)
+    rm -f "$K_NAMESPACE_FILE"
+    echo -e "${YELLOW}Namespace réinitialisé → default${NC}"
+    ;;
+  --dry-run)
+    shift
+    echo -e "${YELLOW}[dry-run] kubectl -n $(current_ns) $*${NC}"
+    ;;
+  *)
+    NS=$(current_ns)
+    echo -e "${GREEN}[ns: $NS]${NC} kubectl $*" >&2
+    kubectl -n "$NS" "$@"
+    ;;
+esac
