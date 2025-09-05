@@ -1,0 +1,23 @@
+# Application ROOT qui déploie tout le reste
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vixens-root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+    path: clusters/vixens/argocd/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
