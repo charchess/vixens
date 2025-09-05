@@ -1,82 +1,74 @@
-# clusters/vixens/argocd/apps/prometheus.yaml
+# clusters/vixens/argocd/apps/argocd.yaml
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: prometheus
+  name: argocd
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: vixens
   source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    chart: prometheus
-    targetRevision: "25.20.0"
+    repoURL: https://argoproj.github.io/argo-helm
+    chart: argo-cd
+    targetRevision: "8.3.1"
     helm:
       values: |
+        # Configuration des métriques basée sur la structure officielle du values.yaml
+        # On active les métriques pour chaque composant
+        controller:
+          metrics:
+            enabled: true
+            service:
+              enabled: true
+            serviceMonitor:
+              enabled: true
+              namespace: monitoring
+              additionalLabels:
+                release: prometheus
+
         server:
-          persistentVolume:
+          metrics:
             enabled: true
-            storageClass: synelia-iscsi
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
-          
-          # Ajoute cette configuration pour scraper les ServiceMonitors
-          extraScrapeConfigs: |
-            - job_name: 'servicemonitors'
-              kubernetes_sd_configs:
-                - role: service
-              relabel_configs:
-                - source_labels: [__meta_kubernetes_service_label_prometheus_io_servicemonitor]
-                  action: keep
-                  regex: true
-                - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
-                  action: keep
-                  regex: true
-                - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
-                  action: replace
-                  target_label: __metrics_path__
-                  regex: (.+)
-                - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
-                  action: replace
-                  regex: ([^:]+)(?::\d+)?;(\d+)
-                  replacement: $1:$2
-                  target_label: __address__
-                - action: labelmap
-                  regex: __meta_kubernetes_service_label_(.+)
-                - source_labels: [__meta_kubernetes_namespace]
-                  action: replace
-                  target_label: kubernetes_namespace
-                - source_labels: [__meta_kubernetes_service_name]
-                  action: replace
-                  target_label: kubernetes_name
+            service:
+              enabled: true
+            serviceMonitor:
+              enabled: true
+              namespace: monitoring
+              additionalLabels:
+                release: prometheus
 
-        alertmanager:
-          enabled: true
-          persistentVolume:
+        repoServer:
+          metrics:
             enabled: true
-            storageClass: synelia-iscsi
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
+            service:
+              enabled: true
+            serviceMonitor:
+              enabled: true
+              namespace: monitoring
+              additionalLabels:
+                release: prometheus
 
-        kube-state-metrics:
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
-        nodeExporter:
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
+        applicationSet:
+          metrics:
+            enabled: true
+            service:
+              enabled: true
+            serviceMonitor:
+              enabled: true
+              namespace: monitoring
+              additionalLabels:
+                release: prometheus
+        server:
+          extraArgs:
+            - --insecure
   destination:
     server: https://kubernetes.default.svc
-    namespace: monitoring
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      - ServerSideApply=true
+      - CreateNamespace=true
