@@ -15,31 +15,51 @@ spec:
     targetRevision: "8.3.1"
     helm:
       values: |
-        metrics:
-          enabled: true
-          # On dit au chart de créer un Service pour les métriques
-          service:
+        # Configuration des métriques basée sur la structure officielle du values.yaml
+        # On active les métriques pour chaque composant
+        controller:
+          metrics:
             enabled: true
-          # On dit au chart de créer LUI-MÊME le ServiceMonitor
-          serviceMonitor:
-            enabled: true
-            # On ajoute le label que notre Prometheus recherche
-            # pour qu'il le découvre automatiquement.
-            labels:
-              release: prometheus
+            service:
+              enabled: true
+            serviceMonitor:
+              enabled: true
+              namespace: monitoring
+              additionalLabels:
+                release: prometheus
+
         server:
-          extraArgs:
-            - --insecure
-          service:
-            # Nous définissons le port principal du service sur 80 (HTTP)
-            port: 80
-            # Nous désactivons le port HTTPS en lui donnant une valeur vide.
-            # Le chart ne créera ainsi pas de port 443 sur le service.
-            httpsPort: ""
+          metrics:
+            enabled: true
+            service:
+              enabled: true
+            serviceMonitor:
+              enabled: true
+              namespace: monitoring
+              additionalLabels:
+                release: prometheus
 
-          ingress:
-            enabled: false
+        repoServer:
+          metrics:
+            enabled: true
+            service:
+              enabled: true
+            serviceMonitor:
+              enabled: true
+              namespace: monitoring
+              additionalLabels:
+                release: prometheus
 
+        applicationSet:
+          metrics:
+            enabled: true
+            service:
+              enabled: true
+            serviceMonitor:
+              enabled: true
+              namespace: monitoring
+              additionalLabels:
+                release: prometheus
 
   destination:
     server: https://kubernetes.default.svc
