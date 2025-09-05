@@ -60,7 +60,9 @@ spec:
               namespace: monitoring
               additionalLabels:
                 release: prometheus
-
+        server:
+          extraArgs:
+            - --insecure
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
