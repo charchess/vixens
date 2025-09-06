@@ -1,0 +1,459 @@
+version: v1alpha1
+debug: false
+persist: true
+machine:
+    type: controlplane
+    token: 8t2nst.rfy3t6cbp8c6k3th
+    ca:
+        crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJQakNCOGFBREFnRUNBaEEvVXpEcWtpVG1ReURSL3pqMlJTU0FNQVVHQXl0bGNEQVFNUTR3REFZRFZRUUsKRXdWMFlXeHZjekFlRncweU5UQTRNakV4TXpNMk1UbGFGdzB6TlRBNE1Ua3hNek0yTVRsYU1CQXhEakFNQmdOVgpCQW9UQlhSaGJHOXpNQ293QlFZREsyVndBeUVBZWN2Q0xGRXFmdmpJbWNKY09xYXRNSk91ZFE1anJoMkdqcTVGCnlsQ2FjRFdqWVRCZk1BNEdBMVVkRHdFQi93UUVBd0lDaERBZEJnTlZIU1VFRmpBVUJnZ3JCZ0VGQlFjREFRWUkKS3dZQkJRVUhBd0l3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFkQmdOVkhRNEVGZ1FVU1dlVXJHMHVTeVhxMnk5TQpNelhreExCaDVMY3dCUVlESzJWd0EwRUEranJ4N1kwSzhhWWpLakRsUTdhMUJZVlZTM2V0QzVXWCtKVWtuWFQ0CnhINUlRenI2dnU0WCtMRDlXYkE4Q3ZjNm56cHI5SURWcFFRY3d5SXh4dGpLRHc9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+        key: LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM0Q0FRQXdCUVlESzJWd0JDSUVJRUQwaEVJSWRXRHRJYmdtdy8rYXRZMElXaUd5Z2FPNjdpSkdXN1VhRkJxZQotLS0tLUVORCBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0K
+    certSANs: []
+    #   # Uncomment this to enable SANs.
+    #   - 10.0.0.10
+    #   - 172.16.0.10
+    #   - 192.168.0.10
+
+    kubelet:
+        image: ghcr.io/siderolabs/kubelet:v1.33.3
+        defaultRuntimeSeccompProfileEnabled: true
+        disableManifestsDirectory: true
+        nodeTaints: [] 
+        # clusterDNS:
+        #     - 10.96.0.10
+        #     - 169.254.2.53
+
+        # extraArgs:
+        #     key: value
+
+        # extraMounts:
+        #     - destination: /var/lib/example
+        #       type: bind
+        #       source: /var/lib/example
+        #       options:
+        #         - bind
+        #         - rshared
+        #         - rw
+        extraMounts:
+            - destination: /var/lib/longhorn
+              type: bind
+              source: /var/lib/longhorn
+              options:
+                  - bind
+                  - rshared
+                  - rw
+          
+        # extraConfig:
+        #     serverTLSBootstrap: true
+
+        # credentialProviderConfig:
+        #     apiVersion: kubelet.config.k8s.io/v1
+        #     kind: CredentialProviderConfig
+        #     providers:
+        #         - apiVersion: credentialprovider.kubelet.k8s.io/v1
+        #           defaultCacheDuration: 12h
+        #           matchImages:
+        #             - '*.dkr.ecr.*.amazonaws.com'
+        #             - '*.dkr.ecr.*.amazonaws.com.cn'
+        #             - '*.dkr.ecr-fips.*.amazonaws.com'
+        #             - '*.dkr.ecr.us-iso-east-1.c2s.ic.gov'
+        #             - '*.dkr.ecr.us-isob-east-1.sc2s.sgov.gov'
+        #           name: ecr-credential-provider
+
+        # nodeIP:
+        #     validSubnets:
+        #         - 10.0.0.0/8
+        #         - '!10.0.0.3/32'
+        #         - fdc7::/16
+    network: {}
+    # interfaces:
+    #     - interface: enp0s1
+    #       addresses:
+    #         - 192.168.2.0/24
+    #       routes:
+    #         - network: 0.0.0.0/0
+    #           gateway: 192.168.2.1
+    #           metric: 1024
+    #       mtu: 1500
+    #       
+    #       # # select a device with bus prefix 00:*.
+    #       # deviceSelector:
+    #       #     busPath: 00:*
+    #       # # select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
+    #       # deviceSelector:
+    #       #     hardwareAddr: '*:f0:ab'
+    #       #     driver: virtio_net
+    #       # # select a device with bus prefix 00:*, a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
+    #       # deviceSelector:
+    #       #     - busPath: 00:*
+    #       #     - hardwareAddr: '*:f0:ab'
+    #       #       driver: virtio_net
+
+    #       # bond:
+    #       #     interfaces:
+    #       #         - enp2s0
+    #       #         - enp2s1
+    #       #     deviceSelectors:
+    #       #         - busPath: 00:*
+    #       #         - hardwareAddr: '*:f0:ab'
+    #       #           driver: virtio_net
+    #       #     mode: 802.3ad
+    #       #     lacpRate: fast
+
+    #       # bridge:
+    #       #     interfaces:
+    #       #         - enxda4042ca9a51
+    #       #         - enxae2a6774c259
+    #       #     stp:
+    #       #         enabled: true
+
+    #       # bridgePort:
+    #       #     master: br0
+
+    #       # dhcp: true
+
+    #       # dhcpOptions:
+    #       #     routeMetric: 1024
+
+    #       # # wireguard server example
+    #       # wireguard:
+    #       #     privateKey: ABCDEF...
+    #       #     listenPort: 51111
+    #       #     peers:
+    #       #         - publicKey: ABCDEF...
+    #       #           endpoint: 192.168.1.3
+    #       #           allowedIPs:
+    #       #             - 192.168.1.0/24
+    #       # # wireguard peer example
+    #       # wireguard:
+    #       #     privateKey: ABCDEF...
+    #       #     peers:
+    #       #         - publicKey: ABCDEF...
+    #       #           endpoint: 192.168.1.2:51822
+    #       #           persistentKeepaliveInterval: 10s
+    #       #           allowedIPs:
+    #       #             - 192.168.1.0/24
+
+    #       # # layer2 vip example
+    #       # vip:
+    #       #     ip: 172.16.199.55
+
+    # nameservers:
+    #     - 8.8.8.8
+    #     - 1.1.1.1
+
+    # searchDomains:
+    #     - example.org
+    #     - example.com
+
+    # extraHostEntries:
+    #     - ip: 192.168.1.100
+    #       aliases:
+    #         - example
+    #         - example.domain.tld
+
+    # kubespan:
+    #     enabled: true
+
+    install:
+        disk: /dev/sda
+        image: ghcr.io/siderolabs/installer:v1.10.6
+        wipe: true
+        extraKernelArgs:
+            - "cgroup_enable=memory"
+            - "cgroup_memory=1"        
+#        extensions:
+#            - image: ghcr.io/siderolabs/iscsi-tools:v1.8.0
+            # diskSelector:
+        #     size: 4GB
+        #     model: WDC*
+        #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
+
+        # extraKernelArgs:
+        #     - talos.platform=metal
+        #     - reboot=k
+    registries: {}
+    # mirrors:
+    #     ghcr.io:
+    #         endpoints:
+    #             - https://registry.insecure
+    #             - https://ghcr.io/v2/
+
+    # config:
+    #     registry.insecure:
+    #         tls:
+    #             insecureSkipVerify: true
+    #             
+    #             # clientIdentity:
+    #             #     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    #             #     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
+    #         
+    #         # auth:
+    #         #     username: username
+    #         #     password: password
+
+    features:
+        rbac: true
+        stableHostname: true
+        apidCheckExtKeyUsage: true
+        diskQuotaSupport: true
+        kubePrism:
+            enabled: true
+            port: 7445
+        hostDNS:
+            enabled: true
+            forwardKubeDNSToHost: true
+        
+        # kubernetesTalosAPIAccess:
+        #     enabled: true
+        #     allowedRoles:
+        #         - os:reader
+        #     allowedKubernetesNamespaces:
+        #         - kube-system
+    
+    # # ControlPlane definition example.
+    # controlPlane:
+    #     controllerManager:
+    #         disabled: false
+    #     scheduler:
+    #         disabled: true
+
+    # # nginx static pod.
+    # pods:
+    #     - apiVersion: v1
+    #       kind: pod
+    #       metadata:
+    #         name: nginx
+    #       spec:
+    #         containers:
+    #             - image: nginx
+    #               name: nginx
+
+    # # MachineFiles usage example.
+    # files:
+    #    - content: '...'
+    #      permissions: 0o666
+    #      path: /tmp/file.txt
+    #      op: append
+
+    # # Environment variables definition examples.
+    # env:
+    #     GRPC_GO_LOG_SEVERITY_LEVEL: info
+    #     GRPC_GO_LOG_VERBOSITY_LEVEL: "99"
+    #     https_proxy: http://SERVER:PORT/
+    # env:
+    #     GRPC_GO_LOG_SEVERITY_LEVEL: error
+    #     https_proxy: https://USERNAME:PASSWORD@SERVER:PORT/
+    # env:
+    #     https_proxy: http://DOMAIN\USERNAME:PASSWORD@SERVER:PORT/
+
+    # # Example configuration for cloudflare ntp server.
+    # time:
+    #     disabled: false
+    #     servers:
+    #         - time.cloudflare.com
+    #     bootTimeout: 2m0s
+
+    # # MachineSysctls usage example.
+    # sysctls:
+    #     kernel.domainname: talos.dev
+    #     net.ipv4.ip_forward: "0"
+    #     net/ipv6/conf/eth0.100/disable_ipv6: "1"
+    sysctls:
+        net.core.bpf_jit_enable: "1"
+        net.core.bpf_jit_harden: "0"
+        net.core.rmem_max: 16777216          
+        net.ipv4.conf.all.rp_filter: "0"
+        net.ipv4.conf.default.rp_filter: "0"
+    # # MachineSysfs usage example.
+    # sysfs:
+    #     devices.system.cpu.cpu0.cpufreq.scaling_governor: performance
+
+    # systemDiskEncryption:
+    #     ephemeral:
+    #         provider: luks2
+    #         keys:
+    #             - nodeID: {}
+    #               slot: 0
+    #               
+    #               # kms:
+    #               #     endpoint: https://192.168.88.21:4443
+    #         
+    #         # cipher: aes-xts-plain64
+
+    #         # blockSize: 4096
+
+    #         # options:
+    #         #     - no_read_workqueue
+    #         #     - no_write_workqueue
+
+    # udev:
+    #     rules:
+    #         - SUBSYSTEM=="drm", KERNEL=="renderD*", GROUP="44", MODE="0660"
+
+    # logging:
+    #     destinations:
+    #         - endpoint: tcp://1.2.3.4:12345
+    #           format: json_lines
+
+    kernel:
+        modules:
+        - name: iscsi_tcp
+        - name: dm_crypt
+        - name: dm_mod
+    #         - name: brtfs
+    # seccompProfiles:
+    #     - name: audit.json
+    #       value:
+    #         defaultAction: SCMP_ACT_LOG
+
+    # # override default open file limit
+    # baseRuntimeSpecOverrides:
+    #     process:
+    #         rlimits:
+    #             - hard: 1024
+    #               soft: 1024
+    #               type: RLIMIT_NOFILE
+
+    # # node annotations example.
+    # nodeAnnotations:
+    #     customer.io/rack: r13a25
+
+    # # node taints example.
+    # nodeTaints:
+    #     exampleTaint: exampleTaintValue:NoSchedule
+cluster:
+    id: bCGd9WSYk3_Ezr17STuZGSWtk5gsdwrmjTrbaS4k_lo=
+    secret: gdGzqnc8n2rrY/3EOZAKqTdQJ/0RZfoc4KsjX67sxxk=
+    controlPlane:
+        endpoint: https://192.168.111.60:6443
+    clusterName: vixens
+    network:
+        cni:
+            name: none
+        dnsDomain: cluster.local
+        podSubnets:
+            - 10.244.0.0/16
+        serviceSubnets:
+            - 10.96.0.0/12
+    token: n55e9b.d7zf7l0qt3mxc7eg
+    secretboxEncryptionSecret: VSyjueLgYmCTVXDZTFBlNKEgsy7TXyqQeezpWtIAeDE=
+    ca:
+        crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJpakNDQVRDZ0F3SUJBZ0lSQUtkL2pMZm91MDcwZElCaWs5LzhzajB3Q2dZSUtvWkl6ajBFQXdJd0ZURVQKTUJFR0ExVUVDaE1LYTNWaVpYSnVaWFJsY3pBZUZ3MHlOVEE0TWpFeE16TTJNVGxhRncwek5UQTRNVGt4TXpNMgpNVGxhTUJVeEV6QVJCZ05WQkFvVENtdDFZbVZ5Ym1WMFpYTXdXVEFUQmdjcWhrak9QUUlCQmdncWhrak9QUU1CCkJ3TkNBQVJqWGF4Q3kvYU9vejJ3U25rcDdEZGlOcnNCRDB2RG1IQk5VTVFjcDZ6TmRXVUp2UWdzejd0Z1paNEYKWlNvd1dtNU1ndVgzRlZRNnVQVExhZXZDWUdvSG8yRXdYekFPQmdOVkhROEJBZjhFQkFNQ0FvUXdIUVlEVlIwbApCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0dBUVVGQndNQ01BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0hRWURWUjBPCkJCWUVGSS85Yzl0QlJIMW4xSkJ5dFBseE1oOEtURVdrTUFvR0NDcUdTTTQ5QkFNQ0EwZ0FNRVVDSVFEWWNNMzIKVWJSTER4UlAxakh3dURvakhLRmp6ZVFETGFoU21waHZESEMyUUFJZ0xMcmdhLy9jWnFEczN1SGxKekRWQ1kxRgo2b1VCdTcrbEFNTVE5ZXZyK0NZPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+        key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSURIVXpIWWk0eGlscEZDMmkyT1BDcW1waWZyUWQ1NXJCVjllZVRXNStSYzhvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFWTEyc1FzdjJqcU05c0VwNUtldzNZamE3QVE5THc1aHdUVkRFSEtlc3pYVmxDYjBJTE0rNwpZR1dlQldVcU1GcHVUSUxsOXhWVU9yajB5Mm5yd21CcUJ3PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
+    aggregatorCA:
+        crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJZRENDQVFhZ0F3SUJBZ0lSQU8yWGJWZDNPTW9rOVQ1cFpjNFhGand3Q2dZSUtvWkl6ajBFQXdJd0FEQWUKRncweU5UQTRNakV4TXpNMk1UbGFGdzB6TlRBNE1Ua3hNek0yTVRsYU1BQXdXVEFUQmdjcWhrak9QUUlCQmdncQpoa2pPUFFNQkJ3TkNBQVRxd3g0RGRpN3dEbVlWUDRZK2RVT1d0eFMrUEhCaGVLMCtDdGJEdWNaSXFmK1pTVDNKClBGN0tVMEdETG9OUjg2dmtNWWF2bDBuejV5aUVrNWpiMUpGNG8yRXdYekFPQmdOVkhROEJBZjhFQkFNQ0FvUXcKSFFZRFZSMGxCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0dBUVVGQndNQ01BOEdBMVVkRXdFQi93UUZNQU1CQWY4dwpIUVlEVlIwT0JCWUVGTVQ5TWVIWGU4QXVBMWtsWThYZzRnWWs0ZEN6TUFvR0NDcUdTTTQ5QkFNQ0EwZ0FNRVVDCklRQ2kvY1UxU0puaXpCTHY5S3pTRE52Rk5PRDN5NFphek5pS0x1MHFTaWdSZWdJZ0F4dEY0WXJSdEZKNVV3N1cKNldJTlVEbWlzTXFrNXF5NUxocnR1Zm5FbVpjPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+        key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUdWSDNzSFVBYThPa1o4OEw3VGJpVFdRV0lRUFhmenN1V3hVdXJqWllhaG9vQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFNnNNZUEzWXU4QTVtRlQrR1BuVkRscmNVdmp4d1lYaXRQZ3JXdzduR1NLbi9tVWs5eVR4ZQp5bE5CZ3k2RFVmT3I1REdHcjVkSjgrY29oSk9ZMjlTUmVBPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
+    serviceAccount:
+        key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlKS0FJQkFBS0NBZ0VBeXNKa0J3NTNFUWcyQzFXRmhxR2xyaU8rWlhzcVpRWGlBN0dkdUxmeEZOWTVyRUhjCm84a1NXM05TbThOSVRBTHhvN09LMGF6RUFOYWJkamFHZzhtT3pya1ErV3JzU3JUVkx1QUhxbW4xMWxUNEtsd2YKdENjdy9VVEdSaklIS2wwU0ZOOEFyKzc2MjJWSUxHQlFFZC8wMXVNeU9wNWlGc3RRZFNxOHEvMENSSHRkSmxSRgpxZGJaRjZORmQ0SUJIYlJNMzNBYjQ1em9TT01RM2NRMzE3RVhER2RuR3hrcmt3d2tmeE53dCtKQjU2OUlTNGZICitrTjFsSkJUUXp2V3JpUVhQd2R0eEdBVGpTOFRwT1FEYUFmR1A2Tk1RVTdTd0Naa2FKdEtuTktzdGJUUlpmVWgKMndhRUExNG5ySFFib0x1K2V1S0NyQ3NueUhhaUpJckVXbGhCUXVUMjdWcGdjb0FzQkMrNUx2K21WYjk3dDlhTwpRcDZlbFRJUVVlclJDVEswOXZEbFM2UTJwQWo4NFRob0Vyc0gxK0NRK1lRcWkwOEpWbHpRZE1MMHBpYTVqSWpSClVlcTNSOFdpdSt1Ry83clJnSThBQlBFbklaNzJRNm9Jbm4vbkJWZC9GOTF6NGZMbXNEa2dCWklOdTFWbUxXKzEKZE5jVmZabi9GOTdJeGU5MFVCdnhDNWJQSFY1ZE51QzdpRG9TYnprcmF4cGZKenBPdWpDYmtTUkdDY2UzRmxXWgpLUmFjcHdrckVCNVJUODd3aG1jRDR3VUdOWUViK1haNXV3eXdLQjhBS2l1NXdVc0xsRW1FZjdkUmpqeU0wYUN1Ck1qaWlNTmQzQWQ0Z3ZKejhOR3p1U09MU0xCdlBDT1FNbDZJNG1abGg1MTZrUDltbDZiR0ZsajFWSHRzQ0F3RUEKQVFLQ0FnQWVsZUE4NkVPeHdBbFhBRm1hQzN4UW5uZTBHell6OHdVN0JXb0RXVXYybHJJd2QrYnVsZ0E4NTFLSQp5Slo1VU9CZWoxRGJmREk4NWlLaFhHeENLUDl2MDU3cDRPVXdCOE00eFBhakVFVFRSaElCWWRBdWZ0TDNBWTdmCk8rQzAxVUZMQUxDNzJWTGlFWThua29mQmlvVUdmVk13WUgvdmJGQUF2S2VsVWc4cmdXaDF4YlNVZ0NKVFhIKzQKSFZaSndzN3R6WjJIWWozdjhNQzBrMHJSTUplSGVYbW1Mcy9SNkwwQXBsQVVqUDdnRWlMWHNlM0twSzV4OEt0KwpzdUlaZHJ4Qzk3M3BKNDBMZVJSL2hSMjJiYVhNSjdmekNnN2tpV1lRR1l6Unh6M2lVeHBiUlBVTWN4a3E0T01mCk1veVFYSUhKUzYzbWhzUURpMUcrTFdpZE1ENzNzWXlha3FHVGIvUk0rU3VTUW8wTUpaQTI5RU1GODBtNE56d1oKVDBWbkpFdk02bnBIeUR2bFpWTVdmM2RCTWxyRnp2UitZQTVyYVVoU2paMTFHYjh1K3kyVlFrYnFSTjhLNEw5Lwp4ekFWVkNZaUdKOFo0enY3enBZZVMzYm9BZmg2VWVjVnhxVEQ5aHEzU1g5UDhpZUN5YjlOa0lPeDJxQThmSFhuClV5MXgwaXhTMC9abVdGMEZua2VkdTdMV0lOMFlxa0orWEJUSzB4QjdlSlo1RlRLeWt4eGlkNnBkQUhOeEE5NGEKT3ZTVHJXd29MdmtxT3N4cDNXUjNjSnJUbmpxT1RlVFdTK001RnlnUTA3V2E0ZEhaK2JpS1lqVFR1dGhOOXp6SApmMm14S29JblhrOFMyZTAzWXhXTnVRUU5qOCtuK3Z3dlc2TDJXbHd1OUFKMXlYZzNZUUtDQVFFQTNrT1ArTTFZCkM3ZWZ1TjRUT0RYc3NWL1psK2FsOVFFUGViWXB4TzBFTmE4eUFEbWlFTWFSaWZUem5KZlZzemVXM0VDUU1BdGYKZjFtbDJkd2Z2dVNxcjJFYnZ6K0VxQWhabEVDMVNoWDdQSEg1NEhTdEFsTDJiQmtNZFhvUkNkdlkrSDJ6U0xjVQpaVWxuNDYxMXpPbDdwOWY4THlZTWcxTm9TcDcxUFlQMCtaN3B5WkNrWHV2SVpSOExJWU12Qnl1bWJsME1lRTM0Ck1HV0txUkhKR2MyVG8xK2hoQUJWcmY4UnFJSUpXUUV1aFZGeE1jamZFdzJqM084Y3d2Z3F6YjFBUWRFeTFuaGgKTDFacUh4NTQxVzZDNDYrVnlTQVNQcDV3UWN1Ykx2cHNPdFI5MWZweC92QjhCZ2JLRUdIYzhsWHVHNVpwUzFnNwpxRVcvSjdQZlR2ay9LUUtDQVFFQTZZangvTmFpNGd6Sm4rbGRtZndzdEJaMzhrT3o2SXlaaC9qRzJhTURCek5xCnhBeEw3UENnS2NWOFZDUlVNT0pUR1VnSjZwcW5QRXcwVWR0WnY5amJ3dGRlR0R3VEZGbEdqWUlmVVI0K08rTmcKemJEdUhjNVhYSFFwY0pwRldKMDIrbkdoaTV1K3QvWWViZ2hOVmpoNWNZY3FyZlh4YUhqU28wUVNCMjV1RE8ycAoyVnpGR0RWcmtvS3djNlNsaTdDNk5EaXQ2TWh5VVhPT1J6ZEpya29RSys0UzRidnNKTFQwYmszU0xSU0F2TUY3ClhIUG01RWdhRC9GSUZqWXo0RkxCaHdiRm1IQ2lmbVBuN25kQi9YamhHT1BCczIwSVVTQVBobXlDTGc2aGUyVUoKU1hac3Z1Ykg4K01OVE9vQWprc3dOcTZ3S1V5d251WUNwNTBuRHlSaVl3S0NBUUFCdklWamJEZEQ0Q3RmUmx6ZwpFNHZGMXZuY05mRVYrT3dtQjBaTVE0M0UzWm1HWnV6ZE5LL3VZL3VEUGF4dHVnRnp0dzFwVXExc1VVYjZiTDNTCnYvYVZhQ3pQVWErM29Ga1N6MjZiSlpEUTZCTUxyZDJzSnZuRjNtdzZmcm1qV2hSWDNLT0o3ZVE2NWxmcGIzRjgKS0ZiTytPRC9mVXlidWdzV2lpZGdVNmVXUzZlSDY1bGRKSHBzVDlIR2NUL3N6bXArY2p1bXRQVTdhNCtwd25uUAp1Y3R0ZTFISHRqajFJd2tBU0FQS3JqZXUwdlFQYjRKT284eWo3VHBNUzZRSjkzQ0pFeGxTazU0dXdINFR3Q2t4CmdhdUVHOXNQdHpCdFRNK1R0QU9DV25KK0F5cjRnUHhqQVgzMmpoY0dDYjJ3SnZ1MU8zZVhIeGxZTnpOSEhDQ2kKZlZBQkFvSUJBRWYvcFlOcTlPcTJRSThobG03NzlSaE1lUXhpM1J1TUJXV0xTRnNleTdjem5lMzFVSThySEdYawpjZEZMSmYyd09TaHBNazEzQXFvdllFNEFUMm83UkgyTWdvRDhQSEdnbUlUV0lpdVRKR0s0VmtiMERtVjRFU3o2Cnp5L2RFQllpMmlsYVVSREdvb1Q2eHlUclFGU2RzcXRTbmREbUsxZ25MK0dRQWZMeWs5RStrSWZuOXdmZ3FGcVMKR2k1OUMyREd5cEdCQy9UaG40VUhHRTFTZVUvWG02YS9qbWl6MURqNDVRY0F6UlNDNXJITEFPcGUvVWRTQjE3MAo1Mkdac21LdGdPYk5LcXcxeFpNcjMveUFIZ00wZWtsL0psL1g5S0YyUGZNV2p3ZitFTUVIUkZhMndRNFYvbjF0CmVkTkZyWWd4SEJzdnZqWHRZK0tKVFRZNTJDbnQ4THNDZ2dFQkFKQnM5ZGhxRml1UXBzekRYbHc3bVJBcTBzbVgKazhwVFNQS0xZWElaTjJwUXlDNHVGTTU4dFE0TStuVTdhaVJ0OWJGbDJiWCtxQmFhbW1oMUpRZ0dza1FzR20raApxSkNjeitPZnZpeWtRRklYemRuOU9WVHloRVZ3bTExZ003OFZlUXpUQXlKYnFhaFYwQUFYd2x5M0lTVmZ1bHEwCnlWTSttaklUcndsbFJtVk5qVGdIOEN6eWZPWSt3N2kyTkRydEdjZ29DWElCUGJUbnhoMDdLM1RPRU5rWTdQaFQKb1EzREk4VnhsUmd0MmtvYW1JS3BkRGdxL2NIbVZDUzMwZDJ2MkplOEFIUVhyOUlmaHhESXRNVWpvTFNwUXpmLwpYUUFzSExMb0RrSmQrR1U1QkZBUTFNdzNWS05LYS9tMkFDR0paWWFWZDZUbDR3TTZLSGhkaG1rd2M1MD0KLS0tLS1FTkQgUlNBIFBSSVZBVEUgS0VZLS0tLS0K
+    apiServer:
+        image: registry.k8s.io/kube-apiserver:v1.33.3
+        certSANs:
+            - 192.168.111.60
+            - 192.168.111.60
+        disablePodSecurityPolicy: true
+        admissionControl:
+            - name: PodSecurity
+              configuration:
+                apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+                defaults:
+                    audit: restricted
+                    audit-version: latest
+                    enforce: baseline
+                    enforce-version: latest
+                    warn: restricted
+                    warn-version: latest
+                exemptions:
+                    namespaces:
+                        - kube-system
+                        - metallb-system
+                    runtimeClasses: []
+                    usernames: []
+                kind: PodSecurityConfiguration
+        auditPolicy:
+            apiVersion: audit.k8s.io/v1
+            kind: Policy
+            rules:
+                - level: Metadata
+        
+        # authorizationConfig:
+        #     - type: Webhook
+        #       name: webhook
+        #       webhook:
+        #         connectionInfo:
+        #             type: InClusterConfig
+        #         failurePolicy: Deny
+        #         matchConditionSubjectAccessReviewVersion: v1
+        #         matchConditions:
+        #             - expression: has(request.resourceAttributes)
+        #             - expression: '!(\''system:serviceaccounts:kube-system\'' in request.groups)'
+        #         subjectAccessReviewVersion: v1
+        #         timeout: 3s
+        #     - type: Webhook
+        #       name: in-cluster-authorizer
+        #       webhook:
+        #         connectionInfo:
+        #             type: InClusterConfig
+        #         failurePolicy: NoOpinion
+        #         matchConditionSubjectAccessReviewVersion: v1
+        #         subjectAccessReviewVersion: v1
+        #         timeout: 3s
+    controllerManager:
+        image: registry.k8s.io/kube-controller-manager:v1.33.3
+        extraArgs:
+            bind-address: 0.0.0.0
+    proxy:
+        disabled: true
+        image: registry.k8s.io/kube-proxy:v1.33.3
+    scheduler:
+        image: registry.k8s.io/kube-scheduler:v1.33.3
+        extraArgs:
+            bind-address: 0.0.0.0
+    discovery:
+        enabled: true
+        registries:
+            kubernetes:
+                disabled: true
+            service: {}
+            # endpoint: https://discovery.talos.dev/
+    etcd:
+        ca:
+            crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJmVENDQVNPZ0F3SUJBZ0lRY044RWJwcTFTcUpndHRvTVc4T2g0VEFLQmdncWhrak9QUVFEQWpBUE1RMHcKQ3dZRFZRUUtFd1JsZEdOa01CNFhEVEkxTURneU1URXpNell4T1ZvWERUTTFNRGd4T1RFek16WXhPVm93RHpFTgpNQXNHQTFVRUNoTUVaWFJqWkRCWk1CTUdCeXFHU000OUFnRUdDQ3FHU000OUF3RUhBMElBQk4rZTRnb085QlU3CmxCZ0tzQnhBOGlmMCtEYjJXL2JnalFmSzdSRGhsd0ducUdSMkNMTFo5ZnVGbjA0N1NpNk1kMGF6b2RKb2h2Z3UKdXREUno4aUV4Vm1qWVRCZk1BNEdBMVVkRHdFQi93UUVBd0lDaERBZEJnTlZIU1VFRmpBVUJnZ3JCZ0VGQlFjRApBUVlJS3dZQkJRVUhBd0l3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFkQmdOVkhRNEVGZ1FVQkF2enNkRXByRWNhCnc5eHhEbXk1MEI4TnorQXdDZ1lJS29aSXpqMEVBd0lEU0FBd1JRSWhBTVJJdDQ4VVM2bU9HdEVzalFEa29CYlMKanVWSWN1QU1qVWhWelprbHFKZ3hBaUE2RHNqemtzeDFLbnJOZS96cWx2bWIwM2hBV2xrcWRnUStKRksrMlhLSAp1UT09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+            key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUNVdDllbzAzbGlkZFMrR0JlR1h6dno0NHNvcG8wblY1azlrL2VKblZVU0lvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFMzU3aUNnNzBGVHVVR0Fxd0hFRHlKL1Q0TnZaYjl1Q05COHJ0RU9HWEFhZW9aSFlJc3RuMQorNFdmVGp0S0xveDNSck9oMG1pRytDNjYwTkhQeUlURldRPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
+        
+        # image: gcr.io/etcd-development/etcd:v3.5.21
+
+        # advertisedSubnets:
+        #     - 10.0.0.0/8
+    extraManifests: []
+    #   - https://www.example.com/manifest1.yaml
+    #   - https://www.example.com/manifest2.yaml
+
+    inlineManifests: []
+    #   - name: namespace-ci
+    #     contents: |-
+    #       apiVersion: v1
+    #       kind: Namespace
+    #       metadata:
+    #       	name: ci
+
+    
+    # # Decryption secret example (do not use in production!).
+    # aescbcEncryptionSecret: z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
+
+    # coreDNS:
+    #     image: registry.k8s.io/coredns/coredns:v1.12.1
+
+    # externalCloudProvider:
+    #     enabled: true
+    #     manifests:
+    #         - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml
+    #         - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml
+
+    # extraManifestHeaders:
+    #     Token: "1234567"
+    #     X-ExtraInfo: info
+
+    # adminKubeconfig:
+    #     certLifetime: 1h0m0s
+
+    # allowSchedulingOnControlPlanes: true
