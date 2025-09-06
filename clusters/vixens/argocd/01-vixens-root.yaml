@@ -1,22 +1,21 @@
 # clusters/vixens/argocd/01-root-app.yaml
 ---
+# Application ROOT qui déploie tout le reste
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: vixens
+  name: vixens-root
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: vixens
+  project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
     path: clusters/vixens/argocd/apps
   destination:
     server: https://kubernetes.default.svc
-    # --- LA CORRECTION EST ICI ---
-    # La destination des objets Application enfants est le namespace argocd
     namespace: argocd
   syncPolicy:
     automated:
