@@ -1,6 +1,5 @@
-# clusters/vixens/argocd/01-root-app.yaml
+# clusters/vixens/argocd/01-vixens-root.yaml
 ---
-# Application ROOT qui déploie tout le reste
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -9,10 +8,10 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: default
+  project: vixens
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: HEAD  # ← important : suit la branche actuelle
     path: clusters/vixens/argocd/apps
   destination:
     server: https://kubernetes.default.svc
