@@ -1,0 +1,357 @@
+apiVersion: v1
+items:
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/admin-user
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/admin-user"},"finalizers":["resources-finalizer.argocd.argoj.io"],"name":"admin-user","namespace":"argocd"},"spec":{"destination":{"namespace":"kube-system","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"path":"base/admin-user","repoURL":"https://github.com/charchess/vixens.git","targetRevision":"dev"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}
+    creationTimestamp: "2025-09-05T23:15:12Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:28Z"
+    finalizers:
+    - resources-finalizer.argocd.argoj.io
+    generation: 201
+    name: admin-user
+    namespace: argocd
+    resourceVersion: "3475047"
+    uid: e05925f2-4e59-486e-97c6-df6855accd15
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/argocd
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/argocd"},"finalizers":["resources-finalizer.argocd.argoproj.io"],"name":"argocd","namespace":"argocd"},"spec":{"destination":{"namespace":"argocd","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"chart":"argo-cd","helm":{"values":"server:\n  metrics:\n    enabled: true\n    service:\n      enabled: true\n      annotations:\n        prometheus.io/scrape: \"true\"\n        prometheus.io/port: \"8082\"\n        prometheus.io/path: \"/metrics\"\n\ncontroller:\n  metrics:\n    enabled: true\n    service:\n      enabled: true\n      annotations:\n        prometheus.io/scrape: \"true\"\n        prometheus.io/port: \"8083\"\n        prometheus.io/path: \"/metrics\"\n\nrepoServer:\n  metrics:\n    enabled: true\n    service:\n      enabled: true\n      annotations:\n        prometheus.io/scrape: \"true\"\n        prometheus.io/port: \"8084\"\n        prometheus.io/path: \"/metrics\"\n\napplicationSet:\n  metrics:\n    enabled: true\n    service:\n      enabled: true\n      annotations:\n        prometheus.io/scrape: \"true\"\n        prometheus.io/port: \"8080\"\n        prometheus.io/path: \"/metrics\"\n"},"repoURL":"https://argoproj.github.io/argo-helm","targetRevision":"8.3.1"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true},"syncOptions":["CreateNamespace=true"]}}}
+    creationTimestamp: "2025-09-06T14:45:47Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:28Z"
+    finalizers:
+    - resources-finalizer.argocd.argoproj.io
+    generation: 26
+    name: argocd
+    namespace: argocd
+    resourceVersion: "3475048"
+    uid: fd489f19-0dec-419e-9d1a-f39d4e05e474
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/argocd-config
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/argocd-config"},"finalizers":["resources-finalizer.argoproj.io"],"name":"argocd-config","namespace":"argocd"},"spec":{"destination":{"namespace":"argocd","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"path":"base/argocd-config","repoURL":"https://github.com/charchess/vixens.git","targetRevision":"dev"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}
+    creationTimestamp: "2025-09-05T23:15:12Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:28Z"
+    finalizers:
+    - resources-finalizer.argoproj.io
+    generation: 251
+    name: argocd-config
+    namespace: argocd
+    resourceVersion: "3475049"
+    uid: 0745fc14-6908-4699-a26d-31026ae8ff24
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/cilium
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/cilium"},"finalizers":["resources-finalizer.argocd.argoproj.io"],"name":"cilium","namespace":"argocd"},"spec":{"destination":{"namespace":"kube-system","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"chart":"cilium","helm":{"values":"hubble:\n  enabled: true\n  ui:\n    enabled: true\n    # Cette section garantit que le service pour l'UI est créé\n    # et que l'Ingress pourra le trouver.\n    service:\n      type: ClusterIP\n      # Le port par défaut est 80. L'ingress s'y connectera.\n"},"repoURL":"https://helm.cilium.io/","targetRevision":"1.18.1"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}
+    creationTimestamp: "2025-09-05T22:12:15Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:28Z"
+    finalizers:
+    - resources-finalizer.argocd.argoproj.io
+    generation: 286
+    name: cilium
+    namespace: argocd
+    resourceVersion: "3475050"
+    uid: f3cda787-435c-4ae2-9903-c332559906b6
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/external-homeassistant
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/external-homeassistant"},"finalizers":["resources-finalizer.argoproj.io"],"name":"external-homeassistant","namespace":"argocd"},"spec":{"destination":{"namespace":"default","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"path":"base/external-homeassistant","repoURL":"https://github.com/charchess/vixens.git","targetRevision":"dev"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}
+    creationTimestamp: "2025-09-05T23:15:12Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:28Z"
+    finalizers:
+    - resources-finalizer.argoproj.io
+    generation: 203
+    name: external-homeassistant
+    namespace: argocd
+    resourceVersion: "3475051"
+    uid: 8fb2873a-cc7a-46ce-8397-fe0045ddbfc1
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/external-synelia
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/external-synelia"},"finalizers":["resources-finalizer.argoproj.io"],"name":"external-synelia","namespace":"argocd"},"spec":{"destination":{"namespace":"default","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"path":"base/external-synelia","repoURL":"https://github.com/charchess/vixens.git","targetRevision":"dev"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}
+    creationTimestamp: "2025-09-05T23:15:12Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:28Z"
+    finalizers:
+    - resources-finalizer.argoproj.io
+    generation: 201
+    name: external-synelia
+    namespace: argocd
+    resourceVersion: "3475052"
+    uid: ecd98c35-bccf-490e-9048-3e24ebd0980d
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/headlamp
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/headlamp"},"finalizers":["resources-finalizer.argoproj.io"],"name":"headlamp","namespace":"argocd"},"spec":{"destination":{"namespace":"headlamp","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"chart":"headlamp","helm":{"values":"insecure: true\n# On garde les tolérances pour vos nœuds control-plane\ntolerations:\n  - key: \"node-role.kubernetes.io/control-plane\"\n    operator: \"Exists\"\n    effect: \"NoSchedule\"\n"},"repoURL":"https://kubernetes-sigs.github.io/headlamp/","targetRevision":"0.34.0"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true},"syncOptions":["CreateNamespace=true"]}}}
+    creationTimestamp: "2025-09-05T23:15:12Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:28Z"
+    finalizers:
+    - resources-finalizer.argoproj.io
+    generation: 199
+    name: headlamp
+    namespace: argocd
+    resourceVersion: "3475054"
+    uid: feecbc91-5546-4ac4-b95c-3792fce11fb9
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/headlamp-ingress
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/headlamp-ingress"},"finalizers":["resources-finalizer.argocd.argoproj.io"],"name":"headlamp-ingress","namespace":"argocd"},"spec":{"destination":{"namespace":"headlamp","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"path":"base/headlamp","repoURL":"https://github.com/charchess/vixens.git","targetRevision":"dev"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true},"syncOptions":["CreateNamespace=true"]}}}
+    creationTimestamp: "2025-09-05T22:12:15Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:29Z"
+    finalizers:
+    - resources-finalizer.argocd.argoproj.io
+    generation: 230
+    name: headlamp-ingress
+    namespace: argocd
+    resourceVersion: "3475055"
+    uid: 0c77497d-5cf0-4778-ada8-82d24f2e82a9
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/hubble-ingress
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/hubble-ingress"},"finalizers":["resources-finalizer.argocd.argoproj.io"],"name":"hubble-ingress","namespace":"argocd"},"spec":{"destination":{"namespace":"kube-system","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"path":"base/hubble","repoURL":"https://github.com/charchess/vixens.git","targetRevision":"dev"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}
+    creationTimestamp: "2025-09-05T22:12:15Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:29Z"
+    finalizers:
+    - resources-finalizer.argocd.argoproj.io
+    generation: 226
+    name: hubble-ingress
+    namespace: argocd
+    resourceVersion: "3475056"
+    uid: b85ba0f7-6da3-4631-8272-1bcc3afd2267
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/metallb
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/metallb"},"finalizers":["resources-finalizer.argocd.argoproj.io"],"name":"metallb","namespace":"argocd"},"spec":{"destination":{"namespace":"metallb-system","server":"https://kubernetes.default.svc"},"ignoreDifferences":[{"group":"metallb.io","jsonPointers":["/webhooks/clientConfig/caBundle"],"kind":"BGPAdvertisement"},{"group":"metallb.io","jsonPointers":["/spec/caBundle"],"kind":"BGPPeer"}],"project":"vixens","source":{"chart":"metallb","helm":{"values":"# Vos tolerations pour que les pods tournent sur les control-planes\ncontroller:\n  tolerations:\n    - key: \"node-role.kubernetes.io/control-plane\"\n      operator: \"Exists\"\n      effect: \"NoSchedule\"\nspeaker:\n  tolerations:\n    - key: \"node-role.kubernetes.io/control-plane\"\n      operator: \"Exists\"\n      effect: \"NoSchedule\"\n"},"repoURL":"https://metallb.github.io/metallb","targetRevision":"0.14.5"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true},"syncOptions":["CreateNamespace=true"]}}}
+    creationTimestamp: "2025-09-05T22:12:21Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:29Z"
+    finalizers:
+    - resources-finalizer.argocd.argoproj.io
+    generation: 995
+    name: metallb
+    namespace: argocd
+    resourceVersion: "3475057"
+    uid: 4980a8c0-7539-4a3b-8d49-6f95177d418f
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/metallb-config
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/metallb-config"},"finalizers":["resources-finalizer.argocd.argoproj.io"],"name":"metallb-config","namespace":"argocd"},"spec":{"destination":{"namespace":"metallb-system","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"path":"base/metallb","repoURL":"https://github.com/charchess/vixens.git","targetRevision":"dev"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}
+    creationTimestamp: "2025-09-05T22:12:13Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:29Z"
+    finalizers:
+    - resources-finalizer.argocd.argoproj.io
+    generation: 239
+    name: metallb-config
+    namespace: argocd
+    resourceVersion: "3475058"
+    uid: e54e4fc3-1910-4c72-b9d5-9c87e2de725b
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/monitoring-ingress
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/monitoring-ingress"},"finalizers":["resources-finalizer.argoproj.io"],"name":"monitoring-ingress","namespace":"argocd"},"spec":{"destination":{"namespace":"monitoring","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"path":"base/monitoring","repoURL":"https://github.com/charchess/vixens.git","targetRevision":"dev"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}
+    creationTimestamp: "2025-09-05T23:15:11Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:29Z"
+    finalizers:
+    - resources-finalizer.argoproj.io
+    generation: 204
+    name: monitoring-ingress
+    namespace: argocd
+    resourceVersion: "3475059"
+    uid: 2d6357a2-5555-425b-a16e-eb43be4ae84c
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/nfs-storage
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/nfs-storage"},"finalizers":["resources-finalizer.argoproj.io"],"name":"nfs-storage","namespace":"argocd"},"spec":{"destination":{"namespace":"media-stack","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"path":"base/nfs-storage","repoURL":"https://github.com/charchess/vixens.git","targetRevision":"dev"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true},"syncOptions":["CreateNamespace=true"]}}}
+    creationTimestamp: "2025-09-05T23:15:12Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:29Z"
+    finalizers:
+    - resources-finalizer.argoproj.io
+    generation: 201
+    name: nfs-storage
+    namespace: argocd
+    resourceVersion: "3475060"
+    uid: c2850c4d-3139-4ad8-8556-eff22b70bc8a
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/traefik
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/traefik"},"finalizers":["resources-finalizer.argocd.argoproj.io"],"name":"traefik","namespace":"argocd"},"spec":{"destination":{"namespace":"traefik","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"chart":"traefik","helm":{"values":"service:\n  type: LoadBalancer\n  loadBalancerIP: \"192.168.200.70\"\n  annotations:\n    metallb.universe.tf/address-pool: ingress-pool\nports:\n  web:\n    port: 80\n    expose: {}\n  websecure:\n    port: 443\n    expose: {}\n  traefik:\n    port: 9000\n    expose: {}\n    protocol: TCP\ningressRoute:\n  dashboard:\n    enabled: true\n    matchRule: Host(`traefik.truxonline.com`) \u0026\u0026 PathPrefix(`/`)\n    entryPoints: [\"websecure\"]\n    tls:\n      certResolver: letsencrypt-gandi-prod\n    services:\n      - name: api@internal\n        kind: TraefikService\n\nadditionalArguments:\n  - \"--providers.kubernetescrd.allowExternalNameServices=true\"\n\ndashboard:\n  enabled: true\n\ntolerations:\n  - key: \"node-role.kubernetes.io/control-plane\"\n    operator: \"Exists\"\n    effect: \"NoSchedule\"\n\npodSecurityContext:\n  seccompProfile:\n    type: RuntimeDefault\n\nsecurityContext:\n  allowPrivilegeEscalation: false\n  capabilities:\n    drop:\n      - ALL\n  runAsNonRoot: true\n"},"repoURL":"https://helm.traefik.io/traefik","targetRevision":"34.0.0"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true},"syncOptions":["CreateNamespace=true"]}}}
+    creationTimestamp: "2025-09-05T22:12:39Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:29Z"
+    finalizers:
+    - resources-finalizer.argocd.argoproj.io
+    generation: 235
+    name: traefik
+    namespace: argocd
+    resourceVersion: "3475063"
+    uid: 879db761-21ae-442a-94d9-2d0467d2929d
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: vixens:argoproj.io/Application:argocd/traefik-ingress
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"vixens:argoproj.io/Application:argocd/traefik-ingress"},"finalizers":["resources-finalizer.argocd.argroj.io"],"name":"traefik-ingress","namespace":"argocd"},"spec":{"destination":{"namespace":"traefik","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"path":"base/traefik","repoURL":"https://github.com/charchess/vixens.git","targetRevision":"dev"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}
+    creationTimestamp: "2025-09-05T23:15:12Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:29Z"
+    finalizers:
+    - resources-finalizer.argocd.argroj.io
+    generation: 203
+    name: traefik-ingress
+    namespace: argocd
+    resourceVersion: "3475064"
+    uid: 14a157ff-303b-4a07-aab8-145fef866db6
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{},"finalizers":["resources-finalizer.argocd.argoproj.io"],"name":"vixens","namespace":"argocd"},"spec":{"destination":{"namespace":"argocd","server":"https://kubernetes.default.svc"},"project":"vixens","source":{"path":"clusters/vixens/argocd/apps","repoURL":"https://github.com/charchess/vixens.git","targetRevision":"dev"},"syncPolicy":{"automated":{"prune":true,"selfHeal":true},"syncOptions":["CreateNamespace=true"]}}}
+    creationTimestamp: "2025-09-05T22:58:46Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:29Z"
+    finalizers:
+    - resources-finalizer.argocd.argoproj.io
+    generation: 279
+    name: vixens
+    namespace: argocd
+    resourceVersion: "3475065"
+    uid: fc8dc3c7-df44-43dc-b424-dd788e28541b
+  spec:
+    destination: {}
+    project: vixens
+    source: {}
+- apiVersion: argoproj.io/v1alpha1
+  kind: AppProject
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"argoproj.io/v1alpha1","kind":"AppProject","metadata":{"annotations":{},"finalizers":["resources-finalizer.argoproj.io"],"name":"vixens","namespace":"argocd"},"spec":{"clusterResourceWhitelist":[{"group":"*","kind":"*"}],"description":"Project for the vixens cluster applications","destinations":[{"namespace":"*","server":"*"}],"sourceRepos":["*"]}}
+    creationTimestamp: "2025-09-05T22:12:09Z"
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: "2025-09-06T14:55:28Z"
+    finalizers:
+    - resources-finalizer.argoproj.io
+    generation: 2
+    name: vixens
+    namespace: argocd
+    resourceVersion: "3475046"
+    uid: a60f60d7-cc27-43e9-b236-af9e4d83649d
+  spec: {}
+kind: List
+metadata:
+  resourceVersion: ""

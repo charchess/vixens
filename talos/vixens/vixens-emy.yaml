@@ -1,0 +1,46 @@
+# vixens-emy.yaml
+machine:
+  type: controlplane
+  certSANs: ["192.168.111.65", "192.168.200.65"]
+  kubelet:
+    image: ghcr.io/siderolabs/kubelet:v1.30.0
+    clusterDNS: ["10.96.0.10"]
+    nodeIP:
+      validSubnets: ["192.168.111.0/24", "192.168.200.0/24"]
+  network:
+    hostname: emy
+    interfaces:
+      - interface: enp3s0
+        vlans:
+          - vlanId: 200
+            dhcp: false
+            addresses: ["192.168.200.65/24"]
+            routes:
+              - network: 0.0.0.0/0
+                gateway: 192.168.200.1
+          - vlanId: 111
+            dhcp: false
+            addresses: ["192.168.111.65/24"]
+            vip:
+              ip: 192.168.111.60
+  install:
+    disk: /dev/nvme0n1
+    
+#  files:
+#    - op: create
+#      path: /var/etc/iscsi/initiatorname.iscsi
+#      permissions: 0o600
+#      content: |
+#        InitiatorName=iqn.2017-11.dev.talos:494e9791d5f66a852806d70ea21a82de
+#    - op: create
+#      path: /var/etc/iscsi/send_targets
+#      permissions: 0o644
+#      content: |
+#        # BEGIN RECORD 2.0-873
+#        discovery.startup = manual
+#        discovery.type = sendtargets
+#        discovery.sendtargets.address = 192.168.111.69
+#        discovery.sendtargets.port = 3260
+#        discovery.sendtargets.auth.authmethod = None
+#        # END RECORD
+            
