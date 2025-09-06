@@ -1,27 +1,50 @@
 # clusters/vixens/argocd/00-vixens-project.yaml
 ---
-# clusters/vixens/argocd/00-vixens-project.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: AppProject
+apiVersion: v1
+kind: Namespace
 metadata:
-  name: vixens
-  namespace: argocd
-  finalizers:
-    - resources-finalizer.argoproj.io
+  name: argocd
+---
+# CRDs ArgoCD
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: applications.argoproj.io
 spec:
-  description: "Project for the vixens cluster applications"
-
-  # La source de vérité est notre dépôt Git
-  sourceRepos:
-    - '*'
-
-  # La destination est le cluster local
-  destinations:
-    - server: '*'
-      namespace: '*'
-
-
-  # Autoriser tous les types de ressources
-  clusterResourceWhitelist:
-    - group: '*'
-      kind: '*'
+  group: argoproj.io
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              source:
+                type: object
+              destination:
+                type: object
+              project:
+                type: string
+  scope: Namespaced
+  names:
+    plural: applications
+    singular: application
+    kind: Application
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: appprojects.argoproj.io
+spec:
+  group: argoproj.io
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
