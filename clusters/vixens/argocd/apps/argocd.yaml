@@ -15,14 +15,12 @@ spec:
     targetRevision: "8.3.1"
     helm:
       values: |
-        # Configuration des métriques basée sur la structure officielle du values.yaml
-        # On active les métriques pour chaque composant
         server:
           metrics:
             enabled: true
             service:
               enabled: true
-              annotations:                 # <-- doit être ici
+              annotations:
                 prometheus.io/scrape: "true"
                 prometheus.io/port: "8082"
                 prometheus.io/path: "/metrics"
@@ -46,12 +44,16 @@ spec:
                 prometheus.io/scrape: "true"
                 prometheus.io/port: "8084"
                 prometheus.io/path: "/metrics"
-        
+
         applicationSet:
           metrics:
             enabled: true
             service:
               enabled: true
+              annotations:
+                prometheus.io/scrape: "true"
+                prometheus.io/port: "8080"
+                prometheus.io/path: "/metrics"
 
   destination:
     server: https://kubernetes.default.svc
