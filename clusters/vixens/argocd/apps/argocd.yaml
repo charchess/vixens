@@ -17,6 +17,16 @@ spec:
       values: |
         # Configuration des métriques basée sur la structure officielle du values.yaml
         # On active les métriques pour chaque composant
+        server:
+          metrics:
+            enabled: true
+            service:
+              enabled: true
+              annotations:                 # <-- doit être ici
+                prometheus.io/scrape: "true"
+                prometheus.io/port: "8082"
+                prometheus.io/path: "/metrics"
+
         controller:
           metrics:
             enabled: true
@@ -26,26 +36,6 @@ spec:
                 prometheus.io/scrape: "true"
                 prometheus.io/port: "8083"
                 prometheus.io/path: "/metrics"
-            serviceMonitor:
-              enabled: true
-              namespace: monitoring
-              additionalLabels:
-                release: prometheus
-
-        server:
-          metrics:
-            enabled: true
-              annotations:
-                prometheus.io/scrape: "true"
-                prometheus.io/port: "8082"
-                prometheus.io/path: "/metrics"
-            service:
-              enabled: true
-            serviceMonitor:
-              enabled: true
-              namespace: monitoring
-              additionalLabels:
-                release: prometheus
 
         repoServer:
           metrics:
@@ -56,25 +46,13 @@ spec:
                 prometheus.io/scrape: "true"
                 prometheus.io/port: "8084"
                 prometheus.io/path: "/metrics"
-            serviceMonitor:
-              enabled: true
-              namespace: monitoring
-              additionalLabels:
-                release: prometheus
-
+        
         applicationSet:
           metrics:
             enabled: true
             service:
               enabled: true
-            serviceMonitor:
-              enabled: true
-              namespace: monitoring
-              additionalLabels:
-                release: prometheus
-        server:
-          extraArgs:
-            - --insecure
+
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
