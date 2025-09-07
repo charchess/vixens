@@ -1,24 +1,24 @@
-# clusters/vixens/argocd/apps/hubble-ingress.yaml
+# clusters/vixens/argocd/apps/cilium-replace.yaml
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: hubble-ingress
+  name: cilium-config
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   project: vixens
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
-    path: base/hubble
+    path: base/cilium
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
   syncPolicy:
     automated:
-      prune: true
-      selfHeal: true
+      prune: false
+      selfHeal: false

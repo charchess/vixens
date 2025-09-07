@@ -7,6 +7,9 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   project: vixens
   source:
@@ -14,16 +17,44 @@ spec:
     chart: cilium
     targetRevision: "1.18.1"
     helm:
+      releaseName: cilium
       values: |
+        # Configuration IDENTIQUE à cilium-values.yaml
+        ipam:
+          operator:
+            clusterPoolIPv4PodCIDRList:
+            - 10.244.0.0/16
+        
+        k8sServiceHost: 192.168.111.160
+        k8sServicePort: 6443
+        
+        kubeProxyReplacement: true
+        
+        operator:
+          replicas: 1
+        
+        securityContext:
+          privileged: true
+        
+        routingMode: tunnel
+        
+        bpf:
+          masquerade: true
+        
         hubble:
           enabled: true
           ui:
             enabled: true
-            # Cette section garantit que le service pour l'UI est créé
-            # et que l'Ingress pourra le trouver.
-            service:
-              type: ClusterIP
-              # Le port par défaut est 80. L'ingress s'y connectera.
+            tolerations:
+              - key: "node-role.kubernetes.io/control-plane"
+                operator: "Exists"
+                effect: "NoSchedule"
+          relay:
+            enabled: true
+            tolerations:
+              - key: "node-role.kubernetes.io/control-plane"
+                operator: "Exists"
+                effect: "NoSchedule"
 
   destination:
     server: https://kubernetes.default.svc
@@ -32,3 +63,13 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+      - Replace=true
+      - SkipDryRunOnMissingResource=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
