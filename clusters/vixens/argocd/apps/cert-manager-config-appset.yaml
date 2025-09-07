@@ -20,6 +20,8 @@ spec:
   template:
     metadata:
       name: 'cert-manager-config-{{env}}'
+      labels:
+        env: '{{env}}'  # ← ajoute ce label
     spec:
       project: vixens
       source:
