@@ -1,25 +1,32 @@
+# base/argocd/ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: argocd-server-ingress
+  name: argocd-server
   namespace: argocd
   annotations:
+    # L'Issuer que cert-manager doit utiliser
     cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
+    # L'entryPoint Traefik pour le HTTPS (typo corrigée)
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   ingressClassName: traefik
+  # --- AJOUT : Le bloc TLS crucial ---
+  # Ce bloc fait le lien entre le nom d'hôte et le Secret qui contiendra le certificat.
+  # Cert-manager lira cette section pour savoir quel certificat créer et où le stocker.
+  # Traefik lira cette section pour savoir quel certificat utiliser pour le HTTPS.
   tls:
-  - hosts:
-    - argocd.truxonline.com
-    secretName: argocd-server-tls
+    - hosts:
+        - argocd.truxonline.com
+      secretName: argocd-tls # Nom du Secret qui sera créé par cert-manager
   rules:
-  - host: argocd.truxonline.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: argocd-server
-            port:
-              number: 80
+    - host: argocd.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
