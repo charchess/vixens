@@ -1,0 +1,26 @@
+# base/external-synelia/templates/ingress.yaml
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-https
+  namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.clusterIssuer | default "letsencrypt-gandi-dev" | quote }}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.host }}
+      secretName: {{ .Values.tlsSecret }}
+  rules:
+    - host: {{ .Values.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.serviceName }}
+                port:
+                  number: {{ .Values.servicePort }}

@@ -1,0 +1,8 @@
+# base/external-synelia/Chart.yaml
+---
+apiVersion: v2
+name: argocd
+description: argocd external Ingress
+type: application
+version: 0.1.0
+appVersion: "1.0"
