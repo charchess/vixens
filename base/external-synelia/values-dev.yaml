@@ -1,0 +1,7 @@
+# base/external-synelia/values-dev.yaml
+---
+clusterIssuer: letsencrypt-gandi-dev
+host: synelia.truxonline.com
+tlsSecret: synelia-tls
+serviceName: synelia-ext
+servicePort: 5000
