@@ -20,5 +20,5 @@ data:
   deployment.enabled: "true"
   ingress.domain: "truxonline.com"
   tls.issuer: "letsencrypt-gandi-prod"
-  storage.class: "synology-csi"
+  storage.class: "synelia-iscsi"
   monitoring.enabled: "true"
