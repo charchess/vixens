@@ -7,29 +7,32 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - list:
-        elements:
-          - cluster: vixens-dev
-            env: dev
-            server: https://kubernetes.default.svc
-          - cluster: vixens
-            env: prod
-            server: https://kubernetes.default.svc
-
+    - matrix:
+        generators:
+          # Fichiers plats au lieu de dossiers
+          - git:
+              repoURL: https://github.com/charchess/vixens.git
+              revision: HEAD
+              files:
+                - path: "clusters/cluster-config-{{name}}.yaml"
+          
+          - list:
+              elements:
+                - filter: "{{cluster.active}}"
   template:
     metadata:
-      name: 'external-homeassistant-{{env}}'
+      name: 'external-homeassistant-{{cluster.environment}}'
     spec:
       project: vixens
       source:
-        repoURL: https://github.com/charchess/vixens.git
-        targetRevision: dev
+        repoURL: '{{git.repoURL}}'
+        targetRevision: '{{git.targetRevision}}'
         path: base/external-homeassistant
         helm:
           valueFiles:
-            - values-{{env}}.yaml
+            - values-{{cluster.environment}}.yaml
       destination:
-        server: '{{server}}'
+        server: '{{cluster.server}}'
         namespace: default
       syncPolicy:
         automated:

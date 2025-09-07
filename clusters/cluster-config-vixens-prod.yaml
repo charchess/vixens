@@ -1,0 +1,24 @@
+# clusters/cluster-config-vixens.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-config
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: vixens
+    app.kubernetes.io/component: cluster-config
+data:
+  cluster.name: "vixens"
+  cluster.environment: "prod"
+  cluster.type: "production"
+  cluster.server: "https://kubernetes.default.svc"
+  cluster.region: "home"
+  cluster.active: "true"
+  git.targetRevision: "main"
+  git.repoURL: "https://github.com/charchess/vixens.git"
+  deployment.enabled: "true"
+  ingress.domain: "truxonline.com"
+  tls.issuer: "letsencrypt-gandi-prod"
+  storage.class: "synology-csi"
+  monitoring.enabled: "true"
