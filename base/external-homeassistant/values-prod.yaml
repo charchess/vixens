@@ -1,0 +1,7 @@
+# base/external-homeassistant/values-prod.yaml
+---
+clusterIssuer: letsencrypt-gandi-prod  # DNS-01 Gandi
+host: homeassistant.truxonline.com
+tlsSecret: homeassistant-tls
+serviceName: homeassistant-ext
+servicePort: 8123
