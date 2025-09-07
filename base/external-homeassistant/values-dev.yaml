@@ -1,6 +1,6 @@
 # base/external-homeassistant/values-dev.yaml
 ---
-clusterIssuer: letsencrypt-gandi-dev   # self-signed
+clusterIssuer: letsencrypt-gandi-dev
 host: homeassistant.truxonline.com
 tlsSecret: homeassistant-tls
 serviceName: homeassistant-ext
