@@ -9,5 +9,9 @@ resources:
   - ../../base/cert-manager
   - clusterissuer-dev.yaml
 
-patchesStrategicMerge:
-  - clusterissuer-dev.yaml
+patches:
+  - path: ingress-issuer-patch.yaml
+    target:
+      group: networking.k8s.io
+      version: v1
+      kind: Ingress
