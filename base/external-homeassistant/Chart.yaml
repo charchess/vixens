@@ -1,0 +1,8 @@
+# base/external-homeassistant/Chart.yaml
+---
+apiVersion: v2
+name: external-homeassistant
+description: Home-assistant external Ingress
+type: application
+version: 0.1.0
+appVersion: "1.0"
