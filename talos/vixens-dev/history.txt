@@ -1,0 +1,19 @@
+export CLUSTER_NAME=vixens-dev
+export ENDPOINT_IP=192.168.208.84
+export INSTALLER=factory.talos.dev/metal-installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.0
+
+talosctl gen secrets -o secrets.yaml
+talosctl gen config --with-secrets secrets.yaml "$CLUSTERNAME" "https://$ENDPOINT_IP:6443" --install-image="$INSTALLER"
+
+talosctl apply-config --insecure -n 192.168.208.82 -e 192.168.208.82 -f controlplane.yaml --config-patch @vixens-dev-onyx.yaml
+talosctl apply-config --insecure -n 192.168.208.83 -e 192.168.208.83 -f controlplane.yaml --config-patch @vixens-dev-obsy.yaml
+talosctl apply-config --insecure -n 192.168.208.84 -e 192.168.208.84 -f controlplane.yaml --config-patch @vixens-dev-opale.yaml
+
+talosctl config endpoint 192.168.111.160
+
+talosctl -n 192.168.208.163 bootstrap --talosconfig ./talosconfig
+
+# penser a virer les taints controlplane ...
+
+untaint-control-plane.sh
+./clusters/vixens/argocd/bootstrap.sh dev

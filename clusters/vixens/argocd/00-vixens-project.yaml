@@ -5,96 +5,18 @@ kind: Namespace
 metadata:
   name: argocd
 ---
-# CRD Application officiel COMPLET v2.11.2
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
 metadata:
-  name: applications.argoproj.io
+  name: vixens
+  namespace: argocd
 spec:
-  group: argoproj.io
-  versions:
-  - name: v1alpha1
-    served: true
-    storage: true
-    schema:
-      openAPIV3Schema:
-        description: Application is a definition of Application resource.
-        type: object
-        properties:
-          spec:
-            description: ApplicationSpec defines the desired state of Application.
-            type: object
-            properties:
-              source:
-                description: Source is a reference to the location of the application's manifests.
-                type: object
-                properties:
-                  repoURL:
-                    description: RepoURL is the URL to the repository (Git or Helm) that contains the application manifests.
-                    type: string
-                  path:
-                    description: Path is a directory path within the Git repository.
-                    type: string
-                  targetRevision:
-                    description: TargetRevision defines the revision of the source to sync the application to.
-                    type: string
-              destination:
-                description: Destination is a reference to the target cluster and namespace.
-                type: object
-                properties:
-                  server:
-                    description: Server specifies the URL of the target cluster and must be set to the Kubernetes control plane API.
-                    type: string
-                  namespace:
-                    description: Namespace specifies the target namespace for the application's resources.
-                    type: string
-              project:
-                description: Project is a reference to the project this application belongs to.
-                type: string
-              syncPolicy:
-                description: SyncPolicy controls when and how a sync will be performed.
-                type: object
-                properties:
-                  automated:
-                    description: Automated will keep an application synced to the target revision.
-                    type: object
-                    properties:
-                      prune:
-                        type: boolean
-                      selfHeal:
-                        type: boolean
-                  syncOptions:
-                    description: SyncOptions configure how to sync.
-                    type: array
-                    items:
-                      type: string
-  scope: Namespaced
-  names:
-    plural: applications
-    singular: application
-    kind: Application
-    listKind: ApplicationList
----
-# CRD AppProject officiel (court suffit)
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: appprojects.argoproj.io
-spec:
-  group: argoproj.io
-  versions:
-  - name: v1alpha1
-    served: true
-    storage: true
-    schema:
-      openAPIV3Schema:
-        type: object
-        properties:
-          spec:
-            type: object
-  scope: Namespaced
-  names:
-    plural: appprojects
-    singular: appproject
-    kind: AppProject
-    listKind: AppProjectList
+  sourceRepos:
+    - 'https://github.com/charchess/vixens.git'
+    - '*'
+  destinations:
+    - namespace: '*'
+      server: 'https://kubernetes.default.svc'
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"

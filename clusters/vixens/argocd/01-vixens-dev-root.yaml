@@ -11,11 +11,11 @@ spec:
   project: vixens
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: HEAD  # ← important : suit la branche actuelle
+    targetRevision: dev  # ← important : suit la branche actuelle
     path: clusters/vixens/argocd/apps
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd
+    namespace: 'vixens'
   syncPolicy:
     automated:
       prune: true
