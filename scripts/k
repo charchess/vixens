@@ -8,6 +8,12 @@ GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
+init() {
+    ENV=$(current_env)
+    KUBECONFIG=~/vixens/kubeconfig-$ENV
+    NS=$(current_ns)
+}
+
 # ── Helpers ────────────────────────────────────────────────────────────
 
 current_ns() {
@@ -40,19 +46,21 @@ save_env() {
   fi
 }
 
+init
+
 # ── Commands ────────────────────────────────────────────────────────────
 
 case "${1:-}" in
-  set)
+  "")
+    echo -e "[ns: ${GREEN}$NS${NC}] [env: ${GREEN}$ENV${NC}] "
+  ;;
+  ns)
     [[ -z "${2:-}" ]] && { echo -e "${RED}Usage: k set <namespace>${NC}" >&2; exit 1; }
     save_ns "$2"
     ;;
   env)
     [[ -z "${2:-}" ]] && { echo -e "${RED}Usage: k env <dev/prod>${NC}" >&2; exit 1; }
     save_env "$2"
-    ;;
-  ns|current)
-    echo -e "${GREEN}Namespace actuel : $(current_ns)${NC}"
     ;;
   reset)
     rm -f "$K_NAMESPACE_FILE"
@@ -67,6 +75,7 @@ case "${1:-}" in
     KUBECONFIG=~/vixens/kubeconfig-$ENV
     NS=$(current_ns)
     echo -e "[ns: ${GREEN}$NS${NC}] [env: ${GREEN}$ENV${NC}] kubectl $*" >&2
-    kubectl -n "$NS" "$@"
+    kubectl "$@" -n "$NS"
     ;;
 esac
+
