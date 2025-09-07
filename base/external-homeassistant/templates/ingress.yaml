@@ -6,7 +6,7 @@ metadata:
   name: homeassistant-https
   namespace: default
   annotations:
-    cert-manager.io/cluster-issuer: {{ .Values.clusterIssuer | quote }}
+    cert-manager.io/cluster-issuer: {{ .Values.clusterIssuer | default "letsencrypt-gandi-dev" | quote }}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   tls:
