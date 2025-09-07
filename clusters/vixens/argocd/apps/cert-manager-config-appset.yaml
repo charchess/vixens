@@ -9,7 +9,7 @@ spec:
   generators:
     - list:
         elements:
-          - cluster: vixens-prod
+          - cluster: vixens
             env: prod
             server: https://kubernetes.default.svc
 
