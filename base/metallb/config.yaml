@@ -7,8 +7,8 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-    # REMPLACEZ AVEC UNE PLAGE LIBRE DE VOTRE RÉSEAU
-    - 192.168.111.240-192.168.111.250
+    - 192.168.200.240-192.168.200.250
+    - 192.168.208.240-192.168.208.250
 ---
 apiVersion: metallb.io/v1beta1
 kind: L2Advertisement

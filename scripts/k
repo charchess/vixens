@@ -2,6 +2,7 @@
 set -euo pipefail
 
 K_NAMESPACE_FILE="${HOME}/.k_namespace"
+K_ENV_FILE="${HOME}/.k_env"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
@@ -11,6 +12,10 @@ NC='\033[0m' # No Color
 
 current_ns() {
   [[ -f "$K_NAMESPACE_FILE" ]] && cat "$K_NAMESPACE_FILE" || echo "default"
+}
+
+current_env() {
+  [[ -f "$K_ENV_FILE" ]] && cat "$K_ENV_FILE" || echo "dev"
 }
 
 save_ns() {
@@ -24,12 +29,27 @@ save_ns() {
   fi
 }
 
+save_env() {
+  local env="$1"
+  if [[ "$env" == "prod" || "$env" == "dev" ]]; then
+    echo "$env" > "$K_ENV_FILE"
+    echo -e "${GREEN}Environnement défini → $env${NC}"
+  else
+    echo -e "${RED}Environnement inconnu : $env${NC}" >&2
+    exit 1
+  fi
+}
+
 # ── Commands ────────────────────────────────────────────────────────────
 
 case "${1:-}" in
   set)
     [[ -z "${2:-}" ]] && { echo -e "${RED}Usage: k set <namespace>${NC}" >&2; exit 1; }
     save_ns "$2"
+    ;;
+  env)
+    [[ -z "${2:-}" ]] && { echo -e "${RED}Usage: k env <dev/prod>${NC}" >&2; exit 1; }
+    save_env "$2"
     ;;
   ns|current)
     echo -e "${GREEN}Namespace actuel : $(current_ns)${NC}"
@@ -43,8 +63,10 @@ case "${1:-}" in
     echo -e "${YELLOW}[dry-run] kubectl -n $(current_ns) $*${NC}"
     ;;
   *)
+    ENV=$(current_env)
+    KUBECONFIG=~/vixens/kubeconfig-$ENV
     NS=$(current_ns)
-    echo -e "${GREEN}[ns: $NS]${NC} kubectl $*" >&2
+    echo -e "[ns: ${GREEN}$NS${NC}] [env: ${GREEN}$ENV${NC}] kubectl $*" >&2
     kubectl -n "$NS" "$@"
     ;;
 esac
