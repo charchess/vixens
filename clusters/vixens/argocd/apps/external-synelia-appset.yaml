@@ -1,9 +1,9 @@
-# clusters/vixens/argocd/apps/external-homeassistant-appset.yaml
+# clusters/vixens/argocd/apps/external-synelia-appset.yaml
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: external-homeassistant
+  name: external-synelia
   namespace: argocd
 spec:
   generators:
@@ -18,13 +18,13 @@ spec:
 
   template:
     metadata:
-      name: 'external-homeassistant-{{env}}'
+      name: 'external-synelia-{{env}}'
     spec:
       project: vixens
       source:
         repoURL: https://github.com/charchess/vixens.git
         targetRevision: dev
-        path: base/external-homeassistant
+        path: base/external-synelia
         helm:
           valueFiles:
             - values-{{env}}.yaml
