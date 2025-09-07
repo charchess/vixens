@@ -1,5 +1,6 @@
 # clusters/vixens/argocd/apps/external-homeassistant-appset.yaml
 ---
+# clusters/vixens/argocd/apps/external-homeassistant.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -7,26 +8,22 @@ metadata:
   namespace: argocd
 spec:
   generators:
-    - matrix:
-        generators:
-          # Fichiers plats au lieu de dossiers
-          - git:
-              repoURL: https://github.com/charchess/vixens.git
-              revision: HEAD
-              files:
-                - path: "clusters/cluster-config-{{name}}.yaml"
-          
-          - list:
-              elements:
-                - filter: "{{cluster.active}}"
+    - git:
+        repoURL: https://github.com/charchess/vixens.git
+        revision: dev
+        files:
+          - path: "clusters/cluster-config-{{metadata.name}}.yaml"
+  
   template:
     metadata:
-      name: 'external-homeassistant-{{cluster.environment}}'
+      name: 'external-homeassistant'
+      labels:
+        app.kubernetes.io/name: external-homeassistant
     spec:
       project: vixens
       source:
-        repoURL: '{{git.repoURL}}'
-        targetRevision: '{{git.targetRevision}}'
+        repoURL: https://github.com/charchess/vixens.git
+        targetRevision: dev
         path: base/external-homeassistant
         helm:
           valueFiles:
