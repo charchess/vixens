@@ -1,0 +1,37 @@
+# clusters/vixens/argocd/apps/external-synelia-appset.yaml
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: external-synelia
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - cluster: vixens-dev
+            env: dev
+            server: https://kubernetes.default.svc
+          - cluster: vixens
+            env: prod
+            server: https://kubernetes.default.svc
+
+  template:
+    metadata:
+      name: 'argocd-{{env}}'
+    spec:
+      project: vixens
+      source:
+        repoURL: https://github.com/charchess/vixens.git
+        targetRevision: dev
+        path: base/argocd
+        helm:
+          valueFiles:
+            - values-{{env}}.yaml
+      destination:
+        server: '{{server}}'
+        namespace: default
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
