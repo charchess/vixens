@@ -1,0 +1,34 @@
+# vixens-dev-opale.yaml
+machine:
+  type: controlplane
+  certSANs:
+    - 192.168.111.163
+    - 192.168.208.163
+    - 192.168.111.160
+  kubelet:
+    image: ghcr.io/siderolabs/kubelet:v1.30.0
+    clusterDNS:
+      - 10.96.0.10
+    nodeIP:
+      validSubnets:
+        - 192.168.111.0/24
+        - 192.168.208.0/24
+  network:
+    hostname: opale
+    interfaces:
+      - interface: enx00155d00cb0b
+        dhcp: false
+        addresses:
+          - 192.168.208.163/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.208.1
+      - interface: enx00155d00cb0f
+        dhcp: false
+        addresses:
+          - 192.168.111.163/24
+        vip:
+          ip: 192.168.111.160
+  install:
+    disk: /dev/sda
+
