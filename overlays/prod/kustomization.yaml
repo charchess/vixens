@@ -1,10 +1,20 @@
-# overlays/prod/kustomization.yaml
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: cert-manager
-
 resources:
-  - ../../base/cert-manager
-  - clusterissuer-prod.yaml
+  - ../../base/external-homeassistant
+
+patches:
+  - target:
+      kind: Ingress
+      name: homeassistant
+    patch: |-
+      - op: add
+        path: /metadata/annotations/cert-manager.io~1cluster-issuer
+        value: letsencrypt-gandi-prod
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: homeassistant.truxonline.com
+      - op: replace
+        path: /spec/rules/0/host
+        value: homeassistant.truxonline.com
