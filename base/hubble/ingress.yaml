@@ -3,28 +3,26 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: hubble-ui-ingress
-  # Hubble est installé dans le namespace kube-system par le chart Cilium
+  name: hubble-ui
   namespace: kube-system
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - hubble.truxonline.com
-      secretName: hubble-tls
+        - hubble.vixens.local
+      secretName: hubble-ui-tls
   rules:
-    - host: hubble.truxonline.com
+    - host: hubble.vixens.local
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                # Le service créé par le chart Helm de Cilium
                 name: hubble-ui
                 port:
-                  # Le port exposé par le service hubble-ui
                   number: 80
