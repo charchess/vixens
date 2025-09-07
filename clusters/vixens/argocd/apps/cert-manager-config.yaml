@@ -1,0 +1,22 @@
+# clusters/vixens/argocd/apps/cert-manager-config.yaml
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager-config
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: vixens
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+    path: base/cert-manager
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
