@@ -1,21 +1,17 @@
-# base/external-services/homeassistant-ingress.yaml
----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: homeassistant-https
+  name: homeassistant
   namespace: default
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-gandi-prod"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
-  ingressClassName: traefik
   tls:
     - hosts:
-        - homeassistant.truxonline.com
+        - homeassistant.local
       secretName: homeassistant-tls
   rules:
-    - host: homeassistant.truxonline.com
+    - host: homeassistant.local
       http:
         paths:
           - path: /
