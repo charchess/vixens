@@ -1,66 +1,14 @@
 # clusters/vixens/argocd/apps/cilium.yaml
 ---
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: cilium
-  namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
-  project: vixens
   source:
     repoURL: https://helm.cilium.io/
     chart: cilium
     targetRevision: "1.18.1"
     helm:
-      releaseName: cilium
-      values: |
-        # Configuration actuelle (identique à votre cilium-values.yaml)
-        ipam:
-          operator:
-            clusterPoolIPv4PodCIDRList:
-            - 10.244.0.0/16
-        
-        k8sServiceHost: 192.168.111.60
-        k8sServicePort: 6443
-        
-        kubeProxyReplacement: true
-        
-        operator:
-          replicas: 1
-        
-        securityContext:
-          privileged: true
-        
-        routingMode: tunnel
-        
-        bpf:
-          masquerade: true
-        
-        hubble:
-          enabled: true
-          ui:
-            enabled: true
-            tolerations:
-              - key: "node-role.kubernetes.io/control-plane"
-                operator: "Exists"
-                effect: "NoSchedule"
-          relay:
-            enabled: true
-            tolerations:
-              - key: "node-role.kubernetes.io/control-plane"
-                operator: "Exists"
-                effect: "NoSchedule"
-
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: kube-system
-  syncPolicy:
-    automated:
-      prune: false
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=false
-      - Replace=false
+      valueFiles:
+        - $values/base/cilium/helm-values.yaml
+  sources:
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: dev
+      ref: values
