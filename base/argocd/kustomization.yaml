@@ -1,0 +1,21 @@
+# base/argocd/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+resources:
+  - namespace.yaml
+  - rbac.yaml
+  - configmap.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/name: argocd
+  app.kubernetes.io/part-of: argocd
+  app.kubernetes.io/managed-by: kustomize
+
+namePrefix: argocd-
