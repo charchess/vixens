@@ -29,6 +29,9 @@ machine:
           - 192.168.111.163/24
         vip:
           ip: 192.168.111.160
+    nameservers:
+      - 192.168.208.1
+      - 8.8.8.8
   install:
     disk: /dev/sda
 

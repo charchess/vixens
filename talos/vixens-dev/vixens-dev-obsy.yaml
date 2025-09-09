@@ -27,8 +27,11 @@ machine:
         dhcp: false
         addresses:
           - 192.168.111.162/24
-#        vip:
-#          ip: 192.168.111.160
+        vip:
+          ip: 192.168.111.160
+    nameservers:
+      - 192.168.208.1
+      - 8.8.8.8
   install:
     disk: /dev/sda
 

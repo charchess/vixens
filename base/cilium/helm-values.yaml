@@ -1,0 +1,20 @@
+# base/cilium/helm-values.yaml
+---
+k8sServiceHost: ${K8S_SERVICE_HOST}
+k8sServicePort: 6443
+ipam:
+  operator:
+    clusterPoolIPv4PodCIDRList:
+      - 10.244.0.0/16
+
+k8sServiceHost: ${K8S_SERVICE_HOST}
+k8sServicePort: 6443
+
+kubeProxyReplacement: true
+
+securityContext:
+  privileged: true
+
+routingMode: tunnel
+bpf:
+  masquerade: true
