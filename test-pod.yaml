@@ -1,0 +1,32 @@
+# test-pod-secure.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: network-test-pod
+  # On le met dans default pour le test, car c'est là que kubectl run essaie de le mettre
+  namespace: default
+spec:
+  # On ajoute la tolérance pour vos nœuds control-plane
+  tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
+  
+  # --- LE "COSTUME DE SÉCURITÉ" POUR PASSER LA POLITIQUE 'restricted' ---
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+
+  containers:
+    - name: netshoot-container
+      image: nicolaka/netshoot
+      # Cette commande garde le conteneur en vie
+      command: ["sleep", "infinity"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - "ALL"

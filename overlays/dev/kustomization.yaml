@@ -1,3 +1,5 @@
+# overlays/dev/kustomization.yaml
+---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
@@ -18,3 +20,17 @@ patches:
       - op: replace
         path: /spec/rules/0/host
         value: homeassistant.truxonline.com
+configMapGenerator:
+  - name: cilium-values
+    files:
+      - helm-values.yaml
+    options:
+      disableNameSuffixHash: true
+      vars:
+        - name: K8S_SERVICE_HOST
+          objref:
+            kind: ConfigMap
+            name: cluster-config
+            apiVersion: v1
+          fieldref:
+            fieldpath: data.K8S_SERVICE_HOST
