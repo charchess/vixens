@@ -1,5 +1,3 @@
-# overlays/dev/argocd/kustomization.yaml
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
@@ -7,28 +5,7 @@ resources:
   - ../../../base/argocd
 
 patches:
-  # Cert-manager issuer pour DEV
-  - target:
-      kind: Ingress
-      name: argocd-server
-    patch: |-
-      - op: add
-        path: /metadata/annotations/cert-manager.io~1cluster-issuer
-        value: letsencrypt-gandi-dev
-  
-  # Hostname DEV
-  - target:
-      kind: Ingress
-      name: argocd-server
-    patch: |-
-      - op: replace
-        path: /spec/tls/0/hosts/0
-        value: argocd-dev.truxonline.com
-      - op: replace
-        path: /spec/rules/0/host
-        value: argocd-dev.truxonline.com
-  
-  # Réplicas DEV (optionnel - plus léger)
+  # Utiliser les noms EXISTANTS du Helm
   - target:
       kind: Deployment
       name: argocd-server
@@ -37,11 +14,16 @@ patches:
         path: /spec/replicas
         value: 1
   
-  # Config URL DEV
   - target:
-      kind: ConfigMap
-      name: argocd-cm
+      kind: Ingress
+      name: argocd-server
     patch: |-
+      - op: add
+        path: /metadata/annotations/cert-manager.io~1cluster-issuer
+        value: letsencrypt-gandi-dev
       - op: replace
-        path: /data/url
-        value: "https://argocd-dev.truxonline.com"
+        path: /spec/tls/0/hosts/0
+        value: argocd-dev.truxonline.com
+      - op: replace
+        path: /spec/rules/0/host
+        value: argocd-dev.truxonline.com
