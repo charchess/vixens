@@ -1,8 +1,0 @@
-# overlays/dev/cluster-config.yaml
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cluster-config
-data:
-  K8S_SERVICE_HOST: "192.168.111.160"

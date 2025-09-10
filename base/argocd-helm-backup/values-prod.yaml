@@ -1,7 +1,0 @@
-# base/argocd/values-prod.yaml
----
-clusterIssuer: letsencrypt-gandi-prod
-host: argocd.truxonline.com
-tlsSecret: argocd-tls
-serviceName: argocd-server
-servicePort: 80
