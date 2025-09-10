@@ -1,9 +1,0 @@
-# base/longhorn/namespace.yaml
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: longhorn-system
-  # On ne garde QUE le label de sécurité Pod Security
-  labels:
-    pod-security.kubernetes.io/enforce: privileged
