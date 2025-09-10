@@ -1,0 +1,46 @@
+# clusters/vixens/argocd/apps/metallb.yaml
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: metallb
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: vixens
+  source:
+    repoURL: https://metallb.github.io/metallb
+    chart: metallb
+    targetRevision: "0.15.2"
+    helm:
+      values: |
+        # Vos tolerations pour que les pods tournent sur les control-planes
+        controller:
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
+        speaker:
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
+  ignoreDifferences:
+    - group: metallb.io
+      kind: BGPAdvertisement
+      jsonPointers:
+        - /webhooks/clientConfig/caBundle
+    - group: metallb.io
+      kind: BGPPeer
+      jsonPointers:
+        - /spec/caBundle
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: metallb-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
