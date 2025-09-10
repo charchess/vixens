@@ -114,4 +114,8 @@ untaint-control-plane.sh
 
 sleep 5
 # on installe la app of apps
-kubectl --kubeconfig $KUBECONFIG  apply -f ~/vixens/clusters/vixens/argocd/01-vixens-dev-root.yaml
+kubectl --kubeconfig $KUBECONFIG  apply -f ~/vixens/clusters/vixens/argocd/00-pre-argo-settings.yaml
+kubectl --kubeconfig $KUBECONFIG  apply -f ~/vixens/clusters/vixens/argocd/01-argo-install.yaml
+kubectl --kubeconfig $KUBECONFIG  apply -f ~/vixens/clusters/vixens/argocd/02-vixens-dev-root.yaml
+
+

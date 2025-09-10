@@ -1,0 +1,15 @@
+# clusters/vixens/argocd/00-vixens-project.yaml
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+  namespace: argocd
+data:
+  server.insecure: "true"
+  server.disable.auth: "true"
