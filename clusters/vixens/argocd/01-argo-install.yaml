@@ -16,5 +16,5 @@ spec:
     - group: "*"
       kind: "*"
   namespaceResourceWhitelist:
-  - group: "*"
-    kind: "*"
+    - group: "*"
+      kind: "*"
