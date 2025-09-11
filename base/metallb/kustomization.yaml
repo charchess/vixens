@@ -1,8 +1,16 @@
-# base/metallb/kustomization.yaml
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+namespace: metallb-system
+
 resources:
   - namespace.yaml
-  - config.yaml
+  - metallb-native.yaml          # CRDs + controller
+  - config.yaml                  # Configuration IP pools
+
+commonLabels:
+  app.kubernetes.io/part-of: metallb
+  managed-by: gitops
+  component: load-balancer
+
+namePrefix: metallb-
