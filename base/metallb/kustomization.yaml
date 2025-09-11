@@ -9,7 +9,9 @@ resources:
   - namespace.yaml
   - metallb-native.yaml
   - config.yaml
+  - cluster-selector.yaml  # ⭐ Logique cluster-based
 
 commonLabels:
   app.kubernetes.io/part-of: metallb
   managed-by: gitops
+  component: load-balancer
