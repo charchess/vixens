@@ -2,23 +2,14 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - ../../base/metallb
+  - ../../../base/metallb  # Path absolu depuis overlays/dev/metallb
 
 patches:
-  # Pool dev: 192.168.208.240-249
   - target:
       kind: IPAddressPool
       name: default-pool
-    patch: |-
-      - op: replace
-        path: /spec/addresses
-        value: ["192.168.208.240-192.168.208.249"]
-
-  # Service pool dev: 192.168.208.70-79  
+    patch: '[{"op": "replace", "path": "/spec/addresses", "value": ["192.168.208.240-192.168.208.249"]}]'
   - target:
       kind: IPAddressPool
       name: service-pool
-    patch: |-
-      - op: replace
-        path: /spec/addresses
-        value: ["192.168.208.70-192.168.208.79"]
+    patch: '[{"op": "replace", "path": "/spec/addresses", "value": ["192.168.208.70-192.168.208.79"]}]'
