@@ -1,0 +1,141 @@
+# MetalLB native manifests - version 0.15.2
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: controller
+  namespace: metallb-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: speaker
+  namespace: metallb-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: metallb-system:controller
+rules:
+- apiGroups: [""]
+  resources: ["services", "endpoints", "nodes"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["metallb.io"]
+  resources: ["addresspools", "bfdprofiles", "bgpadvertisements", "bgppeers", "communities", "ipaddresspools", "l2advertisements"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: metallb-system:speaker
+rules:
+- apiGroups: [""]
+  resources: ["services", "endpoints", "nodes"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["metallb.io"]
+  resources: ["addresspools", "bfdprofiles", "bgpadvertisements", "bgppeers", "communities", "ipaddresspools", "l2advertisements"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: metallb-system:controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: metallb-system:controller
+subjects:
+- kind: ServiceAccount
+  name: controller
+  namespace: metallb-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: metallb-system:speaker
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: metallb-system:speaker
+subjects:
+- kind: ServiceAccount
+  name: speaker
+  namespace: metallb-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller
+  namespace: metallb-system
+spec:
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: metallb
+      component: controller
+  template:
+    metadata:
+      labels:
+        app: metallb
+        component: controller
+    spec:
+      serviceAccountName: controller
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+      - name: controller
+        image: quay.io/metallb/controller:v0.15.2
+        ports:
+        - containerPort: 7472
+          name: monitoring
+        env:
+        - name: METALLB_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: METALLB_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: speaker
+  namespace: metallb-system
+spec:
+  selector:
+    matchLabels:
+      app: metallb
+      component: speaker
+  template:
+    metadata:
+      labels:
+        app: metallb
+        component: speaker
+    spec:
+      serviceAccountName: speaker
+      hostNetwork: true
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+      - name: speaker
+        image: quay.io/metallb/speaker:v0.15.2
+        ports:
+        - containerPort: 7472
+          name: monitoring
+        env:
+        - name: METALLB_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: METALLB_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
