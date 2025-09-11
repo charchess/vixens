@@ -1,37 +1,24 @@
+# clusters/vixens/argocd/apps/metallb.yaml 
+---
 apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
+kind: Application
 metadata:
   name: metallb
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
-  generators:
-  - list:
-      elements:
-      - cluster: vixens-dev
-        url: https://kubernetes.default.svc
-        branch: dev
-        env: dev
-      - cluster: vixens
-        url: https://kubernetes.default.svc
-        branch: main
-        env: prod
-  template:
-    metadata:
-      name: 'metallb-{{env}}'
-      finalizers:
-        - resources-finalizer.argocd.argoproj.io
-    spec:
-      project: vixens
-      source:
-        repoURL: https://github.com/charchess/vixens.git
-        targetRevision: '{{branch}}'
-        path: overlays/{{env}}/metallb
-      destination:
-        server: '{{url}}'
-        namespace: metallb-system
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
+  project: vixens
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: HEAD  # Utilise la branche actuelle
+    path: clusters/vixens/argocd/overlays/current/metallb  # Même logique qu'ArgoCD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: metallb-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
