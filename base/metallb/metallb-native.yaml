@@ -1,4 +1,6 @@
 # MetalLB native manifests - version 0.15.2
+---
+# MetalLB 0.15.2 - Controller & Speaker
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -8,59 +10,6 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: speaker
-  namespace: metallb-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: metallb-system:controller
-rules:
-- apiGroups: [""]
-  resources: ["services", "endpoints", "nodes"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: ["metallb.io"]
-  resources: ["addresspools", "bfdprofiles", "bgpadvertisements", "bgppeers", "communities", "ipaddresspools", "l2advertisements"]
-  verbs: ["get", "list", "watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: metallb-system:speaker
-rules:
-- apiGroups: [""]
-  resources: ["services", "endpoints", "nodes"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: ["metallb.io"]
-  resources: ["addresspools", "bfdprofiles", "bgpadvertisements", "bgppeers", "communities", "ipaddresspools", "l2advertisements"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: [""]
-  resources: ["events"]
-  verbs: ["create", "patch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: metallb-system:controller
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: metallb-system:controller
-subjects:
-- kind: ServiceAccount
-  name: controller
-  namespace: metallb-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: metallb-system:speaker
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: metallb-system:speaker
-subjects:
-- kind: ServiceAccount
   name: speaker
   namespace: metallb-system
 ---
@@ -92,15 +41,6 @@ spec:
         ports:
         - containerPort: 7472
           name: monitoring
-        env:
-        - name: METALLB_NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        - name: METALLB_HOST
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -130,12 +70,3 @@ spec:
         ports:
         - containerPort: 7472
           name: monitoring
-        env:
-        - name: METALLB_NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        - name: METALLB_HOST
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP

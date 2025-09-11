@@ -1,9 +1,10 @@
 # Configuration de base - sera patchée par overlays
+---
+# Configuration de base - placeholder
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
   name: default-pool
-  namespace: metallb-system
 spec:
   addresses:
     - 10.0.0.240-10.0.0.249  # Placeholder
@@ -13,7 +14,6 @@ apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
   name: service-pool
-  namespace: metallb-system
 spec:
   addresses:
     - 10.0.0.70-10.0.0.79   # Placeholder
@@ -23,7 +23,6 @@ apiVersion: metallb.io/v1beta1
 kind: L2Advertisement
 metadata:
   name: default-l2
-  namespace: metallb-system
 spec:
   ipAddressPools:
     - default-pool
