@@ -1,0 +1,33 @@
+# base/metallb/cluster-selector.yaml
+---
+# Configuration cluster-based - s'adapte selon le cluster
+# Cluster: vixens-dev → IPs dev
+# Cluster: vixens → IPs prod
+
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: default-pool-cluster
+  namespace: metallb-system
+  labels:
+    cluster: auto-detected
+    pool-type: default
+    managed-by: gitops
+spec:
+  addresses:
+    - CLUSTER_SPECIFIC  # Sera patché par overlay
+  autoAssign: true
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: service-pool-cluster
+  namespace: metallb-system
+  labels:
+    cluster: auto-detected
+    pool-type: services
+    managed-by: gitops
+spec:
+  addresses:
+    - CLUSTER_SPECIFIC  # Sera patché par overlay
+  autoAssign: false
