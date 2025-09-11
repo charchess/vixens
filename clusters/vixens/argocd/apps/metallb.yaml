@@ -12,7 +12,7 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: HEAD
-    path: overlays/metallb-cluster-selector  # Pointe vers le sélecteur
+    path: overlays/metallb  # ✅ Pointe vers overlays/ (ta structure)
   destination:
     server: https://kubernetes.default.svc
     namespace: metallb-system
