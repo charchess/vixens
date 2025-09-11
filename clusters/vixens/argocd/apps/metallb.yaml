@@ -1,46 +1,37 @@
-# clusters/vixens/argocd/apps/metallb.yaml
----
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
   name: metallb
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
-  project: vixens
-  source:
-    repoURL: https://metallb.github.io/metallb
-    chart: metallb
-    targetRevision: "0.15.2"
-    helm:
-      values: |
-        # Vos tolerations pour que les pods tournent sur les control-planes
-        controller:
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
-        speaker:
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
-  ignoreDifferences:
-    - group: metallb.io
-      kind: BGPAdvertisement
-      jsonPointers:
-        - /webhooks/clientConfig/caBundle
-    - group: metallb.io
-      kind: BGPPeer
-      jsonPointers:
-        - /spec/caBundle
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: metallb-system
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
+  generators:
+  - list:
+      elements:
+      - cluster: vixens-dev
+        url: https://kubernetes.default.svc
+        branch: dev
+        env: dev
+      - cluster: vixens
+        url: https://kubernetes.default.svc
+        branch: main
+        env: prod
+  template:
+    metadata:
+      name: 'metallb-{{env}}'
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: vixens
+      source:
+        repoURL: https://github.com/charchess/vixens.git
+        targetRevision: '{{branch}}'
+        path: overlays/{{env}}/metallb
+      destination:
+        server: '{{url}}'
+        namespace: metallb-system
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
