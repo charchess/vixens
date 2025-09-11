@@ -1,17 +1,28 @@
-# overlays/dev/metallb/kustomization.yaml
+# overlays/prod/metallb/kustomization.yaml
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - ../../../base/metallb  # Path absolu depuis overlays/prod/metallb
+  - ../../../base/metallb
 
 patches:
   - target:
       kind: IPAddressPool
-      name: default-pool
+      name: default-pool-cluster
     patch: '[{"op": "replace", "path": "/spec/addresses", "value": ["192.168.200.240-192.168.200.249"]}]'
+
   - target:
       kind: IPAddressPool
-      name: service-pool
+      name: service-pool-cluster
     patch: '[{"op": "replace", "path": "/spec/addresses", "value": ["192.168.200.70-192.168.200.79"]}]'
+
+  - target:
+      kind: IPAddressPool
+      name: default-pool-cluster
+    patch: '[{"op": "add", "path": "/metadata/labels", "value": {"environment": "prod", "cluster": "vixens"}}]'
+
+  - target:
+      kind: IPAddressPool
+      name: service-pool-cluster
+    patch: '[{"op": "add", "path": "/metadata/labels", "value": {"environment": "prod", "cluster": "vixens"}}]'

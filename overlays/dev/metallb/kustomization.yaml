@@ -4,17 +4,25 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - ../../../../base/metallb  # Path depuis clusters/vixens/argocd/overlays/dev/metallb
+  - ../../../base/metallb
 
 patches:
-  # Pool dev: 192.168.208.240-249
   - target:
       kind: IPAddressPool
-      name: default-pool
+      name: default-pool-cluster
     patch: '[{"op": "replace", "path": "/spec/addresses", "value": ["192.168.208.240-192.168.208.249"]}]'
 
-  # Service pool dev: 192.168.208.70-79
   - target:
       kind: IPAddressPool
-      name: service-pool
+      name: service-pool-cluster
     patch: '[{"op": "replace", "path": "/spec/addresses", "value": ["192.168.208.70-192.168.208.79"]}]'
+
+  - target:
+      kind: IPAddressPool
+      name: default-pool-cluster
+    patch: '[{"op": "add", "path": "/metadata/labels", "value": {"environment": "dev", "cluster": "vixens-dev"}}]'
+
+  - target:
+      kind: IPAddressPool
+      name: service-pool-cluster
+    patch: '[{"op": "add", "path": "/metadata/labels", "value": {"environment": "dev", "cluster": "vixens-dev"}}]'
