@@ -1,0 +1,82 @@
+# overlays/prod/argocd/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base/argocd
+
+configMapGenerator:
+  - name: argocd-cm
+    behavior: merge
+    literals:
+      - url=https://argocd.truxonline.com
+      - users.anonymous.enabled=false
+      - dex.config=|
+          connectors:
+          - type: github
+            id: github
+            name: GitHub
+            config:
+              clientID: $dex.github.clientID
+              clientSecret: $dex.github.clientSecret
+              orgs:
+              - name: charchess
+
+patches:
+  # Configuration Git pour prod = main branch
+  - target:
+      kind: ConfigMap
+      name: argocd-cm
+    patch: |-
+      - op: add
+        path: /data/repositories
+        value: |
+          - url: https://github.com/charchess/vixens.git
+            type: git
+            targetRevision: main
+
+  # Désactiver le mode insecure
+  - target:
+      kind: Deployment
+      name: argocd-server
+    patch: |-
+      - op: remove
+        path: /spec/template/spec/containers/0/args/-
+  
+  # Configuration TLS
+  - target:
+      kind: Deployment
+      name: argocd-server
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --insecure=false
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --tlsminversion=1.2
+
+  # Resources limits pour prod
+  - target:
+      kind: Deployment
+      name: argocd-application-controller
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+
+  # Réplicas pour HA
+  - target:
+      kind: Deployment
+      name: argocd-server
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+
