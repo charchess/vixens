@@ -10,8 +10,8 @@ declare -A machines=(
 
 
 
-TALOSCONFIG=~/vixens/talosconfig-$ENV
-KUBECONFIG=~/vixens//kubeconfig-$ENV
+TALOSCONFIG=~/vixens/environments/$ENV/talosconfig
+KUBECONFIG=~/vixens/environments/$ENV/kubeconfig
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 
@@ -95,7 +95,7 @@ helm --kubeconfig $KUBECONFIG install cilium cilium/cilium --version 1.18.1  --n
 sleep 10
 
 echo "⏳ Attente Cilium..."
-kubectl --kubeconfig ./kubeconfig-dev wait --for=condition=ready pod -l k8s-app=cilium -n kube-system --timeout=300s
+kubectl --kubeconfig $KUBECONFIG wait --for=condition=ready pod -l k8s-app=cilium -n kube-system --timeout=300s
 
 sleep 10
 
@@ -111,11 +111,4 @@ sleep 5
 # parce qu'une fois, ca suffit pas
 echo "on untaint les nodes (encore)"
 untaint-control-plane.sh
-
-sleep 5
-# on installe la app of apps
-kubectl --kubeconfig $KUBECONFIG  apply -f ~/vixens/clusters/vixens/argocd/00-pre-argo-settings.yaml
-kubectl --kubeconfig $KUBECONFIG  apply -f ~/vixens/clusters/vixens/argocd/01-argo-install.yaml
-kubectl --kubeconfig $KUBECONFIG  apply -f ~/vixens/clusters/vixens/argocd/02-vixens-dev-root.yaml
-
 
