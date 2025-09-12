@@ -18,3 +18,5 @@ kustomize.build.*
 *.good
 *.backup
 *~
+
+terraformoverlays/prod/argocd/*secret*.yaml
