@@ -22,3 +22,5 @@ kustomize.build.*
 terraform
 overlays/prod/argocd/*secret*.yaml
 terraform/*
+.terraform/
+.terraform/
