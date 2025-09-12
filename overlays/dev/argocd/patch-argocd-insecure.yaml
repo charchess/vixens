@@ -1,0 +1,13 @@
+# overlays/dev/argocd/patch-argocd-insecure.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  source:
+    helm:
+      values: |
+        server:
+          extraArgs:
+            - --insecure
