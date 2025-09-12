@@ -1,30 +1,33 @@
-#!/bin/bash
-# Bootstrap ArgoCD Self-Managed
-# Usage: ./bootstrap.sh [dev|prod]
-
+# bootstrap.sh (remplace l'ancien contenu helm)
+#!/usr/bin/env bash
 set -euo pipefail
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+ENV="$1"
 
-cd "$(dirname "$0")/.."
-ENVIRONMENT=${1:-dev}
+if [[ -z "$ENV" ]]; then
+  echo "Usage: $0 <dev|prod>"
+  exit 1
+fi
+if [[ "$ENV" != "dev" && "$ENV" != "prod" ]]; then
+  echo "Erreur : l'argument doit être 'dev' ou 'prod'"
+  exit 1
+fi
 
-echo "🚀 Installing ArgoCD ${ENVIRONMENT} (self-managed mode)..."
+export KUBECONFIG=~/vixens/kubeconfig-"$ENV"
 
-# 1. Installation INITIALE d'ArgoCD (hors GitOps)
-kubectl --kubeconfig ~/vixens/environments/${ENVIRONMENT}/kubeconfig apply -k ~/vixens/overlays/${ENVIRONMENT}/argocd-bootstrap --validate=false
+# 1) Namespace
+kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 
-# 2. Attendre qu'ArgoCD soit prêt
-echo "⏳ Waiting for ArgoCD to be ready..."
-kubectl --kubeconfig ~/vixens/environments/${ENVIRONMENT}/kubeconfig -n argocd wait --for=condition=available --timeout=300s deployment/argocd-server
+# 2) Installer les manifests officiels (controller + CRDs) - version "stable"
+# Ceci démarre ArgoCD (controller) pour permettre ensuite la gestion GitOps.
+kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-# 3. Créer le project et l'app ArgoCD (première fois uniquement)
-echo "🔧 Creating ArgoCD self-managed project and app..."
-kubectl --kubeconfig ~/vixens/environments/${ENVIRONMENT}/kubeconfig apply -f ~/vixens/clusters/vixens/argocd/00-vixens-project.yaml
-kubectl --kubeconfig ~/vixens/environments/${ENVIRONMENT}/kubeconfig apply -f ~/vixens/clusters/vixens/argocd/apps/argocd.yaml
+# 3) Appliquer (optionnel) tes settings bootstrap locaux (ex: pre settings)
+# # kubectl apply -f "$SCRIPT_DIR/00-pre-argo-settings.yaml" || true
+kubectl apply -f "$SCRIPT_DIR/00-pre-argo-settings.yaml" || true
+kubectl apply -f "$SCRIPT_DIR/00-pre-argo-settings.yaml" || true
 
-# 4. Mot de passe admin
-echo "🔑 ArgoCD Admin Password:"
-kubectl --kubeconfig ~/vixens/environments/${ENVIRONMENT}/kubeconfig -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-echo ""
+echo "Bootstrap minimal ArgoCD lancé. Attends quelques instants que les pods démarrent..."
+kubectl -n argocd get pods --watch --timeout=120s || true
 
-echo "✅ ArgoCD is now self-managed via GitOps!"
-echo "📋 Next: Commit argocd/ files and watch self-management begin"
+echo "Ensuite, sync la racine vixens-root dans ArgoCD pour que le repo prenne le relais."

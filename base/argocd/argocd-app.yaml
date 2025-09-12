@@ -1,0 +1,25 @@
+# base/argocd/argocd-app.yaml
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  project: vixens
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  source:
+    repoURL: https://argoproj.github.io/argo-helm
+    chart: argo-cd
+    targetRevision: "8.3.1"    # adapte si tu veux une autre version
+    helm:
+      releaseName: argocd
+      # values: |         <- la valeur par défaut (vide) ; sera patchée par overlays/dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

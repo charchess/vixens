@@ -6,30 +6,7 @@ kind: Kustomization
 namespace: argocd
 
 resources:
-  - ../../../base/argocd  # ton base ArgoCD
+  - ../../../base/argocd
 
-patches:
-  - target:
-      kind: ConfigMap
-      name: argocd-cm
-    patch: |-
-      - op: add
-        path: /data/server.insecure
-        value: "true"
-
-  - target:
-      kind: Deployment
-      name: argocd-server
-    patch: |-
-      - op: add
-        path: /spec/template/spec/containers/0/args/-
-        value: --insecure
-
-  # Patch: URL dev
-  - target:
-      kind: ConfigMap
-      name: argocd-cm
-    patch: |-
-      - op: replace
-        path: /data/url
-        value: http://argocd-dev.local:8080
+patchesStrategicMerge:
+  - patch-argocd-insecure.yaml
