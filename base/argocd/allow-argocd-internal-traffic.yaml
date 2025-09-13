@@ -1,0 +1,46 @@
+# base/argocd/allow-argocd-internal-traffic.yaml
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-argocd-internal-traffic
+  namespace: argocd
+spec:
+  description: "Allow internal traffic between ArgoCD components"
+  
+  # Applique cette politique à tous les pods du namespace argocd
+  endpointSelector:
+    matchLabels: {}
+
+  # Règle d'entrée (Ingress)
+  ingress:
+    # Autorise les connexions depuis n'importe quel autre pod DANS LE MÊME NAMESPACE
+    - fromEndpoints:
+        - matchLabels: {}
+
+  # Règle de sortie (Egress)
+  egress:
+    # Autorise les pods à parler à d'autres pods DANS LE MÊME NAMESPACE
+    - toEndpoints:
+        - matchLabels: {}
+    # Autorise aussi la sortie vers l'API Kubernetes (nécessaire)
+    - toEndpoints:
+      - matchLabels:
+          "k8s-app": kube-dns
+        matchExpressions:
+        - key: io.kubernetes.pod.namespace
+          operator: In
+          values:
+          - kube-system
+      toPorts:
+      - ports:
+        - port: "53"
+          protocol: ANY
+        rules:
+          dns:
+          - matchPattern: '*'
+    # Autorise la sortie vers l'extérieur pour contacter Git
+    - toServices:
+        - k8sService:
+            serviceName: kubernetes
+            namespace: default

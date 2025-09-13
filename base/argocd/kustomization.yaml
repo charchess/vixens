@@ -5,6 +5,7 @@ kind: Kustomization
 
 resources:
   - namespace.yaml
+  - allow-argocd-internal-traffic.yaml
 
 helmCharts:
 - name: argo-cd
