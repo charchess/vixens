@@ -1,4 +1,5 @@
 # overlays/dev/argocd/patch-argocd-insecure.yaml
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -9,5 +10,12 @@ spec:
     helm:
       values: |
         server:
+          config:
+            # Désactive l'authentification
+            "users.anonymous.enabled": "true" 
+          # Rend le serveur accessible en HTTP
+          insecure: true
+          # Si vous voulez aussi patcher les args pour d'autres raisons
           extraArgs:
-            - --insecure
+            - --disable-auth # Une autre façon de le faire
+  
