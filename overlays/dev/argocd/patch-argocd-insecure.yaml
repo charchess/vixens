@@ -3,19 +3,32 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  # Le nom doit correspondre à l'application que vous patchez
   name: argocd
   namespace: argocd
 spec:
   source:
     helm:
       values: |
+        # Cette section configure le chart Helm d'ArgoCD
+        
+        # 1. Configuration du serveur pour le mode HTTP
         server:
-          config:
-            # Désactive l'authentification
-            "users.anonymous.enabled": "true" 
-          # Rend le serveur accessible en HTTP
+          # Dit au chart de configurer le mode insecure.
+          # Il ajoutera lui-même l'argument --insecure au Deployment.
           insecure: true
-          # Si vous voulez aussi patcher les args pour d'autres raisons
-          extraArgs:
-            - --disable-auth # Une autre façon de le faire
-  
+
+        # 2. Configuration du ConfigMap (argocd-cm) et du RBAC (argocd-rbac-cm)
+        configs:
+          # 2a. On modifie le ConfigMap principal
+          cm:
+            # On active l'utilisateur 'anonymous'
+            # IMPORTANT: les guillemets autour de "true" sont nécessaires
+            users.anonymous.enabled: "true"
+
+          # 2b. On donne des droits à l'utilisateur 'anonymous'
+          rbac:
+            policy: |
+              # On donne à l'utilisateur anonyme un rôle qui a tous les droits
+              p, role:admin, applications, *, */*, allow
+              g, anonymous, role:admin

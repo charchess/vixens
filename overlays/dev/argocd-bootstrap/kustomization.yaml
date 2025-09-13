@@ -7,5 +7,9 @@ namespace: argocd
 
 resources:
   - namespace.yaml
-  - https://raw.githubusercontent.com/argoproj/argo-cd/v2.11.0/manifests/install.yaml
   - argocd-project.yaml
+  - argocd-root-app.yaml
+
+# install.yaml a été retiré car il est géré par le script bootstrap.
+
+  
