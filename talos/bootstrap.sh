@@ -29,6 +29,7 @@ echo "✅ CRDs are ready."
 
 # 4. Attendez que l'ArgoCD "graine" soit pleinement opérationnel.
 echo "⏳ [4/5] Waiting for initial ArgoCD server to be available..."
+untaint-control-plane.sh
 kubectl --kubeconfig "$KUBECONFIG" -n argocd wait --for=condition=available --timeout=300s deployment/argocd-server
 echo "✅ Initial ArgoCD server is running."
 
