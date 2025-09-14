@@ -1,0 +1,20 @@
+# debug-allow-all-traffic.yaml
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: debug-allow-all-traffic
+  namespace: argocd
+spec:
+  description: "TEMPORARY DEBUGGING RULE: Allow ALL ingress and egress traffic for all pods in the argocd namespace."
+  
+  # Applique cette politique à TOUS les pods
+  endpointSelector: {}
+
+  # Autorise TOUT le trafic entrant (ingress)
+  ingress:
+    - {}
+
+  # Autorise TOUT le trafic sortant (egress)
+  egress:
+    - {}
