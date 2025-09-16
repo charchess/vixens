@@ -6,5 +6,9 @@ metadata:
   name: argocd-cmd-params-cm
   namespace: argocd
 data:
+  # Mode HTTP insecure (pas de HTTPS)
   server.insecure: "true"
+  # Désactiver l'authentification
   server.disable.auth: "true"
+  # Autoriser l'accès anonyme
+  users.anonymous.enabled: "true"
