@@ -1,0 +1,17 @@
+# overlays/dev/argocd-server-patch.yaml (fichier optionnel pour plus de contrôle)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-server
+  namespace: argocd
+spec:
+  template:
+    spec:
+      containers:
+      - name: argocd-server
+        env:
+        - name: ARGOCD_SERVER_INSECURE
+          value: "true"
+        - name: ARGOCD_AUTH_ENABLED
+          value: "false"
