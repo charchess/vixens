@@ -2,22 +2,16 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
-# On se base toujours sur le dossier 'base' pour la ConfigMap
 resources:
   - ../../../base/argocd-config
-
-# On continue de patcher la ConfigMap comme avant
 patches:
   - path: patch-insecure-configmap.yaml
-  
-  # NOUVEAU : On applique un patch inline sur le Deployment.
-  # Ce patch est beaucoup plus précis et ne détruira pas les champs existants.
+  # On réintroduit le patch du Deployment de manière chirurgicale
   - target:
       kind: Deployment
       name: argocd-server
     patch: |-
-      - op: add
+      - op: replace
         path: /spec/template/spec/containers/0/args
         value:
           - /usr/local/bin/argocd-server
