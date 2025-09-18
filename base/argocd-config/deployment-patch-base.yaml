@@ -1,0 +1,12 @@
+# base/argocd-config/deployment-patch-base.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-server
+spec:
+  template:
+    spec:
+      containers:
+      - name: argocd-server
+        # Pas de patch d'arguments ici. La base est neutre.

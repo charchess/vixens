@@ -1,5 +1,10 @@
 # clusters/vixens/argocd/00-vixens-project.yaml
 ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
@@ -7,14 +12,10 @@ metadata:
   namespace: argocd
 spec:
   sourceRepos:
-    - 'https://github.com/charchess/vixens.git'
-    - '*'
+    - 'https://github.com/charchess/vixens.git' # IMPORTANT: Adaptez à votre URL de repo
   destinations:
     - namespace: '*'
       server: 'https://kubernetes.default.svc'
   clusterResourceWhitelist:
-    - group: "*"
-      kind: "*"
-  namespaceResourceWhitelist:
     - group: "*"
       kind: "*"
