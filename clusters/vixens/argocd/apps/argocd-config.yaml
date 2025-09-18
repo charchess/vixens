@@ -8,25 +8,22 @@ metadata:
 spec:
   project: vixens
   source:
-    repoURL: https://github.com/charchess/vixens.git # IMPORTANT: Adaptez à votre URL de repo
+    repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
-    path: overlays/dev/argocd-config # Pointe vers l'overlay de config 'dev'
+    path: overlays/dev/argocd-config
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd # Applique la configuration dans le namespace d'ArgoCD
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
-  
-  # LA CLÉ DE LA STABILITÉ : On résout le conflit Helm vs. GitOps
   ignoreDifferences:
   - group: apps
     kind: Deployment
     name: argocd-server
     jsonPointers:
     - /spec/template/spec/containers/0/args
-
   - group: ""
     kind: ConfigMap
     name: argocd-cmd-params-cm
