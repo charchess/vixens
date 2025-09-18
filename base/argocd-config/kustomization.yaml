@@ -5,4 +5,3 @@ kind: Kustomization
 namespace: argocd
 resources:
   - configmap-params.yaml
-  - deployment-patch-base.yaml
