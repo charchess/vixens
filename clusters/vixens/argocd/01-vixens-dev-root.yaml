@@ -1,0 +1,63 @@
+# clusters/vixens/argocd/01-vixens-dev-root.yaml
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vixens-root-dev
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: vixens
+  source:
+    repoURL: https://github.com/charchess/vixens.git # IMPORTANT: Adaptez à votre URL de repo
+    targetRevision: dev
+    path: clusters/vixens/argocd/apps # Rôle de "sommaire" : pointe vers les définitions d'apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd # Les 'Application' elles-mêmes seront dans le namespace 'argocd'
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true```
+
+#### **Groupe 4 : Le Cœur de l'App-of-Apps (`apps`)**
+
+C'est ici que l'on définit l'auto-management d'ArgoCD.
+
+##### **`clusters/vixens/argocd/apps/argocd-config.yaml`**
+```yaml
+# clusters/vixens/argocd/apps/argocd-config.yaml
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd-config
+  namespace: argocd
+spec:
+  project: vixens
+  source:
+    repoURL: https://github.com/charchess/vixens.git # IMPORTANT: Adaptez à votre URL de repo
+    targetRevision: dev
+    path: overlays/dev/argocd-config # Pointe vers l'overlay de config 'dev'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd # Applique la configuration dans le namespace d'ArgoCD
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  
+  # LA CLÉ DE LA STABILITÉ : On résout le conflit Helm vs. GitOps
+  ignoreDifferences:
+  - group: apps
+    kind: Deployment
+    name: argocd-server
+    jsonPointers:
+    - /spec/template/spec/containers/0/args
+
+  - group: ""
+    kind: ConfigMap
+    name: argocd-cmd-params-cm
+    jsonPointers:
+    - /data
