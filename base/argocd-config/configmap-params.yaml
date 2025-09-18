@@ -1,0 +1,11 @@
+# base/argocd-config/configmap-params.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+data:
+  # Cette ConfigMap est intentionnellement quasi-vide dans la base.
+  # La configuration par défaut d'ArgoCD est déjà sécurisée.
+  # Les overlays viendront ajouter des clés/valeurs ici.
+  server.log.level: "info"

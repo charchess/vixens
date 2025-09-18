@@ -1,0 +1,12 @@
+# overlays/dev/argocd-config/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  # On se base sur la configuration du dossier 'base'
+  - ../../../base/argocd-config
+
+# On applique nos patchs spécifiques à 'dev'
+patches:
+  - path: patch-insecure-configmap.yaml
+  - path: patch-insecure-deployment.yaml
