@@ -2,18 +2,27 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
 resources:
   - ../../../base/argocd-config
-patches:
-  - path: patch-insecure-configmap.yaml
-  # On réintroduit le patch du Deployment de manière chirurgicale
-  - target:
+
+# On surcharge la ConfigMap de la base avec nos valeurs 'dev'
+configMapGenerator:
+- name: argocd-cmd-params-cm
+  behavior: merge
+  envs:
+  - argocd-cmd-params.env
+
+# On dit à Kustomize de prendre le hash de la ConfigMap générée
+# et de l'injecter dans l'annotation du Deployment
+replacements:
+- source:
+    kind: ConfigMap
+    name: argocd-cmd-params-cm
+    version: v1
+  target:
+    select:
       kind: Deployment
       name: argocd-server
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/args
-        value:
-          - /usr/local/bin/argocd-server
-          - --insecure
-          - --disable-auth
+    fieldPaths:
+    - spec.template.metadata.annotations.[checksum/config]
