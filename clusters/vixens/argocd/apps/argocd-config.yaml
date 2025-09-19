@@ -18,15 +18,10 @@ spec:
     automated:
       prune: true
       selfHeal: true
-  # CORRECTION DE SYNTAXE YAML CI-DESSOUS
+  # On ignore maintenant l'annotation que nous ajoutons nous-mêmes
   ignoreDifferences:
   - group: apps
     kind: Deployment
     name: argocd-server
     jsonPointers:
-    - /spec/template/spec/containers/0/args
-  - group: ""
-    kind: ConfigMap
-    name: argocd-cmd-params-cm
-    jsonPointers:
-    - /data
+    - /spec/template/metadata/annotations

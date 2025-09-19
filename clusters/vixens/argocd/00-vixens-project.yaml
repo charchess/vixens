@@ -12,7 +12,7 @@ metadata:
   namespace: argocd
 spec:
   sourceRepos:
-    - 'https://github.com/charchess/vixens.git' # IMPORTANT: Adaptez à votre URL de repo
+    - 'https://github.com/charchess/vixens.git'
   destinations:
     - namespace: '*'
       server: 'https://kubernetes.default.svc'
