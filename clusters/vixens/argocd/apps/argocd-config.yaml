@@ -18,10 +18,15 @@ spec:
     automated:
       prune: true
       selfHeal: true
-  # On ignore maintenant l'annotation que nous ajoutons nous-mêmes
+  # On ignore les champs que nous allons surcharger
   ignoreDifferences:
-  - group: apps
-    kind: Deployment
-    name: argocd-server
+  - group: ""
+    kind: ConfigMap
+    name: argocd-cmd-params-cm
     jsonPointers:
-    - /spec/template/metadata/annotations
+    - /data
+  - group: "apps"
+    kind: "Deployment"
+    name: "argocd-server"
+    jsonPointers:
+    - /spec/template/spec/containers/0/args
