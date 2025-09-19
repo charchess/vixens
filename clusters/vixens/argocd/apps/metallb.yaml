@@ -7,14 +7,14 @@ metadata:
   namespace: argocd
 spec:
   generators:
-  - list:
-      elements:
-      - name: dev
-        cluster: vixens-dev
-        path: overlays/dev/metallb
-      - name: prod
-        cluster: vixens
-        path: overlays/prod/metallb
+    - list:
+        elements:
+          - name: dev
+            cluster: vixens-dev
+            path: overlays/dev/metallb
+          - name: prod
+            cluster: vixens
+            path: overlays/prod/metallb
   template:
     metadata:
       # 👇 Même nom partout

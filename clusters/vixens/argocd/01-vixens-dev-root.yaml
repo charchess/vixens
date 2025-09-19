@@ -10,7 +10,7 @@ metadata:
 spec:
   project: vixens
   source:
-    repoURL: https://github.com/charchess/vixens.git # IMPORTANT: Adaptez à votre URL de repo
+    repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
     path: clusters/vixens/argocd/apps
   destination:
