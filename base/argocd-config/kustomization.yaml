@@ -3,15 +3,5 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: argocd
-
-# Par défaut, on génère une ConfigMap vide. L'overlay la surchargera.
-configMapGenerator:
-- name: argocd-cmd-params-cm
-  literals: []
-
-# On prépare le patch du déploiement
-patches:
-- path: deployment-checksum-patch.yaml
-  target:
-    kind: Deployment
-    name: argocd-server
+resources:
+  - ../../base-resources # Nous allons créer ce dossier
