@@ -13,3 +13,5 @@ metadata:
 data:
   server.insecure: "true"
   server.disable.auth: "true"
+  users.anonymous.enabled: "true"
+  server.insecure.bind.address: "0.0.0.0"

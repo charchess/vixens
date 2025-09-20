@@ -20,7 +20,20 @@ kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 # 2. Installez ArgoCD depuis le manifeste officiel.
 echo "🔧 [2/4] Installing ArgoCD core components from official manifest..."
 untaint-control-plane.sh
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.11.0/manifests/install.yaml
+#kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.11.0/manifests/install.yaml
+helm repo add argo https://argoproj.github.io/argo-helm || echo "Repo 'argo' already exists."
+helm repo update
+helm upgrade --install argocd argo/argo-cd \
+  --version 5.51.5 \
+  --namespace argocd \
+  --create-namespace \
+  --wait \
+  --set configs.cm."server\.insecure"=true \
+  --set configs.cm."server\.disable\.auth"=true \
+  --set configs.cm."users\.anonymous\.enabled"=true
+
+
+
 
 # 3. Attendez que les CRDs et le déploiement principal soient prêts.
 echo "⏳ [3/4] Waiting for ArgoCD CRDs and Deployment to be ready..."
