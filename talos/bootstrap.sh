@@ -30,7 +30,9 @@ helm upgrade --install argocd argo/argo-cd \
   --wait \
   --set configs.cm."server\.insecure"=true \
   --set configs.cm."server\.disable\.auth"=true \
-  --set configs.cm."users\.anonymous\.enabled"=true
+  --set configs.cm."users\.anonymous\.enabled"=true \
+  --set server.insecure=true \
+  --set server.disableAuth=true
 
 
 
