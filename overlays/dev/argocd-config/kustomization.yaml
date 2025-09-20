@@ -21,7 +21,10 @@ patches:
       - op: add
         path: /data/users.anonymous.enabled
         value: "true"
-
+      - op: add
+        path: /data/server.insecure.bind.address
+        value: "0.0.0.0"
+  
   # Patch 2 : On AJOUTE la section 'args' au Deployment, ce qui déclenche le redémarrage
   - target:
       kind: Deployment
