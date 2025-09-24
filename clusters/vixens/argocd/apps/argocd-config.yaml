@@ -18,15 +18,3 @@ spec:
     automated:
       prune: true
       selfHeal: true
-  # On ignore les champs que nous allons surcharger
-  ignoreDifferences:
-  - group: ""
-    kind: ConfigMap
-    name: argocd-cmd-params-cm
-    jsonPointers:
-    - /data
-  - group: "apps"
-    kind: "Deployment"
-    name: "argocd-server"
-    jsonPointers:
-    - /spec/template/spec/containers/0/args
