@@ -163,6 +163,7 @@ log "⏳ Attente pods Cilium..."
 kubectl --kubeconfig $KUBECONFIG wait --for=condition=ready pod -l k8s-app=cilium -n kube-system --timeout=300s
 log "✅ Cilium ready"
 
+exit
 # -------------------------------
 # 9️⃣ Bootstrap ArgoCD
 # -------------------------------

@@ -54,6 +54,8 @@ spec:
 
           params:
             server.insecure: true
+            server.disableAuth: true
+            server.disable.auth: true 
           rbac:
             policy.default: role:readonly
           cmp:
@@ -81,10 +83,10 @@ spec:
           metrics:
             enabled: true
             serviceMonitor:
-              enabled: false # true
+              enabled: true
               namespace: argocd
-              additionalLabels:
-                prometheus.io/scrap-with: kube-prometheus-stack
+#              additionalLabels:
+#                prometheus.io/scrap-with: kube-prometheus-stack
       
         ## DEX ##
         dex:
@@ -92,10 +94,10 @@ spec:
           metrics:
             enabled: true
             serviceMonitor:
-              enabled: false # true
+              enabled: true
               namespace: argocd
-              additionalLabels:
-                prometheus.io/scrap-with: kube-prometheus-stack
+#              additionalLabels:
+#                prometheus.io/scrap-with: kube-prometheus-stack
 
         ## RepoServer ##
         repoServer:
@@ -152,10 +154,10 @@ spec:
           metrics:
             enabled: true
             serviceMonitor:
-              enabled: false # true
+              enabled: true
               namespace: argocd
-              additionalLabels:
-                prometheus.io/scrap-with: kube-prometheus-stack
+#              additionalLabels:
+#                prometheus.io/scrap-with: kube-prometheus-stack
 
         ## Redis ##
         redis:
@@ -169,9 +171,9 @@ spec:
           metrics:
             enabled: true
             serviceMonitor:
-              enabled: false # true
-              additionalLabels:
-                prometheus.io/scrap-with: kube-prometheus-stack
+              enabled: true
+ #             additionalLabels:
+ #               prometheus.io/scrap-with: kube-prometheus-stack
               namespace: argocd
 
         ## Server ##
@@ -192,9 +194,9 @@ spec:
           metrics:
             enabled: true
             serviceMonitor:
-              enabled: false # true
-              additionalLabels:
-                prometheus.io/scrap-with: kube-prometheus-stack
+              enabled: true
+#              additionalLabels:
+#                prometheus.io/scrap-with: kube-prometheus-stack
               namespace: argocd
 
   destination:
