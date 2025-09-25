@@ -7,5 +7,17 @@ resources:
   - https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
   - argocd-cm.yaml
 
-patchesStrategicMerge:
-  - argocd-server-service-patch.yaml
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/type
+        value: NodePort
+      - op: replace
+        path: /spec/ports/0/port
+        value: 80
+      - op: replace
+        path: /spec/ports/0/targetPort
+        value: 8080
+    target:
+      kind: Service
+      name: argocd-server
