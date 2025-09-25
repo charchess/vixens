@@ -1,0 +1,16 @@
+# bootstrap/argocd/base/argocd-cm.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cmd-params-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Disable TLS
+  server.insecure: "true"
+  # Disable authentication
+  server.disable.auth: "true"
+  # Enable local users (for potential future use)
+  server.enable.local.users: "true"
