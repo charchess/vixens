@@ -3,27 +3,23 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+namespace: argocd
+
 resources:
-  - ../../../base/argocd
+  - ../../base/argocd
 
-# On retire le patch sur l'objet Application
-# patchesStrategicMerge:
-#  - patch-argocd-insecure.yaml
+patchesStrategicMerge:
+  - deployment-patch.yaml
+  - configmap-patch.yaml
 
-# On ajoute les values directement au chart Helm défini dans la base
-helmCharts:
-- name: argo-cd
-  repo: https://argoproj.github.io/argo-helm
-  version: "8.3.5"
-  releaseName: argocd
-  namespace: argocd
-  valuesInline:
-    server:
-      insecure: true
-    configs:
-      cm:
-        "users.anonymous.enabled": "true"
-      rbac:
-        policy: |
-          p, role:admin, applications, *, */*, allow
-          g, anonymous, role:admin
+configMapGenerator:
+  - name: argocd-cm
+    behavior: merge
+    literals:
+      - url=http://argocd-server.argocd.svc.cluster.local
+      - application.instanceLabelKey=argocd.argoproj.io/instance
+  - name: argocd-cmd-params-cm
+    behavior: merge
+    literals:
+      - server.insecure=true
+      - server.disable.auth=true
