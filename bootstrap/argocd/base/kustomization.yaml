@@ -6,8 +6,10 @@ resources:
   - namespace.yaml
   - https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
   - argocd-cm.yaml
+  - argocd-server-config.yaml
 
 patches:
+  # Patch the service to be HTTP NodePort
   - patch: |-
       - op: replace
         path: /spec/type
@@ -20,4 +22,13 @@ patches:
         value: 8080
     target:
       kind: Service
+      name: argocd-server
+  
+  # Patch the server deployment to run in insecure mode
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/command/-
+        value: "--insecure"
+    target:
+      kind: Deployment
       name: argocd-server
