@@ -14,3 +14,5 @@ data:
   server.disable.auth: "true"
   # Enable local users (for potential future use)
   server.enable.local.users: "true"
+  # Additional server parameters
+  server.grpc.web: "true"
