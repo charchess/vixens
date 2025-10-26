@@ -1,27 +1,80 @@
-# Emacs/Vim temp files
-*~
+# =========================
+# OS & IDE
+# =========================
+.DS_Store
+Thumbs.db
 *.swp
 *.swo
-
-# Kustomize build artifacts
-kustomize.build.*
-
-# Kubernetes secrets (déjà chiffrés)
-*.secret.yaml
-!*.enc.yaml
-
-# IDE
+*~
 .idea/
 .vscode/
+*.iml
 
-*.old
-*.good
+# =========================
+# Node / npm / yarn
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+.pnpm-store/
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.env
+*.env
+
+# =========================
+# Logs & temp
+# =========================
+*.log
+*.tmp
+*.temp
+.cache/
+.tmp/
+
+# =========================
+# Terraform – NE JAMAIS GIT
+# =========================
+# État local (sensible + conflits en équipe)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+# Plan binaire (re-générable)
+*.tfplan
+# Fichiers de variables contenant des secrets
+terraform.tfvars
+terraform.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json
+# Clés / certificats
+*.pem
+*.key
+*.crt
+
+# =========================
+# Build artefacts
+# =========================
+dist/
+build/
+out/
+target/
+
+# =========================
+# Autres
+# =========================
+*.bak
 *.backup
-*~
-
-terraform
-overlays/prod/argocd/*secret*.yaml
-terraform/*
-.terraform/
-.terraform/
-overlays/prod/argocd/dex-github-secret.yaml
