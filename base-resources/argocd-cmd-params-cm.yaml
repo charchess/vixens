@@ -1,8 +1,0 @@
-# base-resources/argocd-cmd-params-cm.yaml
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-cmd-params-cm
-data:
-  server.log.level: "info"
