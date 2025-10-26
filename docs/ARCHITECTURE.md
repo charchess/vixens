@@ -47,10 +47,10 @@ La convention de nommage est basée sur des noms de pierres précieuses ou semi-
 
 | Nom de VM        | IP Interne (VLAN 111) | IP Externe (VLAN 208) | Rôle        |
 | :--------------- | :-------------------- | :-------------------- | :---------- |
-| `obsy`           | `192.168.111.11`      | `192.168.208.11`      | ControlPlane |
-| `opale`          | `192.168.111.12`      | `192.168.208.12`      | ControlPlane |
-| `onyx`           | `192.168.111.13`      | `192.168.208.13`      | ControlPlane |
-| **VIP / Endpoint** | **`192.168.111.10`**  | N/A                   | KubeAPI     |
+| `obsy`           | `192.168.111.162`      | `192.168.208.162`      | ControlPlane |
+| `opale`          | `192.168.111.163`      | `192.168.208.163`      | ControlPlane |
+| `onyx`           | `192.168.111.164`      | `192.168.208.164`      | ControlPlane |
+| **VIP / Endpoint** | **`192.168.111.160`**  | N/A                   | KubeAPI     |
 
 ### 3.4. Configuration des Réseaux Internes Kubernetes
 
