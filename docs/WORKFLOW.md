@@ -10,6 +10,8 @@ Le projet avance par "sprints", où chaque sprint correspond à un `OBJECTIF` un
 
 **Chaque `OBJECTIF` est obligatoirement accompagné d'un fichier de spécification dédié dans le dossier `/docs/objectives/` qui détaille le périmètre et les critères de succès.**
 
+Chaque tâche doit inclure une section 'test:' dans sa description, définissant comment valider qu'elle est conforme. Lors de la modification d'une tâche, il est nécessaire de valider non seulement la tâche en cours mais aussi toutes les tâches précédemment marquées comme "done".
+
 ## 2. Modèle de Branches (GitFlow)
 
 Le projet utilise un modèle GitFlow où chaque environnement persistant est représenté par une branche Git dédiée.
