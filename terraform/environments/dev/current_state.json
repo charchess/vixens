@@ -1,0 +1,574 @@
+{
+  "version": 4,
+  "terraform_version": "1.13.4",
+  "serial": 34,
+  "lineage": "e55c9350-ba32-c7cf-70a6-5d853064f0dd",
+  "outputs": {},
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "local_file",
+      "name": "talosconfig",
+      "provider": "provider[\"registry.terraform.io/hashicorp/local\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "content": "context: vixens-dev\ncontexts:\n    vixens-dev:\n        endpoints: []\n        nodes:\n            - 192.168.111.162\n        ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJQekNCOHFBREFnRUNBaEVBNUZJNGJLaUVpOFhnaXN2S2RqV0ZtVEFGQmdNclpYQXdFREVPTUF3R0ExVUUKQ2hNRmRHRnNiM013SGhjTk1qVXhNRE13TVRFMU16RXdXaGNOTXpVeE1ESTRNVEUxTXpFd1dqQVFNUTR3REFZRApWUVFLRXdWMFlXeHZjekFxTUFVR0F5dGxjQU1oQU1MREo1MWJvY3d6dWorMTVRVnJkT2hWbEdIdjdGNzJFLzRjCjFYYzg5QXk2bzJFd1h6QU9CZ05WSFE4QkFmOEVCQU1DQW9Rd0hRWURWUjBsQkJZd0ZBWUlLd1lCQlFVSEF3RUcKQ0NzR0FRVUZCd01DTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkxJeFFtUDhWS1FLWU8rbAp0Wmhrc09qN3dGTzRNQVVHQXl0bGNBTkJBQ3hZMGhqQ3V2em12cUVTaENPbUNZdnlZaFBhdkJNeGc2Nnl5KzlVCnVsS1piYitJbHhUd2NWbUFZck9Qc241RG1ITGpUWjByd0hGMENpSVNZbG1STlFnPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==\n        crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJLRENCMjZBREFnRUNBaEExbTF5SklEQ25QUWMwcjAySmptR2JNQVVHQXl0bGNEQVFNUTR3REFZRFZRUUsKRXdWMFlXeHZjekFlRncweU5URXdNekF4TVRVek1UQmFGdzB5TmpFd016QXhNVFV6TVRCYU1CTXhFVEFQQmdOVgpCQW9UQ0c5ek9tRmtiV2x1TUNvd0JRWURLMlZ3QXlFQUJhTWhXTXJmQ3BjcHpYQkkzTHpMaldmTkdUaGQxdjk5CmhNTDc0OVFNTnptalNEQkdNQTRHQTFVZER3RUIvd1FFQXdJSGdEQVRCZ05WSFNVRUREQUtCZ2dyQmdFRkJRY0QKQWpBZkJnTlZIU01FR0RBV2dCU3lNVUpqL0ZTa0NtRHZwYldZWkxEbys4QlR1REFGQmdNclpYQURRUUF3OCtTaQpBS3ErWFErZHIzT3oxT29IakJvTDNRMWFtc2RxTFN2L3lRd3BkTnlDMHlYOUZIUlhwMElBMWJOUnQxSUYzQVVSClRLbVk2OTVueDIydEg0SUYKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=\n        key: LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM0Q0FRQXdCUVlESzJWd0JDSUVJUHRYN3BQNit1bXRiWmlnUFJxNnJxMko4RXlKTnJJYmNyaDJaRU1rMkcweAotLS0tLUVORCBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0K\n",
+            "content_base64": null,
+            "content_base64sha256": "GZVwX7wm8B+q5461aDPH0uckPO8UNcMgn2Z8hWA2kRo=",
+            "content_base64sha512": "7UwI8GE6EcL5Ca5r1l+ZtoUP6KFhw2G94t5MPAbbRfzai4Mh7JRhB5Bdvzd5HCZRO02UaZvZSOpcUyFBfo6yEg==",
+            "content_md5": "7cb2797dead864bcd977b58d973724be",
+            "content_sha1": "8264defd93048301bc140231825df9913a9baa47",
+            "content_sha256": "1995705fbc26f01faae78eb56833c7d2e7243cef1435c3209f667c856036911a",
+            "content_sha512": "ed4c08f0613a11c2f909ae6bd65f99b6850fe8a161c361bde2de4c3c06db45fcda8b8321ec946107905dbf37791c26513b4d94699bd948ea5c5321417e8eb212",
+            "directory_permission": "0777",
+            "file_permission": "0600",
+            "filename": "./talosconfig-dev",
+            "id": "8264defd93048301bc140231825df9913a9baa47",
+            "sensitive_content": null,
+            "source": null
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "content"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "sensitive_content"
+              }
+            ]
+          ],
+          "identity_schema_version": 0,
+          "dependencies": [
+            "module.talos_cluster.data.talos_client_configuration.this",
+            "module.talos_cluster.talos_machine_secrets.cluster"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.talos_cluster",
+      "mode": "data",
+      "type": "talos_client_configuration",
+      "name": "this",
+      "provider": "provider[\"registry.terraform.io/siderolabs/talos\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "client_configuration": {
+              "ca_certificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJQekNCOHFBREFnRUNBaEVBNUZJNGJLaUVpOFhnaXN2S2RqV0ZtVEFGQmdNclpYQXdFREVPTUF3R0ExVUUKQ2hNRmRHRnNiM013SGhjTk1qVXhNRE13TVRFMU16RXdXaGNOTXpVeE1ESTRNVEUxTXpFd1dqQVFNUTR3REFZRApWUVFLRXdWMFlXeHZjekFxTUFVR0F5dGxjQU1oQU1MREo1MWJvY3d6dWorMTVRVnJkT2hWbEdIdjdGNzJFLzRjCjFYYzg5QXk2bzJFd1h6QU9CZ05WSFE4QkFmOEVCQU1DQW9Rd0hRWURWUjBsQkJZd0ZBWUlLd1lCQlFVSEF3RUcKQ0NzR0FRVUZCd01DTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkxJeFFtUDhWS1FLWU8rbAp0Wmhrc09qN3dGTzRNQVVHQXl0bGNBTkJBQ3hZMGhqQ3V2em12cUVTaENPbUNZdnlZaFBhdkJNeGc2Nnl5KzlVCnVsS1piYitJbHhUd2NWbUFZck9Qc241RG1ITGpUWjByd0hGMENpSVNZbG1STlFnPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==",
+              "client_certificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJLRENCMjZBREFnRUNBaEExbTF5SklEQ25QUWMwcjAySmptR2JNQVVHQXl0bGNEQVFNUTR3REFZRFZRUUsKRXdWMFlXeHZjekFlRncweU5URXdNekF4TVRVek1UQmFGdzB5TmpFd016QXhNVFV6TVRCYU1CTXhFVEFQQmdOVgpCQW9UQ0c5ek9tRmtiV2x1TUNvd0JRWURLMlZ3QXlFQUJhTWhXTXJmQ3BjcHpYQkkzTHpMaldmTkdUaGQxdjk5CmhNTDc0OVFNTnptalNEQkdNQTRHQTFVZER3RUIvd1FFQXdJSGdEQVRCZ05WSFNVRUREQUtCZ2dyQmdFRkJRY0QKQWpBZkJnTlZIU01FR0RBV2dCU3lNVUpqL0ZTa0NtRHZwYldZWkxEbys4QlR1REFGQmdNclpYQURRUUF3OCtTaQpBS3ErWFErZHIzT3oxT29IakJvTDNRMWFtc2RxTFN2L3lRd3BkTnlDMHlYOUZIUlhwMElBMWJOUnQxSUYzQVVSClRLbVk2OTVueDIydEg0SUYKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=",
+              "client_key": "LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM0Q0FRQXdCUVlESzJWd0JDSUVJUHRYN3BQNit1bXRiWmlnUFJxNnJxMko4RXlKTnJJYmNyaDJaRU1rMkcweAotLS0tLUVORCBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0K"
+            },
+            "cluster_name": "vixens-dev",
+            "endpoints": null,
+            "id": "vixens-dev",
+            "nodes": [
+              "192.168.111.162"
+            ],
+            "talos_config": "context: vixens-dev\ncontexts:\n    vixens-dev:\n        endpoints: []\n        nodes:\n            - 192.168.111.162\n        ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJQekNCOHFBREFnRUNBaEVBNUZJNGJLaUVpOFhnaXN2S2RqV0ZtVEFGQmdNclpYQXdFREVPTUF3R0ExVUUKQ2hNRmRHRnNiM013SGhjTk1qVXhNRE13TVRFMU16RXdXaGNOTXpVeE1ESTRNVEUxTXpFd1dqQVFNUTR3REFZRApWUVFLRXdWMFlXeHZjekFxTUFVR0F5dGxjQU1oQU1MREo1MWJvY3d6dWorMTVRVnJkT2hWbEdIdjdGNzJFLzRjCjFYYzg5QXk2bzJFd1h6QU9CZ05WSFE4QkFmOEVCQU1DQW9Rd0hRWURWUjBsQkJZd0ZBWUlLd1lCQlFVSEF3RUcKQ0NzR0FRVUZCd01DTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkxJeFFtUDhWS1FLWU8rbAp0Wmhrc09qN3dGTzRNQVVHQXl0bGNBTkJBQ3hZMGhqQ3V2em12cUVTaENPbUNZdnlZaFBhdkJNeGc2Nnl5KzlVCnVsS1piYitJbHhUd2NWbUFZck9Qc241RG1ITGpUWjByd0hGMENpSVNZbG1STlFnPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==\n        crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJLRENCMjZBREFnRUNBaEExbTF5SklEQ25QUWMwcjAySmptR2JNQVVHQXl0bGNEQVFNUTR3REFZRFZRUUsKRXdWMFlXeHZjekFlRncweU5URXdNekF4TVRVek1UQmFGdzB5TmpFd016QXhNVFV6TVRCYU1CTXhFVEFQQmdOVgpCQW9UQ0c5ek9tRmtiV2x1TUNvd0JRWURLMlZ3QXlFQUJhTWhXTXJmQ3BjcHpYQkkzTHpMaldmTkdUaGQxdjk5CmhNTDc0OVFNTnptalNEQkdNQTRHQTFVZER3RUIvd1FFQXdJSGdEQVRCZ05WSFNVRUREQUtCZ2dyQmdFRkJRY0QKQWpBZkJnTlZIU01FR0RBV2dCU3lNVUpqL0ZTa0NtRHZwYldZWkxEbys4QlR1REFGQmdNclpYQURRUUF3OCtTaQpBS3ErWFErZHIzT3oxT29IakJvTDNRMWFtc2RxTFN2L3lRd3BkTnlDMHlYOUZIUlhwMElBMWJOUnQxSUYzQVVSClRLbVk2OTVueDIydEg0SUYKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=\n        key: LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM0Q0FRQXdCUVlESzJWd0JDSUVJUHRYN3BQNit1bXRiWmlnUFJxNnJxMko4RXlKTnJJYmNyaDJaRU1rMkcweAotLS0tLUVORCBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0K\n"
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "client_configuration"
+              },
+              {
+                "type": "get_attr",
+                "value": "client_key"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "talos_config"
+              }
+            ]
+          ],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "module": "module.talos_cluster",
+      "mode": "data",
+      "type": "talos_machine_configuration",
+      "name": "control_plane",
+      "provider": "provider[\"registry.terraform.io/siderolabs/talos\"]",
+      "instances": [
+        {
+          "index_key": "obsy",
+          "schema_version": 0,
+          "attributes": {
+            "cluster_endpoint": "https://192.168.111.160:6443",
+            "cluster_name": "vixens-dev",
+            "config_patches": [
+              "\"cluster\":\n  \"network\":\n    \"podSubnets\":\n    - \"10.244.0.0/16\"\n    \"serviceSubnets\":\n    - \"10.96.0.0/12\"\n\"machine\":\n  \"install\":\n    \"disk\": \"/dev/sda\"\n    \"image\": null\n  \"network\":\n    \"interfaces\":\n    - \"interface\": \"enx00155d00cb10\"\n      \"vlans\":\n      - \"addresses\":\n        - \"192.168.111.162/24\"\n        \"routes\": []\n        \"vlanId\": 111\n      - \"addresses\":\n        - \"192.168.208.162/24\"\n        \"routes\":\n        - \"gateway\": \"192.168.208.1\"\n          \"network\": \"0.0.0.0/0\"\n        \"vlanId\": 208\n"
+            ],
+            "docs": null,
+            "examples": null,
+            "id": "vixens-dev",
+            "kubernetes_version": "1.34.0",
+            "machine_configuration": "version: v1alpha1\ndebug: false\npersist: true\nmachine:\n    type: controlplane\n    token: svh0k4.vm6bqu93pcng3dsr\n    ca:\n        crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJQekNCOHFBREFnRUNBaEVBNUZJNGJLaUVpOFhnaXN2S2RqV0ZtVEFGQmdNclpYQXdFREVPTUF3R0ExVUUKQ2hNRmRHRnNiM013SGhjTk1qVXhNRE13TVRFMU16RXdXaGNOTXpVeE1ESTRNVEUxTXpFd1dqQVFNUTR3REFZRApWUVFLRXdWMFlXeHZjekFxTUFVR0F5dGxjQU1oQU1MREo1MWJvY3d6dWorMTVRVnJkT2hWbEdIdjdGNzJFLzRjCjFYYzg5QXk2bzJFd1h6QU9CZ05WSFE4QkFmOEVCQU1DQW9Rd0hRWURWUjBsQkJZd0ZBWUlLd1lCQlFVSEF3RUcKQ0NzR0FRVUZCd01DTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkxJeFFtUDhWS1FLWU8rbAp0Wmhrc09qN3dGTzRNQVVHQXl0bGNBTkJBQ3hZMGhqQ3V2em12cUVTaENPbUNZdnlZaFBhdkJNeGc2Nnl5KzlVCnVsS1piYitJbHhUd2NWbUFZck9Qc241RG1ITGpUWjByd0hGMENpSVNZbG1STlFnPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==\n        key: LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM0Q0FRQXdCUVlESzJWd0JDSUVJTTZaSUkvd1RJb05ybFRaTWVYVVNXcFAvZmUrNHVTU2tsR1Bic0RqTUhQaQotLS0tLUVORCBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0K\n    certSANs: []\n    kubelet:\n        image: ghcr.io/siderolabs/kubelet:v1.34.0\n        defaultRuntimeSeccompProfileEnabled: true\n        disableManifestsDirectory: true\n    network:\n        interfaces:\n            - interface: enx00155d00cb10\n              vlans:\n                - addresses:\n                    - 192.168.111.162/24\n                  routes: []\n                  vlanId: 111\n                - addresses:\n                    - 192.168.208.162/24\n                  routes:\n                    - network: 0.0.0.0/0\n                      gateway: 192.168.208.1\n                  vlanId: 208\n    install:\n        disk: /dev/sda\n        image: ghcr.io/siderolabs/installer:v1.11.0\n        wipe: false\n    features:\n        rbac: true\n        stableHostname: true\n        apidCheckExtKeyUsage: true\n        diskQuotaSupport: true\n        kubePrism:\n            enabled: true\n            port: 7445\n        hostDNS:\n            enabled: true\n            forwardKubeDNSToHost: true\n    nodeLabels:\n        node.kubernetes.io/exclude-from-external-load-balancers: \"\"\ncluster:\n    id: yBD9yJNAzyDy7g4_m5dso06Xdw-_IzWEofUT-81ntxU=\n    secret: e7ysjeMS2xPSAhukxx2G57fZ4ib/QpQR3+39a1bpX38=\n    controlPlane:\n        endpoint: https://192.168.111.160:6443\n    clusterName: vixens-dev\n    network:\n        dnsDomain: cluster.local\n        podSubnets:\n            - 10.244.0.0/16\n        serviceSubnets:\n            - 10.96.0.0/12\n    token: h8zcbf.rf8kdt9lrk90639t\n    secretboxEncryptionSecret: llsTefzFARwBYv6sjQl0goWkWIp9moIT2IcV4B1eOaM=\n    ca:\n        crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJpakNDQVRDZ0F3SUJBZ0lSQUxOL0tIWXlBbXVBL2NBcDhMd0tkZW93Q2dZSUtvWkl6ajBFQXdJd0ZURVQKTUJFR0ExVUVDaE1LYTNWaVpYSnVaWFJsY3pBZUZ3MHlOVEV3TXpBeE1UVXpNVEJhRncwek5URXdNamd4TVRVegpNVEJhTUJVeEV6QVJCZ05WQkFvVENtdDFZbVZ5Ym1WMFpYTXdXVEFUQmdjcWhrak9QUUlCQmdncWhrak9QUU1CCkJ3TkNBQVM5TmVHSm1DQXJkc25VVVpPSDh2S1NERDJYbUloUWVUNEM5TFY5WU5pbHVGRzF5R3RYMFNESFJWcjkKOWxlWnA5dklIeGlxS01oZndwZjAvZXNId2ZTeW8yRXdYekFPQmdOVkhROEJBZjhFQkFNQ0FvUXdIUVlEVlIwbApCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0dBUVVGQndNQ01BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0hRWURWUjBPCkJCWUVGTkJXeXlRV0N1VmQrTmhUMmZxVGk4SXJ5Zm1aTUFvR0NDcUdTTTQ5QkFNQ0EwZ0FNRVVDSUE0QWVIM1QKZXJnM004dDlyV01wRUtra1FpbzJmakZ3VDd6YU42VkVtSGY5QWlFQWs5Z0FiZFN0aGpCaGtIRWRrTFJjSDIrNApvNC92R1FlbkNjTW13SkE1em04PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==\n        key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUVZNnBaWjVYeWswYjJTQWkrMzJlWmtDV3lMVXZ3N1BFMTU1VVh1eEZldTJvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFdlRYaGlaZ2dLM2JKMUZHVGgvTHlrZ3c5bDVpSVVIaytBdlMxZldEWXBiaFJ0Y2hyVjlFZwp4MFZhL2ZaWG1hZmJ5QjhZcWlqSVg4S1g5UDNyQjhIMHNnPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=\n    aggregatorCA:\n        crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJYekNDQVFXZ0F3SUJBZ0lRRjJmSUdXL1N6ZjF4d001TEdmSFFvVEFLQmdncWhrak9QUVFEQWpBQU1CNFgKRFRJMU1UQXpNREV4TlRNeE1Gb1hEVE0xTVRBeU9ERXhOVE14TUZvd0FEQlpNQk1HQnlxR1NNNDlBZ0VHQ0NxRwpTTTQ5QXdFSEEwSUFCRkc2MFlsUjQ0UEFobHd2czNPNjY0QWhzZGRIY2U5MFZFN2c0QkIvQ3RGNENQVkZEYm1mCjBWblVKeG9EbjFxc1YrQ21YbG5QM21uekZCRWtZakZUdFJPallUQmZNQTRHQTFVZER3RUIvd1FFQXdJQ2hEQWQKQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUJCUVVIQXdJd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZApCZ05WSFE0RUZnUVVlN1B4Z3Iyd3NkZ0cvTkxkZDZXSnkxNDBGV0V3Q2dZSUtvWkl6ajBFQXdJRFNBQXdSUUlnCkpSSWJURDR3OVZBaGdOeUlXQzJBYlNGZUlHTFZzUGdtcmp3aXNCWEVGUHdDSVFEWlI5Vjg5bm8rWjIrZlltdUcKekZDRWRpbW90ai9QNUJjSGFCM09DWlFWcXc9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==\n        key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUtDMFVNRktNSjJSM2NJWFFQT1F3OVhaRXAvdnZ5OERPQ1krazBLZEczU1dvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFVWJyUmlWSGpnOENHWEMremM3cnJnQ0d4MTBkeDczUlVUdURnRUg4SzBYZ0k5VVVOdVovUgpXZFFuR2dPZldxeFg0S1plV2MvZWFmTVVFU1JpTVZPMUV3PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=\n    serviceAccount:\n        key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlKS2dJQkFBS0NBZ0VBMUN3MUJvei8zcVNTZWFzZENzRFZwTmNSbHJnWUw5QTRxY3dHSmVZZU1aVGlHempSClFsVkF1b3BjVk1ZTk9yMktKVmpXazlVaXNESjV3Szl2VUFnQVFXRVAxWVBNY2hYdXNUQWhZbWNVZ0RPVWNnaVoKMU82MlRHbWRUT3E5UVZRSndkUC9GSHljUy9IdDM3RG5PdDdtVldTVjlHUG9KbGxJSkl4NU51WDJxUXdISy9RNgp3b2hTQmJtaWRzSEFZakx6U0VYV2hHNENwMGxYUjJua3hWZ2FSbWZtL3dLSTlRbGdpL29xTEkrc2NUS0hjVzVUCllhZlczUjh5NEUwMi9tWFVBSnArV2xjakxmckpsNTVoUVlXZElKM1JRRVFNeG9BamUzbCtKWFV6NEUyVnhqR0UKb2hNa2dZZGg4V3haL2twUzJNWm9jeTJQbG5uNjQyWXowT2xxamh6c20yUXBxY1pweXBoY29ScjUyZDdLTUk3NApoVmdaV0Ezd3liSmRoa2VpdDlRbkp6bjdRWlBaai9ObnhEOEk3SlRESEhjaUN6Y0FERlArMThXbVdlTTR6REdyClJHaVFhdjBKaHQxczFYNldOQXpwTUh2aTNoNEdBVHJBeUwyUG5wTEJtOVI4Zkt0QVdpcXZ6NHV2UFBBSjN4eGgKQzE0WFNMeDZRQURDcWdhMWdhaldjelEzMHYwSGV4U3lYdUYwVEpFT2UrY29zUUd5REtUbVI2S0NHYnlKL3B5MQo1ZXJVak9sTmFKeFlpT0JEK2daWkNUcDBORisxRS9xbUtkem9pa1J6NGtMSTVMZko5Z1dsYWRXTG1XZ0pLaXRRCmRUdGg0blRhUGJReUlTNUNKblJtd0FSUVpreHFDdGhKWGR0TndkMldkM3lHcEVLYzA0Q3d5S0xzamZNQ0F3RUEKQVFLQ0FnQmNyOEVzVHUwNkFFL0NtZWN5ZXVINXhFQTVSTXZBRzJpZGVIVFpHb2xuSklDUDNzYS9nUW1wVStjWQoyM29OQnA3eVNMaFlWVnYxZDk5ck50aGNNRnFZTlFRYlJKdkwzTnZzaUxlVXlxNFFnVGZnaHZSWXFqMTE3UTliCitoSGFGNUc1bkZoS3hWTHI5RkJ6ajA2OEQ0SzBuQi9MNXRjVDVaM1g1WXZRV1M1alU4OVFPcjF1bk9taitaL0kKM0VRa1FkaTRZbFhmZlVWb2VlZ0lXUENvNng5elVWRitaa2VaTDlMKzR6YUlSKzFQZUFEbUl3bUcyRERMWVNVegpDbGd6VXgyRmMvZ3RrL0pZMUQwN29HTWhJZkx0dkRPY3JQMmR1MzJFbzZMaFR5MXQxOGJOa1hVODdqcmM0TnorCi85UGllK3BzSzJTV3FEa1pSY2s5akxpbkUwako1eDZXTXJJeFRtVHNITjJBckQxQnFHdGxyR0NqaEV5MXdGSTIKS1FiRkxsd0lHQmU4RkM3VTVMSzNUTjdiMXVrWnFUT3JMUUxHRk5MS0lSOTM4UE5lcWQ1YzVML1BXK3l6ZkhudQpLdnQ3aGdKZGhMN0R0ckwwMjU4bTNlVVBlZUlFTVVqMXpNVUJjcTVMRklrZ3FDSmdHbnFrZmhZSlg1RGVycU5sCkVYNlR1aVBzVzRnMlY4bzBjYzBHazhsL01CSXlOSi9LaGg1bVZ4a2dGUHlPdGZDVTlaa3ZUUCtLY1pvVElaL1oKd3RwUTJ1N21IenRKR2lWTVNhTG5PN3RnT1lKeThJdmd1bjZTYkZFd0tQMkdHQ3RYa3JMTjJmMHE0bE1OMk85eQovb3RLQ3pCMDlOY2dOcGlvRWs3TUh6azRPcGc2bkhLM3d0eGVkSjlwc3dHU2FFdXYrUUtDQVFFQStuc3hIK2FWCmZWS3RSTzFWTW9BYXc4N3IzdzRpenNqZ2lXcWR0eUVUeEwraUV2d2tWeFRNUFdKaHczT2NUUWp4aXRuMlNxdDMKZkZ6ZVdzdzIvcWpuK3pPZ1lVTklpaVJMeHFpeDAvSmxrcXpBc2NFV2xlZVNRZHRSWlIrWnNnckt6eGVwU1g3eQpJM3dJQ3pzR29DM1hqdk1wVzVJU0Qyc2hxUmNVSmJkdURnWkVFd2h3djZTZ0lWTXRwR3ZmNTNWSFRnbCtRaVpTCnQ0VXN6WXFqY29YTW9qVE1oZ3JPMHJFVzZ4Z1NEVFJvcGhsVFdjMEZFbk5sQ1YyZ0N0NUd5bmROK1ArMll4K0sKK1ZURDMwV3RMeHUwY3BxUEVOdStRcHVxS0ZBVnpld3VYMm9NdlZUTFJQZk41OWhnUEJSc3F2SUlUeFo3M2kvTwo1SkVnL0kydlZJd0RpUUtDQVFFQTJOancwejlOSWVSS0JnWTZ6eVlDL3FCaC9MRVhVcURwV3hRK2diaklFdzhGClk5RWZQZGtzc2JCblZYRGY3ek9nd21RZEhTL0FwSm40VFFmdUpJZzY0WFBDNU9odzhBWVhqbjhJS3N0T21HMTAKUFlaKzlHbUdzM1dBMG9wMnQvMGwwaHpMcE5qd3QwSmN5SGE2WEQwK1p6UGxkdlpRVkFmcWVQR0lRdTdsU0c5eAo5QkI1clQwcHJNY2lrOTRlU0pQMlNsSU4ra1V1bUJUTkp0NFFxQUpSNXl1ODMzdzZBK3UvTFBPd01kVWRNcnZTCk5NUjlaUVhvUi9UOGxaeEhNZGNKNWc0Y2hHbDNaNjVNY1JYejR2UzM4eDRDSHBkaUliM29MaWxoRFI1VGtuZ0wKeWovbk0vd0NsendNa1ZTYkJ2SFNDdEN3bjJwZmZNTVZGU2M0eUZhYW13S0NBUUVBam9DcHVSRnhPT1JoaVZaUQo0ek00aHUvaEIzeStWdEMzMWRZZk5rR09RcUFYc0I5YytXSHV0SG1WVHlJbDZUbk9XWVdaZG0vSXdhc0FJYjRQCkI2REdvZ2FFRnZHMWdrb1dCa2FSTFJpNXF0RzNxeWxFRlRLeTVkN0ZsdmQ4ZEd0cGFKcDRpRVM5czJ4c0V4K1kKckdhSVBWNmZ4K1g1ZW1ZanQxUlc5UUkvamFFSTk1OFVyaU1WcXYvc2RwK2N1Y3ppTFVaL1cxajhORWFDNzhrUgpKaVZ5LzFGMGprbjEwcTVIY0thNEZtVWJxR3UrSE5ma0s5UVV4bGhLcGdSQldBeTZBcEJRam1JeXFaa00rcWhrClYrbTJKb0ZDSllBdTVTdzBpVXpPcXVIVW5CbjBkMzZYU255RTI0TWhkT3pWeWdkNnJLd0krcVpPV1lFcnVDTlAKZlpWT3FRS0NBUUVBeW5pRkpEbU93MzVzdjROQmxmbGdBbSt1RGtzc0E3TExNSWVPZFlFYkR2Q1BqOHZLNSt6SApsb0duZWxlU1A3NXM5QlNXT3BKRHhXMGVNbzZkQk85T1N3UFRqZmlhdXdKMUxFL2dTRlRjWmVhTkNvVnlOTFB6CldjejFJNkMxaU1XTmNzb0FPME4wUHlodmlaMlNGRjM2emxIZWgxMGxVOUN3Vll6d05jN3B0dUNYL2RNRVNZVTYKVEdFRElCM2RHTmRPdDhZMTF1Q1J5TjVqVDA4NUxpWThZeVNyamVCb0t4RUx4K1VoTnVaT0JQanFKT3J5U2tsaAp3UTQyYVZzcC9wZFNYc1ArVElSTlFUbTFsa0Z4SHhCd1VVaExvbFNuQStwVnlBUks0ZnpXKzRPclBvUzhWQVdTClJiT0Q2STZlMGJVbzhZQTU2aDlnV1JXdHNicVZnam1hMFFLQ0FRRUE1cWNkSGcxcDRzT0wyMDQrNVIwZExoQVYKaFdLa0VQa0ZTMVZqVUJkRmYvSTJwWWhzbUxLWFN4M1hISXVYYjZvc2xaWFBtdkd0aWdOTEFINWpyd3hRTjEyUgpLbzFFQjVBcHA4WXBVUUtKWmUxYjhKNENKWk51ODhNbXVLOHNybTA0RGlmOW80R2hRZzNmNlFQMTVXQTBnY0FNCnFWUEo5VWVkcVlxbVBSYkpHVC9jNmxMZG1HVTZUZG1DNm5rNGd2NUx6SzlBR0t4U3ZXclE0SHFNdFRkZmVaYzMKbVN6RWV3c2hBaVJrMUIydXY1S2lJNER6MmdtTkJPQlR2VGFiZi9VcjcrRDFrbWkxa254UlIzMEgyWlZ4ZFNlTApwYlZLZGdNamQ5SXJMSGFQREhqSTFNTTlPZ0xVWVN3MGg0WmpwcGordTBvY1J4Zjg4MzdIWjlxeEZFb0Uwdz09Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==\n    apiServer:\n        image: registry.k8s.io/kube-apiserver:v1.34.0\n        certSANs:\n            - 192.168.111.160\n        disablePodSecurityPolicy: true\n        admissionControl:\n            - name: PodSecurity\n              configuration:\n                apiVersion: pod-security.admission.config.k8s.io/v1alpha1\n                defaults:\n                    audit: restricted\n                    audit-version: latest\n                    enforce: baseline\n                    enforce-version: latest\n                    warn: restricted\n                    warn-version: latest\n                exemptions:\n                    namespaces:\n                        - kube-system\n                    runtimeClasses: []\n                    usernames: []\n                kind: PodSecurityConfiguration\n        auditPolicy:\n            apiVersion: audit.k8s.io/v1\n            kind: Policy\n            rules:\n                - level: Metadata\n    controllerManager:\n        image: registry.k8s.io/kube-controller-manager:v1.34.0\n    proxy:\n        image: registry.k8s.io/kube-proxy:v1.34.0\n    scheduler:\n        image: registry.k8s.io/kube-scheduler:v1.34.0\n    discovery:\n        enabled: true\n        registries:\n            kubernetes:\n                disabled: true\n            service: {}\n    etcd:\n        ca:\n            crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJmRENDQVNPZ0F3SUJBZ0lRRGQ0VXoybkdHclErblBrS0xkWEFIekFLQmdncWhrak9QUVFEQWpBUE1RMHcKQ3dZRFZRUUtFd1JsZEdOa01CNFhEVEkxTVRBek1ERXhOVE14TUZvWERUTTFNVEF5T0RFeE5UTXhNRm93RHpFTgpNQXNHQTFVRUNoTUVaWFJqWkRCWk1CTUdCeXFHU000OUFnRUdDQ3FHU000OUF3RUhBMElBQktlZGZGRFpIN3RXCjlMRlcwL2ttNnNHUGhwTmNUdG9RSnlOUmZRd29MMDdESEw1OTNGSm1sVEdpSmRaRnZPVFBVeUJsUHRrTUlCdmQKUG5tNThkOHdYR2FqWVRCZk1BNEdBMVVkRHdFQi93UUVBd0lDaERBZEJnTlZIU1VFRmpBVUJnZ3JCZ0VGQlFjRApBUVlJS3dZQkJRVUhBd0l3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFkQmdOVkhRNEVGZ1FVc0R2cTdybEZRSmhuCmhjajlEeVpteWJlbFJSVXdDZ1lJS29aSXpqMEVBd0lEUndBd1JBSWdKb1IwSWpKY0ozdkwxSUplZEZLZUZLNWEKRkJEek95TWl3L1dLaERpd21VOENJQkJDVGRrQW1JTHk1cXcyc3N3N3pHQU82K054WjdWVVUzZDZkWnV3YUcydwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==\n            key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUs2d0dBSDlIcXRUYStKc2IrbWZoUWZHQm10TGZxL2dESHk2eU53ckpZanpvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFcDUxOFVOa2Z1MWIwc1ZiVCtTYnF3WStHazF4TzJoQW5JMUY5RENndlRzTWN2bjNjVW1hVgpNYUlsMWtXODVNOVRJR1UrMlF3Z0c5MCtlYm54M3pCY1pnPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=\n",
+            "machine_secrets": {
+              "certs": {
+                "etcd": {
+                  "cert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJmRENDQVNPZ0F3SUJBZ0lRRGQ0VXoybkdHclErblBrS0xkWEFIekFLQmdncWhrak9QUVFEQWpBUE1RMHcKQ3dZRFZRUUtFd1JsZEdOa01CNFhEVEkxTVRBek1ERXhOVE14TUZvWERUTTFNVEF5T0RFeE5UTXhNRm93RHpFTgpNQXNHQTFVRUNoTUVaWFJqWkRCWk1CTUdCeXFHU000OUFnRUdDQ3FHU000OUF3RUhBMElBQktlZGZGRFpIN3RXCjlMRlcwL2ttNnNHUGhwTmNUdG9RSnlOUmZRd29MMDdESEw1OTNGSm1sVEdpSmRaRnZPVFBVeUJsUHRrTUlCdmQKUG5tNThkOHdYR2FqWVRCZk1BNEdBMVVkRHdFQi93UUVBd0lDaERBZEJnTlZIU1VFRmpBVUJnZ3JCZ0VGQlFjRApBUVlJS3dZQkJRVUhBd0l3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFkQmdOVkhRNEVGZ1FVc0R2cTdybEZRSmhuCmhjajlEeVpteWJlbFJSVXdDZ1lJS29aSXpqMEVBd0lEUndBd1JBSWdKb1IwSWpKY0ozdkwxSUplZEZLZUZLNWEKRkJEek95TWl3L1dLaERpd21VOENJQkJDVGRrQW1JTHk1cXcyc3N3N3pHQU82K054WjdWVVUzZDZkWnV3YUcydwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==",
+                  "key": "LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUs2d0dBSDlIcXRUYStKc2IrbWZoUWZHQm10TGZxL2dESHk2eU53ckpZanpvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFcDUxOFVOa2Z1MWIwc1ZiVCtTYnF3WStHazF4TzJoQW5JMUY5RENndlRzTWN2bjNjVW1hVgpNYUlsMWtXODVNOVRJR1UrMlF3Z0c5MCtlYm54M3pCY1pnPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo="
+                },
+                "k8s": {
+                  "cert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJpakNDQVRDZ0F3SUJBZ0lSQUxOL0tIWXlBbXVBL2NBcDhMd0tkZW93Q2dZSUtvWkl6ajBFQXdJd0ZURVQKTUJFR0ExVUVDaE1LYTNWaVpYSnVaWFJsY3pBZUZ3MHlOVEV3TXpBeE1UVXpNVEJhRncwek5URXdNamd4TVRVegpNVEJhTUJVeEV6QVJCZ05WQkFvVENtdDFZbVZ5Ym1WMFpYTXdXVEFUQmdjcWhrak9QUUlCQmdncWhrak9QUU1CCkJ3TkNBQVM5TmVHSm1DQXJkc25VVVpPSDh2S1NERDJYbUloUWVUNEM5TFY5WU5pbHVGRzF5R3RYMFNESFJWcjkKOWxlWnA5dklIeGlxS01oZndwZjAvZXNId2ZTeW8yRXdYekFPQmdOVkhROEJBZjhFQkFNQ0FvUXdIUVlEVlIwbApCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0dBUVVGQndNQ01BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0hRWURWUjBPCkJCWUVGTkJXeXlRV0N1VmQrTmhUMmZxVGk4SXJ5Zm1aTUFvR0NDcUdTTTQ5QkFNQ0EwZ0FNRVVDSUE0QWVIM1QKZXJnM004dDlyV01wRUtra1FpbzJmakZ3VDd6YU42VkVtSGY5QWlFQWs5Z0FiZFN0aGpCaGtIRWRrTFJjSDIrNApvNC92R1FlbkNjTW13SkE1em04PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==",
+                  "key": "LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUVZNnBaWjVYeWswYjJTQWkrMzJlWmtDV3lMVXZ3N1BFMTU1VVh1eEZldTJvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFdlRYaGlaZ2dLM2JKMUZHVGgvTHlrZ3c5bDVpSVVIaytBdlMxZldEWXBiaFJ0Y2hyVjlFZwp4MFZhL2ZaWG1hZmJ5QjhZcWlqSVg4S1g5UDNyQjhIMHNnPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo="
+                },
+                "k8s_aggregator": {
+                  "cert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJYekNDQVFXZ0F3SUJBZ0lRRjJmSUdXL1N6ZjF4d001TEdmSFFvVEFLQmdncWhrak9QUVFEQWpBQU1CNFgKRFRJMU1UQXpNREV4TlRNeE1Gb1hEVE0xTVRBeU9ERXhOVE14TUZvd0FEQlpNQk1HQnlxR1NNNDlBZ0VHQ0NxRwpTTTQ5QXdFSEEwSUFCRkc2MFlsUjQ0UEFobHd2czNPNjY0QWhzZGRIY2U5MFZFN2c0QkIvQ3RGNENQVkZEYm1mCjBWblVKeG9EbjFxc1YrQ21YbG5QM21uekZCRWtZakZUdFJPallUQmZNQTRHQTFVZER3RUIvd1FFQXdJQ2hEQWQKQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUJCUVVIQXdJd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZApCZ05WSFE0RUZnUVVlN1B4Z3Iyd3NkZ0cvTkxkZDZXSnkxNDBGV0V3Q2dZSUtvWkl6ajBFQXdJRFNBQXdSUUlnCkpSSWJURDR3OVZBaGdOeUlXQzJBYlNGZUlHTFZzUGdtcmp3aXNCWEVGUHdDSVFEWlI5Vjg5bm8rWjIrZlltdUcKekZDRWRpbW90ai9QNUJjSGFCM09DWlFWcXc9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==",
+                  "key": "LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUtDMFVNRktNSjJSM2NJWFFQT1F3OVhaRXAvdnZ5OERPQ1krazBLZEczU1dvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFVWJyUmlWSGpnOENHWEMremM3cnJnQ0d4MTBkeDczUlVUdURnRUg4SzBYZ0k5VVVOdVovUgpXZFFuR2dPZldxeFg0S1plV2MvZWFmTVVFU1JpTVZPMUV3PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo="
+                },
+                "k8s_serviceaccount": {
+                  "key": "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlKS2dJQkFBS0NBZ0VBMUN3MUJvei8zcVNTZWFzZENzRFZwTmNSbHJnWUw5QTRxY3dHSmVZZU1aVGlHempSClFsVkF1b3BjVk1ZTk9yMktKVmpXazlVaXNESjV3Szl2VUFnQVFXRVAxWVBNY2hYdXNUQWhZbWNVZ0RPVWNnaVoKMU82MlRHbWRUT3E5UVZRSndkUC9GSHljUy9IdDM3RG5PdDdtVldTVjlHUG9KbGxJSkl4NU51WDJxUXdISy9RNgp3b2hTQmJtaWRzSEFZakx6U0VYV2hHNENwMGxYUjJua3hWZ2FSbWZtL3dLSTlRbGdpL29xTEkrc2NUS0hjVzVUCllhZlczUjh5NEUwMi9tWFVBSnArV2xjakxmckpsNTVoUVlXZElKM1JRRVFNeG9BamUzbCtKWFV6NEUyVnhqR0UKb2hNa2dZZGg4V3haL2twUzJNWm9jeTJQbG5uNjQyWXowT2xxamh6c20yUXBxY1pweXBoY29ScjUyZDdLTUk3NApoVmdaV0Ezd3liSmRoa2VpdDlRbkp6bjdRWlBaai9ObnhEOEk3SlRESEhjaUN6Y0FERlArMThXbVdlTTR6REdyClJHaVFhdjBKaHQxczFYNldOQXpwTUh2aTNoNEdBVHJBeUwyUG5wTEJtOVI4Zkt0QVdpcXZ6NHV2UFBBSjN4eGgKQzE0WFNMeDZRQURDcWdhMWdhaldjelEzMHYwSGV4U3lYdUYwVEpFT2UrY29zUUd5REtUbVI2S0NHYnlKL3B5MQo1ZXJVak9sTmFKeFlpT0JEK2daWkNUcDBORisxRS9xbUtkem9pa1J6NGtMSTVMZko5Z1dsYWRXTG1XZ0pLaXRRCmRUdGg0blRhUGJReUlTNUNKblJtd0FSUVpreHFDdGhKWGR0TndkMldkM3lHcEVLYzA0Q3d5S0xzamZNQ0F3RUEKQVFLQ0FnQmNyOEVzVHUwNkFFL0NtZWN5ZXVINXhFQTVSTXZBRzJpZGVIVFpHb2xuSklDUDNzYS9nUW1wVStjWQoyM29OQnA3eVNMaFlWVnYxZDk5ck50aGNNRnFZTlFRYlJKdkwzTnZzaUxlVXlxNFFnVGZnaHZSWXFqMTE3UTliCitoSGFGNUc1bkZoS3hWTHI5RkJ6ajA2OEQ0SzBuQi9MNXRjVDVaM1g1WXZRV1M1alU4OVFPcjF1bk9taitaL0kKM0VRa1FkaTRZbFhmZlVWb2VlZ0lXUENvNng5elVWRitaa2VaTDlMKzR6YUlSKzFQZUFEbUl3bUcyRERMWVNVegpDbGd6VXgyRmMvZ3RrL0pZMUQwN29HTWhJZkx0dkRPY3JQMmR1MzJFbzZMaFR5MXQxOGJOa1hVODdqcmM0TnorCi85UGllK3BzSzJTV3FEa1pSY2s5akxpbkUwako1eDZXTXJJeFRtVHNITjJBckQxQnFHdGxyR0NqaEV5MXdGSTIKS1FiRkxsd0lHQmU4RkM3VTVMSzNUTjdiMXVrWnFUT3JMUUxHRk5MS0lSOTM4UE5lcWQ1YzVML1BXK3l6ZkhudQpLdnQ3aGdKZGhMN0R0ckwwMjU4bTNlVVBlZUlFTVVqMXpNVUJjcTVMRklrZ3FDSmdHbnFrZmhZSlg1RGVycU5sCkVYNlR1aVBzVzRnMlY4bzBjYzBHazhsL01CSXlOSi9LaGg1bVZ4a2dGUHlPdGZDVTlaa3ZUUCtLY1pvVElaL1oKd3RwUTJ1N21IenRKR2lWTVNhTG5PN3RnT1lKeThJdmd1bjZTYkZFd0tQMkdHQ3RYa3JMTjJmMHE0bE1OMk85eQovb3RLQ3pCMDlOY2dOcGlvRWs3TUh6azRPcGc2bkhLM3d0eGVkSjlwc3dHU2FFdXYrUUtDQVFFQStuc3hIK2FWCmZWS3RSTzFWTW9BYXc4N3IzdzRpenNqZ2lXcWR0eUVUeEwraUV2d2tWeFRNUFdKaHczT2NUUWp4aXRuMlNxdDMKZkZ6ZVdzdzIvcWpuK3pPZ1lVTklpaVJMeHFpeDAvSmxrcXpBc2NFV2xlZVNRZHRSWlIrWnNnckt6eGVwU1g3eQpJM3dJQ3pzR29DM1hqdk1wVzVJU0Qyc2hxUmNVSmJkdURnWkVFd2h3djZTZ0lWTXRwR3ZmNTNWSFRnbCtRaVpTCnQ0VXN6WXFqY29YTW9qVE1oZ3JPMHJFVzZ4Z1NEVFJvcGhsVFdjMEZFbk5sQ1YyZ0N0NUd5bmROK1ArMll4K0sKK1ZURDMwV3RMeHUwY3BxUEVOdStRcHVxS0ZBVnpld3VYMm9NdlZUTFJQZk41OWhnUEJSc3F2SUlUeFo3M2kvTwo1SkVnL0kydlZJd0RpUUtDQVFFQTJOancwejlOSWVSS0JnWTZ6eVlDL3FCaC9MRVhVcURwV3hRK2diaklFdzhGClk5RWZQZGtzc2JCblZYRGY3ek9nd21RZEhTL0FwSm40VFFmdUpJZzY0WFBDNU9odzhBWVhqbjhJS3N0T21HMTAKUFlaKzlHbUdzM1dBMG9wMnQvMGwwaHpMcE5qd3QwSmN5SGE2WEQwK1p6UGxkdlpRVkFmcWVQR0lRdTdsU0c5eAo5QkI1clQwcHJNY2lrOTRlU0pQMlNsSU4ra1V1bUJUTkp0NFFxQUpSNXl1ODMzdzZBK3UvTFBPd01kVWRNcnZTCk5NUjlaUVhvUi9UOGxaeEhNZGNKNWc0Y2hHbDNaNjVNY1JYejR2UzM4eDRDSHBkaUliM29MaWxoRFI1VGtuZ0wKeWovbk0vd0NsendNa1ZTYkJ2SFNDdEN3bjJwZmZNTVZGU2M0eUZhYW13S0NBUUVBam9DcHVSRnhPT1JoaVZaUQo0ek00aHUvaEIzeStWdEMzMWRZZk5rR09RcUFYc0I5YytXSHV0SG1WVHlJbDZUbk9XWVdaZG0vSXdhc0FJYjRQCkI2REdvZ2FFRnZHMWdrb1dCa2FSTFJpNXF0RzNxeWxFRlRLeTVkN0ZsdmQ4ZEd0cGFKcDRpRVM5czJ4c0V4K1kKckdhSVBWNmZ4K1g1ZW1ZanQxUlc5UUkvamFFSTk1OFVyaU1WcXYvc2RwK2N1Y3ppTFVaL1cxajhORWFDNzhrUgpKaVZ5LzFGMGprbjEwcTVIY0thNEZtVWJxR3UrSE5ma0s5UVV4bGhLcGdSQldBeTZBcEJRam1JeXFaa00rcWhrClYrbTJKb0ZDSllBdTVTdzBpVXpPcXVIVW5CbjBkMzZYU255RTI0TWhkT3pWeWdkNnJLd0krcVpPV1lFcnVDTlAKZlpWT3FRS0NBUUVBeW5pRkpEbU93MzVzdjROQmxmbGdBbSt1RGtzc0E3TExNSWVPZFlFYkR2Q1BqOHZLNSt6SApsb0duZWxlU1A3NXM5QlNXT3BKRHhXMGVNbzZkQk85T1N3UFRqZmlhdXdKMUxFL2dTRlRjWmVhTkNvVnlOTFB6CldjejFJNkMxaU1XTmNzb0FPME4wUHlodmlaMlNGRjM2emxIZWgxMGxVOUN3Vll6d05jN3B0dUNYL2RNRVNZVTYKVEdFRElCM2RHTmRPdDhZMTF1Q1J5TjVqVDA4NUxpWThZeVNyamVCb0t4RUx4K1VoTnVaT0JQanFKT3J5U2tsaAp3UTQyYVZzcC9wZFNYc1ArVElSTlFUbTFsa0Z4SHhCd1VVaExvbFNuQStwVnlBUks0ZnpXKzRPclBvUzhWQVdTClJiT0Q2STZlMGJVbzhZQTU2aDlnV1JXdHNicVZnam1hMFFLQ0FRRUE1cWNkSGcxcDRzT0wyMDQrNVIwZExoQVYKaFdLa0VQa0ZTMVZqVUJkRmYvSTJwWWhzbUxLWFN4M1hISXVYYjZvc2xaWFBtdkd0aWdOTEFINWpyd3hRTjEyUgpLbzFFQjVBcHA4WXBVUUtKWmUxYjhKNENKWk51ODhNbXVLOHNybTA0RGlmOW80R2hRZzNmNlFQMTVXQTBnY0FNCnFWUEo5VWVkcVlxbVBSYkpHVC9jNmxMZG1HVTZUZG1DNm5rNGd2NUx6SzlBR0t4U3ZXclE0SHFNdFRkZmVaYzMKbVN6RWV3c2hBaVJrMUIydXY1S2lJNER6MmdtTkJPQlR2VGFiZi9VcjcrRDFrbWkxa254UlIzMEgyWlZ4ZFNlTApwYlZLZGdNamQ5SXJMSGFQREhqSTFNTTlPZ0xVWVN3MGg0WmpwcGordTBvY1J4Zjg4MzdIWjlxeEZFb0Uwdz09Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg=="
+                },
+                "os": {
+                  "cert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJQekNCOHFBREFnRUNBaEVBNUZJNGJLaUVpOFhnaXN2S2RqV0ZtVEFGQmdNclpYQXdFREVPTUF3R0ExVUUKQ2hNRmRHRnNiM013SGhjTk1qVXhNRE13TVRFMU16RXdXaGNOTXpVeE1ESTRNVEUxTXpFd1dqQVFNUTR3REFZRApWUVFLRXdWMFlXeHZjekFxTUFVR0F5dGxjQU1oQU1MREo1MWJvY3d6dWorMTVRVnJkT2hWbEdIdjdGNzJFLzRjCjFYYzg5QXk2bzJFd1h6QU9CZ05WSFE4QkFmOEVCQU1DQW9Rd0hRWURWUjBsQkJZd0ZBWUlLd1lCQlFVSEF3RUcKQ0NzR0FRVUZCd01DTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkxJeFFtUDhWS1FLWU8rbAp0Wmhrc09qN3dGTzRNQVVHQXl0bGNBTkJBQ3hZMGhqQ3V2em12cUVTaENPbUNZdnlZaFBhdkJNeGc2Nnl5KzlVCnVsS1piYitJbHhUd2NWbUFZck9Qc241RG1ITGpUWjByd0hGMENpSVNZbG1STlFnPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==",
+                  "key": "LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM0Q0FRQXdCUVlESzJWd0JDSUVJTTZaSUkvd1RJb05ybFRaTWVYVVNXcFAvZmUrNHVTU2tsR1Bic0RqTUhQaQotLS0tLUVORCBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0K"
+                }
+              },
+              "cluster": {
+                "id": "yBD9yJNAzyDy7g4_m5dso06Xdw-_IzWEofUT-81ntxU=",
+                "secret": "e7ysjeMS2xPSAhukxx2G57fZ4ib/QpQR3+39a1bpX38="
+              },
+              "secrets": {
+                "aescbc_encryption_secret": null,
+                "bootstrap_token": "h8zcbf.rf8kdt9lrk90639t",
+                "secretbox_encryption_secret": "llsTefzFARwBYv6sjQl0goWkWIp9moIT2IcV4B1eOaM="
+              },
+              "trustdinfo": {
+                "token": "svh0k4.vm6bqu93pcng3dsr"
+              }
+            },
+            "machine_type": "controlplane",
+            "talos_version": "v1.11.3"
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_configuration"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "certs"
+              },
+              {
+                "type": "get_attr",
+                "value": "etcd"
+              },
+              {
+                "type": "get_attr",
+                "value": "key"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "certs"
+              },
+              {
+                "type": "get_attr",
+                "value": "k8s"
+              },
+              {
+                "type": "get_attr",
+                "value": "key"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "certs"
+              },
+              {
+                "type": "get_attr",
+                "value": "k8s_aggregator"
+              },
+              {
+                "type": "get_attr",
+                "value": "key"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "certs"
+              },
+              {
+                "type": "get_attr",
+                "value": "k8s_serviceaccount"
+              },
+              {
+                "type": "get_attr",
+                "value": "key"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "certs"
+              },
+              {
+                "type": "get_attr",
+                "value": "os"
+              },
+              {
+                "type": "get_attr",
+                "value": "key"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "cluster"
+              },
+              {
+                "type": "get_attr",
+                "value": "secret"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "aescbc_encryption_secret"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "bootstrap_token"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "secretbox_encryption_secret"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "trustdinfo"
+              },
+              {
+                "type": "get_attr",
+                "value": "token"
+              }
+            ]
+          ],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "module": "module.talos_cluster",
+      "mode": "managed",
+      "type": "talos_machine_secrets",
+      "name": "cluster",
+      "provider": "provider[\"registry.terraform.io/siderolabs/talos\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "client_configuration": {
+              "ca_certificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJQekNCOHFBREFnRUNBaEVBNUZJNGJLaUVpOFhnaXN2S2RqV0ZtVEFGQmdNclpYQXdFREVPTUF3R0ExVUUKQ2hNRmRHRnNiM013SGhjTk1qVXhNRE13TVRFMU16RXdXaGNOTXpVeE1ESTRNVEUxTXpFd1dqQVFNUTR3REFZRApWUVFLRXdWMFlXeHZjekFxTUFVR0F5dGxjQU1oQU1MREo1MWJvY3d6dWorMTVRVnJkT2hWbEdIdjdGNzJFLzRjCjFYYzg5QXk2bzJFd1h6QU9CZ05WSFE4QkFmOEVCQU1DQW9Rd0hRWURWUjBsQkJZd0ZBWUlLd1lCQlFVSEF3RUcKQ0NzR0FRVUZCd01DTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkxJeFFtUDhWS1FLWU8rbAp0Wmhrc09qN3dGTzRNQVVHQXl0bGNBTkJBQ3hZMGhqQ3V2em12cUVTaENPbUNZdnlZaFBhdkJNeGc2Nnl5KzlVCnVsS1piYitJbHhUd2NWbUFZck9Qc241RG1ITGpUWjByd0hGMENpSVNZbG1STlFnPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==",
+              "client_certificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJLRENCMjZBREFnRUNBaEExbTF5SklEQ25QUWMwcjAySmptR2JNQVVHQXl0bGNEQVFNUTR3REFZRFZRUUsKRXdWMFlXeHZjekFlRncweU5URXdNekF4TVRVek1UQmFGdzB5TmpFd016QXhNVFV6TVRCYU1CTXhFVEFQQmdOVgpCQW9UQ0c5ek9tRmtiV2x1TUNvd0JRWURLMlZ3QXlFQUJhTWhXTXJmQ3BjcHpYQkkzTHpMaldmTkdUaGQxdjk5CmhNTDc0OVFNTnptalNEQkdNQTRHQTFVZER3RUIvd1FFQXdJSGdEQVRCZ05WSFNVRUREQUtCZ2dyQmdFRkJRY0QKQWpBZkJnTlZIU01FR0RBV2dCU3lNVUpqL0ZTa0NtRHZwYldZWkxEbys4QlR1REFGQmdNclpYQURRUUF3OCtTaQpBS3ErWFErZHIzT3oxT29IakJvTDNRMWFtc2RxTFN2L3lRd3BkTnlDMHlYOUZIUlhwMElBMWJOUnQxSUYzQVVSClRLbVk2OTVueDIydEg0SUYKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=",
+              "client_key": "LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM0Q0FRQXdCUVlESzJWd0JDSUVJUHRYN3BQNit1bXRiWmlnUFJxNnJxMko4RXlKTnJJYmNyaDJaRU1rMkcweAotLS0tLUVORCBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0K"
+            },
+            "id": "machine_secrets",
+            "machine_secrets": {
+              "certs": {
+                "etcd": {
+                  "cert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJmRENDQVNPZ0F3SUJBZ0lRRGQ0VXoybkdHclErblBrS0xkWEFIekFLQmdncWhrak9QUVFEQWpBUE1RMHcKQ3dZRFZRUUtFd1JsZEdOa01CNFhEVEkxTVRBek1ERXhOVE14TUZvWERUTTFNVEF5T0RFeE5UTXhNRm93RHpFTgpNQXNHQTFVRUNoTUVaWFJqWkRCWk1CTUdCeXFHU000OUFnRUdDQ3FHU000OUF3RUhBMElBQktlZGZGRFpIN3RXCjlMRlcwL2ttNnNHUGhwTmNUdG9RSnlOUmZRd29MMDdESEw1OTNGSm1sVEdpSmRaRnZPVFBVeUJsUHRrTUlCdmQKUG5tNThkOHdYR2FqWVRCZk1BNEdBMVVkRHdFQi93UUVBd0lDaERBZEJnTlZIU1VFRmpBVUJnZ3JCZ0VGQlFjRApBUVlJS3dZQkJRVUhBd0l3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFkQmdOVkhRNEVGZ1FVc0R2cTdybEZRSmhuCmhjajlEeVpteWJlbFJSVXdDZ1lJS29aSXpqMEVBd0lEUndBd1JBSWdKb1IwSWpKY0ozdkwxSUplZEZLZUZLNWEKRkJEek95TWl3L1dLaERpd21VOENJQkJDVGRrQW1JTHk1cXcyc3N3N3pHQU82K054WjdWVVUzZDZkWnV3YUcydwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==",
+                  "key": "LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUs2d0dBSDlIcXRUYStKc2IrbWZoUWZHQm10TGZxL2dESHk2eU53ckpZanpvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFcDUxOFVOa2Z1MWIwc1ZiVCtTYnF3WStHazF4TzJoQW5JMUY5RENndlRzTWN2bjNjVW1hVgpNYUlsMWtXODVNOVRJR1UrMlF3Z0c5MCtlYm54M3pCY1pnPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo="
+                },
+                "k8s": {
+                  "cert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJpakNDQVRDZ0F3SUJBZ0lSQUxOL0tIWXlBbXVBL2NBcDhMd0tkZW93Q2dZSUtvWkl6ajBFQXdJd0ZURVQKTUJFR0ExVUVDaE1LYTNWaVpYSnVaWFJsY3pBZUZ3MHlOVEV3TXpBeE1UVXpNVEJhRncwek5URXdNamd4TVRVegpNVEJhTUJVeEV6QVJCZ05WQkFvVENtdDFZbVZ5Ym1WMFpYTXdXVEFUQmdjcWhrak9QUUlCQmdncWhrak9QUU1CCkJ3TkNBQVM5TmVHSm1DQXJkc25VVVpPSDh2S1NERDJYbUloUWVUNEM5TFY5WU5pbHVGRzF5R3RYMFNESFJWcjkKOWxlWnA5dklIeGlxS01oZndwZjAvZXNId2ZTeW8yRXdYekFPQmdOVkhROEJBZjhFQkFNQ0FvUXdIUVlEVlIwbApCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0dBUVVGQndNQ01BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0hRWURWUjBPCkJCWUVGTkJXeXlRV0N1VmQrTmhUMmZxVGk4SXJ5Zm1aTUFvR0NDcUdTTTQ5QkFNQ0EwZ0FNRVVDSUE0QWVIM1QKZXJnM004dDlyV01wRUtra1FpbzJmakZ3VDd6YU42VkVtSGY5QWlFQWs5Z0FiZFN0aGpCaGtIRWRrTFJjSDIrNApvNC92R1FlbkNjTW13SkE1em04PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==",
+                  "key": "LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUVZNnBaWjVYeWswYjJTQWkrMzJlWmtDV3lMVXZ3N1BFMTU1VVh1eEZldTJvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFdlRYaGlaZ2dLM2JKMUZHVGgvTHlrZ3c5bDVpSVVIaytBdlMxZldEWXBiaFJ0Y2hyVjlFZwp4MFZhL2ZaWG1hZmJ5QjhZcWlqSVg4S1g5UDNyQjhIMHNnPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo="
+                },
+                "k8s_aggregator": {
+                  "cert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJYekNDQVFXZ0F3SUJBZ0lRRjJmSUdXL1N6ZjF4d001TEdmSFFvVEFLQmdncWhrak9QUVFEQWpBQU1CNFgKRFRJMU1UQXpNREV4TlRNeE1Gb1hEVE0xTVRBeU9ERXhOVE14TUZvd0FEQlpNQk1HQnlxR1NNNDlBZ0VHQ0NxRwpTTTQ5QXdFSEEwSUFCRkc2MFlsUjQ0UEFobHd2czNPNjY0QWhzZGRIY2U5MFZFN2c0QkIvQ3RGNENQVkZEYm1mCjBWblVKeG9EbjFxc1YrQ21YbG5QM21uekZCRWtZakZUdFJPallUQmZNQTRHQTFVZER3RUIvd1FFQXdJQ2hEQWQKQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUJCUVVIQXdJd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZApCZ05WSFE0RUZnUVVlN1B4Z3Iyd3NkZ0cvTkxkZDZXSnkxNDBGV0V3Q2dZSUtvWkl6ajBFQXdJRFNBQXdSUUlnCkpSSWJURDR3OVZBaGdOeUlXQzJBYlNGZUlHTFZzUGdtcmp3aXNCWEVGUHdDSVFEWlI5Vjg5bm8rWjIrZlltdUcKekZDRWRpbW90ai9QNUJjSGFCM09DWlFWcXc9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==",
+                  "key": "LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUtDMFVNRktNSjJSM2NJWFFQT1F3OVhaRXAvdnZ5OERPQ1krazBLZEczU1dvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFVWJyUmlWSGpnOENHWEMremM3cnJnQ0d4MTBkeDczUlVUdURnRUg4SzBYZ0k5VVVOdVovUgpXZFFuR2dPZldxeFg0S1plV2MvZWFmTVVFU1JpTVZPMUV3PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo="
+                },
+                "k8s_serviceaccount": {
+                  "key": "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlKS2dJQkFBS0NBZ0VBMUN3MUJvei8zcVNTZWFzZENzRFZwTmNSbHJnWUw5QTRxY3dHSmVZZU1aVGlHempSClFsVkF1b3BjVk1ZTk9yMktKVmpXazlVaXNESjV3Szl2VUFnQVFXRVAxWVBNY2hYdXNUQWhZbWNVZ0RPVWNnaVoKMU82MlRHbWRUT3E5UVZRSndkUC9GSHljUy9IdDM3RG5PdDdtVldTVjlHUG9KbGxJSkl4NU51WDJxUXdISy9RNgp3b2hTQmJtaWRzSEFZakx6U0VYV2hHNENwMGxYUjJua3hWZ2FSbWZtL3dLSTlRbGdpL29xTEkrc2NUS0hjVzVUCllhZlczUjh5NEUwMi9tWFVBSnArV2xjakxmckpsNTVoUVlXZElKM1JRRVFNeG9BamUzbCtKWFV6NEUyVnhqR0UKb2hNa2dZZGg4V3haL2twUzJNWm9jeTJQbG5uNjQyWXowT2xxamh6c20yUXBxY1pweXBoY29ScjUyZDdLTUk3NApoVmdaV0Ezd3liSmRoa2VpdDlRbkp6bjdRWlBaai9ObnhEOEk3SlRESEhjaUN6Y0FERlArMThXbVdlTTR6REdyClJHaVFhdjBKaHQxczFYNldOQXpwTUh2aTNoNEdBVHJBeUwyUG5wTEJtOVI4Zkt0QVdpcXZ6NHV2UFBBSjN4eGgKQzE0WFNMeDZRQURDcWdhMWdhaldjelEzMHYwSGV4U3lYdUYwVEpFT2UrY29zUUd5REtUbVI2S0NHYnlKL3B5MQo1ZXJVak9sTmFKeFlpT0JEK2daWkNUcDBORisxRS9xbUtkem9pa1J6NGtMSTVMZko5Z1dsYWRXTG1XZ0pLaXRRCmRUdGg0blRhUGJReUlTNUNKblJtd0FSUVpreHFDdGhKWGR0TndkMldkM3lHcEVLYzA0Q3d5S0xzamZNQ0F3RUEKQVFLQ0FnQmNyOEVzVHUwNkFFL0NtZWN5ZXVINXhFQTVSTXZBRzJpZGVIVFpHb2xuSklDUDNzYS9nUW1wVStjWQoyM29OQnA3eVNMaFlWVnYxZDk5ck50aGNNRnFZTlFRYlJKdkwzTnZzaUxlVXlxNFFnVGZnaHZSWXFqMTE3UTliCitoSGFGNUc1bkZoS3hWTHI5RkJ6ajA2OEQ0SzBuQi9MNXRjVDVaM1g1WXZRV1M1alU4OVFPcjF1bk9taitaL0kKM0VRa1FkaTRZbFhmZlVWb2VlZ0lXUENvNng5elVWRitaa2VaTDlMKzR6YUlSKzFQZUFEbUl3bUcyRERMWVNVegpDbGd6VXgyRmMvZ3RrL0pZMUQwN29HTWhJZkx0dkRPY3JQMmR1MzJFbzZMaFR5MXQxOGJOa1hVODdqcmM0TnorCi85UGllK3BzSzJTV3FEa1pSY2s5akxpbkUwako1eDZXTXJJeFRtVHNITjJBckQxQnFHdGxyR0NqaEV5MXdGSTIKS1FiRkxsd0lHQmU4RkM3VTVMSzNUTjdiMXVrWnFUT3JMUUxHRk5MS0lSOTM4UE5lcWQ1YzVML1BXK3l6ZkhudQpLdnQ3aGdKZGhMN0R0ckwwMjU4bTNlVVBlZUlFTVVqMXpNVUJjcTVMRklrZ3FDSmdHbnFrZmhZSlg1RGVycU5sCkVYNlR1aVBzVzRnMlY4bzBjYzBHazhsL01CSXlOSi9LaGg1bVZ4a2dGUHlPdGZDVTlaa3ZUUCtLY1pvVElaL1oKd3RwUTJ1N21IenRKR2lWTVNhTG5PN3RnT1lKeThJdmd1bjZTYkZFd0tQMkdHQ3RYa3JMTjJmMHE0bE1OMk85eQovb3RLQ3pCMDlOY2dOcGlvRWs3TUh6azRPcGc2bkhLM3d0eGVkSjlwc3dHU2FFdXYrUUtDQVFFQStuc3hIK2FWCmZWS3RSTzFWTW9BYXc4N3IzdzRpenNqZ2lXcWR0eUVUeEwraUV2d2tWeFRNUFdKaHczT2NUUWp4aXRuMlNxdDMKZkZ6ZVdzdzIvcWpuK3pPZ1lVTklpaVJMeHFpeDAvSmxrcXpBc2NFV2xlZVNRZHRSWlIrWnNnckt6eGVwU1g3eQpJM3dJQ3pzR29DM1hqdk1wVzVJU0Qyc2hxUmNVSmJkdURnWkVFd2h3djZTZ0lWTXRwR3ZmNTNWSFRnbCtRaVpTCnQ0VXN6WXFqY29YTW9qVE1oZ3JPMHJFVzZ4Z1NEVFJvcGhsVFdjMEZFbk5sQ1YyZ0N0NUd5bmROK1ArMll4K0sKK1ZURDMwV3RMeHUwY3BxUEVOdStRcHVxS0ZBVnpld3VYMm9NdlZUTFJQZk41OWhnUEJSc3F2SUlUeFo3M2kvTwo1SkVnL0kydlZJd0RpUUtDQVFFQTJOancwejlOSWVSS0JnWTZ6eVlDL3FCaC9MRVhVcURwV3hRK2diaklFdzhGClk5RWZQZGtzc2JCblZYRGY3ek9nd21RZEhTL0FwSm40VFFmdUpJZzY0WFBDNU9odzhBWVhqbjhJS3N0T21HMTAKUFlaKzlHbUdzM1dBMG9wMnQvMGwwaHpMcE5qd3QwSmN5SGE2WEQwK1p6UGxkdlpRVkFmcWVQR0lRdTdsU0c5eAo5QkI1clQwcHJNY2lrOTRlU0pQMlNsSU4ra1V1bUJUTkp0NFFxQUpSNXl1ODMzdzZBK3UvTFBPd01kVWRNcnZTCk5NUjlaUVhvUi9UOGxaeEhNZGNKNWc0Y2hHbDNaNjVNY1JYejR2UzM4eDRDSHBkaUliM29MaWxoRFI1VGtuZ0wKeWovbk0vd0NsendNa1ZTYkJ2SFNDdEN3bjJwZmZNTVZGU2M0eUZhYW13S0NBUUVBam9DcHVSRnhPT1JoaVZaUQo0ek00aHUvaEIzeStWdEMzMWRZZk5rR09RcUFYc0I5YytXSHV0SG1WVHlJbDZUbk9XWVdaZG0vSXdhc0FJYjRQCkI2REdvZ2FFRnZHMWdrb1dCa2FSTFJpNXF0RzNxeWxFRlRLeTVkN0ZsdmQ4ZEd0cGFKcDRpRVM5czJ4c0V4K1kKckdhSVBWNmZ4K1g1ZW1ZanQxUlc5UUkvamFFSTk1OFVyaU1WcXYvc2RwK2N1Y3ppTFVaL1cxajhORWFDNzhrUgpKaVZ5LzFGMGprbjEwcTVIY0thNEZtVWJxR3UrSE5ma0s5UVV4bGhLcGdSQldBeTZBcEJRam1JeXFaa00rcWhrClYrbTJKb0ZDSllBdTVTdzBpVXpPcXVIVW5CbjBkMzZYU255RTI0TWhkT3pWeWdkNnJLd0krcVpPV1lFcnVDTlAKZlpWT3FRS0NBUUVBeW5pRkpEbU93MzVzdjROQmxmbGdBbSt1RGtzc0E3TExNSWVPZFlFYkR2Q1BqOHZLNSt6SApsb0duZWxlU1A3NXM5QlNXT3BKRHhXMGVNbzZkQk85T1N3UFRqZmlhdXdKMUxFL2dTRlRjWmVhTkNvVnlOTFB6CldjejFJNkMxaU1XTmNzb0FPME4wUHlodmlaMlNGRjM2emxIZWgxMGxVOUN3Vll6d05jN3B0dUNYL2RNRVNZVTYKVEdFRElCM2RHTmRPdDhZMTF1Q1J5TjVqVDA4NUxpWThZeVNyamVCb0t4RUx4K1VoTnVaT0JQanFKT3J5U2tsaAp3UTQyYVZzcC9wZFNYc1ArVElSTlFUbTFsa0Z4SHhCd1VVaExvbFNuQStwVnlBUks0ZnpXKzRPclBvUzhWQVdTClJiT0Q2STZlMGJVbzhZQTU2aDlnV1JXdHNicVZnam1hMFFLQ0FRRUE1cWNkSGcxcDRzT0wyMDQrNVIwZExoQVYKaFdLa0VQa0ZTMVZqVUJkRmYvSTJwWWhzbUxLWFN4M1hISXVYYjZvc2xaWFBtdkd0aWdOTEFINWpyd3hRTjEyUgpLbzFFQjVBcHA4WXBVUUtKWmUxYjhKNENKWk51ODhNbXVLOHNybTA0RGlmOW80R2hRZzNmNlFQMTVXQTBnY0FNCnFWUEo5VWVkcVlxbVBSYkpHVC9jNmxMZG1HVTZUZG1DNm5rNGd2NUx6SzlBR0t4U3ZXclE0SHFNdFRkZmVaYzMKbVN6RWV3c2hBaVJrMUIydXY1S2lJNER6MmdtTkJPQlR2VGFiZi9VcjcrRDFrbWkxa254UlIzMEgyWlZ4ZFNlTApwYlZLZGdNamQ5SXJMSGFQREhqSTFNTTlPZ0xVWVN3MGg0WmpwcGordTBvY1J4Zjg4MzdIWjlxeEZFb0Uwdz09Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg=="
+                },
+                "os": {
+                  "cert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJQekNCOHFBREFnRUNBaEVBNUZJNGJLaUVpOFhnaXN2S2RqV0ZtVEFGQmdNclpYQXdFREVPTUF3R0ExVUUKQ2hNRmRHRnNiM013SGhjTk1qVXhNRE13TVRFMU16RXdXaGNOTXpVeE1ESTRNVEUxTXpFd1dqQVFNUTR3REFZRApWUVFLRXdWMFlXeHZjekFxTUFVR0F5dGxjQU1oQU1MREo1MWJvY3d6dWorMTVRVnJkT2hWbEdIdjdGNzJFLzRjCjFYYzg5QXk2bzJFd1h6QU9CZ05WSFE4QkFmOEVCQU1DQW9Rd0hRWURWUjBsQkJZd0ZBWUlLd1lCQlFVSEF3RUcKQ0NzR0FRVUZCd01DTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkxJeFFtUDhWS1FLWU8rbAp0Wmhrc09qN3dGTzRNQVVHQXl0bGNBTkJBQ3hZMGhqQ3V2em12cUVTaENPbUNZdnlZaFBhdkJNeGc2Nnl5KzlVCnVsS1piYitJbHhUd2NWbUFZck9Qc241RG1ITGpUWjByd0hGMENpSVNZbG1STlFnPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==",
+                  "key": "LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM0Q0FRQXdCUVlESzJWd0JDSUVJTTZaSUkvd1RJb05ybFRaTWVYVVNXcFAvZmUrNHVTU2tsR1Bic0RqTUhQaQotLS0tLUVORCBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0K"
+                }
+              },
+              "cluster": {
+                "id": "yBD9yJNAzyDy7g4_m5dso06Xdw-_IzWEofUT-81ntxU=",
+                "secret": "e7ysjeMS2xPSAhukxx2G57fZ4ib/QpQR3+39a1bpX38="
+              },
+              "secrets": {
+                "aescbc_encryption_secret": null,
+                "bootstrap_token": "h8zcbf.rf8kdt9lrk90639t",
+                "secretbox_encryption_secret": "llsTefzFARwBYv6sjQl0goWkWIp9moIT2IcV4B1eOaM="
+              },
+              "trustdinfo": {
+                "token": "svh0k4.vm6bqu93pcng3dsr"
+              }
+            },
+            "talos_version": "v1.11"
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "client_configuration"
+              },
+              {
+                "type": "get_attr",
+                "value": "client_key"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "certs"
+              },
+              {
+                "type": "get_attr",
+                "value": "etcd"
+              },
+              {
+                "type": "get_attr",
+                "value": "key"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "certs"
+              },
+              {
+                "type": "get_attr",
+                "value": "k8s"
+              },
+              {
+                "type": "get_attr",
+                "value": "key"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "certs"
+              },
+              {
+                "type": "get_attr",
+                "value": "k8s_aggregator"
+              },
+              {
+                "type": "get_attr",
+                "value": "key"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "certs"
+              },
+              {
+                "type": "get_attr",
+                "value": "k8s_serviceaccount"
+              },
+              {
+                "type": "get_attr",
+                "value": "key"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "certs"
+              },
+              {
+                "type": "get_attr",
+                "value": "os"
+              },
+              {
+                "type": "get_attr",
+                "value": "key"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "cluster"
+              },
+              {
+                "type": "get_attr",
+                "value": "secret"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "aescbc_encryption_secret"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "bootstrap_token"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "secretbox_encryption_secret"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "machine_secrets"
+              },
+              {
+                "type": "get_attr",
+                "value": "trustdinfo"
+              },
+              {
+                "type": "get_attr",
+                "value": "token"
+              }
+            ]
+          ],
+          "identity_schema_version": 0
+        }
+      ]
+    }
+  ],
+  "check_results": [
+    {
+      "object_kind": "var",
+      "config_addr": "module.talos_cluster.var.control_plane_nodes",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "module.talos_cluster.var.control_plane_nodes",
+          "status": "pass"
+        }
+      ]
+    }
+  ]
+}
+

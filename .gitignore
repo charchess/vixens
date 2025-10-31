@@ -16,3 +16,7 @@ crash.*.log
 # Fichiers de configuration spécifiques à l'OS
 .DS_Store
 Thumbs.db
+
+# Kubernetes and Talos sensitive config files
+**/kubeconfig*
+**/talosconfig*

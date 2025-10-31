@@ -1,0 +1,45 @@
+name: Vixens CI
+
+on:
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  lint-and-validate:
+    name: Lint and Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: YAML Lint Check
+        id: yamllint
+        run: yamllint .
+
+      - name: Install Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          install-type: 'binary'
+          aqua-key: ${{ secrets.AQUA_KEY }}
+          aqua-secret: ${{ secrets.AQUA_SECRET }}
+          trivy-version: '0.29.2'
+
+      - name: Trivy Config Scan
+        run: trivy config .
