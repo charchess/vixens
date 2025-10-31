@@ -20,3 +20,4 @@ Thumbs.db
 # Kubernetes and Talos sensitive config files
 **/kubeconfig*
 **/talosconfig*
+.claude/
