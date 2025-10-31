@@ -9,9 +9,25 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
-    path: apps/metallb/overlays/dev
+    chart: metallb
+    repoURL: https://metallb.github.io/metallb
+    targetRevision: 0.14.8
+    helm:
+      values: |
+        controller:
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
+
+        speaker:
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
+
+          frr:
+            enabled: false  # Layer 2 mode only
 
   destination:
     server: https://kubernetes.default.svc
