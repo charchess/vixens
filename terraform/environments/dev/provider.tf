@@ -1,0 +1,13 @@
+provider "talos" {
+  # Configuration du fournisseur Talos
+  # Assurez-vous que talosconfig est configuré correctement
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = module.talos_cluster.kubernetes_host
+    client_certificate     = base64decode(module.talos_cluster.kubernetes_client_certificate)
+    client_key             = base64decode(module.talos_cluster.kubernetes_client_key)
+    cluster_ca_certificate = base64decode(module.talos_cluster.kubernetes_ca_certificate)
+  }
+}

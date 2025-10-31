@@ -1,0 +1,281 @@
+# Talos Machine Secrets - generated once per cluster
+resource "talos_machine_secrets" "cluster" {}
+
+# Extract VIP address from cluster_endpoint
+locals {
+  vip_address = regex("https?://([^:]+)", var.cluster_endpoint)[0]
+}
+
+# Generate per-node configuration patches
+locals {
+  node_patches = {
+    for k, v in var.control_plane_nodes : k => yamlencode({
+      machine = {
+        install = {
+          disk  = v.install_disk
+          image = var.talos_image != "" ? var.talos_image : null
+        }
+        network = {
+          hostname = v.name # Set node hostname
+          interfaces = [{
+            interface = v.network.interface
+            dhcp      = false # Disable DHCP on physical interface
+            addresses = []    # No IP on untagged interface
+            vlans = [
+              for vlan in v.network.vlans : merge(
+                {
+                  vlanId    = vlan.vlanId
+                  addresses = vlan.addresses
+                  routes = vlan.gateway != "" ? [{
+                    network = "0.0.0.0/0"
+                    gateway = vlan.gateway
+                  }] : []
+                },
+                # Add VIP on internal VLAN (no gateway = VLAN 111)
+                vlan.gateway == "" ? {
+                  vip = {
+                    ip = local.vip_address
+                  }
+                } : {}
+              )
+            ]
+          }]
+        }
+      }
+      cluster = {
+        network = {
+          podSubnets     = [var.pod_subnet]
+          serviceSubnets = [var.service_subnet]
+          # Disable default CNI (Flannel) to use Cilium instead
+          cni = {
+            name = "none"
+          }
+        }
+        # Disable kube-proxy (Cilium replaces it)
+        proxy = {
+          disabled = true
+        }
+        # Add VIP to API server certificates
+        apiServer = {
+          certSANs = [local.vip_address]
+        }
+      }
+    })
+  }
+
+  # Extract VLAN IP with gateway (routable IP) for each control plane node
+  # This is used for talosctl reset during destroy, as nodes are not reachable on maintenance IPs
+  control_plane_vlan_ips = {
+    for k, v in var.control_plane_nodes : k => [
+      for vlan in v.network.vlans :
+      split("/", vlan.addresses[0])[0]
+      if vlan.gateway != ""
+    ][0]
+  }
+
+  # Extract VLAN IP with gateway for each worker node
+  worker_vlan_ips = {
+    for k, v in var.worker_nodes : k => [
+      for vlan in v.network.vlans :
+      split("/", vlan.addresses[0])[0]
+      if vlan.gateway != ""
+    ][0]
+  }
+}
+
+data "talos_machine_configuration" "control_plane" {
+  for_each = var.control_plane_nodes
+
+  cluster_name     = var.cluster_name
+  machine_type     = "controlplane"
+  cluster_endpoint = var.cluster_endpoint
+  machine_secrets  = talos_machine_secrets.cluster.machine_secrets
+  talos_version    = var.talos_version
+
+  config_patches = [
+    local.node_patches[each.key]
+  ]
+}
+
+data "talos_client_configuration" "this" {
+  cluster_name         = var.cluster_name
+  client_configuration = talos_machine_secrets.cluster.client_configuration
+  nodes = concat(
+    [for k, v in var.control_plane_nodes : v.ip_address],
+    [for k, v in var.worker_nodes : v.ip_address]
+  )
+}
+
+resource "talos_machine_configuration_apply" "control_plane" {
+  for_each = var.control_plane_nodes
+
+  client_configuration        = talos_machine_secrets.cluster.client_configuration
+  machine_configuration_input = data.talos_machine_configuration.control_plane[each.key].machine_configuration
+  node                        = each.value.ip_address
+}
+
+resource "talos_machine_bootstrap" "this" {
+  depends_on = [
+    talos_machine_configuration_apply.control_plane
+  ]
+  node                 = [for k, v in var.control_plane_nodes : v.ip_address][0]
+  client_configuration = talos_machine_secrets.cluster.client_configuration
+}
+
+resource "talos_cluster_kubeconfig" "this" {
+  depends_on = [
+    talos_machine_bootstrap.this
+  ]
+  client_configuration = talos_machine_secrets.cluster.client_configuration
+  node                 = [for k, v in var.control_plane_nodes : v.ip_address][0]
+}
+
+# Automatic node reset on destroy - Control Plane
+resource "null_resource" "node_reset_on_destroy" {
+  for_each = var.control_plane_nodes
+
+  # This resource depends on the cluster being configured
+  depends_on = [
+    talos_machine_bootstrap.this
+  ]
+
+  # Store talosconfig content and VLAN IP in triggers
+  # Using VLAN IP with gateway (routable IP) because nodes are not reachable on maintenance IPs after config is applied
+  # This ensures the talosconfig is available even after local_file is destroyed
+  triggers = {
+    node_ip     = local.control_plane_vlan_ips[each.key]
+    talosconfig = data.talos_client_configuration.this.talos_config
+  }
+
+  # Reset node before destroying terraform state
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      # Create temporary talosconfig file with stored content
+      TEMP_TALOSCONFIG=$(mktemp)
+      cat > $TEMP_TALOSCONFIG <<'EOF'
+${self.triggers.talosconfig}
+EOF
+
+      export TALOSCONFIG=$TEMP_TALOSCONFIG
+      echo "Resetting node ${self.triggers.node_ip} before destroy..."
+      talosctl reset \
+        -n ${self.triggers.node_ip} \
+        -e ${self.triggers.node_ip} \
+        --system-labels-to-wipe STATE \
+        --system-labels-to-wipe EPHEMERAL \
+        --graceful=false \
+        --reboot \
+        --wait=false || echo "Warning: Node reset failed, continuing destroy"
+
+      # Cleanup temp file
+      rm -f $TEMP_TALOSCONFIG
+      echo "Node ${self.triggers.node_ip} reset initiated"
+    EOT
+  }
+}
+
+# Worker nodes configuration
+locals {
+  worker_patches = {
+    for k, v in var.worker_nodes : k => yamlencode({
+      machine = {
+        install = {
+          disk  = v.install_disk
+          image = var.talos_image != "" ? var.talos_image : null
+        }
+        network = {
+          hostname = v.name # Set node hostname
+          interfaces = [{
+            interface = v.network.interface
+            dhcp      = false # Disable DHCP on physical interface
+            addresses = []    # No IP on untagged interface
+            vlans = [
+              for vlan in v.network.vlans : {
+                vlanId    = vlan.vlanId
+                addresses = vlan.addresses
+                routes = vlan.gateway != "" ? [{
+                  network = "0.0.0.0/0"
+                  gateway = vlan.gateway
+                }] : []
+              }
+            ]
+          }]
+        }
+      }
+      cluster = {
+        network = {
+          podSubnets     = [var.pod_subnet]
+          serviceSubnets = [var.service_subnet]
+        }
+      }
+    })
+  }
+}
+
+data "talos_machine_configuration" "worker" {
+  for_each = var.worker_nodes
+
+  cluster_name     = var.cluster_name
+  machine_type     = "worker"
+  cluster_endpoint = var.cluster_endpoint
+  machine_secrets  = talos_machine_secrets.cluster.machine_secrets
+  talos_version    = var.talos_version
+
+  config_patches = [
+    local.worker_patches[each.key]
+  ]
+}
+
+resource "talos_machine_configuration_apply" "worker" {
+  for_each = var.worker_nodes
+
+  client_configuration        = talos_machine_secrets.cluster.client_configuration
+  machine_configuration_input = data.talos_machine_configuration.worker[each.key].machine_configuration
+  node                        = each.value.ip_address
+}
+
+# Automatic node reset on destroy - Workers
+resource "null_resource" "worker_reset_on_destroy" {
+  for_each = var.worker_nodes
+
+  # This resource depends on the worker being configured
+  depends_on = [
+    talos_machine_configuration_apply.worker
+  ]
+
+  # Store talosconfig content and VLAN IP in triggers
+  # Using VLAN IP with gateway (routable IP) because nodes are not reachable on maintenance IPs after config is applied
+  # This ensures the talosconfig is available even after local_file is destroyed
+  triggers = {
+    node_ip     = local.worker_vlan_ips[each.key]
+    talosconfig = data.talos_client_configuration.this.talos_config
+  }
+
+  # Reset node before destroying terraform state
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      # Create temporary talosconfig file with stored content
+      TEMP_TALOSCONFIG=$(mktemp)
+      cat > $TEMP_TALOSCONFIG <<'EOF'
+${self.triggers.talosconfig}
+EOF
+
+      export TALOSCONFIG=$TEMP_TALOSCONFIG
+      echo "Resetting worker node ${self.triggers.node_ip} before destroy..."
+      talosctl reset \
+        -n ${self.triggers.node_ip} \
+        -e ${self.triggers.node_ip} \
+        --system-labels-to-wipe STATE \
+        --system-labels-to-wipe EPHEMERAL \
+        --graceful=false \
+        --reboot \
+        --wait=false || echo "Warning: Worker node reset failed, continuing destroy"
+
+      # Cleanup temp file
+      rm -f $TEMP_TALOSCONFIG
+      echo "Worker node ${self.triggers.node_ip} reset initiated"
+    EOT
+  }
+}
