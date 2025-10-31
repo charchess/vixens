@@ -19,6 +19,16 @@ resource "helm_release" "argocd" {
     server = {
       extraArgs = ["--insecure"] # HTTP mode (Traefik will terminate TLS later)
 
+      # Service configuration (parameterized per environment)
+      service = {
+        type = var.argocd_service_type
+        # LoadBalancer IP only used when type is LoadBalancer
+        loadBalancerIP = var.argocd_service_type == "LoadBalancer" ? var.argocd_loadbalancer_ip : null
+        annotations = {
+          "environment" = var.environment
+        }
+      }
+
       # Tolerate control-plane taint for full control-plane cluster
       tolerations = [
         {
