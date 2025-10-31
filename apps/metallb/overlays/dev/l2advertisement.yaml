@@ -1,0 +1,13 @@
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: vixens-dev-l2
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+    - vixens-dev-assigned
+    - vixens-dev-auto
+  interfaces:
+    - enx00155d00cb10  # Node obsy
+    - enx00155d00cb11  # Node onyx
+    - enx00155d00cb0b  # Node opale
