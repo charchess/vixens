@@ -7,7 +7,4 @@ spec:
   ipAddressPools:
     - vixens-dev-assigned
     - vixens-dev-auto
-  interfaces:
-    - enx00155d00cb10  # Node obsy
-    - enx00155d00cb11  # Node onyx
-    - enx00155d00cb0b  # Node opale
+  # No interfaces specified = announce on all interfaces (including VLAN 208)
