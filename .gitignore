@@ -21,3 +21,11 @@ Thumbs.db
 **/kubeconfig*
 **/talosconfig*
 .claude/
+
+# Obsolete directories (old project artifacts)
+node_modules/
+src/
+kubernetes/
+agents/
+commands/
+openspec/
