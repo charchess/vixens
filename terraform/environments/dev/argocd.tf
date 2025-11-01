@@ -123,3 +123,14 @@ resource "helm_release" "argocd" {
     helm_release.cilium
   ]
 }
+
+# Bootstrap root-app automatically (App-of-Apps pattern)
+# This enables full GitOps automation - after this, all deployments are via Git
+resource "kubectl_manifest" "argocd_root_app" {
+  yaml_body = file("${path.module}/../../../argocd/base/root-app.yaml")
+
+  # Wait for ArgoCD to be fully deployed and healthy
+  depends_on = [
+    helm_release.argocd
+  ]
+}
