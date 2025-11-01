@@ -21,6 +21,25 @@ resource "helm_release" "cilium" {
     k8sServiceHost = "localhost" # KubePrism local endpoint
     k8sServicePort = 7445        # KubePrism port (instead of 6443)
 
+    # L2 Announcements for LoadBalancer services (replaces MetalLB)
+    l2announcements = {
+      enabled = true
+    }
+
+    # LoadBalancer IPAM - enabled automatically when IP pools are created
+    # No specific helm value needed, activated via CiliumLoadBalancerIPPool CRDs
+
+    # Increase API client rate limits for L2 announcements
+    k8sClientRateLimit = {
+      qps   = 10 # Default: 5
+      burst = 20 # Default: 10
+    }
+
+    # Enable external IPs support for services
+    externalIPs = {
+      enabled = true
+    }
+
     # IPAM configuration
     ipam = {
       mode = "kubernetes"
