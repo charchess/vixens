@@ -7,18 +7,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Vixens is a multi-cluster Kubernetes homelab infrastructure following GitOps best practices. The project is built in phases: **Phase 1** provisions infrastructure with Terraform, **Phase 2** deploys services via ArgoCD, and **Phase 3** runs applications.
 
 **Core Stack:**
-- **OS**: Talos Linux v1.11.3 (immutable, API-driven)
-- **Kubernetes**: v1.30.0
+- **OS**: Talos Linux v1.11.0 (immutable, API-driven)
+- **Kubernetes**: v1.34.0
 - **Infrastructure**: Terraform + Talos provider
-- **GitOps**: ArgoCD (App-of-Apps pattern) - Phase 2
-- **CNI**: Cilium v1.16.5 (eBPF, kube-proxy replacement, Hubble observability)
-- **LoadBalancer**: MetalLB (Layer 2) - Phase 2
+- **GitOps**: ArgoCD v7.7.7 (App-of-Apps pattern) - ✅ Deployed
+- **CNI**: Cilium v1.18.3 (eBPF, kube-proxy replacement, Hubble observability, L2 Announcements)
+- **LoadBalancer**: Cilium L2 Announcements + LB IPAM - ✅ Deployed
 - **Ingress**: Traefik v3.x - Phase 2
 - **Storage**: Synology CSI (iSCSI) - Phase 2
 
-## Current Phase: Phase 1 (Infrastructure as Code)
+## Current Phase: Phase 2 (GitOps Infrastructure)
 
-**Status**: Sprint 1 - Terraform module Talos created and validated ✅
+**Status**: Sprint 4 COMPLETED - Full GitOps automation with zero manual kubectl commands ✅
 
 The project is iterative with a **destroy/recreate** strategy for dev/test environments to ensure reproducibility.
 
@@ -30,7 +30,7 @@ The infrastructure consists of 4 independent clusters, each on a dedicated VLAN:
 
 | Environment | Nodes                     | VLAN Internal | VLAN Services | VIP              | Status |
 |-------------|---------------------------|---------------|---------------|------------------|--------|
-| **Dev**     | obsy (cp), onyx (worker)  | 111           | 208           | 192.168.111.160  | ✅ Active |
+| **Dev**     | obsy, onyx, opale (3 CP HA) | 111         | 208           | 192.168.111.160  | ✅ Active |
 | **Test**    | carny, celesty, citrine   | 111           | 209           | 192.168.111.180  | ⏳ Sprint 9 |
 | **Staging** | TBD (3 nodes)             | 111           | 210           | 192.168.111.190  | 📅 Future |
 | **Prod**    | Physical nodes (3)        | 111           | 201           | 192.168.111.200  | 📅 Phase 3 |
@@ -47,7 +47,7 @@ Each node has **two VLANs** configured on a single physical interface:
 
 - **VLAN 20X** (192.168.20X.0/24) - **Routed, services**
   - External service exposure (Ingress, LoadBalancer)
-  - MetalLB IP pools: .70-.79 (assigned), .80-.89 (auto)
+  - Cilium LB IPAM pools: .70-.79 (assigned), .80-.89 (auto)
   - Internet gateway configured on this VLAN
 
 ### Repository Structure
@@ -62,7 +62,7 @@ vixens/
 │   │   ├── providers.tf           # Provider documentation
 │   │   └── versions.tf            # Terraform >= 1.5.0, Talos ~> 0.9
 │   └── environments/
-│       ├── dev/                   # Dev cluster (obsy + onyx) ✅
+│       ├── dev/                   # Dev cluster (obsy, onyx, opale - 3 CP HA) ✅
 │       │   ├── main.tf            # Module call with node configs
 │       │   ├── versions.tf        # Provider versions
 │       │   ├── provider.tf        # Provider config
@@ -83,14 +83,12 @@ vixens/
 │       └── prod/
 │
 ├── apps/                          # Phase 2: Infrastructure apps
-│   ├── metallb/
+│   ├── cilium-lb/                 # ✅ Cilium L2 Announcements + LB IPAM
 │   │   ├── base/
-│   │   │   ├── helm-release.yaml
-│   │   │   └── ipaddresspool.yaml
+│   │   │   ├── kustomization.yaml
+│   │   │   └── ippool.yaml
 │   │   └── overlays/
-│   │       ├── dev/               # VLAN 208 pools
-│   │       ├── test/              # VLAN 209 pools
-│   │       └── prod/              # VLAN 201 pools
+│   │       └── dev/               # VLAN 208 pools (192.168.208.70-89)
 │   ├── traefik/
 │   ├── cert-manager/
 │   ├── synology-csi/
@@ -106,7 +104,8 @@ vixens/
 │   │   ├── 001-talos-linux.md
 │   │   ├── 002-argocd-gitops.md
 │   │   ├── 003-vlan-segmentation.md
-│   │   └── 004-cilium-cni.md
+│   │   ├── 004-cilium-cni.md
+│   │   └── 005-cilium-l2-announcements.md
 │   └── ROADMAP.md                 # Sprint-based roadmap
 │
 ├── .github/workflows/
@@ -383,7 +382,7 @@ resource "local_file" "kubeconfig" {
 }
 ```
 
-## Current Infrastructure Status (Sprint 1 COMPLETED ✅)
+## Current Infrastructure Status (Sprints 1-4 COMPLETED ✅)
 
 ### Dev Cluster ✅
 
@@ -391,38 +390,54 @@ resource "local_file" "kubeconfig" {
 |-----------|--------|---------|
 | **Terraform module** | ✅ Done | VIP, hostname, certSANs, destroy/recreate validated |
 | **Node obsy** | ✅ Deployed | Control plane - 192.168.111.162 + VIP 192.168.111.160 |
-| **Node onyx** | ✅ Deployed | Worker - 192.168.111.164 |
+| **Node onyx** | ✅ Deployed | Control plane - 192.168.111.164 |
+| **Node opale** | ✅ Deployed | Control plane - 192.168.111.163 |
 | **Talos** | ✅ Running | v1.11.0, Kubernetes v1.34.0 |
 | **VIP HA** | ✅ Active | 192.168.111.160/32 on VLAN 111 |
-| **Hostnames** | ✅ Configured | obsy, onyx (automatic) |
+| **etcd Quorum** | ✅ Active | 3 members HA |
+| **Cilium CNI** | ✅ Running | v1.18.3 with L2 Announcements + LB IPAM |
+| **ArgoCD** | ✅ Running | v7.7.7 with root-app auto-bootstrapped |
+| **Cilium LB** | ✅ Active | Pool 192.168.208.70-89 (20 IPs available) |
 | **VLANs** | ✅ Configured | VLAN 111 (internal) + VLAN 208 (services) |
 | **Config files** | ✅ Generated | kubeconfig-dev, talosconfig-dev (local) |
+| **GitOps Automation** | ✅ Complete | Zero manual kubectl commands |
 | **Destroy/Recreate** | ✅ Validated | Fully reproducible infrastructure |
 
-### Pending (Future Sprints)
+### Completed Sprints
 
 | Sprint | Component | Status |
 |--------|-----------|--------|
-| **1** | **Terraform module + dev 2 nodes** | **✅ DONE** |
-| 2 | Cilium CNI | ⏳ Next |
-| 3 | Scale to 3 control planes | 📅 Sprint 3 |
-| 4 | ArgoCD bootstrap | 📅 Sprint 4 |
-| 5-11 | Phase 2 services | 📅 Sprints 5-11 |
+| **1** | **Terraform module Talos + dev 1 node** | **✅ DONE** |
+| **2** | **Cilium CNI v1.18.3** | **✅ DONE** |
+| **3** | **Scale to 3 control planes HA** | **✅ DONE** |
+| **4** | **ArgoCD bootstrap + full automation** | **✅ DONE** |
+| **5 (partial)** | **Cilium L2 Announcements (MetalLB replacement)** | **✅ DONE** |
+
+### Next Sprints
+
+| Sprint | Component | Status |
+|--------|-----------|--------|
+| 5 | Traefik Ingress | 📅 Next |
+| 6 | cert-manager (TLS) | 📅 Future |
+| 7 | Synology CSI | 📅 Future |
+| 8-11 | Phase 2 services | 📅 Future |
 
 ## Important Notes
 
-### Phase 1 (Current)
+### Phase 1 (Completed ✅)
 - **Terraform-managed**: All infrastructure is code
 - **Immutable**: Talos nodes are disposable and reproducible
 - **Destroy/recreate safe**: Dev/test can be destroyed anytime
 - **Per-node config**: Each node has its own disk, network, patches
 - **Dual-VLAN required**: Internal (111) + Services (20X)
+- **HA etcd quorum**: 3 control planes validated
 
-### Phase 2 (Future - GitOps)
-- **ArgoCD App-of-Apps**: One root application manages all services
-- **Kustomize overlays**: Base + per-environment patches
-- **Branch per environment**: dev/test/staging/main branches
-- **Auto-sync**: Git push = automatic deployment
+### Phase 2 (Current - GitOps Active ✅)
+- **ArgoCD App-of-Apps**: ✅ Root application deployed and managing services
+- **Kustomize overlays**: ✅ Base + dev environment active
+- **Branch per environment**: dev branch active, test/staging/main planned
+- **Auto-sync**: ✅ Git push = automatic deployment (active)
+- **Zero manual kubectl**: ✅ Full automation via Terraform + ArgoCD
 
 ### Archon Task Management
 - Tasks tracked in Archon MCP server
@@ -442,15 +457,32 @@ resource "local_file" "kubeconfig" {
 7. ✅ Bonus: Worker node support - DONE
 8. ✅ Bonus: Destroy/recreate validation - DONE
 
-**Immediate** (Sprint 2 - Cilium CNI):
-- Task 2.1: Configure Helm provider in Terraform
-- Task 2.2: Deploy Cilium via Terraform Helm
-- Task 2.3: Apply Terraform and deploy Cilium
-- Task 2.4: Validate Cilium operational and network connectivity
+**Sprint 2** (✅ COMPLETED):
+- ✅ Task 2.1: Configure Helm provider in Terraform
+- ✅ Task 2.2: Deploy Cilium v1.18.3 via Terraform Helm
+- ✅ Task 2.3: Apply Terraform and deploy Cilium
+- ✅ Task 2.4: Validate Cilium operational and network connectivity
 
-**After Sprint 2**:
-- Sprint 3: Scale to 3 control planes HA
-- Sprint 4: Bootstrap ArgoCD
-- Sprints 5-11: Phase 2 services
+**Sprint 3** (✅ COMPLETED):
+- ✅ Scale to 3 control planes HA (obsy, onyx, opale)
+- ✅ Validate etcd quorum (3 members)
+- ✅ Destroy/recreate workflow validated
+
+**Sprint 4** (✅ COMPLETED):
+- ✅ Deploy ArgoCD v7.7.7 via Terraform Helm
+- ✅ Create argocd/ structure (base + overlays/dev)
+- ✅ Automate root-app bootstrap via kubectl provider
+- ✅ Validate full GitOps workflow (zero manual kubectl)
+
+**Sprint 5** (🔨 IN PROGRESS):
+- ✅ Replace MetalLB with Cilium L2 Announcements
+- ✅ Deploy CiliumLoadBalancerIPPool (192.168.208.70-89)
+- ✅ Validate LoadBalancer IP assignment
+- 📅 Next: Deploy Traefik Ingress
+
+**After Sprint 5**:
+- Sprint 6: cert-manager (TLS certificates)
+- Sprint 7: Synology CSI (iSCSI storage)
+- Sprints 8-11: Additional Phase 2 services
 
 See `docs/ROADMAP.md` for complete sprint breakdown.
