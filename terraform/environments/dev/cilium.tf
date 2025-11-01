@@ -141,8 +141,9 @@ resource "helm_release" "cilium" {
     }
   })]
 
-  # Ensure Talos cluster is ready before deploying Cilium
+  # Ensure Talos cluster is ready and API is responsive before deploying Cilium
   depends_on = [
-    module.talos_cluster
+    module.talos_cluster,
+    null_resource.wait_for_k8s_api
   ]
 }
