@@ -18,6 +18,6 @@ Pour chaque objectif listé ci-dessous, une **spécification détaillée** inclu
 - **Spécification détaillée:** [./docs/objectives/01-infra-bootstrap.md](./docs/objectives/01-infra-bootstrap.md)
 
 ### OBJECTIF-02: Amorçage de GitOps avec ArgoCD et Cilium
-- **Statut:** `[ ] En attente`
+- **Statut:** `[x] Terminé`
 - **Description sommaire:** Déployer ArgoCD et Cilium sur le cluster `dev` via Terraform pour initier la boucle GitOps. ArgoCD deviendra ensuite `self-managed`.
 - **Spécification détaillée:** (Fichier à créer : `02-gitops-bootstrap.md`)

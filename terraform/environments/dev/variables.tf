@@ -36,6 +36,12 @@ variable "argocd_anonymous_enabled" {
   default     = true
 }
 
+variable "argocd_disable_auth" {
+  description = "Disable authentication for ArgoCD server (WARNING: INSECURE!)"
+  type        = bool
+  default     = false # Default to false for security
+}
+
 variable "environment" {
   description = "Environment name (dev, test, staging, prod)"
   type        = string

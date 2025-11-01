@@ -20,7 +20,13 @@ resource "helm_release" "argocd" {
       # Insecure mode (HTTP, no TLS) - environment-specific
       # dev/test: true (Traefik will terminate TLS later)
       # staging/prod: false (TLS at ArgoCD level)
-      extraArgs = var.argocd_insecure ? ["--insecure"] : []
+      config = {
+        url = "http://192.168.208.71"   # TODO: a corrigé pour utiliser une variable
+      }
+      extraArgs = concat(
+        var.argocd_insecure ? ["--insecure"] : [],
+        var.argocd_disable_auth ? ["--disable-auth"] : []
+      )
 
       # Service configuration (parameterized per environment)
       service = {
@@ -120,7 +126,29 @@ resource "helm_release" "argocd" {
       }
       cm = {
         "users.anonymous.enabled" = var.argocd_anonymous_enabled ? "true" : "false"
+        
+        "url" = "http://192.168.208.71" # TODO: a corrigé pour utiliser une variable
+        "policy.csv" = <<-EOT
+          p, role:readonly, applications, get, */*, allow
+          p, role:readonly, applications, list, */*, allow
+          p, role:readonly, clusters, get, *, allow
+          p, role:readonly, repositories, get, *, allow
+          p, role:readonly, repositories, list, *, allow
+          p, role:readonly, projects, get, *, allow
+          p, role:readonly, projects, list, *, allow
+          g, anonymous, role:readonly
+          g, default, role:readonly
+        EOT
       }
+
+      # Désactiver le secret admin
+      
+      
+      # Configuration RBAC
+      rbac = {
+        create = true
+        policyDefault = "role:readonly" # TODO: a corrigé pour utiliser une variable
+      }      
     }
   })]
 
