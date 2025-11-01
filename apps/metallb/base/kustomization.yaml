@@ -5,4 +5,5 @@ namespace: metallb-system
 
 resources:
   - namespace.yaml
-  - helm-release.yaml
+  # Note: Helm chart deployed via argocd/overlays/dev/metallb-app.yaml
+  # This base only provides namespace with PodSecurity labels + shared config
