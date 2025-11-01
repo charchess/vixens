@@ -1,0 +1,13 @@
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: vixens-ippool
+spec:
+  blocks:
+    # This is a base template - CIDR will be overridden in overlays
+    - cidr: "0.0.0.0/32"
+  serviceSelector:
+    matchExpressions:
+      # Select all LoadBalancer services (no specific selector = match all)
+      - key: io.kubernetes.service.type
+        operator: DoesNotExist  # This is just a placeholder, will be overridden
