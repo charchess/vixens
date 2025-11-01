@@ -24,6 +24,18 @@ variable "argocd_hostname" {
   default     = "argocd.dev.vixens.lab"
 }
 
+variable "argocd_insecure" {
+  description = "Run ArgoCD in insecure mode (HTTP, no TLS) - dev/test: true, staging/prod: false"
+  type        = bool
+  default     = true
+}
+
+variable "argocd_anonymous_enabled" {
+  description = "Enable anonymous access to ArgoCD (no login required) - dev: true, test/staging/prod: false"
+  type        = bool
+  default     = true
+}
+
 variable "environment" {
   description = "Environment name (dev, test, staging, prod)"
   type        = string
@@ -39,4 +51,16 @@ variable "vlan_services_subnet" {
   description = "VLAN services subnet (208 for dev, 209 for test, etc.)"
   type        = string
   default     = "192.168.208.0/24"
+}
+
+# Git Configuration
+variable "git_branch" {
+  description = "Git branch for ArgoCD to track (dev, test, staging, main)"
+  type        = string
+  default     = "dev"
+
+  validation {
+    condition     = contains(["dev", "test", "staging", "main"], var.git_branch)
+    error_message = "Git branch must be one of: dev, test, staging, main."
+  }
 }
