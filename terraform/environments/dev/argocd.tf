@@ -17,7 +17,10 @@ resource "helm_release" "argocd" {
   values = [yamlencode({
     # Server configuration
     server = {
-      extraArgs = ["--insecure"] # HTTP mode (Traefik will terminate TLS later)
+      # Insecure mode (HTTP, no TLS) - environment-specific
+      # dev/test: true (Traefik will terminate TLS later)
+      # staging/prod: false (TLS at ArgoCD level)
+      extraArgs = var.argocd_insecure ? ["--insecure"] : []
 
       # Service configuration (parameterized per environment)
       service = {
@@ -110,10 +113,13 @@ resource "helm_release" "argocd" {
       ]
     }
 
-    # Config
+    # Config (environment-specific)
     configs = {
       params = {
-        "server.insecure" = true
+        "server.insecure" = var.argocd_insecure
+      }
+      cm = {
+        "users.anonymous.enabled" = var.argocd_anonymous_enabled ? "true" : "false"
       }
     }
   })]
@@ -126,8 +132,13 @@ resource "helm_release" "argocd" {
 
 # Bootstrap root-app automatically (App-of-Apps pattern)
 # This enables full GitOps automation - after this, all deployments are via Git
+# Template is rendered with environment-specific values
 resource "kubectl_manifest" "argocd_root_app" {
-  yaml_body = file("${path.module}/../../../argocd/base/root-app.yaml")
+  yaml_body = templatefile("${path.module}/../../../argocd/base/root-app.yaml.tpl", {
+    environment      = var.environment
+    target_revision  = var.git_branch
+    overlay_path     = "argocd/overlays/${var.environment}"
+  })
 
   # Wait for ArgoCD to be fully deployed and healthy
   depends_on = [

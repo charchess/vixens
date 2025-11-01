@@ -1,33 +1,30 @@
-### Coherence Report between Project Files and Archon Tasks
+### Coherence Report between Project Files and Archon Tasks (Updated 2025-11-01)
 
 #### Introduction
-This report compares the project documentation (objectives, project plan, workflow) with the tasks defined in Archon to ensure alignment.
+This report compares the project documentation (objectives, project plan, workflow) with the tasks defined in Archon to ensure alignment. This report has been updated to reflect the latest changes and decisions.
 
 #### Findings
 
-1. **Missing Tasks:**
-   - The Terraform module setup for Talos (from Objective 01) is not directly reflected in Archon tasks. There are tasks related to Talos configuration but might not cover the module development.
+1.  **Storage Tasks Created:**
+    *   Tasks for the implementation of the storage strategy (`docs/architecture/storage-strategy.md`) have been created in Archon under the feature "S2: Storage (iSCSI & NFS)". This resolves a previously identified gap.
 
-2. **Duplicate Tasks:**
-   - There are two tasks named "Configure Talos Nodes" in Archon (task order 95 and 96). This could be an error or lack of consolidation.
+2.  **Missing Project Milestones:**
+    *   The milestone "Monitoring and Observability" from the project plan does not have corresponding tasks in Archon. This remains an open point.
+    *   Tasks for setting up the `test`, `staging`, and `prod` environments are still missing.
 
-3. **Redundant Tasks:**
-   - "Deploy ArgoCD" and "Deploy ArgoCD and Cilium" might overlap and need clarification.
+3.  **Duplicate/Redundant Tasks:**
+    *   The potential duplicate tasks "Configure Talos Nodes" (task order 95 and 96) and the potential overlap between "Deploy ArgoCD" and "Deploy ArgoCD and Cilium" still need to be reviewed.
 
-4. **Documentation Task:**
-   - The "Update Documentation" task is present, which aligns with the workflow's requirement to keep docs updated.
-
-5. **Missing Project Milestones:**
-   - The milestone "Monitoring and Observability" from the project plan does not have corresponding tasks in Archon.
+4.  **Known & Accepted Inconsistencies:**
+    *   **Cilium vs. MetalLB:** There is a known inconsistency between the decision to use Cilium for L2 announcements (ADR-005) and the current ArgoCD configuration for the `dev` environment, which references MetalLB. This is currently under investigation and no action is required at this time.
+    *   **Technical Debt:** The ambiguity in the project structure regarding `argocd/` vs `apps/` is acknowledged as technical debt and will be addressed at a later stage.
 
 #### Recommendations
 
-- Review and update Archon tasks to align with the project's documented objectives and milestones.
-- Consolidate duplicate tasks.
-- Add missing tasks for critical project components.
-- Ensure each milestone has corresponding tasks in Archon.
+*   Create tasks for the "Monitoring and Observability" milestone.
+*   Plan the creation of the `test`, `staging`, and `prod` environments by creating corresponding tasks in Archon.
+*   Review and consolidate the potentially duplicate or redundant tasks.
 
 #### Next Steps
 
-- Update the Archon tasks to reflect the project documentation accurately.
-- Regularly check coherence between the project plan and task management system.
+*   Continue to regularly check coherence between the project plan and the task management system.
