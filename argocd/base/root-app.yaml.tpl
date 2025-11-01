@@ -1,17 +1,23 @@
 # App-of-Apps Root Application
 # This Application manages all other Applications in the cluster
-# It watches argocd/overlays/<env>/ and deploys all Applications defined there
+# It watches argocd/overlays/${environment}/ and deploys all Applications defined there
 #
-# Bootstrap: Apply this manually once with:
-#   kubectl apply -f argocd/base/root-app.yaml
+# This file is a Terraform template - DO NOT apply manually!
+# Rendered by: terraform/environments/${environment}/argocd.tf
 #
-# After that, ArgoCD manages everything automatically (including itself)
+# Variables:
+#   - environment: ${environment}
+#   - target_revision: ${target_revision}
+#   - overlay_path: ${overlay_path}
 
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: root-app
   namespace: argocd
+  labels:
+    vixens.lab/environment: ${environment}
+    vixens.lab/managed-by: terraform
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -19,8 +25,8 @@ spec:
 
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
-    path: argocd/overlays/dev
+    targetRevision: ${target_revision}
+    path: ${overlay_path}
 
   destination:
     server: https://kubernetes.default.svc
