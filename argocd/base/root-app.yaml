@@ -1,0 +1,40 @@
+# App-of-Apps Root Application
+# This Application manages all other Applications in the cluster
+# It watches argocd/overlays/<env>/ and deploys all Applications defined there
+#
+# Bootstrap: Apply this manually once with:
+#   kubectl apply -f argocd/base/root-app.yaml
+#
+# After that, ArgoCD manages everything automatically (including itself)
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+    path: argocd/overlays/dev
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
