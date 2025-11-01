@@ -38,7 +38,7 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
+      - CreateNamespace=false  # Namespace created by metallb-config (sync-wave -1)
     retry:
       limit: 5
       backoff:
