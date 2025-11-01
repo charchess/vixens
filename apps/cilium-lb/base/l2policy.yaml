@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2alpha1
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: vixens-l2policy
+spec:
+  # Select all LoadBalancer services
+  serviceSelector:
+    matchLabels: {}
+
+  # Select all nodes
+  nodeSelector:
+    matchLabels: {}
+
+  # Announce on VLAN interfaces (will be overridden in overlays)
+  interfaces:
+    - "^enx.*"  # Match all physical interfaces as base
+
+  # Announce both external IPs and LoadBalancer IPs
+  externalIPs: true
+  loadBalancerIPs: true

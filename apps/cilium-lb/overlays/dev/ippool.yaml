@@ -1,0 +1,16 @@
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: vixens-dev-pool
+spec:
+  blocks:
+    # Assigned pool for static IPs (192.168.208.70-79)
+    - start: "192.168.208.70"
+      stop: "192.168.208.79"
+    # Auto pool for dynamic allocation (192.168.208.80-89)
+    - start: "192.168.208.80"
+      stop: "192.168.208.89"
+
+  # Allow all LoadBalancer services to use this pool
+  serviceSelector:
+    matchLabels: {}
