@@ -1,0 +1,8 @@
+# ArgoCD installation is managed by Terraform (terraform/environments/dev/argocd.tf)
+# This file is kept for reference and future GitOps self-management (Sprint 4+)
+#
+# Currently ArgoCD is deployed via:
+#   terraform apply -target=helm_release.argocd
+#
+# Future: ArgoCD will manage itself via this manifest when we implement
+# the App-of-Apps pattern with root-app.yaml

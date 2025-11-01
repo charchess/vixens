@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+resources:
+  - ../../base
+  - metallb-app.yaml
+  - metallb-config-app.yaml
+
+# Future: Add more ArgoCD Applications here as we deploy services
+# - traefik-app.yaml
+# - cert-manager-app.yaml
+# - synology-csi-app.yaml
