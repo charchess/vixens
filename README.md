@@ -38,3 +38,4 @@ Pour comprendre le fonctionnement de ce projet, veuillez consulter les documents
 2.  **[docs/WORKFLOW.md](./docs/WORKFLOW.md)**: Le processus Git (branches, commits, PRs).
 3.  **[docs/CONVENTIONS.md](./docs/CONVENTIONS.md)**: Les règles de style pour le code Terraform et Kubernetes.
 4.  **[DEFINITIONS.md](./DEFINITIONS.md)**: Le backlog de tous les objectifs du projet.
+\nThis is a test change for PR validation.
