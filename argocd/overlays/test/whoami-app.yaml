@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: traefik
+  name: whoami
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -10,10 +10,10 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: test
-    path: apps/traefik/overlays/test
+    path: apps/whoami/overlays/test
   destination:
     server: https://kubernetes.default.svc
-    namespace: traefik
+    namespace: whoami
   syncPolicy:
     automated:
       prune: true

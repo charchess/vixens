@@ -50,7 +50,7 @@ module "talos_cluster" {
     },
     "citrine" = {
       name         = "citrine"
-      ip_address   = "192.168.0.172"  # VLAN 111 IP for initial access
+      ip_address   = "192.168.111.172"  # VLAN 111 IP for initial access
       mac_address  = "00:15:5d:00:cb:1a"
       install_disk = "/dev/sda"
       network = {
