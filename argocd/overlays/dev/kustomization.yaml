@@ -7,5 +7,6 @@ resources:
   - cilium-lb-app.yaml        # Cilium L2 Announcements + LB IPAM (wave -2)
   # Future: Add more ArgoCD Applications here as we deploy services
   - traefik-app.yaml
+  - whoami-app.yaml
   # - cert-manager-app.yaml
   # - synology-csi-app.yaml
