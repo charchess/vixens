@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: whoami.dev.local
+    - host: whoami.dev.truxonline.com
       http:
         paths:
           - path: /
