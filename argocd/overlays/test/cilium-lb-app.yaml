@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cilium-lb
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2" # Deploy before other apps
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: test
+    path: apps/cilium-lb/overlays/test
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system # Cilium resources are in kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
