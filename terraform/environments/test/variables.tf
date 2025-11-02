@@ -21,7 +21,7 @@ variable "argocd_loadbalancer_ip" {
 variable "argocd_hostname" {
   description = "ArgoCD server hostname for Ingress (Sprint 6+)"
   type        = string
-  default     = "argocd.dev.vixens.lab"
+  default     = "argocd.test.truxonline.com"
 }
 
 variable "argocd_insecure" {
