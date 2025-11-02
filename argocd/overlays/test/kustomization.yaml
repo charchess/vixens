@@ -6,3 +6,4 @@ namespace: argocd
 resources:
   - cilium-lb-app.yaml
   - traefik-app.yaml
+  - whoami-app.yaml
