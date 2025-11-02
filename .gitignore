@@ -29,3 +29,4 @@ kubernetes/
 agents/
 commands/
 openspec/
+.aider*
