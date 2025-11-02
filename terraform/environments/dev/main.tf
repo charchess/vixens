@@ -54,7 +54,7 @@ module "talos_cluster" {
     }
     "opale" = {
       name         = "opale"
-      ip_address   = "192.168.0.163"  # Maintenance IP for initial access
+      ip_address   = "192.168.0.163"  # VLAN 111 IP for initial access
       mac_address  = "00:15:5D:00:CB:0B"
       install_disk = "/dev/sda"
       network = {

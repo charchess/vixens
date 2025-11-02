@@ -73,6 +73,14 @@ locals {
     ][0]
   }
 
+  control_plane_vlan111_ips = {
+    for k, v in var.control_plane_nodes : k => [
+      for vlan in v.network.vlans :
+      split("/", vlan.addresses[0])[0]
+      if vlan.vlanId == 111
+    ][0]
+  }
+
   # Extract VLAN IP with gateway for each worker node
   worker_vlan_ips = {
     for k, v in var.worker_nodes : k => [
@@ -118,7 +126,7 @@ resource "talos_machine_bootstrap" "this" {
   depends_on = [
     talos_machine_configuration_apply.control_plane
   ]
-  node                 = [for k, v in var.control_plane_nodes : v.ip_address][0]
+  node                 = [for k, v in var.control_plane_nodes : local.control_plane_vlan_ips[k]][0]
   client_configuration = talos_machine_secrets.cluster.client_configuration
 }
 
@@ -127,7 +135,7 @@ resource "talos_cluster_kubeconfig" "this" {
     talos_machine_bootstrap.this
   ]
   client_configuration = talos_machine_secrets.cluster.client_configuration
-  node                 = [for k, v in var.control_plane_nodes : v.ip_address][0]
+  node                 = [for k, v in var.control_plane_nodes : local.control_plane_vlan_ips[k]][0]
 }
 
 # Automatic node reset on destroy - Control Plane
