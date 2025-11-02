@@ -45,7 +45,7 @@ jobs:
           EOF
 
           # Valider tous les fichiers YAML pertinents
-          find base clusters -name "*.yaml" -o -name "*.yml" | \
+          find apps argocd -name "*.yaml" -o -name "*.yml" | \
             xargs yamllint -c yamllint-config.yml
 
   # 2️⃣ Validation structurelle Kubernetes
@@ -68,7 +68,7 @@ jobs:
           echo "🔍 Validation structure Kubernetes"
 
           # Valider uniquement les ressources standards
-          find base clusters -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 |
+          find apps argocd -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 |
             xargs -0 kubeval \
             --ignore-missing-schemas \
             --kubernetes-version 1.30.0 \
@@ -91,7 +91,7 @@ jobs:
           echo "🔍 Validation Applications ArgoCD"
 
           # Validation complète des Applications
-          find clusters -name "*.yaml" -type f | while read file; do
+          find argocd -name "*.yaml" -type f | while read file; do
             if [ "$(yq eval '.kind' "$file" 2>/dev/null)" = "Application" ]; then
               echo "📋 Validation: $(basename "$file")"
 
@@ -142,7 +142,7 @@ jobs:
           echo "🔍 Recherche de patterns de sécurité"
 
           # Vérification des patterns dangereux
-          find base clusters -name "*.yaml" -type f | while read file; do
+          find apps argocd -name "*.yaml" -type f | while read file; do
             echo "  📄 $(basename "$file")"
 
             # Recherche de patterns problématiques
