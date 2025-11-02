@@ -3,22 +3,42 @@ kind: Application
 metadata:
   name: traefik
   namespace: argocd
-  labels:
-    env: dev
 spec:
   project: default
-  source:
-    repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
-    path: apps/traefik/overlays/dev
-    kustomize:
-      enableHelm: true
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
+  source:
+    # Point directly to the Helm chart repository
+    repoURL: https://helm.traefik.io/traefik
+    chart: traefik
+    targetRevision: "v25.0.0"
+
+    # Define Helm values directly here
+    helm:
+      values: |
+        service:
+          type: LoadBalancer
+          loadBalancerIP: "192.168.208.70"
+
+        ports:
+          web:
+            port: 80
+            expose: true
+          websecure:
+            port: 443
+            expose: true
+            tls:
+              enabled: true
+
+        ingressRoute:
+          dashboard:
+            enabled: true
+            match: Host(`traefik.vixens.dev`)
+
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
+    - CreateNamespace=true
