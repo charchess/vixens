@@ -187,7 +187,7 @@ terraform apply -auto-approve
 # This updates state to use the configured IP
 
 # Validate new cluster
-export KUBECONFIG=$PWD/kubeconfig-dev
+export KUBECONFIG=/root/vixens/terraform/environments/dev/kubeconfig-dev
 export TALOSCONFIG=$PWD/talosconfig-dev
 
 talosctl --nodes 192.168.111.162 --endpoints 192.168.111.162 version
