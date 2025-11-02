@@ -8,3 +8,4 @@ resources:
   - traefik-app.yaml
   - whoami-app.yaml
   - whoami-app.yaml
+  - whoami-app.yaml
