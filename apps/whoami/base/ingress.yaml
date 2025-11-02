@@ -7,7 +7,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
-    - host: whoami.test.local
+    - host: whoami.dev.local
       http:
         paths:
           - path: /
