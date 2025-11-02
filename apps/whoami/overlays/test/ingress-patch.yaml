@@ -4,4 +4,4 @@ metadata:
   name: whoami
 spec:
   rules:
-  - host: whoami.test.truxonline.com
+    - host: whoami.test.truxonline.com
