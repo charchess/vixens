@@ -81,3 +81,18 @@ metadata:
     app.kubernetes.io/instance: my-app-v1.2.3
     app.kubernetes.io/managed-by: argocd
 ```
+
+## 4. Conventions de Configuration Multi-Environnement
+
+### 4.1. Principe de Miroir (Mirroring)
+
+Pour assurer la cohérence et la prévisibilité, les environnements (`dev`, `test`, `staging`, `prod`) doivent être configurés en "miroir".
+
+- **Structure :** La structure des répertoires Terraform et GitOps pour un nouvel environnement (ex: `test`) doit être une réplique de celle de `dev`.
+- **Adressage IP :** Pour les services réseau (ex: ArgoCD, Traefik), le dernier octet de l'adresse IP doit rester le même à travers les différents VLANs de service.
+
+  - **Exemple :**
+    - **ArgoCD (dev)** : `192.168.208.81` (sur VLAN 208)
+    - **ArgoCD (test)** : `192.168.209.81` (sur VLAN 209)
+
+Cette convention simplifie la gestion des DNS, des règles de pare-feu et la compréhension globale de l'adressage réseau.
