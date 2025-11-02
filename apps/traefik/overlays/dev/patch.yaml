@@ -1,0 +1,12 @@
+- op: replace
+  path: /spec/values/service/type
+  value: LoadBalancer
+- op: add
+  path: /spec/values/service/loadBalancerIP
+  value: "192.168.208.70"
+- op: replace
+  path: /spec/values/ingressRoute/dashboard/enabled
+  value: true
+- op: add
+  path: /spec/values/ingressRoute/dashboard/match
+  value: Host(`traefik.vixens.dev`)
