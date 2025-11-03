@@ -108,10 +108,9 @@ data "talos_machine_configuration" "control_plane" {
 data "talos_client_configuration" "this" {
   cluster_name         = var.cluster_name
   client_configuration = talos_machine_secrets.cluster.client_configuration
-  endpoints = [local.vip_address]
   nodes = concat(
-    [for k, v in var.control_plane_nodes : local.control_plane_vlan111_ips[k]],
-    [for k, v in var.worker_nodes : local.worker_vlan_ips[k]]
+    [for k, v in var.control_plane_nodes : v.ip_address],
+    [for k, v in var.worker_nodes : v.ip_address]
   )
 }
 
