@@ -57,8 +57,3 @@ La convention de nommage est basée sur des noms de pierres précieuses ou semi-
 - **Pod Network CIDR**: `10.244.0.0/16`
 - **Service Network CIDR**: `10.96.0.0/16`
 
-### 3.5. Configuration de MetalLB (par environnement)
-
-- **Cluster `dev` (sur VLAN 208)**:
-  - `dynamic-pool`: `192.168.208.50` - `192.168.208.59`
-  - `service-pool`: `192.168.208.70` - `192.168.208.79`
