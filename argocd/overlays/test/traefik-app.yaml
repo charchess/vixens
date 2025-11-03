@@ -8,9 +8,14 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/charchess/vixens.git
-    targetRevision: test
-    path: apps/traefik/overlays/test
+    repoURL: https://helm.traefik.io/traefik
+    chart: traefik
+    targetRevision: v25.0.0
+    helm:
+      values: |
+        service:
+          type: LoadBalancer
+          loadBalancerIP: 192.168.209.70
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
