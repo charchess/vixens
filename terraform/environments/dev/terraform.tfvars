@@ -3,6 +3,7 @@
 # Environment
 environment = "dev"
 vlan_services_subnet = "192.168.208.0/24"
+cluster_endpoint = "https://192.168.111.160:6443"
 
 # ArgoCD Configuration
 argocd_service_type    = "LoadBalancer"  # Upgraded in Sprint 5 with MetalLB
