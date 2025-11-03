@@ -8,9 +8,18 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/charchess/vixens.git
-    targetRevision: test
-    path: apps/traefik/overlays/test
+    # Sp\u00e9cification Helm native \u00e0 ArgoCD
+    repoURL: https://helm.traefik.io/traefik
+    chart: traefik
+    targetRevision: v25.0.0 # Version r\u00e9cente et stable du chart
+    helm:
+      # Fichier de valeurs de base
+      valueFiles:
+        - apps/traefik/base/values.yaml
+      # Surcharge depuis le fichier de l'overlay
+      values: |
+        service:
+          loadBalancerIP: 192.168.209.70
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
