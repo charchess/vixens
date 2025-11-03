@@ -70,3 +70,8 @@ variable "git_branch" {
     error_message = "Git branch must be one of: dev, test, staging, main."
   }
 }
+
+variable "cluster_endpoint" {
+  description = "The endpoint for the Kubernetes cluster (VIP)."
+  type        = string
+}
