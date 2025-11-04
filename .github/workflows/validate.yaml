@@ -2,7 +2,7 @@ name: Validate & Security
 
 on:
   push:
-    branches: [ dev,main ]
+    branches: [dev, test, staging, main]
   pull_request:
 
 jobs:
@@ -74,7 +74,7 @@ jobs:
             --kubernetes-version 1.30.0 \
             --strict \
             --skip-kinds Application,AppProject,CustomResourceDefinition
-    
+
   # 3️⃣ Validation spécifique ArgoCD
   argocd-validate:
     name: ArgoCD Structure
@@ -118,6 +118,40 @@ jobs:
               }
             fi
           done
+
+  # 4️⃣½  Vérification du flux de branches
+  branch-flow:
+    name: Branch Flow Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Enforce promotion order  (dev → test → staging → main)
+        run: |
+          # Branche source de la PR
+          SOURCE="${{ github.head_ref }}"
+          # Branche cible de la PR
+          TARGET="${{ github.base_ref }}"
+
+          echo "🔀 PR from '$SOURCE' into '$TARGET'"
+
+          case "$TARGET" in
+            test)
+              [ "$SOURCE" = "dev" ] && exit 0 ;;
+            staging)
+              [ "$SOURCE" = "test" ] && exit 0 ;;
+            main)
+              [ "$SOURCE" = "staging" ] && exit 0 ;;
+            dev)
+              echo "❌ PRs toward 'dev' must come from a feature branch, not from $SOURCE"
+              exit 1 ;;
+            *)
+              echo "❌ Unknown target branch '$TARGET'"
+              exit 1 ;;
+          esac
+
+          echo "❌ Promotion interdite : $SOURCE → $TARGET"
+          echo "   Seuls dev→test, test→staging, staging→main sont autorisés."
+          exit 1
 
   # 4️⃣ Validation de sécurité
   security-scan:
@@ -163,7 +197,7 @@ jobs:
   validation-summary:
     name: Validation Summary
     runs-on: ubuntu-latest
-    needs: [yaml-lint, kube-structure, argocd-validate, security-scan]
+    needs: [yaml-lint, kube-structure, argocd-validate, security-scan, branch-flow]
     if: always()
     steps:
       - name: Create summary
