@@ -13,7 +13,7 @@ Pour chaque objectif listé ci-dessous, une **spécification détaillée** inclu
 ## Backlog
 
 ### OBJECTIF-01: Création du code Terraform pour le cluster `dev`
-- **Statut:** `[ ] En attente`
+- **Statut:** [ ] En cours
 - **Description sommaire:** Mettre en place le code Terraform nécessaire pour provisionner l'infrastructure socle (VMs Hyper-V) et y installer un cluster Talos fonctionnel pour l'environnement de développement.
 - **Spécification détaillée:** [./docs/objectives/01-infra-bootstrap.md](./docs/objectives/01-infra-bootstrap.md)
 
