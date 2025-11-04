@@ -17,6 +17,10 @@ spec:
     # Define Helm values directly here
     helm:
       values: |
+        providers:
+          kubernetesCRD:
+            enabled: true
+
         tolerations:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Exists"
