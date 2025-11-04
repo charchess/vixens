@@ -28,3 +28,12 @@ variable "processors" { type = number }
 variable "disk_size_gb" { type = number }
 variable "iso_path" { type = string }
 variable "cluster_vip" { type = string }
+
+variable "argocd_insecure" {
+  type = bool
+  default = true
+}
+variable "argocd_anonymous_enabled" {
+  type = bool
+  default = true
+}
