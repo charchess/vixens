@@ -38,6 +38,16 @@ resource "helm_release" "argocd" {
         }
       }
 
+      ingress = {
+        enabled = true
+        ingressClassName = "traefik"
+        hosts = [var.argocd_hostname]
+        paths = ["/"]
+        annotations = {
+          "traefik.ingress.kubernetes.io/router.entrypoints" = "web"
+        }
+      }
+
       # Tolerate control-plane taint for full control-plane cluster
       tolerations = [
         {
