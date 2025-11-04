@@ -39,7 +39,7 @@ resource "helm_release" "argocd" {
       }
 
       ingress = {
-        enabled = true
+        enabled = false
         ingressClassName = "traefik"
         hosts = [var.argocd_hostname]
         paths = ["/"]
@@ -183,4 +183,35 @@ resource "kubectl_manifest" "argocd_root_app" {
   depends_on = [
     helm_release.argocd
   ]
+}
+
+resource "kubernetes_ingress_v1" "argocd_ingress" {
+  metadata {
+    name = "argocd-server-ingress"
+    namespace = "argocd"
+    annotations = {
+      "traefik.ingress.kubernetes.io/router.entrypoints" = "web"
+    }
+  }
+  spec {
+    ingress_class_name = "traefik"
+    rule {
+      host = var.argocd_hostname
+      http {
+        path {
+          path = "/"
+          path_type = "Prefix"
+          backend {
+            service {
+              name = "argocd-server"
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  depends_on = [helm_release.argocd]
 }
