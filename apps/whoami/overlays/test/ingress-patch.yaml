@@ -3,5 +3,5 @@ kind: Ingress
 metadata:
   name: whoami
 spec:
-    rules:
-        - host: whoami.test.truxonline.com
+  rules:
+    - host: whoami.test.truxonline.com
