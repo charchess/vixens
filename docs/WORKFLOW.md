@@ -1,79 +1,49 @@
 # Workflow du Projet Vixens
 
-Ce document décrit le processus de développement, de validation et de promotion du code au sein du projet.
+Ce document est le guide unique pour le développement, la validation et la promotion du code.
 
-## 1. Méthodologie de Sprint et Focus
+## 1. Principes de Travail
 
-Le projet avance par "sprints", où chaque sprint correspond à un `OBJECTIF` unique défini dans le fichier `DEFINITIONS.md`.
+- **Focus Sprint**: Un seul `OBJECTIF` est traité à la fois. Aucun travail sur un objectif futur n'est autorisé.
+- **Spécifications**: Chaque `OBJECTIF` est défini dans un fichier dédié dans `/docs/objectives/`.
+- **Validation Continue**: Chaque tâche doit inclure une section `test:`. Modifier une tâche impose de re-valider **toutes** les tâches "done" de l'objectif pour garantir la non-régression.
 
-**La règle d'or est le focus unique :** tout le travail de développement, y compris l'assistance par l'IA, doit se concentrer exclusivement sur les tâches de l'objectif actuellement "En cours". Aucun travail sur un objectif futur ne doit être entrepris avant que l'objectif actuel n'ait atteint sa "Definition of Done".
+## 2. GitFlow & Promotion
 
-**Chaque `OBJECTIF` est obligatoirement accompagné d'un fichier de spécification dédié dans le dossier `/docs/objectives/` qui détaille le périmètre et les critères de succès.**
+Le code est promu via des Pull Requests (PR) en suivant un chemin strict.
 
-Chaque tâche doit inclure une section 'test:' dans sa description, définissant comment valider qu'elle est conforme. Lors de la modification d'une tâche, il est nécessaire de valider non seulement la tâche en cours mais aussi toutes les tâches précédemment marquées comme "done".
+### Branches
+- **Environnements**: `main` (prod), `staging`, `test`, `dev`.
+- **Travail**: `feature/*`, `fix/*`, `docs/*` (basées sur `dev`).
 
-## 2. Modèle de Branches (GitFlow)
+### Chemin de Promotion
+`feature/*` -> **PR** -> `dev` -> **PR** -> `test` -> **PR** -> `staging` -> **PR** -> `main`
 
-Le projet utilise un modèle GitFlow où chaque environnement persistant est représenté par une branche Git dédiée.
-
-- **`main`**: Reflète l'état de l'environnement de **production**. Cette branche est protégée. Toute modification ne peut provenir que d'une Pull Request validée depuis la branche `staging`.
-- **`staging`**: Reflète l'état de l'environnement de **staging**.
-- **`test`**: Reflète l'état de l'environnement de **test**.
-- **`dev`**: La branche principale d'intégration.
-- **`feature/*`**, **`fix/*`**, **`docs/*`**: Branches de travail éphémères créées à partir de `dev`.
-
-## 3. Processus de Promotion
-
-Le code est promu d'un environnement à l'autre en suivant strictement ce chemin, via des Pull Requests (PR) :
-
-### 3.1. Validation et Qualité du Code
-
-Avant toute promotion de code via une Pull Request, les modifications doivent passer les étapes de validation suivantes :
-
-1.  **Validation YAML (`yamllint`)**: Tous les fichiers YAML modifiés doivent être validés avec `yamllint` en utilisant la configuration `.yamllint` à la racine du projet. Cette étape garantit la conformité aux standards de formatage et de syntaxe.
+### Qualité Pré-PR
+Toute PR doit passer ces validations pour être acceptée :
+1.  **Linting YAML**:
     ```bash
     find apps argocd -name "*.yaml" -o -name "*.yml" | xargs yamllint -c .yamllint
     ```
-2.  **Tests Unitaires et d'Intégration**: (Si applicable) Les tests associés aux modifications doivent être exécutés et passer avec succès.
-3.  **Linting et Type-Checking**: (Si applicable) Les outils de linting et de vérification de type spécifiques au langage utilisé doivent être exécutés et ne rapporter aucune erreur.
+2.  **Tests**: Unitaires et intégration doivent réussir.
+3.  **Linting & Type-Checking**: Spécifique au langage, sans aucune erreur.
 
-Ces validations sont cruciales pour maintenir la qualité et la stabilité du projet à travers les différents environnements.
+## 3. Commits & Pull Requests
 
-`feature/*` -> **PR** -> `dev` -> **PR** -> `test` -> **PR** -> `staging` -> **PR** -> `main`
+La clarté de l'historique est primordiale.
 
-## 4. Conventions de Nommage
+### Format du Titre (Commit & PR)
+Le titre doit respecter ce format : **`v<M.m.p>: <type>(<scope>) - "Titre humoristique"`**
 
-Pour maintenir un historique clair et centré sur les versions, une convention de nommage stricte est appliquée aux commits et aux Pull Requests.
+- **Version `M.m.p`**: `Majeur.Medium.Mineur`.
+- **Exemples**:
+  - `v1.1.1: feat(talos) - "Et la lumière fut !"`
+  - `v0.1.2: docs(workflow) - "On écrit les règles du jeu"`
 
-### 4.1. Versioning
-
-La version suit le format `Majeur.Medium.Mineur` :
-- **Majeur**: La phase majeure du projet (ex: 1 = Infrastructure Terraform).
-- **Medium**: La sous-phase ou la fonctionnalité majeure (ex: 1.1 = Bootstrap Talos).
-- **Mineur**: L'itération d'implémentation ou la correction.
-
-### 4.2. Sujet des Commits et Titre des Pull Requests
-
-Le sujet doit impérativement respecter le format suivant :
-**`v<M.m.p>: <type>(<scope>) - "Titre humoristique"`**
-
-**Exemples :**
-- `v1.1.1: feat(talos) - "Et la lumière fut !"`
-- `v0.1.2: docs(workflow) - "On écrit les règles du jeu"`
-
-### 4.3. Corps des Commits et Description des Pull Requests
-
-Le corps est utilisé pour fournir le contexte et les détails techniques.
-- Il doit contenir une description des changements techniques.
-- Il doit faire référence à l'objectif concerné (`Relates to OBJECTIF-01`).
-
-## 5. Pull Requests (PR) : Le Journal de Bord du Changement
-
-La Pull Request est l'historique complet et auditable d'une modification. **Toute PR doit obligatoirement contenir dans sa description :**
-
-1.  **Titre Humoristique et Version :** Suivant la convention de nommage.
-2.  **Référence à l'Objectif :** `Relates to OBJECTIF-XX`.
-3.  **Description du Changement :** Le "quoi" et le "pourquoi".
-4.  **Procédure de Test :** Une description des tests effectués.
-5.  **Résultats des Tests et Journal :** Un résumé des résultats, y compris les erreurs rencontrées et résolues.
-6.  **Validation de Non-Régression :** Une confirmation que les fonctionnalités existantes ne sont pas impactées.
+### Contenu Obligatoire de la PR
+La description de la PR sert de journal de bord et doit contenir :
+1.  **Référence Objectif**: `Relates to OBJECTIF-XX`.
+2.  **Description**: Le "quoi" et le "pourquoi" du changement.
+3.  **Procédure de Test**: Comment valider la modification.
+4.  **Résultats & Journal**: Résumé des tests, y compris les erreurs résolues.
+5.  **Validation de Non-Régression**: Confirmation que rien n'est cassé.
