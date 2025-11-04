@@ -37,7 +37,7 @@ spec:
         ingressRoute:
           dashboard:
             enabled: true
-            match: Host(`traefik.vixens.test`)
+            match: Host(`traefik.test.truxonline.com`)
   syncPolicy:
     automated:
       prune: true
