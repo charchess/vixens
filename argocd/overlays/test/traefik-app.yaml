@@ -6,6 +6,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
+# coin coin coin
   project: default
   source:
     # Sp\u00e9cification Helm native \u00e0 ArgoCD
