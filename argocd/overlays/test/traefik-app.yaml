@@ -7,6 +7,9 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik
   source:
     repoURL: https://github.com/charchess/vixens-new.git
     targetRevision: test
@@ -15,9 +18,6 @@ spec:
       valueFiles:
         - values.yaml
         - ../overlays/test/values-test.yaml
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: traefik
   syncPolicy:
     automated:
       prune: true
