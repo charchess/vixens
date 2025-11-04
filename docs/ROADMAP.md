@@ -96,6 +96,8 @@ DEV (branche dev)
 ### Sprint 1 : Terraform Module Talos (4-6h)
 **Objectif** : Cluster dev à 1 node (obsy) fonctionnel
 
+**Statut** : ✅ Terminé
+
 **Tâches** :
 1. Créer module `terraform/modules/talos/`
    - Variables validation (control planes impair)
@@ -124,6 +126,8 @@ kubectl --kubeconfig kubeconfig-dev get nodes
 ### Sprint 2 : Déploiement Cilium (2-3h)
 **Objectif** : CNI opérationnel sur cluster 1 node
 
+**Statut** : ✅ Terminé
+
 **Tâches** :
 1. Configurer Helm provider Terraform
 2. Déployer Cilium via Terraform
@@ -148,6 +152,8 @@ cilium connectivity test
 
 ### Sprint 3 : Scale à 3 Nodes Dev (3-4h)
 **Objectif** : Cluster HA 3 control planes
+
+**Statut** : ✅ Terminé
 
 **Tâches** :
 1. Ajouter onyx, opale dans `terraform.tfvars`
@@ -177,6 +183,8 @@ talosctl --nodes 192.168.111.160 etcd members
 ### Sprint 4 : ArgoCD Bootstrap (3-4h)
 **Objectif** : ArgoCD auto-géré via GitOps
 
+**Statut** : ✅ Terminé
+
 **Tâches** :
 1. Déployer ArgoCD via Terraform (Helm chart)
 2. Créer structure `argocd/base/` + `overlays/dev/`
@@ -201,8 +209,10 @@ argocd app list
 
 ## Phase 2 - Détail des Sprints
 
-### Sprint 5 : MetalLB (2-3h)
-**Objectif** : LoadBalancer opérationnel
+### Sprint 5 : Cilium L2 LoadBalancer (2-3h)
+**Objectif** : LoadBalancer opérationnel via Cilium L2 Announcements
+
+**Statut** : ✅ Terminé
 
 **Tâches** :
 1. Créer `apps/metallb/base/` + `overlays/dev/`
@@ -227,6 +237,8 @@ kubectl get svc -n metallb-system
 
 ### Sprint 6 : Traefik (3-4h)
 **Objectif** : Ingress controller exposé
+
+**Statut** : [ ] En cours
 
 **Tâches** :
 1. Créer `apps/traefik/base/` + `overlays/dev/`
@@ -304,6 +316,8 @@ kubectl exec -it mariadb-0 -n test -- df -h /var/lib/mysql
 
 ### Sprint 9 : Réplication Cluster Test (6-8h)
 **Objectif** : Valider Terraform + Kustomize sur 2e cluster
+
+**Statut** : [ ] En cours
 
 **Tâches** :
 1. Créer `terraform/environments/test/`
@@ -426,7 +440,7 @@ Sprint 1 (Terraform 1 node)
 - [ ] Cluster destructible et recréable en < 30min
 - [ ] 3 control planes HA fonctionnels
 - [ ] CNI (Cilium) opérationnel
-- [ ] ArgoCD auto-géré
+- [x] ArgoCD auto-géré
 
 ### Phase 2 (GitOps Services)
 - [ ] Tous les services gérés via Git
@@ -435,7 +449,7 @@ Sprint 1 (Terraform 1 node)
 - [ ] Storage dynamique (iSCSI)
 - [ ] Authelia SSO protège tous les services
 - [ ] Monitoring complet (Prometheus/Grafana)
-- [ ] Cluster test réplique dev avec succès
+- [ ] Cluster test réplique dev avec succès (en cours)
 
 ---
 
