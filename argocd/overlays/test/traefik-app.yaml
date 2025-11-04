@@ -18,9 +18,6 @@ spec:
       valueFiles:
         - values.yaml
         - ../overlays/test/values-test.yaml
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: traefik
   syncPolicy:
     automated:
       prune: true
