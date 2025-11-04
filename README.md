@@ -6,9 +6,9 @@ Infrastructure GitOps pour le déploiement et la gestion de clusters Kubernetes 
 
 ## 2. État Actuel
 
-**Phase Actuelle :** Phase 1 - Création du code Terraform pour le provisionnement du cluster `dev`.
+**Phase Actuelle :** Phase 2 - Déploiement des services GitOps (avec des problèmes en cours sur l'environnement `test`).
 
-**Objectif en cours :** Voir `OBJECTIF-01` dans le fichier [DEFINITIONS.md](./DEFINITIONS.md).
+**Objectif en cours :** Voir `OBJECTIF-02` dans le fichier [DEFINITIONS.md](./DEFINITIONS.md).
 
 ## 3. Schéma d'Architecture
 

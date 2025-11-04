@@ -39,13 +39,14 @@ The following prerequisites are required to run this project:
 
 ## 5. Usage
 
-1. Initialize Terraform:
+1. Initialize Terraform (from project root):
 
    ```bash
-   terraform init
+   terraform -chdir=terraform/environments/dev init -upgrade
    ```
 
-2. Apply the Terraform configuration:
+2. Apply the Terraform configuration (from project root):
 
    ```bash
-   terraform apply
+   terraform -chdir=terraform/environments/dev apply -auto-approve
+   ```
