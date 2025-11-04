@@ -26,6 +26,19 @@ Le projet utilise un modèle GitFlow où chaque environnement persistant est rep
 
 Le code est promu d'un environnement à l'autre en suivant strictement ce chemin, via des Pull Requests (PR) :
 
+### 3.1. Validation et Qualité du Code
+
+Avant toute promotion de code via une Pull Request, les modifications doivent passer les étapes de validation suivantes :
+
+1.  **Validation YAML (`yamllint`)**: Tous les fichiers YAML modifiés doivent être validés avec `yamllint` en utilisant la configuration `.yamllint` à la racine du projet. Cette étape garantit la conformité aux standards de formatage et de syntaxe.
+    ```bash
+    find apps argocd -name "*.yaml" -o -name "*.yml" | xargs yamllint -c .yamllint
+    ```
+2.  **Tests Unitaires et d'Intégration**: (Si applicable) Les tests associés aux modifications doivent être exécutés et passer avec succès.
+3.  **Linting et Type-Checking**: (Si applicable) Les outils de linting et de vérification de type spécifiques au langage utilisé doivent être exécutés et ne rapporter aucune erreur.
+
+Ces validations sont cruciales pour maintenir la qualité et la stabilité du projet à travers les différents environnements.
+
 `feature/*` -> **PR** -> `dev` -> **PR** -> `test` -> **PR** -> `staging` -> **PR** -> `main`
 
 ## 4. Conventions de Nommage
