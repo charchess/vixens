@@ -4,7 +4,7 @@ resources:
   - ../../base
 
 patches:
-  - path: values-test.yaml
+  - path: dashboard-redirect-patch.yaml
     target:
-      kind: HelmRelease
-      name: traefik
+      kind: IngressRoute
+      name: traefik-dashboard-redirect
