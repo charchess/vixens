@@ -16,6 +16,10 @@ spec:
     targetRevision: "v25.0.0"
     helm:
       values: |
+        providers:
+          kubernetesCRD:
+            enabled: true
+
         # Enable API and Dashboard
         api:
           dashboard: true
