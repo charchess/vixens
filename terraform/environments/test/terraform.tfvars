@@ -2,15 +2,15 @@ git_branch = "test"
 environment = "test"
 vlan_services_subnet = "192.168.209.0/24"
 argocd_service_type = "LoadBalancer"
-argocd_loadbalancer_ip = "192.168.209.81"
+argocd_loadbalancer_ip = "192.168.209.71"
 
 
 # Talos Cluster Configuration
 cluster_name = "vixens-test"
 cluster_endpoint = "https://192.168.111.170:6443"
 control_plane_nodes = {
-  "topaze" = {
-    hostname = "topaze"
+  "citrine" = {
+    hostname = "citrine"
     ip_address = "192.168.111.172"
     install_disk = "/dev/sda"
     nameservers = ["1.1.1.1", "8.8.8.8"]
@@ -23,8 +23,8 @@ control_plane_nodes = {
       }
     ]
   },
-  "turquoise" = {
-    hostname = "turquoise"
+  "carny" = {
+    hostname = "carny"
     ip_address = "192.168.111.173"
     install_disk = "/dev/sda"
     nameservers = ["1.1.1.1", "8.8.8.8"]
@@ -37,8 +37,8 @@ control_plane_nodes = {
       }
     ]
   },
-  "tanzanite" = {
-    hostname = "tanzanite"
+  "celesty" = {
+    hostname = "celesty"
     ip_address = "192.168.111.174"
     install_disk = "/dev/sda"
     nameservers = ["1.1.1.1", "8.8.8.8"]
@@ -56,11 +56,11 @@ worker_nodes = {}
 
 # Cilium L2 Announcement
 l2_pool_name = "test-pool"
-l2_pool_ips = ["192.168.209.80-192.168.209.90"]
+l2_pool_ips = ["192.168.209.70-192.168.209.89"]
 l2_policy_name = "test-l2-policy"
 l2_policy_interfaces = ["eth1"]
 l2_policy_node_selector_labels = {
-  "kubernetes.io/hostname" = "topaze"
+  "kubernetes.io/hostname" = "citrine"
 }
 argocd_insecure = true
 argocd_anonymous_enabled = true
