@@ -19,3 +19,7 @@ provider "kubectl" {
   cluster_ca_certificate = base64decode(module.talos_cluster.kubernetes_ca_certificate)
   load_config_file       = false
 }
+
+provider "kubernetes" {
+  config_path = var.kubeconfig_path
+}

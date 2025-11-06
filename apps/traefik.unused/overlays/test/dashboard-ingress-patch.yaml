@@ -1,0 +1,12 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard
+  namespace: traefik
+spec:
+  routes:
+    - match: Host(`traefik.test.truxonline.com`)
+      kind: Rule
+      services:
+        - name: api@internal
+          kind: TraefikService
