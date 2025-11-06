@@ -4,7 +4,9 @@ metadata:
   name: cilium-lb
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-2" # Deploy before other apps
+    argocd.argoproj.io/sync-wave: "-2"  # Deploy before metallb-config (wave -1)
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
@@ -13,10 +15,15 @@ spec:
     path: apps/cilium-lb/overlays/test
   destination:
     server: https://kubernetes.default.svc
-    namespace: kube-system # Cilium resources are in kube-system
+    namespace: kube-system  # Cilium CRDs are cluster-scoped, but convention is kube-system
+
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
