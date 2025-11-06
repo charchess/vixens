@@ -21,6 +21,11 @@ spec:
           kubernetesCRD:
             enabled: true
 
+        # Enable API and Dashboard
+        api:
+          dashboard: true
+          insecure: true
+
         tolerations:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Exists"
