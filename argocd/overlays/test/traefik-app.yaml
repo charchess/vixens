@@ -21,12 +21,10 @@ spec:
           dashboard: true
           insecure: true
 
-        # Configure IngressRoute for dashboard
+        # Disable default IngressRoute (using custom redirect)
         ingressRoute:
           dashboard:
-            enabled: true
-            matchRule: Host(`traefik.test.truxonline.com`)
-            entryPoints: ["web"]
+            enabled: false
 
         tolerations:
           - key: "node-role.kubernetes.io/control-plane"
