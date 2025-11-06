@@ -20,6 +20,8 @@ spec:
         providers:
           kubernetesCRD:
             enabled: true
+          kubernetesIngress:
+            enabled: true
 
         # Enable API and Dashboard
         api:
