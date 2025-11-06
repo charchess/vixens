@@ -4,9 +4,9 @@ kind: Kustomization
 namespace: argocd
 
 resources:
-  - cilium-lb-app.yaml        # Cilium L2 Announcements + LB IPAM (wave -2)
-  # Future: Add more ArgoCD Applications here as we deploy services
-  - traefik-app.yaml
-  - whoami-app.yaml
+  - cilium-lb-app.yaml         # Cilium L2 Announcements + LB IPAM (wave -2)
+  - traefik-app.yaml           # Traefik Ingress Controller
+  - argocd-app.yaml            # ArgoCD Ingress for UI
+  - whoami-app.yaml            # Test application
   # - cert-manager-app.yaml
   # - synology-csi-app.yaml
