@@ -16,6 +16,11 @@ spec:
     targetRevision: "v25.0.0"
     helm:
       values: |
+        # Enable API and Dashboard
+        api:
+          dashboard: true
+          insecure: true
+
         tolerations:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Exists"
