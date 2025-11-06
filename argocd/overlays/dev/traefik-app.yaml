@@ -26,11 +26,6 @@ spec:
           dashboard: true
           insecure: true
 
-        # Configure IngressRoute for dashboard
-        ingressRoute:
-          dashboard:
-            enabled: false
-
         tolerations:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Exists"
