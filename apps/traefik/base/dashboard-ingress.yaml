@@ -9,13 +9,13 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: traefik.dev.truxonline.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: api@internal
-            port:
-              number: 9000
+    - host: traefik.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api@internal
+                port:
+                  number: 9000
