@@ -1,0 +1,27 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: dashboard-redirect
+  namespace: traefik
+spec:
+  redirectRegex:
+    regex: ^https?://([^/]+)/?$
+    replacement: http://${1}/dashboard/
+    permanent: false
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard-redirect
+  namespace: traefik
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`traefik.dev.truxonline.com`) && Path(`/`)
+      kind: Rule
+      middlewares:
+        - name: dashboard-redirect
+      services:
+        - name: noop@internal
+          kind: TraefikService
