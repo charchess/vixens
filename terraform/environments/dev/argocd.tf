@@ -31,21 +31,15 @@ resource "helm_release" "argocd" {
       # Service configuration (parameterized per environment)
       service = {
         type = var.argocd_service_type
-        # LoadBalancer IP only used when type is LoadBalancer
-        loadBalancerIP = var.argocd_service_type == "LoadBalancer" ? var.argocd_loadbalancer_ip : null
-        annotations = {
-          "environment" = var.environment
-        }
-      }
-
-      ingress = {
-        enabled = false
-        ingressClassName = "traefik"
-        hosts = [var.argocd_hostname]
-        paths = ["/"]
-        annotations = {
-          "traefik.ingress.kubernetes.io/router.entrypoints" = "web"
-        }
+        annotations = merge(
+          {
+            "environment" = var.environment
+          },
+          # Use Cilium IPAM annotation for LoadBalancer IP assignment
+          var.argocd_service_type == "LoadBalancer" && var.argocd_loadbalancer_ip != null ? {
+            "io.cilium/lb-ipam-ips" = var.argocd_loadbalancer_ip
+          } : {}
+        )
       }
 
       # Tolerate control-plane taint for full control-plane cluster
@@ -183,35 +177,4 @@ resource "kubectl_manifest" "argocd_root_app" {
   depends_on = [
     helm_release.argocd
   ]
-}
-
-resource "kubernetes_ingress_v1" "argocd_ingress" {
-  metadata {
-    name = "argocd-server-ingress"
-    namespace = "argocd"
-    annotations = {
-      "traefik.ingress.kubernetes.io/router.entrypoints" = "web"
-    }
-  }
-  spec {
-    ingress_class_name = "traefik"
-    rule {
-      host = var.argocd_hostname
-      http {
-        path {
-          path = "/"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = "argocd-server"
-              port {
-                number = 80
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  depends_on = [helm_release.argocd]
 }
