@@ -43,11 +43,10 @@ spec:
             expose: true
             tls:
               enabled: true
-
-        ingressRoute:
-          dashboard:
-            enabled: true
-            match: Host(`traefik.dev.truxonline.com`)
+          traefik:
+            port: 9000
+            expose: false
+            exposedPort: 9000
 
   syncPolicy:
     automated:
