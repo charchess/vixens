@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traefik-dashboard
+  namespace: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-dashboard-stripprefix@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: traefik.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api@internal
+                port:
+                  number: 9000

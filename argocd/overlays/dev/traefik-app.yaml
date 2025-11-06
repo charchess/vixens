@@ -17,6 +17,21 @@ spec:
     # Define Helm values directly here
     helm:
       values: |
+        providers:
+          kubernetesCRD:
+            enabled: true
+
+        # Enable API and Dashboard
+        api:
+          dashboard: true
+          insecure: true
+
+        # Enable dashboard IngressRoute on web entrypoint
+        ingressRoute:
+          dashboard:
+            enabled: true
+            entryPoints: ["web"]
+
         tolerations:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Exists"
@@ -34,11 +49,10 @@ spec:
             expose: true
             tls:
               enabled: true
-
-        ingressRoute:
-          dashboard:
-            enabled: true
-            match: Host(`traefik.vixens.dev`)
+          traefik:
+            port: 9000
+            expose: false
+            exposedPort: 9000
 
   syncPolicy:
     automated:
