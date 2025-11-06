@@ -21,6 +21,12 @@ spec:
           dashboard: true
           insecure: true
 
+        # Enable dashboard IngressRoute on web entrypoint
+        ingressRoute:
+          dashboard:
+            enabled: true
+            entryPoints: ["web"]
+
         tolerations:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Exists"
