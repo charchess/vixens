@@ -4,7 +4,7 @@ resources:
   - ../../base
 
 patches:
-  - path: dashboard-ingress-patch.yaml
+  - path: dashboard-redirect-patch.yaml
     target:
       kind: IngressRoute
-      name: traefik-dashboard
+      name: traefik-dashboard-redirect
