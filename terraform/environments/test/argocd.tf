@@ -21,7 +21,7 @@ resource "helm_release" "argocd" {
       # dev/test: true (Traefik will terminate TLS later)
       # staging/prod: false (TLS at ArgoCD level)
       config = {
-        url = "http://192.168.208.71"   # TODO: a corrigé pour utiliser une variable
+        url = "http://${var.argocd_loadbalancer_ip}"
       }
       extraArgs = concat(
         var.argocd_insecure ? ["--insecure"] : [],
@@ -130,8 +130,8 @@ resource "helm_release" "argocd" {
       }
       cm = {
         "users.anonymous.enabled" = var.argocd_anonymous_enabled ? "true" : "false"
-        
-        "url" = "http://192.168.208.71" # TODO: a corrigé pour utiliser une variable
+
+        "url" = "http://${var.argocd_loadbalancer_ip}"
         "policy.csv" = <<-EOT
           p, role:readonly, applications, get, */*, allow
           p, role:readonly, applications, list, */*, allow
