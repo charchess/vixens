@@ -5,3 +5,12 @@ metadata:
 spec:
   rules:
     - host: whoami.test.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  name: http
