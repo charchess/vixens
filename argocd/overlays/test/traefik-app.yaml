@@ -3,17 +3,18 @@ kind: Application
 metadata:
   name: traefik
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
   source:
+    # Point directly to the Helm chart repository
     repoURL: https://helm.traefik.io/traefik
     chart: traefik
     targetRevision: "v25.0.0"
+
+    # Define Helm values directly here
     helm:
       values: |
         providers:
@@ -55,6 +56,7 @@ spec:
             port: 9000
             expose: false
             exposedPort: 9000
+
   syncPolicy:
     automated:
       prune: true
