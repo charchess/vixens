@@ -64,21 +64,21 @@ l2_policy_node_selector_labels = {
   "kubernetes.io/hostname" = "obsy"
 }
 
-# Common Variables (assuming they are the same as test)
-talos_version      = "1.7"
-kubernetes_version = "1.30"
-force_destroy_time = "15m"
-talos_config_path  = "/root/.talos/config"
-kubeconfig_path    = "/root/vixens/terraform/environments/dev/kubeconfig-dev"
-hyperv_host        = "HV-TRUX-2"
-vm_path            = "D:\\VM"
-vswitch_name       = "TRUNK-EXT"
-vlan_interco       = 111
-ram_mb             = 4096
-processors         = 2
-disk_size_gb       = 40
-iso_path           = "C:\\ISO\\talos-amd64.iso"
-cluster_vip        = "192.168.111.160"
-
 argocd_insecure          = true
 argocd_anonymous_enabled = true
+
+# Common Variables (assuming they are the same as test)
+# talos_version      = "1.7"
+# kubernetes_version = "1.30"
+# force_destroy_time = "15m"
+# talos_config_path  = "/root/.talos/config"
+# kubeconfig_path    = "/root/vixens/terraform/environments/dev/kubeconfig-dev"
+# hyperv_host        = "HV-TRUX-2"
+# vm_path            = "D:\\VM"
+# vswitch_name       = "TRUNK-EXT"
+# vlan_interco       = 111
+# ram_mb             = 4096
+# processors         = 2
+# disk_size_gb       = 40
+# iso_path           = "C:\\ISO\\talos-amd64.iso"
+cluster_vip        = "192.168.111.160"
