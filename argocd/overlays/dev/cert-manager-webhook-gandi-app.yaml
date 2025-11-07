@@ -14,9 +14,9 @@ spec:
     namespace: cert-manager
   source:
     # Point directly to the Helm chart repository
-    repoURL: https://bwolf.github.io/cert-manager-webhook-gandi
+    repoURL: https://sintef.github.io/cert-manager-webhook-gandi
     chart: cert-manager-webhook-gandi
-    targetRevision: "0.5.2"
+    targetRevision: "v0.5.2"
 
     # Define Helm values directly here
     helm:
