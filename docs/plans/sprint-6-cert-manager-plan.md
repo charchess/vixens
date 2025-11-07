@@ -43,16 +43,28 @@ Services internes
 - Création automatique via annotations Ingress
 - Stockage dans Secrets Kubernetes
 
-### Flux ACME HTTP-01 Challenge
+### Flux ACME DNS-01 Challenge (Gandi)
 ```
 1. Ingress créé avec annotation cert-manager
 2. cert-manager détecte et crée Certificate CRD
-3. Let's Encrypt envoie HTTP challenge
-4. Traefik route /.well-known/acme-challenge/ vers cert-manager
-5. Validation OK → Certificat émis
-6. cert-manager stocke cert dans Secret
-7. Traefik utilise le Secret pour TLS
+3. Let's Encrypt demande validation DNS
+4. cert-manager utilise Gandi API pour créer TXT record
+   → _acme-challenge.traefik.dev.truxonline.com TXT "validation_token"
+5. Let's Encrypt vérifie le TXT record DNS
+6. Validation OK → Certificat émis
+7. cert-manager supprime le TXT record
+8. cert-manager stocke cert dans Secret
+9. Traefik utilise le Secret pour TLS
 ```
+
+**Avantages DNS-01 :**
+- ✅ Pas besoin d'exposer HTTP publiquement
+- ✅ Support des wildcard certificates (*.dev.truxonline.com)
+- ✅ Fonctionne avec services internes
+
+**Prérequis DNS-01 :**
+- API Key Gandi (LiveDNS API)
+- Webhook cert-manager-webhook-gandi déployé
 
 ---
 
@@ -63,15 +75,27 @@ apps/cert-manager/
 ├── base/
 │   ├── kustomization.yaml
 │   ├── namespace.yaml
+│   ├── gandi-credentials-secret.yaml  # Template (sealed)
 │   ├── cluster-issuer-staging.yaml
 │   └── cluster-issuer-prod.yaml
 └── overlays/
     ├── dev/
     │   ├── kustomization.yaml
-    │   └── cluster-issuer-patch.yaml  # Email contact Let's Encrypt
+    │   ├── cluster-issuer-patch.yaml  # Email + DNS zone
+    │   └── gandi-credentials.yaml     # API key (gitignored)
     └── test/
         ├── kustomization.yaml
-        └── cluster-issuer-patch.yaml
+        ├── cluster-issuer-patch.yaml
+        └── gandi-credentials.yaml     # API key (gitignored)
+
+apps/cert-manager-webhook-gandi/
+├── base/
+│   └── kustomization.yaml             # Helm chart reference
+└── overlays/
+    ├── dev/
+    │   └── kustomization.yaml
+    └── test/
+        └── kustomization.yaml
 
 argocd/overlays/{dev,test}/
 ├── cert-manager-app.yaml              # ArgoCD Application
@@ -108,7 +132,27 @@ mkdir -p apps/cert-manager/overlays/{dev,test}
   - Replicas : 1 (suffisant pour homelab)
   - Tolerations : control-plane
 
-**Tâche 1.3 : Créer ClusterIssuer staging**
+**Tâche 1.2b : Déployer webhook Gandi**
+- Chart Helm : `cert-manager-webhook-gandi`
+- Repository : https://bwolf.github.io/cert-manager-webhook-gandi
+- Version : latest
+- Configuration :
+  - Namespace : `cert-manager`
+  - groupName : `acme.truxonline.com`
+
+**Tâche 1.3 : Créer Secret Gandi API**
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gandi-credentials
+  namespace: cert-manager
+type: Opaque
+stringData:
+  api-token: "YOUR_GANDI_API_KEY"  # LiveDNS API key
+```
+
+**Tâche 1.4 : Créer ClusterIssuer staging**
 ```yaml
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -121,15 +165,36 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-staging
     solvers:
-    - http01:
-        ingress:
-          class: traefik
+    - dns01:
+        webhook:
+          groupName: acme.truxonline.com
+          solverName: gandi
+          config:
+            apiKeySecretRef:
+              name: gandi-credentials
+              key: api-token
 ```
 
-**Tâche 1.4 : Tester avec un Ingress**
+**Tâche 1.5 : Tester avec un Ingress**
 - Modifier whoami Ingress pour activer TLS staging
 - Vérifier émission du certificat
+- Vérifier création/suppression TXT record dans Gandi
 - Valider accès HTTPS (certificat staging non-trusted = normal)
+
+**Debug DNS-01 :**
+```bash
+# Vérifier TXT record créé
+dig _acme-challenge.whoami.dev.truxonline.com TXT +short
+
+# Logs cert-manager
+kubectl logs -n cert-manager -l app=cert-manager -f
+
+# Logs webhook Gandi
+kubectl logs -n cert-manager -l app=cert-manager-webhook-gandi -f
+
+# Status Certificate
+kubectl describe certificate whoami-tls -n whoami
+```
 
 ### Phase 2 : Activer TLS sur tous les services (Dev)
 
@@ -173,9 +238,14 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
-    - http01:
-        ingress:
-          class: traefik
+    - dns01:
+        webhook:
+          groupName: acme.truxonline.com
+          solverName: gandi
+          config:
+            apiKeySecretRef:
+              name: gandi-credentials
+              key: api-token
 ```
 
 **Tâche 3.2 : Basculer tous les Ingress vers prod**
@@ -216,20 +286,34 @@ openssl s_client -connect traefik.dev.truxonline.com:443 -servername traefik.dev
 - 5 duplicate certificates/semaine/domain
 - ⚠️ **IMPORTANT** : Tester en staging avant prod !
 
-### DNS et domaines
+### DNS et domaines (Gandi)
 
-**Prérequis :**
-- DNS public pointant vers LoadBalancer externe
-- Ou DNS interne si Let's Encrypt peut atteindre les services
+**Prérequis DNS-01 :**
+- ✅ Gandi LiveDNS API activée
+- ✅ API Key Gandi avec droits sur zone truxonline.com
+- ✅ cert-manager-webhook-gandi déployé
+
+**Obtenir API Key Gandi :**
+1. Se connecter à account.gandi.net
+2. Sécurité → Générer une clé API
+3. Permissions : "Voir et renouveler les domaines" + "Gérer les enregistrements DNS"
+4. Copier la clé (affichée une seule fois)
 
 **Validation :**
 ```bash
 # Vérifier résolution DNS
 nslookup traefik.dev.truxonline.com
 
-# Vérifier accessibilité HTTP (challenge)
-curl -v http://traefik.dev.truxonline.com/.well-known/acme-challenge/test
+# Tester API Gandi (avec votre clé)
+curl -H "Authorization: Apikey YOUR_API_KEY" \
+  https://api.gandi.net/v5/livedns/domains/truxonline.com
 ```
+
+**Sécurité API Key :**
+- ⚠️ Ne JAMAIS commiter l'API key en clair
+- ✅ Utiliser Secret Kubernetes
+- ✅ Ajouter `**/gandi-credentials.yaml` au .gitignore
+- ✅ Ou utiliser Sealed Secrets / External Secrets
 
 ### Traefik Configuration
 
@@ -276,27 +360,38 @@ spec:
 
 ## 🚀 Ordre d'exécution recommandé
 
+### Préparation
+0. Obtenir API Key Gandi
+0. Tester API Gandi
+
+### Implémentation
 1. Installer cert-manager (dev)
-2. Créer ClusterIssuer staging
-3. Tester avec 1 service (whoami)
-4. Valider certificat staging émis
-5. Étendre aux 3 services
-6. Créer ClusterIssuer prod
-7. Basculer les 3 services en prod
-8. Valider certificats prod
-9. Activer redirect HTTP → HTTPS
-10. Créer overlay test
-11. PR dev → test
-12. Valider test
+2. Installer webhook Gandi (dev)
+3. Créer Secret Gandi API key
+4. Créer ClusterIssuer staging
+5. Tester avec 1 service (whoami)
+6. Vérifier TXT record créé/supprimé
+7. Valider certificat staging émis
+8. Étendre aux 3 services
+9. Créer ClusterIssuer prod
+10. Basculer les 3 services en prod
+11. Valider certificats prod
+12. Activer redirect HTTP → HTTPS
+13. Créer overlay test
+14. PR dev → test
+15. Valider test
 
 ---
 
 ## 📚 Ressources
 
 - [cert-manager docs](https://cert-manager.io/docs/)
+- [cert-manager DNS-01 challenges](https://cert-manager.io/docs/configuration/acme/dns01/)
+- [cert-manager-webhook-gandi](https://github.com/bwolf/cert-manager-webhook-gandi)
+- [Gandi LiveDNS API](https://api.gandi.net/docs/livedns/)
 - [Let's Encrypt rate limits](https://letsencrypt.org/docs/rate-limits/)
 - [Traefik + cert-manager](https://doc.traefik.io/traefik/https/acme/)
-- [HTTP-01 Challenge](https://letsencrypt.org/docs/challenge-types/)
+- [DNS-01 Challenge types](https://letsencrypt.org/docs/challenge-types/)
 
 ---
 
