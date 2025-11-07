@@ -6,5 +6,6 @@ namespace: argocd
 resources:
   - cilium-lb-app.yaml         # Cilium L2 Announcements + LB IPAM (wave -2)
   - traefik-app.yaml           # Traefik Ingress Controller
+  - traefik-dashboard-app.yaml # Traefik Dashboard Ingress (hostname access)
   - argocd-app.yaml            # ArgoCD Ingress for UI
   - whoami-app.yaml            # Test application
