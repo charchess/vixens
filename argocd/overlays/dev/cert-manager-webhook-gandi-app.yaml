@@ -9,13 +9,24 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  source:
-    repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
-    path: apps/cert-manager-webhook-gandi/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
+  source:
+    # Point directly to the Helm chart repository
+    repoURL: https://bwolf.github.io/cert-manager-webhook-gandi
+    chart: cert-manager-webhook-gandi
+    targetRevision: "v0.3.0"
+
+    # Define Helm values directly here
+    helm:
+      values: |
+        groupName: acme.truxonline.com
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            operator: Exists
+            effect: NoSchedule
+
   syncPolicy:
     automated:
       prune: true
