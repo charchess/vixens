@@ -65,8 +65,6 @@ l2_policy_node_selector_labels = {
 }
 argocd_insecure = true
 argocd_anonymous_enabled = true
-argocd_disable_auth = true
-argocd_hostname = "argocd.test.truxonline.com"
 talos_version = "1.7"
 kubernetes_version = "1.30"
 force_destroy_time = "15m"

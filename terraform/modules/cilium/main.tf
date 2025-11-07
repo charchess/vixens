@@ -1,55 +1,33 @@
-# Cilium CNI Deployment
-# Cilium v1.18.3 with kube-proxy replacement, Hubble observability
-
 resource "helm_release" "cilium" {
-  name       = "cilium"
+  name       = var.release_name
   repository = "https://helm.cilium.io/"
   chart      = "cilium"
-  version    = "1.18.3"
-  namespace  = "kube-system"
+  version    = var.chart_version
+  namespace  = var.namespace
 
-  # Wait for Cilium to be ready before marking as complete
   wait          = true
   wait_for_jobs = true
-  timeout       = 600 # 10 minutes
+  timeout       = 600
 
   values = [yamlencode({
-    # Kube-proxy replacement mode
     kubeProxyReplacement = true
-
-    # Kubernetes API server configuration - Use KubePrism for Talos compatibility
-    k8sServiceHost = "localhost" # KubePrism local endpoint
-    k8sServicePort = 7445        # KubePrism port (instead of 6443)
-
-    # L2 Announcements for LoadBalancer services (replaces MetalLB)
+    k8sServiceHost = "localhost"
+    k8sServicePort = 7445
     l2announcements = {
       enabled = true
     }
-
-    # LoadBalancer IPAM - enabled automatically when IP pools are created
-    # No specific helm value needed, activated via CiliumLoadBalancerIPPool CRDs
-
-    # Increase API client rate limits for L2 announcements
     k8sClientRateLimit = {
-      qps   = 10 # Default: 5
-      burst = 20 # Default: 10
+      qps   = 10
+      burst = 20
     }
-
-    # Enable external IPs support for services
     externalIPs = {
       enabled = true
     }
-
-    # IPAM configuration
     ipam = {
       mode = "kubernetes"
     }
-
-    # Routing mode (replaces deprecated tunnel parameter)
     routingMode = "tunnel"
     tunnelProtocol = "vxlan"
-
-    # Talos-specific security context configuration
     securityContext = {
       capabilities = {
         ciliumAgent = [
@@ -72,27 +50,19 @@ resource "helm_release" "cilium" {
         ]
       }
     }
-
-    # Talos-specific cgroup configuration
     cgroup = {
       autoMount = {
-        enabled = false # Talos manages cgroups differently
+        enabled = false
       }
       hostRoot = "/sys/fs/cgroup"
     }
-
-    # Required for Talos DNS forwarding compatibility
     bpf = {
-      hostLegacyRouting = true # Talos kube-dns forwarding needs this
+      hostLegacyRouting = true
     }
-
-    # Hubble observability
     hubble = {
       enabled = true
-
       relay = {
         enabled = true
-        # Tolerate control-plane taint for full control-plane cluster
         tolerations = [
           {
             key      = "node-role.kubernetes.io/control-plane"
@@ -101,10 +71,8 @@ resource "helm_release" "cilium" {
           }
         ]
       }
-
       ui = {
         enabled = true
-        # Tolerate control-plane taint for full control-plane cluster
         tolerations = [
           {
             key      = "node-role.kubernetes.io/control-plane"
@@ -113,7 +81,6 @@ resource "helm_release" "cilium" {
           }
         ]
       }
-
       metrics = {
         enabled = [
           "dns",
@@ -126,11 +93,8 @@ resource "helm_release" "cilium" {
         ]
       }
     }
-
-    # Operator configuration
     operator = {
-      replicas = 1 # Single replica for dev (3 control planes)
-      # Tolerate control-plane taint for full control-plane cluster
+      replicas = 1
       tolerations = [
         {
           key      = "node-role.kubernetes.io/control-plane"
@@ -141,9 +105,38 @@ resource "helm_release" "cilium" {
     }
   })]
 
-  # Ensure Talos cluster is ready and API is responsive before deploying Cilium
   depends_on = [
-    module.talos_cluster,
-    null_resource.wait_for_k8s_api
+    var.talos_cluster_module,
+    var.wait_for_k8s_api
+  ]
+}
+
+resource "null_resource" "wait_for_cilium_crds" {
+  depends_on = [
+    helm_release.cilium
+  ]
+
+  provisioner "local-exec" {
+    command = "bash ${path.module}/wait_for_cilium_crds.sh"
+
+    environment = {
+      KUBECONFIG_PATH = var.kubeconfig_path
+    }
+  }
+}
+
+resource "kubectl_manifest" "cilium_ip_pool" {
+  yaml_body = file(var.ip_pool_yaml_path)
+
+  depends_on = [
+    null_resource.wait_for_cilium_crds
+  ]
+}
+
+resource "kubectl_manifest" "cilium_l2_policy" {
+  yaml_body = file(var.l2_policy_yaml_path)
+
+  depends_on = [
+    null_resource.wait_for_cilium_crds
   ]
 }

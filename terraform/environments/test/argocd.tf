@@ -158,8 +158,7 @@ resource "helm_release" "argocd" {
 
   # Deploy after Cilium is ready and the LB pool has been created
   depends_on = [
-    kubectl_manifest.cilium_ip_pool,
-    kubectl_manifest.cilium_l2_policy
+    module.cilium
   ]
 }
 
