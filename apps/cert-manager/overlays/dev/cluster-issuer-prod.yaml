@@ -14,6 +14,6 @@ spec:
             groupName: acme.truxonline.com
             solverName: gandi
             config:
-              apiKeySecretRef:
+              patSecretRef:
                 name: gandi-credentials
                 key: api-token
