@@ -1,6 +1,8 @@
 #!/bin/bash
 # This script waits for Cilium CRDs to be registered in the Kubernetes API
 
+# refactor : integrer dans un modules cilium
+
 end_time=$(( $(date +%s) + 600 )) # 10 minutes timeout for CRDs
 required_crds=(
   "ciliumnodes.cilium.io"
