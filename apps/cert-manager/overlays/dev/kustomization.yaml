@@ -4,6 +4,8 @@ kind: Kustomization
 namespace: cert-manager
 
 resources:
-  - gandi-credentials-secret.yaml
   - cluster-issuer-staging.yaml
   - cluster-issuer-prod.yaml
+
+# Note: gandi-credentials Secret déployé manuellement (hors GitOps)
+# car contient API key sensible
