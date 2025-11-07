@@ -21,8 +21,7 @@ spec:
     # Define Helm values directly here
     helm:
       values: |
-        crds:
-          enabled: true
+        installCRDs: true
         global:
           leaderElection:
             namespace: cert-manager
