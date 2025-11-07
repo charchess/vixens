@@ -4,7 +4,6 @@ kind: Kustomization
 namespace: cert-manager
 
 resources:
-  - ../../base
   - gandi-credentials-secret.yaml
   - cluster-issuer-staging.yaml
   - cluster-issuer-prod.yaml
