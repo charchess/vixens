@@ -87,3 +87,21 @@ resource "local_file" "talosconfig" {
   filename        = "${path.module}/talosconfig-test"
   file_permission = "0600"
 }
+
+# Cilium CNI with L2 Announcements and LoadBalancer IPAM
+module "cilium" {
+  source = "../../modules/cilium"
+
+  release_name  = "cilium"
+  chart_version = "1.18.3"
+  namespace     = "kube-system"
+
+  # Dependencies
+  talos_cluster_module = module.talos_cluster
+  wait_for_k8s_api     = null_resource.wait_for_k8s_api
+
+  # Paths for resources
+  kubeconfig_path      = "${path.module}/kubeconfig-test"
+  ip_pool_yaml_path    = "${path.module}/../../../apps/cilium-lb/overlays/test/ippool.yaml"
+  l2_policy_yaml_path  = "${path.module}/../../../apps/cilium-lb/base/l2policy.yaml"
+}

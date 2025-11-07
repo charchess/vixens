@@ -12,7 +12,7 @@ module "talos_cluster" {
   control_plane_nodes = {
     "obsy" = {
       name         = "obsy"
-      ip_address   = "192.168.0.162"  # Maintenance IP for initial access
+      ip_address   = "192.168.0.162" # Maintenance IP for initial access
       mac_address  = "00:15:5D:00:CB:10"
       install_disk = "/dev/sda"
       network = {
@@ -33,7 +33,7 @@ module "talos_cluster" {
     }
     "onyx" = {
       name         = "onyx"
-      ip_address   = "192.168.0.164"  # Maintenance IP for initial access
+      ip_address   = "192.168.0.164" # Maintenance IP for initial access
       mac_address  = "00:15:5D:00:CB:11"
       install_disk = "/dev/sda"
       network = {
@@ -54,7 +54,7 @@ module "talos_cluster" {
     }
     "opale" = {
       name         = "opale"
-      ip_address   = "192.168.0.163"  # VLAN 111 IP for initial access
+      ip_address   = "192.168.0.163" # VLAN 111 IP for initial access
       mac_address  = "00:15:5D:00:CB:0B"
       install_disk = "/dev/sda"
       network = {
@@ -90,4 +90,22 @@ resource "local_file" "talosconfig" {
   content         = module.talos_cluster.talosconfig
   filename        = "${path.module}/talosconfig-dev"
   file_permission = "0600"
+}
+
+# Cilium CNI with L2 Announcements and LoadBalancer IPAM
+module "cilium" {
+  source = "../../modules/cilium"
+
+  release_name  = "cilium"
+  chart_version = "1.18.3"
+  namespace     = "kube-system"
+
+  # Dependencies
+  talos_cluster_module = module.talos_cluster
+  wait_for_k8s_api     = null_resource.wait_for_k8s_api
+
+  # Paths for resources
+  kubeconfig_path     = "${path.module}/kubeconfig-dev"
+  ip_pool_yaml_path   = "${path.module}/../../../apps/cilium-lb/overlays/dev/ippool.yaml"
+  l2_policy_yaml_path = "${path.module}/../../../apps/cilium-lb/base/l2policy.yaml"
 }
