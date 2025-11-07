@@ -1,25 +1,17 @@
-# ArgoCD GitOps Deployment
-# ArgoCD for continuous deployment and GitOps workflow
-
 resource "helm_release" "argocd" {
   name             = "argocd"
   repository       = "https://argoproj.github.io/argo-helm"
   chart            = "argo-cd"
-  version          = "7.7.7"
-  namespace        = "argocd"
+  version          = var.chart_version
+  namespace        = var.namespace
   create_namespace = true
 
-  # Wait for ArgoCD to be ready
   wait          = true
   wait_for_jobs = true
-  timeout       = 600 # 10 minutes
+  timeout       = 600
 
   values = [yamlencode({
-    # Server configuration
     server = {
-      # Insecure mode (HTTP, no TLS) - environment-specific
-      # dev/test: true (Traefik will terminate TLS later)
-      # staging/prod: false (TLS at ArgoCD level)
       config = {
         url = "http://${var.argocd_loadbalancer_ip}"
       }
@@ -27,22 +19,22 @@ resource "helm_release" "argocd" {
         var.argocd_insecure ? ["--insecure"] : [],
         var.argocd_disable_auth ? ["--disable-auth"] : []
       )
-
-      # Service configuration (parameterized per environment)
       service = {
         type = var.argocd_service_type
-        annotations = merge(
-          {
-            "environment" = var.environment
-          },
-          # Use Cilium IPAM annotation for LoadBalancer IP assignment
-          var.argocd_service_type == "LoadBalancer" && var.argocd_loadbalancer_ip != null ? {
-            "io.cilium/lb-ipam-ips" = var.argocd_loadbalancer_ip
-          } : {}
-        )
+        loadBalancerIP = var.argocd_service_type == "LoadBalancer" ? var.argocd_loadbalancer_ip : null
+        annotations = {
+          "environment" = var.environment
+        }
       }
-
-      # Tolerate control-plane taint for full control-plane cluster
+      ingress = {
+        enabled = false
+        ingressClassName = "traefik"
+        hosts = [var.argocd_hostname]
+        paths = ["/"]
+        annotations = {
+          "traefik.ingress.kubernetes.io/router.entrypoints" = "web"
+        }
+      }
       tolerations = [
         {
           key      = "node-role.kubernetes.io/control-plane"
@@ -51,8 +43,6 @@ resource "helm_release" "argocd" {
         }
       ]
     }
-
-    # Repo server tolerations
     repoServer = {
       tolerations = [
         {
@@ -62,8 +52,6 @@ resource "helm_release" "argocd" {
         }
       ]
     }
-
-    # Application controller tolerations
     controller = {
       tolerations = [
         {
@@ -73,8 +61,6 @@ resource "helm_release" "argocd" {
         }
       ]
     }
-
-    # Redis tolerations
     redis = {
       tolerations = [
         {
@@ -84,8 +70,6 @@ resource "helm_release" "argocd" {
         }
       ]
     }
-
-    # ApplicationSet controller tolerations
     applicationSet = {
       tolerations = [
         {
@@ -95,8 +79,6 @@ resource "helm_release" "argocd" {
         }
       ]
     }
-
-    # Notifications controller tolerations
     notifications = {
       tolerations = [
         {
@@ -106,13 +88,9 @@ resource "helm_release" "argocd" {
         }
       ]
     }
-
-    # Dex (SSO) tolerations
     dex = {
-      enabled = false # Disable Dex for now, will configure later if needed
+      enabled = false
     }
-
-    # Redis secret init Job tolerations
     redisSecretInit = {
       tolerations = [
         {
@@ -122,16 +100,13 @@ resource "helm_release" "argocd" {
         }
       ]
     }
-
-    # Config (environment-specific)
     configs = {
       params = {
         "server.insecure" = var.argocd_insecure
       }
       cm = {
         "users.anonymous.enabled" = var.argocd_anonymous_enabled ? "true" : "false"
-
-        "url"        = "http://${var.argocd_loadbalancer_ip}"
+        "url" = "http://${var.argocd_loadbalancer_ip}"
         "policy.csv" = <<-EOT
           p, role:readonly, applications, get, */*, allow
           p, role:readonly, applications, list, */*, allow
@@ -144,36 +119,28 @@ resource "helm_release" "argocd" {
           g, default, role:readonly
         EOT
       }
-
-      # Désactiver le secret admin
-
-
-      # Configuration RBAC
       rbac = {
-        create        = true
-        policyDefault = "role:readonly" # TODO: a corrigé pour utiliser une variable
+        create = true
+        policyDefault = "role:readonly"
       }
     }
   })]
 
-  # Deploy after Cilium is ready and the LB pool has been created
   depends_on = [
-    module.cilium
+    var.cilium_module
   ]
 }
 
-# Bootstrap root-app automatically (App-of-Apps pattern)
-# This enables full GitOps automation - after this, all deployments are via Git
-# Template is rendered with environment-specific values
 resource "kubectl_manifest" "argocd_root_app" {
-  yaml_body = templatefile("${path.module}/../../../argocd/base/root-app.yaml.tpl", {
-    environment     = var.environment
-    target_revision = var.git_branch
-    overlay_path    = "argocd/overlays/${var.environment}"
+  yaml_body = templatefile(var.root_app_template_path, {
+    environment      = var.environment
+    target_revision  = var.git_branch
+    overlay_path     = "argocd/overlays/${var.environment}"
   })
 
-  # Wait for ArgoCD to be fully deployed and healthy
   depends_on = [
     helm_release.argocd
   ]
 }
+
+
