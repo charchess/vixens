@@ -108,7 +108,7 @@ data "talos_machine_configuration" "control_plane" {
 data "talos_client_configuration" "this" {
   cluster_name         = var.cluster_name
   client_configuration = talos_machine_secrets.cluster.client_configuration
-  endpoints = [local.vip_address]
+  endpoints            = [local.vip_address]
   nodes = concat(
     [for k, v in var.control_plane_nodes : local.control_plane_vlan111_ips[k]],
     [for k, v in var.worker_nodes : local.worker_vlan_ips[k]]
@@ -120,7 +120,7 @@ resource "talos_machine_configuration_apply" "control_plane" {
 
   client_configuration        = talos_machine_secrets.cluster.client_configuration
   machine_configuration_input = data.talos_machine_configuration.control_plane[each.key].machine_configuration
-  node                        = each.value.ip_address
+  node                        = local.control_plane_vlan_ips[each.key] # Use VLAN IP (routable) instead of maintenance IP
 }
 
 resource "talos_machine_bootstrap" "this" {
@@ -241,7 +241,7 @@ resource "talos_machine_configuration_apply" "worker" {
 
   client_configuration        = talos_machine_secrets.cluster.client_configuration
   machine_configuration_input = data.talos_machine_configuration.worker[each.key].machine_configuration
-  node                        = each.value.ip_address
+  node                        = local.worker_vlan_ips[each.key] # Use VLAN IP (routable) instead of maintenance IP
 }
 
 # Automatic node reset on destroy - Workers
@@ -285,6 +285,97 @@ EOF
       # Cleanup temp file
       rm -f $TEMP_TALOSCONFIG
       echo "Worker node ${self.triggers.node_ip} reset initiated"
+    EOT
+  }
+}
+
+# Automatic Talos upgrade when talos_version or talos_image changes - Control Plane
+resource "null_resource" "control_plane_upgrade" {
+  for_each = var.control_plane_nodes
+
+  # Trigger upgrade when version or image changes
+  triggers = {
+    talos_version = var.talos_version
+    talos_image   = var.talos_image
+    node_ip       = local.control_plane_vlan_ips[each.key]
+  }
+
+  # Upgrade must happen after node is configured and bootstrapped
+  depends_on = [
+    talos_machine_bootstrap.this,
+    talos_machine_configuration_apply.control_plane
+  ]
+
+  # Upgrade node when triggers change
+  provisioner "local-exec" {
+    command = <<-EOT
+      # Create temporary talosconfig file
+      TEMP_TALOSCONFIG=$(mktemp)
+      cat > $TEMP_TALOSCONFIG <<'EOF'
+${data.talos_client_configuration.this.talos_config}
+EOF
+
+      export TALOSCONFIG=$TEMP_TALOSCONFIG
+
+      # Determine image to use
+      IMAGE="${var.talos_image != "" ? var.talos_image : format("ghcr.io/siderolabs/installer:%s", var.talos_version)}"
+
+      echo "Upgrading node ${self.triggers.node_ip} to $IMAGE..."
+      talosctl upgrade \
+        --nodes ${self.triggers.node_ip} \
+        --endpoints ${self.triggers.node_ip} \
+        --image "$IMAGE" \
+        --preserve=true \
+        --wait=false
+
+      # Cleanup temp file
+      rm -f $TEMP_TALOSCONFIG
+      echo "Node ${self.triggers.node_ip} upgrade initiated"
+    EOT
+  }
+}
+
+# Automatic Talos upgrade when talos_version or talos_image changes - Workers
+resource "null_resource" "worker_upgrade" {
+  for_each = var.worker_nodes
+
+  # Trigger upgrade when version or image changes
+  triggers = {
+    talos_version = var.talos_version
+    talos_image   = var.talos_image
+    node_ip       = local.worker_vlan_ips[each.key]
+  }
+
+  # Upgrade must happen after node is configured
+  depends_on = [
+    talos_machine_configuration_apply.worker
+  ]
+
+  # Upgrade node when triggers change
+  provisioner "local-exec" {
+    command = <<-EOT
+      # Create temporary talosconfig file
+      TEMP_TALOSCONFIG=$(mktemp)
+      cat > $TEMP_TALOSCONFIG <<'EOF'
+${data.talos_client_configuration.this.talos_config}
+EOF
+
+      export TALOSCONFIG=$TEMP_TALOSCONFIG
+
+      # Determine image to use
+      IMAGE="${var.talos_image != "" ? var.talos_image : format("ghcr.io/siderolabs/installer:%s", var.talos_version)}"
+
+      echo "Upgrading worker node ${self.triggers.node_ip} to $IMAGE..."
+      talosctl upgrade \
+        --nodes ${self.triggers.node_ip} \
+        --endpoints ${self.triggers.node_ip} \
+        --image "$IMAGE" \
+        --preserve=true \
+        --wait=false
+
+      # Cleanup temp file
+      rm -f $TEMP_TALOSCONFIG
+      echo "Worker node ${self.triggers.node_ip} upgrade initiated"
     EOT
   }
 }
