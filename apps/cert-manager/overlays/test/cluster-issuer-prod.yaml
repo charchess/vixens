@@ -17,3 +17,4 @@ spec:
               patSecretRef:
                 name: gandi-credentials
                 key: api-token
+                namespace: cert-manager
