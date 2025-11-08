@@ -95,6 +95,17 @@ vixens/
 │   ├── authelia/
 │   └── monitoring/
 │
+├── .secrets/                      # Secrets (⚠️ temporary, committed in Git)
+│   ├── dev/
+│   │   └── gandi-credentials.yaml
+│   ├── test/
+│   │   └── gandi-credentials.yaml
+│   ├── staging/
+│   └── prod/
+│
+├── scripts/                       # Automation scripts
+│   └── bootstrap-secrets.sh       # Deploy secrets post-infrastructure
+│
 ├── docs/                          # Documentation
 │   ├── architecture/
 │   │   ├── network-diagram.md
@@ -177,6 +188,33 @@ kubectl --kubeconfig=kubeconfig-dev get nodes
 - Destroy is **dangerous** for prod (physical infrastructure)
 - Always commit Terraform code before destroying
 - Validation: `terraform plan` should show "no changes" after recreate
+
+### Secrets Management (Post-Infrastructure)
+
+⚠️ **TEMPORARY SOLUTION** - Secrets are currently committed in Git for simplicity.
+
+After cluster deployment, secrets must be applied manually (not managed by GitOps):
+
+```bash
+# Apply secrets after terraform apply
+./scripts/bootstrap-secrets.sh dev
+
+# Or manually
+kubectl apply -f .secrets/dev/
+```
+
+**Current implementation:**
+- Secrets stored in `.secrets/<environment>/` (committed in Git)
+- Applied manually after cluster creation
+- **Not** managed by ArgoCD (post-infrastructure step)
+
+**Future improvements (later sprint):**
+- Encrypt secrets (Minio + age, Sealed Secrets, or SOPS)
+- Remove from Git
+- Automate in destroy/recreate workflow
+
+**Secrets currently managed:**
+- `gandi-credentials` (cert-manager DNS-01 challenge)
 
 ### Talos Node Management
 
