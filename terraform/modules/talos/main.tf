@@ -120,7 +120,7 @@ resource "talos_machine_configuration_apply" "control_plane" {
 
   client_configuration        = talos_machine_secrets.cluster.client_configuration
   machine_configuration_input = data.talos_machine_configuration.control_plane[each.key].machine_configuration
-  node                        = local.control_plane_vlan_ips[each.key] # Use VLAN IP (routable) instead of maintenance IP
+  node                        = each.value.ip_address
 }
 
 resource "talos_machine_bootstrap" "this" {
@@ -241,7 +241,7 @@ resource "talos_machine_configuration_apply" "worker" {
 
   client_configuration        = talos_machine_secrets.cluster.client_configuration
   machine_configuration_input = data.talos_machine_configuration.worker[each.key].machine_configuration
-  node                        = local.worker_vlan_ips[each.key] # Use VLAN IP (routable) instead of maintenance IP
+  node                        = each.value.ip_address
 }
 
 # Automatic node reset on destroy - Workers
