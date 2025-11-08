@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: test
     path: apps/whoami/overlays/test
   destination:
     server: https://kubernetes.default.svc
