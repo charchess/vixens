@@ -382,7 +382,7 @@ resource "local_file" "kubeconfig" {
 }
 ```
 
-## Current Infrastructure Status (Sprints 1-4 COMPLETED ✅)
+## Current Infrastructure Status (Sprints 1-6 COMPLETED ✅)
 
 ### Dev Cluster ✅
 
@@ -398,6 +398,9 @@ resource "local_file" "kubeconfig" {
 | **Cilium CNI** | ✅ Running | v1.18.3 with L2 Announcements + LB IPAM |
 | **ArgoCD** | ✅ Running | v7.7.7 with root-app auto-bootstrapped |
 | **Cilium LB** | ✅ Active | Pool 192.168.208.70-89 (20 IPs available) |
+| **Traefik Ingress** | ✅ Running | v2.10.5 (Helm v25.0.0) with TLS support |
+| **cert-manager** | ✅ Running | v1.14.4 with Let's Encrypt DNS-01 (Gandi) |
+| **TLS Certificates** | ✅ Active | Production Let's Encrypt for whoami, traefik, argocd |
 | **VLANs** | ✅ Configured | VLAN 111 (internal) + VLAN 208 (services) |
 | **Config files** | ✅ Generated | kubeconfig-dev, talosconfig-dev (local) |
 | **GitOps Automation** | ✅ Complete | Zero manual kubectl commands |
@@ -411,16 +414,17 @@ resource "local_file" "kubeconfig" {
 | **2** | **Cilium CNI v1.18.3** | **✅ DONE** |
 | **3** | **Scale to 3 control planes HA** | **✅ DONE** |
 | **4** | **ArgoCD bootstrap + full automation** | **✅ DONE** |
-| **5 (partial)** | **Cilium L2 Announcements (MetalLB replacement)** | **✅ DONE** |
+| **5** | **Traefik Ingress + Cilium L2 Announcements** | **✅ DONE** |
+| **6** | **cert-manager + Let's Encrypt DNS-01 (Gandi)** | **✅ DONE** |
 
 ### Next Sprints
 
 | Sprint | Component | Status |
 |--------|-----------|--------|
-| 5 | Traefik Ingress | 📅 Next |
-| 6 | cert-manager (TLS) | 📅 Future |
-| 7 | Synology CSI | 📅 Future |
-| 8-11 | Phase 2 services | 📅 Future |
+| 7 | Synology CSI (iSCSI storage) | 📅 Next |
+| 8 | Authelia (SSO/Auth) | 📅 Future |
+| 9 | Test cluster replication | 📅 Future |
+| 10-11 | Phase 2 services | 📅 Future |
 
 ## Important Notes
 
@@ -474,14 +478,21 @@ resource "local_file" "kubeconfig" {
 - ✅ Automate root-app bootstrap via kubectl provider
 - ✅ Validate full GitOps workflow (zero manual kubectl)
 
-**Sprint 5** (🔨 IN PROGRESS):
+**Sprint 5** (✅ COMPLETED):
 - ✅ Replace MetalLB with Cilium L2 Announcements
 - ✅ Deploy CiliumLoadBalancerIPPool (192.168.208.70-89)
 - ✅ Validate LoadBalancer IP assignment
-- 📅 Next: Deploy Traefik Ingress
+- ✅ Deploy Traefik Ingress v2.10.5
 
-**After Sprint 5**:
-- Sprint 6: cert-manager (TLS certificates)
+**Sprint 6** (✅ COMPLETED):
+- ✅ Deploy cert-manager v1.14.4 via ArgoCD
+- ✅ Deploy cert-manager-webhook-gandi v0.5.2
+- ✅ Create ClusterIssuers (letsencrypt-staging, letsencrypt-prod)
+- ✅ Configure DNS-01 challenge with Gandi LiveDNS
+- ✅ Enable TLS on whoami, traefik-dashboard, argocd
+- ✅ Validate production Let's Encrypt certificates
+
+**After Sprint 6**:
 - Sprint 7: Synology CSI (iSCSI storage)
 - Sprints 8-11: Additional Phase 2 services
 

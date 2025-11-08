@@ -1,8 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: traefik-dashboard
+  name: cert-manager-config
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -10,10 +12,10 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
-    path: apps/traefik-dashboard/overlays/test
+    path: apps/cert-manager/overlays/test
   destination:
     server: https://kubernetes.default.svc
-    namespace: traefik
+    namespace: cert-manager
   syncPolicy:
     automated:
       prune: true
