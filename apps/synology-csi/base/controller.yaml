@@ -65,6 +65,10 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
+            # ✅ AJOUTER CE MOUNT
+            - name: synology-config
+              mountPath: /etc/synology
+              readOnly: true
       volumes:
         - name: socket-dir
           emptyDir: {}
