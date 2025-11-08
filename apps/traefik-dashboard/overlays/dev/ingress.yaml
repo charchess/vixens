@@ -1,13 +1,42 @@
+# Ingress pour HTTP -> HTTPS redirect
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: traefik-dashboard-redirect
+  name: traefik-dashboard-http-redirect
   namespace: traefik
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: traefik-traefik-dashboard-redirect@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik
+  rules:
+    - host: traefik.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: traefik-internal
+                port:
+                  name: traefik
+---
+# Ingress HTTPS pour / -> /dashboard/ redirect
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traefik-dashboard-root
+  namespace: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-traefik-dashboard-redirect@kubernetescrd
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - traefik.dev.truxonline.com
+      secretName: traefik-dashboard-tls
   rules:
     - host: traefik.dev.truxonline.com
       http:
@@ -18,4 +47,38 @@ spec:
               service:
                 name: traefik-internal
                 port:
-                  name: web
+                  name: traefik
+---
+# Ingress HTTPS pour /dashboard
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traefik-dashboard
+  namespace: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - traefik.dev.truxonline.com
+      secretName: traefik-dashboard-tls
+  rules:
+    - host: traefik.dev.truxonline.com
+      http:
+        paths:
+          - path: /dashboard
+            pathType: Prefix
+            backend:
+              service:
+                name: traefik-internal
+                port:
+                  name: traefik
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: traefik-internal
+                port:
+                  name: traefik

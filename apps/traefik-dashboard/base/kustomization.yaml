@@ -3,4 +3,5 @@ kind: Kustomization
 
 resources:
   - middleware.yaml
+  - redirect-https-middleware.yaml
   - service.yaml

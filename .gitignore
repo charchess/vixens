@@ -22,6 +22,9 @@ Thumbs.db
 **/talosconfig*
 .claude/
 
+# cert-manager sensitive files
+**/gandi-credentials-secret.yaml
+
 # Obsolete directories (old project artifacts)
 node_modules/
 src/

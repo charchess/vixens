@@ -9,7 +9,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: whoami.dev.truxonline.com
+    - host: whoami.test.truxonline.com
       http:
         paths:
           - path: /
@@ -32,10 +32,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - whoami.dev.truxonline.com
+        - whoami.test.truxonline.com
       secretName: whoami-tls
   rules:
-    - host: whoami.dev.truxonline.com
+    - host: whoami.test.truxonline.com
       http:
         paths:
           - path: /
