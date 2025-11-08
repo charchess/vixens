@@ -12,7 +12,7 @@ spec:
 
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: test
     path: apps/metallb/overlays/dev
 
   destination:
