@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: test
+    targetRevision: dev
     path: apps/argocd/overlays/test
   destination:
     server: https://kubernetes.default.svc
