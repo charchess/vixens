@@ -33,9 +33,12 @@ spec:
           volumeMounts:
             - name: plugin-dir
               mountPath: /csi
-            - name: registration-dir
-              mountPath: /registration
-        
+            - name: kubelet-dir
+              mountPath: /var/lib/kubelet
+              mountPropagation: Bidirectional
+            - name: synology-config
+              mountPath: /etc/synology
+              readOnly: true        
         - name: synology-csi-plugin
           image: synology/synology-csi:v1.1.1
           # ✅ AJOUTER CE BLOC
