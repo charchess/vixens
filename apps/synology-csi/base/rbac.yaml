@@ -1,17 +1,18 @@
-# ServiceAccount
+# ServiceAccount pour le controller
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: synology-csi-controller
   namespace: synology-csi
 ---
+# ServiceAccount pour les nodes
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: synology-csi-node
   namespace: synology-csi
-
-# Roles (à compléter avec les permissions exactes Synology)
+---
+# Role pour le controller
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -30,6 +31,7 @@ rules:
     resources: ["events"]
     verbs: ["list", "watch", "create", "update", "patch"]
 ---
+# Binding du role
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
