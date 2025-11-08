@@ -6,10 +6,14 @@ namespace: synology-csi
 resources:
   - ../../base
 
-patchesStrategicMerge:
-  - secret-values.yaml
-
 patches:
+  # Patch du secret
+  - target:
+      kind: Secret
+      name: synology-csi-secret
+    path: secret-values.yaml
+
+  # Patch du storage class pour dev
   - target:
       kind: StorageClass
       name: synology-iscsi-retain
@@ -20,3 +24,8 @@ patches:
       - op: add
         path: /parameters/targetIps
         value: "192.168.111.70,192.168.111.71"
+
+labels:
+  - pairs:
+      vixens.lab/environment: dev
+    includeTemplates: true
