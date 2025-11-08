@@ -11,8 +11,8 @@ resource "helm_release" "cilium" {
 
   values = [yamlencode({
     kubeProxyReplacement = true
-    k8sServiceHost = "localhost"
-    k8sServicePort = 7445
+    k8sServiceHost       = "localhost"
+    k8sServicePort       = 7445
     l2announcements = {
       enabled = true
     }
@@ -26,7 +26,7 @@ resource "helm_release" "cilium" {
     ipam = {
       mode = "kubernetes"
     }
-    routingMode = "tunnel"
+    routingMode    = "tunnel"
     tunnelProtocol = "vxlan"
     securityContext = {
       capabilities = {

@@ -81,4 +81,4 @@ argocd_anonymous_enabled = true
 # processors         = 2
 # disk_size_gb       = 40
 # iso_path           = "C:\\ISO\\talos-amd64.iso"
-cluster_vip        = "192.168.111.160"
+cluster_vip = "192.168.111.160"
