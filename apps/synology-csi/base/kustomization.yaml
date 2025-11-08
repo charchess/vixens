@@ -5,14 +5,16 @@ namespace: synology-csi
 
 resources:
   - namespace.yaml
-  - secret.yaml
   - rbac.yaml
   - driver.yaml
   - controller.yaml
   - node.yaml
   - storage-class.yaml
+  - secret.yaml
 
-commonLabels:
-  app.kubernetes.io/name: synology-csi
-  app.kubernetes.io/version: "v1.1.1"
-  vixens.lab/managed-by: argocd
+labels:
+  - pairs:
+      app.kubernetes.io/name: synology-csi
+      app.kubernetes.io/version: "v1.1.1"
+      vixens.lab/managed-by: argocd
+    includeSelectors: true
