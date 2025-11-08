@@ -2,31 +2,29 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: argocd-server-http-redirect
-  namespace: argocd
+  name: whoami-http-redirect
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
-    - host: argocd.test.truxonline.com
+    - host: whoami.test.truxonline.com
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: argocd-server
+                name: whoami
                 port:
-                  number: 80
+                  name: http
 ---
 # HTTPS with TLS
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: argocd-server-ingress
-  namespace: argocd
+  name: whoami
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -34,16 +32,16 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - argocd.test.truxonline.com
-      secretName: argocd-server-tls
+        - whoami.test.truxonline.com
+      secretName: whoami-tls
   rules:
-    - host: argocd.test.truxonline.com
+    - host: whoami.test.truxonline.com
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: argocd-server
+                name: whoami
                 port:
-                  number: 80
+                  name: http
