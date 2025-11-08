@@ -9,7 +9,7 @@ spec:
     app.kubernetes.io/name: traefik
     app.kubernetes.io/instance: traefik-traefik
   ports:
-    - name: web
-      port: 80
-      targetPort: web
+    - name: traefik
+      port: 9000
+      targetPort: traefik
       protocol: TCP
