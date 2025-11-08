@@ -14,11 +14,21 @@ spec:
       labels:
         app: synology-csi-controller
     spec:
+      serviceAccountName: synology-csi-controller
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-      serviceAccountName: synology-csi-controller
+      # ✅ VOLUMES DEFINITION - CRITICAL
+      volumes:
+        - name: socket-dir
+          emptyDir: {}
+        - name: synology-config
+          secret:
+            secretName: synology-csi-secret
+            items:
+              - key: client-info.yml
+                path: client-info.yml
       containers:
         - name: csi-provisioner
           image: k8s.gcr.io/sig-storage/csi-provisioner:v3.5.0
@@ -31,15 +41,13 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
-        
         - name: synology-csi-plugin
           image: synology/synology-csi:v1.1.1
+          securityContext:
+            privileged: true
           args:
             - --nodeid=$(NODE_ID)
             - --endpoint=$(CSI_ENDPOINT)
-            - --synology_username=$(USERNAME)
-            - --synology_password=$(PASSWORD)
-            - --synology_ip=$(ENDPOINT)
           env:
             - name: NODE_ID
               valueFrom:
@@ -47,28 +55,10 @@ spec:
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
               value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
-            - name: USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: synology-csi-secret
-                  key: username
-            - name: PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: synology-csi-secret
-                  key: password
-            - name: ENDPOINT
-              valueFrom:
-                secretKeyRef:
-                  name: synology-csi-secret
-                  key: endpoint
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
-            # ✅ AJOUTER CE MOUNT
+            # ✅ CONFIG VOLUME MOUNT - CRITICAL
             - name: synology-config
               mountPath: /etc/synology
               readOnly: true
-      volumes:
-        - name: socket-dir
-          emptyDir: {}
