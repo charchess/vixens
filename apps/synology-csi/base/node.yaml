@@ -34,6 +34,10 @@ spec:
         
         - name: synology-csi-plugin
           image: synology/synology-csi:v1.1.1
+          # ✅ AJOUTER CE BLOC
+          securityContext:
+            privileged: true                  # ✅ REQUIS pour mountPropagation
+            allowPrivilegeEscalation: true    # ✅ Recommandé
           args:
             - --nodeid=$(NODE_ID)
             - --endpoint=$(CSI_ENDPOINT)
