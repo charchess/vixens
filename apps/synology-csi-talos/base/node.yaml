@@ -33,7 +33,7 @@ spec:
         - name: registration-dir
           mountPath: /registration
       - name: synology-csi-plugin
-        image: ghcr.io/alex1989hu/synology-csi-talos:v1.1.1
+        image: ghcr.io/zebernst/synology-csi:edge
         args:
         - --nodeid=$(KUBE_NODE_NAME)
         - --endpoint=$(CSI_ENDPOINT)
