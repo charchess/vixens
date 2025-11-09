@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: synology-csi-controller
-  namespace: synology-csi
 spec:
   serviceName: synology-csi-controller
   replicas: 1
@@ -15,50 +14,41 @@ spec:
         app: synology-csi-controller
     spec:
       serviceAccountName: synology-csi-controller
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
-      # ✅ VOLUMES DEFINITION - CRITICAL
-      volumes:
-        - name: socket-dir
-          emptyDir: {}
-        - name: synology-config
-          secret:
-            secretName: synology-csi-secret
-            items:
-              - key: client-info.yml
-                path: client-info.yml
       containers:
-        - name: csi-provisioner
-          image: k8s.gcr.io/sig-storage/csi-provisioner:v3.5.0
-          args:
-            - --csi-address=$(ADDRESS)
-            - --v=5
-          env:
-            - name: ADDRESS
-              value: /var/lib/csi/sockets/pluginproxy/csi.sock
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/lib/csi/sockets/pluginproxy/
-        - name: synology-csi-plugin
-          image: synology/synology-csi:v1.1.1
-          securityContext:
-            privileged: true
-          args:
-            - --nodeid=$(NODE_ID)
-            - --endpoint=$(CSI_ENDPOINT)
-          env:
-            - name: NODE_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: CSI_ENDPOINT
-              value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/lib/csi/sockets/pluginproxy/
-            # ✅ CONFIG VOLUME MOUNT - CRITICAL
-            - name: synology-config
-              mountPath: /etc/synology
-              readOnly: true
+      - name: csi-provisioner
+        image: registry.k8s.io/sig-storage/csi-provisioner:v3.5.0
+        args:
+        - --csi-address=$(ADDRESS)
+        - --v=5
+        - --feature-gates=Topology=true
+        env:
+        - name: ADDRESS
+          value: /var/lib/csi/sockets/pluginproxy/csi.sock
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /var/lib/csi/sockets/pluginproxy/
+      - name: synology-csi-plugin
+        image: ghcr.io/alex1989hu/synology-csi-talos:v1.1.1
+        args:
+        - --nodeid=$(KUBE_NODE_NAME)
+        - --endpoint=$(CSI_ENDPOINT)
+        - --client-info=/etc/synology/client-info.yml
+        env:
+        - name: CSI_ENDPOINT
+          value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
+        - name: KUBE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /var/lib/csi/sockets/pluginproxy/
+        - name: client-info
+          mountPath: /etc/synology
+          readOnly: true
+      volumes:
+      - name: socket-dir
+        emptyDir: {}
+      - name: client-info
+        secret:
+          secretName: synology-csi-secret

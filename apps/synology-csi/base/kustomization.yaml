@@ -10,7 +10,7 @@ resources:
   - controller.yaml
   - node.yaml
   - storage-class.yaml
-  - secret.yaml
+# - secret.yaml
 
 labels:
   - pairs:

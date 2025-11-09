@@ -1,20 +1,15 @@
+# argocd/overlays/dev/synology-csi-app.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: synology-csi
   namespace: argocd
-  labels:
-    vixens.lab/environment: dev
-    vixens.lab/app-type: storage
-    vixens.lab/managed-by: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    repoURL: https://github.com/charchess/vixens.git
+    repoURL: https://github.com/charchess/vixens
+    path: apps/synology-csi-talos/overlays/dev
     targetRevision: dev
-    path: apps/synology-csi/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: synology-csi
@@ -22,5 +17,3 @@ spec:
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
