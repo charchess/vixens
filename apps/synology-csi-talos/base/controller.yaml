@@ -82,6 +82,10 @@ spec:
       labels:
         app: synology-csi-controller
     spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
       serviceAccountName: csi-controller-sa
       hostNetwork: true
       containers:
