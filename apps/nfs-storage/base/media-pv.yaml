@@ -1,0 +1,41 @@
+# base/nfs-storage/media-pv.yaml
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-downloads
+spec:
+  capacity:
+    storage: 1Ti # Mettez une taille indicative, ex: 1To
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany # Important: permet à plusieurs pods d'écrire en même temps
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: "" # On le laisse vide pour un "binding" manuel
+  nfs:
+    path: /volume3/Downloads
+    server: 192.168.111.69
+    readOnly: false
+  mountOptions:
+    - nfsvers=4.1
+    - resvport
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-content
+spec:
+  capacity:
+    storage: 1Ti # Mettez une taille indicative
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  nfs:
+    path: /volume3/Content
+    server: 192.168.111.69
+    readOnly: false
+  mountOptions:
+    - nfsvers=4.1
+    - resvport
