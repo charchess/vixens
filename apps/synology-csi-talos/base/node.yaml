@@ -56,8 +56,8 @@ spec:
         - name: client-info
           mountPath: /etc/synology
           readOnly: true
-        - name: iscsiadm
-          mountPath: /usr/local/sbin/iscsiadm
+#        - name: iscsiadm
+#          mountPath: /usr/local/sbin/iscsiadm
       volumes:
       - name: plugin-dir
         hostPath:
@@ -74,7 +74,7 @@ spec:
       - name: client-info
         secret:
           secretName: synology-csi-secret
-      - name: iscsiadm
-        hostPath:
-          path: /usr/local/sbin/iscsiadm
-          type: File
+#      - name: iscsiadm
+#        hostPath:
+#          path: /usr/local/sbin/iscsiadm
+#          type: File
