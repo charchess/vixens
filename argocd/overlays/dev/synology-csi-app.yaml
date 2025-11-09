@@ -1,9 +1,10 @@
-# argocd/overlays/dev/synology-csi-app.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: synology-csi
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.io
 spec:
   project: default
   source:
@@ -17,3 +18,9 @@ spec:
     automated:
       prune: true
       selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - Replace=true
+      - FailOnSharedResource=true
+      - PrunePropagationPolicy=foreground
