@@ -1,14 +1,23 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: synology-iscsi
+  name: synelia-iscsi-ephemeral  # ← NOM CLAIR : synelia + iscsi + éphémère
   annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
+    storageclass.kubernetes.io/is-default-class: "true"  # Par défaut
 provisioner: csi.san.synology.com
 parameters:
-  # dsm: '1.1.1.1'
-  # location: '/volume1'
   protocol: iscsi
   csi.storage.k8s.io/fstype: ext4
-reclaimPolicy: Delete
+reclaimPolicy: Delete  # ✓ Éphémère
+allowVolumeExpansion: true
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: synelia-iscsi-retain  # ← NOM CLAIR : synelia + iscsi + rétention
+provisioner: csi.san.synology.com
+parameters:
+  protocol: iscsi
+  csi.storage.k8s.io/fstype: ext4
+reclaimPolicy: Retain  # ✓ Persistance
 allowVolumeExpansion: true
