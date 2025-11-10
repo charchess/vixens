@@ -15,36 +15,36 @@ kind: ClusterRole
 metadata:
   name: synology-csi-external-provisioner
 rules:
-- apiGroups: [""]
-  resources: ["nodes"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: [""]
-  resources: ["persistentvolumes"]
-  verbs: ["get", "list", "watch", "create", "delete", "patch"]
-- apiGroups: [""]
-  resources: ["persistentvolumeclaims"]
-  verbs: ["get", "list", "watch", "update", "patch"]
-- apiGroups: ["storage.k8s.io"]
-  resources: ["storageclasses"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: ["storage.k8s.io"]
-  resources: ["csinodes"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: [""]
-  resources: ["events"]
-  verbs: ["get", "list", "watch", "create", "update", "patch"]
-- apiGroups: ["snapshot.storage.k8s.io"]
-  resources: ["volumesnapshots"]
-  verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshots"]
+    verbs: ["get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: synology-csi-external-provisioner
 subjects:
-- kind: ServiceAccount
-  name: synology-csi-controller
-  namespace: synology-csi
+  - kind: ServiceAccount
+    name: synology-csi-controller
+    namespace: synology-csi
 roleRef:
   kind: ClusterRole
   name: synology-csi-external-provisioner
@@ -55,18 +55,18 @@ kind: ClusterRole
 metadata:
   name: synology-csi-driver-registrar
 rules:
-- apiGroups: [""]
-  resources: ["events"]
-  verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: synology-csi-driver-registrar
 subjects:
-- kind: ServiceAccount
-  name: synology-csi-node
-  namespace: synology-csi
+  - kind: ServiceAccount
+    name: synology-csi-node
+    namespace: synology-csi
 roleRef:
   kind: ClusterRole
   name: synology-csi-driver-registrar
@@ -78,9 +78,9 @@ metadata:
   namespace: synology-csi
   name: synology-csi-node
 rules:
-- apiGroups: [""]
-  resources: ["endpoints"]
-  verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -88,9 +88,9 @@ metadata:
   name: synology-csi-node
   namespace: synology-csi
 subjects:
-- kind: ServiceAccount
-  name: synology-csi-node
-  namespace: synology-csi
+  - kind: ServiceAccount
+    name: synology-csi-node
+    namespace: synology-csi
 roleRef:
   kind: Role
   name: synology-csi-node

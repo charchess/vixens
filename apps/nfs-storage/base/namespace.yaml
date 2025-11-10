@@ -1,9 +1,5 @@
-# apps/synology-csi/base/namespace.yaml
+# apps/nfs-storage/base/namespace.yaml
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: media-stack
-  labels:
-    pod-security.kubernetes.io/enforce: privileged
-    pod-security.kubernetes.io/audit: privileged
-    pod-security.kubernetes.io/warn: privileged
+  name: nfs-storage

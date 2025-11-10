@@ -5,13 +5,13 @@ namespace: synology-csi
 
 resources:
   - namespace.yaml
-#  - rbac.yaml
+  # - rbac.yaml
   - controller.yaml
   - node.yaml
   - csi-driver.yaml
   - storage-class.yaml
-#  - snapshotter/snapshotter.yaml
-#  - snapshotter/volume-snapshot-class.yaml
+  # - snapshotter/snapshotter.yaml
+  # - snapshotter/volume-snapshot-class.yaml
 
 # commonLabels:
 #   app.kubernetes.io/name: synology-csi
