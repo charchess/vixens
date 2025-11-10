@@ -1,7 +1,4 @@
-provider "talos" {
-  # Configuration du fournisseur Talos
-  # Assurez-vous que talosconfig est configuré correctement
-}
+
 
 provider "helm" {
   kubernetes {

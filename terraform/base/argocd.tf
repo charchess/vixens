@@ -166,7 +166,7 @@ resource "helm_release" "argocd" {
 # This enables full GitOps automation - after this, all deployments are via Git
 # Template is rendered with environment-specific values
 resource "kubectl_manifest" "argocd_root_app" {
-  yaml_body = templatefile("${path.module}/../../../argocd/base/root-app.yaml.tpl", {
+  yaml_body = templatefile("../../../argocd/base/root-app.yaml.tpl", {
     environment     = var.environment
     target_revision = var.git_branch
     overlay_path    = "argocd/overlays/${var.environment}"

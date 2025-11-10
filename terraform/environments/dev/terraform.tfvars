@@ -11,46 +11,67 @@ cluster_name     = "vixens-dev"
 cluster_endpoint = "https://192.168.111.160:6443"
 control_plane_nodes = {
   "obsy" = {
-    hostname     = "obsy"
-    ip_address   = "192.168.111.162"
+    name         = "obsy"
+    ip_address   = "192.168.0.162"
+    mac_address  = "00:15:5D:00:CB:10"
     install_disk = "/dev/sda"
-    nameservers  = ["1.1.1.1", "8.8.8.8"]
-    network_interfaces = [
-      {
-        iface     = "eth1"
-        vlan      = 208
-        addresses = ["192.168.208.162/24"]
-        routes    = [{ network = "0.0.0.0/0", gateway = "192.168.208.1" }]
-      }
-    ]
-  },
-  "opale" = {
-    hostname     = "opale"
-    ip_address   = "192.168.111.163"
-    install_disk = "/dev/sda"
-    nameservers  = ["1.1.1.1", "8.8.8.8"]
-    network_interfaces = [
-      {
-        iface     = "eth1"
-        vlan      = 208
-        addresses = ["192.168.208.163/24"]
-        routes    = [{ network = "0.0.0.0/0", gateway = "192.168.208.1" }]
-      }
-    ]
+    network = {
+      interface = "enx00155d00cb10"
+      vlans = [
+        {
+          vlanId    = 111
+          addresses = ["192.168.111.162/24"]
+          gateway   = ""
+        },
+        {
+          vlanId    = 208
+          addresses = ["192.168.208.162/24"]
+          gateway   = "192.168.208.1"
+        }
+      ]
+    }
   },
   "onyx" = {
-    hostname     = "onyx"
-    ip_address   = "192.168.111.164"
+    name         = "onyx"
+    ip_address   = "192.168.0.164"
+    mac_address  = "00:15:5D:00:CB:11"
     install_disk = "/dev/sda"
-    nameservers  = ["1.1.1.1", "8.8.8.8"]
-    network_interfaces = [
-      {
-        iface     = "eth1"
-        vlan      = 208
-        addresses = ["192.168.208.164/24"]
-        routes    = [{ network = "0.0.0.0/0", gateway = "192.168.208.1" }]
-      }
-    ]
+    network = {
+      interface = "enx00155d00cb11"
+      vlans = [
+        {
+          vlanId    = 111
+          addresses = ["192.168.111.164/24"]
+          gateway   = ""
+        },
+        {
+          vlanId    = 208
+          addresses = ["192.168.208.164/24"]
+          gateway   = "192.168.208.1"
+        }
+      ]
+    }
+  },
+  "opale" = {
+    name         = "opale"
+    ip_address   = "192.168.0.163"
+    mac_address  = "00:15:5D:00:CB:0B"
+    install_disk = "/dev/sda"
+    network = {
+      interface = "enx00155d00cb0b"
+      vlans = [
+        {
+          vlanId    = 111
+          addresses = ["192.168.111.163/24"]
+          gateway   = ""
+        },
+        {
+          vlanId    = 208
+          addresses = ["192.168.208.163/24"]
+          gateway   = "192.168.208.1"
+        }
+      ]
+    }
   }
 }
 worker_nodes = {}
@@ -67,18 +88,12 @@ l2_policy_node_selector_labels = {
 argocd_insecure          = true
 argocd_anonymous_enabled = true
 
-# Common Variables (assuming they are the same as test)
-# talos_version      = "1.7"
-# kubernetes_version = "1.30"
-# force_destroy_time = "15m"
-# talos_config_path  = "/root/.talos/config"
-# kubeconfig_path    = "/root/vixens/terraform/environments/dev/kubeconfig-dev"
-# hyperv_host        = "HV-TRUX-2"
-# vm_path            = "D:\\VM"
-# vswitch_name       = "TRUNK-EXT"
-# vlan_interco       = 111
-# ram_mb             = 4096
-# processors         = 2
-# disk_size_gb       = 40
-# iso_path           = "C:\\ISO\\talos-amd64.iso"
 cluster_vip = "192.168.111.160"
+
+talos_version                = "v1.11.5"
+talos_image                  = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
+kubeconfig_path              = "./kubeconfig-dev"
+talosconfig_path             = "./talosconfig-dev"
+cilium_ip_pool_yaml_path     = "../../../apps/cilium-lb/overlays/dev/ippool.yaml"
+cilium_l2_policy_yaml_path   = "../../../apps/cilium-lb/base/l2policy.yaml"
+kubernetes_version           = "1.30.0"

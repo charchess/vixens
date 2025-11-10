@@ -1,111 +1,30 @@
-module "talos_cluster" {
-  source = "../../modules/talos"
+module "dev_environment" {
+  source = "../../base"
 
-  cluster_name     = "vixens-dev"
-  talos_version    = "v1.11.5"
-  cluster_endpoint = "https://192.168.111.160:6443" # VIP sur VLAN 111
-
-  # Custom image with iSCSI extension for Synology CSI
-  talos_image = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
-
-  # HA: 3 control planes (etcd quorum)
-  control_plane_nodes = {
-    "obsy" = {
-      name         = "obsy"
-      ip_address   = "192.168.0.162" # Maintenance IP for initial access
-      mac_address  = "00:15:5D:00:CB:10"
-      install_disk = "/dev/sda"
-      network = {
-        interface = "enx00155d00cb10"
-        vlans = [
-          {
-            vlanId    = 111
-            addresses = ["192.168.111.162/24"]
-            gateway   = ""
-          },
-          {
-            vlanId    = 208
-            addresses = ["192.168.208.162/24"]
-            gateway   = "192.168.208.1"
-          }
-        ]
-      }
-    }
-    "onyx" = {
-      name         = "onyx"
-      ip_address   = "192.168.0.164" # Maintenance IP for initial access
-      mac_address  = "00:15:5D:00:CB:11"
-      install_disk = "/dev/sda"
-      network = {
-        interface = "enx00155d00cb11"
-        vlans = [
-          {
-            vlanId    = 111
-            addresses = ["192.168.111.164/24"]
-            gateway   = ""
-          },
-          {
-            vlanId    = 208
-            addresses = ["192.168.208.164/24"]
-            gateway   = "192.168.208.1"
-          }
-        ]
-      }
-    }
-    "opale" = {
-      name         = "opale"
-      ip_address   = "192.168.0.163" # VLAN 111 IP for initial access
-      mac_address  = "00:15:5D:00:CB:0B"
-      install_disk = "/dev/sda"
-      network = {
-        interface = "enx00155d00cb0b"
-        vlans = [
-          {
-            vlanId    = 111
-            addresses = ["192.168.111.163/24"]
-            gateway   = ""
-          },
-          {
-            vlanId    = 208
-            addresses = ["192.168.208.163/24"]
-            gateway   = "192.168.208.1"
-          }
-        ]
-      }
-    }
-  }
-
-  worker_nodes = {}
-}
-
-# Output kubeconfig to file for easy access
-resource "local_file" "kubeconfig" {
-  content         = module.talos_cluster.kubeconfig
-  filename        = "${path.module}/kubeconfig-dev"
-  file_permission = "0600"
-}
-
-# Output talosconfig to file
-resource "local_file" "talosconfig" {
-  content         = module.talos_cluster.talosconfig
-  filename        = "${path.module}/talosconfig-dev"
-  file_permission = "0600"
-}
-
-# Cilium CNI with L2 Announcements and LoadBalancer IPAM
-module "cilium" {
-  source = "../../modules/cilium"
-
-  release_name  = "cilium"
-  chart_version = "1.18.3"
-  namespace     = "kube-system"
-
-  # Dependencies
-  talos_cluster_module = module.talos_cluster
-  wait_for_k8s_api     = null_resource.wait_for_k8s_api
-
-  # Paths for resources
-  kubeconfig_path     = "${path.module}/kubeconfig-dev"
-  ip_pool_yaml_path   = "${path.module}/../../../apps/cilium-lb/overlays/dev/ippool.yaml"
-  l2_policy_yaml_path = "${path.module}/../../../apps/cilium-lb/base/l2policy.yaml"
+  git_branch                      = var.git_branch
+  environment                     = var.environment
+  vlan_services_subnet            = var.vlan_services_subnet
+  argocd_service_type             = var.argocd_service_type
+  argocd_loadbalancer_ip          = var.argocd_loadbalancer_ip
+  argocd_disable_auth             = var.argocd_disable_auth
+  argocd_hostname                 = var.argocd_hostname
+  cluster_name                    = var.cluster_name
+  cluster_endpoint                = var.cluster_endpoint
+  control_plane_nodes             = var.control_plane_nodes
+  worker_nodes                    = var.worker_nodes
+  l2_pool_name                    = var.l2_pool_name
+  l2_pool_ips                     = var.l2_pool_ips
+  l2_policy_name                  = var.l2_policy_name
+  l2_policy_interfaces            = var.l2_policy_interfaces
+  l2_policy_node_selector_labels  = var.l2_policy_node_selector_labels
+  cluster_vip                     = var.cluster_vip
+  argocd_insecure                 = var.argocd_insecure
+  argocd_anonymous_enabled        = var.argocd_anonymous_enabled
+  talos_version                   = var.talos_version
+  talos_image                     = var.talos_image
+  kubeconfig_path                 = var.kubeconfig_path
+  talosconfig_path                = var.talosconfig_path
+  cilium_ip_pool_yaml_path        = var.cilium_ip_pool_yaml_path
+  cilium_l2_policy_yaml_path      = var.cilium_l2_policy_yaml_path
+  kubernetes_version              = var.kubernetes_version
 }
