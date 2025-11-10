@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: synology-csi-node
+spec:
+  selector:
+    matchLabels:
+      app: synology-csi-node
+  template:
+    metadata:
+      labels:
+        app: synology-csi-node
+    spec:
+      serviceAccountName: synology-csi-node
+      containers:
+        - name: csi-node-driver-registrar
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.8.0
+          args:
+            - --csi-address=/csi/csi.sock
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/csi.san.synology.com/csi.sock
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /csi/
+            - name: registration-dir
+              mountPath: /registration
+        - name: synology-csi-plugin
+          image: ghcr.io/zebernst/synology-csi:edge
+          args:
+            - --nodeid=$(KUBE_NODE_NAME)
+            - --endpoint=$(CSI_ENDPOINT)
+            - --client-info=/etc/synology/client-info.yml
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /csi/
+            - name: pods-mount-dir
+              mountPath: /var/lib/kubelet/pods
+              mountPropagation: Bidirectional
+            - name: client-info
+              mountPath: /etc/synology
+              readOnly: true
+      volumes:
+        - name: plugin-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/csi.san.synology.com
+            type: DirectoryOrCreate
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry
+            type: Directory
+        - name: pods-mount-dir
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory
+        - name: client-info
+          secret:
+            secretName: synology-csi-secret
+        - name: iscsiadm
+          hostPath:
+            path: /usr/local/sbin/iscsiadm
+            type: File
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"

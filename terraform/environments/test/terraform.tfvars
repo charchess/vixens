@@ -1,54 +1,54 @@
-git_branch = "test"
-environment = "test"
-vlan_services_subnet = "192.168.209.0/24"
-argocd_service_type = "LoadBalancer"
+git_branch             = "test"
+environment            = "test"
+vlan_services_subnet   = "192.168.209.0/24"
+argocd_service_type    = "LoadBalancer"
 argocd_loadbalancer_ip = "192.168.209.71"
-argocd_disable_auth = true
-argocd_hostname = "argocd.test.truxonline.com"
+argocd_disable_auth    = true
+argocd_hostname        = "argocd.test.truxonline.com"
 
 # Talos Cluster Configuration
-cluster_name = "vixens-test"
+cluster_name     = "vixens-test"
 cluster_endpoint = "https://192.168.111.170:6443"
 control_plane_nodes = {
   "citrine" = {
-    hostname = "citrine"
-    ip_address = "192.168.111.172"
+    hostname     = "citrine"
+    ip_address   = "192.168.111.172"
     install_disk = "/dev/sda"
-    nameservers = ["1.1.1.1", "8.8.8.8"]
+    nameservers  = ["1.1.1.1", "8.8.8.8"]
     network_interfaces = [
       {
-        iface = "eth1"
-        vlan = 209
+        iface     = "eth1"
+        vlan      = 209
         addresses = ["192.168.209.172/24"]
-        routes = [{ network = "0.0.0.0/0", gateway = "192.168.209.1" }]
+        routes    = [{ network = "0.0.0.0/0", gateway = "192.168.209.1" }]
       }
     ]
   },
   "carny" = {
-    hostname = "carny"
-    ip_address = "192.168.111.173"
+    hostname     = "carny"
+    ip_address   = "192.168.111.173"
     install_disk = "/dev/sda"
-    nameservers = ["1.1.1.1", "8.8.8.8"]
+    nameservers  = ["1.1.1.1", "8.8.8.8"]
     network_interfaces = [
       {
-        iface = "eth1"
-        vlan = 209
+        iface     = "eth1"
+        vlan      = 209
         addresses = ["192.168.209.173/24"]
-        routes = [{ network = "0.0.0.0/0", gateway = "192.168.209.1" }]
+        routes    = [{ network = "0.0.0.0/0", gateway = "192.168.209.1" }]
       }
     ]
   },
   "celesty" = {
-    hostname = "celesty"
-    ip_address = "192.168.111.174"
+    hostname     = "celesty"
+    ip_address   = "192.168.111.174"
     install_disk = "/dev/sda"
-    nameservers = ["1.1.1.1", "8.8.8.8"]
+    nameservers  = ["1.1.1.1", "8.8.8.8"]
     network_interfaces = [
       {
-        iface = "eth1"
-        vlan = 209
+        iface     = "eth1"
+        vlan      = 209
         addresses = ["192.168.209.174/24"]
-        routes = [{ network = "0.0.0.0/0", gateway = "192.168.209.1" }]
+        routes    = [{ network = "0.0.0.0/0", gateway = "192.168.209.1" }]
       }
     ]
   }
@@ -56,9 +56,9 @@ control_plane_nodes = {
 worker_nodes = {}
 
 # Cilium L2 Announcement
-l2_pool_name = "test-pool"
-l2_pool_ips = ["192.168.209.70-192.168.209.89"]
-l2_policy_name = "test-l2-policy"
+l2_pool_name         = "test-pool"
+l2_pool_ips          = ["192.168.209.70-192.168.209.89"]
+l2_policy_name       = "test-l2-policy"
 l2_policy_interfaces = ["eth1"]
 l2_policy_node_selector_labels = {
   "kubernetes.io/hostname" = "citrine"
@@ -78,7 +78,7 @@ l2_policy_node_selector_labels = {
 #iso_path = "C:\\ISO\\talos-amd64.iso"
 cluster_vip = "192.168.111.170"
 #cluster_vip_ip = "192.168.111.170"
-argocd_insecure = true
+argocd_insecure          = true
 argocd_anonymous_enabled = true
 # cluster_vip_iface = "eth0"
 # cluster_vip_node_selector = "node-role.kubernetes.io/control-plane"

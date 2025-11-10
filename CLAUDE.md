@@ -244,7 +244,63 @@ talosctl --nodes 192.168.111.162 --endpoints 192.168.111.162 get machineconfig -
 
 # Reboot node
 talosctl --nodes 192.168.111.162 --endpoints 192.168.111.162 reboot
+
+# Check installed extensions
+talosctl --nodes 192.168.111.162 --endpoints 192.168.111.162 get extensions
+
+# Check extension services (e.g., iscsi-tools)
+talosctl --nodes 192.168.111.162 --endpoints 192.168.111.162 service ext-iscsid
 ```
+
+### Talos Image Factory & Automatic Upgrades
+
+The Talos module supports **automatic upgrades** when `talos_version` or `talos_image` changes.
+
+**Factory Images (for extensions like iSCSI):**
+
+1. Generate a factory image at https://factory.talos.dev/ with required extensions
+2. Set `talos_image` variable in `environments/dev/main.tf`:
+
+```hcl
+module "talos_cluster" {
+  source = "../../modules/talos"
+
+  talos_version = "v1.11.5"
+  talos_image   = "factory.talos.dev/installer/<schematic_id>:v1.11.5"
+
+  # ... rest of config
+}
+```
+
+3. Run `terraform apply` - nodes will automatically upgrade
+
+**How automatic upgrade works:**
+
+- Terraform detects changes to `talos_version` or `talos_image`
+- Creates/updates `null_resource.control_plane_upgrade` resources
+- Triggers `talosctl upgrade` provisioner for each node
+- Nodes upgrade sequentially with `--preserve=true` (preserves data)
+- Upgrade completes in ~2-3 minutes per node
+
+**Verify upgrade and extensions:**
+
+```bash
+# Check Talos version (all nodes)
+talosctl --nodes 192.168.111.162,192.168.111.164,192.168.111.163 \
+         --endpoints 192.168.111.162 version
+
+# Check installed extensions
+talosctl --nodes 192.168.111.162 --endpoints 192.168.111.162 get extensions
+
+# Verify iscsi-tools extension (example)
+talosctl --nodes 192.168.111.162 --endpoints 192.168.111.162 dmesg | grep -i iscsi
+talosctl --nodes 192.168.111.162 --endpoints 192.168.111.162 service ext-iscsid
+```
+
+**Current dev cluster:**
+- Image: `factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5`
+- Extensions: iscsi-tools v0.2.0, util-linux-tools 2.41.1
+- Talos version: v1.11.5
 
 ### Kubernetes (via kubectl)
 
@@ -297,6 +353,7 @@ The Talos module provisions Kubernetes control plane clusters on Talos Linux wit
 - **certSANs with VIP**: API server certificates automatically include VIP
 - **Worker node support**: Support for both control plane and worker nodes
 - **Automatic node reset on destroy**: talosctl reset provisioner cleans nodes on destroy
+- **Automatic Talos upgrades**: Nodes upgrade automatically when talos_version or talos_image changes
 - **Odd control plane validation**: Enforces etcd quorum requirements (1, 3, 5 nodes)
 - **Custom image support**: Optional factory/schematic images for extensions (iSCSI, etc.)
 - **Automatic bootstrap**: First node is bootstrapped automatically

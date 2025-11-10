@@ -30,7 +30,7 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-traefik-dashboard-redirect@kubernetescrd
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-staging
 spec:
   ingressClassName: traefik
   tls:
@@ -57,7 +57,7 @@ metadata:
   namespace: traefik
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-staging
 spec:
   ingressClassName: traefik
   tls:
