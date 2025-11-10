@@ -12,4 +12,5 @@ resources:
   - cert-manager-app.yaml               # cert-manager (wave 0)
   - cert-manager-webhook-gandi-app.yaml # Gandi DNS webhook (wave 1)
   - cert-manager-config-app.yaml        # ClusterIssuers + Secret (wave 2)
-  # - synology-csi-app.yaml
+  - synology-csi-app.yaml
+  - nfs-storage-app.yaml

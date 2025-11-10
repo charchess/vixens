@@ -2,11 +2,11 @@ module "talos_cluster" {
   source = "../../modules/talos"
 
   cluster_name     = "vixens-dev"
-  talos_version    = "v1.11.3"
+  talos_version    = "v1.11.5"
   cluster_endpoint = "https://192.168.111.160:6443" # VIP sur VLAN 111
 
-  # Optional: Custom image with iSCSI extension for Synology CSI
-  # talos_image = "factory.talos.dev/installer/<schematic_id>:v1.11.3"
+  # Custom image with iSCSI extension for Synology CSI
+  talos_image = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
 
   # HA: 3 control planes (etcd quorum)
   control_plane_nodes = {
