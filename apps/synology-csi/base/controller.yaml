@@ -19,40 +19,40 @@ spec:
           effect: "NoSchedule"
       serviceAccountName: synology-csi-controller
       containers:
-      - name: csi-provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v3.5.0
-        args:
-        - --csi-address=$(ADDRESS)
-        - --v=5
-        - --feature-gates=Topology=true
-        env:
-        - name: ADDRESS
-          value: /var/lib/csi/sockets/pluginproxy/csi.sock
-        volumeMounts:
-        - name: socket-dir
-          mountPath: /var/lib/csi/sockets/pluginproxy/
-      - name: synology-csi-plugin
-        image: ghcr.io/zebernst/synology-csi:edge
-        args:
-        - --nodeid=$(KUBE_NODE_NAME)
-        - --endpoint=$(CSI_ENDPOINT)
-        - --client-info=/etc/synology/client-info.yml
-        env:
-        - name: CSI_ENDPOINT
-          value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
-        - name: KUBE_NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        volumeMounts:
-        - name: socket-dir
-          mountPath: /var/lib/csi/sockets/pluginproxy/
-        - name: client-info
-          mountPath: /etc/synology
-          readOnly: true
+        - name: csi-provisioner
+          image: registry.k8s.io/sig-storage/csi-provisioner:v3.5.0
+          args:
+            - --csi-address=$(ADDRESS)
+            - --v=5
+            - --feature-gates=Topology=true
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+        - name: synology-csi-plugin
+          image: ghcr.io/zebernst/synology-csi:edge
+          args:
+            - --nodeid=$(KUBE_NODE_NAME)
+            - --endpoint=$(CSI_ENDPOINT)
+            - --client-info=/etc/synology/client-info.yml
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+            - name: client-info
+              mountPath: /etc/synology
+              readOnly: true
       volumes:
-      - name: socket-dir
-        emptyDir: {}
-      - name: client-info
-        secret:
-          secretName: synology-csi-secret
+        - name: socket-dir
+          emptyDir: {}
+        - name: client-info
+          secret:
+            secretName: synology-csi-secret
