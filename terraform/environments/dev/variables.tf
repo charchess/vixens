@@ -18,9 +18,9 @@ variable "cluster_vip" {}
 variable "argocd_insecure" {}
 variable "argocd_anonymous_enabled" {}
 variable "talos_version" {}
+variable "kubernetes_version" {}
 variable "talos_image" {}
 variable "kubeconfig_path" {}
 variable "talosconfig_path" {}
 variable "cilium_ip_pool_yaml_path" {}
 variable "cilium_l2_policy_yaml_path" {}
-variable "kubernetes_version" {}
