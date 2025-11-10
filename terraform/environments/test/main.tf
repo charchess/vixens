@@ -8,7 +8,7 @@ module "talos_cluster" {
   control_plane_nodes = {
     "carny" = {
       name         = "carny"
-      ip_address   = "192.168.0.173"  # Maintenance IP for initial access
+      ip_address   = "192.168.0.173" # Maintenance IP for initial access
       mac_address  = "00:15:5d:00:cb:18"
       install_disk = "/dev/sda"
       network = {
@@ -29,7 +29,7 @@ module "talos_cluster" {
     },
     "celesty" = {
       name         = "celesty"
-      ip_address   = "192.168.0.174"  # Maintenance IP for initial access
+      ip_address   = "192.168.0.174" # Maintenance IP for initial access
       mac_address  = "00:15:5d:00:cb:19"
       install_disk = "/dev/sda"
       network = {
@@ -50,7 +50,7 @@ module "talos_cluster" {
     },
     "citrine" = {
       name         = "citrine"
-      ip_address   = "192.168.0.172"  # VLAN 111 IP for initial access
+      ip_address   = "192.168.0.172" # VLAN 111 IP for initial access
       mac_address  = "00:15:5d:00:cb:1a"
       install_disk = "/dev/sda"
       network = {
@@ -101,7 +101,7 @@ module "cilium" {
   wait_for_k8s_api     = null_resource.wait_for_k8s_api
 
   # Paths for resources
-  kubeconfig_path      = "${path.module}/kubeconfig-test"
-  ip_pool_yaml_path    = "${path.module}/../../../apps/cilium-lb/overlays/test/ippool.yaml"
-  l2_policy_yaml_path  = "${path.module}/../../../apps/cilium-lb/base/l2policy.yaml"
+  kubeconfig_path     = "${path.module}/kubeconfig-test"
+  ip_pool_yaml_path   = "${path.module}/../../../apps/cilium-lb/overlays/test/ippool.yaml"
+  l2_policy_yaml_path = "${path.module}/../../../apps/cilium-lb/base/l2policy.yaml"
 }

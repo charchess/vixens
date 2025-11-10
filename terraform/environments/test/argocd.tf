@@ -131,7 +131,7 @@ resource "helm_release" "argocd" {
       cm = {
         "users.anonymous.enabled" = var.argocd_anonymous_enabled ? "true" : "false"
 
-        "url" = "http://${var.argocd_loadbalancer_ip}"
+        "url"        = "http://${var.argocd_loadbalancer_ip}"
         "policy.csv" = <<-EOT
           p, role:readonly, applications, get, */*, allow
           p, role:readonly, applications, list, */*, allow
@@ -146,13 +146,13 @@ resource "helm_release" "argocd" {
       }
 
       # Désactiver le secret admin
-      
-      
+
+
       # Configuration RBAC
       rbac = {
-        create = true
+        create        = true
         policyDefault = "role:readonly" # TODO: a corrigé pour utiliser une variable
-      }      
+      }
     }
   })]
 
@@ -167,9 +167,9 @@ resource "helm_release" "argocd" {
 # Template is rendered with environment-specific values
 resource "kubectl_manifest" "argocd_root_app" {
   yaml_body = templatefile("${path.module}/../../../argocd/base/root-app.yaml.tpl", {
-    environment      = var.environment
-    target_revision  = var.git_branch
-    overlay_path     = "argocd/overlays/${var.environment}"
+    environment     = var.environment
+    target_revision = var.git_branch
+    overlay_path    = "argocd/overlays/${var.environment}"
   })
 
   # Wait for ArgoCD to be fully deployed and healthy
