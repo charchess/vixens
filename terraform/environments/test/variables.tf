@@ -1,39 +1,26 @@
-variable "git_branch" { type = string }
-variable "environment" { type = string }
-variable "vlan_services_subnet" { type = string }
-variable "argocd_service_type" { type = string }
-variable "argocd_loadbalancer_ip" { type = string }
-variable "argocd_disable_auth" { type = bool }
-variable "argocd_hostname" { type = string }
-variable "cluster_name" { type = string }
-variable "cluster_endpoint" { type = string }
-variable "control_plane_nodes" { type = any }
-variable "worker_nodes" { type = any }
-variable "l2_pool_name" { type = string }
-variable "l2_pool_ips" { type = list(string) }
-variable "l2_policy_name" { type = string }
-variable "l2_policy_interfaces" { type = list(string) }
-variable "l2_policy_node_selector_labels" { type = map(string) }
-# variable "talos_version" { type = string }
-# variable "kubernetes_version" { type = string }
-# variable "force_destroy_time" { type = string }
-# variable "talos_config_path" { type = string }
-# variable "kubeconfig_path" { type = string }
-# variable "hyperv_host" { type = string }
-# variable "vm_path" { type = string }
-# variable "vswitch_name" { type = string }
-# variable "vlan_interco" { type = number }
-# variable "ram_mb" { type = number }
-# variable "processors" { type = number }
-# variable "disk_size_gb" { type = number }
-# variable "iso_path" { type = string }
-variable "cluster_vip" { type = string }
-
-variable "argocd_insecure" {
-  type    = bool
-  default = true
-}
-variable "argocd_anonymous_enabled" {
-  type    = bool
-  default = true
-}
+variable "git_branch" {}
+variable "environment" {}
+variable "vlan_services_subnet" {}
+variable "argocd_service_type" {}
+variable "argocd_loadbalancer_ip" {}
+variable "argocd_disable_auth" {}
+variable "argocd_hostname" {}
+variable "cluster_name" {}
+variable "cluster_endpoint" {}
+variable "control_plane_nodes" {}
+variable "worker_nodes" {}
+variable "l2_pool_name" {}
+variable "l2_pool_ips" {}
+variable "l2_policy_name" {}
+variable "l2_policy_interfaces" {}
+variable "l2_policy_node_selector_labels" {}
+variable "cluster_vip" {}
+variable "argocd_insecure" {}
+variable "argocd_anonymous_enabled" {}
+variable "talos_version" {}
+variable "kubernetes_version" {}
+variable "talos_image" {}
+variable "kubeconfig_path" {}
+variable "talosconfig_path" {}
+variable "cilium_ip_pool_yaml_path" {}
+variable "cilium_l2_policy_yaml_path" {}

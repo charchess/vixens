@@ -11,4 +11,6 @@ resources:
   - cert-manager-config-app.yaml        # ClusterIssuers (wave 2)
   - traefik-dashboard-app.yaml          # Traefik Dashboard hostname redirect
   - argocd-app.yaml                     # ArgoCD Ingress for UI
-  - whoami-app.yaml                     # Test application
+  - whoami-app.yaml
+  - mail-gateway-app.yaml
+  - homeassistant-app.yaml                     # Test application

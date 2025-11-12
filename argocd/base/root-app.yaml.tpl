@@ -13,7 +13,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: vixens_app_of_apps
+  name: vixens-app-of-apps
   namespace: argocd
   labels:
     vixens.lab/environment: ${environment}
