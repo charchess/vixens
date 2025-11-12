@@ -1,3 +1,4 @@
+---
 # ArgoCD installation is managed by Terraform (terraform/environments/dev/argocd.tf)
 # This file is kept for reference and future GitOps self-management (Sprint 4+)
 #
