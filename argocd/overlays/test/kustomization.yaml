@@ -6,11 +6,13 @@ namespace: argocd
 resources:
   - cilium-lb-app.yaml                  # Cilium L2 Announcements + LB IPAM (wave -2)
   - traefik-app.yaml                    # Traefik Ingress Controller
-  - cert-manager-app.yaml               # cert-manager Helm chart (wave 0)
-  - cert-manager-webhook-gandi-app.yaml # Gandi DNS-01 webhook (wave 1)
-  - cert-manager-config-app.yaml        # ClusterIssuers (wave 2)
   - traefik-dashboard-app.yaml          # Traefik Dashboard hostname redirect
   - argocd-app.yaml                     # ArgoCD Ingress for UI
-  - whoami-app.yaml
+  - whoami-app.yaml                     # Test application
+  - cert-manager-app.yaml               # cert-manager (wave 0)
+  - cert-manager-webhook-gandi-app.yaml # Gandi DNS webhook (wave 1)
+  - cert-manager-config-app.yaml        # ClusterIssuers + Secret (wave 2)
+  - synology-csi-app.yaml
+  - nfs-storage-app.yaml
   - mail-gateway-app.yaml
-  - homeassistant-app.yaml                     # Test application
+  - homeassistant-app.yaml
