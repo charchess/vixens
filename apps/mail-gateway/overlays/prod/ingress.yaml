@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mail-gateway-ingress
+  namespace: mail-gateway
+  annotations:
+    cert-manager.io/cluster-issuer: "gandi"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  rules:
+    - host: mail.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mail-gateway-svc
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - mail.truxonline.com
+      secretName: mail-gateway-tls-prod
