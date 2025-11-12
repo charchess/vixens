@@ -1,3 +1,5 @@
+# naming : topaze, turquoise, tanzana
+
 git_branch             = "test"
 environment            = "test"
 vlan_services_subnet   = "192.168.209.0/24"
