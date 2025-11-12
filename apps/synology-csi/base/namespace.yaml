@@ -1,3 +1,4 @@
+---
 # apps/synology-csi/base/namespace.yaml
 apiVersion: v1
 kind: Namespace
