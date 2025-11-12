@@ -18,4 +18,3 @@ resources:
   - nfs-storage-app.yaml
   - mail-gateway-app.yaml
   - homeassistant-app.yaml
-  
