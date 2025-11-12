@@ -1,3 +1,5 @@
+# naming : saphira, spinelia, serpentina
+
 git_branch             = "dev"
 environment            = "dev"
 vlan_services_subnet   = "192.168.210.0/24"
