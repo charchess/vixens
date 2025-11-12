@@ -36,4 +36,4 @@ rules:
   comments: disable
   comments-indentation: disable
   brackets: disable
-  truthy: disable  # Pour éviter les alertes sur 'yes' dans Ansible/K8s
+  truthy: disable 
