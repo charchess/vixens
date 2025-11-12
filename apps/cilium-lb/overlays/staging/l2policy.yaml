@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2alpha1
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: vixens-staging-l2
+spec:
+  # Select all LoadBalancer services (no restriction)
+  serviceSelector:
+    matchLabels: {}
+
+  # Select all nodes
+  nodeSelector:
+    matchLabels: {}
+
+  # Announce on VLAN 208 interfaces
+  # Pattern matches: enx00155d00cb10.208, enx085f7b8.208, enx0cba27a.208
+  interfaces:
+    - "^enx.*\\.208$"  # Match VLAN 208 sub-interfaces
+
+  # Announce both external IPs and LoadBalancer IPs
+  externalIPs: true
+  loadBalancerIPs: true
