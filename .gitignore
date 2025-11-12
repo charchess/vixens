@@ -1,35 +1,155 @@
-# Fichiers de state Terraform locaux
+# ============= TERRAFORM (State of the Art) =============
+# State files (jamais versionnés)
 *.tfstate
 *.tfstate.backup
+*.tfstate.lock.info
 
-# Fichiers de logs de crash
+# Crash logs
 crash.log
 crash.*.log
 
-# Fichiers de plan Terraform non chiffrés
+# Plan files (contiennent des secrets potentiels)
 *.tfplan
+*.tfplan.*
 
-# Dossiers de plugins et modules Terraform locaux
+# Provider plugins (téléchargeables)
 .terraform/
-.terraform.lock.hcl
+# REMARQUE : .terraform.lock.hcl DOIT être versionné pour la déterminance !
 
-# Fichiers de configuration spécifiques à l'OS
-.DS_Store
-Thumbs.db
+# Override files (locaux non commités)
+*_override.tf
+*_override.tf.json
 
-# Kubernetes and Talos sensitive config files
+# CLI configuration files
+.terraformrc
+terraform.rc
+
+# Local secret files dans les environnements
+terraform/environments/*/backend.tfvars
+terraform/environments/*/*credentials*
+terraform/environments/*/kubeconfig*
+terraform/environments/*/talosconfig*
+
+# ============= KUBERNETES / KUSTOMIZE =============
+# Secrets non chiffrés (absolu)
+**/gandi-credentials-secret.yaml
+**/secret-values.yaml
+**/secret-*.yaml
+**/secrets.unseal-keys
+**/secrets-*.env
+
+# Kubeconfigs générés
 **/kubeconfig*
 **/talosconfig*
-.claude/
 
-# cert-manager sensitive files
-**/gandi-credentials-secret.yaml
+# Fichiers de valeurs sensibles
+**/values-secret.yaml
+**/values-*.secret.yaml
 
-# Obsolete directories (old project artifacts)
+# Certificates et clés
+**/*.crt
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx
+
+# ============= APPLICATIONS & BUILD =============
+# Node.js (si vous réutilisez des outils JS)
 node_modules/
-src/
-kubernetes/
-agents/
-commands/
-openspec/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python (si vous utilisez des scripts Python)
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+ENV/
+
+# ============= IDE & ÉDITEURS =============
+# VS Code
+.vscode/
+*.code-workspace
+
+# JetBrains (IntelliJ, PyCharm, etc.)
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*#
+.#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ============= OS FILES =============
+# macOS
+.DS_Store
+.AppleDouble
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# ============= LOGS & OUTPUTS =============
+*.log
+*.out
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# ============= DOCUMENTATION =============
+# Build outputs
+_site/
+docs/_build/
+
+# ============= PROJET SPÉCIFIQUE =============
+# Claude AI artefacts
+.claude/
 .aider*
+
+# Fichiers temporaires de test
+*.test
+*.test.*
+
+# Fichiers non utilisés (comme vos .unused)
+*.unused
+*.unused.*
+
+# Dossiers obsolètes (gardés pour référence mais ignorés)
+_old/
+obsolete/
+archive/
+
+# ============= ENVIRONMENT FILES =============
+.env
+.env.local
+.env.*.local
+*.env
+*.local
+
+# ============= CERT-MANAGER & TLS =============
+# ACME challenge temp files (si vous en générez)
+.acme-challenge/
+*.acme-challenge
+
+# ============= DEBUG & PROFILING =============
+*.prof
+*.pstat

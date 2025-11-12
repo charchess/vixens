@@ -1,16 +1,39 @@
+---
+# Ne pas utiliser "extends" si vous personnalisez tout
 extends: default
+
+yaml-files:
+  - '*.yaml'
+  - '*.yml'
+  - '.yamllint'
+
 rules:
-  truthy: disable
-  document-start: disable
-  line-length:
-    max: 120
-    level: error
-  comments:
-    min-spaces-from-content: 1
+  # ============ ERREURS CRITIQUES ============
   indentation:
     spaces: 2
     indent-sequences: true
+    check-multi-line-strings: false
+    level: error
+
+  key-duplicates:
+    level: error
+
+  # ============ WARNINGS ============
+  line-length:
+    max: 80
+    allow-non-breakable-words: true
+    level: warning
+
+  trailing-spaces:
+    level: warning
+
   new-lines:
     type: unix
-  empty-lines:
-    max-end: 2
+    level: warning
+
+  # ============ DÉSACTIVÉES ============
+  # Syntaxe CORRECTE pour désactiver :
+  comments: disable
+  comments-indentation: disable
+  brackets: disable
+  truthy: disable  # Pour éviter les alertes sur 'yes' dans Ansible/K8s
