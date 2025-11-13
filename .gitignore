@@ -153,3 +153,6 @@ archive/
 # ============= DEBUG & PROFILING =============
 *.prof
 *.pstat
+
+terraform.tfstate*
+current_state.json
