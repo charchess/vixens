@@ -8,4 +8,4 @@ spec:
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 80 # Assuming Home Assistant runs on port 80 for HTTP
+      targetPort: 8123 # Assuming Home Assistant runs on port 8123 for HTTP
