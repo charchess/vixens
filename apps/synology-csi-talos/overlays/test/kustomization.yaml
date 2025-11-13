@@ -9,11 +9,11 @@ resources:
 
 labels:
   - pairs:
-      vixens.lab/environment: prod
+      vixens.lab/environment: test
     includeTemplates: true
 
 patches:
-  # Patch le Secret pour prod
+  # Patch le Secret pour test
   - target:
       kind: Secret
       name: synology-csi-secret
