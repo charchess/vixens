@@ -24,47 +24,49 @@ jobs:
           echo "🔍 Validation YAML syntax"
 
           # Configuration yamllint inline
-          cat > yamllint-config.yml << 'EOF'
-            ---
-            # Ne pas utiliser "extends" si vous personnalisez tout
-            extends: default
+      - name: Validate YAML syntax
+        run: |
+          echo "🔍 Validation YAML syntax"
 
-            yaml-files:
-              - '*.yaml'
-              - '*.yml'
-              - '.yamllint'
-
-            rules:
-              # ============ ERREURS CRITIQUES ============
-              indentation:
-                spaces: 2
-                indent-sequences: true
-                check-multi-line-strings: false
-                level: error
-
-              key-duplicates:
-                level: error
-
-              # ============ WARNINGS ============
-              line-length:
-                max: 80
-                allow-non-breakable-words: true
-                level: warning
-
-              trailing-spaces:
-                level: warning
-
-              new-lines:
-                type: unix
-                level: warning
-
-              # ============ DÉSACTIVÉES ============
-              # Syntaxe CORRECTE pour désactiver :
-              comments: disable
-              comments-indentation: disable
-              brackets: disable
-              truthy: disable
-          EOF
+          # Création du fichier ligne par ligne
+          echo "---" > yamllint-config.yml
+          echo "extends: default" >> yamllint-config.yml
+          echo "" >> yamllint-config.yml
+          echo "yaml-files:" >> yamllint-config.yml
+          echo "  - '*.yaml'" >> yamllint-config.yml
+          echo "  - '*.yml'" >> yamllint-config.yml
+          echo "  - '.yamllint'" >> yamllint-config.yml
+          echo "" >> yamllint-config.yml
+          echo "rules:" >> yamllint-config.yml
+          echo "  # ============ ERREURS CRITIQUES ============" >> yamllint-config.yml
+          echo "  indentation:" >> yamllint-config.yml
+          echo "    spaces: 2" >> yamllint-config.yml
+          echo "    indent-sequences: true" >> yamllint-config.yml
+          echo "    check-multi-line-strings: false" >> yamllint-config.yml
+          echo "    level: error" >> yamllint-config.yml
+          echo "" >> yamllint-config.yml
+          echo "  key-duplicates:" >> yamllint-config.yml
+          echo "    level: error" >> yamllint-config.yml
+          echo "" >> yamllint-config.yml
+          echo "  # ============ WARNINGS ============" >> yamllint-config.yml
+          echo "  line-length:" >> yamllint-config.yml
+          echo "    max: 80" >> yamllint-config.yml
+          echo "    allow-non-breakable-words: true" >> yamllint-config.yml
+          echo "    allow-non-breakable-inline-mappings: true" >> yamllint-config.yml
+          echo "    level: warning" >> yamllint-config.yml
+          echo "" >> yamllint-config.yml
+          echo "  trailing-spaces:" >> yamllint-config.yml
+          echo "    level: warning" >> yamllint-config.yml
+          echo "" >> yamllint-config.yml
+          echo "  new-lines:" >> yamllint-config.yml
+          echo "    type: unix" >> yamllint-config.yml
+          echo "    level: warning" >> yamllint-config.yml
+          echo "" >> yamllint-config.yml
+          echo "  # ============ DÉSACTIVÉES ============" >> yamllint-config.yml
+          echo "  comments: disable" >> yamllint-config.yml
+          echo "  comments-indentation: disable" >> yamllint-config.yml
+          echo "  brackets: disable" >> yamllint-config.yml
+          echo "  truthy: disable" >> yamllint-config.yml
 
           # Valider tous les fichiers YAML pertinents
           find apps argocd -name "*.yaml" -o -name "*.yml" | \
