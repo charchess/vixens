@@ -10,7 +10,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   rules:
-    - host: homeassistant.staging.truxonline.com
+    - host: homeassistant.stg.truxonline.com
       http:
         paths:
           - path: /
@@ -22,5 +22,5 @@ spec:
                   number: 80
   tls:
     - hosts:
-        - homeassistant.staging.truxonline.com
+        - homeassistant.stg.truxonline.com
       secretName: homeassistant-tls-staging
