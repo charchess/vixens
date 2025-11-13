@@ -1,6 +1,6 @@
 # naming : perla, peridot et purpuria
 
-git_branch             = "prod"
+git_branch             = "main"
 environment            = "prod"
 vlan_services_subnet   = "192.168.200.0/24"
 argocd_service_type    = "LoadBalancer"
