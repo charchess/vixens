@@ -1,3 +1,4 @@
+---
 apiVersion: cilium.io/v2alpha1
 kind: CiliumLoadBalancerIPPool
 metadata:
@@ -5,12 +6,12 @@ metadata:
 spec:
   # TODO: Adjust IP ranges for staging environment to avoid conflicts with dev
   blocks:
-    # Assigned pool for static IPs (192.168.208.70-79)
-    - start: "192.168.208.70"
-      stop: "192.168.208.79"
-    # Auto pool for dynamic allocation (192.168.208.80-89)
-    - start: "192.168.208.80"
-      stop: "192.168.208.89"
+    # Assigned pool for static IPs (192.168.210.70-79)
+    - start: "192.168.210.70"
+      stop: "192.168.210.79"
+    # Auto pool for dynamic allocation (192.168.210.80-89)
+    - start: "192.168.210.80"
+      stop: "192.168.210.89"
 
   # Allow all LoadBalancer services to use this pool
   serviceSelector:

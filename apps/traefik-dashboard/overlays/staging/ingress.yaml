@@ -1,3 +1,4 @@
+---
 # Ingress pour HTTP -> HTTPS redirect
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -10,7 +11,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: traefik.staging.truxonline.com
+    - host: traefik.stg.truxonline.com
       http:
         paths:
           - path: /
@@ -35,14 +36,14 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - traefik.staging.truxonline.com
+        - traefik.stg.truxonline.com
       secretName: traefik-dashboard-tls-staging
   rules:
-    - host: traefik.staging.truxonline.com
+    - host: traefik.stg.truxonline.com
       http:
         paths:
           - path: /
-            pathType: Exact
+            pathType: Prefix
             backend:
               service:
                 name: traefik-internal
@@ -62,10 +63,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - traefik.staging.truxonline.com
+        - traefik.stg.truxonline.com
       secretName: traefik-dashboard-tls-staging
   rules:
-    - host: traefik.staging.truxonline.com
+    - host: traefik.stg.truxonline.com
       http:
         paths:
           - path: /dashboard
