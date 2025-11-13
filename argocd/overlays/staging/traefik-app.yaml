@@ -42,7 +42,7 @@ spec:
         service:
           type: LoadBalancer
           annotations:
-            io.cilium/lb-ipam-ips: "192.168.2.70"
+            io.cilium/lb-ipam-ips: "192.168.210.70"
 
         ports:
           web:
