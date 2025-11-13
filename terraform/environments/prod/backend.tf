@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket = "terraform-state-prod"
-    key    = "terraform/prod.tfstate"
+    key    = "terraform.tfstate"
     region = "us-east-1"
 
     endpoint   = "http://synelia.internal.truxonline.com:9000"
