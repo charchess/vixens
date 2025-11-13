@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens-new.git
     path: apps/homeassistant/overlays/dev
-    targetRevision: HEAD
+    targetRevision: dev
   destination:
     server: https://kubernetes.default.svc
     namespace: homeassistant
