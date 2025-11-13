@@ -1,3 +1,4 @@
+---
 # ServiceAccount pour le controller
 apiVersion: v1
 kind: ServiceAccount

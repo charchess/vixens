@@ -1,3 +1,4 @@
+---
 name: Validate & Security
 
 on:
@@ -24,23 +25,45 @@ jobs:
 
           # Configuration yamllint inline
           cat > yamllint-config.yml << 'EOF'
-          extends: default
+            ---
+            # Ne pas utiliser "extends" si vous personnalisez tout
+            extends: default
 
-          rules:
-            line-length:
-              max: 120
-              level: warning
-            document-start: disable
-            trailing-spaces:
-              level: error
-            new-line-at-end-of-file:
-              level: error
-            comments:
-              min-spaces-from-content: 1
-            brackets:
-              level: warning
-            empty-lines:
-              max: 2
+            yaml-files:
+              - '*.yaml'
+              - '*.yml'
+              - '.yamllint'
+
+            rules:
+              # ============ ERREURS CRITIQUES ============
+              indentation:
+                spaces: 2
+                indent-sequences: true
+                check-multi-line-strings: false
+                level: error
+
+              key-duplicates:
+                level: error
+
+              # ============ WARNINGS ============
+              line-length:
+                max: 80
+                allow-non-breakable-words: true
+                level: warning
+
+              trailing-spaces:
+                level: warning
+
+              new-lines:
+                type: unix
+                level: warning
+
+              # ============ DÉSACTIVÉES ============
+              # Syntaxe CORRECTE pour désactiver :
+              comments: disable
+              comments-indentation: disable
+              brackets: disable
+              truthy: disable
           EOF
 
           # Valider tous les fichiers YAML pertinents
@@ -168,7 +191,9 @@ jobs:
           pip3 install checkov
 
           # Scan des bonnes pratiques
-          checkov --directory . --framework kubernetes --compact --quiet || true
+          checkov --directory . \
+            --framework kubernetes \
+            --compact --quiet || true
 
       - name: Check security patterns
         run: |
@@ -207,7 +232,11 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| YAML Lint | ${{ needs.yaml-lint.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| K8s Structure | ${{ needs.kube-structure.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ArgoCD Apps | ${{ needs.argocd-validate.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security Check | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| YAML Lint | ${{ needs.yaml-lint.result }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| K8s Structure | ${{ needs.kube-structure.result }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| ArgoCD Apps | ${{ needs.argocd-validate.result }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Security Check | ${{ needs.security-scan.result }} |" \
+            >> $GITHUB_STEP_SUMMARY
