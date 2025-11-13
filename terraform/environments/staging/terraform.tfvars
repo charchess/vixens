@@ -1,7 +1,7 @@
 # naming : saphira, spinelia, serpentina
 
-git_branch             = "dev"
-environment            = "dev"
+git_branch             = "staging"
+environment            = "staging"
 vlan_services_subnet   = "192.168.210.0/24"
 argocd_service_type    = "LoadBalancer"
 argocd_loadbalancer_ip = "192.168.210.71"
@@ -35,7 +35,7 @@ control_plane_nodes = {
   },
   "spinelia" = {
     name         = "spinelia"
-    ip_address   = "192.168.0.164"
+    ip_address   = "192.168.0.129"
     mac_address  = "00:15:5D:00:77:02"
     install_disk = "/dev/sda"
     network = {
@@ -56,7 +56,7 @@ control_plane_nodes = {
   },
   "saphira" = {
     name         = "saphira"
-    ip_address   = "192.168.0.165"
+    ip_address   = "192.168.0.127"
     mac_address  = "00:15:5D:00:77:00"
     install_disk = "/dev/sda"
     network = {
@@ -79,12 +79,12 @@ control_plane_nodes = {
 worker_nodes = {}
 
 # Cilium L2 Announcement
-l2_pool_name         = "dev-pool"
+l2_pool_name         = "staging-pool"
 l2_pool_ips          = ["192.168.210.70-192.168.210.89"]
-l2_policy_name       = "dev-l2-policy"
+l2_policy_name       = "staging-l2-policy"
 l2_policy_interfaces = ["enx"]
 l2_policy_node_selector_labels = {
-  "kubernetes.io/hostname" = "saphira"
+  "kubernetes.io/control-plane" = "" # Selects all control plane nodes
 }
 
 argocd_insecure          = true
@@ -94,8 +94,8 @@ cluster_vip = "192.168.111.180"
 
 talos_version                = "v1.11.5"
 talos_image                  = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
-kubeconfig_path              = "./kubeconfig-dev"
-talosconfig_path             = "./talosconfig-dev"
-cilium_ip_pool_yaml_path     = "../../../apps/cilium-lb/overlays/dev/ippool.yaml"
-cilium_l2_policy_yaml_path   = "../../../apps/cilium-lb/base/l2policy.yaml"
+kubeconfig_path              = "./kubeconfig-staging"
+talosconfig_path             = "./talosconfig-staging"
+cilium_ip_pool_yaml_path     = "../../../apps/cilium-lb/overlays/staging/ippool.yaml"
+cilium_l2_policy_yaml_path   = "../../../apps/cilium-lb/overlays/staging/l2policy.yaml"
 kubernetes_version           = "1.30.0"

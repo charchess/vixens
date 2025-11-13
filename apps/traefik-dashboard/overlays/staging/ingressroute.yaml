@@ -9,7 +9,7 @@ spec:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`traefik.staging.truxonline.com`)
+      match: Host(`traefik.stg.truxonline.com`)
       services:
         - kind: TraefikService
           name: api@internal
@@ -27,7 +27,7 @@ spec:
     - web
   routes:
     - kind: Rule
-      match: Host(`traefik.staging.truxonline.com`)
+      match: Host(`traefik.stg.truxonline.com`)
       middlewares:
         - name: redirect-https
       services:

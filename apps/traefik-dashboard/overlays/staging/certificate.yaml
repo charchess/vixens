@@ -10,4 +10,4 @@ spec:
     name: letsencrypt-staging
     kind: ClusterIssuer
   dnsNames:
-    - traefik.dev.truxonline.com
+    - traefik.stg.truxonline.com
