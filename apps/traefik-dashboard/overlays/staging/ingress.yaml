@@ -11,7 +11,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: traefik.staging.truxonline.com
+    - host: traefik.stg.truxonline.com
       http:
         paths:
           - path: /
@@ -36,10 +36,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - traefik.staging.truxonline.com
+        - traefik.stg.truxonline.com
       secretName: traefik-dashboard-tls-staging
   rules:
-    - host: traefik.staging.truxonline.com
+    - host: traefik.stg.truxonline.com
       http:
         paths:
           - path: /
@@ -63,10 +63,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - traefik.staging.truxonline.com
+        - traefik.stg.truxonline.com
       secretName: traefik-dashboard-tls-staging
   rules:
-    - host: traefik.staging.truxonline.com
+    - host: traefik.stg.truxonline.com
       http:
         paths:
           - path: /dashboard
