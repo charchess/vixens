@@ -8,5 +8,5 @@ subsets:
   - addresses:
       - ip: 192.168.201.51
     ports:
-      - port: 80
+      - port: 8123
         protocol: TCP
