@@ -20,11 +20,11 @@ jobs:
           sudo apt-get update && sudo apt-get install -y yamllint
 
       - name: Validate YAML syntax
-      run: |
-        echo "🔍 Validation YAML syntax"
+        run: |
+          echo "🔍 Validation YAML syntax"
 
-        # Configuration yamllint CORRIGÉE
-        cat > yamllint-config.yml << 'EOF'
+          # Configuration yamllint inline
+          cat > yamllint-config.yml << 'EOF'
 ---
 # Ne pas utiliser "extends" si vous personnalisez tout
 extends: default
@@ -49,6 +49,7 @@ rules:
   line-length:
     max: 80
     allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
     level: warning
 
   trailing-spaces:
