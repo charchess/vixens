@@ -61,8 +61,9 @@ resource "null_resource" "wait_for_k8s_api" {
     command = <<-EOT
       set -e
       echo "⏳ Waiting for Kubernetes API to be ready..."
-      echo "⏸️  Initial delay: waiting 60 seconds for Talos bootstrap..."
-      sleep 60
+      echo "⏸️  Initial delay: waiting 90 seconds for Talos bootstrap..."
+      echo "📁 Kubeconfig path: ${var.paths.kubeconfig}"
+      sleep 90
 
       # Phase 1: Wait for API server to respond (60 attempts x 10s = 10min)
       echo "📡 Phase 1: Waiting for API server to respond..."
