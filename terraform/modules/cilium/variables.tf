@@ -50,7 +50,7 @@ variable "control_plane_tolerations" {
 variable "timeout" {
   description = "Helm installation timeout (seconds)"
   type        = number
-  default     = 600
+  default     = 900
 }
 
 # --------------------------------------------------------------------------
