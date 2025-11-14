@@ -1,23 +1,23 @@
 # ============================================================================
-# VIXENS TEST ENVIRONMENT - OUTPUTS
+# ENVIRONMENT OUTPUTS
 # ============================================================================
 
 output "cluster_endpoint" {
   description = "Kubernetes API endpoint"
-  value       = var.cluster.endpoint
+  value       = module.environment.cluster_endpoint
 }
 
 output "kubeconfig_path" {
   description = "Path to generated kubeconfig"
-  value       = var.paths.kubeconfig
+  value       = module.environment.kubeconfig_path
 }
 
 output "talosconfig_path" {
   description = "Path to generated talosconfig"
-  value       = var.paths.talosconfig
+  value       = module.environment.talosconfig_path
 }
 
 output "argocd_url" {
   description = "ArgoCD URL"
-  value       = "http://${var.argocd.loadbalancer_ip}"
+  value       = module.environment.argocd_url
 }
