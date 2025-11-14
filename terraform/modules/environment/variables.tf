@@ -97,13 +97,18 @@ variable "worker_nodes" {
 variable "argocd" {
   description = "ArgoCD configuration"
   type = object({
+    service_type      = string
     loadbalancer_ip   = string
     hostname          = string
-    admin_password    = string
     insecure          = bool
     disable_auth      = bool
     anonymous_enabled = bool
   })
+
+  validation {
+    condition     = contains(["LoadBalancer", "ClusterIP", "NodePort"], var.argocd.service_type)
+    error_message = "ArgoCD service type must be LoadBalancer, ClusterIP, or NodePort"
+  }
 
   validation {
     condition     = can(regex("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$", var.argocd.loadbalancer_ip))
