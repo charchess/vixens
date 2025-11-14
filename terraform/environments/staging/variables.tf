@@ -1,5 +1,5 @@
 # ============================================================================
-# VIXENS TERRAFORM - STAGING ENVIRONMENT VARIABLES
+# VIXENS TERRAFORM - DEV ENVIRONMENT VARIABLES
 # ============================================================================
 # Strongly typed variables with validation
 

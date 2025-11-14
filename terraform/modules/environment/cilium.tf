@@ -3,7 +3,7 @@
 # ============================================================================
 
 module "cilium" {
-  source = "../../modules/cilium"
+  source = "../cilium"
 
   chart_version = module.shared.chart_versions.cilium
 

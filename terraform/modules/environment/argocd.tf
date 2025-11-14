@@ -3,7 +3,7 @@
 # ============================================================================
 
 module "argocd" {
-  source = "../../modules/argocd"
+  source = "../argocd"
 
   chart_version = module.shared.chart_versions.argocd
   environment   = var.environment
