@@ -6,18 +6,16 @@ kind: Kustomization
 namespace: argocd
 
 resources:
-  # Pilot apps (new pattern in apps/ subdirectory)
-  - apps/cilium-lb.yaml                 # Cilium L2 Announcements + LB IPAM (wave -2)
-  - apps/argocd.yaml                    # ArgoCD Ingress for UI
-  - apps/whoami.yaml                    # Test application
-
-  # Remaining apps (old pattern, to be migrated)
-  - traefik-app.yaml                    # Traefik Ingress Controller
-  - traefik-dashboard-app.yaml          # Traefik Dashboard hostname redirect
-  - cert-manager-app.yaml               # cert-manager (wave 0)
-  - cert-manager-webhook-gandi-app.yaml # Gandi DNS webhook (wave 1)
-  - cert-manager-config-app.yaml        # ClusterIssuers + Secret (wave 2)
-  - synology-csi-app.yaml
-  - nfs-storage-app.yaml
-  - mail-gateway-app.yaml
-  - homeassistant-app.yaml
+  # All applications in apps/ subdirectory (new pattern)
+  - apps/cilium-lb.yaml                      # Cilium L2 Announcements + LB IPAM (wave -2)
+  - apps/traefik.yaml                        # Traefik Ingress Controller
+  - apps/traefik-dashboard.yaml              # Traefik Dashboard hostname redirect
+  - apps/argocd.yaml                         # ArgoCD Ingress for UI
+  - apps/whoami.yaml                         # Test application
+  - apps/cert-manager.yaml                   # cert-manager (wave 0)
+  - apps/cert-manager-webhook-gandi.yaml     # Gandi DNS webhook (wave 1)
+  - apps/cert-manager-config.yaml            # ClusterIssuers + Secret (wave 2)
+  - apps/synology-csi.yaml                   # Synology CSI driver
+  - apps/nfs-storage.yaml                    # NFS PV/PVC
+  - apps/mail-gateway.yaml                   # Mail gateway external service
+  - apps/homeassistant.yaml                  # Home Assistant external service
