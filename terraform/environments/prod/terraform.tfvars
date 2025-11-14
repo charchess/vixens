@@ -1,16 +1,24 @@
-# naming : perla, peridot et purpuria
+# ============================================================================
+# VIXENS PROD ENVIRONMENT - CONFIGURATION VALUES
+# ============================================================================
 
-git_branch             = "main"
-environment            = "prod"
-vlan_services_subnet   = "192.168.200.0/24"
-argocd_service_type    = "LoadBalancer"
-argocd_loadbalancer_ip = "192.168.200.71" # Assuming same LB IP for now, might need adjustment
-argocd_disable_auth    = true
-argocd_hostname        = "argocd.truxonline.com"
+environment = "prod"
+git_branch  = "main"
 
-# Talos Cluster Configuration
-cluster_name     = "vixens"
-cluster_endpoint = "https://192.168.111.170:6443" # New VIP for prod
+# ----------------------------------------------------------------------------
+# CLUSTER CONFIGURATION
+# ----------------------------------------------------------------------------
+cluster = {
+  name               = "vixens"
+  endpoint           = "https://192.168.111.170:6443"
+  talos_version      = "v1.11.5"
+  talos_image        = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
+  kubernetes_version = "1.30.0"
+}
+
+# ----------------------------------------------------------------------------
+# CONTROL PLANE NODES
+# ----------------------------------------------------------------------------
 control_plane_nodes = {
   "perla" = {
     name         = "perla"
@@ -77,26 +85,30 @@ control_plane_nodes = {
     }
   }
 }
+
+# ----------------------------------------------------------------------------
+# WORKER NODES
+# ----------------------------------------------------------------------------
 worker_nodes = {}
 
-# Cilium L2 Announcement
-l2_pool_name         = "prod-pool"
-l2_pool_ips          = ["192.168.200.100-192.168.200.119"] # Placeholder, needs verification
-l2_policy_name       = "prod-l2-policy"
-l2_policy_interfaces = ["enp3s0", "enp2s0"] # Based on get links output
-l2_policy_node_selector_labels = {
-  "kubernetes.io/hostname" = "perla" # Assuming all control plane nodes are selected
+# ----------------------------------------------------------------------------
+# FILE PATHS
+# ----------------------------------------------------------------------------
+paths = {
+  kubeconfig            = "./kubeconfig-prod"
+  talosconfig           = "./talosconfig-prod"
+  cilium_ip_pool_yaml   = "../../../apps/cilium-lb/overlays/prod/ippool.yaml"
+  cilium_l2_policy_yaml = "../../../apps/cilium-lb/overlays/prod/l2policy.yaml"
 }
 
-argocd_insecure          = true
-argocd_anonymous_enabled = true
-
-cluster_vip = "192.168.111.190" # New VIP for prod
-
-talos_version              = "v1.11.5"                                                                                              # Keep same for now, might need update
-talos_image                = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5" # Keep same for now
-kubeconfig_path            = "./kubeconfig-prod"
-talosconfig_path           = "./talosconfig-prod"
-cilium_ip_pool_yaml_path   = "../../../apps/cilium-lb/overlays/prod/ippool.yaml"
-cilium_l2_policy_yaml_path = "../../../apps/cilium-lb/overlays/prod/l2policy.yaml"
-kubernetes_version         = "1.30.0" # Keep same for now
+# ----------------------------------------------------------------------------
+# ARGOCD CONFIGURATION
+# ----------------------------------------------------------------------------
+argocd = {
+  loadbalancer_ip   = "192.168.200.71"
+  hostname          = "argocd.truxonline.com"
+  admin_password    = "admin" # TODO: Change in production
+  insecure          = true
+  anonymous_enabled = true
+  disable_auth      = true
+}

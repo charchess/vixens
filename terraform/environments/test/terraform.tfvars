@@ -1,16 +1,25 @@
-# naming : topaze, turquoise, tanzana
+# ============================================================================
+# VIXENS TEST ENVIRONMENT - CONFIGURATION VALUES
+# ============================================================================
+# Nodes: citrine, carny, celesty (3 CP HA)
 
-git_branch             = "test"
-environment            = "test"
-vlan_services_subnet   = "192.168.209.0/24"
-argocd_service_type    = "LoadBalancer"
-argocd_loadbalancer_ip = "192.168.209.71"
-argocd_disable_auth    = true
-argocd_hostname        = "argocd.test.truxonline.com"
+environment = "test"
+git_branch  = "test"
 
-# Talos Cluster Configuration
-cluster_name     = "vixens-test"
-cluster_endpoint = "https://192.168.111.170:6443"
+# ----------------------------------------------------------------------------
+# CLUSTER CONFIGURATION
+# ----------------------------------------------------------------------------
+cluster = {
+  name               = "vixens-test"
+  endpoint           = "https://192.168.111.170:6443"
+  talos_version      = "v1.11.5"
+  talos_image        = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
+  kubernetes_version = "1.30.0"
+}
+
+# ----------------------------------------------------------------------------
+# CONTROL PLANE NODES (3 nodes HA)
+# ----------------------------------------------------------------------------
 control_plane_nodes = {
   "citrine" = {
     name         = "citrine"
@@ -76,26 +85,30 @@ control_plane_nodes = {
     }
   }
 }
+
+# ----------------------------------------------------------------------------
+# WORKER NODES
+# ----------------------------------------------------------------------------
 worker_nodes = {}
 
-# Cilium L2 Announcement
-l2_pool_name         = "test-pool"
-l2_pool_ips          = ["192.168.209.70-192.168.209.89"]
-l2_policy_name       = "test-l2-policy"
-l2_policy_interfaces = ["enx*"]
-l2_policy_node_selector_labels = {
-  "kubernetes.io/hostname" = "citrine"
+# ----------------------------------------------------------------------------
+# FILE PATHS
+# ----------------------------------------------------------------------------
+paths = {
+  kubeconfig            = "./kubeconfig-test"
+  talosconfig           = "./talosconfig-test"
+  cilium_ip_pool_yaml   = "../../../apps/cilium-lb/overlays/test/ippool.yaml"
+  cilium_l2_policy_yaml = "../../../apps/cilium-lb/base/l2policy.yaml"
 }
 
-argocd_insecure          = true
-argocd_anonymous_enabled = true
-
-cluster_vip = "192.168.111.170"
-
-talos_version              = "v1.11.5"
-talos_image                = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
-kubeconfig_path            = "./kubeconfig-test"
-talosconfig_path           = "./talosconfig-test"
-cilium_ip_pool_yaml_path   = "../../../apps/cilium-lb/overlays/test/ippool.yaml"
-cilium_l2_policy_yaml_path = "../../../apps/cilium-lb/base/l2policy.yaml"
-kubernetes_version         = "1.30.0"
+# ----------------------------------------------------------------------------
+# ARGOCD CONFIGURATION
+# ----------------------------------------------------------------------------
+argocd = {
+  loadbalancer_ip   = "192.168.209.71"
+  hostname          = "argocd.test.truxonline.com"
+  admin_password    = "admin" # TODO: Change in production
+  insecure          = true
+  anonymous_enabled = true
+  disable_auth      = true
+}
