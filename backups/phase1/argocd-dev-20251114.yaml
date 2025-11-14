@@ -1,0 +1,382 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  name: argocd
+  namespace: argocd
+spec:
+  destination:
+    namespace: argocd
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: apps/argocd/overlays/dev
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  name: cert-manager
+  namespace: argocd
+spec:
+  destination:
+    namespace: cert-manager
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: cert-manager
+    helm:
+      values: |
+        installCRDs: true
+        global:
+          leaderElection:
+            namespace: cert-manager
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            operator: Exists
+            effect: NoSchedule
+        webhook:
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
+        cainjector:
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
+        startupapicheck:
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
+    repoURL: https://charts.jetstack.io
+    targetRevision: v1.14.4
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+      limit: 5
+    syncOptions:
+    - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  name: cert-manager-config
+  namespace: argocd
+spec:
+  destination:
+    namespace: cert-manager
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: apps/cert-manager/overlays/dev
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+      limit: 5
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  name: cert-manager-webhook-gandi
+  namespace: argocd
+spec:
+  destination:
+    namespace: cert-manager
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: cert-manager-webhook-gandi
+    helm:
+      values: |
+        groupName: acme.truxonline.com
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            operator: Exists
+            effect: NoSchedule
+    repoURL: https://sintef.github.io/cert-manager-webhook-gandi
+    targetRevision: v0.5.2
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+      limit: 5
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  name: cilium-lb
+  namespace: argocd
+spec:
+  destination:
+    namespace: kube-system
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: apps/cilium-lb/overlays/dev
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+      limit: 5
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  name: homeassistant
+  namespace: argocd
+spec:
+  destination:
+    namespace: homeassistant
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: apps/homeassistant/overlays/dev
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  name: mail-gateway
+  namespace: argocd
+spec:
+  destination:
+    namespace: mail-gateway
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: apps/mail-gateway/overlays/dev
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  finalizers:
+  - resources-finalizer.argocd.io
+  name: nfs-storage
+  namespace: argocd
+spec:
+  destination:
+    namespace: media-stack
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: apps/nfs-storage/overlays/dev
+    repoURL: https://github.com/charchess/vixens
+    targetRevision: dev
+  syncPolicy:
+    automated:
+      allowEmpty: false
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - Replace=true
+    - FailOnSharedResource=true
+    - PrunePropagationPolicy=foreground
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  finalizers:
+  - resources-finalizer.argocd.io
+  name: synology-csi
+  namespace: argocd
+spec:
+  destination:
+    namespace: synology-csi
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: apps/synology-csi-talos/overlays/dev
+    repoURL: https://github.com/charchess/vixens
+    targetRevision: dev
+  syncPolicy:
+    automated:
+      allowEmpty: false
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - Replace=true
+    - FailOnSharedResource=true
+    - PrunePropagationPolicy=foreground
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+spec:
+  destination:
+    namespace: traefik
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: traefik
+    helm:
+      values: |
+        providers:
+          kubernetesCRD:
+            enabled: true
+          kubernetesIngress:
+            enabled: true
+
+        # Enable API and Dashboard
+        api:
+          dashboard: true
+          insecure: true
+
+        # Enable dashboard IngressRoute on web entrypoint
+        ingressRoute:
+          dashboard:
+            enabled: true
+            entryPoints: ["web"]
+
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Exists"
+            effect: "NoSchedule"
+        service:
+          type: LoadBalancer
+          annotations:
+            io.cilium/lb-ipam-ips: "192.168.208.70"
+
+        ports:
+          web:
+            port: 80
+            expose: true
+          websecure:
+            port: 443
+            expose: true
+            tls:
+              enabled: true
+          traefik:
+            port: 9000
+            expose: false
+            exposedPort: 9000
+    repoURL: https://helm.traefik.io/traefik
+    targetRevision: v25.0.0
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  name: traefik-dashboard
+  namespace: argocd
+spec:
+  destination:
+    namespace: traefik
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: apps/traefik-dashboard/overlays/dev
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+      limit: 5
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  name: whoami
+  namespace: argocd
+spec:
+  destination:
+    namespace: whoami
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: apps/whoami/overlays/dev
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

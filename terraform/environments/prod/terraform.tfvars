@@ -6,11 +6,12 @@ environment = "prod"
 git_branch  = "main"
 
 # ----------------------------------------------------------------------------
-# CLUSTER CONFIGURATION
+# CLUSTER
 # ----------------------------------------------------------------------------
 cluster = {
   name               = "vixens"
   endpoint           = "https://192.168.111.170:6443"
+  vip                = "192.168.111.170"
   talos_version      = "v1.11.5"
   talos_image        = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
   kubernetes_version = "1.30.0"
@@ -34,9 +35,9 @@ control_plane_nodes = {
           gateway   = ""
         },
         {
-          vlanId    = 200 # Assuming 200.x.x.x is VLAN 200
+          vlanId    = 200
           addresses = ["192.168.200.65/24"]
-          gateway   = "192.168.200.1" # Assuming a gateway
+          gateway   = "192.168.200.1"
         }
       ]
     }
@@ -55,9 +56,9 @@ control_plane_nodes = {
           gateway   = ""
         },
         {
-          vlanId    = 200 # Assuming 200.x.x.x is VLAN 200
+          vlanId    = 200
           addresses = ["192.168.200.63/24"]
-          gateway   = "192.168.200.1" # Assuming a gateway
+          gateway   = "192.168.200.1"
         }
       ]
     }
@@ -76,9 +77,9 @@ control_plane_nodes = {
           gateway   = ""
         },
         {
-          vlanId    = 200 # Assuming 200.x.x.x is VLAN 200
+          vlanId    = 200
           addresses = ["192.168.200.66/24"]
-          gateway   = "192.168.200.1" # Assuming a gateway
+          gateway   = "192.168.200.1"
         }
 
       ]
@@ -91,6 +92,39 @@ control_plane_nodes = {
 # ----------------------------------------------------------------------------
 worker_nodes = {}
 
+
+# ----------------------------------------------------------------------------
+# ARGOCD CONFIGURATION
+# ----------------------------------------------------------------------------
+argocd = {
+  service_type      = "LoadBalancer"
+  loadbalancer_ip   = "192.168.200.71"
+  hostname          = "argocd.truxonline.com"
+  insecure          = true
+  disable_auth      = true
+  anonymous_enabled = true
+}
+
+# --------------------------------------------------------------------------
+# CILIUM L2 ANNOUNCEMENTS
+# --------------------------------------------------------------------------
+cilium_l2 = {
+  pool_name   = "prod-pool"
+  pool_ips    = ["192.168.200.70-192.168.200.89"]
+  policy_name = "prod-l2-policy"
+  interfaces  = ["eth1"]
+  node_selector = {
+    "kubernetes.io/hostname" = "perla"
+  }
+}
+
+# --------------------------------------------------------------------------
+# NETWORK
+# --------------------------------------------------------------------------
+network = {
+  vlan_services_subnet = "192.168.200.0/24"
+}
+
 # ----------------------------------------------------------------------------
 # FILE PATHS
 # ----------------------------------------------------------------------------
@@ -99,16 +133,4 @@ paths = {
   talosconfig           = "./talosconfig-prod"
   cilium_ip_pool_yaml   = "../../../apps/cilium-lb/overlays/prod/ippool.yaml"
   cilium_l2_policy_yaml = "../../../apps/cilium-lb/overlays/prod/l2policy.yaml"
-}
-
-# ----------------------------------------------------------------------------
-# ARGOCD CONFIGURATION
-# ----------------------------------------------------------------------------
-argocd = {
-  loadbalancer_ip   = "192.168.200.71"
-  hostname          = "argocd.truxonline.com"
-  service_type      = "LoadBalancer"
-  insecure          = true
-  anonymous_enabled = true
-  disable_auth      = true
 }
