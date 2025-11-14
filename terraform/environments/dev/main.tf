@@ -62,16 +62,18 @@ resource "null_resource" "wait_for_k8s_api" {
       echo "⏳ Waiting for Kubernetes API to be ready..."
 
       # Phase 1: Wait for initial connectivity (40 attempts x 5s = 3min 20s)
-      for i in {1..40}; do
+      i=1
+      while [ $i -le 40 ]; do
         if kubectl --kubeconfig=${var.paths.kubeconfig} get nodes &>/dev/null; then
-          echo "✅ Kubernetes API responded (attempt $i)"
+          echo "✅ Kubernetes API responded (attempt $i/40)"
           break
         fi
         echo "⏳ Attempt $i/40... (waiting 5s)"
         sleep 5
+        i=$((i + 1))
 
-        if [ $i -eq 40 ]; then
-          echo "❌ Timeout: API never responded"
+        if [ $i -gt 40 ]; then
+          echo "❌ Timeout: API never responded after 40 attempts"
           exit 1
         fi
       done
@@ -79,27 +81,31 @@ resource "null_resource" "wait_for_k8s_api" {
       # Phase 2: Wait for API to be stable (5 consecutive successful checks)
       echo "🔍 Verifying API stability (need 5 consecutive successful checks)..."
       CONSECUTIVE_SUCCESS=0
-      for i in {1..20}; do
+      ATTEMPT=1
+      MAX_ATTEMPTS=60
+
+      while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
         if kubectl --kubeconfig=${var.paths.kubeconfig} get nodes &>/dev/null && \
            kubectl --kubeconfig=${var.paths.kubeconfig} get namespaces &>/dev/null && \
            kubectl --kubeconfig=${var.paths.kubeconfig} get --raw /healthz &>/dev/null; then
           CONSECUTIVE_SUCCESS=$((CONSECUTIVE_SUCCESS + 1))
-          echo "✅ Stability check $CONSECUTIVE_SUCCESS/5 passed"
+          echo "✅ Stability check $CONSECUTIVE_SUCCESS/5 passed (attempt $ATTEMPT/$MAX_ATTEMPTS)"
 
-          if [ $CONSECUTIVE_SUCCESS -eq 5 ]; then
+          if [ $CONSECUTIVE_SUCCESS -ge 5 ]; then
             echo "🎉 Kubernetes API is STABLE and ready!"
             exit 0
           fi
         else
           if [ $CONSECUTIVE_SUCCESS -gt 0 ]; then
-            echo "⚠️  API became unstable, resetting counter (was at $CONSECUTIVE_SUCCESS/5)"
+            echo "⚠️  API became unstable, resetting counter (was at $CONSECUTIVE_SUCCESS/5, attempt $ATTEMPT/$MAX_ATTEMPTS)"
           fi
           CONSECUTIVE_SUCCESS=0
         fi
         sleep 3
+        ATTEMPT=$((ATTEMPT + 1))
       done
 
-      echo "❌ API is responding but not stable enough"
+      echo "❌ API is responding but not stable enough after $MAX_ATTEMPTS attempts"
       exit 1
     EOT
   }
