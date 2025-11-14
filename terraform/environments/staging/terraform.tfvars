@@ -1,16 +1,24 @@
-# naming : saphira, spinelia, serpentina
+# ============================================================================
+# VIXENS STAGING ENVIRONMENT - CONFIGURATION VALUES
+# ============================================================================
 
-git_branch             = "staging"
-environment            = "staging"
-vlan_services_subnet   = "192.168.210.0/24"
-argocd_service_type    = "LoadBalancer"
-argocd_loadbalancer_ip = "192.168.210.71"
-argocd_disable_auth    = true
-argocd_hostname        = "argocd.stg.truxonline.com"
+environment = "staging"
+git_branch  = "staging"
 
-# Talos Cluster Configuration
-cluster_name     = "vixens-stg"
-cluster_endpoint = "https://192.168.111.180:6443"
+# ----------------------------------------------------------------------------
+# CLUSTER CONFIGURATION
+# ----------------------------------------------------------------------------
+cluster = {
+  name               = "vixens-stg"
+  endpoint           = "https://192.168.111.180:6443"
+  talos_version      = "v1.11.5"
+  talos_image        = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
+  kubernetes_version = "1.30.0"
+}
+
+# ----------------------------------------------------------------------------
+# CONTROL PLANE NODES
+# ----------------------------------------------------------------------------
 control_plane_nodes = {
   "serpentina" = {
     name         = "serpentina"
@@ -76,26 +84,30 @@ control_plane_nodes = {
     }
   }
 }
+
+# ----------------------------------------------------------------------------
+# WORKER NODES
+# ----------------------------------------------------------------------------
 worker_nodes = {}
 
-# Cilium L2 Announcement
-l2_pool_name         = "staging-pool"
-l2_pool_ips          = ["192.168.210.70-192.168.210.89"]
-l2_policy_name       = "staging-l2-policy"
-l2_policy_interfaces = ["enx"]
-l2_policy_node_selector_labels = {
-  "kubernetes.io/control-plane" = "" # Selects all control plane nodes
+# ----------------------------------------------------------------------------
+# FILE PATHS
+# ----------------------------------------------------------------------------
+paths = {
+  kubeconfig            = "./kubeconfig-staging"
+  talosconfig           = "./talosconfig-staging"
+  cilium_ip_pool_yaml   = "../../../apps/cilium-lb/overlays/staging/ippool.yaml"
+  cilium_l2_policy_yaml = "../../../apps/cilium-lb/overlays/staging/l2policy.yaml"
 }
 
-argocd_insecure          = true
-argocd_anonymous_enabled = true
-
-cluster_vip = "192.168.111.180"
-
-talos_version              = "v1.11.5"
-talos_image                = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
-kubeconfig_path            = "./kubeconfig-staging"
-talosconfig_path           = "./talosconfig-staging"
-cilium_ip_pool_yaml_path   = "../../../apps/cilium-lb/overlays/staging/ippool.yaml"
-cilium_l2_policy_yaml_path = "../../../apps/cilium-lb/overlays/staging/l2policy.yaml"
-kubernetes_version         = "1.30.0"
+# ----------------------------------------------------------------------------
+# ARGOCD CONFIGURATION
+# ----------------------------------------------------------------------------
+argocd = {
+  loadbalancer_ip   = "192.168.210.71"
+  hostname          = "argocd.stg.truxonline.com"
+  admin_password    = "admin" # TODO: Change in production
+  insecure          = true
+  anonymous_enabled = true
+  disable_auth      = true
+}
