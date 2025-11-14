@@ -59,53 +59,78 @@ resource "null_resource" "wait_for_k8s_api" {
 
   provisioner "local-exec" {
     command = <<-EOT
+      set -e
       echo "⏳ Waiting for Kubernetes API to be ready..."
+      echo "⏸️  Initial delay: waiting 60 seconds for Talos bootstrap..."
+      sleep 60
 
-      # Phase 1: Wait for initial connectivity (40 attempts x 5s = 3min 20s)
+      # Phase 1: Wait for API server to respond (60 attempts x 10s = 10min)
+      echo "📡 Phase 1: Waiting for API server to respond..."
       i=1
-      while [ $i -le 40 ]; do
-        if kubectl --kubeconfig=${var.paths.kubeconfig} get nodes &>/dev/null; then
-          echo "✅ Kubernetes API responded (attempt $i/40)"
+      while [ $i -le 60 ]; do
+        if kubectl --kubeconfig=${var.paths.kubeconfig} get --raw /healthz &>/dev/null; then
+          echo "✅ API server responded on attempt $i"
           break
         fi
-        echo "⏳ Attempt $i/40... (waiting 5s)"
-        sleep 5
+        echo "⏳ Attempt $i/60 - API not ready yet (waiting 10s)..."
+        sleep 10
         i=$((i + 1))
-
-        if [ $i -gt 40 ]; then
-          echo "❌ Timeout: API never responded after 40 attempts"
-          exit 1
-        fi
       done
 
-      # Phase 2: Wait for API to be stable (5 consecutive successful checks)
-      echo "🔍 Verifying API stability (need 5 consecutive successful checks)..."
-      CONSECUTIVE_SUCCESS=0
+      if [ $i -gt 60 ]; then
+        echo "❌ Timeout: API never responded after 10 minutes"
+        exit 1
+      fi
+
+      # Phase 2: Wait for control plane pods to be ready (checks kube-apiserver, kube-controller, kube-scheduler, etcd)
+      echo "🔍 Phase 2: Waiting for control plane components to be ready..."
+      READY=0
       ATTEMPT=1
       MAX_ATTEMPTS=60
 
       while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-        if kubectl --kubeconfig=${var.paths.kubeconfig} get nodes &>/dev/null && \
-           kubectl --kubeconfig=${var.paths.kubeconfig} get namespaces &>/dev/null && \
-           kubectl --kubeconfig=${var.paths.kubeconfig} get --raw /healthz &>/dev/null; then
-          CONSECUTIVE_SUCCESS=$((CONSECUTIVE_SUCCESS + 1))
-          echo "✅ Stability check $CONSECUTIVE_SUCCESS/5 passed (attempt $ATTEMPT/$MAX_ATTEMPTS)"
+        # Check if we can list nodes (API operational)
+        if ! kubectl --kubeconfig=${var.paths.kubeconfig} get nodes &>/dev/null; then
+          echo "⏳ Attempt $ATTEMPT/$MAX_ATTEMPTS - API not fully operational yet (10s)..."
+          sleep 10
+          ATTEMPT=$((ATTEMPT + 1))
+          continue
+        fi
 
-          if [ $CONSECUTIVE_SUCCESS -ge 5 ]; then
-            echo "🎉 Kubernetes API is STABLE and ready!"
+        # Check control plane pods in kube-system
+        APISERVER_COUNT=$(kubectl --kubeconfig=${var.paths.kubeconfig} get pods -n kube-system -l component=kube-apiserver --no-headers 2>/dev/null | grep -c Running || echo "0")
+        CONTROLLER_COUNT=$(kubectl --kubeconfig=${var.paths.kubeconfig} get pods -n kube-system -l component=kube-controller-manager --no-headers 2>/dev/null | grep -c Running || echo "0")
+        SCHEDULER_COUNT=$(kubectl --kubeconfig=${var.paths.kubeconfig} get pods -n kube-system -l component=kube-scheduler --no-headers 2>/dev/null | grep -c Running || echo "0")
+        ETCD_COUNT=$(kubectl --kubeconfig=${var.paths.kubeconfig} get pods -n kube-system -l component=etcd --no-headers 2>/dev/null | grep -c Running || echo "0")
+
+        echo "📊 Control plane status: kube-apiserver=$APISERVER_COUNT kube-controller=$CONTROLLER_COUNT kube-scheduler=$SCHEDULER_COUNT etcd=$ETCD_COUNT"
+
+        # We need at least 1 of each (for single control plane) or 2+ for HA
+        if [ "$APISERVER_COUNT" -ge 1 ] && [ "$CONTROLLER_COUNT" -ge 1 ] && [ "$SCHEDULER_COUNT" -ge 1 ] && [ "$ETCD_COUNT" -ge 1 ]; then
+          READY=$((READY + 1))
+          echo "✅ Control plane ready ($READY/3 consecutive checks)"
+
+          if [ $READY -ge 3 ]; then
+            echo "🎉 Kubernetes control plane is STABLE and ready!"
+            echo "📋 Final status:"
+            kubectl --kubeconfig=${var.paths.kubeconfig} get nodes
+            kubectl --kubeconfig=${var.paths.kubeconfig} get pods -n kube-system | grep -E "(kube-|etcd)"
             exit 0
           fi
+          sleep 5
         else
-          if [ $CONSECUTIVE_SUCCESS -gt 0 ]; then
-            echo "⚠️  API became unstable, resetting counter (was at $CONSECUTIVE_SUCCESS/5, attempt $ATTEMPT/$MAX_ATTEMPTS)"
+          if [ $READY -gt 0 ]; then
+            echo "⚠️  Control plane became unstable (was at $READY/3)"
           fi
-          CONSECUTIVE_SUCCESS=0
+          READY=0
+          echo "⏳ Waiting for control plane... (10s)"
+          sleep 10
         fi
-        sleep 3
+
         ATTEMPT=$((ATTEMPT + 1))
       done
 
-      echo "❌ API is responding but not stable enough after $MAX_ATTEMPTS attempts"
+      echo "❌ Control plane not ready after $MAX_ATTEMPTS attempts (10 minutes)"
       exit 1
     EOT
   }
