@@ -90,16 +90,16 @@ resource "null_resource" "wait_for_k8s_api" {
       MAX_ATTEMPTS=120  # 20 minutes (120 attempts × 10s) - static pods can take time to start on Talos
 
       while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-        # Check control plane pods in kube-system (don't block on 'get nodes')
+        # Check control plane pods in kube-system
+        # Note: On Talos, etcd runs as a system service (not a Kubernetes pod), so we only check K8s components
         APISERVER_COUNT=$(kubectl --kubeconfig=${var.paths.kubeconfig} get pods -n kube-system -l component=kube-apiserver --no-headers 2>/dev/null | grep -c Running || echo "0")
         CONTROLLER_COUNT=$(kubectl --kubeconfig=${var.paths.kubeconfig} get pods -n kube-system -l component=kube-controller-manager --no-headers 2>/dev/null | grep -c Running || echo "0")
         SCHEDULER_COUNT=$(kubectl --kubeconfig=${var.paths.kubeconfig} get pods -n kube-system -l component=kube-scheduler --no-headers 2>/dev/null | grep -c Running || echo "0")
-        ETCD_COUNT=$(kubectl --kubeconfig=${var.paths.kubeconfig} get pods -n kube-system -l component=etcd --no-headers 2>/dev/null | grep -c Running || echo "0")
 
-        echo "📊 Control plane status: kube-apiserver=$APISERVER_COUNT kube-controller=$CONTROLLER_COUNT kube-scheduler=$SCHEDULER_COUNT etcd=$ETCD_COUNT"
+        echo "📊 Control plane status: kube-apiserver=$APISERVER_COUNT kube-controller=$CONTROLLER_COUNT kube-scheduler=$SCHEDULER_COUNT"
 
-        # We need at least 1 of each (for single control plane) or 2+ for HA
-        if [ "$APISERVER_COUNT" -ge 1 ] && [ "$CONTROLLER_COUNT" -ge 1 ] && [ "$SCHEDULER_COUNT" -ge 1 ] && [ "$ETCD_COUNT" -ge 1 ]; then
+        # We need at least 1 of each component
+        if [ "$APISERVER_COUNT" -ge 1 ] && [ "$CONTROLLER_COUNT" -ge 1 ] && [ "$SCHEDULER_COUNT" -ge 1 ]; then
           READY=$((READY + 1))
           echo "✅ Control plane ready ($READY/3 consecutive checks)"
 
@@ -107,7 +107,7 @@ resource "null_resource" "wait_for_k8s_api" {
             echo "🎉 Kubernetes control plane is STABLE and ready!"
             echo "📋 Final status:"
             kubectl --kubeconfig=${var.paths.kubeconfig} get nodes
-            kubectl --kubeconfig=${var.paths.kubeconfig} get pods -n kube-system | grep -E "(kube-|etcd)"
+            kubectl --kubeconfig=${var.paths.kubeconfig} get pods -n kube-system | grep "kube-"
             exit 0
           fi
           sleep 5
