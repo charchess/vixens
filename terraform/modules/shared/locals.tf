@@ -128,9 +128,9 @@ locals {
   # TIMEOUTS
   # --------------------------------------------------------------------------
   timeouts = {
-    helm_install = 600 # 10 minutes
-    helm_upgrade = 600 # 10 minutes
-    k8s_api_wait = 300 # 5 minutes
-    cilium_ready = 180 # 3 minutes
+    helm_install = 1200 # 20 minutes (Cilium needs time to pull images and start on fresh cluster)
+    helm_upgrade = 900  # 15 minutes
+    k8s_api_wait = 300  # 5 minutes
+    cilium_ready = 300  # 5 minutes
   }
 }
