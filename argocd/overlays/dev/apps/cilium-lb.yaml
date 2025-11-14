@@ -18,7 +18,8 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: kube-system  # Cilium CRDs are cluster-scoped, but convention is kube-system
+    # Cilium CRDs are cluster-scoped, but convention is kube-system
+    namespace: kube-system
 
   syncPolicy:
     automated:
