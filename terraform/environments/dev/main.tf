@@ -86,18 +86,10 @@ resource "null_resource" "wait_for_k8s_api" {
       echo "🔍 Phase 2: Waiting for control plane components to be ready..."
       READY=0
       ATTEMPT=1
-      MAX_ATTEMPTS=60
+      MAX_ATTEMPTS=120  # 20 minutes (120 attempts × 10s) - static pods can take time to start on Talos
 
       while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-        # Check if we can list nodes (API operational)
-        if ! kubectl --kubeconfig=${var.paths.kubeconfig} get nodes &>/dev/null; then
-          echo "⏳ Attempt $ATTEMPT/$MAX_ATTEMPTS - API not fully operational yet (10s)..."
-          sleep 10
-          ATTEMPT=$((ATTEMPT + 1))
-          continue
-        fi
-
-        # Check control plane pods in kube-system
+        # Check control plane pods in kube-system (don't block on 'get nodes')
         APISERVER_COUNT=$(kubectl --kubeconfig=${var.paths.kubeconfig} get pods -n kube-system -l component=kube-apiserver --no-headers 2>/dev/null | grep -c Running || echo "0")
         CONTROLLER_COUNT=$(kubectl --kubeconfig=${var.paths.kubeconfig} get pods -n kube-system -l component=kube-controller-manager --no-headers 2>/dev/null | grep -c Running || echo "0")
         SCHEDULER_COUNT=$(kubectl --kubeconfig=${var.paths.kubeconfig} get pods -n kube-system -l component=kube-scheduler --no-headers 2>/dev/null | grep -c Running || echo "0")
