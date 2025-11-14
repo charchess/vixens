@@ -7,9 +7,11 @@ namespace: argocd
 
 resources:
   # All applications in apps/ subdirectory (new pattern)
-  - apps/cilium-lb.yaml                      # Cilium L2 Announcements + LB IPAM (wave -2)
+  # Cilium L2 Announcements + LB IPAM (wave -2)
+  - apps/cilium-lb.yaml
   - apps/traefik.yaml                        # Traefik Ingress Controller
-  - apps/traefik-dashboard.yaml              # Traefik Dashboard hostname redirect
+  # Traefik Dashboard hostname redirect
+  - apps/traefik-dashboard.yaml
   - apps/argocd.yaml                         # ArgoCD Ingress for UI
   - apps/whoami.yaml                         # Test application
   - apps/cert-manager.yaml                   # cert-manager (wave 0)
