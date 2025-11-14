@@ -55,19 +55,29 @@ Each node has **two VLANs** configured on a single physical interface:
 ```
 vixens/
 ├── terraform/                      # Phase 1: Infrastructure as Code
-│   ├── modules/talos/             # Reusable Talos cluster module ✅
-│   │   ├── main.tf                # Resources + per-node patches
-│   │   ├── variables.tf           # Per-node config (disk, network, etc.)
-│   │   ├── outputs.tf             # kubeconfig, talosconfig
-│   │   ├── providers.tf           # Provider documentation
-│   │   └── versions.tf            # Terraform >= 1.5.0, Talos ~> 0.9
+│   ├── modules/
+│   │   ├── shared/                # ✅ DRY Module (Single Source of Truth)
+│   │   │   ├── locals.tf          # Chart versions, tolerations, capabilities, timeouts
+│   │   │   ├── outputs.tf         # Exported configurations
+│   │   │   └── variables.tf       # Environment input
+│   │   ├── talos/                 # Reusable Talos cluster module ✅
+│   │   │   ├── main.tf            # Resources + per-node patches
+│   │   │   ├── variables.tf       # Per-node config (disk, network, etc.)
+│   │   │   ├── outputs.tf         # kubeconfig, talosconfig
+│   │   │   └── versions.tf        # Terraform >= 1.5.0, Talos ~> 0.9
+│   │   ├── cilium/                # Cilium CNI module
+│   │   └── argocd/                # ArgoCD GitOps module
 │   └── environments/
 │       ├── dev/                   # Dev cluster (obsy, onyx, opale - 3 CP HA) ✅
-│       │   ├── main.tf            # Module call with node configs
+│       │   ├── main.tf            # 2-level: env → modules (no base/)
+│       │   ├── variables.tf       # 8 typed objects (cluster, paths, argocd, etc.)
+│       │   ├── terraform.tfvars   # Environment-specific values
+│       │   ├── backend.tf         # S3 backend config
 │       │   ├── versions.tf        # Provider versions
 │       │   ├── provider.tf        # Provider config
 │       │   ├── kubeconfig-dev     # Generated (gitignored)
-│       │   └── talosconfig-dev    # Generated (gitignored)
+│       │   ├── talosconfig-dev    # Generated (gitignored)
+│       │   └── .envrc             # Backend credentials (gitignored)
 │       ├── test/                  # Test cluster ⏳ Sprint 9
 │       ├── staging/               # Staging cluster 📅 Future
 │       └── prod/                  # Prod cluster 📅 Future
@@ -116,7 +126,8 @@ vixens/
 │   │   ├── 002-argocd-gitops.md
 │   │   ├── 003-vlan-segmentation.md
 │   │   ├── 004-cilium-cni.md
-│   │   └── 005-cilium-l2-announcements.md
+│   │   ├── 005-cilium-l2-announcements.md
+│   │   └── 006-terraform-2-level-architecture.md ✅ NEW
 │   └── ROADMAP.md                 # Sprint-based roadmap
 │
 ├── .github/workflows/
@@ -337,6 +348,83 @@ cilium connectivity test
 ping 192.168.111.162  # VLAN 111 (internal)
 ping 192.168.208.162  # VLAN 208 (services)
 ```
+
+## Terraform Architecture (2-Level)
+
+The Terraform infrastructure uses a **2-level architecture** following DRY principles:
+
+### Architecture Overview
+
+```
+environments/dev/main.tf → modules/{shared, talos, cilium, argocd}
+```
+
+**Key Modules:**
+
+1. **shared/** - Single source of truth (DRY)
+   - Chart versions (Cilium, ArgoCD, Traefik, cert-manager)
+   - Control plane tolerations (reusable)
+   - Cilium capabilities (11 validated for Talos)
+   - Network defaults (pod/service subnets)
+   - Security contexts
+   - Timeouts (helm install: 20min, upgrade: 15min)
+
+2. **talos/** - Cluster provisioning
+   - Per-node configuration (disk, network, patches)
+   - Dual-VLAN support (internal 111 + services 20X)
+   - VIP management
+   - Automatic bootstrap
+
+3. **cilium/** - CNI deployment
+   - Uses shared module for capabilities/tolerations
+   - L2 Announcements + LB IPAM
+   - Hubble observability
+
+4. **argocd/** - GitOps bootstrap
+   - Uses shared module for tolerations/versions
+   - App-of-Apps pattern
+   - Automatic root-app deployment
+
+### Variable Structure (8 Typed Objects)
+
+Environments use **8 typed objects** instead of 27+ scattered variables:
+
+1. `cluster` - Cluster configuration (name, endpoint, versions)
+2. `control_plane_nodes` - Per-node CP configs
+3. `worker_nodes` - Per-node worker configs
+4. `paths` - File paths (kubeconfig, talosconfig, yamls)
+5. `argocd` - ArgoCD configuration (LoadBalancer IP, admin password)
+6. `environment` - Environment name (dev, test, staging, prod)
+7. `git_branch` - Git branch for ArgoCD
+8. `vlan_services` - Services VLAN ID (208, 209, 210, 201)
+
+**Benefits:**
+- ✅ Type safety with Terraform validation
+- ✅ Logical grouping of related configs
+- ✅ Clear module interfaces
+- ✅ Easy discovery and maintenance
+
+### wait_for_k8s_api Validation
+
+The infrastructure includes a robust **two-phase** cluster readiness check:
+
+**Phase 1: API Server Response** (10 min timeout)
+- 90s initial delay for Talos bootstrap
+- Checks `/healthz` endpoint
+- 60 attempts × 10s
+
+**Phase 2: Control Plane Readiness** (20 min timeout)
+- Validates kube-apiserver, kube-controller-manager, kube-scheduler
+- Requires **3 consecutive successful checks**
+- Does NOT check etcd (runs as Talos system service, not K8s pod)
+- 120 attempts × 10s
+- Static pods can take 8-9 minutes to start on fresh cluster
+
+**Validated Timeouts:**
+- Helm install: **1200s (20 min)** - Cilium can take 15-17 min on fresh cluster
+- wait_for_k8s_api: **~30 min max** (10 min Phase 1 + 20 min Phase 2)
+
+See [ADR 006: Terraform 2-Level Architecture](docs/adr/006-terraform-2-level-architecture.md) for full rationale.
 
 ## Terraform Module: talos
 
