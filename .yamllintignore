@@ -1,0 +1,6 @@
+# Backup files (kubectl dumps with different indentation)
+backups/
+
+# Temporary files
+*.tmp
+*.bak
