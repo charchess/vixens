@@ -1,7 +1,8 @@
 # ============================================================================
-# VIXENS TERRAFORM - DEV ENVIRONMENT VARIABLES
+# ENVIRONMENT MODULE - INPUT VARIABLES
 # ============================================================================
-# Strongly typed variables with validation
+# This module encapsulates the common logic for all environments (dev/test/staging/prod)
+# Only environment-specific values differ via terraform.tfvars
 
 # --------------------------------------------------------------------------
 # ENVIRONMENT
@@ -29,7 +30,6 @@ variable "cluster" {
   type = object({
     name               = string
     endpoint           = string
-    vip                = string
     talos_version      = string
     talos_image        = string
     kubernetes_version = string
@@ -43,11 +43,6 @@ variable "cluster" {
   validation {
     condition     = can(regex("^v\\d+\\.\\d+\\.\\d+$", var.cluster.talos_version))
     error_message = "Talos version must be in format vX.Y.Z"
-  }
-
-  validation {
-    condition     = can(regex("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$", var.cluster.vip))
-    error_message = "Cluster VIP must be a valid IPv4 address"
   }
 }
 
@@ -102,56 +97,17 @@ variable "worker_nodes" {
 variable "argocd" {
   description = "ArgoCD configuration"
   type = object({
-    service_type      = string
     loadbalancer_ip   = string
     hostname          = string
+    admin_password    = string
     insecure          = bool
     disable_auth      = bool
     anonymous_enabled = bool
   })
 
   validation {
-    condition     = contains(["LoadBalancer", "ClusterIP", "NodePort"], var.argocd.service_type)
-    error_message = "ArgoCD service type must be LoadBalancer, ClusterIP, or NodePort"
-  }
-
-  validation {
     condition     = can(regex("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$", var.argocd.loadbalancer_ip))
     error_message = "ArgoCD LoadBalancer IP must be a valid IPv4 address"
-  }
-}
-
-# --------------------------------------------------------------------------
-# CILIUM L2 ANNOUNCEMENTS
-# --------------------------------------------------------------------------
-variable "cilium_l2" {
-  description = "Cilium L2 Announcements configuration"
-  type = object({
-    pool_name     = string
-    pool_ips      = list(string)
-    policy_name   = string
-    interfaces    = list(string)
-    node_selector = map(string)
-  })
-
-  validation {
-    condition     = length(var.cilium_l2.pool_ips) > 0
-    error_message = "At least one IP pool range must be specified"
-  }
-}
-
-# --------------------------------------------------------------------------
-# NETWORK
-# --------------------------------------------------------------------------
-variable "network" {
-  description = "Network configuration"
-  type = object({
-    vlan_services_subnet = string
-  })
-
-  validation {
-    condition     = can(cidrhost(var.network.vlan_services_subnet, 0))
-    error_message = "VLAN services subnet must be a valid CIDR notation"
   }
 }
 
@@ -166,11 +122,4 @@ variable "paths" {
     cilium_ip_pool_yaml   = string
     cilium_l2_policy_yaml = string
   })
-
-  default = {
-    kubeconfig            = "./kubeconfig-dev"
-    talosconfig           = "./talosconfig-dev"
-    cilium_ip_pool_yaml   = "../../../apps/cilium-lb/overlays/dev/ippool.yaml"
-    cilium_l2_policy_yaml = "../../../apps/cilium-lb/base/l2policy.yaml"
-  }
 }

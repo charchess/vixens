@@ -95,9 +95,9 @@ worker_nodes = {}
 # ARGOCD
 # --------------------------------------------------------------------------
 argocd = {
-  service_type      = "LoadBalancer"
   loadbalancer_ip   = "192.168.208.71"
   hostname          = "argocd.dev.truxonline.com"
+  admin_password    = "admin" # TODO: Change in production
   insecure          = true
   disable_auth      = true
   anonymous_enabled = true

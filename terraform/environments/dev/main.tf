@@ -1,30 +1,16 @@
 # ============================================================================
-# VIXENS DEV ENVIRONMENT - 2-LEVEL ARCHITECTURE
+# VIXENS DEV ENVIRONMENT
 # ============================================================================
-# Direct module calls (env → modules) without base/ abstraction layer
-#
-# Structure:
-#   - main.tf      : Locals + shared module (DRY configurations)
-#   - talos.tf     : Talos cluster + kubeconfig + wait script
-#   - cilium.tf    : Cilium CNI
-#   - argocd.tf    : ArgoCD GitOps
-#   - outputs.tf   : Environment outputs
-#   - variables.tf : Input variables
-#   - versions.tf  : Provider versions
-#   - providers.tf : Provider configurations
-#   - backend.tf   : S3 backend configuration
+# Uses the shared environment module for DRY infrastructure deployment
 
-locals {
-  # Repository root for relative paths
-  repo_root = "${path.module}/../../.."
-}
+module "environment" {
+  source = "../../modules/environment"
 
-# ----------------------------------------------------------------------------
-# SHARED MODULE (DRY Configurations)
-# ----------------------------------------------------------------------------
-module "shared" {
-  source = "../../modules/shared"
-
-  environment     = var.environment
-  loadbalancer_ip = var.argocd.loadbalancer_ip
+  environment         = var.environment
+  git_branch          = var.git_branch
+  cluster             = var.cluster
+  control_plane_nodes = var.control_plane_nodes
+  worker_nodes        = var.worker_nodes
+  paths               = var.paths
+  argocd              = var.argocd
 }
