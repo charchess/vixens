@@ -77,9 +77,9 @@ ATTEMPT=1
 while [ $ATTEMPT -le $PHASE2_MAX_ATTEMPTS ]; do
   # Check control plane pods in kube-system
   # Note: On Talos, etcd runs as a system service (not a Kubernetes pod)
-  APISERVER_COUNT=$(kubectl --kubeconfig="$KUBECONFIG_PATH" get pods -n kube-system -l component=kube-apiserver --no-headers 2>/dev/null | grep -c Running || echo "0")
-  CONTROLLER_COUNT=$(kubectl --kubeconfig="$KUBECONFIG_PATH" get pods -n kube-system -l component=kube-controller-manager --no-headers 2>/dev/null | grep -c Running || echo "0")
-  SCHEDULER_COUNT=$(kubectl --kubeconfig="$KUBECONFIG_PATH" get pods -n kube-system -l component=kube-scheduler --no-headers 2>/dev/null | grep -c Running || echo "0")
+  APISERVER_COUNT=$(kubectl --kubeconfig="$KUBECONFIG_PATH" get pods -n kube-system -l component=kube-apiserver --no-headers 2>/dev/null | grep -c Running | tr -d '\n' || echo "0")
+  CONTROLLER_COUNT=$(kubectl --kubeconfig="$KUBECONFIG_PATH" get pods -n kube-system -l component=kube-controller-manager --no-headers 2>/dev/null | grep -c Running | tr -d '\n' || echo "0")
+  SCHEDULER_COUNT=$(kubectl --kubeconfig="$KUBECONFIG_PATH" get pods -n kube-system -l component=kube-scheduler --no-headers 2>/dev/null | grep -c Running | tr -d '\n' || echo "0")
 
   echo "📊 Control plane status: kube-apiserver=$APISERVER_COUNT kube-controller=$CONTROLLER_COUNT kube-scheduler=$SCHEDULER_COUNT"
 
