@@ -72,7 +72,7 @@ control_plane_nodes = {
           addresses = ["192.168.200.66/24"]
           gateway   = "192.168.200.1" # Assuming a gateway
         }
-        
+
       ]
     }
   }
@@ -93,10 +93,10 @@ argocd_anonymous_enabled = true
 
 cluster_vip = "192.168.111.190" # New VIP for prod
 
-talos_version                = "v1.11.5" # Keep same for now, might need update
-talos_image                  = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5" # Keep same for now
-kubeconfig_path              = "./kubeconfig-prod"
-talosconfig_path             = "./talosconfig-prod"
-cilium_ip_pool_yaml_path     = "../../../apps/cilium-lb/overlays/prod/ippool.yaml"
-cilium_l2_policy_yaml_path   = "../../../apps/cilium-lb/overlays/prod/l2policy.yaml"
-kubernetes_version           = "1.30.0" # Keep same for now
+talos_version              = "v1.11.5"                                                                                              # Keep same for now, might need update
+talos_image                = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5" # Keep same for now
+kubeconfig_path            = "./kubeconfig-prod"
+talosconfig_path           = "./talosconfig-prod"
+cilium_ip_pool_yaml_path   = "../../../apps/cilium-lb/overlays/prod/ippool.yaml"
+cilium_l2_policy_yaml_path = "../../../apps/cilium-lb/overlays/prod/l2policy.yaml"
+kubernetes_version         = "1.30.0" # Keep same for now
