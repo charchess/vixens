@@ -1,5 +1,5 @@
 # ============================================================================
-# TERRAFORM & PROVIDER VERSIONS - STAGING ENVIRONMENT
+# TERRAFORM & PROVIDER VERSIONS
 # ============================================================================
 
 terraform {
