@@ -92,10 +92,10 @@ argocd_anonymous_enabled = true
 
 cluster_vip = "192.168.111.180"
 
-talos_version                = "v1.11.5"
-talos_image                  = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
-kubeconfig_path              = "./kubeconfig-staging"
-talosconfig_path             = "./talosconfig-staging"
-cilium_ip_pool_yaml_path     = "../../../apps/cilium-lb/overlays/staging/ippool.yaml"
-cilium_l2_policy_yaml_path   = "../../../apps/cilium-lb/overlays/staging/l2policy.yaml"
-kubernetes_version           = "1.30.0"
+talos_version              = "v1.11.5"
+talos_image                = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
+kubeconfig_path            = "./kubeconfig-staging"
+talosconfig_path           = "./talosconfig-staging"
+cilium_ip_pool_yaml_path   = "../../../apps/cilium-lb/overlays/staging/ippool.yaml"
+cilium_l2_policy_yaml_path = "../../../apps/cilium-lb/overlays/staging/l2policy.yaml"
+kubernetes_version         = "1.30.0"

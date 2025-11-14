@@ -4,7 +4,10 @@ terraform {
     key    = "terraform.tfstate"
     region = "us-east-1"
 
-    endpoint   = "http://synelia.internal.truxonline.com:9000"
+    endpoint = "http://synelia.internal.truxonline.com:9000"
+
+    # TODO TFREF-006: Migrate to environment variables
+    # For now, keeping inline for testing
     access_key = "terraform"
     secret_key = "terraform"
 

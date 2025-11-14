@@ -1,12 +1,12 @@
 module "talos_cluster" {
   source = "../modules/talos"
 
-  cluster_name          = var.cluster_name
-  talos_version         = var.talos_version
-  cluster_endpoint      = var.cluster_endpoint
-  talos_image           = var.talos_image
-  control_plane_nodes   = var.control_plane_nodes
-  worker_nodes          = var.worker_nodes
+  cluster_name        = var.cluster_name
+  talos_version       = var.talos_version
+  cluster_endpoint    = var.cluster_endpoint
+  talos_image         = var.talos_image
+  control_plane_nodes = var.control_plane_nodes
+  worker_nodes        = var.worker_nodes
 }
 
 resource "local_file" "kubeconfig" {

@@ -156,3 +156,11 @@ archive/
 
 terraform.tfstate*
 current_state.json
+
+# Environment files (credentials)
+.envrc
+.envrc.*
+
+# Backup and temporary files from refactoring
+*.old
+*.BASE

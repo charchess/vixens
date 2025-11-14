@@ -1,3 +1,8 @@
+# ============================================================================
+# CILIUM MODULE - OPTIMIZED WITH DRY PRINCIPLE
+# ============================================================================
+# Eliminates hardcoding by using shared configurations
+
 resource "helm_release" "cilium" {
   name       = var.release_name
   repository = "https://helm.cilium.io/"
@@ -7,79 +12,61 @@ resource "helm_release" "cilium" {
 
   wait          = true
   wait_for_jobs = true
-  timeout       = 600
+  timeout       = var.timeout
 
   values = [yamlencode({
     kubeProxyReplacement = true
     k8sServiceHost       = "localhost"
     k8sServicePort       = 7445
+
     l2announcements = {
       enabled = true
     }
+
     k8sClientRateLimit = {
       qps   = 10
       burst = 20
     }
+
     externalIPs = {
       enabled = true
     }
+
     ipam = {
       mode = "kubernetes"
     }
+
     routingMode    = "tunnel"
     tunnelProtocol = "vxlan"
+
+    # DRY: Capabilities from shared module
     securityContext = {
       capabilities = {
-        ciliumAgent = [
-          "CHOWN",
-          "KILL",
-          "NET_ADMIN",
-          "NET_RAW",
-          "IPC_LOCK",
-          "SYS_ADMIN",
-          "SYS_RESOURCE",
-          "DAC_OVERRIDE",
-          "FOWNER",
-          "SETGID",
-          "SETUID"
-        ]
-        cleanCiliumState = [
-          "NET_ADMIN",
-          "SYS_ADMIN",
-          "SYS_RESOURCE"
-        ]
+        ciliumAgent      = var.cilium_agent_capabilities.add
+        cleanCiliumState = var.cilium_clean_capabilities.add
       }
     }
+
     cgroup = {
       autoMount = {
         enabled = false
       }
       hostRoot = "/sys/fs/cgroup"
     }
+
     bpf = {
       hostLegacyRouting = true
     }
+
     hubble = {
       enabled = true
       relay = {
-        enabled = true
-        tolerations = [
-          {
-            key      = "node-role.kubernetes.io/control-plane"
-            operator = "Exists"
-            effect   = "NoSchedule"
-          }
-        ]
+        enabled     = true
+        tolerations = var.control_plane_tolerations
       }
       ui = {
-        enabled = true
-        tolerations = [
-          {
-            key      = "node-role.kubernetes.io/control-plane"
-            operator = "Exists"
-            effect   = "NoSchedule"
-          }
-        ]
+        enabled     = true
+        tolerations = var.control_plane_tolerations
       }
       metrics = {
         enabled = [
@@ -93,15 +80,10 @@ resource "helm_release" "cilium" {
         ]
       }
     }
+
     operator = {
-      replicas = 1
-      tolerations = [
-        {
-          key      = "node-role.kubernetes.io/control-plane"
-          operator = "Exists"
-          effect   = "NoSchedule"
-        }
-      ]
+      replicas    = 1
+      tolerations = var.control_plane_tolerations
     }
   })]
 
@@ -111,6 +93,9 @@ resource "helm_release" "cilium" {
   ]
 }
 
+# --------------------------------------------------------------------------
+# WAIT FOR CILIUM CRDs
+# --------------------------------------------------------------------------
 resource "null_resource" "wait_for_cilium_crds" {
   depends_on = [
     helm_release.cilium
@@ -125,6 +110,9 @@ resource "null_resource" "wait_for_cilium_crds" {
   }
 }
 
+# --------------------------------------------------------------------------
+# CILIUM L2 ANNOUNCEMENTS RESOURCES
+# --------------------------------------------------------------------------
 resource "kubectl_manifest" "cilium_ip_pool" {
   yaml_body = file(var.ip_pool_yaml_path)
 
@@ -137,6 +125,6 @@ resource "kubectl_manifest" "cilium_l2_policy" {
   yaml_body = file(var.l2_policy_yaml_path)
 
   depends_on = [
-    null_resource.wait_for_cilium_crds
+    kubectl_manifest.cilium_ip_pool
   ]
 }

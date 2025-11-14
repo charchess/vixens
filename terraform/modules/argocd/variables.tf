@@ -1,66 +1,71 @@
+# ============================================================================
+# ARGOCD MODULE VARIABLES
+# ============================================================================
+
 variable "chart_version" {
-  description = "The version of the ArgoCD Helm chart to deploy."
+  description = "ArgoCD Helm chart version"
   type        = string
-  default     = "7.7.7"
 }
 
 variable "namespace" {
-  description = "The Kubernetes namespace to deploy ArgoCD into."
+  description = "Kubernetes namespace for ArgoCD"
   type        = string
   default     = "argocd"
 }
 
-variable "argocd_loadbalancer_ip" {
-  description = "The IP address to assign to the ArgoCD server LoadBalancer."
-  type        = string
-}
-
-variable "argocd_service_type" {
-  description = "The type of Kubernetes service to use for the ArgoCD server."
-  type        = string
-  default     = "ClusterIP"
-}
-
 variable "environment" {
-  description = "The name of the deployment environment."
+  description = "Environment name (dev, test, staging, prod)"
   type        = string
 }
 
-variable "argocd_hostname" {
-  description = "The hostname for the ArgoCD Ingress."
+variable "git_branch" {
+  description = "Git branch for ArgoCD to track"
   type        = string
 }
 
-variable "argocd_insecure" {
-  description = "If true, run the ArgoCD server in insecure (HTTP) mode."
-  type        = bool
-  default     = false
+# --------------------------------------------------------------------------
+# ARGOCD CONFIGURATION (typed object)
+# --------------------------------------------------------------------------
+variable "argocd_config" {
+  description = "ArgoCD configuration object"
+  type = object({
+    service_type      = string
+    loadbalancer_ip   = string
+    hostname          = string
+    insecure          = bool
+    disable_auth      = bool
+    anonymous_enabled = bool
+  })
 }
 
-variable "argocd_anonymous_enabled" {
-  description = "If true, enables anonymous user access to ArgoCD."
-  type        = bool
-  default     = false
+# --------------------------------------------------------------------------
+# DRY CONFIGURATION
+# --------------------------------------------------------------------------
+variable "control_plane_tolerations" {
+  description = "Control plane tolerations (from shared module)"
+  type = list(object({
+    key      = string
+    operator = string
+    effect   = string
+  }))
 }
 
-variable "argocd_disable_auth" {
-  description = "If true, disables authentication on the ArgoCD server. WARNING: INSECURE."
-  type        = bool
-  default     = false
+variable "timeout" {
+  description = "Helm installation timeout (seconds)"
+  type        = number
+  default     = 600
 }
 
+# --------------------------------------------------------------------------
+# DEPENDENCIES
+# --------------------------------------------------------------------------
 variable "cilium_module" {
-  description = "A reference to the Cilium module to ensure proper dependency."
+  description = "Cilium module reference for dependency"
   type        = any
   default     = null
 }
 
 variable "root_app_template_path" {
-  description = "The path to the root-app.yaml.tpl file."
-  type        = string
-}
-
-variable "git_branch" {
-  description = "The Git branch for ArgoCD to track."
+  description = "Path to root-app.yaml.tpl template"
   type        = string
 }
