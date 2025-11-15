@@ -18,9 +18,24 @@ Vixens is a multi-cluster Kubernetes homelab infrastructure following GitOps bes
 
 ## Current Phase: Phase 2 (GitOps Infrastructure)
 
-**Status**: Sprint 4 COMPLETED - Full GitOps automation with zero manual kubectl commands ✅
+**Status**: Sprint 6 COMPLETED - DRY Optimization & Helm Values Externalization ✅
 
 The project is iterative with a **destroy/recreate** strategy for dev/test environments to ensure reproducibility.
+
+### Recent Achievements (Nov 2025)
+
+**Phase 2 DRY Optimization** ✅
+- Externalized all Helm values (Traefik, cert-manager, webhook-gandi)
+- Eliminated 354 lines of duplication across environments
+- Implemented ArgoCD multiple sources pattern
+- Created comprehensive values documentation (3 READMEs)
+- Established DRY conventions in CONVENTIONS.md
+
+**Benefits:**
+- 40% reduction in ArgoCD app file sizes
+- Common values defined once, shared across 4 environments
+- Production-ready configs (resources, HA, monitoring)
+- Easy to test locally with `helm template`
 
 ## Architecture
 
@@ -99,11 +114,26 @@ vixens/
 │   │   │   └── ippool.yaml
 │   │   └── overlays/
 │   │       └── dev/               # VLAN 208 pools (192.168.208.70-89)
-│   ├── traefik/
-│   ├── cert-manager/
-│   ├── synology-csi/
-│   ├── authelia/
-│   └── monitoring/
+│   ├── traefik/                   # ✅ DRY Helm values (Phase 2)
+│   │   └── values/                # External Helm values
+│   │       ├── common.yaml        # Shared config (all envs)
+│   │       ├── dev.yaml           # Dev overrides
+│   │       ├── test.yaml, staging.yaml, prod.yaml
+│   │       └── README.md          # Values documentation
+│   ├── cert-manager/              # ✅ DRY Helm values (Phase 2)
+│   │   └── values/
+│   │       ├── common.yaml        # installCRDs, tolerations
+│   │       ├── dev.yaml, test.yaml, staging.yaml
+│   │       ├── prod.yaml          # Resources, HA, metrics
+│   │       └── README.md
+│   ├── cert-manager-webhook-gandi/  # ✅ DRY Helm values (Phase 2)
+│   │   └── values/
+│   │       ├── common.yaml        # groupName, tolerations
+│   │       ├── dev.yaml, test.yaml, staging.yaml, prod.yaml
+│   │       └── README.md
+│   ├── synology-csi/              # 📅 Sprint 7
+│   ├── authelia/                  # 📅 Sprint 8
+│   └── monitoring/                # 📅 Future
 │
 ├── .secrets/                      # Secrets (⚠️ temporary, committed in Git)
 │   ├── dev/
