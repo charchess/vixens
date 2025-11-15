@@ -1,0 +1,93 @@
+---
+# Environment-specific configuration for production
+# Used by Kustomize replacements to inject values into app templates
+# This ConfigMap is NOT deployed to the cluster - it's used at build time only
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: env-config
+  namespace: argocd
+  annotations:
+    kustomize.config.k8s.io/behavior: create
+    description: "Environment configuration for production - used at build time"
+data:
+  # ============================================================================
+  # Environment Identification
+  # ============================================================================
+  environment: "prod"
+  git_branch: "main"  # Production uses main branch
+  cluster_name: "vixens-prod"
+
+  # ============================================================================
+  # Domain Configuration
+  # ============================================================================
+  domain_suffix: ""  # No suffix for production
+  base_domain: "truxonline.com"
+  full_domain: "truxonline.com"
+
+  # ============================================================================
+  # Network Configuration - VLAN Services (201)
+  # ============================================================================
+  vlan_id: "201"
+  vlan_subnet: "192.168.201.0/24"
+  vlan_gateway: "192.168.201.1"
+
+  # Internal VLAN (same for all environments)
+  vlan_internal: "111"
+  vlan_internal_subnet: "192.168.111.0/24"
+
+  # ============================================================================
+  # LoadBalancer IP Pools (Cilium L2 Announcements)
+  # ============================================================================
+  # Assigned pool: .70-.79 (static IPs for specific services)
+  lb_pool_assigned_start: "192.168.201.70"
+  lb_pool_assigned_end: "192.168.201.79"
+
+  # Auto pool: .80-.89 (dynamic allocation by Cilium)
+  lb_pool_auto_start: "192.168.201.80"
+  lb_pool_auto_end: "192.168.201.89"
+
+  # Full pool range
+  lb_pool_start: "192.168.201.70"
+  lb_pool_end: "192.168.201.89"
+
+  # ============================================================================
+  # Service LoadBalancer IPs (from assigned pool .70-.79)
+  # ============================================================================
+  traefik_lb_ip: "192.168.201.70"
+  argocd_server_ip: "192.168.201.71"
+  # Reserved for future services: .72-.79
+
+  # ============================================================================
+  # Cluster Configuration
+  # ============================================================================
+  # Kubernetes API VIP on VLAN 111
+  cluster_vip: "192.168.111.200"
+  cluster_endpoint: "https://192.168.111.200:6443"
+
+  # ============================================================================
+  # Control Plane Nodes (Physical - VLAN 111 IPs) - TBD
+  # ============================================================================
+  # node_xxx_ip: "192.168.111.202"
+  # node_yyy_ip: "192.168.111.204"
+  # node_zzz_ip: "192.168.111.203"
+
+  # ============================================================================
+  # Application-Specific Configuration
+  # ============================================================================
+  # Talos version
+  talos_version: "v1.11.5"
+
+  # Kubernetes version
+  kubernetes_version: "v1.34.0"
+
+  # Cilium version
+  cilium_version: "v1.18.3"
+
+  # ArgoCD version
+  argocd_version: "v7.7.7"
+
+  # ============================================================================
+  # Resource Limits (production-grade)
+  # ============================================================================
+  resource_tier: "production"  # development | staging | production
