@@ -1,0 +1,29 @@
+fullnameOverride: sealed-secrets-controller
+
+# Run on control plane nodes (all nodes in current dev cluster)
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+# Resource requests/limits
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 65534
+
+# Enable metrics for monitoring (future Prometheus integration)
+metrics:
+  enabled: false
+
+# Log level
+logLevel: info
