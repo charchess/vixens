@@ -1,0 +1,51 @@
+---
+# Production environment overrides for Traefik
+# VLAN 201 (192.168.201.0/24)
+
+# ============================================================================
+# LoadBalancer Service Configuration
+# ============================================================================
+service:
+  type: LoadBalancer
+  annotations:
+    io.cilium/lb-ipam-ips: "192.168.201.70"
+
+# ============================================================================
+# Production-Specific Settings
+# ============================================================================
+# Log level for production (less verbose)
+logs:
+  general:
+    level: WARN
+  access:
+    enabled: true
+
+# Production-grade resource limits
+resources:
+  requests:
+    cpu: "500m"
+    memory: "512Mi"
+  limits:
+    cpu: "2000m"
+    memory: "2Gi"
+
+# High availability with multiple replicas
+deployment:
+  replicas: 3
+
+# ============================================================================
+# Production Metrics & Monitoring
+# ============================================================================
+metrics:
+  prometheus:
+    enabled: true
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    addRoutersLabels: true
+
+# ============================================================================
+# Production Pod Disruption Budget
+# ============================================================================
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
