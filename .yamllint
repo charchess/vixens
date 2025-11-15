@@ -2,6 +2,12 @@
 # Ne pas utiliser "extends" si vous personnalisez tout
 extends: default
 
+# Ignore patterns
+ignore: |
+  backups/
+  .git/
+  .terraform/
+
 yaml-files:
   - '*.yaml'
   - '*.yml'
@@ -36,4 +42,4 @@ rules:
   comments: disable
   comments-indentation: disable
   brackets: disable
-  truthy: disable 
+  truthy: disable
