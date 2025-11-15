@@ -1,0 +1,18 @@
+---
+# Production environment overrides for cert-manager-webhook-gandi
+# VLAN 201 (192.168.201.0/24)
+
+# ============================================================================
+# Production-Specific Settings
+# ============================================================================
+# Higher resource limits for production
+resources:
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+
+# Production-grade replica count
+replicaCount: 2
