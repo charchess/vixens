@@ -7,8 +7,8 @@ namespace: argocd
 
 resources:
   # All applications in apps/ subdirectory (new pattern)
-  # Sealed Secrets controller (wave -1)
-  - apps/sealed-secrets.yaml
+  # Infisical Operator for secrets management (wave -3)
+  - apps/infisical-operator.yaml
   # Cilium L2 Announcements + LB IPAM (wave -2)
   - apps/cilium-lb.yaml
   - apps/traefik.yaml                        # Traefik Ingress Controller
