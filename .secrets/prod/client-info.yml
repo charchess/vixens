@@ -1,0 +1,7 @@
+---
+clients:
+  - host: "192.168.111.69"
+    port: 5000
+    https: false
+    username: "talos-csi"
+    password: "w61CpDQs2RB7bfE8r2eSY3zB7dXJ6pBCAudfuK8fDDN43Oi3Jw"
