@@ -40,10 +40,10 @@ spec:
               requests:
                 cpu: 50m
                 memory: 32Mi
-        tolerations:
-          - key: node-role.kubernetes.io/control-plane
-            operator: Exists
-            effect: NoSchedule
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
   destination:
     server: https://kubernetes.default.svc
     namespace: infisical-operator-system
