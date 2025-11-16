@@ -13,8 +13,8 @@ spec:
   project: default
   source:
     repoURL: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/
-    chart: infisical-secrets-operator
-    targetRevision: 0.10.1
+    chart: secrets-operator
+    targetRevision: 0.10.5
     helm:
       values: |
         controllerManager:
