@@ -262,28 +262,48 @@ curl http://whoami.dev.local
 
 ---
 
-### Sprint 7 : cert-manager (Self-Signed Dev) (2-3h)
-**Objectif** : TLS automatique en dev
+### Sprint 7 : Infisical Secrets Management (3-4h)
+**Objectif** : Gestion automatisée des secrets via Infisical
+
+**Statut** : [ ] En cours
 
 **Tâches** :
-1. Créer `apps/cert-manager/base/`
-2. ClusterIssuer `selfsigned` pour dev
-3. Annoter Ingress whoami avec cert-manager
-4. Valider certificat généré
+1. Configurer Infisical UI (projet vixens, 4 environnements, Machine Identities)
+2. Déployer Infisical Operator via ArgoCD
+3. Créer Secret Universal Auth (bootstrap manuel)
+4. Migrer secrets Gandi et Synology CSI vers InfisicalSecret CRDs
+5. Valider synchronisation Infisical → Kubernetes
+6. Supprimer `.secrets/` plaintext de Git
+7. Tester rotation manuelle d'un secret
 
 **Validation** :
 ```bash
-kubectl get certificate -n default
-# Résultat attendu : whoami-tls Ready
+# Vérifier l'operator
+kubectl get pods -n infisical-operator-system
+# Résultat attendu : 1/1 Running
 
-curl https://whoami.dev.local -k
-# Résultat attendu : HTTPS avec self-signed cert
+# Vérifier InfisicalSecrets
+kubectl get infisicalsecrets -A
+# Résultat attendu : gandi-credentials-infisical, synology-csi-credentials-infisical
+
+# Vérifier secrets K8s générés
+kubectl get secret gandi-credentials -n cert-manager -o jsonpath='{.data.api-token}' | base64 -d
+# Résultat attendu : valeur depuis Infisical
+
+# Tester rotation
+# 1. Modifier secret dans Infisical UI
+# 2. Attendre 60s
+# 3. Vérifier mise à jour automatique dans K8s
 ```
 
 **Definition of Done** :
-- [ ] cert-manager pods running
-- [ ] ClusterIssuer selfsigned créé
-- [ ] Certificat auto-généré pour Ingress
+- [ ] Infisical Operator déployé et Running
+- [ ] Machine Identities créées pour dev (test/staging/prod futurs)
+- [ ] InfisicalSecret CRDs créés pour Gandi et Synology CSI
+- [ ] Secrets K8s synchronisés automatiquement depuis Infisical
+- [ ] `.secrets/` supprimé de Git
+- [ ] Documentation ADR 007 + deployment guide créée
+- [ ] Test de rotation validé (Gandi token)
 
 ---
 
