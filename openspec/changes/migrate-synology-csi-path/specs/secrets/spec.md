@@ -1,6 +1,6 @@
 # Secrets Spec Delta - Synology CSI Path Isolation
 
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: Applications SHALL use isolated Infisical paths
 
