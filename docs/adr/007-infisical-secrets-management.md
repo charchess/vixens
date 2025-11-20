@@ -1,7 +1,7 @@
 # ADR 007: Infisical pour la Gestion des Secrets
 
 **Date**: 2025-11-16
-**Statut**: ✅ Implémenté (2025-11-20)
+**Statut**: ✅ Implémenté Multi-Environnement (2025-11-20)
 **Auteur**: Claude Code
 
 ---
@@ -67,16 +67,25 @@ Utiliser **Infisical Kubernetes Operator** pour la gestion des secrets.
 ```
 Projet: vixens
 ├── Environment: dev
-│   ├── Path: / (root)
-│   │   └── synology-csi-client-info  # Synology CSI (YAML complet)
-│   └── Path: /cert-manager
-│       └── api-token                  # Gandi LiveDNS API token
+│   ├── Path: /cert-manager
+│   │   └── api-token                  # Gandi LiveDNS API token
+│   └── Path: /synology-csi
+│       └── client-info.yaml           # Synology CSI credentials
 ├── Environment: test
-│   └── (mêmes paths et secrets, valeurs différentes)
+│   ├── Path: /cert-manager
+│   │   └── api-token
+│   └── Path: /synology-csi
+│       └── client-info.yaml
 ├── Environment: staging
-│   └── (mêmes paths et secrets, valeurs différentes)
+│   ├── Path: /cert-manager
+│   │   └── api-token
+│   └── Path: /synology-csi
+│       └── client-info.yaml
 └── Environment: prod
-    └── (mêmes paths et secrets, valeurs différentes)
+    ├── Path: /cert-manager
+    │   └── api-token
+    └── Path: /synology-csi
+        └── client-info.yaml
 ```
 
 **Architecture des paths (isolation):**
@@ -464,6 +473,102 @@ spec:
 - Réplication sur test/staging/prod
 - Backup automatique Infisical
 - Monitoring expiration secrets
+
+---
+
+## Implémentation Multi-Environnement (2025-11-20)
+
+### Statut Déploiement
+
+| Environnement | Machine Identity | Secrets Déployés | Status |
+|---------------|------------------|------------------|--------|
+| **dev** | `vixens-dev-k8s-operator` | cert-manager, synology-csi | ✅ Opérationnel |
+| **test** | `vixens-test-k8s-operator` | cert-manager, synology-csi | ✅ Configuré |
+| **staging** | `vixens-staging-k8s-operator` | cert-manager, synology-csi | ✅ Configuré |
+| **prod** | `vixens-prod-k8s-operator` | cert-manager, synology-csi | ✅ Configuré |
+
+### Architecture GitOps Multi-Environnement
+
+**Structure des overlays Kustomize:**
+
+```
+apps/
+├── cert-manager-webhook-gandi/
+│   ├── base/
+│   │   ├── gandi-infisical-secret.yaml  # InfisicalSecret template
+│   │   └── infisical-auth-secret.yaml   # Placeholder
+│   └── overlays/
+│       ├── dev/
+│       │   ├── kustomization.yaml
+│       │   ├── infisical-auth-secret.yaml         # Dev credentials
+│       │   └── gandi-infisical-secret-patch.yaml  # envSlug: dev
+│       ├── test/
+│       │   ├── kustomization.yaml
+│       │   ├── infisical-auth-secret.yaml         # Test credentials
+│       │   └── gandi-infisical-secret-patch.yaml  # envSlug: test
+│       ├── staging/ (idem)
+│       └── prod/ (idem)
+└── synology-csi/infisical/ (même structure)
+```
+
+**Patches par environnement:**
+
+Chaque overlay patch l'`envSlug` pour pointer vers le bon environnement Infisical:
+
+```yaml
+# gandi-infisical-secret-patch.yaml (exemple test)
+apiVersion: secrets.infisical.com/v1alpha1
+kind: InfisicalSecret
+metadata:
+  name: gandi-credentials-sync
+spec:
+  authentication:
+    universalAuth:
+      secretsScope:
+        envSlug: test  # Change selon l'environnement
+```
+
+### Machine Identities Isolation
+
+Chaque environnement utilise une Machine Identity dédiée avec accès restreint:
+
+- **test**: Accès uniquement à `vixens/test/*`
+- **staging**: Accès uniquement à `vixens/staging/*`
+- **prod**: Accès uniquement à `vixens/prod/*`
+
+**Sécurité**: Compromission d'un environnement n'expose PAS les secrets des autres.
+
+### ArgoCD Applications
+
+Chaque environnement a des Applications ArgoCD dédiées pour les secrets:
+
+```yaml
+# argocd/overlays/test/apps/cert-manager-secrets.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager-secrets
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"  # Before cert-manager
+spec:
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: test  # Branch spécifique
+    path: apps/cert-manager-webhook-gandi/overlays/test
+```
+
+### Nettoyage `.secrets/`
+
+Les anciens secrets en clair ont été supprimés:
+- ✅ `.secrets/test/` supprimé
+- ✅ `.secrets/staging/` supprimé
+- ✅ `.secrets/prod/` supprimé
+- ✅ `.gitignore` mis à jour avec `.secrets/`
+
+### Références
+
+- **OpenSpec**: [propagate-infisical-multi-env](../../openspec/changes/propagate-infisical-multi-env/)
+- **Procédure Setup**: [docs/procedures/infisical-multi-env-setup.md](../procedures/infisical-multi-env-setup.md)
 
 ---
 
