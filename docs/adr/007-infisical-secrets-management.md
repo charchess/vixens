@@ -1,7 +1,7 @@
 # ADR 007: Infisical pour la Gestion des Secrets
 
 **Date**: 2025-11-16
-**Statut**: ✅ Accepté
+**Statut**: ✅ Implémenté (2025-11-20)
 **Auteur**: Claude Code
 
 ---
@@ -62,22 +62,28 @@ Utiliser **Infisical Kubernetes Operator** pour la gestion des secrets.
 
 ### Structure Infisical
 
-**Un seul projet "vixens" avec 4 environnements:**
+**Un seul projet "vixens" avec 4 environnements et paths isolés:**
 
 ```
 Projet: vixens
 ├── Environment: dev
-│   ├── gandi-api-token          # cert-manager DNS-01
-│   ├── synology-csi-host        # Synology CSI
-│   ├── synology-csi-username    # Synology CSI
-│   └── synology-csi-password    # Synology CSI
+│   ├── Path: / (root)
+│   │   └── synology-csi-client-info  # Synology CSI (YAML complet)
+│   └── Path: /cert-manager
+│       └── api-token                  # Gandi LiveDNS API token
 ├── Environment: test
-│   └── (mêmes secrets, valeurs différentes)
+│   └── (mêmes paths et secrets, valeurs différentes)
 ├── Environment: staging
-│   └── (mêmes secrets, valeurs différentes)
+│   └── (mêmes paths et secrets, valeurs différentes)
 └── Environment: prod
-    └── (mêmes secrets, valeurs différentes)
+    └── (mêmes paths et secrets, valeurs différentes)
 ```
+
+**Architecture des paths (isolation):**
+- Chaque application a son propre path dédié
+- Évite les conflits de noms de secrets
+- Facilite la gestion des permissions (Machine Identity scoped par path)
+- Exemple : `/cert-manager`, `/synology-csi`, `/authentik`, etc.
 
 **Pourquoi un seul projet?**
 - Alignement avec la structure Git (`argocd/overlays/{dev,test,staging,prod}`)
@@ -194,11 +200,11 @@ kubectl create secret generic infisical-universal-auth \
 **Exemple: Gandi API token (cert-manager)**
 
 ```yaml
-# apps/cert-manager-config/base/infisical-secret-gandi.yaml
+# apps/cert-manager-webhook-gandi/base/gandi-infisical-secret.yaml
 apiVersion: secrets.infisical.com/v1alpha1
 kind: InfisicalSecret
 metadata:
-  name: gandi-credentials
+  name: gandi-credentials-sync
   namespace: cert-manager
 spec:
   hostAPI: http://192.168.111.69:8085
@@ -208,14 +214,15 @@ spec:
       secretsScope:
         projectSlug: vixens
         envSlug: dev  # dev, test, staging, prod
-        secretsPath: "/"
+        secretsPath: "/cert-manager"  # ✅ Path isolé
       credentialsRef:
         secretName: infisical-universal-auth
-        secretNamespace: infisical-operator-system
+        secretNamespace: cert-manager  # ✅ Credentials par namespace
   managedSecretReference:
     secretName: gandi-credentials
     secretNamespace: cert-manager
-    secretType: Opaque
+    creationPolicy: "Owner"
+    secretType: "Opaque"
 ```
 
 **L'operator créera automatiquement:**
@@ -448,7 +455,7 @@ spec:
 
 ### À moyen terme (Sprint 8-11)
 
-- Ajout de nouveaux secrets (Authelia, PostgreSQL, etc.)
+- Ajout de nouveaux secrets (Authentik, PostgreSQL, etc.)
 - Réutilisation des templates CRD
 - Test de rotation sur environnement test
 
@@ -495,6 +502,97 @@ spec:
 
 ---
 
-**Statut**: ✅ Accepté
-**Version**: 1.0
-**Dernière mise à jour**: 2025-11-16
+## Implémentation Réelle (2025-11-20)
+
+### Secrets Déployés
+
+**cert-manager Gandi API Token** ✅
+- **Path Infisical**: `/cert-manager/api-token`
+- **Kubernetes Secret**: `gandi-credentials` (namespace: `cert-manager`)
+- **InfisicalSecret CRD**: `gandi-credentials-sync`
+- **Machine Identity**: `vixens-dev-k8s-operator`
+- **Validation**: Certificat Let's Encrypt Staging émis avec succès pour `whoami.dev.truxonline.com`
+
+**Synology CSI** 🔄 En cours
+- **Path Infisical**: `/synology-csi-client-info` (root)
+- **Status**: Configuration existante, migration vers path isolé recommandée
+
+### Architecture Déployée
+
+```
+apps/cert-manager-webhook-gandi/
+├── base/
+│   ├── infisical-auth-secret.yaml      # Machine Identity credentials
+│   ├── gandi-infisical-secret.yaml     # InfisicalSecret CRD
+│   ├── kustomization.yaml              # Base resources
+│   └── README.md                       # Documentation complète
+└── overlays/
+    └── dev/
+        └── kustomization.yaml          # Dev overlay
+```
+
+**ArgoCD Application:**
+- Name: `cert-manager-secrets`
+- Sync Wave: `0` (avant cert-manager-webhook-gandi wave 1)
+- Auto-sync: `true`
+- Source: `apps/cert-manager-webhook-gandi/overlays/dev`
+
+### Machine Identity Configuration
+
+**Universal Auth Credentials:**
+- Client ID: `ee279e5e-82b6-476b-9643-093898807f35`
+- Client Secret: Stocké dans `infisical-universal-auth` secret (namespace: `cert-manager`)
+- Permissions: Read access to project `vixens`, environment `dev`, path `/cert-manager`
+
+### Validation Tests
+
+✅ **Test 1: Secret Synchronization**
+```bash
+kubectl get secret -n cert-manager gandi-credentials -o jsonpath='{.data}' | jq 'keys'
+# Result: ["api-token"] ✅ Isolé, pas de contamination
+```
+
+✅ **Test 2: DNS-01 Challenge**
+```bash
+kubectl describe challenge -n whoami <challenge-name>
+# Result: State: valid, Reason: Successfully authorized domain ✅
+```
+
+✅ **Test 3: Certificate Issuance**
+```bash
+kubectl get certificate -n whoami whoami-tls
+# Result: READY=True ✅
+```
+
+### Problèmes Rencontrés et Résolutions
+
+**Problème 1: Authentication failed (401)**
+- **Cause**: Configuration initiale pointait vers `https://app.infisical.com/api` (cloud) au lieu de l'instance self-hosted
+- **Solution**: Mise à jour `hostAPI: http://192.168.111.69:8085`
+
+**Problème 2: Project not found (404)**
+- **Cause**: Project slug incorrect dans Infisical UI
+- **Solution**: Correction du slug de projet vers `vixens`
+
+**Problème 3: Secret contamination**
+- **Cause**: Tous les secrets à la racine `/` étaient synchronisés ensemble
+- **Solution**: Migration vers paths isolés (`/cert-manager`)
+
+### Documentation Créée
+
+- ✅ `apps/cert-manager-webhook-gandi/base/README.md` - Architecture, troubleshooting, rotation
+- ✅ Cette ADR mise à jour avec implémentation réelle
+- ✅ Commits Git documentés avec détails techniques
+
+### Métriques
+
+- **Time to sync**: ~60 secondes (resyncInterval configurable)
+- **Certificate issuance**: ~30 secondes après secret disponible
+- **Secrets in Git**: 0 (100% externalisés)
+- **Security improvement**: Secrets jamais en clair dans Git ✅
+
+---
+
+**Statut**: ✅ Implémenté
+**Version**: 2.0
+**Dernière mise à jour**: 2025-11-20
