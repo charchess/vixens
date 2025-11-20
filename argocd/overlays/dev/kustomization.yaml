@@ -17,6 +17,7 @@ resources:
   - apps/argocd.yaml                         # ArgoCD Ingress for UI
   - apps/whoami.yaml                         # Test application
   - apps/cert-manager.yaml                   # cert-manager (wave 0)
+  - apps/cert-manager-secrets.yaml           # Infisical secrets for cert-manager (wave 0)
   - apps/cert-manager-webhook-gandi.yaml     # Gandi DNS webhook (wave 1)
   - apps/cert-manager-config.yaml            # ClusterIssuers + Secret (wave 2)
   - apps/synology-csi.yaml                   # Synology CSI driver
