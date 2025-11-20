@@ -31,6 +31,9 @@ terraform/environments/*/kubeconfig*
 terraform/environments/*/talosconfig*
 
 # ============= KUBERNETES / KUSTOMIZE =============
+# Secrets directory (all secrets managed via Infisical)
+.secrets/
+
 # Secrets non chiffrés (absolu)
 **/gandi-credentials-secret.yaml
 **/secret-values.yaml
@@ -164,3 +167,4 @@ current_state.json
 # Backup and temporary files from refactoring
 *.old
 *.BASE
+**/.secrets/**/client-info.yml
