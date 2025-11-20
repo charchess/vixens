@@ -1,3 +1,22 @@
+<!-- OPENSPEC:START -->
+# OpenSpec Instructions
+
+These instructions are for AI assistants working in this project.
+
+Always open `@/openspec/AGENTS.md` when the request:
+- Mentions planning or proposals (words like proposal, spec, change, plan)
+- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
+- Sounds ambiguous and you need the authoritative spec before coding
+
+Use `@/openspec/AGENTS.md` to learn:
+- How to create and apply change proposals
+- Spec format and conventions
+- Project structure and guidelines
+
+Keep this managed block so 'openspec update' can refresh the instructions.
+
+<!-- OPENSPEC:END -->
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -132,7 +151,7 @@ vixens/
 │   │       ├── dev.yaml, test.yaml, staging.yaml, prod.yaml
 │   │       └── README.md
 │   ├── synology-csi/              # 📅 Sprint 7
-│   ├── authelia/                  # 📅 Sprint 8
+│   ├── authentik/                  # 📅 Sprint 8
 │   └── monitoring/                # 📅 Future
 │
 ├── .secrets/                      # Secrets (⚠️ temporary, committed in Git)
@@ -230,32 +249,55 @@ kubectl --kubeconfig=kubeconfig-dev get nodes
 - Always commit Terraform code before destroying
 - Validation: `terraform plan` should show "no changes" after recreate
 
-### Secrets Management (Post-Infrastructure)
+### Secrets Management (Infisical)
 
-⚠️ **TEMPORARY SOLUTION** - Secrets are currently committed in Git for simplicity.
+✅ **IMPLÉMENTÉ (2025-11-20)** - La gestion des secrets est automatisée via **Infisical Kubernetes Operator**.
 
-After cluster deployment, secrets must be applied manually (not managed by GitOps):
+**Instance Infisical:**
+- URL: `http://192.168.111.69:8085` (self-hosted sur NAS Synology)
+- Project: `vixens`
+- Environments: `dev`, `test`, `staging`, `prod`
 
-```bash
-# Apply secrets after terraform apply
-./scripts/bootstrap-secrets.sh dev
-
-# Or manually
-kubectl apply -f .secrets/dev/
+**Architecture des Secrets:**
+```
+Project: vixens / Environment: dev
+├── Path: /cert-manager
+│   └── api-token (Gandi LiveDNS API)
+└── Path: / (root)
+    └── synology-csi-client-info (Synology CSI)
 ```
 
-**Current implementation:**
-- Secrets stored in `.secrets/<environment>/` (committed in Git)
-- Applied manually after cluster creation
-- **Not** managed by ArgoCD (post-infrastructure step)
+**Implémentation:**
+- ✅ Secrets synchronisés automatiquement depuis Infisical vers Kubernetes (60s resync)
+- ✅ Universal Auth (Machine Identity: `vixens-dev-k8s-operator`)
+- ✅ Paths isolés par application (évite les conflits de noms)
+- ✅ InfisicalSecret CRDs déclaratives (GitOps)
+- ✅ Aucun secret en clair dans Git
 
-**Future improvements (later sprint):**
-- Encrypt secrets (Minio + age, Sealed Secrets, or SOPS)
-- Remove from Git
-- Automate in destroy/recreate workflow
+**Secrets Déployés:**
+| Application | Secret K8s | Path Infisical | Status |
+|-------------|------------|----------------|--------|
+| cert-manager | `gandi-credentials` | `/cert-manager/api-token` | ✅ Actif |
+| synology-csi | `synology-csi-credentials` | `/synology-csi-client-info` | 🔄 En cours |
 
-**Secrets currently managed:**
-- `gandi-credentials` (cert-manager DNS-01 challenge)
+**Commandes Utiles:**
+```bash
+# Check InfisicalSecret status
+kubectl get infisicalsecret -n cert-manager gandi-credentials-sync -o yaml
+
+# Verify secret synchronization
+kubectl get secret -n cert-manager gandi-credentials -o jsonpath='{.data}' | jq 'keys'
+
+# Force reconciliation
+kubectl annotate infisicalsecret gandi-credentials-sync \
+  -n cert-manager \
+  --overwrite \
+  reconcile="$(date +%s)"
+```
+
+**Documentation:**
+- [ADR 007: Infisical Secrets Management](docs/adr/007-infisical-secrets-management.md) - Architecture et décisions
+- [cert-manager-webhook-gandi/base/README.md](apps/cert-manager-webhook-gandi/base/README.md) - Guide opérationnel
 
 ### Talos Node Management
 
@@ -635,7 +677,7 @@ resource "local_file" "kubeconfig" {
 | Sprint | Component | Status |
 |--------|-----------|--------|
 | 7 | Synology CSI (iSCSI storage) | 📅 Next |
-| 8 | Authelia (SSO/Auth) | 📅 Future |
+| 8 | Authentik (SSO/Auth) | 📅 Future |
 | 9 | Test cluster replication | 📅 Future |
 | 10-11 | Phase 2 services | 📅 Future |
 
