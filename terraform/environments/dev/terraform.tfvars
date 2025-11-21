@@ -1,16 +1,25 @@
-# naming : diamond, diaphhonia, dulcia
+# ============================================================================
+# VIXENS TERRAFORM - DEV ENVIRONMENT
+# ============================================================================
 
-git_branch             = "dev"
-environment            = "dev"
-vlan_services_subnet   = "192.168.208.0/24"
-argocd_service_type    = "LoadBalancer"
-argocd_loadbalancer_ip = "192.168.208.71"
-argocd_disable_auth    = true
-argocd_hostname        = "argocd.dev.truxonline.com"
+environment = "dev"
+git_branch  = "dev"
 
-# Talos Cluster Configuration
-cluster_name     = "vixens-dev"
-cluster_endpoint = "https://192.168.111.160:6443"
+# --------------------------------------------------------------------------
+# CLUSTER
+# --------------------------------------------------------------------------
+cluster = {
+  name               = "vixens-dev"
+  endpoint           = "https://192.168.111.160:6443"
+  vip                = "192.168.111.160"
+  talos_version      = "v1.11.5"
+  talos_image        = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
+  kubernetes_version = "1.30.0"
+}
+
+# --------------------------------------------------------------------------
+# CONTROL PLANE NODES (3 HA)
+# --------------------------------------------------------------------------
 control_plane_nodes = {
   "obsy" = {
     name         = "obsy"
@@ -76,26 +85,50 @@ control_plane_nodes = {
     }
   }
 }
+
+# --------------------------------------------------------------------------
+# WORKER NODES (none for dev - all control plane)
+# --------------------------------------------------------------------------
 worker_nodes = {}
 
-# Cilium L2 Announcement
-l2_pool_name         = "dev-pool"
-l2_pool_ips          = ["192.168.208.70-192.168.208.89"]
-l2_policy_name       = "dev-l2-policy"
-l2_policy_interfaces = ["eth1"]
-l2_policy_node_selector_labels = {
-  "kubernetes.io/hostname" = "obsy"
+# --------------------------------------------------------------------------
+# ARGOCD
+# --------------------------------------------------------------------------
+argocd = {
+  service_type      = "LoadBalancer"
+  loadbalancer_ip   = "192.168.208.71"
+  hostname          = "argocd.dev.truxonline.com"
+  insecure          = true
+  disable_auth      = true
+  anonymous_enabled = true
 }
 
-argocd_insecure          = true
-argocd_anonymous_enabled = true
+# --------------------------------------------------------------------------
+# CILIUM L2 ANNOUNCEMENTS
+# --------------------------------------------------------------------------
+cilium_l2 = {
+  pool_name   = "dev-pool"
+  pool_ips    = ["192.168.208.70-192.168.208.89"]
+  policy_name = "dev-l2-policy"
+  interfaces  = ["eth1"]
+  node_selector = {
+    "kubernetes.io/hostname" = "obsy"
+  }
+}
 
-cluster_vip = "192.168.111.160"
+# --------------------------------------------------------------------------
+# NETWORK
+# --------------------------------------------------------------------------
+network = {
+  vlan_services_subnet = "192.168.208.0/24"
+}
 
-talos_version                = "v1.11.5"
-talos_image                  = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
-kubeconfig_path              = "./kubeconfig-dev"
-talosconfig_path             = "./talosconfig-dev"
-cilium_ip_pool_yaml_path     = "../../../apps/cilium-lb/overlays/dev/ippool.yaml"
-cilium_l2_policy_yaml_path   = "../../../apps/cilium-lb/base/l2policy.yaml"
-kubernetes_version           = "1.30.0"
+# --------------------------------------------------------------------------
+# PATHS (using defaults from variables.tf)
+# --------------------------------------------------------------------------
+paths = {
+  kubeconfig            = "./kubeconfig-dev"
+  talosconfig           = "./talosconfig-dev"
+  cilium_ip_pool_yaml   = "../../../apps/cilium-lb/overlays/dev/ippool.yaml"
+  cilium_l2_policy_yaml = "../../../apps/cilium-lb/base/l2policy.yaml"
+}

@@ -1,0 +1,8 @@
+---
+# Test environment overrides for cert-manager-webhook-gandi
+# VLAN 209 (192.168.209.0/24)
+
+# ============================================================================
+# Test-Specific Settings
+# ============================================================================
+# Currently using all common values

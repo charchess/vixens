@@ -4,8 +4,14 @@ kind: Service
 metadata:
   name: homeassistant-svc
   namespace: homeassistant
+  labels:
+    app: homeassistant
 spec:
+  type: ClusterIP
+  selector:
+    app: homeassistant
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 80
-      targetPort: 80 # Assuming Home Assistant runs on port 80 for HTTP
+      targetPort: 8123

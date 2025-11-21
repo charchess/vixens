@@ -1,0 +1,52 @@
+---
+# Common Traefik Helm values for all environments
+# Based on terraform/modules/shared/locals.tf and current deployment
+# Source: argocd/overlays/dev/apps/traefik.yaml
+
+# ============================================================================
+# Providers Configuration
+# ============================================================================
+providers:
+  kubernetesCRD:
+    enabled: true
+  kubernetesIngress:
+    enabled: true
+
+# ============================================================================
+# API and Dashboard
+# ============================================================================
+api:
+  dashboard: true
+  insecure: true  # Dashboard accessible on internal network
+
+# Enable dashboard IngressRoute on web entrypoint
+ingressRoute:
+  dashboard:
+    enabled: true
+    entryPoints: ["web"]
+
+# ============================================================================
+# Control Plane Tolerations
+# ============================================================================
+# From terraform/modules/shared/locals.tf
+tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+# ============================================================================
+# Entrypoints / Ports Configuration
+# ============================================================================
+ports:
+  web:
+    port: 80
+    expose: true
+  websecure:
+    port: 443
+    expose: true
+    tls:
+      enabled: true
+  traefik:
+    port: 9000
+    expose: false
+    exposedPort: 9000

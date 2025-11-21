@@ -1,0 +1,34 @@
+---
+# Test environment overrides for Traefik
+# VLAN 209 (192.168.209.0/24)
+
+# ============================================================================
+# LoadBalancer Service Configuration
+# ============================================================================
+service:
+  type: LoadBalancer
+  annotations:
+    io.cilium/lb-ipam-ips: "192.168.209.70"
+
+# ============================================================================
+# Test-Specific Settings
+# ============================================================================
+# Log level for testing
+logs:
+  general:
+    level: INFO
+  access:
+    enabled: true
+
+# Resource limits (VM environment)
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+# Single replica for test
+deployment:
+  replicas: 1
