@@ -20,6 +20,10 @@ spec:
     spec:
       hostNetwork: true  # Required for mDNS/UPnP local discovery
       dnsPolicy: ClusterFirstWithHostNet  # Use cluster DNS even with hostNetwork
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: homeassistant
           image: ghcr.io/home-assistant/home-assistant:latest
