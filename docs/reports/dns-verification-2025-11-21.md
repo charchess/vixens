@@ -106,11 +106,14 @@ La configuration DNS actuelle utilise une architecture **CNAME vers A record cen
 
 ## Environnement: Prod
 
-### LoadBalancer IP Attendue
+### Cluster Configuration
 
-| VLAN | Traefik LB IP (expected) |
-|------|-------------------------|
-| 200/201 | 192.168.200.70 ou 192.168.201.70 |
+| Parameter | Value |
+|-----------|-------|
+| **VIP Kubernetes API** | 192.168.111.190 |
+| **VLAN Internal** | 111 (192.168.111.0/24) |
+| **VLAN Services** | 200 (192.168.200.0/24) |
+| **Traefik LB IP (expected)** | 192.168.200.70 |
 
 ### DNS Records (Gandi LiveDNS)
 
@@ -261,10 +264,27 @@ La configuration DNS actuelle utilise une architecture **CNAME vers A record cen
 - [x] Vérifier DNS records test
 - [x] Identifier patterns DNS
 - [x] Documenter architecture CNAME → A
-- [ ] Créer DNS staging dans Gandi
-- [ ] Créer DNS prod dans Gandi
-- [ ] Compléter DNS test (mail, argocd, whoami)
+- [x] Configurer VIP prod à 192.168.111.190 (2025-11-21)
+- [ ] DNS non-prod: DNS local suffisant (pas d'action Gandi requise)
+- [ ] Créer DNS prod dans Gandi (avant déploiement cluster)
 - [ ] Créer runbook DNS
+
+## Corrections Appliquées (2025-11-21)
+
+### Production VIP Update
+
+**Changement:** VIP Kubernetes API mise à jour pour cohérence.
+
+**Avant:** `192.168.111.170`
+**Après:** `192.168.111.190` ✅
+
+**Fichier modifié:**
+- `terraform/environments/prod/terraform.tfvars` (cluster.endpoint et cluster.vip)
+
+### DNS Strategy Clarification
+
+**Dev/Test/Staging:** DNS local suffisant, pas besoin de configuration Gandi.
+**Prod:** DNS Gandi requis avant déploiement cluster (pattern CNAME → A record).
 
 ---
 
