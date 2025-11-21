@@ -178,6 +178,21 @@ Terraform state SHALL be stored in MinIO S3-compatible backend hébergé sur Syn
 - **AND** it SHALL use bucket "terraform-state-vixens"
 - **AND** state locking SHALL be enabled via MinIO
 
+### Requirement: Terraform SHALL Wait for Kubernetes API
+Terraform SHALL validate cluster readiness before deploying apps.
+
+#### Scenario: API health check
+- **WHEN** Talos cluster is created
+- **THEN** Terraform SHALL wait 90s initial delay for Talos bootstrap
+- **AND** it SHALL perform 60 attempts every 10s for /healthz endpoint
+- **AND** it SHALL timeout after 10 minutes if API is unavailable
+
+#### Scenario: Control plane stability verification
+- **WHEN** API is responding
+- **THEN** Terraform SHALL wait for 3 consecutive successful checks
+- **AND** it SHALL validate kube-apiserver, controller-manager, scheduler pods
+- **AND** it SHALL timeout after 20 minutes if control plane is not stable
+
 ### Requirement: Virtual Machines SHALL be Created on Hyper-V
 All virtualized nodes SHALL be provisioned via Hyper-V sur Windows Server 2022.
 
