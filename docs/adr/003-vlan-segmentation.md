@@ -45,7 +45,7 @@ Infrastructure multi-cluster nécessitant :
 2. **VLANs 20X (Routés, Par Environnement)** : Services exposés
    - Isolation environnements (firewall au niveau VLAN)
    - Exposition sélective (80/443 uniquement)
-   - MetalLB pool par VLAN = IPs dédiées par cluster
+   - Cilium L2 IPAM pool par VLAN = IPs dédiées par cluster
 
 3. **VLAN 200 (Admin)** : Gestion infrastructure
    - Accès Hyper-V, SSH poste de gestion

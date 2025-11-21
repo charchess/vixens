@@ -49,7 +49,7 @@ Besoin d'un outil GitOps pour gérer déclarativement l'infrastructure Kubernete
 2. **App-of-Apps** : Architecture modulaire (1 root app → N apps enfants)
 3. **Multi-Cluster** : 1 ArgoCD par cluster (autonomie) avec possibilité central future
 4. **Kustomize Overlays** : Base + overlays par environnement (dev/test/prod)
-5. **RBAC** : Authentification Authelia future + RBAC ArgoCD
+5. **RBAC** : Authentification Authentik future + RBAC ArgoCD
 6. **Helm Support** : Déploiement charts officiels (Traefik, MetalLB, cert-manager)
 
 ## Conséquences
@@ -66,8 +66,8 @@ Besoin d'un outil GitOps pour gérer déclarativement l'infrastructure Kubernete
   - **Mitigation** : Déployer ArgoCD en HA (3 replicas)
 - ⚠️ **Complexité initiale** : Structure App-of-Apps, kustomize overlays
   - **Mitigation** : Documentation détaillée, exemples
-- ⚠️ **Secret Management** : Secrets en clair dans Git (si pas SOPS)
-  - **Mitigation** : Intégrer SOPS Phase 2 (bas priorité)
+- ⚠️ **Secret Management** : Secrets en clair dans Git (si pas Infisical)
+  - **Mitigation** : Intégrer Infisical Phase 2 (bas priorité)
 
 ## Architecture Choisie
 
@@ -96,13 +96,13 @@ argocd/
     prod/
 
 apps/
-  metallb/
+  cilium-lb/
     base/
-      - helm-release.yaml
-      - ipaddresspool.yaml
+      - ippool.yaml
+      - l2policy.yaml
     overlays/
       dev/
-        - ipaddresspool-dev.yaml (patch pour VLAN 208)
+        - ippool-patch.yaml (patch pour VLAN 208)
 ```
 
 ### Workflow Promotion
@@ -130,7 +130,7 @@ Branch dev → Cluster Dev (auto-sync)
 
 **Déploiement** : Via Terraform Helm provider (bootstrap initial), puis auto-géré via GitOps
 
-**Version** : v2.11+ (support Kustomize components)
+**Version** : v7.7.7
 
 **Configuration** :
 ```yaml
@@ -139,7 +139,7 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens
     targetRevision: dev  # ou test, staging, main
-    path: apps/metallb/overlays/dev
+    path: apps/cilium-lb/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: metallb-system
