@@ -1,30 +1,16 @@
-module "dev_environment" {
-  source = "../../base"
+# ============================================================================
+# VIXENS DEV ENVIRONMENT
+# ============================================================================
+# Uses the shared environment module for DRY infrastructure deployment
 
-  git_branch                      = var.git_branch
-  environment                     = var.environment
-  vlan_services_subnet            = var.vlan_services_subnet
-  argocd_service_type             = var.argocd_service_type
-  argocd_loadbalancer_ip          = var.argocd_loadbalancer_ip
-  argocd_disable_auth             = var.argocd_disable_auth
-  argocd_hostname                 = var.argocd_hostname
-  cluster_name                    = var.cluster_name
-  cluster_endpoint                = var.cluster_endpoint
-  control_plane_nodes             = var.control_plane_nodes
-  worker_nodes                    = var.worker_nodes
-  l2_pool_name                    = var.l2_pool_name
-  l2_pool_ips                     = var.l2_pool_ips
-  l2_policy_name                  = var.l2_policy_name
-  l2_policy_interfaces            = var.l2_policy_interfaces
-  l2_policy_node_selector_labels  = var.l2_policy_node_selector_labels
-  cluster_vip                     = var.cluster_vip
-  argocd_insecure                 = var.argocd_insecure
-  argocd_anonymous_enabled        = var.argocd_anonymous_enabled
-  talos_version                   = var.talos_version
-  talos_image                     = var.talos_image
-  kubeconfig_path                 = var.kubeconfig_path
-  talosconfig_path                = var.talosconfig_path
-  cilium_ip_pool_yaml_path        = var.cilium_ip_pool_yaml_path
-  cilium_l2_policy_yaml_path      = var.cilium_l2_policy_yaml_path
-  kubernetes_version              = var.kubernetes_version
+module "environment" {
+  source = "../../modules/environment"
+
+  environment         = var.environment
+  git_branch          = var.git_branch
+  cluster             = var.cluster
+  control_plane_nodes = var.control_plane_nodes
+  worker_nodes        = var.worker_nodes
+  paths               = var.paths
+  argocd              = var.argocd
 }

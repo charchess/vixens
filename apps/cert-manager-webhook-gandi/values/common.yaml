@@ -1,0 +1,19 @@
+---
+# Common cert-manager-webhook-gandi configuration for ALL environments
+# Gandi LiveDNS webhook for DNS-01 challenges
+
+# ============================================================================
+# ACME Solver Group Name
+# ============================================================================
+# Group name for the ACME DNS solver
+# Must match the group used in ClusterIssuer
+groupName: acme.truxonline.com
+
+# ============================================================================
+# Control Plane Tolerations
+# ============================================================================
+# Webhook runs on control plane nodes
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule

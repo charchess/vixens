@@ -26,6 +26,30 @@ spec:
             - --csi-address=$(ADDRESS)
             - --v=5
             - --feature-gates=Topology=true
+            - --timeout=60s
+            - --extra-create-metadata
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+        - name: csi-attacher
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.3.0
+          args:
+            - --csi-address=$(ADDRESS)
+            - --v=5
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+        - name: csi-resizer
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.8.0
+          args:
+            - --csi-address=$(ADDRESS)
+            - --v=5
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
@@ -56,4 +80,4 @@ spec:
           emptyDir: {}
         - name: client-info
           secret:
-            secretName: synology-csi-secret
+            secretName: client-info-secret

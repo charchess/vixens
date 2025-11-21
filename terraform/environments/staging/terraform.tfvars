@@ -1,16 +1,25 @@
-# naming : saphira, spinelia, serpentina
+# ============================================================================
+# VIXENS STAGING ENVIRONMENT - CONFIGURATION VALUES
+# ============================================================================
 
-git_branch             = "staging"
-environment            = "staging"
-vlan_services_subnet   = "192.168.210.0/24"
-argocd_service_type    = "LoadBalancer"
-argocd_loadbalancer_ip = "192.168.210.71"
-argocd_disable_auth    = true
-argocd_hostname        = "argocd.stg.truxonline.com"
+environment = "staging"
+git_branch  = "staging"
 
-# Talos Cluster Configuration
-cluster_name     = "vixens-stg"
-cluster_endpoint = "https://192.168.111.180:6443"
+# ----------------------------------------------------------------------------
+# CLUSTER
+# ----------------------------------------------------------------------------
+cluster = {
+  name               = "vixens-stg"
+  endpoint           = "https://192.168.111.180:6443"
+  vip                = "192.168.111.180"
+  talos_version      = "v1.11.5"
+  talos_image        = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
+  kubernetes_version = "1.30.0"
+}
+
+# ----------------------------------------------------------------------------
+# CONTROL PLANE NODES
+# ----------------------------------------------------------------------------
 control_plane_nodes = {
   "serpentina" = {
     name         = "serpentina"
@@ -76,26 +85,51 @@ control_plane_nodes = {
     }
   }
 }
+
+# ----------------------------------------------------------------------------
+# WORKER NODES
+# ----------------------------------------------------------------------------
 worker_nodes = {}
 
-# Cilium L2 Announcement
-l2_pool_name         = "staging-pool"
-l2_pool_ips          = ["192.168.210.70-192.168.210.89"]
-l2_policy_name       = "staging-l2-policy"
-l2_policy_interfaces = ["enx"]
-l2_policy_node_selector_labels = {
-  "kubernetes.io/control-plane" = "" # Selects all control plane nodes
+
+# ----------------------------------------------------------------------------
+# ARGOCD
+# ----------------------------------------------------------------------------
+argocd = {
+  service_type      = "LoadBalancer"
+  loadbalancer_ip   = "192.168.210.71"
+  hostname          = "argocd.stg.truxonline.com"
+  insecure          = true
+  disable_auth      = true
+  anonymous_enabled = true
 }
 
-argocd_insecure          = true
-argocd_anonymous_enabled = true
+# --------------------------------------------------------------------------
+# CILIUM L2 ANNOUNCEMENTS
+# --------------------------------------------------------------------------
+cilium_l2 = {
+  pool_name   = "staging-pool"
+  pool_ips    = ["192.168.210.70-192.168.210.89"]
+  policy_name = "staging-l2-policy"
+  interfaces  = ["eth1"]
+  node_selector = {
+    "kubernetes.io/hostname" = "serpentina"
+  }
+}
 
-cluster_vip = "192.168.111.180"
+# --------------------------------------------------------------------------
+# NETWORK
+# --------------------------------------------------------------------------
+network = {
+  vlan_services_subnet = "192.168.210.0/24"
+}
 
-talos_version                = "v1.11.5"
-talos_image                  = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
-kubeconfig_path              = "./kubeconfig-staging"
-talosconfig_path             = "./talosconfig-staging"
-cilium_ip_pool_yaml_path     = "../../../apps/cilium-lb/overlays/staging/ippool.yaml"
-cilium_l2_policy_yaml_path   = "../../../apps/cilium-lb/overlays/staging/l2policy.yaml"
-kubernetes_version           = "1.30.0"
+# ----------------------------------------------------------------------------
+# FILE PATHS
+# ----------------------------------------------------------------------------
+paths = {
+  kubeconfig            = "./kubeconfig-staging"
+  talosconfig           = "./talosconfig-staging"
+  cilium_ip_pool_yaml   = "../../../apps/cilium-lb/overlays/staging/ippool.yaml"
+  cilium_l2_policy_yaml = "../../../apps/cilium-lb/overlays/staging/l2policy.yaml"
+}

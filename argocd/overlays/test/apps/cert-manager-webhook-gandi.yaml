@@ -1,0 +1,44 @@
+---
+# cert-manager-webhook-gandi - test environment
+# Uses external Helm values from apps/cert-manager-webhook-gandi/values/
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager-webhook-gandi
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+
+  # Multiple sources: Helm chart + Git values
+  sources:
+    # Helm chart from SINTEF repository
+    - repoURL: https://sintef.github.io/cert-manager-webhook-gandi
+      chart: cert-manager-webhook-gandi
+      targetRevision: "v0.5.2"
+      helm:
+        valueFiles:
+          - $values/apps/cert-manager-webhook-gandi/values/common.yaml
+          - $values/apps/cert-manager-webhook-gandi/values/test.yaml
+
+    # Values from Git repository
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: test
+      ref: values
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

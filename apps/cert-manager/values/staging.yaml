@@ -1,0 +1,12 @@
+---
+# Staging environment overrides for cert-manager
+# VLAN 210 (192.168.210.0/24)
+
+# ============================================================================
+# Staging-Specific Settings
+# ============================================================================
+# Currently using all common values
+# Add staging-specific overrides here if needed
+# Examples:
+# - Production-like resource limits
+# - Staging-specific issuers

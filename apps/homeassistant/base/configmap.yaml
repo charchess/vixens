@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homeassistant-config
+  namespace: homeassistant
+data:
+  configuration.yaml: |
+    # Loads default set of integrations. Do not remove.
+    default_config:
+
+    # HTTP Configuration for reverse proxy (Traefik/Ingress)
+    http:
+      use_x_forwarded_for: true
+      trusted_proxies:
+        - 10.0.0.0/8        # Cluster IPs
+        - 192.168.0.0/16    # Local network
+      server_host: 0.0.0.0
+      server_port: 8123

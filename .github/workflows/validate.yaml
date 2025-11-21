@@ -91,8 +91,10 @@ jobs:
         run: |
           echo "🔍 Validation structure Kubernetes"
 
-          # Valider uniquement les ressources standards
-          find apps argocd -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 |
+          # Valider uniquement les ressources standards (exclure values/)
+          find apps argocd -type f \( -name '*.yaml' -o -name '*.yml' \) \
+            ! -path '*/values/*' \
+            -print0 |
             xargs -0 kubeval \
             --ignore-missing-schemas \
             --kubernetes-version 1.30.0 \
@@ -166,8 +168,15 @@ jobs:
             main)
               [ "$SOURCE" = "staging" ] && exit 0 ;;
             dev)
-              echo "❌ PRs toward 'dev' must come from a feature branch, not from $SOURCE"
-              exit 1 ;;
+              # Allow feature branches to merge into dev
+              # Block environment branches (test, staging, main) from merging to dev
+              if [[ "$SOURCE" =~ ^(test|staging|main)$ ]]; then
+                echo "❌ Environment branch '$SOURCE' cannot merge to 'dev'"
+                echo "   Use promotion flow: dev→test→staging→main"
+                exit 1
+              fi
+              echo "✅ Feature branch '$SOURCE' allowed to merge into 'dev'"
+              exit 0 ;;
             *)
               echo "❌ Unknown target branch '$TARGET'"
               exit 1 ;;

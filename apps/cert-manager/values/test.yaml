@@ -1,0 +1,9 @@
+---
+# Test environment overrides for cert-manager
+# VLAN 209 (192.168.209.0/24)
+
+# ============================================================================
+# Test-Specific Settings
+# ============================================================================
+# Currently using all common values
+# Add test-specific overrides here if needed

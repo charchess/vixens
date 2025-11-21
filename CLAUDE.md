@@ -1,6 +1,35 @@
+<!-- OPENSPEC:START -->
+# OpenSpec Instructions
+
+These instructions are for AI assistants working in this project.
+
+Always open `@/openspec/AGENTS.md` when the request:
+- Mentions planning or proposals (words like proposal, spec, change, plan)
+- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
+- Sounds ambiguous and you need the authoritative spec before coding
+
+Use `@/openspec/AGENTS.md` to learn:
+- How to create and apply change proposals
+- Spec format and conventions
+- Project structure and guidelines
+
+Keep this managed block so 'openspec update' can refresh the instructions.
+
+<!-- OPENSPEC:END -->
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Documentation Systems
+
+This project uses three complementary systems. **See [Documentation Hierarchy](docs/DOCUMENTATION-HIERARCHY.md) for complete guidelines**.
+
+- **OpenSpec** (`openspec/`) - Requirements, specifications, change proposals
+- **Documentation** (`docs/`) - Architecture decisions (ADRs), runbooks, procedures
+- **Archon MCP** - Task management, work-in-progress tracking
+
+**Key Principle**: Information lives in ONE authoritative place. Other locations LINK to it, never duplicate it.
 
 ## Repository Overview
 
@@ -18,9 +47,24 @@ Vixens is a multi-cluster Kubernetes homelab infrastructure following GitOps bes
 
 ## Current Phase: Phase 2 (GitOps Infrastructure)
 
-**Status**: Sprint 4 COMPLETED - Full GitOps automation with zero manual kubectl commands ✅
+**Status**: Sprint 6 COMPLETED - DRY Optimization & Helm Values Externalization ✅
 
 The project is iterative with a **destroy/recreate** strategy for dev/test environments to ensure reproducibility.
+
+### Recent Achievements (Nov 2025)
+
+**Phase 2 DRY Optimization** ✅
+- Externalized all Helm values (Traefik, cert-manager, webhook-gandi)
+- Eliminated 354 lines of duplication across environments
+- Implemented ArgoCD multiple sources pattern
+- Created comprehensive values documentation (3 READMEs)
+- Established DRY conventions in CONVENTIONS.md
+
+**Benefits:**
+- 40% reduction in ArgoCD app file sizes
+- Common values defined once, shared across 4 environments
+- Production-ready configs (resources, HA, monitoring)
+- Easy to test locally with `helm template`
 
 ## Architecture
 
@@ -55,19 +99,29 @@ Each node has **two VLANs** configured on a single physical interface:
 ```
 vixens/
 ├── terraform/                      # Phase 1: Infrastructure as Code
-│   ├── modules/talos/             # Reusable Talos cluster module ✅
-│   │   ├── main.tf                # Resources + per-node patches
-│   │   ├── variables.tf           # Per-node config (disk, network, etc.)
-│   │   ├── outputs.tf             # kubeconfig, talosconfig
-│   │   ├── providers.tf           # Provider documentation
-│   │   └── versions.tf            # Terraform >= 1.5.0, Talos ~> 0.9
+│   ├── modules/
+│   │   ├── shared/                # ✅ DRY Module (Single Source of Truth)
+│   │   │   ├── locals.tf          # Chart versions, tolerations, capabilities, timeouts
+│   │   │   ├── outputs.tf         # Exported configurations
+│   │   │   └── variables.tf       # Environment input
+│   │   ├── talos/                 # Reusable Talos cluster module ✅
+│   │   │   ├── main.tf            # Resources + per-node patches
+│   │   │   ├── variables.tf       # Per-node config (disk, network, etc.)
+│   │   │   ├── outputs.tf         # kubeconfig, talosconfig
+│   │   │   └── versions.tf        # Terraform >= 1.5.0, Talos ~> 0.9
+│   │   ├── cilium/                # Cilium CNI module
+│   │   └── argocd/                # ArgoCD GitOps module
 │   └── environments/
 │       ├── dev/                   # Dev cluster (obsy, onyx, opale - 3 CP HA) ✅
-│       │   ├── main.tf            # Module call with node configs
+│       │   ├── main.tf            # 2-level: env → modules (no base/)
+│       │   ├── variables.tf       # 8 typed objects (cluster, paths, argocd, etc.)
+│       │   ├── terraform.tfvars   # Environment-specific values
+│       │   ├── backend.tf         # S3 backend config
 │       │   ├── versions.tf        # Provider versions
 │       │   ├── provider.tf        # Provider config
 │       │   ├── kubeconfig-dev     # Generated (gitignored)
-│       │   └── talosconfig-dev    # Generated (gitignored)
+│       │   ├── talosconfig-dev    # Generated (gitignored)
+│       │   └── .envrc             # Backend credentials (gitignored)
 │       ├── test/                  # Test cluster ⏳ Sprint 9
 │       ├── staging/               # Staging cluster 📅 Future
 │       └── prod/                  # Prod cluster 📅 Future
@@ -89,11 +143,26 @@ vixens/
 │   │   │   └── ippool.yaml
 │   │   └── overlays/
 │   │       └── dev/               # VLAN 208 pools (192.168.208.70-89)
-│   ├── traefik/
-│   ├── cert-manager/
-│   ├── synology-csi/
-│   ├── authelia/
-│   └── monitoring/
+│   ├── traefik/                   # ✅ DRY Helm values (Phase 2)
+│   │   └── values/                # External Helm values
+│   │       ├── common.yaml        # Shared config (all envs)
+│   │       ├── dev.yaml           # Dev overrides
+│   │       ├── test.yaml, staging.yaml, prod.yaml
+│   │       └── README.md          # Values documentation
+│   ├── cert-manager/              # ✅ DRY Helm values (Phase 2)
+│   │   └── values/
+│   │       ├── common.yaml        # installCRDs, tolerations
+│   │       ├── dev.yaml, test.yaml, staging.yaml
+│   │       ├── prod.yaml          # Resources, HA, metrics
+│   │       └── README.md
+│   ├── cert-manager-webhook-gandi/  # ✅ DRY Helm values (Phase 2)
+│   │   └── values/
+│   │       ├── common.yaml        # groupName, tolerations
+│   │       ├── dev.yaml, test.yaml, staging.yaml, prod.yaml
+│   │       └── README.md
+│   ├── synology-csi/              # 📅 Sprint 7
+│   ├── authentik/                  # 📅 Sprint 8
+│   └── monitoring/                # 📅 Future
 │
 ├── .secrets/                      # Secrets (⚠️ temporary, committed in Git)
 │   ├── dev/
@@ -116,7 +185,8 @@ vixens/
 │   │   ├── 002-argocd-gitops.md
 │   │   ├── 003-vlan-segmentation.md
 │   │   ├── 004-cilium-cni.md
-│   │   └── 005-cilium-l2-announcements.md
+│   │   ├── 005-cilium-l2-announcements.md
+│   │   └── 006-terraform-2-level-architecture.md ✅ NEW
 │   └── ROADMAP.md                 # Sprint-based roadmap
 │
 ├── .github/workflows/
@@ -189,32 +259,56 @@ kubectl --kubeconfig=kubeconfig-dev get nodes
 - Always commit Terraform code before destroying
 - Validation: `terraform plan` should show "no changes" after recreate
 
-### Secrets Management (Post-Infrastructure)
+### Secrets Management (Infisical)
 
-⚠️ **TEMPORARY SOLUTION** - Secrets are currently committed in Git for simplicity.
+✅ **IMPLÉMENTÉ (2025-11-20)** - La gestion des secrets est automatisée via **Infisical Kubernetes Operator**.
 
-After cluster deployment, secrets must be applied manually (not managed by GitOps):
+**Instance Infisical:**
+- URL: `http://192.168.111.69:8085` (self-hosted sur NAS Synology)
+- Project: `vixens`
+- Environments: `dev`, `test`, `staging`, `prod`
 
-```bash
-# Apply secrets after terraform apply
-./scripts/bootstrap-secrets.sh dev
-
-# Or manually
-kubectl apply -f .secrets/dev/
+**Architecture des Secrets:**
+```
+Project: vixens / Environment: dev
+├── Path: /cert-manager
+│   └── api-token (Gandi LiveDNS API)
+└── Path: / (root)
+    └── synology-csi-client-info (Synology CSI)
 ```
 
-**Current implementation:**
-- Secrets stored in `.secrets/<environment>/` (committed in Git)
-- Applied manually after cluster creation
-- **Not** managed by ArgoCD (post-infrastructure step)
+**Implémentation:**
+- ✅ Secrets synchronisés automatiquement depuis Infisical vers Kubernetes (60s resync)
+- ✅ Universal Auth (Machine Identity: `vixens-dev-k8s-operator`)
+- ✅ Paths isolés par application (évite les conflits de noms)
+- ✅ InfisicalSecret CRDs déclaratives (GitOps)
+- ✅ Aucun secret en clair dans Git
 
-**Future improvements (later sprint):**
-- Encrypt secrets (Minio + age, Sealed Secrets, or SOPS)
-- Remove from Git
-- Automate in destroy/recreate workflow
+**Secrets Déployés:**
+| Application | Secret K8s | Path Infisical | Status |
+|-------------|------------|----------------|--------|
+| cert-manager | `gandi-credentials` | `/cert-manager/api-token` | ✅ Actif |
+| synology-csi | `synology-csi-credentials` | `/synology-csi-client-info` | 🔄 En cours |
 
-**Secrets currently managed:**
-- `gandi-credentials` (cert-manager DNS-01 challenge)
+**Commandes Utiles:**
+```bash
+# Check InfisicalSecret status
+kubectl get infisicalsecret -n cert-manager gandi-credentials-sync -o yaml
+
+# Verify secret synchronization
+kubectl get secret -n cert-manager gandi-credentials -o jsonpath='{.data}' | jq 'keys'
+
+# Force reconciliation
+kubectl annotate infisicalsecret gandi-credentials-sync \
+  -n cert-manager \
+  --overwrite \
+  reconcile="$(date +%s)"
+```
+
+**Documentation:**
+- [ADR 007: Infisical Secrets Management](docs/adr/007-infisical-secrets-management.md) - Architecture et décisions
+- [OpenSpec: propagate-infisical-multi-env](openspec/changes/propagate-infisical-multi-env/) - Multi-env implementation
+- [Procedure: Infisical Multi-Env Setup](docs/procedures/infisical-multi-env-setup.md) - Manual UI configuration
 
 ### Talos Node Management
 
@@ -337,6 +431,83 @@ cilium connectivity test
 ping 192.168.111.162  # VLAN 111 (internal)
 ping 192.168.208.162  # VLAN 208 (services)
 ```
+
+## Terraform Architecture (2-Level)
+
+The Terraform infrastructure uses a **2-level architecture** following DRY principles:
+
+### Architecture Overview
+
+```
+environments/dev/main.tf → modules/{shared, talos, cilium, argocd}
+```
+
+**Key Modules:**
+
+1. **shared/** - Single source of truth (DRY)
+   - Chart versions (Cilium, ArgoCD, Traefik, cert-manager)
+   - Control plane tolerations (reusable)
+   - Cilium capabilities (11 validated for Talos)
+   - Network defaults (pod/service subnets)
+   - Security contexts
+   - Timeouts (helm install: 20min, upgrade: 15min)
+
+2. **talos/** - Cluster provisioning
+   - Per-node configuration (disk, network, patches)
+   - Dual-VLAN support (internal 111 + services 20X)
+   - VIP management
+   - Automatic bootstrap
+
+3. **cilium/** - CNI deployment
+   - Uses shared module for capabilities/tolerations
+   - L2 Announcements + LB IPAM
+   - Hubble observability
+
+4. **argocd/** - GitOps bootstrap
+   - Uses shared module for tolerations/versions
+   - App-of-Apps pattern
+   - Automatic root-app deployment
+
+### Variable Structure (8 Typed Objects)
+
+Environments use **8 typed objects** instead of 27+ scattered variables:
+
+1. `cluster` - Cluster configuration (name, endpoint, versions)
+2. `control_plane_nodes` - Per-node CP configs
+3. `worker_nodes` - Per-node worker configs
+4. `paths` - File paths (kubeconfig, talosconfig, yamls)
+5. `argocd` - ArgoCD configuration (LoadBalancer IP, admin password)
+6. `environment` - Environment name (dev, test, staging, prod)
+7. `git_branch` - Git branch for ArgoCD
+8. `vlan_services` - Services VLAN ID (208, 209, 210, 201)
+
+**Benefits:**
+- ✅ Type safety with Terraform validation
+- ✅ Logical grouping of related configs
+- ✅ Clear module interfaces
+- ✅ Easy discovery and maintenance
+
+### wait_for_k8s_api Validation
+
+The infrastructure includes a robust **two-phase** cluster readiness check:
+
+**Phase 1: API Server Response** (10 min timeout)
+- 90s initial delay for Talos bootstrap
+- Checks `/healthz` endpoint
+- 60 attempts × 10s
+
+**Phase 2: Control Plane Readiness** (20 min timeout)
+- Validates kube-apiserver, kube-controller-manager, kube-scheduler
+- Requires **3 consecutive successful checks**
+- Does NOT check etcd (runs as Talos system service, not K8s pod)
+- 120 attempts × 10s
+- Static pods can take 8-9 minutes to start on fresh cluster
+
+**Validated Timeouts:**
+- Helm install: **1200s (20 min)** - Cilium can take 15-17 min on fresh cluster
+- wait_for_k8s_api: **~30 min max** (10 min Phase 1 + 20 min Phase 2)
+
+See [ADR 006: Terraform 2-Level Architecture](docs/adr/006-terraform-2-level-architecture.md) for full rationale.
 
 ## Terraform Module: talos
 
@@ -517,7 +688,7 @@ resource "local_file" "kubeconfig" {
 | Sprint | Component | Status |
 |--------|-----------|--------|
 | 7 | Synology CSI (iSCSI storage) | 📅 Next |
-| 8 | Authelia (SSO/Auth) | 📅 Future |
+| 8 | Authentik (SSO/Auth) | 📅 Future |
 | 9 | Test cluster replication | 📅 Future |
 | 10-11 | Phase 2 services | 📅 Future |
 

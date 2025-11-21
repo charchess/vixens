@@ -1,0 +1,47 @@
+---
+# Common cert-manager configuration for ALL environments
+# These values are shared across dev, test, staging, and production
+
+# ============================================================================
+# CRD Installation
+# ============================================================================
+# Install cert-manager CRDs as part of the Helm release
+installCRDs: true
+
+# ============================================================================
+# Global Configuration
+# ============================================================================
+global:
+  leaderElection:
+    # Leader election namespace (should match deployment namespace)
+    namespace: cert-manager
+
+# ============================================================================
+# Control Plane Tolerations
+# ============================================================================
+# All cert-manager components run on control plane nodes
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+# Webhook component tolerations
+webhook:
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
+# CA Injector component tolerations
+cainjector:
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
+# Startup API check tolerations
+startupapicheck:
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule

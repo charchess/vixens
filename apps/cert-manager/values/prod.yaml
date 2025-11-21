@@ -1,0 +1,47 @@
+---
+# Production environment overrides for cert-manager
+# VLAN 201 (192.168.201.0/24)
+
+# ============================================================================
+# Production-Specific Settings
+# ============================================================================
+# Higher resource limits for production
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+# Webhook resources
+webhook:
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+# CA Injector resources
+cainjector:
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+# Production-grade replica count
+replicaCount: 2
+
+# ============================================================================
+# Production Monitoring
+# ============================================================================
+# Enable Prometheus metrics for production
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: true
