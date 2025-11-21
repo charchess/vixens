@@ -2,21 +2,22 @@
 
 ## ADDED Requirements
 
-### Requirement: yamllint configuration file SHALL exist in repository root
+### Requirement: GitHub Actions workflow SHALL use existing .yamllint file
 
-Inline yamllint configuration from workflow SHALL be extracted to dedicated `.yamllint.yaml` file in repository root for reusability across local testing and CI/CD.
+GitHub Actions workflow SHALL use existing `.yamllint` file from repository root instead of creating inline configuration, for consistency across local testing and CI/CD.
 
 #### Scenario: Developer runs yamllint locally
 **GIVEN** a developer has cloned the repository
-**WHEN** they run `yamllint -c .yamllint.yaml apps/`
+**WHEN** they run `yamllint -c .yamllint apps/`
 **THEN** they SHALL get identical results to GitHub Actions workflow
 **AND** configuration SHALL be consistent across environments
 
-#### Scenario: CI/CD workflow uses config file
-**GIVEN** `.yamllint.yaml` exists in repo root
+#### Scenario: CI/CD workflow uses existing config file
+**GIVEN** `.yamllint` exists in repo root
 **WHEN** GitHub Actions workflow runs yaml-lint job
-**THEN** it SHALL reference `.yamllint.yaml` via `-c` flag
+**THEN** it SHALL reference `.yamllint` via `-c` flag
 **AND** no inline configuration SHALL remain in workflow file
+**AND** no temporary `yamllint-config.yml` SHALL be created
 
 ### Requirement: Local validation script SHALL mimic GitHub Actions jobs
 
