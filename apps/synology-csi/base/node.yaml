@@ -19,9 +19,14 @@ spec:
         - name: csi-node-driver-registrar
           image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.8.0
           args:
-            - --csi-address=/csi/csi.sock
-            - --kubelet-registration-path=/var/lib/kubelet/plugins/csi.san.synology.com/csi.sock
+            - --v=5
+            - --csi-address=$(ADDRESS)
+            - --kubelet-registration-path=$(REGISTRATION_PATH)
           env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: REGISTRATION_PATH
+              value: /var/lib/kubelet/plugins/csi.san.synology.com/csi.sock
             - name: KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -34,15 +39,13 @@ spec:
             - name: registration-dir
               mountPath: /registration
         - name: synology-csi-plugin
-          image: ghcr.io/zebernst/synology-csi:edge
+          image: ghcr.io/zebernst/synology-csi:v1.2.0
           args:
             - --nodeid=$(KUBE_NODE_NAME)
             - --endpoint=$(CSI_ENDPOINT)
-            - --client-info=/etc/synology/client-info.yml
-            - --chroot-dir=/host
-            - --iscsiadm-path=/usr/local/sbin/iscsiadm
-            - --multipath-path=/sbin/multipath
-            - --multipathd-path=/sbin/multipathd
+            - --client-info
+            - /etc/synology/client-info.yml
+            - --log-level=info
           env:
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
