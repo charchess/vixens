@@ -56,4 +56,4 @@ spec:
           emptyDir: {}
         - name: client-info
           secret:
-            secretName: synology-csi-secret
+            secretName: client-info-secret

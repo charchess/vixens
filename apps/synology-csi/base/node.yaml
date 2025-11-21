@@ -68,7 +68,7 @@ spec:
             type: Directory
         - name: client-info
           secret:
-            secretName: synology-csi-secret
+            secretName: client-info-secret
         - name: iscsiadm
           hostPath:
             path: /usr/local/sbin/iscsiadm
