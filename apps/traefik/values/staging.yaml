@@ -1,0 +1,34 @@
+---
+# Staging environment overrides for Traefik
+# VLAN 210 (192.168.210.0/24)
+
+# ============================================================================
+# LoadBalancer Service Configuration
+# ============================================================================
+service:
+  type: LoadBalancer
+  annotations:
+    io.cilium/lb-ipam-ips: "192.168.210.70"
+
+# ============================================================================
+# Staging-Specific Settings (closer to production)
+# ============================================================================
+# Log level for staging
+logs:
+  general:
+    level: INFO
+  access:
+    enabled: true
+
+# Higher resource limits for staging
+resources:
+  requests:
+    cpu: "200m"
+    memory: "256Mi"
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"
+
+# Multiple replicas (closer to prod)
+deployment:
+  replicas: 2

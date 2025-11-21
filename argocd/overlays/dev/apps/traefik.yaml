@@ -1,0 +1,38 @@
+---
+# Traefik Ingress Controller - dev environment
+# Uses external Helm values from apps/traefik/values/
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik
+
+  # Multiple sources: Helm chart + Git values
+  sources:
+    # Helm chart from Traefik repository
+    - repoURL: https://helm.traefik.io/traefik
+      chart: traefik
+      targetRevision: "v25.0.0"
+      helm:
+        valueFiles:
+          - $values/apps/traefik/values/common.yaml
+          - $values/apps/traefik/values/dev.yaml
+
+    # Values from Git repository
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: dev
+      ref: values
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,3 +1,8 @@
+# ============================================================================
+# ARGOCD MODULE - OPTIMIZED WITH DRY PRINCIPLE
+# ============================================================================
+# Eliminates duplication by using shared tolerations and typed configurations
+
 resource "helm_release" "argocd" {
   name             = "argocd"
   repository       = "https://argoproj.github.io/argo-helm"
@@ -8,105 +13,56 @@ resource "helm_release" "argocd" {
 
   wait          = true
   wait_for_jobs = true
-  timeout       = 600
+  timeout       = var.timeout
 
   values = [yamlencode({
     server = {
       config = {
-        url = "http://${var.argocd_loadbalancer_ip}"
+        url = "http://${var.argocd_config.loadbalancer_ip}"
       }
       extraArgs = concat(
-        var.argocd_insecure ? ["--insecure"] : [],
-        var.argocd_disable_auth ? ["--disable-auth"] : []
+        var.argocd_config.insecure ? ["--insecure"] : [],
+        var.argocd_config.disable_auth ? ["--disable-auth"] : []
       )
       service = {
-        type           = var.argocd_service_type
-        loadBalancerIP = var.argocd_service_type == "LoadBalancer" ? var.argocd_loadbalancer_ip : null
+        type           = var.argocd_config.service_type
+        loadBalancerIP = var.argocd_config.service_type == "LoadBalancer" ? var.argocd_config.loadbalancer_ip : null
         annotations = {
-          "environment" = var.environment
+          "environment"           = var.environment
+          "io.cilium/lb-ipam-ips" = var.argocd_config.loadbalancer_ip
         }
       }
       ingress = {
         enabled          = false
         ingressClassName = "traefik"
-        hosts            = [var.argocd_hostname]
+        hosts            = [var.argocd_config.hostname]
         paths            = ["/"]
         annotations = {
           "traefik.ingress.kubernetes.io/router.entrypoints" = "web"
         }
       }
-      tolerations = [
-        {
-          key      = "node-role.kubernetes.io/control-plane"
-          operator = "Exists"
-          effect   = "NoSchedule"
-        }
-      ]
+      tolerations = var.control_plane_tolerations
     }
-    repoServer = {
-      tolerations = [
-        {
-          key      = "node-role.kubernetes.io/control-plane"
-          operator = "Exists"
-          effect   = "NoSchedule"
-        }
-      ]
-    }
-    controller = {
-      tolerations = [
-        {
-          key      = "node-role.kubernetes.io/control-plane"
-          operator = "Exists"
-          effect   = "NoSchedule"
-        }
-      ]
-    }
-    redis = {
-      tolerations = [
-        {
-          key      = "node-role.kubernetes.io/control-plane"
-          operator = "Exists"
-          effect   = "NoSchedule"
-        }
-      ]
-    }
-    applicationSet = {
-      tolerations = [
-        {
-          key      = "node-role.kubernetes.io/control-plane"
-          operator = "Exists"
-          effect   = "NoSchedule"
-        }
-      ]
-    }
-    notifications = {
-      tolerations = [
-        {
-          key      = "node-role.kubernetes.io/control-plane"
-          operator = "Exists"
-          effect   = "NoSchedule"
-        }
-      ]
-    }
+
+    # DRY: Apply same tolerations to all components
+    repoServer      = { tolerations = var.control_plane_tolerations }
+    controller      = { tolerations = var.control_plane_tolerations }
+    redis           = { tolerations = var.control_plane_tolerations }
+    applicationSet  = { tolerations = var.control_plane_tolerations }
+    notifications   = { tolerations = var.control_plane_tolerations }
+    redisSecretInit = { tolerations = var.control_plane_tolerations }
+
     dex = {
       enabled = false
     }
-    redisSecretInit = {
-      tolerations = [
-        {
-          key      = "node-role.kubernetes.io/control-plane"
-          operator = "Exists"
-          effect   = "NoSchedule"
-        }
-      ]
-    }
+
     configs = {
       params = {
-        "server.insecure" = var.argocd_insecure
+        "server.insecure" = var.argocd_config.insecure
       }
       cm = {
-        "users.anonymous.enabled" = var.argocd_anonymous_enabled ? "true" : "false"
-        "url"                     = "http://${var.argocd_loadbalancer_ip}"
+        "users.anonymous.enabled" = var.argocd_config.anonymous_enabled ? "true" : "false"
+        "url"                     = "http://${var.argocd_config.loadbalancer_ip}"
         "policy.csv"              = <<-EOT
           p, role:readonly, applications, get, */*, allow
           p, role:readonly, applications, list, */*, allow
@@ -131,6 +87,9 @@ resource "helm_release" "argocd" {
   ]
 }
 
+# --------------------------------------------------------------------------
+# ROOT APPLICATION (App-of-Apps)
+# --------------------------------------------------------------------------
 resource "kubectl_manifest" "argocd_root_app" {
   yaml_body = templatefile(var.root_app_template_path, {
     environment     = var.environment
@@ -142,5 +101,3 @@ resource "kubectl_manifest" "argocd_root_app" {
     helm_release.argocd
   ]
 }
-
-

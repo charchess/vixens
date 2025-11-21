@@ -2,7 +2,7 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: synology-iscsi-retain
+  name: synelia-iscsi-retain
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
 provisioner: csi.san.synology.com
@@ -20,7 +20,7 @@ volumeBindingMode: WaitForFirstConsumer
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: synology-iscsi-delete
+  name: synelia-iscsi-delete
 provisioner: csi.san.synology.com
 parameters:
   fsType: ext4

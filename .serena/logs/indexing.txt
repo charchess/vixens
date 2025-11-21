@@ -1,0 +1,16 @@
+terraform/environments/test/terraform.tfvars
+Error processing request textDocument/documentSymbol with params:
+{'textDocument': {'uri': 'file:///root/vixens/terraform/environments/test/terraform.tfvars'}}
+(caused by terraform.tfvars: file not found (-32098))
+terraform/environments/dev/terraform.tfvars
+Error processing request textDocument/documentSymbol with params:
+{'textDocument': {'uri': 'file:///root/vixens/terraform/environments/dev/terraform.tfvars'}}
+(caused by terraform.tfvars: file not found (-32098))
+terraform/environments/prod/terraform.tfvars
+Error processing request textDocument/documentSymbol with params:
+{'textDocument': {'uri': 'file:///root/vixens/terraform/environments/prod/terraform.tfvars'}}
+(caused by terraform.tfvars: file not found (-32098))
+terraform/environments/staging/terraform.tfvars
+Error processing request textDocument/documentSymbol with params:
+{'textDocument': {'uri': 'file:///root/vixens/terraform/environments/staging/terraform.tfvars'}}
+(caused by terraform.tfvars: file not found (-32098))
