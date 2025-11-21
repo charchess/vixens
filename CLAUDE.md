@@ -21,6 +21,16 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Documentation Systems
+
+This project uses three complementary systems. **See [Documentation Hierarchy](docs/DOCUMENTATION-HIERARCHY.md) for complete guidelines**.
+
+- **OpenSpec** (`openspec/`) - Requirements, specifications, change proposals
+- **Documentation** (`docs/`) - Architecture decisions (ADRs), runbooks, procedures
+- **Archon MCP** - Task management, work-in-progress tracking
+
+**Key Principle**: Information lives in ONE authoritative place. Other locations LINK to it, never duplicate it.
+
 ## Repository Overview
 
 Vixens is a multi-cluster Kubernetes homelab infrastructure following GitOps best practices. The project is built in phases: **Phase 1** provisions infrastructure with Terraform, **Phase 2** deploys services via ArgoCD, and **Phase 3** runs applications.
@@ -297,7 +307,8 @@ kubectl annotate infisicalsecret gandi-credentials-sync \
 
 **Documentation:**
 - [ADR 007: Infisical Secrets Management](docs/adr/007-infisical-secrets-management.md) - Architecture et décisions
-- [cert-manager-webhook-gandi/base/README.md](apps/cert-manager-webhook-gandi/base/README.md) - Guide opérationnel
+- [OpenSpec: propagate-infisical-multi-env](openspec/changes/propagate-infisical-multi-env/) - Multi-env implementation
+- [Procedure: Infisical Multi-Env Setup](docs/procedures/infisical-multi-env-setup.md) - Manual UI configuration
 
 ### Talos Node Management
 

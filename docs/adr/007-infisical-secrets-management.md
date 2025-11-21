@@ -1,8 +1,9 @@
 # ADR 007: Infisical pour la Gestion des Secrets
 
 **Date**: 2025-11-16
-**Statut**: ✅ Implémenté Multi-Environnement (2025-11-20)
+**Statut**: Active - ✅ Implémenté Multi-Environnement (2025-11-20)
 **Auteur**: Claude Code
+**Related OpenSpec**: [propagate-infisical-multi-env](../../openspec/changes/propagate-infisical-multi-env/)
 
 ---
 
