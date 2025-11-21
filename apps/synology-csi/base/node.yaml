@@ -51,8 +51,11 @@ spec:
               mountPath: /var/lib/kubelet/pods
               mountPropagation: Bidirectional
             - name: client-info
-              mountPath: /etc/synology
-              readOnly: true
+            mountPath: /etc/synology
+            readOnly: true
+          - name: host-usr-local-sbin
+            mountPath: /usr/local/sbin
+            readOnly: true
       volumes:
         - name: plugin-dir
           hostPath:
@@ -69,10 +72,10 @@ spec:
         - name: client-info
           secret:
             secretName: client-info-secret
-        - name: iscsiadm
+        - name: host-usr-local-sbin
           hostPath:
-            path: /usr/local/sbin/iscsiadm
-            type: File
+            path: /usr/local/sbin
+            type: DirectoryOrCreate
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
