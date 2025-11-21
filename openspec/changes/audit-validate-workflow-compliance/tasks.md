@@ -1,41 +1,33 @@
 # Tasks for Audit & Fix Validate Workflow Compliance
 
-## Phase 1: Extract yamllint Config (4 tasks)
+## Phase 1: Update Workflow to Use Existing Config (3 tasks)
 
-### Task 1.1: Create .yamllint.yaml in repo root ✅
+### Task 1.1: Update workflow to use existing .yamllint ✅
 **Owner**: DevOps
 **Status**: todo
-**Description**: Extract inline yamllint config from workflow to dedicated file
+**Description**: Modify `.github/workflows/validate.yaml` to use existing `.yamllint` file
 **Acceptance Criteria**:
-- File `.yamllint.yaml` exists at repo root
-- Contains exact config from workflow (extends: default, rules section)
-- Includes yaml-files section (*.yaml, *.yml, .yamllint)
+- Lines 26-73 (inline config creation) removed
+- Replaced with: `find apps argocd -name "*.yaml" -o -name "*.yml" | xargs yamllint -c .yamllint`
+- No temporary `yamllint-config.yml` creation
+- Workflow references existing `.yamllint` at repo root
 
-### Task 1.2: Test yamllint with new config ✅
+### Task 1.2: Test yamllint with existing config ✅
 **Owner**: DevOps
 **Status**: todo
-**Description**: Verify new config file produces identical results to inline config
+**Description**: Verify existing `.yamllint` produces identical results to inline config
 **Acceptance Criteria**:
-- Run: `find apps argocd -name "*.yaml" -o -name "*.yml" | xargs yamllint -c .yamllint.yaml`
-- Output matches previous test (30 warnings, 0 errors)
+- Run: `find apps argocd -name "*.yaml" -o -name "*.yml" | xargs yamllint -c .yamllint`
+- Output matches audit test (30 warnings, 0 errors)
 - No new errors introduced
 
-### Task 1.3: Update workflow to use config file ✅
+### Task 1.3: Commit workflow changes ✅
 **Owner**: DevOps
 **Status**: todo
-**Description**: Modify `.github/workflows/validate.yaml` to reference `.yamllint.yaml`
+**Description**: Commit updated workflow
 **Acceptance Criteria**:
-- Workflow line 26-73 replaced with simplified command
-- Uses `-c .yamllint.yaml` flag
-- No inline config remains in workflow
-
-### Task 1.4: Commit yamllint changes ✅
-**Owner**: DevOps
-**Status**: todo
-**Description**: Commit new config file and updated workflow
-**Acceptance Criteria**:
-- Git commit includes `.yamllint.yaml` and `.github/workflows/validate.yaml`
-- Commit message: "refactor(ci): Extract yamllint config to .yamllint.yaml"
+- Git commit includes `.github/workflows/validate.yaml`
+- Commit message: "refactor(ci): Use existing .yamllint config instead of inline"
 
 ## Phase 2: Create Local Validation Script (3 tasks)
 
@@ -110,8 +102,9 @@
 
 ## Summary
 
-- **Total Tasks**: 11
-- **Phases**: 4 (extract config, create script, validate workflow, document)
+- **Total Tasks**: 10
+- **Phases**: 4 (update workflow, create script, validate workflow, document)
 - **Estimated Time**: 2-3 hours
-- **Dependencies**: Phase 2 depends on Phase 1, Phase 3 depends on Phase 1+2
+- **Dependencies**: Phase 2 independent, Phase 3 depends on Phase 1+2
 - **Risk**: Low (no breaking changes, pure refactoring)
+- **Note**: `.yamllint` config already exists, only workflow update needed
