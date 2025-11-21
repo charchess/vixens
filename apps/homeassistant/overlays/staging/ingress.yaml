@@ -5,13 +5,13 @@ metadata:
   name: homeassistant-ingress
   namespace: homeassistant
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik
   rules:
-    - host: ha.staging.truxonline.com
+    - host: homeassistant.staging.truxonline.com
       http:
         paths:
           - path: /
@@ -23,5 +23,5 @@ spec:
                   number: 80
   tls:
     - hosts:
-        - ha.staging.truxonline.com
+        - homeassistant.staging.truxonline.com
       secretName: homeassistant-tls-staging
