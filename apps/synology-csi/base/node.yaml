@@ -56,6 +56,12 @@ spec:
             - name: host-usr-local-sbin
               mountPath: /usr/local/sbin
               readOnly: true
+            - name: host-usr-local-lib
+              mountPath: /usr/local/lib
+              readOnly: true
+            - name: host-usr-lib
+              mountPath: /usr/lib
+              readOnly: true
       volumes:
         - name: plugin-dir
           hostPath:
@@ -75,6 +81,14 @@ spec:
         - name: host-usr-local-sbin
           hostPath:
             path: /usr/local/sbin
+            type: DirectoryOrCreate
+        - name: host-usr-local-lib
+          hostPath:
+            path: /usr/local/lib
+            type: DirectoryOrCreate
+        - name: host-usr-lib
+          hostPath:
+            path: /usr/lib
             type: DirectoryOrCreate
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
