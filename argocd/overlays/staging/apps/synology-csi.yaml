@@ -10,7 +10,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens
-    path: apps/synology-csi-talos/overlays/staging
+    path: apps/synology-csi/overlays/staging
     targetRevision: staging
   destination:
     server: https://kubernetes.default.svc
