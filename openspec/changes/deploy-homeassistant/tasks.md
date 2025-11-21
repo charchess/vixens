@@ -35,7 +35,7 @@
   - [x] **Added:** `base/service-nodeport.yaml` - NodePort 30812 for direct access during configuration
   - [x] **Added:** `base/configmap.yaml` - HTTP configuration for Traefik reverse proxy (use_x_forwarded_for, trusted_proxies)
   - [x] Create `base/kustomization.yaml` - Include all base resources
-  - [ ] Create `base/README.md` - Document deployment architecture *(TODO)*
+  - [x] Create `base/README.md` - Document deployment architecture (commit 64cb57b)
 
 ## Phase 3: Dev Environment Overlay
 
@@ -84,40 +84,42 @@
 
 ## Phase 6: Test Environment
 
-- [ ] Create test overlay:
-  - [ ] Copy dev overlay structure to `overlays/test/`
-  - [ ] Update ingress hostname to `homeassistant.test.truxonline.com`
-  - [ ] Adjust resources if needed
+- [x] Create test overlay:
+  - [x] Copy dev overlay structure to `overlays/test/`
+  - [x] Update ingress hostname to `homeassistant.test.truxonline.com`
+  - [x] TLS: letsencrypt-staging (commit 64cb57b)
 
-- [ ] Create ArgoCD Application for test:
-  - [ ] Create `argocd/overlays/test/apps/homeassistant.yaml`
-  - [ ] Update test kustomization.yaml
+- [x] Create ArgoCD Application for test:
+  - [x] Create `argocd/overlays/test/apps/homeassistant.yaml` (targetRevision: test branch)
+  - [x] Referenced in test kustomization.yaml (line 23)
 
-- [ ] Deploy and validate in test environment
+- [ ] Deploy and validate in test environment *(Requires test cluster active)*
 
 ## Phase 7: Staging Environment
 
-- [ ] Create staging overlay:
-  - [ ] Copy test overlay structure to `overlays/staging/`
-  - [ ] Update ingress hostname to `homeassistant.staging.truxonline.com`
-  - [ ] Increase resources (750m CPU, 1.5Gi memory)
+- [x] Create staging overlay:
+  - [x] Copy test overlay structure to `overlays/staging/`
+  - [x] Update ingress hostname to `homeassistant.staging.truxonline.com`
+  - [x] TLS: letsencrypt-prod (commit 64cb57b)
+  - [ ] Increase resources (750m CPU, 1.5Gi memory) *(TODO: Add resource patches)*
 
-- [ ] Create ArgoCD Application for staging
-- [ ] Deploy and validate in staging environment
+- [x] Create ArgoCD Application for staging (targetRevision: staging branch)
+- [ ] Deploy and validate in staging environment *(Requires staging cluster active)*
 
 ## Phase 8: Production Environment
 
-- [ ] Create production overlay:
-  - [ ] Copy staging overlay structure to `overlays/prod/`
-  - [ ] Update ingress hostname to `homeassistant.truxonline.com`
-  - [ ] Production resources: 1 CPU, 2Gi memory
-  - [ ] Add resource requests/limits
-  - [ ] Consider PVC size increase (50Gi)
-  - [ ] Pin image tag to specific version (not :stable)
+- [x] Create production overlay:
+  - [x] Copy staging overlay structure to `overlays/prod/`
+  - [x] Update ingress hostname to `homeassistant.truxonline.com`
+  - [x] TLS: letsencrypt-prod (commit 64cb57b)
+  - [ ] Production resources: 1 CPU, 2Gi memory *(TODO: Add resource patches)*
+  - [ ] Add resource requests/limits *(TODO)*
+  - [ ] Consider PVC size increase (50Gi) *(Optional, defer to production)*
+  - [ ] Pin image tag to specific version (not :stable) *(TODO: Decide versioning strategy)*
 
-- [ ] Create ArgoCD Application for prod:
-  - [ ] Create `argocd/overlays/prod/apps/homeassistant.yaml`
-  - [ ] Update prod kustomization.yaml
+- [x] Create ArgoCD Application for prod:
+  - [x] Create `argocd/overlays/prod/apps/homeassistant.yaml` (targetRevision: main branch)
+  - [x] Referenced in prod kustomization.yaml (line 23)
 
 ## Phase 9: Migration (If Applicable)
 
