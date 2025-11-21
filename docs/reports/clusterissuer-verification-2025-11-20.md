@@ -191,9 +191,27 @@ Email: admin@truxonline.com
 - [x] Vérifier Gandi webhook opérationnel
 - [x] Inventorier certificats déployés
 - [x] Identifier anomalies (mail-gateway)
-- [ ] Corriger issuer mail-gateway-tls-dev
+- [x] Corriger issuer mail-gateway (tous environnements - 2025-11-21)
 - [ ] Créer runbook ClusterIssuer management
 - [ ] Répéter vérification sur test/staging/prod (quand déployés)
+
+## Corrections Appliquées (2025-11-21)
+
+### Mail-Gateway ClusterIssuer Fix
+
+**Problème:** Tous les environnements utilisaient un ClusterIssuer "gandi" inexistant.
+
+**Corrections:**
+- **Dev**: `gandi` → `letsencrypt-staging` ✅
+- **Test**: `gandi` → `letsencrypt-staging` ✅
+- **Staging**: `gandi` → `letsencrypt-staging` ✅
+- **Prod**: `gandi` → `letsencrypt-prod` ✅
+
+**Fichiers modifiés:**
+- `apps/mail-gateway/overlays/dev/ingress.yaml`
+- `apps/mail-gateway/overlays/test/ingress.yaml`
+- `apps/mail-gateway/overlays/staging/ingress.yaml`
+- `apps/mail-gateway/overlays/prod/ingress.yaml`
 
 ---
 
