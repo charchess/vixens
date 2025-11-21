@@ -12,6 +12,8 @@ spec:
       labels:
         app: synology-csi-node
     spec:
+      hostNetwork: true
+      hostPID: true
       serviceAccountName: synology-csi-node
       containers:
         - name: csi-node-driver-registrar
@@ -24,6 +26,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+          securityContext:
+            privileged: true
           volumeMounts:
             - name: plugin-dir
               mountPath: /csi/
@@ -45,24 +49,23 @@ spec:
           securityContext:
             privileged: true
           volumeMounts:
+            - name: kubelet-dir
+              mountPath: /var/lib/kubelet
+              mountPropagation: Bidirectional
             - name: plugin-dir
               mountPath: /csi/
-            - name: pods-mount-dir
-              mountPath: /var/lib/kubelet/pods
-              mountPropagation: Bidirectional
             - name: client-info
               mountPath: /etc/synology
               readOnly: true
-            - name: host-usr-local-sbin
-              mountPath: /usr/local/sbin
-              readOnly: true
-            - name: host-usr-local-lib
-              mountPath: /usr/local/lib
-              readOnly: true
-            - name: host-usr-lib
-              mountPath: /usr/lib
-              readOnly: true
+            - name: host-root
+              mountPath: /host
+            - name: device-dir
+              mountPath: /dev
       volumes:
+        - name: kubelet-dir
+          hostPath:
+            path: /var/lib/kubelet
+            type: Directory
         - name: plugin-dir
           hostPath:
             path: /var/lib/kubelet/plugins/csi.san.synology.com
@@ -71,25 +74,17 @@ spec:
           hostPath:
             path: /var/lib/kubelet/plugins_registry
             type: Directory
-        - name: pods-mount-dir
-          hostPath:
-            path: /var/lib/kubelet/pods
-            type: Directory
         - name: client-info
           secret:
             secretName: client-info-secret
-        - name: host-usr-local-sbin
+        - name: host-root
           hostPath:
-            path: /usr/local/sbin
-            type: DirectoryOrCreate
-        - name: host-usr-local-lib
+            path: /
+            type: Directory
+        - name: device-dir
           hostPath:
-            path: /usr/local/lib
-            type: DirectoryOrCreate
-        - name: host-usr-lib
-          hostPath:
-            path: /usr/lib
-            type: DirectoryOrCreate
+            path: /dev
+            type: Directory
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
