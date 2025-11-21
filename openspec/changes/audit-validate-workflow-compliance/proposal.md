@@ -48,63 +48,24 @@ Audit current codebase compliance with existing validation workflow, fix all iss
 
 ### Actions Required
 
-#### 1. Extract yamllint config to file
+#### 1. Update workflow to use existing .yamllint file
 
-Create `.yamllint.yaml` in repo root:
+**Current State:** `.yamllint` file already exists in repo root with complete configuration.
 
-```yaml
----
-extends: default
+**Problem:** Workflow creates inline config in temporary `yamllint-config.yml` file (lines 26-73).
 
-yaml-files:
-  - '*.yaml'
-  - '*.yml'
-  - '.yamllint'
-
-rules:
-  # ============ CRITICAL ERRORS ============
-  indentation:
-    spaces: 2
-    indent-sequences: true
-    check-multi-line-strings: false
-    level: error
-
-  key-duplicates:
-    level: error
-
-  # ============ WARNINGS ============
-  line-length:
-    max: 80
-    allow-non-breakable-words: true
-    allow-non-breakable-inline-mappings: true
-    level: warning
-
-  trailing-spaces:
-    level: warning
-
-  new-lines:
-    type: unix
-    level: warning
-
-  # ============ DISABLED ============
-  comments: disable
-  comments-indentation: disable
-  brackets: disable
-  truthy: disable
-```
-
-#### 2. Update workflow to use config file
-
-Change `.github/workflows/validate.yaml` line 26-73:
+**Solution:** Change `.github/workflows/validate.yaml` to use existing `.yamllint`:
 
 ```yaml
 - name: Validate YAML syntax
   run: |
     find apps argocd -name "*.yaml" -o -name "*.yml" | \
-      xargs yamllint -c .yamllint.yaml
+      xargs yamllint -c .yamllint
 ```
 
-#### 3. Create local validation script
+**Change:** Replace lines 26-73 (inline config creation) with single command using existing `.yamllint`.
+
+#### 2. Create local validation script
 
 Create `scripts/validate-local.sh`:
 
@@ -115,7 +76,7 @@ set -e
 echo "=== Local Validation (mimics GitHub Actions) ==="
 
 echo "1️⃣ YAML Lint..."
-find apps argocd -name "*.yaml" -o -name "*.yml" | xargs yamllint -c .yamllint.yaml
+find apps argocd -name "*.yaml" -o -name "*.yml" | xargs yamllint -c .yamllint
 
 echo "2️⃣ Kube Structure (kubeval)..."
 if ! command -v kubeval &> /dev/null; then
@@ -146,7 +107,7 @@ openspec validate --all --strict
 echo "✅ All validations passed!"
 ```
 
-#### 4. Document in CLAUDE.md
+#### 3. Document in CLAUDE.md
 
 Add section "Code Validation":
 
@@ -157,7 +118,7 @@ All code changes are validated via GitHub Actions (`.github/workflows/validate.y
 
 ### Validation Jobs
 
-1. **yaml-lint**: YAML syntax & style (yamllint with `.yamllint.yaml`)
+1. **yaml-lint**: YAML syntax & style (yamllint with `.yamllint`)
 2. **kube-structure**: Kubernetes resource validation (kubeval)
 3. **argocd-validate**: ArgoCD Application structure (yq validation)
 4. **security-scan**: Security best practices (checkov, informational)
@@ -179,6 +140,7 @@ Run before pushing:
 
 ## Non-Goals
 
+- **Not creating .yamllint file**: Already exists in repo root
 - **Not fixing line-length warnings**: Warnings don't block, acceptable
 - **Not adding new validations**: Audit existing workflow only
 - **Not changing branch protection**: Assumed already configured
@@ -186,20 +148,20 @@ Run before pushing:
 
 ## Testing Strategy
 
-### Phase 1: Extract Config & Test
-1. Create `.yamllint.yaml`
-2. Test yamllint with new config
-3. Verify same results as inline config
+### Phase 1: Update Workflow to Use Existing Config
+1. Modify `.github/workflows/validate.yaml` to use existing `.yamllint`
+2. Remove lines 26-73 (inline config creation)
+3. Test yamllint with existing `.yamllint`
 
 ### Phase 2: Create Local Script
 1. Create `scripts/validate-local.sh`
 2. Test on current codebase
 3. Verify passes (same as GitHub Actions)
 
-### Phase 3: Update Workflow
-1. Modify `.github/workflows/validate.yaml` to use `.yamllint.yaml`
-2. Push to dev
-3. Verify GitHub Actions still passes
+### Phase 3: Validate Workflow Changes
+1. Push changes to dev
+2. Verify GitHub Actions still passes
+3. Confirm workflow uses `.yamllint` correctly
 
 ### Phase 4: Documentation
 1. Update CLAUDE.md with validation section
@@ -208,9 +170,9 @@ Run before pushing:
 
 ## Success Criteria
 
-- ✅ `.yamllint.yaml` exists in repo root
+- ✅ `.yamllint` exists in repo root (already present)
 - ✅ `scripts/validate-local.sh` exists and passes
-- ✅ Workflow uses `.yamllint.yaml` (not inline config)
+- ✅ Workflow uses `.yamllint` (not inline config)
 - ✅ CLAUDE.md documents validation rules
 - ✅ Developers can run validation locally before push
 - ✅ All validations pass on current codebase
@@ -219,6 +181,6 @@ Run before pushing:
 ## Rollback Plan
 
 1. Revert workflow changes: `git revert <commit>`
-2. Delete `.yamllint.yaml` if causing issues
-3. Workflow falls back to inline config
-4. No data loss, purely configuration changes
+2. Workflow falls back to inline config
+3. No data loss, purely configuration changes
+4. `.yamllint` file remains (can be used independently)
