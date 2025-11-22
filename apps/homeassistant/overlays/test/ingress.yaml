@@ -11,7 +11,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: homeassistant.test.truxonline.com
+    - host: ha.test.truxonline.com
       http:
         paths:
           - path: /
@@ -23,5 +23,5 @@ spec:
                   number: 80
   tls:
     - hosts:
-        - homeassistant.test.truxonline.com
+        - ha.test.truxonline.com
       secretName: homeassistant-tls-test
