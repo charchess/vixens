@@ -8,20 +8,14 @@ resources:
   - ../../base
 
 patches:
-  # Patch du secret
-  - target:
-      kind: Secret
-      name: synology-csi-secret
-    path: secret-values.yaml
-
-  # Patch du storage class pour dev
+  # Patch du storage class pour test
   - target:
       kind: StorageClass
-      name: synology-iscsi-retain
+      name: synelia-iscsi-retain
     patch: |-
       - op: replace
         path: /parameters/igroup
-        value: "vixens-dev-iscsi-group"
+        value: "vixens-test-iscsi-group"
       - op: add
         path: /parameters/targetIps
         value: "192.168.111.70,192.168.111.71"
