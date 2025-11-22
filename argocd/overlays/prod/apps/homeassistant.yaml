@@ -10,8 +10,8 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    path: apps/homeassistant/overlays/prod
     targetRevision: main
+    path: apps/homeassistant/overlays/prod
   destination:
     server: https://kubernetes.default.svc
     namespace: homeassistant
