@@ -7,7 +7,10 @@ kind: Kustomization
 namespace: argocd
 
 resources:
-  - apps/cilium-lb.yaml                  # Cilium L2 Announcements + LB IPAM (wave -2)
+  # Infisical Operator for secrets management (wave -3)
+  - apps/infisical-operator.yaml
+  # Cilium L2 Announcements + LB IPAM (wave -2)
+  - apps/cilium-lb.yaml
   - apps/synology-csi-secrets.yaml       # Infisical secrets for Synology CSI (wave -1)
   - apps/traefik.yaml                    # Traefik Ingress Controller (DRY external values)
   - apps/traefik-dashboard.yaml          # Traefik Dashboard hostname redirect
