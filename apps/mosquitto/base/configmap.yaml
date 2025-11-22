@@ -1,0 +1,42 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+  namespace: mosquitto
+data:
+  mosquitto.conf: |
+    # Mosquitto MQTT Broker Configuration
+    # Eclipse Mosquitto 2.x
+    
+    # Listeners
+    listener 1883
+    protocol mqtt
+    
+    # Anonymous Authentication (Phase 1 - will be replaced by Authentik in Phase 3)
+    allow_anonymous true
+    
+    # Persistence
+    persistence true
+    persistence_location /mosquitto/data/
+    autosave_interval 300
+    
+    # Logging
+    log_dest stdout
+    log_type error
+    log_type warning
+    log_type notice
+    log_type information
+    log_timestamp true
+    log_timestamp_format %Y-%m-%dT%H:%M:%S
+    
+    # Connection limits
+    max_connections 100
+    max_queued_messages 1000
+    
+    # Message size limits
+    message_size_limit 0
+    
+    # Retained messages
+    max_inflight_messages 20
+    max_queued_bytes 0
