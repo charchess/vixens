@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: homeassistant
+  name: mosquitto
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -10,11 +10,11 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: staging
-    path: apps/homeassistant/overlays/staging
+    targetRevision: test
+    path: apps/mosquitto/overlays/test
   destination:
     server: https://kubernetes.default.svc
-    namespace: homeassistant
+    namespace: mosquitto
   syncPolicy:
     automated:
       prune: true
