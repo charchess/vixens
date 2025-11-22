@@ -6,6 +6,7 @@ namespace: synology-csi
 
 resources:
   - ../../base
+  - infisical-auth-secret.yaml
 
 patches:
   - path: synology-infisical-secret-patch.yaml
