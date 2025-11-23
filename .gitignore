@@ -156,3 +156,7 @@ archive/
 
 terraform.tfstate*
 current_state.json
+*.hcl
+*.lock
+.envrc
+.envrc.example
