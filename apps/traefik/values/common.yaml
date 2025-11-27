@@ -11,6 +11,8 @@ providers:
     enabled: true
   kubernetesIngress:
     enabled: true
+    publishedService:
+      enabled: true
 
 # ============================================================================
 # API and Dashboard
