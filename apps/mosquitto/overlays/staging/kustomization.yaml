@@ -4,3 +4,9 @@ kind: Kustomization
 namespace: mosquitto
 resources:
   - ../../base
+
+patches:
+  - path: service-nodeport.yaml
+    target:
+      kind: Service
+      name: mosquitto

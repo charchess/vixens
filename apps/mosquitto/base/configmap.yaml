@@ -8,13 +8,14 @@ data:
   mosquitto.conf: |
     # Mosquitto MQTT Broker Configuration
     # Eclipse Mosquitto 2.x
-    
-    # Listeners
-    listener 1883
-    protocol mqtt
-    
+
     # Anonymous Authentication (Phase 1 - will be replaced by Authentik in Phase 3)
+    # IMPORTANT: Must be defined BEFORE listener in Mosquitto 2.x
     allow_anonymous true
+
+    # Listeners
+    listener 1883 0.0.0.0
+    protocol mqtt
     
     # Persistence
     persistence true
