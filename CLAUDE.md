@@ -17,6 +17,33 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 
 <!-- OPENSPEC:END -->
 
+---
+
+# ⚠️ CRITICAL WORKFLOW - READ FIRST ⚠️
+
+**Before ANY development work, you MUST follow the workflow defined in `@/root/vixens/.claude/PROJECT.md`:**
+
+1. ✅ **Check `.claude/hooks/pre-task.md`** - Complete workflow checklist
+2. ✅ **Archon First** - `find_tasks()` to check existing macro tasks
+3. ✅ **Beads for Tracking** - `bd create/update/close` for technical tickets (NOT TodoWrite)
+4. ✅ **Validity After Push** - Call validity agent after `git push origin dev` (Phase 2)
+5. ✅ **Conformity for Notation** - Call conformity agent after validation (Phase 4, conditional)
+
+**Key Rules:**
+- **Beads** = Technical task tracking (micro level)
+- **Archon** = Project phase management (macro level)
+- **Validity** = Called after dev push, consolidation, and promotions (conditional per PROJECT.md)
+- **Conformity** = Called in Phase 4 after dev validation (conditional per PROJECT.md)
+- **TodoWrite** = Internal progress tracking only (does NOT replace Beads workflow)
+
+**Commit Format:**
+- `<type>(<scope>): <description> [bd-<id>]` for feat/fix/refactor/test
+- `<type>(<scope>): <description> [no-issue]` for docs/chore ONLY (scope mandatory)
+
+See `@PROJECT.md` for complete 7-phase workflow.
+
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -763,3 +790,4 @@ resource "local_file" "kubeconfig" {
 - Sprints 8-11: Additional Phase 2 services
 
 See `docs/ROADMAP.md` for complete sprint breakdown.
+- prends connaissance et respecte @/root/vixens/.claude/PROJECT.md
