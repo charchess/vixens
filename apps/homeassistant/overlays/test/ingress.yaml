@@ -20,7 +20,7 @@ spec:
               service:
                 name: homeassistant-svc
                 port:
-                  number: 80
+                  number: 8123
   tls:
     - hosts:
         - ha.test.truxonline.com
