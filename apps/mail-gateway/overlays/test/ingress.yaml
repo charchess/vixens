@@ -1,14 +1,15 @@
 ---
+# HTTP -> HTTPS redirect
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: mail-gateway-ingress
+  name: mail-gateway-http-redirect
   namespace: mail-gateway
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
 spec:
+  ingressClassName: traefik
   rules:
     - host: mail.test.truxonline.com
       http:
@@ -20,7 +21,31 @@ spec:
                 name: mail-gateway-svc
                 port:
                   number: 80
-      tls:
-        - hosts:
-            - mail.test.truxonline.com
-          secretName: mail-gateway-tls-test
+---
+# HTTPS with TLS
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mail-gateway-ingress
+  namespace: mail-gateway
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: mail.test.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mail-gateway-svc
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - mail.test.truxonline.com
+      secretName: mail-gateway-tls-test
