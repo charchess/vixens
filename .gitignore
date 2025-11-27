@@ -166,3 +166,4 @@ current_state.json
 *.lock
 .envrc
 .envrc.example
+.serena
