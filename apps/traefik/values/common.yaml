@@ -21,11 +21,10 @@ api:
   dashboard: true
   insecure: true  # Dashboard accessible on internal network
 
-# Enable dashboard IngressRoute on web entrypoint
+# Dashboard IngressRoute disabled - managed by traefik-dashboard app
 ingressRoute:
   dashboard:
-    enabled: true
-    entryPoints: ["web"]
+    enabled: false
 
 # ============================================================================
 # Control Plane Tolerations
