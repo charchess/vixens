@@ -126,5 +126,6 @@ variable "paths" {
     talosconfig           = string
     cilium_ip_pool_yaml   = string
     cilium_l2_policy_yaml = string
+    infisical_secret      = string
   })
 }

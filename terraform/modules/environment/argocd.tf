@@ -15,6 +15,9 @@ module "argocd" {
   control_plane_tolerations = module.shared.control_plane_tolerations
   timeout                   = module.shared.timeouts.helm_install
 
+  # Infisical bootstrap secret (optional)
+  infisical_secret_path = var.paths.infisical_secret
+
   cilium_module          = module.cilium
   root_app_template_path = "${local.repo_root}/argocd/base/root-app.yaml.tpl"
 
