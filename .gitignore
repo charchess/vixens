@@ -125,6 +125,12 @@ docs/_build/
 .claude/
 .aider*
 
+# Secrets management (Infisical credentials)
+.secrets/
+
+# Beads issue tracking database
+.beads/
+
 # Fichiers temporaires de test
 *.test
 *.test.*
