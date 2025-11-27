@@ -1,0 +1,16 @@
+---
+# Infisical Universal Auth Secret - Staging Environment
+# To be applied manually: kubectl apply -f .secrets/staging/infisical-universal-auth.yaml
+# This secret will be centralized in argocd namespace and referenced by all InfisicalSecret CRDs
+apiVersion: v1
+kind: Secret
+metadata:
+  name: infisical-universal-auth
+  namespace: argocd
+  labels:
+    app: infisical-operator
+    managed-by: kubectl
+type: Opaque
+stringData:
+  clientId: "eb389f4f-27b8-4858-8fb7-00078adf27e0"
+  clientSecret: "cbbbabddab3e92289f71256da231af46b5bc6af9084ff73a17d1fffd501861b1"
