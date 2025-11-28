@@ -248,7 +248,7 @@ Tout stockage réseau SHALL venir du Synology DS1821+ avec DSM 7.2.2-72806 Updat
 | **vixens-dev** | 192.168.111.160 | obsy: 192.168.111.162 / 00:15:5D:00:CB:10 / /dev/sda&lt;br&gt;onyx: 192.168.111.164 / 00:15:5D:00:CB:11 / /dev/sda&lt;br&gt;opale: 192.168.111.163 / 00:15:5D:00:CB:0B / /dev/sda | 192.168.208.71 | 192.168.208.70 | 111 | 208 | Active |
 | **vixens-test** | 192.168.111.170 | citrine: 192.168.111.172 / 00:15:5D:00:CB:1A / /dev/sda&lt;br&gt;carny: 192.168.111.173 / 00:15:5D:00:CB:18 / /dev/sda&lt;br&gt;celestite: 192.168.111.174 / 00:15:5D:00:CB:19 / /dev/sda | 192.168.209.71 | 192.168.209.70 | 111 | 209 | Deployed with issues |
 | **vixens-stg** | 192.168.111.180 | serpentina: 192.168.111.182 / 00:15:5D:00:77:01 / /dev/sda&lt;br&gt;spinelia: 192.168.111.183 / 00:15:5D:00:77:02 / /dev/sda&lt;br&gt;saphira: 192.168.111.184 / 00:15:5D:00:77:00 / /dev/sda | 192.168.210.71 | 192.168.210.70 | 111 | 210 | Configured, not deployed |
-| **vixens-prod** | 192.168.111.170 | perla: 192.168.111.65 / 68:1d:ef:4d:d6:a9 / /dev/nvme0n1&lt;br&gt;peridot: 192.168.111.60-63 / 68:1d:ef:56:d7:bb / /dev/nvme0n1&lt;br&gt;purpuria: 192.168.111.66 / 00:e1:4f:68:0d:f8 / /dev/sda | 192.168.200.71 | 192.168.200.70 | 200 | 200 | Configured, not deployed |
+| **vixens-prod** | 192.168.111.190 | perla: 192.168.111.65 / 68:1d:ef:4d:d6:a9 / /dev/nvme0n1&lt;br&gt;peridot: 192.168.111.60-63 / 68:1d:ef:56:d7:bb / /dev/nvme0n1&lt;br&gt;purpuria: 192.168.111.66 / 00:e1:4f:68:0d:f8 / /dev/sda | 192.168.200.71 | 192.168.200.70 | 200 | 200 | Configured, not deployed |
 
 ### Terraform Providers & Versions
 
