@@ -14,7 +14,7 @@ spec:
 
   # Announce on VLAN interfaces (will be overridden in overlays)
   interfaces:
-    - "^enx.*"  # Match all physical interfaces as base
+    - "^en.*"  # Match all interfaces as base
 
   # Announce both external IPs and LoadBalancer IPs
   externalIPs: true
