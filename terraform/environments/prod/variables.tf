@@ -165,12 +165,14 @@ variable "paths" {
     talosconfig           = string
     cilium_ip_pool_yaml   = string
     cilium_l2_policy_yaml = string
+    infisical_secret      = string
   })
 
   default = {
-    kubeconfig            = "./kubeconfig-dev"
-    talosconfig           = "./talosconfig-dev"
-    cilium_ip_pool_yaml   = "../../../apps/cilium-lb/overlays/dev/ippool.yaml"
+    kubeconfig            = "./kubeconfig-prod"
+    talosconfig           = "./talosconfig-prod"
+    cilium_ip_pool_yaml   = "../../../apps/cilium-lb/overlays/prod/ippool.yaml"
     cilium_l2_policy_yaml = "../../../apps/cilium-lb/base/l2policy.yaml"
+    infisical_secret      = "../../../.secrets/prod/infisical-universal-auth.yaml"
   }
 }

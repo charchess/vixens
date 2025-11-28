@@ -132,4 +132,5 @@ paths = {
   talosconfig           = "./talosconfig-test"
   cilium_ip_pool_yaml   = "../../../apps/cilium-lb/overlays/test/ippool.yaml"
   cilium_l2_policy_yaml = "../../../apps/cilium-lb/base/l2policy.yaml"
+  infisical_secret      = "../../../.secrets/test/infisical-universal-auth.yaml"
 }
