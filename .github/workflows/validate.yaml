@@ -228,11 +228,26 @@ jobs:
             fi
           done
 
+  # 4️⃣½  Vérification de la branche de production
+  prod-branch-check:
+    name: "Check for 'targetRevision: prod'"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: "Fail if 'targetRevision: prod' is found"
+        run: |
+          if grep -r "targetRevision: prod" argocd/overlays/prod; then
+            echo "::error::Found 'targetRevision: prod' in argocd/overlays/prod. Please use 'main' for production."
+            exit 1
+          fi
+
   # 5️⃣ Résumé final
   validation-summary:
     name: Validation Summary
     runs-on: ubuntu-latest
-    needs: [yaml-lint, kube-structure, argocd-validate, security-scan, branch-flow]
+    needs: [yaml-lint, kube-structure, argocd-validate, security-scan, branch-flow, prod-branch-check]
     if: always()
     steps:
       - name: Create summary
@@ -250,4 +265,8 @@ jobs:
           echo "| ArgoCD Apps | ${{ needs.argocd-validate.result }} |" \
             >> $GITHUB_STEP_SUMMARY
           echo "| Security Check | ${{ needs.security-scan.result }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Branch Flow | ${{ needs.branch-flow.result }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Prod Branch Check | ${{ needs.prod-branch-check.result }} |" \
             >> $GITHUB_STEP_SUMMARY
