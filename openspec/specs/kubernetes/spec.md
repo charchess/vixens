@@ -25,7 +25,7 @@ Cilium SHALL use the IP pool defined in the infrastructure specification.
 
 #### Scenario: Cilium config prod
 - **WHEN** Cilium is deployed on prod
-- **THEN** it SHALL use service range 192.168.200.0/24
+- **THEN** it SHALL use service range 192.168.201.0/24
 - **AND** it SHALL allocate LB IPs according to infrastructure spec
 
 ### Requirement: Applications SHALL be Deployed via ArgoCD
