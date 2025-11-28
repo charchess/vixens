@@ -112,7 +112,8 @@ resource "kubernetes_secret_v1" "infisical_universal_auth" {
   type = "Opaque"
 
   depends_on = [
-    helm_release.argocd
+    helm_release.argocd,
+    var.cilium_module
   ]
 }
 
