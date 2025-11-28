@@ -41,7 +41,7 @@ replicaCount: 2
 # Production Monitoring
 # ============================================================================
 # Enable Prometheus metrics for production
-prometheus:
-  enabled: true
-  servicemonitor:
-    enabled: true
+#prometheus:
+#  enabled: true
+#  servicemonitor:
+#    enabled: true
