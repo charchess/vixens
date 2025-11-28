@@ -23,7 +23,7 @@ cluster = {
 control_plane_nodes = {
   "perla" = {
     name         = "perla"
-    ip_address   = "192.168.200.65"
+    ip_address   = "192.168.0.65"  # Maintenance IP for Terraform access
     mac_address  = "68:1d:ef:4d:d6:a9"
     install_disk = "nvme0n1"
     network = {
@@ -44,7 +44,7 @@ control_plane_nodes = {
   },
   "peridot" = {
     name         = "peridot"
-    ip_address   = "192.168.200.63"
+    ip_address   = "192.168.0.63"  # Maintenance IP for Terraform access
     mac_address  = "68:1d:ef:56:d7:bb"
     install_disk = "nvme0n1"
     network = {
@@ -65,7 +65,7 @@ control_plane_nodes = {
   },
   "purpuria" = {
     name         = "purpuria"
-    ip_address   = "192.168.200.66"
+    ip_address   = "192.168.0.66"  # Maintenance IP for Terraform access
     mac_address  = "00:e1:4f:68:0d:f8"
     install_disk = "sda"
     network = {
