@@ -88,6 +88,36 @@ resource "helm_release" "argocd" {
 }
 
 # --------------------------------------------------------------------------
+# INFISICAL UNIVERSAL AUTH SECRET (BOOTSTRAP)
+# --------------------------------------------------------------------------
+# Deploy Infisical credentials secret before root-app to enable InfisicalSecret CRDs
+resource "kubernetes_secret_v1" "infisical_universal_auth" {
+  count = var.infisical_secret_path != "" ? 1 : 0
+
+  metadata {
+    name      = "infisical-universal-auth"
+    namespace = var.namespace
+
+    labels = {
+      "app"        = "infisical-operator"
+      "managed-by" = "terraform"
+    }
+  }
+
+  data = {
+    clientId     = yamldecode(file(var.infisical_secret_path)).stringData.clientId
+    clientSecret = yamldecode(file(var.infisical_secret_path)).stringData.clientSecret
+  }
+
+  type = "Opaque"
+
+  depends_on = [
+    helm_release.argocd,
+    var.cilium_module
+  ]
+}
+
+# --------------------------------------------------------------------------
 # ROOT APPLICATION (App-of-Apps)
 # --------------------------------------------------------------------------
 resource "kubectl_manifest" "argocd_root_app" {
@@ -98,6 +128,7 @@ resource "kubectl_manifest" "argocd_root_app" {
   })
 
   depends_on = [
-    helm_release.argocd
+    helm_release.argocd,
+    kubernetes_secret_v1.infisical_universal_auth
   ]
 }

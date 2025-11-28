@@ -69,3 +69,12 @@ variable "root_app_template_path" {
   description = "Path to root-app.yaml.tpl template"
   type        = string
 }
+
+# --------------------------------------------------------------------------
+# INFISICAL BOOTSTRAP SECRET
+# --------------------------------------------------------------------------
+variable "infisical_secret_path" {
+  description = "Path to Infisical universal auth secret YAML file (e.g., .secrets/dev/infisical-universal-auth.yaml)"
+  type        = string
+  default     = ""
+}
