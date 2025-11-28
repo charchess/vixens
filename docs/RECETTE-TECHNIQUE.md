@@ -125,48 +125,52 @@ kubectl -n argocd get applications --kubeconfig <path-to-kubeconfig>
 
 ---
 
-## 4. Sécurité & Secrets
+## 4. Sécurité, Secrets & Accès
 
-### 4.1. Validation du Bootstrap Automatique Infisical
+### 4.1. Validation de la Redirection HTTPS
 
-Le secret `infisical-universal-auth` doit être créé automatiquement par Terraform lors du déploiement de l'infrastructure.
+Inspectez le middleware Traefik responsable de la redirection.
 
-1. **Vérifier que le secret existe dans ArgoCD namespace :**
-   ```bash
-   kubectl -n argocd get secret infisical-universal-auth -o yaml
-   ```
-   **Résultat Attendu :**
-   - Le secret existe avec le label `managed-by: terraform`
-   - Il contient deux clés: `clientId` et `clientSecret`
-   - Les valeurs correspondent à celles définies dans `.secrets/<env>/infisical-universal-auth.yaml`
+```bash
+kubectl -n traefik get middleware traefik-http-to-https -o yaml --kubeconfig <path-to-kubeconfig>
+```
 
-2. **Vérifier la source Terraform :**
-   ```bash
-   terraform -chdir=terraform/environments/dev show | grep -A 10 "infisical_universal_auth"
-   ```
-   **Résultat Attendu :**
-   - La ressource `kubernetes_secret_v1.infisical_universal_auth` apparaît
-   - Le namespace est `argocd`
+**Résultat Attendu :**
+- La ressource `Middleware` nommée `traefik-http-to-https` existe.
+- Sa spécification (`spec`) doit contenir `redirectScheme` avec `scheme: https` et `permanent: true`.
+- Ce middleware doit être référencé par les `entryPoints` (comme `web`) dans la configuration statique de Traefik.
 
-### 4.2. Validation des Secrets Infisical Synchronisés
+### 4.2. Validation du Bootstrap des Secrets Terraform
+
+Vérifiez que le secret initial, nécessaire au démarrage d'Infisical ou d'autres composants critiques, a bien été créé par Terraform.
+
+```bash
+# Le nom et le namespace peuvent varier. Adaptez si nécessaire.
+kubectl -n infisical get secret infisical-bootstrap-secret -o yaml --kubeconfig <path-to-kubeconfig>
+```
+
+**Résultat Attendu :**
+- Le secret existe dans le namespace attendu.
+- Il contient les clés (`data`) requises (ex: `INFISICAL_TOKEN`).
+- Les valeurs ne sont pas vides.
+
+### 4.3. Validation des Secrets Synchronisés par Infisical
 
 1. Choisissez un secret géré par l'opérateur, par exemple le secret pour le webhook Gandi.
 2. Vérifiez la ressource `InfisicalSecret` :
    ```bash
-   kubectl -n cert-manager get infisicalsecret gandi-credentials-sync -o yaml
+   kubectl -n cert-manager get infisicalsecret gandi-credentials -o yaml
    ```
 3. Vérifiez le secret Kubernetes natif généré :
    ```bash
    kubectl -n cert-manager get secret gandi-credentials -o yaml
    ```
 **Résultat Attendu :**
-- Le secret Kubernetes `gandi-credentials` existe
-- Il contient une clé `api-token`
-- La valeur est encodée en Base64
-- Le `InfisicalSecret` a le status `conditions.type: Ready` avec `status: True`
-- L'`InfisicalSecret` référence bien le secret `infisical-universal-auth` dans le namespace `argocd`
+- Le secret Kubernetes `gandi-credentials` existe.
+- Il contient une clé `api-key`.
+- La valeur est encodée en Base64. Le décoder doit révéler un token, pas le chemin du secret Infisical.
 
-### 4.3. Validation des Certificats (cert-manager)
+### 4.4. Validation des Certificats (cert-manager)
 
 1. Vérifiez le `ClusterIssuer`.
    ```bash
@@ -186,52 +190,13 @@ Le secret `infisical-universal-auth` doit être créé automatiquement par Terra
 
 ## 5. Applications
 
-### 5.1. Traefik & Redirections HTTP → HTTPS
-
-#### 5.1.1. Validation des IngressRoute et Middleware
+### 5.1. Traefik
 
 Vérifiez les `IngressRoute` et `Middleware` appliqués.
 ```bash
-kubectl get ingressroutes.traefik.io,middlewares.traefik.io -A --kubeconfig <path-to-kubeconfig>
+kubectl get ingressroutes,middlewares -A --kubeconfig <path-to-kubeconfig>
 ```
 **Résultat Attendu :** La liste correspond aux ressources définies dans `apps/traefik/` et les applications (comme `apps/traefik-dashboard/`).
-
-#### 5.1.2. Validation du Middleware redirect-https
-
-```bash
-kubectl -n traefik get middleware redirect-https -o yaml
-```
-**Résultat Attendu :**
-- Le middleware existe avec le nom `redirect-https`
-- La spec contient `redirectScheme: { scheme: https, permanent: true }`
-
-#### 5.1.3. Validation des Ingress avec Redirections HTTP
-
-Pour chaque service (homeassistant, mail-gateway, whoami, argocd), vérifiez qu'il y a **deux Ingress** :
-
-```bash
-kubectl -n homeassistant get ingress
-```
-**Résultat Attendu :**
-- **Ingress 1** : `homeassistant-http-redirect`
-  - Annotations: `traefik.ingress.kubernetes.io/router.entrypoints: web`
-  - Annotations: `traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd`
-- **Ingress 2** : `homeassistant-ingress`
-  - Annotations: `traefik.ingress.kubernetes.io/router.entrypoints: websecure`
-  - Section `tls` présente avec le certificat
-
-#### 5.1.4. Test Fonctionnel des Redirections
-
-```bash
-# Test HomeAssistant
-curl -I http://homeassistant.dev.truxonline.com
-
-# Test Mail Gateway
-curl -I http://mail.dev.truxonline.com
-```
-**Résultat Attendu :**
-- Code HTTP: `308 Permanent Redirect`
-- Header `Location:` pointe vers l'URL HTTPS
 
 ### 5.2. Synology CSI
 

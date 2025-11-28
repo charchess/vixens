@@ -791,3 +791,4 @@ resource "local_file" "kubeconfig" {
 
 See `docs/ROADMAP.md` for complete sprint breakdown.
 - prends connaissance et respecte @/root/vixens/.claude/PROJECT.md
+- dans docs, il existe 2 fichiers de recettes, garde les a jour
