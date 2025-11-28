@@ -1,0 +1,61 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infisical-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"  # Deployed before sealed-secrets (-1) and cilium-lb (-2)
+  labels:
+    app.kubernetes.io/part-of: vixens
+    app.kubernetes.io/component: secrets-management
+spec:
+  project: default
+  source:
+    repoURL: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/
+    chart: secrets-operator
+    targetRevision: 0.10.5
+    helm:
+      values: |
+        controllerManager:
+          manager:
+            image:
+              repository: infisical/kubernetes-operator
+              tag: v0.10.1
+            resources:
+              limits:
+                cpu: 500m
+                memory: 256Mi
+              requests:
+                cpu: 100m
+                memory: 128Mi
+          kubeRbacProxy:
+            image:
+              repository: gcr.io/kubebuilder/kube-rbac-proxy
+              tag: v0.13.1
+            resources:
+              limits:
+                cpu: 100m
+                memory: 64Mi
+              requests:
+                cpu: 50m
+                memory: 32Mi
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: infisical-operator-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
