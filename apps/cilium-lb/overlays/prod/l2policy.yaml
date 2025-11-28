@@ -15,7 +15,7 @@ spec:
   # Announce on VLAN 208 interfaces
   # Pattern matches: enx00155d00cb10.208, enx085f7b8.208, enx0cba27a.208
   interfaces:
-    - "^enx.*\\.200$"  # Match VLAN 208 sub-interfaces
+    - "^en.*\\.200$"  # Match VLAN 200 sub-interfaces (both enp physical and enx virtual)
 
   # Announce both external IPs and LoadBalancer IPs
   externalIPs: true
