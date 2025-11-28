@@ -7,11 +7,11 @@ spec:
   # TODO: Adjust IP ranges for prod environment to avoid conflicts with dev and staging
   blocks:
     # Assigned pool for static IPs (192.168.208.70-79)
-    - start: "192.168.200.70"
-      stop: "192.168.200.79"
+    - start: "192.168.201.70"
+      stop: "192.168.201.79"
     # Auto pool for dynamic allocation (192.168.208.80-89)
-    - start: "192.168.200.80"
-      stop: "192.168.200.89"
+    - start: "192.168.201.80"
+      stop: "192.168.201.89"
 
   # Allow all LoadBalancer services to use this pool
   serviceSelector:
