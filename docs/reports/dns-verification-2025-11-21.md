@@ -112,8 +112,8 @@ La configuration DNS actuelle utilise une architecture **CNAME vers A record cen
 |-----------|-------|
 | **VIP Kubernetes API** | 192.168.111.190 |
 | **VLAN Internal** | 111 (192.168.111.0/24) |
-| **VLAN Services** | 200 (192.168.200.0/24) |
-| **Traefik LB IP (expected)** | 192.168.200.70 |
+| **VLAN Services** | 200 (192.168.201.0/24) |
+| **Traefik LB IP (expected)** | 192.168.201.70 |
 
 ### DNS Records (Gandi LiveDNS)
 
@@ -184,7 +184,7 @@ La configuration DNS actuelle utilise une architecture **CNAME vers A record cen
 
    **Prod (à créer dans Gandi):**
    ```
-   vixens-prod.truxonline.com.     A      192.168.200.70
+   vixens-prod.truxonline.com.     A      192.168.201.70
    mail.truxonline.com.            CNAME  vixens-prod.truxonline.com.
    homeassistant.truxonline.com.   CNAME  vixens-prod.truxonline.com.
    traefik.truxonline.com.         CNAME  vixens-prod.truxonline.com.

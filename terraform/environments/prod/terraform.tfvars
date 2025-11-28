@@ -35,9 +35,9 @@ control_plane_nodes = {
           gateway   = ""
         },
         {
-          vlanId    = 200
-          addresses = ["192.168.200.65/24"]
-          gateway   = "192.168.200.1"
+          vlanId    = 201
+          addresses = ["192.168.201.65/24"]
+          gateway   = "192.168.201.1"
         }
       ]
     }
@@ -57,8 +57,8 @@ control_plane_nodes = {
         },
         {
           vlanId    = 200
-          addresses = ["192.168.200.63/24"]
-          gateway   = "192.168.200.1"
+          addresses = ["192.168.201.63/24"]
+          gateway   = "192.168.201.1"
         }
       ]
     }
@@ -78,8 +78,8 @@ control_plane_nodes = {
         },
         {
           vlanId    = 200
-          addresses = ["192.168.200.66/24"]
-          gateway   = "192.168.200.1"
+          addresses = ["192.168.201.66/24"]
+          gateway   = "192.168.201.1"
         }
 
       ]
@@ -98,7 +98,7 @@ worker_nodes = {}
 # ----------------------------------------------------------------------------
 argocd = {
   service_type      = "LoadBalancer"
-  loadbalancer_ip   = "192.168.200.71"
+  loadbalancer_ip   = "192.168.201.71"
   hostname          = "argocd.truxonline.com"
   insecure          = true
   disable_auth      = true
@@ -110,7 +110,7 @@ argocd = {
 # --------------------------------------------------------------------------
 cilium_l2 = {
   pool_name   = "prod-pool"
-  pool_ips    = ["192.168.200.70-192.168.200.89"]
+  pool_ips    = ["192.168.201.70-192.168.201.89"]
   policy_name = "prod-l2-policy"
   interfaces  = ["eth1"]
   node_selector = {
@@ -122,7 +122,7 @@ cilium_l2 = {
 # NETWORK
 # --------------------------------------------------------------------------
 network = {
-  vlan_services_subnet = "192.168.200.0/24"
+  vlan_services_subnet = "192.168.201.0/24"
 }
 
 # ----------------------------------------------------------------------------
