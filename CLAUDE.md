@@ -792,3 +792,4 @@ resource "local_file" "kubeconfig" {
 See `docs/ROADMAP.md` for complete sprint breakdown.
 - prends connaissance et respecte @/root/vixens/.claude/PROJECT.md
 - dans docs, il existe 2 fichiers de recettes, garde les a jour
+- quand on travaille sur un environnement (par exemple staging), bases toi sur les environnements inferieurs (test et dev pour staging par exemple) pour mener ta reflexion et comparer les differences (on considère que les environnements inferieurs ont étés validés antérieurement avant d'en arriver a celui en cours)

@@ -1,0 +1,6 @@
+# Core libraries for test execution and HTTP requests
+requests
+kubernetes
+
+# Utility for colored terminal output
+termcolor
