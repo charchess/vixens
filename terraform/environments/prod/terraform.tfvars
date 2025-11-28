@@ -56,7 +56,7 @@ control_plane_nodes = {
           gateway   = ""
         },
         {
-          vlanId    = 200
+          vlanId    = 201
           addresses = ["192.168.201.63/24"]
           gateway   = "192.168.201.1"
         }
@@ -77,7 +77,7 @@ control_plane_nodes = {
           gateway   = ""
         },
         {
-          vlanId    = 200
+          vlanId    = 201
           addresses = ["192.168.201.66/24"]
           gateway   = "192.168.201.1"
         }
