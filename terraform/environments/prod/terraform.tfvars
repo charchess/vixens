@@ -31,12 +31,12 @@ control_plane_nodes = {
       vlans = [
         {
           vlanId    = 111
-          addresses = ["192.168.111.65/24"]
+          addresses = ["192.168.111.193/24"]
           gateway   = ""
         },
         {
           vlanId    = 201
-          addresses = ["192.168.201.65/24"]
+          addresses = ["192.168.201.193/24"]
           gateway   = "192.168.201.1"
         }
       ]
@@ -52,12 +52,12 @@ control_plane_nodes = {
       vlans = [
         {
           vlanId    = 111
-          addresses = ["192.168.111.60/24", "192.168.111.63/24"]
+          addresses = ["192.168.111.60/24", "192.168.111.194/24"]
           gateway   = ""
         },
         {
           vlanId    = 201
-          addresses = ["192.168.201.63/24"]
+          addresses = ["192.168.201.194/24"]
           gateway   = "192.168.201.1"
         }
       ]
@@ -73,12 +73,12 @@ control_plane_nodes = {
       vlans = [
         {
           vlanId    = 111
-          addresses = ["192.168.111.66/24"]
+          addresses = ["192.168.111.195/24"]
           gateway   = ""
         },
         {
           vlanId    = 201
-          addresses = ["192.168.201.66/24"]
+          addresses = ["192.168.201.195/24"]
           gateway   = "192.168.201.1"
         }
 
