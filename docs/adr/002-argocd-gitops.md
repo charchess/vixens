@@ -50,7 +50,7 @@ Besoin d'un outil GitOps pour gérer déclarativement l'infrastructure Kubernete
 3. **Multi-Cluster** : 1 ArgoCD par cluster (autonomie) avec possibilité central future
 4. **Kustomize Overlays** : Base + overlays par environnement (dev/test/prod)
 5. **RBAC** : Authentification Authentik future + RBAC ArgoCD
-6. **Helm Support** : Déploiement charts officiels (Traefik, MetalLB, cert-manager)
+6. **Helm Support** : Déploiement charts officiels (Traefik, ciliumLB, cert-manager)
 
 ## Conséquences
 
@@ -75,7 +75,7 @@ Besoin d'un outil GitOps pour gérer déclarativement l'infrastructure Kubernete
 
 ```
 Root App (clusters/dev/root-app.yaml)
-  └─> apps/metallb/overlays/dev/
+  └─> apps/ciilium-lb/overlays/dev/
   └─> apps/traefik/overlays/dev/
   └─> apps/cert-manager/overlays/dev/
   └─> apps/synology-csi/overlays/dev/
