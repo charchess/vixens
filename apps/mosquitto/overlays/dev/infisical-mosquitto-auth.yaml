@@ -19,7 +19,4 @@ spec:
     secretNamespace: mosquitto
     creationPolicy: Owner
     secretType: Opaque
-  data:
-    - secretPath: MOSQUITTO_PASSWD_FILE
-      name: mosquitto.passwd
   resyncInterval: 60
