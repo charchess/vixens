@@ -34,43 +34,43 @@ spec:
             - name: mosquitto-auth-writable
               mountPath: /mnt/mosquitto-auth-writable
       containers:
-        - name: mosquitto
-          image: eclipse-mosquitto:2.0.20
-          ports:
-            - name: mqtt
-              containerPort: 1883
-              protocol: TCP
-          volumeMounts:
-            - name: config
-              mountPath: /mosquitto/config
-            - name: data
-              mountPath: /mosquitto/data
-            - name: mosquitto-conf
-              mountPath: /mosquitto/config/mosquitto.conf
-              subPath: mosquitto.conf
-            - name: mosquitto-auth-writable # Mount the writable emptyDir here
-              mountPath: /mosquitto/config/auth
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 200m
-              memory: 256Mi
-          livenessProbe:
-            tcpSocket:
-              port: 1883
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
-          readinessProbe:
-            tcpSocket:
-              port: 1883
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 3
+      - name: mosquitto
+        image: eclipse-mosquitto:2.0.20
+        ports:
+          - name: mqtt
+            containerPort: 1883
+            protocol: TCP
+        volumeMounts:
+          - name: config
+            mountPath: /mosquitto/config
+          - name: data
+            mountPath: /mosquitto/data
+          - name: mosquitto-conf
+            mountPath: /mosquitto/config/mosquitto.conf
+            subPath: mosquitto.conf
+          - name: mosquitto-auth-writable # Mount the writable emptyDir here
+            mountPath: /mosquitto/config/auth
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu:     200m
+            memory:  512Mi
+        livenessProbe:
+          tcpSocket:
+            port: 1883
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: 1883
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
