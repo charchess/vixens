@@ -49,8 +49,7 @@ spec:
               mountPath: /mosquitto/config/mosquitto.conf
               subPath: mosquitto.conf
             - name: mosquitto-auth-writable # Mount the writable emptyDir here
-              mountPath: /mosquitto/config/auth/mosquitto.passwd
-              readOnly: false # Changed to false
+              mountPath: /mosquitto/config/auth
           resources:
             requests:
               cpu: 50m
