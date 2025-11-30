@@ -19,6 +19,20 @@ spec:
       labels:
         app: mosquitto
     spec:
+      initContainers: # NEW SECTION
+        - name: copy-mosquitto-password
+          image: busybox:1.36.1 # A small image with basic utilities
+          command: ["sh", "-c"]
+          args:
+            - cp /secrets/mosquitto.passwd /mnt/mosquitto-auth-writable/mosquitto.passwd &&
+              chmod 0700 /mnt/mosquitto-auth-writable/mosquitto.passwd &&
+              chown 1883:1883 /mnt/mosquitto-auth-writable/mosquitto.passwd # Assuming mosquitto user ID is 1883
+          volumeMounts:
+            - name: mosquitto-auth
+              mountPath: /secrets
+              readOnly: true
+            - name: mosquitto-auth-writable
+              mountPath: /mnt/mosquitto-auth-writable
       containers:
         - name: mosquitto
           image: eclipse-mosquitto:2.0.20
@@ -34,7 +48,7 @@ spec:
             - name: mosquitto-conf
               mountPath: /mosquitto/config/mosquitto.conf
               subPath: mosquitto.conf
-            - name: mosquitto-auth # New volumeMount
+            - name: mosquitto-auth-writable # Mount the writable emptyDir here
               mountPath: /mosquitto/config/auth/mosquitto.passwd
               subPath: mosquitto.passwd
               readOnly: true
@@ -73,6 +87,8 @@ spec:
         - name: mosquitto-conf
           configMap:
             name: mosquitto-config
-        - name: mosquitto-auth # New volume
+        - name: mosquitto-auth # This volume is the secret mount
           secret:
             secretName: mosquitto-password-file
+        - name: mosquitto-auth-writable # New emptyDir volume
+          emptyDir: {}
