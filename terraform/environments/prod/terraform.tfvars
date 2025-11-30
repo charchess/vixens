@@ -21,8 +21,8 @@ cluster = {
 # CONTROL PLANE NODES
 # ----------------------------------------------------------------------------
 control_plane_nodes = {
-  "perla" = {
-    name         = "perla"
+  "powder" = {
+    name         = "powder"
     ip_address   = "192.168.0.65"  # Maintenance IP for Terraform access
     mac_address  = "68:1d:ef:4d:d6:a9"
     install_disk = "nvme0n1"
@@ -42,8 +42,8 @@ control_plane_nodes = {
       ]
     }
   },
-  "peridot" = {
-    name         = "peridot"
+  "poison" = {
+    name         = "poison"
     ip_address   = "192.168.0.63"  # Maintenance IP for Terraform access
     mac_address  = "68:1d:ef:56:d7:bb"
     install_disk = "nvme0n1"
@@ -63,8 +63,8 @@ control_plane_nodes = {
       ]
     }
   },
-  "purpuria" = {
-    name         = "purpuria"
+  "phoebe" = {
+    name         = "phoebe"
     ip_address   = "192.168.0.66"  # Maintenance IP for Terraform access
     mac_address  = "00:e1:4f:68:0d:f8"
     install_disk = "sda"

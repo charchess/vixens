@@ -34,6 +34,10 @@ spec:
             - name: mosquitto-conf
               mountPath: /mosquitto/config/mosquitto.conf
               subPath: mosquitto.conf
+            - name: mosquitto-auth # New volumeMount
+              mountPath: /mosquitto/config/auth/mosquitto.passwd
+              subPath: mosquitto.passwd
+              readOnly: true
           resources:
             requests:
               cpu: 50m
@@ -69,3 +73,6 @@ spec:
         - name: mosquitto-conf
           configMap:
             name: mosquitto-config
+        - name: mosquitto-auth # New volume
+          secret:
+            secretName: mosquitto-password-file
