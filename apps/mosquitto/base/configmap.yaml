@@ -9,9 +9,11 @@ data:
     # Mosquitto MQTT Broker Configuration
     # Eclipse Mosquitto 2.x
 
-    # Anonymous Authentication (Phase 1 - will be replaced by Authentik in Phase 3)
-    # IMPORTANT: Must be defined BEFORE listener in Mosquitto 2.x
-    allow_anonymous true
+    # Enable password authentication
+    password_file /mosquitto/config/auth/mosquitto.passwd
+    
+    # Disallow anonymous connections (optional but recommended for security)
+    allow_anonymous false
 
     # Listeners
     listener 1883 0.0.0.0

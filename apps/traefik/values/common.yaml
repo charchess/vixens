@@ -47,6 +47,10 @@ ports:
     expose: true
     tls:
       enabled: true
+  mqtt: # New entrypoint for Mosquitto
+    port: 1883
+    expose: true
+    protocol: TCP
   traefik:
     port: 9000
     expose: false

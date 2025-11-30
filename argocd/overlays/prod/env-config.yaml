@@ -62,8 +62,8 @@ data:
   # Cluster Configuration
   # ============================================================================
   # Kubernetes API VIP on VLAN 111
-  cluster_vip: "192.168.111.200"
-  cluster_endpoint: "https://192.168.111.200:6443"
+  cluster_vip: "192.168.111.190"
+  cluster_endpoint: "https://192.168.111.190:6443"
 
   # ============================================================================
   # Control Plane Nodes (Physical - VLAN 111 IPs) - TBD

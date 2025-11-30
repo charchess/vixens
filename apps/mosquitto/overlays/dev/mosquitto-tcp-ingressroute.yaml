@@ -1,0 +1,13 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: mosquitto-mqtt
+  namespace: mosquitto
+spec:
+  entryPoints:
+    - mqtt # Refers to the 'mqtt' entrypoint defined in Traefik's configuration
+  routes:
+    - match: HostSNI(`*`) # For MQTT, HostSNI(*) is common as clients don't always send a hostname
+      services:
+        - name: mosquitto # The name of your mosquitto ClusterIP Service (from base/service.yaml)
+          port: 1883
