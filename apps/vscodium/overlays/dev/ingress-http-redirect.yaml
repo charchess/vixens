@@ -1,12 +1,11 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: vscodium-ingress
+  name: vscodium-http-redirect
   namespace: vscodium
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -20,7 +19,7 @@ spec:
                 name: vscodium-svc
                 port:
                   number: 8080
-    - host: vscode.dev.truxonline.com # New host
+    - host: vscode.dev.truxonline.com
       http:
         paths:
           - path: /
@@ -30,8 +29,3 @@ spec:
                 name: vscodium-svc
                 port:
                   number: 8080
-  tls:
-    - hosts:
-        - vscodium.dev.truxonline.com
-        - vscode.dev.truxonline.com # New host
-      secretName: vscodium-tls-dev
