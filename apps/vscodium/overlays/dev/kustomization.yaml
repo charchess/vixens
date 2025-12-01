@@ -6,5 +6,8 @@ resources:
   - ingress.yaml
 namePrefix: dev- # Add a prefix for dev environment resources (e.g., dev-vscodium-svc)
 nameSuffix: -dev # Add a suffix for dev environment resources (e.g., vscodium-svc-dev)
-# TODO: Add specific patches for dev environment if needed (e.g., resource limits, replicas)
-# For now, base resources are applied directly
+patches:
+  - path: patch-deployment-tolerations.yaml
+    target:
+      kind: Deployment
+      name: vscodium
