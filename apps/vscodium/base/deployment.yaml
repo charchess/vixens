@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vscodium
+  namespace: vscodium
+  labels:
+    app: vscodium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vscodium
+  template:
+    metadata:
+      labels:
+        app: vscodium
+    spec:
+      containers:
+        - name: vscodium
+          image: codercom/code-server:latest # Using code-server as a VSCodium equivalent
+          imagePullPolicy: Always
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Paris"
+            - name: PASSWORD # Set a strong password
+              value: "your-strong-password"
+            - name: DOCKER_USER # For extensions
+              value: "true"
+          ports:
+            - name: http
+              containerPort: 8080 # Default port for code-server
+              protocol: TCP
+          volumeMounts:
+            - name: vscodium-config
+              mountPath: /config
+            - name: vscodium-data
+              mountPath: /home/coder
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+      volumes:
+        - name: vscodium-config
+          persistentVolumeClaim:
+            claimName: vscodium-config
+        - name: vscodium-data
+          persistentVolumeClaim:
+            claimName: vscodium-data
