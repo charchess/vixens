@@ -4,11 +4,4 @@ namespace: vscodium # Ensure vscodium resources are deployed in vscodium namespa
 resources:
   - ../../base
   - ingress.yaml
-# NOTE : pas de prefix/suffix, ca sert a rien au vu de la structure du projet  
-# namePrefix: dev- # Add a prefix for dev environment resources (e.g., dev-vscodium-svc)
-# nameSuffix: -dev # Add a suffix for dev environment resources (e.g., vscodium-svc-dev)
-patches:
-  - path: patch-deployment-tolerations.yaml
-    target:
-      kind: Deployment
-      name: vscodium
+  - ingress-http-redirect.yaml
