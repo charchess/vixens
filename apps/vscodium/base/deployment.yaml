@@ -21,6 +21,8 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      securityContext:
+        fsGroup: 1000 # Matches PGID
       containers:
         - name: vscodium
           image: codercom/code-server:latest # Using code-server as a VSCodium equivalent
