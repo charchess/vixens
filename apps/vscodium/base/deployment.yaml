@@ -15,6 +15,12 @@ spec:
       labels:
         app: vscodium
     spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: vscodium
           image: codercom/code-server:latest # Using code-server as a VSCodium equivalent
