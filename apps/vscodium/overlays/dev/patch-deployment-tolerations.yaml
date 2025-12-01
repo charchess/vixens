@@ -5,7 +5,7 @@ metadata:
 spec:
   template:
     spec:
-      tolerations:
+      tolerations: # TODO a porter sur la base ...
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
