@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: vscodium # Ensure vscodium resources are deployed in vscodium namespace
+resources:
+  - ../../base
+  - ingress.yaml
+namePrefix: dev- # Add a prefix for dev environment resources (e.g., dev-vscodium-svc)
+nameSuffix: -dev # Add a suffix for dev environment resources (e.g., vscodium-svc-dev)
+# TODO: Add specific patches for dev environment if needed (e.g., resource limits, replicas)
+# For now, base resources are applied directly

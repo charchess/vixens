@@ -1,150 +1,98 @@
-# Gemini Instructions for Vixens Project
+# Vixens GitOps Project - Gemini CLI Context
 
-This document provides essential context and instructions for AI agents working on the Vixens GitOps project.
+This document provides an overview of the Vixens GitOps project, intended to serve as instructional context for the Gemini CLI.
 
-## 1. Project Overview
+## Project Overview
 
-The Vixens project aims to create a **resilient homelab** for managing HomeAssistant and other personal services. It emphasizes applying enterprise best practices (Infrastructure as Code, GitOps, progressive security) with a focus on being both **production-ready** in design and **pedagogical** in approach, despite having a zero budget and a single developer.
+The Vixens project implements a GitOps approach for deploying and managing Kubernetes clusters based on Talos Linux. It encompasses the complete lifecycle, from infrastructure provisioning using Terraform to application management with ArgoCD.
 
-### Key Technologies:
-- **Operating System**: Talos Linux v1.7.6 (immutable, no SSH)
-- **Kubernetes**: v1.31.4 (embedded in Talos)
-- **Infrastructure Provisioning**: Terraform (version to be determined, managed via `terraform-version.tf` or similar) with Talos provider
-- **Container Network Interface (CNI)**: Cilium 1.16.5 (with native Load Balancer)
-- **Ingress Controller**: Traefik 33.0.0
-- **GitOps**: ArgoCD v7.6.12 (3-layer approach: system → security → apps)
-- **Storage**: Synology CSI (iSCSI) and NFS (deprecated)
-- **Secrets Management**: Infisical Operator
-- **Certificates**: cert-manager with Gandi webhook (DNS-01)
-- **Configuration Management**: Kustomize for environment-specific overlays
+**Key Technologies:**
+- **Terraform:** For declarative infrastructure provisioning.
+- **Talos Linux:** Immutable operating system for Kubernetes nodes.
+- **Kubernetes:** Container orchestration platform.
+- **ArgoCD:** GitOps continuous delivery tool for Kubernetes applications.
+- **Kustomize:** Used for managing application configurations across environments.
 
-### Architecture:
-The project employs two distinct control loops:
-- **Application Loop (Fast & Automated)**: Developers push to GitHub, ArgoCD manages Kubernetes applications on various environments (dev, test).
-- **Infrastructure Loop (Slow & Manual)**: `terraform apply` provisions and manages cluster infrastructure for different environments.
+**Architecture:**
+The project utilizes a two-pronged approach, reflecting a "two control loops" architecture:
 
-### Hardware Summary:
-- **Hypervisor**: Hyper-V on Windows Server 2022 (3 dev/test/staging nodes)
-- **Bare Metal**: NiPoGi mini PCs, Intel N150, 16GB DDR4, 512GB NVMe (3 prod nodes)
-- **NAS**: Synology DS1821+, DSM 7.2.2-72806 Update 4 (iSCSI + MinIO backend S3)
-- **Network**: UniFi Dream Machine SE (VLANs 111, 200, 208-210)
-- **UPS**: Infosec E3 (currently inoperative)
+1.  **Infrastructure Loop (Terraform):**
+    -   A 3-level Terraform architecture is employed for enhanced DRY (Don't Repeat Yourself) principles.
+    -   Structure: `environments/{env}/main.tf` -> `modules/environment/` -> `modules/{shared, talos, cilium, argocd}`.
+    -   The `terraform/base/` directory is deprecated and unused.
+    -   `modules/environment/` acts as a central orchestration layer for core infrastructure components (Talos cluster, Cilium CNI, ArgoCD GitOps).
+    -   `modules/shared/` centralizes global, reusable configurations (e.g., chart versions, control plane tolerations, network defaults).
+    -   Features robust Kubernetes API readiness checks with two-phase validation.
 
-## 2. Building and Running
+2.  **Application Loop (ArgoCD):**
+    -   ArgoCD operates on an "App-of-Apps" pattern.
+    -   A root application (templated by Terraform for each environment) watches `argocd/overlays/${environment}/` to deploy all applications defined there.
+    -   Application configurations are managed using Kustomize overlays within `apps/<app-name>/overlays/<env-name>` directories.
 
-### Prerequisites:
-- Terraform
-- kubectl
-- talosctl
+## Building and Running
 
-### Installation & Usage (Example for `dev` environment):
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/charchess/vixens.git
-    cd vixens
-    ```
-2.  **Navigate to environment and review `terraform.tfvars` (if applicable)**:
+### Prerequisites
+
+To interact with the project, ensure the following tools are installed:
+-   [Terraform](https://www.terraform.io/downloads.html)
+-   [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
+-   [talosctl](https://www.talos.dev/v1.6/introduction/getting-started/#talosctl)
+
+### Terraform (Infrastructure Management)
+
+To provision or update the infrastructure for a specific environment (e.g., `dev`):
+
+1.  Navigate to the environment's directory:
     ```bash
     cd terraform/environments/dev
-    # Review or create terraform.tfvars
     ```
-3.  **Initialize and apply Terraform (from project root)**:
+2.  Initialize Terraform (run from the environment directory):
     ```bash
-    terraform -chdir=terraform/environments/dev init -upgrade
-    terraform -chdir=terraform/environments/dev apply -auto-approve
+    terraform init -upgrade
     ```
+3.  Apply the Terraform configuration (run from the environment directory):
+    ```bash
+    terraform apply -auto-approve
+    ```
+    *(Note: `terraform plan` can be used to review changes before applying.)*
 
-### ArgoCD Configuration Example (`dev` environment):
-Application configurations are managed using Kustomize overlays. For instance, the ArgoCD `dev` environment's configuration typically includes an `ingress.yaml`:
-```yaml
-# apps/argocd/overlays/dev/kustomization.yaml
----
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - ingress.yaml
+### ArgoCD (Application Deployment)
+
+ArgoCD is bootstrapped by Terraform. Applications are defined in Git and automatically synchronized by ArgoCD.
+
+-   Root application definition: `argocd/base/root-app.yaml.tpl`
+-   Application overlays for environments: `apps/<app-name>/overlays/<env-name>/kustomization.yaml`
+
+### Testing
+
+The project uses a custom Python-based test runner: `scripts/run_tests.py`.
+
+**Usage:**
+```bash
+python3 scripts/run_tests.py <test_type> <environment> [--tags <tags>] [--output <format>] [--no-color]
 ```
 
-## 3. Development Conventions
+-   `<test_type>`: `fonc` (functional tests) or `tech` (technical tests).
+-   `<environment>`: `dev`, `test`, `staging`, or `prod`.
+-   `--tags`: (Optional) Comma-separated list of tags to filter tests (e.g., `terraform,network`).
+-   `--output`: (Optional) `console` (default) or `json`.
+-   `--no-color`: (Optional) Disable colored output.
 
-### Code Style & Philosophy:
--   **"Functional" Approach**: Prioritize simplicity and "it works" over over-engineered complexity.
-- **Progressive Evolution**: Start with "insecure to go fast" (Phase 1-2) with a focus on functionality, then progressively add robust security (e.g., Authentik) and comprehensive monitoring in Phase 3+.
--   **Version Pinning**: Always pin versions for Helm charts, Docker images, Terraform providers.
--   **No Inline YAML**: All values in `values-{env}.yaml` files; no inline YAML.
--   **DRY**: Single base Terraform module, single Helm chart per application.
+**Example:**
+```bash
+python3 scripts/run_tests.py fonc dev --tags terraform
+```
 
-### Architecture Patterns:
--   **Talos Immutable**: Recreate on upgrade; no `terraform apply -replace`.
--   **100% GitOps**: All changes driven through Git; manual intervention only for initial ArgoCD bootstrap.
--   **3-Layer ArgoCD**: System, Security, and Applications.
--   **Kustomize Overlays**: `base/` + `overlays/{env}/` structure for environment differentiation.
--   **No SSH**: Talos's design intentionally restricts SSH access.
--   **Local Services**: HomeAssistant and mail should remain locally accessible even if the cluster is down.
+**Pre-flight Checks for Testing:**
+The test runner requires `terraform` and `talosctl` to be available in the system's PATH.
 
-### Testing & Validation Strategy:
--   **yamllint**: Automated validation of all YAML files via GitHub Actions.
--   **OpenSpec Validator**: All specifications must pass `openspec validate --strict`.
--   **Workflow Validation**: GitHub branch protection enforces linear progression (dev → test → staging → prod).
--   **AI Tests**: AI generates code, manual review before PR.
--   **User Tests**: Manual validation on `dev` environment before PR to `test`.
+## Development Conventions
 
-### Git Workflow:
--   **Branch Strategy**:
-    -   `dev`: Active development (force-push allowed).
-    -   `test`: Testing branch (PR from `dev` only).
-    -   `staging`: Pre-production (PR from `test` only).
-    -   `main (prod)`: Production branch (PR from `staging` only).
--   **GitHub Protection Rules**: Enforce status checks (yamllint, openspec-validate), linear history, and required reviews (for `staging` and `main`).
-
-## 4. AI Agent Instructions
-
-### Most Used Tools:
-For general file system and code modification tasks, the following tools are frequently used and highly effective:
--   `run_shell_command`: To execute various shell commands.
--   `replace`: For precise, context-aware text replacement within files.
--   `write_file`: To create new files or overwrite existing ones.
-
-### Issue Tracking with bd (beads):
-**IMPORTANT**: This project uses **bd (beads)** for ALL issue tracking. Do NOT use markdown TODOs, task lists, or other tracking methods.
--   **Workflow for AI Agents**:
-    1.  **Check ready work**: `bd ready --json`
-    2.  **Claim your task**: `bd update <id> --status in_progress --json`
-    3.  **Work on it**: Implement, test, document.
-    4.  **Discover new work?**: Create linked issue: `bd create "Found bug" -p 1 --deps discovered-from:<parent-id> --json`
-    5.  **Complete**: `bd close <id> --reason "Done" --json`
-    6.  **Commit together**: Always commit the `.beads/issues.jsonl` file with code changes to keep issue state synchronized.
-
-### Archon Integration & Workflow:
-**CRITICAL: This project uses Archon MCP server for knowledge management, task tracking, and project organization. ALWAYS start with Archon MCP server task management.**
--   **Core Workflow: Task-Driven Development**:
-    1.  **Get Task** → `find_tasks(task_id="...")` or `find_tasks(filter_by="status", filter_value="todo")`
-    2.  **Start Work** → `manage_task("update", task_id="...", status="doing")`
-    3.  **Research** → Use knowledge base (RAG workflow)
-    4.  **Implement** → Write code based on research
-    5.  **Review** → `manage_task("update", task_id="...", status="review")`
-    6.  **Next Task** → `find_tasks(filter_by="status", filter_value="todo")`
--   **NEVER skip task updates. NEVER code without checking current tasks first.**
-
-### OpenSpec Instructions:
-Always consult `openspec/AGENTS.md` when the request:
--   Mentions planning or proposals (e.g., proposal, spec, change, plan).
--   Introduces new capabilities, breaking changes, architecture shifts, or significant performance/security work.
--   Sounds ambiguous and requires an authoritative specification before coding.
--   **Three-Stage Workflow**:
-    1.  **Creating Changes**: Review existing context, choose a unique `change-id`, scaffold `proposal.md`, `tasks.md`, optional `design.md`, and spec deltas. Validate with `openspec validate <id> --strict`.
-    2.  **Implementing Changes**: Read `proposal.md`, `design.md` (if present), and `tasks.md`. Implement tasks sequentially, confirm completion, and update the checklist. **Do not start implementation until the proposal is approved.**
-    3.  **Archiving Changes**: After deployment, archive changes using `openspec archive <change-id>`.
-
-### Tool Selection Guide:
-| Task                      | Tool                      | Why                       |
-|---------------------------|---------------------------|---------------------------|
-| Find files by pattern     | `glob`                    | Fast pattern matching     |
-| Search code content       | `search_file_content`     | Optimized regex search    |
-| Read specific files       | `read_file`               | Direct file access        |
-| Explore unknown scope     | `codebase_investigator`   | Multi-step investigation  |
-
-### Critical Note for AI Agents:
--   **Concurrency**: The `dev` and `test` environments cannot run simultaneously due to network connectivity issues during `terraform plan` when the respective environment is down.
--   **Host Format**: The host format is `<host>.<env>.truxonline.com`.
--   **Kubeconfig Path**: The kubeconfig path for the test environment is `/root/vixens/terraform/environments/test/kubeconfig-test`.
+-   **GitOps Workflow:** All infrastructure and application configurations are stored in Git, acting as the single source of truth. Changes are applied via Pull Requests.
+-   **Branch-Based Deployment:** Each environment (dev, test, prod, etc.) corresponds to a specific Git branch.
+-   **Terraform 3-Level Architecture:** Strict adherence to the `environments/ → modules/environment/ → modules/{shared, ...}` pattern for managing infrastructure.
+-   **Typed Variables:** Terraform variables are strictly typed and grouped into objects for clarity and validation.
+-   **Kustomize Overlays:** Application configurations are customized per environment using Kustomize.
+-   **Architectural Decision Records (ADRs):** Significant architectural decisions are documented in ADRs (e.g., `docs/adr/006-terraform-3-level-architecture-REVISED.md`).
+-   **Secrets Management:** Secrets are managed separately per environment within the `.secrets/<environment>` directory.
+-   **Conformity Scoring:** The project uses a conformity scoring grid (mentioned in ADRs).
