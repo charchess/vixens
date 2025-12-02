@@ -15,3 +15,7 @@ spec:
       protocol: TCP
       port: 8123
       targetPort: 8123
+    - name: coiot
+      protocol: UDP
+      port: 5683
+      targetPort: 5683
