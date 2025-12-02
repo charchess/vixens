@@ -32,6 +32,9 @@ spec:
             - name: http
               containerPort: 8123
               protocol: TCP
+            - name: coiot
+              containerPort: 5683
+              protocol: UDP
           env:
             - name: TZ
               value: "Europe/Paris"
