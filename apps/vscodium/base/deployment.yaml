@@ -7,6 +7,8 @@ metadata:
     app: vscodium
 spec:
   replicas: 1
+  strategy:
+    type: Recreate  # Required for RWO PVCs - terminate old pod before creating new one
   selector:
     matchLabels:
       app: vscodium
