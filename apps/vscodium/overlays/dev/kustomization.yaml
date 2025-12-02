@@ -5,3 +5,4 @@ resources:
   - ../../base
   - ingress.yaml
   - ingress-http-redirect.yaml
+  - infisical-vscodium-password.yaml
