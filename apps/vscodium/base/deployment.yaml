@@ -61,12 +61,9 @@ spec:
               mountPath: /config
             - name: vscodium-data
               mountPath: /home/coder
-            # Note: homeassistant-config PVC cannot be mounted cross-namespace
-            # Recommended approaches for accessing homeassistant configs:
-            # 1. Git-based workflow (configs in repo, deployed via ArgoCD)
-            # 2. kubectl cp for file transfer when needed
-            # 3. VSCodium Kubernetes extension for remote file browsing
-            # 4. Create a shared hostPath volume (for single-node deployments)
+            - name: homeassistant-config-shared
+              mountPath: /homeassistant
+              readOnly: false  # Allow editing Home Assistant configs in real-time
           resources:
             requests:
               memory: "512Mi"
@@ -81,3 +78,7 @@ spec:
         - name: vscodium-data
           persistentVolumeClaim:
             claimName: vscodium-data
+        - name: homeassistant-config-shared
+          hostPath:
+            path: /var/lib/kubelet/plugins/kubernetes.io/csi/pv/pvc-6bc8d6af-54be-4657-9f52-7709449e8ea3/globalmount
+            type: DirectoryOrCreate
