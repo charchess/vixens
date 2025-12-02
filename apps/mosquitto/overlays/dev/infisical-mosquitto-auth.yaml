@@ -19,7 +19,4 @@ spec:
     secretNamespace: mosquitto
     creationPolicy: Owner
     secretType: Opaque
-  data:
-    - secretKey: MOSQUITTO_PASSWD_FILE
-      kubeSecretKey: mosquitto.passwd
   resyncInterval: 60
