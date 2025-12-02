@@ -64,6 +64,22 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /var/lib/dav
+          readinessProbe:
+            httpGet:
+              path: /
+              port: webdav
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: webdav
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
 #            - name: ha-config
 #              mountPath: /config/configuration.yaml
 #              subPath: configuration.yaml
