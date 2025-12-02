@@ -41,6 +41,29 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+        - name: webdav-sidecar
+          image: bytemark/webdav:latest
+          imagePullPolicy: Always
+          ports:
+            - name: webdav
+              containerPort: 80
+              protocol: TCP
+          env:
+            - name: AUTH_TYPE
+              value: "Basic"
+            - name: USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: homeassistant-webdav-auth
+                  key: USERNAME
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: homeassistant-webdav-auth
+                  key: PASSWORD
+          volumeMounts:
+            - name: config
+              mountPath: /var/lib/dav
 #            - name: ha-config
 #              mountPath: /config/configuration.yaml
 #              subPath: configuration.yaml

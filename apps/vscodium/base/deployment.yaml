@@ -61,9 +61,10 @@ spec:
               mountPath: /config
             - name: vscodium-data
               mountPath: /home/coder
-            - name: homeassistant-config-shared
-              mountPath: /homeassistant
-              readOnly: false  # Allow editing Home Assistant configs in real-time
+            # Note: Home Assistant configs are accessible via WebDAV
+            # Install "Remote - FS" extension in VSCodium
+            # Connect to: http://homeassistant-svc.homeassistant.svc.cluster.local:8080
+            # Credentials: from Infisical /homeassistant/webdav (USERNAME, PASSWORD)
           resources:
             requests:
               memory: "512Mi"
@@ -78,7 +79,3 @@ spec:
         - name: vscodium-data
           persistentVolumeClaim:
             claimName: vscodium-data
-        - name: homeassistant-config-shared
-          hostPath:
-            path: /var/lib/kubelet/plugins/kubernetes.io/csi/pv/pvc-6bc8d6af-54be-4657-9f52-7709449e8ea3/globalmount
-            type: DirectoryOrCreate
