@@ -20,6 +20,6 @@ spec:
     creationPolicy: Owner
     secretType: Opaque
   data:
-    - secretPath: MOSQUITTO_PASSWD_FILE
-      name: mosquitto.passwd
+    - secretKey: MOSQUITTO_PASSWD_FILE
+      kubeSecretKey: mosquitto.passwd
   resyncInterval: 60
