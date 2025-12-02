@@ -21,6 +21,15 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - onyx  # Schedule on same node as homeassistant
       securityContext:
         fsGroup: 1000 # Matches PGID
       containers:
@@ -50,6 +59,12 @@ spec:
               mountPath: /config
             - name: vscodium-data
               mountPath: /home/coder
+            # Note: homeassistant-config PVC cannot be mounted cross-namespace
+            # Recommended approaches for accessing homeassistant configs:
+            # 1. Git-based workflow (configs in repo, deployed via ArgoCD)
+            # 2. kubectl cp for file transfer when needed
+            # 3. VSCodium Kubernetes extension for remote file browsing
+            # 4. Create a shared hostPath volume (for single-node deployments)
           resources:
             requests:
               memory: "512Mi"
