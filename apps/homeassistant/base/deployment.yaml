@@ -67,7 +67,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /
-              port: webdav
+              port: 80
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 3
@@ -75,7 +75,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /
-              port: webdav
+              port: 80
             initialDelaySeconds: 10
             periodSeconds: 30
             timeoutSeconds: 5
