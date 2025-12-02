@@ -51,6 +51,10 @@ ports:
     port: 1883
     expose: true
     protocol: TCP
+  coiot: # New entrypoint for Home Assistant CoIoT (Shelly devices)
+    port: 5683
+    expose: true
+    protocol: UDP
   traefik:
     port: 9000
     expose: false

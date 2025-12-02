@@ -5,4 +5,4 @@ namespace: homeassistant
 resources:
   - ../../base
   - ingress.yaml
-  - service-loadbalancer.yaml
+  - ingressroute-udp.yaml
