@@ -49,3 +49,54 @@ spec:
     - hosts:
         - homeassistant.stg.truxonline.com
       secretName: homeassistant-tls-staging
+---
+# Filebrowser HTTP -> HTTPS redirect
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homeassistant-fb-http-redirect
+  namespace: homeassistant
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: homeassistant-fb.stg.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homeassistant-svc
+                port:
+                  number: 8080
+---
+# Filebrowser HTTPS with TLS
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homeassistant-fb-ingress
+  namespace: homeassistant
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: homeassistant-fb.stg.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homeassistant-svc
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - homeassistant-fb.stg.truxonline.com
+      secretName: homeassistant-fb-tls-staging
