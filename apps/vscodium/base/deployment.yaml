@@ -39,8 +39,6 @@ spec:
           image: gitpod/openvscode-server:latest
           imagePullPolicy: Always
           env:
-            - name: OPENVSCODE_SERVER_ROOT
-              value: "/home/workspace"
             - name: CONNECTION_TOKEN # Password from Infisical
               valueFrom:
                 secretKeyRef:
