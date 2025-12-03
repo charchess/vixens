@@ -61,10 +61,33 @@ spec:
               mountPath: /config
             - name: vscodium-data
               mountPath: /home/coder
-            # Note: Home Assistant configs are accessible via WebDAV
-            # Install "Remote - FS" extension in VSCodium
-            # Connect to: http://homeassistant-svc.homeassistant.svc.cluster.local:8080
-            # Credentials: from Infisical /homeassistant/webdav (USERNAME, PASSWORD)
+            # ========================================================================
+            # Home Assistant Config Access via WebDAV
+            # ========================================================================
+            # The homeassistant pod includes a WebDAV sidecar sharing /config volume
+            #
+            # SETUP IN VSCODIUM:
+            # 1. Install "Remote - FS" extension (liximomo.remotefs)
+            # 2. Create workspace config (.vscode/remotefs.json):
+            #    {
+            #      "remote": {
+            #        "homeassistant": {
+            #          "scheme": "webdav",
+            #          "host": "homeassistant-svc.homeassistant.svc.cluster.local",
+            #          "port": 8080,
+            #          "username": "admin",
+            #          "password": "<from Infisical /webdav path>",
+            #          "remotePath": "/",
+            #          "protocol": "http"
+            #        }
+            #      }
+            #    }
+            # 3. Press Ctrl+Shift+P → "Remote FS: Edit Config"
+            # 4. Press Ctrl+Shift+P → "Remote FS: Add Folder to Workspace"
+            #
+            # WebDAV Endpoint: http://homeassistant-svc.homeassistant.svc.cluster.local:8080
+            # Credentials (Infisical /webdav): USERNAME=admin, PASSWORD=<secret>
+            # ========================================================================
           resources:
             requests:
               memory: "512Mi"
