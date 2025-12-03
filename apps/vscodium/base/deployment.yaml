@@ -44,6 +44,8 @@ spec:
                 secretKeyRef:
                   name: vscodium-password
                   key: VSCODIUM_PASSWORD
+            - name: EXTENSIONS_GALLERY
+              value: '{"serviceUrl":"https://marketplace.visualstudio.com/_apis/public/gallery","itemUrl":"https://marketplace.visualstudio.com/items"}'
           ports:
             - name: http
               containerPort: 3000 # Default port for openvscode-server
