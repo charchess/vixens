@@ -26,3 +26,4 @@ resources:
   - apps/mail-gateway.yaml                   # Mail gateway external service
   - apps/homeassistant.yaml                  # Home Assistant (with filebrowser sidecar)
   - apps/mosquitto.yaml                      # Mosquitto MQTT broker
+  - apps/birdnet-go.yaml                     # BirdNET-Go bird song detection

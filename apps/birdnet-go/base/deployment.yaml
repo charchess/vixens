@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: birdnet-go
+  namespace: birdnet-go
+  labels:
+    app: birdnet-go
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # PVC can only be mounted by one pod at a time
+  selector:
+    matchLabels:
+      app: birdnet-go
+  template:
+    metadata:
+      labels:
+        app: birdnet-go
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: birdnet-go
+          image: ghcr.io/tphakala/birdnet-go:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: TZ
+              value: "Europe/Paris"
+            - name: WEB_PORT
+              value: "8080"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: birdnet-go-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: birdnet-go-data
