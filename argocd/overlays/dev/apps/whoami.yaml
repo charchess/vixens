@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
-    path: apps/whoami/overlays/dev
+    path: apps/99-test/whoami/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: whoami

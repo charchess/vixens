@@ -10,7 +10,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens
-    path: apps/nfs-storage/overlays/dev
+    path: apps/01-storage/nfs-storage/overlays/dev
     targetRevision: dev
   destination:
     server: https://kubernetes.default.svc

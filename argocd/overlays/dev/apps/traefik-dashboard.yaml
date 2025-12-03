@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
-    path: apps/traefik-dashboard/overlays/dev
+    path: apps/00-infra/traefik-dashboard/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
