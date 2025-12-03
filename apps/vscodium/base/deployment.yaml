@@ -61,6 +61,9 @@ spec:
               mountPath: /config
             - name: vscodium-data
               mountPath: /home/coder
+            - name: mount-ha-script
+              mountPath: /usr/local/bin/mount-homeassistant.sh
+              subPath: mount-homeassistant.sh
             # ========================================================================
             # Home Assistant Config Access via WebDAV
             # ========================================================================
@@ -102,3 +105,7 @@ spec:
         - name: vscodium-data
           persistentVolumeClaim:
             claimName: vscodium-data
+        - name: mount-ha-script
+          configMap:
+            name: vscodium-mount-ha-script
+            defaultMode: 0755
