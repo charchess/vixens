@@ -1,0 +1,84 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ssh-bastion
+  namespace: ssh-bastion
+  labels:
+    app: ssh-bastion
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # Required for RWO PVCs and hostPath
+  selector:
+    matchLabels:
+      app: ssh-bastion
+  template:
+    metadata:
+      labels:
+        app: ssh-bastion
+    spec:
+      # Schedule on onyx where homeassistant/mosquitto are located
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - onyx
+      securityContext:
+        fsGroup: 1000  # PGID for linuxserver image
+      containers:
+        - name: openssh-server
+          image: lscr.io/linuxserver/openssh-server:latest
+          imagePullPolicy: Always
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Paris"
+            - name: PASSWORD_ACCESS
+              value: "true"
+            - name: USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ssh-bastion-password
+                  key: SSH_PASSWORD
+            - name: USER_NAME
+              value: "devops"
+          ports:
+            - name: ssh
+              containerPort: 2222  # linuxserver uses 2222 by default
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /config  # SSH keys, configs
+            - name: data
+              mountPath: /data    # User home directory
+            # hostPath access to all pod volumes on the node
+            - name: kubelet-volumes
+              mountPath: /mnt/volumes
+              readOnly: false
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: ssh-bastion-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: ssh-bastion-data
+        # Access to kubelet CSI mounts (Synology iSCSI volumes)
+        - name: kubelet-volumes
+          hostPath:
+            path: /var/lib/kubelet/plugins/kubernetes.io/csi
+            type: Directory
