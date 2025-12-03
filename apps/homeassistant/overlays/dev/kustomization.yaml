@@ -6,4 +6,3 @@ resources:
   - ../../base
   - ingress.yaml
   - ingressroute-udp.yaml
-  - infisical-webdav-auth.yaml
