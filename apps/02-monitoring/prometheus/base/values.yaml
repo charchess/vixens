@@ -9,6 +9,13 @@ prometheusOperator:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
+  admissionWebhooks:
+    enabled: true
+    patch:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
 
 # Prometheus configuration
 prometheus:
