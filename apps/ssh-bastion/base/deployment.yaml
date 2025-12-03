@@ -81,8 +81,8 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: ssh-bastion-data
-        # Access to kubelet CSI mounts (Synology iSCSI volumes)
+        # Access to kubelet pod volumes (all active pod mounts on this node)
         - name: kubelet-volumes
           hostPath:
-            path: /var/lib/kubelet/plugins/kubernetes.io/csi
+            path: /var/lib/kubelet/pods
             type: Directory
