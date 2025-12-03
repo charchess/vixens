@@ -25,3 +25,4 @@ resources:
   - apps/mail-gateway.yaml
   - apps/homeassistant.yaml
   - apps/mosquitto.yaml                  # Mosquitto MQTT broker
+  - apps/birdnet-go.yaml                 # BirdNET-Go bird song detection

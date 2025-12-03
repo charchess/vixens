@@ -450,3 +450,4 @@ See [docs/adr/006-terraform-2-level-architecture.md](docs/adr/006-terraform-2-le
 2. Technical: [RECETTE-TECHNIQUE.md](docs/RECETTE-TECHNIQUE.md)
 3. Always run: `terraform plan` (should show no changes)
 - les apply kubectl apply/edit/delete sont acceptable EN DEV pour le troubleshoot/confirmation mais doivent etre consolider avec une approche gitops ensuite.
+- find_tasks a une fenetre de 10 taches, pense a l'etendre pour en avoir plus
