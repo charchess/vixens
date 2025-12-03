@@ -27,3 +27,4 @@ resources:
   - apps/homeassistant.yaml                  # Home Assistant
   - apps/mosquitto.yaml                      # Mosquitto MQTT broker
   - apps/ssh-bastion.yaml                    # SSH bastion for dev access
+  - apps/vscodium.yaml                       # VSCodium web IDE (Remote-SSH to bastion)
