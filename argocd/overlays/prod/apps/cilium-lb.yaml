@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: main
-    path: apps/cilium-lb/overlays/prod
+    path: apps/00-infra/cilium-lb/overlays/prod
 
   destination:
     server: https://kubernetes.default.svc
