@@ -28,6 +28,10 @@ spec:
                     operator: In
                     values:
                       - onyx
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       securityContext:
         fsGroup: 1000  # PGID for linuxserver image
       containers:
