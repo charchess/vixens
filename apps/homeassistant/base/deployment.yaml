@@ -24,6 +24,50 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      initContainers:
+        - name: filebrowser-init
+          image: filebrowser/filebrowser:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "Initializing filebrowser database..."
+              cd /database
+
+              # Initialize database if not exists
+              if [ ! -f /database/filebrowser.db ]; then
+                filebrowser config init --database /database/filebrowser.db
+                echo "Database initialized"
+              fi
+
+              # Configure filebrowser
+              filebrowser config set --database /database/filebrowser.db --port 8080 --address 0.0.0.0
+
+              # Remove default admin if exists
+              filebrowser users rm admin --database /database/filebrowser.db 2>/dev/null || true
+
+              # Create admin user with credentials from Infisical
+              echo "Creating admin user..."
+              filebrowser users add "$FB_USERNAME" "$FB_PASSWORD" \
+                --database /database/filebrowser.db \
+                --perm.admin
+
+              echo "Filebrowser configured successfully"
+          env:
+            - name: FB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: filebrowser-auth
+                  key: USERNAME
+            - name: FB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: filebrowser-auth
+                  key: PASSWORD
+          volumeMounts:
+            - name: filebrowser-db
+              mountPath: /database
       containers:
         - name: homeassistant
           image: ghcr.io/home-assistant/home-assistant:latest
@@ -51,9 +95,13 @@ spec:
           env:
             - name: FB_PORT
               value: "8080"  # Use non-privileged port
+            - name: FB_DATABASE
+              value: "/database/filebrowser.db"
           volumeMounts:
             - name: config
               mountPath: /srv  # filebrowser serves files from /srv by default
+            - name: filebrowser-db
+              mountPath: /database
           readinessProbe:
             httpGet:
               path: /
@@ -81,6 +129,8 @@ spec:
         - name: config
           persistentVolumeClaim:
             claimName: homeassistant-config
+        - name: filebrowser-db
+          emptyDir: {}  # Ephemeral storage for filebrowser database
 #        - name: ha-config
 #          configMap:
 #            name: homeassistant-config
