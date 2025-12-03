@@ -1,9 +1,22 @@
 ---
 # Common values for kube-prometheus-stack across all environments
 
+# Global tolerations for control-plane nodes (3 CP HA, no workers)
+defaultRules:
+  runbookUrl: https://runbooks.prometheus-operator.dev/runbooks
+prometheusOperator:
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
 # Prometheus configuration
 prometheus:
   prometheusSpec:
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
     retention: 30d
     storageSpec:
       volumeClaimTemplate:
@@ -23,6 +36,10 @@ prometheus:
 # Alertmanager configuration
 alertmanager:
   alertmanagerSpec:
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
     storage:
       volumeClaimTemplate:
         spec:
@@ -42,6 +59,10 @@ alertmanager:
 grafana:
   enabled: true
   adminPassword: changeme  # Override per environment with Infisical
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
   persistence:
     enabled: true
     storageClassName: synology-iscsi-storage
@@ -56,10 +77,18 @@ grafana:
 # Node exporter
 nodeExporter:
   enabled: true
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
 
 # Kube-state-metrics
 kubeStateMetrics:
   enabled: true
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
 
 # Disable components not needed
 kubeProxy:
