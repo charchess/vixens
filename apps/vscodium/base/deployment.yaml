@@ -36,52 +36,37 @@ spec:
         fsGroup: 1000 # Matches PGID
       containers:
         - name: vscodium
-          image: gitpod/openvscode-server:latest
+          image: codercom/code-server:latest
           imagePullPolicy: Always
           env:
-            - name: CONNECTION_TOKEN # Password from Infisical
+            - name: PASSWORD # Password from Infisical
               valueFrom:
                 secretKeyRef:
                   name: vscodium-password
                   key: VSCODIUM_PASSWORD
-            - name: EXTENSIONS_GALLERY
-              value: '{"serviceUrl":"https://marketplace.visualstudio.com/_apis/public/gallery","itemUrl":"https://marketplace.visualstudio.com/items"}'
           ports:
             - name: http
-              containerPort: 3000 # Default port for openvscode-server
+              containerPort: 8080 # Default port for code-server
               protocol: TCP
           volumeMounts:
             - name: vscodium-config
-              mountPath: /home/workspace/.openvscode-server
+              mountPath: /home/coder/.local/share/code-server
             - name: vscodium-data
-              mountPath: /home/workspace
+              mountPath: /home/coder/project
+            - name: homeassistant-config
+              mountPath: /home/coder/homeassistant
+              readOnly: false
             # ========================================================================
-            # Home Assistant Config Access via WebDAV
+            # Home Assistant Config Access via Direct PVC Mount
             # ========================================================================
-            # The homeassistant pod includes a WebDAV sidecar sharing /config volume
+            # The homeassistant PVC is directly mounted at /home/coder/homeassistant
+            # Both pods are scheduled on the same node (onyx) via node affinity.
+            # This provides real-time filesystem access without WebDAV dependencies.
             #
-            # SETUP IN OPENVSCODE-SERVER:
-            # 1. Open Extensions (Ctrl+Shift+X)
-            # 2. Search and install "Remote - FS" (liximomo.remotefs)
-            # 3. Press F1 or Ctrl+Shift+P → "Remote FS: Edit Config"
-            # 4. Add this configuration:
-            #    {
-            #      "remote": {
-            #        "homeassistant": {
-            #          "scheme": "webdav",
-            #          "host": "homeassistant-svc.homeassistant.svc.cluster.local",
-            #          "port": 8080,
-            #          "username": "admin",
-            #          "password": "DeqxOodrO6etyd97JmkoJo88lbgVvO",
-            #          "remotePath": "/",
-            #          "protocol": "http"
-            #        }
-            #      }
-            #    }
-            # 5. Press F1 → "Remote FS: Add Folder to Workspace" → Select "homeassistant"
-            #
-            # WebDAV Endpoint: http://homeassistant-svc.homeassistant.svc.cluster.local:8080
-            # Credentials: admin / <password from Infisical /webdav>
+            # ACCESS IN CODE-SERVER:
+            # 1. Navigate to /home/coder/homeassistant in the file explorer
+            # 2. All Home Assistant configs are directly accessible
+            # 3. Changes are immediately visible to Home Assistant pod
             # ========================================================================
           resources:
             requests:
@@ -97,3 +82,6 @@ spec:
         - name: vscodium-data
           persistentVolumeClaim:
             claimName: vscodium-data
+        - name: homeassistant-config
+          persistentVolumeClaim:
+            claimName: homeassistant-config  # Shared with homeassistant pod
