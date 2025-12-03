@@ -11,7 +11,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: mail.staging.truxonline.com
+    - host: mail.stg.truxonline.com
       http:
         paths:
           - path: /
@@ -35,7 +35,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: mail.staging.truxonline.com
+    - host: mail.stg.truxonline.com
       http:
         paths:
           - path: /
@@ -47,5 +47,5 @@ spec:
                   number: 80
   tls:
     - hosts:
-        - mail.staging.truxonline.com
+        - mail.stg.truxonline.com
       secretName: mail-gateway-tls-staging
