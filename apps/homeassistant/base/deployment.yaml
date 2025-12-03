@@ -64,24 +64,19 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /var/lib/dav
-#            - name: ha-config
-#              mountPath: /config/configuration.yaml
-#              subPath: configuration.yaml
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-            initialDelaySeconds: 180
-            periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 3
           readinessProbe:
-            httpGet:
-              path: /
-              port: http
-            initialDelaySeconds: 120
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 10
             periodSeconds: 10
-            timeoutSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 3
             failureThreshold: 3
           resources:
             requests:
