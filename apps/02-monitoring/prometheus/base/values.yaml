@@ -72,7 +72,7 @@ grafana:
       effect: NoSchedule
   persistence:
     enabled: true
-    storageClassName: synology-iscsi-storage
+    storageClassName: synelia-iscsi-retain
     size: 10Gi
   resources:
     requests:
