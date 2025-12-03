@@ -4,3 +4,4 @@ backups/
 # Temporary files
 *.tmp
 *.bak
+.serena/
