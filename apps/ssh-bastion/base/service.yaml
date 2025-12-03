@@ -7,7 +7,7 @@ metadata:
   labels:
     app: ssh-bastion
   annotations:
-    io.cilium/lb-ipam-ips: "192.168.208.12"  # Fixed IP for SSH access
+    io.cilium/lb-ipam-ips: "192.168.208.72"  # Fixed IP for SSH access (from assigned pool .70-.79)
 spec:
   type: LoadBalancer
   selector:
