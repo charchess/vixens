@@ -24,7 +24,5 @@ resources:
   - apps/synology-csi.yaml                   # Synology CSI driver
   - apps/nfs-storage.yaml                    # NFS PV/PVC
   - apps/mail-gateway.yaml                   # Mail gateway external service
-  - apps/homeassistant.yaml                  # Home Assistant
+  - apps/homeassistant.yaml                  # Home Assistant (with filebrowser sidecar)
   - apps/mosquitto.yaml                      # Mosquitto MQTT broker
-  - apps/ssh-bastion.yaml                    # SSH bastion for dev access
-  - apps/vscodium.yaml                       # VSCodium web IDE (Remote-SSH to bastion)
