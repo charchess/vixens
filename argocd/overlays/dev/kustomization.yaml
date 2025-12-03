@@ -27,3 +27,4 @@ resources:
   - apps/homeassistant.yaml                  # Home Assistant (with filebrowser sidecar)
   - apps/mosquitto.yaml                      # Mosquitto MQTT broker
   - apps/birdnet-go.yaml                     # BirdNET-Go bird song detection
+  - apps/kube-prometheus-stack.yaml          # Prometheus + Grafana + Alertmanager monitoring stack
