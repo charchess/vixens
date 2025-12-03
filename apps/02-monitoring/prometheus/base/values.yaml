@@ -92,10 +92,11 @@ nodeExporter:
 # Kube-state-metrics
 kubeStateMetrics:
   enabled: true
-  tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-      effect: NoSchedule
+  kube-state-metrics:
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
 
 # Disable components not needed
 kubeProxy:
