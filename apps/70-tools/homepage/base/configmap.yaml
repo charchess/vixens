@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-config
+data:
+  # settings.yaml is the main configuration file for Homepage
+  settings.yaml: |
+    # Instruct Homepage to discover services inside the Kubernetes cluster
+    provider:
+      kubernetes:
+        mode: cluster
+        showHealth: true
+        useIngress: true
+
+  # widgets.yaml defines the widgets to display on the dashboard
+  widgets.yaml: |
+    - resources:
+        label: Cluster Resources
+        expanded: true
+        cpu: true
+        memory: true
+        storage: true
+    - search:
+        provider: "duckduckgo"
+        target: "_blank"
+    - datetime:
+        text_size: xl
+        format:
+          timeStyle: long
+          
+  # bookmarks.yaml is for static bookmarks
+  bookmarks.yaml: |
+    - Development:
+        - GitHub:
+            - abbr: GH
+              href: "https://github.com/charchess/vixens-new"
+
+    - Infrastructure:
+        - ArgoCD:
+            - abbr: CD
+              href: "https://argocd.dev.truxonline.com"
+        - Traefik:
+            - abbr: TF
+              href: "https://traefik.dev.truxonline.com"
+
+  # services.yaml is for statically defined services, though we will rely on discovery
+  services.yaml: |
+    - My First Group:
+        - My First Service:
+            href: "http://localhost/"
+            description: "This is a placeholder service."

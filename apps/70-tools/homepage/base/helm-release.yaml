@@ -1,0 +1,58 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: homepage
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: homepage
+      version: 1.2.1
+      sourceRef:
+        kind: HelmRepository
+        name: m0nsterrr
+        namespace: flux-system
+      # OCI source for M0NsTeRRR's chart
+      # chart: oci://ghcr.io/m0nsterrr/helm-charts/homepage
+  values:
+    # Mount the ConfigMap containing settings.yaml, widgets.yaml, etc.
+    # as a volume. The chart's initContainer will then copy these to a
+    # persistent volume if it's empty.
+    extraVolumes:
+      - name: homepage-initial-config
+        configMap:
+          name: homepage-config
+
+    extraVolumeMounts:
+      - name: homepage-initial-config
+        mountPath: /app/config/
+        readOnly: true
+
+    # Use an existing PVC for the configuration data
+    persistence:
+      config:
+        enabled: true
+        existingClaim: homepage-config
+
+    ingress:
+      main:
+        enabled: true
+        ingressClassName: "traefik"
+        annotations:
+          # Enable automatic service discovery for Homepage itself
+          "gethomepage.dev/enabled": "true"
+          "gethomepage.dev/name": "Homepage"
+          "gethomepage.dev/icon": "homepage.png"
+          "gethomepage.dev/group": "Infrastructure"
+          # Traefik middleware for HTTP to HTTPS redirection
+          "traefik.ingress.kubernetes.io/router.entrypoints": "web, websecure"
+          "traefik.ingress.kubernetes.io/router.middlewares": "traefik-http-to-https@kubeflow"
+        hosts:
+          - host: homepage.dev.truxonline.com
+            paths:
+              - path: /
+                pathType: Prefix
+        tls:
+          - secretName: homepage-dev-tls
+            hosts:
+              - homepage.dev.truxonline.com
