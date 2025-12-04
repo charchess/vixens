@@ -13,7 +13,7 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: test
-    path: apps/cert-manager/overlays/test
+    path: apps/00-infra/cert-manager/overlays/test
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
