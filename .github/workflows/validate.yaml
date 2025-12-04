@@ -94,6 +94,7 @@ jobs:
           # Valider uniquement les ressources standards (exclure values/)
           find apps argocd -type f \( -name '*.yaml' -o -name '*.yml' \) \
             ! -path '*/values/*' \
+            ! -name 'values.yaml' \
             -print0 |
             xargs -0 kubeval \
             --ignore-missing-schemas \
