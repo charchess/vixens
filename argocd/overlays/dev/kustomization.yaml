@@ -28,3 +28,4 @@ resources:
   - apps/mosquitto.yaml                      # Mosquitto MQTT broker
   - apps/birdnet-go.yaml                     # BirdNET-Go bird song detection
   - apps/prometheus.yaml                     # Prometheus standalone monitoring
+  - apps/prometheus-ingress.yaml             # Prometheus IngressRoutes
