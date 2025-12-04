@@ -452,3 +452,6 @@ See [docs/adr/006-terraform-2-level-architecture.md](docs/adr/006-terraform-2-le
 - les apply kubectl apply/edit/delete sont acceptable EN DEV pour le troubleshoot/confirmation mais doivent etre consolider avec une approche gitops ensuite.
 - find_tasks a une fenetre de 10 taches, pense a l'etendre pour en avoir plus
 - le secret infisical-universal-auth est dans le namespace argocd pour etre utilisé par tous les operator
+- n'oublie pas de me signaler quand je dois creer des secrets dans infisical ou des DNS
+- n'oublie pas de créer les adr sur les decisions architecturales
+- quand tu configure un ingress https, mets en place un redirect http -> https
