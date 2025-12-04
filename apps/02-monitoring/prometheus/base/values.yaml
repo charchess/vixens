@@ -1,0 +1,65 @@
+---
+# Prometheus standalone configuration
+
+# Server configuration
+server:
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
+  persistentVolume:
+    enabled: true
+    storageClass: synelia-iscsi-retain
+    size: 50Gi
+
+  retention: "30d"
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
+
+# Alertmanager configuration
+alertmanager:
+  enabled: true
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
+  persistentVolume:
+    enabled: true
+    storageClass: synelia-iscsi-retain
+    size: 10Gi
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+# Node exporter
+nodeExporter:
+  enabled: true
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+  hostNetwork: true
+  hostPID: true
+
+# Pushgateway subchart (disabled - réactiver si CronJobs/batch jobs nécessaires)
+prometheus-pushgateway:
+  enabled: false
+
+# Kube-state-metrics subchart (metrics on Kubernetes objects)
+kube-state-metrics:
+  enabled: true
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
