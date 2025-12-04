@@ -27,3 +27,7 @@ resources:
   - apps/homeassistant.yaml                  # Home Assistant (with filebrowser sidecar)
   - apps/mosquitto.yaml                      # Mosquitto MQTT broker
   - apps/birdnet-go.yaml                     # BirdNET-Go bird song detection
+  - apps/prometheus.yaml                     # Prometheus standalone monitoring
+  - apps/prometheus-ingress.yaml             # Prometheus IngressRoutes
+  - apps/grafana.yaml                        # Grafana standalone monitoring
+  - apps/grafana-ingress.yaml                # Grafana IngressRoutes with HTTP→HTTPS redirect
