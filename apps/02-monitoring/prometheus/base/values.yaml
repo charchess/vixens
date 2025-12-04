@@ -1,83 +1,44 @@
 ---
-# Common values for kube-prometheus-stack across all environments
+# Prometheus standalone configuration
 
-# Global tolerations for control-plane nodes (3 CP HA, no workers)
-defaultRules:
-  runbookUrl: https://runbooks.prometheus-operator.dev/runbooks
-prometheusOperator:
+# Server configuration
+server:
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
-  admissionWebhooks:
-    enabled: true
-    patch:
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
 
-# Prometheus configuration
-prometheus:
-  prometheusSpec:
-    tolerations:
-      - key: node-role.kubernetes.io/control-plane
-        operator: Exists
-        effect: NoSchedule
-    retention: 30d
-    storageSpec:
-      volumeClaimTemplate:
-        spec:
-          storageClassName: synelia-iscsi-retain
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 50Gi
-    resources:
-      requests:
-        cpu: 200m
-        memory: 512Mi
-      limits:
-        memory: 2Gi
+  persistentVolume:
+    enabled: true
+    storageClass: synelia-iscsi-retain
+    size: 50Gi
+
+  retention: "30d"
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
 
 # Alertmanager configuration
 alertmanager:
-  alertmanagerSpec:
-    tolerations:
-      - key: node-role.kubernetes.io/control-plane
-        operator: Exists
-        effect: NoSchedule
-    storage:
-      volumeClaimTemplate:
-        spec:
-          storageClassName: synelia-iscsi-retain
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 10Gi
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        memory: 512Mi
-
-# Grafana configuration
-grafana:
   enabled: true
-  adminPassword: changeme  # Override per environment with Infisical
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
-  persistence:
+
+  persistentVolume:
     enabled: true
-    storageClassName: synelia-iscsi-retain
+    storageClass: synelia-iscsi-retain
     size: 10Gi
+
   resources:
     requests:
       cpu: 100m
-      memory: 256Mi
+      memory: 128Mi
     limits:
       memory: 512Mi
 
@@ -88,25 +49,13 @@ nodeExporter:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
+  hostNetwork: true
+  hostPID: true
 
-# Kube-state-metrics
+# Pushgateway (disabled)
+pushgateway:
+  enabled: false
+
+# Kube-state-metrics (disabled, will add separately if needed)
 kubeStateMetrics:
-  enabled: true
-  kube-state-metrics:
-    tolerations:
-      - key: node-role.kubernetes.io/control-plane
-        operator: Exists
-        effect: NoSchedule
-
-# Disable components not needed
-kubeProxy:
-  enabled: false
-
-kubeEtcd:
-  enabled: false
-
-kubeScheduler:
-  enabled: false
-
-kubeControllerManager:
   enabled: false
