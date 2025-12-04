@@ -11,13 +11,13 @@ spec:
     universalAuth:
       credentialsRef:
         secretName: infisical-universal-auth
-        secretNamespace: mosquitto
+        secretNamespace: argocd
       secretsScope:
-        projectSlug: 9f90e1c8-a85d-4613-88a6-0eb2ff1d3cdb
+        projectSlug: vixens
         envSlug: staging
-        secretsPath: /vixens/staging/mosquitto-auth
-        recursive: false
+        secretsPath: /mosquitto
   managedSecretReference:
     secretName: mosquitto-password-file
     secretNamespace: mosquitto
     creationPolicy: Owner
+    secretType: Opaque
