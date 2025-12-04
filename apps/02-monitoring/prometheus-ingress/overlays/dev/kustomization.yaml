@@ -5,6 +5,7 @@ kind: Kustomization
 namespace: monitoring
 
 resources:
+  - ../../base
   - prometheus-ingress.yaml
 
 labels:
