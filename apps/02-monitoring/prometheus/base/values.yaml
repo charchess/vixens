@@ -52,10 +52,14 @@ nodeExporter:
   hostNetwork: true
   hostPID: true
 
-# Pushgateway (disabled)
+# Pushgateway (disabled - réactiver si CronJobs/batch jobs nécessaires)
 pushgateway:
   enabled: false
 
-# Kube-state-metrics (disabled, will add separately if needed)
+# Kube-state-metrics (metrics on Kubernetes objects)
 kubeStateMetrics:
-  enabled: false
+  enabled: true
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
