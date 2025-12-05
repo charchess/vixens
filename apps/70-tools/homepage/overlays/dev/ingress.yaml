@@ -11,6 +11,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
     traefik.ingress.kubernetes.io/router.middlewares: "redirect-to-https@kubernetescrd"
 spec:
+  ingressClassName: traefik
   rules:
     - host: "homepage.dev.truxonline.com"
       http:
