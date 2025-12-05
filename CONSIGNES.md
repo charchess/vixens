@@ -197,6 +197,18 @@ spec:
 
 Pour les applications qui ont besoin de stocker des données (ex: une base de données, un gestionnaire de fichiers).
 
+#### Point de Vigilance : Choisir la bonne `StorageClass`
+
+Avant de créer un volume, assurez-vous d'utiliser un nom de `StorageClass` qui existe. Une erreur ici empêchera la création du volume.
+
+Les `StorageClass` disponibles pour notre driver Synology sont :
+*   `synelia-iscsi-retain` : **(Recommandée)** Le volume persistant (PV) n'est **pas** supprimé lorsque vous supprimez la demande (PVC). C'est le choix le plus sûr pour les données importantes.
+*   `synelia-iscsi-delete` : Le volume persistant est automatiquement supprimé avec la demande. À n'utiliser que pour des données temporaires ou facilement recréables.
+
+> **Astuce :** Pour lister toutes les `StorageClass` disponibles dans le cluster, utilisez la commande : `kubectl get storageclass`
+
+#### Création du PVC
+
 1.  **Créez un fichier `pvc.yaml`** (PersistentVolumeClaim) dans le dossier `base/`.
 
 **Exemple : `apps/70-tools/filebrowser/base/pvc.yaml`**
@@ -208,7 +220,8 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: synology-iscsi-storage # Le nom de la classe de stockage
+  # On utilise le nom de la classe de stockage correcte et recommandée
+  storageClassName: synelia-iscsi-retain
   resources:
     requests:
       storage: 1Gi # La taille du volume désiré
