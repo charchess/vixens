@@ -3,49 +3,80 @@ kind: ConfigMap
 metadata:
   name: homepage-config
 data:
-  # settings.yaml is the main configuration file for Homepage
+  # For a full list of options, see https://gethomepage.dev/en/configs/settings/
   settings.yaml: |
-    # Instruct Homepage to discover services inside the Kubernetes cluster
+    title: "Vixens Cluster Dashboard"
+    background: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2942"
+    headerStyle: "transparent"
+    layout:
+      # Define the order and name of the groups for discovered services
+      # Services with the annotation 'gethomepage.dev/group: Infrastructure' will appear here
+      Infrastructure:
+        style: "row"
+        columns: 4
+      Monitoring:
+        style: "row"
+        columns: 4
+      Home Automation:
+        style: "row"
+        columns: 4
+      Services:
+        style: "row"
+        columns: 4
+
+    # Kubernetes service discovery provider
     provider:
       kubernetes:
         mode: cluster
         showHealth: true
-        useIngress: true
+        useIngress: true # Use Ingress annotations to get service metadata
+        namespaceExclude: 
+          - "kube-system"
+          - "flux-system"
+          - "longhorn-system"
+          - "rook-ceph"
 
-  # widgets.yaml defines the widgets to display on the dashboard
+  # For a full list of options, see https://gethomepage.dev/en/configs/widgets/
   widgets.yaml: |
     - resources:
-        label: Cluster Resources
+        label: Cluster State
         expanded: true
         cpu: true
         memory: true
-        storage: true
+        storage: true # Requires Kubernetes Metrics Server to be installed
+
     - search:
         provider: "duckduckgo"
         target: "_blank"
+
     - datetime:
-        text_size: xl
+        text_size: "xl"
         format:
-          timeStyle: long
-          
-  # bookmarks.yaml is for static bookmarks
+          timeStyle: "long"
+
+  # services.yaml is now primarily for adding services that are NOT discovered automatically.
+  # Most services will be populated automatically via Kubernetes Ingress discovery.
+  # The groups defined in settings.yaml will be used for organization.
+  services.yaml: |
+    - Infrastructure: []
+    - Monitoring: []
+    - Home Automation: []
+    - Services: []
+
+  # For a full list of options, see https://gethomepage.dev/en/configs/bookmarks/
   bookmarks.yaml: |
-    - Development:
-        - GitHub:
-            - abbr: GH
+    - Project:
+        - Source Code:
+            - abbr: GIT
               href: "https://github.com/charchess/vixens-new"
 
-    - Infrastructure:
-        - ArgoCD:
-            - abbr: CD
-              href: "https://argocd.dev.truxonline.com"
+    - Documentation:
+        - Homepage:
+            - abbr: DOCS
+              href: "https://gethomepage.dev/en/getting-started/"
+        - Talos Linux:
+            - abbr: OS
+              href: "https://www.talos.dev/v1.6/"
         - Traefik:
-            - abbr: TF
-              href: "https://traefik.dev.truxonline.com"
-
-  # services.yaml is for statically defined services, though we will rely on discovery
-  services.yaml: |
-    - My First Group:
-        - My First Service:
-            href: "http://localhost/"
-            description: "This is a placeholder service."
+            - abbr: IN
+              href: "https://doc.traefik.io/traefik/"
