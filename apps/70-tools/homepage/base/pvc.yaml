@@ -8,4 +8,4 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  storageClassName: synology-csi-storage
+  storageClassName: synelia-iscsi-retain
