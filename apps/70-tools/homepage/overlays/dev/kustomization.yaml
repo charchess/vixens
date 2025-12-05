@@ -4,4 +4,5 @@ namespace: tools
 resources:
   - ../../base
   - ingress.yaml
+  - ingress-redirect.yaml
   - redirect-middleware.yaml
