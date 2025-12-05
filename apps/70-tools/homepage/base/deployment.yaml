@@ -35,13 +35,7 @@ spec:
         volumeMounts:
         - name: config
           mountPath: /app/config
-        # Optional: persistence for dynamic bookmarks
-        - name: data
-          mountPath: /app/data
       volumes:
       - name: config
-        configMap:
-          name: homepage-config
-      - name: data
         persistentVolumeClaim:
-          claimName: homepage-config # Reusing the existing PVC
+          claimName: homepage-config
