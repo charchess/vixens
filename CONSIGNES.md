@@ -211,8 +211,8 @@ metadata:
     # Lie l'Ingress aux points d'entrée HTTP (web) et HTTPS (websecure) de Traefik
     traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
     # Applique le middleware de redirection sur le routeur de l'Ingress
-    traefik.ingress.kubernetes.io/router.middlewares: "redirect-to-https@kubernetescrd"
 spec:
+  ingressClassName: traefik # Indique à Traefik de gérer cet Ingress
   rules:
     - host: "mon-app.dev.truxonline.com" # Le nom de domaine pour dev
       http:
