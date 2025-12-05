@@ -8,48 +8,10 @@ metadata:
 spec:
   project: default
   source:
-    # Source changed to deploy a Helm chart directly
-    repoURL: https://m0nsterrr.github.io/helm-charts
-    chart: homepage
-    targetRevision: 0.1.5 # Helm Chart version
-    helm:
-      # Values are now defined directly here
-      values: |
-        extraVolumes:
-          - name: homepage-initial-config
-            configMap:
-              name: homepage-config
-
-        extraVolumeMounts:
-          - name: homepage-initial-config
-            mountPath: /app/config/
-            readOnly: true
-
-        persistence:
-          config:
-            enabled: true
-            existingClaim: homepage-config
-
-        ingress:
-          main:
-            enabled: true
-            ingressClassName: "traefik"
-            annotations:
-              "gethomepage.dev/enabled": "true"
-              "gethomepage.dev/name": "Homepage"
-              "gethomepage.dev/icon": "homepage.png"
-              "gethomepage.dev/group": "Infrastructure"
-              "traefik.ingress.kubernetes.io/router.entrypoints": "web, websecure"
-              "traefik.ingress.kubernetes.io/router.middlewares": "traefik-http-to-https@kubeflow"
-            hosts:
-              - host: homepage.dev.truxonline.com
-                paths:
-                  - path: /
-                    pathType: Prefix
-            tls:
-              - secretName: homepage-dev-tls
-                hosts:
-                  - homepage.dev.truxonline.com
+    # Reverted to Kustomize source
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+    path: apps/70-tools/homepage/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: tools
