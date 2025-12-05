@@ -9,7 +9,7 @@ metadata:
     gethomepage.dev/icon: "homepage.png"
     gethomepage.dev/group: "Infrastructure"
     traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
-    traefik.ingress.kubernetes.io/router.middlewares: "traefik-http-to-https@kubeflow"
+    traefik.ingress.kubernetes.io/router.middlewares: "redirect-to-https@kubernetescrd"
 spec:
   rules:
     - host: "homepage.dev.truxonline.com"
