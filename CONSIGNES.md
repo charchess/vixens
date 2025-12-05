@@ -61,6 +61,22 @@ resources:
   # - ... autres fichiers de base
 ```
 
+### ⚠️ Point de Vigilance : Vérifier le Contenu de la Base
+
+Avant de passer à l'étape 4, il est **impératif** de vérifier le *contenu* des fichiers dans le dossier `base`. La structure peut être correcte, mais la méthode de déploiement peut être incompatible.
+
+Ce projet utilise **ArgoCD**. Assurez-vous que les ressources dans `base` sont compatibles :
+
+1.  **Cas Idéal : Manifestes Kubernetes Standards**
+    *   Les fichiers sont des `Deployment.yaml`, `Service.yaml`, `ConfigMap.yaml`, etc.
+    *   **Action :** Vous pouvez suivre ce guide sans modification.
+
+2.  **Cas Incompatible : `HelmRelease` (FluxCD)**
+    *   Si vous trouvez un fichier `helm-release.yaml` ou un objet de `kind: HelmRelease`, **ceci n'est PAS compatible** avec notre installation ArgoCD.
+    *   **Action :** N'allez PAS à l'étape 4. L'application doit être "traduite" pour qu'ArgoCD puisse la déployer en tant que chart Helm natif.
+
+**En résumé : Ne supposez pas que le contenu de `base` est correct, vérifiez-le toujours.**
+
 ---
 
 ## Étape 3: Création des Overlays par Environnement
