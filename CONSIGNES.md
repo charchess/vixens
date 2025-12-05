@@ -41,6 +41,24 @@ Ce document explique, étape par étape, comment déployer une nouvelle applicat
 
 ## Étape 2: Configuration de Base de l'Application
 
+### ⚠️ Point de Vigilance Majeur : Tolérances des Nœuds
+
+**Notre cluster actuel est composé uniquement de nœuds `control-plane`.**
+
+Cela signifie que, par défaut, **aucun pod d'application ne pourra y être déployé**. Pour qu'un pod puisse démarrer, il doit explicitement "tolérer" le fait de tourner sur un nœud de contrôle.
+
+**Action :** Pour **toute nouvelle application**, vous devez systématiquement ajouter le bloc de `tolerations` suivant dans votre fichier `deployment.yaml`, comme détaillé plus bas dans la section D.
+
+```yaml
+# ... dans spec.template.spec ...
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+```
+
+---
+
 La configuration de `base` contient les manifestes Kubernetes qui **ne changent pas** d'un environnement à l'autre.
 
 1.  **Créez les manifestes de base** dans le dossier `base/`. Au minimum, vous aurez besoin de :
