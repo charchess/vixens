@@ -11,7 +11,7 @@ spec:
     # Source changed to deploy a Helm chart directly
     repoURL: https://m0nsterrr.github.io/helm-charts
     chart: homepage
-    targetRevision: 1.2.1 # Helm Chart version
+    targetRevision: 0.1.5 # Helm Chart version
     helm:
       # Values are now defined directly here
       values: |
