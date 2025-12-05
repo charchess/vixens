@@ -180,36 +180,65 @@ Une fois ces fichiers poussés sur Git, ArgoCD détectera la nouvelle applicatio
 
 Pour exposer votre application sur internet avec un nom de domaine et un certificat HTTPS.
 
-1.  **Créez un fichier `ingress.yaml`** dans le dossier de l'overlay (`overlays/dev/`).
+1.  **Créez un fichier `http-redirect.yaml`** pour définir le middleware de redirection. Placez-le dans le dossier de l'overlay (ex: `overlays/dev/`).
 
-**Exemple : `apps/70-tools/filebrowser/overlays/dev/ingress.yaml`**
+**Exemple : `apps/mon-app/overlays/dev/http-redirect.yaml`**
+```yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  # Le nom du middleware
+  name: redirect-to-https
+  # Le namespace doit être le même que celui de votre Ingress
+  namespace: tools 
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+```
+
+2.  **Créez un fichier `ingress.yaml`** dans le même dossier.
+
+**Exemple : `apps/mon-app/overlays/dev/ingress.yaml`**
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: filebrowser-ingress
+  name: mon-app-ingress
   annotations:
     # Dit à cert-manager de générer un certificat
     cert-manager.io/cluster-issuer: letsencrypt-staging # ou letsencrypt-prod
+    # Lie l'Ingress aux points d'entrée HTTP (web) et HTTPS (websecure) de Traefik
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    # Applique le middleware de redirection sur le routeur de l'Ingress
+    traefik.ingress.kubernetes.io/router.middlewares: "redirect-to-https@kubernetescrd"
 spec:
   rules:
-    - host: "filebrowser.dev.truxonline.com" # Le nom de domaine pour dev
+    - host: "mon-app.dev.truxonline.com" # Le nom de domaine pour dev
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: filebrowser-service # Le nom de votre service
+                name: mon-app-service # Le nom de votre service
                 port:
                   number: 80
   tls:
     - hosts:
-        - "filebrowser.dev.truxonline.com"
-      secretName: filebrowser-tls # Nom du secret qui stockera le certificat
+        - "mon-app.dev.truxonline.com"
+      secretName: mon-app-tls # Nom du secret qui stockera le certificat
 ```
 
-2.  **Ajoutez `ingress.yaml`** au `kustomization.yaml` de l'overlay.
+3.  **Ajoutez `http-redirect.yaml` et `ingress.yaml`** au `kustomization.yaml` de l'overlay.
+```yaml
+# ...
+resources:
+  - ../../base
+  - http-redirect.yaml
+  - ingress.yaml
+# ...
+```
 
 ### B. Utiliser du Stockage Persistant (Synology CSI)
 
