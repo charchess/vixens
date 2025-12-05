@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homepage
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Homepage"
+    gethomepage.dev/icon: "homepage.png"
+    gethomepage.dev/group: "Infrastructure"
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.middlewares: "traefik-http-to-https@kubeflow"
+spec:
+  rules:
+    - host: "homepage.dev.truxonline.com"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homepage
+                port:
+                  name: http
+  tls:
+    - hosts:
+        - "homepage.dev.truxonline.com"
+      secretName: homepage-dev-tls

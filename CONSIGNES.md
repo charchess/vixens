@@ -63,19 +63,22 @@ resources:
 
 ### ⚠️ Point de Vigilance : Vérifier le Contenu de la Base
 
-Avant de passer à l'étape 4, il est **impératif** de vérifier le *contenu* des fichiers dans le dossier `base`. La structure peut être correcte, mais la méthode de déploiement peut être incompatible.
+Avant de passer à l'étape 4, il est **impératif** de vérifier le *contenu* des fichiers dans le dossier `base` pour choisir la bonne méthode de déploiement.
 
-Ce projet utilise **ArgoCD**. Assurez-vous que les ressources dans `base` sont compatibles :
-
-1.  **Cas Idéal : Manifestes Kubernetes Standards**
+1.  **Approche Préférée : Manifestes Kubernetes Standards**
     *   Les fichiers sont des `Deployment.yaml`, `Service.yaml`, `ConfigMap.yaml`, etc.
-    *   **Action :** Vous pouvez suivre ce guide sans modification.
+    *   C'est la méthode la plus robuste et la plus simple à maintenir, car elle n'a pas de dépendances externes.
+    *   **Action :** Suivre ce guide sans modification.
 
-2.  **Cas Incompatible : `HelmRelease` (FluxCD)**
+2.  **Cas d'Exception : Utilisation d'un Chart Helm**
+    *   Si une application est trop complexe pour être définie par des manifestes simples, un Chart Helm peut être utilisé.
+    *   **Action :** Le déploiement doit se faire **nativement par ArgoCD**. Le `source` de l'application ArgoCD pointera directement vers le dépôt Helm. L'utilisation de charts communautaires comporte des risques (obsolescence, pannes) comme nous l'avons vu.
+
+3.  **Cas Incompatible : `HelmRelease` (FluxCD)**
     *   Si vous trouvez un fichier `helm-release.yaml` ou un objet de `kind: HelmRelease`, **ceci n'est PAS compatible** avec notre installation ArgoCD.
-    *   **Action :** N'allez PAS à l'étape 4. L'application doit être "traduite" pour qu'ArgoCD puisse la déployer en tant que chart Helm natif.
+    *   **Action :** Ne continuez pas. La meilleure solution est de traduire le déploiement en manifestes Kubernetes standards (Approche Préférée).
 
-**En résumé : Ne supposez pas que le contenu de `base` est correct, vérifiez-le toujours.**
+**En résumé : Toujours privilégier les manifestes standards. Vérifiez le contenu de `base` avant de continuer.**
 
 ---
 
