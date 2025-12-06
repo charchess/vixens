@@ -15,7 +15,7 @@ spec:
     - hard
     - nfsvers=4.1
   csi:
-    driver: nfs.csi.k8s.io
+    driver: csi.san.synology.com
     volumeHandle: synelia-nfs-content
     volumeAttributes:
       server: 192.168.111.69

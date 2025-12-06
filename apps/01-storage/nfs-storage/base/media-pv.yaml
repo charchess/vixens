@@ -12,7 +12,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: nfs-csi
   csi:
-    driver: nfs.csi.k8s.io
+    driver: csi.san.synology.com
     volumeHandle: media
     volumeAttributes:
       server: 192.168.1.10
