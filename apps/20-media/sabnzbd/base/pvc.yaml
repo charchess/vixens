@@ -17,7 +17,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: nfs-csi
+  storageClassName: synelia-nfs-retain
   volumeName: synelia-nfs-downloads
   resources:
     requests:
