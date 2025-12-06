@@ -9,16 +9,3 @@ spec:
   resources:
     requests:
       storage: 1Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: sabnzbd-downloads-pvc
-spec:
-  accessModes:
-    - ReadWriteMany # SABnzbd peut avoir besoin d'écrire depuis plusieurs pods ou d'être partagé
-  storageClassName: nfs-csi
-  volumeName: synelia-nfs-downloads
-  resources:
-    requests:
-      storage: 500Gi # Taille à ajuster selon les besoins
