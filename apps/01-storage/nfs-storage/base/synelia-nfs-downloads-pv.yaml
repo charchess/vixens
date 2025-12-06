@@ -10,7 +10,7 @@ spec:
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: nfs-csi
+  storageClassName: synelia-nfs-retain
   mountOptions:
     - hard
     - nfsvers=4.1
