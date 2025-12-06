@@ -2,7 +2,7 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: redirect-to-https
-  namespace: media # The namespace must be the same as your Ingress
+  namespace: media
 spec:
   redirectScheme:
     scheme: https

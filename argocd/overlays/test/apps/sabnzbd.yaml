@@ -9,8 +9,8 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev # The Git branch corresponding to the environment
-    path: apps/20-media/sabnzbd/overlays/dev # The path to the app's overlay
+    targetRevision: test # The Git branch corresponding to the environment
+    path: apps/20-media/sabnzbd/overlays/test # The path to the app's overlay
   destination:
     server: https://kubernetes.default.svc
     namespace: media # The namespace where the application will be deployed

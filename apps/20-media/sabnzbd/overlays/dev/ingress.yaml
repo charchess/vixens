@@ -3,25 +3,23 @@ kind: Ingress
 metadata:
   name: sabnzbd-ingress
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-staging
+    cert-manager.io/cluster-issuer: letsencrypt-staging # or letsencrypt-prod for prod
     traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
-    traefik.ingress.kubernetes.io/router.middlewares: "media-sabnzbd-redirect-to-https@kubernetescrd"
-  labels:
-    app: sabnzbd
+    traefik.ingress.kubernetes.io/router.middlewares: "media-redirect-to-https@kubernetescrd" # Reference the middleware
 spec:
   ingressClassName: traefik
   rules:
-    - host: "sabnzbd.dev.truxonline.com"
+    - host: "sabnzbd.dev.truxonline.com" # The domain name for dev
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: sabnzbd-service
+                name: sabnzbd # The name of your service
                 port:
-                  number: 80
+                  number: 8080 # The port of your service
   tls:
     - hosts:
         - "sabnzbd.dev.truxonline.com"
-      secretName: sabnzbd-tls
+      secretName: sabnzbd-tls # Name of the secret that will store the certificate
