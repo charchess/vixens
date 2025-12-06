@@ -45,6 +45,11 @@ spec:
         env:
         - name: HOMEPAGE_ALLOWED_HOSTS
           value: "homepage.dev.truxonline.com"
+        - name: HOMEASSISTANT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: homepage-secrets
+              key: HOMEASSISTANT_API_KEY
         volumeMounts:
         # Mount the writable PVC, which is now populated by the initContainer.
         - name: config-vol
