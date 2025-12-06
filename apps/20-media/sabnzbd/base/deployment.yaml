@@ -23,6 +23,13 @@ spec:
           image: ghcr.io/linuxserver/sabnzbd:latest # Placeholder image
           ports:
             - containerPort: 8080 # Default SABnzbd UI port
+          env: # Added environment variables
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Paris"
           volumeMounts:
             - name: config
               mountPath: /config
