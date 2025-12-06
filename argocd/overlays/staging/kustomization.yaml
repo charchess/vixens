@@ -30,3 +30,4 @@ resources:
   - apps/prometheus-ingress.yaml         # Prometheus IngressRoutes with HTTP→HTTPS redirect
   - apps/grafana.yaml                    # Grafana standalone monitoring
   - apps/grafana-ingress.yaml            # Grafana IngressRoutes with HTTP→HTTPS redirect
+  - apps/sabnzbd.yaml

@@ -14,26 +14,15 @@ spec:
       labels:
         app: sabnzbd
     spec:
-      # Tolérations pour les nœuds control-plane
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
       containers:
         - name: sabnzbd
-          image: lscr.io/linuxserver/sabnzbd:latest
+          image: ghcr.io/linuxserver/sabnzbd:latest # Placeholder image
           ports:
-            - containerPort: 8080
-              name: http
-            - containerPort: 9090
-              name: https
-          env:
-            - name: PUID
-              value: "1000"
-            - name: PGID
-              value: "1000"
-            - name: TZ
-              value: "Europe/Paris"
+            - containerPort: 8080 # Default SABnzbd UI port
           volumeMounts:
             - name: config
               mountPath: /config
