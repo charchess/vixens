@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: synelia-nfs-downloads
+  labels:
+    app: nfs-storage
+spec:
+  capacity:
+    storage: 10Ti # Placeholder, adjust as needed
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-csi
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  csi:
+    driver: nfs.csi.k8s.io
+    volumeHandle: synelia-nfs-downloads
+    volumeAttributes:
+      server: 192.168.111.69
+      share: /volume3/Downloads
