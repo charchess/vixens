@@ -27,3 +27,15 @@ parameters:
   protocol: iscsi
 reclaimPolicy: Delete
 allowVolumeExpansion: true
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: synelia-nfs-retain
+provisioner: csi.san.synology.com
+parameters:
+  protocol: nfs
+  fsType: nfs
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: Immediate
