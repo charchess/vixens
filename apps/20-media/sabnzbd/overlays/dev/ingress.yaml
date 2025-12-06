@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sabnzbd-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.middlewares: "media-sabnzbd-redirect-to-https@kubernetescrd"
+  labels:
+    app: sabnzbd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: "sabnzbd.dev.truxonline.com"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sabnzbd-service
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - "sabnzbd.dev.truxonline.com"
+      secretName: sabnzbd-tls
