@@ -295,51 +295,101 @@ spec:
 1.  **Dans l'UI Infisical :** Créez le secret.
     *   Projet: `vixens`
     *   Environnement: `dev`
-    *   Path: `/filebrowser`
+    *   Path: `/mon-app`
     *   Secret: `API_KEY` = `valeur-secrete`
 
-2.  **Créez un manifeste `infisical-secret.yaml`** dans le dossier `base/` de votre application.
+Il existe deux modèles pour intégrer le secret dans votre application. Choisissez-en un.
 
-**Exemple : `apps/70-tools/filebrowser/base/infisical-secret.yaml`**
-```yaml
-apiVersion: secrets.infisical.com/v1alpha1
-kind: InfisicalSecret
-metadata:
-  name: filebrowser-secrets-sync
-spec:
-  hostAPI: http://192.168.111.69:8085
-  resyncInterval: 60
-  authentication:
-    universalAuth:
-      secretsScope:
-        projectSlug: vixens
-        # ATTENTION: Le slug de l'environnement sera patché par l'overlay
-        envSlug: dev # Valeur par défaut, sera surchargée
-        secretsPath: "/filebrowser"
-      credentialsRef:
-        secretName: infisical-universal-auth
-        secretNamespace: infisical-operator-system
-  managedSecretReference:
-    # Le secret Kubernetes qui sera créé
-    secretName: filebrowser-secrets
-    creationPolicy: "Owner"
-```
+#### Modèle 1 : Base + Patch (Recommandé pour la cohérence)
 
-3.  **Patch pour chaque environnement :** Créez un patch pour spécifier le `envSlug` correct.
+Ce modèle utilise un fichier de base et des patchs pour chaque environnement. C'est la méthode la plus DRY (Don't Repeat Yourself).
 
-**Exemple : `apps/70-tools/filebrowser/overlays/dev/infisical-patch.yaml`**
-```yaml
-apiVersion: secrets.infisical.com/v1alpha1
-kind: InfisicalSecret
-metadata:
-  name: filebrowser-secrets-sync
-spec:
-  authentication:
-    universalAuth:
-      secretsScope:
-        envSlug: dev
-```
-Ajoutez ce patch au `kustomization.yaml` de l'overlay `dev`.
+1.  **Créez un manifeste `infisical-secret.yaml`** dans le dossier `base/` de votre application. Il pointera par défaut vers l'environnement `dev`.
+
+    **Exemple : `apps/mon-app/base/infisical-secret.yaml`**
+    ```yaml
+    apiVersion: secrets.infisical.com/v1alpha1
+    kind: InfisicalSecret
+    metadata:
+      name: mon-app-secrets-sync
+    spec:
+      hostAPI: http://192.168.111.69:8085
+      resyncInterval: 60
+      authentication:
+        universalAuth:
+          secretsScope:
+            projectSlug: vixens
+            # ATTENTION: Le slug de l'environnement sera patché par l'overlay
+            envSlug: dev # Valeur par défaut
+            secretsPath: "/mon-app"
+          credentialsRef:
+            secretName: infisical-universal-auth
+            secretNamespace: infisical-operator-system
+      managedSecretReference:
+        secretName: mon-app-secrets
+        creationPolicy: "Owner"
+    ```
+
+2.  **Ajoutez le fichier** au `kustomization.yaml` de `base/`.
+
+3.  **Pour chaque autre environnement** (`prod`, `staging`...), créez un patch pour spécifier le `envSlug` correct.
+
+    **Exemple : `apps/mon-app/overlays/prod/infisical-patch.yaml`**
+    ```yaml
+    apiVersion: secrets.infisical.com/v1alpha1
+    kind: InfisicalSecret
+    metadata:
+      name: mon-app-secrets-sync
+    spec:
+      authentication:
+        universalAuth:
+          secretsScope:
+            envSlug: prod
+    ```
+    Ajoutez ce patch au `kustomization.yaml` de l'overlay `prod`.
+
+#### Modèle 2 : Manifeste Complet dans l'Overlay (Plus simple pour des cas uniques)
+
+Ce modèle place un fichier de configuration complet et spécifique dans chaque dossier d'environnement. C'est moins DRY mais plus explicite.
+
+1.  **Créez un manifeste `infisical-secret.yaml`** directement dans le dossier de l'overlay (ex: `overlays/dev/`).
+
+    **Exemple : `apps/mon-app/overlays/dev/infisical-secret.yaml`**
+    ```yaml
+    apiVersion: secrets.infisical.com/v1alpha1
+    kind: InfisicalSecret
+    metadata:
+      name: mon-app-secrets-sync
+    spec:
+      hostAPI: http://192.168.111.69:8085
+      resyncInterval: 60
+      authentication:
+        universalAuth:
+          secretsScope:
+            projectSlug: vixens
+            envSlug: dev # Directement le bon environnement
+            secretsPath: "/mon-app"
+          credentialsRef:
+            secretName: infisical-universal-auth
+            secretNamespace: infisical-operator-system
+      managedSecretReference:
+        secretName: mon-app-secrets
+        creationPolicy: "Owner"
+    ```
+
+2.  **Ajoutez une référence** à ce nouveau fichier dans le `kustomization.yaml` de l'overlay.
+
+    **Exemple : `apps/mon-app/overlays/dev/kustomization.yaml`**
+    ```yaml
+    # ...
+    resources:
+      - ../../base
+      - infisical-secret.yaml
+    # ...
+    ```
+
+---
+#### Étape finale (commune aux deux modèles)
 
 4.  **Utilisez le secret** dans votre `deployment.yaml`.
     ```yaml
@@ -348,7 +398,7 @@ Ajoutez ce patch au `kustomization.yaml` de l'overlay `dev`.
             - name: MY_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: filebrowser-secrets # Le secret créé par Infisical
+                  name: mon-app-secrets # Le secret créé par Infisical
                   key: API_KEY
     ```
 
