@@ -30,6 +30,8 @@ spec:
               value: "1000"
             - name: TZ
               value: "Europe/Paris"
+            - name: HOST_WHITELIST_ENTRIES
+              value: "sabnzbd.dev.truxonline.com" # Adapted per environment
           volumeMounts:
             - name: config
               mountPath: /config
