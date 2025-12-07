@@ -50,4 +50,4 @@ spec:
         - name: books
           nfs:
             server: 192.168.111.69
-            path: /volume3/Content/Books
+            path: /volume3/Content/ebooks
