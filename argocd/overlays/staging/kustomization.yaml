@@ -31,3 +31,4 @@ resources:
   - apps/grafana.yaml                    # Grafana standalone monitoring
   - apps/grafana-ingress.yaml            # Grafana IngressRoutes with HTTP→HTTPS redirect
   - apps/sabnzbd.yaml
+  - apps/radarr.yaml
