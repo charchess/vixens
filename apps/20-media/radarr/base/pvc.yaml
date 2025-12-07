@@ -9,29 +9,4 @@ spec:
   resources:
     requests:
       storage: 1Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: radarr-downloads-pvc
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: synelia-nfs-retain
-  volumeName: synelia-nfs-downloads
-  resources:
-    requests:
-      storage: 10Ti # Matches synelia-nfs-downloads PV capacity
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: radarr-movies-pvc
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: synelia-nfs-retain
-  volumeName: synelia-nfs-content
-  resources:
-    requests:
-      storage: 10Ti # Matches synelia-nfs-content PV capacity
+

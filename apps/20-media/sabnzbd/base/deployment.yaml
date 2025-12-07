@@ -40,5 +40,6 @@ spec:
           persistentVolumeClaim:
             claimName: sabnzbd-config-pvc
         - name: downloads
-          persistentVolumeClaim:
-            claimName: sabnzbd-downloads-pvc
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Downloads

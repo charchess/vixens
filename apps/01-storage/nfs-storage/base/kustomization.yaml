@@ -6,5 +6,3 @@ namespace: media-stack
 
 resources:
   - namespace.yaml
-  - synelia-nfs-content-pv.yaml
-  - synelia-nfs-downloads-pv.yaml

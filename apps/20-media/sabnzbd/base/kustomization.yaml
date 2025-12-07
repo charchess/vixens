@@ -5,5 +5,4 @@ namespace: media # Specify the namespace here
 resources:
   - deployment.yaml
   - service.yaml
-  - pvc.yaml
   - infisical-secret.yaml
