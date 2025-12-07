@@ -11,7 +11,7 @@ spec:
   source:
     path: apps/20-media/radarr/overlays/staging
     repoURL: https://github.com/charchess/vixens-new.git # Placeholder, replace with actual repo URL
-    targetRevision: HEAD
+    targetRevision: staging
   syncPolicy:
     automated:
       prune: true
