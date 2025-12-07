@@ -37,7 +37,6 @@ spec:
               mountPath: /downloads
             - name: music
               mountPath: /music
-              subPath: Music # Mounts /volume3/Content/Music
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -49,4 +48,4 @@ spec:
         - name: music
           nfs:
             server: 192.168.111.69
-            path: /volume3/Content
+            path: /volume3/Content/music
