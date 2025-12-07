@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lidarr
+  labels:
+    app: lidarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lidarr
+  template:
+    metadata:
+      labels:
+        app: lidarr
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: lidarr
+          image: ghcr.io/linuxserver/lidarr:latest
+          ports:
+            - containerPort: 8686 # Default Lidarr UI port
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Paris"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: downloads
+              mountPath: /downloads
+            - name: music
+              mountPath: /music
+              subPath: Music # Mounts /volume3/Content/Music
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: lidarr-config-pvc
+        - name: downloads
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Downloads
+        - name: music
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Content
