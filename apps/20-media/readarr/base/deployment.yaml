@@ -22,7 +22,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: readarr
-          image: ghcr.io/linuxserver/readarr:latest
+          image: lscr.io/linuxserver/readarr:latest
           ports:
             - containerPort: 8787
           env:
