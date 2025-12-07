@@ -33,3 +33,4 @@ resources:
   - apps/sabnzbd.yaml
   - apps/radarr.yaml
   - apps/sonarr.yaml
+  - apps/lidarr.yaml
