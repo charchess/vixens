@@ -31,7 +31,7 @@ spec:
             - name: TZ
               value: "Europe/Paris"
             - name: HOST_WHITELIST_ENTRIES
-              value: "sabnzbd.dev.truxonline.com" # Adapted per environment
+              value: "sabnzbd.dev.truxonline.com,sabnzbd,sabnzbd.media,sabnzbd.media.svc.cluster.local" # Adapted per environment
             - name: SABNZBD_HOST
               value: "sabnzbd.dev.truxonline.com" # Set the host explicitly
           volumeMounts:
