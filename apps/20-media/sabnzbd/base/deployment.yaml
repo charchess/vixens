@@ -41,9 +41,6 @@ spec:
               mountPath: /config
             - name: downloads
               mountPath: /downloads
-            - name: sabnzbd-config-ini
-              mountPath: /config/sabnzbd.ini
-              subPath: sabnzbd.ini
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -52,6 +49,3 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Downloads
-        - name: sabnzbd-config-ini
-          configMap:
-            name: sabnzbd-config-ini
