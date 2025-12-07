@@ -37,14 +37,16 @@ spec:
               mountPath: /downloads
             - name: movies
               mountPath: /movies
-              subPath: Movies # Mounts /volume3/Content/Movies
+              subPath: Movies
       volumes:
         - name: config
           persistentVolumeClaim:
             claimName: radarr-config-pvc
         - name: downloads
-          persistentVolumeClaim:
-            claimName: radarr-downloads-pvc
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Downloads
         - name: movies
-          persistentVolumeClaim:
-            claimName: radarr-movies-pvc
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Content
