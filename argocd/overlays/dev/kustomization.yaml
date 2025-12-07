@@ -33,3 +33,4 @@ resources:
   - apps/grafana-ingress.yaml                # Grafana IngressRoutes with HTTP→HTTPS redirect
   - apps/homepage.yaml                       # Homepage dashboard for services
   - apps/sabnzbd.yaml
+  - apps/radarr.yaml
