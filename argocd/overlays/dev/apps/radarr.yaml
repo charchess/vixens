@@ -10,7 +10,7 @@ spec:
   project: default
   source:
     path: apps/20-media/radarr/overlays/dev
-    repoURL: https://github.com/charchess/vixens-new.git # Placeholder, replace with actual repo URL
+    repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
   syncPolicy:
     automated:
