@@ -45,7 +45,7 @@ spec:
               mountPath: /downloads
             - name: media
               mountPath: /media
-              subPath: "xxx" # Assuming "XXX" is the subpath for Whisparr media
+              subPath: "xxx"
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -57,4 +57,4 @@ spec:
         - name: media
           nfs:
             server: 192.168.111.69
-            path: /volume3/Content/XXX
+            path: /volume3/Content/xxx
