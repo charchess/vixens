@@ -18,7 +18,7 @@ spec:
               service:
                 name: hydrus-client
                 port:
-                  number: 45868
+                  number: 5800
   tls:
     - hosts:
         - hydrus.dev.truxonline.com

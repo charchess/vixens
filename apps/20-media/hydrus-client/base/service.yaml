@@ -9,5 +9,5 @@ spec:
     app: hydrus-client
   ports:
     - protocol: TCP
-      port: 45868
-      targetPort: 45868
+      port: 5800
+      targetPort: 5800
