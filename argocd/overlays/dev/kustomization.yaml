@@ -39,3 +39,4 @@ resources:
   - apps/readarr.yaml
   - apps/lazylibrarian.yaml
   - apps/prowlarr.yaml
+  - apps/whisparr.yaml
