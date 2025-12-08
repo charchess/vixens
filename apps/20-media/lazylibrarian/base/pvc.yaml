@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: readarr-config-pvc
+  name: lazylibrarian-config-pvc
 spec:
   accessModes:
     - ReadWriteOnce
