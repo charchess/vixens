@@ -40,3 +40,4 @@ resources:
   - apps/prowlarr.yaml
   - apps/whisparr.yaml
   - apps/mylar.yaml
+  - apps/hydrus-server.yaml
