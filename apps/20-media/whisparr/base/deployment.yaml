@@ -30,6 +30,14 @@ spec:
               value: "1000"
             - name: TZ
               value: "Europe/Paris"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
           volumeMounts:
             - name: config
               mountPath: /config
