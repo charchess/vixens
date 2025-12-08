@@ -17,6 +17,9 @@ spec:
         app: hydrus-client
         test-label: "true"
     spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
@@ -25,7 +28,7 @@ spec:
         - name: hydrus-client
           image: ghcr.io/hydrusnetwork/hydrus:latest
           ports:
-            - containerPort: 45868 # Default Hydrus Client Booru port
+            - containerPort: 5800
           env:
             - name: PUID
               value: "1000"
@@ -33,3 +36,16 @@ spec:
               value: "1000"
             - name: TZ
               value: "Europe/Paris"
+          volumeMounts:
+            - name: config
+              mountPath: /opt/hydrus/db
+            - name: client-files
+              mountPath: /opt/hydrus/db/client_files
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: hydrus-client-config-pvc
+        - name: client-files
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Content/pictures/hentai/client_files
