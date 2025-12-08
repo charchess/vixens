@@ -34,9 +34,9 @@ spec:
               value: "Europe/Paris"
           volumeMounts:
             - name: config
-              mountPath: /config
+              mountPath: /opt/hydrus/db # Store DB on the PVC
             - name: hydrus-data
-              mountPath: /opt/hydrus/db # Corrected mount path
+              mountPath: /media # Mount media on NFS
       volumes:
         - name: config
           persistentVolumeClaim:

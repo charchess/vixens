@@ -32,16 +32,3 @@ spec:
               value: "1000"
             - name: TZ
               value: "Europe/Paris"
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: hydrus-data
-              mountPath: /opt/hydrus/db # Corrected mount path
-      volumes:
-        - name: config
-          persistentVolumeClaim:
-            claimName: hydrus-client-config-pvc
-        - name: hydrus-data
-          nfs:
-            server: 192.168.111.69
-            path: /volume3/Content/pictures/hentai # Corrected NFS path
