@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hydrus-client
+  labels:
+    app: hydrus-client
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: hydrus-client
+  template:
+    metadata:
+      labels:
+        app: hydrus-client
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: hydrus-client
+          image: ghcr.io/hydrusnetwork/hydrus:latest
+          ports:
+            - containerPort: 45868 # Default Hydrus Client Booru port
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Paris"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: hydrus-data
+              mountPath: /opt/hydrus/db # Corrected mount path
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: hydrus-client-config-pvc
+        - name: hydrus-data
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Content/pictures/hentai # Corrected NFS path

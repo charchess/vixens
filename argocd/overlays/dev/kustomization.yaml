@@ -41,3 +41,4 @@ resources:
   - apps/whisparr.yaml
   - apps/mylar.yaml
   - apps/hydrus-server.yaml
+  - apps/hydrus-client.yaml
