@@ -25,6 +25,7 @@ spec:
           image: lscr.io/linuxserver/lazylibrarian:latest
           ports:
             - containerPort: 5299
+              name: http
           env:
             - name: PUID
               value: "1000"
