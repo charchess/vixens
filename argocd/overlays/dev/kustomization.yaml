@@ -36,7 +36,6 @@ resources:
   - apps/radarr.yaml
   - apps/sonarr.yaml
   - apps/lidarr.yaml
-  - apps/readarr.yaml
   - apps/lazylibrarian.yaml
   - apps/prowlarr.yaml
   - apps/whisparr.yaml
