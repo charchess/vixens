@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whisparr
+  labels:
+    app: whisparr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whisparr
+  template:
+    metadata:
+      labels:
+        app: whisparr
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: whisparr
+          image: ghcr.io/linuxserver/whisparr:latest
+          ports:
+            - containerPort: 6969 # Default Whisparr UI port
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Paris"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: downloads
+              mountPath: /downloads
+            - name: media
+              mountPath: /media
+              subPath: "xxx" # Assuming "XXX" is the subpath for Whisparr media
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: whisparr-config-pvc
+        - name: downloads
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Downloads
+        - name: media
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Content/XXX
