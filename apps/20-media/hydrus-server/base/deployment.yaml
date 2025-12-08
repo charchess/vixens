@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hydrus-server
+  labels:
+    app: hydrus-server
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: hydrus-server
+  template:
+    metadata:
+      labels:
+        app: hydrus-server
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: hydrus-server
+          image: hydrusnetwork/hydrus:latest
+          ports:
+            - containerPort: 45870 # Default Hydrus Server UI port
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Paris"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: hydrus-data
+              mountPath: /opt/hydrus/db # Corrected mount path
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: hydrus-server-config-pvc
+        - name: hydrus-data
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Content/pictures/hentai # Corrected NFS path
