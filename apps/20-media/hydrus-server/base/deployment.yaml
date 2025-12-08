@@ -40,6 +40,8 @@ spec:
               mountPath: /opt/hydrus/db
             - name: server-files
               mountPath: /opt/hydrus/db/server_files
+            - name: client-files
+              mountPath: /opt/hydrus/db/client_files
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -48,3 +50,7 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Content/pictures/hentai/server_files
+        - name: client-files
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Content/pictures/hentai/client_files
