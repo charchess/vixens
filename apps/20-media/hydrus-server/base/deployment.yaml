@@ -37,14 +37,14 @@ spec:
               value: "Europe/Paris"
           volumeMounts:
             - name: config
-              mountPath: /opt/hydrus/db # Store DB on the PVC
-            - name: hydrus-data
-              mountPath: /media # Mount media on NFS
+              mountPath: /opt/hydrus/db
+            - name: server-files
+              mountPath: /opt/hydrus/db/server_files
       volumes:
         - name: config
           persistentVolumeClaim:
             claimName: hydrus-server-config-pvc
-        - name: hydrus-data
+        - name: server-files
           nfs:
             server: 192.168.111.69
-            path: /volume3/Content/pictures/hentai # Corrected NFS path
+            path: /volume3/Content/pictures/hentai/server_files
