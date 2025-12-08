@@ -17,23 +17,12 @@ spec:
         app: hydrus-server
     spec:
       securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
-      initContainers:
-        - name: set-permissions
-          image: ghcr.io/hydrusnetwork/hydrus:latest
-          command: ["sh", "-c", "chown -R 1000:1000 /opt/hydrus"]
-          securityContext:
-            runAsUser: 0
-          volumeMounts:
-            - name: config
-              mountPath: /opt/hydrus/db
       containers:
         - name: hydrus-server
           image: ghcr.io/hydrusnetwork/hydrus:latest
