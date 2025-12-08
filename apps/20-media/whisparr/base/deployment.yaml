@@ -14,8 +14,6 @@ spec:
       labels:
         app: whisparr
     spec:
-      securityContext:
-        fsGroup: 1000
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
@@ -37,8 +35,6 @@ spec:
             capabilities:
               drop:
                 - ALL
-            runAsGroup: 1000
-            runAsUser: 1000
             seccompProfile:
               type: RuntimeDefault
           volumeMounts:
