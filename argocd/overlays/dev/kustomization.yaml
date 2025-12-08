@@ -38,3 +38,4 @@ resources:
   - apps/lidarr.yaml
   - apps/readarr.yaml
   - apps/lazylibrarian.yaml
+  - apps/prowlarr.yaml
