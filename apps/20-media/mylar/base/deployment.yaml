@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mylar
+  labels:
+    app: mylar
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mylar
+  template:
+    metadata:
+      labels:
+        app: mylar
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: mylar
+          image: hotio/mylar:latest
+          ports:
+            - containerPort: 8090 # Default Mylar UI port
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Paris"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: downloads
+              mountPath: /downloads
+            - name: comics
+              mountPath: /comics
+              subPath: "comics"
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: mylar-config-pvc
+        - name: downloads
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Downloads
+        - name: comics
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Content/comics

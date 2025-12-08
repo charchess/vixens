@@ -39,3 +39,4 @@ resources:
   - apps/lazylibrarian.yaml
   - apps/prowlarr.yaml
   - apps/whisparr.yaml
+  - apps/mylar.yaml
