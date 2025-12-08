@@ -22,7 +22,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: lazylibrarian
-          image: ghcr.io/linuxserver/lazylibrarian:latest
+          image: lscr.io/linuxserver/lazylibrarian:latest
           ports:
             - containerPort: 5299
           env:
