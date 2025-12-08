@@ -15,6 +15,7 @@ spec:
     metadata:
       labels:
         app: hydrus-client
+        test-label: "true"
     spec:
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
