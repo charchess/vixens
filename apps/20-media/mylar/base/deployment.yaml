@@ -16,6 +16,8 @@ spec:
       labels:
         app: mylar
     spec:
+      securityContext:
+        fsGroup: 0
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
