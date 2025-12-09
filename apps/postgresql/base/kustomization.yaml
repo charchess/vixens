@@ -3,11 +3,3 @@ kind: Kustomization
 
 resources:
   - infisical-secret.yaml
-
-helmCharts:
-  - name: postgresql
-    repo: https://charts.bitnami.com/bitnami
-    version: "18.1.13"
-    releaseName: postgresql-docspell
-    namespace: services
-    valuesFile: values.yaml

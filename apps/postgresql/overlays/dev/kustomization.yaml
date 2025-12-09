@@ -14,6 +14,7 @@ helmCharts:
     namespace: services
     valuesFile: values.yaml
 
-commonLabels:
-  app: postgresql
-  environment: dev
+labels:
+  - pairs:
+      app: postgresql
+      environment: dev
