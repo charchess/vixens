@@ -1,0 +1,6 @@
+apiVersion: v2
+name: postgresql
+description: A Helm chart to deploy PostgreSQL for Docspell
+type: application
+version: 0.0.1 # Placeholder
+appVersion: "15.x.x" # Placeholder
