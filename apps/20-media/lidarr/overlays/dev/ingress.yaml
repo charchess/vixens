@@ -5,6 +5,10 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Lidarr"
+    gethomepage.dev/icon: "lidarr.png"
+    gethomepage.dev/group: "Media"
     traefik.ingress.kubernetes.io/router.middlewares: media-redirect-to-https@kubernetescrd
 spec:
   ingressClassName: traefik
