@@ -42,3 +42,4 @@ resources:
   - apps/mylar.yaml
   - apps/hydrus-server.yaml
   - apps/hydrus-client.yaml
+  - apps/music-assistant.yaml

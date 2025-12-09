@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: music-assistant-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.middlewares: media-music-assistant-http-redirect@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: musicassistant.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: music-assistant
+                port:
+                  number: 8095
+  tls:
+    - hosts:
+        - musicassistant.dev.truxonline.com
+      secretName: music-assistant-tls
