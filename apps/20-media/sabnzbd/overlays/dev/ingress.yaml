@@ -5,6 +5,10 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging # or letsencrypt-prod for prod
     traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "SABnzbd"
+    gethomepage.dev/icon: "sabnzbd.png"
+    gethomepage.dev/group: "Media"
     traefik.ingress.kubernetes.io/router.middlewares: "media-redirect-to-https@kubernetescrd" # Reference the middleware
 spec:
   ingressClassName: traefik
