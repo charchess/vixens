@@ -44,4 +44,5 @@ resources:
   - apps/hydrus-client.yaml
   - apps/music-assistant.yaml
   - apps/vaultwarden.yaml
+  - apps/postgresql.yaml                     # PostgreSQL for Docspell
   - apps/docspell.yaml

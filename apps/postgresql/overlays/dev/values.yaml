@@ -1,12 +1,12 @@
 image:
-  tag: "15.5.0-debian-11-r2" # Specific image tag for dev
+  tag: "18.1.0"
 
 auth:
   database: docspell
   username: docspell
-  # Password will be sourced from secrets.sops.yaml - This comment is incorrect, should be from Infisical
+  existingSecret: docspell-postgresql-credentials
 
-# Adjust resources for dev if needed
+# Resources for dev
 resources:
   requests:
     cpu: 50m
@@ -15,18 +15,16 @@ resources:
     cpu: 250m
     memory: 256Mi
 
-# Reference the Infisical-managed secret for DB credentials
-fullnameOverride: docspell-postgresql # Override default fullname for postgresql deployment
+fullnameOverride: docspell-postgresql
 
 primary:
   persistence:
     enabled: true
     size: 10Gi
-    storageClass: "ceph-block"
-  fsGroup:
-    enabled: true
+    storageClass: "synelia-iscsi-retain"
 
-auth:
-  database: docspell
-  username: docspell
-  existingSecret: docspell-postgresql-credentials # The Kubernetes Secret created by Infisical
+  # Allow scheduling on control-plane nodes
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
