@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: docspell
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/docspell/docker.git
+    targetRevision: main # The docspell/docker repo uses 'main' branch
+    path: charts/docspell
+    helm:
+      valueFiles:
+        - ../../apps/60-services/docspell/overlays/dev/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: services
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

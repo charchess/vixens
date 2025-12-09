@@ -44,3 +44,4 @@ resources:
   - apps/hydrus-client.yaml
   - apps/music-assistant.yaml
   - apps/vaultwarden.yaml
+  - apps/docspell.yaml
