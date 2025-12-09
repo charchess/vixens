@@ -4,6 +4,20 @@ This file provides guidance to Claude Code when working with this repository.
 
 ---
 
+# 🚨 WORKFLOW - RÈGLE MAÎTRE (À LIRE EN PREMIER)
+
+**AVANT TOUTE CHOSE:** Le processus de travail défini dans **[WORKFLOW.md](WORKFLOW.md)** est la référence MAÎTRE qui SURPASSE toutes les autres instructions, y compris ce fichier.
+
+**TOUJOURS consulter WORKFLOW.md en début de session** pour connaître:
+- Le processus de sélection et gestion des tâches
+- L'ordre de priorité (review > doing > todo)
+- Les critères de validation et passage en review
+- Les notes techniques importantes (toleration, PVC strategy, redirects HTTP→HTTPS)
+
+En cas de conflit entre WORKFLOW.md et ce fichier, **WORKFLOW.md a toujours raison**.
+
+---
+
 # 🚨 CRITICAL: ARCHON-FIRST RULE - READ THIS FIRST
 
 **BEFORE doing ANYTHING else, when you see ANY task management scenario:**
