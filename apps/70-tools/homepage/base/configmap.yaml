@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-config
+data:
+  # For a full list of options, see https://gethomepage.dev/en/configs/settings/
+  settings.yaml: |
+    title: "Vixens Cluster Dashboard"
+    background: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2942"
+    headerStyle: "transparent"
+    layout:
+      # Define the order and name of the groups for discovered services
+      # Services with the annotation 'gethomepage.dev/group: Infrastructure' will appear here
+      Infrastructure:
+        style: "row"
+        columns: 4
+      Monitoring:
+        style: "row"
+        columns: 4
+      Home Automation:
+        style: "row"
+        columns: 4
+      Services:
+        style: "row"
+        columns: 4
+
+    # Kubernetes service discovery provider
+    provider:
+      kubernetes:
+        mode: cluster
+        showHealth: true
+        useIngress: true # Use Ingress annotations to get service metadata
+        namespaceExclude: 
+          - "kube-system"
+          - "flux-system"
+          - "longhorn-system"
+          - "rook-ceph"
+
+  # For a full list of options, see https://gethomepage.dev/en/configs/widgets/
+  widgets.yaml: |
+    - resources:
+        label: Cluster State
+        expanded: true
+        cpu: true
+        memory: true
+        storage: true # Requires Kubernetes Metrics Server to be installed
+
+    - homeassistant:
+        host: http://homeassistant-svc.homeassistant.svc.cluster.local:8123
+        key: "{{ .env.HOMEASSISTANT_API_KEY }}"
+
+    - search:
+        provider: "duckduckgo"
+        target: "_blank"
+
+    - datetime:
+        text_size: "xl"
+        format:
+          timeStyle: "long"
+
+  # services.yaml is now primarily for adding services that are NOT discovered automatically.
+  # Most services will be populated automatically via Kubernetes Ingress discovery.
+  # The groups defined in settings.yaml will be used for organization.
+  services.yaml: |
+    - Infrastructure: []
+    - Monitoring: []
+    - Home Automation: []
+    - Services: []
+
+  # For a full list of options, see https://gethomepage.dev/en/configs/bookmarks/
+  bookmarks.yaml: |
+    - Project:
+        - Source Code:
+            - abbr: GIT
+              href: "https://github.com/charchess/vixens-new"
+
+    - Documentation:
+        - Homepage:
+            - abbr: DOCS
+              href: "https://gethomepage.dev/en/getting-started/"
+        - Talos Linux:
+            - abbr: OS
+              href: "https://www.talos.dev/v1.6/"
+        - Traefik:
+            - abbr: IN
+              href: "https://doc.traefik.io/traefik/"

@@ -1,0 +1,52 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sabnzbd
+  labels:
+    app: sabnzbd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: sabnzbd
+  template:
+    metadata:
+      labels:
+        app: sabnzbd
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: sabnzbd
+          image: ghcr.io/linuxserver/sabnzbd:latest # Placeholder image
+          ports:
+            - containerPort: 8080 # Default SABnzbd UI port
+          env: # Added environment variables
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Paris"
+            - name: HOST_WHITELIST_ENTRIES
+              value: "sabnzbd.dev.truxonline.com,sabnzbd,sabnzbd.media,sabnzbd.media.svc.cluster.local" # Adapted per environment
+            - name: SABNZBD_HOST
+              value: "sabnzbd.dev.truxonline.com" # Set the host explicitly
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: downloads
+              mountPath: /downloads
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: sabnzbd-config-pvc
+        - name: downloads
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Downloads
