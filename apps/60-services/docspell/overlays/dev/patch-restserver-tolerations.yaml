@@ -1,0 +1,13 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: docspell-restserver
+  namespace: services
+spec:
+  template:
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
