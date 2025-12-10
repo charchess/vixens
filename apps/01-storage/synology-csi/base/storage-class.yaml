@@ -27,4 +27,3 @@ parameters:
   protocol: iscsi
 reclaimPolicy: Delete
 allowVolumeExpansion: true
-
