@@ -14,17 +14,8 @@ spec:
     spec:
       containers:
         - name: linkwarden
-          image: ghcr.io/linkwarden/linkwarden:v2.5.0
-          ports:
-            - containerPort: 3000
-          envFrom:
-            - secretRef:
-                name: linkwarden-secrets # This secret will be created by Infisical in the overlay
-          volumeMounts:
-            - name: data
-              mountPath: /data
+          image: ghcr.io/linkwarden/linkwarden:latest
           workingDir: /usr/src/app
-          command: ["sleep", "3600"]
           resources:
             requests:
               cpu: 100m
