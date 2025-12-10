@@ -41,18 +41,22 @@ tolerations:
 ports:
   web:
     port: 80
+    exposedPort: 80
     expose: true
   websecure:
     port: 443
+    exposedPort: 443
     expose: true
     tls:
       enabled: true
   mqtt: # New entrypoint for Mosquitto
     port: 1883
+    exposedPort: 1883
     expose: true
     protocol: TCP
   coiot: # New entrypoint for Home Assistant CoIoT (Shelly devices)
     port: 5683
+    exposedPort: 5683
     expose: true
     protocol: UDP
   traefik:
