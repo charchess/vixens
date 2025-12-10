@@ -1,10 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: tools
+# Don't set namespace here because database.yaml needs databases namespace
+# Individual resources set their own namespace
 
 resources:
   - ../../base
+  - database.yaml  # Database in databases namespace
   - infisical-secret.yaml
   - ingress.yaml
 
