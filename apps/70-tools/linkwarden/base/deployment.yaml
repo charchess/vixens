@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: linkwarden
-          image: ghcr.io/linkwarden/linkwarden:latest
+          image: ghcr.io/linkwarden/linkwarden:v2.4.9
           workingDir: /usr/src/app
           resources:
             requests:
