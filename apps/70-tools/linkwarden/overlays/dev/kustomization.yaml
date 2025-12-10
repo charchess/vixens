@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: tools
+resources:
+  - ../../base
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/values/ingress/main/enabled
+        value: true
+      - op: replace
+        path: /spec/values/ingress/main/hosts/0/host
+        value: linkwarden.dev.truxonline.com
+      - op: replace
+        path: /spec/values/ingress/main/hosts/0/paths/0/path
+        value: /
+      - op: add
+        path: /spec/values/ingress/main/tls
+        value:
+          - hosts:
+              - linkwarden.dev.truxonline.com
+            secretName: linkwarden-dev-tls
+    target:
+      kind: HelmRelease
+      name: linkwarden
