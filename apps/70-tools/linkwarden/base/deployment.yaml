@@ -24,6 +24,7 @@ spec:
             - name: data
               mountPath: /data
           workingDir: /usr/src/app
+          command: ["sleep", "3600"]
           resources:
             requests:
               cpu: 100m
