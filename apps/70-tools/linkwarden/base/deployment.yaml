@@ -47,13 +47,13 @@ spec:
                   key: DATABASE_URL
             # Storage Configuration
             - name: STORAGE_FOLDER
-              value: "/data"
+              value: "/data/data"
             # Optional: Disable registration if desired
             - name: NEXT_PUBLIC_DISABLE_REGISTRATION
               value: "false"
           volumeMounts:
             - name: data
-              mountPath: /data
+              mountPath: /data/data
           resources:
             requests:
               cpu: 100m

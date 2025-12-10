@@ -1,12 +1,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Don't set namespace here because database.yaml needs databases namespace
+# Database and credentials managed centrally in postgresql-shared app
 # Individual resources set their own namespace
 
 resources:
   - ../../base
-  - database.yaml  # Database in databases namespace
   - infisical-secret.yaml
   - ingress.yaml
 
