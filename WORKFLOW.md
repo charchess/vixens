@@ -8,6 +8,7 @@ processus de travail:
 ** SINON on continue celle en doing (coding agent) 
 ** SINON on propose celles semblant plus critique/importante
 * travail sur la tache choisi :  
+** etudier et informer de possibles pré requis technique, uniquement si il y en a
 ** passage de la tache en doing dans archon  
 ** pour la documentation, privilegier le RAG archon
 ** pour l'acces au code, privilegier serena  
