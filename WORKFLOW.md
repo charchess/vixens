@@ -21,7 +21,7 @@ processus de travail:
 
 NOTE :
 * se rappeler des tolérations pour les controlplane
-* si il y a un pvc RWO, mettre la trategy en recreate 
+* si il y a un pvc RWO, mettre la strategy en recreate 
 * penser a mettre la redirection http vers https
 * s'assurer que le certificat tls est bien obtenu par letsencrypt-staging en dev/test/staging et letsencrypt-prod en prod  
 
