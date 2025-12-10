@@ -20,7 +20,7 @@ spec:
         replicaCount: 1
 
         crds:
-          create: true
+          create: false  # CRDs installed manually via kubectl (poolers CRD too large for Helm)
 
         config:
           clusterWide: true
