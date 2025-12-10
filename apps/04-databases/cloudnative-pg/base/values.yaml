@@ -1,0 +1,30 @@
+# CloudNativePG Operator - Base Configuration
+# https://cloudnative-pg.io/
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/cloudnative-pg/cloudnative-pg
+  pullPolicy: IfNotPresent
+
+crds:
+  create: true
+
+config:
+  create: true
+  name: cnpg-controller-manager-config
+  clusterWide: true
+
+# Allow operator on control-plane nodes
+tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
