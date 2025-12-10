@@ -1,0 +1,12 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: docspell
+  namespace: databases
+spec:
+  cluster:
+    name: postgresql-shared
+  name: docspell
+  owner: docspell
+  ensure: present

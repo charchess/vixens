@@ -30,6 +30,10 @@ metadata:
   namespace: argocd
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "ArgoCD"
+    gethomepage.dev/icon: "argocd.png"
+    gethomepage.dev/group: "Infrastructure"
     cert-manager.io/cluster-issuer: letsencrypt-staging
 spec:
   ingressClassName: traefik

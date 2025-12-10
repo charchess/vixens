@@ -1,0 +1,70 @@
+---
+# deployment.yaml - Final Correct Version
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homepage
+  labels:
+    app.kubernetes.io/name: homepage
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: homepage
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: homepage
+    spec:
+      serviceAccountName: homepage
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+
+      # Init container to copy initial config from the read-only ConfigMap
+      # to the writable PVC, if the PVC is empty.
+      initContainers:
+        - name: copy-initial-config
+          image: busybox:1.36
+          # Always copy the latest config from the ConfigMap to the PVC on startup.
+          command: ['sh', '-c', 'cp -L /initial-config/* /config/']
+          volumeMounts:
+            - name: initial-config-vol
+              mountPath: /initial-config
+            - name: config-vol # The writable PVC
+              mountPath: /config
+
+      # Main application container
+      containers:
+        - name: homepage
+          image: ghcr.io/gethomepage/homepage:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: HOMEPAGE_ALLOWED_HOSTS
+              value: "homepage.dev.truxonline.com"
+            - name: HOMEASSISTANT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: homepage-secrets
+                  key: HOMEASSISTANT_API_KEY
+          volumeMounts:
+            # Mount the writable PVC, which is now populated by the initContainer.
+            - name: config-vol
+              mountPath: /app/config
+
+      # Volume definitions
+      volumes:
+        # The read-only ConfigMap containing the default configuration
+        - name: initial-config-vol
+          configMap:
+            name: homepage-config
+        # The writable PersistentVolumeClaim for the config
+        - name: config-vol
+          persistentVolumeClaim:
+            claimName: homepage-config
