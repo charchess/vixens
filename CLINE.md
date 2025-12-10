@@ -1,18 +1,18 @@
-<!-- OPENSPEC:START -->
-# OpenSpec Instructions
+# Instructions for AI Assistants (Cline/Roo-Cline)
 
-These instructions are for AI assistants working in this project.
+This project uses a centralized workflow management system.
 
-Always open `@/openspec/AGENTS.md` when the request:
-- Mentions planning or proposals (words like proposal, spec, change, plan)
-- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
-- Sounds ambiguous and you need the authoritative spec before coding
+**⚠️ IMPORTANT:** Please refer to the following files for complete instructions:
 
-Use `@/openspec/AGENTS.md` to learn:
-- How to create and apply change proposals
-- Spec format and conventions
-- Project structure and guidelines
+1. **[WORKFLOW.md](WORKFLOW.md)** - MASTER workflow reference (supersedes all other instructions)
+2. **[CLAUDE.md](CLAUDE.md)** - General guidelines and tool configuration
+3. **[AGENTS.md](AGENTS.md)** - Archon MCP integration details
 
-Keep this managed block so 'openspec update' can refresh the instructions.
+## Quick Start
 
-<!-- OPENSPEC:END -->
+1. Read [WORKFLOW.md](WORKFLOW.md) FIRST
+2. Follow the task prioritization: review > doing > todo
+3. Use Archon MCP for task management (NOT local tools)
+4. Validate with Playwright for all web applications
+
+In case of any conflict between instructions, **WORKFLOW.md always wins**.

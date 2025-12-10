@@ -18,6 +18,9 @@ spec:
       labels:
         app: homeassistant
     spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
       hostNetwork: true  # Required for mDNS/UPnP local discovery
       dnsPolicy: ClusterFirstWithHostNet  # Use cluster DNS even with hostNetwork
       tolerations:

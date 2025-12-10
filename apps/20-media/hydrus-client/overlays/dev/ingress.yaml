@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hydrus-client-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Hydrus Client"
+    gethomepage.dev/icon: "hydrus.png"
+    gethomepage.dev/group: "Media"
+    traefik.ingress.kubernetes.io/router.middlewares: media-redirect-to-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: hydrus.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hydrus-client
+                port:
+                  number: 5800
+  tls:
+    - hosts:
+        - hydrus.dev.truxonline.com
+      secretName: hydrus-client-tls

@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lazylibrarian-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "LazyLibrarian"
+    gethomepage.dev/icon: "lazylibrarian.png"
+    gethomepage.dev/group: "Media"
+    traefik.ingress.kubernetes.io/router.middlewares: media-redirect-to-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: lazylibrarian.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: lazylibrarian
+                port:
+                  number: 5299
+  tls:
+    - hosts:
+        - lazylibrarian.dev.truxonline.com
+      secretName: lazylibrarian-tls
