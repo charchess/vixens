@@ -4,6 +4,20 @@ This file provides guidance to Claude Code when working with this repository.
 
 ---
 
+# 🚨 WORKFLOW - RÈGLE MAÎTRE (À LIRE EN PREMIER)
+
+**AVANT TOUTE CHOSE:** Le processus de travail défini dans **[WORKFLOW.md](WORKFLOW.md)** est la référence MAÎTRE qui SURPASSE toutes les autres instructions, y compris ce fichier.
+
+**TOUJOURS consulter WORKFLOW.md en début de session** pour connaître:
+- Le processus de sélection et gestion des tâches
+- L'ordre de priorité (review > doing > todo)
+- Les critères de validation et passage en review
+- Les notes techniques importantes (toleration, PVC strategy, redirects HTTP→HTTPS)
+
+En cas de conflit entre WORKFLOW.md et ce fichier, **WORKFLOW.md a toujours raison**.
+
+---
+
 # 🚨 CRITICAL: ARCHON-FIRST RULE - READ THIS FIRST
 
 **BEFORE doing ANYTHING else, when you see ANY task management scenario:**
@@ -452,3 +466,6 @@ See [docs/adr/006-terraform-2-level-architecture.md](docs/adr/006-terraform-2-le
 - les apply kubectl apply/edit/delete sont acceptable EN DEV pour le troubleshoot/confirmation mais doivent etre consolider avec une approche gitops ensuite.
 - find_tasks a une fenetre de 10 taches, pense a l'etendre pour en avoir plus
 - le secret infisical-universal-auth est dans le namespace argocd pour etre utilisé par tous les operator
+- n'oublie pas de me signaler quand je dois creer des secrets dans infisical ou des DNS
+- n'oublie pas de créer les adr sur les decisions architecturales
+- quand tu configure un ingress https, mets en place un redirect http -> https

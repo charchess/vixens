@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: whisparr
+  labels:
+    app: whisparr
+spec:
+  selector:
+    app: whisparr
+  ports:
+    - protocol: TCP
+      port: 6969
+      targetPort: 6969

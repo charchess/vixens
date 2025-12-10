@@ -1,0 +1,35 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: docspell-joex-config
+  labels:
+    app: docspell
+    component: joex
+data:
+  config: |
+    docspell.joex {
+      app-id = ${HOSTNAME}
+      base-url = ${BASE_URL}
+      bind {
+        address = "0.0.0.0"
+        port = 7878
+      }
+      jdbc {
+        url = ${JDBC_URI}
+        user = ${JDBC_USERNAME}
+        password = ${JDBC_PASSWORD}
+      }
+
+      full-text-search {
+        enabled = true
+        backend = "postgresql"
+
+        postgresql = {
+          use-default-connection = true
+        }
+      }
+
+      files {
+      }
+    }
