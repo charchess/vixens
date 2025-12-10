@@ -218,3 +218,44 @@ kubectl get ingressroutes,middlewares -A --kubeconfig <path-to-kubeconfig>
    kubectl -n synology-csi get secret client-info -o yaml
    ```
    **Résultat Attendu :** Le secret existe et contient le fichier `client-info.yml` avec les informations correctes.
+
+### 5.3. Linkwarden
+
+1.  **Vérifier le Déploiement :**
+    ```bash
+    kubectl -n tools get deployment linkwarden -o yaml
+    ```
+    **Résultat Attendu :**
+    - Le statut du déploiement indique que les réplicas sont à jour et disponibles (`status.availableReplicas: 1`).
+    - L'image du conteneur (`spec.template.spec.containers[0].image`) est `ghcr.io/linkwarden/linkwarden:v2.5.0`.
+    - Le volume `linkwarden-data` est correctement monté.
+
+2.  **Vérifier le secret Infisical :**
+    ```bash
+    # 1. Vérifier la ressource InfisicalSecret
+    kubectl -n tools get infisicalsecret linkwarden-secrets -o yaml
+
+    # 2. Vérifier le secret Kubernetes généré
+    kubectl -n tools get secret linkwarden-secrets -o yaml
+    ```
+    **Résultat Attendu :**
+    - Le secret `linkwarden-secrets` existe et est géré par Infisical.
+    - Il contient les clés `DATABASE_URL` et `NEXTAUTH_SECRET` encodées en Base64.
+
+3.  **Vérifier le `PersistentVolumeClaim` (PVC) :**
+    ```bash
+    kubectl -n tools get pvc linkwarden-data -o yaml
+    ```
+    **Résultat Attendu :**
+    - Le PVC existe, est à l'état `Bound`.
+    - La `storageClassName` est `synelia-iscsi-retain`.
+    - La capacité (`status.capacity.storage`) est `1Gi`.
+
+4.  **Vérifier l'Ingress :**
+    ```bash
+    kubectl -n tools get ingress linkwarden -o yaml
+    ```
+    **Résultat Attendu :**
+    - L'Ingress existe.
+    - La règle (`spec.rules[0].host`) est `linkwarden.dev.truxonline.com`.
+    - La section TLS (`spec.tls[0]`) est configurée pour `linkwarden.dev.truxonline.com` avec le secret `linkwarden-dev-tls`.

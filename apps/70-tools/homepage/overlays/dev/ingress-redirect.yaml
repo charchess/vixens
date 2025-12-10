@@ -1,0 +1,24 @@
+# Ingress for HTTP to HTTPS redirection
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homepage-http-redirect
+  annotations:
+    # This Ingress is only for the insecure entrypoint
+    traefik.ingress.kubernetes.io/router.entrypoints: "web"
+    # Apply the redirection middleware
+    traefik.ingress.kubernetes.io/router.middlewares: "traefik-redirect-https@kubernetescrd"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: "homepage.dev.truxonline.com"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                # This service name is arbitrary, as it will be redirected
+                name: homepage
+                port:
+                  name: http
