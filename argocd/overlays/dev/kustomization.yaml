@@ -45,4 +45,5 @@ resources:
   - apps/music-assistant.yaml
   - apps/vaultwarden.yaml
   - apps/cloudnative-pg.yaml                 # CloudNativePG Operator (databases)
+  - apps/docspell-postgresql.yaml            # PostgreSQL Cluster for Docspell
   - apps/docspell.yaml
