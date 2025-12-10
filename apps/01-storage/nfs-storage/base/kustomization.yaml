@@ -6,5 +6,3 @@ namespace: media-stack
 
 resources:
   - namespace.yaml
-  - media-pvc.yaml
-  - media-pv.yaml

@@ -31,6 +31,10 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-staging"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Home Assistant"
+    gethomepage.dev/icon: "home-assistant.png"
+    gethomepage.dev/group: "Home Automation"
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik
@@ -83,6 +87,10 @@ metadata:
     cert-manager.io/cluster-issuer: "letsencrypt-staging"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Home Assistant File Browser"
+    gethomepage.dev/icon: "filebrowser.png"
+    gethomepage.dev/group: "Home Automation"
 spec:
   ingressClassName: traefik
   rules:

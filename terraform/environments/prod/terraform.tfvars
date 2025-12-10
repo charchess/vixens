@@ -131,7 +131,7 @@ network = {
 paths = {
   kubeconfig            = "./kubeconfig-prod"
   talosconfig           = "./talosconfig-prod"
-  cilium_ip_pool_yaml   = "../../../apps/cilium-lb/overlays/prod/ippool.yaml"
-  cilium_l2_policy_yaml = "../../../apps/cilium-lb/overlays/prod/l2policy.yaml"
+  cilium_ip_pool_yaml   = "../../../apps/00-infra/cilium-lb/overlays/prod/ippool.yaml"
+  cilium_l2_policy_yaml = "../../../apps/00-infra/cilium-lb/overlays/prod/l2policy.yaml"
   infisical_secret      = "../../../.secrets/prod/infisical-universal-auth.yaml"
 }
