@@ -1,11 +1,14 @@
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: linkwarden
+  labels:
+    app: linkwarden
   annotations:
-    cert-manager.io/cluster-issuer: "gandi"
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.middlewares: "tools-linkwarden-http-redirect@kubernetescrd"
 spec:
   ingressClassName: traefik
   rules:
@@ -18,8 +21,8 @@ spec:
               service:
                 name: linkwarden
                 port:
-                  name: http
+                  number: 3000
   tls:
     - hosts:
         - linkwarden.dev.truxonline.com
-      secretName: linkwarden-dev-tls
+      secretName: linkwarden-tls
