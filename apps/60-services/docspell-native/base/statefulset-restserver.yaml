@@ -1,0 +1,63 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: docspell-restserver
+  labels:
+    app: docspell
+    component: restserver
+spec:
+  serviceName: docspell-restserver
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docspell
+      component: restserver
+  template:
+    metadata:
+      labels:
+        app: docspell
+        component: restserver
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: restserver
+          image: ghcr.io/docspell/restserver:v0.43.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - /opt/docspell.conf
+          ports:
+            - name: api
+              containerPort: 7880
+              protocol: TCP
+          env:
+            - name: JDBC_URI
+              value: jdbc:postgresql://postgresql-shared-rw.databases.svc.cluster.local:5432/docspell
+            - name: JDBC_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: docspell-db-credentials
+                  key: username
+            - name: JDBC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: docspell-db-credentials
+                  key: password
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: config
+              mountPath: /opt/docspell.conf
+              subPath: config
+      volumes:
+        - name: config
+          configMap:
+            name: docspell-restserver-config

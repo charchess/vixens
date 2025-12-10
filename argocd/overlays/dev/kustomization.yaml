@@ -47,4 +47,5 @@ resources:
   - apps/vaultwarden.yaml
   - apps/cloudnative-pg.yaml                 # CloudNativePG Operator (databases)
   - apps/postgresql-shared.yaml              # Shared PostgreSQL Cluster (Docspell, ...)
-  - apps/docspell.yaml
+  # - apps/docspell.yaml                     # OLD Helm-based (deprecated, use docspell-native)
+  - apps/docspell-native.yaml                # Docspell Kubernetes native deployment
