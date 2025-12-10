@@ -19,10 +19,6 @@ restserver:
     limits:
       cpu: 500m
       memory: 512Mi
-  tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-      effect: NoSchedule
 
 joex:
   resources:
@@ -32,10 +28,6 @@ joex:
     limits:
       cpu: 500m
       memory: 512Mi
-  tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-      effect: NoSchedule
 
 jdbc:
   host: postgresql-shared-rw.databases.svc.cluster.local # Shared PostgreSQL cluster (read-write service)

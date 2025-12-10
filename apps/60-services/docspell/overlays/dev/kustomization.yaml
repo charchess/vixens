@@ -6,5 +6,9 @@ namespace: services
 resources:
   - ../../base
 
+patches:
+  - path: patch-restserver-tolerations.yaml
+  - path: patch-joex-tolerations.yaml
+
 commonLabels:
   environment: dev
