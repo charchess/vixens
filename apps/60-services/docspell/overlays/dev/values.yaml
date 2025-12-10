@@ -30,7 +30,7 @@ joex:
       memory: 512Mi
 
 jdbc:
-  host: postgresql-docspell # Placeholder
-  port: 5432 # Placeholder
-  database: docspell # Placeholder
-  credentialsSecretName: docspell-db-credentials # Name of the Kubernetes Secret containing DB credentials
+  host: postgresql-shared-rw.databases.svc.cluster.local # Shared PostgreSQL cluster (read-write service)
+  port: 5432
+  database: docspell
+  credentialsSecretName: docspell-db-credentials # Synced from databases namespace
