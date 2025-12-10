@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sabnzbd-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod # Use prod issuer for staging
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.middlewares: "media-redirect-to-https@kubernetescrd"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: "sabnzbd.staging.truxonline.com" # Adjusted for staging environment
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sabnzbd
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - "sabnzbd.staging.truxonline.com"
+      secretName: sabnzbd-tls

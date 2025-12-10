@@ -1,0 +1,48 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vaultwarden
+  labels:
+    app: vaultwarden
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: vaultwarden
+  template:
+    metadata:
+      labels:
+        app: vaultwarden
+    spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: vaultwarden
+          image: vaultwarden/server:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: DOMAIN
+              value: "https://vaultwarden.dev.truxonline.com"
+            - name: SIGNUPS_ALLOWED
+              value: "true"
+            - name: ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-secrets
+                  key: ADMIN_TOKEN
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: vaultwarden-data-pvc

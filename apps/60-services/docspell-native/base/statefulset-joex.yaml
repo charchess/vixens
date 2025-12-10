@@ -1,0 +1,74 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: docspell-joex
+  labels:
+    app: docspell
+    component: joex
+spec:
+  serviceName: docspell-joex
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docspell
+      component: joex
+  template:
+    metadata:
+      labels:
+        app: docspell
+        component: joex
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: joex
+          image: ghcr.io/docspell/joex:v0.43.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - /custom-entrypoint.sh
+          args:
+            - --
+            - /opt/docspell.conf
+          ports:
+            - name: api
+              containerPort: 7878
+              protocol: TCP
+          env:
+            - name: JDBC_URI
+              value: jdbc:postgresql://postgresql-shared-rw.databases.svc.cluster.local:5432/docspell
+            - name: JDBC_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: docspell-db-credentials
+                  key: username
+            - name: JDBC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: docspell-db-credentials
+                  key: password
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: config
+              mountPath: /opt/docspell.conf
+              subPath: config
+            - name: entrypoint
+              mountPath: /custom-entrypoint.sh
+              subPath: entrypoint.sh
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: docspell-joex-config
+        - name: entrypoint
+          configMap:
+            name: docspell-joex-entrypoint
+            defaultMode: 0755

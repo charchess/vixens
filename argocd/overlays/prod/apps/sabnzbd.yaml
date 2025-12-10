@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sabnzbd
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: main # The Git branch corresponding to the environment
+    path: apps/20-media/sabnzbd/overlays/prod # The path to the app's overlay
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: media # The namespace where the application will be deployed
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

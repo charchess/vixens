@@ -19,6 +19,7 @@ Pour chaque service listé ci-dessous, ouvrez l'URL correspondante dans un navig
 | **Whoami** | `https://whoami.dev.truxonline.com` | `https://whoami.test.truxonline.com` | Une page simple affichant des informations sur la requête et le conteneur s'affiche. | |
 | **Home Assistant** | `https://homeassistant.dev.truxonline.com` | `https://homeassistant.test.truxonline.com` | La page de connexion ou le tableau de bord de Home Assistant s'affiche. | |
 | **Mail Gateway** | `https://mail.dev.truxonline.com` | `https://mail.test.truxonline.com` | La page de Roundcube ou du service mail s'affiche. | |
+| **Linkwarden** | `https://linkwarden.dev.truxonline.com` | `https://linkwarden.test.truxonline.com` | La page de connexion ou le tableau de bord de Linkwarden s'affiche. | |
 
 ## 2. Validation de la Sécurité (HTTPS)
 
