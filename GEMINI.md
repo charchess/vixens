@@ -21,8 +21,13 @@ The project utilizes a two-pronged approach, reflecting a "two control loops" ar
     -   Structure: `environments/{env}/main.tf` -> `modules/environment/` -> `modules/{shared, talos, cilium, argocd}`.
     -   The `terraform/base/` directory is deprecated and unused.
     -   `modules/environment/` acts as a central orchestration layer for core infrastructure components (Talos cluster, Cilium CNI, ArgoCD GitOps).
-    -   `modules/shared/` centralizes global, reusable configurations (e.g., chart versions, control plane tolerations, network defaults).
-    -   Features robust Kubernetes API readiness checks with two-phase validation.
+    -   `modules/shared/` centralizes global, reusable configurations such as:
+        - Chart versions: Cilium 1.18.3, ArgoCD 7.7.7, Traefik 25.0.0, cert-manager v1.14.4
+        - Control plane tolerations: Reusable across Cilium, ArgoCD, Hubble
+        - Cilium capabilities: Validated set of 11 Linux capabilities for Talos
+        - Network defaults: Pod subnet, service subnet
+        - Security defaults: Common security contexts
+        - Timeouts: Helm install (20min), upgrade (15min), API wait (5min)
 
 2.  **Application Loop (ArgoCD):**
     -   ArgoCD operates on an "App-of-Apps" pattern.
@@ -96,3 +101,32 @@ The test runner requires `terraform` and `talosctl` to be available in the syste
 -   **Architectural Decision Records (ADRs):** Significant architectural decisions are documented in ADRs (e.g., `docs/adr/006-terraform-3-level-architecture-REVISED.md`).
 -   **Secrets Management:** Secrets are managed separately per environment within the `.secrets/<environment>` directory.
 -   **Conformity Scoring:** The project uses a conformity scoring grid (mentioned in ADRs).
+
+## Work Process:
+
+**1. Initialization:**
+    - Retrieve all tasks assigned to "Coding Agent" with status "todo", "doing", or "review", ensuring to use a sufficiently large `per_page` value to get all tasks.
+
+**2. Task Selection:**
+    - **Priority 1:** Select tasks assigned to "Coding Agent" with status "review".
+    - **Priority 2:** If no "review" tasks, select tasks assigned to "Coding Agent" with status "doing".
+    - **Priority 3:** If no "review" or "doing" tasks, propose "todo" tasks that appear most critical/important.
+
+**3. Working on a Task:**
+    - Change task status to "doing" in Archon.
+    - Prioritize Archon RAG for documentation and Serena for code access.
+    - Proceed incrementally.
+    - Keep `@docs/RECETTE-FONCTIONNELLE.md` and `@docs/RECETTE-TECHNIQUE.md` up to date.
+
+**4. Task Completion:**
+    - Change task status to "review" in Archon.
+    - Validate results thoroughly using all available means, including Playwright/curl for application access, not just its state.
+    - If successful, change assignee to "User", keep status as "review", and proceed to the next task.
+    - If unsuccessful, revert status to "doing" and resume work.
+
+**Important Notes:**
+- Remember control-plane tolerations.
+- If there is a PVC with `ReadWriteOnce` access mode, ensure the deployment strategy is `Recreate`.
+- Implement HTTP to HTTPS redirection.
+- Ensure correct `cert-manager` cluster issuer (`letsencrypt-staging` for dev/test/staging, `letsencrypt-prod` for prod).
+- **IMPORTANT: DO NOT TOUCH COMMON RESOURCES WITHOUT ASKING THE USER!!**

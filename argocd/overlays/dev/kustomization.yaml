@@ -31,3 +31,21 @@ resources:
   - apps/prometheus-ingress.yaml             # Prometheus IngressRoutes
   - apps/grafana.yaml                        # Grafana standalone monitoring
   - apps/grafana-ingress.yaml                # Grafana IngressRoutes with HTTP→HTTPS redirect
+  - apps/homepage.yaml                       # Homepage dashboard for services
+  - apps/linkwarden.yaml                     # Linkwarden bookmark manager
+  - apps/sabnzbd.yaml
+  - apps/radarr.yaml
+  - apps/sonarr.yaml
+  - apps/lidarr.yaml
+  - apps/lazylibrarian.yaml
+  - apps/prowlarr.yaml
+  - apps/whisparr.yaml
+  - apps/mylar.yaml
+  - apps/hydrus-server.yaml
+  - apps/hydrus-client.yaml
+  - apps/music-assistant.yaml
+  - apps/vaultwarden.yaml
+  - apps/cloudnative-pg.yaml                 # CloudNativePG Operator (databases)
+  - apps/postgresql-shared.yaml              # Shared PostgreSQL Cluster (Docspell, ...)
+  # - apps/docspell.yaml                     # OLD Helm-based (deprecated, use docspell-native)
+  - apps/docspell-native.yaml                # Docspell Kubernetes native deployment

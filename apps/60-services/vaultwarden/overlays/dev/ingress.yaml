@@ -1,0 +1,30 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vaultwarden-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Vaultwarden"
+    gethomepage.dev/icon: "vaultwarden.png"
+    gethomepage.dev/group: "Services"
+    traefik.ingress.kubernetes.io/router.middlewares: services-vaultwarden-http-redirect@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: vaultwarden.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vaultwarden
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - vaultwarden.dev.truxonline.com
+      secretName: vaultwarden-tls
