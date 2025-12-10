@@ -1,0 +1,11 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: linkwarden-http-redirect
+  labels:
+    app: linkwarden
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
