@@ -7,4 +7,6 @@ resources:
   - cluster.yaml
   - credentials/admin-secret.yaml
   - credentials/docspell-secret.yaml
+  - credentials/linkwarden-secret.yaml
   - databases/docspell.yaml
+  - databases/linkwarden.yaml

@@ -1,13 +1,9 @@
 ---
-# Database must be in the same namespace as the Cluster (databases)
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
   name: linkwarden
   namespace: databases
-  labels:
-    app: linkwarden
-    environment: dev
 spec:
   cluster:
     name: postgresql-shared
