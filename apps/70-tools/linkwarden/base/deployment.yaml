@@ -23,6 +23,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+          workingDir: /usr/src/app
           resources:
             requests:
               cpu: 100m
