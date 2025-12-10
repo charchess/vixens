@@ -2,21 +2,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: docspell-postgresql
+  name: postgresql-shared
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-wave: "4"
 spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
-    path: apps/60-services/docspell-postgresql/overlays/dev
+    path: apps/04-databases/postgresql-shared/overlays/dev
   destination:
     server: https://kubernetes.default.svc
-    namespace: services
+    namespace: databases
   syncPolicy:
     automated:
       prune: true
