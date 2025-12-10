@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkwarden
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: linkwarden
+  template:
+    metadata:
+      labels:
+        app: linkwarden
+    spec:
+      containers:
+        - name: linkwarden
+          image: ghcr.io/linkwarden/linkwarden:v2.5.0
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: linkwarden-secrets # This secret will be created by Infisical in the overlay
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: linkwarden-data

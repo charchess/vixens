@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: linkwarden
+  annotations:
+    cert-manager.io/cluster-issuer: "gandi"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  rules:
+    - host: linkwarden.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: linkwarden
+                port:
+                  name: http
+  tls:
+    - hosts:
+        - linkwarden.dev.truxonline.com
+      secretName: linkwarden-dev-tls
