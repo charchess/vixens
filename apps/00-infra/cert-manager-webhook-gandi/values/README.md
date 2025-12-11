@@ -52,8 +52,8 @@ sources:
     targetRevision: "v0.5.2"
     helm:
       valueFiles:
-        - $values/apps/cert-manager-webhook-gandi/values/common.yaml
-        - $values/apps/cert-manager-webhook-gandi/values/dev.yaml
+        - $values/apps/00-infra/cert-manager-webhook-gandi/values/common.yaml
+        - $values/apps/00-infra/cert-manager-webhook-gandi/values/dev.yamls
 
   - repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev

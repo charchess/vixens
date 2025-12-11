@@ -67,8 +67,8 @@ sources:
     targetRevision: "v25.0.0"
     helm:
       valueFiles:
-        - $values/apps/traefik/values/common.yaml
-        - $values/apps/traefik/values/dev.yaml  # Environment-specific
+        - $values/apps/00-infra/traefik/values/common.yaml
+        - $values/apps/00-infra/traefik/values/dev.yaml  # Environment-specific
 
   # Values from Git repository
   - repoURL: https://github.com/charchess/vixens.git
