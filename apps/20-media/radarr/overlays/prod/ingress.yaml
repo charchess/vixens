@@ -3,10 +3,15 @@ kind: Ingress
 metadata:
   name: radarr-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: media-radarr-http-redirect@kubernetescrd
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Radarr"
+    gethomepage.dev/icon: "radarr.png"
+    gethomepage.dev/group: "Media"
+    traefik.ingress.kubernetes.io/router.middlewares: media-redirect-to-https@kubernetescrd
 spec:
+  ingressClassName: traefik
   rules:
     - host: radarr.truxonline.com
       http:
@@ -18,3 +23,7 @@ spec:
                 name: radarr
                 port:
                   number: 7878
+  tls:
+    - hosts:
+        - radarr.truxonline.com
+      secretName: radarr-tls
