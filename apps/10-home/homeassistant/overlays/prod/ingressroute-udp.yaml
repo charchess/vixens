@@ -1,13 +1,14 @@
 ---
-# HomeAssistant Discovery Protocol (UDP 5683)
 apiVersion: traefik.io/v1alpha1
 kind: IngressRouteUDP
 metadata:
-  name: homeassistant-discovery
+  name: homeassistant-coiot
   namespace: homeassistant
+  labels:
+    app: homeassistant
 spec:
   entryPoints:
-    - homeassistant-discovery
+    - coiot
   routes:
     - services:
         - name: homeassistant-svc
