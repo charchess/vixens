@@ -1,7 +1,0 @@
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: whoami-http-redirect
-spec:
-  rules:
-  - host: whoami.truxonline.com

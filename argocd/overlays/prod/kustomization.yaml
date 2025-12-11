@@ -7,30 +7,47 @@ kind: Kustomization
 namespace: argocd
 
 resources:
+  # All applications in apps/ subdirectory (new pattern)
   # Infisical Operator for secrets management (wave -3)
   - apps/infisical-operator.yaml
   # Cilium L2 Announcements + LB IPAM (wave -2)
   - apps/cilium-lb.yaml
-  - apps/synology-csi-secrets.yaml       # Infisical secrets for Synology CSI (wave -1)
-  - apps/traefik.yaml                    # Traefik Ingress Controller
-  - apps/traefik-dashboard.yaml          # Traefik Dashboard hostname redirect
-  - apps/argocd.yaml                     # ArgoCD Ingress for UI
-  - apps/whoami.yaml                     # Test application
-  - apps/cert-manager.yaml               # cert-manager (wave 0)
-  - apps/cert-manager-secrets.yaml       # Infisical secrets for cert-manager (wave 0)
-  - apps/cert-manager-webhook-gandi.yaml # Gandi DNS webhook (wave 1)
-  - apps/cert-manager-config.yaml        # ClusterIssuers + Secret (wave 2)
-  - apps/synology-csi.yaml
-  - apps/nfs-storage.yaml
-  - apps/mail-gateway.yaml
-  - apps/homeassistant.yaml
-  - apps/mosquitto.yaml                  # Mosquitto MQTT broker
-  - apps/birdnet-go.yaml                 # BirdNET-Go bird song detection
-  - apps/prometheus.yaml                 # Prometheus standalone monitoring
-  - apps/prometheus-ingress.yaml         # Prometheus IngressRoutes with HTTP→HTTPS redirect
-  - apps/grafana.yaml                    # Grafana standalone monitoring
-  - apps/grafana-ingress.yaml            # Grafana IngressRoutes with HTTP→HTTPS redirect
+  - apps/traefik.yaml                        # Traefik Ingress Controller
+  # Traefik Dashboard hostname redirect
+  - apps/traefik-dashboard.yaml
+  - apps/argocd.yaml                         # ArgoCD Ingress for UI
+  - apps/whoami.yaml                         # Test application
+  - apps/cert-manager.yaml                   # cert-manager (wave 0)
+  - apps/cert-manager-secrets.yaml           # Infisical secrets for cert-manager (wave 0)
+  - apps/cert-manager-webhook-gandi.yaml     # Gandi DNS webhook (wave 1)
+  - apps/cert-manager-config.yaml            # ClusterIssuers + Secret (wave 2)
+  - apps/synology-csi-secrets.yaml           # Infisical secrets for Synology CSI (wave -1)
+  - apps/synology-csi.yaml                   # Synology CSI driver
+  - apps/nfs-storage.yaml                    # NFS PV/PVC
+  - apps/mail-gateway.yaml                   # Mail gateway external service
+  - apps/homeassistant.yaml                  # Home Assistant (with filebrowser sidecar)
+  - apps/mosquitto.yaml                      # Mosquitto MQTT broker
+  - apps/birdnet-go.yaml                     # BirdNET-Go bird song detection
+  - apps/prometheus.yaml                     # Prometheus standalone monitoring
+  - apps/prometheus-ingress.yaml             # Prometheus IngressRoutes
+  - apps/grafana.yaml                        # Grafana standalone monitoring
+  - apps/grafana-ingress.yaml                # Grafana IngressRoutes with HTTP→HTTPS redirect
+  - apps/homepage.yaml                       # Homepage dashboard for services
+  - apps/linkwarden.yaml                     # Linkwarden bookmark manager
+  - apps/gluetun.yaml                        # Gluetun VPN client for downloads
   - apps/sabnzbd.yaml
   - apps/radarr.yaml
   - apps/sonarr.yaml
   - apps/lidarr.yaml
+  - apps/lazylibrarian.yaml
+  - apps/prowlarr.yaml
+  - apps/whisparr.yaml
+  - apps/mylar.yaml
+  - apps/hydrus-server.yaml
+  - apps/hydrus-client.yaml
+  - apps/music-assistant.yaml
+  - apps/vaultwarden.yaml
+  - apps/cloudnative-pg.yaml                 # CloudNativePG Operator (databases)
+  - apps/postgresql-shared.yaml              # Shared PostgreSQL Cluster (Docspell, ...)
+  # - apps/docspell.yaml                     # OLD Helm-based (deprecated, use docspell-native)
+  - apps/docspell-native.yaml                # Docspell Kubernetes native deployment
