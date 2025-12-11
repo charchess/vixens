@@ -7,6 +7,9 @@ namespace: services
 resources:
   - ../../base
 
+patches:
+  - path: patch-infisical-secrets.yaml
+
 labels:
   - pairs:
       environment: prod
