@@ -24,8 +24,8 @@ spec:
       targetRevision: "v1.14.4"
       helm:
         valueFiles:
-          - $values/apps/cert-manager/values/common.yaml
-          - $values/apps/cert-manager/values/test.yaml
+          - $values/apps/00-infra/cert-manager/values/common.yaml
+          - $values/apps/00-infra/cert-manager/values/test.yaml
 
     # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git
