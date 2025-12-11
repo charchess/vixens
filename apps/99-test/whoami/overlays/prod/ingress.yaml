@@ -1,29 +1,29 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: sabnzbd-ingress
+  name: whoami-ingress
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "SABnzbd"
-    gethomepage.dev/icon: "sabnzbd.png"
-    gethomepage.dev/group: "Media"
-    traefik.ingress.kubernetes.io/router.middlewares: "media-redirect-to-https@kubernetescrd"
+    gethomepage.dev/name: "Whoami"
+    gethomepage.dev/icon: "whoami.png"
+    gethomepage.dev/group: "Test"
+    traefik.ingress.kubernetes.io/router.middlewares: default-redirect-to-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
-    - host: "sabnzbd.truxonline.com"
+    - host: whoami.truxonline.com
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: sabnzbd
+                name: whoami
                 port:
-                  number: 8080
+                  number: 80
   tls:
     - hosts:
-        - "sabnzbd.truxonline.com"
-      secretName: sabnzbd-tls
+        - whoami.truxonline.com
+      secretName: whoami-tls
