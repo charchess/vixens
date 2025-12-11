@@ -4,6 +4,6 @@ namespace: networking
 
 resources:
   - deployment.yaml
-  - service-dns.yaml
-  - service-web.yaml
+  - service.yaml
   - pvc.yaml
+  - ingressroute-dns.yaml

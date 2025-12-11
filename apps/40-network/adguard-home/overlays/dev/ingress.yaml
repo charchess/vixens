@@ -17,9 +17,9 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: adguard-home-web
+            name: adguard-home
             port:
-              number: 3000 # Port de setup initial / admin
+              number: 3000
   tls:
   - hosts:
     - adguard.dev.truxonline.com
