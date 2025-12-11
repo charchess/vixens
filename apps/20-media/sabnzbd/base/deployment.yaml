@@ -33,10 +33,7 @@ spec:
               value: "1000"
             - name: TZ
               value: "Europe/Paris"
-            - name: HOST_WHITELIST_ENTRIES
-              value: "sabnzbd.dev.truxonline.com,sabnzbd,sabnzbd.media,sabnzbd.media.svc.cluster.local" # Adapted per environment
-            - name: SABNZBD_HOST
-              value: "sabnzbd.dev.truxonline.com" # Set the host explicitly
+            # HOST_WHITELIST_ENTRIES and SABNZBD_HOST are set per environment via overlays
           volumeMounts:
             - name: config
               mountPath: /config
