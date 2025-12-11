@@ -3,10 +3,15 @@ kind: Ingress
 metadata:
   name: lidarr-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: media-lidarr-http-redirect@kubernetescrd
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Lidarr"
+    gethomepage.dev/icon: "lidarr.png"
+    gethomepage.dev/group: "Media"
+    traefik.ingress.kubernetes.io/router.middlewares: media-redirect-to-https@kubernetescrd
 spec:
+  ingressClassName: traefik
   rules:
     - host: lidarr.truxonline.com
       http:
@@ -18,3 +23,7 @@ spec:
                 name: lidarr
                 port:
                   number: 8686
+  tls:
+    - hosts:
+        - lidarr.truxonline.com
+      secretName: lidarr-tls
