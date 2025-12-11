@@ -23,7 +23,7 @@ spec:
       helm:
         valueFiles:
           - $values/apps/00-infra/traefik/values/common.yaml
-          - $values/apps/00-infra/traefik/values/dev.yaml
+          - $values/apps/00-infra/traefik/values/prod.yaml
 
     # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git
