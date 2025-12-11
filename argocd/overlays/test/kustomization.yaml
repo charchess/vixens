@@ -34,3 +34,4 @@ resources:
   - apps/radarr.yaml
   - apps/sonarr.yaml
   - apps/lidarr.yaml
+  - apps/argocd-image-updater.yaml

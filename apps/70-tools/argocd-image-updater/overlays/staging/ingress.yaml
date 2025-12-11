@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-image-updater
+  namespace: tools
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+spec:
+  rules:
+  - host: image-updater.staging.truxonline.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-image-updater-webhook
+            port:
+              number: 8080
+  tls:
+  - hosts:
+    - image-updater.staging.truxonline.com
+    secretName: argocd-image-updater-tls
