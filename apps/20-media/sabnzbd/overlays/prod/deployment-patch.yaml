@@ -1,0 +1,15 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sabnzbd
+spec:
+  template:
+    spec:
+      containers:
+        - name: sabnzbd
+          env:
+            - name: HOST_WHITELIST_ENTRIES
+              value: "sabnzbd.truxonline.com,sabnzbd,sabnzbd.media,sabnzbd.media.svc.cluster.local"
+            - name: SABNZBD_HOST
+              value: "sabnzbd.truxonline.com"

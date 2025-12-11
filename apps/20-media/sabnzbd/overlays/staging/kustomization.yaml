@@ -12,3 +12,7 @@ patches:
     target:
       kind: InfisicalSecret
       name: sabnzbd-secrets-sync
+  - path: deployment-patch.yaml
+    target:
+      kind: Deployment
+      name: sabnzbd
