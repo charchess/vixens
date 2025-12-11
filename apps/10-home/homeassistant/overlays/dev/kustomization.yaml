@@ -7,3 +7,5 @@ resources:
   - ingress.yaml
   - ingressroute-udp.yaml
   - infisical-filebrowser-auth.yaml
+patchesStrategicMerge:
+  - service-coiot-lb-patch.yaml
