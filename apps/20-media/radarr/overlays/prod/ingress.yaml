@@ -8,7 +8,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: media-radarr-http-redirect@kubernetescrd
 spec:
   rules:
-    - host: radarr.prod.truxonline.com
+    - host: radarr.truxonline.com
       http:
         paths:
           - path: /

@@ -8,7 +8,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: media-sonarr-http-redirect@kubernetescrd
 spec:
   rules:
-    - host: sonarr.prod.truxonline.com
+    - host: sonarr.truxonline.com
       http:
         paths:
           - path: /
