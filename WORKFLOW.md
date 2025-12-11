@@ -13,9 +13,10 @@ processus de travail:
 ** pour la documentation, privilegier le RAG archon
 ** pour l'acces au code, privilegier serena  
 ** procéder sur la tache de manière incrementale
+** une fois la tache terminer, porter les changements necssaires dans les overlays de test/staging/prod
 * une fois la tache terminée
 ** passer la tache en review  
-** PUIS valider le resultat avec tous les moyens disponible en validant l'acces a l'application (incluant playwright), pas juste son etat 
+** PUIS valider le resultat dans l'environnement de dev avec tous les moyens disponible en validant l'acces a l'application (incluant playwright), pas juste son etat 
 ** SI reussi, passer le proprietaire en "user", garder la tache en review et passer a la tache suivante  
 ** SINON, reprendre le travail sur la tache (en la repassant en doing)  
 
@@ -24,4 +25,6 @@ NOTE :
 * si il y a un pvc RWO, mettre la strategy en recreate 
 * penser a mettre la redirection http vers https
 * s'assurer que le certificat tls est bien obtenu par letsencrypt-staging en dev/test/staging et letsencrypt-prod en prod  
+* les urls des ingress sont <app>.<env>.truxonline.com (sauf prod qui est <app>.truxonline.com)
+* on garde une approche DRY, state of the art, best practice axée sur la maintenabilité
 
