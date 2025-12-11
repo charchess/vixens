@@ -3,13 +3,17 @@ kind: Ingress
 metadata:
   name: sabnzbd-ingress
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod # Use prod issuer for prod
+    cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "SABnzbd"
+    gethomepage.dev/icon: "sabnzbd.png"
+    gethomepage.dev/group: "Media"
     traefik.ingress.kubernetes.io/router.middlewares: "media-redirect-to-https@kubernetescrd"
 spec:
   ingressClassName: traefik
   rules:
-    - host: "sabnzbd.truxonline.com" # Adjusted for prod environment
+    - host: "sabnzbd.truxonline.com"
       http:
         paths:
           - path: /
