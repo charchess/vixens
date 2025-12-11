@@ -1,0 +1,33 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgresql
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: oci://registry-1.docker.io/bitnamicharts
+      chart: postgresql
+      targetRevision: 16.7.27
+      helm:
+        releaseName: postgresql-docspell
+        valueFiles:
+          - $values/apps/04-databases/postgresql/overlays/prod/values.yaml
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: main
+      path: apps/postgresql/base
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: services
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
