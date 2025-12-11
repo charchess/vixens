@@ -15,6 +15,10 @@ spec:
       labels:
         app: gluetun
     spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
       containers:
       - name: gluetun
         image: ghcr.io/qdm12/gluetun:v3.39.1
