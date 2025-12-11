@@ -5,7 +5,8 @@ metadata:
   namespace: tools
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod # Default, patched in overlay
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+    traefik.ingress.kubernetes.io/router.middlewares: tools-argocd-image-updater-redirect-scheme@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
