@@ -24,8 +24,8 @@ spec:
       targetRevision: "v0.5.2"
       helm:
         valueFiles:
-          - $values/apps/cert-manager-webhook-gandi/values/common.yaml
-          - $values/apps/cert-manager-webhook-gandi/values/prod.yaml
+          - $values/apps/00-infra/cert-manager-webhook-gandi/values/common.yaml
+          - $values/apps/00-infra/cert-manager-webhook-gandi/values/prod.yaml
 
     # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git
