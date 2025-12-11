@@ -11,4 +11,4 @@ spec:
   routes:
     - services:
         - name: homeassistant-svc
-          port: 5353
+          port: 5683
