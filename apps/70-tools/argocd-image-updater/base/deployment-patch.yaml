@@ -6,12 +6,14 @@ metadata:
 spec:
   template:
     spec:
-      containers:
-      - name: argocd-image-updater-controller
-        volumeMounts:
-        - mountPath: /tmp
-          name: tmp
+      securityContext:
+        fsGroup: 1000
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
       volumes:
       - name: tmp
+        emptyDir: null
         persistentVolumeClaim:
           claimName: argocd-image-updater-cache

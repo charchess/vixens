@@ -8,6 +8,8 @@ resources:
   - service-webhook.yaml
   - ingress.yaml
   - pvc.yaml
+  - networkpolicy-webhook.yaml
+  - http-redirect.yaml
 
 patches:
   - target:
