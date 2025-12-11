@@ -6,9 +6,3 @@ resources:
   - ../../base
   - infisical-mosquitto-auth.yaml
   - mosquitto-tcp-ingressroute.yaml
-
-patches:
-  - path: service-nodeport.yaml
-    target:
-      kind: Service
-      name: mosquitto
