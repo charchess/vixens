@@ -7,4 +7,5 @@ resources:
   - deployment.yaml
   - service.yaml
   - service-nodeport.yaml
+  - service-coiot-loadbalancer.yaml
   - pvc.yaml
