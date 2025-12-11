@@ -33,6 +33,7 @@ resources:
   - apps/grafana-ingress.yaml                # Grafana IngressRoutes with HTTP→HTTPS redirect
   - apps/homepage.yaml                       # Homepage dashboard for services
   - apps/linkwarden.yaml                     # Linkwarden bookmark manager
+  - apps/gluetun.yaml                        # Gluetun VPN client for downloads
   - apps/sabnzbd.yaml
   - apps/radarr.yaml
   - apps/sonarr.yaml

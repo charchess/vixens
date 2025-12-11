@@ -19,12 +19,12 @@ spec:
           main:
             image:
               repository: ghcr.io/qdm12/gluetun
-              tag: latest
+              tag: v3.39.1
             env:
               # -- VPN Service Provider
               VPN_SERVICE_PROVIDER: "nordvpn"
               VPN_TYPE: "wireguard"
-              
+
               # -- Wireguard credentials from the Infisical-managed secret
               WIREGUARD_PRIVATE_KEY:
                 valueFrom:
@@ -39,13 +39,19 @@ spec:
 
               # -- VPN server location
               SERVER_COUNTRIES: "Switzerland"
-              
+
               # -- Timezone
               TZ: "Etc/UTC"
+
+              # -- Kubernetes-specific DNS settings (required for kube-dns)
+              DNS_KEEP_NAMESERVER: "on"
 
               # -- Firewall settings to allow access from other pods in the cluster
               # Allows access to the HTTP and SOCKS5 proxies from any pod on the cluster's internal network
               FIREWALL_VPN_INPUT_PORTS: "8888,1080"
+              # Allow outbound to Kubernetes pod and service networks
+              # 10.42.0.0/15 covers pod IPs, 10.96.0.0/12 covers service IPs
+              FIREWALL_OUTBOUND_SUBNETS: "10.42.0.0/15,10.96.0.0/12"
 
             securityContext:
               capabilities:
