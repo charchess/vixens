@@ -4,6 +4,3 @@ resources:
   - ../../base
   - http-redirect.yaml
   - ingress.yaml
-
-patches:
-  - path: service-dns-patch.yaml

@@ -59,6 +59,16 @@ ports:
     exposedPort: 5683
     expose: true
     protocol: UDP
+  dns-tcp: # AdGuard Home TCP
+    port: 53
+    exposedPort: 53
+    expose: true
+    protocol: TCP
+  dns-udp: # AdGuard Home UDP
+    port: 53
+    exposedPort: 53
+    expose: true
+    protocol: UDP
   traefik:
     port: 9000
     expose: false
