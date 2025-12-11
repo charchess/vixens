@@ -23,7 +23,7 @@ cluster = {
 control_plane_nodes = {
   "powder" = {
     name         = "powder"
-    ip_address   = "192.168.0.65"  # Maintenance IP for Terraform access
+    ip_address   = "192.168.0.65" # Maintenance IP for Terraform access
     mac_address  = "68:1d:ef:4d:d6:a9"
     install_disk = "nvme0n1"
     network = {
@@ -44,7 +44,7 @@ control_plane_nodes = {
   },
   "poison" = {
     name         = "poison"
-    ip_address   = "192.168.0.63"  # Maintenance IP for Terraform access
+    ip_address   = "192.168.0.63" # Maintenance IP for Terraform access
     mac_address  = "68:1d:ef:56:d7:bb"
     install_disk = "nvme0n1"
     network = {
@@ -52,7 +52,7 @@ control_plane_nodes = {
       vlans = [
         {
           vlanId    = 111
-          addresses = ["192.168.111.190/24", "192.168.111.194/24"]
+          addresses = ["192.168.111.194/24"] # IP node uniquement (VIP gérée par Talos)
           gateway   = ""
         },
         {
@@ -65,7 +65,7 @@ control_plane_nodes = {
   },
   "phoebe" = {
     name         = "phoebe"
-    ip_address   = "192.168.0.66"  # Maintenance IP for Terraform access
+    ip_address   = "192.168.0.66" # Maintenance IP for Terraform access
     mac_address  = "00:e1:4f:68:0d:f8"
     install_disk = "sda"
     network = {
@@ -108,14 +108,14 @@ argocd = {
 # --------------------------------------------------------------------------
 # CILIUM L2 ANNOUNCEMENTS
 # --------------------------------------------------------------------------
+# NOTE: Configuration mise à jour pour refléter le YAML déployé manuellement
+# Le module Terraform utilise file() pour charger les YAMLs existants
 cilium_l2 = {
-  pool_name   = "prod-pool"
-  pool_ips    = ["192.168.201.70-192.168.201.89"]
-  policy_name = "prod-l2-policy"
-  interfaces  = ["eth1"]
-  node_selector = {
-    "kubernetes.io/hostname" = "perla"
-  }
+  pool_name     = "prod-pool"
+  pool_ips      = ["192.168.201.70-192.168.201.89"]
+  policy_name   = "prod-l2-policy"
+  interfaces    = ["^en.*\\.201$"] # Regex VLAN 201 pour nodes physiques
+  node_selector = {}               # Tous les nodes (correspond au YAML déployé)
 }
 
 # --------------------------------------------------------------------------
