@@ -6,4 +6,12 @@ resources:
   - ../../base
   - http-redirect.yaml
   - ingress.yaml
-  - infisical-patch.yaml
+
+patches:
+  - target:
+      kind: InfisicalSecret
+      name: radarr-secrets-sync
+    patch: |
+      - op: replace
+        path: /spec/secretPath
+        value: /kubernetes/radarr/prod
