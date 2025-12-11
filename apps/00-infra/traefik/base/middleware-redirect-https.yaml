@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-https
+  namespace: monitoring # This should be where the IngressRoutes are, or a common namespace for middleware
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
