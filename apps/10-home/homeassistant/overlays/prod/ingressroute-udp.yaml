@@ -1,5 +1,5 @@
 ---
-# HomeAssistant Discovery Protocol (UDP 5353)
+# HomeAssistant Discovery Protocol (UDP 5683)
 apiVersion: traefik.io/v1alpha1
 kind: IngressRouteUDP
 metadata:

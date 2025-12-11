@@ -3,10 +3,15 @@ kind: Ingress
 metadata:
   name: sonarr-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: media-sonarr-http-redirect@kubernetescrd
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Sonarr"
+    gethomepage.dev/icon: "sonarr.png"
+    gethomepage.dev/group: "Media"
+    traefik.ingress.kubernetes.io/router.middlewares: media-redirect-to-https@kubernetescrd
 spec:
+  ingressClassName: traefik
   rules:
     - host: sonarr.truxonline.com
       http:
@@ -18,3 +23,7 @@ spec:
                 name: sonarr
                 port:
                   number: 8989
+  tls:
+    - hosts:
+        - sonarr.truxonline.com
+      secretName: sonarr-tls
