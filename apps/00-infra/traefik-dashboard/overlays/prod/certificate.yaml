@@ -7,7 +7,7 @@ metadata:
 spec:
   secretName: traefik-dashboard-tls
   issuerRef:
-    name: letsencrypt-staging
+    name: letsencrypt-prod
     kind: ClusterIssuer
   dnsNames:
-    - traefik.dev.truxonline.com
+    - traefik.truxonline.com

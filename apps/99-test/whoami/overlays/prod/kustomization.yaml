@@ -4,11 +4,11 @@ kind: Kustomization
 resources:
   - ../../base
 patches:
-  - path: ingress-patch.yaml
-    target:
-      kind: Ingress
-      name: whoami
-  - path: ingress-patch.yaml
+  - path: ingress-http-redirect-patch.yaml
     target:
       kind: Ingress
       name: whoami-http-redirect
+  - path: ingress-https-patch.yaml
+    target:
+      kind: Ingress
+      name: whoami
