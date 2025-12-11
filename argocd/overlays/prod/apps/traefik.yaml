@@ -22,8 +22,8 @@ spec:
       targetRevision: "v25.0.0"
       helm:
         valueFiles:
-          - $values/apps/traefik/values/common.yaml
-          - $values/apps/traefik/values/prod.yaml
+          - $values/apps/00-infra/traefik/values/common.yaml
+          - $values/apps/00-infra/traefik/values/dev.yaml
 
     # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git
