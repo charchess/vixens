@@ -50,4 +50,5 @@ resources:
   - apps/postgresql-shared.yaml              # Shared PostgreSQL Cluster (Docspell, ...)
   # - apps/docspell.yaml                     # OLD Helm-based (deprecated, use docspell-native)
   - apps/docspell-native.yaml                # Docspell Kubernetes native deployment
-  - apps/argocd-image-updater.yaml  - apps/adguard-home.yaml
+  - apps/argocd-image-updater.yaml
+  - apps/adguard-home.yaml
