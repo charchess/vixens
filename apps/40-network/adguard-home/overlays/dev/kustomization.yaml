@@ -4,3 +4,4 @@ resources:
   - ../../base
   - http-redirect.yaml
   - ingress.yaml
+  - adguard-udp-ingressroute.yaml

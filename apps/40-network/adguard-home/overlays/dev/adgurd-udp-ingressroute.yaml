@@ -1,0 +1,15 @@
+---
+# Mosquitto MQTT over TCP (port 1883)
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: adguard-home-dns-udp
+  namespace: networking
+spec:
+  entryPoints:
+    - adguard-dns-udp
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: adguard-home
+          port: 53
