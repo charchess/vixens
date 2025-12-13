@@ -1,0 +1,12 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Role
+metadata:
+  name: netbox
+  namespace: network
+spec:
+  cluster:
+    name: postgresql-shared
+  secret:
+    name: netbox-postgresql-credentials # The secret created by Infisical
+  ensure: present

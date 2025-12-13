@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netbox-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.middlewares: network-netbox-redirect-to-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: "netbox.dev.truxonline.com"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: netbox
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - "netbox.dev.truxonline.com"
+      secretName: netbox-tls
