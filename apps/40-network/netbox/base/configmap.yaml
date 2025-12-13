@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: netbox-config
+  namespace: networking
+data:
+  configuration.py: |
+    # This is a placeholder for Netbox configuration.py
+    # Sensitive values will be pulled from environment variables / secrets.
+
+    # PostgreSQL database settings
+    DATABASE = {
+        'NAME': '${DB_NAME}',
+        'USER': '${DB_USER}',
+        'PASSWORD': '${DB_PASSWORD}',
+        'HOST': '${DB_HOST}',
+        'PORT': 5432,
+    }
+
+    # Redis settings
+    REDIS_CACHE_HOST = '${REDIS_HOST}'
+    REDIS_CACHE_PORT = ${REDIS_PORT}
+    REDIS_CACHE_DB = 0
+
+    # If Redis requires authentication
+    # REDIS_CACHE_PASSWORD = '${REDIS_PASSWORD}' # Uncomment and set if needed
+
+    # SECRET_KEY (must be unique and random) - pulled from environment
+    SECRET_KEY = '${SECRET_KEY}'
+
+    # ALLOWED_HOSTS - important for production
+    ALLOWED_HOSTS = ['netbox.dev.truxonline.com'] # Will be patched in overlays
+
+    # BASE_PATH (if deployed under a subpath)
+    # BASE_PATH = '/netbox/'
+
+    # Other configurations can be added here
+    # E.g., TIME_ZONE, RACK_STATUS_CHOICES, etc.

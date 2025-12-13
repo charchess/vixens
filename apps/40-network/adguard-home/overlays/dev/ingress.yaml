@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: adguard-home
+  namespace: networking
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+    traefik.ingress.kubernetes.io/router.middlewares: networking-adguard-home-redirect-scheme@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: adguard.dev.truxonline.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: adguard-home
+            port:
+              number: 3000
+  tls:
+  - hosts:
+    - adguard.dev.truxonline.com
+    secretName: adguard-home-tls
