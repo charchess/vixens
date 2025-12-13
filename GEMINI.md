@@ -30,12 +30,20 @@ This project implements a GitOps approach for deploying and managing Kubernetes 
     terraform -chdir=terraform/environments/dev apply -auto-approve
     ```
 
+## Documentation
+The project's main documentation is organized as follows:
+- **Documentation Hierarchy**: See `docs/DOCUMENTATION-HIERARCHY.md`
+- **Functional Recipe (RECETTE-FONCTIONNELLE)**: See `docs/RECETTE-FONCTIONNELLE.md`
+- **Technical Recipe (RECETTE-TECHNIQUE)**: See `docs/RECETTE-TECHNIQUE.md`
+- **Architecture Decision Records (ADR)**: See `docs/adr/`
+- **Procedures**: See `docs/procedures/`
+- **Reports**: See `docs/reports/`
+
 ## Development Conventions
 -   **GitOps:** The project adheres to GitOps principles, managing infrastructure and application configurations through Git.
 -   **Infrastructure as Code:** Terraform is used for provisioning and managing the underlying Kubernetes infrastructure.
 -   **Application Deployment:** ArgoCD is utilized for automated deployment and management of applications within the Kubernetes clusters.
 -   **Operating System:** Talos Linux is the chosen operating system for the Kubernetes nodes.
--   **Documentation Standard:** Project documentation follows the OpenSpec standard. Refer to `openspec/specs/project/spec.md`, `openspec/specs/infrastructure/spec.md`, and `openspec/specs/workflow/spec.md` for detailed information.
 
 ## Current Project Status
 The project is currently in **Phase 2 - GitOps services deployment**.
