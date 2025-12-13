@@ -14,7 +14,8 @@ def get_service_urls(environment):
         "argocd": "argocd",
         "traefik": "traefik",
         "whoami": "whoami",
-        "homeassistant": "homeassistant"
+        "homeassistant": "homeassistant",
+        "adguard-home": "adguard"
     }
     base_domain = "truxonline.com"
     

@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: headlamp
+  labels:
+    app: headlamp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: headlamp
+  template:
+    metadata:
+      labels:
+        app: headlamp
+    spec:
+      serviceAccountName: headlamp
+      containers:
+        - name: headlamp
+          image: ghcr.io/headlamp-k8s/headlamp:latest
+          ports:
+            - containerPort: 4466
+              name: http
+              protocol: TCP
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          env:
+            - name: HEADLAMP_OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: headlamp-secrets
+                  key: OIDC_CLIENT_ID
+            - name: HEADLAMP_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: headlamp-secrets
+                  key: OIDC_CLIENT_SECRET
+            - name: HEADLAMP_OIDC_ISSUER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: headlamp-secrets
+                  key: OIDC_ISSUER_URL
+            - name: HEADLAMP_BASE_URL
+              value: "/headlamp"
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"

@@ -36,6 +36,9 @@ spec:
             - containerPort: 3000
               name: http-setup
               protocol: TCP
+          envFrom:
+            - secretRef:
+                name: adguard-home-secrets
           volumeMounts:
             - name: adguard-work
               mountPath: /opt/adguardhome/work

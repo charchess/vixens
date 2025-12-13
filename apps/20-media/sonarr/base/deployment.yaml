@@ -37,7 +37,7 @@ spec:
               mountPath: /downloads
             - name: tv
               mountPath: /tv
-              subPath: "TV Show" # Mounts /volume3/Content/TV Show
+              subPath: "TVShow" # Mounts /volume3/Content/TV Show
       volumes:
         - name: config
           persistentVolumeClaim:

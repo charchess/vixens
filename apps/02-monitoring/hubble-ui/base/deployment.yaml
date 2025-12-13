@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hubble-ui
+  namespace: monitoring
+  labels:
+    app: hubble-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hubble-ui
+  template:
+    metadata:
+      labels:
+        app: hubble-ui
+    spec:
+      containers:
+        - name: hubble-ui
+          image: quay.io/cilium/hubble-ui:latest
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          env:
+            - name: HUP_RELAY_URL
+              value: "hubble-relay.kube-system.svc.cluster.local:80" # Default service and port for Hubble Relay
+            # Add other environment variables from Infisical secrets if needed (e.g., authentication)
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"

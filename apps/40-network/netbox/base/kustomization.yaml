@@ -5,6 +5,8 @@ namespace: networking
 resources:
   - deployment.yaml
   - service.yaml
-  - pvc.yaml
-  - ingressroute-dns.yaml
+  - ingress.yaml
   - infisical-secret.yaml
+  - configmap.yaml
+  - serviceaccount.yaml
+  - pvc.yaml
