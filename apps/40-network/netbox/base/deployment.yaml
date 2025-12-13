@@ -2,8 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: netbox
-  labels:
-    app: netbox
 spec:
   replicas: 1
   selector:
@@ -14,45 +12,60 @@ spec:
       labels:
         app: netbox
     spec:
-      serviceAccountName: netbox
-      volumes:
-        - name: netbox-data
-          persistentVolumeClaim:
-            claimName: netbox-data
-        - name: netbox-config-volume
-          configMap:
-            name: netbox-config
-            items:
-              - key: configuration.py
-                path: configuration.py
-      containers:
-        - name: netbox
-          image: netboxcommunity/netbox:latest
-          ports:
-            - containerPort: 8080
-              name: http
-              protocol: TCP
-          envFrom:
-            - secretRef:
-                name: netbox-secrets
-          env:
-            - name: PYTHONUNBUFFERED
-              value: "1"
-            - name: NETBOX_CONFIG_FILE
-              value: "/etc/netbox/config/configuration.py"
-          volumeMounts:
-            - name: netbox-data
-              mountPath: /opt/netbox/var/media
-            - name: netbox-config-volume
-              mountPath: /etc/netbox/config
-          resources:
-            requests:
-              memory: "512Mi"
-              cpu: "200m"
-            limits:
-              memory: "1024Mi"
-              cpu: "500m"
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
+      containers:
+        - name: netbox
+          image: "netboxcommunity/netbox:v3.7.3" # Pinned image version
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: DB_NAME
+              value: netbox
+            - name: DB_USER
+              value: netbox
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-postgresql-credentials
+                  key: password
+            - name: DB_HOST
+              value: postgresql-shared.databases.svc.cluster.local # Shared PostgreSQL service
+            - name: REDIS_HOST
+              value: redis-shared.databases.svc.cluster.local # Shared Redis service
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-shared-credentials
+                  key: password
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: netbox-media-storage
+              mountPath: /opt/netbox/media
+      volumes:
+        - name: netbox-media-storage
+          persistentVolumeClaim:
+            claimName: netbox-media-pvc
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"

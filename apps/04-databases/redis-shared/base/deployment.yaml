@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-shared
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-shared
+  template:
+    metadata:
+      labels:
+        app: redis-shared
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: redis
+          image: "redis:7-alpine" # Standard Redis image
+          ports:
+            - name: redis
+              containerPort: 6379
