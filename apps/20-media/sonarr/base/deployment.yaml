@@ -37,7 +37,7 @@ spec:
               mountPath: /downloads
             - name: tv
               mountPath: /tv
-              subPath: "TVShow" # Mounts /volume3/Content/TVShow
+              subPath: "TV Show" # Mounts /volume3/Content/TVShow
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -49,4 +49,4 @@ spec:
         - name: tv
           nfs:
             server: 192.168.111.69
-            path: /volume3/Content/TVShow
+            path: /volume3/Content
