@@ -52,7 +52,10 @@ graph TD
 ```
 
 ## 5. Documentation
-Project documentation has been migrated to the OpenSpec standard.
-- **Project Overview**: See `openspec/specs/project/spec.md`
-- **Technical Architecture**: See `openspec/specs/infrastructure/spec.md`
-- **Development Workflow**: See `openspec/specs/workflow/spec.md`
+The project's main documentation is organized as follows:
+- **Documentation Hierarchy**: See `docs/DOCUMENTATION-HIERARCHY.md`
+- **Functional Recipe (RECETTE-FONCTIONNELLE)**: See `docs/RECETTE-FONCTIONNELLE.md`
+- **Technical Recipe (RECETTE-TECHNIQUE)**: See `docs/RECETTE-TECHNIQUE.md`
+- **Architecture Decision Records (ADR)**: See `docs/adr/`
+- **Procedures**: See `docs/procedures/`
+- **Reports**: See `docs/reports/`
