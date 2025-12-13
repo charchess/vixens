@@ -23,17 +23,11 @@ spec:
             - name: http
               containerPort: 8080
           env:
-            - name: DB_NAME
-              value: netbox
-            - name: DB_USER
-              value: netbox
-            - name: DB_PASSWORD
+            - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: netbox-postgresql-credentials
-                  key: password
-            - name: DB_HOST
-              value: postgresql-shared.databases.svc.cluster.local # Shared PostgreSQL service
+                  name: netbox-database-url-secret
+                  key: DATABASE_URL
             - name: REDIS_HOST
               value: redis-shared.databases.svc.cluster.local # Shared Redis service
             - name: REDIS_PORT
