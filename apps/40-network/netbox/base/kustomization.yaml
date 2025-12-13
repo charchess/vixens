@@ -5,7 +5,5 @@ resources:
   - namespace.yaml
   - deployment.yaml
   - service.yaml
-  - netbox-postgresql-credentials.yaml
-  - netbox-database.yaml
-  - netbox-role.yaml
   - netbox-pvc.yaml
+  - netbox-database-url-secret.yaml
