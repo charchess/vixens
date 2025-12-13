@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promtail-config
+  namespace: monitoring
+data:
+  promtail-config.yaml: |
+    server:
+      http_listen_port: 9080
+      grpc_listen_port: 0
+
+    positions:
+      filename: /tmp/positions.yaml
+
+    clients:
+      - url: http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push
+
+    scrape_configs:
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels:
+              - __meta_kubernetes_pod_controller_kind
+            regex: (.+)
+            target_label: __meta_kubernetes_pod_controller_kind
+            action: replace
+          - source_labels:
+              - __meta_kubernetes_pod_label_app_kubernetes_io_name
+            regex: (.+)
+            target_label: app_kubernetes_io_name
+            action: replace
+          - source_labels:
+              - __meta_kubernetes_pod_label_app
+            regex: (.+)
+            target_label: app
+            action: replace
+          - source_labels:
+              - __meta_kubernetes_pod_label_job_name
+            regex: (.+)
+            target_label: job_name
+            action: replace
+          - source_labels:
+              - __meta_kubernetes_pod_node_name
+            target_label: __host__
+            action: replace
+          - source_labels:
+              - __meta_kubernetes_namespace
+            target_label: namespace
+          - source_labels:
+              - __meta_kubernetes_pod_name
+            target_label: instance
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_namespace
+              - __meta_kubernetes_pod_name
+            regex: (.+)
+            target_label: __path__
+            replacement: /var/log/pods/*$1/*.log
