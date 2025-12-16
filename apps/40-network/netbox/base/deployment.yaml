@@ -32,11 +32,6 @@ spec:
               value: redis-shared.databases.svc.cluster.local # Shared Redis service
             - name: REDIS_PORT
               value: "6379"
-            - name: REDIS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: redis-shared-credentials
-                  key: password
           livenessProbe:
             httpGet:
               path: /
