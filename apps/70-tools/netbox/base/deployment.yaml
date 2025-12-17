@@ -32,6 +32,8 @@ spec:
               value: redis-shared.databases.svc.cluster.local # Shared Redis service
             - name: REDIS_PORT
               value: "6379"
+            - name: DB_WAIT_DEBUG
+              value: "1"
           livenessProbe:
             httpGet:
               path: /
