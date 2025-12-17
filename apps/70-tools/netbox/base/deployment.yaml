@@ -37,6 +37,10 @@ spec:
               value: redis-shared.databases.svc.cluster.local # Shared Redis service
             - name: REDIS_PORT
               value: "6379"
+            - name: ALLOWED_HOSTS
+              value: "netbox.dev.truxonline.com"
+            - name: DB_WAIT_DEBUG
+              value: "1"
           livenessProbe:
             httpGet:
               path: /
@@ -56,16 +60,10 @@ spec:
           volumeMounts:
             - name: netbox-media-storage
               mountPath: /opt/netbox/media
-            - name: netbox-config-volume
-              mountPath: /opt/netbox/netbox/configuration.py
-              subPath: configuration.py # Mounts only the file, not the directory
       volumes:
         - name: netbox-media-storage
           persistentVolumeClaim:
             claimName: netbox-media-pvc
-        - name: netbox-config-volume
-          configMap:
-            name: netbox-config
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
