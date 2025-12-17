@@ -28,12 +28,15 @@ spec:
                 secretKeyRef:
                   name: netbox-database-url-secret
                   key: DATABASE_URL
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: SECRET_KEY
             - name: REDIS_HOST
               value: redis-shared.databases.svc.cluster.local # Shared Redis service
             - name: REDIS_PORT
               value: "6379"
-            - name: DB_WAIT_DEBUG
-              value: "1"
           livenessProbe:
             httpGet:
               path: /
