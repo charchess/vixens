@@ -8,5 +8,7 @@ resources:
   - credentials/admin-secret.yaml
   - credentials/docspell-secret.yaml
   - credentials/linkwarden-secret.yaml
+  - credentials/netbox-postgresql-credentials.yaml
   - databases/docspell.yaml
   - databases/linkwarden.yaml
+  - databases/netbox-database.yaml
