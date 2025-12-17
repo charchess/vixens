@@ -11,3 +11,6 @@ labels:
   - includeSelectors: false
     pairs:
       environment: dev
+
+patches:
+  - path: patch-infisical-env.yaml
