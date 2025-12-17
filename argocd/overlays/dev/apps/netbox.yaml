@@ -10,10 +10,10 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev # The Git branch corresponding to the environment
-    path: apps/40-network/netbox/overlays/dev # The path to the app's overlay
+    path: apps/70-tools/netbox/overlays/dev # The path to the app's overlay
   destination:
     server: https://kubernetes.default.svc
-    namespace: network # The namespace where to deploy the application
+    namespace: tools # The namespace where to deploy the application
   syncPolicy:
     automated:
       prune: true
