@@ -11,4 +11,7 @@ resources:
 
 labels:
   - pairs:
-      environment: dev
+      environment: prod
+
+patches:
+  - path: patch-nextauth-url.yaml

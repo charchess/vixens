@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbox
+spec:
+  selector:
+    app: netbox
+  ports:
+    - protocol: TCP
+      port: 80 # Service port
+      targetPort: http # Refers to the named port in the deployment
