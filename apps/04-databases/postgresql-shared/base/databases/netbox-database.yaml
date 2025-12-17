@@ -1,0 +1,12 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: netbox
+  namespace: databases # This database is created within the 'databases' namespace
+spec:
+  cluster:
+    name: postgresql-shared
+  name: netbox
+  owner: netbox # The owner role for this database
+  ensure: present
