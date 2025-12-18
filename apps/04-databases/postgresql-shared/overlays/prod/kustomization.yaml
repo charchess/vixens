@@ -6,5 +6,8 @@ namespace: databases
 resources:
   - ../../base
 
+patchesStrategicMerge:
+  - patch-credentials-env.yaml
+
 commonLabels:
   environment: prod
