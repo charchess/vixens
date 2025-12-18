@@ -12,7 +12,8 @@ resources:
   # Cilium L2 Announcements + LB IPAM (wave -2)
   - apps/cilium-lb.yaml
   - apps/traefik.yaml
-  - apps/metrics-server.yaml                        # Traefik Ingress Controller
+  - apps/metrics-server.yaml
+  - apps/vpa.yaml                        # Traefik Ingress Controller
   # Traefik Dashboard hostname redirect
   - apps/traefik-dashboard.yaml
   - apps/argocd.yaml                         # ArgoCD Ingress for UI
