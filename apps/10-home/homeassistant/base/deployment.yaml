@@ -99,7 +99,7 @@ spec:
           image: filebrowser/filebrowser:latest
           imagePullPolicy: Always
           ports:
-            - name: http
+            - name: filebrowser-http
               containerPort: 8080
               protocol: TCP
           env:
