@@ -48,11 +48,11 @@ spec:
                   key: password
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
+              cpu: 300m
               memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
           volumeMounts:
             - name: config
               mountPath: /opt/docspell.conf

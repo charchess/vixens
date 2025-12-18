@@ -43,6 +43,8 @@ spec:
               value: "netbox.dev.truxonline.com"
             - name: DB_WAIT_DEBUG
               value: "1"
+            - name: DB_HOST
+              value: "postgresql-shared-rw.databases.svc.cluster.local"
           livenessProbe:
             httpGet:
               path: /
@@ -62,10 +64,16 @@ spec:
           volumeMounts:
             - name: netbox-media-storage
               mountPath: /opt/netbox/media
+            - name: netbox-config
+              mountPath: /etc/netbox/config/configuration.py
+              subPath: configuration.py
       volumes:
         - name: netbox-media-storage
           persistentVolumeClaim:
             claimName: netbox-media-pvc
+        - name: netbox-config
+          configMap:
+            name: netbox-config
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
