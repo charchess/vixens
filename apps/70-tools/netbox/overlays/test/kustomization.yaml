@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - http-redirect.yaml
+  - ingress.yaml
+
+patches:
+  - target:
+      kind: InfisicalSecret
+      name: netbox-secrets-sync
+    patch: |-
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: test
+  - target:
+      kind: InfisicalSecret
+      name: netbox-database-url-secret
+    patch: |-
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: test
+  - target:
+      kind: Deployment
+      name: netbox
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/4/value
+        value: "netbox.test.truxonline.com"
