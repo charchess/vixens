@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: vpa
+  name: goldilocks
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -12,17 +12,24 @@ spec:
     namespace: monitoring
 
   sources:
+    # Source 1: Helm Chart
     - repoURL: https://charts.fairwinds.com/stable
-      chart: vpa
-      targetRevision: 4.7.0
+      chart: goldilocks
+      targetRevision: 9.3.3
       helm:
         valueFiles:
-          - $values/apps/02-monitoring/vpa/values/common.yaml
-          - $values/apps/02-monitoring/vpa/values/dev.yaml
+          - $values/apps/02-monitoring/goldilocks/values/common.yaml
+          - $values/apps/02-monitoring/goldilocks/values/dev.yaml
 
+    # Source 2: Values from Git
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: dev
       ref: values
+
+    # Source 3: Kustomize manifests from Git
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: dev
+      path: apps/02-monitoring/goldilocks/overlays/dev
 
   syncPolicy:
     automated:
