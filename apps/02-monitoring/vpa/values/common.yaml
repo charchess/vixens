@@ -13,3 +13,8 @@ admissionController:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
+  certGen:
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
