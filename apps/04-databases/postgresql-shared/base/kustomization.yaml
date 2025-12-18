@@ -12,3 +12,4 @@ resources:
   - databases/docspell.yaml
   - databases/linkwarden.yaml
   - databases/netbox-database.yaml
+  - jobs/create-users-job.yaml

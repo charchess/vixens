@@ -469,3 +469,4 @@ See [docs/adr/006-terraform-2-level-architecture.md](docs/adr/006-terraform-2-le
 - n'oublie pas de me signaler quand je dois creer des secrets dans infisical ou des DNS
 - n'oublie pas de créer les adr sur les decisions architecturales
 - quand tu configure un ingress https, mets en place un redirect http -> https
+- on ne peut pas merge dev en main, il faut PR dev to test to staging to main
