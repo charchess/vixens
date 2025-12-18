@@ -5,7 +5,7 @@ namespace: auth
 resources:
   - namespace.yaml
   - deployment-server.yaml
-  - deployment-worker.yaml
+#  - deployment-worker.yaml
   - service.yaml
   - ingress.yaml
   - infisical-secret.yaml
