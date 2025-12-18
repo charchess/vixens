@@ -15,7 +15,7 @@ spec:
     # Source 1: Helm Chart
     - repoURL: https://charts.fairwinds.com/stable
       chart: goldilocks
-      targetRevision: 9.3.3
+      targetRevision: 10.2.0
       helm:
         valueFiles:
           - $values/apps/02-monitoring/goldilocks/values/common.yaml
