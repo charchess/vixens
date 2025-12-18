@@ -2,37 +2,55 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: netbox-config
-  namespace: networking
+  namespace: tools
 data:
   configuration.py: |
-    # This is a placeholder for Netbox configuration.py
-    # Sensitive values will be pulled from environment variables / secrets.
+    import os
+    import dj_database_url
 
-    # PostgreSQL database settings
-    DATABASE = {
-        'NAME': '${DB_NAME}',
-        'USER': '${DB_USER}',
-        'PASSWORD': '${DB_PASSWORD}',
-        'HOST': '${DB_HOST}',
-        'PORT': 5432,
-    }
+    # Load database configuration from DATABASE_URL
+    DATABASE_URL = os.getenv('DATABASE_URL')
+    if DATABASE_URL:
+        DATABASES = {
+            'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
+        }
+    else:
+        # Fallback if needed (though we expect DATABASE_URL)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.getenv('DB_NAME', 'netbox'),
+                'USER': os.getenv('DB_USER', 'netbox'),
+                'PASSWORD': os.getenv('DB_PASSWORD', 'netbox'),
+                'HOST': os.getenv('DB_HOST', 'localhost'),
+                'PORT': os.getenv('DB_PORT', '5432'),
+            }
+        }
 
     # Redis settings
-    REDIS_CACHE_HOST = '${REDIS_HOST}'
-    REDIS_CACHE_PORT = ${REDIS_PORT}
-    REDIS_CACHE_DB = 0
+    REDIS = {
+        'tasks': {
+            'HOST': os.getenv('REDIS_HOST', 'redis-shared'),
+            'PORT': int(os.getenv('REDIS_PORT', 6379)),
+            'PASSWORD': os.getenv('REDIS_PASSWORD', ''),
+            'DATABASE': 0,
+            'SSL': False,
+        },
+        'caching': {
+            'HOST': os.getenv('REDIS_HOST', 'redis-shared'),
+            'PORT': int(os.getenv('REDIS_PORT', 6379)),
+            'PASSWORD': os.getenv('REDIS_PASSWORD', ''),
+            'DATABASE': 1,
+            'SSL': False,
+        }
+    }
 
-    # If Redis requires authentication
-    # REDIS_CACHE_PASSWORD = '${REDIS_PASSWORD}' # Uncomment and set if needed
+    # SECRET_KEY
+    SECRET_KEY = os.getenv('SECRET_KEY')
 
-    # SECRET_KEY (must be unique and random) - pulled from environment
-    SECRET_KEY = '${SECRET_KEY}'
+    # ALLOWED_HOSTS
+    ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
 
-    # ALLOWED_HOSTS - important for production
-    ALLOWED_HOSTS = ['netbox.dev.truxonline.com'] # Will be patched in overlays
-
-    # BASE_PATH (if deployed under a subpath)
-    # BASE_PATH = '/netbox/'
-
-    # Other configurations can be added here
-    # E.g., TIME_ZONE, RACK_STATUS_CHOICES, etc.
+    # PLUGINS
+    PLUGINS = []
+    PLUGINS_CONFIG = {}
