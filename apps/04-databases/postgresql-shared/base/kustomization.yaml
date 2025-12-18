@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: databases
 
 resources:
+  - namespace.yaml
   - cluster.yaml
   - credentials/admin-secret.yaml
   - credentials/docspell-secret.yaml
