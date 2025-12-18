@@ -6,4 +6,4 @@ resources:
 patchesStrategicMerge:
   - patch-infisical-env.yaml
 commonLabels:
-  environment: prod
+  environment: staging
