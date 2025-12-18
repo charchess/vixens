@@ -1,0 +1,128 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgresql-create-users
+  namespace: databases
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: postgresql-create-users
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: default
+      containers:
+      - name: create-users
+        image: postgres:17
+        env:
+          # PostgreSQL admin credentials
+          - name: PGHOST
+            value: "postgresql-shared-rw"
+          - name: PGPORT
+            value: "5432"
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                name: postgresql-admin-credentials
+                key: username
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgresql-admin-credentials
+                key: password
+
+          # Application credentials from Infisical
+          - name: LINKWARDEN_USER
+            valueFrom:
+              secretKeyRef:
+                name: linkwarden-postgresql-credentials
+                key: username
+          - name: LINKWARDEN_PASS
+            valueFrom:
+              secretKeyRef:
+                name: linkwarden-postgresql-credentials
+                key: password
+
+          - name: DOCSPELL_USER
+            valueFrom:
+              secretKeyRef:
+                name: docspell-postgresql-credentials
+                key: username
+          - name: DOCSPELL_PASS
+            valueFrom:
+              secretKeyRef:
+                name: docspell-postgresql-credentials
+                key: password
+
+          - name: NETBOX_USER
+            valueFrom:
+              secretKeyRef:
+                name: netbox-postgresql-credentials
+                key: username
+          - name: NETBOX_PASS
+            valueFrom:
+              secretKeyRef:
+                name: netbox-postgresql-credentials
+                key: password
+
+        command:
+          - /bin/bash
+          - -c
+          - |
+            set -e
+
+            echo "=== PostgreSQL User Creation Job ==="
+            echo "Target: $PGHOST:$PGPORT"
+            echo ""
+
+            # Function to create user if not exists
+            create_user_if_not_exists() {
+              local username=$1
+              local password=$2
+
+              echo "Checking user: $username"
+
+              # Check if user exists
+              USER_EXISTS=$(psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$username'" 2>/dev/null || echo "0")
+
+              if [ "$USER_EXISTS" = "1" ]; then
+                echo "  ✅ User '$username' already exists"
+                # Update password in case it changed
+                psql -c "ALTER USER $username WITH PASSWORD '$password';" > /dev/null
+                echo "  🔑 Password updated"
+              else
+                echo "  ➕ Creating user '$username'"
+                psql -c "CREATE USER $username WITH PASSWORD '$password';" > /dev/null
+                echo "  ✅ User '$username' created"
+              fi
+              echo ""
+            }
+
+            # Wait for PostgreSQL to be ready
+            echo "Waiting for PostgreSQL..."
+            until psql -c '\q' 2>/dev/null; do
+              echo "  PostgreSQL not ready, waiting..."
+              sleep 2
+            done
+            echo "✅ PostgreSQL is ready"
+            echo ""
+
+            # Create all application users
+            create_user_if_not_exists "$LINKWARDEN_USER" "$LINKWARDEN_PASS"
+            create_user_if_not_exists "$DOCSPELL_USER" "$DOCSPELL_PASS"
+            create_user_if_not_exists "$NETBOX_USER" "$NETBOX_PASS"
+
+            echo "=== User creation completed ==="
+
+            # List all users
+            echo ""
+            echo "Current PostgreSQL users:"
+            psql -c "\du" | grep -E "(linkwarden|docspell|netbox|Role name)"
+
+            exit 0
