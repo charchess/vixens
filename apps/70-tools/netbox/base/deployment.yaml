@@ -4,6 +4,8 @@ metadata:
   name: netbox
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: netbox
@@ -37,6 +39,10 @@ spec:
               value: redis-shared.databases.svc.cluster.local # Shared Redis service
             - name: REDIS_PORT
               value: "6379"
+            - name: ALLOWED_HOSTS
+              value: "netbox.dev.truxonline.com"
+            - name: DB_WAIT_DEBUG
+              value: "1"
           livenessProbe:
             httpGet:
               path: /

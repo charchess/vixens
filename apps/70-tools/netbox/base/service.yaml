@@ -7,5 +7,5 @@ spec:
     app: netbox
   ports:
     - protocol: TCP
-      port: 80 # Service port
+      port: 8080 # Service port
       targetPort: http # Refers to the named port in the deployment
