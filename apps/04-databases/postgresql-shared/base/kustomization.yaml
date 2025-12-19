@@ -10,7 +10,9 @@ resources:
   - credentials/docspell-secret.yaml
   - credentials/linkwarden-secret.yaml
   - credentials/netbox-postgresql-credentials.yaml
+  - credentials/authentik-secret.yaml
   - databases/docspell.yaml
   - databases/linkwarden.yaml
   - databases/netbox-database.yaml
+  - databases/authentik.yaml
   - jobs/create-users-job.yaml
