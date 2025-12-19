@@ -58,3 +58,4 @@ resources:
   - apps/adguard-home.yaml
   - apps/authentik.yaml
   - apps/netbox.yaml
+  - apps/loki.yaml
