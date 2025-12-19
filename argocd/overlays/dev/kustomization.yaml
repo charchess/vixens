@@ -59,3 +59,4 @@ resources:
   - apps/authentik.yaml
   - apps/netbox.yaml
   - apps/loki.yaml
+  - apps/promtail.yaml
