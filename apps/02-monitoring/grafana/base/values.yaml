@@ -24,6 +24,12 @@ datasources:
         access: proxy
         isDefault: true
         editable: true
+      - name: Loki
+        type: loki
+        url: http://loki.monitoring.svc.cluster.local:3100
+        access: proxy
+        isDefault: false
+        editable: true
 
 # Resources
 resources:

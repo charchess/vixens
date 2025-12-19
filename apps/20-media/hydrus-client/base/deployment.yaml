@@ -17,6 +17,13 @@ spec:
         app: hydrus-client
         test-label: "true"
     spec:
+      initContainers:
+        - name: fix-permissions
+          image: busybox:latest
+          command: ["sh", "-c", "mkdir -p /data/client_files && chown -R 1000:1000 /data"]
+          volumeMounts:
+            - name: config
+              mountPath: /data
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
@@ -41,8 +48,7 @@ spec:
               mountPath: /opt/hydrus/db
             - name: client-files
               mountPath: /opt/hydrus/db/client_files
-            - name: server-files
-              mountPath: /opt/hydrus/db/server_files
+              subPath: client_files
       volumes:
         - name: config
           persistentVolumeClaim:

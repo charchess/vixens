@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netvisor-server
+  labels:
+    app: netvisor-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netvisor-server
+  template:
+    metadata:
+      labels:
+        app: netvisor-server
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: server
+          image: scanopy/server:latest
+          ports:
+            - containerPort: 60072
+              name: http
+          env:
+            - name: SCANOPY_SERVER_PORT
+              value: "60072"
+            - name: SCANOPY_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: netvisor-secrets
+                  key: DATABASE_URL
+            - name: SCANOPY_SERVER_REDIS_URL
+              value: "redis://redis-shared.databases.svc.cluster.local:6379/0"

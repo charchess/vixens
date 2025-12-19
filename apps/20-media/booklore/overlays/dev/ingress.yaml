@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: booklore-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.middlewares: "media-redirect-to-https@kubernetescrd"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "BookLore"
+    gethomepage.dev/icon: "booklore.png" # Standard icon if available
+    gethomepage.dev/group: "Media"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: "booklore.dev.truxonline.com"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: booklore
+                port:
+                  number: 6060
+  tls:
+    - hosts:
+        - "booklore.dev.truxonline.com"
+      secretName: booklore-tls
