@@ -4,6 +4,7 @@ namespace: monitoring
 
 resources:
   - rbac.yaml
+  - service.yaml
   - configmap.yaml
   - daemonset.yaml
   - infisical-secret.yaml
