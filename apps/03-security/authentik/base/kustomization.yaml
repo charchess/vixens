@@ -7,7 +7,6 @@ resources:
   - deployment-server.yaml
 #  - deployment-worker.yaml
   - service.yaml
-  - ingress.yaml
   - infisical-secret.yaml
   - configmap.yaml
   - pvc.yaml
