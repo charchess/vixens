@@ -1,0 +1,12 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: authentik
+  namespace: databases
+spec:
+  cluster:
+    name: postgresql-shared
+  name: authentik
+  owner: authentik
+  ensure: present

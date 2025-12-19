@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentik-server
+  namespace: auth
+spec:
+  strategy:
+    type: Recreate
+  template:
+    spec:
+      containers:
+        - name: authentik-server
+          image: ghcr.io/goauthentik/authentik:2024.12.2
