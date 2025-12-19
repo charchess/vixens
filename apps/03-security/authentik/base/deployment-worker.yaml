@@ -1,32 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: authentik-server
+  name: authentik-worker
   namespace: auth
   labels:
-    app: authentik-server
+    app: authentik-worker
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: authentik-server
+      app: authentik-worker
   template:
     metadata:
       labels:
-        app: authentik-server
+        app: authentik-worker
     spec:
-      volumes:
-        - name: authentik-data
-          persistentVolumeClaim:
-            claimName: authentik-data
       containers:
-        - name: authentik-server
+        - name: authentik-worker
           image: ghcr.io/goauthentik/authentik:2025.2.0
-          args: ["server"]
-          ports:
-            - containerPort: 9000
-              name: http
-              protocol: TCP
+          args: ["worker"]
           envFrom:
             - secretRef:
                 name: authentik-secrets
@@ -57,17 +49,13 @@ spec:
                 secretKeyRef:
                   name: authentik-secrets
                   key: SECRET_KEY
-            # Add other environment variables from Authentik documentation if needed
           volumeMounts:
             - name: authentik-data
               mountPath: /var/lib/authentik
-          resources:
-            requests:
-              memory: "512Mi"
-              cpu: "200m"
-            limits:
-              memory: "1024Mi"
-              cpu: "500m"
+      volumes:
+        - name: authentik-data
+          persistentVolumeClaim:
+            claimName: authentik-data
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
