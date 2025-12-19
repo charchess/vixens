@@ -75,6 +75,17 @@ spec:
                 name: netbox-postgresql-credentials
                 key: password
 
+          - name: AUTHENTIK_USER
+            valueFrom:
+              secretKeyRef:
+                name: authentik-postgresql-credentials
+                key: username
+          - name: AUTHENTIK_PASS
+            valueFrom:
+              secretKeyRef:
+                name: authentik-postgresql-credentials
+                key: password
+
         command:
           - /bin/bash
           - -c
@@ -121,12 +132,13 @@ spec:
             create_user_if_not_exists "$LINKWARDEN_USER" "$LINKWARDEN_PASS"
             create_user_if_not_exists "$DOCSPELL_USER" "$DOCSPELL_PASS"
             create_user_if_not_exists "$NETBOX_USER" "$NETBOX_PASS"
+            create_user_if_not_exists "$AUTHENTIK_USER" "$AUTHENTIK_PASS"
 
             echo "=== User creation completed ==="
 
             # List all users
             echo ""
             echo "Current PostgreSQL users:"
-            psql -c "\du" | grep -E "(linkwarden|docspell|netbox|Role name)"
+            psql -c "\du" | grep -E "(linkwarden|docspell|netbox|authentik|Role name)"
 
             exit 0
