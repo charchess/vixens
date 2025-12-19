@@ -23,12 +23,18 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
-              echo "Fixing permissions on /opt/hydrus/db..."
-              # Le montage PVC existe déjà ici, on applique juste les permissions
-              chown -R 1000:1000 /opt/hydrus/db
-              chmod -R 755 /opt/hydrus/db
-              echo "Permissions fixed:"
-              ls -lan /opt/hydrus/db
+              echo "=== START DEBUG ==="
+              echo "User: $(id)"
+              echo "Mount point exists?"
+              ls -ld /opt/hydrus/db || echo "MOUNT MISSING"
+              echo "Mount point permissions:"
+              ls -ldn /opt/hydrus/db 2>&1 || echo "Cannot read mount"
+              echo "=== TRYING FIX ==="
+              # Test si on peut écrire
+              touch /opt/hydrus/db/test.txt 2>&1 && echo "Write OK" || echo "Write FAILED"
+              # Si le test échoue, on s'arrête sans erreur (temporaire)
+              chown -R 1000:1000 /opt/hydrus/db 2>&1 || echo "chown FAILED (continuing anyway)"
+              echo "=== END DEBUG ==="
           volumeMounts:
             - name: config
               mountPath: /data
