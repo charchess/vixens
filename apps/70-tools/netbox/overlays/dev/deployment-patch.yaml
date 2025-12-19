@@ -9,4 +9,4 @@ spec:
         - name: netbox
           env:
             - name: ALLOWED_HOSTS
-              value: "netbox.dev.truxonline.com"
+              value: "*"
