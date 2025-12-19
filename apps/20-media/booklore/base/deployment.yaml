@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booklore
+  labels:
+    app: booklore
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: booklore
+  template:
+    metadata:
+      labels:
+        app: booklore
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: booklore
+          image: ghcr.io/booklore-app/booklore:v1.14.0
+          ports:
+            - containerPort: 6060
+              name: http
+          env:
+            - name: APP_USER_ID
+              value: "1000"
+            - name: APP_GROUP_ID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Paris"
+            - name: BOOKLORE_PORT
+              value: "6060"
+            - name: DATABASE_URL
+              value: "jdbc:mariadb://booklore-mariadb:3306/booklore"
+            - name: DB_USER
+              value: "booklore"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: booklore-secrets
+                  key: DB_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: books
+              mountPath: /books
+            - name: bookdrop
+              mountPath: /bookdrop
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: booklore-config-pvc
+        - name: books
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Content/ebooks
+        - name: bookdrop
+          persistentVolumeClaim:
+            claimName: booklore-bookdrop-pvc
