@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: netvisor-daemon
+  labels:
+    app: netvisor-daemon
+spec:
+  selector:
+    matchLabels:
+      app: netvisor-daemon
+  template:
+    metadata:
+      labels:
+        app: netvisor-daemon
+    spec:
+      hostNetwork: true
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: daemon
+          image: scanopy/daemon:latest
+          securityContext:
+            privileged: true
+          env:
+            - name: SCANOPY_SERVER_TARGET
+              value: "netvisor-server.networking.svc.cluster.local"
+            - name: SCANOPY_SERVER_PORT
+              value: "60072"
+            - name: SCANOPY_DAEMON_PORT
+              value: "60073"
+            - name: SCANOPY_CONCURRENT_SCANS
+              value: "10"

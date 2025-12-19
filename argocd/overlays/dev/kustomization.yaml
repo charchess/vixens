@@ -42,10 +42,13 @@ resources:
   - apps/sonarr.yaml
   - apps/lidarr.yaml
   - apps/lazylibrarian.yaml
+  - apps/booklore.yaml
+  - apps/frigate.yaml
   - apps/prowlarr.yaml
   - apps/whisparr.yaml
   - apps/mylar.yaml
   - apps/hydrus-server.yaml
+  - apps/jellyseerr.yaml
   - apps/hydrus-client.yaml
   - apps/music-assistant.yaml
   - apps/vaultwarden.yaml
@@ -55,5 +58,10 @@ resources:
   # - apps/docspell.yaml                     # OLD Helm-based (deprecated, use docspell-native)
   - apps/docspell-native.yaml                # Docspell Kubernetes native deployment
   - apps/argocd-image-updater.yaml
+  - apps/changedetection.yaml
   - apps/adguard-home.yaml
+  - apps/netvisor.yaml
+  - apps/authentik.yaml
   - apps/netbox.yaml
+  - apps/loki.yaml
+  - apps/promtail.yaml

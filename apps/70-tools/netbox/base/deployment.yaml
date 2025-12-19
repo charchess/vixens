@@ -25,31 +25,40 @@ spec:
             - name: http
               containerPort: 8080
           env:
-            - name: DATABASE_URL
+            - name: DB_HOST
+              value: "postgresql-shared-rw.databases.svc.cluster.local"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: "netbox"
+            - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: netbox-database-url-secret
-                  key: DATABASE_URL
+                  name: netbox-db-secrets
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-db-secrets
+                  key: password
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: netbox-secrets
                   key: SECRET_KEY
             - name: REDIS_HOST
-              value: redis-shared.databases.svc.cluster.local # Shared Redis service
+              value: "redis-shared.databases.svc.cluster.local"
             - name: REDIS_PORT
               value: "6379"
             - name: ALLOWED_HOSTS
-              value: "netbox.dev.truxonline.com"
+              value: "netbox.dev.truxonline.com" # Should be patched in overlays
             - name: DB_WAIT_DEBUG
               value: "1"
-            - name: DB_HOST
-              value: "postgresql-shared-rw.databases.svc.cluster.local"
           livenessProbe:
             httpGet:
               path: /
               port: http
-            initialDelaySeconds: 60
+            initialDelaySeconds: 120 # Increased for migrations
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 6
@@ -57,23 +66,17 @@ spec:
             httpGet:
               path: /
               port: http
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
             periodSeconds: 5
             timeoutSeconds: 3
             failureThreshold: 3
           volumeMounts:
             - name: netbox-media-storage
               mountPath: /opt/netbox/media
-            - name: netbox-config
-              mountPath: /etc/netbox/config/configuration.py
-              subPath: configuration.py
       volumes:
         - name: netbox-media-storage
           persistentVolumeClaim:
             claimName: netbox-media-pvc
-        - name: netbox-config
-          configMap:
-            name: netbox-config
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
