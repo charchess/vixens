@@ -20,7 +20,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: daemon
-          image: ghcr.io/netvisor-io/netvisor:latest
+          image: ghcr.io/scanopy/scanopy:latest
           securityContext:
             privileged: true
           env:
