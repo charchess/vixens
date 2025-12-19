@@ -1,0 +1,36 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: booklore-config-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: synelia-iscsi-retain
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: booklore-mariadb-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: synelia-iscsi-retain
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: booklore-bookdrop-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: synelia-iscsi-retain
+  resources:
+    requests:
+      storage: 2Gi

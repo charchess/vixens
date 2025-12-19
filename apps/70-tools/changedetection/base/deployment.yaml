@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: changedetection
+  labels:
+    app: changedetection
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: changedetection
+  template:
+    metadata:
+      labels:
+        app: changedetection
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: changedetection
+          image: ghcr.io/dgtlmoon/changedetection.io:latest
+          ports:
+            - containerPort: 5000
+              name: http
+          env:
+            - name: BASE_URL
+              value: "https://changedetection.dev.truxonline.com" # Will be patched in overlays
+            - name: PLAYWRIGHT_DRIVER_URL
+              value: "ws://localhost:3000/?stealth=1&--disable-web-security=true"
+          volumeMounts:
+            - name: datastore
+              mountPath: /datastore
+        - name: browserless
+          image: browserless/chrome:latest
+          ports:
+            - containerPort: 3000
+              name: playwright
+          env:
+            - name: SCREEN_WIDTH
+              value: "1920"
+            - name: SCREEN_HEIGHT
+              value: "1080"
+            - name: SCREEN_DEPTH
+              value: "24"
+            - name: ENABLE_DEBUGGER
+              value: "false"
+            - name: PRE_BOOT_CHROME
+              value: "true"
+            - name: CONNECTION_TIMEOUT
+              value: "300000"
+            - name: MAX_CONCURRENT_SESSIONS
+              value: "10"
+            - name: CHROME_REFRESH_TIME
+              value: "600000"
+      volumes:
+        - name: datastore
+          persistentVolumeClaim:
+            claimName: changedetection-datastore-pvc

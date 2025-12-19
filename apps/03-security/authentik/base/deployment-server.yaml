@@ -21,7 +21,7 @@ spec:
             claimName: authentik-data
       containers:
         - name: authentik-server
-          image: ghcr.io/goauthentik/authentik:latest
+          image: ghcr.io/goauthentik/server:2025.2
           args: ["server"]
           ports:
             - containerPort: 9000
@@ -32,9 +32,14 @@ spec:
                 name: authentik-secrets
           env:
             - name: AUTHENTIK_REDIS__HOST
-              value: "redis.default.svc.cluster.local" # Assuming Redis is in default namespace
+              value: "redis-shared.databases.svc.cluster.local"
+            - name: AUTHENTIK_REDIS__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-secrets
+                  key: REDIS_PASSWORD
             - name: AUTHENTIK_POSTGRESQL__HOST
-              value: "postgresql.default.svc.cluster.local" # Assuming Postgres is in default namespace
+              value: "postgresql-shared-rw.databases.svc.cluster.local"
             - name: AUTHENTIK_POSTGRESQL__NAME
               value: "authentik"
             - name: AUTHENTIK_POSTGRESQL__USER

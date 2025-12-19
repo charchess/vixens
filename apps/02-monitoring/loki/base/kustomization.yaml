@@ -7,4 +7,4 @@ resources:
   - service.yaml
   - configmap.yaml
   - infisical-secret.yaml
-  - ingress.yaml
+
