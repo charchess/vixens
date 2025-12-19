@@ -23,7 +23,6 @@ spec:
       containers:
         - name: frigate
           image: ghcr.io/blakeblackshear/frigate:stable
-          shmSize: 256Mi # Note: Standard k8s deployment might need emptyDir with medium: Memory for /dev/shm
           ports:
             - containerPort: 5000
               name: http
