@@ -4,3 +4,9 @@ kind: Kustomization
 resources:
   - ../../base
   - ingress.yaml
+
+patches:
+  - path: infisical-patch.yaml
+    target:
+      kind: InfisicalSecret
+      name: authentik-secrets-sync
