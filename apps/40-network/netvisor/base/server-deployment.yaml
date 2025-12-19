@@ -20,7 +20,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: server
-          image: ghcr.io/scanopy/scanopy:v0.12.2
+          image: scanopy/scanopy-server:latest
           ports:
             - containerPort: 60072
               name: http
