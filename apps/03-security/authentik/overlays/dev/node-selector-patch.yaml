@@ -1,0 +1,10 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentik-server
+  namespace: auth
+spec:
+  template:
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: obsy
