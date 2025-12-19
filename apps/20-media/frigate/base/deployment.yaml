@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frigate
+  labels:
+    app: frigate
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: frigate
+  template:
+    metadata:
+      labels:
+        app: frigate
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: frigate
+          image: ghcr.io/blakeblackshear/frigate:stable
+          shmSize: 256Mi # Note: Standard k8s deployment might need emptyDir with medium: Memory for /dev/shm
+          ports:
+            - containerPort: 5000
+              name: http
+            - containerPort: 1935
+              name: rtmp
+            - containerPort: 8554
+              name: rtsp
+          env:
+            - name: FRIGATE_MQTT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: frigate-secrets
+                  key: MQTT_PASSWORD
+                  optional: true
+          volumeMounts:
+            - name: config
+              mountPath: /config/config.yml
+              subPath: config.yml
+            - name: db
+              mountPath: /config
+            - name: media
+              mountPath: /media/frigate
+            - name: cache
+              mountPath: /tmp/cache
+            - name: shm
+              mountPath: /dev/shm
+      volumes:
+        - name: config
+          configMap:
+            name: frigate-config
+        - name: db
+          persistentVolumeClaim:
+            claimName: frigate-config-pvc
+        - name: media
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Internal/incoming/frigate # Placeholder NFS path
+        - name: cache
+          emptyDir:
+            medium: Memory
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 256Mi
