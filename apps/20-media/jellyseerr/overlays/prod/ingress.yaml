@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jellyseerr-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.middlewares: "media-redirect-to-https@kubernetescrd"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Jellyseerr"
+    gethomepage.dev/icon: "jellyseerr.png"
+    gethomepage.dev/group: "Media"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: "jellyseerr.truxonline.com"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jellyseerr
+                port:
+                  number: 5055
+  tls:
+    - hosts:
+        - "jellyseerr.truxonline.com"
+      secretName: jellyseerr-tls
