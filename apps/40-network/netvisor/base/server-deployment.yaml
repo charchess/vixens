@@ -20,7 +20,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: server
-          image: ghcr.io/scanopy/server:v0.12.2
+          image: scanopy/scanopy-server:latest
           ports:
             - containerPort: 60072
               name: http
@@ -32,3 +32,5 @@ spec:
                 secretKeyRef:
                   name: netvisor-secrets
                   key: DATABASE_URL
+            - name: SCANOPY_SERVER_REDIS_URL
+              value: "redis://redis-shared.databases.svc.cluster.local:6379/0"

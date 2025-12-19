@@ -22,7 +22,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: booklore
-          image: ghcr.io/booklore-app/booklore:v1.14.0
+          image: ghcr.io/booklore-app/booklore:latest
           ports:
             - containerPort: 6060
               name: http
