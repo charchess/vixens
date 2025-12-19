@@ -43,6 +43,7 @@ data:
       retention_period: 336h # 14 days
       reject_old_samples: true
       reject_old_samples_max_age: 168h
+      max_label_names_per_series: 30
 
     compactor:
       working_directory: /var/loki/retention
