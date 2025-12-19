@@ -20,7 +20,15 @@ spec:
       initContainers:
         - name: fix-permissions
           image: busybox:latest
-          command: ["sh", "-c", "mkdir -p /data/client_files && chown -R 1000:1000 /data"]
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "Fixing permissions on /opt/hydrus/db..."
+              # Le montage PVC existe déjà ici, on applique juste les permissions
+              chown -R 1000:1000 /opt/hydrus/db
+              chmod -R 755 /opt/hydrus/db
+              echo "Permissions fixed:"
+              ls -lan /opt/hydrus/db
           volumeMounts:
             - name: config
               mountPath: /data
