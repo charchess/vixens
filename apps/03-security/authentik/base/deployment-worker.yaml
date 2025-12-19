@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: authentik-worker
-          image: ghcr.io/goauthentik/authentik:2025.2
+          image: ghcr.io/goauthentik/server:2025.2
           args: ["worker"]
           envFrom:
             - secretRef:
