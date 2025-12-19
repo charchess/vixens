@@ -6,6 +6,5 @@ resources:
   - deployment.yaml
   - service.yaml
   - netbox-pvc.yaml
-  - netbox-database-url-secret.yaml
+  - netbox-db-secrets.yaml
   - infisical-secret.yaml
-  - configmap.yaml

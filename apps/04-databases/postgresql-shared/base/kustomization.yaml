@@ -4,12 +4,17 @@ kind: Kustomization
 namespace: databases
 
 resources:
+  - namespace.yaml
   - cluster.yaml
   - credentials/admin-secret.yaml
   - credentials/docspell-secret.yaml
   - credentials/linkwarden-secret.yaml
   - credentials/netbox-postgresql-credentials.yaml
+  - credentials/authentik-secret.yaml
+  - credentials/scanopy-secret.yaml
   - databases/docspell.yaml
+  - databases/scanopy.yaml
   - databases/linkwarden.yaml
   - databases/netbox-database.yaml
+  - databases/authentik.yaml
   - jobs/create-users-job.yaml
