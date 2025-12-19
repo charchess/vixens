@@ -86,6 +86,17 @@ spec:
                 name: authentik-postgresql-credentials
                 key: password
 
+          - name: SCANOPY_USER
+            valueFrom:
+              secretKeyRef:
+                name: scanopy-postgresql-credentials
+                key: username
+          - name: SCANOPY_PASS
+            valueFrom:
+              secretKeyRef:
+                name: scanopy-postgresql-credentials
+                key: password
+
         command:
           - /bin/bash
           - -c
@@ -133,6 +144,7 @@ spec:
             create_user_if_not_exists "$DOCSPELL_USER" "$DOCSPELL_PASS"
             create_user_if_not_exists "$NETBOX_USER" "$NETBOX_PASS"
             create_user_if_not_exists "$AUTHENTIK_USER" "$AUTHENTIK_PASS"
+            create_user_if_not_exists "$SCANOPY_USER" "$SCANOPY_PASS"
 
             echo "=== User creation completed ==="
 
