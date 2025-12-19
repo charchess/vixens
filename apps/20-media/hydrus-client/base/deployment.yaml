@@ -20,7 +20,21 @@ spec:
       initContainers:
         - name: fix-permissions
           image: busybox:latest
-          command: ["sh", "-c", "mkdir -p /data/client_files && chown -R 1000:1000 /data"]
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "=== START DEBUG ==="
+              echo "User: $(id)"
+              echo "Mount point exists?"
+              ls -ld /opt/hydrus/db || echo "MOUNT MISSING"
+              echo "Mount point permissions:"
+              ls -ldn /opt/hydrus/db 2>&1 || echo "Cannot read mount"
+              echo "=== TRYING FIX ==="
+              # Test si on peut écrire
+              touch /opt/hydrus/db/test.txt 2>&1 && echo "Write OK" || echo "Write FAILED"
+              # Si le test échoue, on s'arrête sans erreur (temporaire)
+              chown -R 1000:1000 /opt/hydrus/db 2>&1 || echo "chown FAILED (continuing anyway)"
+              echo "=== END DEBUG ==="
           volumeMounts:
             - name: config
               mountPath: /data
@@ -47,7 +61,7 @@ spec:
             - name: config
               mountPath: /opt/hydrus/db
             - name: client-files
-              mountPath: /opt/hydrus/db/client_files
+              mountPath: /opt/hydrus/db/
               subPath: client_files
       volumes:
         - name: config
@@ -57,7 +71,3 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Content/pictures/hentai/client_files
-        - name: server-files
-          nfs:
-            server: 192.168.111.69
-            path: /volume3/Content/pictures/hentai/server_files
