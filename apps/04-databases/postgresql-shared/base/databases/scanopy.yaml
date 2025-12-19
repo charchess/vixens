@@ -1,0 +1,12 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: scanopy
+  namespace: databases
+spec:
+  cluster:
+    name: postgresql-shared
+  name: scanopy
+  owner: scanopy
+  ensure: present

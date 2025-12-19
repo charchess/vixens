@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netvisor-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.middlewares: "networking-redirect-to-https@kubernetescrd"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "NetVisor"
+    gethomepage.dev/icon: "netvisor.png"
+    gethomepage.dev/group: "Network"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: "netvisor.staging.truxonline.com"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: netvisor-server
+                port:
+                  number: 60072
+  tls:
+    - hosts:
+        - "netvisor.staging.truxonline.com"
+      secretName: netvisor-tls
