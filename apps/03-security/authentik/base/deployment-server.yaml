@@ -21,7 +21,7 @@ spec:
             claimName: authentik-data
       containers:
         - name: authentik-server
-          image: ghcr.io/goauthentik/authentik:latest
+          image: ghcr.io/goauthentik/authentik:2024.12.3
           args: ["server"]
           ports:
             - containerPort: 9000
