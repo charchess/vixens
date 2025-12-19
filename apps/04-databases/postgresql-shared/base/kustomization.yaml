@@ -12,6 +12,7 @@ resources:
   - credentials/netbox-postgresql-credentials.yaml
   - credentials/authentik-secret.yaml
   - databases/docspell.yaml
+  - databases/scanopy.yaml
   - databases/linkwarden.yaml
   - databases/netbox-database.yaml
   - databases/authentik.yaml
