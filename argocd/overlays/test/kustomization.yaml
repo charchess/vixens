@@ -35,6 +35,7 @@ resources:
   - apps/sonarr.yaml
   - apps/lidarr.yaml
   - apps/booklore.yaml
+  - apps/frigate.yaml
   - apps/argocd-image-updater.yaml
   - apps/adguard-home.yaml
   - apps/netvisor.yaml
