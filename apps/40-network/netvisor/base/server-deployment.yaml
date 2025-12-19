@@ -20,7 +20,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: server
-          image: ghcr.io/netvisor-io/netvisor:latest
+          image: ghcr.io/scanopy/scanopy:latest
           ports:
             - containerPort: 60072
               name: http
