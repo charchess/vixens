@@ -11,6 +11,7 @@ resources:
   - credentials/linkwarden-secret.yaml
   - credentials/netbox-postgresql-credentials.yaml
   - credentials/authentik-secret.yaml
+  - credentials/scanopy-secret.yaml
   - databases/docspell.yaml
   - databases/scanopy.yaml
   - databases/linkwarden.yaml
