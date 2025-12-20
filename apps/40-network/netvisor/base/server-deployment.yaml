@@ -36,3 +36,9 @@ spec:
               value: "redis://redis-shared.databases.svc.cluster.local:6379/0"
             - name: SCANOPY_WEB_EXTERNAL_PATH
               value: "/"
+            - name: SCANOPY_SERVER_WEB_EXTERNAL_PATH
+              value: "/"
+            - name: SCANOPY_PUBLIC_URL
+              value: "https://netvisor.dev.truxonline.com"
+            - name: SCANOPY_LOG_LEVEL
+              value: "debug"
