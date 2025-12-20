@@ -27,13 +27,14 @@ processus de travail, adherence stricte et totale, pas de raccourci, a respecter
 
 
 
-NOTE :
+NOTES IMPORTANTES :
 * se rappeler des tolérations pour les controlplane
 * si il y a un pvc RWO, mettre la strategy en recreate 
 * penser a mettre la redirection http vers https
 * s'assurer que le certificat tls est bien obtenu par letsencrypt-staging en dev/test/staging et letsencrypt-prod en prod  
 * les urls des ingress sont <app>.<env>.truxonline.com (sauf prod qui est <app>.truxonline.com)
 * on garde une approche DRY, state of the art, best practice axée sur la maintenabilité
+* si il te manque une information ou qu'il te faut une configuration exterieure, suspends tout et interroge l'utilisateur
 
 
 OUTILS :

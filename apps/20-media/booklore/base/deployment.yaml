@@ -37,9 +37,9 @@ spec:
               value: "6060"
             - name: DATABASE_URL
               value: "jdbc:mariadb://booklore-mariadb:3306/booklore"
-            - name: DB_USER
+            - name: DATABASE_USERNAME
               value: "booklore"
-            - name: DB_PASSWORD
+            - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: booklore-secrets

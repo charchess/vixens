@@ -37,6 +37,7 @@ resources:
   - apps/booklore.yaml
   - apps/frigate.yaml
   - apps/jellyseerr.yaml
+  - apps/jellyfin.yaml
   - apps/argocd-image-updater.yaml
   - apps/changedetection.yaml
   - apps/adguard-home.yaml
