@@ -9,6 +9,9 @@ spec:
 
   imageName: ghcr.io/cloudnative-pg/postgresql:17.6-system-trixie
 
+  superuserSecret:
+    name: postgresql-admin-credentials
+
   postgresql:
     parameters:
       max_connections: "200"
