@@ -59,7 +59,7 @@ spec:
         - name: media
           nfs:
             server: 192.168.111.69
-            path: /volume3/Internal/incoming/frigate # Placeholder NFS path
+            path: /volume3/Internal/frigate # Updated NFS path
         - name: cache
           emptyDir:
             medium: Memory
