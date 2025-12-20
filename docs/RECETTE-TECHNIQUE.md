@@ -259,3 +259,32 @@ kubectl get ingressroutes,middlewares -A --kubeconfig <path-to-kubeconfig>
     - L'Ingress existe.
     - La règle (`spec.rules[0].host`) est `linkwarden.dev.truxonline.com`.
     - La section TLS (`spec.tls[0]`) est configurée pour `linkwarden.dev.truxonline.com` avec le secret `linkwarden-dev-tls`.
+
+### 5.4. Jellyfin
+
+1.  **Vérifier le Déploiement :**
+    ```bash
+    kubectl -n media get deployment jellyfin -o yaml
+    ```
+    **Résultat Attendu :**
+    - `status.availableReplicas: 1`.
+    - L'image est `jellyfin/jellyfin:10.10.3`.
+    - La stratégie est `type: Recreate`.
+    - Les volumes `config` (PVC) et `media` (NFS) sont correctement montés.
+
+2.  **Vérifier le `PersistentVolumeClaim` (PVC) :**
+    ```bash
+    kubectl -n media get pvc jellyfin-config-pvc -o yaml
+    ```
+    **Résultat Attendu :**
+    - État `Bound`.
+    - `storageClassName: synelia-iscsi-retain`.
+
+3.  **Vérifier l'Ingress :**
+    ```bash
+    kubectl -n media get ingress jellyfin-ingress -o yaml
+    ```
+    **Résultat Attendu :**
+    - L'Ingress existe.
+    - La règle (`spec.rules[0].host`) est `jellyfin.dev.truxonline.com`.
+    - Les annotations de redirection HTTPS sont présentes.

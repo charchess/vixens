@@ -1,54 +1,50 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sonarr
+  name: jellyfin
   labels:
-    app: sonarr
+    app: jellyfin
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: sonarr
+      app: jellyfin
   template:
     metadata:
       labels:
-        app: sonarr
+        app: jellyfin
     spec:
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
       containers:
-        - name: sonarr
-          image: ghcr.io/linuxserver/sonarr:latest
+        - name: jellyfin
+          image: jellyfin/jellyfin:10.10.3
           ports:
-            - containerPort: 8989 # Default Sonarr UI port
+            - containerPort: 8096
+              name: http
           env:
-            - name: PUID
-              value: "1000"
-            - name: PGID
-              value: "1000"
             - name: TZ
               value: "Europe/Paris"
+            - name: JELLYFIN_LOG_DIR
+              value: "/config/log"
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: downloads
-              mountPath: /downloads
-            - name: tv
-              mountPath: /tv
-              subPath: "TV Show" # Mounts /volume3/Content/TVShow
+            - name: cache
+              mountPath: /cache
+            - name: media
+              mountPath: /media
       volumes:
         - name: config
           persistentVolumeClaim:
-            claimName: sonarr-config-pvc
-        - name: downloads
-          nfs:
-            server: 192.168.111.69
-            path: /volume3/Downloads
-        - name: tv
+            claimName: jellyfin-config-pvc
+        - name: cache
+          emptyDir: {}
+        - name: media
           nfs:
             server: 192.168.111.69
             path: /volume3/Content
