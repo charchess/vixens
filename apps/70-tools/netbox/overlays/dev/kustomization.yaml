@@ -7,7 +7,36 @@ resources:
   - ingress.yaml
 
 patches:
-  - path: deployment-patch.yaml
-    target:
+  - target:
       kind: Deployment
       name: netbox
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env
+        value:
+          - name: DB_HOST
+            value: "postgresql-shared-rw.databases.svc.cluster.local"
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_NAME
+            value: "netbox"
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: netbox-db-secrets
+                key: username
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: netbox-db-secrets
+                key: password
+          - name: SECRET_KEY
+            value: "vixens-temporary-long-secret-key-at-least-50-characters-long-1234567890"
+          - name: REDIS_HOST
+            value: "redis-shared.databases.svc.cluster.local"
+          - name: REDIS_PORT
+            value: "6379"
+          - name: ALLOWED_HOSTS
+            value: "*"
+          - name: DB_WAIT_DEBUG
+            value: "1"
