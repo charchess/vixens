@@ -10,9 +10,11 @@ spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:17.6-system-trixie
 
   superuserSecret:
-    name: postgresql-admin-credentials
+    name: postgresql-admin-credentials-v2
 
   postgresql:
+    pg_hba:
+      - host all postgres all trust
     parameters:
       max_connections: "200"
       shared_buffers: "128MB"
@@ -23,7 +25,7 @@ spec:
       database: postgres
       owner: postgres
       secret:
-        name: postgresql-admin-credentials
+        name: postgresql-admin-credentials-v2
 
   storage:
     size: 20Gi  # Shared across multiple databases
