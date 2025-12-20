@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: prometheus-alertmanager
+  namespace: monitoring
+spec:
+  template:
+    spec:
+      containers:
+        - name: alertmanager
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cp /etc/config/alertmanager.yml /tmp/alertmanager.yml &&
+              sed -i "s|DISCORD_WEBHOOK_URL_PLACEHOLDER|$DISCORD_WEBHOOK_URL|g" /tmp/alertmanager.yml &&
+              /bin/alertmanager --config.file=/tmp/alertmanager.yml --storage.path=/alertmanager

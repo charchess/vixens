@@ -1,6 +1,10 @@
 ---
 # Grafana standalone configuration
 
+# Deployment strategy
+deploymentStrategy:
+  type: Recreate
+
 # Persistence
 persistence:
   enabled: true
