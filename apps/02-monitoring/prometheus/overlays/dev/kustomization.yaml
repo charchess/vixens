@@ -8,8 +8,11 @@ resources:
   - ../../base
   # prometheus-ingress.yaml managed by separate ArgoCD app
 
-patchesStrategicMerge:
-  - patch-alertmanager-command.yaml
+patches:
+  - path: patch-alertmanager-command.yaml
+    target:
+      kind: StatefulSet
+      name: prometheus-alertmanager
 
 commonLabels:
   environment: dev

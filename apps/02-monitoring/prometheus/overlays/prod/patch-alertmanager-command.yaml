@@ -11,6 +11,6 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              cp /etc/config/alertmanager.yml /tmp/alertmanager.yml &&
+              cp /etc/alertmanager/alertmanager.yml /tmp/alertmanager.yml &&
               sed -i "s|DISCORD_WEBHOOK_URL_PLACEHOLDER|$DISCORD_WEBHOOK_URL|g" /tmp/alertmanager.yml &&
               /bin/alertmanager --config.file=/tmp/alertmanager.yml --storage.path=/alertmanager
