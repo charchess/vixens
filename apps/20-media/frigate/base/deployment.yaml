@@ -31,6 +31,12 @@ spec:
             - containerPort: 8554
               name: rtsp
           env:
+            - name: FRIGATE_MQTT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: frigate-secrets
+                  key: MQTT_USER
+                  optional: true
             - name: FRIGATE_MQTT_PASSWORD
               valueFrom:
                 secretKeyRef:
