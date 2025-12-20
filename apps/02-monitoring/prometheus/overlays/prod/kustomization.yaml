@@ -8,21 +8,8 @@ resources:
   - ../../base
   # prometheus-ingress.yaml managed by separate ArgoCD app
 
-patches:
-  - target:
-      kind: StatefulSet
-      name: prometheus-alertmanager
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/command
-        value: ["/bin/sh", "-c"]
-      - op: replace
-        path: /spec/template/spec/containers/0/args
-        value:
-          - |
-            cp /etc/alertmanager/alertmanager.yml /tmp/alertmanager.yml &&
-            sed -i "s|DISCORD_WEBHOOK_URL_PLACEHOLDER|$DISCORD_WEBHOOK_URL|g" /tmp/alertmanager.yml &&
-            /bin/alertmanager --config.file=/tmp/alertmanager.yml --storage.path=/alertmanager
+patchesStrategicMerge:
+  - patch-infisical-env.yaml
 
 commonLabels:
   environment: prod
