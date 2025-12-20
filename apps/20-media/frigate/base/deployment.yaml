@@ -32,17 +32,9 @@ spec:
               name: rtsp
           env:
             - name: FRIGATE_MQTT_USER
-              valueFrom:
-                secretKeyRef:
-                  name: frigate-secrets
-                  key: MQTT_USER
-                  optional: true
+              value: "admin" # Default value, override in Infisical
             - name: FRIGATE_MQTT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: frigate-secrets
-                  key: MQTT_PASSWORD
-                  optional: true
+              value: "password" # Default value, override in Infisical
           volumeMounts:
             - name: config
               mountPath: /config/config.yml
