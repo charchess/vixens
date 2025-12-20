@@ -10,3 +10,5 @@ spec:
           env:
             - name: ALLOWED_HOSTS
               value: "*"
+            - name: SECRET_KEY
+              value: "vixens-temporary-long-secret-key-at-least-50-characters-long-1234567890"
