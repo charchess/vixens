@@ -10,7 +10,7 @@ spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:17.6-system-trixie
 
   superuserSecret:
-    name: postgresql-admin-credentials
+    name: postgresql-admin-credentials-v2
 
   postgresql:
     parameters:
@@ -23,7 +23,7 @@ spec:
       database: postgres
       owner: postgres
       secret:
-        name: postgresql-admin-credentials
+        name: postgresql-admin-credentials-v2
 
   storage:
     size: 20Gi  # Shared across multiple databases
