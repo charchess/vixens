@@ -13,6 +13,8 @@ spec:
     name: postgresql-admin-credentials-v2
 
   postgresql:
+    pg_hba:
+      - host all postgres all trust
     parameters:
       max_connections: "200"
       shared_buffers: "128MB"
