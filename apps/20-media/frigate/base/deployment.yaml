@@ -31,12 +31,10 @@ spec:
             - containerPort: 8554
               name: rtsp
           env:
+            - name: FRIGATE_MQTT_USER
+              value: "admin" # Default value, override in Infisical
             - name: FRIGATE_MQTT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: frigate-secrets
-                  key: MQTT_PASSWORD
-                  optional: true
+              value: "password" # Default value, override in Infisical
           volumeMounts:
             - name: config
               mountPath: /config/config.yml
@@ -59,7 +57,7 @@ spec:
         - name: media
           nfs:
             server: 192.168.111.69
-            path: /volume3/Internal/incoming/frigate # Placeholder NFS path
+            path: /volume3/Internal/frigate # Updated NFS path
         - name: cache
           emptyDir:
             medium: Memory

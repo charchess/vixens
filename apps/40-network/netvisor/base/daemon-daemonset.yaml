@@ -20,7 +20,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: daemon
-          image: scanopy/daemon:latest
+          image: ghcr.io/scanopy/scanopy/daemon:latest
           securityContext:
             privileged: true
           env:
