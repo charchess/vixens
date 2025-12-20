@@ -34,5 +34,5 @@ spec:
                   key: DATABASE_URL
             - name: SCANOPY_SERVER_REDIS_URL
               value: "redis://redis-shared.databases.svc.cluster.local:6379/0"
-            - name: SCANOPY_SERVER_WEB_EXTERNAL_PATH
+            - name: SCANOPY_WEB_EXTERNAL_PATH
               value: "/"
