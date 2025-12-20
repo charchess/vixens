@@ -66,9 +66,17 @@ alertmanager:
     receivers:
       - name: 'discord-notifications'
         slack_configs:
-          - api_url: '{{ .Env.DISCORD_WEBHOOK_URL }}' # Using Env variable sync via Infisical
+          - api_url: 'DISCORD_WEBHOOK_URL_PLACEHOLDER'
             channel: '#alerts'
             send_resolved: true
+
+  # Custom command to substitute env var in config file at runtime
+  command: ["/bin/sh", "-c"]
+  args:
+    - |
+      cp /etc/config/alertmanager.yml /tmp/alertmanager.yml &&
+      sed -i "s|DISCORD_WEBHOOK_URL_PLACEHOLDER|$DISCORD_WEBHOOK_URL|g" /tmp/alertmanager.yml &&
+      /bin/alertmanager --config.file=/tmp/alertmanager.yml --storage.path=/alertmanager
 
 # Node exporter
 nodeExporter:
