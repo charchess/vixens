@@ -8,7 +8,9 @@ resources:
   - ../../base
   # prometheus-ingress.yaml managed by separate ArgoCD app
 
-labels:
-  - includeSelectors: false
-    pairs:
-      environment: prod
+patchesStrategicMerge:
+  - patch-infisical-env.yaml
+  - patch-alertmanager-command.yaml
+
+commonLabels:
+  environment: prod

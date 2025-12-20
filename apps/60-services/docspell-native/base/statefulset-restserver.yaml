@@ -34,6 +34,8 @@ spec:
               containerPort: 7880
               protocol: TCP
           env:
+            - name: JAVA_OPTS
+              value: "-Xmx1024m -Xms512m"
             - name: JDBC_URI
               value: jdbc:postgresql://postgresql-shared-rw.databases.svc.cluster.local:5432/docspell
             - name: JDBC_USERNAME
@@ -48,11 +50,11 @@ spec:
                   key: password
           resources:
             requests:
-              cpu: 300m
-              memory: 512Mi
+              cpu: 500m
+              memory: 1024Mi
             limits:
               cpu: 1000m
-              memory: 1024Mi
+              memory: 1536Mi
           volumeMounts:
             - name: config
               mountPath: /opt/docspell.conf
