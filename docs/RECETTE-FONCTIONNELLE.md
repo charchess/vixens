@@ -20,6 +20,10 @@ Pour chaque service listé ci-dessous, ouvrez l'URL correspondante dans un navig
 | **Home Assistant** | `https://homeassistant.dev.truxonline.com` | `https://homeassistant.test.truxonline.com` | La page de connexion ou le tableau de bord de Home Assistant s'affiche. | |
 | **Mail Gateway** | `https://mail.dev.truxonline.com` | `https://mail.test.truxonline.com` | La page de Roundcube ou du service mail s'affiche. | |
 | **Linkwarden** | `https://linkwarden.dev.truxonline.com` | `https://linkwarden.test.truxonline.com` | La page de connexion ou le tableau de bord de Linkwarden s'affiche. | |
+| **BookLore** | `https://booklore.dev.truxonline.com` | `https://booklore.test.truxonline.com` | La page de configuration ou de connexion de BookLore s'affiche. | OK |
+| **NetVisor** | `https://netvisor.dev.truxonline.com` | `https://netvisor.test.truxonline.com` | La page d'onboarding ou de connexion de NetVisor s'affiche. | OK |
+| **Jellyseerr** | `https://jellyseerr.dev.truxonline.com` | `https://jellyseerr.test.truxonline.com` | La page de configuration de Jellyseerr s'affiche. | OK |
+| **Jellyfin** | `https://jellyfin.dev.truxonline.com` | `https://jellyfin.test.truxonline.com` | La page de démarrage ou de connexion de Jellyfin s'affiche. | OK |
 
 ## 2. Validation de la Sécurité (HTTPS)
 
