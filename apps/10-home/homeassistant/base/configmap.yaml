@@ -15,5 +15,109 @@ data:
       trusted_proxies:
         - 10.0.0.0/8        # Cluster IPs
         - 192.168.0.0/16    # Local network
-      server_host: 0.0.0.0
       server_port: 8123
+homeassistant:
+  #allowlist_external_dirs:
+  #  - "/usr/var/dumping-ground"
+  #  - "/tmp"
+  allowlist_external_urls:
+    - "http://synelia.media.truxonline.com:1234/ding.mp3"
+    - "https://homeassistant.truxonline.com/local/snapshots/trigger.jpg"
+    - "https://homeassistant.truxonline.com/local/"
+    #media_dirs:
+  #  media: "/media"
+  #  recordings: "/mnt/recordings"
+
+#  ssl_certificate: /etc/letsencrypt/live/hass.example.com/fullchain.pem
+#  ssl_key: /etc/letsencrypt/live/hass.example.com/privkey.pem
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+template: !include templates.yaml
+#proximity: !include proximity.yaml
+switch: !include switches.yaml
+sensor: !include sensors.yaml
+utility_meter: !include utility_meters.yaml
+python_script:
+media_player: !include mediaplayer.yaml
+
+device_tracker:
+  - platform: google_maps
+    username: "charchess.hass@gmail.com"
+
+# google_assistant:
+#   project_id: homeassistant
+#   service_account: !include googlehome.json
+#   expose_by_default: false
+#  exposed_domains:
+#    - script
+#    - switch
+#    - light
+#    - cover
+#    - fan
+#    - sensor
+#    - input_button
+#    - input_boolean
+#    - button
+#    - scene
+#    - input_select
+#   report_state: true
+
+google_assistant:
+  project_id: homeassistant-garpinier
+  service_account: !include HA_garpinier_SA.json
+  report_state: true
+  expose_by_default: false
+#  exposed_domains:
+#    - script
+#    - switch
+#    - light
+#    - cover
+#    - fan
+#    - sensor
+#    - input_button
+#    - input_boolean
+#    - button
+#    - scene
+#    - input_select
+
+# wake_on_lan:
+
+#alarm_control_panel:
+#  - platform: manual
+#    name: Home alarm
+#    code: !secret alarm_code
+#    code_arm_required: false
+#    arming_time: 30
+#    delay_time: 30
+#    trigger_time: 120
+#    disarm_after_trigger: false
+#    disarmed:
+#      trigger_time: 0
+#    armed_home:
+#      arming_time: 0
+#      delay_time: 0
+#    armed_night:
+#      arming_time: 0
+#      delay_time: 0
+#    armed_away:
+#      arming_time: 0
+#      delay_time: 0
+
+notify:
+  - name: notify_charchess_SMS
+    platform: free_mobile
+    username: 18485651
+    access_token: gDpI6n3t6lyhuG
+
+shell_command:
+  # Commande pour créer un dossier avec la date et l'heure du jour, sous un répertoire 'snapshots'.
+  # Le chemin '/data/nfs/homeassistant_data/snapshots/' est un exemple.
+  # Assurez-vous que ce chemin existe et est accessible en écriture par l'utilisateur Home Assistant (PUID/PGID).
+  create_dated_snapshot_folder: "./create_snapshots_folder.sh"

@@ -45,7 +45,7 @@ resources:
   - apps/prowlarr.yaml
   - apps/whisparr.yaml
   - apps/mylar.yaml
-  - apps/hydrus-server.yaml
+  # - apps/hydrus-server.yaml
   - apps/jellyseerr.yaml
   - apps/jellyfin.yaml
   - apps/hydrus-client.yaml
