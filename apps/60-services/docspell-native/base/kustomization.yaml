@@ -15,6 +15,7 @@ resources:
   - infisical-secrets.yaml
   - middleware-redirect.yaml
   - ingress.yaml
+  - middleware.yaml
 
 labels:
   - pairs:
