@@ -94,10 +94,10 @@ spec:
           resources:
             requests:
               cpu: 300m
-              memory: 512Mi
+              memory: 1024Mi
             limits:
               cpu: 1000m
-              memory: 1024Mi
+              memory: 2048Mi
         - name: filebrowser
           image: filebrowser/filebrowser:latest
           imagePullPolicy: Always
