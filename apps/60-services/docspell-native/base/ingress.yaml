@@ -9,7 +9,7 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
-    traefik.ingress.kubernetes.io/router.middlewares: "services-docspell-http-redirect@kubernetescrd"
+    traefik.ingress.kubernetes.io/router.middlewares: "services-redirect-to-https@kubernetescrd"
 spec:
   ingressClassName: traefik
   tls:
