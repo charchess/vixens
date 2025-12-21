@@ -53,6 +53,7 @@ resources:
   - apps/hydrus-client.yaml
   - apps/music-assistant.yaml
   - apps/vaultwarden.yaml
+  - apps/cloudnative-pg-crds.yaml            # CloudNativePG CRDs (manually managed due to size)
   - apps/cloudnative-pg.yaml                 # CloudNativePG Operator (databases)
   - apps/redis-shared.yaml
   - apps/postgresql-shared.yaml              # Shared PostgreSQL Cluster (Docspell, ...)
