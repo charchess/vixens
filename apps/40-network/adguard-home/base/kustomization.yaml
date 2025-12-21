@@ -4,6 +4,7 @@ namespace: networking
 
 resources:
   - namespace.yaml
+  - middleware.yaml
   - deployment.yaml
   - service.yaml
   - pvc.yaml
