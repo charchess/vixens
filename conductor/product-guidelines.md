@@ -22,3 +22,8 @@
     -   *Constraint:* Never duplicate code in overlays that belongs in the base.
 -   **Directory Structure:** Adhere strictly to the existing hierarchy (e.g., `apps/<category>/<app-name>/overlays/<env>/`).
 -   **Strict GitOps:** All state changes must originate from a Git commit to the `dev` branch.
+
+## Ingress & Network Standards
+-   **HTTPS Redirection:** All HTTP traffic must be redirected to HTTPS.
+    -   **Middleware:** Use the namespace-local `redirect-to-https` middleware (Standardized naming: `<namespace>-redirect-to-https` or `redirect-to-https` if local).
+    -   **Annotation:** `traefik.ingress.kubernetes.io/router.middlewares: <namespace>-redirect-to-https@kubernetescrd`.
