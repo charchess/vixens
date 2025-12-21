@@ -20,7 +20,7 @@ spec:
         replicaCount: 1
 
         crds:
-          create: false  # CRDs installed manually via kubectl (poolers CRD too large for Helm)
+          create: true
 
         config:
           clusterWide: true
@@ -46,6 +46,7 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
     retry:
       limit: 3
       backoff:
