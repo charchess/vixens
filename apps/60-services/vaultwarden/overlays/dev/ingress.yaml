@@ -10,7 +10,7 @@ metadata:
     gethomepage.dev/name: "Vaultwarden"
     gethomepage.dev/icon: "vaultwarden.png"
     gethomepage.dev/group: "Services"
-    traefik.ingress.kubernetes.io/router.middlewares: services-vaultwarden-http-redirect@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: services-redirect-to-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
