@@ -21,8 +21,8 @@ cluster = {
 # CONTROL PLANE NODES (3 HA)
 # --------------------------------------------------------------------------
 control_plane_nodes = {
-  "obsy" = {
-    name         = "obsy"
+  "daphne" = {
+    name         = "daphne"
     ip_address   = "192.168.0.162"
     mac_address  = "00:15:5D:00:CB:10"
     install_disk = "/dev/sda"
@@ -42,8 +42,8 @@ control_plane_nodes = {
       ]
     }
   },
-  "onyx" = {
-    name         = "onyx"
+  "diva" = {
+    name         = "diva"
     ip_address   = "192.168.0.164"
     mac_address  = "00:15:5D:00:CB:11"
     install_disk = "/dev/sda"
@@ -63,8 +63,8 @@ control_plane_nodes = {
       ]
     }
   },
-  "opale" = {
-    name         = "opale"
+  "dulce" = {
+    name         = "dulce"
     ip_address   = "192.168.0.163"
     mac_address  = "00:15:5D:00:CB:0B"
     install_disk = "/dev/sda"
@@ -112,7 +112,7 @@ cilium_l2 = {
   policy_name = "dev-l2-policy"
   interfaces  = ["eth1"]
   node_selector = {
-    "kubernetes.io/hostname" = "obsy"
+    "kubernetes.io/hostname" = "daphne"
   }
 }
 
