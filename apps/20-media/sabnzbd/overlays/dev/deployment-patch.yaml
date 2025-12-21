@@ -6,6 +6,16 @@ metadata:
 spec:
   template:
     spec:
+      initContainers:
+        - name: configure-whitelist
+          image: busybox:latest
+          command: ["sh", "-c", "if [ -f /config/sabnzbd.ini ]; then sed -i \"s/^host_whitelist =.* /host_whitelist = ${HOST_WHITELIST_ENTRIES}/\" /config/sabnzbd.ini; else echo 'Config not found, skipping whitelist patch'; fi"]
+          env:
+            - name: HOST_WHITELIST_ENTRIES
+              value: "sabnzbd.dev.truxonline.com,sabnzbd,sabnzbd.media,sabnzbd.media.svc.cluster.local"
+          volumeMounts:
+            - name: config
+              mountPath: /config
       containers:
         - name: sabnzbd
           env:

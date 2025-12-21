@@ -20,7 +20,7 @@ spec:
         replicaCount: 1
 
         crds:
-          create: true
+          create: false
 
         config:
           clusterWide: true
