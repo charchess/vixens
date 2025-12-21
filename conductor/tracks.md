@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [ ] Track: Execute Pending GitOps & Application Tasks
+## [~] Track: Execute Pending GitOps & Application Tasks
 *Link: [./conductor/tracks/gitops_apps_20251221/](./conductor/tracks/gitops_apps_20251221/)*

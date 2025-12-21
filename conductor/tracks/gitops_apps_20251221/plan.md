@@ -1,22 +1,23 @@
 # Plan: Execute Pending GitOps & Application Tasks
 
-## Phase 1: Task Initialization & Analysis
-- [ ] Task: Connect to Archon and retrieve tasks assigned to "Coding Agent" (Status: review, doing, todo).
-- [ ] Task: Select the highest priority task according to the workflow (Review > Doing > Critical Todo).
+## Phase 1: Task Initialization & Audit
+- [ ] Task: Connect to Archon and retrieve tasks assigned to "Coding Agent".
+- [ ] Task: Perform an audit of existing Ingresses in `dev` environment to identify those missing HTTPS redirection.
+- [ ] Task: Identify applications currently in degraded states (CrashLoopBackOff, ImagePullBackOff, etc.).
 - [ ] Task: Update selected task status to 'doing' in Archon.
-- [ ] Task: Analyze the specific task requirements (e.g., NFS issue details, PVC configurations).
-- [ ] Task: Conductor - User Manual Verification 'Task Initialization & Analysis' (Protocol in workflow.md)
+- [ ] Task: Conductor - User Manual Verification 'Phase 1: Task Initialization & Audit' (Protocol in workflow.md)
 
 ## Phase 2: Implementation & Resolution
-- [ ] Task: Research solution using Archon RAG (e.g., Synology CSI docs, Talos NFS requirements).
-- [ ] Task: Implement fixes using Serena (e.g., updating PVC specs, debugging network policies, checking secret configurations).
+- [ ] Task: Update Ingress resources to include the `redirect-https` middleware.
+- [ ] Task: Resolve storage/NFS issues (e.g., updating PVC specs to `Recreate` strategy where needed).
+- [ ] Task: Fix configuration errors causing application crashes (Netbox, ArgoCD Server, etc.).
 - [ ] Task: Apply changes to the `dev` environment via Git commit (to `dev` branch).
-- [ ] Task: Verify deployment success (Terraform/ArgoCD sync).
-- [ ] Task: Conductor - User Manual Verification 'Implementation & Resolution' (Protocol in workflow.md)
+- [ ] Task: Conductor - User Manual Verification 'Phase 2: Implementation & Resolution' (Protocol in workflow.md)
 
 ## Phase 3: Validation & Propagation
-- [ ] Task: Validate application health using Playwright/Curl (Functional Check).
-- [ ] Task: Verify certificate issuance and HTTP->HTTPS redirection.
-- [ ] Task: Update task status to 'review' in Archon.
-- [ ] Task: Upon success, propagate changes to `test`, `staging`, and `prod` overlays (if applicable/safe).
-- [ ] Task: Conductor - User Manual Verification 'Validation & Propagation' (Protocol in workflow.md)
+- [ ] Task: Use Playwright/Curl to verify HTTP -> HTTPS redirection for all apps.
+- [ ] Task: Verify successful TLS certificate issuance via Cert-manager.
+- [ ] Task: Validate overall application health in `dev`.
+- [ ] Task: Update task status to 'review' in Archon and re-assign to User.
+- [ ] Task: Propagate validated changes to `test`, `staging`, and `prod` overlays.
+- [ ] Task: Conductor - User Manual Verification 'Phase 3: Validation & Propagation' (Protocol in workflow.md)
