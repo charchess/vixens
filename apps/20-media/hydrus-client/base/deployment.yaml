@@ -23,6 +23,7 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
+              touch /opt/hydrus/hydrus_crash.log
               chown -R 1000:1000 /opt/hydrus/db 2>&1 || echo "chown FAILED (continuing anyway)"
           volumeMounts:
             - name: config
