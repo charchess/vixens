@@ -10,7 +10,10 @@ metadata:
   name: hubble-ui
 rules:
   - apiGroups: [""]
-    resources: ["namespaces"]
+    resources: ["namespaces", "pods", "services", "endpoints"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["cilium.io"]
+    resources: ["ciliumnodes", "ciliumidentities", "ciliumendpoints"]
     verbs: ["get", "list", "watch"]
 ---
 kind: ClusterRoleBinding
