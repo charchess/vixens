@@ -18,7 +18,7 @@ spec:
       serviceAccountName: hubble-ui
       containers:
         - name: hubble-ui
-          image: quay.io/cilium/hubble-ui:v0.13.1
+          image: quay.io/cilium/hubble-ui:latest
           ports:
             - containerPort: 8080
               name: http
@@ -35,11 +35,12 @@ spec:
               mountPath: /etc/nginx/conf.d/default.conf
               subPath: default.conf
         - name: hubble-ui-backend
-          image: quay.io/cilium/hubble-ui-backend:v0.13.1
-          args:
-            - "serve"
-            - "--listen-address=:8081"
-            - "--api-address=hubble-relay.kube-system.svc.cluster.local:80"
+          image: quay.io/cilium/hubble-ui-backend:latest
+          env:
+            - name: EVENTS_SERVER_PORT
+              value: "8081"
+            - name: FLOWS_API_ADDR
+              value: "hubble-relay.kube-system.svc.cluster.local:80"
           ports:
             - containerPort: 8081
               name: grpc
