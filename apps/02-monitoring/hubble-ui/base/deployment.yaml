@@ -18,7 +18,7 @@ spec:
       serviceAccountName: hubble-ui
       containers:
         - name: hubble-ui
-          image: quay.io/cilium/hubble-ui:latest
+          image: quay.io/cilium/hubble-ui:v0.13.3
           ports:
             - containerPort: 8080
               name: http
@@ -35,7 +35,7 @@ spec:
               mountPath: /etc/nginx/conf.d/default.conf
               subPath: default.conf
         - name: hubble-ui-backend
-          image: quay.io/cilium/hubble-ui-backend:latest
+          image: quay.io/cilium/hubble-ui-backend:v0.13.3
           env:
             - name: EVENTS_SERVER_PORT
               value: "8081"
