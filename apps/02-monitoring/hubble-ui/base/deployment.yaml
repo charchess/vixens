@@ -36,11 +36,10 @@ spec:
               subPath: default.conf
         - name: hubble-ui-backend
           image: quay.io/cilium/hubble-ui-backend:v0.13.1
-          env:
-            - name: EVENTS_SERVER_PORT
-              value: "8081"
-            - name: FLOWS_API_ADDR
-              value: "hubble-relay.kube-system.svc.cluster.local:80"
+          args:
+            - "serve"
+            - "--listen-address=:8081"
+            - "--api-address=hubble-relay.kube-system.svc.cluster.local:80"
           ports:
             - containerPort: 8081
               name: grpc
