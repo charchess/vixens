@@ -56,7 +56,7 @@ data:
       project_id: homeassistant-garpinier
       service_account: !include HA_garpinier_SA.json
       report_state: true
-      expose_by_default: false
+      expose_by_default: true
       # exposed_domains:
       #   - script
       #   - switch
