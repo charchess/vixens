@@ -6,11 +6,11 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
-    traefik.ingress.kubernetes.io/router.middlewares: networking-redirect-scheme@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: tools-redirect-to-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
-  - host: headlamp.dev.truxonline.com
+  - host: headlamp.PLACEHOLDER.truxonline.com
     http:
       paths:
       - path: /
@@ -19,8 +19,8 @@ spec:
           service:
             name: headlamp
             port:
-              number: 4466
+              number: 80
   tls:
   - hosts:
-    - headlamp.dev.truxonline.com
+    - headlamp.PLACEHOLDER.truxonline.com
     secretName: headlamp-tls
