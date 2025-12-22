@@ -4,3 +4,4 @@ metadata:
   name: databases
   labels:
     goldilocks.fairwinds.com/enabled: "true"
+    goldilocks.fairwinds.com/enabled: "true"
