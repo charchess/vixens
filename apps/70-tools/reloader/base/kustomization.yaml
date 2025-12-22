@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: tools
+
+# Helm chart will be managed by ArgoCD Application directly or via Kustomize helmCharts
+# Since we use ArgoCD multiple sources pattern, I'll define it in the ArgoCD App.
+# This base will just define the namespace if needed, but tools already exists.

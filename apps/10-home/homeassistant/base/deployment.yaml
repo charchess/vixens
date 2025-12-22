@@ -6,6 +6,8 @@ metadata:
   namespace: homeassistant
   labels:
     app: homeassistant
+  annotations:
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   strategy:
@@ -90,7 +92,7 @@ spec:
               mountPath: /config
             - name: ha-config
               mountPath: /config/configuration.yaml
-              subPath: configuration.yaml
+              subPath: CONFIGURATION_YAML
           resources:
             requests:
               cpu: 300m
@@ -145,5 +147,5 @@ spec:
         - name: filebrowser-db
           emptyDir: {}  # Ephemeral storage for filebrowser database
         - name: ha-config
-          configMap:
-            name: homeassistant-config
+          secret:
+            secretName: homeassistant-config

@@ -1,36 +1,32 @@
----
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: alertmanager
+  name: reloader
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
-  annotations:
-    argocd.argoproj.io/sync-wave: "5"
 spec:
   project: default
   sources:
-    - repoURL: https://prometheus-community.github.io/helm-charts
-      chart: prometheus-alertmanager
-      targetRevision: 0.30.0
+    - repoURL: https://stakater.github.io/stakater-charts
+      chart: reloader
+      targetRevision: v1.0.118
       helm:
-        releaseName: alertmanager
+        releaseName: reloader
         valueFiles:
-          - $values/apps/02-monitoring/alertmanager/base/values.yaml
+          - $values/apps/70-tools/reloader/base/values.yaml
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: dev
       ref: values
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: dev
-      path: apps/02-monitoring/alertmanager/overlays/dev
+      path: apps/70-tools/reloader/base
   destination:
     server: https://kubernetes.default.svc
-    namespace: monitoring
+    namespace: tools
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - ServerSideApply=true
