@@ -47,3 +47,16 @@ spec:
 
   monitoring:
     enablePodMonitor: false  # Enable later with Prometheus integration
+
+  backup:
+    barmanObjectStore:
+      destinationPath: s3://postgresql-backups/
+      endpointURL: http://synelia.internal.truxonline.com:9000
+      s3Credentials:
+        accessKeyId:
+          name: postgresql-backup-s3
+          key: accessKey
+        secretAccessKey:
+          name: postgresql-backup-s3
+          key: secretKey
+    retentionPolicy: "30d"

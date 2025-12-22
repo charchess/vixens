@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+spec:
+  template:
+    spec:
+      containers:
+        - name: alertmanager
+          env:
+            - name: ALERTMANAGER_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: alertmanager-secrets
+                  key: ALERTMANAGER_WEBHOOK_URL
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cp /etc/alertmanager/alertmanager.yml /tmp/alertmanager.yml &&
+              sed -i "s|WEBHOOK_URL_PLACEHOLDER|$ALERTMANAGER_WEBHOOK_URL|g" /tmp/alertmanager.yml &&
+              /bin/alertmanager --config.file=/tmp/alertmanager.yml --storage.path=/alertmanager

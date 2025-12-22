@@ -1,0 +1,23 @@
+---
+apiVersion: secrets.infisical.com/v1alpha1
+kind: InfisicalSecret
+metadata:
+  name: homeassistant-config-sync
+  namespace: homeassistant
+spec:
+  hostAPI: http://192.168.111.69:8085
+  resyncInterval: 60
+  authentication:
+    universalAuth:
+      credentialsRef:
+        secretName: infisical-universal-auth
+        secretNamespace: argocd
+      secretsScope:
+        projectSlug: vixens
+        envSlug: dev # Sera patché par l'overlay
+        secretsPath: /homeassistant
+  managedSecretReference:
+    secretName: homeassistant-config
+    secretNamespace: homeassistant
+    creationPolicy: Owner
+    secretType: Opaque
