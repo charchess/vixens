@@ -59,3 +59,6 @@ resources:
   - apps/changedetection.yaml
   - apps/adguard-home.yaml
   - apps/netvisor.yaml
+  - apps/alertmanager.yaml
+  - apps/headlamp.yaml
+  - apps/hubble-ui.yaml
