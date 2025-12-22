@@ -15,6 +15,9 @@ resources:
   - apps/metrics-server.yaml
   - apps/vpa.yaml
   - apps/goldilocks.yaml                        # Traefik Ingress Controller
+  - apps/alertmanager.yaml
+  - apps/headlamp.yaml
+  - apps/hubble-ui.yaml
   # Traefik Dashboard hostname redirect
   - apps/traefik-dashboard.yaml
   - apps/argocd.yaml                         # ArgoCD Ingress for UI
