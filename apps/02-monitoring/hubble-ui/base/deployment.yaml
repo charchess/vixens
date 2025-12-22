@@ -15,6 +15,7 @@ spec:
       labels:
         app: hubble-ui
     spec:
+      serviceAccountName: hubble-ui
       containers:
         - name: hubble-ui
           image: quay.io/cilium/hubble-ui:v0.13.3
