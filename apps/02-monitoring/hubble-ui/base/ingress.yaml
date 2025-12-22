@@ -6,11 +6,11 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
-    traefik.ingress.kubernetes.io/router.middlewares: networking-redirect-scheme@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: monitoring-redirect-to-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
-  - host: hubble.dev.truxonline.com
+  - host: hubble.PLACEHOLDER.truxonline.com
     http:
       paths:
       - path: /
@@ -22,5 +22,5 @@ spec:
               number: 80
   tls:
   - hosts:
-    - hubble.dev.truxonline.com
+    - hubble.PLACEHOLDER.truxonline.com
     secretName: hubble-ui-tls
