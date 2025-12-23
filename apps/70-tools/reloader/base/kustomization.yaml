@@ -5,3 +5,6 @@ namespace: tools
 
 resources:
   - https://raw.githubusercontent.com/stakater/Reloader/v1.0.118/deployments/kubernetes/reloader.yaml
+
+patchesStrategicMerge:
+  - patch-tolerations.yaml
