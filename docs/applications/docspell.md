@@ -13,16 +13,22 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://docspell.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://docspell.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://docspell.dev.truxonline.com | grep "Docspell"
+# Attendu: Présence de "Docspell"
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Se connecter et uploader un document test.
+2. Se connecter et vérifier que l'upload de documents fonctionne.
+3. Vérifier que la recherche Solr fonctionne (pas d'erreur "Solr not available").
 
 ## Notes Techniques
-- **Namespace :** `services` (A vérifier, probable)
+- **Namespace :** `services`
 - **Dépendances :**
     - `PostgreSQL` (Shared Cluster)
     - `Solr` (Composant Joex interne)

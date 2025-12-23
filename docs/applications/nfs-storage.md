@@ -13,8 +13,9 @@
 
 ### Méthode Automatique (Command Line)
 ```bash
+# Vérifier l'existence et le statut du namespace
 kubectl get ns nfs-storage
-# Attendu: Active
+# Attendu: Status "Active"
 ```
 
 ### Méthode Manuelle

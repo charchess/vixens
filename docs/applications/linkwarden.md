@@ -13,8 +13,13 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://linkwarden.dev.truxonline.com
-# Attendu: HTTP 200 (ou redirect login)
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://linkwarden.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://linkwarden.dev.truxonline.com | grep "Linkwarden"
+# Attendu: Présence de "Linkwarden"
 ```
 
 ### Méthode Manuelle

@@ -13,13 +13,18 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://frigate.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://frigate.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://frigate.dev.truxonline.com | grep "Frigate"
+# Attendu: Présence de "Frigate"
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Vérifier le flux des caméras.
+2. Vérifier le flux des caméras et l'absence d'erreurs "MSE" ou de connexion.
 
 ## Notes Techniques
 - **Namespace :** `media-stack`

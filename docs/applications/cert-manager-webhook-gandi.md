@@ -13,12 +13,14 @@
 
 ### Méthode Automatique (Command Line)
 ```bash
+# Vérifier que le pod webhook est en ligne
 kubectl get pods -n cert-manager -l app.kubernetes.io/name=cert-manager-webhook-gandi
 # Attendu: Pod en statut Running
 ```
 
 ### Méthode Manuelle
-1. Vérifier les logs du pod webhook lors d'une demande de certificat.
+1. Vérifier les logs du pod webhook lors d'une demande de certificat : `kubectl logs -n cert-manager -l app.kubernetes.io/name=cert-manager-webhook-gandi`.
+2. S'assurer qu'il n'y a pas d'erreur d'authentification API Gandi (403 Forbidden).
 
 ## Notes Techniques
 - **Namespace :** `cert-manager`

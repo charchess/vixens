@@ -13,13 +13,19 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://sonarr.dev.truxonline.com
-# Attendu: HTTP 200 (Login ou App)
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://sonarr.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://sonarr.dev.truxonline.com | grep "Sonarr"
+# Attendu: Présence de "Sonarr"
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Vérifier l'accès aux séries TV.
+2. Vérifier que l'interface se charge.
+3. Vérifier la connexion à Prowlarr et au client de téléchargement dans Settings > Connect.
 
 ## Notes Techniques
 - **Namespace :** `media-stack`

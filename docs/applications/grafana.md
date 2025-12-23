@@ -13,14 +13,19 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://grafana.dev.truxonline.com/login
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://grafana.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS et le contenu (Page Login)
+curl -L -k https://grafana.dev.truxonline.com/login | grep "Grafana"
+# Attendu: Présence de "Grafana"
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
 2. Se connecter (SSO ou admin/admin si configuré).
-3. Vérifier que les dashboards sont accessibles.
+3. Vérifier que les dashboards sont accessibles et ne retournent pas d'erreur "Datasource missing".
 
 ## Notes Techniques
 - **Namespace :** `monitoring`

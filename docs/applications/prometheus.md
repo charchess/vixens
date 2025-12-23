@@ -13,14 +13,19 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://prometheus.dev.truxonline.com/graph
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://prometheus.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS et le contenu (Graph)
+curl -L -k https://prometheus.dev.truxonline.com/graph | grep "Prometheus"
+# Attendu: Présence de "Prometheus" dans le titre
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
 2. Vérifier que l'interface Prometheus s'affiche.
-3. Exécuter une requête simple (ex: `up`).
+3. Exécuter une requête simple (ex: `up`) et vérifier qu'elle retourne des résultats (pas d'erreur "Network Error" ou vide).
 
 ## Notes Techniques
 - **Namespace :** `monitoring`

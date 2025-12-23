@@ -13,13 +13,18 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://goldilocks.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://goldilocks.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://goldilocks.dev.truxonline.com | grep "Goldilocks"
+# Attendu: Présence de "Goldilocks"
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Vérifier que la liste des namespaces s'affiche.
+2. Vérifier que la liste des namespaces s'affiche et que les recommandations VPA sont visibles.
 
 ## Notes Techniques
 - **Namespace :** `monitoring`

@@ -13,13 +13,19 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://prowlarr.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://prowlarr.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://prowlarr.dev.truxonline.com | grep "Prowlarr"
+# Attendu: Présence de "Prowlarr"
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Vérifier le statut des indexeurs.
+2. Vérifier que l'interface se charge.
+3. Vérifier le statut des indexeurs (pas d'erreur rouge, utilisation du proxy Gluetun confirmée).
 
 ## Notes Techniques
 - **Namespace :** `media-stack`

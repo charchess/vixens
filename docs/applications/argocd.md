@@ -13,13 +13,18 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://argocd.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://argocd.dev.truxonline.com
+# Attendu: HTTP 301/302/307/308 (Location: https://...)
+
+# 2. Vérifier l'accès HTTPS et le contenu
+curl -L -k https://argocd.dev.truxonline.com | grep "Argo CD"
+# Attendu: Présence de "Argo CD" dans le body ou title
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Vérifier que l'interface de login ArgoCD s'affiche.
+2. Vérifier que l'interface de login ArgoCD s'affiche correctement sans erreur de chargement d'assets.
 
 ## Notes Techniques
 - **Namespace :** `argocd`

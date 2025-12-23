@@ -13,13 +13,15 @@
 
 ### Méthode Automatique (Command Line)
 ```bash
+# Vérifier que le pod est en ligne
 kubectl get pods -n tools -l app=gitops-revision-controller
 # Attendu: Pod en statut Running
 ```
 
 ### Méthode Manuelle
 1. Vérifier les logs du pod: `kubectl logs -n tools -l app=gitops-revision-controller`.
-2. Vérifier qu'il réagit aux changements d'applications ArgoCD.
+2. Vérifier qu'il réagit aux changements d'applications ArgoCD (logs de type "Application changed...").
+3. Vérifier qu'il met à jour les ConfigMaps cibles (ex: config HomeAssistant).
 
 ## Notes Techniques
 - **Namespace :** `tools`

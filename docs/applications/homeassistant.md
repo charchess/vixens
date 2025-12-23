@@ -13,13 +13,19 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://homeassistant.dev.truxonline.com
-# Attendu: HTTP 200 ou 302 (Redirection Login)
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://homeassistant.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://homeassistant.dev.truxonline.com | grep "Home Assistant"
+# Attendu: Présence de "Home Assistant"
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
 2. Vérifier que la page de login s'affiche ("Home Assistant").
+3. Vérifier que la connexion WebSocket ne retourne pas d'erreur (pas de bandeau "Connection lost").
 
 ## Notes Techniques
 - **Namespace :** `homeassistant`

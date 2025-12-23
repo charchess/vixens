@@ -13,13 +13,17 @@
 
 ### Méthode Automatique (Command Line)
 ```bash
+# Vérifier que le pod est en ligne
 kubectl get pods -n databases -l app=redis-shared
 # Attendu: Pod en statut Running
+
+# Test de connexion simple (PING)
+kubectl exec -it -n databases deploy/redis-shared -- redis-cli ping
+# Attendu: PONG
 ```
 
 ### Méthode Manuelle
-1. `kubectl exec -it -n databases deploy/redis-shared -- redis-cli ping`
-2. Attendu: `PONG`
+1. Vérifier que les applications dépendantes (Authentik, Netbox) ne remontent pas d'erreur de connexion Redis.
 
 ## Notes Techniques
 - **Namespace :** `databases`

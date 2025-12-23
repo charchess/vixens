@@ -13,13 +13,18 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://traefik.dev.truxonline.com/dashboard/
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://traefik.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS au dashboard
+curl -L -k https://traefik.dev.truxonline.com/dashboard/ | grep "Traefik"
+# Attendu: Présence de "Traefik" dans le titre ou le body
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Vérifier que l'interface dashboard de Traefik s'affiche.
+2. Vérifier que l'interface dashboard de Traefik s'affiche avec les routeurs et services (pas de page blanche).
 
 ## Notes Techniques
 - **Namespace :** `traefik`

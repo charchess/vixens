@@ -13,13 +13,18 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://sabnzbd.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://sabnzbd.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://sabnzbd.dev.truxonline.com | grep "SABnzbd"
+# Attendu: Présence de "SABnzbd"
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Vérifier la file d'attente de téléchargement.
+2. Vérifier que la file d'attente de téléchargement est visible et qu'il n'y a pas d'erreurs de dossiers (Permissions NFS).
 
 ## Notes Techniques
 - **Namespace :** `media-stack`

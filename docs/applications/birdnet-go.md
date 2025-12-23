@@ -13,13 +13,18 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://birdnet.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://birdnet.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://birdnet.dev.truxonline.com | grep "BirdNET-Go"
+# Attendu: Présence de "BirdNET-Go"
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Vérifier que l'analyse audio fonctionne (si flux audio configuré).
+2. Vérifier que l'analyse audio fonctionne (si flux audio configuré) et que le spectrogramme s'affiche.
 
 ## Notes Techniques
 - **Namespace :** `media-stack`

@@ -13,13 +13,15 @@
 
 ### Méthode Automatique (Command Line)
 ```bash
+# Vérifier que les composants Cert-Manager sont en ligne
 kubectl get pods -n cert-manager
 # Attendu: Pods cert-manager, cainjector, webhook en statut Running
 ```
 
 ### Méthode Manuelle
-1. Vérifier la création d'un certificat pour une Ingress.
-2. `kubectl get certificaterequest -A`
+1. Créer une Ingress avec `cert-manager.io/cluster-issuer: letsencrypt-staging`.
+2. Vérifier la création de la ressource `CertificateRequest`: `kubectl get certificaterequest -A`.
+3. Vérifier que le challenge DNS (via webhook Gandi) réussit et que le secret TLS est créé.
 
 ## Notes Techniques
 - **Namespace :** `cert-manager`

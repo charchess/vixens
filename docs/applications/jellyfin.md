@@ -13,13 +13,19 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://jellyfin.dev.truxonline.com/web/index.html
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://jellyfin.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://jellyfin.dev.truxonline.com/web/index.html | grep "Jellyfin"
+# Attendu: Présence de "Jellyfin"
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Lire une vidéo.
+2. Se connecter.
+3. Lire une vidéo pour vérifier le transcodage et l'accès au stockage.
 
 ## Notes Techniques
 - **Namespace :** `media-stack`

@@ -13,8 +13,9 @@
 
 ### Méthode Automatique (Command Line)
 ```bash
+# Vérifier que l'API metrics est disponible
 kubectl top nodes
-# Attendu: Affichage de la consommation CPU/RAM des noeuds
+# Attendu: Affichage de la consommation CPU/RAM des noeuds (et non "metrics API not available")
 ```
 
 ### Méthode Manuelle
