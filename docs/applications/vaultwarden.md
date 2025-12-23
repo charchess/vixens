@@ -13,13 +13,19 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://vaultwarden.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://vaultwarden.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://vaultwarden.dev.truxonline.com | grep "Vaultwarden"
+# Attendu: Présence de "Vaultwarden" (ou "Bitwarden")
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Vérifier que l'interface Bitwarden s'affiche.
+2. Vérifier que l'interface de login s'affiche.
+3. Tenter une création de compte (si activé) ou un login.
 
 ## Notes Techniques
 - **Namespace :** `services` (A vérifier)

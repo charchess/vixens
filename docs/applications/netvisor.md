@@ -13,13 +13,18 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://netvisor.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://netvisor.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://netvisor.dev.truxonline.com | grep "Netvisor"
+# Attendu: Présence de "Netvisor"
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Vérifier que les métriques réseau s'affichent.
+2. Vérifier que les métriques réseau s'affichent et se mettent à jour.
 
 ## Notes Techniques
 - **Namespace :** `networking`

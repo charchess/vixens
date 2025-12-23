@@ -13,12 +13,18 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://whisparr.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://whisparr.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://whisparr.dev.truxonline.com | grep "Whisparr"
+# Attendu: Présence de "Whisparr"
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
+2. Vérifier que l'interface se charge.
 
 ## Notes Techniques
 - **Namespace :** `media-stack`

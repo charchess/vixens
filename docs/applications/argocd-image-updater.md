@@ -13,12 +13,17 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://image-updater.dev.truxonline.com/healthz
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://image-updater.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier le health check
+curl -k https://image-updater.dev.truxonline.com/healthz
+# Attendu: HTTP 200 (OK)
 ```
 
 ### Méthode Manuelle
-1. Vérifier les logs pour voir si les nouvelles images sont détectées.
+1. Vérifier les logs pour voir si les nouvelles images sont détectées (`kubectl logs -n tools -l app.kubernetes.io/name=argocd-image-updater`).
 
 ## Notes Techniques
 - **Namespace :** `tools`

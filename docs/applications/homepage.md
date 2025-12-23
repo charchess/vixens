@@ -13,13 +13,19 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://homepage.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://homepage.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://homepage.dev.truxonline.com | grep "Homepage"
+# Attendu: Contenu de la page d'accueil
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
 2. Vérifier que le dashboard d'accueil s'affiche avec les icônes des services.
+3. Vérifier que les widgets dynamiques (ex: météo, ressources) affichent des données et non des erreurs API.
 
 ## Notes Techniques
 - **Namespace :** `tools`

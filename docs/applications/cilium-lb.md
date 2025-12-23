@@ -13,12 +13,14 @@
 
 ### Méthode Automatique (Command Line)
 ```bash
+# Vérifier l'existence du pool IP
 kubectl get ciliumloadbalancerippool
-# Attendu: Liste des pools IP configurés (ex: pool-dev)
+# Attendu: Liste des pools IP configurés (ex: pool-dev) et Enabled
 ```
 
 ### Méthode Manuelle
-1. Vérifier qu'un service de type LoadBalancer obtient une IP externe.
+1. Vérifier qu'un service de type LoadBalancer (ex: Traefik) obtient une IP externe du pool.
+2. Vérifier que cette IP est joignable depuis le réseau local (ping/curl).
 
 ## Notes Techniques
 - **Namespace :** `kube-system`

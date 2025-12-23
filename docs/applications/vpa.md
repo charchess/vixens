@@ -13,13 +13,14 @@
 
 ### Méthode Automatique (Command Line)
 ```bash
+# Vérifier que les composants VPA sont en ligne
 kubectl get pods -n monitoring -l app.kubernetes.io/name=vpa
 # Attendu: Pods recommender, updater, admission-controller en statut Running
 ```
 
 ### Méthode Manuelle
-1. Créer un objet `VerticalPodAutoscaler` de test.
-2. Vérifier qu'il génère des recommandations.
+1. Créer un objet `VerticalPodAutoscaler` de test pour un Deployment existant.
+2. Attendre quelques minutes et vérifier qu'il génère des recommandations : `kubectl get vpa <nom> -o yaml`.
 
 ## Notes Techniques
 - **Namespace :** `monitoring`

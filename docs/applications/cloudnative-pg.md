@@ -13,13 +13,14 @@
 
 ### Méthode Automatique (Command Line)
 ```bash
+# Vérifier que le pod de l'opérateur est en ligne
 kubectl get pods -n cnpg-system
 # Attendu: Pod operator en statut Running
 ```
 
 ### Méthode Manuelle
-1. Vérifier les logs de l'opérateur.
-2. Vérifier que les CRDs `Cluster` sont disponibles.
+1. Vérifier les logs de l'opérateur pour s'assurer qu'il n'y a pas d'erreurs de boucle de réconciliation.
+2. Vérifier que les CRDs `Cluster`, `Pooler`, `Backup` sont disponibles : `kubectl get crds | grep postgresql`.
 
 ## Notes Techniques
 - **Namespace :** `cnpg-system`

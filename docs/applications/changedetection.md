@@ -13,13 +13,18 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://changedetection.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://changedetection.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://changedetection.dev.truxonline.com | grep "ChangeDetection.io"
+# Attendu: Présence du titre
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Ajouter une URL à surveiller (ex: google.com).
+2. Ajouter une URL à surveiller (ex: google.com) et vérifier que le check passe au vert (Browserless fonctionnel).
 
 ## Notes Techniques
 - **Namespace :** `tools`

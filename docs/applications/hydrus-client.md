@@ -13,12 +13,18 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://hydrus-web.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://hydrus-web.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://hydrus-web.dev.truxonline.com | grep "Hydrus"
+# Attendu: Présence de "Hydrus"
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
+2. Vérifier l'affichage de la galerie.
 
 ## Notes Techniques
 - **Namespace :** `media-stack`

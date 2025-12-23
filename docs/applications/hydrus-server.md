@@ -13,12 +13,17 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://hydrus.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://hydrus.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://hydrus.dev.truxonline.com
+# Attendu: HTTP 200 (Page d'accueil ou API status)
 ```
 
 ### Méthode Manuelle
-1. Vérifier la connexion depuis le client Hydrus.
+1. Vérifier la connexion depuis le client Hydrus (test de l'API Key).
 
 ## Notes Techniques
 - **Namespace :** `media-stack`

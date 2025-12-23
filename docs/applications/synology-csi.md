@@ -13,13 +13,15 @@
 
 ### Méthode Automatique (Command Line)
 ```bash
+# Vérifier que les pods du driver sont en ligne
 kubectl get pods -n synology-csi
-# Attendu: Pods controller et node en statut Running
+# Attendu: Pods controller et node en statut Running (tous)
 ```
 
 ### Méthode Manuelle
-1. Créer une PVC utilisant la StorageClass `synelia-iscsi-retain`.
-2. Vérifier que la PVC est bound.
+1. Créer une PVC de test utilisant la StorageClass `synelia-iscsi-retain`.
+2. Créer un Pod qui monte cette PVC.
+3. Vérifier que la PVC passe en statut `Bound` et que le Pod démarre (Mount successful).
 
 ## Notes Techniques
 - **Namespace :** `synology-csi`

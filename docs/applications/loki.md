@@ -13,13 +13,18 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://loki.dev.truxonline.com/ready
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://loki.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'état "Ready" de l'API
+curl -L -k https://loki.dev.truxonline.com/ready
+# Attendu: HTTP 200 (ready)
 ```
 
 ### Méthode Manuelle
-1. Vérifier la source de données Loki dans Grafana.
-2. Explorer les logs dans Grafana.
+1. Vérifier la source de données Loki dans Grafana (Explore > Loki).
+2. Exécuter une requête simple (`{namespace="monitoring"}`) et vérifier l'affichage des logs.
 
 ## Notes Techniques
 - **Namespace :** `monitoring`

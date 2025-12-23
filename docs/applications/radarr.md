@@ -13,13 +13,19 @@
 
 ### Méthode Automatique (Curl)
 ```bash
-curl -I -k https://radarr.dev.truxonline.com
-# Attendu: HTTP 200
+# 1. Vérifier la redirection HTTP -> HTTPS
+curl -I http://radarr.dev.truxonline.com
+# Attendu: HTTP 301/302/308
+
+# 2. Vérifier l'accès HTTPS
+curl -L -k https://radarr.dev.truxonline.com | grep "Radarr"
+# Attendu: Présence de "Radarr"
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Vérifier l'accès aux films.
+2. Vérifier que l'interface se charge.
+3. Vérifier les connexions (Prowlarr, Download Client).
 
 ## Notes Techniques
 - **Namespace :** `media-stack`

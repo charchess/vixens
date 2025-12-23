@@ -13,12 +13,14 @@
 
 ### Méthode Automatique (Command Line)
 ```bash
+# Vérifier que le DaemonSet déploie bien un pod par noeud
 kubectl get daemonset promtail -n monitoring
-# Attendu: Desired = Current = Ready
+# Attendu: Desired = Current = Ready = (Nombre de noeuds)
 ```
 
 ### Méthode Manuelle
 1. Vérifier que les logs d'un nouveau pod apparaissent dans Grafana (Loki) quelques secondes après démarrage.
+2. Vérifier les logs d'un pod Promtail pour s'assurer de la connexion réussie à Loki (`clients.go: Connect ... success`).
 
 ## Notes Techniques
 - **Namespace :** `monitoring`
