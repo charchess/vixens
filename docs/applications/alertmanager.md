@@ -33,5 +33,5 @@ curl -L -k https://alertmanager.dev.truxonline.com | grep "Alertmanager"
     - `Prometheus` (Source des alertes)
 - **Particularités :** Déployé via Helm Chart `prometheus-alertmanager`.
 - **Secrets :**
-    - Path Infisical : `/apps/02-monitoring/prometheus`
+    - Path Infisical : `/apps/02-monitoring/alertmanager`
     - Variables requises : `DISCORD_WEBHOOK_URL`
