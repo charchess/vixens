@@ -14,7 +14,7 @@ spec:
       secretsScope:
         projectSlug: vixens
         envSlug: dev
-        secretsPath: "/gitops/revisions/homeassistant"
+        secretsPath: "/apps/70-tools/gitops-revision-controller"
   managedSecretReference:
     secretName: homeassistant-revision
     secretNamespace: argocd
