@@ -4,14 +4,19 @@ metadata:
   name: homeassistant-revision
   namespace: tools
 spec:
+  hostAPI: http://192.168.111.69:8085
+  resyncInterval: 60
+  authentication:
+    universalAuth:
+      credentialsRef:
+        secretName: infisical-universal-auth
+        secretNamespace: argocd
+      secretsScope:
+        projectSlug: vixens
+        envSlug: dev
+        secretsPath: "/apps/70-tools/gitops-revision-controller"
   managedSecretReference:
     secretName: homeassistant-revision
     secretNamespace: tools
     creationPolicy: Owner
     secretType: Opaque
-    # Templates/Annotations are not directly supported by InfisicalSecret to be applied on the GENERATED secret easily unless we use a specific feature or if the Operator copies them.
-    # The Infisical Operator (v1alpha1) typically copies labels/annotations from the InfisicalSecret to the ManagedSecret?
-    # Let's verify documentation or assume standard behavior.
-    # If not, we might need a workaround (e.g. creating the Secret wrapper manually or using a reflector).
-    # Update: Recent Infisical Operator versions support `managedSecretReference.template` or similar.
-    # checking `apps/01-storage/synology-csi/base/infisical/client-info.yaml` for examples.
