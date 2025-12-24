@@ -10,7 +10,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    path: apps/01-storage/synology-csi/overlays/dev
+    path: apps/01-storage/synology-csi/overlays/dev-v2
     targetRevision: dev
   destination:
     server: https://kubernetes.default.svc
