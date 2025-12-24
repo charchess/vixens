@@ -14,8 +14,9 @@ spec:
         secretNamespace: argocd
       secretsScope:
         projectSlug: vixens
-        envSlug: dev # Sera patché par l'overlay
-        secretsPath: /homeassistant
+        envSlug: dev
+        secretsPath: /apps/10-home/homeassistant
+      credentialsRef:
   managedSecretReference:
     secretName: homeassistant-config
     secretNamespace: homeassistant

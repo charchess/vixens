@@ -15,8 +15,8 @@ spec:
       secretsScope:
         projectSlug: vixens
         envSlug: staging
-        secretsPath: /mosquitto
-  managedSecretReference:
+        secretsPath: /apps/10-home/mosquitto
+      credentialsRef:
     secretName: mosquitto-password-file
     secretNamespace: mosquitto
     creationPolicy: Owner
