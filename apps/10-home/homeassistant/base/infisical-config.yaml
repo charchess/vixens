@@ -16,7 +16,6 @@ spec:
         projectSlug: vixens
         envSlug: dev
         secretsPath: /apps/10-home/homeassistant
-      credentialsRef:
   managedSecretReference:
     secretName: homeassistant-config
     secretNamespace: homeassistant
