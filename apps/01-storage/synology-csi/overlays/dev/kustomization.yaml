@@ -27,3 +27,4 @@ patches:
 
 commonLabels:
   vixens.lab/environment: dev
+  cache-bust: "1"
