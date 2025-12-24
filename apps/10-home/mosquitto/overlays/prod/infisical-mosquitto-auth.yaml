@@ -16,7 +16,6 @@ spec:
         projectSlug: vixens
         envSlug: prod
         secretsPath: /apps/10-home/mosquitto
-      credentialsRef:
   managedSecretReference:
     secretName: mosquitto-password-file
     secretNamespace: mosquitto
