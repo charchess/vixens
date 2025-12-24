@@ -9,6 +9,7 @@
 ## Networking & Security
 - **CNI:** Cilium (High-performance networking with L2 announcements and observability).
 - **Secrets Management:** Infisical (Centralized secret storage and injection).
+    - **Standard:** Strict mirror hierarchy (Infisical Path: `/apps/XX-category/app-name`).
 - **Certificates:** Cert-manager (Automated TLS via Let's Encrypt and Gandi DNS).
 - **Ingress Controller:** Traefik (Edge router and load balancer).
 

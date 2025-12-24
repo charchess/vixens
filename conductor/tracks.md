@@ -19,5 +19,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [~] Track: Global Application Migration & Infisical Hierarchy Refactor
+## [x] Track: Global Application Migration & Infisical Hierarchy Refactor
 *Link: [./conductor/tracks/infisical_refactor_20251222/](./conductor/tracks/infisical_refactor_20251222/)*
