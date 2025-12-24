@@ -9,7 +9,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/charchess/vixens
+    repoURL: https://github.com/charchess/vixens.git
     path: apps/01-storage/synology-csi/overlays/dev
     targetRevision: dev
   destination:
