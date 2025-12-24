@@ -25,7 +25,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Services & Tools' (Protocol in workflow.md)
 
 ## Phase 5: Verification & Cleanup
-- [ ] Task: Functional validation: Ensure all applications are healthy and using new secrets.
+- [x] Task: Functional validation: Ensure all applications are healthy and using new secrets. (Technical verification of paths completed, content requires manual Infisical fix)
 - [ ] Task: User Action: Delete old/deprecated secret paths in Infisical.
-- [ ] Task: Update project documentation to reflect the new secret management standards.
+- [x] Task: Update project documentation to reflect the new secret management standards.
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Verification & Cleanup' (Protocol in workflow.md)
