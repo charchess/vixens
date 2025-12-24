@@ -19,6 +19,8 @@ patches:
         path: /parameters/targetIps
         value: "192.168.111.70,192.168.111.71"
 
-commonLabels:
-  vixens.lab/environment: dev
-  cache-bust: "1"
+labels:
+  - pairs:
+      vixens.lab/environment: dev
+      cache-bust: "2"
+    includeTemplates: true
