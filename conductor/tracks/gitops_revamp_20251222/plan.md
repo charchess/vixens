@@ -13,12 +13,12 @@
 - [x] Task: Refactor Home Assistant `kustomization.yaml` to remove local `configmap.yaml`.
 - [x] Task: Update Home Assistant `deployment.yaml` to mount the new Secret as a volume at `/config/configuration.yaml`.
 - [x] Task: Add `reloader.stakater.com/auto: "true"` annotation to Home Assistant Deployment.
-- [ ] Task: Verify Home Assistant starts correctly with config from Infisical.
+- [x] Task: Verify Home Assistant starts correctly with config from Infisical.
 
 ## Phase 3: Dynamic Revision Verification
 - [x] Task: Create an Infisical Secret for Home Assistant revision (e.g., `HASS_TARGET_REVISION`).
 - [x] Task: Configure the `gitops-revision-controller` to watch this secret.
-- [ ] Task: Functional Test: Change revision in Infisical and observe ArgoCD Application update.
+- [x] Task: Functional Test: Change revision in Infisical and observe ArgoCD Application update.
 
 ## Phase 4: Follow-up & Documentation
 - [x] Task: Document the new Configuration Management pattern in `conductor/product-guidelines.md` or `tech-stack.md`.

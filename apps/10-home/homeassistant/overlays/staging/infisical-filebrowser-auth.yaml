@@ -15,7 +15,7 @@ spec:
       secretsScope:
         projectSlug: vixens
         envSlug: staging
-        secretsPath: /homeassistant/filebrowser
+        secretsPath: /apps/10-home/homeassistant
   managedSecretReference:
     secretName: filebrowser-auth
     secretNamespace: homeassistant

@@ -22,7 +22,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Integration & Dashboards' (Protocol in workflow.md)
 
 ## Phase 4: Validation & Archon Sync
-- [ ] Task: Functional validation: Verify HTTPS redirection and TLS for all new tool UIs.
-- [ ] Task: Test Alertmanager alert firing path (webhook reception).
+- [x] Task: Functional validation: Verify HTTPS redirection and TLS for all new tool UIs.
+- [x] Task: Test Alertmanager alert firing path (webhook reception).
 - [x] Task: Synchronize track progress with Archon (Create granular tasks).
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Validation & Archon Sync' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Validation & Archon Sync' (Protocol in workflow.md)
