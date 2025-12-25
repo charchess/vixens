@@ -70,7 +70,7 @@ jobs:
 
 
           # Valider tous les fichiers YAML pertinents
-          find apps argocd -name "*.yaml" -o -name "*.yml" \
+          find apps argocd \( -name "*.yaml" -o -name "*.yml" \) \
             ! -path "*/crds/*" \
             ! -name "upstream.yaml" \
             ! -name "poolers.yaml" | \
