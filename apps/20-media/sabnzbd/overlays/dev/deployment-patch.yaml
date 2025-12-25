@@ -37,6 +37,16 @@ spec:
                 secretKeyRef:
                   name: sabnzbd-secrets
                   key: USENET_PASS
+            - name: SABNZBD__ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sabnzbd-secrets
+                  key: ADMIN_USER
+            - name: SABNZBD__ADMIN_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: sabnzbd-secrets
+                  key: ADMIN_PASS
           volumeMounts:
             - name: config
               mountPath: /config
