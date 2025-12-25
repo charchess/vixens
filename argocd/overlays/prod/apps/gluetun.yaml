@@ -12,7 +12,7 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     path: apps/60-services/gluetun/overlays/prod
-    targetRevision: dev
+    targetRevision: main
   destination:
     server: https://kubernetes.default.svc
     namespace: services

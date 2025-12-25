@@ -23,12 +23,12 @@ spec:
 
     # Source 2: Values from Git
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: dev
+      targetRevision: main
       ref: values
 
     # Source 3: Kustomize manifests from Git
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: dev
+      targetRevision: main
       path: apps/02-monitoring/goldilocks/overlays/prod
 
   syncPolicy:
