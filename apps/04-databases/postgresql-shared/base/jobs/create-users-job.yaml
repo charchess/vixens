@@ -97,6 +97,17 @@ spec:
                   name: scanopy-postgresql-credentials
                   key: password
 
+            - name: VAULTWARDEN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-postgresql-credentials
+                  key: username
+            - name: VAULTWARDEN_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-postgresql-credentials
+                  key: password
+
           command:
             - /bin/bash
             - -c
@@ -150,6 +161,7 @@ spec:
               create_user_if_not_exists "$NETBOX_USER" "$NETBOX_PASS"
               create_user_if_not_exists "$AUTHENTIK_USER" "$AUTHENTIK_PASS"
               create_user_if_not_exists "$SCANOPY_USER" "$SCANOPY_PASS"
+              create_user_if_not_exists "$VAULTWARDEN_USER" "$VAULTWARDEN_PASS"
 
               echo "=== User creation completed ==="
 
