@@ -67,7 +67,7 @@ jobs:
           echo "  comments-indentation: disable" >> yamllint-config.yml
           echo "  brackets: disable" >> yamllint-config.yml
           echo "  truthy: disable" >> yamllint-config.yml
-          echo "  new-line-at-end-of-file: disable" >> yamllint-config.yml
+
 
           # Valider tous les fichiers YAML pertinents
           find apps argocd -name "*.yaml" -o -name "*.yml" \
