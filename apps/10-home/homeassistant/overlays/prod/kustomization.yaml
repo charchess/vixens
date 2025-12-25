@@ -7,3 +7,6 @@ resources:
   - ingress.yaml
   - ingressroute-udp.yaml
   - infisical-filebrowser-auth.yaml
+
+patches:
+  - path: infisical-config-patch.yaml

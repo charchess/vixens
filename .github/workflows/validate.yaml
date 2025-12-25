@@ -248,6 +248,11 @@ jobs:
             exit 1
           fi
 
+          if grep -r "envSlug: dev" apps/*/*/overlays/prod; then
+            echo "::error::Found 'envSlug: dev' in apps/*/*/overlays/prod. Please use 'prod' for production."
+            exit 1
+          fi
+
           if grep -r "vixens-new.git" argocd; then
             echo "::error::Found 'vixens-new.git references' in argocd. Please use 'vixens.git', vixens-new is deprecated."
             exit 1
