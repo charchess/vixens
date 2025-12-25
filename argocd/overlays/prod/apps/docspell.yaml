@@ -19,10 +19,10 @@ spec:
         valueFiles:
           - $values/apps/60-services/docspell/overlays/prod/values.yaml
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: dev
+      targetRevision: main
       ref: values
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: dev
+      targetRevision: main
       path: apps/60-services/docspell/overlays/prod
   destination:
     server: https://kubernetes.default.svc

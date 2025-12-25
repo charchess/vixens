@@ -12,7 +12,7 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     path: apps/20-media/jellyseerr/overlays/prod
-    targetRevision: dev
+    targetRevision: main
   destination:
     server: https://kubernetes.default.svc
     namespace: media

@@ -11,7 +11,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: main
     path: apps/40-network/netvisor/overlays/prod
   destination:
     server: https://kubernetes.default.svc
