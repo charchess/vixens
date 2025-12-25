@@ -6,3 +6,9 @@ resources:
   - ../../base
   - http-redirect.yaml
   - ingress.yaml
+
+patches:
+  - path: deployment-patch.yaml
+    target:
+      kind: Deployment
+      name: whisparr

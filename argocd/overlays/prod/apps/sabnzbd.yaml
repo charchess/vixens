@@ -3,17 +3,17 @@ kind: Application
 metadata:
   name: sabnzbd
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 spec:
+  destination:
+    namespace: media
+    server: https://kubernetes.default.svc
   project: default
   source:
+    path: apps/20-media/sabnzbd/overlays/prod
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: main # The Git branch corresponding to the environment
-    path: apps/20-media/sabnzbd/overlays/prod # The path to the app's overlay
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: media # The namespace where the application will be deployed
+    targetRevision: main
   syncPolicy:
     automated:
       prune: true

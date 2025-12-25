@@ -79,12 +79,12 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: authentik-postgresql-credentials
-                key: username
+                key: POSTGRES_USER
           - name: AUTHENTIK_PASS
             valueFrom:
               secretKeyRef:
                 name: authentik-postgresql-credentials
-                key: password
+                key: POSTGRES_PASSWORD
 
           - name: SCANOPY_USER
             valueFrom:
@@ -96,6 +96,17 @@ spec:
               secretKeyRef:
                 name: scanopy-postgresql-credentials
                 key: password
+
+          # - name: VAULTWARDEN_USER
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: vaultwarden-postgresql-credentials
+          #       key: username
+          # - name: VAULTWARDEN_PASS
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: vaultwarden-postgresql-credentials
+          #       key: password
 
         command:
           - /bin/bash
@@ -111,6 +122,11 @@ spec:
             create_user_if_not_exists() {
               local username=$1
               local password=$2
+
+              if [ -z "$username" ] || [ -z "$password" ]; then
+                echo "  ⚠️  Skipping user creation: username or password missing."
+                return
+              fi
 
               echo "Checking user: $username"
 
@@ -145,6 +161,7 @@ spec:
             create_user_if_not_exists "$NETBOX_USER" "$NETBOX_PASS"
             create_user_if_not_exists "$AUTHENTIK_USER" "$AUTHENTIK_PASS"
             create_user_if_not_exists "$SCANOPY_USER" "$SCANOPY_PASS"
+            # create_user_if_not_exists "$VAULTWARDEN_USER" "$VAULTWARDEN_PASS"
 
             echo "=== User creation completed ==="
 

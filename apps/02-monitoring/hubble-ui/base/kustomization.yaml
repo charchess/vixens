@@ -8,3 +8,4 @@ resources:
   - ingress.yaml
   - infisical-secret.yaml
   - configmap.yaml
+  - rbac.yaml
