@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: sonarr
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 spec:
   destination:
     namespace: media
@@ -11,7 +13,7 @@ spec:
   source:
     path: apps/20-media/sonarr/overlays/prod
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: main
+    targetRevision: dev
   syncPolicy:
     automated:
       prune: true

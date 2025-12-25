@@ -6,12 +6,12 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-wave: "10"
 spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: prod
+    targetRevision: dev
     path: apps/70-tools/argocd-image-updater/overlays/prod
   destination:
     server: https://kubernetes.default.svc

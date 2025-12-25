@@ -21,10 +21,10 @@ spec:
           - $values/apps/02-monitoring/prometheus/base/values.yaml
     # Git repo for kustomize resources (namespace, ingress)
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: main
+      targetRevision: dev
       ref: values
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: main
+      targetRevision: dev
       path: apps/02-monitoring/prometheus/overlays/prod
   destination:
     server: https://kubernetes.default.svc

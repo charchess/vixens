@@ -5,12 +5,14 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 spec:
   project: default
   source:
     # Reverted to Kustomize source
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: main
+    targetRevision: dev
     path: apps/70-tools/homepage/overlays/prod
   destination:
     server: https://kubernetes.default.svc

@@ -17,10 +17,10 @@ spec:
         valueFiles:
           - $values/apps/04-databases/postgresql/overlays/prod/values.yaml
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: main
+      targetRevision: dev
       ref: values
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: main
+      targetRevision: dev
       path: apps/postgresql/base
   destination:
     server: https://kubernetes.default.svc
