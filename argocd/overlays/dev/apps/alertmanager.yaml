@@ -10,63 +10,20 @@ metadata:
     argocd.argoproj.io/sync-wave: "5"
 spec:
   project: default
-  source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    chart: prometheus-alertmanager
-    targetRevision: 0.30.0
-    helm:
-      releaseName: alertmanager
-      values: |
-        replicaCount: 1
-
-        config:
-          global:
-            resolve_timeout: 5m
-          route:
-            group_by: ['alertname', 'cluster', 'service']
-            group_wait: 30s
-            group_interval: 5m
-            repeat_interval: 12h
-            receiver: 'webhook'
-          receivers:
-            - name: 'webhook'
-              webhook_configs:
-                - url: "http://placeholder-replaced-by-infisical"
-
-        tolerations:
-          - key: "node-role.kubernetes.io/control-plane"
-            operator: "Exists"
-            effect: "NoSchedule"
-
-        resources:
-          requests:
-            cpu: 10m
-            memory: 32Mi
-          limits:
-            cpu: 100m
-            memory: 128Mi
-
-        ingress:
-          enabled: true
-          ingressClassName: traefik
-          annotations:
-            cert-manager.io/cluster-issuer: letsencrypt-staging
-            traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
-            traefik.ingress.kubernetes.io/router.middlewares: monitoring-redirect-to-https@kubernetescrd
-          hosts:
-            - host: alertmanager.dev.truxonline.com
-              paths:
-                - path: /
-                  pathType: ImplementationSpecific
-          tls:
-            - secretName: alertmanager-tls
-              hosts:
-                - alertmanager.dev.truxonline.com
-
-        persistence:
-          enabled: true
-          storageClass: synelia-iscsi-retain
-          size: 2Gi
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: prometheus-alertmanager
+      targetRevision: 0.30.0
+      helm:
+        releaseName: alertmanager
+        valueFiles:
+          - $values/apps/02-monitoring/alertmanager/base/values.yaml
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: dev
+      ref: values
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: dev
+      path: apps/02-monitoring/alertmanager/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

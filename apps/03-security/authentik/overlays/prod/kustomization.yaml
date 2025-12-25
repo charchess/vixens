@@ -1,12 +1,21 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+namespace: auth
+
 resources:
   - ../../base
+  - http-redirect.yaml
   - ingress.yaml
 
 patches:
-  - path: infisical-patch.yaml
-    target:
+  - target:
       kind: InfisicalSecret
       name: authentik-secrets-sync
+    patch: |
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
+
+commonLabels:
+  environment: prod

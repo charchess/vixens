@@ -65,7 +65,7 @@ resource "helm_release" "cilium" {
         tolerations = var.control_plane_tolerations
       }
       ui = {
-        enabled     = true
+        enabled     = false
         tolerations = var.control_plane_tolerations
       }
       metrics = {

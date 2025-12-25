@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sabnzbd-config-patcher
+data:
+  patcher.py: |
+    import configparser
+    import os
+    import sys
+
+    CONFIG_FILE = "/config/sabnzbd.ini"
+
+    import re
+
+    def patch_config():
+        if not os.path.exists(CONFIG_FILE):
+            print(f"Config file {CONFIG_FILE} not found. Skipping patch.")
+            return
+
+        with open(CONFIG_FILE, 'r') as f:
+            lines = f.readlines()
+
+        new_lines = []
+        current_section = None
+        current_subsection = None
+        
+        api_key = os.environ.get("SABNZBD__API_KEY")
+        whitelist = os.environ.get("HOST_WHITELIST_ENTRIES")
+        u_host = os.environ.get("USENET_HOST")
+        u_user = os.environ.get("USENET_USER")
+        u_pass = os.environ.get("USENET_PASS")
+        
+        # New admin credentials (optional)
+        admin_user = os.environ.get("SABNZBD__ADMIN_USER", "")
+        admin_pass = os.environ.get("SABNZBD__ADMIN_PASS", "")
+
+        misc_patched = {k: False for k in ["api_key", "nzb_key", "host_whitelist", "wizard_completed", "username", "password"]}
+
+        for line in lines:
+            stripped = line.strip()
+            
+            # Detect sections
+            if stripped.startswith("[[") and stripped.endswith("]]"):
+                current_subsection = stripped[2:-2]
+            elif stripped.startswith("[") and stripped.endswith("]"):
+                current_section = stripped[1:-1]
+                current_subsection = None
+            
+            patched_line = line
+
+            # Logic for [misc]
+            if current_section == "misc" and not current_subsection:
+                if api_key:
+                    if stripped.startswith("api_key ="):
+                        patched_line = f"api_key = {api_key}\n"
+                        misc_patched["api_key"] = True
+                    elif stripped.startswith("nzb_key ="):
+                        patched_line = f"nzb_key = {api_key}\n"
+                        misc_patched["nzb_key"] = True
+                
+                if whitelist and stripped.startswith("host_whitelist ="):
+                    patched_line = f"host_whitelist = {whitelist}\n"
+                    misc_patched["host_whitelist"] = True
+                
+                if stripped.startswith("wizard_completed ="):
+                    patched_line = "wizard_completed = 1\n"
+                    misc_patched["wizard_completed"] = True
+                
+                # Admin UI credentials
+                if admin_user and stripped.startswith("username ="):
+                    patched_line = f"username = {admin_user}\n"
+                    misc_patched["username"] = True
+                if admin_pass and stripped.startswith("password ="):
+                    patched_line = f"password = {admin_pass}\n"
+                    misc_patched["password"] = True
+
+            # Logic for [servers]
+            if current_section == "servers" and current_subsection:
+                # If we are in a subsection of servers, we assume it's a usenet server
+                if u_user and stripped.startswith("username ="):
+                    print(f"Patching Usenet Username in section [[{current_subsection}]]")
+                    patched_line = f"username = {u_user}\n"
+                if u_pass and stripped.startswith("password ="):
+                    print(f"Patching Usenet Password in section [[{current_subsection}]]")
+                    patched_line = f"password = {u_pass}\n"
+                if u_host and stripped.startswith("host ="):
+                    print(f"Patching Usenet Host in section [[{current_subsection}]]")
+                    patched_line = f"host = {u_host}\n"
+
+            new_lines.append(patched_line)
+
+        # Post-process: add missing fields in [misc]
+        if not misc_patched["wizard_completed"]:
+            for i, l in enumerate(new_lines):
+                if l.strip() == "[misc]":
+                    print("Adding wizard_completed = 1")
+                    new_lines.insert(i+1, "wizard_completed = 1\n")
+                    break
+
+        # Write back
+        with open(CONFIG_FILE, 'w') as f:
+            f.writelines(new_lines)
+        print("Configuration patched with section awareness.")
+
+    if __name__ == "__main__":
+        patch_config()

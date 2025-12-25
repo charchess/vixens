@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitops-revision-controller
+  namespace: tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitops-revision-controller
+  template:
+    metadata:
+      labels:
+        app: gitops-revision-controller
+    spec:
+      serviceAccountName: gitops-revision-controller
+      containers:
+        - name: controller
+          image: python:3.11-slim
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              pip install -r /src/requirements.txt &&
+              kopf run /src/main.py --verbose
+          volumeMounts:
+            - name: src
+              mountPath: /src
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 512Mi
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      volumes:
+        - name: src
+          configMap:
+            name: gitops-revision-controller-src

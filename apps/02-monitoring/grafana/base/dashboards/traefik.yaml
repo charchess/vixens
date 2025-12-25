@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-traefik
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  traefik.json: |-
+    {} # Placeholder - user to populate with JSON from https://grafana.com/grafana/dashboards/13391

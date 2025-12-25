@@ -1,5 +1,5 @@
 ---
-# Traefik - production environment
+# Traefik Ingress Controller - dev environment
 # Uses external Helm values from apps/traefik/values/
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -8,12 +8,13 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
-
   # Multiple sources: Helm chart + Git values
   sources:
     # Helm chart from Traefik repository
@@ -23,22 +24,14 @@ spec:
       helm:
         valueFiles:
           - $values/apps/00-infra/traefik/values/common.yaml
-          - $values/apps/00-infra/traefik/values/prod.yaml
-
+          - $values/apps/00-infra/traefik/values/dev.yaml
     # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: main
       ref: values
-
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-    retry:
-      limit: 5
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m
