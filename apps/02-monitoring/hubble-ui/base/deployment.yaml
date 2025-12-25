@@ -60,4 +60,3 @@ spec:
         - name: nginx-config
           configMap:
             name: hubble-ui-nginx-config
-

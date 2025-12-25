@@ -4,4 +4,4 @@ metadata:
   name: whoami-http-redirect
 spec:
   rules:
-  - host: whoami.truxonline.com
+    - host: whoami.truxonline.com
