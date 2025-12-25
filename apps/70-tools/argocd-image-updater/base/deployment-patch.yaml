@@ -13,7 +13,7 @@ spec:
           operator: "Exists"
           effect: "NoSchedule"
       volumes:
-      - name: tmp
-        emptyDir: null
-        persistentVolumeClaim:
-          claimName: argocd-image-updater-cache
+        - name: tmp
+          emptyDir: null
+          persistentVolumeClaim:
+            claimName: argocd-image-updater-cache

@@ -1,5 +1,5 @@
 ---
-# Traefik Ingress Controller - dev environment
+# Traefik Ingress Controller - prod environment
 # Uses external Helm values from apps/traefik/values/
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -24,7 +24,7 @@ spec:
       helm:
         valueFiles:
           - $values/apps/00-infra/traefik/values/common.yaml
-          - $values/apps/00-infra/traefik/values/dev.yaml
+          - $values/apps/00-infra/traefik/values/prod.yaml
     # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: main
