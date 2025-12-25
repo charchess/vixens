@@ -11,7 +11,7 @@ spec:
   source:
     path: apps/20-media/hydrus-server/overlays/prod
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: main
+    targetRevision: dev
   syncPolicy:
     automated:
       prune: true

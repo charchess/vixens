@@ -7,7 +7,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd.argoproj.io/sync-wave: "7"  # After postgresql-shared (wave 4)
+    argocd.argoproj.io/sync-wave: "5" # After postgresql-shared (wave 4)
 spec:
   project: default
   sources:
@@ -19,10 +19,10 @@ spec:
         valueFiles:
           - $values/apps/60-services/docspell/overlays/prod/values.yaml
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: main
+      targetRevision: dev
       ref: values
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: main
+      targetRevision: dev
       path: apps/60-services/docspell/overlays/prod
   destination:
     server: https://kubernetes.default.svc

@@ -6,12 +6,14 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens
     path: apps/01-storage/nfs-storage/overlays/prod
-    targetRevision: main
+    targetRevision: dev
   destination:
     server: https://kubernetes.default.svc
     namespace: media-stack

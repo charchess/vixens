@@ -5,12 +5,14 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
 spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
     path: apps/70-tools/linkwarden/overlays/prod
-    targetRevision: main
+    targetRevision: dev
   destination:
     server: https://kubernetes.default.svc
     namespace: tools
