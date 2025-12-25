@@ -22,6 +22,21 @@ spec:
                 secretKeyRef:
                   name: sabnzbd-secrets
                   key: API_KEY
+            - name: USENET_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: sabnzbd-secrets
+                  key: USENET_HOST
+            - name: USENET_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sabnzbd-secrets
+                  key: USENET_USER
+            - name: USENET_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: sabnzbd-secrets
+                  key: USENET_PASS
           volumeMounts:
             - name: config
               mountPath: /config
