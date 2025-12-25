@@ -1,5 +1,5 @@
 ---
-# cert-manager - production environment
+# cert-manager - prod environment
 # Uses external Helm values from apps/cert-manager/values/
 apiVersion: argoproj.io/v1alpha1
 kind: Application

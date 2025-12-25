@@ -9,17 +9,20 @@ processus de travail, adherence stricte et totale, pas de raccourci, a respecter
 ** SINON on propose celles semblant plus critique/importante
 * travail sur la tache choisi :  
 ** etudier et informer de possibles pré requis technique, uniquement si il y en a
-** analyser l'objectif de la tache, son utilisation, afin de definir un"definition of done"
+** consulter la documentation de l'application concernée dans `docs/applications/<app>.md` (si existante) pour comprendre l'état actuel et les validations attendues.
+** analyser l'objectif de la tache, son utilisation, afin de definir un "definition of done" basé sur la demande ET sur les validations existantes (non-régression).
 ** passage de la tache en doing dans archon  
 ** pour la documentation, privilegier le RAG archon
 ** pour l'acces au code, privilegier serena  
 ** procéder sur la tache de manière incrementale
+** mettre à jour le fichier `docs/applications/<app>.md` si l'infrastructure, la configuration ou les méthodes de validation évoluent.
 ** une fois la tache terminer, porter les changements necssaires dans les overlays de test/staging/prod
 * une fois la tache terminée
 ** faire un commit et un push vers github (branche de dev ONLY !)
 ** passer la tache en review
 ** PUIS valider le resultat dans l'environnement de dev avec tous les moyens disponible en validant l'acces a l'application 
-*** incluant playwright pour des frontend web. 
+*** Exécuter les commandes de validation (Automatique & Manuelle) définies dans `docs/applications/<app>.md` pour garantir la NON-RÉGRESSION.
+*** Utiliser playwright pour les interfaces web (validation visuelle/fonctionnelle).
 *** Verifier sa conformité avec le "definition of done" evalué plus tot
 ** SI reussi, passer le proprietaire en "user", garder la tache en review et passer a la tache suivante  
 ** SINON, reprendre le travail sur la tache (en la repassant en doing)  

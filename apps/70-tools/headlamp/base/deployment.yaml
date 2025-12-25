@@ -30,23 +30,8 @@ spec:
               memory: "256Mi"
               cpu: "200m"
           env:
-            - name: HEADLAMP_OIDC_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: headlamp-secrets
-                  key: OIDC_CLIENT_ID
-            - name: HEADLAMP_OIDC_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: headlamp-secrets
-                  key: OIDC_CLIENT_SECRET
-            - name: HEADLAMP_OIDC_ISSUER_URL
-              valueFrom:
-                secretKeyRef:
-                  name: headlamp-secrets
-                  key: OIDC_ISSUER_URL
             - name: HEADLAMP_BASE_URL
-              value: "/headlamp"
+              value: "/"
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"

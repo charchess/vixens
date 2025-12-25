@@ -1,0 +1,10 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: headlamp
+spec:
+  rules:
+    - host: headlamp.test.truxonline.com
+  tls:
+    - hosts:
+        - headlamp.test.truxonline.com

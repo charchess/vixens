@@ -10,17 +10,17 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: loki.staging.truxonline.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: loki
-            port:
-              number: 3100
+    - host: loki.staging.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loki
+                port:
+                  number: 3100
   tls:
-  - hosts:
-    - loki.staging.truxonline.com
-    secretName: loki-tls
+    - hosts:
+        - loki.staging.truxonline.com
+      secretName: loki-tls

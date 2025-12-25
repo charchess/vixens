@@ -11,10 +11,13 @@ resources:
   - credentials/linkwarden-secret.yaml
   - credentials/netbox-postgresql-credentials.yaml
   - credentials/authentik-secret.yaml
+  - credentials/backup-s3-secret.yaml
   - credentials/scanopy-secret.yaml
+  - credentials/vaultwarden-secret.yaml
   - databases/docspell.yaml
   - databases/scanopy.yaml
   - databases/linkwarden.yaml
   - databases/netbox-database.yaml
   - databases/authentik.yaml
+  - databases/vaultwarden.yaml
   - jobs/create-users-job.yaml

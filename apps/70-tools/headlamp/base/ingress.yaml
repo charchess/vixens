@@ -10,17 +10,17 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: headlamp.PLACEHOLDER.truxonline.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: headlamp
-            port:
-              number: 80
+    - host: headlamp.PLACEHOLDER.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: headlamp
+                port:
+                  number: 80
   tls:
-  - hosts:
-    - headlamp.PLACEHOLDER.truxonline.com
-    secretName: headlamp-tls
+    - hosts:
+        - headlamp.PLACEHOLDER.truxonline.com
+      secretName: headlamp-tls

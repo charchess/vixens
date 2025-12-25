@@ -54,3 +54,10 @@ service:
   type: ClusterIP
   port: 80
   targetPort: 3000
+
+# Sidecar for dashboard discovery
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    searchNamespace: ALL

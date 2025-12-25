@@ -12,7 +12,15 @@ resources:
   - apps/infisical-operator.yaml
   # Cilium L2 Announcements + LB IPAM (wave -2)
   - apps/cilium-lb.yaml
-  - apps/traefik.yaml                        # Traefik Ingress Controller
+  - apps/traefik.yaml
+  - apps/metrics-server.yaml
+  - apps/vpa.yaml
+  - apps/goldilocks.yaml                        # Traefik Ingress Controller
+  - apps/reloader.yaml
+  - apps/gitops-revision-controller.yaml
+  - apps/alertmanager.yaml
+  - apps/headlamp.yaml
+  - apps/hubble-ui.yaml
   # Traefik Dashboard hostname redirect
   - apps/traefik-dashboard.yaml
   - apps/argocd.yaml                         # ArgoCD Ingress for UI
@@ -51,7 +59,9 @@ resources:
   - apps/hydrus-client.yaml
   - apps/music-assistant.yaml
   - apps/vaultwarden.yaml
+  - apps/cloudnative-pg-crds.yaml            # CloudNativePG CRDs (manually managed due to size)
   - apps/cloudnative-pg.yaml                 # CloudNativePG Operator (databases)
+  - apps/redis-shared.yaml
   - apps/postgresql-shared.yaml              # Shared PostgreSQL Cluster (Docspell, ...)
   # - apps/docspell.yaml                     # OLD Helm-based (deprecated, use docspell-native)
   - apps/docspell-native.yaml                # Docspell Kubernetes native deployment
@@ -59,3 +69,7 @@ resources:
   - apps/changedetection.yaml
   - apps/adguard-home.yaml
   - apps/netvisor.yaml
+  - apps/authentik.yaml
+  - apps/netbox.yaml
+  - apps/loki.yaml
+  - apps/promtail.yaml
