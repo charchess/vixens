@@ -6,42 +6,72 @@ data:
   patcher.py: |
     import xml.etree.ElementTree as ET
     import os
-    import sys
+    import sqlite3
+    import json
 
     CONFIG_FILE = "/config/config.xml"
+    DB_FILE = "/config/lidarr.db"
 
-    def patch_config():
+    def patch_config_xml():
         if not os.path.exists(CONFIG_FILE):
-            print(f"Config file {CONFIG_FILE} not found. Skipping patch.")
             return
-
         try:
             tree = ET.parse(CONFIG_FILE)
             root = tree.getroot()
+            changed = False
+            api_key = os.environ.get("API_KEY")
+            if api_key:
+                elem = root.find("ApiKey")
+                if elem is None: elem = ET.SubElement(root, "ApiKey")
+                if elem.text != api_key:
+                    print(f"Patching local API Key in config.xml...")
+                    elem.text = api_key
+                    changed = True
+            if changed:
+                tree.write(CONFIG_FILE, encoding="utf-8", xml_declaration=True)
+                print("config.xml patched.")
         except Exception as e:
-            print(f"Error parsing {CONFIG_FILE}: {e}")
+            print(f"Error patching config.xml: {e}")
+
+    def patch_db():
+        if not os.path.exists(DB_FILE):
+            print(f"DB file {DB_FILE} not found. Skipping DB patch.")
             return
-
-        changed = False
-
-        # Patch API Key
-        api_key = os.environ.get("API_KEY")
-        if api_key:
-            api_key_elem = root.find("ApiKey")
-            if api_key_elem is None:
-                api_key_elem = ET.SubElement(root, "ApiKey")
+        try:
+            conn = sqlite3.connect(DB_FILE)
+            cur = conn.cursor()
             
-            if api_key_elem.text != api_key:
-                print(f"Patching API Key...")
-                api_key_elem.text = api_key
-                changed = True
+            # 1. Patch Sabnzbd API Key in DownloadClients
+            sab_key = os.environ.get("SABNZBD__API_KEY")
+            if sab_key:
+                clients = cur.execute("SELECT id, settings FROM DownloadClients WHERE implementation = 'Sabnzbd'").fetchall()
+                for row_id, settings_json in clients:
+                    settings = json.loads(settings_json)
+                    if settings.get("apiKey") != sab_key:
+                        settings["apiKey"] = sab_key
+                        cur.execute("UPDATE DownloadClients SET settings = ? WHERE id = ?", (json.dumps(settings), row_id))
+                        print(f"Updated Sabnzbd API key in DB (client id {row_id})")
 
-        # Write back if changed
-        if changed:
-            tree.write(CONFIG_FILE, encoding="utf-8", xml_declaration=True)
-            print("Configuration patched successfully.")
-        else:
-            print("No changes needed.")
+            # 2. Patch Prowlarr API Key in Indexers (Torznab/Newznab)
+            prowl_key = os.environ.get("PROWLARR__API_KEY")
+            if prowl_key:
+                indexers = cur.execute("SELECT id, settings FROM Indexers").fetchall()
+                for row_id, settings_json in indexers:
+                    try:
+                        settings = json.loads(settings_json)
+                        # Check if it looks like a Prowlarr/Torznab indexer
+                        if "apiKey" in settings and ("prowlarr" in settings.get("baseUrls", [""])[0] or "prowlarr" in settings.get("baseUrl", "")):
+                            if settings["apiKey"] != prowl_key:
+                                settings["apiKey"] = prowl_key
+                                cur.execute("UPDATE Indexers SET settings = ? WHERE id = ?", (json.dumps(settings), row_id))
+                                print(f"Updated Prowlarr API key in DB (indexer id {row_id})")
+                    except: continue
+
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"Error patching DB: {e}")
 
     if __name__ == "__main__":
-        patch_config()
+        patch_config_xml()
+        patch_db()

@@ -20,6 +20,11 @@ spec:
                 secretKeyRef:
                   name: mylar-secrets
                   key: API_KEY
+            - name: SABNZBD__API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mylar-secrets
+                  key: SABNZBD__API_KEY
           volumeMounts:
             - name: config
               mountPath: /config

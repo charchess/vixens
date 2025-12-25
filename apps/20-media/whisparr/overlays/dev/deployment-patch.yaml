@@ -20,6 +20,16 @@ spec:
                 secretKeyRef:
                   name: whisparr-secrets
                   key: API_KEY
+            - name: SABNZBD__API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: whisparr-secrets
+                  key: SABNZBD__API_KEY
+            - name: PROWLARR__API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: whisparr-secrets
+                  key: PROWLARR__API_KEY
           volumeMounts:
             - name: config
               mountPath: /config
