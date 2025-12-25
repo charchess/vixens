@@ -20,6 +20,16 @@ spec:
                 secretKeyRef:
                   name: lidarr-secrets
                   key: API_KEY
+            - name: SABNZBD__API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lidarr-secrets
+                  key: SABNZBD__API_KEY
+            - name: PROWLARR__API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lidarr-secrets
+                  key: PROWLARR__API_KEY
           volumeMounts:
             - name: config
               mountPath: /config
