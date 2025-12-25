@@ -10,17 +10,17 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: image-updater.dev.truxonline.com # Default, patched in overlay
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: argocd-image-updater-webhook
-            port:
-              number: 8080
+    - host: image-updater.dev.truxonline.com # Default, patched in overlay
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-image-updater-webhook
+                port:
+                  number: 8080
   tls:
-  - hosts:
-    - image-updater.dev.truxonline.com # Default, patched in overlay
-    secretName: argocd-image-updater-tls
+    - hosts:
+        - image-updater.dev.truxonline.com # Default, patched in overlay
+      secretName: argocd-image-updater-tls

@@ -11,7 +11,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: "homepage.dev.truxonline.com"
+    - host: "homepage.truxonline.com"
       http:
         paths:
           - path: /

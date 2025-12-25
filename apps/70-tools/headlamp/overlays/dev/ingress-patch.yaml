@@ -5,6 +5,16 @@ metadata:
 spec:
   rules:
     - host: headlamp.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: headlamp
+                port:
+                  number: 80
   tls:
     - hosts:
         - headlamp.dev.truxonline.com
+      secretName: headlamp-tls

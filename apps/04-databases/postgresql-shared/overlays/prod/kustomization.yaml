@@ -6,9 +6,14 @@ namespace: databases
 resources:
   - ../../base
 
-patchesStrategicMerge:
-  - patch-credentials-env.yaml
-  - patch-instances.yaml
+patches:
+  - target:
+      kind: InfisicalSecret
+      name: postgresql-admin-credentials
+    patch: |
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
 
 commonLabels:
   environment: prod
