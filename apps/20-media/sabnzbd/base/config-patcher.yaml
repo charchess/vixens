@@ -10,34 +10,32 @@ data:
 
     CONFIG_FILE = "/config/sabnzbd.ini"
 
+    import re
+
     def patch_config():
         if not os.path.exists(CONFIG_FILE):
             print(f"Config file {CONFIG_FILE} not found. Skipping patch.")
             return
 
-        config = configparser.ConfigParser()
-        config.read(CONFIG_FILE)
+        with open(CONFIG_FILE, 'r') as f:
+            content = f.read()
 
         # Patch API Key
         api_key = os.environ.get("SABNZBD__API_KEY")
         if api_key:
-            if not config.has_section("misc"):
-                config.add_section("misc")
             print(f"Patching API Key...")
-            config.set("misc", "api_key", api_key)
-            config.set("misc", "nzb_key", api_key)
+            content = re.sub(r'^api_key\s*=\s*.*$', f'api_key = {api_key}', content, flags=re.MULTILINE)
+            content = re.sub(r'^nzb_key\s*=\s*.*$', f'nzb_key = {api_key}', content, flags=re.MULTILINE)
 
         # Patch Whitelist
         whitelist = os.environ.get("HOST_WHITELIST_ENTRIES")
         if whitelist:
-            if not config.has_section("misc"):
-                config.add_section("misc")
             print(f"Patching Whitelist: {whitelist}")
-            config.set("misc", "host_whitelist", whitelist)
+            content = re.sub(r'^host_whitelist\s*=\s*.*$', f'host_whitelist = {whitelist}', content, flags=re.MULTILINE)
 
         # Write back
-        with open(CONFIG_FILE, 'w') as configfile:
-            config.write(configfile)
+        with open(CONFIG_FILE, 'w') as f:
+            f.write(content)
         print("Configuration patched successfully.")
 
     if __name__ == "__main__":
