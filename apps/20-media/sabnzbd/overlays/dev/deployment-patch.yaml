@@ -6,16 +6,27 @@ metadata:
 spec:
   template:
     spec:
+      volumes:
+        - name: config-patcher
+          configMap:
+            name: sabnzbd-config-patcher
       initContainers:
-        - name: configure-whitelist
-          image: busybox:latest
-          command: ["sh", "-c", "if [ -f /config/sabnzbd.ini ]; then sed -i \"s/^host_whitelist =.* /host_whitelist = ${HOST_WHITELIST_ENTRIES}/\" /config/sabnzbd.ini; else echo 'Config not found, skipping whitelist patch'; fi"]
+        - name: configure-sabnzbd
+          image: ghcr.io/linuxserver/sabnzbd:latest
+          command: ["python3", "/scripts/patcher.py"]
           env:
             - name: HOST_WHITELIST_ENTRIES
               value: "sabnzbd.dev.truxonline.com,sabnzbd,sabnzbd.media,sabnzbd.media.svc.cluster.local"
+            - name: SABNZBD__API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sabnzbd-secrets
+                  key: SABNZBD__API_KEY
           volumeMounts:
             - name: config
               mountPath: /config
+            - name: config-patcher
+              mountPath: /scripts
       containers:
         - name: sabnzbd
           env:
