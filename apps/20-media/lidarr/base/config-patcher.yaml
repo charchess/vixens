@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lidarr-config-patcher
+data:
+  patcher.py: |
+    import xml.etree.ElementTree as ET
+    import os
+    import sys
+
+    CONFIG_FILE = "/config/config.xml"
+
+    def patch_config():
+        if not os.path.exists(CONFIG_FILE):
+            print(f"Config file {CONFIG_FILE} not found. Skipping patch.")
+            return
+
+        try:
+            tree = ET.parse(CONFIG_FILE)
+            root = tree.getroot()
+        except Exception as e:
+            print(f"Error parsing {CONFIG_FILE}: {e}")
+            return
+
+        changed = False
+
+        # Patch API Key
+        api_key = os.environ.get("API_KEY")
+        if api_key:
+            api_key_elem = root.find("ApiKey")
+            if api_key_elem is None:
+                api_key_elem = ET.SubElement(root, "ApiKey")
+            
+            if api_key_elem.text != api_key:
+                print(f"Patching API Key...")
+                api_key_elem.text = api_key
+                changed = True
+
+        # Write back if changed
+        if changed:
+            tree.write(CONFIG_FILE, encoding="utf-8", xml_declaration=True)
+            print("Configuration patched successfully.")
+        else:
+            print("No changes needed.")
+
+    if __name__ == "__main__":
+        patch_config()

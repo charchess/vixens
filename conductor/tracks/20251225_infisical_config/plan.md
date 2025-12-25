@@ -14,7 +14,7 @@ Extend Infisical usage to manage complex application configurations (specificall
 - [x] **API Key Mapping**: Map out the dependencies (e.g., Sonarr needs Sabnzbd's API Key).
 
 ## Phase 2: Implementation (Dev)
-- [ ] **Prototype Sabnzbd**: Implement the InitContainer pattern for `sabnzbd` in the `dev` environment.
+- [x] **Prototype Sabnzbd**: Implement the InitContainer pattern for `sabnzbd` in the `dev` environment.
     -   Create a generic "Config Patcher" script (using `sed` or Python).
     -   Configure `InfisicalSecret` to inject the raw values as Env Vars.
     -   Add `initContainer` to Deployment.
