@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: networking
 
 resources:
+  - namespace.yaml
   - server-deployment.yaml
   - daemon-daemonset.yaml
   - server-service.yaml
