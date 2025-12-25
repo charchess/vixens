@@ -10,3 +10,4 @@ resources:
   - pvc.yaml
   - ingressroute-dns.yaml
   - infisical-secret.yaml
+  - config-patcher.yaml
