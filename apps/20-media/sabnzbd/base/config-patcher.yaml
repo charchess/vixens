@@ -18,41 +18,78 @@ data:
             return
 
         with open(CONFIG_FILE, 'r') as f:
-            content = f.read()
+            lines = f.readlines()
 
-        # Patch API Key
+        new_lines = []
+        current_section = None
+        current_subsection = None
+        
         api_key = os.environ.get("SABNZBD__API_KEY")
-        if api_key:
-            print(f"Patching API Key...")
-            content = re.sub(r'^api_key\s*=\s*.*$', f'api_key = {api_key}', content, flags=re.MULTILINE)
-            content = re.sub(r'^nzb_key\s*=\s*.*$', f'nzb_key = {api_key}', content, flags=re.MULTILINE)
-
-        # Patch Whitelist
         whitelist = os.environ.get("HOST_WHITELIST_ENTRIES")
-        if whitelist:
-            print(f"Patching Whitelist: {whitelist}")
-            content = re.sub(r'^host_whitelist\s*=\s*.*$', f'host_whitelist = {whitelist}', content, flags=re.MULTILINE)
-
-        # Patch Usenet Config (Server 0)
         u_host = os.environ.get("USENET_HOST")
         u_user = os.environ.get("USENET_USER")
         u_pass = os.environ.get("USENET_PASS")
-        
-        if u_host:
-            print(f"Patching Usenet Host: {u_host}")
-            # Note: This simple patch assumes the first server entry in the ini
-            content = re.sub(r'^host\s*=\s*.*$', f'host = {u_host}', content, flags=re.MULTILINE)
-        if u_user:
-            print(f"Patching Usenet User...")
-            content = re.sub(r'^username\s*=\s*.*$', f'username = {u_user}', content, flags=re.MULTILINE)
-        if u_pass:
-            print(f"Patching Usenet Password...")
-            content = re.sub(r'^password\s*=\s*.*$', f'password = {u_pass}', content, flags=re.MULTILINE)
+
+        misc_patched = {k: False for k in ["api_key", "nzb_key", "host_whitelist", "wizard_completed", "username", "password"]}
+        server_patched = {k: False for k in ["host", "username", "password"]}
+
+        for line in lines:
+            stripped = line.strip()
+            
+            # Detect sections
+            if stripped.startswith("[[") and stripped.endswith("]]"):
+                current_subsection = stripped[2:-2]
+            elif stripped.startswith("[") and stripped.endswith("]"):
+                current_section = stripped[1:-1]
+                current_subsection = None
+            
+            patched_line = line
+
+            # Logic for [misc]
+            if current_section == "misc" and not current_subsection:
+                if api_key:
+                    if stripped.startswith("api_key ="):
+                        patched_line = f"api_key = {api_key}\n"
+                        misc_patched["api_key"] = True
+                    elif stripped.startswith("nzb_key ="):
+                        patched_line = f"nzb_key = {api_key}\n"
+                        misc_patched["nzb_key"] = True
+                if whitelist and stripped.startswith("host_whitelist ="):
+                    patched_line = f"host_whitelist = {whitelist}\n"
+                    misc_patched["host_whitelist"] = True
+                if stripped.startswith("wizard_completed ="):
+                    patched_line = "wizard_completed = 1\n"
+                    misc_patched["wizard_completed"] = True
+                # REMOVE UI credentials if they were accidentally set to usenet ones
+                if stripped.startswith("username =") or stripped.startswith("password ="):
+                    patched_line = stripped.split("=")[0].strip() + " = \"\"\n"
+
+            # Logic for [servers] -> [[u_host]]
+            if current_section == "servers" and current_subsection == u_host:
+                if u_user and stripped.startswith("username ="):
+                    patched_line = f"username = {u_user}\n"
+                    server_patched["username"] = True
+                if u_pass and stripped.startswith("password ="):
+                    patched_line = f"password = {u_pass}\n"
+                    server_patched["password"] = True
+                if u_host and stripped.startswith("host ="):
+                    patched_line = f"host = {u_host}\n"
+                    server_patched["host"] = True
+
+            new_lines.append(patched_line)
+
+        # Post-process: add missing fields in [misc]
+        if not misc_patched["wizard_completed"]:
+            # Find where to insert (after [misc])
+            for i, l in enumerate(new_lines):
+                if l.strip() == "[misc]":
+                    new_lines.insert(i+1, "wizard_completed = 1\n")
+                    break
 
         # Write back
         with open(CONFIG_FILE, 'w') as f:
-            f.write(content)
-        print("Configuration patched successfully.")
+            f.writelines(new_lines)
+        print("Configuration patched with section awareness.")
 
     if __name__ == "__main__":
         patch_config()
