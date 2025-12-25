@@ -6,4 +6,7 @@ namespace: monitoring
 
 resources:
   - infisical-secret.yaml
+  - dashboards/traefik.yaml
+  - dashboards/postgresql.yaml
+  - dashboards/homeassistant.yaml
 # Helm chart managed by ArgoCD

@@ -5,6 +5,16 @@ metadata:
 spec:
   rules:
     - host: hubble.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hubble-ui
+                port:
+                  number: 80
   tls:
     - hosts:
         - hubble.dev.truxonline.com
+      secretName: hubble-ui-tls

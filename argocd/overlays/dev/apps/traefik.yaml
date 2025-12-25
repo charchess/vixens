@@ -8,12 +8,13 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
-
   # Multiple sources: Helm chart + Git values
   sources:
     # Helm chart from Traefik repository
@@ -24,12 +25,10 @@ spec:
         valueFiles:
           - $values/apps/00-infra/traefik/values/common.yaml
           - $values/apps/00-infra/traefik/values/dev.yaml
-
     # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: dev
       ref: values
-
   syncPolicy:
     automated:
       prune: true
