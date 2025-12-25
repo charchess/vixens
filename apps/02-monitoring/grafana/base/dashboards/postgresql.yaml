@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-postgresql
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  postgresql.json: |-
+    {} # Placeholder - user to populate with JSON from https://grafana.com/grafana/dashboards/20417 (CNPG)

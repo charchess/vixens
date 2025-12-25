@@ -7,17 +7,17 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-staging
 spec:
   rules:
-  - host: image-updater.test.truxonline.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: argocd-image-updater-webhook
-            port:
-              number: 8080
+    - host: image-updater.test.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-image-updater-webhook
+                port:
+                  number: 8080
   tls:
-  - hosts:
-    - image-updater.test.truxonline.com
-    secretName: argocd-image-updater-tls
+    - hosts:
+        - image-updater.test.truxonline.com
+      secretName: argocd-image-updater-tls

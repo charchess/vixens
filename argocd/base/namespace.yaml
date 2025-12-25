@@ -4,5 +4,6 @@ kind: Namespace
 metadata:
   name: argocd
   labels:
+    goldilocks.fairwinds.com/enabled: "true"
     app.kubernetes.io/name: argocd
     app.kubernetes.io/part-of: vixens-gitops

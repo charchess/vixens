@@ -1,3 +1,4 @@
+---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: media
@@ -13,5 +14,9 @@ patches:
       name: radarr-secrets-sync
     patch: |
       - op: replace
-        path: /spec/secretPath
-        value: /kubernetes/radarr/prod
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
+  - path: deployment-patch.yaml
+    target:
+      kind: Deployment
+      name: radarr
