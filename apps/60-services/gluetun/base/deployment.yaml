@@ -16,58 +16,58 @@ spec:
         app: gluetun
     spec:
       tolerations:
-      - key: "node-role.kubernetes.io/control-plane"
-        operator: "Exists"
-        effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
       containers:
-      - name: gluetun
-        image: ghcr.io/qdm12/gluetun:v3.39.1
-        securityContext:
-          capabilities:
-            add:
-              - NET_ADMIN
-        env:
-        # VPN Service Provider
-        - name: VPN_SERVICE_PROVIDER
-          value: "nordvpn"
-        - name: VPN_TYPE
-          value: "wireguard"
+        - name: gluetun
+          image: ghcr.io/qdm12/gluetun:v3.39.1
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+          env:
+            # VPN Service Provider
+            - name: VPN_SERVICE_PROVIDER
+              value: "nordvpn"
+            - name: VPN_TYPE
+              value: "wireguard"
 
-        # Wireguard credentials from Infisical-managed secret
-        - name: WIREGUARD_PRIVATE_KEY
-          valueFrom:
-            secretKeyRef:
-              name: gluetun-wireguard-secrets
-              key: WIREGUARD_PRIVATE_KEY
-        - name: WIREGUARD_ADDRESSES
-          valueFrom:
-            secretKeyRef:
-              name: gluetun-wireguard-secrets
-              key: WIREGUARD_ADDRESSES
+            # Wireguard credentials from Infisical-managed secret
+            - name: WIREGUARD_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gluetun-wireguard-secrets
+                  key: WIREGUARD_PRIVATE_KEY
+            - name: WIREGUARD_ADDRESSES
+              valueFrom:
+                secretKeyRef:
+                  name: gluetun-wireguard-secrets
+                  key: WIREGUARD_ADDRESSES
 
-        # VPN server location (CHANGE THIS to select country)
-        - name: SERVER_COUNTRIES
-          value: "Switzerland"
+            # VPN server location (CHANGE THIS to select country)
+            - name: SERVER_COUNTRIES
+              value: "Switzerland"
 
-        # Timezone
-        - name: TZ
-          value: "Etc/UTC"
+            # Timezone
+            - name: TZ
+              value: "Etc/UTC"
 
-        # Kubernetes-specific DNS settings (required for kube-dns)
-        - name: DNS_KEEP_NAMESERVER
-          value: "on"
+            # Kubernetes-specific DNS settings (required for kube-dns)
+            - name: DNS_KEEP_NAMESERVER
+              value: "on"
 
-        # Firewall settings to allow access from other pods
-        - name: FIREWALL_VPN_INPUT_PORTS
-          value: "8888,1080"
-        # Allow outbound to Kubernetes pod and service networks
-        - name: FIREWALL_OUTBOUND_SUBNETS
-          value: "10.42.0.0/15,10.96.0.0/12"
+            # Firewall settings to allow access from other pods
+            - name: FIREWALL_VPN_INPUT_PORTS
+              value: "8888,1080"
+            # Allow outbound to Kubernetes pod and service networks
+            - name: FIREWALL_OUTBOUND_SUBNETS
+              value: "10.42.0.0/15,10.96.0.0/12"
 
-        ports:
-        - containerPort: 8888
-          name: http-proxy
-          protocol: TCP
-        - containerPort: 1080
-          name: socks5-proxy
-          protocol: TCP
+          ports:
+            - containerPort: 8888
+              name: http-proxy
+              protocol: TCP
+            - containerPort: 1080
+              name: socks5-proxy
+              protocol: TCP

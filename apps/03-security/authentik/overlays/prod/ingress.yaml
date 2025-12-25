@@ -10,17 +10,17 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: authentik.truxonline.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: authentik
-            port:
-              number: 9000
+    - host: authentik.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: authentik
+                port:
+                  number: 9000
   tls:
-  - hosts:
-    - authentik.truxonline.com
-    secretName: authentik-tls
+    - hosts:
+        - authentik.truxonline.com
+      secretName: authentik-tls

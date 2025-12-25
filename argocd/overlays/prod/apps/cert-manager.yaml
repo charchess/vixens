@@ -1,5 +1,5 @@
 ---
-# cert-manager - dev environment
+# cert-manager - prod environment
 # Uses external Helm values from apps/cert-manager/values/
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -25,7 +25,7 @@ spec:
       helm:
         valueFiles:
           - $values/apps/00-infra/cert-manager/values/common.yaml
-          - $values/apps/00-infra/cert-manager/values/dev.yaml
+          - $values/apps/00-infra/cert-manager/values/prod.yaml
 
     # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git

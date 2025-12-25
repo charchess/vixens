@@ -10,17 +10,17 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: hubble.PLACEHOLDER.truxonline.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: hubble-ui
-            port:
-              number: 80
+    - host: hubble.PLACEHOLDER.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hubble-ui
+                port:
+                  number: 80
   tls:
-  - hosts:
-    - hubble.PLACEHOLDER.truxonline.com
-    secretName: hubble-ui-tls
+    - hosts:
+        - hubble.PLACEHOLDER.truxonline.com
+      secretName: hubble-ui-tls

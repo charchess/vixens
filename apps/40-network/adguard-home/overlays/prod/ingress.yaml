@@ -7,17 +7,17 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   rules:
-  - host: adguard.truxonline.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: adguard-home
-            port:
-              number: 3000
+    - host: adguard.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: adguard-home
+                port:
+                  number: 3000
   tls:
-  - hosts:
-    - adguard.truxonline.com
-    secretName: adguard-home-tls
+    - hosts:
+        - adguard.truxonline.com
+      secretName: adguard-home-tls

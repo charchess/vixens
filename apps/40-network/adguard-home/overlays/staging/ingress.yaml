@@ -7,17 +7,17 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-staging
 spec:
   rules:
-  - host: adguard.staging.truxonline.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: adguard-home
-            port:
-              number: 3000
+    - host: adguard.staging.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: adguard-home
+                port:
+                  number: 3000
   tls:
-  - hosts:
-    - adguard.staging.truxonline.com
-    secretName: adguard-home-tls
+    - hosts:
+        - adguard.staging.truxonline.com
+      secretName: adguard-home-tls

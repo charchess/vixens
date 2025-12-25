@@ -1,0 +1,40 @@
+---
+extends: default
+
+yaml-files:
+  - '*.yaml'
+  - '*.yml'
+  - '.yamllint'
+
+rules:
+  # ============ ERREURS CRITIQUES ============
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+    level: error
+
+  key-duplicates:
+    level: error
+
+  # ============ WARNINGS ============
+  line-length:
+    max: 80
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+    level: warning
+
+  trailing-spaces:
+    level: warning
+
+  new-lines:
+    type: unix
+    level: warning
+
+  new-line-at-end-of-file: disable
+
+  # ============ DÉSACTIVÉES ============
+  comments: disable
+  comments-indentation: disable
+  brackets: disable
+  truthy: disable
