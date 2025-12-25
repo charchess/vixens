@@ -31,8 +31,6 @@ rules:
     type: unix
     level: warning
 
-  new-line-at-end-of-file: disable
-
   # ============ DÉSACTIVÉES ============
   comments: disable
   comments-indentation: disable
