@@ -5,7 +5,7 @@ metadata:
   name: loki
   namespace: argocd
   labels:
-    vixens.lab/environment: dev
+    vixens.lab/environment: prod
     vixens.lab/managed-by: terraform
   finalizers:
     - resources-finalizer.argocd.argoproj.io
