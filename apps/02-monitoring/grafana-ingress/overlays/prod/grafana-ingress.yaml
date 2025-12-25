@@ -53,4 +53,3 @@ spec:
     - hosts:
         - grafana.truxonline.com
       secretName: grafana-tls
-

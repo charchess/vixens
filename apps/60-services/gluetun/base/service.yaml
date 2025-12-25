@@ -10,11 +10,11 @@ spec:
   selector:
     app: gluetun
   ports:
-  - name: http-proxy
-    port: 8888
-    targetPort: 8888
-    protocol: TCP
-  - name: socks5-proxy
-    port: 1080
-    targetPort: 1080
-    protocol: TCP
+    - name: http-proxy
+      port: 8888
+      targetPort: 8888
+      protocol: TCP
+    - name: socks5-proxy
+      port: 1080
+      targetPort: 1080
+      protocol: TCP

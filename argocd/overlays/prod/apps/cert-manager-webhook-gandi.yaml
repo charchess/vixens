@@ -1,5 +1,5 @@
 ---
-# cert-manager-webhook-gandi - dev environment
+# cert-manager-webhook-gandi - prod environment
 # Uses external Helm values from apps/cert-manager-webhook-gandi/values/
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -25,7 +25,7 @@ spec:
       helm:
         valueFiles:
           - $values/apps/00-infra/cert-manager-webhook-gandi/values/common.yaml
-          - $values/apps/00-infra/cert-manager-webhook-gandi/values/dev.yaml
+          - $values/apps/00-infra/cert-manager-webhook-gandi/values/prod.yaml
 
     # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git

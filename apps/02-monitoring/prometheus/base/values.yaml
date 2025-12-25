@@ -80,8 +80,6 @@ alertmanager:
             channel: '#alerts'
             send_resolved: true
 
-
-
 # Node exporter
 nodeExporter:
   enabled: true

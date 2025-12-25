@@ -10,17 +10,17 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: netbox.dev.truxonline.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: netbox
-            port:
-              number: 8080
+    - host: netbox.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: netbox
+                port:
+                  number: 8080
   tls:
-  - hosts:
-    - netbox.dev.truxonline.com
-    secretName: netbox-tls
+    - hosts:
+        - netbox.dev.truxonline.com
+      secretName: netbox-tls

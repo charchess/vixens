@@ -8,8 +8,8 @@ spec:
     matchLabels:
       control-plane: argocd-image-updater-controller
   ingress:
-  - ports:
-    - port: 8080
-      protocol: TCP
+    - ports:
+        - port: 8080
+          protocol: TCP
   policyTypes:
-  - Ingress
+    - Ingress

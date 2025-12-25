@@ -6,7 +6,7 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   tls:
-  - hosts:
-    - whoami.truxonline.com
+    - hosts:
+        - whoami.truxonline.com
   rules:
-  - host: whoami.truxonline.com
+    - host: whoami.truxonline.com
