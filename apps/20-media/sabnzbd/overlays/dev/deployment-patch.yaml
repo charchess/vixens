@@ -21,7 +21,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: sabnzbd-secrets
-                  key: SABNZBD__API_KEY
+                  key: API_KEY
           volumeMounts:
             - name: config
               mountPath: /config
