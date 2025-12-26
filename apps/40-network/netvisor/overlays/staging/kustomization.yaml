@@ -7,6 +7,9 @@ resources:
   - http-redirect.yaml
   - ingress.yaml
 
+patchesStrategicMerge:
+  - server-url-patch.yaml
+
 patches:
   - target:
       kind: InfisicalSecret
