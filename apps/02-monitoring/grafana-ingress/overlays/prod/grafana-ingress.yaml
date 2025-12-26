@@ -1,41 +1,16 @@
----
-# HTTP -> HTTPS redirect for Grafana
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: grafana-http-redirect
-  namespace: monitoring
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: media-redirect-to-https@kubernetescrd
-spec:
-  ingressClassName: traefik
-  rules:
-    - host: grafana.truxonline.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: grafana
-                port:
-                  number: 80
----
-# HTTPS Ingress for Grafana
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: grafana-ingress
+  name: grafana
   namespace: monitoring
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.middlewares: "monitoring-redirect-https@kubernetescrd"
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Grafana"
     gethomepage.dev/icon: "grafana.png"
     gethomepage.dev/group: "Monitoring"
-    traefik.ingress.kubernetes.io/router.middlewares: media-redirect-to-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
