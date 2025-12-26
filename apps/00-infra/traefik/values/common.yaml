@@ -43,6 +43,8 @@ ports:
     port: 80
     exposedPort: 80
     expose: true
+    redirectTo:
+      port: websecure
   websecure:
     port: 443
     exposedPort: 443

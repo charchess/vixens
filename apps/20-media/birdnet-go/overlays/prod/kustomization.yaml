@@ -5,6 +5,4 @@ namespace: birdnet-go
 resources:
   - ../../base
   - ingress.yaml
-
-patchesStrategicMerge:
   - patch-infisical-env.yaml
