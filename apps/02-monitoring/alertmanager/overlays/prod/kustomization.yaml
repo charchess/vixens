@@ -5,14 +5,14 @@ namespace: monitoring
 
 resources:
   - ../../base
-  - http-redirect.yaml
   - ingress.yaml
 
 patches:
-  - path: infisical-patch.yaml
+  - path: patch-alertmanager-config.yaml
     target:
-      kind: InfisicalSecret
-      name: loki-secrets-sync
+      kind: Deployment
+      name: alertmanager
+  - path: patch-infisical-env.yaml
 
 commonLabels:
   environment: prod
