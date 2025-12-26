@@ -50,8 +50,8 @@ spec:
               mountPath: /dev/shm
       volumes:
         - name: config
-          configMap:
-            name: frigate-config
+          secret:
+            secretName: frigate-config-secret
         - name: db
           persistentVolumeClaim:
             claimName: frigate-config-pvc
