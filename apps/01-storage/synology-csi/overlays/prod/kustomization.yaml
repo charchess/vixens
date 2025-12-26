@@ -8,6 +8,7 @@ resources:
   - ../../base
 
 patches:
+  - path: infisical-patch.yaml
   # Patch du storage class pour prod
   - target:
       kind: StorageClass

@@ -3,3 +3,18 @@ kind: Kustomization
 
 resources:
   - ../../base
+
+patches:
+  - patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 100m
+            memory: 200Mi
+          limits:
+            cpu: 500m
+            memory: 500Mi
+    target:
+      kind: Deployment
+      name: metrics-server
