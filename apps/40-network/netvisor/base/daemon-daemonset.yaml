@@ -33,3 +33,17 @@ spec:
               value: "60073"
             - name: SCANOPY_CONCURRENT_SCANS
               value: "10"
+            - name: SCANOPY_SERVER_URL
+              value: "https://netvisor.dev.truxonline.com"
+            - name: SCANOPY_NETWORK_ID
+              valueFrom:
+                secretKeyRef:
+                  name: netvisor-secrets
+                  key: SCANOPY_NETWORK_ID
+            - name: SCANOPY_DAEMON_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: netvisor-secrets
+                  key: SCANOPY_DAEMON_API_KEY
+            - name: SCANOPY_MODE
+              value: "Pull"
