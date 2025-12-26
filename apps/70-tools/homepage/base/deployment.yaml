@@ -60,10 +60,10 @@ spec:
 
       # Volume definitions
       volumes:
-        # The read-only ConfigMap containing the default configuration
+        # The read-only Secret containing the configuration synced from Infisical
         - name: initial-config-vol
-          configMap:
-            name: homepage-config
+          secret:
+            secretName: homepage-config-secret
         # The writable PersistentVolumeClaim for the config
         - name: config-vol
           persistentVolumeClaim:
