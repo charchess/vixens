@@ -1,0 +1,13 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netvisor-server
+spec:
+  template:
+    spec:
+      containers:
+        - name: server
+          env:
+            - name: SCANOPY_PUBLIC_URL
+              value: "https://netvisor.truxonline.com"
