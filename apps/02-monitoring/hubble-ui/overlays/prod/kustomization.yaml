@@ -5,8 +5,7 @@ namespace: kube-system
 
 resources:
   - ../../base
-  - http-redirect.yaml
-  - ingress.yaml
+  - ingress-patch.yaml
 
 commonLabels:
   environment: prod
