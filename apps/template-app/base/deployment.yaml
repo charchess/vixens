@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: template-app
+  labels:
+    app: template-app
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # Mandatory for RWO volumes
+  selector:
+    matchLabels:
+      app: template-app
+  template:
+    metadata:
+      labels:
+        app: template-app
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: template-app
+          image: "nginx:stable-alpine" # Placeholder
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          envFrom:
+            - secretRef:
+                name: template-app-secrets

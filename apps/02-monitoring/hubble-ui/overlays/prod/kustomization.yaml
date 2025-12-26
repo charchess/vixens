@@ -5,7 +5,12 @@ namespace: kube-system
 
 resources:
   - ../../base
-  - ingress-patch.yaml
 
 commonLabels:
   environment: prod
+
+patches:
+  - path: ingress-patch.yaml
+    target:
+      kind: Ingress
+      name: hubble-ui

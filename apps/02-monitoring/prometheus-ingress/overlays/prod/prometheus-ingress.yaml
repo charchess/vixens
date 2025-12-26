@@ -1,4 +1,17 @@
 ---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: prometheus-tls
+  namespace: monitoring
+spec:
+  secretName: prometheus-tls
+  dnsNames:
+    - prometheus.truxonline.com
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
@@ -14,7 +27,7 @@ spec:
         - name: prometheus-server
           port: 80
   tls:
-    certResolver: letsencrypt-prod
+    secretName: prometheus-tls
 ---
 # HTTP Redirect for Prometheus
 apiVersion: traefik.io/v1alpha1
@@ -34,6 +47,19 @@ spec:
         - name: prometheus-server
           port: 80
 ---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: alertmanager-tls
+  namespace: monitoring
+spec:
+  secretName: alertmanager-tls
+  dnsNames:
+    - alertmanager.truxonline.com
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
@@ -49,7 +75,7 @@ spec:
         - name: prometheus-alertmanager
           port: 9093
   tls:
-    certResolver: letsencrypt-prod
+    secretName: alertmanager-tls
 ---
 # HTTP Redirect for Alertmanager
 apiVersion: traefik.io/v1alpha1
