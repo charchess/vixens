@@ -10,3 +10,13 @@ spec:
           env:
             - name: ALLOWED_HOSTS
               value: "netbox.truxonline.com,127.0.0.1,localhost"
+          livenessProbe:
+            httpGet:
+              httpHeaders:
+                - name: Host
+                  value: localhost
+          readinessProbe:
+            httpGet:
+              httpHeaders:
+                - name: Host
+                  value: localhost
