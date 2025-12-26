@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | v3.7.3  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | v3.7.3  |
 
 ## Validation
 **URL :** https://netbox.[env].truxonline.com
