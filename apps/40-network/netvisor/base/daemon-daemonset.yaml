@@ -14,7 +14,7 @@ spec:
       labels:
         app: netvisor-daemon
     spec:
-      hostNetwork: true
+      hostNetwork: false
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
