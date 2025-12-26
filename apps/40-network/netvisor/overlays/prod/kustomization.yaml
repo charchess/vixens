@@ -9,7 +9,6 @@ resources:
 
 patchesStrategicMerge:
   - server-url-patch.yaml
-  - daemon-url-patch.yaml
 
 patches:
   - target:

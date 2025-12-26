@@ -33,8 +33,6 @@ spec:
               value: "60073"
             - name: SCANOPY_CONCURRENT_SCANS
               value: "10"
-            - name: SCANOPY_SERVER_URL
-              value: "https://netvisor.dev.truxonline.com"
             - name: SCANOPY_NETWORK_ID
               valueFrom:
                 secretKeyRef:
