@@ -5,7 +5,7 @@ metadata:
   name: traefik-dashboard-tls
   namespace: traefik
 spec:
-  secretName: traefik-dashboard-tls
+  secretName: traefik-dashboard-tls-prod
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer

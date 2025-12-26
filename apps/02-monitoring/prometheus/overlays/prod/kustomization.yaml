@@ -7,20 +7,14 @@ resources:
   - ../../base
 
 patches:
-  - target:
+  - path: patch-alertmanager-command.yaml
+    target:
       kind: StatefulSet
       name: prometheus-alertmanager
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/command
-        value: ["/bin/sh", "-c"]
-      - op: replace
-        path: /spec/template/spec/containers/0/args
-        value:
-          - |
-            cp /etc/alertmanager/alertmanager.yml /tmp/alertmanager.yml &&
-            sed -i "s|DISCORD_WEBHOOK_URL_PLACEHOLDER|$DISCORD_WEBHOOK_URL|g" /tmp/alertmanager.yml &&
-            /bin/alertmanager --config.file=/tmp/alertmanager.yml --storage.path=/alertmanager
+  - path: patch-infisical-env.yaml
+    target:
+      kind: InfisicalSecret
+      name: alertmanager-secrets-sync
 
 commonLabels:
   environment: prod
