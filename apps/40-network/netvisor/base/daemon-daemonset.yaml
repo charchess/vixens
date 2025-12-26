@@ -25,8 +25,10 @@ spec:
           securityContext:
             privileged: true
           env:
-            - name: SCANOPY_SERVER_URL
-              value: "http://netvisor-server.networking.svc.cluster.local:60072"
+            - name: SCANOPY_SERVER_TARGET
+              value: "http://netvisor-server.networking.svc.cluster.local"
+            - name: SCANOPY_SERVER_PORT
+              value: "60072"
             - name: SCANOPY_DAEMON_PORT
               value: "60073"
             - name: SCANOPY_NETWORK_ID
