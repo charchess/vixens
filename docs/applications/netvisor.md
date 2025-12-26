@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | latest  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | latest  |
 
 ## Validation
 **URL :** https://netvisor.[env].truxonline.com
