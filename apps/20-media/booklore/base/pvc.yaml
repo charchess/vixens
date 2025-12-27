@@ -9,7 +9,7 @@ spec:
   storageClassName: synelia-iscsi-retain
   resources:
     requests:
-      storage: 2Gi
+      storage: 10Gi
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
