@@ -5,6 +5,8 @@ metadata:
   name: frigate
   labels:
     app: frigate
+  annotations:
+    secret.reloader.stakater.com/reload: "frigate-config-secret,frigate-secrets"
 spec:
   replicas: 1
   strategy:
