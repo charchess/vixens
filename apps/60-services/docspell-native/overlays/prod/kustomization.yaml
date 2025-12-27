@@ -5,13 +5,10 @@ namespace: services
 
 resources:
   - ../../base
+  - ingress.yaml
 
 patches:
   - path: patch-infisical-secrets.yaml
-  - path: ingress.yaml
-    target:
-      kind: Ingress
-      name: docspell-restserver
 
 labels:
   - pairs:
