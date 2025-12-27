@@ -61,5 +61,6 @@ spec:
             server: 192.168.111.69
             path: /volume3/Content/ebooks
         - name: bookdrop
-          persistentVolumeClaim:
-            claimName: booklore-bookdrop-pvc
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/incoming/ebooks
