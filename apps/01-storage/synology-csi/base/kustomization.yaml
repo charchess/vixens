@@ -11,7 +11,6 @@ resources:
   - controller.yaml
   - node.yaml
   - storage-class.yaml
-  - infisical-secret.yaml
 
 labels:
   - pairs:
