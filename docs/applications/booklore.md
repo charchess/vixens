@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | latest  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | latest  |
 
 ## Validation
 **URL :** https://booklore.[env].truxonline.com
@@ -14,19 +14,22 @@
 ### Méthode Automatique (Curl)
 ```bash
 # 1. Vérifier la redirection HTTP -> HTTPS
-curl -I http://booklore.dev.truxonline.com
+curl -I http://booklore.truxonline.com
 # Attendu: HTTP 301/302/308
 
 # 2. Vérifier l'accès HTTPS
-curl -L -k https://booklore.dev.truxonline.com | grep "Booklore"
-# Attendu: Présence de "Booklore"
+curl -L -k https://booklore.truxonline.com | grep "Booklore"
+# Attendu: Présence de "Booklore" dans le titre ou le body
 ```
 
 ### Méthode Manuelle
 1. Accéder à l'URL.
-2. Vérifier l'accès à la bibliothèque.
+2. Vérifier que les fichiers dans `/bookdrop` (montage NFS) sont scannés.
+3. Vérifier les logs du pod pour les évènements `BookdropMonitoringService`.
 
 ## Notes Techniques
-- **Namespace :** `media-stack`
-- **Dépendances :** PVC Storage
-- **Particularités :** Gestionnaire de livres.
+- **Namespace :** `media`
+- **Stockage (NFS) :**
+    - `/books` : Pointé vers `/volume3/Content/ebooks`
+    - `/bookdrop` : Pointé vers `/volume3/Internal/incoming/ebooks`
+- **Base de données :** MariaDB (PVC local)
