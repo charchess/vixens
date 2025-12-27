@@ -63,4 +63,4 @@ spec:
         - name: bookdrop
           nfs:
             server: 192.168.111.69
-            path: /volume3/incoming/ebooks
+            path: /volume3/Internal/incoming/ebooks
