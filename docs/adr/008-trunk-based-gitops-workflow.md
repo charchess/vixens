@@ -1,7 +1,7 @@
 # ADR-008: Migration vers Trunk-Based GitOps Workflow
 
 **Date:** 2025-12-28
-**Status:** 🔄 Proposed (À Discuter)
+**Status:** ✅ Accepted
 **Deciders:** Architecture, DevOps
 **Tags:** `gitops`, `workflow`, `migration`, `best-practices`
 
@@ -16,6 +16,7 @@ Workflow multi-branches (dev/test/staging/main):
 - ❌ Historique Git fragmenté
 - ❌ Promotion manuelle complexe (promote.sh)
 - ❌ Pas aligné avec les best practices 2025
+- ❌ Branches test/staging inutiles pour les apps (seulement utiles pour tests Terraform)
 
 ### Best Practices Industrie 2025
 
@@ -32,27 +33,28 @@ Workflow multi-branches (dev/test/staging/main):
 
 ## Decision
 
-**Migrer vers un workflow trunk-based avec promotion par tags Git.**
+**Migrer vers un workflow trunk-based simplifié avec 2 branches (dev/main) et promotion par tags Git.**
 
 ### Nouveau Modèle
 
 ```
-Main Branch (unique source de vérité)
-    ↓
-Git Tags (promotion)
-    ↓
-ArgoCD Applications (targetRevision = tag)
+Feature Branch → dev (auto-deploy cluster dev) → main (auto-deploy cluster prod)
+                  ↓                                ↓
+              dev-latest                      prod-stable
+              dev-v1.2.3                      prod-v1.2.3
 ```
 
 ### Structure des Tags
 
-- **dev-latest** - Auto-updated after merge to main
-- **dev-v1.2.3** - Specific dev version
-- **test-stable** - Current test version
-- **test-v1.2.3** - Specific test version
-- **staging-stable** - Current staging version
-- **prod-stable** - Current prod version
-- **prod-v1.2.3** - Specific prod version
+**Dev (auto-tagging):**
+- **dev-latest** - Auto-updated after merge to dev
+- **dev-v1.2.3** - Specific dev version (auto-created)
+
+**Prod (manual promotion):**
+- **prod-stable** - Current prod version (manually promoted)
+- **prod-v1.2.3** - Specific prod version (manually promoted)
+
+**Supprimé:** test-*, staging-* (branches test/staging archivées)
 
 ### Workflow
 
@@ -61,34 +63,37 @@ ArgoCD Applications (targetRevision = tag)
    git checkout -b feature/xyz
    # develop
    git push
-   gh pr create -B main
+   gh pr create -B dev  # PR vers dev (pas main directement)
    ```
 
 2. **Auto-deploy Dev (après merge):**
-   - GitHub Action crée `dev-vX.Y.Z` + update `dev-latest`
-   - ArgoCD dev sync automatiquement
+   - GitHub Action `auto-tag-dev.yaml` crée automatiquement:
+     - `dev-vX.Y.Z` (version incrémentée)
+     - Update `dev-latest`
+   - ArgoCD dev (targetRevision: dev) sync automatiquement
 
-3. **Promotion Test/Staging/Prod (manuel):**
+3. **Promotion Prod (manuel, après validation dev):**
    ```bash
    gh workflow run promote-prod.yaml -f version=v1.2.3
    ```
-   - Crée tag `prod-v1.2.3`
+   - Crée tag `prod-v1.2.3` pointant sur dev-v1.2.3
    - Update tag `prod-stable`
-   - ArgoCD prod sync automatiquement
+   - ArgoCD prod (targetRevision: prod-stable) sync automatiquement
 
 ## Consequences
 
 ### Positives
 
 ✅ **Simplicité:**
-- 1 branche au lieu de 4
-- Pas de merge conflicts entre branches
+- 2 branches au lieu de 4 (dev/main seulement)
+- Pas de merge conflicts entre environnements
 - Historique Git linéaire et clair
+- 1 PR au lieu de 4 pour chaque feature
 
 ✅ **Renovate Native:**
-- Configuration simple: `"baseBranches": ["main"]`
-- PRs directes vers main (comportement par défaut)
-- Pas de configuration spéciale nécessaire
+- Configuration simple: `"baseBranches": ["dev"]`
+- PRs vers dev, test en dev, puis promote vers prod
+- Workflow naturel pour Renovate
 
 ✅ **Rollback Instantané:**
 - Changer le tag ArgoCD suffit
@@ -146,7 +151,7 @@ ArgoCD Applications (targetRevision = tag)
 3. 🔄 Supprimer promote.sh
 
 ### Phase 4: Cleanup (1 semaine)
-1. 🔄 Archiver les branches dev/test/staging
+1. 🔄 Archiver les branches test/staging (dev et main conservées)
 2. 🔄 Mettre à jour la documentation
 3. 🔄 Former l'équipe au nouveau workflow
 
@@ -189,9 +194,9 @@ Si la migration échoue:
 ---
 
 **Next Steps:**
-1. 🗣️ Discussion avec l'équipe
+1. ✅ Discussion avec l'équipe
 2. ✅ Approbation de l'ADR
-3. 🚀 Démarrage Phase 1 (Préparation)
+3. 🚀 Phase 1 en cours (Préparation)
 
 **Decision Owner:** Architecture Team
 **Target Implementation Date:** 2025-01-15

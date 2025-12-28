@@ -1,0 +1,101 @@
+---
+name: Auto-tag Dev
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  auto-tag:
+    name: Create dev tags
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for tags
+
+      - name: Get latest dev tag
+        id: get_tag
+        run: |
+          # Get latest dev-v* tag
+          LATEST_TAG=$(git tag -l "dev-v*" | sort -V | tail -n 1)
+
+          if [ -z "$LATEST_TAG" ]; then
+            # No existing tag, start at v0.1.0
+            NEW_VERSION="0.1.0"
+          else
+            # Extract version number (dev-v1.2.3 -> 1.2.3)
+            VERSION=${LATEST_TAG#dev-v}
+
+            # Split into major.minor.patch
+            MAJOR=$(echo $VERSION | cut -d. -f1)
+            MINOR=$(echo $VERSION | cut -d. -f2)
+            PATCH=$(echo $VERSION | cut -d. -f3)
+
+            # Increment based on commit message
+            COMMIT_MSG=$(git log -1 --pretty=%B)
+
+            if [[ "$COMMIT_MSG" == *"BREAKING CHANGE"* ]] || [[ "$COMMIT_MSG" == *"major:"* ]]; then
+              # Major version bump
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+            elif [[ "$COMMIT_MSG" == *"feat:"* ]] || [[ "$COMMIT_MSG" == *"feature:"* ]]; then
+              # Minor version bump
+              MINOR=$((MINOR + 1))
+              PATCH=0
+            else
+              # Patch version bump (default)
+              PATCH=$((PATCH + 1))
+            fi
+
+            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          fi
+
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "new_tag=dev-v${NEW_VERSION}" >> $GITHUB_OUTPUT
+
+          echo "📦 New version: dev-v${NEW_VERSION}"
+
+      - name: Create versioned tag
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          # Create annotated tag with version info
+          git tag -a "${{ steps.get_tag.outputs.new_tag }}" \
+            -m "Auto-tagged dev version ${{ steps.get_tag.outputs.new_version }}" \
+            -m "Commit: ${{ github.sha }}" \
+            -m "Author: ${{ github.actor }}"
+
+          git push origin "${{ steps.get_tag.outputs.new_tag }}"
+
+          echo "✅ Created tag: ${{ steps.get_tag.outputs.new_tag }}"
+
+      - name: Update dev-latest tag
+        run: |
+          # Delete old dev-latest tag if exists
+          git tag -d dev-latest 2>/dev/null || true
+          git push origin :refs/tags/dev-latest 2>/dev/null || true
+
+          # Create new dev-latest pointing to current commit
+          git tag -a dev-latest \
+            -m "Latest dev version: ${{ steps.get_tag.outputs.new_version }}" \
+            -m "Points to: ${{ steps.get_tag.outputs.new_tag }}"
+
+          git push origin dev-latest
+
+          echo "✅ Updated dev-latest to ${{ steps.get_tag.outputs.new_version }}"
+
+      - name: Summary
+        run: |
+          echo "## 📦 Auto-tagging Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Created versioned tag: \`${{ steps.get_tag.outputs.new_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Updated mobile tag: \`dev-latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Author:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
