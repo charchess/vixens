@@ -250,15 +250,18 @@ jobs:
 
           # Trunk-based: prod doit utiliser targetRevision: prod-stable (tag mobile)
           # Vérifier qu'on n'utilise pas 'main' ou 'prod' comme targetRevision
-          if grep -r "targetRevision: main" argocd/overlays/prod; then
+          if grep -rE "targetRevision:\s+main\s*$" argocd/overlays/prod; then
             echo "::error::Found 'targetRevision: main' in argocd/overlays/prod."
             echo "::error::Trunk-based workflow requires 'targetRevision: prod-stable' for production."
             exit 1
           fi
 
-          if grep -r "targetRevision: prod\"" argocd/overlays/prod; then
+          # Rejeter 'prod' seul (pas 'prod-stable' ou 'prod-v1.2.3')
+          # Gemini suggère souvent targetRevision: prod à tort
+          if grep -rE "targetRevision:\s+[\"']?prod[\"']?\s*$" argocd/overlays/prod; then
             echo "::error::Found 'targetRevision: prod' in argocd/overlays/prod."
             echo "::error::Trunk-based workflow requires 'targetRevision: prod-stable' for production."
+            echo "::error::Note: 'prod' branch does not exist. Use 'prod-stable' tag instead."
             exit 1
           fi
 
