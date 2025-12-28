@@ -30,7 +30,7 @@ spec:
           effect: NoSchedule
       initContainers:
         - name: filebrowser-init
-          image: filebrowser/filebrowser:latest
+          image: filebrowser/filebrowser:v2.52.0
           command:
             - /bin/sh
             - -c
@@ -100,7 +100,7 @@ spec:
               cpu: 1000m
               memory: 2048Mi
         - name: filebrowser
-          image: filebrowser/filebrowser:latest
+          image: filebrowser/filebrowser:v2.52.0
           imagePullPolicy: Always
           ports:
             - name: fb-http

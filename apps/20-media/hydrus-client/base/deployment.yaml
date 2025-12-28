@@ -38,7 +38,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: hydrus-client
-          image: ghcr.io/hydrusnetwork/hydrus:latest
+          image: ghcr.io/hydrusnetwork/hydrus:v652
           ports:
             - containerPort: 5800
           env:
