@@ -10,7 +10,7 @@ resources:
 patches:
   - path: patch-alertmanager-config.yaml
     target:
-      kind: Deployment
+      kind: StatefulSet
       name: alertmanager
   - path: patch-infisical-env.yaml
 
