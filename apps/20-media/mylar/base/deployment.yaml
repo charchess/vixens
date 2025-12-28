@@ -25,7 +25,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: mylar
-          image: lscr.io/linuxserver/mylar3:latest
+          image: lscr.io/linuxserver/mylar3:@a2bfda373281
           ports:
             - containerPort: 8090 # Default Mylar UI port
           env:

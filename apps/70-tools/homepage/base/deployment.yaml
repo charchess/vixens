@@ -42,7 +42,7 @@ spec:
       # Main application container
       containers:
         - name: homepage
-          image: ghcr.io/gethomepage/homepage:latest
+          image: ghcr.io/gethomepage/homepage:v1.8
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000

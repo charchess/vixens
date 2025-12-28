@@ -26,7 +26,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: hydrus-server
-          image: ghcr.io/hydrusnetwork/hydrus:latest
+          image: ghcr.io/hydrusnetwork/hydrus:v652
           ports:
             - containerPort: 45870 # Default Hydrus Server UI port
           env:

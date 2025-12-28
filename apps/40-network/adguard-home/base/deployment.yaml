@@ -25,7 +25,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: adguard-home
-          image: adguard/adguardhome:latest
+          image: adguard/adguardhome:@92929135ced2
           ports:
             - containerPort: 53
               name: dns-udp

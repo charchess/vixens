@@ -23,7 +23,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: prowlarr
-          image: ghcr.io/linuxserver/prowlarr:latest
+          image: ghcr.io/linuxserver/prowlarr:version-2.3.0.5236
           ports:
             - containerPort: 9696 # Default Prowlarr UI port
           env:

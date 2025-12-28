@@ -23,7 +23,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: sabnzbd
-          image: ghcr.io/linuxserver/sabnzbd:latest # Placeholder image
+          image: ghcr.io/linuxserver/sabnzbd:version-4.5.5 # Placeholder image
           ports:
             - containerPort: 8080 # Default SABnzbd UI port
           env: # Added environment variables
