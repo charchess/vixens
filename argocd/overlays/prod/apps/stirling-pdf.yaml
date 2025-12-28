@@ -9,10 +9,18 @@ metadata:
     argocd.argoproj.io/sync-wave: "5"
 spec:
   project: default
-  source:
-    repoURL: https://github.com/charchess/vixens.git
-    targetRevision: prod-stable
-    path: apps/70-tools/stirling-pdf/overlays/prod
+  sources:
+    - repoURL: https://stirling-tools.github.io/Stirling-PDF-chart
+      chart: stirling-pdf-chart
+      targetRevision: 2.2.0
+      helm:
+        releaseName: stirling-pdf
+        valueFiles:
+          - $values/apps/70-tools/stirling-pdf/base/values.yaml
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: prod-stable
+      ref: values
+      path: apps/70-tools/stirling-pdf/overlays/prod
   destination:
     server: https://kubernetes.default.svc
     namespace: tools

@@ -3,10 +3,4 @@ kind: Kustomization
 namespace: tools
 
 resources:
-  - upstream.yaml
-
-patches:
-  - path: deployment-patch.yaml
-
-commonLabels:
-  app.kubernetes.io/part-of: stirling-pdf
+  # Empty base - resources are managed by Helm
