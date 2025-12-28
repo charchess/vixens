@@ -22,7 +22,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: changedetection
-          image: ghcr.io/dgtlmoon/changedetection.io:latest
+          image: ghcr.io/dgtlmoon/changedetection.io:0.51.4
           ports:
             - containerPort: 5000
               name: http
