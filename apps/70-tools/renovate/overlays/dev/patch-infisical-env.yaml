@@ -1,0 +1,11 @@
+---
+apiVersion: secrets.infisical.com/v1alpha1
+kind: InfisicalSecret
+metadata:
+  name: renovate-secret-sync
+  namespace: tools
+spec:
+  authentication:
+    universalAuth:
+      secretsScope:
+        envSlug: dev
