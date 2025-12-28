@@ -12,8 +12,8 @@ spec:
   project: default
   sources:
     - repoURL: https://prometheus-community.github.io/helm-charts
-      chart: prometheus-alertmanager
-      targetRevision: 0.30.0
+      chart: alertmanager
+      targetRevision: 1.30.0
       helm:
         releaseName: alertmanager
         valueFiles:
@@ -21,9 +21,6 @@ spec:
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: dev
       ref: values
-    - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: dev
-      path: apps/02-monitoring/alertmanager/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
