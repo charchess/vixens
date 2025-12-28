@@ -169,7 +169,7 @@ spec:
 - [ ] Vérifier qu'aucune application ne démarre avant ses dépendances
 
 ### Phase 4: Propagation (Sprint suivant)
-- [ ] Appliquer les mêmes waves sur test/staging/prod
+- [x] Appliquer les mêmes waves sur prod (trunk-based workflow: dev/prod uniquement)
 - [ ] Créer des scripts de validation automatique
 
 ## Métriques de Succès
