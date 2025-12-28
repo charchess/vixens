@@ -20,7 +20,6 @@ spec:
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
       ref: values
-      path: apps/70-tools/stirling-pdf/overlays/prod
   destination:
     server: https://kubernetes.default.svc
     namespace: tools
