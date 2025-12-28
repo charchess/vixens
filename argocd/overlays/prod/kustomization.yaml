@@ -74,3 +74,4 @@ resources:
   - apps/loki.yaml
   - apps/promtail.yaml
   - apps/renovate.yaml
+  - apps/stirling-pdf.yaml
