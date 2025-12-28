@@ -9,6 +9,13 @@ resources:
 
 patches:
   - path: patch-infisical-env.yaml
+  - target:
+      kind: CronJob
+      name: renovate
+    patch: |-
+      - op: replace
+        path: /spec/schedule
+        value: "*/5 * * * *"
 
 commonLabels:
   environment: dev
