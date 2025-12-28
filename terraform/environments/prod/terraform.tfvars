@@ -3,7 +3,7 @@
 # ============================================================================
 
 environment = "prod"
-git_branch  = "main"
+git_branch  = "prod-stable"  # Tag-based deployment (trunk-based workflow)
 
 # ----------------------------------------------------------------------------
 # CLUSTER
