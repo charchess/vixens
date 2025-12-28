@@ -29,4 +29,8 @@ curl -L -k https://birdnet.dev.truxonline.com | grep "BirdNET-Go"
 ## Notes Techniques
 - **Namespace :** `media-stack`
 - **Dépendances :** Flux audio (RTSP/Microphone)
+- **Stockage :**
+  - `/config` : PVC `birdnet-go-config` (iSCSI)
+  - `/data` : PVC `birdnet-go-data` (iSCSI)
+  - `/data/clips` : NFS `192.168.111.69:/volume3/Internal/birdnet/clips` (Stockage des enregistrements audio)
 - **Particularités :** Analyse et identification de chants d'oiseaux en temps réel (Version Go légère).
