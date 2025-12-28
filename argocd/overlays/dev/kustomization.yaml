@@ -72,3 +72,4 @@ resources:
   - apps/netbox.yaml
   - apps/loki.yaml
   - apps/promtail.yaml
+  - apps/renovate.yaml

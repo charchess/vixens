@@ -1,0 +1,34 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: renovate-config
+  namespace: tools
+data:
+  config.json: |
+    {
+      "platform": "github",
+      "username": "renovate-bot",
+      "gitAuthor": "Renovate Bot <renovate@vixens.local>",
+      "onboarding": false,
+      "requireConfig": "optional",
+      "repositories": ["charchess/vixens"],
+      "enabledManagers": ["terraform", "helm-values", "kubernetes", "regex"],
+      "kubernetes": {
+        "fileMatch": ["(^|/)kustomization\\.yaml$", "(^|/)[^/]*\\.yaml$"]
+      },
+      "helm-values": {
+        "fileMatch": ["(^|/)values.*\\.yaml$"]
+      },
+      "terraform": {
+        "fileMatch": ["(^|/)\\.tf$"]
+      },
+      "prConcurrentLimit": 3,
+      "prHourlyLimit": 2,
+      "automerge": false,
+      "ignoreTests": true,
+      "labels": ["dependencies", "renovate"],
+      "assignees": ["@charchess"],
+      "reviewers": ["@charchess"],
+      "schedule": ["every weekday"]
+    }
