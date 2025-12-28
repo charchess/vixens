@@ -236,36 +236,51 @@ jobs:
             fi
           done
 
-  # 4️⃣½  Vérification de la branche de production
-  prod-branch-check:
-    name: "Check for 'targetRevision: prod'"
+  # 4️⃣½  Vérification de la configuration production (trunk-based)
+  prod-config-check:
+    name: "Production Configuration Checks"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: "Fail if 'targetRevision: prod' is found"
+      - name: "Verify trunk-based workflow compliance"
         run: |
-          if grep -r "targetRevision: prod" argocd/overlays/prod; then
-            echo "::error::Found 'targetRevision: prod' in argocd/overlays/prod. Please use 'main' for production."
+          echo "🔍 Vérification configuration production (trunk-based workflow)"
+
+          # Trunk-based: prod doit utiliser targetRevision: prod-stable (tag mobile)
+          # Vérifier qu'on n'utilise pas 'main' ou 'prod' comme targetRevision
+          if grep -r "targetRevision: main" argocd/overlays/prod; then
+            echo "::error::Found 'targetRevision: main' in argocd/overlays/prod."
+            echo "::error::Trunk-based workflow requires 'targetRevision: prod-stable' for production."
             exit 1
           fi
 
+          if grep -r "targetRevision: prod\"" argocd/overlays/prod; then
+            echo "::error::Found 'targetRevision: prod' in argocd/overlays/prod."
+            echo "::error::Trunk-based workflow requires 'targetRevision: prod-stable' for production."
+            exit 1
+          fi
+
+          # Vérifier que prod utilise bien envSlug: prod (pas dev)
           if grep -r "envSlug: dev" apps/*/*/overlays/prod; then
             echo "::error::Found 'envSlug: dev' in apps/*/*/overlays/prod. Please use 'prod' for production."
             exit 1
           fi
 
+          # Vérifier absence de références au repo deprecated
           if grep -r "vixens-new.git" argocd; then
             echo "::error::Found 'vixens-new.git references' in argocd. Please use 'vixens.git', vixens-new is deprecated."
             exit 1
           fi
 
+          echo "✅ Production configuration compliant with trunk-based workflow"
+
   # 5️⃣ Résumé final
   validation-summary:
     name: Validation Summary
     runs-on: ubuntu-latest
-    needs: [yaml-lint, kube-structure, argocd-validate, security-scan, branch-flow, prod-branch-check]
+    needs: [yaml-lint, kube-structure, argocd-validate, security-scan, branch-flow, prod-config-check]
     if: always()
     steps:
       - name: Create summary
@@ -286,5 +301,5 @@ jobs:
             >> $GITHUB_STEP_SUMMARY
           echo "| Branch Flow | ${{ needs.branch-flow.result }} |" \
             >> $GITHUB_STEP_SUMMARY
-          echo "| Prod Branch Check | ${{ needs.prod-branch-check.result }} |" \
+          echo "| Prod Config Check | ${{ needs.prod-config-check.result }} |" \
             >> $GITHUB_STEP_SUMMARY
