@@ -75,3 +75,4 @@ resources:
   - apps/promtail.yaml
   - apps/renovate.yaml
   - apps/stirling-pdf.yaml
+  - apps/stirling-pdf-ingress.yaml
