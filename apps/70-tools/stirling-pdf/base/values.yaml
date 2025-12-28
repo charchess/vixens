@@ -24,18 +24,21 @@ tolerations:
     effect: "NoSchedule"
 
 # Probes configuration (Increased timeouts for slow startup)
-livenessProbe:
-  initialDelaySeconds: 60
-  periodSeconds: 10
-  failureThreshold: 5
-  timeoutSeconds: 5
-
-readinessProbe:
-  initialDelaySeconds: 30
-  periodSeconds: 10
-  failureThreshold: 5
-  timeoutSeconds: 5
+probes:
+  liveness:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    failureThreshold: 5
+    timeoutSeconds: 5
+  readiness:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 5
+    timeoutSeconds: 5
 
 # Env variables
-extraEnv:
-  SYSTEM_ROOTURIPATH: /
+envs:
+  - name: SYSTEM_ROOTURIPATH
+    value: /
