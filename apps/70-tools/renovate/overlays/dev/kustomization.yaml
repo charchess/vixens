@@ -9,13 +9,7 @@ resources:
 
 patches:
   - path: patch-infisical-env.yaml
-  - target:
-      kind: CronJob
-      name: renovate
-    patch: |-
-      - op: replace
-        path: /spec/schedule
-        value: "*/5 * * * *"
+  # Testing schedule removed - back to 6-hour schedule from base
 
 commonLabels:
   environment: dev
