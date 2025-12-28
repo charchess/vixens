@@ -22,7 +22,7 @@ spec:
           - $values/apps/02-monitoring/vpa/values/prod.yaml
 
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: main
+      targetRevision: prod-stable
       ref: values
 
   syncPolicy:

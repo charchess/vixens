@@ -3,7 +3,7 @@ name: Validate & Security
 
 on:
   push:
-    branches: [dev, test, staging, main]
+    branches: [dev, main]
   pull_request:
 
 jobs:
@@ -150,13 +150,13 @@ jobs:
             fi
           done
 
-  # 4️⃣½  Vérification du flux de branches
+  # 4️⃣½  Vérification du flux de branches (trunk-based: dev → main)
   branch-flow:
     name: Branch Flow Check
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - name: Enforce promotion order  (dev → test → staging → main)
+      - name: Enforce trunk-based flow (feature → dev → main)
         run: |
           # Branche source de la PR
           SOURCE="${{ github.head_ref }}"
@@ -166,30 +166,33 @@ jobs:
           echo "🔀 PR from '$SOURCE' into '$TARGET'"
 
           case "$TARGET" in
-            test)
-              [ "$SOURCE" = "dev" ] && exit 0 ;;
-            staging)
-              [ "$SOURCE" = "test" ] && exit 0 ;;
-            main)
-              [ "$SOURCE" = "staging" ] && exit 0 ;;
             dev)
-              # Allow feature branches to merge into dev
-              # Block environment branches (test, staging, main) from merging to dev
-              if [[ "$SOURCE" =~ ^(test|staging|main)$ ]]; then
-                echo "❌ Environment branch '$SOURCE' cannot merge to 'dev'"
-                echo "   Use promotion flow: dev→test→staging→main"
+              # Feature branches allowed, protected branches blocked
+              if [[ "$SOURCE" =~ ^(main|test|staging)$ ]]; then
+                echo "❌ Protected branch '$SOURCE' cannot merge to 'dev'"
+                echo "   Only feature branches can merge to dev"
                 exit 1
               fi
               echo "✅ Feature branch '$SOURCE' allowed to merge into 'dev'"
               exit 0 ;;
+            main)
+              # Only 'dev' can merge to 'main'
+              if [ "$SOURCE" != "dev" ]; then
+                echo "❌ Branch '$SOURCE' cannot merge to 'main'"
+                echo "   Only 'dev' branch can be promoted to 'main'"
+                echo "   Use: gh pr create -B main -H dev"
+                exit 1
+              fi
+              echo "✅ Dev branch allowed to promote to main"
+              exit 0 ;;
+            test|staging)
+              echo "❌ Branch '$TARGET' is archived"
+              echo "   Use new workflow: feature → dev → main"
+              exit 1 ;;
             *)
               echo "❌ Unknown target branch '$TARGET'"
               exit 1 ;;
           esac
-
-          echo "❌ Promotion interdite : $SOURCE → $TARGET"
-          echo "   Seuls dev→test, test→staging, staging→main sont autorisés."
-          exit 1
 
   # 4️⃣ Validation de sécurité
   security-scan:

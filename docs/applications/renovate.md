@@ -4,9 +4,9 @@
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
 | Dev           | [x]     | [x]       | [x]   | 42.66.10 |
-| Test          | [ ]     | [ ]       | [ ]   | -        |
-| Staging       | [ ]     | [ ]       | [ ]   | -        |
-| Prod          | [ ]     | [ ]       | [ ]   | -        |
+| Test          | [x]     | [x]       | [ ]   | 42.66.10 |
+| Staging       | [x]     | [x]       | [ ]   | 42.66.10 |
+| Prod          | [x]     | [x]       | [ ]   | 42.66.10 |
 
 ## Validation
 

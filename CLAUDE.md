@@ -150,14 +150,14 @@ mcp__playwright__browser_snapshot()  # Capture page state
 
 ## Multi-Cluster Architecture
 
-4 independent clusters on dedicated VLANs:
+2 active clusters on dedicated VLANs (trunk-based workflow):
 
 | Environment | Nodes | VLAN Internal | VLAN Services | VIP | Status |
 |-------------|-------|---------------|---------------|-----|--------|
 | **Dev** | obsy, onyx, opale (3 CP HA) | 111 | 208 | 192.168.111.160 | ✅ Active |
-| **Test** | citrine, carny, celesty (3 CP HA) | 111 | 209 | 192.168.111.180 | ⏳ Sprint 9 |
-| **Staging** | TBD (3 nodes) | 111 | 210 | 192.168.111.190 | 📅 Future |
 | **Prod** | Physical nodes (3) | 111 | 201 | 192.168.111.200 | 📅 Phase 3 |
+
+**Archived clusters** (test/staging): Only used for Terraform infrastructure testing, not for application deployments.
 
 **Dual-VLAN Network Architecture:**
 - **VLAN 111** (192.168.111.0/24) - Non-routed, internal (etcd, kubelet, storage)
@@ -258,16 +258,24 @@ vixens/
 
 ### Working with Multiple Environments
 
-**IMPORTANT:** When working on an environment (e.g., staging), base your analysis on lower environments (test, dev for staging). Compare differences. Lower environments are considered validated before moving up.
+**IMPORTANT:** Trunk-based workflow with 2 environments:
+- **dev**: Development and testing (cluster dev)
+- **main/prod**: Production (cluster prod)
+- **test/staging**: Archived (only used for Terraform testing)
+
+When working on production, base your analysis on dev environment. Compare differences.
 
 Example workflow:
 ```bash
 # Compare configurations
 diff apps/traefik/overlays/dev/kustomization.yaml \
-     apps/traefik/overlays/test/kustomization.yaml
+     apps/traefik/overlays/prod/kustomization.yaml
 
-# Check what changed between environments
-git diff dev..test -- apps/
+# Check what changed between dev and main
+git diff dev..main -- apps/
+
+# Promote to production
+gh workflow run promote-prod.yaml -f version=v1.2.3
 ```
 
 ---
