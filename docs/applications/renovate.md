@@ -3,7 +3,7 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [ ]     | [ ]       | [ ]   | 39.134.2 |
+| Dev           | [x]     | [ ]       | [ ]   | 39.134.2 |
 | Test          | [ ]     | [ ]       | [ ]   | -        |
 | Staging       | [ ]     | [ ]       | [ ]   | -        |
 | Prod          | [ ]     | [ ]       | [ ]   | -        |
