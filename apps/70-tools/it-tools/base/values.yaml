@@ -6,7 +6,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/corentinth/it-tools
   pullPolicy: IfNotPresent
-  tag: "latest" # Will be managed by Renovate
+  tag: "2024.10.22-7ca5933" # Pinned version (Renovate compatible)
 
 tolerations:
   - key: "node-role.kubernetes.io/control-plane"
