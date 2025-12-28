@@ -15,7 +15,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: main
+    targetRevision: prod-stable
     path: apps/02-monitoring/promtail/overlays/prod
   destination:
     server: https://kubernetes.default.svc

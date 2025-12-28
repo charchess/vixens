@@ -29,7 +29,7 @@ spec:
 
     # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: main
+      targetRevision: prod-stable
       ref: values
 
   syncPolicy:
