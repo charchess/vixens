@@ -17,6 +17,10 @@ spec:
             app: renovate
         spec:
           restartPolicy: Never
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
           containers:
             - name: renovate
               image: renovate/renovate:39.134.2  # Renovate latest stable
