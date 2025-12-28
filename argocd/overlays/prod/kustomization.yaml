@@ -76,3 +76,5 @@ resources:
   - apps/renovate.yaml
   - apps/stirling-pdf.yaml
   - apps/stirling-pdf-ingress.yaml
+  - apps/it-tools.yaml
+  - apps/it-tools-ingress.yaml
