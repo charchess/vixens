@@ -455,8 +455,8 @@ kubectl get events -n argocd --sort-by='.lastTimestamp' | grep "SyncSucceeded"
 - [ ] Documenter résultats
 
 **Jour 8-9: Propagation**
-- [ ] Appliquer aux overlays test/staging/prod
-- [ ] Créer PR dev → test
+- [x] Appliquer aux overlays prod (trunk-based workflow: dev/prod uniquement)
+- [x] Créer PR dev → main (trunk-based workflow)
 - [ ] Documentation finale
 
 **Jour 10: Finalisation**
