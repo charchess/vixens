@@ -13,9 +13,9 @@ spec:
     server: https://kubernetes.default.svc
     namespace: networking
   sources:
-    - repoURL: https://charts.bitnami.com/bitnami
+    - repoURL: oci://registry-1.docker.io/bitnamicharts
       chart: external-dns
-      targetRevision: "8.9.2"
+      targetRevision: 9.0.3
       helm:
         valueFiles:
           - $values/apps/40-network/external-dns-gandi/values/prod.yaml
