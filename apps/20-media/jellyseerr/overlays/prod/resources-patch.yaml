@@ -9,8 +9,8 @@ spec:
       - name: jellyseerr
         resources:
           requests:
-            cpu: "15m"
-            memory: "214Mi"
+            cpu: "50m"
+            memory: "128Mi"
           limits:
-            cpu: "15m"
-            memory: "236Mi"
+            cpu: "200m"
+            memory: "256Mi"
