@@ -12,3 +12,17 @@ spec:
               value: "*"
             - name: SECRET_KEY
               value: "vixens-temporary-long-secret-key-at-least-50-characters-long-1234567890"
+            - name: SUPERUSER_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: username
+            - name: SUPERUSER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: password
+            - name: SUPERUSER_EMAIL
+              value: "netbox@truxonline.com"
+            - name: SUPERUSER_API_TOKEN
+              value: "0123456789abcdef0123456789abcdef01234567"
