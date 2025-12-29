@@ -1,5 +1,6 @@
 # ExternalDNS UniFi Configuration (Private/LAN)
 provider: webhook
+logLevel: debug
 
 image:
   registry: registry.k8s.io
@@ -33,7 +34,7 @@ sidecars:
             name: external-dns-unifi-secret
             key: UNIFI_PASS
       - name: LOG_LEVEL
-        value: info
+        value: debug
       - name: UNIFI_SKIP_TLS_VERIFY
         value: "true"
 
