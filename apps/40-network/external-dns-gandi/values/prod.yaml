@@ -7,11 +7,11 @@ image:
   tag: v0.14.2
 
 extraEnvVars:
-  - name: GANDI_API_KEY
+  - name: GANDI_KEY
     valueFrom:
       secretKeyRef:
         name: external-dns-gandi-secret
-        key: GANDI_API_KEY
+        key: GANDI_API_KEY # Keeping the secret key as is if it matches what's in Infisical
 
 # Arguments
 extraArgs:
