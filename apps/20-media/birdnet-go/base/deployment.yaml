@@ -22,6 +22,10 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: birdnet-go
           image: ghcr.io/tphakala/birdnet-go:nightly-20251026
