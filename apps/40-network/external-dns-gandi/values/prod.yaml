@@ -10,11 +10,6 @@ image:
   tag: v0.13.4
 
 extraEnvVars:
-  - name: GANDI_KEY
-    valueFrom:
-      secretKeyRef:
-        name: external-dns-gandi-secret
-        key: GANDI_API_KEY
   - name: GANDI_PAT
     valueFrom:
       secretKeyRef:
