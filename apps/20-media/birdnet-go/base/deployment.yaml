@@ -24,7 +24,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: birdnet-go
-          image: ghcr.io/tphakala/birdnet-go:@b7d92ab3ac1a
+          image: ghcr.io/tphakala/birdnet-go:nightly-20251026
           imagePullPolicy: Always
           ports:
             - name: http
