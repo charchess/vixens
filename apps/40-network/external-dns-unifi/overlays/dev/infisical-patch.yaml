@@ -1,0 +1,3 @@
+- op: replace
+  path: /spec/authentication/universalAuth/secretsScope/envSlug
+  value: dev
