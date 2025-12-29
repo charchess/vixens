@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarr
+spec:
+  template:
+    spec:
+      containers:
+      - name: sonarr
+        resources:
+          requests:
+            cpu: "15m"
+            memory: "236Mi"
+          limits:
+            cpu: "15m"
+            memory: "236Mi"

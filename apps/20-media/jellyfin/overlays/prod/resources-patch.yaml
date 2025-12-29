@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+spec:
+  template:
+    spec:
+      containers:
+      - name: jellyfin
+        resources:
+          requests:
+            cpu: "15m"
+            memory: "1567Mi"
+          limits:
+            cpu: "15m"
+            memory: "2062Mi"
