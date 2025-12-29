@@ -35,7 +35,7 @@ spec:
               mountPath: /mnt/mosquitto-auth-writable
       containers:
         - name: mosquitto
-          image: eclipse-mosquitto:2.0.20
+          image: eclipse-mosquitto:2.0.22
           ports:
             - name: mqtt
               containerPort: 1883
