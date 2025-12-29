@@ -1,7 +1,7 @@
 # ExternalDNS Gandi Configuration (Public)
 provider: gandi
-env:
-  - name: EXT_DNS_GANDI_API_KEY
+extraEnvVars:
+  - name: GANDI_API_KEY
     valueFrom:
       secretKeyRef:
         name: external-dns-gandi-secret
@@ -9,8 +9,13 @@ env:
 
 # Arguments
 extraArgs:
-  - --gandi-api-key=$(EXT_DNS_GANDI_API_KEY)
-  - --annotation-filter=external-dns.alpha.kubernetes.io/target=public
+  gandi-api-key: $(GANDI_API_KEY)
+  annotation-filter: external-dns.alpha.kubernetes.io/target=public
+
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
 
 # Ownership
 txtOwnerId: prod-gandi-public
