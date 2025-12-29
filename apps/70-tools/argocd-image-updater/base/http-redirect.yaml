@@ -1,9 +1,0 @@
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: argocd-image-updater-redirect-scheme
-  namespace: tools
-spec:
-  redirectScheme:
-    scheme: https
-    permanent: true
