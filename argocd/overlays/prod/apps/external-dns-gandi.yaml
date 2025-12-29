@@ -15,7 +15,7 @@ spec:
   sources:
     - repoURL: https://charts.bitnami.com/bitnami
       chart: external-dns
-      targetRevision: "9.0.4"
+      targetRevision: "9.0.3"
       helm:
         valueFiles:
           - $values/apps/40-network/external-dns-gandi/values/prod.yaml
