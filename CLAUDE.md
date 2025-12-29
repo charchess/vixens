@@ -180,14 +180,14 @@ vixens/
 │   │   ├── cilium/                # Cilium CNI module
 │   │   └── argocd/                # ArgoCD GitOps module
 │   └── environments/
-│       ├── dev/                   # Dev cluster (obsy, onyx, opale - 3 CP HA)
-│       ├── test/                  # Test cluster (citrine, carny, celesty - 3 CP HA)
-│       ├── staging/               # Staging cluster
-│       └── prod/                  # Prod cluster
+│       ├── dev/                   # Dev cluster (obsy, onyx, opale - 3 CP HA) - ACTIVE
+│       ├── test/                  # ARCHIVED - Test cluster (Terraform only, not deployed)
+│       ├── staging/               # ARCHIVED - Staging cluster (Terraform only, not deployed)
+│       └── prod/                  # Prod cluster (physical nodes) - ACTIVE
 │
 ├── argocd/                        # Phase 2: ArgoCD self-management
 │   ├── base/
-│   └── overlays/                  # dev, test, staging, prod
+│   └── overlays/                  # dev, prod (test/staging archived)
 │
 ├── apps/                          # Phase 2: Infrastructure & Application services
 │   ├── cilium-lb/                 # Cilium L2 Announcements + LB IPAM
@@ -258,24 +258,27 @@ vixens/
 
 ### Working with Multiple Environments
 
-**IMPORTANT:** Trunk-based workflow with 2 environments:
-- **dev**: Development and testing (cluster dev)
-- **main/prod**: Production (cluster prod)
-- **test/staging**: Archived (only used for Terraform testing)
+**IMPORTANT:** Trunk-based workflow with 2 active branches:
+- **dev**: Development and testing (cluster dev, auto-deploy)
+- **main**: Production (cluster prod, auto-deploy)
+- **test/staging**: Archived on 2025-12-29 (branches deleted, archived as tags)
 
-When working on production, base your analysis on dev environment. Compare differences.
+**Branch Strategy:**
+- All development work happens on `dev` branch
+- Production promotion via Pull Request: `dev` → `main`
+- Both branches auto-deploy via ArgoCD (dev cluster watches `dev`, prod cluster watches `main`)
 
 Example workflow:
 ```bash
-# Compare configurations
+# Compare configurations between environments
 diff apps/traefik/overlays/dev/kustomization.yaml \
      apps/traefik/overlays/prod/kustomization.yaml
 
 # Check what changed between dev and main
 git diff dev..main -- apps/
 
-# Promote to production
-gh workflow run promote-prod.yaml -f version=v1.2.3
+# Promote to production (via Pull Request)
+gh pr create --base main --head dev --title "chore: promote dev to prod"
 ```
 
 ---
@@ -295,14 +298,15 @@ terraform validate
 terraform plan
 terraform apply
 
-# Destroy/recreate (dev/test only!)
+# Destroy/recreate (dev only!)
 terraform destroy -auto-approve
 terraform apply -auto-approve
 ```
 
 **Destroy/Recreate Strategy:**
-- Safe for: dev, test (virtualized)
-- Dangerous for: staging, prod (physical infrastructure)
+- Safe for: dev (virtualized cluster)
+- Dangerous for: prod (physical infrastructure)
+- Archived: test, staging (Terraform definitions exist but clusters not deployed)
 - Use when: validating reproducibility, major refactoring
 - NOT for: normal development (just apply changes)
 
@@ -343,7 +347,7 @@ kubectl annotate infisicalsecret gandi-credentials-sync \
 
 **Secret Architecture:**
 - Project: `vixens`
-- Environments: `dev`, `test`, `staging`, `prod`
+- Environments: `dev`, `prod` (active) | `test`, `staging` (archived, secrets retained)
 - Paths: `/cert-manager`, `/synology-csi`, etc.
 
 ### Validation & Testing
@@ -433,7 +437,8 @@ See [docs/adr/006-terraform-2-level-architecture.md](docs/adr/006-terraform-2-le
 ### Phase 2 (Current - GitOps Active ✅)
 - ArgoCD App-of-Apps managing all services
 - Kustomize overlays per environment
-- Branch per environment (dev, test, staging, main)
+- Active branches: `dev` (dev cluster), `main` (prod cluster)
+- Archived branches: `test`, `staging` (deleted 2025-12-29, preserved as tags)
 - Auto-sync enabled (git push = automatic deployment)
 - Zero manual kubectl commands required
 
@@ -477,4 +482,4 @@ See [docs/adr/006-terraform-2-level-architecture.md](docs/adr/006-terraform-2-le
 - n'oublie pas de me signaler quand je dois creer des secrets dans infisical ou des DNS
 - n'oublie pas de créer les adr sur les decisions architecturales
 - quand tu configure un ingress https, mets en place un redirect http -> https
-- on ne peut pas merge dev en main, il faut PR dev to test to staging to main
+- promotion dev → main se fait via Pull Request (gh pr create --base main --head dev)
