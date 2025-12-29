@@ -30,15 +30,13 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
-          args:
-            - "realtime"
-            - "--locale"
-            - "en-uk"
           env:
             - name: TZ
               value: "Europe/Paris"
             - name: WEB_PORT
               value: "8080"
+            - name: BIRDNET_LOCALE
+              value: "en-uk"
           volumeMounts:
             - name: config
               mountPath: /config
