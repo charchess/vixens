@@ -1,0 +1,55 @@
+---
+# HTTP -> HTTPS redirect
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: contacts-http-redirect
+  namespace: contacts
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: contacts.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: contacts-svc
+                port:
+                  number: 80
+---
+# HTTPS with TLS
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: contacts-ingress
+  namespace: contacts
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Contacts"
+    gethomepage.dev/icon: "contacts" # Guessing icon name
+    gethomepage.dev/group: "Services"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: contacts.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: contacts-svc
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - contacts.dev.truxonline.com
+      secretName: contacts-tls-dev
