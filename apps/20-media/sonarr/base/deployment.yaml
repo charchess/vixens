@@ -23,7 +23,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: sonarr
-          image: ghcr.io/linuxserver/sonarr:latest
+          image: ghcr.io/linuxserver/sonarr:version-4.0.16.2944
           ports:
             - containerPort: 8989 # Default Sonarr UI port
           env:

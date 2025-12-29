@@ -20,3 +20,6 @@ patches:
     target:
       kind: Deployment
       name: sabnzbd
+
+patchesStrategicMerge:
+  - resources-patch.yaml

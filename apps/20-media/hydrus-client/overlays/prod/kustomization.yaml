@@ -7,3 +7,6 @@ resources:
   - ../../base
   - http-redirect.yaml
   - ingress.yaml
+
+patchesStrategicMerge:
+  - resources-patch.yaml

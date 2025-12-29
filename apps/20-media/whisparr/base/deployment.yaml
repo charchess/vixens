@@ -23,7 +23,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: whisparr
-          image: ghcr.io/hotio/whisparr:latest
+          image: ghcr.io/hotio/whisparr:nightly
           ports:
             - containerPort: 6969 # Default Whisparr UI port
           env:

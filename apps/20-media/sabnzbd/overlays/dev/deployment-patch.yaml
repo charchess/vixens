@@ -12,7 +12,7 @@ spec:
             name: sabnzbd-config-patcher
       initContainers:
         - name: configure-sabnzbd
-          image: ghcr.io/linuxserver/sabnzbd:latest
+          image: ghcr.io/linuxserver/sabnzbd:version-4.5.5
           command: ["python3", "/scripts/patcher.py"]
           env:
             - name: HOST_WHITELIST_ENTRIES

@@ -24,7 +24,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: birdnet-go
-          image: ghcr.io/tphakala/birdnet-go:latest
+          image: ghcr.io/tphakala/birdnet-go:nightly-20251026
           imagePullPolicy: Always
           ports:
             - name: http
@@ -40,6 +40,9 @@ spec:
               mountPath: /config
             - name: data
               mountPath: /data
+            - name: internals
+              mountPath: /data/clips
+              subPath: birdnet/clips
           readinessProbe:
             httpGet:
               path: /
@@ -70,3 +73,7 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: birdnet-go-data
+        - name: internals
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Internal

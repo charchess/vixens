@@ -18,3 +18,5 @@ patches:
     target:
       kind: InfisicalSecret
       name: frigate-config-sync
+patchesStrategicMerge:
+  - resources-patch.yaml
