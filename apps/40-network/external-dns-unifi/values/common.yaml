@@ -42,6 +42,11 @@ tolerations:
     operator: Exists
     effect: NoSchedule
 
+livenessProbe:
+  enabled: false
+readinessProbe:
+  enabled: false
+
 # Scope
 policy: sync
 sources:

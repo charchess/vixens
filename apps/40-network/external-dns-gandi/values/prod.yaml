@@ -23,6 +23,11 @@ tolerations:
     operator: Exists
     effect: NoSchedule
 
+livenessProbe:
+  enabled: false
+readinessProbe:
+  enabled: false
+
 # Ownership
 txtOwnerId: prod-gandi-public
 
