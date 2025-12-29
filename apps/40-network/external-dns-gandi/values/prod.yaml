@@ -15,7 +15,6 @@ extraEnvVars:
 
 # Arguments
 extraArgs:
-  gandi-api-key: $(GANDI_API_KEY)
   annotation-filter: external-dns.alpha.kubernetes.io/public=true
 
 tolerations:
