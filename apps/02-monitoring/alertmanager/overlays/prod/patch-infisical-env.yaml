@@ -7,4 +7,4 @@ spec:
   authentication:
     universalAuth:
       secretsScope:
-        envSlug: dev
+        envSlug: prod
