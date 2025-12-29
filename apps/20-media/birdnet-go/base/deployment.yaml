@@ -30,6 +30,10 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+          args:
+            - "realtime"
+            - "--locale"
+            - "en-uk"
           env:
             - name: TZ
               value: "Europe/Paris"
