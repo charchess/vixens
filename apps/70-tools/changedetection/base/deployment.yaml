@@ -22,7 +22,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: changedetection
-          image: ghcr.io/dgtlmoon/changedetection.io:latest
+          image: ghcr.io/dgtlmoon/changedetection.io:0.51.4
           ports:
             - containerPort: 5000
               name: http
@@ -35,7 +35,7 @@ spec:
             - name: datastore
               mountPath: /datastore
         - name: browserless
-          image: browserless/chrome:latest
+          image: browserless/chrome:1.61.1-puppeteer-16.2.0
           ports:
             - containerPort: 3000
               name: playwright

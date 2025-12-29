@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mylar
+spec:
+  template:
+    spec:
+      containers:
+      - name: mylar
+        resources:
+          requests:
+            cpu: "15m"
+            memory: "104Mi"
+          limits:
+            cpu: "15m"
+            memory: "104Mi"

@@ -23,7 +23,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: jellyseerr
-          image: fallenbagel/jellyseerr:latest
+          image: fallenbagel/jellyseerr:2.7
           ports:
             - containerPort: 5055
               name: http

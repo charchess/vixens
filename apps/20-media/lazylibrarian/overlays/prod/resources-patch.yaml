@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lazylibrarian
+spec:
+  template:
+    spec:
+      containers:
+      - name: lazylibrarian
+        resources:
+          requests:
+            cpu: "15m"
+            memory: "259Mi"
+          limits:
+            cpu: "15m"
+            memory: "488Mi"
