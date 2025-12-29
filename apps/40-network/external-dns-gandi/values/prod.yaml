@@ -1,5 +1,11 @@
 # ExternalDNS Gandi Configuration (Public)
 provider: gandi
+
+image:
+  registry: registry.k8s.io
+  repository: external-dns/external-dns
+  tag: v0.13.4
+
 extraEnvVars:
   - name: GANDI_API_KEY
     valueFrom:
