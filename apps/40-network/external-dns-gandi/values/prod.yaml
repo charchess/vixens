@@ -14,7 +14,12 @@ extraEnvVars:
     valueFrom:
       secretKeyRef:
         name: external-dns-gandi-secret
-        key: GANDI_API_KEY # Keeping the secret key as is if it matches what's in Infisical
+        key: GANDI_API_KEY
+  - name: GANDI_PAT
+    valueFrom:
+      secretKeyRef:
+        name: external-dns-gandi-secret
+        key: GANDI_API_KEY
 
 # Arguments
 extraArgs:
