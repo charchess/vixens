@@ -1,0 +1,4 @@
+# Prod Configuration
+txtOwnerId: prod-unifi
+domainFilters:
+  - truxonline.com

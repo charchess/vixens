@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns-unifi
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: networking
+  sources:
+    - repoURL: https://charts.bitnami.com/bitnami
+      chart: external-dns
+      targetRevision: "9.0.4"
+      helm:
+        valueFiles:
+          - $values/apps/40-network/external-dns-unifi/values/common.yaml
+          - $values/apps/40-network/external-dns-unifi/values/prod.yaml
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: prod-stable
+      ref: values
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
