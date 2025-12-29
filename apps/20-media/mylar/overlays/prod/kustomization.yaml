@@ -20,3 +20,6 @@ patches:
     target:
       kind: Deployment
       name: mylar
+
+patchesStrategicMerge:
+  - resources-patch.yaml

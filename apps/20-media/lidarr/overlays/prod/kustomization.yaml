@@ -20,3 +20,6 @@ patches:
     target:
       kind: Deployment
       name: lidarr
+
+patchesStrategicMerge:
+  - resources-patch.yaml

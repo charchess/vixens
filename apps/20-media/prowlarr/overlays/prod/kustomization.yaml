@@ -20,3 +20,6 @@ patches:
     target:
       kind: Deployment
       name: prowlarr
+
+patchesStrategicMerge:
+  - resources-patch.yaml

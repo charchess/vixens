@@ -20,3 +20,6 @@ patches:
     target:
       kind: Deployment
       name: whisparr
+
+patchesStrategicMerge:
+  - resources-patch.yaml

@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: music-assistant
+spec:
+  template:
+    spec:
+      containers:
+      - name: music-assistant
+        resources:
+          requests:
+            cpu: "15m"
+            memory: "283Mi"
+          limits:
+            cpu: "15m"
+            memory: "283Mi"
