@@ -32,8 +32,9 @@ curl -L -k https://frigate.truxonline.com | grep -i "Frigate"
 - **Gestion de la Configuration :**
     - Le fichier `config.yml` est géré dans **Infisical** au chemin `/apps/20-media/frigate/config/config.yml`.
     - Un `InfisicalSecret` synchronise ce fichier vers un secret Kubernetes `frigate-config-secret`.
-    - Le déploiement monte ce secret dans `/config/config.yml`.
-    - Les secrets MQTT (User/Password) sont gérés via des variables d'environnement dans Infisical ou substitués directement dans le fichier de config.
+    - Un **InitContainer** (`copy-config`) copie le contenu du secret vers le volume PVC `/config` au démarrage.
+    - Cela permet au fichier d'être inscriptible (non read-only) par Frigate tout en conservant Infisical comme source de vérité.
+    - Les secrets MQTT (User/Password) sont gérés via des variables d'environnement dans Infisical.
 - **Dépendances :**
     - MQTT : `mosquitto.mosquitto.svc.cluster.local`. Authentification requise (user `frigate` à créer dans Mosquitto via hash).
     - NFS Storage : `/media/frigate` -> `/volume3/Internal/frigate` (Stockage des clips).
