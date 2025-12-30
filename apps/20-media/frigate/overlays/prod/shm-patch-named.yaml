@@ -9,7 +9,7 @@ spec:
         - name: shm
           emptyDir:
             medium: Memory
-            sizeLimit: 512Mi
+            sizeLimit: 1Gi
         - name: cache
           emptyDir:
             medium: Memory
