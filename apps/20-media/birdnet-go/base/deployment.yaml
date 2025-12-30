@@ -22,6 +22,19 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      initContainers:
+        - name: setup-nfs-permissions
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /nfs-root/birdnet/clips
+              chmod -R 777 /nfs-root/birdnet
+              echo "NFS directory created and permissions set"
+          volumeMounts:
+            - name: internals
+              mountPath: /nfs-root
       containers:
         - name: birdnet-go
           image: ghcr.io/tphakala/birdnet-go:nightly-20251026
@@ -35,6 +48,8 @@ spec:
               value: "Europe/Paris"
             - name: WEB_PORT
               value: "8080"
+            - name: BIRDNET_LOCALE
+              value: "en-uk"
           volumeMounts:
             - name: config
               mountPath: /config

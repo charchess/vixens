@@ -150,14 +150,14 @@ mcp__playwright__browser_snapshot()  # Capture page state
 
 ## Multi-Cluster Architecture
 
-2 active clusters on dedicated VLANs (trunk-based workflow):
+4 independent clusters on dedicated VLANs:
 
 | Environment | Nodes | VLAN Internal | VLAN Services | VIP | Status |
 |-------------|-------|---------------|---------------|-----|--------|
 | **Dev** | obsy, onyx, opale (3 CP HA) | 111 | 208 | 192.168.111.160 | ✅ Active |
+| **Test** | citrine, carny, celesty (3 CP HA) | 111 | 209 | 192.168.111.180 | ⏳ Sprint 9 |
+| **Staging** | TBD (3 nodes) | 111 | 210 | 192.168.111.190 | 📅 Future |
 | **Prod** | Physical nodes (3) | 111 | 201 | 192.168.111.200 | 📅 Phase 3 |
-
-**Archived clusters** (test/staging): Only used for Terraform infrastructure testing, not for application deployments.
 
 **Dual-VLAN Network Architecture:**
 - **VLAN 111** (192.168.111.0/24) - Non-routed, internal (etcd, kubelet, storage)
@@ -180,14 +180,14 @@ vixens/
 │   │   ├── cilium/                # Cilium CNI module
 │   │   └── argocd/                # ArgoCD GitOps module
 │   └── environments/
-│       ├── dev/                   # Dev cluster (obsy, onyx, opale - 3 CP HA) - ACTIVE
-│       ├── test/                  # ARCHIVED - Test cluster (Terraform only, not deployed)
-│       ├── staging/               # ARCHIVED - Staging cluster (Terraform only, not deployed)
-│       └── prod/                  # Prod cluster (physical nodes) - ACTIVE
+│       ├── dev/                   # Dev cluster (obsy, onyx, opale - 3 CP HA)
+│       ├── test/                  # Test cluster (citrine, carny, celesty - 3 CP HA)
+│       ├── staging/               # Staging cluster
+│       └── prod/                  # Prod cluster
 │
 ├── argocd/                        # Phase 2: ArgoCD self-management
 │   ├── base/
-│   └── overlays/                  # dev, prod (test/staging archived)
+│   └── overlays/                  # dev, test, staging, prod
 │
 ├── apps/                          # Phase 2: Infrastructure & Application services
 │   ├── cilium-lb/                 # Cilium L2 Announcements + LB IPAM
@@ -200,7 +200,10 @@ vixens/
 │   ├── mosquitto/                 # ✅ MQTT broker
 │   ├── mail-gateway/              # Email gateway (Roundcube)
 │   ├── whoami/                    # Test service
-│   └── authentik/                 # SSO/Auth (Sprint 8)
+│   ├── authentik/                 # SSO/Auth (Sprint 8)
+│   ├── 40-network/external-dns-unifi/ # ✅ Internal DNS (UniFi)
+│   ├── 40-network/external-dns-gandi/ # ✅ Public DNS (Gandi)
+│   └── 40-network/contacts/       # ✅ Contacts redirection service
 │
 ├── docs/                          # Documentation
 │   ├── RECETTE-FONCTIONNELLE.md  # ⚠️ Keep updated - Functional validation
@@ -258,27 +261,24 @@ vixens/
 
 ### Working with Multiple Environments
 
-**IMPORTANT:** Trunk-based workflow with 2 active branches:
-- **dev**: Development and testing (cluster dev, auto-deploy)
-- **main**: Production (cluster prod, auto-deploy)
-- **test/staging**: Archived on 2025-12-29 (branches deleted, archived as tags)
+**IMPORTANT:** Trunk-based workflow with 2 environments:
+- **dev**: Development and testing (cluster dev)
+- **main/prod**: Production (cluster prod)
+- **test/staging**: Archived (only used for Terraform testing)
 
-**Branch Strategy:**
-- All development work happens on `dev` branch
-- Production promotion via Pull Request: `dev` → `main`
-- Both branches auto-deploy via ArgoCD (dev cluster watches `dev`, prod cluster watches `main`)
+When working on production, base your analysis on dev environment. Compare differences.
 
 Example workflow:
 ```bash
-# Compare configurations between environments
+# Compare configurations
 diff apps/traefik/overlays/dev/kustomization.yaml \
      apps/traefik/overlays/prod/kustomization.yaml
 
 # Check what changed between dev and main
 git diff dev..main -- apps/
 
-# Promote to production (via Pull Request)
-gh pr create --base main --head dev --title "chore: promote dev to prod"
+# Promote to production
+gh workflow run promote-prod.yaml -f version=v1.2.3
 ```
 
 ---
@@ -298,15 +298,14 @@ terraform validate
 terraform plan
 terraform apply
 
-# Destroy/recreate (dev only!)
+# Destroy/recreate (dev/test only!)
 terraform destroy -auto-approve
 terraform apply -auto-approve
 ```
 
 **Destroy/Recreate Strategy:**
-- Safe for: dev (virtualized cluster)
-- Dangerous for: prod (physical infrastructure)
-- Archived: test, staging (Terraform definitions exist but clusters not deployed)
+- Safe for: dev, test (virtualized)
+- Dangerous for: staging, prod (physical infrastructure)
 - Use when: validating reproducibility, major refactoring
 - NOT for: normal development (just apply changes)
 
@@ -347,7 +346,7 @@ kubectl annotate infisicalsecret gandi-credentials-sync \
 
 **Secret Architecture:**
 - Project: `vixens`
-- Environments: `dev`, `prod` (active) | `test`, `staging` (archived, secrets retained)
+- Environments: `dev`, `test`, `staging`, `prod`
 - Paths: `/cert-manager`, `/synology-csi`, etc.
 
 ### Validation & Testing
@@ -437,8 +436,7 @@ See [docs/adr/006-terraform-2-level-architecture.md](docs/adr/006-terraform-2-le
 ### Phase 2 (Current - GitOps Active ✅)
 - ArgoCD App-of-Apps managing all services
 - Kustomize overlays per environment
-- Active branches: `dev` (dev cluster), `main` (prod cluster)
-- Archived branches: `test`, `staging` (deleted 2025-12-29, preserved as tags)
+- Branch per environment (dev, test, staging, main)
 - Auto-sync enabled (git push = automatic deployment)
 - Zero manual kubectl commands required
 
@@ -482,4 +480,4 @@ See [docs/adr/006-terraform-2-level-architecture.md](docs/adr/006-terraform-2-le
 - n'oublie pas de me signaler quand je dois creer des secrets dans infisical ou des DNS
 - n'oublie pas de créer les adr sur les decisions architecturales
 - quand tu configure un ingress https, mets en place un redirect http -> https
-- promotion dev → main se fait via Pull Request (gh pr create --base main --head dev)
+- on ne peut pas merge dev en main, il faut PR dev to test to staging to main
