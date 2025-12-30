@@ -18,6 +18,23 @@ En cas de conflit entre WORKFLOW.md et ce fichier, **WORKFLOW.md a toujours rais
 
 ---
 
+# 📚 DOCUMENTATION HUB - START HERE
+
+**Complete documentation index:** **[docs/README.md](docs/README.md)**
+
+### Quick Links for Common Tasks
+
+- **🆕 Adding a new application?** → [docs/guides/adding-new-application.md](docs/guides/adding-new-application.md)
+- **🚀 Pushing to production?** → [docs/guides/gitops-workflow.md](docs/guides/gitops-workflow.md)
+- **📋 Managing tasks in Archon?** → [docs/guides/task-management.md](docs/guides/task-management.md)
+- **🔍 Looking for app documentation?** → [docs/applications/](docs/applications/)
+- **❓ Troubleshooting an issue?** → [docs/troubleshooting/](docs/troubleshooting/)
+- **🏗️ Architecture decisions?** → [docs/adr/](docs/adr/)
+
+**IMPORTANT:** Documentation is now organized in `docs/` with clear categories (guides, reference, procedures, adr, reports). Always check `docs/README.md` first to find what you need.
+
+---
+
 # 🚨 CRITICAL: ARCHON-FIRST RULE - READ THIS FIRST
 
 **BEFORE doing ANYTHING else, when you see ANY task management scenario:**
@@ -120,10 +137,19 @@ mcp__playwright__browser_snapshot()  # Capture page state
 
 **Key Principle:** Information lives in ONE authoritative place. Other locations LINK to it, never duplicate.
 
-- **[docs/DOCUMENTATION-HIERARCHY.md](docs/DOCUMENTATION-HIERARCHY.md)** - Complete guidelines
-- **[docs/RECETTE-FONCTIONNELLE.md](docs/RECETTE-FONCTIONNELLE.md)** - Functional validation procedures
-- **[docs/RECETTE-TECHNIQUE.md](docs/RECETTE-TECHNIQUE.md)** - Technical validation procedures
+**📚 MAIN HUB:** **[docs/README.md](docs/README.md)** - Start here for all documentation
+
+**Key Documentation:**
+- **[docs/guides/](docs/guides/)** - How-to guides (adding apps, gitops, tasks)
+- **[docs/reference/](docs/reference/)** - Technical references (sync-waves, kustomize)
+- **[docs/applications/](docs/applications/)** - Application documentation by category
+- **[docs/adr/](docs/adr/)** - Architecture Decision Records
+- **[docs/procedures/](docs/procedures/)** - Operational procedures
+- **[docs/RECETTE-FONCTIONNELLE.md](docs/RECETTE-FONCTIONNELLE.md)** - Functional validation
+- **[docs/RECETTE-TECHNIQUE.md](docs/RECETTE-TECHNIQUE.md)** - Technical validation
 - **Archon MCP** - Task management, work-in-progress tracking
+
+**IMPORTANT:** Keep RECETTE-*.md up to date when infrastructure or services change.
 
 **IMPORTANT:** Keep the 2 recipe files (RECETTE-*.md) up to date when infrastructure or services change.
 
