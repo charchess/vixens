@@ -90,6 +90,55 @@ mcp__playwright__browser_click(...)
 
 ---
 
+## 📄 Documentation Centralisée dans Archon
+
+**IMPORTANT :** Toute la documentation critique du projet est centralisée dans Archon MCP Server.
+
+### Accès à la Documentation
+
+**15 documents critiques disponibles via Archon :**
+- **Processus** : WORKFLOW.md, AGENT.md
+- **Guides** : adding-new-application.md, gitops-workflow.md, task-management.md
+- **ADRs** : 007-renovate-dev-first, 008-trunk-based-gitops, 009-simplified-two-branch
+- **Références** : argocd-sync-waves.md, task-formalism.md, sync-waves-implementation-plan.md
+- **Hub** : docs/README.md, GEMINI.md, RESTRUCTURING-COMPLETE.md, adr/README.md
+
+```bash
+# Lister les documents du projet
+find_documents(project_id="<vixens-project-id>")
+
+# Rechercher un document spécifique
+find_documents(project_id="<id>", query="gitops")
+find_documents(project_id="<id>", document_type="guide")
+
+# Lire un document complet
+find_documents(project_id="<id>", document_id="<doc-id>")
+```
+
+### Architecture de Documentation
+
+```
+Git Repository (docs/*.md)      Archon MCP (documents DB)
+         ↓                                ↑
+   Édition humaine              Accès programmatique agents
+         ↓                                ↑
+    Source de vérité    ←──sync──→  Centralisation MCP
+```
+
+**Principe :**
+- **Git** = Source de vérité pour édition humaine et versioning
+- **Archon** = Centralisation pour accès programmatique par agents (MCP)
+- **Synchronisation** = Les deux systèmes restent alignés
+
+**Types de documents dans Archon :**
+- `spec` - Spécifications (WORKFLOW.md, ADRs)
+- `guide` - Guides pratiques (adding-new-application.md, etc.)
+- `note` - Notes techniques et références
+
+**IMPORTANT :** Les documents dans Archon sont distincts du système RAG (39 sources externes). Utilisez `find_documents()` pour la doc projet, `rag_search_knowledge_base()` pour les docs externes (Kubernetes, ArgoCD, etc.).
+
+---
+
 ## 📚 Documentation Clé
 
 ### Point d'Entrée Principal
