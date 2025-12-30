@@ -44,6 +44,8 @@ spec:
               name: rtmp
             - containerPort: 8554
               name: rtsp
+            - containerPort: 8555
+              name: webrtc
           env:
             - name: LIBVA_DRIVER_NAME
               value: iHD # Correct driver for VA-API on Intel 12th Gen+
