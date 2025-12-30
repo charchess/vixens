@@ -36,7 +36,7 @@ spec:
         - name: frigate
           image: ghcr.io/blakeblackshear/frigate:stable
           securityContext:
-            privileged: true # Required for GPU access on some setups, or use group mapping
+            runAsUser: 0 # Run as root to ensure access to /dev/dri
           ports:
             - containerPort: 5000
               name: http
@@ -46,7 +46,7 @@ spec:
               name: rtsp
           env:
             - name: LIBVA_DRIVER_NAME
-              value: i965 # Or iris for newer Intel CPUs
+              value: iris # Required for Intel 12th Gen (Iris Xe)
           volumeMounts:
             - name: db
               mountPath: /config
