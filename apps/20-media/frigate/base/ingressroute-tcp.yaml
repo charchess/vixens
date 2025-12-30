@@ -1,0 +1,42 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: frigate-api
+  namespace: media
+spec:
+  entryPoints:
+    - frigate-api
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: frigate
+          port: 5000
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: frigate-rtsp
+  namespace: media
+spec:
+  entryPoints:
+    - frigate-rtsp
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: frigate
+          port: 8554
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: frigate-webrtc
+  namespace: media
+spec:
+  entryPoints:
+    - frigate-webrtc
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: frigate
+          port: 8555
