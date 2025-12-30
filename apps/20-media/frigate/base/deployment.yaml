@@ -23,6 +23,15 @@ spec:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
+      initContainers:
+        - name: copy-config
+          image: alpine:latest
+          command: ["/bin/sh", "-c", "cp /config-source/config.yml /config-target/config.yml"]
+          volumeMounts:
+            - name: config
+              mountPath: /config-source
+            - name: db
+              mountPath: /config-target
       containers:
         - name: frigate
           image: ghcr.io/blakeblackshear/frigate:stable
@@ -39,9 +48,6 @@ spec:
             - name: FRIGATE_MQTT_PASSWORD
               value: "password" # Default value, override in Infisical
           volumeMounts:
-            - name: config
-              mountPath: /config/config.yml
-              subPath: config.yml
             - name: db
               mountPath: /config
             - name: media
