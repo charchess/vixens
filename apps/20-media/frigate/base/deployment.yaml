@@ -46,7 +46,7 @@ spec:
               name: rtsp
           env:
             - name: LIBVA_DRIVER_NAME
-              value: iris # Required for Intel 12th Gen (Iris Xe)
+              value: iHD # Correct driver for VA-API on Intel 12th Gen+
           volumeMounts:
             - name: db
               mountPath: /config
