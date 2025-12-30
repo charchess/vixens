@@ -22,7 +22,7 @@ patches:
     target:
       kind: Deployment
       name: frigate
-  - path: shm-patch.yaml
+  - path: shm-patch-named.yaml
     target:
       kind: Deployment
       name: frigate
