@@ -14,5 +14,8 @@ spec:
     - port: 8554
       targetPort: 8554
       name: rtsp
+    - port: 8555
+      targetPort: 8555
+      name: webrtc
   selector:
     app: frigate
