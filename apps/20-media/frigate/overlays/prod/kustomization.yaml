@@ -26,3 +26,7 @@ patches:
     target:
       kind: Deployment
       name: frigate
+  - path: node-affinity-patch.yaml
+    target:
+      kind: Deployment
+      name: frigate
