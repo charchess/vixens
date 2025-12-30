@@ -10,3 +10,7 @@ spec:
           emptyDir:
             medium: Memory
             sizeLimit: 512Mi
+        - name: cache
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
