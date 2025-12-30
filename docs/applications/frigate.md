@@ -45,3 +45,4 @@ curl -L -k https://frigate.truxonline.com | grep -i "Frigate"
 - **Accélération Matérielle (Piste d'amélioration) :**
     - Actuellement non configurée (utilise CPU).
     - Sur les NUC avec iGPU Intel, il est recommandé d'installer le `intel-device-plugin` et de monter `/dev/dri` pour réduire la charge CPU drastiquement.
+    - **Référence :** [Proxmox Passthrough to Talos](https://johanneskueber.com/posts/proxmox_passthrough_talos/) (utile même sur bare metal pour la configuration Talos).
