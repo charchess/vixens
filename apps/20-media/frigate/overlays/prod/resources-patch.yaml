@@ -9,8 +9,8 @@ spec:
       - name: frigate
         resources:
           requests:
-            cpu: "22m"
-            memory: "523Mi"
+            cpu: "500m"
+            memory: "1Gi"
           limits:
-            cpu: "35m"
-            memory: "776Mi"
+            cpu: "2000m"
+            memory: "2Gi"

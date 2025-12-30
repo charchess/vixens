@@ -49,5 +49,9 @@ apps/<category>/<app-name>/
 - **Namespace Label**: `goldilocks.fairwinds.com/enabled: "true"` for resource recommendations.
 - **Homepage Integration** (Optional): Use `gethomepage.dev/` annotations for dashboard integration.
 
+### 5. DNS (ExternalDNS)
+- **Internal DNS**: Automatically managed for all Ingresses. Use `external-dns.alpha.kubernetes.io/target` to force a CNAME hostname if needed.
+- **Public DNS**: Add `external-dns.alpha.kubernetes.io/public: "true"` to expose the Ingress on Gandi (Prod only).
+
 ## Example: The Template App
 A reference implementation is available in `apps/template-app/`.

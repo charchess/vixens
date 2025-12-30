@@ -1,0 +1,39 @@
+# ExternalDNS Gandi Configuration (Public)
+provider: gandi
+
+domainFilters:
+  - truxonline.com
+
+image:
+  registry: registry.k8s.io
+  repository: external-dns/external-dns
+  tag: v0.14.2
+
+extraEnvVars:
+  - name: GANDI_PAT
+    valueFrom:
+      secretKeyRef:
+        name: external-dns-gandi-secret
+        key: GANDI_API_KEY
+
+# Arguments
+extraArgs:
+  annotation-filter: external-dns.alpha.kubernetes.io/public=true
+
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+livenessProbe:
+  enabled: false
+readinessProbe:
+  enabled: false
+
+# Ownership
+txtOwnerId: prod-gandi-public
+
+# Scope
+policy: sync
+sources:
+  - ingress

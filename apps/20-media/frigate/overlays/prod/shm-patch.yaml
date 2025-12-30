@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frigate
+spec:
+  template:
+    spec:
+      volumes:
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 512Mi

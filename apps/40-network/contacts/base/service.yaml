@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: contacts-svc
+  namespace: contacts
+spec:
+  ports:
+    - port: 80
+      targetPort: 5000 # Same as mail for consistency if pointing to Synology
+      protocol: TCP

@@ -1,0 +1,4 @@
+# Dev Configuration
+txtOwnerId: dev-unifi
+domainFilters:
+  - dev.truxonline.com
