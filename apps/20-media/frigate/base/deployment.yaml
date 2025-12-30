@@ -35,6 +35,8 @@ spec:
       containers:
         - name: frigate
           image: ghcr.io/blakeblackshear/frigate:stable
+          securityContext:
+            privileged: true # Required for GPU access on some setups, or use group mapping
           ports:
             - containerPort: 5000
               name: http
@@ -43,10 +45,8 @@ spec:
             - containerPort: 8554
               name: rtsp
           env:
-            - name: FRIGATE_MQTT_USER
-              value: "admin" # Default value, override in Infisical
-            - name: FRIGATE_MQTT_PASSWORD
-              value: "password" # Default value, override in Infisical
+            - name: LIBVA_DRIVER_NAME
+              value: i965 # Or iris for newer Intel CPUs
           volumeMounts:
             - name: db
               mountPath: /config
@@ -56,6 +56,8 @@ spec:
               mountPath: /tmp/cache
             - name: shm
               mountPath: /dev/shm
+            - name: dri
+              mountPath: /dev/dri
       volumes:
         - name: config
           secret:
@@ -66,7 +68,7 @@ spec:
         - name: media
           nfs:
             server: 192.168.111.69
-            path: /volume3/Internal/frigate # Updated NFS path
+            path: /volume3/Internal/frigate
         - name: cache
           emptyDir:
             medium: Memory
@@ -74,3 +76,6 @@ spec:
           emptyDir:
             medium: Memory
             sizeLimit: 256Mi
+        - name: dri
+          hostPath:
+            path: /dev/dri
