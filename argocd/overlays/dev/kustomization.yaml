@@ -44,6 +44,7 @@ resources:
   - apps/linkwarden.yaml                     # Linkwarden bookmark manager
   - apps/gluetun.yaml                        # Gluetun VPN client for downloads
   - apps/sabnzbd.yaml
+  - apps/pyload.yaml
   - apps/radarr.yaml
   - apps/sonarr.yaml
   - apps/lidarr.yaml
