@@ -3,3 +3,4 @@ kind: Kustomization
 
 resources:
   - descheduler-gen.yaml
+  - priorityclasses.yaml
