@@ -30,8 +30,8 @@ resources:
   - apps/cert-manager-webhook-gandi.yaml     # Gandi DNS webhook (wave 1)
   - apps/cert-manager-config.yaml            # ClusterIssuers + Secret (wave 2)
   - apps/synology-csi-secrets.yaml           # Infisical secrets for Synology CSI (wave -1)
-  # - apps/synology-csi.yaml                   # Synology CSI driver
-  # - apps/nfs-storage.yaml                    # NFS PV/PVC
+  - apps/synology-csi.yaml                   # Synology CSI driver
+  - apps/nfs-storage.yaml                    # NFS PV/PVC
   - apps/mail-gateway.yaml                   # Mail gateway external service
   - apps/homeassistant.yaml                  # Home Assistant (with filebrowser sidecar)
   - apps/mosquitto.yaml                      # Mosquitto MQTT broker
