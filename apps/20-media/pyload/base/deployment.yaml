@@ -1,0 +1,60 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pyload
+  namespace: downloads
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pyload
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pyload
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: pyload
+          image: lscr.io/linuxserver/pyload-ng:latest
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Europe/Paris
+            - name: HTTP_PROXY
+              value: http://gluetun.services.svc.cluster.local:8888
+            - name: HTTPS_PROXY
+              value: http://gluetun.services.svc.cluster.local:8888
+            - name: NO_PROXY
+              value: localhost,127.0.0.1,10.0.0.0/8,192.168.0.0/16
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: downloads
+              mountPath: /downloads
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: pyload-config-pvc
+        - name: downloads
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Downloads/pyload
