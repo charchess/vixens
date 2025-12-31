@@ -13,8 +13,8 @@ data:
       "onboarding": false,
       "requireConfig": "optional",
       "repositories": ["charchess/vixens"],
-      "baseBranches": ["dev"],
-      "enabledManagers": ["terraform", "helm-values", "kubernetes", "regex"],
+      "baseBranchPatterns": ["dev"],
+      "enabledManagers": ["terraform", "helm-values", "kubernetes", "custom.regex"],
       "kubernetes": {
         "fileMatch": ["(^|/)kustomization\\.yaml$", "(^|/)[^/]*\\.yaml$"]
       },
@@ -24,12 +24,34 @@ data:
       "terraform": {
         "fileMatch": ["(^|/)\\.tf$"]
       },
-      "prConcurrentLimit": 3,
-      "prHourlyLimit": 2,
+      "packageRules": [
+        {
+          "matchPackageNames": ["lscr.io/linuxserver/**"],
+          "versioning": "regex:^version-v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(.*)?$"
+        },
+        {
+          "matchPackageNames": ["lscr.io/linuxserver/lazylibrarian"],
+          "versioning": "regex:^version-(?<major>[a-f0-9]+)$"
+        },
+        {
+          "matchPackageNames": ["ghcr.io/music-assistant/server"],
+          "versioning": "docker"
+        },
+        {
+          "matchPackageNames": ["adguard/adguardhome"],
+          "versioning": "docker"
+        },
+        {
+          "matchPackageNames": ["ghcr.io/tphakala/birdnet-go"],
+          "versioning": "regex:^nightly-(?<major>\\d+)$"
+        }
+      ],
+      "prConcurrentLimit": 10,
+      "prHourlyLimit": 0,
       "automerge": false,
       "ignoreTests": true,
       "labels": ["dependencies", "renovate"],
       "assignees": ["@charchess"],
       "reviewers": ["@charchess"],
-      "schedule": ["every weekday"]
+      "schedule": ["at any time"]
     }
