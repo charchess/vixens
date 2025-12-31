@@ -15,6 +15,7 @@ spec:
       labels:
         app: authentik-server
     spec:
+      priorityClassName: homelab-critical
       volumes:
         - name: authentik-data
           persistentVolumeClaim:
