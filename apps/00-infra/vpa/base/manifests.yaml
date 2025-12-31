@@ -1,0 +1,1974 @@
+---
+# Source: vertical-pod-autoscaler/templates/admission-controller/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vpa-vertical-pod-autoscaler-admission-controller
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: admission-controller
+---
+# Source: vertical-pod-autoscaler/templates/recommender/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vpa-vertical-pod-autoscaler-recommender
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: recommender
+---
+# Source: vertical-pod-autoscaler/templates/updater/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vpa-vertical-pod-autoscaler-updater
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: updater
+---
+# Source: vertical-pod-autoscaler/templates/admission-controller/tls-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: vpa-vertical-pod-autoscaler-admission-controller-tls
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: admission-controller
+type: Opaque
+data:
+  ca.crt: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURZVENDQWttZ0F3SUJBZ0lRZERZc0xyNGFMclJrcnhIaWphdHhrakFOQmdrcWhraUc5dzBCQVFzRkFEQTcKTVRrd053WURWUVFERXpCMmNHRXRkbVZ5ZEdsallXd3RjRzlrTFdGMWRHOXpZMkZzWlhJdFlXUnRhWE56YVc5dQpMV052Ym5SeWIyeHNaWEl3SGhjTk1qVXhNak14TVRjMU5UTTVXaGNOTWpZeE1qTXhNVGMxTlRNNVdqQTdNVGt3Ck53WURWUVFERXpCMmNHRXRkbVZ5ZEdsallXd3RjRzlrTFdGMWRHOXpZMkZzWlhJdFlXUnRhWE56YVc5dUxXTnYKYm5SeWIyeHNaWEl3Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRRGVKeGRDaW1wTQpJVFdPcnVxc0NGdVJDSWpGS1pzZzlMSGtoWEl2VUJOY2lQWU95R2NIRlhheVQ3cmZnNG14eGtRNkZUSFRPdk4vCnlPT3ZJSHFtcitUaC9rTXVMNnBUOUdjYXEvbVhTS1NnMklRcUVzTlp5UHlwREdzVXZab1diMUJQaUtaS2JjYjQKTml3VHBLZHR2NW55NDFpNGRyV0tQS3lEL0FSOG42UlMyVFRXdnJlbGNtSHJxZm1YbHNQejlqWkloYXRKRVRLeQovaytZMEFRNWozVld3VDVGb0NOUmh2RGIxN2lSZGZzVlAxWG5rM3dMbXczWmh1eG5CUTdYYWNIUmY4SGgxcXIxCit0UXJ2QnJVNGQvamxIa3p3RWtpMlJ0eEt5ZFc0VStZV1VyZHJDbEdoN0J1ejJGZTBzVzJ1VTN2dmZpZ3B4NzIKNGlDaWs4RWQycCtoQWdNQkFBR2pZVEJmTUE0R0ExVWREd0VCL3dRRUF3SUNwREFkQmdOVkhTVUVGakFVQmdncgpCZ0VGQlFjREFRWUlLd1lCQlFVSEF3SXdEd1lEVlIwVEFRSC9CQVV3QXdFQi96QWRCZ05WSFE0RUZnUVVyVHkxCkROWXJBZmdVMGZMR1ZOeEI3Y20vTGtZd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFFRm1ONHUzZC9nUXdQaXQKa0V4SlNRMGhPU0tLcVM5TG5jR0VjNEl1Vk92ZUVLVE5KcWUwZHErcTRqWEVGL2g5WEtIUXZKR1I1bW5uSmg4agpTRHIvMkZKNS82Q09Sb285Kzh4YkFBWU4rU2JXd3M4ZE91SVpxYkpKcmtsVEtWNHI3QnIzMGkwb1hmQXBiWXRMCkN6VFZObFJvNk9LcUFiQXVEelRpZXo2a2RScnhKR0ZjWjlUSStQK090ek9YL2E4Tjlsd0RjR0Q0anFVMTFUZTAKY01lRzVwRzQrVk4vT2JEYit0THFQSEc1dDRPMVRWaXBPbE5VOVhDZFpycStuYURDRnI2NG1EN0FDa2JKQUUvMwo0UXZjWUlyMW9UQ1NVcGpXS1I5czVrakVnNExhSmRmalE5Z0Q5UDh3QzBZZ3NIeVI5Q3ptWG1YQ0ZmcUtWOFBrCmQyN1crTzg9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+  tls.crt: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURaVENDQWsyZ0F3SUJBZ0lSQU1QU0FVVll3NFlRblJKMHZ4ZkFod0F3RFFZSktvWklodmNOQVFFTEJRQXcKT3pFNU1EY0dBMVVFQXhNd2RuQmhMWFpsY25ScFkyRnNMWEJ2WkMxaGRYUnZjMk5oYkdWeUxXRmtiV2x6YzJsdgpiaTFqYjI1MGNtOXNiR1Z5TUI0WERUSTFNVEl6TVRFM05UVTBNVm9YRFRJMk1USXpNVEUzTlRVME1Wb3dIakVjCk1Cb0dBMVVFQXhNVGRuQmhMWGRsWW1odmIyc3VkbkJoTG5OMll6Q0NBU0l3RFFZSktvWklodmNOQVFFQkJRQUQKZ2dFUEFEQ0NBUW9DZ2dFQkFLcmFCT2NZVGJzYjc3emRPQTNnTkhvQnZSbGdlSGVzeWJxbVJpTVdXU2luUXRWaQpGSXZ0NVFKMkFwMWhaYjVsV2x6a0k1UmdicXhIaHowdHBLcUpRbzVrK2YwbU12emp1QmlVOFBQcHo2M0syeUR5CmFZd3JvSVE4QVBJU29rRDE4aVpqMSt4WTdmcWVudmFmMGl6REZzekZ0R005Wm9pa1paY3V1dlZZVjJVZlhZRUoKSGpJRktCM2Y2YW1Wa3d4TlFyanMyUmV3QWhoTHdieHNkd01WWEorMlV4U3FVNzg4QUt3MG9UdWVOZmdRdDJQTApTcFpjT3VpMVkyUkF3bzdBT2c2WmcxNjViSEtobVlkTkpYWnMvOHhDQ2s0QkNSbHIyV05wREFPT0lvU09YQU41Clc1cWp1SXB1VlVyeVJONWpubDFMVW9ISXEyaUlaRkdnT1VCTDRBTUNBd0VBQWFPQmdEQitNQTRHQTFVZER3RUIKL3dRRUF3SUZvREFkQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUJCUVVIQXdJd0RBWURWUjBUQVFILwpCQUl3QURBZkJnTlZIU01FR0RBV2dCU3RQTFVNMWlzQitCVFI4c1pVM0VIdHliOHVSakFlQmdOVkhSRUVGekFWCmdoTjJjR0V0ZDJWaWFHOXZheTUyY0dFdWMzWmpNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUFsUVY1cHJ6Z3AKKzN4amNKZ25xS2hFcFlTcjd1Smh2SEFjSEkyUFRIcnBTTzF3bDdxc3YrWUtGL2RMb1dWK1V2S2VQbU44clRFLwoxNEU1QlNUTGJ2WUkwRUkvWHE3SHFLUGQrNkdyZzlaNDVjKzd4WlZ6eG5VcVg1aloxZmdiVTZ3ME9QdU10T1NPCkc4ZitIaFg4UVExWFdXTWk1MlovbmFmU3pWTDh4dy9TSndGMG1VQzBnU3lUM3crek8rdjlSTXdiaWl4UGVTNlgKd2R0dGJsbVVlcjAvbEpmMTNwdnkydnViZG42OTBTMjVIK0FwdGRpalIzU2VsV2lZV0tyT3gvRERaR3V5WjdqZwplMmNxYjlLVGZNdWN0WWlMbDVLNksyOUl0YVNvLzVhN3FVSDVIMHYvaElBV3JyUjBaNWg5YW1lRERwRTA2MTk3CjBRMG5lZHJHb0JHRwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
+  tls.key: "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBcXRvRTV4aE51eHZ2dk4wNERlQTBlZ0c5R1dCNGQ2ekp1cVpHSXhaWktLZEMxV0lVCmkrM2xBbllDbldGbHZtVmFYT1FqbEdCdXJFZUhQUzJrcW9sQ2ptVDUvU1l5L09PNEdKVHc4K25QcmNyYklQSnAKakN1Z2hEd0E4aEtpUVBYeUptUFg3Rmp0K3A2ZTlwL1NMTU1Xek1XMFl6MW1pS1JsbHk2NjlWaFhaUjlkZ1FrZQpNZ1VvSGQvcHFaV1RERTFDdU96WkY3QUNHRXZCdkd4M0F4VmNuN1pURktwVHZ6d0FyRFNoTzU0MStCQzNZOHRLCmxsdzY2TFZqWkVEQ2pzQTZEcG1EWHJsc2NxR1poMDBsZG16L3pFSUtUZ0VKR1d2Wlkya01BNDRpaEk1Y0EzbGIKbXFPNGltNVZTdkpFM21PZVhVdFNnY2lyYUloa1VhQTVRRXZnQXdJREFRQUJBb0lCQUMxRkNXbUdPZ3BxODVIeQpkOGpOY0hvbmZjaDhsRTc1ZkpZMU9uNVBqSjVGKzJKNDA0TGtMUHNDODl4cGswRG9zQkhPN1ZLQ1hyRE5YeHNwCnZlamw1N205TGJRUzdBMnY5UGFtZUZYWXpRdDZwYWRNTkFWTkJnSWp1QWhzUVl1KzMwT216dTZ6L1pLYmR2bFkKRGFPSXFjRG1YYzZ4MVRvOWZTR2E0elRoREg4aGFvcmd3T1lUOXV5V2dVa0lsbTN2SXlKck9CdEdodDVxa0F6dgp5dTNxK1FmMmJMN2s0c0xyOVRFS3RyQ1gzTGtMZkswc0prY3NLTzdlcXRZNkJxeXhtVUI3M1MvaWZqYzlSbURhClFHYkhkZ2JVZTZWWlFJTnJENWJaVWgxaHBTQXhWQ0NWalNtNlQwUTVZaDQ3czBrMmtZa2VWNGdiUEtKWjVUVkMKemtOTXQ5RUNnWUVBMkgvYzBUelVCNm9hdDZDUE0rditsQmZXVEwzQmsvNHVPNFZWb1MxNzJuMUNkb2JkSXF0VQpPdTFOT1JHSUJGU1ZmK3hYT3kxKzRDUmh2a244aEdOZ05xUXJDbFFDNVBZcWtmRHhIdkExM1NUbHgydWRwZkRUClRtd2pOUTFmbWk1SkZMREpqd1ZXL09ZVTd4OEVNeC8wT3dSM1oxQzU1RnFJU1g4bXJpWkhvTXNDZ1lFQXlnWVEKS1M1QzUrd1BwVnMzRHY1K3NtRmQzUjMzRVNOTzQ2eUxIQm0xNDFUZFVVZGFnSEE1ekFMZUNPVW9oMVpDRUp4bQpib0hueHBzN0tZeUpRTVNwVTl6K0FqaithVVMzazduS2FYMG1vSG1Yd1JEdVlUZXJOTnVEcnlXbnoxcGdoSVVCCnhTSmNvQkRtNUFDMVRjYWF2N1pMdUVQZlQ2bXpaSEZodmRmUzdxa0NnWUJraFhHa29RYWRqR2lkUytwUnBFaHUKd0dhYStSd1JOOXFGZmxJVTVRWjFtdVVxSFZJOWo2a3JOeFU4NHh2eFRzaWZQYi8rMVEvc3lGZXR2N0tFVVpQUgpxd1hrNUw3M1NpalgzRFJJTmlYOFNPNTdXa2MzVGdyK2hZMFBTK2RRc2g3eWdXY0VoZWt1d1RHRkdUU2MvRUFzCnl0VVoza3lCYjF1S0xJUnNKWS9xWXdLQmdIa1hIVVN4dCtTdmQ4bFRYVE1kays5enNRRkNYcjdrL1BvMmg4TTIKSGZHL0FsRWZoYjJLaHZvamxkYWJGS25hS0FzdzA2elZMSW04cmI5L3Z4MFZRN0ZDdXZXMkY3Z2RPalBQbnVXUAo0RUU3NEp3V2UrdkZwRmN3WkVQdFBDSnJONEwyL2xLZEFBdnBWWnZBV092ZmFRNFVSRnFVUkJ2SnlmOGdmc2Q5CnY2N1JBb0dCQUxwODR4cEZDaldKeHY0Q01Kc1JqU3UzT0VBWFoyVHA0RXg2STV1cSs3YXRUSXEvZ0JrVVhHejEKcGZ2aXlpbFYwY2lDd0I1Z084ZVg4WDd5RnBtLytpdFZ1Tk1Rb3N0eVIzRjN0L3B5M3dsY0IxcnBwSlltd3ZERApOZ1VLQnUwMU01KzZwM21peGdabms3RG1oREkrbE9GMFJTZFh2UGhOYSsyS0R2b1ppSlNHCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg=="
+---
+# Source: vertical-pod-autoscaler/templates/admission-controller/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vpa-vertical-pod-autoscaler-admission-controller
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: admission-controller
+rules:
+  # system:vpa-target-reader
+  - apiGroups:
+      - "*"
+    resources:
+      - "*/scale"
+    verbs:
+      - get
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - replicationcontrollers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+      - statefulsets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+      - cronjobs
+    verbs:
+      - get
+      - list
+      - watch
+  # system:vpa-admission-controller
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - configmaps
+      - nodes
+      - limitranges
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "admissionregistration.k8s.io"
+    resources:
+      - mutatingwebhookconfigurations
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+  - apiGroups:
+      - "poc.autoscaling.k8s.io"
+    resources:
+      - verticalpodautoscalers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "autoscaling.k8s.io"
+    resources:
+      - verticalpodautoscalers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "coordination.k8s.io"
+    resources:
+      - leases
+    verbs:
+      - create
+      - update
+      - get
+      - list
+      - watch
+---
+# Source: vertical-pod-autoscaler/templates/recommender/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vpa-vertical-pod-autoscaler-recommender
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: recommender
+rules:
+  # system:metrics-reader
+  - apiGroups:
+      - "metrics.k8s.io"
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+  # system:vpa-actor
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - nodes
+      - limitranges
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+      - events.k8s.io
+    resources:
+      - events
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - patch
+      - update
+  - apiGroups:
+      - "poc.autoscaling.k8s.io"
+    resources:
+      - verticalpodautoscalers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "autoscaling.k8s.io"
+    resources:
+      - verticalpodautoscalers
+    verbs:
+      - get
+      - list
+      - watch
+  # system:vpa-status-actor
+  - apiGroups:
+      - "autoscaling.k8s.io"
+    resources:
+      - verticalpodautoscalers/status
+    verbs:
+      - get
+      - patch
+  # system:vpa-checkpoint-actor
+  - apiGroups:
+      - "poc.autoscaling.k8s.io"
+    resources:
+      - verticalpodautoscalercheckpoints
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - patch
+      - delete
+  - apiGroups:
+      - "autoscaling.k8s.io"
+    resources:
+      - verticalpodautoscalercheckpoints
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - get
+      - list
+  # system:vpa-target-reader
+  - apiGroups:
+      - "*"
+    resources:
+      - "*/scale"
+    verbs:
+      - get
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - replicationcontrollers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+      - statefulsets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+      - cronjobs
+    verbs:
+      - get
+      - list
+      - watch
+  # system:leader-locking-vpa-recommender
+  - apiGroups:
+      - "coordination.k8s.io"
+    resources:
+      - leases
+    verbs:
+      - create
+  - apiGroups:
+      - "coordination.k8s.io"
+    resourceNames:
+      - vpa-recommender
+      - vpa-recommender-lease
+    resources:
+      - leases
+    verbs:
+      - get
+      - watch
+      - update
+---
+# Source: vertical-pod-autoscaler/templates/updater/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vpa-vertical-pod-autoscaler-updater
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: updater
+rules:
+  # system:vpa-actor
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - nodes
+      - limitranges
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+      - events.k8s.io
+    resources:
+      - events
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - patch
+      - update
+  - apiGroups:
+      - "poc.autoscaling.k8s.io"
+    resources:
+      - verticalpodautoscalers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "autoscaling.k8s.io"
+    resources:
+      - verticalpodautoscalers
+    verbs:
+      - get
+      - list
+      - watch
+  # system:vpa-target-reader
+  - apiGroups:
+      - "*"
+    resources:
+      - "*/scale"
+    verbs:
+      - get
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - replicationcontrollers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+      - statefulsets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+      - cronjobs
+    verbs:
+      - get
+      - list
+      - watch
+  # system:evictioner
+  - apiGroups:
+      - "apps"
+      - "extensions"
+    resources:
+      - replicasets
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - pods/eviction
+    verbs:
+      - create
+  # system:vpa-status-reader
+  - apiGroups:
+      - "coordination.k8s.io"
+    resources:
+      - leases
+    verbs:
+      - get
+      - list
+      - watch
+  # system:leader-locking-vpa-updater
+  - apiGroups:
+      - "coordination.k8s.io"
+    resources:
+      - leases
+    verbs:
+      - create
+  - apiGroups:
+      - "coordination.k8s.io"
+    resourceNames:
+      - vpa-updater
+    resources:
+      - leases
+    verbs:
+      - get
+      - watch
+      - update
+  # system:vpa-updater-in-place
+  - apiGroups:
+      - ""
+    resources:
+      - pods/resize
+      - pods
+    verbs:
+      - patch
+---
+# Source: vertical-pod-autoscaler/templates/admission-controller/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vpa-vertical-pod-autoscaler-admission-controller
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: admission-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: vpa-vertical-pod-autoscaler-admission-controller
+subjects:
+  - kind: ServiceAccount
+    name: vpa-vertical-pod-autoscaler-admission-controller
+    namespace: "vpa"
+---
+# Source: vertical-pod-autoscaler/templates/recommender/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vpa-vertical-pod-autoscaler-recommender
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: recommender
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: vpa-vertical-pod-autoscaler-recommender
+subjects:
+  - kind: ServiceAccount
+    name: vpa-vertical-pod-autoscaler-recommender
+    namespace: "vpa"
+---
+# Source: vertical-pod-autoscaler/templates/updater/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vpa-vertical-pod-autoscaler-updater
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: updater
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: vpa-vertical-pod-autoscaler-updater
+subjects:
+  - kind: ServiceAccount
+    name: vpa-vertical-pod-autoscaler-updater
+    namespace: "vpa"
+---
+# Source: vertical-pod-autoscaler/templates/admission-controller/metrics-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: vpa-vertical-pod-autoscaler-admission-controller-metrics
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: admission-controller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8944
+      targetPort: http-metrics
+      protocol: TCP
+      name: http-metrics
+  selector:
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/component: admission-controller
+---
+# Source: vertical-pod-autoscaler/templates/admission-controller/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: vpa-webhook
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: admission-controller
+spec:
+  type: ClusterIP
+  sessionAffinity: None
+  ports:
+    - port: 443
+      targetPort: https
+      protocol: TCP
+      name: https
+  selector:
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/component: admission-controller
+---
+# Source: vertical-pod-autoscaler/templates/recommender/metrics-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: vpa-vertical-pod-autoscaler-recommender-metrics
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: recommender
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8942
+      targetPort: http-metrics
+      protocol: TCP
+      name: http-metrics
+  selector:
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/component: recommender
+---
+# Source: vertical-pod-autoscaler/templates/updater/metrics-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: vpa-vertical-pod-autoscaler-updater-metrics
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: updater
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8943
+      targetPort: http-metrics
+      protocol: TCP
+      name: http-metrics
+  selector:
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/component: updater
+---
+# Source: vertical-pod-autoscaler/templates/admission-controller/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpa-vertical-pod-autoscaler-admission-controller
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: admission-controller
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vertical-pod-autoscaler
+      app.kubernetes.io/instance: vpa
+      app.kubernetes.io/component: admission-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vertical-pod-autoscaler
+        app.kubernetes.io/instance: vpa
+        app.kubernetes.io/component: admission-controller
+      annotations:
+        checksum/tls-secret: fa3308ee8b9e184e803df818cb317f43ead71602ff868df4f16552a33e27343d
+    spec:
+      enableServiceLinks: false
+      
+      serviceAccountName: vpa-vertical-pod-autoscaler-admission-controller
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: admission-controller
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 65534
+            runAsNonRoot: true
+            runAsUser: 65534
+          image: registry.k8s.io/autoscaling/vpa-admission-controller:1.5.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - --address=:8944
+            - --port=8000
+            - --client-ca-file=/tls-secret/ca.crt
+            - --tls-cert-file=/tls-secret/tls.crt
+            - --tls-private-key=/tls-secret/tls.key
+            - --v=2
+          env:
+            - name: NAMESPACE
+              value: "vpa"
+          ports:
+            - name: https
+              containerPort: 8000
+              protocol: TCP
+            - name: http-metrics
+              containerPort: 8944
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health-check
+              port: http-metrics
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: /health-check
+              port: http-metrics
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+            successThreshold: 1
+          resources:
+            limits:
+              cpu: 200m
+              memory: 500Mi
+            requests:
+              cpu: 50m
+              memory: 100Mi
+          volumeMounts:
+            - name: tls-secret
+              mountPath: /tls-secret
+              readOnly: true
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+          operator: Exists
+      volumes:
+        - name: tls-secret
+          secret:
+            secretName: vpa-vertical-pod-autoscaler-admission-controller-tls
+---
+# Source: vertical-pod-autoscaler/templates/recommender/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpa-vertical-pod-autoscaler-recommender
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: recommender
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vertical-pod-autoscaler
+      app.kubernetes.io/instance: vpa
+      app.kubernetes.io/component: recommender
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vertical-pod-autoscaler
+        app.kubernetes.io/instance: vpa
+        app.kubernetes.io/component: recommender
+    spec:
+      enableServiceLinks: false
+      
+      serviceAccountName: vpa-vertical-pod-autoscaler-recommender
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: recommender
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 65534
+            runAsNonRoot: true
+            runAsUser: 65534
+          image: registry.k8s.io/autoscaling/vpa-recommender:1.5.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - --address=:8942
+            - --v=2
+            - --vpa-recommendation-min-cpu=10m
+            - --vpa-recommendation-min-memory=128Mi
+          ports:
+            - name: http-metrics
+              containerPort: 8942
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health-check
+              port: http-metrics
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: /health-check
+              port: http-metrics
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+            successThreshold: 1
+          resources:
+            limits:
+              cpu: 200m
+              memory: 1Gi
+            requests:
+              cpu: 50m
+              memory: 250Mi
+          volumeMounts:
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+          operator: Exists
+      volumes:
+---
+# Source: vertical-pod-autoscaler/templates/updater/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpa-vertical-pod-autoscaler-updater
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: updater
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vertical-pod-autoscaler
+      app.kubernetes.io/instance: vpa
+      app.kubernetes.io/component: updater
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vertical-pod-autoscaler
+        app.kubernetes.io/instance: vpa
+        app.kubernetes.io/component: updater
+    spec:
+      enableServiceLinks: false
+      
+      serviceAccountName: vpa-vertical-pod-autoscaler-updater
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: updater
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 65534
+            runAsNonRoot: true
+            runAsUser: 65534
+          image: registry.k8s.io/autoscaling/vpa-updater:1.5.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - --address=:8943
+            - --v=2
+          env:
+            - name: NAMESPACE
+              value: "vpa"
+          ports:
+            - name: http-metrics
+              containerPort: 8943
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health-check
+              port: http-metrics
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: /health-check
+              port: http-metrics
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+            successThreshold: 1
+          resources:
+            limits:
+              cpu: 200m
+              memory: 500Mi
+            requests:
+              cpu: 50m
+              memory: 100Mi
+          volumeMounts:
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+          operator: Exists
+      volumes:
+---
+# Source: vertical-pod-autoscaler/templates/crds/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vpa-vertical-pod-autoscaler-crds
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: crds
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+---
+# Source: vertical-pod-autoscaler/templates/crds/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vpa-vertical-pod-autoscaler-crds
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: crds
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+data:
+  verticalpodautoscalercheckpoints.yaml: |
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      name: verticalpodautoscalercheckpoints.autoscaling.k8s.io
+      labels:
+        helm.sh/chart: vertical-pod-autoscaler-11.1.1
+        app.kubernetes.io/name: vertical-pod-autoscaler
+        app.kubernetes.io/instance: vpa
+        app.kubernetes.io/version: "1.5.0"
+        app.kubernetes.io/managed-by: Helm
+      annotations:
+        api-approved.kubernetes.io: https://github.com/kubernetes/kubernetes/pull/63797
+        controller-gen.kubebuilder.io/version: v0.16.5
+    spec:
+      group: autoscaling.k8s.io
+      names:
+        kind: VerticalPodAutoscalerCheckpoint
+        listKind: VerticalPodAutoscalerCheckpointList
+        plural: verticalpodautoscalercheckpoints
+        shortNames:
+        - vpacheckpoint
+        singular: verticalpodautoscalercheckpoint
+      scope: Namespaced
+      versions:
+      - name: v1
+        schema:
+          openAPIV3Schema:
+            description: |-
+              VerticalPodAutoscalerCheckpoint is the checkpoint of the internal state of VPA that
+              is used for recovery after recommender's restart.
+            properties:
+              apiVersion:
+                description: |-
+                  APIVersion defines the versioned schema of this representation of an object.
+                  Servers should convert recognized schemas to the latest internal value, and
+                  may reject unrecognized values.
+                  More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                type: string
+              kind:
+                description: |-
+                  Kind is a string value representing the REST resource this object represents.
+                  Servers may infer this from the endpoint the client submits requests to.
+                  Cannot be updated.
+                  In CamelCase.
+                  More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                type: string
+              metadata:
+                type: object
+              spec:
+                description: |-
+                  Specification of the checkpoint.
+                  More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status.
+                properties:
+                  containerName:
+                    description: Name of the checkpointed container.
+                    type: string
+                  vpaObjectName:
+                    description: Name of the VPA object that stored VerticalPodAutoscalerCheckpoint
+                      object.
+                    type: string
+                type: object
+              status:
+                description: Data of the checkpoint.
+                properties:
+                  cpuHistogram:
+                    description: Checkpoint of histogram for consumption of CPU.
+                    properties:
+                      bucketWeights:
+                        description: Map from bucket index to bucket weight.
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      referenceTimestamp:
+                        description: Reference timestamp for samples collected within
+                          this histogram.
+                        format: date-time
+                        nullable: true
+                        type: string
+                      totalWeight:
+                        description: Sum of samples to be used as denominator for weights
+                          from BucketWeights.
+                        type: number
+                    type: object
+                  firstSampleStart:
+                    description: Timestamp of the fist sample from the histograms.
+                    format: date-time
+                    nullable: true
+                    type: string
+                  lastSampleStart:
+                    description: Timestamp of the last sample from the histograms.
+                    format: date-time
+                    nullable: true
+                    type: string
+                  lastUpdateTime:
+                    description: The time when the status was last refreshed.
+                    format: date-time
+                    nullable: true
+                    type: string
+                  memoryHistogram:
+                    description: Checkpoint of histogram for consumption of memory.
+                    properties:
+                      bucketWeights:
+                        description: Map from bucket index to bucket weight.
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      referenceTimestamp:
+                        description: Reference timestamp for samples collected within
+                          this histogram.
+                        format: date-time
+                        nullable: true
+                        type: string
+                      totalWeight:
+                        description: Sum of samples to be used as denominator for weights
+                          from BucketWeights.
+                        type: number
+                    type: object
+                  totalSamplesCount:
+                    description: Total number of samples in the histograms.
+                    type: integer
+                  version:
+                    description: Version of the format of the stored data.
+                    type: string
+                type: object
+            type: object
+        served: true
+        storage: true
+      - name: v1beta2
+        schema:
+          openAPIV3Schema:
+            description: |-
+              VerticalPodAutoscalerCheckpoint is the checkpoint of the internal state of VPA that
+              is used for recovery after recommender's restart.
+            properties:
+              apiVersion:
+                description: |-
+                  APIVersion defines the versioned schema of this representation of an object.
+                  Servers should convert recognized schemas to the latest internal value, and
+                  may reject unrecognized values.
+                  More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                type: string
+              kind:
+                description: |-
+                  Kind is a string value representing the REST resource this object represents.
+                  Servers may infer this from the endpoint the client submits requests to.
+                  Cannot be updated.
+                  In CamelCase.
+                  More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                type: string
+              metadata:
+                type: object
+              spec:
+                description: |-
+                  Specification of the checkpoint.
+                  More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status.
+                properties:
+                  containerName:
+                    description: Name of the checkpointed container.
+                    type: string
+                  vpaObjectName:
+                    description: Name of the VPA object that stored VerticalPodAutoscalerCheckpoint
+                      object.
+                    type: string
+                type: object
+              status:
+                description: Data of the checkpoint.
+                properties:
+                  cpuHistogram:
+                    description: Checkpoint of histogram for consumption of CPU.
+                    properties:
+                      bucketWeights:
+                        description: Map from bucket index to bucket weight.
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      referenceTimestamp:
+                        description: Reference timestamp for samples collected within
+                          this histogram.
+                        format: date-time
+                        nullable: true
+                        type: string
+                      totalWeight:
+                        description: Sum of samples to be used as denominator for weights
+                          from BucketWeights.
+                        type: number
+                    type: object
+                  firstSampleStart:
+                    description: Timestamp of the fist sample from the histograms.
+                    format: date-time
+                    nullable: true
+                    type: string
+                  lastSampleStart:
+                    description: Timestamp of the last sample from the histograms.
+                    format: date-time
+                    nullable: true
+                    type: string
+                  lastUpdateTime:
+                    description: The time when the status was last refreshed.
+                    format: date-time
+                    nullable: true
+                    type: string
+                  memoryHistogram:
+                    description: Checkpoint of histogram for consumption of memory.
+                    properties:
+                      bucketWeights:
+                        description: Map from bucket index to bucket weight.
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      referenceTimestamp:
+                        description: Reference timestamp for samples collected within
+                          this histogram.
+                        format: date-time
+                        nullable: true
+                        type: string
+                      totalWeight:
+                        description: Sum of samples to be used as denominator for weights
+                          from BucketWeights.
+                        type: number
+                    type: object
+                  totalSamplesCount:
+                    description: Total number of samples in the histograms.
+                    type: integer
+                  version:
+                    description: Version of the format of the stored data.
+                    type: string
+                type: object
+            type: object
+        served: false
+        storage: false
+    
+  verticalpodautoscalers.yaml: |
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      name: verticalpodautoscalers.autoscaling.k8s.io
+      labels:
+        helm.sh/chart: vertical-pod-autoscaler-11.1.1
+        app.kubernetes.io/name: vertical-pod-autoscaler
+        app.kubernetes.io/instance: vpa
+        app.kubernetes.io/version: "1.5.0"
+        app.kubernetes.io/managed-by: Helm
+      annotations:
+        api-approved.kubernetes.io: https://github.com/kubernetes/kubernetes/pull/63797
+        controller-gen.kubebuilder.io/version: v0.16.5
+    spec:
+      group: autoscaling.k8s.io
+      names:
+        kind: VerticalPodAutoscaler
+        listKind: VerticalPodAutoscalerList
+        plural: verticalpodautoscalers
+        shortNames:
+        - vpa
+        singular: verticalpodautoscaler
+      scope: Namespaced
+      versions:
+      - additionalPrinterColumns:
+        - jsonPath: .spec.updatePolicy.updateMode
+          name: Mode
+          type: string
+        - jsonPath: .status.recommendation.containerRecommendations[0].target.cpu
+          name: CPU
+          type: string
+        - jsonPath: .status.recommendation.containerRecommendations[0].target.memory
+          name: Mem
+          type: string
+        - jsonPath: .status.conditions[?(@.type=='RecommendationProvided')].status
+          name: Provided
+          type: string
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+        name: v1
+        schema:
+          openAPIV3Schema:
+            description: |-
+              VerticalPodAutoscaler is the configuration for a vertical pod
+              autoscaler, which automatically manages pod resources based on historical and
+              real time resource utilization.
+            properties:
+              apiVersion:
+                description: |-
+                  APIVersion defines the versioned schema of this representation of an object.
+                  Servers should convert recognized schemas to the latest internal value, and
+                  may reject unrecognized values.
+                  More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                type: string
+              kind:
+                description: |-
+                  Kind is a string value representing the REST resource this object represents.
+                  Servers may infer this from the endpoint the client submits requests to.
+                  Cannot be updated.
+                  In CamelCase.
+                  More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                type: string
+              metadata:
+                type: object
+              spec:
+                description: |-
+                  Specification of the behavior of the autoscaler.
+                  More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status.
+                properties:
+                  recommenders:
+                    description: |-
+                      Recommender responsible for generating recommendation for this object.
+                      List should be empty (then the default recommender will generate the
+                      recommendation) or contain exactly one recommender.
+                    items:
+                      description: |-
+                        VerticalPodAutoscalerRecommenderSelector points to a specific Vertical Pod Autoscaler recommender.
+                        In the future it might pass parameters to the recommender.
+                      properties:
+                        name:
+                          description: Name of the recommender responsible for generating
+                            recommendation for this object.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                  resourcePolicy:
+                    description: |-
+                      Controls how the autoscaler computes recommended resources.
+                      The resource policy may be used to set constraints on the recommendations
+                      for individual containers.
+                      If any individual containers need to be excluded from getting the VPA recommendations, then
+                      it must be disabled explicitly by setting mode to "Off" under containerPolicies.
+                      If not specified, the autoscaler computes recommended resources for all containers in the pod,
+                      without additional constraints.
+                    properties:
+                      containerPolicies:
+                        description: Per-container resource policies.
+                        items:
+                          description: |-
+                            ContainerResourcePolicy controls how autoscaler computes the recommended
+                            resources for a specific container.
+                          properties:
+                            containerName:
+                              description: |-
+                                Name of the container or DefaultContainerResourcePolicy, in which
+                                case the policy is used by the containers that don't have their own
+                                policy specified.
+                              type: string
+                            controlledResources:
+                              description: |-
+                                Specifies the type of recommendations that will be computed
+                                (and possibly applied) by VPA.
+                                If not specified, the default of [ResourceCPU, ResourceMemory] will be used.
+                              items:
+                                description: ResourceName is the name identifying various
+                                  resources in a ResourceList.
+                                type: string
+                              type: array
+                            controlledValues:
+                              description: |-
+                                Specifies which resource values should be controlled.
+                                The default is "RequestsAndLimits".
+                              enum:
+                              - RequestsAndLimits
+                              - RequestsOnly
+                              type: string
+                            maxAllowed:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: |-
+                                Specifies the maximum amount of resources that will be recommended
+                                for the container. The default is no maximum.
+                              type: object
+                            minAllowed:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: |-
+                                Specifies the minimal amount of resources that will be recommended
+                                for the container. The default is no minimum.
+                              type: object
+                            mode:
+                              description: Whether autoscaler is enabled for the container.
+                                The default is "Auto".
+                              enum:
+                              - Auto
+                              - "Off"
+                              type: string
+                          type: object
+                        type: array
+                    type: object
+                  targetRef:
+                    description: |-
+                      TargetRef points to the controller managing the set of pods for the
+                      autoscaler to control - e.g. Deployment, StatefulSet. VerticalPodAutoscaler
+                      can be targeted at controller implementing scale subresource (the pod set is
+                      retrieved from the controller's ScaleStatus) or some well known controllers
+                      (e.g. for DaemonSet the pod set is read from the controller's spec).
+                      If VerticalPodAutoscaler cannot use specified target it will report
+                      ConfigUnsupported condition.
+                      Note that VerticalPodAutoscaler does not require full implementation
+                      of scale subresource - it will not use it to modify the replica count.
+                      The only thing retrieved is a label selector matching pods grouped by
+                      the target resource.
+                    properties:
+                      apiVersion:
+                        description: apiVersion is the API version of the referent
+                        type: string
+                      kind:
+                        description: 'kind is the kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                        type: string
+                      name:
+                        description: 'name is the name of the referent; More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                        type: string
+                    required:
+                    - kind
+                    - name
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  updatePolicy:
+                    description: |-
+                      Describes the rules on how changes are applied to the pods.
+                      If not specified, all fields in the `PodUpdatePolicy` are set to their
+                      default values.
+                    properties:
+                      evictionRequirements:
+                        description: |-
+                          EvictionRequirements is a list of EvictionRequirements that need to
+                          evaluate to true in order for a Pod to be evicted. If more than one
+                          EvictionRequirement is specified, all of them need to be fulfilled to allow eviction.
+                        items:
+                          description: |-
+                            EvictionRequirement defines a single condition which needs to be true in
+                            order to evict a Pod
+                          properties:
+                            changeRequirement:
+                              description: EvictionChangeRequirement refers to the relationship
+                                between the new target recommendation for a Pod and its
+                                current requests, what kind of change is necessary for
+                                the Pod to be evicted
+                              enum:
+                              - TargetHigherThanRequests
+                              - TargetLowerThanRequests
+                              type: string
+                            resources:
+                              description: |-
+                                Resources is a list of one or more resources that the condition applies
+                                to. If more than one resource is given, the EvictionRequirement is fulfilled
+                                if at least one resource meets `changeRequirement`.
+                              items:
+                                description: ResourceName is the name identifying various
+                                  resources in a ResourceList.
+                                type: string
+                              type: array
+                          required:
+                          - changeRequirement
+                          - resources
+                          type: object
+                        type: array
+                      minReplicas:
+                        description: |-
+                          Minimal number of replicas which need to be alive for Updater to attempt
+                          pod eviction (pending other checks like PDB). Only positive values are
+                          allowed. Overrides global '--min-replicas' flag.
+                        format: int32
+                        type: integer
+                      updateMode:
+                        description: |-
+                          Controls when autoscaler applies changes to the pod resources.
+                          The default is 'Auto'.
+                        enum:
+                        - "Off"
+                        - Initial
+                        - Recreate
+                        - InPlaceOrRecreate
+                        - Auto
+                        type: string
+                    type: object
+                required:
+                - targetRef
+                type: object
+              status:
+                description: Current information about the autoscaler.
+                properties:
+                  conditions:
+                    description: |-
+                      Conditions is the set of conditions required for this autoscaler to scale its target,
+                      and indicates whether or not those conditions are met.
+                    items:
+                      description: |-
+                        VerticalPodAutoscalerCondition describes the state of
+                        a VerticalPodAutoscaler at a certain point.
+                      properties:
+                        lastTransitionTime:
+                          description: |-
+                            lastTransitionTime is the last time the condition transitioned from
+                            one status to another
+                          format: date-time
+                          type: string
+                        message:
+                          description: |-
+                            message is a human-readable explanation containing details about
+                            the transition
+                          type: string
+                        reason:
+                          description: reason is the reason for the condition's last transition.
+                          type: string
+                        status:
+                          description: status is the status of the condition (True, False,
+                            Unknown)
+                          type: string
+                        type:
+                          description: type describes the current condition
+                          type: string
+                      required:
+                      - status
+                      - type
+                      type: object
+                    type: array
+                  recommendation:
+                    description: |-
+                      The most recently computed amount of resources recommended by the
+                      autoscaler for the controlled pods.
+                    properties:
+                      containerRecommendations:
+                        description: Resources recommended by the autoscaler for each
+                          container.
+                        items:
+                          description: |-
+                            RecommendedContainerResources is the recommendation of resources computed by
+                            autoscaler for a specific container. Respects the container resource policy
+                            if present in the spec. In particular the recommendation is not produced for
+                            containers with `ContainerScalingMode` set to 'Off'.
+                          properties:
+                            containerName:
+                              description: Name of the container.
+                              type: string
+                            lowerBound:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: |-
+                                Minimum recommended amount of resources. Observes ContainerResourcePolicy.
+                                This amount is not guaranteed to be sufficient for the application to operate in a stable way, however
+                                running with less resources is likely to have significant impact on performance/availability.
+                              type: object
+                            target:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: Recommended amount of resources. Observes ContainerResourcePolicy.
+                              type: object
+                            uncappedTarget:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: |-
+                                The most recent recommended resources target computed by the autoscaler
+                                for the controlled pods, based only on actual resource usage, not taking
+                                into account the ContainerResourcePolicy.
+                                May differ from the Recommendation if the actual resource usage causes
+                                the target to violate the ContainerResourcePolicy (lower than MinAllowed
+                                or higher that MaxAllowed).
+                                Used only as status indication, will not affect actual resource assignment.
+                              type: object
+                            upperBound:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: |-
+                                Maximum recommended amount of resources. Observes ContainerResourcePolicy.
+                                Any resources allocated beyond this value are likely wasted. This value may be larger than the maximum
+                                amount of application is actually capable of consuming.
+                              type: object
+                          required:
+                          - target
+                          type: object
+                        type: array
+                    type: object
+                type: object
+            required:
+            - spec
+            type: object
+        served: true
+        storage: true
+        subresources:
+          status: {}
+      - deprecated: true
+        deprecationWarning: autoscaling.k8s.io/v1beta2 API is deprecated
+        name: v1beta2
+        schema:
+          openAPIV3Schema:
+            description: |-
+              VerticalPodAutoscaler is the configuration for a vertical pod
+              autoscaler, which automatically manages pod resources based on historical and
+              real time resource utilization.
+            properties:
+              apiVersion:
+                description: |-
+                  APIVersion defines the versioned schema of this representation of an object.
+                  Servers should convert recognized schemas to the latest internal value, and
+                  may reject unrecognized values.
+                  More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                type: string
+              kind:
+                description: |-
+                  Kind is a string value representing the REST resource this object represents.
+                  Servers may infer this from the endpoint the client submits requests to.
+                  Cannot be updated.
+                  In CamelCase.
+                  More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                type: string
+              metadata:
+                type: object
+              spec:
+                description: |-
+                  Specification of the behavior of the autoscaler.
+                  More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status.
+                properties:
+                  resourcePolicy:
+                    description: |-
+                      Controls how the autoscaler computes recommended resources.
+                      The resource policy may be used to set constraints on the recommendations
+                      for individual containers. If not specified, the autoscaler computes recommended
+                      resources for all containers in the pod, without additional constraints.
+                    properties:
+                      containerPolicies:
+                        description: Per-container resource policies.
+                        items:
+                          description: |-
+                            ContainerResourcePolicy controls how autoscaler computes the recommended
+                            resources for a specific container.
+                          properties:
+                            containerName:
+                              description: |-
+                                Name of the container or DefaultContainerResourcePolicy, in which
+                                case the policy is used by the containers that don't have their own
+                                policy specified.
+                              type: string
+                            maxAllowed:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: |-
+                                Specifies the maximum amount of resources that will be recommended
+                                for the container. The default is no maximum.
+                              type: object
+                            minAllowed:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: |-
+                                Specifies the minimal amount of resources that will be recommended
+                                for the container. The default is no minimum.
+                              type: object
+                            mode:
+                              description: Whether autoscaler is enabled for the container.
+                                The default is "Auto".
+                              enum:
+                              - Auto
+                              - "Off"
+                              type: string
+                          type: object
+                        type: array
+                    type: object
+                  targetRef:
+                    description: |-
+                      TargetRef points to the controller managing the set of pods for the
+                      autoscaler to control - e.g. Deployment, StatefulSet. VerticalPodAutoscaler
+                      can be targeted at controller implementing scale subresource (the pod set is
+                      retrieved from the controller's ScaleStatus) or some well known controllers
+                      (e.g. for DaemonSet the pod set is read from the controller's spec).
+                      If VerticalPodAutoscaler cannot use specified target it will report
+                      ConfigUnsupported condition.
+                      Note that VerticalPodAutoscaler does not require full implementation
+                      of scale subresource - it will not use it to modify the replica count.
+                      The only thing retrieved is a label selector matching pods grouped by
+                      the target resource.
+                    properties:
+                      apiVersion:
+                        description: apiVersion is the API version of the referent
+                        type: string
+                      kind:
+                        description: 'kind is the kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                        type: string
+                      name:
+                        description: 'name is the name of the referent; More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                        type: string
+                    required:
+                    - kind
+                    - name
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  updatePolicy:
+                    description: |-
+                      Describes the rules on how changes are applied to the pods.
+                      If not specified, all fields in the `PodUpdatePolicy` are set to their
+                      default values.
+                    properties:
+                      updateMode:
+                        description: |-
+                          Controls when autoscaler applies changes to the pod resources.
+                          The default is 'Auto'.
+                        enum:
+                        - "Off"
+                        - Initial
+                        - Recreate
+                        - Auto
+                        type: string
+                    type: object
+                required:
+                - targetRef
+                type: object
+              status:
+                description: Current information about the autoscaler.
+                properties:
+                  conditions:
+                    description: |-
+                      Conditions is the set of conditions required for this autoscaler to scale its target,
+                      and indicates whether or not those conditions are met.
+                    items:
+                      description: |-
+                        VerticalPodAutoscalerCondition describes the state of
+                        a VerticalPodAutoscaler at a certain point.
+                      properties:
+                        lastTransitionTime:
+                          description: |-
+                            lastTransitionTime is the last time the condition transitioned from
+                            one status to another
+                          format: date-time
+                          type: string
+                        message:
+                          description: |-
+                            message is a human-readable explanation containing details about
+                            the transition
+                          type: string
+                        reason:
+                          description: reason is the reason for the condition's last transition.
+                          type: string
+                        status:
+                          description: status is the status of the condition (True, False,
+                            Unknown)
+                          type: string
+                        type:
+                          description: type describes the current condition
+                          type: string
+                      required:
+                      - status
+                      - type
+                      type: object
+                    type: array
+                  recommendation:
+                    description: |-
+                      The most recently computed amount of resources recommended by the
+                      autoscaler for the controlled pods.
+                    properties:
+                      containerRecommendations:
+                        description: Resources recommended by the autoscaler for each
+                          container.
+                        items:
+                          description: |-
+                            RecommendedContainerResources is the recommendation of resources computed by
+                            autoscaler for a specific container. Respects the container resource policy
+                            if present in the spec. In particular the recommendation is not produced for
+                            containers with `ContainerScalingMode` set to 'Off'.
+                          properties:
+                            containerName:
+                              description: Name of the container.
+                              type: string
+                            lowerBound:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: |-
+                                Minimum recommended amount of resources. Observes ContainerResourcePolicy.
+                                This amount is not guaranteed to be sufficient for the application to operate in a stable way, however
+                                running with less resources is likely to have significant impact on performance/availability.
+                              type: object
+                            target:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: Recommended amount of resources. Observes ContainerResourcePolicy.
+                              type: object
+                            uncappedTarget:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: |-
+                                The most recent recommended resources target computed by the autoscaler
+                                for the controlled pods, based only on actual resource usage, not taking
+                                into account the ContainerResourcePolicy.
+                                May differ from the Recommendation if the actual resource usage causes
+                                the target to violate the ContainerResourcePolicy (lower than MinAllowed
+                                or higher that MaxAllowed).
+                                Used only as status indication, will not affect actual resource assignment.
+                              type: object
+                            upperBound:
+                              additionalProperties:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              description: |-
+                                Maximum recommended amount of resources. Observes ContainerResourcePolicy.
+                                Any resources allocated beyond this value are likely wasted. This value may be larger than the maximum
+                                amount of application is actually capable of consuming.
+                              type: object
+                          required:
+                          - target
+                          type: object
+                        type: array
+                    type: object
+                type: object
+            required:
+            - spec
+            type: object
+        served: false
+        storage: false
+        subresources:
+          status: {}
+---
+# Source: vertical-pod-autoscaler/templates/tests/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vpa-vertical-pod-autoscaler-tests
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: tests
+  annotations:
+    helm.sh/hook: test
+data:
+  test_all.py: |
+    import requests
+
+
+    def test_admission_controller_service_connection():
+        url = "https://vpa-webhook.vpa.svc:443/"
+        verify = "/admission-controller-tls-secret/ca.crt"
+
+        response = requests.get(url, verify=verify)
+
+        assert response.status_code == 200
+
+
+    def test_admission_controller_metrics_service_connection():
+        url = "http://vpa-vertical-pod-autoscaler-admission-controller-metrics:8944/metrics"
+
+        response = requests.get(url)
+
+        assert response.status_code == 200
+
+
+    def test_recommender_metrics_service_connection():
+        url = "http://vpa-vertical-pod-autoscaler-recommender-metrics:8942/metrics"
+
+        response = requests.get(url)
+
+        assert response.status_code == 200
+
+
+    def test_updater_metrics_service_connection():
+        url = "http://vpa-vertical-pod-autoscaler-updater-metrics:8943/metrics"
+
+        response = requests.get(url)
+
+        assert response.status_code == 200
+---
+# Source: vertical-pod-autoscaler/templates/crds/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vpa-vertical-pod-autoscaler-crds
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: crds
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+rules:
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - create
+      - get
+      - patch
+---
+# Source: vertical-pod-autoscaler/templates/crds/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vpa-vertical-pod-autoscaler-crds
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: crds
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: vpa-vertical-pod-autoscaler-crds
+subjects:
+  - kind: ServiceAccount
+    name: vpa-vertical-pod-autoscaler-crds
+    namespace: "vpa"
+---
+# Source: vertical-pod-autoscaler/templates/tests/pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vpa-vertical-pod-autoscaler-tests
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: tests
+  annotations:
+    helm.sh/hook: test
+spec:
+  
+  containers:
+    - name: tests
+      image: ghcr.io/cowboysysop/pytest:1.2.0
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - name: tests
+          mountPath: /tests
+          readOnly: true
+        - name: admission-controller-tls-secret
+          mountPath: /admission-controller-tls-secret
+          readOnly: true
+      workingDir: /tests
+  restartPolicy: Never
+  volumes:
+    - name: tests
+      configMap:
+        name: vpa-vertical-pod-autoscaler-tests
+    - name: admission-controller-tls-secret
+      secret:
+        secretName: vpa-vertical-pod-autoscaler-admission-controller-tls
+---
+# Source: vertical-pod-autoscaler/templates/crds/job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vpa-vertical-pod-autoscaler-crds
+  namespace: "vpa"
+  labels:
+    helm.sh/chart: vertical-pod-autoscaler-11.1.1
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/instance: vpa
+    app.kubernetes.io/version: "1.5.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: crds
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vertical-pod-autoscaler
+        app.kubernetes.io/instance: vpa
+        app.kubernetes.io/component: crds
+    spec:
+      
+      serviceAccountName: vpa-vertical-pod-autoscaler-crds
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: kubectl
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 65534
+            runAsNonRoot: true
+            runAsUser: 65534
+          image: docker.io/bitnamilegacy/kubectl:1.29.3
+          imagePullPolicy: IfNotPresent
+          args:
+            - apply
+            - --filename=/config/verticalpodautoscalercheckpoints.yaml
+            - --filename=/config/verticalpodautoscalers.yaml
+          resources:
+            {}
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+      restartPolicy: Never
+      volumes:
+        - name: config
+          configMap:
+            name: vpa-vertical-pod-autoscaler-crds

@@ -1,4 +1,3 @@
----
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -8,23 +7,13 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: prod-stable
+    path: apps/00-infra/vpa/overlays/prod
   destination:
     server: https://kubernetes.default.svc
-    namespace: monitoring
-
-  sources:
-    - repoURL: https://charts.fairwinds.com/stable
-      chart: vpa
-      targetRevision: 4.7.0
-      helm:
-        valueFiles:
-          - $values/apps/02-monitoring/vpa/values/common.yaml
-          - $values/apps/02-monitoring/vpa/values/prod.yaml
-
-    - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: prod-stable
-      ref: values
-
+    namespace: vpa
   syncPolicy:
     automated:
       prune: true
