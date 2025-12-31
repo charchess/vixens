@@ -19,7 +19,6 @@ resources:
   - apps/reloader.yaml
   - apps/descheduler.yaml
   - apps/gitops-revision-controller.yaml
-  - apps/alertmanager.yaml
   - apps/headlamp.yaml
   - apps/hubble-ui.yaml
   # Traefik Dashboard hostname redirect
