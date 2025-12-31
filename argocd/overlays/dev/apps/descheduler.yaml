@@ -14,6 +14,7 @@ spec:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
     path: apps/00-infra/descheduler/overlays/dev
+
   destination:
     server: https://kubernetes.default.svc
     namespace: descheduler
