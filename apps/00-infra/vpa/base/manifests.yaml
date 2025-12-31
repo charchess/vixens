@@ -1954,7 +1954,7 @@ spec:
             runAsGroup: 65534
             runAsNonRoot: true
             runAsUser: 65534
-          image: docker.io/bitnamilegacy/kubectl:1.29.3
+          image: docker.io/bitnamilegacy/kubectl:1.33.4
           imagePullPolicy: IfNotPresent
           args:
             - apply
