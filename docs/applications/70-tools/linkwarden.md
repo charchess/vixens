@@ -6,7 +6,9 @@
 | Dev           | [x]     | [x]       | [x]   | v2.4.9  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | v2.4.9  |
+
+
 
 ## Validation
 **URL :** https://linkwarden.[env].truxonline.com
@@ -32,3 +34,4 @@ curl -L -k https://linkwarden.dev.truxonline.com | grep "Linkwarden"
     - `PostgreSQL` (Cluster partagé)
     - `Infisical` (Secrets DATABASE_URL, NEXTAUTH_SECRET)
 - **Particularités :** Gestionnaire de favoris collaboratif.
+- **Note Stockage (2025-12-31) :** Augmentation du stockage PostgreSQL partagé de 20Gi à 50Gi pour résoudre la saturation disque causant des CrashLoopBackOff.
