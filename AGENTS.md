@@ -24,6 +24,7 @@ Toutes les instructions de ce fichier sont complémentaires et ne doivent JAMAIS
 2. **Sélection** → Priorité : review > doing > todo (toutes assignées à "Coding Agent")
 3. **Analyse** → Définir "Definition of Done", consulter docs/applications/<app>.md
 4. **Exécution** → Passer en "doing", travailler de manière incrémentale
+5. **Prévalidation** → Vérifie la conformité du travail produit avec AGENTS.md, le workflow et la description complète de la tâche
 5. **Validation** → Tester en dev (kubectl + playwright)
 6. **Commit/Push** → Git commit + push vers dev UNIQUEMENT
 7. **Review** → Passer en "review" + assignee="User"
