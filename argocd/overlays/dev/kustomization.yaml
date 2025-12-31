@@ -16,6 +16,7 @@ resources:
   - apps/vpa.yaml
   - apps/goldilocks.yaml                        # Traefik Ingress Controller
   - apps/reloader.yaml
+  - apps/descheduler.yaml
   - apps/gitops-revision-controller.yaml
   - apps/alertmanager.yaml
   - apps/headlamp.yaml
