@@ -4,7 +4,7 @@
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
 | Dev           | [x]     | [x]       | [x]   | v0.32.2 |
-| Prod          | [x]     | [x]       | [ ]   | v0.32.2 |
+| Prod          | [x]     | [x]       | [x]   | v0.32.2 |
 
 ## Architecture
 **Type :** Infrastructure (Static Manifests)
