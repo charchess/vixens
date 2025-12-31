@@ -12,7 +12,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: alertmanager-secrets
-                  key: ALERTMANAGER_WEBHOOK_URL
+                  key: DISCORD_WEBHOOK_URL
           command: ["/bin/sh", "-c"]
           args:
             - |
