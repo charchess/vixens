@@ -23,9 +23,20 @@ spec:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
+      initContainers:
+        - name: copy-config
+          image: alpine:latest
+          command: ["/bin/sh", "-c", "cp /config-source/config.yml /config-target/config.yml"]
+          volumeMounts:
+            - name: config
+              mountPath: /config-source
+            - name: db
+              mountPath: /config-target
       containers:
         - name: frigate
           image: ghcr.io/blakeblackshear/frigate:stable
+          securityContext:
+            privileged: true # Required for full GPU access on Talos/NUC 12
           ports:
             - containerPort: 5000
               name: http
@@ -33,15 +44,12 @@ spec:
               name: rtmp
             - containerPort: 8554
               name: rtsp
+            - containerPort: 8555
+              name: webrtc
           env:
-            - name: FRIGATE_MQTT_USER
-              value: "admin" # Default value, override in Infisical
-            - name: FRIGATE_MQTT_PASSWORD
-              value: "password" # Default value, override in Infisical
+            - name: LIBVA_DRIVER_NAME
+              value: iHD # Correct driver for VA-API on Intel 12th Gen+
           volumeMounts:
-            - name: config
-              mountPath: /config/config.yml
-              subPath: config.yml
             - name: db
               mountPath: /config
             - name: media
@@ -50,6 +58,8 @@ spec:
               mountPath: /tmp/cache
             - name: shm
               mountPath: /dev/shm
+            - name: dri
+              mountPath: /dev/dri
       volumes:
         - name: config
           secret:
@@ -60,7 +70,7 @@ spec:
         - name: media
           nfs:
             server: 192.168.111.69
-            path: /volume3/Internal/frigate # Updated NFS path
+            path: /volume3/Internal/frigate
         - name: cache
           emptyDir:
             medium: Memory
@@ -68,3 +78,6 @@ spec:
           emptyDir:
             medium: Memory
             sizeLimit: 256Mi
+        - name: dri
+          hostPath:
+            path: /dev/dri

@@ -45,9 +45,13 @@ This document lists essential commands for developing and managing the Vixens pr
 
 *   **Commit Changes:**
     ```bash
-    git commit -m "v<M.m.p>: <type>(<scope>) - 'Humorous Title'"
+    git commit -m "<type>(<scope>): <description>"
+    # Examples:
+    # git commit -m "feat(homeassistant): add MQTT integration"
+    # git commit -m "fix(traefik): correct ingress TLS configuration"
+    # git commit -m "chore(docs): update application documentation"
     ```
-    *Description:* Records changes to the repository with a formatted commit message.
+    *Description:* Records changes using Conventional Commits format (type: feat, fix, chore, docs, refactor, etc.).
 
 *   **Push Changes:**
     ```bash

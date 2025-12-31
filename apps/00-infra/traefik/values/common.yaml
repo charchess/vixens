@@ -71,6 +71,21 @@ ports:
     exposedPort: 53
     expose: true
     protocol: UDP
+  frigate-api: # Frigate HTTP API (Home Assistant integration)
+    port: 5000
+    exposedPort: 5000
+    expose: true
+    protocol: TCP
+  frigate-rtsp: # Frigate RTSP streaming
+    port: 8554
+    exposedPort: 8554
+    expose: true
+    protocol: TCP
+  frigate-webrtc: # Frigate WebRTC streaming
+    port: 8555
+    exposedPort: 8555
+    expose: true
+    protocol: TCP
   traefik:
     port: 9000
     expose: false

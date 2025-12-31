@@ -2,5 +2,6 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: postgresql-shared
+  namespace: databases
 spec:
   instances: 3
