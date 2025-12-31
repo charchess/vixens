@@ -654,7 +654,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
-              - ALL
+                - ALL
             readOnlyRootFilesystem: true
             runAsGroup: 65534
             runAsNonRoot: true
@@ -756,7 +756,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
-              - ALL
+                - ALL
             readOnlyRootFilesystem: true
             runAsGroup: 65534
             runAsNonRoot: true
@@ -844,7 +844,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
-              - ALL
+                - ALL
             readOnlyRootFilesystem: true
             runAsGroup: 65534
             runAsNonRoot: true
@@ -1939,11 +1939,6 @@ spec:
         app.kubernetes.io/instance: vpa
         app.kubernetes.io/component: crds
     spec:
-      
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
       serviceAccountName: vpa-vertical-pod-autoscaler-crds
       securityContext:
         seccompProfile:
@@ -1954,7 +1949,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
-              - ALL
+                - ALL
             readOnlyRootFilesystem: true
             runAsGroup: 65534
             runAsNonRoot: true
