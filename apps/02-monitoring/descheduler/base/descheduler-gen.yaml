@@ -4,7 +4,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: descheduler
-  namespace: descheduler
+  namespace: kube-system
   labels:
     app.kubernetes.io/name: descheduler
     helm.sh/chart: descheduler-0.32.2
@@ -17,7 +17,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: descheduler
-  namespace: descheduler
+  namespace: kube-system
   labels:
     app.kubernetes.io/name: descheduler
     helm.sh/chart: descheduler-0.32.2
@@ -70,18 +70,24 @@ data:
           - RemovePodsViolatingNodeAffinity
           - RemovePodsViolatingInterPodAntiAffinity
     strategies:
-      HighNodeUtilization:
+      LowNodeUtilization:
         enabled: true
         params:
+          evictableNamespaces:
+            exclude:
+            - kube-system
+            - homeassistant
           nodeResourceUtilizationThresholds:
             targetThresholds:
-              cpu: 50
-              memory: 50
+              cpu: 60
+              memory: 60
             thresholds:
-              cpu: 20
-              memory: 20
-      RemoveDuplicates:
+              cpu: 30
+              memory: 30
+      PodLifeTime:
         enabled: true
+        params:
+          maxPodLifeTimeSeconds: 86400
       RemovePodsViolatingInterPodAntiAffinity:
         enabled: true
       RemovePodsViolatingNodeAffinity:
@@ -139,14 +145,14 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: descheduler
-    namespace: descheduler
+    namespace: kube-system
 ---
 # Source: descheduler/templates/cronjob.yaml
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: descheduler
-  namespace: descheduler
+  namespace: kube-system
   labels:
     app.kubernetes.io/name: descheduler
     helm.sh/chart: descheduler-0.32.2
@@ -154,7 +160,7 @@ metadata:
     app.kubernetes.io/version: "0.32.2"
     app.kubernetes.io/managed-by: Helm
 spec:
-  schedule: "0 */4 * * *"
+  schedule: "*/2 * * * *"
   concurrencyPolicy: "Forbid"
   jobTemplate:
     spec:
@@ -162,7 +168,7 @@ spec:
         metadata:
           name: descheduler
           annotations:
-            checksum/config: 75c41bbc326f3a666051a76ec96506e2ccf3a380492e065ea148eda3be767048
+            checksum/config: 14669d22db95174936b1cc290213bdac2e9f4e5134de0b04987fe9cc207f23c3
           labels:
             app.kubernetes.io/name: descheduler
             app.kubernetes.io/instance: descheduler
