@@ -1,0 +1,47 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: descheduler
+
+resources:
+  - namespace.yaml
+
+helmCharts:
+  - name: descheduler
+    repo: https://kubernetes-sigs.github.io/descheduler/
+    version: 0.32.2
+    releaseName: descheduler
+    namespace: descheduler
+    valuesInline:
+      kind: CronJob
+      deschedulerPolicy:
+        strategies:
+          RemoveDuplicates:
+            enabled: true
+          RemovePodsViolatingInterPodAntiAffinity:
+            enabled: true
+          RemovePodsViolatingNodeAffinity:
+            enabled: true
+          HighNodeUtilization:
+            enabled: true
+            params:
+              nodeResourceUtilizationThresholds:
+                thresholds:
+                  cpu: 20
+                  memory: 20
+                targetThresholds:
+                  cpu: 50
+                  memory: 50
+      cronJob:
+        schedule: "0 */4 * * *"
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
