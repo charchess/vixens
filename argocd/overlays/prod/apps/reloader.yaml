@@ -13,7 +13,7 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: prod-stable
-    path: apps/70-tools/reloader/base
+    path: apps/00-infra/reloader/overlays/prod
   destination:
     server: https://kubernetes.default.svc
     namespace: tools
