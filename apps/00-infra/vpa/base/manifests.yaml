@@ -1940,6 +1940,10 @@ spec:
         app.kubernetes.io/component: crds
     spec:
       
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       serviceAccountName: vpa-vertical-pod-autoscaler-crds
       securityContext:
         seccompProfile:
