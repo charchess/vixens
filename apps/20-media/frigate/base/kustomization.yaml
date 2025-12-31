@@ -6,6 +6,7 @@ namespace: media
 resources:
   - deployment.yaml
   - service.yaml
+  - ingressroute-tcp.yaml
   - pvc.yaml
   - configmap.yaml
   - infisical-secret.yaml

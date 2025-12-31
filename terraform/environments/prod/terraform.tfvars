@@ -12,8 +12,8 @@ cluster = {
   name               = "vixens"
   endpoint           = "https://192.168.111.190:6443"
   vip                = "192.168.111.190"
-  talos_version      = "v1.11.5"
-  talos_image        = "factory.talos.dev/installer/613e1592b2da41ae5e265e8789429f22e121aab91cb4deb6bc3c0b6262961245:v1.11.5"
+  talos_version      = "v1.12.0"
+  talos_image        = "factory.talos.dev/metal-installer/249d9135de54962744e917cfe654117000cba369f9152fbab9d055a00aa3664f:v1.12.0"
   kubernetes_version = "1.30.0"
 }
 

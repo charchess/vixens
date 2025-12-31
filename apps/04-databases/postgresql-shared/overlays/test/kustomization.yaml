@@ -6,8 +6,10 @@ namespace: databases
 resources:
   - ../../base
 
-patchesStrategicMerge:
-  - patch-credentials-env.yaml
+labels:
+  - pairs:
+      environment: test
+    includeSelectors: false
 
-commonLabels:
-  environment: test
+patches:
+  - path: patch-credentials-env.yaml
