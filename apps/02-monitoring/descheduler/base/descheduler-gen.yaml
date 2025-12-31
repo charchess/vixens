@@ -84,6 +84,9 @@ data:
             thresholds:
               cpu: 30
               memory: 30
+          numberOfNodes: 3
+          priorityThreshold:
+            value: 10000
       PodLifeTime:
         enabled: true
         params:
@@ -168,7 +171,7 @@ spec:
         metadata:
           name: descheduler
           annotations:
-            checksum/config: 14669d22db95174936b1cc290213bdac2e9f4e5134de0b04987fe9cc207f23c3
+            checksum/config: e2d69d51d21c4351bb3dec67baffc240bac080c92277c4f94ec13ff7319ce032
           labels:
             app.kubernetes.io/name: descheduler
             app.kubernetes.io/instance: descheduler
@@ -189,7 +192,7 @@ spec:
               args:
                 - --policy-config-file=/policy-dir/policy.yaml
                 - --v=3
-                - --dry-run
+                - --dry-run=true
               livenessProbe:
                 failureThreshold: 3
                 httpGet:
