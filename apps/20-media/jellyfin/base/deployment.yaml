@@ -17,6 +17,7 @@ spec:
       labels:
         app: jellyfin
     spec:
+      priorityClassName: homelab-important
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"

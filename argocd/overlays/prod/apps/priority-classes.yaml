@@ -2,18 +2,18 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: descheduler
+  name: priority-classes
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd.argoproj.io/sync-wave: "10"
+    argocd.argoproj.io/sync-wave: "-4"
 spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: prod-stable
-    path: apps/02-monitoring/descheduler/overlays/prod
+    path: apps/_shared/priority-classes/base
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
@@ -21,9 +21,3 @@ spec:
     automated:
       prune: true
       selfHeal: true
-    retry:
-      limit: 5
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m
