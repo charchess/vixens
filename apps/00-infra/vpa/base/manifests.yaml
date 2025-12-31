@@ -1896,7 +1896,7 @@ spec:
   
   containers:
     - name: tests
-      image: ghcr.io/cowboysysop/pytest:1.2.0
+      image: ghcr.io/cowboysysop/pytest:1.2.32
       imagePullPolicy: IfNotPresent
       volumeMounts:
         - name: tests
