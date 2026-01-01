@@ -45,3 +45,7 @@ curl -L -k https://netvisor.dev.truxonline.com | grep "Netvisor"
 - **Sécurité :**
   - Daemon nécessite `privileged: true` et `hostNetwork: true` pour accès réseau
   - Toleration control-plane activée sur daemon et server
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

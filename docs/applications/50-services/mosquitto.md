@@ -57,3 +57,8 @@ frigate:$7$101$aQfmqdgO+FgaVjV/$nVsVrxaYQBCX5m9rrkFtTpKJu6ysn59HrpblYVk2QbwqGbpK
     - `Infisical` (Secret `mosquitto-password-file`)
     - `Traefik` (Entrée TCP dédiée `mqtt`)
 - **Particularités :** Déployé via StatefulSet. Routage TCP (Layer 4) via `IngressRouteTCP`. Le fichier de mots de passe est géré par un InitContainer qui le copie depuis le Secret vers un volume `emptyDir` (car le Secret est ReadOnly).
+
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
