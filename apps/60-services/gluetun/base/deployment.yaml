@@ -68,6 +68,11 @@ spec:
               value: ":8888"
             - name: SOCKS5_PROXY_LISTENING_ADDRESS
               value: ":1080"
+            # Enable proxies
+            - name: HTTPPROXY
+              value: "on"
+            - name: SOCKS5PROXY
+              value: "on"
 
           ports:
             - containerPort: 8888
