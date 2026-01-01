@@ -31,3 +31,7 @@ curl -L -k https://adguard.dev.truxonline.com | grep "AdGuard Home"
 - **Namespace :** `networking`
 - **Dépendances :** Aucune
 - **Particularités :** Serveur DNS bloqueur de publicités. Expose les ports DNS (53 UDP/TCP) via IngressRouteUDP/TCP sur le LoadBalancer.
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

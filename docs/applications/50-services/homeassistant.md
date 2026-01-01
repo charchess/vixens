@@ -35,3 +35,7 @@ curl -L -k https://homeassistant.dev.truxonline.com | grep "Home Assistant"
     - `PostgreSQL` (Cluster partagé, via `homeassistant-postgresql-credentials`)
     - `Traefik` (Ingress)
 - **Particularités :** Utilise `hostNetwork: true` pour la découverte mDNS. Configuration montée via `subPath`.
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

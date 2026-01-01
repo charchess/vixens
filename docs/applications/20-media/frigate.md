@@ -105,3 +105,8 @@ kubectl -n media get ingressroutetcp
 - **Fichiers :**
     - `apps/00-infra/traefik/values/common.yaml` - Définition des entrypoints
     - `apps/20-media/frigate/base/ingressroute-tcp.yaml` - Routes TCP
+
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
