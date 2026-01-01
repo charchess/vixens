@@ -1,33 +1,32 @@
 processus de travail, adherence stricte et totale, pas de raccourci, a respecter absolument, chaque étape est importante, chaque instruction doit etre respecté:
 * initialisation :
-** recuperer la liste des taches (attention a la fenetre, 10 par defaut)
-** ET uniquement attribuée à "coding agent"  
-** ET en todo, doing ou review  
+** recuperer la liste des taches attribuée à "coding agent" (utiliser `per_page=50` ou plus pour ne manquer aucune tâche en cours).
+** filtrer sur les statuts todo, doing ou review.
 * choix de la tache :
-** on reprends celle en review (coding agent) en priorité, sans demaner 
-** SINON on continue celle en doing (coding agent)
-** SINON on propose celles semblant plus critique/importante
+** on reprends celle en review (coding agent) en priorité, sans demander.
+** SINON on continue celle en doing (coding agent).
+** SINON on **PROPOSE** la liste des taches todo à l'utilisateur et on attend son choix.
 * travail sur la tache choisi :  
-** etudier et informer de possibles pré requis technique, uniquement si il y en a
+** etudier et informer de possibles pré requis technique, uniquement si il y en a.
 ** consulter la documentation de l'application concernée dans `docs/applications/<app>.md` (si existante) pour comprendre l'état actuel et les validations attendues.
-** analyser l'objectif de la tache, son utilisation, afin de definir un "definition of done" basé sur la demande ET sur les validations existantes (non-régression).
-** passage de la tache en doing dans archon  
-** pour la documentation, privilegier le RAG archon
-** pour l'acces au code, privilegier serena  
-** procéder sur la tache de manière incrementale
+** analyser l'objectif de la tache, son utilisation, afin de definir un "definition of done" (DoD) basé sur la demande ET sur les validations existantes (non-régression).
+** passage de la tache en doing dans archon.
+** pour la documentation, privilegier le RAG archon.
+** pour l'acces au code, privilegier serena.
+** procéder sur la tache de manière incrementale.
 ** mettre à jour le fichier `docs/applications/<app>.md` si l'infrastructure, la configuration ou les méthodes de validation évoluent.
-** une fois la tache terminer, porter les changements necessaires dans l'overlay prod
+** une fois la tache terminer, porter les changements necessaires dans l'overlay prod.
 * une fois la tache terminée
-** faire un commit et un push vers github (branche de dev ONLY !)
-** utiliser GitHub Actions pour promotion vers main/prod si necessaire
-** passer la tache en review
-** PUIS valider le resultat dans l'environnement de dev avec tous les moyens disponible en validant l'acces a l'application 
+** faire un commit et un push vers github (branche de dev ONLY !).
+** PUIS valider le resultat dans l'environnement de dev avec tous les moyens disponible en validant l'acces a l'application.
 *** Exécuter les commandes de validation (Automatique & Manuelle) définies dans `docs/applications/<app>.md` pour garantir la NON-RÉGRESSION.
 *** Utiliser playwright pour les interfaces web (validation visuelle/fonctionnelle).
-*** Verifier sa conformité avec le "definition of done" evalué plus tot
-** SI reussi, passer le proprietaire en "user", garder la tache en review et passer a la tache suivante  
-** SINON, reprendre le travail sur la tache (en la repassant en doing)  
-** ENFIN, on reprend connaissance du @WORKFLOW.md
+*** Verifier sa conformité avec le "definition of done" evalué plus tot.
+** SI le DoD est 100% validé en dev, la promotion vers main/prod peut être effectuée via GitHub Actions.
+** valider le resultat en PROD et la conformié avec le Definition Of Done.
+** SI reussi, passer le proprietaire en "user", garder la tache en review et passer a la tache suivante.
+** SINON, reprendre le travail sur la tache (en la repassant en doing).
+** ENFIN, on reprend connaissance du @WORKFLOW.md.
 
 
 
