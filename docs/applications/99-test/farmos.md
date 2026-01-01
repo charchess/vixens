@@ -32,8 +32,16 @@ None for this test deployment (credentials passed via env vars in plaintext for 
 
 ### Manual
 - Access `https://farmos.dev.truxonline.com`
+- **Note:** If you get a 404 on the homepage, try `https://farmos.dev.truxonline.com/user/login`
 - Proceed with Drupal/farmOS installation if required.
 - Use DB credentials: Host `localhost`, User `farm`, Pass `farm`, DB `farm`.
+
+### Troubleshooting
+- **Trusted Host settings:** If access is blocked, you may need to patch `settings.php` in the pod:
+  ```bash
+  kubectl -n test exec deployment/farmos -c farmos -- sh -c "echo \"\
+$settings['trusted_host_patterns'] = ['^farmos\.dev\.truxonline\.com$'];\" >> /opt/drupal/web/sites/default/settings.php"
+  ```
 
 ---
 > ⚠️ **APP CANDIDATE**
