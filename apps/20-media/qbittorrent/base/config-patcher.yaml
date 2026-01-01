@@ -1,4 +1,4 @@
---- 
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,7 +10,9 @@ data:
     import re
     import hashlib
     import base64
+    import shutil
 
+    # Ensure correct path
     CONF_PATH = "/config/qBittorrent/config/qBittorrent.conf"
 
     def generate_hash(password):
@@ -22,7 +24,7 @@ data:
 
     def patch():
         if not os.path.exists(CONF_PATH):
-            print("Config not found. Creating a minimal one.")
+            print(f"Config not found at {CONF_PATH}. Creating a minimal one.")
             os.makedirs(os.path.dirname(CONF_PATH), exist_ok=True)
             with open(CONF_PATH, 'w') as f:
                 f.write("[Preferences]\n")
@@ -35,36 +37,45 @@ data:
             return
 
         with open(CONF_PATH, 'r') as f:
-            lines = f.readlines()
+            content = f.read()
 
         new_lines = []
         pwd_hash = generate_hash(password)
         
-        # We avoid using backslashes in literals to prevent unicode errors
-        # Using chr(92) for \ 
         key_user = "WebUI" + chr(92) + "Username="
         key_pass = "WebUI" + chr(92) + "Password_PBKDF2="
         
+        lines = content.splitlines()
         found_user = False
         found_pass = False
         
         for line in lines:
             if line.startswith(key_user):
-                new_lines.append(f"{key_user}{username}\n")
+                new_lines.append(f"{key_user}{username}")
                 found_user = True
             elif line.startswith(key_pass):
-                new_lines.append(f"{key_pass}{pwd_hash}\n")
+                new_lines.append(f"{key_pass}{pwd_hash}")
                 found_pass = True
             else:
                 new_lines.append(line)
 
         if not found_user:
-            new_lines.insert(1, f"{key_user}{username}\n")
+            new_lines.insert(1, f"{key_user}{username}")
         if not found_pass:
-            new_lines.insert(1, f"{key_pass}{pwd_hash}\n")
+            new_lines.insert(1, f"{key_pass}{pwd_hash}")
 
         with open(CONF_PATH, 'w') as f:
-            f.writelines(new_lines)
+            f.write("\n".join(new_lines) + "\n")
+        
+        # CRITICAL: Fix permissions for 'abc' user (1000:1000)
+        try:
+            os.chown(CONF_PATH, 1000, 1000)
+            # Fix directory permissions too
+            os.chown(os.path.dirname(CONF_PATH), 1000, 1000)
+            os.chown(os.path.dirname(os.path.dirname(CONF_PATH)), 1000, 1000)
+        except Exception as e:
+            print(f"Warning: Could not change ownership: {e}")
+
         print(f"Successfully patched qBittorrent for user {username}")
 
     if __name__ == "__main__":
