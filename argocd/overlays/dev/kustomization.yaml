@@ -43,23 +43,24 @@ resources:
   - apps/homepage.yaml                       # Homepage dashboard for services
   - apps/linkwarden.yaml                     # Linkwarden bookmark manager
   - apps/gluetun.yaml                        # Gluetun VPN client for downloads
-  - apps/sabnzbd.yaml
-  - apps/pyload.yaml
-  - apps/qbittorrent.yaml
-  - apps/amule.yaml
-  - apps/radarr.yaml
-  - apps/sonarr.yaml
-  - apps/lidarr.yaml
-  - apps/lazylibrarian.yaml
-  - apps/booklore.yaml
+  # HIBERNATED APPS (Uncomment to reactivate)
+  # - apps/sabnzbd.yaml
+  # - apps/pyload.yaml
+  # - apps/qbittorrent.yaml
+  # - apps/amule.yaml
+  # - apps/radarr.yaml
+  # - apps/sonarr.yaml
+  # - apps/lidarr.yaml
+  # - apps/lazylibrarian.yaml
+  # - apps/booklore.yaml
   - apps/frigate.yaml
-  - apps/prowlarr.yaml
-  - apps/whisparr.yaml
-  - apps/mylar.yaml
+  # - apps/prowlarr.yaml
+  # - apps/whisparr.yaml
+  # - apps/mylar.yaml
   # - apps/hydrus-server.yaml
-  - apps/jellyseerr.yaml
+  # - apps/jellyseerr.yaml
   - apps/jellyfin.yaml
-  - apps/hydrus-client.yaml
+  # - apps/hydrus-client.yaml
   - apps/music-assistant.yaml
   - apps/vaultwarden.yaml
   - apps/cloudnative-pg-crds.yaml            # CloudNativePG CRDs (manually managed due to size)
@@ -68,7 +69,7 @@ resources:
   - apps/postgresql-shared.yaml              # Shared PostgreSQL Cluster (Docspell, ...)
   # - apps/docspell.yaml                     # OLD Helm-based (deprecated, use docspell-native)
   - apps/docspell-native.yaml                # Docspell Kubernetes native deployment
-  - apps/changedetection.yaml
+  # - apps/changedetection.yaml
   - apps/adguard-home.yaml
   - apps/netvisor.yaml
   - apps/authentik.yaml
@@ -76,10 +77,10 @@ resources:
   - apps/loki.yaml
   - apps/promtail.yaml
   - apps/renovate.yaml
-  - apps/stirling-pdf.yaml
-  - apps/stirling-pdf-ingress.yaml
-  - apps/it-tools.yaml
-  - apps/it-tools-ingress.yaml
-  - apps/contacts.yaml
+  # - apps/stirling-pdf.yaml
+  # - apps/stirling-pdf-ingress.yaml
+  # - apps/it-tools.yaml
+  # - apps/it-tools-ingress.yaml
+  # - apps/contacts.yaml
   - apps/external-dns-unifi.yaml
   - apps/external-dns-unifi-secrets.yaml

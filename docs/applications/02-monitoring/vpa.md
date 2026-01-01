@@ -4,7 +4,7 @@
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
 | Dev           | [x]     | [x]       | [x]   | v1.5.0  |
-| Prod          | [x]     | [x]       | [ ]   | v1.5.0  |
+| Prod          | [x]     | [x]       | [x]   | v1.5.0  |
 
 ## Architecture
 **Type :** Infrastructure (Static Manifests)
@@ -14,6 +14,8 @@ VPA est déployé via des manifestes statiques générés (hydratés) à partir 
 - **Source :** `apps/00-infra/vpa/base/manifests.yaml`
 - **Chart Upstream :** `cowboysysop/vertical-pod-autoscaler` (v11.1.1)
 - **Namespace :** `vpa`
+
+**⚠️ Attention :** Lors de la génération manuelle via `helm template`, bien vérifier l'absence de duplication de clés (notamment `tolerations`) et l'indentation via `yamllint`.
 
 ## Configuration
 Les manifestes sont générés avec les ressources suivantes :

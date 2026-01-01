@@ -50,3 +50,8 @@ curl -I https://qbittorrent.dev.truxonline.com
 - **Image :** `lscr.io/linuxserver/qbittorrent:latest`
 - **Port UI :** 8080
 - **Stratégie :** Recreate (à cause du PVC RWO).
+
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

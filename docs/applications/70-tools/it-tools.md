@@ -37,3 +37,8 @@ curl -L -k https://it-tools.dev.truxonline.com | grep "IT Tools"
 - **Ressources :**
   - Requests: 10m CPU / 32Mi RAM
   - Limits: 100m CPU / 128Mi RAM
+
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

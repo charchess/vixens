@@ -30,3 +30,7 @@ curl -L -k https://hydrus-web.dev.truxonline.com | grep "Hydrus"
 - **Namespace :** `media-stack`
 - **Dépendances :** `Hydrus Server`
 - **Particularités :** Interface Web pour Hydrus.
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

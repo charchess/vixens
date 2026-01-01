@@ -49,3 +49,8 @@ curl -I https://pyload.dev.truxonline.com
 - **Image :** `lscr.io/linuxserver/pyload-ng:latest`
 - **Port :** 8000
 - **Stratégie :** Recreate (à cause du PVC RWO).
+
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
