@@ -32,3 +32,7 @@ curl -L -k https://vaultwarden.dev.truxonline.com | grep "Vaultwarden"
 - **Dépendances :**
     - `Infisical` (Admin Token)
 - **Particularités :** Serveur Bitwarden léger (Rust). Utilise SQLite (sur PVC) par défaut (ou Postgres si configuré).
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
