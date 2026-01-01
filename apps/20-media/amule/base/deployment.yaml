@@ -60,7 +60,7 @@ spec:
               value: localhost,127.0.0.1,10.0.0.0/8,192.168.0.0/16
           volumeMounts:
             - name: config
-              mountPath: /config
+              mountPath: /home/amule/.aMule
             - name: downloads
               mountPath: /downloads
           resources:
@@ -69,6 +69,13 @@ spec:
               memory: 128Mi
             limits:
               memory: 512Mi
+      initContainers:
+        - name: disable-gzip
+          image: busybox
+          command: ["sh", "-c", "if [ -f /config/amule.conf ]; then sed -i 's/UseGzip=1/UseGzip=0/' /config/amule.conf; fi"]
+          volumeMounts:
+            - name: config
+              mountPath: /config
       volumes:
         - name: config
           persistentVolumeClaim:
