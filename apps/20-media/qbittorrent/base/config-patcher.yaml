@@ -32,8 +32,10 @@ data:
 
     def patch():
         if not os.path.exists(CONF_PATH):
-            print("Config not found yet.")
-            return
+            print("Config not found. Creating a minimal one.")
+            os.makedirs(os.path.dirname(CONF_PATH), exist_ok=True)
+            with open(CONF_PATH, 'w') as f:
+                f.write("[Preferences]\n")
 
         username = os.environ.get("WEBUI_USERNAME")
         password = os.environ.get("WEBUI_PASSWORD")
