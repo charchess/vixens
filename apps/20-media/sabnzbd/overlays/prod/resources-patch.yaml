@@ -9,8 +9,8 @@ spec:
       - name: sabnzbd
         resources:
           requests:
-            cpu: "15m"
-            memory: "100Mi"
+            cpu: "50m"
+            memory: "256Mi"
           limits:
-            cpu: "15m"
-            memory: "100Mi"
+            cpu: "500m"
+            memory: "1Gi"
