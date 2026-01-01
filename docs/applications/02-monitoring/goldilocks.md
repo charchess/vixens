@@ -32,3 +32,7 @@ curl -L -k https://goldilocks.dev.truxonline.com | grep "Goldilocks"
     - `VPA` (Vertical Pod Autoscaler)
     - `Metrics Server`
 - **Particularités :** Déployé via Helm Chart. Recommande des requêtes/limites CPU/RAM basées sur l'usage réel observé par VPA.
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

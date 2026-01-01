@@ -31,3 +31,7 @@ curl -L -k https://whoami.dev.truxonline.com
 - **Namespace :** `whoami`
 - **Dépendances :** Aucune
 - **Particularités :** Application de test légère pour valider l'Ingress, les certificats et le routage.
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

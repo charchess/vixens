@@ -15,7 +15,7 @@ resources:
   - apps/traefik.yaml
   - apps/metrics-server.yaml
   - apps/vpa.yaml
-  - apps/goldilocks.yaml                        # Traefik Ingress Controller
+  # - apps/goldilocks.yaml                        # Traefik Ingress Controller
   - apps/reloader.yaml
   - apps/descheduler.yaml
   - apps/gitops-revision-controller.yaml
@@ -24,7 +24,7 @@ resources:
   # Traefik Dashboard hostname redirect
   - apps/traefik-dashboard.yaml
   - apps/argocd.yaml                         # ArgoCD Ingress for UI
-  - apps/whoami.yaml                         # Test application
+  # - apps/whoami.yaml                         # Test application
   - apps/cert-manager.yaml                   # cert-manager (wave 0)
   - apps/cert-manager-secrets.yaml           # Infisical secrets for cert-manager (wave 0)
   - apps/cert-manager-webhook-gandi.yaml     # Gandi DNS webhook (wave 1)
@@ -32,14 +32,14 @@ resources:
   - apps/synology-csi-secrets.yaml           # Infisical secrets for Synology CSI (wave -1)
   - apps/synology-csi.yaml                   # Synology CSI driver
   - apps/nfs-storage.yaml                    # NFS PV/PVC
-  - apps/mail-gateway.yaml                   # Mail gateway external service
+  # - apps/mail-gateway.yaml                   # Mail gateway external service
   # - apps/homeassistant.yaml
   # - apps/mosquitto.yaml
   # - apps/birdnet-go.yaml
-  - apps/prometheus.yaml                     # Prometheus standalone monitoring
-  - apps/prometheus-ingress.yaml             # Prometheus IngressRoutes
-  - apps/grafana.yaml                        # Grafana standalone monitoring
-  - apps/grafana-ingress.yaml                # Grafana IngressRoutes with HTTP→HTTPS redirect
+  # - apps/prometheus.yaml                     # Prometheus standalone monitoring
+  # - apps/prometheus-ingress.yaml             # Prometheus IngressRoutes
+  # - apps/grafana.yaml                        # Grafana standalone monitoring
+  # - apps/grafana-ingress.yaml                # Grafana IngressRoutes with HTTP→HTTPS redirect
   # - apps/homepage.yaml
   # - apps/linkwarden.yaml
   # - apps/gluetun.yaml
@@ -62,7 +62,7 @@ resources:
   # - apps/jellyfin.yaml
   # - apps/hydrus-client.yaml
   # - apps/music-assistant.yaml
-  - apps/vaultwarden.yaml
+  # - apps/vaultwarden.yaml
   - apps/cloudnative-pg-crds.yaml            # CloudNativePG CRDs (manually managed due to size)
   - apps/cloudnative-pg.yaml                 # CloudNativePG Operator (databases)
   - apps/redis-shared.yaml
@@ -73,9 +73,9 @@ resources:
   # - apps/adguard-home.yaml
   # - apps/netvisor.yaml
   - apps/authentik.yaml
-  - apps/netbox.yaml
-  - apps/loki.yaml
-  - apps/promtail.yaml
+  # - apps/netbox.yaml
+  # - apps/loki.yaml
+  # - apps/promtail.yaml
   # - apps/renovate.yaml
   # - apps/stirling-pdf.yaml
   # - apps/stirling-pdf-ingress.yaml
