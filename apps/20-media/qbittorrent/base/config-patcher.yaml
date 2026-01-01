@@ -1,0 +1,64 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: qbittorrent-config-patcher
+  namespace: downloads
+data:
+  patcher.py: |
+    import os
+    import re
+    import hashlib
+    import base64
+
+    # This script patches qBittorrent config with Infisical credentials
+    # It generates the required PBKDF2-SHA512 hash for the password
+    
+    CONF_PATH = "/config/qBittorrent/config/qBittorrent.conf" # Fixed path
+
+    def generate_hash(password):
+        # qBittorrent uses 100,000 iterations of PBKDF2-SHA512
+        # Salt is random 16 bytes, but for simplicity we can use a fixed one 
+        # or generate one. Let's use a fixed salt for idempotency if needed, 
+        # but random is better.
+        salt = os.urandom(16)
+        key = hashlib.pbkdf2_hmac('sha512', password.encode('utf-8'), salt, 100000)
+        
+        salt_b64 = base64.b64encode(salt).decode('utf-8')
+        key_b64 = base64.b64encode(key).decode('utf-8')
+        
+        # Format: @ByteArray(<salt>:<hash>)
+        return f"@ByteArray({salt_b64}:{key_b64})"
+
+    def patch():
+        if not os.path.exists(CONF_PATH):
+            print("Config not found yet.")
+            return
+
+        username = os.environ.get("WEBUI_USERNAME")
+        password = os.environ.get("WEBUI_PASSWORD")
+        
+        if not username or not password:
+            print("Missing env vars.")
+            return
+
+        with open(CONF_PATH, 'r') as f:
+            content = f.read()
+
+        # Patch Username
+        content = re.sub(r'WebUI\\Username=.*', f'WebUI\\Username={username}', content)
+        
+        # Patch Password (PBKDF2)
+        pwd_hash = generate_hash(password)
+        if 'WebUI\\Password_PBKDF2=' in content:
+            content = re.sub(r'WebUI\\Password_PBKDF2=.*', f'WebUI\\Password_PBKDF2={pwd_hash}', content)
+        else:
+            # Add it if missing under [Preferences]
+            content = content.replace("[Preferences]", f"[Preferences]\nWebUI\\Password_PBKDF2={pwd_hash}")
+
+        with open(CONF_PATH, 'w') as f:
+            f.write(content)
+        print(f"Successfully patched qBittorrent for user {username}")
+
+    if __name__ == "__main__":
+        patch()
