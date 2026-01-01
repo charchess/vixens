@@ -1,4 +1,4 @@
---- 
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -40,23 +40,27 @@ data:
         new_lines = []
         pwd_hash = generate_hash(password)
         
+        # We avoid using backslashes in literals to prevent unicode errors
+        key_user = "WebUI/Username="
+        key_pass = "WebUI/Password_PBKDF2="
+        
         found_user = False
         found_pass = False
         
         for line in lines:
-            if line.startswith("WebUI\Username="):
-                new_lines.append(f"WebUI\Username={username}\n")
+            if line.startswith(key_user):
+                new_lines.append(f"{key_user}{username}\n")
                 found_user = True
-            elif line.startswith("WebUI\Password_PBKDF2="):
-                new_lines.append(f"WebUI\Password_PBKDF2={pwd_hash}\n")
+            elif line.startswith(key_pass):
+                new_lines.append(f"{key_pass}{pwd_hash}\n")
                 found_pass = True
             else:
                 new_lines.append(line)
 
         if not found_user:
-            new_lines.insert(1, f"WebUI\Username={username}\n")
+            new_lines.insert(1, f"{key_user}{username}\n")
         if not found_pass:
-            new_lines.insert(1, f"WebUI\Password_PBKDF2={pwd_hash}\n")
+            new_lines.insert(1, f"{key_pass}{pwd_hash}\n")
 
         with open(CONF_PATH, 'w') as f:
             f.writelines(new_lines)
