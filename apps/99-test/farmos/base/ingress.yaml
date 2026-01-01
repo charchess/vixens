@@ -1,0 +1,45 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: farmos
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`farmos.dev.truxonline.com`)
+      services:
+        - name: farmos
+          port: 80
+  tls:
+    secretName: farmos-tls
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: farmos-http
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`farmos.dev.truxonline.com`)
+      middlewares:
+        - name: redirect-https
+          namespace: traefik
+      services:
+        - name: farmos
+          port: 80
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: farmos-tls
+spec:
+  secretName: farmos-tls
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer
+  dnsNames:
+    - farmos.dev.truxonline.com
