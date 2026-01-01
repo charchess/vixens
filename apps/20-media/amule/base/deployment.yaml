@@ -22,7 +22,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: amule
-          image: tchabaud/amule:latest
+          image: mrhaggis/amule:latest
           ports:
             - containerPort: 4711
               name: http
@@ -69,13 +69,6 @@ spec:
               memory: 128Mi
             limits:
               memory: 512Mi
-      initContainers:
-        - name: disable-gzip
-          image: busybox
-          command: ["sh", "-c", "if [ -f /config/amule.conf ]; then sed -i 's/UseGzip=1/UseGzip=0/' /config/amule.conf; fi"]
-          volumeMounts:
-            - name: config
-              mountPath: /config
       volumes:
         - name: config
           persistentVolumeClaim:
