@@ -20,33 +20,11 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-      containers:
-        - name: qbittorrent
+      initContainers:
+        - name: configure-qbittorrent
           image: lscr.io/linuxserver/qbittorrent:latest
-          ports:
-            - containerPort: 8080
-              name: http
-            - containerPort: 6881
-              name: bittorrent-tcp
-              protocol: TCP
-            - containerPort: 6881
-              name: bittorrent-udp
-              protocol: UDP
+          command: ["python3", "/scripts/patcher.py"]
           env:
-            - name: PUID
-              value: "1000"
-            - name: PGID
-              value: "1000"
-            - name: TZ
-              value: Europe/Paris
-            - name: WEBUI_PORT
-              value: "8080"
-            - name: HTTP_PROXY
-              value: http://gluetun.services.svc.cluster.local:8888
-            - name: HTTPS_PROXY
-              value: http://gluetun.services.svc.cluster.local:8888
-            - name: NO_PROXY
-              value: localhost,127.0.0.1,10.0.0.0/8,192.168.0.0/16
             - name: WEBUI_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -60,16 +38,15 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: downloads
-              mountPath: /downloads
-            - name: blackhole
-              mountPath: /blackhole
-          resources:
-            requests:
-              cpu: 50m
-              memory: 256Mi
-            limits:
-              memory: 1Gi
+            - name: config-patcher
+              mountPath: /scripts
+      containers:
+        - name: qbittorrent
+          image: lscr.io/linuxserver/qbittorrent:latest
+          ports:
+            - containerPort: 8080
+              name: http
+--
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -82,3 +59,6 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Downloads/blackhole/torrent
+        - name: config-patcher
+          configMap:
+            name: qbittorrent-config-patcher
