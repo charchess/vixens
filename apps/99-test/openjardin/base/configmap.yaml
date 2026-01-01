@@ -7,13 +7,14 @@ data:
   install.sh: |
     #!/bin/bash
     echo "Starting OpenJardin installation..."
-    if [ ! -f /usr/bin/openjardin ]; then
+    # The binary might be quickjardinV6 or openjardin
+    if [ ! -f /usr/bin/quickjardinV6 ] && [ ! -f /usr/bin/openjardin ]; then
       apt-get update
-      apt-get install -y wget libqt5widgets5 libqt5gui5 libqt5core5a libqt5printsupport5 libqt5sql5 libqt5sql5-sqlite
-      wget -O /tmp/openjardin.deb https://sourceforge.net/projects/openjardin/files/latest/download
+      apt-get install -y wget libqt5widgets5 libqt5gui5 libqt5core5a libqt5printsupport5 libqt5sql5 libqt5sql5-sqlite libqt5qml5 libqt5quick5 libqt5svg5 libqt5quickcontrols2-5 libqt5quickwidgets5
+      wget -L -O /tmp/openjardin.deb https://sourceforge.net/projects/openjardin/files/quickjardinV6_2.28_amd64.deb/download
       dpkg -i /tmp/openjardin.deb || apt-get install -f -y
       rm /tmp/openjardin.deb
-      echo "OpenJardin installed successfully."
+      echo "OpenJardin (QuickJardin) installed successfully."
     else
       echo "OpenJardin already installed."
     fi
