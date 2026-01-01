@@ -1,45 +1,46 @@
 ---
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
   name: farmos
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    cert-manager.io/cluster-issuer: letsencrypt-staging
 spec:
-  entryPoints:
-    - websecure
-  routes:
-    - kind: Rule
-      match: Host(`farmos.dev.truxonline.com`)
-      services:
-        - name: farmos
-          port: 80
+  ingressClassName: traefik
   tls:
-    secretName: farmos-tls
+    - hosts:
+        - farmos.dev.truxonline.com
+      secretName: farmos-tls
+  rules:
+    - host: farmos.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: farmos
+                port:
+                  number: 80
 ---
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: farmos-http
+  name: farmos-redirect
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
 spec:
-  entryPoints:
-    - web
-  routes:
-    - kind: Rule
-      match: Host(`farmos.dev.truxonline.com`)
-      middlewares:
-        - name: redirect-https
-          namespace: traefik
-      services:
-        - name: farmos
-          port: 80
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: farmos-tls
-spec:
-  secretName: farmos-tls
-  issuerRef:
-    name: letsencrypt-staging
-    kind: ClusterIssuer
-  dnsNames:
-    - farmos.dev.truxonline.com
+  ingressClassName: traefik
+  rules:
+    - host: farmos.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: farmos
+                port:
+                  number: 80
