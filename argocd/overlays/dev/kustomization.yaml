@@ -85,3 +85,4 @@ resources:
   - apps/external-dns-unifi.yaml
   - apps/external-dns-unifi-secrets.yaml
   - apps/farmos.yaml
+  - apps/petio.yaml

@@ -1,0 +1,51 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: petio
+  template:
+    metadata:
+      labels:
+        app: petio
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: petio
+          image: ghcr.io/petio-team/petio:latest
+          ports:
+            - containerPort: 7777
+              name: http
+          env:
+            - name: MONGO_URI
+              value: "mongodb://localhost:27017/petio"
+            - name: TZ
+              value: "Europe/Paris"
+          volumeMounts:
+            - name: config
+              mountPath: /app/api/config
+            - name: logs
+              mountPath: /app/logs
+            - name: images
+              mountPath: /app/images
+        - name: mongo
+          image: mongo:5.0
+          volumeMounts:
+            - name: db-data
+              mountPath: /data/db
+      volumes:
+        - name: config
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
+        - name: images
+          emptyDir: {}
+        - name: db-data
+          emptyDir: {}
