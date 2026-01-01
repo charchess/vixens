@@ -1,0 +1,26 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: amule
+  namespace: downloads
+spec:
+  ports:
+    - port: 4711
+      targetPort: 4711
+      protocol: TCP
+      name: http
+    - port: 4662
+      targetPort: 4662
+      protocol: TCP
+      name: edonkey-tcp
+    - port: 4665
+      targetPort: 4665
+      protocol: UDP
+      name: edonkey-udp
+    - port: 4672
+      targetPort: 4672
+      protocol: UDP
+      name: kademlia-udp
+  selector:
+    app.kubernetes.io/name: amule
