@@ -22,7 +22,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: amule
-          image: ghcr.io/linuxserver/amule:latest
+          image: lscr.io/linuxserver/amule:2.3.3
           ports:
             - containerPort: 4711
               name: http
