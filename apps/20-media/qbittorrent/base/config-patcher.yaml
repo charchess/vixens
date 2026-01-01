@@ -54,15 +54,16 @@ data:
                 new_lines.append(f"{key_user}{username}")
                 found_user = True
             elif line.startswith(key_pass):
-                new_lines.append(f"{key_pass}{pwd_hash}")
-                found_pass = True
+                found_pass = True # We skip adding the old pass, and we won't add the new hash yet
+                continue
             else:
                 new_lines.append(line)
 
         if not found_user:
             new_lines.insert(1, f"{key_user}{username}")
-        if not found_pass:
-            new_lines.insert(1, f"{key_pass}{pwd_hash}")
+        
+        # We don't add found_pass here to leave it empty
+
 
         with open(CONF_PATH, 'w') as f:
             f.write("\n".join(new_lines) + "\n")
