@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent
+  namespace: downloads
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+    - port: 6881
+      targetPort: 6881
+      protocol: TCP
+      name: bittorrent-tcp
+    - port: 6881
+      targetPort: 6881
+      protocol: UDP
+      name: bittorrent-udp
+  selector:
+    app.kubernetes.io/name: qbittorrent
