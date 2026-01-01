@@ -46,7 +46,32 @@ spec:
           ports:
             - containerPort: 8080
               name: http
---
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Europe/Paris
+            - name: WEBUI_PORT
+              value: "8080"
+            - name: HTTP_PROXY
+              value: http://gluetun.services.svc.cluster.local:8888
+            - name: HTTPS_PROXY
+              value: http://gluetun.services.svc.cluster.local:8888
+            - name: NO_PROXY
+              value: localhost,127.0.0.1,10.0.0.0/8,192.168.0.0/16
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: downloads
+              mountPath: /downloads
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
       volumes:
         - name: config
           persistentVolumeClaim:
