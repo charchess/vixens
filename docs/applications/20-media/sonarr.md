@@ -34,3 +34,7 @@ curl -L -k https://sonarr.dev.truxonline.com | grep "Sonarr"
     - `Prowlarr` (Indexers)
     - `Sabnzbd` / `Transmission` (Download Clients)
 - **Particularités :** Gestionnaire de séries TV (PVR).
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

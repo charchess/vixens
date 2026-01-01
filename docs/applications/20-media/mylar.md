@@ -30,3 +30,7 @@ curl -L -k https://mylar.dev.truxonline.com | grep "Mylar"
 - **Namespace :** `media-stack`
 - **Dépendances :** NFS Storage
 - **Particularités :** Gestionnaire de Comics.
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

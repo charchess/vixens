@@ -37,3 +37,8 @@ curl -L -k https://pdf.dev.truxonline.com | grep "Stirling PDF"
 - **Ressources :**
   - Requests: 100m CPU / 256Mi RAM
   - Limits: 1000m CPU / 1Gi RAM
+
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
