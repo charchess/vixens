@@ -69,6 +69,26 @@ spec:
               memory: 128Mi
             limits:
               memory: 512Mi
+      initContainers:
+        - name: configure-proxy
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              CONF="/config/amule.conf"
+              if [ -f "$CONF" ]; then
+                echo "Patching amule.conf for SOCKS5 proxy..."
+                sed -i 's/^ProxyEnableProxy=.*/ProxyEnableProxy=1/' "$CONF"
+                sed -i 's/^ProxyType=.*/ProxyType=2/' "$CONF"
+                sed -i 's/^ProxyName=.*/ProxyName=gluetun.services.svc.cluster.local/' "$CONF"
+                sed -i 's/^ProxyPort=.*/ProxyPort=1080/' "$CONF"
+              else
+                echo "Config file not found, will be created by aMule on first run."
+              fi
+          volumeMounts:
+            - name: config
+              mountPath: /config
       volumes:
         - name: config
           persistentVolumeClaim:
