@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openjardin-init
+spec:
+  install.sh: |
+    #!/bin/bash
+    echo "Starting OpenJardin installation..."
+    if [ ! -f /usr/bin/openjardin ]; then
+      apt-get update
+      apt-get install -y wget libqt5widgets5 libqt5gui5 libqt5core5a libqt5printsupport5 libqt5sql5 libqt5sql5-sqlite
+      wget -O /tmp/openjardin.deb https://sourceforge.net/projects/openjardin/files/latest/download
+      dpkg -i /tmp/openjardin.deb || apt-get install -f -y
+      rm /tmp/openjardin.deb
+      echo "OpenJardin installed successfully."
+    else
+      echo "OpenJardin already installed."
+    fi
