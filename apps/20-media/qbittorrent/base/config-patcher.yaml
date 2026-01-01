@@ -1,4 +1,4 @@
----
+--- 
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -41,8 +41,9 @@ data:
         pwd_hash = generate_hash(password)
         
         # We avoid using backslashes in literals to prevent unicode errors
-        key_user = "WebUI/Username="
-        key_pass = "WebUI/Password_PBKDF2="
+        # Using chr(92) for \ 
+        key_user = "WebUI" + chr(92) + "Username="
+        key_pass = "WebUI" + chr(92) + "Password_PBKDF2="
         
         found_user = False
         found_pass = False
