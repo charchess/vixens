@@ -62,7 +62,12 @@ spec:
               value: "8888,1080"
             # Allow outbound to Kubernetes pod and service networks
             - name: FIREWALL_OUTBOUND_SUBNETS
-              value: "10.42.0.0/15,10.96.0.0/12"
+              value: "10.244.0.0/16,10.96.0.0/12"
+            # Listening addresses
+            - name: HTTP_PROXY_LISTENING_ADDRESS
+              value: ":8888"
+            - name: SOCKS5_PROXY_LISTENING_ADDRESS
+              value: ":1080"
 
           ports:
             - containerPort: 8888
