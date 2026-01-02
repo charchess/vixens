@@ -29,6 +29,7 @@ resources:
 - apps/mail-gateway.yaml
 - apps/homeassistant.yaml
 - apps/mosquitto.yaml
+- apps/mealie.yaml
 - apps/birdnet-go.yaml
 - apps/prometheus.yaml
 - apps/prometheus-ingress.yaml
@@ -77,4 +78,3 @@ resources:
 - apps/external-dns-gandi-secrets.yaml
 - apps/external-dns-unifi.yaml
 - apps/external-dns-unifi-secrets.yaml
-- apps/mealie.yaml
