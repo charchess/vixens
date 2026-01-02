@@ -24,6 +24,7 @@ spec:
         fsGroupChangePolicy: "OnRootMismatch"
       hostNetwork: true  # Required for mDNS/UPnP local discovery
       dnsPolicy: ClusterFirstWithHostNet  # Use cluster DNS even with hostNetwork
+      priorityClassName: homelab-critical
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists

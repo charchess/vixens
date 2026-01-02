@@ -30,3 +30,7 @@ curl -L -k https://sabnzbd.dev.truxonline.com | grep "SABnzbd"
 - **Namespace :** `media-stack`
 - **Dépendances :** NFS Storage (`/volume3/Downloads`)
 - **Particularités :** Client de téléchargement Usenet.
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

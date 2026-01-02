@@ -8,9 +8,9 @@ spec:
       containers:
       - name: lazylibrarian
         resources:
-          requests:
-            cpu: "15m"
-            memory: "259Mi"
           limits:
-            cpu: "15m"
-            memory: "488Mi"
+            cpu: 500m
+            memory: 261Mi
+          requests:
+            cpu: 23m
+            memory: 174Mi

@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkwarden
+spec:
+  template:
+    spec:
+      containers:
+      - name: linkwarden
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1026Mi
+          requests:
+            cpu: 11m
+            memory: 560Mi

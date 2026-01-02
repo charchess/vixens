@@ -1,0 +1,68 @@
+--- 
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: qbittorrent-config-patcher
+  namespace: downloads
+data:
+  patcher.py: |
+    import os
+    import re
+    import hashlib
+    import base64
+
+    CONF_PATH = "/config/qBittorrent/config/qBittorrent.conf"
+
+    def patch():
+        if not os.path.exists(CONF_PATH):
+            print("Config not found. Creating a minimal one.")
+            os.makedirs(os.path.dirname(CONF_PATH), exist_ok=True)
+            with open(CONF_PATH, 'w') as f:
+                f.write("[Preferences]\n")
+
+        username = os.environ.get("WEBUI_USERNAME")
+        password = os.environ.get("WEBUI_PASSWORD")
+        
+        if not username or not password:
+            print("Missing env vars.")
+            return
+
+        with open(CONF_PATH, 'r') as f:
+            lines = f.readlines()
+
+        new_lines = []
+        # Fallback to MD5 for easier injection
+        pwd_hash_md5 = hashlib.md5(password.encode('utf-8')).hexdigest()
+        
+        key_user = "WebUI" + chr(92) + "Username="
+        key_pass_pbkdf2 = "WebUI" + chr(92) + "Password_PBKDF2="
+        key_pass_md5 = "WebUI" + chr(92) + "Password_md5="
+        
+        found_user = False
+        found_md5 = False
+        
+        for line in lines:
+            if line.startswith(key_user):
+                new_lines.append(f"{key_user}{username}\n")
+                found_user = True
+            elif line.startswith(key_pass_pbkdf2):
+                continue # Remove PBKDF2 to force MD5 usage
+            elif line.startswith(key_pass_md5):
+                new_lines.append(f"{key_pass_md5}{pwd_hash_md5}\n")
+                found_md5 = True
+            else:
+                new_lines.append(line)
+
+        if not found_user:
+            new_lines.insert(1, f"{key_user}{username}\n")
+        if not found_md5:
+            new_lines.insert(1, f"{key_pass_md5}{pwd_hash_md5}\n")
+
+        with open(CONF_PATH, 'w') as f:
+            f.writelines(new_lines)
+        
+        os.chown(CONF_PATH, 1000, 1000)
+        print(f"Successfully patched qBittorrent with MD5 for user {username}")
+
+    if __name__ == "__main__":
+        patch()

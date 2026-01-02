@@ -8,9 +8,9 @@ spec:
       containers:
       - name: prowlarr
         resources:
-          requests:
-            cpu: "15m"
-            memory: "155Mi"
           limits:
-            cpu: "15m"
-            memory: "174Mi"
+            cpu: 500m
+            memory: 291Mi
+          requests:
+            cpu: 11m
+            memory: 194Mi

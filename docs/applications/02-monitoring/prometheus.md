@@ -31,3 +31,7 @@ curl -L -k https://prometheus.dev.truxonline.com/graph | grep "Prometheus"
 - **Namespace :** `monitoring`
 - **Dépendances :** Aucune
 - **Particularités :** Déployé via Helm Chart `prometheus` (version chart 25.30.1). Scraping automatique via annotations `prometheus.io/scrape`. Alertmanager intégré.
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

@@ -30,3 +30,7 @@ curl -L -k https://whisparr.dev.truxonline.com | grep "Whisparr"
 - **Namespace :** `media-stack`
 - **Dépendances :** NFS Storage
 - **Particularités :** Gestionnaire de contenu adulte.
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

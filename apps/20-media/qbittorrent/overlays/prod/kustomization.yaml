@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+labels:
+- includeSelectors: false
+  pairs:
+    environment: prod
+patches:
+- path: patch-infisical-env.yaml
+  target:
+    kind: InfisicalSecret
+    name: qbittorrent-secrets
+patchesStrategicMerge:
+- resources-patch.yaml
+resources:
+- ../../base
+- ingress.yaml
+- http-redirect.yaml

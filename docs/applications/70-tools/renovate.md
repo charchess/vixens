@@ -54,6 +54,12 @@ kubectl get configmap -n tools renovate-config -o yaml
 - **Kubernetes** - Mise à jour des images et versions dans kustomization.yaml
 - **Regex** - Patterns personnalisés
 
+### Règles de Versioning Custom
+Renovate est configuré avec des `packageRules` pour gérer les tags non-standard :
+- **LinuxServer.io** : Utilise `regex` pour extraire les versions derrière le préfixe `version-`.
+- **BirdNET-Go** : Utilise `regex` pour les tags `nightly-YYYYMMDD`.
+- **Music Assistant / AdGuard** : Utilise le versioning `docker` pour une meilleure compatibilité avec les tags beta.
+
 ## Notes Techniques
 - **Namespace :** `tools`
 - **Dépendances :**
@@ -63,12 +69,16 @@ kubectl get configmap -n tools renovate-config -o yaml
   - CronJob (pas de Deployment)
   - Utilise emptyDir pour le workspace temporaire
   - Configuration via ConfigMap (config.json)
-  - PRs automatiques mais pas de merge automatique (sécurité)
-  - Limite de 3 PRs concurrentes et 2 PRs par heure
-  - Planification en semaine uniquement
+  - PRs concurrentes limitées à 10.
+  - Planification : "at any time" (pour favoriser les mises à jour rapides sur dev).
 
 ## Références
 - [Renovate Documentation](https://docs.renovatebot.com/)
 - [Self-Hosting Examples](https://docs.renovatebot.com/examples/self-hosting/)
 - [Kubernetes Manager](https://docs.renovatebot.com/modules/manager/kubernetes/)
 - [Terraform Manager](https://docs.renovatebot.com/modules/manager/terraform/)
+
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

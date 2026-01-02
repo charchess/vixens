@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns-gandi-secrets
+spec:
+  template:
+    spec:
+      containers:
+      - name: external-dns-gandi-secrets
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 20m
+            memory: 128Mi

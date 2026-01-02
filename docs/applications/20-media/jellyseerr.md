@@ -32,3 +32,7 @@ curl -L -k https://jellyseerr.dev.truxonline.com | grep "Jellyseerr"
     - `Jellyfin`
     - `Sonarr` / `Radarr`
 - **Particularités :** Gestionnaire de demandes de contenu (Overseerr fork pour Jellyfin).
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

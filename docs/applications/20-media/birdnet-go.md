@@ -34,3 +34,7 @@ curl -L -k https://birdnet.dev.truxonline.com | grep "BirdNET-Go"
   - `/data` : PVC `birdnet-go-data` (iSCSI)
   - `/data/clips` : NFS `192.168.111.69:/volume3/Internal/birdnet/clips` (Stockage des enregistrements audio)
 - **Particularités :** Analyse et identification de chants d'oiseaux en temps réel (Version Go légère).
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

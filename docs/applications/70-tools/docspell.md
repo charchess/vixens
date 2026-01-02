@@ -34,3 +34,7 @@ curl -L -k https://docspell.dev.truxonline.com | grep "Docspell"
     - `Solr` (Composant Joex interne)
     - `Infisical` (Secrets)
 - **Particularités :** Gestionnaire de documents (DMS). Architecture micro-services (RestServer + Joex).
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

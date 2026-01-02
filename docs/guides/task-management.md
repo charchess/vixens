@@ -103,6 +103,23 @@ todo → doing → review → done
 
 **IMPORTANT:** Only ONE task should be in `doing` status at a time.
 
+### Special Status Management
+
+Since Archon uses a fixed set of statuses (`todo`, `doing`, `review`, `done`), we use **Naming Conventions (Prefixes)** and **Priority Rules** to handle special states.
+
+| Use Case | Archon Status | Convention & Action |
+| :--- | :--- | :--- |
+| **Obsolete / Cancelled** | `done` | Prefix title with `[CANCELLED]`. Add comment/update description explaining why. |
+| **Out of Scope** | `done` | Prefix title with `[OUT-OF-SCOPE]`. Add comment. |
+| **Postponed** | `todo` | Prefix title with `[POSTPONED]`. Set priority to `p3` (Low). |
+| **Paused** | `todo` | Prefix title with `[PAUSED]`. Remove assignee. |
+| **Blocked** | `todo` | Prefix title with `[BLOCKED]`. Add detail on dependency in description. |
+| **Draft / Needs Info** | `todo` | Prefix title with `[DRAFT]`. Do not start until defined. |
+
+**Example:**
+- `[CANCELLED] feat: deploy old app` (Status: `done`)
+- `[BLOCKED] feat: integration with external api` (Status: `todo`, blocked by API credentials)
+
 ---
 
 ## Creating Tasks

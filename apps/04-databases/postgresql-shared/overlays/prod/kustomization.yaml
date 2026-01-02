@@ -1,16 +1,14 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
-namespace: databases
-
-resources:
-  - ../../base
-
 labels:
-  - pairs:
-      environment: prod
-    includeSelectors: false
-
+- includeSelectors: false
+  pairs:
+    environment: prod
+namespace: databases
 patches:
-  - path: patch-credentials-env.yaml
-  - path: patch-instances.yaml
+- path: patch-credentials-env.yaml
+- path: patch-instances.yaml
+patchesStrategicMerge:
+- resources-patch.yaml
+resources:
+- ../../base

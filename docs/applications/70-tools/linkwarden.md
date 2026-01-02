@@ -35,3 +35,7 @@ curl -L -k https://linkwarden.dev.truxonline.com | grep "Linkwarden"
     - `Infisical` (Secrets DATABASE_URL, NEXTAUTH_SECRET)
 - **Particularités :** Gestionnaire de favoris collaboratif.
 - **Note Stockage (2025-12-31) :** Augmentation du stockage PostgreSQL partagé de 20Gi à 50Gi pour résoudre la saturation disque causant des CrashLoopBackOff.
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

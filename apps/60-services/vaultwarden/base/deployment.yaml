@@ -17,6 +17,7 @@ spec:
       labels:
         app: vaultwarden
     spec:
+      priorityClassName: homelab-important
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"

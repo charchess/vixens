@@ -34,3 +34,7 @@ curl -L -k https://netbox.dev.truxonline.com | grep "NetBox"
     - `Redis` (Cluster partagé)
     - `Infisical` (Secrets DB et Secret Key)
 - **Particularités :** IPAM et DCIM. Migrations de base de données exécutées au démarrage du conteneur (délai possible).
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

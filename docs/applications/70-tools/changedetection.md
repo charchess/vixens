@@ -30,3 +30,7 @@ curl -L -k https://changedetection.dev.truxonline.com | grep "ChangeDetection.io
 - **Namespace :** `tools`
 - **Dépendances :** `Browserless` (Sidecar Chrome pour le rendu JS)
 - **Particularités :** Outil de surveillance de changements de sites web. Utilise un volume PVC pour stocker l'historique.
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

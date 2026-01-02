@@ -27,8 +27,10 @@ ingressRoute:
     enabled: false
 
 # ============================================================================
-# Control Plane Tolerations
+# Priority and Tolerations
 # ============================================================================
+priorityClassName: homelab-critical
+
 # From terraform/modules/shared/locals.tf
 tolerations:
   - key: "node-role.kubernetes.io/control-plane"
