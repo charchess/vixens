@@ -1,3 +1,5 @@
+---
+---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
@@ -7,6 +9,10 @@ resources:
   - http-redirect.yaml
 
 patches:
+  - path: resources-patch.yaml
+    target:
+      kind: Deployment
+      name: mealie
   - target:
       kind: InfisicalSecret
       name: mealie-secrets-sync
