@@ -7,5 +7,6 @@ resources:
   - ingress.yaml
   - http-redirect.yaml
 
-commonLabels:
-  environment: dev
+labels:
+  - pairs:
+      environment: dev
