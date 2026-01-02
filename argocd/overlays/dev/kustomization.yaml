@@ -86,3 +86,4 @@ resources:
   - apps/external-dns-unifi-secrets.yaml
   - apps/farmos.yaml
   - apps/mealie.yaml
+  - apps/tandoor.yaml
