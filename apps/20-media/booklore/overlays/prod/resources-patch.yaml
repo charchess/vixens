@@ -8,9 +8,9 @@ spec:
       containers:
       - name: booklore
         resources:
-          requests:
-            cpu: "15m"
-            memory: "1848Mi"
           limits:
-            cpu: "548m"
-            memory: "5545Mi"
+            cpu: 652m
+            memory: 4038Mi
+          requests:
+            cpu: 163m
+            memory: 2692Mi

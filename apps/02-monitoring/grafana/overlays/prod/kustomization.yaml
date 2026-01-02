@@ -1,16 +1,13 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
-namespace: monitoring
-
-resources:
-  - ../../base
-
 labels:
-  - includeSelectors: false
-    pairs:
-      environment: prod
-
+- includeSelectors: false
+  pairs:
+    environment: prod
+namespace: monitoring
 patches:
-  - path: patch-infisical-env.yaml
+- path: patch-infisical-env.yaml
+patchesStrategicMerge:
+- resources-patch.yaml
+resources:
+- ../../base
