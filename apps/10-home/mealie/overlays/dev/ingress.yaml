@@ -1,7 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: template-app
+  name: mealie
+  namespace: mealie
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
@@ -9,17 +10,17 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: template.dev.truxonline.com
+    - host: mealie.dev.truxonline.com
       http:
         paths:
           - path: /
             pathType: ImplementationSpecific
             backend:
               service:
-                name: template-app
+                name: mealie
                 port:
-                  number: 80
+                  number: 9000
   tls:
-    - secretName: template-app-tls
+    - secretName: mealie-tls-dev
       hosts:
-        - template.dev.truxonline.com
+        - mealie.dev.truxonline.com
