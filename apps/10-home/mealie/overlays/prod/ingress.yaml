@@ -1,3 +1,4 @@
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -6,7 +7,8 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
-    traefik.ingress.kubernetes.io/router.middlewares: mealie-redirect-to-https@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: >-
+      mealie-redirect-to-https@kubernetescrd
     external-dns.alpha.kubernetes.io/public: "true"
 spec:
   ingressClassName: traefik
