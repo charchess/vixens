@@ -1,19 +1,19 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: tools
-resources:
-  - ../../base
-  - ingress.yaml
-  - ingress-redirect.yaml
-  - infisical-secret.yaml
-
 patches:
-  - path: infisical-config-patch.yaml
-    target:
-      kind: InfisicalSecret
-      name: homepage-config-sync
-  - path: deployment-patch.yaml
-    target:
-      kind: Deployment
-      name: homepage
+- path: infisical-config-patch.yaml
+  target:
+    kind: InfisicalSecret
+    name: homepage-config-sync
+- path: deployment-patch.yaml
+  target:
+    kind: Deployment
+    name: homepage
+patchesStrategicMerge:
+- resources-patch.yaml
+resources:
+- ../../base
+- ingress.yaml
+- ingress-redirect.yaml
+- infisical-secret.yaml

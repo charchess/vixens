@@ -8,9 +8,9 @@ spec:
       containers:
       - name: radarr
         resources:
-          requests:
-            cpu: "22m"
-            memory: "334Mi"
           limits:
-            cpu: "35m"
-            memory: "362Mi"
+            cpu: 500m
+            memory: 840Mi
+          requests:
+            cpu: 49m
+            memory: 560Mi

@@ -8,9 +8,9 @@ spec:
       containers:
       - name: mylar
         resources:
-          requests:
-            cpu: "15m"
-            memory: "104Mi"
           limits:
-            cpu: "15m"
-            memory: "104Mi"
+            cpu: 500m
+            memory: 192Mi
+          requests:
+            cpu: 11m
+            memory: 128Mi

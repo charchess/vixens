@@ -8,9 +8,9 @@ spec:
       containers:
       - name: whisparr
         resources:
-          requests:
-            cpu: "15m"
-            memory: "120Mi"
           limits:
-            cpu: "15m"
-            memory: "120Mi"
+            cpu: 500m
+            memory: 206Mi
+          requests:
+            cpu: 11m
+            memory: 137Mi

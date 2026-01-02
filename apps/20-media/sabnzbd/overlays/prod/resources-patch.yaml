@@ -8,9 +8,9 @@ spec:
       containers:
       - name: sabnzbd
         resources:
-          requests:
-            cpu: "50m"
-            memory: "256Mi"
           limits:
-            cpu: "500m"
-            memory: "1Gi"
+            cpu: 500m
+            memory: 354Mi
+          requests:
+            cpu: 23m
+            memory: 236Mi

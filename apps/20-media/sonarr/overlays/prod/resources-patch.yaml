@@ -8,9 +8,9 @@ spec:
       containers:
       - name: sonarr
         resources:
-          requests:
-            cpu: "15m"
-            memory: "236Mi"
           limits:
-            cpu: "15m"
-            memory: "236Mi"
+            cpu: 500m
+            memory: 389Mi
+          requests:
+            cpu: 23m
+            memory: 259Mi

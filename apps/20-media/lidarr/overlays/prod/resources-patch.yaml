@@ -8,9 +8,9 @@ spec:
       containers:
       - name: lidarr
         resources:
-          requests:
-            cpu: "15m"
-            memory: "214Mi"
           limits:
-            cpu: "15m"
-            memory: "214Mi"
+            cpu: 500m
+            memory: 354Mi
+          requests:
+            cpu: 11m
+            memory: 236Mi
