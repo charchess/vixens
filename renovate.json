@@ -65,7 +65,7 @@
   "labels": ["dependencies", "renovate"],
   "assignees": ["@charchess"],
   "reviewers": ["@charchess"],
-  "schedule": ["every 6 hours"],
+  "schedule": ["at any time"],
   "timezone": "Europe/Paris",
   "semanticCommits": "enabled",
   "commitMessagePrefix": "chore(deps):",
