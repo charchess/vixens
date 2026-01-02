@@ -38,6 +38,8 @@ spec:
               value: "*"
             - name: DEBUG
               value: "1"
+            - name: TANDOOR_PORT
+              value: "8080"
             - name: TZ
               value: "Europe/Paris"
           volumeMounts:
