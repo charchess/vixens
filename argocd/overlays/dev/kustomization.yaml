@@ -76,7 +76,7 @@ resources:
   # - apps/netbox.yaml
   # - apps/loki.yaml
   # - apps/promtail.yaml
-  # - apps/renovate.yaml
+  - apps/renovate.yaml
   # - apps/stirling-pdf.yaml
   # - apps/stirling-pdf-ingress.yaml
   # - apps/it-tools.yaml
@@ -86,4 +86,3 @@ resources:
   - apps/external-dns-unifi-secrets.yaml
   - apps/farmos.yaml
   - apps/mealie.yaml
-  - apps/tandoor.yaml

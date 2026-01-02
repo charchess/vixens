@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+<<<<<<<< HEAD:apps/10-home/mealie/base/namespace.yaml
+  name: mealie
+========
+  name: template-app
+>>>>>>>> origin/main:apps/20-media/amule/base/namespace.yaml
+  labels:
+    goldilocks.fairwinds.com/enabled: "true"

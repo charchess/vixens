@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mealie
+  name: mealie-prod
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -12,8 +12,8 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
-    path: apps/10-home/mealie/overlays/dev
+    targetRevision: main
+    path: apps/10-home/mealie/overlays/prod
   destination:
     server: https://kubernetes.default.svc
     namespace: mealie
