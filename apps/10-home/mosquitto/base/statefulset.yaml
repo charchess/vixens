@@ -21,7 +21,7 @@ spec:
     spec:
       initContainers: # NEW SECTION
         - name: copy-mosquitto-password
-          image: busybox:1.36.1 # A small image with basic utilities
+          image: busybox:1.37.0 # A small image with basic utilities
           command: ["sh", "-c"]
           args:
             - cp /secrets/MOSQUITTO_PASSWD_FILE /mnt/mosquitto-auth-writable/mosquitto.passwd &&
