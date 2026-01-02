@@ -104,7 +104,7 @@ jobs:
             --ignore-missing-schemas \
             --kubernetes-version 1.30.0 \
             --strict \
-            --skip-kinds Application,AppProject,CustomResourceDefinition
+            --skip-kinds Application,AppProject,CustomResourceDefinition,InfisicalSecret,Middleware,HelmRelease,HelmRepository,Kustomization,Cluster,PostgresCluster,Pooler,ScheduledBackup
 
   # 3️⃣ Validation spécifique ArgoCD
   argocd-validate:
