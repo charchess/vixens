@@ -6,15 +6,17 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
-    path: apps/99-test/mealie/overlays/dev
+    path: apps/10-home/mealie/overlays/dev
   destination:
     server: https://kubernetes.default.svc
-    namespace: test
+    namespace: mealie
   syncPolicy:
     automated:
       prune: true

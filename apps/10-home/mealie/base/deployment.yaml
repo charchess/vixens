@@ -1,10 +1,14 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mealie
+  namespace: mealie
+  labels:
+    app: mealie
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: mealie
@@ -19,20 +23,24 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: mealie
-          image: ghcr.io/mealie-recipes/mealie:v1.0.0
+          image: "ghcr.io/mealie-recipes/mealie:v1.12.0"
           ports:
             - containerPort: 9000
               name: http
-          env:
-            - name: TZ
-              value: "Europe/Paris"
-            - name: BASE_URL
-              value: "https://mealie.dev.truxonline.com"
-            - name: ALLOW_SIGNUP
-              value: "true"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          envFrom:
+            - secretRef:
+                name: mealie-secrets
           volumeMounts:
             - name: data
               mountPath: /app/data
       volumes:
         - name: data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: mealie-data
