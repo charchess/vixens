@@ -2,12 +2,6 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description": "Renovate configuration for Vixens GitOps - Auto-updates with approval workflow",
   "extends": ["config:base"],
-  "baseBranches": ["dev"],
-  "username": "renovate-bot",
-  "gitAuthor": "Renovate Bot <renovate@vixens.local>",
-  "onboarding": false,
-  "requireConfig": "optional",
-  "repositories": ["charchess/vixens"],
   "enabledManagers": ["terraform", "helm-values", "kubernetes", "regex", "dockerfile"],
   "kubernetes": {
     "fileMatch": ["(^|/)kustomization\\.yaml$", "(^|/)[^/]*\\.yaml$"]
@@ -65,7 +59,6 @@
   "labels": ["dependencies", "renovate"],
   "assignees": ["@charchess"],
   "reviewers": ["@charchess"],
-  "schedule": ["at any time"],
   "timezone": "Europe/Paris",
   "semanticCommits": "enabled",
   "commitMessagePrefix": "chore(deps):",
