@@ -1,19 +1,18 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources:
-  - ../../base
-  - http-redirect.yaml
-  - ingress.yaml
-
 patches:
-  - target:
-      kind: InfisicalSecret
-      name: adguard-home-secrets-sync
-    patch: |
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-  - path: deployment-patch.yaml
-    target:
-      kind: Deployment
-      name: adguard-home
+- patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n\
+    \  value: prod\n"
+  target:
+    kind: InfisicalSecret
+    name: adguard-home-secrets-sync
+- path: deployment-patch.yaml
+  target:
+    kind: Deployment
+    name: adguard-home
+patchesStrategicMerge:
+- resources-patch.yaml
+resources:
+- ../../base
+- http-redirect.yaml
+- ingress.yaml

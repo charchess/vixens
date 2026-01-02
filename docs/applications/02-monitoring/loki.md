@@ -31,3 +31,7 @@ curl -L -k https://loki.dev.truxonline.com/ready
 - **Dépendances :**
     - `Synology-CSI` (Stockage logs via PVC `synelia-iscsi-retain`)
 - **Particularités :** Déployé via Manifestes (StatefulSet). Mode monolithique (Single Binary). Stockage sur disque persistent.
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

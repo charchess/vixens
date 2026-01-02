@@ -8,9 +8,9 @@ spec:
       containers:
       - name: frigate
         resources:
-          requests:
-            cpu: "500m"
-            memory: "1Gi"
           limits:
-            cpu: "2000m"
-            memory: "8Gi"
+            cpu: 9624m
+            memory: 5524Mi
+          requests:
+            cpu: 2406m
+            memory: 3682Mi

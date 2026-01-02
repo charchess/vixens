@@ -1,32 +1,30 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
-resources:
-  - ../../base
-  - http-redirect.yaml
-  - ingress.yaml
-
 patches:
-  - target:
-      kind: InfisicalSecret
-      name: frigate-secrets-sync
-    patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-  - path: infisical-config-patch.yaml
-    target:
-      kind: InfisicalSecret
-      name: frigate-config-sync
-  - path: resources-patch.yaml
-    target:
-      kind: Deployment
-      name: frigate
-  - path: shm-patch-named.yaml
-    target:
-      kind: Deployment
-      name: frigate
-  - path: node-affinity-patch.yaml
-    target:
-      kind: Deployment
-      name: frigate
+- patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n\
+    \  value: prod"
+  target:
+    kind: InfisicalSecret
+    name: frigate-secrets-sync
+- path: infisical-config-patch.yaml
+  target:
+    kind: InfisicalSecret
+    name: frigate-config-sync
+- path: resources-patch.yaml
+  target:
+    kind: Deployment
+    name: frigate
+- path: shm-patch-named.yaml
+  target:
+    kind: Deployment
+    name: frigate
+- path: node-affinity-patch.yaml
+  target:
+    kind: Deployment
+    name: frigate
+patchesStrategicMerge:
+- resources-patch.yaml
+resources:
+- ../../base
+- http-redirect.yaml
+- ingress.yaml

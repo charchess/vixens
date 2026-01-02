@@ -18,6 +18,7 @@ spec:
       releaseName: cloudnative-pg
       values: |
         replicaCount: 1
+        priorityClassName: homelab-critical
 
         crds:
           create: false
@@ -32,11 +33,11 @@ spec:
 
         resources:
           requests:
-            cpu: 50m
+            cpu: 100m
             memory: 128Mi
           limits:
-            cpu: 200m
-            memory: 256Mi
+            cpu: 500m
+            memory: 512Mi
   destination:
     server: https://kubernetes.default.svc
     namespace: cnpg-system

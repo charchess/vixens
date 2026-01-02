@@ -32,3 +32,7 @@ curl -L -k https://prowlarr.dev.truxonline.com | grep "Prowlarr"
 - **Dépendances :**
     - `Gluetun` (Proxy pour contourner les blocages)
 - **Particularités :** Gestionnaire d'indexeurs (Torrent/Usenet). Synchronise les indexeurs vers Sonarr/Radarr/etc.
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

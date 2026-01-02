@@ -8,9 +8,9 @@ spec:
       containers:
       - name: hydrus-client
         resources:
-          requests:
-            cpu: "34m"
-            memory: "2294Mi"
           limits:
-            cpu: "49m"
-            memory: "3877Mi"
+            cpu: 500m
+            memory: 2930Mi
+          requests:
+            cpu: 63m
+            memory: 1953Mi

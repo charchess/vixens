@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: renovate
+spec:
+  template:
+    spec:
+      containers:
+      - name: renovate
+        resources:
+          limits:
+            cpu: 118959m
+            memory: 84897Mi
+          requests:
+            cpu: 977m
+            memory: 990Mi

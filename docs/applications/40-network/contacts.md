@@ -30,3 +30,8 @@ L'Ingress utilise `external-dns` pour la gestion automatique du DNS :
 ```bash
 curl -I https://contacts.truxonline.com
 ```
+
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

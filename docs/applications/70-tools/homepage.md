@@ -37,3 +37,8 @@ curl -L -k https://homepage.truxonline.com | grep "Homepage"
     - `Infisical` pour la configuration et les secrets.
 - **Sécurité :**
     - `HOMEPAGE_ALLOWED_HOSTS` doit être défini dans les overlays pour valider l'accès.
+
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.

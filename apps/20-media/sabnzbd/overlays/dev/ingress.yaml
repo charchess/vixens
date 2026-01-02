@@ -21,9 +21,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: sabnzbd # The name of your service
+                name: sabnzbd
                 port:
-                  number: 8080 # The port of your service
+                  name: http
   tls:
     - hosts:
         - "sabnzbd.dev.truxonline.com"

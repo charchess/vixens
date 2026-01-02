@@ -7,23 +7,13 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+    path: apps/00-infra/vpa/overlays/dev
   destination:
     server: https://kubernetes.default.svc
-    namespace: monitoring
-
-  sources:
-    - repoURL: https://charts.fairwinds.com/stable
-      chart: vpa
-      targetRevision: 4.7.0
-      helm:
-        valueFiles:
-          - $values/apps/02-monitoring/vpa/values/common.yaml
-          - $values/apps/02-monitoring/vpa/values/dev.yaml
-
-    - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: dev
-      ref: values
-
+    namespace: vpa
   syncPolicy:
     automated:
       prune: true

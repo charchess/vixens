@@ -27,3 +27,7 @@ kubectl get daemonset promtail -n monitoring
 - **Dépendances :**
     - `Loki` (Destination des logs)
 - **Particularités :** Déployé via DaemonSet. Monte `/var/log` et `/var/lib/docker/containers` (ou équivalent containerd) de l'hôte.
+---
+> ⚠️ **HIBERNATION DEV**
+> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
+> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
