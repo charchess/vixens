@@ -37,3 +37,11 @@ txtOwnerId: prod-gandi-public
 policy: sync
 sources:
   - ingress
+
+resources:
+  requests:
+    cpu: 20m
+    memory: 64Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
