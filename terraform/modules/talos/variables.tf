@@ -5,6 +5,7 @@ variable "control_plane_nodes" {
     ip_address   = string
     mac_address  = string
     install_disk = string
+    nameservers  = optional(list(string), [])
     network = object({
       interface = string
       vlans = list(object({
@@ -28,6 +29,7 @@ variable "worker_nodes" {
     ip_address   = string
     mac_address  = string
     install_disk = string
+    nameservers  = optional(list(string), [])
     network = object({
       interface = string
       vlans = list(object({

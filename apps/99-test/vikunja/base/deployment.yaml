@@ -1,0 +1,66 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vikunja
+  namespace: "99-test"
+  labels:
+    app.kubernetes.io/name: vikunja
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vikunja
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vikunja
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: vikunja
+          image: vikunja/vikunja:0.24.6
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3456
+              name: http
+          env:
+            - name: VIKUNJA_DATABASE_TYPE
+              value: "sqlite"
+            - name: VIKUNJA_DATABASE_PATH
+              value: "/app/vikunja/files/vikunja.db"
+            - name: VIKUNJA_SERVICE_JWTSECRET
+              value: "super-secret-jwt-key-for-test-mode-only-do-not-use-in-prod-123456"
+            # Redis is optional, disabled for test simplicity
+            - name: VIKUNJA_REDIS_ENABLED
+              value: "false"
+          volumeMounts:
+            - name: files
+              mountPath: /app/vikunja/files
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+      volumes:
+        - name: files
+          persistentVolumeClaim:
+            claimName: vikunja-files

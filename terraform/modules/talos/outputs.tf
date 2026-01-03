@@ -47,3 +47,10 @@ output "kubernetes_ca_certificate" {
   value       = talos_cluster_kubeconfig.this.kubernetes_client_configuration.ca_certificate
   sensitive   = true
 }
+
+# Debug: Output node patches to verify nameservers are included
+output "debug_node_patches" {
+  description = "Generated node patches for debugging"
+  value       = { for k, v in var.control_plane_nodes : k => yamldecode(local.node_patches[k]) }
+  sensitive   = false
+}

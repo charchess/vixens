@@ -11,36 +11,43 @@ locals {
   node_patches = {
     for k, v in var.control_plane_nodes : k => yamlencode({
       machine = {
-        install = {
-          disk  = v.install_disk
-          image = var.talos_image != "" ? var.talos_image : null
-        }
-        network = {
-          hostname = v.name # Set node hostname
-          interfaces = [{
-            interface = v.network.interface
-            dhcp      = false # Disable DHCP on physical interface
-            addresses = []    # No IP on untagged interface
-            vlans = [
-              for vlan in v.network.vlans : merge(
-                {
-                  vlanId    = vlan.vlanId
-                  addresses = vlan.addresses
-                  routes = vlan.gateway != "" ? [{
-                    network = "0.0.0.0/0"
-                    gateway = vlan.gateway
-                  }] : []
-                },
-                # Add VIP on internal VLAN (no gateway = VLAN 111)
-                vlan.gateway == "" ? {
-                  vip = {
-                    ip = local.vip_address
-                  }
-                } : {}
-              )
-            ]
-          }]
-        }
+        install = merge(
+          {
+            disk = v.install_disk
+          },
+          # Add custom image only if provided (non-empty string)
+          var.talos_image != "" ? { image = var.talos_image } : {}
+        )
+        network = merge(
+          {
+            hostname = v.name # Set node hostname
+            interfaces = [{
+              interface = v.network.interface
+              dhcp      = false # Disable DHCP on physical interface
+              addresses = []    # No IP on untagged interface
+              vlans = [
+                for vlan in v.network.vlans : merge(
+                  {
+                    vlanId    = vlan.vlanId
+                    addresses = vlan.addresses
+                    routes = vlan.gateway != "" ? [{
+                      network = "0.0.0.0/0"
+                      gateway = vlan.gateway
+                    }] : []
+                  },
+                  # Add VIP on internal VLAN (no gateway = VLAN 111)
+                  vlan.gateway == "" ? {
+                    vip = {
+                      ip = local.vip_address
+                    }
+                  } : {}
+                )
+              ]
+            }]
+          },
+          # Add nameservers only if provided (non-empty list)
+          length(v.nameservers) > 0 ? { nameservers = v.nameservers } : {}
+        )
       }
       cluster = {
         network = {
@@ -120,7 +127,10 @@ resource "talos_machine_configuration_apply" "control_plane" {
 
   client_configuration        = talos_machine_secrets.cluster.client_configuration
   machine_configuration_input = data.talos_machine_configuration.control_plane[each.key].machine_configuration
-  node                        = each.value.ip_address
+  # Use VLAN IP (routable) instead of maintenance IP for configuration apply
+  # Maintenance IPs are only accessible during initial PXE boot, not after Talos config
+  node     = local.control_plane_vlan_ips[each.key]
+  endpoint = local.control_plane_vlan_ips[each.key]
 }
 
 resource "talos_machine_bootstrap" "this" {
@@ -189,28 +199,35 @@ locals {
   worker_patches = {
     for k, v in var.worker_nodes : k => yamlencode({
       machine = {
-        install = {
-          disk  = v.install_disk
-          image = var.talos_image != "" ? var.talos_image : null
-        }
-        network = {
-          hostname = v.name # Set node hostname
-          interfaces = [{
-            interface = v.network.interface
-            dhcp      = false # Disable DHCP on physical interface
-            addresses = []    # No IP on untagged interface
-            vlans = [
-              for vlan in v.network.vlans : {
-                vlanId    = vlan.vlanId
-                addresses = vlan.addresses
-                routes = vlan.gateway != "" ? [{
-                  network = "0.0.0.0/0"
-                  gateway = vlan.gateway
-                }] : []
-              }
-            ]
-          }]
-        }
+        install = merge(
+          {
+            disk = v.install_disk
+          },
+          # Add custom image only if provided (non-empty string)
+          var.talos_image != "" ? { image = var.talos_image } : {}
+        )
+        network = merge(
+          {
+            hostname = v.name # Set node hostname
+            interfaces = [{
+              interface = v.network.interface
+              dhcp      = false # Disable DHCP on physical interface
+              addresses = []    # No IP on untagged interface
+              vlans = [
+                for vlan in v.network.vlans : {
+                  vlanId    = vlan.vlanId
+                  addresses = vlan.addresses
+                  routes = vlan.gateway != "" ? [{
+                    network = "0.0.0.0/0"
+                    gateway = vlan.gateway
+                  }] : []
+                }
+              ]
+            }]
+          },
+          # Add nameservers only if provided (non-empty list)
+          length(v.nameservers) > 0 ? { nameservers = v.nameservers } : {}
+        )
       }
       cluster = {
         network = {
@@ -241,7 +258,9 @@ resource "talos_machine_configuration_apply" "worker" {
 
   client_configuration        = talos_machine_secrets.cluster.client_configuration
   machine_configuration_input = data.talos_machine_configuration.worker[each.key].machine_configuration
-  node                        = each.value.ip_address
+  # Use VLAN IP (routable) instead of maintenance IP for configuration apply
+  node     = local.worker_vlan_ips[each.key]
+  endpoint = local.worker_vlan_ips[each.key]
 }
 
 # Automatic node reset on destroy - Workers

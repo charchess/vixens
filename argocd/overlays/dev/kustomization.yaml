@@ -87,3 +87,4 @@ resources:
   - apps/farmos.yaml
   - apps/mealie.yaml
   - apps/nocodb.yaml
+  - apps/vikunja.yaml
