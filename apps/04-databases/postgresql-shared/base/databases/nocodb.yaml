@@ -1,0 +1,12 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: nocodb
+  namespace: databases
+spec:
+  cluster:
+    name: postgresql-shared
+  name: nocodb
+  owner: nocodb
+  ensure: present

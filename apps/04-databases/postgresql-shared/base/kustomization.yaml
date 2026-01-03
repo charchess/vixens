@@ -14,10 +14,12 @@ resources:
   - credentials/backup-s3-secret.yaml
   - credentials/scanopy-secret.yaml
   - credentials/vaultwarden-secret.yaml
+  - credentials/nocodb-secret.yaml
   - databases/docspell.yaml
   - databases/scanopy.yaml
   - databases/linkwarden.yaml
   - databases/netbox-database.yaml
   - databases/authentik.yaml
   - databases/vaultwarden.yaml
+  - databases/nocodb.yaml
   - jobs/create-users-job.yaml
