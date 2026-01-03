@@ -6,7 +6,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: vixens
+  project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: dev
