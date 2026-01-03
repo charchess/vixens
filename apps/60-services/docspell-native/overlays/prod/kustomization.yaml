@@ -7,7 +7,7 @@ namespace: services
 patches:
 - path: patch-infisical-secrets.yaml
 patchesStrategicMerge:
-- resources-patch.yaml
+- patch-resources.yaml
 resources:
 - ../../base
 - ingress.yaml
