@@ -15,7 +15,6 @@ resources:
   - credentials/scanopy-secret.yaml
   - credentials/vaultwarden-secret.yaml
   - credentials/nocodb-secret.yaml
-  - credentials/vikunja-secret.yaml
   - databases/docspell.yaml
   - databases/scanopy.yaml
   - databases/linkwarden.yaml
@@ -23,5 +22,4 @@ resources:
   - databases/authentik.yaml
   - databases/vaultwarden.yaml
   - databases/nocodb.yaml
-  - databases/vikunja.yaml
   - jobs/create-users-job.yaml
