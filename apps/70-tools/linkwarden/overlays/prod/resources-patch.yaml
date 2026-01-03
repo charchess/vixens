@@ -8,9 +8,9 @@ spec:
       containers:
       - name: linkwarden
         resources:
-          limits:
-            cpu: 500m
-            memory: 1026Mi
           requests:
-            cpu: 11m
-            memory: 560Mi
+            cpu: 50m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi

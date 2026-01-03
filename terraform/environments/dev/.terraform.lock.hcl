@@ -106,7 +106,7 @@ provider "registry.terraform.io/hashicorp/null" {
 
 provider "registry.terraform.io/siderolabs/talos" {
   version     = "0.9.0"
-  constraints = "~> 0.9"
+  constraints = "~> 0.9.0, ~> 0.9"
   hashes = [
     "h1:srV7rO0fGWWGUzYH0W7oIr2XHWCqL+LX83fOt3nQPa0=",
     "zh:0fa82a384b25a58b65523e0ea4768fa1212b1f5cfc0c9379d31162454fedcc9d",
