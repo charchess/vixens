@@ -76,4 +76,3 @@ resources:
 - apps/external-dns-gandi-secrets.yaml
 - apps/external-dns-unifi.yaml
 - apps/external-dns-unifi-secrets.yaml
-# - apps/nocodb.yaml
