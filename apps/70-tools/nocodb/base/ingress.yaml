@@ -1,0 +1,28 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nocodb
+  namespace: tools
+  labels:
+    app.kubernetes.io/name: nocodb
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - nocodb.dev.truxonline.com
+      secretName: nocodb-tls
+  rules:
+    - host: nocodb.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nocodb
+                port:
+                  number: 80

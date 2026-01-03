@@ -1,0 +1,87 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nocodb
+  namespace: tools
+  labels:
+    app.kubernetes.io/name: nocodb
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nocodb
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nocodb
+    spec:
+      containers:
+        - name: nocodb
+          image: nocodb/nocodb:0.265.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: NC_AUTH_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nocodb-secrets
+                  key: NC_AUTH_JWT_SECRET
+            # Database Configuration
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: nocodb-secrets
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: nocodb-secrets
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: nocodb-secrets
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nocodb-secrets
+                  key: DB_USER
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: nocodb-secrets
+                  key: DB_PASS
+            # Construct NC_DB
+            - name: NC_DB
+              value: "pg://$(DB_HOST):$(DB_PORT)?u=$(DB_USER)&p=$(DB_PASS)&d=$(DB_NAME)"
+          volumeMounts:
+            - name: data
+              mountPath: /usr/app/data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: nocodb-data
