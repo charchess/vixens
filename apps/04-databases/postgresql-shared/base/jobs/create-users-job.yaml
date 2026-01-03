@@ -108,6 +108,17 @@ spec:
                   name: vaultwarden-postgresql-credentials
                   key: password
 
+            - name: NOCODB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nocodb-postgresql-credentials
+                  key: username
+            - name: NOCODB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: nocodb-postgresql-credentials
+                  key: password
+
           command:
             - /bin/bash
             - -c
@@ -162,12 +173,13 @@ spec:
               create_user_if_not_exists "$AUTHENTIK_USER" "$AUTHENTIK_PASS"
               create_user_if_not_exists "$SCANOPY_USER" "$SCANOPY_PASS"
               create_user_if_not_exists "$VAULTWARDEN_USER" "$VAULTWARDEN_PASS"
+              create_user_if_not_exists "$NOCODB_USER" "$NOCODB_PASS"
 
               echo "=== User creation completed ==="
 
               # List all users
               echo ""
               echo "Current PostgreSQL users:"
-              psql -c "\du" | grep -E "(linkwarden|docspell|netbox|authentik|Role name)"
+              psql -c "\du" | grep -E "(linkwarden|docspell|netbox|authentik|nocodb|Role name)"
 
               exit 0
