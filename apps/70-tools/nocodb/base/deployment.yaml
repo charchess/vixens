@@ -1,0 +1,80 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nocodb
+  namespace: tools
+  labels:
+    app.kubernetes.io/name: nocodb
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nocodb
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nocodb
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: nocodb
+          image: nocodb/nocodb:0.265.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: NC_DB_TYPE
+              value: "pg"
+            - name: NC_DB_HOST
+              value: "postgresql-shared-rw.databases.svc.cluster.local"
+            - name: NC_DB_PORT
+              value: "5432"
+            - name: NC_DB_NAME
+              value: "nocodb"
+            - name: NC_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nocodb-secrets
+                  key: username
+            - name: NC_DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: nocodb-secrets
+                  key: password
+            - name: NC_AUTH_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nocodb-secrets
+                  key: NC_AUTH_JWT_SECRET
+          volumeMounts:
+            - name: data
+              mountPath: /usr/app/data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: nocodb-data

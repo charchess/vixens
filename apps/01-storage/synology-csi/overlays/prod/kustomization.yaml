@@ -11,6 +11,11 @@ patches:
   target:
     kind: StorageClass
     name: synelia-iscsi-retain
+- patch: "- op: add\n  path: /parameters/igroup\n  value: \"vixens-prod-iscsi-group\"\
+    \n- op: add\n  path: /parameters/targetIps\n  value: \"192.168.111.70,192.168.111.71\""
+  target:
+    kind: StorageClass
+    name: synelia-iscsi-delete
 patchesStrategicMerge:
 - resources-patch.yaml
 resources:

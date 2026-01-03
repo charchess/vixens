@@ -19,6 +19,17 @@ patches:
         path: /parameters/targetIps
         value: "192.168.111.70,192.168.111.71"
 
+  - target:
+      kind: StorageClass
+      name: synelia-iscsi-delete
+    patch: |-
+      - op: add
+        path: /parameters/igroup
+        value: "vixens-dev-iscsi-group"
+      - op: add
+        path: /parameters/targetIps
+        value: "192.168.111.70,192.168.111.71"
+
 labels:
   - pairs:
       vixens.lab/environment: dev
