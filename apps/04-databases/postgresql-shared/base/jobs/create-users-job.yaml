@@ -119,6 +119,17 @@ spec:
                   name: nocodb-postgresql-credentials
                   key: password
 
+            - name: VIKUNJA_USER
+              valueFrom:
+                secretKeyRef:
+                  name: vikunja-postgresql-credentials
+                  key: username
+            - name: VIKUNJA_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: vikunja-postgresql-credentials
+                  key: password
+
           command:
             - /bin/bash
             - -c
@@ -174,12 +185,13 @@ spec:
               create_user_if_not_exists "$SCANOPY_USER" "$SCANOPY_PASS"
               create_user_if_not_exists "$VAULTWARDEN_USER" "$VAULTWARDEN_PASS"
               create_user_if_not_exists "$NOCODB_USER" "$NOCODB_PASS"
+              create_user_if_not_exists "$VIKUNJA_USER" "$VIKUNJA_PASS"
 
               echo "=== User creation completed ==="
 
               # List all users
               echo ""
               echo "Current PostgreSQL users:"
-              psql -c "\du" | grep -E "(linkwarden|docspell|netbox|authentik|nocodb|Role name)"
+              psql -c "\du" | grep -E "(linkwarden|docspell|netbox|authentik|nocodb|vikunja|Role name)"
 
               exit 0
