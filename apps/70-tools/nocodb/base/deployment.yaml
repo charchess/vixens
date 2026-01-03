@@ -26,40 +26,29 @@ spec:
             - containerPort: 8080
               name: http
           env:
+            - name: NC_DB_TYPE
+              value: "pg"
+            - name: NC_DB_HOST
+              value: "postgresql-shared-rw.databases.svc.cluster.local"
+            - name: NC_DB_PORT
+              value: "5432"
+            - name: NC_DB_NAME
+              value: "nocodb"
+            - name: NC_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nocodb-secrets
+                  key: username
+            - name: NC_DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: nocodb-secrets
+                  key: password
             - name: NC_AUTH_JWT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: nocodb-secrets
                   key: NC_AUTH_JWT_SECRET
-            # Database Configuration
-            - name: DB_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: nocodb-secrets
-                  key: DB_HOST
-            - name: DB_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: nocodb-secrets
-                  key: DB_PORT
-            - name: DB_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: nocodb-secrets
-                  key: DB_NAME
-            - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: nocodb-secrets
-                  key: DB_USER
-            - name: DB_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: nocodb-secrets
-                  key: DB_PASS
-            # Construct NC_DB
-            - name: NC_DB
-              value: "pg://$(DB_HOST):$(DB_PORT)?u=$(DB_USER)&p=$(DB_PASS)&d=$(DB_NAME)"
           volumeMounts:
             - name: data
               mountPath: /usr/app/data
