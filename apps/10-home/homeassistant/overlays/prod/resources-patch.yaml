@@ -21,4 +21,4 @@ spec:
             memory: 2930Mi
           requests:
             cpu: 143m
-            memory: 1953Mi
+            memory: 1500Mi
