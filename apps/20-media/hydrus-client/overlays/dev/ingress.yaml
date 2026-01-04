@@ -10,7 +10,7 @@ metadata:
     gethomepage.dev/name: "Hydrus Client"
     gethomepage.dev/icon: "hydrus.png"
     gethomepage.dev/group: "Media"
-    traefik.ingress.kubernetes.io/router.middlewares: media-redirect-to-https@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: hydrus-client-http-redirect@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
