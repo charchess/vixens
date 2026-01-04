@@ -59,6 +59,36 @@ spec:
             - name: litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
+        - name: restore-master
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.master.db"]
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /opt/hydrus/db
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
+        - name: restore-caches
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.caches.db"]
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /opt/hydrus/db
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
