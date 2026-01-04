@@ -4,6 +4,8 @@ kind: StatefulSet
 metadata:
   name: mosquitto
   namespace: mosquitto
+  annotations:
+    reloader.stakater.com/auto: "true"
   labels:
     app: mosquitto
     app.kubernetes.io/name: mosquitto
