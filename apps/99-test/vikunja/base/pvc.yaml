@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: vikunja-files
+  name: vikunja-data-v2
   namespace: "99-test"
 spec:
   accessModes:
