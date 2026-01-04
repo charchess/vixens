@@ -34,25 +34,31 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-o", "/opt/hydrus/db/client.db", "-if-db-not-exists", "-if-replica-exists", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.db"]
+          args: ["restore", "-config", "/etc/litestream.yml", "-o", "/opt/hydrus/db/client.db", "-if-db-not-exists", "-if-replica-exists", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.db"]
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
         - name: restore-mappings
           image: litestream/litestream:0.3.13
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-o", "/opt/hydrus/db/client.mappings.db", "-if-db-not-exists", "-if-replica-exists", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.mappings.db"]
+          args: ["restore", "-config", "/etc/litestream.yml", "-o", "/opt/hydrus/db/client.mappings.db", "-if-db-not-exists", "-if-replica-exists", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.mappings.db"]
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
@@ -82,25 +88,34 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["replicate", "/opt/hydrus/db/client.db", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.db"]
+          args: ["replicate", "-config", "/etc/litestream.yml"]
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
         - name: litestream-mappings
+          # This sidecar might be redundant if one replicate command handles all DBs in config
+          # but keeping it for now or consolidating. Actually, 'litestream replicate' 
+          # without path replicates all DBs in the config file.
           image: litestream/litestream:0.3.13
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["replicate", "/opt/hydrus/db/client.mappings.db", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.mappings.db"]
+          args: ["replicate", "-config", "/etc/litestream.yml"]
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -109,3 +124,6 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Content/pictures/hentai/client_files
+        - name: litestream-config
+          configMap:
+            name: litestream-config
