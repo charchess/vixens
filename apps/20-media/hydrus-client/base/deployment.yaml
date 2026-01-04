@@ -34,7 +34,7 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-config", "/etc/litestream.yml", "-o", "/opt/hydrus/db/client.db", "-if-db-not-exists", "-if-replica-exists", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.db"]
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.db"]
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
@@ -49,7 +49,7 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-config", "/etc/litestream.yml", "-o", "/opt/hydrus/db/client.mappings.db", "-if-db-not-exists", "-if-replica-exists", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.mappings.db"]
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.mappings.db"]
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
