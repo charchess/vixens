@@ -29,6 +29,30 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /data
+        - name: restore-db
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["restore", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.db"]
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /opt/hydrus/db
+        - name: restore-mappings
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["restore", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.mappings.db"]
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /opt/hydrus/db
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
@@ -53,6 +77,30 @@ spec:
               mountPath: /opt/hydrus/db
             - name: client-files
               mountPath: /opt/hydrus/db/client_files
+        - name: litestream-client
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["replicate", "/opt/hydrus/db/client.db", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.db"]
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /opt/hydrus/db
+        - name: litestream-mappings
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["replicate", "/opt/hydrus/db/client.mappings.db", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.mappings.db"]
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /opt/hydrus/db
       volumes:
         - name: config
           persistentVolumeClaim:
