@@ -78,30 +78,19 @@ spec:
               value: "1000"
             - name: TZ
               value: "Europe/Paris"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
             - name: client-files
               mountPath: /opt/hydrus/db/client_files
-        - name: litestream-client
-          image: litestream/litestream:0.3.13
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args: ["replicate", "-config", "/etc/litestream.yml"]
-          envFrom:
-            - secretRef:
-                name: litestream-shared-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /opt/hydrus/db
-            - name: litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
-        - name: litestream-mappings
-          # This sidecar might be redundant if one replicate command handles all DBs in config
-          # but keeping it for now or consolidating. Actually, 'litestream replicate' 
-          # without path replicates all DBs in the config file.
+        - name: litestream
           image: litestream/litestream:0.3.13
           securityContext:
             runAsUser: 1000
