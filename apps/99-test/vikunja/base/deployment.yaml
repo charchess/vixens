@@ -63,4 +63,4 @@ spec:
       volumes:
         - name: files
           persistentVolumeClaim:
-            claimName: vikunja-data-v2
+            claimName: vikunja-sqlite-storage
