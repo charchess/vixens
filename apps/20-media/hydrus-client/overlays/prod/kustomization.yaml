@@ -10,3 +10,4 @@ resources:
 
 patchesStrategicMerge:
   - resources-patch.yaml
+  - infisical-shared-patch.yaml

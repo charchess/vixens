@@ -29,6 +29,66 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /data
+        - name: restore-db
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.db"]
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /opt/hydrus/db
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
+        - name: restore-mappings
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.mappings.db"]
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /opt/hydrus/db
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
+        - name: restore-master
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.master.db"]
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /opt/hydrus/db
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
+        - name: restore-caches
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.caches.db"]
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /opt/hydrus/db
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
@@ -48,11 +108,33 @@ spec:
               value: "1000"
             - name: TZ
               value: "Europe/Paris"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
             - name: client-files
               mountPath: /opt/hydrus/db/client_files
+        - name: litestream
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["replicate", "-config", "/etc/litestream.yml"]
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /opt/hydrus/db
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -61,3 +143,6 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Content/pictures/hentai/client_files
+        - name: litestream-config
+          configMap:
+            name: litestream-config
