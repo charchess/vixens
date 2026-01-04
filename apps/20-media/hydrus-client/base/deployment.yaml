@@ -34,7 +34,7 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-v", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.db"]
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.db"]
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
@@ -49,7 +49,7 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-v", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.mappings.db"]
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.mappings.db"]
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
@@ -64,7 +64,7 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-v", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.master.db"]
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.master.db"]
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
@@ -79,7 +79,7 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-v", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.caches.db"]
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.caches.db"]
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
