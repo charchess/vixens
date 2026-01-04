@@ -62,5 +62,4 @@ spec:
             periodSeconds: 10
       volumes:
         - name: files
-          persistentVolumeClaim:
-            claimName: vikunja-sqlite-storage
+          emptyDir: {}
