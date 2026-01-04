@@ -34,7 +34,7 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-o", "/opt/hydrus/db/client.db", "-endpoint", "$(LITESTREAM_ENDPOINT)", "-if-db-not-exists", "-if-replica-exists", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.db"]
+          args: ["restore", "-o", "/opt/hydrus/db/client.db", "-if-db-not-exists", "-if-replica-exists", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.db"]
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
@@ -46,7 +46,7 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-o", "/opt/hydrus/db/client.mappings.db", "-endpoint", "$(LITESTREAM_ENDPOINT)", "-if-db-not-exists", "-if-replica-exists", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.mappings.db"]
+          args: ["restore", "-o", "/opt/hydrus/db/client.mappings.db", "-if-db-not-exists", "-if-replica-exists", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.mappings.db"]
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
@@ -82,7 +82,7 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["replicate", "-endpoint", "$(LITESTREAM_ENDPOINT)", "/opt/hydrus/db/client.db", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.db"]
+          args: ["replicate", "/opt/hydrus/db/client.db", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.db"]
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
@@ -94,7 +94,7 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["replicate", "-endpoint", "$(LITESTREAM_ENDPOINT)", "/opt/hydrus/db/client.mappings.db", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.mappings.db"]
+          args: ["replicate", "/opt/hydrus/db/client.mappings.db", "s3://$(LITESTREAM_BUCKET)/hydrus-client/client.mappings.db"]
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
