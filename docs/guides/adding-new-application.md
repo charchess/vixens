@@ -540,6 +540,70 @@ Once validated in dev, create prod ArgoCD application:
 - Grafana dashboard ConfigMap
 - No public ingress (cluster-only)
 
+### Pattern 5: SQLite Application with Sidecar Backup
+- Uses **Litestream** for continuous SQLite replication to S3
+- **Init Container**: Restores DB from S3 on startup
+- **Sidecar Container**: Replicates WAL to S3 in real-time
+- Requires S3 credentials in Infisical
+
+---
+
+## SQLite Backup Strategy (Litestream)
+
+For applications relying on SQLite (e.g., *arr stack, Hydrus, Vaultwarden), use **Litestream** to ensure data durability without relying on Volume snapshots.
+
+### 1. Architecture
+- **Init Container (`restore-db`)**: Checks if DB exists. If not, restores from S3.
+- **Sidecar Container (`litestream`)**: Runs alongside the app, watching the DB file and pushing changes to S3.
+- **Shared Volume**: The DB directory must be shared between init, app, and sidecar containers.
+
+### 2. Infisical Setup
+Add S3 credentials to Infisical at `/infra/backup-s3` (or app-specific path):
+- `LITESTREAM_ACCESS_KEY_ID`
+- `LITESTREAM_SECRET_ACCESS_KEY`
+- `LITESTREAM_BUCKET`
+- `LITESTREAM_ENDPOINT` (e.g., `s3.fr-par.scw.cloud`)
+
+### 3. Implementation Example
+
+**In `base/deployment.yaml`:**
+
+```yaml
+      initContainers:
+        - name: restore-db
+          image: litestream/litestream:latest
+          args: ["restore", "-if-db-not-exists", "-if-replica-exists", "/data/my-app.db"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          envFrom:
+            - secretRef:
+                name: <app-name>-litestream-secret
+
+      containers:
+        - name: <app-name>
+          # ... app config ...
+          volumeMounts:
+            - name: data
+              mountPath: /data
+
+        - name: litestream
+          image: litestream/litestream:latest
+          args: ["replicate", "/data/my-app.db", "s3://$(LITESTREAM_BUCKET)/<app-name>/my-app.db"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          envFrom:
+            - secretRef:
+                name: <app-name>-litestream-secret
+          livenessProbe:
+            exec:
+              command: ["/usr/local/bin/litestream", "version"]
+```
+
+**In `base/infisical-secret.yaml`:**
+Ensure you map the S3 credentials to the secret used by Litestream.
+
 ---
 
 ## Troubleshooting
