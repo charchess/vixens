@@ -30,6 +30,25 @@ spec:
           operator: Exists
           effect: NoSchedule
       initContainers:
+        - name: config-init
+          image: busybox:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              if [ ! -f /config/configuration.yaml ]; then
+                echo "No configuration found, copying default from secret..."
+                cp /tmp/ha-config/homeassistant-config /config/configuration.yaml
+                chown 1000:1000 /config/configuration.yaml
+              else
+                echo "Configuration already exists, skipping copy to avoid overwriting user changes or restores."
+              fi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: ha-config
+              mountPath: /tmp/ha-config
+              readOnly: true
         - name: filebrowser-init
           image: filebrowser/filebrowser:v2.52.0
           command:
@@ -90,9 +109,6 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: ha-config
-              mountPath: /config/configuration.yaml
-              subPath: homeassistant-config
           resources:
             requests:
               cpu: 300m
