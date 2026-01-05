@@ -6,7 +6,5 @@ patches:
   target:
     kind: InfisicalSecret
     name: synology-csi-credentials-sync
-patchesStrategicMerge:
-- resources-patch.yaml
 resources:
 - ../../base
