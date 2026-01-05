@@ -5,11 +5,7 @@ items:
   metadata:
     annotations:
       controller-gen.kubebuilder.io/version: v0.19.0
-    creationTimestamp: "2025-12-11T19:36:51Z"
-    generation: 1
     name: backups.postgresql.cnpg.io
-    resourceVersion: "324259"
-    uid: 7adba02f-0a83-48bc-9cef-9171995b2d6a
   spec:
     conversion:
       strategy: None
@@ -480,11 +476,7 @@ items:
   metadata:
     annotations:
       controller-gen.kubebuilder.io/version: v0.19.0
-    creationTimestamp: "2025-12-11T19:36:51Z"
-    generation: 1
     name: clusterimagecatalogs.postgresql.cnpg.io
-    resourceVersion: "324261"
-    uid: 568cb395-6a0a-483d-af91-1ed972490e8f
   spec:
     conversion:
       strategy: None
@@ -585,11 +577,7 @@ items:
   metadata:
     annotations:
       controller-gen.kubebuilder.io/version: v0.19.0
-    creationTimestamp: "2025-12-11T19:36:51Z"
-    generation: 1
     name: clusters.postgresql.cnpg.io
-    resourceVersion: "324271"
-    uid: fc7eab56-1977-4ac8-913a-63830a77e0b7
   spec:
     conversion:
       strategy: None
@@ -7544,7 +7532,6 @@ items:
                         description: PasswordState represents the state of the password
                           of a managed RoleConfiguration
                         properties:
-                          resourceVersion:
                             description: the resource version of the password secret
                             type: string
                           transactionID:
@@ -7841,11 +7828,7 @@ items:
   metadata:
     annotations:
       controller-gen.kubebuilder.io/version: v0.19.0
-    creationTimestamp: "2025-12-11T19:36:51Z"
-    generation: 1
     name: databases.postgresql.cnpg.io
-    resourceVersion: "324272"
-    uid: 665b5da2-687c-4bd5-b235-442bda8c249d
   spec:
     conversion:
       strategy: None
@@ -8462,11 +8445,7 @@ items:
   metadata:
     annotations:
       controller-gen.kubebuilder.io/version: v0.19.0
-    creationTimestamp: "2025-12-11T19:36:51Z"
-    generation: 1
     name: failoverquorums.postgresql.cnpg.io
-    resourceVersion: "324273"
-    uid: 20314065-026f-47ab-acb8-cd35a071609d
   spec:
     conversion:
       strategy: None
@@ -8563,11 +8542,7 @@ items:
   metadata:
     annotations:
       controller-gen.kubebuilder.io/version: v0.19.0
-    creationTimestamp: "2025-12-11T19:36:51Z"
-    generation: 1
     name: imagecatalogs.postgresql.cnpg.io
-    resourceVersion: "324274"
-    uid: a8eae1d6-3d9a-4588-95db-29e5e5416062
   spec:
     conversion:
       strategy: None
@@ -8667,11 +8642,7 @@ items:
   metadata:
     annotations:
       controller-gen.kubebuilder.io/version: v0.19.0
-    creationTimestamp: "2025-12-11T19:36:51Z"
-    generation: 1
     name: poolers.postgresql.cnpg.io
-    resourceVersion: "324289"
-    uid: e276eb52-9f3e-4761-b0ba-d0c17d9ad73e
   spec:
     conversion:
       strategy: None
@@ -18021,11 +17992,7 @@ items:
   metadata:
     annotations:
       controller-gen.kubebuilder.io/version: v0.19.0
-    creationTimestamp: "2025-12-11T19:36:52Z"
-    generation: 1
     name: publications.postgresql.cnpg.io
-    resourceVersion: "324290"
-    uid: f131acbb-dc37-4961-bfa0-2183f56e8306
   spec:
     conversion:
       strategy: None
@@ -18240,11 +18207,7 @@ items:
   metadata:
     annotations:
       controller-gen.kubebuilder.io/version: v0.19.0
-    creationTimestamp: "2025-12-11T19:36:52Z"
-    generation: 1
     name: scheduledbackups.postgresql.cnpg.io
-    resourceVersion: "324291"
-    uid: dc67ca23-0da1-4359-a0d1-8b4cc6829454
   spec:
     conversion:
       strategy: None
@@ -18455,11 +18418,7 @@ items:
   metadata:
     annotations:
       controller-gen.kubebuilder.io/version: v0.19.0
-    creationTimestamp: "2025-12-11T19:36:52Z"
-    generation: 1
     name: subscriptions.postgresql.cnpg.io
-    resourceVersion: "324294"
-    uid: 312f8834-827e-4242-9d30-126205a58229
   spec:
     conversion:
       strategy: None
@@ -18626,4 +18585,3 @@ items:
     - v1
 kind: List
 metadata:
-  resourceVersion: ""
