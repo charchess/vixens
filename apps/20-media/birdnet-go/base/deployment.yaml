@@ -52,7 +52,7 @@ spec:
               value: "en-uk"
           volumeMounts:
             - name: config
-              mountPath: /config
+              mountPath: /home/birdnet/.config/birdnet-go
             - name: data
               mountPath: /data
             - name: internals
