@@ -5,5 +5,7 @@ namespace: databases
 
 resources:
 - ../../base
-- patch-credentials-env.yaml
+
+patches:
+- path: patch-credentials-env.yaml
 
