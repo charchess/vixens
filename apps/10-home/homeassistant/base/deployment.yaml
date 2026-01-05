@@ -36,12 +36,12 @@ spec:
             - /bin/sh
             - -c
             - |
-              if [ ! -f /config/configuration.yaml ]; then
-                echo "No configuration found, copying default from secret..."
+              if [ ! -s /config/configuration.yaml ]; then
+                echo "No configuration found or file is empty, copying default from secret..."
                 cp /tmp/ha-config/homeassistant-config /config/configuration.yaml
                 chown 1000:1000 /config/configuration.yaml
               else
-                echo "Configuration already exists, skipping copy to avoid overwriting user changes or restores."
+                echo "Configuration already exists and is not empty, skipping copy."
               fi
           volumeMounts:
             - name: config
