@@ -7532,6 +7532,7 @@ items:
                         description: PasswordState represents the state of the password
                           of a managed RoleConfiguration
                         properties:
+                          resourceVersion:
                             description: the resource version of the password secret
                             type: string
                           transactionID:
@@ -18585,3 +18586,4 @@ items:
     - v1
 kind: List
 metadata:
+  resourceVersion: ""
