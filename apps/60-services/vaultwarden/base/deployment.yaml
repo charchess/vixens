@@ -17,7 +17,7 @@ spec:
       labels:
         app: vaultwarden
     spec:
-      priorityClassName: homelab-important
+      priorityClassName: vixens-high
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
@@ -25,11 +25,43 @@ spec:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
+      initContainers:
+        - name: restore-db
+          image: litestream/litestream:0.3.13
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/data/db.sqlite3"]
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
       containers:
         - name: vaultwarden
           image: vaultwarden/server:1.34.3
           ports:
             - containerPort: 80
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
           env:
             - name: DOMAIN
               value: "https://vaultwarden.dev.truxonline.com"
@@ -43,7 +75,29 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+        - name: litestream
+          image: litestream/litestream:0.3.13
+          args: ["replicate", "-config", "/etc/litestream.yml"]
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: vaultwarden-data-pvc
+        - name: litestream-config
+          configMap:
+            name: litestream-config
