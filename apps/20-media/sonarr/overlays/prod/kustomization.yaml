@@ -20,6 +20,10 @@ patches:
     target:
       kind: Deployment
       name: sonarr
+  - path: litestream-secret-patch.yaml
+    target:
+      kind: InfisicalSecret
+      name: sonarr-litestream-secret
 
 patchesStrategicMerge:
   - resources-patch.yaml
