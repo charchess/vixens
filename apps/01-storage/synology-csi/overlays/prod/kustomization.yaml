@@ -16,7 +16,5 @@ patches:
   target:
     kind: StorageClass
     name: synelia-iscsi-delete
-patchesStrategicMerge:
-- resources-patch.yaml
 resources:
 - ../../base
