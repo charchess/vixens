@@ -68,14 +68,12 @@ spec:
               name: http
               protocol: TCP
           livenessProbe:
-            httpGet:
-              path: /control/status
+            tcpSocket:
               port: 3000
             initialDelaySeconds: 30
             periodSeconds: 15
           readinessProbe:
-            httpGet:
-              path: /control/status
+            tcpSocket:
               port: 3000
             initialDelaySeconds: 10
             periodSeconds: 10
