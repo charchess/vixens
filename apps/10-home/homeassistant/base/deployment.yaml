@@ -24,18 +24,67 @@ spec:
         fsGroupChangePolicy: "OnRootMismatch"
       hostNetwork: true  # Required for mDNS/UPnP local discovery
       dnsPolicy: ClusterFirstWithHostNet  # Use cluster DNS even with hostNetwork
-      priorityClassName: homelab-critical
+      priorityClassName: vixens-high
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
       initContainers:
+        - name: restore-config
+          image: rclone/rclone:1.65
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command: ["sh", "-c"]
+          args:
+            - |
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              rclone copy s3:$LITESTREAM_BUCKET/homeassistant/config /config --transfers 4 --exclude "*.db*" --exclude "*.log" --exclude "tts/**" 2>/dev/null || true
+          envFrom:
+            - secretRef:
+                name: homeassistant-litestream-secret
+          volumeMounts:
+            - name: config
+              mountPath: /config
+        - name: restore-db
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/config/home-assistant_v2.db"]
+          envFrom:
+            - secretRef:
+                name: homeassistant-litestream-secret
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
         - name: config-init
           image: busybox:latest
           command:
             - /bin/sh
             - -c
             - |
+              if [ ! -s /config/configuration.yaml ]; then
+                echo "No configuration found or file is empty, copying default from secret..."
+                cp /tmp/ha-config/homeassistant-config /config/configuration.yaml
+                chown 1000:1000 /config/configuration.yaml
+              else
+                echo "Configuration already exists and is not empty, skipping copy."
+              fi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: ha-config
+              mountPath: /tmp/ha-config
+              readOnly: true
+        - name: filebrowser-init|
               if [ ! -s /config/configuration.yaml ]; then
                 echo "No configuration found or file is empty, copying default from secret..."
                 cp /tmp/ha-config/homeassistant-config /config/configuration.yaml
@@ -156,6 +205,48 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+        - name: litestream
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["replicate", "-config", "/etc/litestream.yml"]
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+          envFrom:
+            - secretRef:
+                name: homeassistant-litestream-secret
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
+        - name: config-syncer
+          image: alpine:3.19
+          command: ["sh", "-c"]
+          args:
+            - |
+              apk add --no-cache rclone inotify-tools
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              sync_s3() { rclone sync /config s3:$LITESTREAM_BUCKET/homeassistant/config --exclude "*.db*" --exclude "*.log" --exclude "tts/**"; }
+              sync_s3
+              while true; do inotifywait -r -e modify,create,delete,move /config --exclude ".*\.db.*"; sync_s3; sleep 10; done
+          envFrom:
+            - secretRef:
+                name: homeassistant-litestream-secret
+          volumeMounts:
+            - name: config
+              mountPath: /config
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -165,3 +256,6 @@ spec:
         - name: ha-config
           secret:
             secretName: homeassistant-config
+        - name: litestream-config
+          configMap:
+            name: homeassistant-litestream-config
