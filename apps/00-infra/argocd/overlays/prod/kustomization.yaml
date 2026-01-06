@@ -4,6 +4,6 @@ kind: Kustomization
 namespace: argocd
 
 resources:
-- ../../../../../argocd/base
+- ../../base
 - ingress.yaml
 - http-redirect.yaml
