@@ -5,57 +5,40 @@ Il se concentre sur les **capacités fonctionnelles** et la maturité opération
 
 **Note cible pour Production : 85/100**
 
-## 1. Intégration GitOps & Standards (25 pts)
+## 1. Intégration GitOps & Standards (20 pts)
 
 *L'application est-elle correctement gérée par notre usine logicielle ?*
 
-*   **Standardisation (10 pts)** : Structure des dossiers, nommage des ressources et labels conformes aux conventions du projet (`apps/<type>/<nom>`).
-*   **Isolation (5 pts)** : Namespace dédié ou partagé explicitement. Pas de pollution de ressources globales (ClusterRole) sans justification.
-*   **Découplage Configuration (10 pts)** :
-    *   La configuration métier est externalisée (ConfigMap/Secret).
-    *   L'image conteneur est immuable (pas de `latest`, pas de modif interne).
-    *   Les secrets ne sont jamais dans le code (référence à Infisical/ExternalSecrets).
+*   **Standardisation (10 pts)** : Structure des dossiers, nommage et labels conformes aux conventions (`apps/<type>/<nom>`).
+*   **Découplage Configuration (10 pts)** : Configuration métier externalisée (ConfigMap/Secret), images immuables (pas de `latest`) et secrets via Infisical.
 
-## 2. Qualité de Service (QoS) & Stabilité (25 pts)
+## 2. Qualité de Service (QoS) & Stabilité (20 pts)
 
 *L'application est-elle un "bon voisin" dans le cluster ?*
 
-*   **Contrat de Ressources (10 pts)** :
-    *   `Requests` définis (le minimum garanti).
-    *   `Limits` définies (le plafond de sécurité).
-    *   Recommandations VPA/Goldilocks consultées.
-*   **Priorisation (5 pts)** : `PriorityClass` définie selon la criticité (`critical`, `important`, ou défaut).
-*   **Observabilité de Santé (10 pts)** :
-    *   L'application signale quand elle est vivante (`liveness`).
-    *   L'application signale quand elle peut recevoir du trafic (`readiness`).
-    *   L'application gère son démarrage lent si besoin (`startup`).
+*   **Contrat de Ressources (10 pts)** : `Requests` et `Limits` définis de manière réaliste pour garantir la stabilité du node.
+*   **Observabilité & Priorité (10 pts)** : Sondes de santé (`liveness`/`readiness`) configurées et `PriorityClass` adaptée à la criticité du service.
 
 ## 3. Sécurité & Accès (20 pts)
 
 *L'application est-elle exposée de manière sécurisée ?*
 
-*   **Accès Chiffré (10 pts)** :
-    *   Terminaison TLS valide (Cert-Manager).
-    *   Redirection HTTP -> HTTPS forcée.
-*   **Contextualisation (10 pts)** :
-    *   Les URLs s'adaptent automatiquement à l'environnement (`dev` vs `prod`).
-    *   Pas d'IP ou de nom de domaine "en dur" dans les manifestes de base.
+*   **Accès Chiffré (10 pts)** : Terminaison TLS valide (Cert-Manager) et redirection HTTP -> HTTPS forcée (Middleware Traefik).
+*   **Contextualisation (10 pts)** : Les URLs s'adaptent automatiquement à l'environnement (`dev` vs `prod`). Aucun "hardcoding" de domaine dans la `base`.
 
-## 4. Continuité & Intégrité des Données (30 pts)
+## 4. Parité Dev/Prod (20 pts)
+
+*L'application est-elle ISO entre les environnements pour garantir la fiabilité des tests ?*
+
+*   **Identité Architecturale (10 pts)** : Utilisation des mêmes briques logicielles en Dev et Prod (mêmes bases de données, mêmes sidecars de sauvegarde).
+*   **Intégrité DRY (10 pts)** : Utilisation stricte d'une `base` commune. Seules les variables d'ajustement (replicas, hostnames, ressources) diffèrent dans les `overlays`.
+
+## 5. Continuité & Intégrité des Données (20 pts)
 
 *L'application résiste-t-elle aux pannes et préserve-t-elle ses données ?*
 
-*   **Stratégie de Persistance (10 pts)** :
-    *   Les données éphémères (cache) sont distinguées des données persistantes.
-    *   Le type de stockage (RWO/Block vs RWX/NFS) est adapté au besoin (Performance vs Partage).
-*   **Protection des Données (10 pts)** :
-    *   **DB SQLite** : Litestream Sidecar (Streaming Replication).
-    *   **Fichiers Plats (Config)** : Config-Syncer Sidecar (Inotify + Rclone vers S3).
-    *   **DB Externe** : Backup Operator/Dump vers S3.
-*   **Auto-Guérison (10 pts)** :
-    *   Capacité de restauration automatique au démarrage (si DB locale).
-    *   Ou procédure de restauration documentée et testée (si DB externe).
-    *   Rechargement automatique de la configuration (`Reloader`) sans redémarrage violent.
+*   **Protection des Données (10 pts)** : Mécanisme de sauvegarde automatique (Litestream, Config-Syncer ou Operator) vers un stockage externe (S3).
+*   **Auto-Guérison (10 pts)** : Restauration automatique au démarrage et rechargement de configuration sans interruption de service (`Reloader`).
 
 ---
 
@@ -66,3 +49,4 @@ Un score de 85+ ne suffit pas. Les tests suivants sont bloquants :
 1.  **Test de "Zero-Touch"** : Le déploiement complet se fait sans aucune commande manuelle (`kubectl exec`, etc.).
 2.  **Test d'Accès** : L'URL publique renvoie un code HTTP valide.
 3.  **Test de Résilience** : Tuer un pod ne doit pas entraîner de perte de données ou d'indisponibilité prolongée au-delà du redémarrage.
+4.  **Validation Dev** : L'application doit être validée fonctionnellement en Dev avant toute promotion en Prod.
