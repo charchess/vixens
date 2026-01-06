@@ -9,8 +9,8 @@ spec:
       - name: adguard-home
         resources:
           limits:
-            cpu: 500m
-            memory: 192Mi
+            cpu: 1000m
+            memory: 1Gi
           requests:
-            cpu: 11m
-            memory: 128Mi
+            cpu: 200m
+            memory: 256Mi

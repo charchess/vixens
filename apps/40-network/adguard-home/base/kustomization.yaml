@@ -3,6 +3,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: networking
 
+configMapGenerator:
+  - name: adguard-litestream-config
+    files:
+      - litestream.yml
+
 resources:
   - namespace.yaml
   - middleware.yaml
@@ -11,4 +16,5 @@ resources:
   - pvc.yaml
   - ingressroute-dns.yaml
   - infisical-secret.yaml
+  - litestream-secret.yaml
   - config-patcher.yaml
