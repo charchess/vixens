@@ -99,7 +99,23 @@ spec:
               mountPath: /downloads
         - name: litestream
           image: litestream/litestream:0.3.13
-$1
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["replicate", "-config", "/etc/litestream.yml"]
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+          envFrom:
+            - secretRef:
+                name: sabnzbd-litestream-secret
+          volumeMounts:
+            - name: config
+              mountPath: /config
             - name: litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
