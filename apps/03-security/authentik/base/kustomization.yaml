@@ -8,5 +8,6 @@ resources:
   - deployment-worker.yaml
   - service.yaml
   - infisical-secret.yaml
+  - litestream-secret.yaml
   - configmap.yaml
   - pvc.yaml

@@ -7,6 +7,8 @@ metadata:
     app: authentik-worker
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: authentik-worker
@@ -14,12 +16,21 @@ spec:
     metadata:
       labels:
         app: authentik-worker
+      annotations:
+        reloader.stakater.com/auto: "true"
     spec:
-      priorityClassName: homelab-critical
+      priorityClassName: vixens-critical
       containers:
         - name: authentik-worker
           image: ghcr.io/goauthentik/server:2025.2
           args: ["worker"]
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
           envFrom:
             - secretRef:
                 name: authentik-secrets
