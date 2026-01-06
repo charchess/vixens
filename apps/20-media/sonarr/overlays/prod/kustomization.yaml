@@ -16,10 +16,6 @@ patches:
       - op: replace
         path: /spec/authentication/universalAuth/secretsScope/envSlug
         value: prod
-  - path: deployment-patch.yaml
-    target:
-      kind: Deployment
-      name: sonarr
   - path: litestream-secret-patch.yaml
     target:
       kind: InfisicalSecret
@@ -27,3 +23,4 @@ patches:
 
 patchesStrategicMerge:
   - resources-patch.yaml
+  - deployment-patch.yaml
