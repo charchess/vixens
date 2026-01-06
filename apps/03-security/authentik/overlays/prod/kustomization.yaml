@@ -1,23 +1,43 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
-commonLabels:
-  environment: prod
 kind: Kustomization
 namespace: auth
+
+labels:
+  - pairs:
+      environment: prod
+    includeSelectors: false
+
 patches:
-- patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n\
-    \  value: prod\n"
-  target:
-    kind: InfisicalSecret
-    name: authentik-secrets-sync
-- path: deployment-patch.yaml
-  target:
-    kind: Deployment
-    name: authentik-server
-patchesStrategicMerge:
-  - server-resources.yaml
-  - worker-resources.yaml
+  - patch: |
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
+    target:
+      kind: InfisicalSecret
+      name: authentik-secrets-sync
+  - patch: |
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
+    target:
+      kind: InfisicalSecret
+      name: authentik-litestream-sync
+  - path: deployment-patch.yaml
+    target:
+      kind: Deployment
+      name: authentik-server
+  - path: server-resources.yaml
+    target:
+      kind: Deployment
+      name: authentik-server
+  - path: worker-resources.yaml
+    target:
+      kind: Deployment
+      name: authentik-worker
 
 resources:
-- ../../base
-- http-redirect.yaml
-- ingress.yaml
+  - ../../base
+  - http-redirect.yaml
+  - ingress.yaml
+
+
