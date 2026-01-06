@@ -170,11 +170,3 @@ spec:
         - name: litestream-config
           configMap:
             name: sabnzbd-litestream-config
-      volumes:
-        - name: config
-          persistentVolumeClaim:
-            claimName: sabnzbd-config-pvc
-        - name: downloads
-          nfs:
-            server: 192.168.111.69
-            path: /volume3/Downloads
