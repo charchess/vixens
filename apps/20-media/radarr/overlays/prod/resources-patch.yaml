@@ -9,8 +9,8 @@ spec:
       - name: radarr
         resources:
           limits:
-            cpu: 500m
-            memory: 840Mi
+            cpu: 1000m
+            memory: 1Gi
           requests:
-            cpu: 49m
-            memory: 560Mi
+            cpu: 100m
+            memory: 256Mi

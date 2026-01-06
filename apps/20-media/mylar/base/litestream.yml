@@ -1,0 +1,5 @@
+dbs:
+  - path: /config/mylar.db
+    replicas:
+      - url: s3://$LITESTREAM_BUCKET/mylar/mylar.db
+        endpoint: $LITESTREAM_ENDPOINT

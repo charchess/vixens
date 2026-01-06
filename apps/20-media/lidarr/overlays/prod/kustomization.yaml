@@ -16,10 +16,11 @@ patches:
       - op: replace
         path: /spec/authentication/universalAuth/secretsScope/envSlug
         value: prod
-  - path: deployment-patch.yaml
+  - path: litestream-secret-patch.yaml
     target:
-      kind: Deployment
-      name: lidarr
+      kind: InfisicalSecret
+      name: lidarr-litestream-secret
 
 patchesStrategicMerge:
   - resources-patch.yaml
+  - deployment-patch.yaml
