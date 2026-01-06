@@ -22,6 +22,10 @@ patches:
   target:
     kind: Deployment
     name: frigate
+- path: litestream-secret-patch.yaml
+  target:
+    kind: InfisicalSecret
+    name: frigate-litestream-secret
 patchesStrategicMerge:
 - resources-patch.yaml
 resources:
