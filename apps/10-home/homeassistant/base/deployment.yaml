@@ -10,7 +10,7 @@ metadata:
 spec:
   replicas: 1
   strategy:
-    type: Recreate  # PVC can only be mounted by one pod at a time
+    type: Recreate
   selector:
     matchLabels:
       app: homeassistant
@@ -18,12 +18,14 @@ spec:
     metadata:
       labels:
         app: homeassistant
+      annotations:
+        reloader.stakater.com/auto: "true"
     spec:
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
-      hostNetwork: true  # Required for mDNS/UPnP local discovery
-      dnsPolicy: ClusterFirstWithHostNet  # Use cluster DNS even with hostNetwork
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       priorityClassName: vixens-high
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -67,30 +69,13 @@ spec:
               subPath: litestream.yml
         - name: config-init
           image: busybox:latest
-          command:
-            - /bin/sh
-            - -c
+          command: ["sh", "-c"]
+          args:
             - |
               if [ ! -s /config/configuration.yaml ]; then
-                echo "No configuration found or file is empty, copying default from secret..."
+                echo "No configuration found, copying default..."
                 cp /tmp/ha-config/homeassistant-config /config/configuration.yaml
                 chown 1000:1000 /config/configuration.yaml
-              else
-                echo "Configuration already exists and is not empty, skipping copy."
-              fi
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: ha-config
-              mountPath: /tmp/ha-config
-              readOnly: true
-        - name: filebrowser-init|
-              if [ ! -s /config/configuration.yaml ]; then
-                echo "No configuration found or file is empty, copying default from secret..."
-                cp /tmp/ha-config/homeassistant-config /config/configuration.yaml
-                chown 1000:1000 /config/configuration.yaml
-              else
-                echo "Configuration already exists and is not empty, skipping copy."
               fi
           volumeMounts:
             - name: config
@@ -100,33 +85,16 @@ spec:
               readOnly: true
         - name: filebrowser-init
           image: filebrowser/filebrowser:v2.52.0
-          command:
-            - /bin/sh
-            - -c
+          command: ["sh", "-c"]
+          args:
             - |
               set -e
-              echo "Initializing filebrowser database..."
-              cd /database
-
-              # Initialize database if not exists
               if [ ! -f /database/filebrowser.db ]; then
                 filebrowser config init --database /database/filebrowser.db
-                echo "Database initialized"
               fi
-
-              # Configure filebrowser
               filebrowser config set --database /database/filebrowser.db --port 8080 --address 0.0.0.0
-
-              # Remove default admin if exists
               filebrowser users rm admin --database /database/filebrowser.db 2>/dev/null || true
-
-              # Create admin user with credentials from Infisical
-              echo "Creating admin user..."
-              filebrowser users add "$FB_USERNAME" "$FB_PASSWORD" \
-                --database /database/filebrowser.db \
-                --perm.admin
-
-              echo "Filebrowser configured successfully"
+              filebrowser users add "$FB_USERNAME" "$FB_PASSWORD" --database /database/filebrowser.db --perm.admin
           env:
             - name: FB_USERNAME
               valueFrom:
@@ -144,7 +112,7 @@ spec:
       containers:
         - name: homeassistant
           image: ghcr.io/home-assistant/home-assistant:2025.12.5
-          imagePullPolicy: Always  # Force pull latest image
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8123
@@ -167,37 +135,20 @@ spec:
               memory: 2048Mi
         - name: filebrowser
           image: filebrowser/filebrowser:v2.52.0
-          imagePullPolicy: Always
           ports:
             - name: fb-http
               containerPort: 8080
               protocol: TCP
           env:
             - name: FB_PORT
-              value: "8080"  # Use non-privileged port
+              value: "8080"
             - name: FB_DATABASE
               value: "/database/filebrowser.db"
           volumeMounts:
             - name: config
-              mountPath: /srv  # filebrowser serves files from /srv by default
+              mountPath: /srv
             - name: filebrowser-db
               mountPath: /database
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 3
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 30
-            timeoutSeconds: 3
-            failureThreshold: 3
           resources:
             requests:
               memory: "128Mi"
@@ -211,13 +162,6 @@ spec:
             runAsUser: 1000
             runAsGroup: 1000
           args: ["replicate", "-config", "/etc/litestream.yml"]
-          resources:
-            requests:
-              cpu: "10m"
-              memory: "64Mi"
-            limits:
-              cpu: "100m"
-              memory: "128Mi"
           envFrom:
             - secretRef:
                 name: homeassistant-litestream-secret
@@ -252,7 +196,7 @@ spec:
           persistentVolumeClaim:
             claimName: homeassistant-config
         - name: filebrowser-db
-          emptyDir: {}  # Ephemeral storage for filebrowser database
+          emptyDir: {}
         - name: ha-config
           secret:
             secretName: homeassistant-config
