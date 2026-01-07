@@ -34,7 +34,7 @@ Une fois les modifications terminées :
 *   **Controlplane :** Se rappeler des tolérations nécessaires.
 *   **Storage :** Si PVC `ReadWriteOnce` (RWO) => `strategy: Recreate` obligatoire.
 *   **Réseau :** Redirection HTTP vers HTTPS systématique.
-*   **Certificats :** `letsencrypt-staging` en dev/test/staging, `letsencrypt-prod` en prod.
+*   **Certificats :** `letsencrypt-staging` en dev, `letsencrypt-prod` en prod.
 *   **URLs Ingress :** `<app>.dev.truxonline.com` (dev) / `<app>.truxonline.com` (prod).
 *   **Design :** Approche DRY, orientée maintenabilité et "state of the art".
 
@@ -51,4 +51,4 @@ Une fois les modifications terminées :
 *   **Serena :** Outil principal pour la lecture et modification de fichiers.
 *   **Archon :** Outil de recherche documentaire (RAG).
 *   **Playwright :** Validation des interfaces web (backup: curl).
-*   **kubectl/talosctl :** Utiliser les configs dans `terraform/environments/<env>/`.
+*   **kubectl/talosctl :** Utiliser les configs dans `terraform/environments/dev/` ou `terraform/environments/prod/`.
