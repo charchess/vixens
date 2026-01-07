@@ -90,5 +90,6 @@ resources:
   - apps/farmos.yaml
   # - apps/mealie.yaml
   # - apps/nocodb.yaml
-  # - apps/vikunja.yaml- apps/mariadb-shared.yaml
-- apps/mariadb-shared-config.yaml
+  # - apps/vikunja.yaml
+  - apps/mariadb-shared.yaml
+  - apps/mariadb-shared-config.yaml
