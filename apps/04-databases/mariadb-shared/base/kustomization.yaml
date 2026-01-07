@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - infisical-secret.yaml
+
+helmCharts:
+  - name: mariadb
+    releaseName: mariadb-shared
+    version: 19.2.1
+    repo: https://charts.bitnami.com/bitnami
+    namespace: databases
+    valuesInline:
+      auth:
+        existingSecret: mariadb-shared-credentials
+        rootPasswordKey: mariadb-root-password
+      primary:
+        persistence:
+          enabled: true
+          storageClass: synelia-iscsi-retain
+          size: 10Gi
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Exists"
+            effect: "NoSchedule"
