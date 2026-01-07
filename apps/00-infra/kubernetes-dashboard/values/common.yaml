@@ -1,0 +1,19 @@
+# apps/00-infra/kubernetes-dashboard/values/common.yaml
+# Official Chart: https://github.com/kubernetes/dashboard
+
+# Kong integration settings (Default in v7.x)
+kong:
+  enabled: true # Dashboard v7.x depends on it
+
+# We handle ingress via our standard traefik Ingress resource in overlays
+api:
+  ingress:
+    enabled: false
+
+# Metrics scraper integration
+metricsScraper:
+  enabled: true
+
+# Enable extra arguments if needed
+# extraArgs:
+#   - --token-ttl=43200 # 12 hours

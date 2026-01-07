@@ -23,6 +23,7 @@ resources:
   - apps/gitops-revision-controller.yaml
   - apps/headlamp.yaml
   - apps/hubble-ui.yaml
+  - apps/kubernetes-dashboard.yaml
   # Traefik Dashboard hostname redirect
   - apps/traefik-dashboard.yaml
   - apps/argocd.yaml                         # ArgoCD Ingress for UI
