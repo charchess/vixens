@@ -20,10 +20,10 @@ spec:
         valueFiles:
           - $values/apps/00-infra/kubernetes-dashboard/values/common.yaml
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: main
+      targetRevision: prod-stable
       ref: values
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: main
+      targetRevision: prod-stable
       path: apps/00-infra/kubernetes-dashboard/overlays/prod
   syncPolicy:
     automated:
