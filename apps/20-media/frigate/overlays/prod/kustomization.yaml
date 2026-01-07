@@ -10,10 +10,6 @@ patches:
   target:
     kind: InfisicalSecret
     name: frigate-config-sync
-- path: resources-patch.yaml
-  target:
-    kind: Deployment
-    name: frigate
 - path: shm-patch-named.yaml
   target:
     kind: Deployment
@@ -22,9 +18,10 @@ patches:
   target:
     kind: Deployment
     name: frigate
-patchesStrategicMerge:
-- resources-patch.yaml
+- path: litestream-secret-patch.yaml
+  target:
+    kind: InfisicalSecret
+    name: frigate-litestream-secret
 resources:
 - ../../base
-- http-redirect.yaml
 - ingress.yaml

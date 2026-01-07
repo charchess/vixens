@@ -17,6 +17,5 @@ spec:
         secretsPath: "/apps/70-tools/gitops-revision-controller"
   managedSecretReference:
     secretName: homeassistant-revision
-    secretNamespace: tools
     creationPolicy: Owner
     secretType: Opaque

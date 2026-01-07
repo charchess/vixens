@@ -5,12 +5,13 @@ metadata:
 spec:
   template:
     spec:
+      priorityClassName: vixens-critical
       containers:
-      - name: authentik-worker
-        resources:
-          requests:
-            cpu: 200m
-            memory: 512Mi
-          limits:
-            cpu: 500m
-            memory: 1024Mi
+        - name: authentik-worker
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi

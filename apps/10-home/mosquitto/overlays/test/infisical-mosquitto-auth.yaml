@@ -18,6 +18,5 @@ spec:
         secretsPath: /apps/10-home/mosquitto
   managedSecretReference:
     secretName: mosquitto-password-file
-    secretNamespace: mosquitto
     creationPolicy: Owner
     secretType: Opaque

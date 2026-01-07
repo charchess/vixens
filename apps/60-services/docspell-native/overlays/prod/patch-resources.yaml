@@ -5,15 +5,16 @@ metadata:
 spec:
   template:
     spec:
+      priorityClassName: vixens-medium
       containers:
       - name: joex
         resources:
           requests:
-            cpu: 100m
-            memory: 600Mi
+            cpu: 200m
+            memory: 1Gi
           limits:
             cpu: 1000m
-            memory: 1.5Gi
+            memory: 2Gi
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -22,12 +23,13 @@ metadata:
 spec:
   template:
     spec:
+      priorityClassName: vixens-medium
       containers:
       - name: restserver
         resources:
           requests:
-            cpu: 100m
-            memory: 512Mi
+            cpu: 200m
+            memory: 1Gi
           limits:
             cpu: 1000m
-            memory: 1Gi
+            memory: 2Gi

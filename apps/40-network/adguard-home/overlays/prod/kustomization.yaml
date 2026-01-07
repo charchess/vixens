@@ -6,13 +6,12 @@ patches:
   target:
     kind: InfisicalSecret
     name: adguard-home-secrets-sync
-- path: deployment-patch.yaml
+- path: litestream-secret-patch.yaml
   target:
-    kind: Deployment
-    name: adguard-home
+    kind: InfisicalSecret
+    name: adguard-litestream-secret
 patchesStrategicMerge:
-- resources-patch.yaml
+- deployment-patch.yaml
 resources:
 - ../../base
-- http-redirect.yaml
 - ingress.yaml

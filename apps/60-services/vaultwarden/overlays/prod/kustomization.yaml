@@ -5,9 +5,14 @@ patches:
   target:
     kind: InfisicalSecret
     name: vaultwarden-secrets
-patchesStrategicMerge:
-- resources-patch.yaml
+- path: litestream-secret-patch.yaml
+  target:
+    kind: InfisicalSecret
+    name: litestream-shared-secrets
+- path: deployment-patch.yaml
+  target:
+    kind: Deployment
+    name: vaultwarden
 resources:
 - ../../base
-- http-redirect.yaml
 - ingress.yaml

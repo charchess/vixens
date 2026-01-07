@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubernetes-dashboard
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kubernetes-dashboard
+  sources:
+    - repoURL: https://kubernetes.github.io/dashboard/
+      chart: kubernetes-dashboard
+      targetRevision: 7.14.0
+      helm:
+        valueFiles:
+          - $values/apps/00-infra/kubernetes-dashboard/values/common.yaml
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: prod-stable
+      ref: values
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: prod-stable
+      path: apps/00-infra/kubernetes-dashboard/overlays/prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

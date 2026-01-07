@@ -8,7 +8,5 @@ patches:
   target:
     kind: Ingress
     name: hubble-ui
-patchesStrategicMerge:
-- resources-patch.yaml
 resources:
 - ../../base

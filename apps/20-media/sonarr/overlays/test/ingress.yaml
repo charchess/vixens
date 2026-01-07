@@ -6,7 +6,7 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: media-sonarr-http-redirect@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
 spec:
   rules:
     - host: sonarr.test.truxonline.com

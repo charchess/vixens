@@ -5,20 +5,9 @@ kind: Kustomization
 resources:
   - ../../base
   - ingress.yaml
-  - http-redirect.yaml
 
 patches:
-  - path: resources-patch.yaml
-    target:
-      kind: Deployment
-      name: mealie
-  - target:
-      kind: InfisicalSecret
-      name: mealie-secrets-sync
-    patch: |
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
+  - path: patch-infisical-env.yaml
 
 labels:
   - pairs:

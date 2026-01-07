@@ -9,8 +9,8 @@ spec:
       - name: frigate
         resources:
           limits:
-            cpu: 9624m
-            memory: 5524Mi
+            cpu: 8000m
+            memory: 8Gi
           requests:
-            cpu: 2406m
-            memory: 3682Mi
+            cpu: 2000m
+            memory: 4Gi

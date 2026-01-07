@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | 7-alpine|
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | 7-alpine|
 
 ## Validation
 **URL :** N/A (Database Service)
@@ -28,4 +28,4 @@ kubectl exec -it -n databases deploy/redis-shared -- redis-cli ping
 ## Notes Techniques
 - **Namespace :** `databases`
 - **Dépendances :** Aucune
-- **Particularités :** Instance Redis standalone mutualisée. Utilisée pour le cache et les files de messages (Celery, etc.) des applications.
+- **Particularités :** Instance Redis standalone mutualisée. Authentification activée via `REDIS_PASSWORD` (Infisical). Utilisée pour le cache et les files de messages (Celery, etc.) des applications. Priorité `vixens-critical` en production.

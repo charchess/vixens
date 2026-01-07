@@ -3,8 +3,6 @@ commonLabels:
   environment: prod
 kind: Kustomization
 namespace: monitoring
-patchesStrategicMerge:
-- resources-patch.yaml
 resources:
 - ingress.yaml
 - ../../base

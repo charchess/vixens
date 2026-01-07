@@ -1,0 +1,5 @@
+dbs:
+  - path: /config/lidarr.db
+    replicas:
+      - url: s3://$LITESTREAM_BUCKET/lidarr/lidarr.db
+        endpoint: $LITESTREAM_ENDPOINT

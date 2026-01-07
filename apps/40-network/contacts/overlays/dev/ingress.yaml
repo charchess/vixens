@@ -7,7 +7,7 @@ metadata:
   namespace: contacts
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
     external-dns.alpha.kubernetes.io/target: vixens-dev.truxonline.com
 spec:
   ingressClassName: traefik
