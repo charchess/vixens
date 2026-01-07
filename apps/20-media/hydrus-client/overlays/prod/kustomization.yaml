@@ -5,7 +5,6 @@ namespace: media
 
 resources:
   - ../../base
-  - http-redirect.yaml
   - ingress.yaml
 
 patchesStrategicMerge:

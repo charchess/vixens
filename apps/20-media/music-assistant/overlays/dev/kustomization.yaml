@@ -4,5 +4,4 @@ kind: Kustomization
 
 resources:
   - ../../base
-  - http-redirect.yaml
   - ingress.yaml
