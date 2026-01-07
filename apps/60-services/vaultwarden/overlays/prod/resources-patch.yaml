@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: vaultwarden
 spec:
+  strategy:
+    type: Recreate
   template:
     spec:
       priorityClassName: vixens-medium
@@ -15,6 +17,18 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
         - name: litestream
           resources:
             requests:
