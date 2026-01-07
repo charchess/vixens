@@ -14,3 +14,7 @@ Validation des aspects techniques (infra, logs, perfs).
 | **postgresql-shared** | HA Scale-down | ✅ OK | 2026-01-07 | Retour à 1 instance stable après test HA |
 | **redis-shared** | Sécurité Auth | ✅ OK | 2026-01-07 | requirepass activé via Infisical |
 | **mariadb-shared** | Déploiement Kustomize | ✅ OK | 2026-01-07 | Migration StatefulSet natif réussie |
+| **authentik** | QoS & Storage | ✅ OK | 2026-01-07 | vixens-critical + Recreate strategy validés |
+| **docspell** | Stabilité CPU | ✅ OK | 2026-01-07 | Request 200m CPU : Arrêt des CrashLoops |
+| **external-dns** | Architecture Secret | ✅ OK | 2026-01-07 | Séparation Secret/Binaire pour contourner cache ArgoCD |
+| **vaultwarden** | Probes / Stability | ✅ OK | 2026-01-07 | Liveness assouplie (60s) : Arrêt des CrashLoops |
