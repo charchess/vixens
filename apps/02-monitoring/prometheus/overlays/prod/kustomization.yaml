@@ -12,7 +12,5 @@ patches:
   target:
     kind: InfisicalSecret
     name: alertmanager-secrets-sync
-patchesStrategicMerge:
-- resources-patch.yaml
 resources:
 - ../../base

@@ -7,8 +7,6 @@ patches:
   target:
     kind: InfisicalSecret
     name: homeassistant-litestream-secret
-patchesStrategicMerge:
-- resources-patch.yaml
 resources:
 - ../../base
 - ingress.yaml

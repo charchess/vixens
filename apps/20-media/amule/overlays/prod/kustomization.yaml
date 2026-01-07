@@ -9,8 +9,6 @@ patches:
   target:
     kind: InfisicalSecret
     name: amule-secrets
-patchesStrategicMerge:
-- resources-patch.yaml
 resources:
 - ../../base
 - ingress.yaml

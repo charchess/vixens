@@ -1,25 +1,18 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: media
-
-resources:
-  - ../../base
-  - ingress.yaml
-
 patches:
-  - target:
-      kind: InfisicalSecret
-      name: sonarr-secrets-sync
-    patch: |
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-  - path: litestream-secret-patch.yaml
-    target:
-      kind: InfisicalSecret
-      name: sonarr-litestream-secret
-
+- patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n\
+    \  value: prod\n"
+  target:
+    kind: InfisicalSecret
+    name: sonarr-secrets-sync
+- path: litestream-secret-patch.yaml
+  target:
+    kind: InfisicalSecret
+    name: sonarr-litestream-secret
 patchesStrategicMerge:
-  - resources-patch.yaml
-  - deployment-patch.yaml
+- deployment-patch.yaml
+resources:
+- ../../base
+- ingress.yaml
