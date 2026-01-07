@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | latest  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | latest  |
 
 ## Validation
 **URL :** https://vaultwarden.[env].truxonline.com
@@ -28,10 +28,15 @@ curl -L -k https://vaultwarden.dev.truxonline.com | grep "Vaultwarden"
 3. Tenter une création de compte (si activé) ou un login.
 
 ## Notes Techniques
-- **Namespace :** `services` (A vérifier)
+- **Namespace :** `services`
 - **Dépendances :**
     - `Infisical` (Admin Token)
-- **Particularités :** Serveur Bitwarden léger (Rust). Utilise SQLite (sur PVC) par défaut (ou Postgres si configuré).
+- **Particularités :** Serveur Bitwarden léger (Rust). Utilise SQLite (sur PVC) par défaut. Standard **🏆 Elite** :
+    - **Priorité :** `vixens-medium`.
+    - **Profil :** Small (50m/256Mi).
+    - **Stockage :** Stratégie `Recreate` pour PVC RWO (réparé le 07/01/2026).
+    - **Backup :** Litestream S3 (MinIO) configuré.
+    - **Stabilité :** Liveness probe assouplie (60s delay) pour l'initialisation Litestream.
 ---
 > ⚠️ **HIBERNATION DEV**
 > Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.

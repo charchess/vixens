@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | v0.43.0 |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | v0.43.0 |
 
 ## Validation
 **URL :** https://docspell.[env].truxonline.com
@@ -33,7 +33,7 @@ curl -L -k https://docspell.dev.truxonline.com | grep "Docspell"
     - `PostgreSQL` (Shared Cluster)
     - `Solr` (Composant Joex interne)
     - `Infisical` (Secrets)
-- **Particularités :** Gestionnaire de documents (DMS). Architecture micro-services (RestServer + Joex).
+- **Particularités :** Gestionnaire de documents (DMS). Architecture micro-services (RestServer + Joex). Standard **✅ Valid** (Priorité `vixens-medium`, Profil Medium, DB Postgres mutualisée).
 ---
 > ⚠️ **HIBERNATION DEV**
 > Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.

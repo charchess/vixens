@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | 2025.2  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | 2025.2  |
 
 ## Validation
 **URL :** https://authentik.[env].truxonline.com
@@ -33,4 +33,4 @@ curl -L -k https://authentik.dev.truxonline.com/flows/-/default/authentication/ 
     - `Redis` (Cluster partagé `redis-shared`)
     - `PostgreSQL` (Cluster partagé `postgresql-shared`)
     - `Infisical` (Secrets)
-- **Particularités :** Identity Provider (IdP) pour le SSO. Gère les utilisateurs et les flows d'authentification.
+- **Particularités :** Identity Provider (IdP) pour le SSO. Gère les utilisateurs et les flows d'authentification. Standard **🏆 Elite** (Priorité `vixens-critical`, Profil Medium, stratégie `Recreate` pour RWO).
