@@ -10,10 +10,6 @@ patches:
   target:
     kind: InfisicalSecret
     name: frigate-config-sync
-- path: resources-patch.yaml
-  target:
-    kind: Deployment
-    name: frigate
 - path: shm-patch-named.yaml
   target:
     kind: Deployment
