@@ -10,30 +10,9 @@ metadata:
 spec:
   project: default
   source:
-    chart: mariadb
-    repoURL: oci://registry-1.docker.io/bitnamicharts
-    targetRevision: 19.2.1
-    helm:
-      values: |
-        auth:
-          existingSecret: mariadb-shared-credentials
-          rootPasswordKey: mariadb-root-password
-        primary:
-          persistence:
-            enabled: true
-            storageClass: synelia-iscsi-retain
-            size: 1Gi
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: dev
+    path: apps/04-databases/mariadb-shared/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: databases

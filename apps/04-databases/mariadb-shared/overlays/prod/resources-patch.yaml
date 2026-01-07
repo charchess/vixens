@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mariadb-shared
+spec:
+  template:
+    spec:
+      priorityClassName: vixens-critical
+      containers:
+        - name: mariadb
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
