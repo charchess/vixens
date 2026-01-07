@@ -1,59 +1,54 @@
-processus de travail, adherence stricte et totale, pas de raccourci, a respecter absolument, chaque étape est importante, chaque instruction doit etre respecté:
-* initialisation :
-** recuperer la liste des taches attribuée à "coding agent" (utiliser `per_page=50` ou plus pour ne manquer aucune tâche en cours).
-** filtrer sur les statuts todo, doing ou review.
-* choix de la tache :
-** on reprends celle en review (coding agent) en priorité, sans demander.
-** SINON on continue celle en doing (coding agent).
-** SINON on **PROPOSE** la liste des taches todo à l'utilisateur et on attend son choix.
-* travail sur la tache choisi :  
-** etudier et informer de possibles pré requis technique, uniquement si il y en a.
-** consulter la documentation de l'application concernée dans `docs/applications/<app>.md` (si existante) pour comprendre l'état actuel et les validations attendues.
-** analyser l'objectif de la tache, son utilisation, afin de definir un "definition of done" (DoD) basé sur la demande ET sur les validations existantes (non-régression).
-** passage de la tache en doing dans archon.
-** pour la documentation, privilegier le RAG archon.
-** pour l'acces au code, privilegier serena.
-** procéder sur la tache de manière incrementale.
-** mettre à jour le fichier `docs/applications/<app>.md` si l'infrastructure, la configuration ou les méthodes de validation évoluent.
-** une fois la tache terminer, porter les changements necessaires dans l'overlay prod.
-* une fois la tache terminée
-** faire un commit et un push vers github (branche de dev ONLY !).
-** PUIS valider le resultat dans l'environnement de dev avec tous les moyens disponible en validant l'acces a l'application.
-*** Exécuter les commandes de validation (Automatique & Manuelle) définies dans `docs/applications/<app>.md` pour garantir la NON-RÉGRESSION.
-*** Utiliser playwright pour les interfaces web (validation visuelle/fonctionnelle).
-*** Verifier sa conformité avec le "definition of done" evalué plus tot.
-** SI le DoD est 100% validé en dev, la promotion vers main/prod peut être effectuée via GitHub Actions.
-** valider le resultat en PROD et la conformié avec le Definition Of Done.
-** SI reussi, passer le proprietaire en "user", garder la tache en review et passer a la tache suivante.
-** SINON, reprendre le travail sur la tache (en la repassant en doing).
-** ENFIN, on reprend connaissance du @WORKFLOW.md.
+# Processus de Travail (Beads + Just)
 
+Adhérence stricte et totale requise. Pas de raccourcis. Ce workflow remplace l'ancien usage d'Archon pour la gestion des tâches.
 
+## 1. Initialisation & Sélection (Beads)
+*   **Commande :** Utiliser `just resume` pour identifier la tâche en cours ou reprendre le travail.
+*   **Priorité 1 :** Tâches assignées à "coding-agent" avec le statut `review`.
+*   **Priorité 2 :** Tâches assignées à "coding-agent" avec le statut `in_progress`.
+*   **Priorité 3 :** Si aucune tâche active, lister les tâches ouvertes (`bd list --status open`) et **PROPOSER** la liste à l'utilisateur.
 
-NOTES IMPORTANTES :
-* se rappeler des tolérations pour les controlplane
-* si il y a un pvc RWO, mettre la strategy en recreate
-* penser a mettre la redirection http vers https
-* s'assurer que le certificat tls est bien obtenu par letsencrypt-staging en dev et letsencrypt-prod en prod
-* les urls des ingress sont <app>.dev.truxonline.com pour dev et <app>.truxonline.com pour prod
-* on garde une approche DRY, state of the art, best practice axée sur la maintenabilité
-* si il te manque une information ou qu'il te faut une configuration exterieure, suspends tout et interroge l'utilisateur
+## 2. Exécution (Just Work)
+Lancer la tâche avec `just work <task_id>`. Cela automatise les étapes suivantes :
+*   **Phase 1 (Prérequis) :** Vérification automatique des spécificités techniques (ex: PVC RWO détecté -> ajout d'une note pour `strategy: Recreate`).
+*   **Phase 2 (Documentation) :** Identification et invitation à consulter `docs/applications/<app>.md`.
+*   **Phase 3 (Analyse & Développement) :** 
+    *   Analyse du "Definition of Done" (DoD) basé sur la demande et les tests de non-régression.
+    *   Utilisation de **Serena** pour l'accès au code et **Archon** pour la base de connaissances (RAG).
+    *   Développement incrémental sur la branche `dev` uniquement.
+    *   Mise à jour de `docs/applications/<app>.md` si l'infrastructure ou la validation évoluent.
+    *   Application des changements dans l'overlay `prod` une fois le développement `dev` stabilisé.
 
-WORKFLOW GITOPS (Trunk-Based):
-* 2 branches : dev (development) et main (production)
-* Branches test/staging archivées (inutiles pour les apps, utiles uniquement pour tests Terraform)
-* Feature branches → PR vers dev → merge
-* GitHub Action auto-tag dev-vX.Y.Z après merge dans dev
-* Promotion dev→main via: gh workflow run promote-prod.yaml -f version=v1.2.3
-* ArgoCD sync automatique sur changements de branches/tags
-* Voir ADR-008 pour détails complets
+## 3. Clôture & Validation
+Une fois les modifications terminées :
+*   **Commit & Push :** Branche `dev` uniquement !
+*   **Validation Forcée :** `just _validate <task_id>` (exécute `scripts/validate.py`).
+    *   Vérification de l'accès à l'application et conformité DoD.
+    *   Utilisation de **Playwright** pour les interfaces web (validation visuelle).
+*   **Promotion :** Si validation 100% OK en dev, la promotion vers `main`/prod se fait via GitHub Actions (`promote-prod.yaml`).
+*   **Finalisation :** Si succès en prod, passer la tâche en statut `review` et changer l'assigné vers `user` (`bd update <task_id> --status review --assignee user`).
 
+---
 
-OUTILS :
-serena : demander les instructions initiale à serena
-archon : verifier que la connexion avec l'outil est bonne, sinon faire un rapport a l'utilisateur et arreter
-playwright : acces aux pages web, verifier que l'outil fonctionne, utiliser curl en backup et prevenir l'utilisateur
+## Notes Importantes
+*   **Controlplane :** Se rappeler des tolérations nécessaires.
+*   **Storage :** Si PVC `ReadWriteOnce` (RWO) => `strategy: Recreate` obligatoire.
+*   **Réseau :** Redirection HTTP vers HTTPS systématique.
+*   **Certificats :** `letsencrypt-staging` en dev/test/staging, `letsencrypt-prod` en prod.
+*   **URLs Ingress :** `<app>.dev.truxonline.com` (dev) / `<app>.truxonline.com` (prod).
+*   **Design :** Approche DRY, orientée maintenabilité et "state of the art".
 
-COMMANDES :
-kubectl (en utilisant la configuration dans terraform/environments/<env>/kubeconfig-<env>)
-talosctl (en utilisant la configuration dans terraform/environments/<env>/talosconfig-<env>)
+## Workflow GitOps (Trunk-Based)
+*   **Branches :** `dev` (développement) et `main` (production).
+*   **Flux :** Feature branch -> PR vers `dev` -> Merge.
+*   **Auto-Tag :** GitHub Action crée un tag `dev-vX.Y.Z` après merge dans `dev`.
+*   **Promotion :** `gh workflow run promote-prod.yaml -f version=v1.2.3`.
+*   **ArgoCD :** Synchronisation automatique basée sur les branches/tags. Voir ADR-008.
+
+## Outils & Commandes
+*   **Beads (bd) :** Gestionnaire de tâches (remplace Archon Task).
+*   **Just :** Orchestrateur de workflow (`just resume`, `just work`).
+*   **Serena :** Outil principal pour la lecture et modification de fichiers.
+*   **Archon :** Outil de recherche documentaire (RAG).
+*   **Playwright :** Validation des interfaces web (backup: curl).
+*   **kubectl/talosctl :** Utiliser les configs dans `terraform/environments/<env>/`.

@@ -5,6 +5,7 @@ resources:
 - apps/infisical-operator.yaml
 - apps/cilium-lb.yaml
 - apps/traefik.yaml
+- apps/traefik-middlewares.yaml
 - apps/metrics-server.yaml
 - apps/priority-classes.yaml
 - apps/vpa.yaml
