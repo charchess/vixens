@@ -5,6 +5,5 @@ namespace: media
 
 resources:
   - ../../base
-  - http-redirect.yaml
   - ingress.yaml
   - infisical-patch.yaml

@@ -10,7 +10,7 @@ metadata:
     gethomepage.dev/name: "SABnzbd"
     gethomepage.dev/icon: "sabnzbd.png"
     gethomepage.dev/group: "Media"
-    traefik.ingress.kubernetes.io/router.middlewares: "media-redirect-to-https@kubernetescrd" # Reference the middleware
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:

@@ -30,5 +30,4 @@ patchesStrategicMerge:
 - resources-patch.yaml
 resources:
 - ../../base
-- http-redirect.yaml
 - ingress.yaml

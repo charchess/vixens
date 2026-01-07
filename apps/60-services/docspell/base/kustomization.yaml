@@ -6,4 +6,3 @@ namespace: services
 resources:
   - infisical-secret.yaml
   - db-credentials-secret.yaml
-  - http-redirect.yaml
