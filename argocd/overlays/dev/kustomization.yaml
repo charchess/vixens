@@ -36,7 +36,7 @@ resources:
   - apps/synology-csi.yaml                   # Synology CSI driver
   - apps/nfs-storage.yaml                    # NFS PV/PVC
   # - apps/mail-gateway.yaml                   # Mail gateway external service
-  - apps/homeassistant.yaml
+  # - apps/homeassistant.yaml
   # - apps/mosquitto.yaml
   # - apps/birdnet-go.yaml
   # - apps/prometheus.yaml                     # Prometheus standalone monitoring
