@@ -3,7 +3,7 @@ kind: Cluster
 metadata:
   name: postgresql-shared
 spec:
-  instances: 3
+  instances: 1
   priorityClassName: vixens-critical
   resources:
     requests:
