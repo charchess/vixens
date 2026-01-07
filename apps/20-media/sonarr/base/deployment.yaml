@@ -116,15 +116,4 @@ spec:
         - name: litestream-config
           configMap:
             name: sonarr-litestream-config
-      volumes:
-        - name: config
-          persistentVolumeClaim:
-            claimName: sonarr-config-pvc
-        - name: downloads
-          nfs:
-            server: 192.168.111.69
-            path: /volume3/Downloads
-        - name: tv
-          nfs:
-            server: 192.168.111.69
-            path: /volume3/Content
+

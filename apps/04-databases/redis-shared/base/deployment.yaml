@@ -22,7 +22,7 @@ spec:
           command:
             - redis-server
             - --requirepass
-            - "\$(REDIS_PASSWORD)"
+            - $(REDIS_PASSWORD)
           env:
             - name: REDIS_PASSWORD
               valueFrom:
