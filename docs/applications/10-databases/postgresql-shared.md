@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | 17.6    |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | 17.6    |
 
 ## Validation
 **URL :** N/A (Database Service)
@@ -31,4 +31,4 @@ kubectl get svc postgresql-shared-rw -n databases
 - **Dépendances :**
     - `CloudNativePG` (Operator)
     - `Synology-CSI` (Stockage PVC `synelia-iscsi-retain`)
-- **Particularités :** Cluster PostgreSQL mutualisé. Chaque application dispose de sa propre base et de son propre utilisateur (gérés via init scripts ou Jobs). Backup S3 configuré (MinIO/Synology).
+- **Particularités :** Cluster PostgreSQL mutualisé. Gestion déclarative des utilisateurs et des rôles via le bloc `managed.roles` de CNPG. Chaque application dispose de sa propre base et de son propre utilisateur synchronisé depuis Infisical. Backup S3 configuré (MinIO/Synology).

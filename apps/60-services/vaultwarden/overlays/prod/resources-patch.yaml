@@ -5,12 +5,21 @@ metadata:
 spec:
   template:
     spec:
+      priorityClassName: vixens-medium
       containers:
-      - name: vaultwarden
-        resources:
-          limits:
-            cpu: 500m
-            memory: 512Mi
-          requests:
-            cpu: 50m
-            memory: 256Mi
+        - name: vaultwarden
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+        - name: litestream
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
