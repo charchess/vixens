@@ -10,15 +10,12 @@
 | **adguard-home**              |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
 | **authentik**                 |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
 | **cloudnative-pg**            |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
-| **frigate**                   |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
 | **homeassistant**             |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
 | **lidarr**                    |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
 | **mariadb-shared**            |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
 | **mylar**                     |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
-| **postgresql-shared**         |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
 | **prowlarr**                  |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
 | **radarr**                    |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
-| **redis-shared**              |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
 | **sabnzbd**                   |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
 | **sonarr**                    |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
 | **vaultwarden**               |     20      |    20    |    20     |     20      |    20     |  **100**  | 🏆 Elite          |
@@ -29,12 +26,15 @@
 | **argocd**                    |     20      |    10    |    20     |     20      |    20     |  **90**   | 🥇 Gold           |
 | **traefik**                   |     20      |    10    |    20     |     20      |    20     |  **90**   | 🥇 Gold           |
 | **synology-csi**              |     20      |    10    |    20     |     20      |    20     |  **90**   | 🥇 Gold           |
+| **redis-shared**              |     20      |    10    |    20     |     20      |    20     |  **90**   | 🥇 Gold (QoS lost)|
+| **postgresql-shared**         |     20      |    10    |    20     |     20      |    20     |  **90**   | 🥇 Gold (QoS lost)|
+| **frigate**                   |     20      |    10    |    20     |     20      |    20     |  **90**   | 🥇 Gold (QoS lost)|
 | **docspell**                  |     20      |    20    |    20     |     20      |     0     |  **80**   | ✅ Valid          |
-| **linkwarden**                |     20      |    20    |    20     |     20      |     0     |  **80**   | ✅ Valid          |
-| **loki**                      |     20      |    20    |    20     |     20      |     0     |  **80**   | ✅ Valid          |
-| **netbox**                    |     20      |    20    |    20     |     20      |     0     |  **80**   | ✅ Valid          |
+| **linkwarden**                |     20      |    10    |    20     |     20      |     0     |  **70**   | ⚠️ To Consolidate |
+| **loki**                      |     20      |    10    |    20     |     20      |     0     |  **70**   | ⚠️ To Consolidate |
+| **netbox**                    |     20      |    10    |    20     |     20      |     0     |  **70**   | ⚠️ To Consolidate |
 | **hydrus-client**             |     20      |    10    |    10     |     20      |    20     |  **80**   | ✅ Valid          |
-| **birdnet-go**                |      5      |    20    |    20     |     20      |    10     |  **75**   | ✅ Valid          |
+| **birdnet-go**                |      5      |    10    |    20     |     20      |    10     |  **65**   | ⚠️ To Consolidate |
 | **changedetection**           |     20      |    10    |    10     |     20      |    10     |  **70**   | ⚠️ To Consolidate |
 | **stirling-pdf**              |     20      |    10    |    10     |     20      |     0     |  **60**   | ⚠️ To Consolidate |
 | **it-tools**                  |     20      |    10    |    10     |     20      |     0     |  **60**   | ⚠️ To Consolidate |
@@ -71,15 +71,17 @@
 
 ## 🛠️ État de la Production
 
-La production est de nouveau **100% opérationnelle** suite au rétablissement d'Authentik et de la couche stockage (07/01/2026).
+La production est **stable et synchronisée** (GitOps OK) mais fonctionne en mode dégradé sur l'optimisation des ressources.
 
-### Faits marquants de la session :
-*   **Stabilisation CNPG :** Opérateur Goldifié, passage à la gestion déclarative des rôles.
-*   **Mutualisation DB :** Création de `mariadb-shared` au standard Gold.
-*   **Sécurisation Redis :** Activation de l'authentification et des ressources garanties.
-*   **Récupération Désastre :** Réparation des PVCs pour Authentik et Vaultwarden.
-*   **Optimisation Docspell :** Augmentation des ressources CPU pour stopper les crashs.
+### Incidents et Correctifs (07/01/2026) :
+*   **GitOps Repair :** Suppression de 58 fichiers `resources-patch.yaml` erronés pour rétablir la synchronisation de 28 applications.
+    *   *Impact :* Perte de la QoS (Requests/Limits) et de la configuration VPA pour ces 28 applications (notées "QoS lost" ou score QoS rétrogradé à 10).
+*   **Vaultwarden :** Fix du Health Check (passage à `/alive` pour v1.34.3). Service rétabli.
+*   **Authentik :** Fix de l'Ingress (middleware Traefik global). Service rétabli.
+*   **MariaDB Shared :** Résolution du conflit de duplication ArgoCD. Service rétabli.
+*   **Infrastructure :** Rétablissement de VPA, Metrics-Server et Cilium-LB (qui étaient absents du cluster prod).
 
-## 🎯 Prochaine Tâche : Centralisation Middleware (Batch 4)
+## 🎯 Prochaines Priorités
 
-L'objectif est de réduire la dette technique en centralisant les middlewares Traefik (Redirection HTTPS) pour passer toutes les applications au niveau Gold/Elite sur la partie réseau.
+1.  **Restauration QoS (Batch Fix) :** Recréer proprement les patchs de ressources pour les 28 applications impactées (VPA, Metrics, Grafana, Loki, etc.) en validant les sélecteurs Kustomize.
+2.  **Centralisation Middleware (Batch 4) :** Continuer la migration vers le middleware global pour éliminer les warnings ArgoCD restants.
