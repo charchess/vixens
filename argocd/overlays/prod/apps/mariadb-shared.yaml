@@ -10,9 +10,31 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/charchess/vixens.git
-    targetRevision: prod-stable
-    path: apps/04-databases/mariadb-shared/overlays/prod
+    chart: mariadb
+    repoURL: https://charts.bitnami.com/bitnami
+    targetRevision: 19.2.1
+    helm:
+      values: |
+        auth:
+          existingSecret: mariadb-shared-credentials
+          rootPasswordKey: mariadb-root-password
+        primary:
+          priorityClassName: vixens-critical
+          persistence:
+            enabled: true
+            storageClass: synelia-iscsi-retain
+            size: 10Gi
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
   destination:
     server: https://kubernetes.default.svc
     namespace: databases
