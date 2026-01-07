@@ -6,8 +6,6 @@ configMapGenerator:
   name: gitops-revision-controller-src
 kind: Kustomization
 namespace: tools
-patchesStrategicMerge:
-- resources-patch.yaml
 resources:
 - deployment.yaml
 - rbac.yaml

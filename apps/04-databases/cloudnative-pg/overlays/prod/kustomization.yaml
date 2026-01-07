@@ -6,9 +6,6 @@ namespace: cnpg-system
 resources:
   - ../../base
 
-patches:
-  - path: resources-patch.yaml
-
 labels:
   - pairs:
       environment: prod

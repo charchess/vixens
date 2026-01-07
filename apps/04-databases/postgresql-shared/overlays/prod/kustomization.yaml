@@ -8,12 +8,6 @@ resources:
 
 patches:
   - path: patch-credentials-env.yaml
-  - path: resources-patch.yaml
-    target:
-      group: postgresql.cnpg.io
-      version: v1
-      kind: Cluster
-      name: postgresql-shared
   - path: backup-patch.yaml
     target:
       group: postgresql.cnpg.io
