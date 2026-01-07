@@ -11,7 +11,7 @@ This project implements a GitOps approach for deploying and managing Kubernetes 
 
 ## IMPORTANT NOTICE
 - you will only work on the git dev branch
-- you will work in gitops mode (non gitops approach/commands might be used for troubleshoot and testing only)
+- you will work in gitops mode (non gitops approach/commands might be used for troubleshoot and debugging only)
 - you will plan before acting, never act without user explicit consent
 
 ## ALLOWED COMMAND

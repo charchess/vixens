@@ -16,7 +16,6 @@ spec:
   hostAPI: http://192.168.111.69:8085 # Assuming dev uses the same Infisical server endpoint
   managedSecretReference:
     secretName: mosquitto-password-file
-    secretNamespace: mosquitto
     creationPolicy: Owner
     secretType: Opaque
   resyncInterval: 60
