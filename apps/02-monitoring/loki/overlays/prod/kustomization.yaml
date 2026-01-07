@@ -8,8 +8,6 @@ patches:
   target:
     kind: InfisicalSecret
     name: loki-secrets-sync
-patchesStrategicMerge:
-- resources-patch.yaml
 resources:
 - ../../base
 - ingress.yaml

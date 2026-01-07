@@ -11,8 +11,6 @@ patches:
   target:
     kind: Deployment
     name: changedetection
-patchesStrategicMerge:
-- resources-patch.yaml
 resources:
 - ../../base
 - ingress.yaml

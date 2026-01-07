@@ -7,7 +7,5 @@ labels:
 namespace: monitoring
 patches:
 - path: patch-infisical-env.yaml
-patchesStrategicMerge:
-- resources-patch.yaml
 resources:
 - ../../base

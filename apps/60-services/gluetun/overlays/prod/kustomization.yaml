@@ -5,6 +5,5 @@ kind: Kustomization
 namespace: services
 patchesStrategicMerge:
 - patch-infisical-env.yaml
-- resources-patch.yaml
 resources:
 - ../../base

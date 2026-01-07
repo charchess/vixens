@@ -26,8 +26,6 @@ patches:
   target:
     kind: InfisicalSecret
     name: frigate-litestream-secret
-patchesStrategicMerge:
-- resources-patch.yaml
 resources:
 - ../../base
 - ingress.yaml
