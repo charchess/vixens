@@ -34,4 +34,4 @@
 
 ## Multi-Environment Configuration
 *   **Mirroring Principle:** New environments replicate `dev` structure.
-*   **IP Addressing:** Last octet of IP address remains same across different service VLANs (e.g., ArgoCD (dev) `192.168.208.81` vs ArgoCD (test) `192.168.209.81`).
+*   **IP Addressing:** Last octet of IP address remains same across different service VLANs.

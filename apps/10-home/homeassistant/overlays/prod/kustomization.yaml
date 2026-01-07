@@ -3,8 +3,10 @@ kind: Kustomization
 namespace: homeassistant
 patches:
 - path: infisical-config-patch.yaml
-patchesStrategicMerge:
-- resources-patch.yaml
+- path: litestream-secret-patch.yaml
+  target:
+    kind: InfisicalSecret
+    name: homeassistant-litestream-secret
 resources:
 - ../../base
 - ingress.yaml

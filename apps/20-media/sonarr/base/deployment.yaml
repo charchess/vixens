@@ -16,16 +16,54 @@ spec:
     metadata:
       labels:
         app: sonarr
+      annotations:
+        reloader.stakater.com/auto: "true"
     spec:
+      priorityClassName: vixens-medium
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
+      initContainers:
+        - name: restore-db
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/config/sonarr.db"]
+          envFrom:
+            - secretRef:
+                name: sonarr-litestream-secret
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
       containers:
         - name: sonarr
           image: ghcr.io/linuxserver/sonarr:version-4.0.16.2944
           ports:
             - containerPort: 8989 # Default Sonarr UI port
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 8989
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 8989
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
           env:
             - name: PUID
               value: "1000"
@@ -41,6 +79,28 @@ spec:
             - name: tv
               mountPath: /tv
               subPath: "TV Show" # Mounts /volume3/Content/TVShow
+        - name: litestream
+          image: litestream/litestream:0.3.13
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args: ["replicate", "-config", "/etc/litestream.yml"]
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+          envFrom:
+            - secretRef:
+                name: sonarr-litestream-secret
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -53,3 +113,7 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Content
+        - name: litestream-config
+          configMap:
+            name: sonarr-litestream-config
+

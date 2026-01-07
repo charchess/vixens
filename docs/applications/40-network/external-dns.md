@@ -49,6 +49,11 @@ annotations:
 - **Logs Webhook :** `kubectl logs -n networking -l app.kubernetes.io/instance=external-dns-unifi -c unifi-webhook`
 - **Logs Gandi :** `kubectl logs -n networking -l app.kubernetes.io/instance=external-dns-gandi`
 
+## Notes Techniques (Gold)
+- **Priorité :** `vixens-critical`
+- **Ressources :** Profil Micro (20m/64Mi)
+- **Secrets :** Gérés par Infisical (`external-dns-gandi-secret`) via une Application ArgoCD dédiée pour plus de stabilité.
+
 ### Test de résolution
 ```bash
 # Interne (si connecté au LAN)

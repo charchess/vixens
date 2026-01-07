@@ -17,6 +17,5 @@ spec:
         envSlug: staging
         secretsPath: /apps/10-home/mosquitto
     secretName: mosquitto-password-file
-    secretNamespace: mosquitto
     creationPolicy: Owner
     secretType: Opaque

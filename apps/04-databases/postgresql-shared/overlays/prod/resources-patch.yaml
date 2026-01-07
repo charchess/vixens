@@ -1,16 +1,14 @@
-apiVersion: apps/v1
-kind: StatefulSet
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
 metadata:
   name: postgresql-shared
 spec:
-  template:
-    spec:
-      containers:
-      - name: postgresql-shared
-        resources:
-          limits:
-            cpu: 1000m
-            memory: 512Mi
-          requests:
-            cpu: 100m
-            memory: 256Mi
+  instances: 1
+  priorityClassName: vixens-critical
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi

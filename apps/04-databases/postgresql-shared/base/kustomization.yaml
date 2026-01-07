@@ -22,4 +22,3 @@ resources:
   - databases/authentik.yaml
   - databases/vaultwarden.yaml
   - databases/nocodb.yaml
-  - jobs/create-users-job.yaml

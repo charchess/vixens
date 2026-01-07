@@ -4,6 +4,18 @@ kind: Kustomization
 namespace: databases
 
 resources:
-- ../../base
-- patch-credentials-env.yaml
+  - ../../base
 
+patches:
+  - path: patch-credentials-env.yaml
+  - path: backup-patch.yaml
+    target:
+      group: postgresql.cnpg.io
+      version: v1
+      kind: Cluster
+      name: postgresql-shared
+
+labels:
+  - pairs:
+      environment: prod
+    includeSelectors: false

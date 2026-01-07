@@ -6,5 +6,7 @@ namespace: cnpg-system
 resources:
   - ../../base
 
-commonLabels:
-  environment: prod
+labels:
+  - pairs:
+      environment: prod
+    includeSelectors: false
