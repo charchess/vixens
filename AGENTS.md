@@ -1,96 +1,68 @@
-# AGENT.md
+Tu es un agent DevOps autonome. Ton seul objectif est d'exécuter le workflow de déploiement applications.
 
-Guide d'orientation pour agents AI (Gemini, Claude, etc.) travaillant sur le projet Vixens.
+**RÈGLES ABSOLUES**:
+1. Tu NE PEUX PAS passer à l'étape suivante sans avoir terminé la précédente
+2. Tu DOIS exécuter les commandes `!just ...` dans l'ordre exact
+3. Si une validation échoue, tu REVIENS à l'étape 3
 
----
-
-## 🚨 RÈGLE MAÎTRE
-
-**[WORKFLOW.md](WORKFLOW.md) est la référence ABSOLUE pour le processus de travail.**
-
-Toutes les instructions de ce fichier sont complémentaires et ne doivent JAMAIS contredire WORKFLOW.md.
+**WORKFLOW DÉTERMINISTE** (exécuter dans cet ordre):
 
 ---
-
-## 📋 Processus de Travail
-
-### Voir WORKFLOW.md pour le processus complet
-
-**Résumé rapide du cycle de travail :**
-
-1. **Initialisation** → Récupérer les tâches attribuées à "Coding Agent" (Archon : `find_tasks`). **Attention :** Utiliser une pagination suffisante (`per_page=50`) pour ne pas manquer de tâches en cours.
-2. **Sélection** :
-   - Priorité 1 : Reprendre les tâches `review` (assignées à l'agent).
-   - Priorité 2 : Continuer les tâches `doing` (assignées à l'agent).
-   - Priorité 3 : Si aucune tâche en cours, **PROPOSER** la liste des tâches `todo` critiques à l'utilisateur et attendre son choix.
-3. **Analyse** → Définir "Definition of Done", consulter `docs/applications/<app>.md`.
-4. **Exécution** → Passer en "doing", travailler de manière incrémentale.
-5. **Prévalidation** → Vérifier la conformité (AGENTS.md, workflow, DoD).
-6. **Commit/Push** → Git commit + push vers `dev` UNIQUEMENT.
-7. **Validation Dev** → Tester en dev (kubectl + playwright). Validation du DoD complète.
-8. **Promotion** → Si le DoD est 100% validé en dev, promouvoir en prod via GitHub Actions.
-9. **Validation Prod** → Re-valider le résultat en production.
-10. **Finalisation** → Passer en `review` + assignee="User".
+*ÉTAPE 0: Démarrage*
+!just resume
+→ Cette commande te donne la tâche à faire. Si status="resume", continuer avec cette tâche. Si status="choose", demander à l'utilisateur de choisir.
 
 ---
-
-## 🛠️ Outils Essentiels
-
-### 1. Archon MCP Server (Task & Knowledge Management)
-**Système PRIMARY pour la gestion des tâches.**
-
-- **Règles :**
-  - Toujours rechercher dans RAG AVANT de coder.
-  - Garder les queries courtes (2-5 mots-clés).
-  - Status flow : `todo` → `doing` → `review` (Agent) → `review` (User) → `done`.
-
-### 2. Serena MCP Server (Code Analysis)
-**Analyse sémantique et édition de code.**
-- **Action :** Toujours demander les `initial_instructions` à Serena pour connaître les capacités actuelles.
-
-### 3. Playwright (Validation Web)
-**Validation des interfaces web après déploiement.**
-- **Fallback :** Si Playwright ne fonctionne pas, utiliser `curl` et informer l'utilisateur.
+*ÉTAPE 1: Chargement Contexte*
+!just load &lt;task_id&gt;
+→ Analyser le JSON retourné. Note l'app_name, les prereqs détectés, et le doc_path.
 
 ---
-
-## 📄 Documentation Centralisée dans Archon
-
-**IMPORTANT :** Toute la documentation critique du projet est accessible via Archon MCP Server (`find_documents`).
+*ÉTAPE 2: Documentation*
+Si doc_path existe:
+  @serena get_file_content &lt;doc_path&gt;
+  
+Si prereqs=True:
+  @archon rag_query "PVC RWO strategy recreate"
 
 ---
+*ÉTAPE 3: Exécution*
+- Analyser le code avec @serena (symboles, fichiers)
+- Modifier les manifests k8s/ ou terraform/ selon besoin
+- Faire un commit: git add . && git commit -m "..."
+- Pousser sur dev: git push origin dev
+- Sync ArgoCD: @kubernetes apply -f k8s/apps/...
 
-## ⚠️ Règles Impératives
+---
+*ÉTAPE 4: VALIDATION OBLIGATOIRE (GATE)*
+Tu DOIS valider chacun des points suivants:
 
-1. **WORKFLOW.md est MAÎTRE** - Toujours suivre le processus défini.
-2. **Archon FIRST** - Pas de TodoWrite, gestion via Archon MCP.
-3. **RAG avant code** - Rechercher avant d'implémenter.
-4. **Git : dev ONLY** - Jamais de push direct vers main.
-5. **Proposition de Tâches** - Toujours faire valider le choix d'une nouvelle tâche `todo`.
-6. **Validation DoD** - La promotion en prod exige une validation complète du DoD en dev.
+1. @kubernetes get pods -n &lt;namespace&gt; → vérifier Running
+2. @archon rag_query "comment vérifier health check &lt;app&gt;"
+3. curl -I https://&lt;app&gt;.dev.truxonline.com → vérifier HTTP 200
+4. @playwright test --url https://&lt;app&gt;.dev.truxonline.com
 
-## Landing the Plane (Session Completion)
+Si une validation échoue:
+  → Retourner à ÉTAPE 3 avec la correction
+  → Ne jamais appeler !just close
 
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+Si toutes les validations passent:
+  !just validate &lt;task_id&gt;
+  → Cette commande enregistre que tu as validé
 
-**MANDATORY WORKFLOW:**
+---
+*ÉTAPE 5: Fermeture*
+!just close &lt;task_id&gt;
+→ La tâche passe en review. Retourner à ÉTAPE 0.
 
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
-   ```bash
-   git pull --rebase
-   bd sync
-   git push
-   git status  # MUST show "up to date with origin"
-   ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
+---
+*CAS SPÉCIAL: Idée en cours de session*
+Si l'utilisateur propose une nouvelle tâche:
+  !just burst "&lt;titre&gt;"
+  → Retourner à ÉTAPE 0 immédiatement après.
 
-**CRITICAL RULES:**
-- Work is NOT complete until `git push` succeeds
-- NEVER stop before pushing - that leaves work stranded locally
-- NEVER say "ready to push when you are" - YOU must push
-- If push fails, resolve and retry until it succeeds
+---
+**RAPPEL CRITIQUE**: 
+- "just close" est **interdit** avant "!just validate"
+- Si tu n'es pas sûr, demande à l'utilisateur
+- Tu es dans un environnement homelab, mais la rigueur est obligatoire

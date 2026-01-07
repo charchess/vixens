@@ -45,23 +45,28 @@ def get_recommended_priority(ns, name):
     low_apps = ['hydrus', 'jellyfin', 'plex', 'radarr', 'sonarr', 'lidarr', 'downloads', 'media', 'amule', 'pyload', 'qbittorrent']
     
     if ns in infra_ns or any(c in name for c in critical_apps):
-        return "High (Prod-Critical)"
+        return "vixens-critical"
     if any(l in name or l in ns for l in low_apps):
-        return "Low (Prod-BestEffort)"
-    return "Medium (Prod-Standard)"
+        return "vixens-low"
+    return "vixens-medium"
 
 print("Collecting Pods...")
 pods = run_kubectl("kubectl get pods -A -o json --kubeconfig terraform/environments/prod/kubeconfig-prod")
+
+print("Collecting ArgoCD Apps...")
+apps = run_kubectl("kubectl get applications -n argocd -o json --kubeconfig terraform/environments/prod/kubeconfig-prod")
+app_health = {a['metadata']['name']: a.get('status', {}).get('health', {}).get('status', 'Unknown') for a in apps.get('items', [])}
 
 print("Collecting VPAs...")
 vpas = run_kubectl("kubectl get vpa -A -o json --kubeconfig terraform/environments/prod/kubeconfig-prod")
 
 vpa_map = {}
-for vpa in vpas.get('items', []):
-    ns = vpa['metadata']['namespace']
-    target_name = vpa['spec']['targetRef']['name']
-    recs = vpa.get('status', {}).get('recommendation', {}).get('containerRecommendations', [])
-    vpa_map[f"{ns}/{target_name}"] = recs
+if vpas:
+    for vpa in vpas.get('items', []):
+        ns = vpa['metadata']['namespace']
+        target_name = vpa['spec']['targetRef']['name']
+        recs = vpa.get('status', {}).get('recommendation', {}).get('containerRecommendations', [])
+        vpa_map[f"{ns}/{target_name}"] = recs
 
 data = []
 processed_controllers = set()
@@ -69,13 +74,13 @@ processed_controllers = set()
 for pod in pods.get('items', []):
     ns = pod['metadata']['namespace']
     pod_name = pod['metadata']['name']
-    status = pod['status']['phase']
-    if status == 'Pending':
-        # Check for detailed reason
-        for cond in pod['status'].get('conditions', []):
-            if cond['type'] == 'PodScheduled' and cond['status'] == 'False':
-                status = f"Pending ({cond['reason']})"
+    phase = pod['status']['phase']
     
+    # Get restarts
+    restarts = 0
+    if 'containerStatuses' in pod['status']:
+        restarts = sum(c['restartCount'] for c in pod['status']['containerStatuses'])
+
     owner = pod['metadata'].get('ownerReferences', [{}])[0]
     controller_name = owner.get('name', pod_name)
     controller_kind = owner.get('kind', 'Pod')
@@ -90,6 +95,15 @@ for pod in pods.get('items', []):
 
     priority = pod['spec'].get('priorityClassName', 'default (0)')
     
+    # Logic for "App Status"
+    argo_status = app_health.get(controller_name, app_health.get(controller_name.replace('-prod', ''), 'N/A'))
+    if phase != 'Running' or argo_status in ['Degraded', 'Missing']:
+        functional_status = "❌ Broken"
+    elif restarts > 50:
+        functional_status = f"⚠️ Unstable ({restarts} restarts)"
+    else:
+        functional_status = "✅ OK"
+
     for container in pod['spec']['containers']:
         c_name = container['name']
         req = container.get('resources', {}).get('requests', {})
@@ -117,7 +131,8 @@ for pod in pods.get('items', []):
             "Req RAM": req_mem,
             "VPA CPU": vpa_target_cpu,
             "VPA RAM": vpa_target_mem,
-            "Status": status,
+            "Pod Phase": phase,
+            "App Status": functional_status,
             "Current Prio": priority,
             "Rec. Prio": rec_prio
         })
@@ -125,7 +140,7 @@ for pod in pods.get('items', []):
 data.sort(key=lambda x: (x['Namespace'], x['App']))
 
 # Alignment logic
-headers = ["Namespace", "App", "Container", "Req CPU", "Req RAM", "VPA CPU", "VPA RAM", "Status", "Current Prio", "Rec. Prio"]
+headers = ["Namespace", "App", "Container", "Req CPU", "Req RAM", "VPA CPU", "VPA RAM", "Pod Phase", "App Status", "Current Prio", "Rec. Prio"]
 widths = {h: len(h) for h in headers}
 for row in data:
     for h in headers:

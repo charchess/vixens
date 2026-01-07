@@ -167,3 +167,4 @@ current_state.json
 .envrc
 .envrc.example
 .serena
+.bd.db

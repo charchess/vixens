@@ -4,8 +4,14 @@ kind: Kustomization
 namespace: databases
 
 resources:
-- ../../base
+  - ../../base
 
 patches:
-- path: patch-credentials-env.yaml
+  - path: patch-credentials-env.yaml
+  - path: resources-patch.yaml
+  - path: backup-patch.yaml
 
+labels:
+  - pairs:
+      environment: prod
+    includeSelectors: false
