@@ -9,6 +9,10 @@ patches:
   target:
     kind: InfisicalSecret
     name: litestream-shared-secrets
+- path: deployment-patch.yaml
+  target:
+    kind: Deployment
+    name: vaultwarden
 patchesStrategicMerge:
 - resources-patch.yaml
 resources:
