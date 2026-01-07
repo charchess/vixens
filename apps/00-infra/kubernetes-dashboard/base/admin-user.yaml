@@ -19,6 +19,9 @@ subjects:
 - kind: ServiceAccount
   name: kubernetes-dashboard-api
   namespace: kubernetes-dashboard
+- kind: ServiceAccount
+  name: kubernetes-dashboard-web
+  namespace: kubernetes-dashboard
 ---
 apiVersion: v1
 kind: Secret

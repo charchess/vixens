@@ -3,19 +3,16 @@
 
 # Kong integration settings (Default in v7.x)
 kong:
-  enabled: true # Dashboard v7.x depends on it
+  enabled: true
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
 
 # We handle ingress via our standard traefik Ingress resource in overlays
 api:
   ingress:
     enabled: false
-
-# Metrics scraper integration
-metricsScraper:
-  enabled: true
-
-# Enable skip-login and insecure access
-api:
   extraArgs:
     - --enable-skip-login
     - --enable-insecure-login
@@ -25,7 +22,15 @@ api:
       operator: "Exists"
       effect: "NoSchedule"
 
-# Add tolerations to other components
+# Metrics scraper integration
+metricsScraper:
+  enabled: true
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+# Auth and Web components
 auth:
   tolerations:
     - key: "node-role.kubernetes.io/control-plane"
@@ -33,20 +38,6 @@ auth:
       effect: "NoSchedule"
 
 web:
-  tolerations:
-    - key: "node-role.kubernetes.io/control-plane"
-      operator: "Exists"
-      effect: "NoSchedule"
-
-kong:
-  enabled: true
-  tolerations:
-    - key: "node-role.kubernetes.io/control-plane"
-      operator: "Exists"
-      effect: "NoSchedule"
-
-metricsScraper:
-  enabled: true
   tolerations:
     - key: "node-role.kubernetes.io/control-plane"
       operator: "Exists"
