@@ -7,7 +7,6 @@ resources:
   - ../../base
 
 patches:
-  - path: resources-patch.yaml
   - path: patch-infisical-env.yaml
 
 labels:

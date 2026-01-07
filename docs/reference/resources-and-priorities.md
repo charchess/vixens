@@ -20,6 +20,7 @@
 | cert-manager              | cert-manager-webhook-gandi         | cert-manager-webhook-gandi | 50m     | 64Mi    | N/A     | N/A     | Running   | ✅ OK                       | default (0)             | vixens-critical |
 | cnpg-system               | cloudnative-pg                     | manager                    | 100m    | 128Mi   | N/A     | N/A     | Running   | ⚠️ Unstable (171 restarts) | homelab-critical        | vixens-medium   |
 | databases                 | postgresql-shared                  | postgres                   | 100m    | 256Mi   | N/A     | N/A     | Running   | ✅ OK                       | homelab-critical        | vixens-critical |
+| databases                 | postgresql-shared-2-join           | join                       | 200m    | 512Mi   | N/A     | N/A     | Pending   | ❌ Broken                   | vixens-critical         | vixens-critical |
 | databases                 | redis-shared                       | redis                      | 23m     | 128Mi   | N/A     | N/A     | Running   | ✅ OK                       | default (0)             | vixens-critical |
 | homeassistant             | homeassistant                      | filebrowser                | 11m     | 64Mi    | N/A     | N/A     | Running   | ✅ OK                       | vixens-high             | vixens-medium   |
 | homeassistant             | homeassistant                      | homeassistant              | 143m    | 1500Mi  | N/A     | N/A     | Running   | ✅ OK                       | vixens-high             | vixens-medium   |

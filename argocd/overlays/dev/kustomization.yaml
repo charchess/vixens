@@ -88,3 +88,4 @@ resources:
   # - apps/mealie.yaml
   # - apps/nocodb.yaml
   # - apps/vikunja.yaml- apps/mariadb-shared.yaml
+- apps/mariadb-shared-config.yaml
