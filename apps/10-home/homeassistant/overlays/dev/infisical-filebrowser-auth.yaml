@@ -17,6 +17,7 @@ spec:
   hostAPI: http://192.168.111.69:8085
   managedSecretReference:
     secretName: filebrowser-auth
+    secretNamespace: homeassistant
     creationPolicy: Owner
     secretType: Opaque
   resyncInterval: 60

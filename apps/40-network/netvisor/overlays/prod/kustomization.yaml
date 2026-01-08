@@ -6,7 +6,6 @@ patches:
   target:
     kind: InfisicalSecret
     name: netvisor-secrets-sync
-patchesStrategicMerge:
   - server-url-patch.yaml
 resources:
   - ../../base

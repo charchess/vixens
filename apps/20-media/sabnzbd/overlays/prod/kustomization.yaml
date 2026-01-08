@@ -10,7 +10,6 @@ patches:
   target:
     kind: InfisicalSecret
     name: sabnzbd-litestream-secret
-patchesStrategicMerge:
   - deployment-patch.yaml
 resources:
   - ../../base

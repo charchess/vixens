@@ -3,7 +3,6 @@ commonLabels:
   environment: prod
 kind: Kustomization
 namespace: services
-patchesStrategicMerge:
   - patch-infisical-env.yaml
 resources:
   - ../../base
