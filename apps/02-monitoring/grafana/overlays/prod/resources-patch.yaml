@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+spec:
+  template:
+    spec:
+      containers:
+      - name: grafana
+        resources:
+          limits:
+            cpu: 500m
+            memory: 322Mi
+          requests:
+            cpu: 23m
+            memory: 214Mi
+      - name: grafana-sc-dashboard
+        resources:
+          limits:
+            cpu: 500m
+            memory: 502Mi
+          requests:
+            cpu: 11m
+            memory: 334Mi

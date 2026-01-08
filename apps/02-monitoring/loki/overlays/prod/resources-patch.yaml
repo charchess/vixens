@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loki
+spec:
+  template:
+    spec:
+      containers:
+      - name: loki
+        resources:
+          limits:
+            cpu: 500m
+            memory: 389Mi
+          requests:
+            cpu: 23m
+            memory: 259Mi
