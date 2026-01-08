@@ -7,10 +7,10 @@ spec:
     spec:
       containers:
         - name: netbox
-        resources:
-          limits:
-            cpu: 500m
-            memory: 1173Mi
-          requests:
-            cpu: 11m
-            memory: 640Mi
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1173Mi
+            requests:
+              cpu: 11m
+              memory: 640Mi

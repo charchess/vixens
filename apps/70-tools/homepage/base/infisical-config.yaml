@@ -18,3 +18,4 @@ spec:
   managedSecretReference:
     secretName: homepage-config-secret
     creationPolicy: "Owner"
+    secretNamespace: tools

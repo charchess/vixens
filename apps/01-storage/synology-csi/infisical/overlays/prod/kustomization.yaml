@@ -3,8 +3,11 @@ kind: Kustomization
 namespace: synology-csi
 patches:
   - path: synology-infisical-secret-patch.yaml
-  target:
-    kind: InfisicalSecret
-    name: synology-csi-credentials-sync
+    target:
+      kind: InfisicalSecret
+      name: synology-csi-credentials-sync
 resources:
   - ../../base
+spec:
+  managedSecretReference:
+    secretNamespace: storage

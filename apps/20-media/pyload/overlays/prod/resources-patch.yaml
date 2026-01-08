@@ -7,10 +7,10 @@ spec:
     spec:
       containers:
         - name: pyload
-        resources:
-          limits:
-            cpu: 500m
-            memory: 192Mi
-          requests:
-            cpu: 11m
-            memory: 128Mi
+          resources:
+            limits:
+              cpu: 500m
+              memory: 192Mi
+            requests:
+              cpu: 11m
+              memory: 128Mi

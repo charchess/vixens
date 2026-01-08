@@ -7,10 +7,10 @@ spec:
     spec:
       containers:
         - name: sabnzbd
-        resources:
-          limits:
-            cpu: 2000m
-            memory: 4Gi
-          requests:
-            cpu: 50m
-            memory: 256Mi
+          resources:
+            limits:
+              cpu: 2000m
+              memory: 4Gi
+            requests:
+              cpu: 50m
+              memory: 256Mi

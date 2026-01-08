@@ -4,11 +4,10 @@ commonLabels:
 kind: Kustomization
 namespace: monitoring
 patches:
-  - patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n\
-    \  value: prod\n"
-  target:
-    kind: InfisicalSecret
-    name: promtail-secrets-sync
+  - patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n  value: prod\n"
+    target:
+      kind: InfisicalSecret
+      name: promtail-secrets-sync
 resources:
   - ingress.yaml
   - ../../base

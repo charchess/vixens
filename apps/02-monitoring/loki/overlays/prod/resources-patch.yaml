@@ -7,10 +7,10 @@ spec:
     spec:
       containers:
         - name: loki
-        resources:
-          limits:
-            cpu: 500m
-            memory: 389Mi
-          requests:
-            cpu: 23m
-            memory: 259Mi
+          resources:
+            limits:
+              cpu: 500m
+              memory: 389Mi
+            requests:
+              cpu: 23m
+              memory: 259Mi

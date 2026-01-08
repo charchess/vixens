@@ -7,10 +7,10 @@ spec:
     spec:
       containers:
         - name: renovate
-        resources:
-          limits:
-            cpu: 118959m
-            memory: 84897Mi
-          requests:
-            cpu: 977m
-            memory: 990Mi
+          resources:
+            limits:
+              cpu: 118959m
+              memory: 84897Mi
+            requests:
+              cpu: 977m
+              memory: 990Mi

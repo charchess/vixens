@@ -7,3 +7,5 @@ spec:
     universalAuth:
       secretsScope:
         envSlug: staging
+  managedSecretReference:
+    secretNamespace: media

@@ -18,3 +18,4 @@ spec:
   managedSecretReference:
     secretName: frigate-config-secret
     creationPolicy: "Owner"
+    secretNamespace: media

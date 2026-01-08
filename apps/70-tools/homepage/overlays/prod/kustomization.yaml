@@ -3,15 +3,18 @@ kind: Kustomization
 namespace: tools
 patches:
   - path: infisical-config-patch.yaml
-  target:
-    kind: InfisicalSecret
-    name: homepage-config-sync
+    target:
+      kind: InfisicalSecret
+      name: homepage-config-sync
   - path: deployment-patch.yaml
-  target:
-    kind: Deployment
-    name: homepage
+    target:
+      kind: Deployment
+      name: homepage
 resources:
   - ../../base
   - ingress.yaml
   - ingress-redirect.yaml
   - infisical-secret.yaml
+spec:
+  managedSecretReference:
+    secretNamespace: tools

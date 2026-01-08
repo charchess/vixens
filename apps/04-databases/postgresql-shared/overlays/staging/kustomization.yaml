@@ -1,16 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: databases
-
 resources:
   - ../../base
-
 labels:
   - pairs:
       environment: staging
     includeSelectors: false
-
 patches:
   - path: patch-credentials-env.yaml
   - path: patch-instances.yaml
