@@ -1,4 +1,3 @@
----
 apiVersion: secrets.infisical.com/v1alpha1
 kind: InfisicalSecret
 metadata:
@@ -9,3 +8,5 @@ spec:
     universalAuth:
       secretsScope:
         envSlug: dev
+  managedSecretReference:
+    secretNamespace: tools
