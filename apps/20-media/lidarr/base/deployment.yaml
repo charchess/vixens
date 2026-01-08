@@ -20,6 +20,8 @@ spec:
         reloader.stakater.com/auto: "true"
     spec:
       priorityClassName: vixens-medium
+      securityContext:
+        fsGroup: 1000
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
