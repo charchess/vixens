@@ -25,7 +25,6 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-
   source:
     repoURL: HELM_REPO
     chart: CHART_NAME
@@ -33,19 +32,16 @@ spec:
     helm:
       values: |
         HELM_VALUES
-
   destination:
     server: https://kubernetes.default.svc
     namespace: NAMESPACE
-
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - ServerSideApply=true  # Recommended for Helm charts
-
+      - ServerSideApply=true # Recommended for Helm charts
   # Retry configuration for transient failures
   retry:
     limit: 5

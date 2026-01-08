@@ -19,11 +19,11 @@ spec:
     spec:
       securityContext:
         fsGroup: 1000
-        fsGroupChangePolicy: "OnRootMismatch"
+        fsGroupChangePolicy: OnRootMismatch
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: music-assistant
           image: ghcr.io/music-assistant/server:2.8.0b3
@@ -35,7 +35,7 @@ spec:
             - name: PGID
               value: "1000"
             - name: TZ
-              value: "Europe/Paris"
+              value: Europe/Paris
           volumeMounts:
             - name: config
               mountPath: /config

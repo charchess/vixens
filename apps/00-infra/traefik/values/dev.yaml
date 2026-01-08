@@ -8,8 +8,7 @@
 service:
   type: LoadBalancer
   annotations:
-    io.cilium/lb-ipam-ips: "192.168.208.70"
-
+    io.cilium/lb-ipam-ips: 192.168.208.70
 # ============================================================================
 # Development-Specific Settings
 # ============================================================================
@@ -19,16 +18,14 @@ logs:
     level: DEBUG
   access:
     enabled: true
-
 # Resource limits (lower for VM environment)
 resources:
   requests:
-    cpu: "100m"
-    memory: "128Mi"
+    cpu: 100m
+    memory: 128Mi
   limits:
-    cpu: "500m"
-    memory: "512Mi"
-
+    cpu: 500m
+    memory: 512Mi
 # Single replica for dev
 deployment:
   replicas: 1

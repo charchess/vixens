@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,7 +7,7 @@ spec:
   template:
     spec:
       containers:
-      - name: homepage
-        env: null
-      - name: HOMEPAGE_ALLOWED_HOSTS
-        value: homepage.truxonline.com
+        - name: homepage
+          env: null
+        - name: HOMEPAGE_ALLOWED_HOSTS
+          value: homepage.truxonline.com

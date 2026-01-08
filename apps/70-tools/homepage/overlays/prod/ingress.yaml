@@ -1,4 +1,5 @@
---- # Ingress for HTTPS traffic
+---
+# Ingress for HTTPS traffic
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -6,20 +7,20 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     # This Ingress is only for the secure entrypoint
-    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
     # The gethomepage annotations are for service discovery by homepage itself
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Homepage"
-    gethomepage.dev/icon: "homepage.png"
-    gethomepage.dev/group: "Infrastructure"
+    gethomepage.dev/name: Homepage
+    gethomepage.dev/icon: homepage.png
+    gethomepage.dev/group: Infrastructure
 spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - "homepage.truxonline.com"
+        - homepage.truxonline.com
       secretName: homepage-dev-tls
   rules:
-    - host: "homepage.truxonline.com"
+    - host: homepage.truxonline.com
       http:
         paths:
           - path: /

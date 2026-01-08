@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -13,7 +14,9 @@ spec:
                 secretKeyRef:
                   name: alertmanager-secrets
                   key: DISCORD_WEBHOOK_URL
-          command: ["/bin/sh", "-c"]
+          command:
+            - /bin/sh
+            - -c
           args:
             - |
               cp /etc/alertmanager/alertmanager.yml /tmp/alertmanager.yml &&

@@ -1,3 +1,4 @@
+---
 {{- if and .Values.servicePerReplica.enabled }}
 {{- $count := .Values.replicaCount | int -}}
 {{- $serviceValues := .Values.servicePerReplica -}}

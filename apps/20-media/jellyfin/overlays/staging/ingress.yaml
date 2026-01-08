@@ -5,16 +5,16 @@ metadata:
   name: jellyfin-ingress
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
-    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Jellyfin"
-    gethomepage.dev/icon: "jellyfin.png"
-    gethomepage.dev/group: "Media"
+    gethomepage.dev/name: Jellyfin
+    gethomepage.dev/icon: jellyfin.png
+    gethomepage.dev/group: Media
 spec:
   ingressClassName: traefik
   rules:
-    - host: "jellyfin.staging.truxonline.com"
+    - host: jellyfin.staging.truxonline.com
       http:
         paths:
           - path: /
@@ -26,5 +26,5 @@ spec:
                   number: 8096
   tls:
     - hosts:
-        - "jellyfin.staging.truxonline.com"
+        - jellyfin.staging.truxonline.com
       secretName: jellyfin-tls

@@ -19,16 +19,18 @@ spec:
     spec:
       priorityClassName: vixens-low
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       initContainers:
         - name: restore-config
           image: rclone/rclone:1.65
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
             - |
               export RCLONE_CONFIG_S3_TYPE=s3
@@ -50,7 +52,13 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/config/admin/history1.db"]
+          args:
+            - restore
+            - -config
+            - /etc/litestream.yml
+            - -if-db-not-exists
+            - -if-replica-exists
+            - /config/admin/history1.db
           envFrom:
             - secretRef:
                 name: sabnzbd-litestream-secret
@@ -79,18 +87,18 @@ spec:
             periodSeconds: 10
           resources:
             requests:
-              cpu: "50m"
-              memory: "256Mi"
+              cpu: 50m
+              memory: 256Mi
             limits:
-              cpu: "2000m"
-              memory: "4Gi"
+              cpu: 2000m
+              memory: 4Gi
           env: # Added environment variables
             - name: PUID
               value: "1000"
             - name: PGID
               value: "1000"
             - name: TZ
-              value: "Europe/Paris"
+              value: Europe/Paris
               # HOST_WHITELIST_ENTRIES and SABNZBD_HOST are set per environment via overlays
           volumeMounts:
             - name: config
@@ -102,14 +110,17 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["replicate", "-config", "/etc/litestream.yml"]
+          args:
+            - replicate
+            - -config
+            - /etc/litestream.yml
           resources:
             requests:
-              cpu: "10m"
-              memory: "64Mi"
+              cpu: 10m
+              memory: 64Mi
             limits:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: 100m
+              memory: 128Mi
           envFrom:
             - secretRef:
                 name: sabnzbd-litestream-secret
@@ -121,7 +132,9 @@ spec:
               subPath: litestream.yml
         - name: config-syncer
           image: alpine:3.19
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
             - |
               apk add --no-cache rclone inotify-tools
@@ -148,11 +161,11 @@ spec:
               done
           resources:
             requests:
-              cpu: "10m"
-              memory: "32Mi"
+              cpu: 10m
+              memory: 32Mi
             limits:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: 100m
+              memory: 128Mi
           envFrom:
             - secretRef:
                 name: sabnzbd-litestream-secret

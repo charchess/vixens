@@ -6,7 +6,7 @@ metadata:
   labels:
     app: homeassistant
   annotations:
-    secret.reloader.stakater.com/reload: "homeassistant-config"
+    secret.reloader.stakater.com/reload: homeassistant-config
 spec:
   replicas: 1
   strategy:
@@ -23,7 +23,7 @@ spec:
     spec:
       securityContext:
         fsGroup: 1000
-        fsGroupChangePolicy: "OnRootMismatch"
+        fsGroupChangePolicy: OnRootMismatch
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       priorityClassName: vixens-high
@@ -37,7 +37,9 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
             - |
               export RCLONE_CONFIG_S3_TYPE=s3
@@ -57,7 +59,13 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/config/home-assistant_v2.db"]
+          args:
+            - restore
+            - -config
+            - /etc/litestream.yml
+            - -if-db-not-exists
+            - -if-replica-exists
+            - /config/home-assistant_v2.db
           envFrom:
             - secretRef:
                 name: homeassistant-litestream-secret
@@ -69,7 +77,9 @@ spec:
               subPath: litestream.yml
         - name: config-init
           image: busybox:latest
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
             - |
               if [ ! -s /config/configuration.yaml ]; then
@@ -85,7 +95,9 @@ spec:
               readOnly: true
         - name: filebrowser-init
           image: filebrowser/filebrowser:v2.52.0
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
             - |
               set -e
@@ -122,7 +134,7 @@ spec:
               protocol: UDP
           env:
             - name: TZ
-              value: "Europe/Paris"
+              value: Europe/Paris
           volumeMounts:
             - name: config
               mountPath: /config
@@ -143,7 +155,7 @@ spec:
             - name: FB_PORT
               value: "8080"
             - name: FB_DATABASE
-              value: "/database/filebrowser.db"
+              value: /database/filebrowser.db
           volumeMounts:
             - name: config
               mountPath: /srv
@@ -151,17 +163,20 @@ spec:
               mountPath: /database
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "100m"
+              memory: 128Mi
+              cpu: 100m
             limits:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: 512Mi
+              cpu: 500m
         - name: litestream
           image: litestream/litestream:0.3.13
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["replicate", "-config", "/etc/litestream.yml"]
+          args:
+            - replicate
+            - -config
+            - /etc/litestream.yml
           envFrom:
             - secretRef:
                 name: homeassistant-litestream-secret
@@ -173,7 +188,9 @@ spec:
               subPath: litestream.yml
         - name: config-syncer
           image: alpine:3.19
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
             - |
               apk add --no-cache rclone inotify-tools

@@ -27,12 +27,12 @@ metadata:
   name: stirling-pdf-ingress
   namespace: tools
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Stirling PDF"
-    gethomepage.dev/icon: "stirling-pdf.png"
-    gethomepage.dev/group: "Tools"
+    gethomepage.dev/name: Stirling PDF
+    gethomepage.dev/icon: stirling-pdf.png
+    gethomepage.dev/group: Tools
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik

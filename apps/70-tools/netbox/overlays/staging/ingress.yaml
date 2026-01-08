@@ -1,3 +1,4 @@
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -5,12 +6,12 @@ metadata:
   namespace: tools
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
-    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
-    - host: "netbox.staging.truxonline.com"
+    - host: netbox.staging.truxonline.com
       http:
         paths:
           - path: /
@@ -22,5 +23,5 @@ spec:
                   number: 8080
   tls:
     - hosts:
-        - "netbox.staging.truxonline.com"
+        - netbox.staging.truxonline.com
       secretName: netbox-tls

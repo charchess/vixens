@@ -5,11 +5,11 @@ metadata:
   name: lazylibrarian-ingress
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "LazyLibrarian"
-    gethomepage.dev/icon: "lazylibrarian.png"
-    gethomepage.dev/group: "Media"
+    gethomepage.dev/name: LazyLibrarian
+    gethomepage.dev/icon: lazylibrarian.png
+    gethomepage.dev/group: Media
     traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik

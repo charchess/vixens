@@ -1,3 +1,4 @@
+---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 labels:
@@ -6,11 +7,23 @@ labels:
       vixens.lab/environment: prod
 namespace: synology-csi
 patches:
-  - patch: "- op: replace\n  path: /parameters/igroup\n  value: \"vixens-prod-iscsi-group\"\n- op: add\n  path: /parameters/targetIps\n  value: \"192.168.111.70,192.168.111.71\""
+  - patch: |-
+      - op: replace
+        path: /parameters/igroup
+        value: "vixens-prod-iscsi-group"
+      - op: add
+        path: /parameters/targetIps
+        value: "192.168.111.70,192.168.111.71"
     target:
       kind: StorageClass
       name: synelia-iscsi-retain
-  - patch: "- op: add\n  path: /parameters/igroup\n  value: \"vixens-prod-iscsi-group\"\n- op: add\n  path: /parameters/targetIps\n  value: \"192.168.111.70,192.168.111.71\""
+  - patch: |-
+      - op: add
+        path: /parameters/igroup
+        value: "vixens-prod-iscsi-group"
+      - op: add
+        path: /parameters/targetIps
+        value: "192.168.111.70,192.168.111.71"
     target:
       kind: StorageClass
       name: synelia-iscsi-delete

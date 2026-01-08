@@ -15,9 +15,9 @@ spec:
         app: synology-csi-controller
     spec:
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       serviceAccountName: synology-csi-controller
       containers:
         - name: csi-provisioner

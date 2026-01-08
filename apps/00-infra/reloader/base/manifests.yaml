@@ -4,39 +4,38 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   annotations:
-    meta.helm.sh/release-namespace: "tools"
-    meta.helm.sh/release-name: "reloader"
+    meta.helm.sh/release-namespace: tools
+    meta.helm.sh/release-name: reloader
   labels:
     app: reloader-reloader
-    release: "reloader"
+    release: reloader
     app.kubernetes.io/name: reloader
-    app.kubernetes.io/instance: "reloader"
-    helm.sh/chart: "reloader-2.2.7"
-    chart: "reloader-2.2.7"
-    heritage: "Helm"
-    app.kubernetes.io/managed-by: "Helm"
-    app.kubernetes.io/version: "v1.4.12"
+    app.kubernetes.io/instance: reloader
+    helm.sh/chart: reloader-2.2.7
+    chart: reloader-2.2.7
+    heritage: Helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: v1.4.12
   name: reloader-reloader
   namespace: tools
 ---
 # Source: reloader/templates/clusterrole.yaml
 apiVersion: rbac.authorization.k8s.io/v1
-
 kind: ClusterRole
 metadata:
   annotations:
-    meta.helm.sh/release-namespace: "tools"
-    meta.helm.sh/release-name: "reloader"
+    meta.helm.sh/release-namespace: tools
+    meta.helm.sh/release-name: reloader
   labels:
     app: reloader-reloader
-    release: "reloader"
+    release: reloader
     app.kubernetes.io/name: reloader
-    app.kubernetes.io/instance: "reloader"
-    helm.sh/chart: "reloader-2.2.7"
-    chart: "reloader-2.2.7"
-    heritage: "Helm"
-    app.kubernetes.io/managed-by: "Helm"
-    app.kubernetes.io/version: "v1.4.12"
+    app.kubernetes.io/instance: reloader
+    helm.sh/chart: reloader-2.2.7
+    chart: reloader-2.2.7
+    heritage: Helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: v1.4.12
   name: reloader-reloader-role
 rules:
   - apiGroups:
@@ -49,7 +48,7 @@ rules:
       - get
       - watch
   - apiGroups:
-      - "apps"
+      - apps
     resources:
       - deployments
       - daemonsets
@@ -60,14 +59,14 @@ rules:
       - update
       - patch
   - apiGroups:
-      - "batch"
+      - batch
     resources:
       - cronjobs
     verbs:
       - list
       - get
   - apiGroups:
-      - "batch"
+      - batch
     resources:
       - jobs
     verbs:
@@ -85,22 +84,21 @@ rules:
 ---
 # Source: reloader/templates/clusterrolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
-
 kind: ClusterRoleBinding
 metadata:
   annotations:
-    meta.helm.sh/release-namespace: "tools"
-    meta.helm.sh/release-name: "reloader"
+    meta.helm.sh/release-namespace: tools
+    meta.helm.sh/release-name: reloader
   labels:
     app: reloader-reloader
-    release: "reloader"
+    release: reloader
     app.kubernetes.io/name: reloader
-    app.kubernetes.io/instance: "reloader"
-    helm.sh/chart: "reloader-2.2.7"
-    chart: "reloader-2.2.7"
-    heritage: "Helm"
-    app.kubernetes.io/managed-by: "Helm"
-    app.kubernetes.io/version: "v1.4.12"
+    app.kubernetes.io/instance: reloader
+    helm.sh/chart: reloader-2.2.7
+    chart: reloader-2.2.7
+    heritage: Helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: v1.4.12
   name: reloader-reloader-role-binding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -116,18 +114,18 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   annotations:
-    meta.helm.sh/release-namespace: "tools"
-    meta.helm.sh/release-name: "reloader"
+    meta.helm.sh/release-namespace: tools
+    meta.helm.sh/release-name: reloader
   labels:
     app: reloader-reloader
-    release: "reloader"
+    release: reloader
     app.kubernetes.io/name: reloader
-    app.kubernetes.io/instance: "reloader"
-    helm.sh/chart: "reloader-2.2.7"
-    chart: "reloader-2.2.7"
-    heritage: "Helm"
-    app.kubernetes.io/managed-by: "Helm"
-    app.kubernetes.io/version: "v1.4.12"
+    app.kubernetes.io/instance: reloader
+    helm.sh/chart: reloader-2.2.7
+    chart: reloader-2.2.7
+    heritage: Helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: v1.4.12
   name: reloader-reloader-metadata-role
   namespace: tools
 rules:
@@ -135,30 +133,29 @@ rules:
       - ""
     resources:
       - configmaps
+      - secrets
     verbs:
       - list
       - get
       - watch
-      - create
-      - update
 ---
 # Source: reloader/templates/rolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   annotations:
-    meta.helm.sh/release-namespace: "tools"
-    meta.helm.sh/release-name: "reloader"
+    meta.helm.sh/release-namespace: tools
+    meta.helm.sh/release-name: reloader
   labels:
     app: reloader-reloader
-    release: "reloader"
+    release: reloader
     app.kubernetes.io/name: reloader
-    app.kubernetes.io/instance: "reloader"
-    helm.sh/chart: "reloader-2.2.7"
-    chart: "reloader-2.2.7"
-    heritage: "Helm"
-    app.kubernetes.io/managed-by: "Helm"
-    app.kubernetes.io/version: "v1.4.12"
+    app.kubernetes.io/instance: reloader
+    helm.sh/chart: reloader-2.2.7
+    chart: reloader-2.2.7
+    heritage: Helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: v1.4.12
   name: reloader-reloader-metadata-role-binding
   namespace: tools
 roleRef:
@@ -175,21 +172,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    meta.helm.sh/release-namespace: "tools"
-    meta.helm.sh/release-name: "reloader"
+    meta.helm.sh/release-namespace: tools
+    meta.helm.sh/release-name: reloader
   labels:
     app: reloader-reloader
-    release: "reloader"
+    release: reloader
     app.kubernetes.io/name: reloader
-    app.kubernetes.io/instance: "reloader"
-    helm.sh/chart: "reloader-2.2.7"
-    chart: "reloader-2.2.7"
-    heritage: "Helm"
-    app.kubernetes.io/managed-by: "Helm"
-    app.kubernetes.io/version: "v1.4.12"
-    group: com.stakater.platform
-    provider: stakater
-    version: v1.4.12
+    app.kubernetes.io/instance: reloader
+    helm.sh/chart: reloader-2.2.7
+    chart: reloader-2.2.7
+    heritage: Helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: v1.4.12
   name: reloader-reloader
   namespace: tools
 spec:
@@ -198,19 +192,19 @@ spec:
   selector:
     matchLabels:
       app: reloader-reloader
-      release: "reloader"
+      release: reloader
   template:
     metadata:
       labels:
         app: reloader-reloader
-        release: "reloader"
+        release: reloader
         app.kubernetes.io/name: reloader
-        app.kubernetes.io/instance: "reloader"
-        helm.sh/chart: "reloader-2.2.7"
-        chart: "reloader-2.2.7"
-        heritage: "Helm"
-        app.kubernetes.io/managed-by: "Helm"
-        app.kubernetes.io/version: "v1.4.12"
+        app.kubernetes.io/instance: reloader
+        helm.sh/chart: reloader-2.2.7
+        chart: reloader-2.2.7
+        heritage: Helm
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/version: v1.4.12
         group: com.stakater.platform
         provider: stakater
         version: v1.4.12
@@ -220,65 +214,62 @@ spec:
           key: node-role.kubernetes.io/control-plane
           operator: Exists
       containers:
-      - image: "ghcr.io/stakater/reloader:v1.4.12"
-        imagePullPolicy: IfNotPresent
-        name: reloader-reloader
-        env:
-        - name: GOMAXPROCS
-          valueFrom:
-            resourceFieldRef:
-              resource: limits.cpu
-              divisor: '1'
-        - name: GOMEMLIMIT
-          valueFrom:
-            resourceFieldRef:
-              resource: limits.memory
-              divisor: '1'
-
-        - name: RELOADER_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-
-        - name: RELOADER_DEPLOYMENT_NAME
-          value: reloader-reloader
-        ports:
-        - name: http
-          containerPort: 9090
-        livenessProbe:
-          httpGet:
-            path: /live
-            port: http
-          timeoutSeconds: 5
-          failureThreshold: 5
-          periodSeconds: 10
-          successThreshold: 1
-          initialDelaySeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /metrics
-            port: http
-          timeoutSeconds: 5
-          failureThreshold: 5
-          periodSeconds: 10
-          successThreshold: 1
-          initialDelaySeconds: 10
-
-        securityContext:
-          readOnlyRootFilesystem: true
-        volumeMounts:
+        - image: ghcr.io/stakater/reloader:v1.4.12
+          imagePullPolicy: IfNotPresent
+          name: reloader-reloader
+          env:
+            - name: GOMAXPROCS
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.cpu
+                  divisor: "1"
+            - name: GOMEMLIMIT
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.memory
+                  divisor: "1"
+            - name: RELOADER_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: RELOADER_DEPLOYMENT_NAME
+              value: reloader-reloader
+          ports:
+            - name: http
+              containerPort: 9090
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: http
+            timeoutSeconds: 5
+            failureThreshold: 5
+            periodSeconds: 10
+            successThreshold: 1
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: http
+            timeoutSeconds: 5
+            failureThreshold: 5
+            periodSeconds: 10
+            successThreshold: 1
+            initialDelaySeconds: 10
+          securityContext:
+            readOnlyRootFilesystem: true
+          volumeMounts:
             - mountPath: /tmp/
-            name: tmp-volume
-        args:
-          - "--log-level=info"
-        resources:
-          limits:
-            cpu: 100m
-            memory: 256Mi
-          requests:
-            cpu: 10m
-            memory: 128Mi
-      securityContext: 
+              name: tmp-volume
+          args:
+            - --log-level=info
+          resources:
+            limits:
+              cpu: 100m
+              memory: 256Mi
+            requests:
+              cpu: 10m
+              memory: 128Mi
+      securityContext:
         runAsNonRoot: true
         runAsUser: 65534
         seccompProfile:

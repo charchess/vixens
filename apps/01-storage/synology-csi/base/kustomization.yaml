@@ -12,6 +12,6 @@ resources:
 labels:
   - pairs:
       app.kubernetes.io/name: synology-csi
-      app.kubernetes.io/version: "v1.1.1"
+      app.kubernetes.io/version: v1.1.1
       vixens.lab/managed-by: argocd
     includeSelectors: true

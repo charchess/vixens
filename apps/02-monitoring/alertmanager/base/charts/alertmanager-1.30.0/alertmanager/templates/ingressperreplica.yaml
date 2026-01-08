@@ -1,3 +1,4 @@
+---
 {{- if and .Values.servicePerReplica.enabled .Values.ingressPerReplica.enabled }}
 {{- $pathType := .Values.ingressPerReplica.pathType  }}
 {{- $count := .Values.replicaCount | int -}}

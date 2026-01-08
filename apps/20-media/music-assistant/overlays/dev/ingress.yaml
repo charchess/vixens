@@ -5,11 +5,11 @@ metadata:
   name: music-assistant-ingress
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
-    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Music Assistant"
-    gethomepage.dev/icon: "music-assistant.png"
-    gethomepage.dev/group: "Media"
+    gethomepage.dev/name: Music Assistant
+    gethomepage.dev/icon: music-assistant.png
+    gethomepage.dev/group: Media
     traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik

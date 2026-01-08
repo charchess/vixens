@@ -20,15 +20,21 @@ spec:
       priorityClassName: vixens-high
       securityContext:
         fsGroup: 1000
-        fsGroupChangePolicy: "OnRootMismatch"
+        fsGroupChangePolicy: OnRootMismatch
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       initContainers:
         - name: restore-db
           image: litestream/litestream:0.3.13
-          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/data/db.sqlite3"]
+          args:
+            - restore
+            - -config
+            - /etc/litestream.yml
+            - -if-db-not-exists
+            - -if-replica-exists
+            - /data/db.sqlite3
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
@@ -57,14 +63,14 @@ spec:
             periodSeconds: 10
           resources:
             requests:
-              cpu: "50m"
-              memory: "256Mi"
+              cpu: 50m
+              memory: 256Mi
             limits:
-              cpu: "500m"
-              memory: "512Mi"
+              cpu: 500m
+              memory: 512Mi
           env:
             - name: DOMAIN
-              value: "https://vaultwarden.dev.truxonline.com"
+              value: https://vaultwarden.dev.truxonline.com
             - name: SIGNUPS_ALLOWED
               value: "true"
             - name: ADMIN_TOKEN
@@ -77,14 +83,17 @@ spec:
               mountPath: /data
         - name: litestream
           image: litestream/litestream:0.3.13
-          args: ["replicate", "-config", "/etc/litestream.yml"]
+          args:
+            - replicate
+            - -config
+            - /etc/litestream.yml
           resources:
             requests:
-              cpu: "10m"
-              memory: "64Mi"
+              cpu: 10m
+              memory: 64Mi
             limits:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: 100m
+              memory: 128Mi
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets

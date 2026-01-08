@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,7 +7,31 @@ spec:
   template:
     spec:
       containers:
-      - name: netbox
-        env: null
-      - name: ALLOWED_HOSTS
-        value: netbox.test.truxonline.com
+        - name: netbox
+          env:
+            - name: ALLOWED_HOSTS
+              value: '*'
+            - name: SUPERUSER_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: username
+            - name: SUPERUSER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: password
+            - name: SUPERUSER_EMAIL
+              value: netbox@truxonline.com
+            - name: SUPERUSER_API_TOKEN
+              value: 0123456789abcdef0123456789abcdef01234567
+          livenessProbe:
+            httpGet:
+              httpHeaders:
+                - name: Host
+                  value: localhost
+          readinessProbe:
+            httpGet:
+              httpHeaders:
+                - name: Host
+                  value: localhost

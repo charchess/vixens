@@ -7,7 +7,6 @@
 # ============================================================================
 # Install cert-manager CRDs as part of the Helm release
 installCRDs: true
-
 # ============================================================================
 # Global Configuration
 # ============================================================================
@@ -15,7 +14,6 @@ global:
   leaderElection:
     # Leader election namespace (should match deployment namespace)
     namespace: cert-manager
-
 # ============================================================================
 # Control Plane Tolerations
 # ============================================================================
@@ -24,21 +22,18 @@ tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
     effect: NoSchedule
-
 # Webhook component tolerations
 webhook:
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
-
 # CA Injector component tolerations
 cainjector:
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
-
 # Startup API check tolerations
 startupapicheck:
   tolerations:

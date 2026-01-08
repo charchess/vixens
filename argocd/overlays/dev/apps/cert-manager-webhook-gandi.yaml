@@ -15,23 +15,20 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
-
   # Multiple sources: Helm chart + Git values
   sources:
     # Helm chart from SINTEF repository
     - repoURL: https://sintef.github.io/cert-manager-webhook-gandi
       chart: cert-manager-webhook-gandi
-      targetRevision: "v0.5.2"
+      targetRevision: v0.5.2
       helm:
         valueFiles:
           - $values/apps/00-infra/cert-manager-webhook-gandi/values/common.yaml
           - $values/apps/00-infra/cert-manager-webhook-gandi/values/dev.yaml
-
     # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: dev
       ref: values
-
   syncPolicy:
     automated:
       prune: true
