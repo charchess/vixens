@@ -4,10 +4,10 @@ commonLabels:
 kind: Kustomization
 namespace: monitoring
 patches:
-- path: infisical-patch.yaml
+  - path: infisical-patch.yaml
   target:
     kind: InfisicalSecret
     name: loki-secrets-sync
 resources:
-- ../../base
-- ingress.yaml
+  - ../../base
+  - ingress.yaml
