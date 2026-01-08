@@ -1,21 +1,21 @@
+---
 apiVersion: secrets.infisical.com/v1alpha1
 kind: InfisicalSecret
 metadata:
   name: filebrowser-auth
   namespace: homeassistant
 spec:
+  hostAPI: http://192.168.111.69:8085
+  resyncInterval: 60
   authentication:
     universalAuth:
       credentialsRef:
         secretName: infisical-universal-auth
         secretNamespace: argocd
       secretsScope:
-        envSlug: staging
         projectSlug: vixens
+        envSlug: staging
         secretsPath: /apps/10-home/homeassistant
-  hostAPI: http://192.168.111.69:8085
   managedSecretReference:
-    creationPolicy: Owner
     secretName: filebrowser-auth
-    secretNamespace: homeassistant
-  resyncInterval: 60
+    creationPolicy: Owner

@@ -4,18 +4,17 @@ metadata:
   name: homepage-config-sync
   namespace: tools
 spec:
+  hostAPI: http://192.168.111.69:8085
+  resyncInterval: 60
   authentication:
     universalAuth:
       credentialsRef:
         secretName: infisical-universal-auth
         secretNamespace: argocd
       secretsScope:
-        envSlug: dev
         projectSlug: vixens
-        secretsPath: /apps/70-tools/homepage/config
-  hostAPI: http://192.168.111.69:8085
+        envSlug: dev # Will be patched in overlays
+        secretsPath: "/apps/70-tools/homepage/config"
   managedSecretReference:
-    creationPolicy: Owner
     secretName: homepage-config-secret
-    secretNamespace: tools
-  resyncInterval: 60
+    creationPolicy: "Owner"

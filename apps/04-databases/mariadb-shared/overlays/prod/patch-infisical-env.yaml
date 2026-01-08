@@ -8,5 +8,3 @@ spec:
     universalAuth:
       secretsScope:
         envSlug: prod
-  managedSecretReference:
-    secretNamespace: databases

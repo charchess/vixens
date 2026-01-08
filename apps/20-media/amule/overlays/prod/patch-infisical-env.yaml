@@ -7,6 +7,4 @@ spec:
     universalAuth:
       secretsScope:
         envSlug: prod
-        secretsPath: /apps/20-media/amule
-  managedSecretReference:
-    secretNamespace: media
+        secretsPath: "/apps/20-media/amule"
