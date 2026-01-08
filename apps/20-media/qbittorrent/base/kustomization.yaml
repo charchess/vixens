@@ -6,4 +6,3 @@ resources:
   - service.yaml
   - pvc.yaml
   - infisical-secret.yaml
-  - config-patcher.yaml
