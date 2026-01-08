@@ -7,4 +7,6 @@ spec:
     universalAuth:
       secretsScope:
         envSlug: prod
-        secretsPath: "/apps/20-media/pyload"
+        secretsPath: /apps/20-media/pyload
+  managedSecretReference:
+    secretNamespace: media
