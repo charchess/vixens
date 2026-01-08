@@ -610,6 +610,68 @@ spec:
 
 ---
 
+### 11. SQLite Database Management (Fail-Safe Integrity)
+
+**RÈGLE:** Les applications utilisant SQLite DOIVENT implémenter le pattern "Fail-Safe Integrity" pour garantir un boot rapide et une auto-réparation en cas de corruption.
+
+#### Pourquoi?
+
+- 🚀 **Boot Speed:** Évite le rejeu inutile des logs Litestream si la base locale est déjà saine.
+- 🛡️ **Auto-Repair:** Détecte et supprime automatiquement une base corrompue avant le démarrage de l'app, forçant une restauration propre depuis S3.
+- 📉 **NFS Optimization:** Réduit drastiquement les opérations d'E/S sur le stockage réseau au démarrage.
+
+#### Implémentation Standard (Gold Standard)
+
+```yaml
+spec:
+  initContainers:
+    # Étape 1: Vérification sémantique de l'intégrité
+    - name: check-integrity
+      image: alpine:3.19
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          apk add --no-cache sqlite
+          for db in /data/*.db; do
+            [ -e "$db" ] || continue
+            echo "🔍 Checking $db..."
+            if ! sqlite3 "$db" "PRAGMA integrity_check;" | grep -q "ok"; then
+              echo "❌ Corruption detected in $db! Deleting for fresh restore."
+              rm "$db"
+            else
+              echo "✅ $db is healthy."
+            fi
+          done
+      volumeMounts:
+        - name: config-pvc
+          mountPath: /data
+
+    # Étape 2: Restauration conditionnelle (Litestream)
+    - name: restore-db
+      image: litestream/litestream:0.3.13
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          DB_PATH=/data/app.db
+          if [ -f "$DB_PATH" ]; then
+            echo "✅ Local healthy DB found. Skipping restore."
+            exit 0
+          fi
+          echo "⚠️ DB missing or corrupted. Restoring from S3..."
+          litestream restore -config /etc/litestream.yml -if-db-not-exists "$DB_PATH"
+      envFrom:
+        - secretRef:
+            name: litestream-secrets
+      volumeMounts:
+        - name: config-pvc
+          mountPath: /data
+        - name: litestream-config
+          mountPath: /etc/litestream.yml
+          subPath: litestream.yml
+```
+
+---
+
 ## 📋 Deployment Checklist
 
 Avant de déployer une nouvelle application, vérifier:
