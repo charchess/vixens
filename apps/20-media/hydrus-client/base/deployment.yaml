@@ -37,13 +37,23 @@ spec:
             - name: config
               mountPath: /opt/hydrus/db
         - name: check-integrity
-          image: litestream/litestream:0.3.13
+          image: keinos/sqlite3:latest
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
           command: ["/bin/sh", "-c"]
           args:
-            - "for db in /opt/hydrus/db/*.db; do\n  [ -e \"$db\" ] || continue\n  echo \"\U0001F50D Checking $db...\"\n  if ! sqlite3 \"$db\" \"PRAGMA integrity_check;\" | grep -q \"ok\"; then\n    echo \"❌ Corruption detected in $db! Deleting for fresh restore.\"\n    rm \"$db\"\n  else\n    echo \"✅ $db is healthy.\"\n  fi\ndone\n"
+            - |
+              for db in /opt/hydrus/db/*.db; do
+                [ -e "$db" ] || continue
+                echo "🔍 Checking $db..."
+                if ! sqlite3 "$db" "PRAGMA integrity_check;" | grep -q "ok"; then
+                  echo "❌ Corruption detected in $db! Deleting for fresh restore."
+                  rm -f "$db" "$db-wal" "$db-shm"
+                else
+                  echo "✅ $db is healthy."
+                fi
+              done
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
@@ -130,14 +140,9 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              rm -f /opt/hydrus/db/*.tmp* /opt/hydrus/db/*-wal;
-              DB_PATH=/opt/hydrus/db/client.caches.db
-              if [ -f "$DB_PATH" ]; then
-                echo "✅ Local healthy DB found. Skipping restore."
-                exit 0
-              fi
-              echo "⚠️ DB missing or corrupted. Restoring from S3..."
-              litestream restore -config /etc/litestream.yml -if-db-not-exists -if-replica-exists "$DB_PATH"
+              rm -f /opt/hydrus/db/client.caches.db* /opt/hydrus/db/*.tmp* /opt/hydrus/db/*-wal;
+              echo "✅ Cache DB and tmp files cleaned. Skipping restore for caches."
+              exit 0
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
@@ -159,13 +164,13 @@ spec:
             httpGet:
               path: /
               port: 5800
-            initialDelaySeconds: 60
+            initialDelaySeconds: 120
             periodSeconds: 20
           readinessProbe:
             httpGet:
               path: /
               port: 5800
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
             periodSeconds: 10
           env:
             - name: PUID

@@ -107,9 +107,7 @@ vixens/
 brew install steveyegge/tap/bd
 
 # Linux (manual install)
-curl -L https://github.com/beadslabs/beads/releases/latest/download/bd-linux-amd64 -o bd
-chmod +x bd
-sudo mv bd /usr/local/bin/
+curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
 
 # Verify
 bd --version
@@ -124,8 +122,8 @@ Task management system with git-native storage (`.beads/` directory). Replaces t
 # macOS (Homebrew)
 brew install just
 
-# Linux (cargo)
-cargo install just
+# Linux (debian)
+apt install just
 
 # Linux (manual)
 curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin
@@ -151,6 +149,9 @@ brew install kubectl
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 chmod +x kubectl
 sudo mv kubectl /usr/local/bin/
+
+# Linux (debian)
+apt-get install kubectl
 
 # Verify
 kubectl version --client
