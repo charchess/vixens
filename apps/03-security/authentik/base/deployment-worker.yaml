@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,29 +24,30 @@ spec:
       containers:
         - name: authentik-worker
           image: ghcr.io/goauthentik/server:2025.2
-          args: ["worker"]
+          args:
+            - worker
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "100m"
+              memory: 256Mi
+              cpu: 100m
             limits:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: 512Mi
+              cpu: 500m
           envFrom:
             - secretRef:
                 name: authentik-secrets
           env:
             - name: AUTHENTIK_REDIS__HOST
-              value: "redis-shared.databases.svc.cluster.local"
+              value: redis-shared.databases.svc.cluster.local
             - name: AUTHENTIK_REDIS__PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: authentik-secrets
                   key: REDIS_PASSWORD
             - name: AUTHENTIK_POSTGRESQL__HOST
-              value: "postgresql-shared-rw.databases.svc.cluster.local"
+              value: postgresql-shared-rw.databases.svc.cluster.local
             - name: AUTHENTIK_POSTGRESQL__NAME
-              value: "authentik"
+              value: authentik
             - name: AUTHENTIK_POSTGRESQL__USER
               valueFrom:
                 secretKeyRef:
@@ -69,6 +71,6 @@ spec:
           persistentVolumeClaim:
             claimName: authentik-data
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule

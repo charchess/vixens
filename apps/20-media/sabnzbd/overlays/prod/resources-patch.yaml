@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,11 +7,11 @@ spec:
   template:
     spec:
       containers:
-      - name: sabnzbd
-        resources:
-          limits:
-            cpu: 2000m
-            memory: 4Gi
-          requests:
-            cpu: 50m
-            memory: 256Mi
+        - name: sabnzbd
+          resources:
+            limits:
+              cpu: 2000m
+              memory: 4Gi
+            requests:
+              cpu: 50m
+              memory: 256Mi

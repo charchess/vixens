@@ -1,15 +1,13 @@
+---
 # ExternalDNS UniFi Configuration (Private/LAN)
 provider: webhook
 logLevel: debug
-
 image:
   registry: registry.k8s.io
   repository: external-dns/external-dns
   tag: v0.14.2
-
 extraArgs:
   webhook-provider-url: http://localhost:8888
-
 # Sidecar Webhook
 sidecars:
   - name: unifi-webhook
@@ -37,17 +35,14 @@ sidecars:
         value: debug
       - name: UNIFI_SKIP_TLS_VERIFY
         value: "true"
-
 tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
     effect: NoSchedule
-
 livenessProbe:
   enabled: false
 readinessProbe:
   enabled: false
-
 # Scope
 policy: sync
 sources:

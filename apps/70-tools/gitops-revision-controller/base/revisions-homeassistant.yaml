@@ -1,22 +1,23 @@
+---
 apiVersion: secrets.infisical.com/v1alpha1
 kind: InfisicalSecret
 metadata:
   name: homeassistant-revision
   namespace: tools
 spec:
+  hostAPI: http://192.168.111.69:8085
+  resyncInterval: 60
   authentication:
     universalAuth:
       credentialsRef:
         secretName: infisical-universal-auth
         secretNamespace: argocd
       secretsScope:
-        envSlug: dev
         projectSlug: vixens
+        envSlug: dev
         secretsPath: /apps/70-tools/gitops-revision-controller
-  hostAPI: http://192.168.111.69:8085
   managedSecretReference:
-    creationPolicy: Owner
     secretName: homeassistant-revision
-    secretNamespace: tools
+    creationPolicy: Owner
     secretType: Opaque
-  resyncInterval: 60
+    secretNamespace: tools

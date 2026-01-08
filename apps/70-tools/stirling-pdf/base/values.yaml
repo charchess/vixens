@@ -1,3 +1,4 @@
+---
 # Stirling-PDF Helm Values
 # Ref: https://github.com/Stirling-Tools/Stirling-PDF-chart/blob/main/values.yaml
 
@@ -5,10 +6,8 @@ image:
   registry: docker.stirlingpdf.com
   repository: stirlingtools/stirling-pdf
   pullPolicy: IfNotPresent
-  tag: "1.6.0"
-
+  tag: 1.6.0
 replicaCount: 1
-
 resources:
   requests:
     cpu: 100m
@@ -16,13 +15,11 @@ resources:
   limits:
     cpu: 1000m
     memory: 1Gi
-
 # Tolerations for control-plane nodes if needed
 tolerations:
-  - key: "node-role.kubernetes.io/control-plane"
-    operator: "Exists"
-    effect: "NoSchedule"
-
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
 # Probes configuration (Increased timeouts for slow startup)
 probes:
   liveness:
@@ -37,7 +34,6 @@ probes:
     periodSeconds: 10
     failureThreshold: 5
     timeoutSeconds: 5
-
 # Env variables
 envs:
   - name: SYSTEM_ROOTURIPATH

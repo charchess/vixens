@@ -5,16 +5,16 @@ metadata:
   name: booklore-ingress
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
-    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "BookLore"
-    gethomepage.dev/icon: "booklore.png"
-    gethomepage.dev/group: "Media"
+    gethomepage.dev/name: BookLore
+    gethomepage.dev/icon: booklore.png
+    gethomepage.dev/group: Media
 spec:
   ingressClassName: traefik
   rules:
-    - host: "booklore.staging.truxonline.com"
+    - host: booklore.staging.truxonline.com
       http:
         paths:
           - path: /
@@ -26,5 +26,5 @@ spec:
                   number: 6060
   tls:
     - hosts:
-        - "booklore.staging.truxonline.com"
+        - booklore.staging.truxonline.com
       secretName: booklore-tls

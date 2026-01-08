@@ -16,9 +16,9 @@ spec:
     spec:
       hostNetwork: false
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: daemon
           image: ghcr.io/scanopy/scanopy/daemon:v0.12.10
@@ -26,7 +26,7 @@ spec:
             privileged: true
           env:
             - name: SCANOPY_SERVER_TARGET
-              value: "http://netvisor-server.networking.svc.cluster.local"
+              value: http://netvisor-server.networking.svc.cluster.local
             - name: SCANOPY_SERVER_PORT
               value: "60072"
             - name: SCANOPY_DAEMON_PORT
@@ -42,4 +42,4 @@ spec:
                   name: netvisor-secrets
                   key: SCANOPY_DAEMON_API_KEY
             - name: SCANOPY_MODE
-              value: "Pull"
+              value: Pull

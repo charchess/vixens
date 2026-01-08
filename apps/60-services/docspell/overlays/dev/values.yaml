@@ -1,10 +1,11 @@
+---
 restserver:
   ingress:
     enabled: true
     className: traefik
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-staging
-      traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+      traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
       traefik.ingress.kubernetes.io/router.middlewares: services-docspell-http-redirect@kubernetescrd
     host: docspell.dev.truxonline.com
     tlsSecretName: docspell-tls
@@ -19,7 +20,6 @@ restserver:
     limits:
       cpu: 500m
       memory: 512Mi
-
 joex:
   resources:
     requests:
@@ -28,7 +28,6 @@ joex:
     limits:
       cpu: 500m
       memory: 512Mi
-
 jdbc:
   host: postgresql-shared-rw.databases.svc.cluster.local # Shared PostgreSQL cluster (read-write service)
   port: 5432

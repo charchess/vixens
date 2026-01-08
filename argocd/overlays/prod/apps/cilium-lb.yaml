@@ -5,22 +5,19 @@ metadata:
   name: cilium-lb
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-2"  # Deploy before cilium-config (wave -1)
+    argocd.argoproj.io/sync-wave: "-2" # Deploy before cilium-config (wave -1)
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: prod-stable
     path: apps/00-infra/cilium-lb/overlays/prod
-
   destination:
     server: https://kubernetes.default.svc
     # Cilium CRDs are cluster-scoped, but convention is kube-system
     namespace: kube-system
-
   syncPolicy:
     automated:
       prune: true

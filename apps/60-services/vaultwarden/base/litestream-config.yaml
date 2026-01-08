@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vaultwarden-litestream-config
+data:
+  litestream.yml: |
+    dbs:
+      - path: /data/db.sqlite3
+        replicas:
+          - url: s3://$LITESTREAM_BUCKET/vaultwarden/db.sqlite3
+            endpoint: $LITESTREAM_ENDPOINT

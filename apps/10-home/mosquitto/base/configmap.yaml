@@ -11,19 +11,19 @@ data:
 
     # Enable password authentication
     password_file /mosquitto/config/auth/mosquitto.passwd
-    
+
     # Disallow anonymous connections (optional but recommended for security)
     allow_anonymous false
 
     # Listeners
     listener 1883 0.0.0.0
     protocol mqtt
-    
+
     # Persistence
     persistence true
     persistence_location /mosquitto/data/
     autosave_interval 300
-    
+
     # Logging
     log_dest stdout
     log_type error
@@ -32,14 +32,14 @@ data:
     log_type information
     log_timestamp true
     log_timestamp_format %Y-%m-%dT%H:%M:%S
-    
+
     # Connection limits
     max_connections 100
     max_queued_messages 1000
-    
+
     # Message size limits
     message_size_limit 0
-    
+
     # Retained messages
     max_inflight_messages 20
     max_queued_bytes 0

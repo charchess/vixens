@@ -1,0 +1,4 @@
+apps/02-monitoring/alertmanager/base/charts/*
+**/charts/*
+**/values.yaml
+**/values/*.yaml

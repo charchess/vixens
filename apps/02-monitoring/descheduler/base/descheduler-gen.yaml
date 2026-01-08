@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/name: descheduler
     helm.sh/chart: descheduler-0.32.2
     app.kubernetes.io/instance: descheduler
-    app.kubernetes.io/version: "0.32.2"
+    app.kubernetes.io/version: 0.32.2
     app.kubernetes.io/managed-by: Helm
 ---
 # Source: descheduler/templates/configmap.yaml
@@ -22,7 +22,7 @@ metadata:
     app.kubernetes.io/name: descheduler
     helm.sh/chart: descheduler-0.32.2
     app.kubernetes.io/instance: descheduler
-    app.kubernetes.io/version: "0.32.2"
+    app.kubernetes.io/version: 0.32.2
     app.kubernetes.io/managed-by: Helm
 data:
   policy.yaml: |
@@ -105,30 +105,63 @@ metadata:
     app.kubernetes.io/name: descheduler
     helm.sh/chart: descheduler-0.32.2
     app.kubernetes.io/instance: descheduler
-    app.kubernetes.io/version: "0.32.2"
+    app.kubernetes.io/version: 0.32.2
     app.kubernetes.io/managed-by: Helm
 rules:
-- apiGroups: ["events.k8s.io"]
-  resources: ["events"]
-  verbs: ["create", "update"]
-- apiGroups: [""]
-  resources: ["nodes"]
-  verbs: ["get", "watch", "list"]
-- apiGroups: [""]
-  resources: ["namespaces"]
-  verbs: ["get", "watch", "list"]
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "watch", "list", "delete"]
-- apiGroups: [""]
-  resources: ["pods/eviction"]
-  verbs: ["create"]
-- apiGroups: ["scheduling.k8s.io"]
-  resources: ["priorityclasses"]
-  verbs: ["get", "watch", "list"]
-- apiGroups: ["policy"]
-  resources: ["poddisruptionbudgets"]
-  verbs: ["get", "watch", "list"]
+  - apiGroups:
+      - events.k8s.io
+    resources:
+      - events
+    verbs:
+      - create
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get
+      - watch
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - get
+      - watch
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - watch
+      - list
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - pods/eviction
+    verbs:
+      - create
+  - apiGroups:
+      - scheduling.k8s.io
+    resources:
+      - priorityclasses
+    verbs:
+      - get
+      - watch
+      - list
+  - apiGroups:
+      - policy
+    resources:
+      - poddisruptionbudgets
+    verbs:
+      - get
+      - watch
+      - list
 ---
 # Source: descheduler/templates/clusterrolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -139,7 +172,7 @@ metadata:
     app.kubernetes.io/name: descheduler
     helm.sh/chart: descheduler-0.32.2
     app.kubernetes.io/instance: descheduler
-    app.kubernetes.io/version: "0.32.2"
+    app.kubernetes.io/version: 0.32.2
     app.kubernetes.io/managed-by: Helm
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -160,11 +193,11 @@ metadata:
     app.kubernetes.io/name: descheduler
     helm.sh/chart: descheduler-0.32.2
     app.kubernetes.io/instance: descheduler
-    app.kubernetes.io/version: "0.32.2"
+    app.kubernetes.io/version: 0.32.2
     app.kubernetes.io/managed-by: Helm
 spec:
-  schedule: "0 */4 * * *"
-  concurrencyPolicy: "Forbid"
+  schedule: 0 */4 * * *
+  concurrencyPolicy: Forbid
   jobTemplate:
     spec:
       template:
@@ -182,10 +215,10 @@ spec:
               operator: Exists
           priorityClassName: system-cluster-critical
           serviceAccountName: descheduler
-          restartPolicy: "Never"
+          restartPolicy: Never
           containers:
             - name: descheduler
-              image: "registry.k8s.io/descheduler/descheduler:v0.32.2"
+              image: registry.k8s.io/descheduler/descheduler:v0.32.2
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/descheduler
@@ -215,7 +248,7 @@ spec:
                 allowPrivilegeEscalation: false
                 capabilities:
                   drop:
-                  - ALL
+                    - ALL
                 privileged: false
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
@@ -224,6 +257,6 @@ spec:
                 - mountPath: /policy-dir
                   name: policy-volume
           volumes:
-          - name: policy-volume
-            configMap:
-              name: descheduler
+            - name: policy-volume
+              configMap:
+                name: descheduler

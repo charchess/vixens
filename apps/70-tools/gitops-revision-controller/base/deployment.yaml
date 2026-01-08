@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,7 +18,9 @@ spec:
       containers:
         - name: controller
           image: python:3.11-slim
-          command: ["/bin/sh", "-c"]
+          command:
+            - /bin/sh
+            - -c
           args:
             - |
               pip install -r /src/requirements.txt &&
@@ -33,10 +36,13 @@ spec:
               cpu: 200m
               memory: 512Mi
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       volumes:
         - name: src
           configMap:
             name: gitops-revision-controller-src
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

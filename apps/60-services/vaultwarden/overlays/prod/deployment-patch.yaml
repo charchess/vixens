@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,6 +8,6 @@ spec:
     spec:
       containers:
         - name: vaultwarden
-          env:
-            - name: DOMAIN
-              value: "https://vaultwarden.truxonline.com"
+          env: null
+        - name: DOMAIN
+          value: https://vaultwarden.truxonline.com

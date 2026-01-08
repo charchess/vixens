@@ -7,16 +7,13 @@ spec:
   # Select all LoadBalancer services (no restriction)
   serviceSelector:
     matchLabels: {}
-
   # Select all nodes
   nodeSelector:
     matchLabels: {}
-
   # Announce on VLAN 208 interfaces
   # Pattern matches: enx00155d00cb10.208, enx085f7b8.208, enx0cba27a.208
   interfaces:
-    - "^en.*\\.208$"  # Match VLAN 208 sub-interfaces (both enp physical and enx virtual)
-
+    - ^en.*\.208$ # Match VLAN 208 sub-interfaces (both enp physical and enx virtual)
   # Announce both external IPs and LoadBalancer IPs
   externalIPs: true
   loadBalancerIPs: true

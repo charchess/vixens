@@ -8,8 +8,7 @@
 service:
   type: LoadBalancer
   annotations:
-    io.cilium/lb-ipam-ips: "192.168.201.70"
-
+    io.cilium/lb-ipam-ips: 192.168.201.70
 # ============================================================================
 # Production-Specific Settings
 # ============================================================================
@@ -19,20 +18,17 @@ logs:
     level: WARN
   access:
     enabled: true
-
 # Production-grade resource limits
 resources:
   requests:
-    cpu: "500m"
-    memory: "512Mi"
+    cpu: 500m
+    memory: 512Mi
   limits:
-    cpu: "2000m"
-    memory: "2Gi"
-
+    cpu: 2000m
+    memory: 2Gi
 # High availability with multiple replicas
 deployment:
   replicas: 3
-
 # ============================================================================
 # Production Metrics & Monitoring
 # ============================================================================
@@ -42,7 +38,6 @@ metrics:
     addEntryPointsLabels: true
     addServicesLabels: true
     addRoutersLabels: true
-
 # ============================================================================
 # Production Pod Disruption Budget
 # ============================================================================

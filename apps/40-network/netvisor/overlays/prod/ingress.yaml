@@ -5,16 +5,16 @@ metadata:
   name: netvisor-ingress
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "NetVisor"
-    gethomepage.dev/icon: "netvisor.png"
-    gethomepage.dev/group: "Network"
+    gethomepage.dev/name: NetVisor
+    gethomepage.dev/icon: netvisor.png
+    gethomepage.dev/group: Network
 spec:
   ingressClassName: traefik
   rules:
-    - host: "netvisor.truxonline.com"
+    - host: netvisor.truxonline.com
       http:
         paths:
           - path: /
@@ -26,5 +26,5 @@ spec:
                   number: 60072
   tls:
     - hosts:
-        - "netvisor.truxonline.com"
+        - netvisor.truxonline.com
       secretName: netvisor-tls

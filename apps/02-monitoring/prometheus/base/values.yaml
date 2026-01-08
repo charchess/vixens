@@ -7,21 +7,17 @@ server:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
-
   persistentVolume:
     enabled: true
     storageClass: synelia-iscsi-retain
     size: 50Gi
-
-  retention: "30d"
-
+  retention: 30d
   resources:
     requests:
       cpu: 300m
       memory: 1Gi
     limits:
       memory: 2Gi
-
 # Alertmanager configuration
 alertmanager:
   enabled: true
@@ -29,29 +25,24 @@ alertmanager:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
-
   persistentVolume:
     enabled: true
     storageClass: synelia-iscsi-retain
     size: 10Gi
-
   resources:
     requests:
       cpu: 100m
       memory: 128Mi
     limits:
       memory: 512Mi
-
   extraVolumes:
     - name: alertmanager-secrets
       secret:
         secretName: alertmanager-secrets
-
   extraVolumeMounts:
     - name: alertmanager-secrets
       mountPath: /etc/alertmanager-secrets
       readOnly: true
-
   extraEnv:
     - name: DISCORD_WEBHOOK_URL
       valueFrom:
@@ -59,27 +50,28 @@ alertmanager:
           name: alertmanager-secrets
           key: DISCORD_WEBHOOK_URL
           optional: true
-
   config:
     global:
       resolve_timeout: 5m
     route:
-      group_by: ['alertname', 'cluster', 'service']
+      group_by:
+        - alertname
+        - cluster
+        - service
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 12h
-      receiver: 'discord-notifications'
+      receiver: discord-notifications
       routes:
         - match:
             severity: critical
-          receiver: 'discord-notifications'
+          receiver: discord-notifications
     receivers:
-      - name: 'discord-notifications'
+      - name: discord-notifications
         slack_configs:
-          - api_url_file: '/etc/alertmanager-secrets/DISCORD_WEBHOOK_URL'
+          - api_url_file: /etc/alertmanager-secrets/DISCORD_WEBHOOK_URL
             channel: '#alerts'
             send_resolved: true
-
 # Node exporter
 nodeExporter:
   enabled: true
@@ -96,11 +88,9 @@ nodeExporter:
     limits:
       cpu: 200m
       memory: 256Mi
-
 # Pushgateway subchart (disabled - réactiver si CronJobs/batch jobs nécessaires)
 prometheus-pushgateway:
   enabled: false
-
 # Kube-state-metrics subchart (metrics on Kubernetes objects)
 kube-state-metrics:
   enabled: true

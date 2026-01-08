@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,11 +7,11 @@ spec:
   template:
     spec:
       containers:
-      - name: mariadb
-        resources:
-          requests:
-            cpu: "15m"
-            memory: "334Mi"
-          limits:
-            cpu: "49m"
-            memory: "362Mi"
+        - name: mariadb
+          resources:
+            requests:
+              cpu: 15m
+              memory: 334Mi
+            limits:
+              cpu: 49m
+              memory: 362Mi

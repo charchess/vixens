@@ -1,9 +1,7 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: synology-csi
-
 resources:
   - namespace.yaml
   - rbac.yaml
@@ -11,10 +9,9 @@ resources:
   - controller.yaml
   - node.yaml
   - storage-class.yaml
-
 labels:
   - pairs:
       app.kubernetes.io/name: synology-csi
-      app.kubernetes.io/version: "v1.1.1"
+      app.kubernetes.io/version: v1.1.1
       vixens.lab/managed-by: argocd
     includeSelectors: true

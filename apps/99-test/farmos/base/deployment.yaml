@@ -14,9 +14,9 @@ spec:
         app: farmos
     spec:
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: farmos
           image: farmos/farmos:2.x
@@ -24,17 +24,17 @@ spec:
             - containerPort: 80
           env:
             - name: FARMOS_DB_TYPE
-              value: "pgsql"
+              value: pgsql
             - name: FARMOS_DB_HOST
-              value: "localhost"
+              value: localhost
             - name: FARMOS_DB_PORT
               value: "5432"
             - name: FARMOS_DB_NAME
-              value: "farm"
+              value: farm
             - name: FARMOS_DB_USER
-              value: "farm"
+              value: farm
             - name: FARMOS_DB_PASS
-              value: "farm"
+              value: farm
           volumeMounts:
             - name: farmos-data
               mountPath: /opt/drupal/web/sites
@@ -42,11 +42,11 @@ spec:
           image: postgres:14
           env:
             - name: POSTGRES_DB
-              value: "farm"
+              value: farm
             - name: POSTGRES_USER
-              value: "farm"
+              value: farm
             - name: POSTGRES_PASSWORD
-              value: "farm"
+              value: farm
           volumeMounts:
             - name: db-data
               mountPath: /var/lib/postgresql/data
@@ -55,3 +55,6 @@ spec:
           emptyDir: {}
         - name: db-data
           emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

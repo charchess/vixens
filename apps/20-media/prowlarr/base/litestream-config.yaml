@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prowlarr-litestream-config
+data:
+  litestream.yml: |
+    dbs:
+      - path: /config/prowlarr.db
+        replicas:
+          - url: s3://$LITESTREAM_BUCKET/prowlarr/prowlarr.db
+            endpoint: $LITESTREAM_ENDPOINT

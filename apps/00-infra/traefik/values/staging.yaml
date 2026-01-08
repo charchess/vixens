@@ -8,8 +8,7 @@
 service:
   type: LoadBalancer
   annotations:
-    io.cilium/lb-ipam-ips: "192.168.210.70"
-
+    io.cilium/lb-ipam-ips: 192.168.210.70
 # ============================================================================
 # Staging-Specific Settings (closer to production)
 # ============================================================================
@@ -19,16 +18,14 @@ logs:
     level: INFO
   access:
     enabled: true
-
 # Higher resource limits for staging
 resources:
   requests:
-    cpu: "200m"
-    memory: "256Mi"
+    cpu: 200m
+    memory: 256Mi
   limits:
-    cpu: "1000m"
-    memory: "1Gi"
-
+    cpu: 1000m
+    memory: 1Gi
 # Multiple replicas (closer to prod)
 deployment:
   replicas: 2

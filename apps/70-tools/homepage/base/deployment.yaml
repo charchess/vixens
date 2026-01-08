@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: homepage
   annotations:
-    secret.reloader.stakater.com/reload: "homepage-config-secret,homepage-secrets"
+    secret.reloader.stakater.com/reload: homepage-config-secret,homepage-secrets
 spec:
   replicas: 1
   strategy:
@@ -22,23 +22,24 @@ spec:
     spec:
       serviceAccountName: homepage
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
-
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       # Init container to copy initial config from the read-only ConfigMap
       # to the writable PVC, if the PVC is empty.
       initContainers:
         - name: copy-initial-config
           image: busybox:1.37
           # Clear the destination first to avoid pollution, then copy and set ownership.
-          command: ['sh', '-c', 'rm -rf /config/* && cp -L /initial-config/* /config/ && chown -R 1000:1000 /config/']
+          command:
+            - sh
+            - -c
+            - rm -rf /config/* && cp -L /initial-config/* /config/ && chown -R 1000:1000 /config/
           volumeMounts:
             - name: initial-config-vol
               mountPath: /initial-config
             - name: config-vol # The writable PVC
               mountPath: /config
-
       # Main application container
       containers:
         - name: homepage
@@ -49,7 +50,7 @@ spec:
               name: http
           env:
             - name: HOMEPAGE_ALLOWED_HOSTS
-              value: "homepage.dev.truxonline.com"
+              value: homepage.dev.truxonline.com
             - name: HOMEASSISTANT_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -59,7 +60,6 @@ spec:
             # Mount the writable PVC, which is now populated by the initContainer.
             - name: config-vol
               mountPath: /app/config
-
       # Volume definitions
       volumes:
         # The read-only Secret containing the configuration synced from Infisical
@@ -70,3 +70,6 @@ spec:
         - name: config-vol
           persistentVolumeClaim:
             claimName: homepage-config
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

@@ -1,3 +1,12 @@
-- op: replace
-  path: /spec/authentication/universalAuth/secretsScope/envSlug
-  value: dev
+---
+apiVersion: secrets.infisical.com/v1alpha1
+kind: InfisicalSecret
+metadata:
+  name: external-dns-unifi-sync
+spec:
+  authentication:
+    universalAuth:
+      secretsScope:
+        envSlug: dev
+  managedSecretReference:
+    secretNamespace: networking

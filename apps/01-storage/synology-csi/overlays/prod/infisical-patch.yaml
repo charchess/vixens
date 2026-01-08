@@ -1,3 +1,4 @@
+---
 apiVersion: secrets.infisical.com/v1alpha1
 kind: InfisicalSecret
 metadata:
@@ -9,4 +10,4 @@ spec:
       secretsScope:
         envSlug: prod
   managedSecretReference:
-    secretNamespace: synology-csi
+    secretNamespace: storage

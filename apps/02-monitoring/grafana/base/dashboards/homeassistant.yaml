@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -6,5 +7,4 @@ metadata:
   labels:
     grafana_dashboard: "1"
 data:
-  homeassistant.json: |-
-    {} # Placeholder - user to populate with JSON from suitable HA dashboard
+  homeassistant.json: '{} # Placeholder - user to populate with JSON from suitable HA dashboard'

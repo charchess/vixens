@@ -1,7 +1,9 @@
+---
 apiVersion: secrets.infisical.com/v1alpha1
 kind: InfisicalSecret
 metadata:
   name: redis-shared-credentials
+  namespace: databases
 spec:
   authentication:
     universalAuth:

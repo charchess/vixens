@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,7 +10,7 @@ spec:
         - name: netbox
           env:
             - name: ALLOWED_HOSTS
-              value: "*"
+              value: '*'
             - name: SUPERUSER_NAME
               valueFrom:
                 secretKeyRef:
@@ -21,9 +22,9 @@ spec:
                   name: netbox-secrets
                   key: password
             - name: SUPERUSER_EMAIL
-              value: "netbox@truxonline.com"
+              value: netbox@truxonline.com
             - name: SUPERUSER_API_TOKEN
-              value: "0123456789abcdef0123456789abcdef01234567"
+              value: 0123456789abcdef0123456789abcdef01234567
           livenessProbe:
             httpGet:
               httpHeaders:

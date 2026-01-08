@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vikunja
-  namespace: "99-test"
+  namespace: 99-test
   labels:
     app.kubernetes.io/name: vikunja
 spec:
@@ -31,11 +31,11 @@ spec:
               name: http
           env:
             - name: VIKUNJA_DATABASE_TYPE
-              value: "sqlite"
+              value: sqlite
             - name: VIKUNJA_DATABASE_PATH
-              value: "/app/vikunja/files/vikunja.db"
+              value: /app/vikunja/files/vikunja.db
             - name: VIKUNJA_SERVICE_JWTSECRET
-              value: "super-secret-jwt-key-for-test-mode-only-do-not-use-in-prod-123456"
+              value: super-secret-jwt-key-for-test-mode-only-do-not-use-in-prod-123456
             # Redis is optional, disabled for test simplicity
             - name: VIKUNJA_REDIS_ENABLED
               value: "false"
@@ -63,3 +63,6 @@ spec:
       volumes:
         - name: files
           emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

@@ -20,19 +20,19 @@ spec:
         reloader.stakater.com/auto: "true"
     spec:
       priorityClassName: vixens-medium
-      securityContext:
-        fsGroup: 1000
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       initContainers:
         - name: restore-config
           image: rclone/rclone:1.65
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
             - |
               export RCLONE_CONFIG_S3_TYPE=s3
@@ -52,14 +52,20 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/config/whisparr.db"]
+          args:
+            - restore
+            - -config
+            - /etc/litestream.yml
+            - -if-db-not-exists
+            - -if-replica-exists
+            - /config/whisparr.db
           envFrom:
             - secretRef:
                 name: whisparr-litestream-secret
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: litestream-config
+            - name: whisparr-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
       containers:
@@ -81,18 +87,18 @@ spec:
             periodSeconds: 10
           resources:
             requests:
-              cpu: "100m"
-              memory: "256Mi"
+              cpu: 100m
+              memory: 256Mi
             limits:
-              cpu: "1000m"
-              memory: "1Gi"
+              cpu: 1000m
+              memory: 1Gi
           env:
             - name: PUID
               value: "1000"
             - name: PGID
               value: "1000"
             - name: TZ
-              value: "Europe/Paris"
+              value: Europe/Paris
           volumeMounts:
             - name: config
               mountPath: /config
@@ -100,32 +106,37 @@ spec:
               mountPath: /downloads
             - name: media
               mountPath: /media
-              subPath: "xxx"
+              subPath: xxx
         - name: litestream
           image: litestream/litestream:0.3.13
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["replicate", "-config", "/etc/litestream.yml"]
+          args:
+            - replicate
+            - -config
+            - /etc/litestream.yml
           resources:
             requests:
-              cpu: "10m"
-              memory: "64Mi"
+              cpu: 10m
+              memory: 64Mi
             limits:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: 100m
+              memory: 128Mi
           envFrom:
             - secretRef:
                 name: whisparr-litestream-secret
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: litestream-config
+            - name: whisparr-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-syncer
           image: alpine:3.19
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
             - |
               apk add --no-cache rclone inotify-tools
@@ -155,6 +166,9 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Content/xxx
-        - name: litestream-config
+        - name: whisparr-litestream-config
           configMap:
             name: whisparr-litestream-config
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

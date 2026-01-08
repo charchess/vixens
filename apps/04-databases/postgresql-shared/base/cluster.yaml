@@ -5,14 +5,11 @@ metadata:
   name: postgresql-shared
   namespace: databases
 spec:
-  instances: 1  # Single instance in dev (scalable to 3 for HA in staging/prod)
+  instances: 1 # Single instance in dev (scalable to 3 for HA in staging/prod)
   priorityClassName: homelab-critical
-
   imageName: ghcr.io/cloudnative-pg/postgresql:17.6-system-trixie
-
   superuserSecret:
     name: postgresql-admin-credentials
-
   managed:
     roles:
       - name: docspell
@@ -45,27 +42,23 @@ spec:
         login: true
         passwordSecret:
           name: vaultwarden-postgresql-credentials
-
   postgresql:
     pg_hba:
       - host all postgres all trust
       - host all all all md5
     parameters:
       max_connections: "200"
-      shared_buffers: "128MB"
-      effective_cache_size: "512MB"
-
+      shared_buffers: 128MB
+      effective_cache_size: 512MB
   bootstrap:
     initdb:
       database: postgres
       owner: postgres
       secret:
         name: postgresql-admin-credentials
-
   storage:
-    size: 50Gi  # Shared across multiple databases
+    size: 50Gi # Shared across multiple databases
     storageClass: synelia-iscsi-retain
-
   resources:
     requests:
       cpu: 100m
@@ -73,25 +66,22 @@ spec:
     limits:
       cpu: 500m
       memory: 512Mi
-
   affinity:
     tolerations:
-      - key: "node-role.kubernetes.io/control-plane"
-        operator: "Exists"
-        effect: "NoSchedule"
-
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
   monitoring:
-    enablePodMonitor: false  # Enable later with Prometheus integration
-
-  # backup:
-  #   barmanObjectStore:
-  #     destinationPath: s3://postgresql-backups/
-  #     endpointURL: http://synelia.internal.truxonline.com:9000
-  #     s3Credentials:
-  #       accessKeyId:
-  #         name: postgresql-backup-s3
-  #         key: accessKey
-  #       secretAccessKey:
-  #         name: postgresql-backup-s3
-  #         key: secretKey
-  #   retentionPolicy: "30d"
+    enablePodMonitor: false # Enable later with Prometheus integration
+# backup:
+#   barmanObjectStore:
+#     destinationPath: s3://postgresql-backups/
+#     endpointURL: http://synelia.internal.truxonline.com:9000
+#     s3Credentials:
+#       accessKeyId:
+#         name: postgresql-backup-s3
+#         key: accessKey
+#       secretAccessKey:
+#         name: postgresql-backup-s3
+#         key: secretKey
+#   retentionPolicy: "30d"

@@ -1,5 +1,0 @@
-dbs:
-  - path: /config/prowlarr.db
-    replicas:
-      - url: s3://$LITESTREAM_BUCKET/prowlarr/prowlarr.db
-        endpoint: $LITESTREAM_ENDPOINT

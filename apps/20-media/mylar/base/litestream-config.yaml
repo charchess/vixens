@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mylar-litestream-config
+data:
+  litestream.yml: |
+    dbs:
+      - path: /config/mylar.db
+        replicas:
+          - url: s3://$LITESTREAM_BUCKET/mylar/mylar.db
+            endpoint: $LITESTREAM_ENDPOINT

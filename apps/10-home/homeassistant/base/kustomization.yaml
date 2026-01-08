@@ -1,11 +1,6 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-configMapGenerator:
-  - name: homeassistant-litestream-config
-    files:
-      - litestream.yml
-
 resources:
   - namespace.yaml
   - deployment.yaml
@@ -15,3 +10,4 @@ resources:
   - configmap.yaml
   - infisical-config.yaml
   - litestream-secret.yaml
+  - litestream-config.yaml

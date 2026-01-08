@@ -5,16 +5,16 @@ metadata:
   name: frigate-ingress
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
-    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Frigate"
-    gethomepage.dev/icon: "frigate.png"
-    gethomepage.dev/group: "Security"
+    gethomepage.dev/name: Frigate
+    gethomepage.dev/icon: frigate.png
+    gethomepage.dev/group: Security
 spec:
   ingressClassName: traefik
   rules:
-    - host: "frigate.staging.truxonline.com"
+    - host: frigate.staging.truxonline.com
       http:
         paths:
           - path: /
@@ -26,5 +26,5 @@ spec:
                   number: 5000
   tls:
     - hosts:
-        - "frigate.staging.truxonline.com"
+        - frigate.staging.truxonline.com
       secretName: frigate-tls

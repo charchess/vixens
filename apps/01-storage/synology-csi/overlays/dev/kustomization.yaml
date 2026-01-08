@@ -1,11 +1,9 @@
+---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: synology-csi
-
 resources:
   - ../../base
-
 patches:
   # Patch du storage class pour dev
   - target:
@@ -18,7 +16,6 @@ patches:
       - op: add
         path: /parameters/targetIps
         value: "192.168.111.70,192.168.111.71"
-
   - target:
       kind: StorageClass
       name: synelia-iscsi-delete
@@ -29,7 +26,6 @@ patches:
       - op: add
         path: /parameters/targetIps
         value: "192.168.111.70,192.168.111.71"
-
 labels:
   - pairs:
       vixens.lab/environment: dev
