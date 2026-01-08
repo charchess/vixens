@@ -64,7 +64,8 @@ spec:
                 secretKeyRef:
                   name: authentik-secrets
                   key: SECRET_KEY
-                  # Add other environment variables from Authentik documentation if needed
+                  # Add other environment variables from Authentik documentation
+                  # if needed
           volumeMounts:
             - name: authentik-data
               mountPath: /var/lib/authentik

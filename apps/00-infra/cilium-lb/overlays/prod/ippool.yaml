@@ -4,7 +4,8 @@ kind: CiliumLoadBalancerIPPool
 metadata:
   name: vixens-prod-pool
 spec:
-  # TODO: Adjust IP ranges for prod environment to avoid conflicts with dev and staging
+  # TODO: Adjust IP ranges for prod environment to avoid conflicts with dev and
+  # staging
   blocks:
     # Assigned pool for static IPs (192.168.208.70-79)
     - start: 192.168.201.70

@@ -1,6 +1,7 @@
 ---
 # Stirling-PDF Helm Values
-# Ref: https://github.com/Stirling-Tools/Stirling-PDF-chart/blob/main/values.yaml
+# Ref:
+# https://github.com/Stirling-Tools/Stirling-PDF-chart/blob/main/values.yaml
 
 image:
   registry: docker.stirlingpdf.com
