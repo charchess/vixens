@@ -37,14 +37,13 @@ spec:
             - name: config
               mountPath: /opt/hydrus/db
         - name: check-integrity
-          image: alpine:3.19
+          image: litestream/litestream:0.3.13
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
           command: ["/bin/sh", "-c"]
           args:
             - |
-              apk add --no-cache sqlite
               for db in /opt/hydrus/db/*.db; do
                 [ -e "$db" ] || continue
                 echo "🔍 Checking $db..."
