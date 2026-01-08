@@ -6,7 +6,6 @@ patches:
   target:
     kind: InfisicalSecret
     name: booklore-secrets-sync
-patchesStrategicMerge:
   - mariadb-resources-patch.yaml
 resources:
   - ../../base

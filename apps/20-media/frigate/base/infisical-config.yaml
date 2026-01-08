@@ -17,4 +17,5 @@ spec:
         secretsPath: "/apps/20-media/frigate/config"
   managedSecretReference:
     secretName: frigate-config-secret
+    secretNamespace: media
     creationPolicy: "Owner"

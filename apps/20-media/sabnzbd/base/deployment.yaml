@@ -18,6 +18,8 @@ spec:
         app: sabnzbd
     spec:
       priorityClassName: vixens-low
+      securityContext:
+        fsGroup: 1000
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"

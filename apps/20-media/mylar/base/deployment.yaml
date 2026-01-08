@@ -22,6 +22,8 @@ spec:
       priorityClassName: vixens-medium
       securityContext:
         fsGroup: 0
+      securityContext:
+        fsGroup: 1000
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"

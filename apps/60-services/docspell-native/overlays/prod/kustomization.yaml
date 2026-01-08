@@ -6,7 +6,6 @@ labels:
 namespace: services
 patches:
   - path: patch-infisical-secrets.yaml
-patchesStrategicMerge:
   - patch-resources.yaml
 resources:
   - ../../base
