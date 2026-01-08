@@ -19,6 +19,10 @@ spec:
         test-label: "true"
     spec:
       priorityClassName: vixens-medium
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       initContainers:
         - name: fix-permissions
           image: busybox:latest
@@ -27,23 +31,48 @@ spec:
             - -c
           args:
             - |
-              touch /opt/hydrus/hydrus_crash.log
+              touch /opt/hydrus/db/hydrus_crash.log
               chown -R 1000:1000 /opt/hydrus/db 2>&1 || echo "chown FAILED (continuing anyway)"
           volumeMounts:
             - name: config
-              mountPath: /data
+              mountPath: /opt/hydrus/db
+        - name: check-integrity
+          image: alpine:3.19
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              apk add --no-cache sqlite
+              for db in /opt/hydrus/db/*.db; do
+                [ -e "$db" ] || continue
+                echo "🔍 Checking $db..."
+                if ! sqlite3 "$db" "PRAGMA integrity_check;" | grep -q "ok"; then
+                  echo "❌ Corruption detected in $db! Deleting for fresh restore."
+                  rm "$db"
+                else
+                  echo "✅ $db is healthy."
+                fi
+              done
+          volumeMounts:
+            - name: config
+              mountPath: /opt/hydrus/db
         - name: restore-db
           image: litestream/litestream:0.3.13
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+          command: ["/bin/sh", "-c"]
           args:
-            - restore
-            - -config
-            - /etc/litestream.yml
-            - -if-db-not-exists
-            - -if-replica-exists
-            - /opt/hydrus/db/client.db
+            - |
+              DB_PATH=/opt/hydrus/db/client.db
+              if [ -f "$DB_PATH" ]; then
+                echo "✅ Local healthy DB found. Skipping restore."
+                exit 0
+              fi
+              echo "⚠️ DB missing or corrupted. Restoring from S3..."
+              litestream restore -config /etc/litestream.yml -if-db-not-exists -if-replica-exists "$DB_PATH"
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
@@ -58,13 +87,16 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+          command: ["/bin/sh", "-c"]
           args:
-            - restore
-            - -config
-            - /etc/litestream.yml
-            - -if-db-not-exists
-            - -if-replica-exists
-            - /opt/hydrus/db/client.mappings.db
+            - |
+              DB_PATH=/opt/hydrus/db/client.mappings.db
+              if [ -f "$DB_PATH" ]; then
+                echo "✅ Local healthy DB found. Skipping restore."
+                exit 0
+              fi
+              echo "⚠️ DB missing or corrupted. Restoring from S3..."
+              litestream restore -config /etc/litestream.yml -if-db-not-exists -if-replica-exists "$DB_PATH"
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
@@ -79,13 +111,16 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+          command: ["/bin/sh", "-c"]
           args:
-            - restore
-            - -config
-            - /etc/litestream.yml
-            - -if-db-not-exists
-            - -if-replica-exists
-            - /opt/hydrus/db/client.master.db
+            - |
+              DB_PATH=/opt/hydrus/db/client.master.db
+              if [ -f "$DB_PATH" ]; then
+                echo "✅ Local healthy DB found. Skipping restore."
+                exit 0
+              fi
+              echo "⚠️ DB missing or corrupted. Restoring from S3..."
+              litestream restore -config /etc/litestream.yml -if-db-not-exists -if-replica-exists "$DB_PATH"
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
@@ -100,13 +135,16 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+          command: ["/bin/sh", "-c"]
           args:
-            - restore
-            - -config
-            - /etc/litestream.yml
-            - -if-db-not-exists
-            - -if-replica-exists
-            - /opt/hydrus/db/client.caches.db
+            - |
+              DB_PATH=/opt/hydrus/db/client.caches.db
+              if [ -f "$DB_PATH" ]; then
+                echo "✅ Local healthy DB found. Skipping restore."
+                exit 0
+              fi
+              echo "⚠️ DB missing or corrupted. Restoring from S3..."
+              litestream restore -config /etc/litestream.yml -if-db-not-exists -if-replica-exists "$DB_PATH"
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
@@ -119,10 +157,6 @@ spec:
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
       containers:
         - name: hydrus-client
           image: ghcr.io/hydrusnetwork/hydrus:v652
