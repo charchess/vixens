@@ -5,12 +5,12 @@ kind: Kustomization
 namespace: monitoring
 patches:
   - path: patch-alertmanager-command.yaml
-  target:
-    kind: StatefulSet
-    name: prometheus-alertmanager
+    target:
+      kind: StatefulSet
+      name: prometheus-alertmanager
   - path: patch-infisical-env.yaml
-  target:
-    kind: InfisicalSecret
-    name: alertmanager-secrets-sync
+    target:
+      kind: InfisicalSecret
+      name: alertmanager-secrets-sync
 resources:
   - ../../base

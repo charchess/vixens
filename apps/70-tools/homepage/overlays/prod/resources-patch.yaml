@@ -7,10 +7,10 @@ spec:
     spec:
       containers:
         - name: homepage
-        resources:
-          limits:
-            cpu: 500m
-            memory: 394Mi
-          requests:
-            cpu: 11m
-            memory: 214Mi
+          resources:
+            limits:
+              cpu: 500m
+              memory: 394Mi
+            requests:
+              cpu: 11m
+              memory: 214Mi

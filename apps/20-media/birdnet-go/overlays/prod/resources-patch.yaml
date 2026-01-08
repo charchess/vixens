@@ -7,10 +7,10 @@ spec:
     spec:
       containers:
         - name: birdnet-go
-        resources:
-          limits:
-            cpu: 500m
-            memory: 1Gi
-          requests:
-            cpu: 23m
-            memory: 214Mi
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 23m
+              memory: 214Mi

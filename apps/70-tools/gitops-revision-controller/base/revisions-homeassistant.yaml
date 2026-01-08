@@ -19,3 +19,4 @@ spec:
     secretName: homeassistant-revision
     creationPolicy: Owner
     secretType: Opaque
+    secretNamespace: tools

@@ -8,3 +8,5 @@ spec:
       secretsScope:
         envSlug: prod
         secretsPath: "/apps/20-media/qbittorrent"
+  managedSecretReference:
+    secretNamespace: media

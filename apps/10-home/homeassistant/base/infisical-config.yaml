@@ -20,3 +20,4 @@ spec:
     secretName: homeassistant-config
     creationPolicy: Owner
     secretType: Opaque
+    secretNamespace: homeassistant

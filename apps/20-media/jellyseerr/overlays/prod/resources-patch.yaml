@@ -7,10 +7,10 @@ spec:
     spec:
       containers:
         - name: jellyseerr
-        resources:
-          limits:
-            cpu: 500m
-            memory: 633Mi
-          requests:
-            cpu: 78m
-            memory: 422Mi
+          resources:
+            limits:
+              cpu: 500m
+              memory: 633Mi
+            requests:
+              cpu: 78m
+              memory: 422Mi

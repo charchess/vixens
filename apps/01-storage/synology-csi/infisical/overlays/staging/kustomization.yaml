@@ -1,14 +1,14 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: synology-csi
-
 resources:
   - ../../base
-
 patches:
   - path: synology-infisical-secret-patch.yaml
     target:
       kind: InfisicalSecret
       name: synology-csi-credentials-sync
+spec:
+  managedSecretReference:
+    secretNamespace: storage

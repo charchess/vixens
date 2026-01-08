@@ -4,9 +4,9 @@ namespace: homeassistant
 patches:
   - path: infisical-config-patch.yaml
   - path: litestream-secret-patch.yaml
-  target:
-    kind: InfisicalSecret
-    name: homeassistant-litestream-secret
+    target:
+      kind: InfisicalSecret
+      name: homeassistant-litestream-secret
 resources:
   - ../../base
   - ingress.yaml

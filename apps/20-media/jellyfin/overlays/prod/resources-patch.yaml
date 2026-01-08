@@ -7,10 +7,10 @@ spec:
     spec:
       containers:
         - name: jellyfin
-        resources:
-          limits:
-            cpu: 500m
-            memory: 1689Mi
-          requests:
-            cpu: 23m
-            memory: 825Mi
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1689Mi
+            requests:
+              cpu: 23m
+              memory: 825Mi

@@ -7,3 +7,6 @@ patches:
     target:
       kind: InfisicalSecret
       name: external-dns-unifi-sync
+spec:
+  managedSecretReference:
+    secretNamespace: networking

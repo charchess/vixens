@@ -7,10 +7,10 @@ spec:
     spec:
       containers:
         - name: lazylibrarian
-        resources:
-          limits:
-            cpu: 500m
-            memory: 261Mi
-          requests:
-            cpu: 23m
-            memory: 174Mi
+          resources:
+            limits:
+              cpu: 500m
+              memory: 261Mi
+            requests:
+              cpu: 23m
+              memory: 174Mi

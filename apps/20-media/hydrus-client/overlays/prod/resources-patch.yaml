@@ -7,10 +7,10 @@ spec:
     spec:
       containers:
         - name: hydrus-client
-        resources:
-          limits:
-            cpu: 500m
-            memory: 2930Mi
-          requests:
-            cpu: 63m
-            memory: 1953Mi
+          resources:
+            limits:
+              cpu: 500m
+              memory: 2930Mi
+            requests:
+              cpu: 63m
+              memory: 1953Mi

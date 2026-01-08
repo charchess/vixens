@@ -7,10 +7,10 @@ spec:
     spec:
       containers:
         - name: music-assistant
-        resources:
-          limits:
-            cpu: 500m
-            memory: 322Mi
-          requests:
-            cpu: 11m
-            memory: 214Mi
+          resources:
+            limits:
+              cpu: 500m
+              memory: 322Mi
+            requests:
+              cpu: 11m
+              memory: 214Mi

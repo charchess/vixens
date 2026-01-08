@@ -7,18 +7,18 @@ spec:
     spec:
       containers:
         - name: filebrowser
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 11m
-            memory: 64Mi
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 11m
+              memory: 64Mi
         - name: homeassistant
-        resources:
-          limits:
-            cpu: 572m
-            memory: 2930Mi
-          requests:
-            cpu: 143m
-            memory: 1500Mi
+          resources:
+            limits:
+              cpu: 572m
+              memory: 2930Mi
+            requests:
+              cpu: 143m
+              memory: 1500Mi

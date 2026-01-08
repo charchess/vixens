@@ -2,8 +2,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: media
-
-
 resources:
   - deployment.yaml
   - service.yaml
@@ -12,4 +10,5 @@ resources:
   - configmap.yaml
   - infisical-secret.yaml
   - infisical-config.yaml
-  - litestream-secret.yaml  - litestream-config.yaml
+  - litestream-secret.yaml
+  - litestream-config.yaml
