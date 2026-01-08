@@ -22,23 +22,19 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: TARGET_REVISION
     path: APP_PATH
-
   destination:
     server: https://kubernetes.default.svc
     namespace: NAMESPACE
-
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-
   # Retry configuration for transient failures
   retry:
     limit: 3

@@ -18,9 +18,9 @@ spec:
         app: booklore
     spec:
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: booklore
           image: ghcr.io/booklore-app/booklore:v1.14.1-develop-055e86df
@@ -33,13 +33,13 @@ spec:
             - name: APP_GROUP_ID
               value: "1000"
             - name: TZ
-              value: "Europe/Paris"
+              value: Europe/Paris
             - name: BOOKLORE_PORT
               value: "6060"
             - name: DATABASE_URL
-              value: "jdbc:mariadb://booklore-mariadb:3306/booklore"
+              value: jdbc:mariadb://booklore-mariadb:3306/booklore
             - name: DATABASE_USERNAME
-              value: "booklore"
+              value: booklore
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -64,3 +64,6 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Internal/incoming/ebooks
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

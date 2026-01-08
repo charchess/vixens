@@ -19,9 +19,9 @@ spec:
     spec:
       priorityClassName: homelab-important
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: jellyfin
           image: jellyfin/jellyfin:10.10.3
@@ -30,9 +30,9 @@ spec:
               name: http
           env:
             - name: TZ
-              value: "Europe/Paris"
+              value: Europe/Paris
             - name: JELLYFIN_LOG_DIR
-              value: "/config/log"
+              value: /config/log
           volumeMounts:
             - name: config
               mountPath: /config
@@ -50,3 +50,6 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Content
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

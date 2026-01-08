@@ -9,7 +9,7 @@ metadata:
 spec:
   replicas: 1
   strategy:
-    type: Recreate  # RWO PVC requires Recreate strategy
+    type: Recreate # RWO PVC requires Recreate strategy
   selector:
     matchLabels:
       app: linkwarden
@@ -38,7 +38,7 @@ spec:
                   name: linkwarden-secrets
                   key: NEXTAUTH_SECRET
             - name: NEXTAUTH_URL
-              value: "https://linkwarden.dev.truxonline.com/api/v1/auth"
+              value: https://linkwarden.dev.truxonline.com/api/v1/auth
             # Database Configuration
             - name: DATABASE_URL
               valueFrom:
@@ -47,7 +47,7 @@ spec:
                   key: DATABASE_URL
             # Storage Configuration
             - name: STORAGE_FOLDER
-              value: "/data/data"
+              value: /data/data
             # Optional: Disable registration if desired
             - name: NEXT_PUBLIC_DISABLE_REGISTRATION
               value: "false"
@@ -81,3 +81,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: linkwarden-data
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

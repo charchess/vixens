@@ -16,9 +16,9 @@ spec:
         app: gluetun
     spec:
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: gluetun
           image: ghcr.io/qdm12/gluetun:v3.39.1
@@ -29,10 +29,9 @@ spec:
           env:
             # VPN Service Provider
             - name: VPN_SERVICE_PROVIDER
-              value: "nordvpn"
+              value: nordvpn
             - name: VPN_TYPE
-              value: "wireguard"
-
+              value: wireguard
             # Wireguard credentials from Infisical-managed secret
             - name: WIREGUARD_PRIVATE_KEY
               valueFrom:
@@ -44,36 +43,31 @@ spec:
                 secretKeyRef:
                   name: gluetun-wireguard-secrets
                   key: WIREGUARD_ADDRESSES
-
             # VPN server location (CHANGE THIS to select country)
             - name: SERVER_COUNTRIES
-              value: "Switzerland"
-
+              value: Switzerland
             # Timezone
             - name: TZ
-              value: "Etc/UTC"
-
+              value: Etc/UTC
             # Kubernetes-specific DNS settings (required for kube-dns)
             - name: DNS_KEEP_NAMESERVER
-              value: "on"
-
+              value: on
             # Firewall settings to allow access from other pods
             - name: FIREWALL_INPUT_PORTS
-              value: "8888,1080"
+              value: 8888,1080
             # Allow outbound to Kubernetes pod and service networks
             - name: FIREWALL_OUTBOUND_SUBNETS
-              value: "10.244.0.0/16,10.96.0.0/12"
+              value: 10.244.0.0/16,10.96.0.0/12
             # Listening addresses
             - name: HTTP_PROXY_LISTENING_ADDRESS
-              value: ":8888"
+              value: :8888
             - name: SOCKS5_PROXY_LISTENING_ADDRESS
-              value: ":1080"
+              value: :1080
             # Enable proxies
             - name: HTTPPROXY
-              value: "on"
+              value: on
             - name: SOCKS5PROXY
-              value: "on"
-
+              value: on
           ports:
             - containerPort: 8888
               name: http-proxy
@@ -81,3 +75,6 @@ spec:
             - containerPort: 1080
               name: socks5-proxy
               protocol: TCP
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -8,7 +9,9 @@ spec:
     spec:
       containers:
         - name: alertmanager
-          command: ["/bin/sh", "-c"]
+          command:
+            - /bin/sh
+            - -c
           args:
             - |
               cp /etc/alertmanager/alertmanager.yml /tmp/alertmanager.yml &&

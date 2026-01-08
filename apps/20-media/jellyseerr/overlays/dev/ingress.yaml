@@ -5,16 +5,16 @@ metadata:
   name: jellyseerr-ingress
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
-    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Jellyseerr"
-    gethomepage.dev/icon: "jellyseerr.png"
-    gethomepage.dev/group: "Media"
+    gethomepage.dev/name: Jellyseerr
+    gethomepage.dev/icon: jellyseerr.png
+    gethomepage.dev/group: Media
 spec:
   ingressClassName: traefik
   rules:
-    - host: "jellyseerr.dev.truxonline.com"
+    - host: jellyseerr.dev.truxonline.com
       http:
         paths:
           - path: /
@@ -26,5 +26,5 @@ spec:
                   number: 5055
   tls:
     - hosts:
-        - "jellyseerr.dev.truxonline.com"
+        - jellyseerr.dev.truxonline.com
       secretName: jellyseerr-tls

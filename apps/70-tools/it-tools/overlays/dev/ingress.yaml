@@ -27,12 +27,12 @@ metadata:
   name: it-tools-ingress
   namespace: tools
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "IT Tools"
-    gethomepage.dev/icon: "it-tools.png"
-    gethomepage.dev/group: "Tools"
+    gethomepage.dev/name: IT Tools
+    gethomepage.dev/icon: it-tools.png
+    gethomepage.dev/group: Tools
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik

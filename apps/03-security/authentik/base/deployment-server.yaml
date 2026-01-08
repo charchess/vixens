@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,7 +28,8 @@ spec:
       containers:
         - name: authentik-server
           image: ghcr.io/goauthentik/server:2025.2
-          args: ["server"]
+          args:
+            - server
           ports:
             - containerPort: 9000
               name: http
@@ -37,16 +39,16 @@ spec:
                 name: authentik-secrets
           env:
             - name: AUTHENTIK_REDIS__HOST
-              value: "redis-shared.databases.svc.cluster.local"
+              value: redis-shared.databases.svc.cluster.local
             - name: AUTHENTIK_REDIS__PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: authentik-secrets
                   key: REDIS_PASSWORD
             - name: AUTHENTIK_POSTGRESQL__HOST
-              value: "postgresql-shared-rw.databases.svc.cluster.local"
+              value: postgresql-shared-rw.databases.svc.cluster.local
             - name: AUTHENTIK_POSTGRESQL__NAME
-              value: "authentik"
+              value: authentik
             - name: AUTHENTIK_POSTGRESQL__USER
               valueFrom:
                 secretKeyRef:
@@ -62,20 +64,22 @@ spec:
                 secretKeyRef:
                   name: authentik-secrets
                   key: SECRET_KEY
-            # Add other environment variables from Authentik documentation if needed
+                  # Add other environment variables from Authentik documentation if needed
           volumeMounts:
             - name: authentik-data
               mountPath: /var/lib/authentik
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "200m"
+              memory: 512Mi
+              cpu: 200m
             limits:
-              memory: "1024Mi"
-              cpu: "500m"
+              memory: 1024Mi
+              cpu: 500m
         - name: config-syncer
           image: alpine:3.19
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
             - |
               apk add --no-cache rclone inotify-tools
@@ -94,6 +98,6 @@ spec:
             - name: authentik-data
               mountPath: /data
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule

@@ -1,18 +1,16 @@
+---
 # IT-Tools Helm Values
 # Chart: jeffresc/it-tools
 
 replicaCount: 1
-
 image:
   repository: ghcr.io/corentinth/it-tools
   pullPolicy: IfNotPresent
-  tag: "2024.10.22-7ca5933" # Pinned version (Renovate compatible)
-
+  tag: 2024.10.22-7ca5933 # Pinned version (Renovate compatible)
 tolerations:
-  - key: "node-role.kubernetes.io/control-plane"
-    operator: "Exists"
-    effect: "NoSchedule"
-
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
 resources:
   requests:
     cpu: 10m
@@ -20,7 +18,6 @@ resources:
   limits:
     cpu: 100m
     memory: 128Mi
-
 # Security context alignment
 securityContext:
   runAsUser: 1000
@@ -30,7 +27,6 @@ securityContext:
   capabilities:
     drop:
       - ALL
-
 # Service configuration
 service:
   type: ClusterIP

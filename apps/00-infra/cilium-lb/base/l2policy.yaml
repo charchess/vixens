@@ -7,15 +7,12 @@ spec:
   # Select all LoadBalancer services
   serviceSelector:
     matchLabels: {}
-
   # Select all nodes
   nodeSelector:
     matchLabels: {}
-
   # Announce on VLAN interfaces (will be overridden in overlays)
   interfaces:
-    - "^en.*"  # Match all interfaces as base
-
+    - ^en.* # Match all interfaces as base
   # Announce both external IPs and LoadBalancer IPs
   externalIPs: true
   loadBalancerIPs: true

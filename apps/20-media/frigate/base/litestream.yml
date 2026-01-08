@@ -1,5 +1,0 @@
-dbs:
-  - path: /config/frigate.db
-    replicas:
-      - url: s3://$LITESTREAM_BUCKET/frigate/frigate.db
-        endpoint: $LITESTREAM_ENDPOINT

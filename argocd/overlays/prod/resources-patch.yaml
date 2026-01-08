@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,8 +7,8 @@ spec:
   template:
     spec:
       containers:
-      - name: vixens-app-of-apps
-        resources:
+        - name: vixens-app-of-apps
+          resources: null
           limits:
             cpu: 500m
             memory: 512Mi

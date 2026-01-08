@@ -1,12 +1,14 @@
+---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 resources:
   - ../../base
   - ingress.yaml
-
 patches:
   - path: infisical-patch.yaml
     target:
       kind: InfisicalSecret
       name: authentik-secrets-sync
+spec:
+  managedSecretReference:
+    secretNamespace: auth

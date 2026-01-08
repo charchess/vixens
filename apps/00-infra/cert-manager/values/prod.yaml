@@ -8,35 +8,31 @@
 # Higher resource limits for production
 resources:
   requests:
-    cpu: "100m"
-    memory: "128Mi"
+    cpu: 100m
+    memory: 128Mi
   limits:
-    cpu: "500m"
-    memory: "512Mi"
-
+    cpu: 500m
+    memory: 512Mi
 # Webhook resources
 webhook:
   resources:
     requests:
-      cpu: "50m"
-      memory: "64Mi"
+      cpu: 50m
+      memory: 64Mi
     limits:
-      cpu: "200m"
-      memory: "256Mi"
-
+      cpu: 200m
+      memory: 256Mi
 # CA Injector resources
 cainjector:
   resources:
     requests:
-      cpu: "50m"
-      memory: "64Mi"
+      cpu: 50m
+      memory: 64Mi
     limits:
-      cpu: "200m"
-      memory: "256Mi"
-
+      cpu: 200m
+      memory: 256Mi
 # Production-grade replica count
 replicaCount: 2
-
 # ============================================================================
 # Production Monitoring
 # ============================================================================

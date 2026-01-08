@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,11 +7,11 @@ spec:
   template:
     spec:
       containers:
-      - name: hydrus-client
-        resources:
-          limits:
-            cpu: 500m
-            memory: 2930Mi
-          requests:
-            cpu: 63m
-            memory: 1953Mi
+        - name: hydrus-client
+          resources:
+            limits:
+              cpu: 500m
+              memory: 2930Mi
+            requests:
+              cpu: 63m
+              memory: 1953Mi

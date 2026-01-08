@@ -1,14 +1,11 @@
+---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: services
-
 resources:
   - ../../base
-
 patches:
   - path: patch-restserver-tolerations.yaml
   - path: patch-joex-tolerations.yaml
-
 commonLabels:
   environment: dev

@@ -21,7 +21,9 @@ spec:
       initContainers:
         - name: fix-permissions
           image: busybox:latest
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
             - |
               touch /opt/hydrus/hydrus_crash.log
@@ -34,14 +36,20 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.db"]
+          args:
+            - restore
+            - -config
+            - /etc/litestream.yml
+            - -if-db-not-exists
+            - -if-replica-exists
+            - /opt/hydrus/db/client.db
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
-            - name: litestream-config
+            - name: hydrus-client-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: restore-mappings
@@ -49,14 +57,20 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.mappings.db"]
+          args:
+            - restore
+            - -config
+            - /etc/litestream.yml
+            - -if-db-not-exists
+            - -if-replica-exists
+            - /opt/hydrus/db/client.mappings.db
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
-            - name: litestream-config
+            - name: hydrus-client-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: restore-master
@@ -64,14 +78,20 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.master.db"]
+          args:
+            - restore
+            - -config
+            - /etc/litestream.yml
+            - -if-db-not-exists
+            - -if-replica-exists
+            - /opt/hydrus/db/client.master.db
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
-            - name: litestream-config
+            - name: hydrus-client-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: restore-caches
@@ -79,23 +99,29 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/opt/hydrus/db/client.caches.db"]
+          args:
+            - restore
+            - -config
+            - /etc/litestream.yml
+            - -if-db-not-exists
+            - -if-replica-exists
+            - /opt/hydrus/db/client.caches.db
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
-            - name: litestream-config
+            - name: hydrus-client-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
       securityContext:
         fsGroup: 1000
-        fsGroupChangePolicy: "OnRootMismatch"
+        fsGroupChangePolicy: OnRootMismatch
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: hydrus-client
           image: ghcr.io/hydrusnetwork/hydrus:v652
@@ -107,14 +133,14 @@ spec:
             - name: PGID
               value: "1000"
             - name: TZ
-              value: "Europe/Paris"
+              value: Europe/Paris
           resources:
             requests:
-              cpu: "500m"
-              memory: "1Gi"
+              cpu: 500m
+              memory: 1Gi
             limits:
               cpu: "2"
-              memory: "4Gi"
+              memory: 4Gi
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
@@ -125,14 +151,17 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args: ["replicate", "-config", "/etc/litestream.yml"]
+          args:
+            - replicate
+            - -config
+            - /etc/litestream.yml
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
-            - name: litestream-config
+            - name: hydrus-client-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
       volumes:
@@ -143,6 +172,6 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Content/pictures/hentai/client_files
-        - name: litestream-config
+        - name: hydrus-client-litestream-config
           configMap:
-            name: litestream-config
+            name: hydrus-client-litestream-config

@@ -1,27 +1,33 @@
+---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 patches:
-- patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n\
-    \  value: prod"
-  target:
-    kind: InfisicalSecret
-    name: frigate-secrets-sync
-- path: infisical-config-patch.yaml
-  target:
-    kind: InfisicalSecret
-    name: frigate-config-sync
-- path: shm-patch-named.yaml
-  target:
-    kind: Deployment
-    name: frigate
-- path: node-affinity-patch.yaml
-  target:
-    kind: Deployment
-    name: frigate
-- path: litestream-secret-patch.yaml
-  target:
-    kind: InfisicalSecret
-    name: frigate-litestream-secret
+  - patch: |-
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
+    target:
+      kind: InfisicalSecret
+      name: frigate-secrets-sync
+  - path: infisical-config-patch.yaml
+    target:
+      kind: InfisicalSecret
+      name: frigate-config-sync
+  - path: shm-patch-named.yaml
+    target:
+      kind: Deployment
+      name: frigate
+  - path: node-affinity-patch.yaml
+    target:
+      kind: Deployment
+      name: frigate
+  - path: litestream-secret-patch.yaml
+    target:
+      kind: InfisicalSecret
+      name: frigate-litestream-secret
 resources:
-- ../../base
-- ingress.yaml
+  - ../../base
+  - ingress.yaml
+spec:
+  managedSecretReference:
+    secretNamespace: media

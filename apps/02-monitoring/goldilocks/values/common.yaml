@@ -1,3 +1,4 @@
+---
 controller:
   tolerations:
     - key: node-role.kubernetes.io/control-plane

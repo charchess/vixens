@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,22 +16,22 @@ spec:
         app: netbox
     spec:
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: netbox
-          image: "netboxcommunity/netbox:v3.7.8" # Pinned image version
+          image: netboxcommunity/netbox:v3.7.8 # Pinned image version
           ports:
             - name: http
               containerPort: 8080
           env:
             - name: DB_HOST
-              value: "postgresql-shared-rw.databases.svc.cluster.local"
+              value: postgresql-shared-rw.databases.svc.cluster.local
             - name: DB_PORT
               value: "5432"
             - name: DB_NAME
-              value: "netbox"
+              value: netbox
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
@@ -47,11 +48,11 @@ spec:
                   name: netbox-secrets
                   key: SECRET_KEY
             - name: REDIS_HOST
-              value: "redis-shared.databases.svc.cluster.local"
+              value: redis-shared.databases.svc.cluster.local
             - name: REDIS_PORT
               value: "6379"
             - name: ALLOWED_HOSTS
-              value: "netbox.dev.truxonline.com" # Should be patched in overlays
+              value: netbox.dev.truxonline.com # Should be patched in overlays
             - name: DB_WAIT_DEBUG
               value: "1"
           livenessProbe:
@@ -79,4 +80,4 @@ spec:
             claimName: netbox-media-pvc
       securityContext:
         fsGroup: 1000
-        fsGroupChangePolicy: "OnRootMismatch"
+        fsGroupChangePolicy: OnRootMismatch

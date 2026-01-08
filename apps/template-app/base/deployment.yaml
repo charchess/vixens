@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,15 +21,16 @@ spec:
     spec:
       priorityClassName: vixens-medium # Choose: vixens-critical, high, medium, low
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
-      
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       initContainers:
         # 1. Optionnel: Restauration des fichiers de config plats
         - name: restore-config
           image: rclone/rclone:1.65
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
             - |
               export RCLONE_CONFIG_S3_TYPE=s3
@@ -43,24 +45,28 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-
         # 2. Optionnel: Restauration SQLite (Litestream)
         - name: restore-db
           image: litestream/litestream:0.3.13
-          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/config/app.db"]
+          args:
+            - restore
+            - -config
+            - /etc/litestream.yml
+            - -if-db-not-exists
+            - -if-replica-exists
+            - /config/app.db
           envFrom:
             - secretRef:
                 name: template-app-litestream-secret
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: litestream-config
+            - name: template-app-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
-
       containers:
         - name: template-app
-          image: "nginx:stable-alpine" # Placeholder
+          image: nginx:stable-alpine # Placeholder
           ports:
             - containerPort: 80
               name: http
@@ -71,36 +77,39 @@ spec:
             initialDelaySeconds: 15
           resources: # Profile: Small
             requests:
-              cpu: "50m"
-              memory: "256Mi"
+              cpu: 50m
+              memory: 256Mi
             limits:
-              cpu: "500m"
-              memory: "512Mi"
+              cpu: 500m
+              memory: 512Mi
           envFrom:
             - secretRef:
                 name: template-app-secrets
           volumeMounts:
             - name: config
               mountPath: /config
-
         # 3. Optionnel: Sidecar Litestream
         - name: litestream
           image: litestream/litestream:0.3.13
-          args: ["replicate", "-config", "/etc/litestream.yml"]
+          args:
+            - replicate
+            - -config
+            - /etc/litestream.yml
           envFrom:
             - secretRef:
                 name: template-app-litestream-secret
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: litestream-config
+            - name: template-app-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
-
         # 4. Optionnel: Sidecar Config-Syncer
         - name: config-syncer
           image: alpine:3.19
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
             - |
               apk add --no-cache rclone inotify-tools
@@ -118,11 +127,13 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-
       volumes:
         - name: config
           persistentVolumeClaim:
             claimName: template-app-config-pvc
-        - name: litestream-config
+        - name: template-app-litestream-config
           configMap:
             name: template-app-litestream-config
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

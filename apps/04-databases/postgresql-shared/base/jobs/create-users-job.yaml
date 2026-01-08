@@ -16,9 +16,9 @@ spec:
         app: postgresql-create-users
     spec:
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       restartPolicy: OnFailure
       serviceAccountName: default
       containers:
@@ -27,7 +27,7 @@ spec:
           env:
             # PostgreSQL admin credentials
             - name: PGHOST
-              value: "postgresql-shared-rw"
+              value: postgresql-shared-rw
             - name: PGPORT
               value: "5432"
             - name: PGUSER
@@ -40,7 +40,6 @@ spec:
                 secretKeyRef:
                   name: postgresql-admin-credentials
                   key: password
-
             # Application credentials from Infisical
             - name: LINKWARDEN_USER
               valueFrom:
@@ -52,7 +51,6 @@ spec:
                 secretKeyRef:
                   name: linkwarden-postgresql-credentials
                   key: password
-
             - name: DOCSPELL_USER
               valueFrom:
                 secretKeyRef:
@@ -63,7 +61,6 @@ spec:
                 secretKeyRef:
                   name: docspell-postgresql-credentials
                   key: password
-
             - name: NETBOX_USER
               valueFrom:
                 secretKeyRef:
@@ -74,7 +71,6 @@ spec:
                 secretKeyRef:
                   name: netbox-postgresql-credentials
                   key: password
-
             - name: AUTHENTIK_USER
               valueFrom:
                 secretKeyRef:
@@ -85,7 +81,6 @@ spec:
                 secretKeyRef:
                   name: authentik-postgresql-credentials
                   key: POSTGRES_PASSWORD
-
             - name: SCANOPY_USER
               valueFrom:
                 secretKeyRef:
@@ -96,7 +91,6 @@ spec:
                 secretKeyRef:
                   name: scanopy-postgresql-credentials
                   key: password
-
             - name: VAULTWARDEN_USER
               valueFrom:
                 secretKeyRef:
@@ -107,68 +101,7 @@ spec:
                 secretKeyRef:
                   name: vaultwarden-postgresql-credentials
                   key: password
-
           command:
             - /bin/bash
             - -c
-            - |
-              set -e
-
-              echo "=== PostgreSQL User Creation Job ==="
-              echo "Target: $PGHOST:$PGPORT"
-              echo ""
-
-              # Function to create user if not exists
-              create_user_if_not_exists() {
-                local username=$1
-                local password=$2
-
-                if [ -z "$username" ] || [ -z "$password" ]; then
-                  echo "  ⚠️  Skipping user creation: username or password missing."
-                  return
-                fi
-
-                echo "Checking user: $username"
-
-                # Check if user exists
-                USER_EXISTS=$(psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$username'" 2>/dev/null || echo "0")
-
-                if [ "$USER_EXISTS" = "1" ]; then
-                  echo "  ✅ User '$username' already exists"
-                  # Update password in case it changed
-                  psql -c "ALTER USER $username WITH PASSWORD '$password';" > /dev/null
-                  echo "  🔑 Password updated"
-                else
-                  echo "  ➕ Creating user '$username'"
-                  psql -c "CREATE USER $username WITH PASSWORD '$password';" > /dev/null
-                  echo "  ✅ User '$username' created"
-                fi
-                echo ""
-              }
-
-              # Wait for PostgreSQL to be ready
-              echo "Waiting for PostgreSQL..."
-              until psql -c '\q' 2>/dev/null; do
-                echo "  PostgreSQL not ready, waiting..."
-                sleep 2
-              done
-              echo "✅ PostgreSQL is ready"
-              echo ""
-
-              # Create all application users
-              create_user_if_not_exists "$LINKWARDEN_USER" "$LINKWARDEN_PASS"
-              create_user_if_not_exists "$DOCSPELL_USER" "$DOCSPELL_PASS"
-              create_user_if_not_exists "$NETBOX_USER" "$NETBOX_PASS"
-              create_user_if_not_exists "$AUTHENTIK_USER" "$AUTHENTIK_PASS"
-              create_user_if_not_exists "$SCANOPY_USER" "$SCANOPY_PASS"
-              create_user_if_not_exists "$VAULTWARDEN_USER" "$VAULTWARDEN_PASS"
-              # create_user_if_not_exists "$NOCODB_USER" "$NOCODB_PASS"
-
-              echo "=== User creation completed ==="
-
-              # List all users
-              echo ""
-              echo "Current PostgreSQL users:"
-              psql -c "\du" | grep -E "(linkwarden|docspell|netbox|authentik|nocodb|Role name)"
-
-              exit 0
+            - "set -e\n\necho \"=== PostgreSQL User Creation Job ===\"\necho \"Target: $PGHOST:$PGPORT\"\necho \"\"\n\n# Function to create user if not exists\ncreate_user_if_not_exists() {\n  local username=$1\n  local password=$2\n\n  if [ -z \"$username\" ] || [ -z \"$password\" ]; then\n    echo \"  ⚠️  Skipping user creation: username or password missing.\"\n    return\n  fi\n\n  echo \"Checking user: $username\"\n\n  # Check if user exists\n  USER_EXISTS=$(psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='$username'\" 2>/dev/null || echo \"0\")\n\n  if [ \"$USER_EXISTS\" = \"1\" ]; then\n    echo \"  ✅ User '$username' already exists\"\n    # Update password in case it changed\n    psql -c \"ALTER USER $username WITH PASSWORD '$password';\" > /dev/null\n    echo \"  \U0001F511 Password updated\"\n  else\n    echo \"  ➕ Creating user '$username'\"\n    psql -c \"CREATE USER $username WITH PASSWORD '$password';\" > /dev/null\n    echo \"  ✅ User '$username' created\"\n  fi\n  echo \"\"\n}\n\n# Wait for PostgreSQL to be ready\necho \"Waiting for PostgreSQL...\"\nuntil psql -c '\\q' 2>/dev/null; do\n  echo \"  PostgreSQL not ready, waiting...\"\n  sleep 2\ndone\necho \"✅ PostgreSQL is ready\"\necho \"\"\n\n# Create all application users\ncreate_user_if_not_exists \"$LINKWARDEN_USER\" \"$LINKWARDEN_PASS\"\ncreate_user_if_not_exists \"$DOCSPELL_USER\" \"$DOCSPELL_PASS\"\ncreate_user_if_not_exists \"$NETBOX_USER\" \"$NETBOX_PASS\"\ncreate_user_if_not_exists \"$AUTHENTIK_USER\" \"$AUTHENTIK_PASS\"\ncreate_user_if_not_exists \"$SCANOPY_USER\" \"$SCANOPY_PASS\"\ncreate_user_if_not_exists \"$VAULTWARDEN_USER\" \"$VAULTWARDEN_PASS\"\n# create_user_if_not_exists \"$NOCODB_USER\" \"$NOCODB_PASS\"\n\necho \"=== User creation completed ===\"\n\n# List all users\necho \"\"\necho \"Current PostgreSQL users:\"\npsql -c \"\\du\" | grep -E \"(linkwarden|docspell|netbox|authentik|nocodb|Role name)\"\n\nexit 0\n"

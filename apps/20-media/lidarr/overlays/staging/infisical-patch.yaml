@@ -1,14 +1,12 @@
 ---
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - ../../base
-
-patches:
-  - target:
-      kind: InfisicalSecret
-      name: lidarr-secrets-sync
-    patch: |
-      - op: replace
-        path: /spec/secretPath
-        value: /kubernetes/lidarr/staging
+apiVersion: secrets.infisical.com/v1alpha1
+kind: InfisicalSecret
+metadata:
+  name: lidarr-secrets-sync
+spec:
+  authentication:
+    universalAuth:
+      secretsScope:
+        envSlug: staging
+  managedSecretReference:
+    secretNamespace: media

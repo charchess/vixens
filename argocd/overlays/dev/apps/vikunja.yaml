@@ -1,3 +1,4 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -13,7 +14,7 @@ spec:
     path: apps/99-test/vikunja/overlays/dev
   destination:
     server: https://kubernetes.default.svc
-    namespace: "99-test"
+    namespace: 99-test
   syncPolicy:
     automated:
       prune: true

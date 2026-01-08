@@ -1,19 +1,20 @@
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: changedetection-ingress
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
-    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "ChangeDetection"
-    gethomepage.dev/icon: "changedetection.png"
-    gethomepage.dev/group: "Tools"
+    gethomepage.dev/name: ChangeDetection
+    gethomepage.dev/icon: changedetection.png
+    gethomepage.dev/group: Tools
 spec:
   ingressClassName: traefik
   rules:
-    - host: "changedetection.test.truxonline.com"
+    - host: changedetection.test.truxonline.com
       http:
         paths:
           - path: /
@@ -25,5 +26,5 @@ spec:
                   number: 5000
   tls:
     - hosts:
-        - "changedetection.test.truxonline.com"
+        - changedetection.test.truxonline.com
       secretName: changedetection-tls
