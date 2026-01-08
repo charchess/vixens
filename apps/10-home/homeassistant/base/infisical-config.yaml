@@ -18,5 +18,6 @@ spec:
         secretsPath: /apps/10-home/homeassistant
   managedSecretReference:
     secretName: homeassistant-config
+    secretNamespace: homeassistant
     creationPolicy: Owner
     secretType: Opaque

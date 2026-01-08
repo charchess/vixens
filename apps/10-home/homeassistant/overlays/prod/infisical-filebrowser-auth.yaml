@@ -18,4 +18,5 @@ spec:
         secretsPath: /apps/10-home/homeassistant
   managedSecretReference:
     secretName: filebrowser-auth
+    secretNamespace: homeassistant
     creationPolicy: Owner
