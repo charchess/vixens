@@ -92,14 +92,36 @@ spec:
             limits:
               cpu: 2000m
               memory: 4Gi
-          env: # Added environment variables
+          env:
+            - name: SABNZBD__CONFIG__API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sabnzbd-secrets
+                  key: API_KEY
+            - name: SABNZBD__CONFIG__NZB_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sabnzbd-secrets
+                  key: API_KEY
+            - name: SABNZBD__CONFIG__USER
+              valueFrom:
+                secretKeyRef:
+                  name: sabnzbd-secrets
+                  key: ADMIN_USER
+            - name: SABNZBD__CONFIG__PASS
+              valueFrom:
+                secretKeyRef:
+                  name: sabnzbd-secrets
+                  key: ADMIN_PASS
             - name: PUID
               value: "1000"
             - name: PGID
               value: "1000"
             - name: TZ
               value: Europe/Paris
-              # HOST_WHITELIST_ENTRIES and SABNZBD_HOST are set per environment via overlays
+          envFrom:
+            - secretRef:
+                name: sabnzbd-secrets
           volumeMounts:
             - name: config
               mountPath: /config

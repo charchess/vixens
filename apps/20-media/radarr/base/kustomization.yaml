@@ -7,6 +7,5 @@ resources:
   - service.yaml
   - pvc.yaml
   - infisical-secret.yaml
-  - litestream-secret.yaml
-  - config-patcher.yaml
   - litestream-config.yaml
+  - litestream-secret.yaml

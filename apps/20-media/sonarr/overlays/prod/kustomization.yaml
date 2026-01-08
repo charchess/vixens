@@ -18,7 +18,6 @@ patches:
       name: sonarr-litestream-secret
     path: litestream-secret-patch.yaml
 patchesStrategicMerge:
-  - deployment-patch.yaml
 spec:
   managedSecretReference:
     secretNamespace: media

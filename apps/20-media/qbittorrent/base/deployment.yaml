@@ -20,14 +20,13 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-      initContainers:
-        - name: configure-qbittorrent
+      initContainers: []
+      containers:
+        - name: qbittorrent
           image: lscr.io/linuxserver/qbittorrent:latest
-          securityContext:
-            runAsUser: 0
-          command:
-            - python3
-            - /scripts/patcher.py
+          ports:
+            - containerPort: 8080
+              name: http
           env:
             - name: WEBUI_USERNAME
               valueFrom:
@@ -39,18 +38,6 @@ spec:
                 secretKeyRef:
                   name: qbittorrent-secrets
                   key: WEBUI_PASSWORD
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: config-patcher
-              mountPath: /scripts
-      containers:
-        - name: qbittorrent
-          image: lscr.io/linuxserver/qbittorrent:latest
-          ports:
-            - containerPort: 8080
-              name: http
-          env:
             - name: PUID
               value: "1000"
             - name: PGID
@@ -88,9 +75,6 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Downloads/blackhole/torrent
-        - name: config-patcher
-          configMap:
-            name: qbittorrent-config-patcher
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

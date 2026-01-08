@@ -1,7 +1,8 @@
 ---
 # rbac.yaml
 # Defines the permissions required for Homepage's Kubernetes service discovery.
-# As per official documentation: https://gethomepage.dev/installation/k8s/#clusterrole-and-clusterrolebinding
+# As per official documentation:
+# https://gethomepage.dev/installation/k8s/#clusterrole-and-clusterrolebinding
 ---
 apiVersion: v1
 kind: ServiceAccount

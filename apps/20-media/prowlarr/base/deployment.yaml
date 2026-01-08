@@ -93,12 +93,20 @@ spec:
               cpu: 1000m
               memory: 1Gi
           env:
+            - name: PROWLARR__API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: prowlarr-secrets
+                  key: API_KEY
             - name: PUID
               value: "1000"
             - name: PGID
               value: "1000"
             - name: TZ
               value: Europe/Paris
+          envFrom:
+            - secretRef:
+                name: prowlarr-secrets
           volumeMounts:
             - name: config
               mountPath: /config

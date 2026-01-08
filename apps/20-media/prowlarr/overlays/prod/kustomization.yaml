@@ -15,7 +15,6 @@ patches:
       kind: InfisicalSecret
       name: prowlarr-litestream-secret
 patchesStrategicMerge:
-  - deployment-patch.yaml
 resources:
   - ../../base
   - ingress.yaml

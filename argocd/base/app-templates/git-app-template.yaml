@@ -7,7 +7,8 @@
 #
 # Placeholders:
 # - APP_NAME: Will be set via patch metadata.name
-# - TARGET_REVISION: Will be replaced with environment (dev/test/staging/main for prod)
+# - TARGET_REVISION: Will be replaced with environment (dev/test/staging/main
+# for prod)
 # - APP_PATH: Will be replaced with environment-specific path
 # - NAMESPACE: Will be set via patch
 

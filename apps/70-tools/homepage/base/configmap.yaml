@@ -27,15 +27,18 @@ data:
         text_size: "xl"
         format:
           timeStyle: "long"
-  # services.yaml is now primarily for adding services that are NOT discovered automatically.
-  # Most services will be populated automatically via Kubernetes Ingress discovery.
+  # services.yaml is now primarily for adding services that are NOT discovered
+  # automatically.
+  # Most services will be populated automatically via Kubernetes Ingress
+  # discovery.
   # The groups defined in settings.yaml will be used for organization.
   services.yaml: |
     - Infrastructure: []
     - Monitoring: []
     - Home Automation: []
     - Services: []
-  # For a full list of options, see https://gethomepage.dev/en/configs/bookmarks/
+  # For a full list of options, see
+  # https://gethomepage.dev/en/configs/bookmarks/
   bookmarks.yaml: |
     - Project:
         - Source Code:

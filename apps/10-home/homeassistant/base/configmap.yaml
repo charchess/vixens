@@ -100,7 +100,9 @@ data:
         access_token: gDpI6n3t6lyhuG
 
     shell_command:
-      # Commande pour créer un dossier avec la date et l'heure du jour, sous un répertoire 'snapshots'.
+      # Commande pour créer un dossier avec la date et l'heure du jour, sous un
+      # répertoire 'snapshots'.
       # Le chemin '/data/nfs/homeassistant_data/snapshots/' est un exemple.
-      # Assurez-vous que ce chemin existe et est accessible en écriture par l'utilisateur Home Assistant (PUID/PGID).
+      # Assurez-vous que ce chemin existe et est accessible en écriture par
+      # l'utilisateur Home Assistant (PUID/PGID).
       create_dated_snapshot_folder: "./create_snapshots_folder.sh"

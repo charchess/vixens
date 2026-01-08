@@ -30,7 +30,8 @@ spec:
       initContainers:
         - name: copy-initial-config
           image: busybox:1.37
-          # Clear the destination first to avoid pollution, then copy and set ownership.
+          # Clear the destination first to avoid pollution, then copy and set
+          # ownership.
           command:
             - sh
             - -c
@@ -57,12 +58,14 @@ spec:
                   name: homepage-secrets
                   key: HOMEASSISTANT_API_KEY
           volumeMounts:
-            # Mount the writable PVC, which is now populated by the initContainer.
+            # Mount the writable PVC, which is now populated by the
+            # initContainer.
             - name: config-vol
               mountPath: /app/config
       # Volume definitions
       volumes:
-        # The read-only Secret containing the configuration synced from Infisical
+        # The read-only Secret containing the configuration synced from
+        # Infisical
         - name: initial-config-vol
           secret:
             secretName: homepage-config-secret
