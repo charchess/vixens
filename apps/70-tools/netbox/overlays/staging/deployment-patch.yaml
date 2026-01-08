@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: netbox
-          env:
-            - name: ALLOWED_HOSTS
-              value: "netbox.staging.truxonline.com"
+      - name: netbox
+        env: null
+      - name: ALLOWED_HOSTS
+        value: netbox.staging.truxonline.com

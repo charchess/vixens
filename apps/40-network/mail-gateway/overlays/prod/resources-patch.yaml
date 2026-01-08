@@ -6,11 +6,11 @@ spec:
   template:
     spec:
       containers:
-    - name: mail-gateway
-          resources:
-            limits:
-              cpu: 500m
-              memory: 512Mi
-            requests:
-              cpu: 20m
-              memory: 128Mi
+      - name: mail-gateway
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 20m
+            memory: 128Mi

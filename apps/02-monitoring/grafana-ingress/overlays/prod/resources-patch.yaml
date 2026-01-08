@@ -6,11 +6,11 @@ spec:
   template:
     spec:
       containers:
-    - name: grafana-ingress
-          resources:
-            limits:
-              cpu: 500m
-              memory: 512Mi
-            requests:
-              cpu: 20m
-              memory: 128Mi
+      - name: grafana-ingress
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 20m
+            memory: 128Mi

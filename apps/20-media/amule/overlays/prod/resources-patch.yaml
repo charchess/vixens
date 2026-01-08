@@ -6,11 +6,11 @@ spec:
   template:
     spec:
       containers:
-    - name: amule
-          resources:
-            limits:
-              cpu: 500m
-              memory: 192Mi
-            requests:
-              cpu: 11m
-              memory: 128Mi
+      - name: amule
+        resources:
+          limits:
+            cpu: 500m
+            memory: 192Mi
+          requests:
+            cpu: 11m
+            memory: 128Mi

@@ -6,11 +6,11 @@ spec:
   template:
     spec:
       containers:
-    - name: birdnet-go
-          resources:
-            limits:
-              cpu: 500m
-              memory: 1Gi
-            requests:
-              cpu: 23m
-              memory: 214Mi
+      - name: birdnet-go
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+          requests:
+            cpu: 23m
+            memory: 214Mi

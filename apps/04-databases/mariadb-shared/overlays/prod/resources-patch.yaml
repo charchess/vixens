@@ -7,11 +7,11 @@ spec:
     spec:
       priorityClassName: vixens-critical
       containers:
-    - name: mariadb
-          resources:
-            requests:
-              cpu: 200m
-              memory: 512Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
+      - name: mariadb
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
