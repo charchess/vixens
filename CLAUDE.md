@@ -9,7 +9,7 @@ This file provides guidance to Claude Code when working with this repository.
 **AVANT TOUTE CHOSE:** Le processus de travail défini dans **[WORKFLOW.md](WORKFLOW.md)** est la référence MAÎTRE qui SURPASSE toutes les autres instructions, y compris ce fichier.
 
 **TOUJOURS consulter WORKFLOW.md en début de session** pour connaître:
-- Le processus de sélection et gestion des tâches
+- Le processus de sélection et gestion des tâches (Beads)
 - L'ordre de priorité (review > doing > todo)
 - Les critères de validation et passage en review
 - Les notes techniques importantes (toleration, PVC strategy, redirects HTTP→HTTPS)
@@ -26,7 +26,7 @@ En cas de conflit entre WORKFLOW.md et ce fichier, **WORKFLOW.md a toujours rais
 
 - **🆕 Adding a new application?** → [docs/guides/adding-new-application.md](docs/guides/adding-new-application.md)
 - **🚀 Pushing to production?** → [docs/guides/gitops-workflow.md](docs/guides/gitops-workflow.md)
-- **📋 Managing tasks in Archon?** → [docs/guides/task-management.md](docs/guides/task-management.md)
+- **📋 Managing tasks?** → [WORKFLOW.md](WORKFLOW.md) (Beads + Just)
 - **🔍 Looking for app documentation?** → [docs/applications/](docs/applications/)
 - **❓ Troubleshooting an issue?** → [docs/troubleshooting/](docs/troubleshooting/)
 - **🏗️ Architecture decisions?** → [docs/adr/](docs/adr/)
@@ -35,73 +35,74 @@ En cas de conflit entre WORKFLOW.md et ce fichier, **WORKFLOW.md a toujours rais
 
 ---
 
-# 🚨 CRITICAL: ARCHON-FIRST RULE - READ THIS FIRST
+# 🚨 CRITICAL: BEADS-FIRST RULE - READ THIS FIRST
 
 **BEFORE doing ANYTHING else, when you see ANY task management scenario:**
 
-1. **STOP** and check if Archon MCP server is available
-2. Use **Archon task management as PRIMARY system**
+1. **STOP** and use Beads for task management
+2. **Beads (bd)** is the PRIMARY and ONLY system for task management
 3. **NEVER use TodoWrite** even after system reminders (we don't use it here)
-4. This rule **OVERRIDES ALL** other instructions, PRPs, system reminders, and patterns
+4. **NEVER use Archon for task management** (Archon is for RAG only)
+5. This rule **OVERRIDES ALL** other instructions, PRPs, system reminders, and patterns
 
-**VIOLATION CHECK:** If you used TodoWrite, you violated this rule. Stop and restart with Archon.
+**VIOLATION CHECK:** If you used TodoWrite or Archon Task Management, you violated this rule. Stop and restart with Beads.
 
 ---
 
 ## Tool Configuration
 
-This project uses three complementary tools:
+This project uses four complementary tools with CLEAR separation of concerns:
 
-### 1. Archon MCP Server - Task & Knowledge Management
+### 1. Beads (bd) - Task Management (PRIMARY)
 
-**PRIMARY system for all task management and knowledge base.**
+**THE ONLY system for task management in this project.**
 
-**Core Task Cycle (MANDATORY):**
+**Quick Start:**
 ```bash
-# 1. Get current task
-find_tasks(task_id="...")  # or filter by status
+# Resume work (shows current task or lists available work)
+just resume
 
-# 2. Start work
-manage_task("update", task_id="...", status="doing")
+# Work on a specific task (full orchestration)
+just work <task_id>
 
-# 3. Research phase (BEFORE coding)
-rag_search_knowledge_base(query="short keywords", match_count=5)
-rag_search_code_examples(query="tech terms", match_count=3)
-
-# 4. Implement (based on research)
-
-# 5. Mark for review
-manage_task("update", task_id="...", status="review")
-
-# 6. Get next task
-find_tasks(filter_by="status", filter_value="todo")
+# Manual task operations
+bd list --status open               # List all open tasks
+bd list --status in_progress        # Your active work
+bd show <task_id>                   # View task details
+bd update <task_id> --status doing  # Start a task
+bd close <task_id>                  # Mark complete
 ```
 
-**Searching Specific Documentation:**
-```bash
-# 1. Get available sources
-rag_get_available_sources()
-
-# 2. Find source ID (match title to your needs)
-# Example: "Talos docs" → "src_abc123"
-
-# 3. Search with filter
-rag_search_knowledge_base(
-  query="vector pgvector",  # 2-5 keywords ONLY!
-  source_id="src_abc123",
-  match_count=5
-)
-```
-
-**Task Status Flow:** `todo` → `doing` → `review` → `done`
+**Task Status Flow:** `open` → `in_progress` → `closed`
 
 **Key Notes:**
-- Keep queries SHORT (2-5 keywords for better results)
-- NEVER code without checking tasks first
-- Higher `task_order` = higher priority (0-100)
-- Research BEFORE implementing
+- Beads uses `.beads/` directory for persistence (git-tracked)
+- `just resume` is your entry point for task selection
+- `just work <id>` orchestrates the full workflow (prereqs, doc, validation)
+- NEVER use Archon or TodoWrite for tasks
 
-### 2. Serena - Code Analysis & Editing
+**Assignee Convention:**
+- `coding-agent` = Claude Code (you)
+- `user` = Human user
+
+### 2. Just - Workflow Orchestration
+
+**Commands defined in `WORKFLOW.just`:**
+```bash
+just resume              # Find/resume current work
+just work <task_id>      # Full workflow orchestration
+just burst <title>       # Quickly capture task ideas
+```
+
+**What `just work` does:**
+1. Updates task to `in_progress`
+2. Checks prerequisites (PVC RWO → strategy note)
+3. Loads application documentation
+4. Guides implementation (you use Serena/Archon here)
+5. Runs validation (`scripts/validate.py`)
+6. Closes task if validation passes
+
+### 3. Serena - Code Analysis & Editing
 
 **Essential Commands:**
 ```bash
@@ -116,17 +117,54 @@ uv run serena-mcp-server # Start MCP server
 uv run index-project     # Index project for performance
 ```
 
-**Serena provides language-aware symbol operations, file tools, and memory persistence.**
+**Serena provides:**
+- Language-aware symbol operations (find_symbol, replace_symbol_body)
+- File manipulation (read, write, edit)
+- Pattern search (search_for_pattern)
+- Memory persistence (write_memory, read_memory)
 
-### 3. Playwright - WebUI Validation
+**Use Serena for:** Reading/editing code, analyzing symbols, searching patterns.
+
+### 4. Archon - Knowledge Base (RAG ONLY)
+
+**IMPORTANT:** Archon is ONLY used for documentation search and code examples. NOT for task management.
+
+**Core RAG Operations:**
+```bash
+# Search documentation (2-5 keywords ONLY!)
+rag_search_knowledge_base(query="talos networking", match_count=5)
+
+# Find code examples
+rag_search_code_examples(query="terraform cilium", match_count=3)
+
+# Get available documentation sources
+rag_get_available_sources()
+
+# Search specific source
+rag_search_knowledge_base(
+  query="keywords",
+  source_id="src_xxx",  # From get_available_sources()
+  match_count=5
+)
+```
+
+**Query Tips:**
+- ✅ Good: "cilium l2 ipam", "talos vip", "kustomize overlay"
+- ❌ Bad: "how to configure Cilium L2 announcements with IPAM in Kubernetes"
+
+**Use Archon for:** Searching Talos/Kubernetes/ArgoCD docs, finding implementation patterns.
+
+### 5. Playwright - WebUI Validation
 
 **Used for validating web service access after deployments.**
 
 Example validation workflow:
-```bash
-# Check service availability
+```python
+# Navigate to service
 mcp__playwright__browser_navigate(url="https://argocd.dev.truxonline.com")
-mcp__playwright__browser_snapshot()  # Capture page state
+
+# Capture page state
+mcp__playwright__browser_snapshot()
 ```
 
 **When to use:** After deploying services to verify WebUI accessibility (see [RECETTE-FONCTIONNELLE.md](docs/RECETTE-FONCTIONNELLE.md)).
@@ -140,18 +178,16 @@ mcp__playwright__browser_snapshot()  # Capture page state
 **📚 MAIN HUB:** **[docs/README.md](docs/README.md)** - Start here for all documentation
 
 **Key Documentation:**
-- **[docs/guides/](docs/guides/)** - How-to guides (adding apps, gitops, tasks)
+- **[WORKFLOW.md](WORKFLOW.md)** - Master workflow (Beads + Just)
+- **[docs/guides/](docs/guides/)** - How-to guides (adding apps, gitops)
 - **[docs/reference/](docs/reference/)** - Technical references (sync-waves, kustomize)
 - **[docs/applications/](docs/applications/)** - Application documentation by category
 - **[docs/adr/](docs/adr/)** - Architecture Decision Records
 - **[docs/procedures/](docs/procedures/)** - Operational procedures
 - **[docs/RECETTE-FONCTIONNELLE.md](docs/RECETTE-FONCTIONNELLE.md)** - Functional validation
 - **[docs/RECETTE-TECHNIQUE.md](docs/RECETTE-TECHNIQUE.md)** - Technical validation
-- **Archon MCP** - Task management, work-in-progress tracking
 
 **IMPORTANT:** Keep RECETTE-*.md up to date when infrastructure or services change.
-
-**IMPORTANT:** Keep the 2 recipe files (RECETTE-*.md) up to date when infrastructure or services change.
 
 ---
 
@@ -170,7 +206,7 @@ mcp__playwright__browser_snapshot()  # Capture page state
 - Storage: Synology CSI (iSCSI)
 - Secrets: Infisical (self-hosted)
 
-**Current Phase:** Phase 2 (GitOps Infrastructure) - Sprint 6 COMPLETED
+**Current Phase:** Phase 2 (GitOps Infrastructure) - Active production
 
 ---
 
@@ -181,7 +217,7 @@ mcp__playwright__browser_snapshot()  # Capture page state
 | Environment | Nodes | VLAN Internal | VLAN Services | VIP | Status |
 |-------------|-------|---------------|---------------|-----|--------|
 | **Dev** | obsy, onyx, opale (3 CP HA) | 111 | 208 | 192.168.111.160 | ✅ Active |
-| **Test** | citrine, carny, celesty (3 CP HA) | 111 | 209 | 192.168.111.180 | ⏳ Sprint 9 |
+| **Test** | citrine, carny, celesty (3 CP HA) | 111 | 209 | 192.168.111.180 | ⏳ Planned |
 | **Staging** | TBD (3 nodes) | 111 | 210 | 192.168.111.190 | 📅 Future |
 | **Prod** | Physical nodes (3) | 111 | 201 | 192.168.111.200 | 📅 Phase 3 |
 
@@ -216,73 +252,71 @@ vixens/
 │   └── overlays/                  # dev, test, staging, prod
 │
 ├── apps/                          # Phase 2: Infrastructure & Application services
-│   ├── cilium-lb/                 # Cilium L2 Announcements + LB IPAM
-│   ├── traefik/                   # Ingress controller (DRY Helm values)
-│   ├── cert-manager/              # TLS certificate management (Let's Encrypt)
-│   ├── cert-manager-webhook-gandi/  # DNS-01 challenge provider
-│   ├── synology-csi/              # Persistent storage
-│   ├── infisical-operator/        # Secrets management operator
-│   ├── homeassistant/             # ✅ Home automation platform
-│   ├── mosquitto/                 # ✅ MQTT broker
-│   ├── mail-gateway/              # Email gateway (Roundcube)
-│   ├── whoami/                    # Test service
-│   ├── authentik/                 # SSO/Auth (Sprint 8)
-│   ├── 40-network/external-dns-unifi/ # ✅ Internal DNS (UniFi)
-│   ├── 40-network/external-dns-gandi/ # ✅ Public DNS (Gandi)
-│   └── 40-network/contacts/       # ✅ Contacts redirection service
+│   ├── 00-infra/                  # Infrastructure (ArgoCD, Traefik, Cilium, etc.)
+│   ├── 01-storage/                # Storage (Synology CSI, NFS)
+│   ├── 02-monitoring/             # Monitoring (Prometheus, Grafana, Loki)
+│   ├── 03-security/               # Security (Authentik)
+│   ├── 04-databases/              # Databases (CloudNativePG, MariaDB, etc.)
+│   ├── 10-home/                   # Home automation
+│   ├── 20-media/                  # Media applications
+│   ├── 40-network/                # Network services
+│   ├── 60-services/               # General services
+│   ├── 70-tools/                  # Tools & utilities
+│   ├── 99-test/                   # Test applications
+│   └── _shared/                   # Shared resources
 │
 ├── docs/                          # Documentation
+│   ├── README.md                  # Documentation hub
 │   ├── RECETTE-FONCTIONNELLE.md  # ⚠️ Keep updated - Functional validation
 │   ├── RECETTE-TECHNIQUE.md      # ⚠️ Keep updated - Technical validation
-│   ├── DOCUMENTATION-HIERARCHY.md
 │   ├── adr/                       # Architecture Decision Records
-│   └── procedures/
+│   ├── applications/              # App docs (mirroring apps/ structure)
+│   ├── guides/                    # How-to guides
+│   ├── procedures/                # Operational procedures
+│   ├── reference/                 # Technical references
+│   └── troubleshooting/           # Troubleshooting guides
 │
 ├── scripts/                       # Automation scripts
-│   └── bootstrap-secrets.sh
+│   ├── validate.py                # Validation script (used by `just work`)
+│   └── testing/                   # Test suites
 │
-└── .claude/                       # Claude Code configuration
+├── .beads/                        # Beads task management (git-tracked)
+├── .claude/                       # Claude Code configuration
+│   └── hooks/                     # Workflow hooks
+│
+├── WORKFLOW.md                    # Master workflow (RÈGLE MAÎTRE)
+├── WORKFLOW.just                  # Just commands (bd + workflow)
+└── CLAUDE.md                      # This file
 ```
 
 ---
 
 ## Development Workflow
 
-### Task-Driven Development (Archon)
+### Task-Driven Development (Beads + Just)
 
 **ALWAYS follow this cycle:**
 
 1. **Check current work:**
    ```bash
-   find_tasks(filter_by="status", filter_value="doing")
+   just resume  # Shows current task or lists open tasks
    ```
 
-2. **If no active task, get next:**
+2. **Start a task:**
    ```bash
-   find_tasks(filter_by="status", filter_value="todo")
-   find_tasks(task_id="...")  # Get details
+   just work <task_id>  # Full orchestration
    ```
 
-3. **Start work:**
+3. **What happens during `just work`:**
+   - Phase 1: Checks prerequisites (PVC RWO, tolerations)
+   - Phase 2: Identifies relevant documentation
+   - Phase 3: You implement (use Serena for code, Archon for research)
+   - Phase 4: Automatic validation via `scripts/validate.py`
+
+4. **Manual task operations (if needed):**
    ```bash
-   manage_task("update", task_id="...", status="doing")
-   ```
-
-4. **Research phase (MANDATORY before coding):**
-   ```bash
-   # Search knowledge base
-   rag_search_knowledge_base(query="talos networking", match_count=5)
-
-   # Find code examples
-   rag_search_code_examples(query="terraform talos", match_count=3)
-   ```
-
-5. **Implement based on research findings**
-
-6. **Complete task:**
-   ```bash
-   manage_task("update", task_id="...", status="review")
-   # or "done" if validated
+   bd update <task_id> --status in_progress
+   bd close <task_id>
    ```
 
 ### Working with Multiple Environments
@@ -290,7 +324,7 @@ vixens/
 **IMPORTANT:** Trunk-based workflow with 2 environments:
 - **dev**: Development and testing (cluster dev)
 - **main/prod**: Production (cluster prod)
-- **test/staging**: Archived (only used for Terraform testing)
+- **test/staging**: Planned for future
 
 When working on production, base your analysis on dev environment. Compare differences.
 
@@ -310,6 +344,25 @@ gh workflow run promote-prod.yaml -f version=v1.2.3
 ---
 
 ## Essential Commands
+
+### Beads (Task Management)
+
+```bash
+# Resume workflow
+just resume
+
+# Work on task (full orchestration)
+just work <task_id>
+
+# Manual task operations
+bd list --status open
+bd show <task_id>
+bd update <task_id> --status in_progress
+bd close <task_id>
+
+# Quick idea capture
+just burst "Implement feature X"
+```
 
 ### Terraform (Phase 1)
 
@@ -383,70 +436,18 @@ See [docs/RECETTE-FONCTIONNELLE.md](docs/RECETTE-FONCTIONNELLE.md)
 **Technical Validation (Infrastructure):**
 See [docs/RECETTE-TECHNIQUE.md](docs/RECETTE-TECHNIQUE.md)
 
+**Automated Validation:**
 ```bash
-# Quick checks
+# Used by `just work` automatically
+python3 scripts/validate.py <app_name> dev
+```
+
+**Quick checks:**
+```bash
 terraform -chdir=terraform/environments/dev plan  # Should show no changes
 kubectl get nodes                                  # All should be Ready
 kubectl -n argocd get applications                 # All should be Synced+Healthy
 ```
-
----
-
-## Current Infrastructure Status
-
-### Dev Cluster ✅ (ACTIVE)
-
-All core components operational:
-- 3 control planes HA (obsy, onyx, opale)
-- Talos v1.11.0, Kubernetes v1.34.0
-- Cilium CNI v1.18.3 + L2 LB
-- ArgoCD v7.7.7 (GitOps active)
-- Traefik Ingress with TLS
-- cert-manager + Let's Encrypt (production)
-- Synology CSI (iSCSI storage)
-- Infisical (secrets management)
-- Home Assistant ✅
-- Mosquitto MQTT broker ✅
-- Mail Gateway
-
-### Completed Sprints
-
-| Sprint | Component | Status |
-|--------|-----------|--------|
-| 1 | Terraform Talos module + dev cluster | ✅ DONE |
-| 2 | Cilium CNI v1.18.3 | ✅ DONE |
-| 3 | Scale to 3 CP HA | ✅ DONE |
-| 4 | ArgoCD bootstrap + automation | ✅ DONE |
-| 5 | Traefik + Cilium L2 Announcements | ✅ DONE |
-| 6 | cert-manager + Let's Encrypt | ✅ DONE |
-
-**Next:** Sprint 7 (Synology CSI optimization), Sprint 8 (Authentik SSO), Sprint 9 (Test cluster replication)
-
-For detailed sprint information, see Archon task management.
-
----
-
-## Terraform Architecture (2-Level)
-
-**Structure:** `environments/dev/main.tf → modules/{shared, talos, cilium, argocd}`
-
-**Key Modules:**
-1. **shared/** - DRY module (chart versions, tolerations, capabilities)
-2. **talos/** - Cluster provisioning (per-node config, dual-VLAN, VIP)
-3. **cilium/** - CNI deployment (L2 Announcements, LB IPAM)
-4. **argocd/** - GitOps bootstrap (App-of-Apps pattern)
-
-**Variable Structure:** 8 typed objects instead of 27+ scattered variables:
-1. `cluster` - Cluster configuration
-2. `control_plane_nodes` - Per-node CP configs
-3. `worker_nodes` - Per-node worker configs
-4. `paths` - File paths
-5. `argocd` - ArgoCD configuration
-6. `environment` - Environment name
-7. `git_branch` - Git branch for ArgoCD
-8. `vlan_services` - Services VLAN ID
-
-See [docs/adr/006-terraform-2-level-architecture.md](docs/adr/006-terraform-2-level-architecture.md) for details.
 
 ---
 
@@ -466,11 +467,11 @@ See [docs/adr/006-terraform-2-level-architecture.md](docs/adr/006-terraform-2-le
 - Auto-sync enabled (git push = automatic deployment)
 - Zero manual kubectl commands required
 
-### Archon Task Management
-- Tasks tracked in Archon MCP server (PRIMARY system)
-- Sprint-based workflow
-- Task status: todo → doing → review → done
-- NEVER use TodoWrite
+### Beads Task Management
+- Tasks tracked in Beads (`.beads/` directory)
+- Workflow orchestrated via Just (`WORKFLOW.just`)
+- Task status: open → in_progress → closed
+- NEVER use TodoWrite or Archon Task Management
 
 ### Recipe Files Maintenance
 **CRITICAL:** When infrastructure or services change, update:
@@ -479,16 +480,54 @@ See [docs/adr/006-terraform-2-level-architecture.md](docs/adr/006-terraform-2-le
 
 ---
 
+## Technical Notes (Important)
+
+### Controlplane Scheduling
+Applications that need to run on control plane nodes require tolerations:
+```yaml
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+```
+
+### Storage Strategy
+**PVC with ReadWriteOnce (RWO)** → Deployment must use `strategy: Recreate`:
+```yaml
+spec:
+  strategy:
+    type: Recreate
+```
+
+### Network Configuration
+**HTTP to HTTPS Redirection:** Always configure for public-facing services.
+
+**Certificates:**
+- Dev: `letsencrypt-staging` (for testing)
+- Prod: `letsencrypt-prod` (production)
+
+**Ingress URLs:**
+- Dev: `<app>.dev.truxonline.com`
+- Prod: `<app>.truxonline.com`
+
+### Design Principles
+- **DRY (Don't Repeat Yourself):** Use shared resources when possible
+- **Maintainability:** Clear structure, good documentation
+- **State of the Art:** Follow Kubernetes/GitOps best practices
+- **Reproducibility:** Everything in git, infrastructure as code
+
+---
+
 ## Quick Reference
 
 **For new features/services:**
-1. Check Archon tasks first
-2. Research with RAG knowledge base
-3. Compare with lower environments
-4. Implement changes
-5. Update recipe files if needed
-6. Validate with Playwright (WebUI) or kubectl (infrastructure)
-7. Mark task as review/done in Archon
+1. Check Beads tasks first (`just resume`)
+2. Research with Archon RAG knowledge base
+3. Compare with lower environments (if applicable)
+4. Implement changes (use Serena for code editing)
+5. Update recipe files if infrastructure/services changed
+6. Validate with `just work` (automatic validation)
+7. Close task in Beads
 
 **For troubleshooting:**
 1. Check [RECETTE-TECHNIQUE.md](docs/RECETTE-TECHNIQUE.md)
@@ -500,10 +539,40 @@ See [docs/adr/006-terraform-2-level-architecture.md](docs/adr/006-terraform-2-le
 1. Functional: [RECETTE-FONCTIONNELLE.md](docs/RECETTE-FONCTIONNELLE.md) + Playwright
 2. Technical: [RECETTE-TECHNIQUE.md](docs/RECETTE-TECHNIQUE.md)
 3. Always run: `terraform plan` (should show no changes)
-- les apply kubectl apply/edit/delete sont acceptable EN DEV pour le troubleshoot/confirmation mais doivent etre consolider avec une approche gitops ensuite.
-- find_tasks a une fenetre de 10 taches, pense a l'etendre pour en avoir plus
-- le secret infisical-universal-auth est dans le namespace argocd pour etre utilisé par tous les operator
-- n'oublie pas de me signaler quand je dois creer des secrets dans infisical ou des DNS
-- n'oublie pas de créer les adr sur les decisions architecturales
-- quand tu configure un ingress https, mets en place un redirect http -> https
-- on ne peut pas merge dev en main, il faut PR dev to test to staging to main
+
+**kubectl apply/edit/delete:**
+- Acceptable in DEV for troubleshooting/confirmation
+- Must be consolidated with GitOps approach afterward
+- NEVER in prod (GitOps only)
+
+**Beads Tips:**
+- `find_tasks` has a window of 10 tasks, extend with `--limit` for more
+- Secret `infisical-universal-auth` is in namespace `argocd` for all operators
+- Remember to signal when secrets need creation in Infisical or DNS updates
+- Remember to create ADRs for architectural decisions
+- When configuring HTTPS ingress, set up HTTP → HTTPS redirect
+- Cannot merge dev to main directly, must PR: dev → test → staging → main
+
+---
+
+## GitOps Workflow (Trunk-Based)
+
+**Branches:** `dev` (development) and `main` (production)
+
+**Flow:**
+1. Work on `dev` branch
+2. Push changes: `git push origin dev`
+3. ArgoCD auto-syncs to dev cluster
+4. Validate in dev environment
+5. Promote to production: `gh workflow run promote-prod.yaml -f version=v1.2.3`
+6. ArgoCD auto-syncs to prod cluster
+
+**Auto-Tagging:**
+- GitHub Action creates tag `dev-vX.Y.Z` after merge to `dev`
+- Promotion workflow uses tags for production
+
+See [ADR-008](docs/adr/008-trunk-based-gitops-workflow.md) and [ADR-009](docs/adr/009-simplified-two-branch-workflow.md) for details.
+
+---
+
+**Last Updated:** 2026-01-08

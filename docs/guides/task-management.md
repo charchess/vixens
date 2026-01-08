@@ -1,14 +1,32 @@
-# Task Management with Archon
+# Task Management with Beads
 
-This guide explains how to create, update, and manage tasks in the Archon project management system.
+This guide explains how to create, update, and manage tasks using Beads and the Just workflow orchestrator.
 
 ---
 
 ## Overview
 
-Archon MCP is the **PRIMARY** task management system for this project. All tasks are tracked in Archon, not in TodoWrite or markdown files.
+**Beads (bd)** is the **PRIMARY** and **ONLY** task management system for this project. All tasks are tracked in Beads (`.beads/` directory), NOT in TodoWrite, Archon Task Management, or markdown files.
 
-**Archon URL:** http://localhost:3000 (when running locally)
+**Workflow Orchestration:** Just (`WORKFLOW.just`) provides convenient commands for task management and workflow automation.
+
+---
+
+## Quick Start
+
+```bash
+# Entry point: Resume current work or see available tasks
+just resume
+
+# Work on a specific task (full orchestration)
+just work <task_id>
+
+# Manual operations (if needed)
+bd list --status open               # List all open tasks
+bd show <task_id>                   # View task details
+bd update <task_id> --status in_progress --assignee coding-agent
+bd close <task_id>                  # Mark complete
+```
 
 ---
 
@@ -55,33 +73,21 @@ research: evaluate vaultwarden postgresql migration
 
 ## Priority System
 
-Tasks use a **dual priority system**: priority label + task_order numeric value.
+Beads uses simple priority levels for task ordering.
 
-### Priority Labels
+### Priority Levels
 
-| Priority | Range | Description | Use Case |
-|----------|-------|-------------|----------|
-| **p0** | 90-100 | Critical blockers | Production down, security breach |
-| **p1** | 70-89 | High priority | Infrastructure issues, important features |
-| **p2** | 40-69 | Medium priority | Standard features, improvements |
-| **p3** | 10-39 | Low priority | Nice-to-have, research |
+| Priority | Description | Use Case |
+|----------|-------------|----------|
+| **urgent** | Critical blockers | Production down, security breach |
+| **high** | High priority | Infrastructure issues, important features |
+| **normal** | Medium priority (default) | Standard features, improvements |
+| **low** | Low priority | Nice-to-have, research |
 
-### Task Order (0-100)
-
-Higher number = higher execution priority
-
-**Guidelines:**
-- **90-100:** Critical work (P0 blockers)
-- **70-89:** High priority work (P1)
-- **40-69:** Medium priority work (P2)
-- **10-39:** Low priority work (P3)
-
-**Example:**
-```
-task_order: 95, priority: p0  → Critical blocker
-task_order: 85, priority: p1  → High priority infrastructure
-task_order: 50, priority: p2  → Standard feature
-task_order: 20, priority: p3  → Nice-to-have research
+**Usage:**
+```bash
+bd create "feat: deploy app" --priority urgent
+bd update <task_id> --priority high
 ```
 
 ---
@@ -91,80 +97,94 @@ task_order: 20, priority: p3  → Nice-to-have research
 ### Task Status Flow
 
 ```
-todo → doing → review → done
+open → in_progress → closed
 ```
 
 | Status | Meaning | Next Action |
 |--------|---------|-------------|
-| `todo` | Not started | Pick up and move to doing |
-| `doing` | Currently working | Complete and move to review |
-| `review` | Completed, needs validation | Test and move to done |
-| `done` | Completed and validated | Archive |
+| `open` | Not started | Pick up and move to in_progress |
+| `in_progress` | Currently working | Complete and close |
+| `closed` | Completed | Archive |
 
-**IMPORTANT:** Only ONE task should be in `doing` status at a time.
+**IMPORTANT:** Only ONE task should be in `in_progress` status at a time (especially for `coding-agent`).
 
-### Special Status Management
+### Assignee Convention
 
-Since Archon uses a fixed set of statuses (`todo`, `doing`, `review`, `done`), we use **Naming Conventions (Prefixes)** and **Priority Rules** to handle special states.
+- `coding-agent` = Claude Code (AI)
+- `user` = Human user
 
-| Use Case | Archon Status | Convention & Action |
-| :--- | :--- | :--- |
-| **Obsolete / Cancelled** | `done` | Prefix title with `[CANCELLED]`. Add comment/update description explaining why. |
-| **Out of Scope** | `done` | Prefix title with `[OUT-OF-SCOPE]`. Add comment. |
-| **Postponed** | `todo` | Prefix title with `[POSTPONED]`. Set priority to `p3` (Low). |
-| **Paused** | `todo` | Prefix title with `[PAUSED]`. Remove assignee. |
-| **Blocked** | `todo` | Prefix title with `[BLOCKED]`. Add detail on dependency in description. |
-| **Draft / Needs Info** | `todo` | Prefix title with `[DRAFT]`. Do not start until defined. |
+---
 
-**Example:**
-- `[CANCELLED] feat: deploy old app` (Status: `done`)
-- `[BLOCKED] feat: integration with external api` (Status: `todo`, blocked by API credentials)
+## Using Just Workflow
+
+### just resume
+
+**Entry point for all development work.**
+
+```bash
+just resume
+```
+
+**What it does:**
+- Checks for tasks in `in_progress` assigned to `coding-agent`
+- Shows current task if found
+- Lists open tasks if no work in progress
+
+**Example output:**
+```
+🔥 RESUME: beads-abc123 | feat: deploy jellyseerr
+   Commande: just work beads-abc123
+```
+
+### just work <task_id>
+
+**Full workflow orchestration for a task.**
+
+```bash
+just work beads-abc123
+```
+
+**What it does:**
+1. **Phase 1 (Prerequisites):** Checks for technical requirements (PVC RWO, tolerations)
+2. **Phase 2 (Documentation):** Identifies relevant app documentation
+3. **Phase 3 (Implementation):** Guides you through development (you use Serena/Archon RAG here)
+4. **Phase 4 (Validation):** Runs `scripts/validate.py` automatically
+5. **Closes task** if validation passes
+
+**Use this for standard development workflows.** Manual operations only when needed.
+
+### just burst <title>
+
+**Quick idea capture.**
+
+```bash
+just burst "feat: investigate backup solution"
+```
+
+Creates a task immediately without blocking workflow.
 
 ---
 
 ## Creating Tasks
 
-### Using Archon MCP Tools
+### Using Beads CLI
 
-```python
-# Create task
-manage_task(
-    action="create",
-    project_id="15926c59-1ba7-4e9e-b77a-aa4b22a91a6a",  # Vixens project
-    title="feat: deploy jellyseerr in media namespace",
-    description="""## Context
-Need media request management tool.
+```bash
+# Create basic task
+bd create "feat: deploy jellyseerr in media namespace" \
+  --assignee coding-agent \
+  --priority normal \
+  --label media
 
-## Current State
-- No request management system
-- Users manually request media
-
-## Target State
-- Jellyseerr deployed in media namespace
-- Integrated with Radarr/Sonarr
-- Public ingress configured
-
-## Acceptance Criteria
-- [ ] Create Kustomize base and overlays
-- [ ] Configure Ingress for dev/prod
-- [ ] Integrate with Infisical for secrets
-- [ ] Connect to Radarr and Sonarr
-- [ ] Add ArgoCD application manifest
-- [ ] Verify deployment in dev
-- [ ] Promote to prod
-
-## Dependencies
-Requires Radarr and Sonarr to be operational.
-""",
-    status="todo",
-    assignee="Coding Agent",
-    priority="p2",
-    task_order=45,
-    feature="media-library"
-)
+# Create with full description
+bd create "feat: deploy jellyseerr" \
+  --assignee coding-agent \
+  --priority high \
+  --description "Deploy Jellyseerr with Radarr/Sonarr integration" \
+  --label media,deployment
 ```
 
-### Description Template
+### Task Description Template
 
 Use structured markdown for clarity:
 
@@ -193,39 +213,80 @@ Use structured markdown for clarity:
 [Links to docs, ADRs, related tasks]
 ```
 
+**Example:**
+```bash
+bd create "feat: deploy jellyseerr" --description "$(cat <<'EOF'
+## Context
+Need media request management tool.
+
+## Current State
+- No request management system
+- Users manually request media
+
+## Target State
+- Jellyseerr deployed in media namespace
+- Integrated with Radarr/Sonarr
+- Public ingress configured
+
+## Acceptance Criteria
+- [ ] Create Kustomize base and overlays
+- [ ] Configure Ingress for dev/prod
+- [ ] Integrate with Infisical for secrets
+- [ ] Connect to Radarr and Sonarr
+- [ ] Add ArgoCD application manifest
+- [ ] Verify deployment in dev
+- [ ] Promote to prod
+
+## Dependencies
+Requires Radarr and Sonarr to be operational.
+EOF
+)"
+```
+
 ---
 
 ## Finding Tasks
 
-### List All Tasks
+### List Tasks
 
-```python
-# Get all tasks
-find_tasks(per_page=50)
+```bash
+# List all open tasks
+bd list --status open
 
-# Search by keyword
-find_tasks(query="jellyfin")
+# List in-progress tasks
+bd list --status in_progress
 
-# Filter by status
-find_tasks(filter_by="status", filter_value="todo")
-find_tasks(filter_by="status", filter_value="doing")
+# List completed tasks
+bd list --status closed
 
-# Filter by feature
-find_tasks(filter_by="feature", filter_value="media-library")
+# Filter by assignee
+bd list --assignee coding-agent --status open
 
-# Get specific task (full details)
-find_tasks(task_id="550e8400-e29b-41d4-a716-446655440000")
+# Filter by label
+bd list --label media --status open
+
+# Limit results
+bd list --status open --limit 20
 ```
 
-### Get Current Work
+### View Task Details
 
-```python
-# What am I working on?
-find_tasks(filter_by="status", filter_value="doing")
+```bash
+# Show full task details
+bd show <task_id>
 
-# What's ready to work on? (no blockers)
-# Note: Use `bd ready` in beads workflow if available
-find_tasks(filter_by="status", filter_value="todo")
+# Show in JSON format
+bd show <task_id> --json
+```
+
+### Search Tasks
+
+```bash
+# Beads search (if available)
+bd list --status open | grep jellyfin
+
+# Or use interactive filtering
+bd list --status open --limit 50
 ```
 
 ---
@@ -234,67 +295,59 @@ find_tasks(filter_by="status", filter_value="todo")
 
 ### Start Working on Task
 
-```python
-manage_task(
-    action="update",
-    task_id="...",
-    status="doing"
-)
+```bash
+# Manual start
+bd update <task_id> --status in_progress --assignee coding-agent
+
+# Or use just work (recommended)
+just work <task_id>
 ```
 
 ### Complete Task
 
-```python
-# Mark for review
-manage_task(
-    action="update",
-    task_id="...",
-    status="review"
-)
+```bash
+# Close task
+bd close <task_id>
 
-# Or mark as done (if no review needed)
-manage_task(
-    action="update",
-    task_id="...",
-    status="done"
-)
+# Close with reason
+bd close <task_id> --reason "Deployed and validated in dev"
+
+# Close multiple tasks
+bd close <task_id1> <task_id2> <task_id3>
 ```
 
 ### Change Priority
 
-```python
-manage_task(
-    action="update",
-    task_id="...",
-    priority="p1",
-    task_order=85
-)
+```bash
+bd update <task_id> --priority high
 ```
 
 ### Reassign Task
 
-```python
-manage_task(
-    action="update",
-    task_id="...",
-    assignee="User"  # or "Coding Agent" or "Archon"
-)
+```bash
+bd update <task_id> --assignee user
+```
+
+### Add Notes
+
+```bash
+bd update <task_id> --notes "Blocked by missing DNS records"
 ```
 
 ---
 
-## Feature Tags
+## Labels & Organization
 
-Group related tasks with feature labels:
+Group related tasks with labels:
 
-| Feature | Description | Examples |
-|---------|-------------|----------|
+| Label | Description | Examples |
+|-------|-------------|----------|
 | `architecture-cleanup` | Architecture refactoring | DRY violations, tech debt |
 | `monitoring` | Observability & dashboards | Prometheus, Grafana, alerts |
 | `infrastructure` | Terraform, Talos, Cilium | Cluster upgrades, resource limits |
 | `databases` | PostgreSQL, backups | CloudNativePG, backup strategy |
 | `cluster-services` | General K8s services | Linkwarden, Docspell, tools |
-| `media-library` | Media management | Jellyfin, *arr stack |
+| `media` | Media management | Jellyfin, *arr stack |
 | `downloads` | Download managers | qBittorrent, Pyload |
 | `security` | Security tools | CrowdSec, Trivy, Kyverno |
 | `home-automation` | Home Assistant | MQTT, integrations |
@@ -303,41 +356,50 @@ Group related tasks with feature labels:
 | `documentation` | Docs, guides | Restructuring, ADRs |
 | `gitops-workflow` | GitOps processes | Branch strategy, promotion |
 
+**Usage:**
+```bash
+bd create "feat: deploy app" --label media,deployment
+bd list --label media --status open
+```
+
 ---
 
 ## Task Management Cycle
 
 ### Standard Workflow
 
-1. **Find work:**
-   ```python
-   find_tasks(filter_by="status", filter_value="todo", per_page=10)
+1. **Resume work:**
+   ```bash
+   just resume
    ```
 
 2. **Start task:**
-   ```python
-   manage_task("update", task_id="...", status="doing")
+   ```bash
+   just work <task_id>  # Full orchestration
+   # OR manually:
+   bd update <task_id> --status in_progress --assignee coding-agent
    ```
 
-3. **Research before coding:**
+3. **Research before coding (MANDATORY):**
    ```python
-   # Search knowledge base
+   # Search knowledge base (Archon RAG - documentation only)
    rag_search_knowledge_base(query="kubernetes pvc", match_count=5)
 
    # Find code examples
    rag_search_code_examples(query="kustomize overlays", match_count=3)
    ```
 
-4. **Implement solution**
+4. **Implement solution** (use Serena for code editing)
 
 5. **Complete task:**
-   ```python
-   manage_task("update", task_id="...", status="review")
+   ```bash
+   bd close <task_id>
+   # Or let `just work` close it automatically
    ```
 
 6. **Get next task:**
-   ```python
-   find_tasks(filter_by="status", filter_value="todo", per_page=10)
+   ```bash
+   just resume
    ```
 
 ---
@@ -345,21 +407,24 @@ Group related tasks with feature labels:
 ## Best Practices
 
 ### DO ✅
+- Use `just resume` as your entry point
+- Use `just work <task_id>` for standard development
 - Use conventional commit style for task titles
 - Write detailed descriptions with acceptance criteria
-- Set appropriate priority and task_order
-- Tag tasks with feature labels
-- Mark tasks as `doing` before starting work
+- Set appropriate priority
+- Tag tasks with labels
 - Complete ONE task at a time
-- Move to `review` when done (not `done` immediately)
+- Let `just work` handle validation automatically
 
 ### DON'T ❌
-- Use TodoWrite (use Archon instead)
+- Use TodoWrite (use Beads instead)
+- Use Archon for task management (Archon = RAG only)
 - Create tasks with empty descriptions
 - Skip acceptance criteria
-- Have multiple tasks in `doing` status
+- Have multiple tasks in `in_progress` for `coding-agent`
 - Use vague titles ("Fix stuff", "Update things")
 - Forget to update task status
+- Skip the research phase (Archon RAG)
 
 ---
 
@@ -379,68 +444,201 @@ Create feature-level tasks (1 task = 1 feature)
 
 ---
 
-## Troubleshooting
+## Dependencies & Blocking
 
-### Too many TODO tasks (50+)
+Beads supports explicit dependencies between tasks.
 
-**Solution:** Review and clean up:
-```python
-# Find old tasks
-find_tasks(filter_by="status", filter_value="todo", per_page=100)
+```bash
+# Add dependency (task1 depends on task2)
+bd dep add <task1> <task2>
 
-# Archive or delete irrelevant tasks
-manage_task("delete", task_id="...")
+# List blocked tasks
+bd blocked
+
+# Show what blocks a task
+bd show <task_id>  # Dependencies section shows blockers
 ```
 
-### Task stuck in "doing" for days
+---
+
+## Sync & Collaboration
+
+```bash
+# Sync with git remote
+bd sync
+
+# Check sync status
+bd sync --status
+```
+
+**IMPORTANT:** Beads uses `.beads/` directory which is git-tracked. Changes are automatically committed.
+
+**At session end (MANDATORY):**
+```bash
+bd sync  # Commit and push beads changes
+```
+
+---
+
+## Project Health
+
+```bash
+# Project statistics
+bd stats
+
+# Check for issues (sync problems, missing hooks)
+bd doctor
+
+# List blocked tasks
+bd blocked
+```
+
+---
+
+## Troubleshooting
+
+### Too many open tasks (50+)
+
+**Solution:** Review and clean up:
+```bash
+bd list --status open --limit 100
+bd close <task_id1> <task_id2> ...  # Close completed/obsolete tasks
+```
+
+### Task stuck in "in_progress" for days
 
 **Solution:** Either complete it or break it down:
-```python
+```bash
 # Complete if done
-manage_task("update", task_id="...", status="review")
+bd close <task_id>
 
 # Or create smaller subtasks and close original
+bd create "feat: subtask 1" --assignee coding-agent
+bd close <original_task_id> --reason "Split into smaller tasks"
 ```
 
 ### Can't find the right task
 
-**Solution:** Use search and filters:
-```python
-# Search by keyword
-find_tasks(query="media jellyfin")
+**Solution:** Use filters and labels:
+```bash
+# Filter by label
+bd list --label media --status open
 
-# Filter by feature
-find_tasks(filter_by="feature", filter_value="media-library")
+# Filter by assignee
+bd list --assignee coding-agent --status open
+
+# Check blocked tasks
+bd blocked
 ```
+
+### Lost track of current work
+
+**Solution:**
+```bash
+just resume  # Always your entry point
+```
+
+---
+
+## Integration with Archon (RAG Only)
+
+**IMPORTANT:** Archon is used ONLY for knowledge base search (RAG), NOT for task management.
+
+**Before implementing any task, use Archon RAG:**
+
+```python
+# Search documentation (keep queries SHORT - 2-5 keywords)
+rag_search_knowledge_base(query="talos networking", match_count=5)
+
+# Find code examples
+rag_search_code_examples(query="terraform cilium", match_count=3)
+
+# Get available documentation sources
+rag_get_available_sources()
+
+# Search specific source
+rag_search_knowledge_base(
+  query="keywords",
+  source_id="src_xxx",
+  match_count=5
+)
+```
+
+**Query Tips:**
+- ✅ Good: "cilium l2 ipam", "talos vip", "kustomize overlay"
+- ❌ Bad: "how to configure Cilium L2 announcements with IPAM in Kubernetes"
 
 ---
 
 ## Related Documentation
 
+- [WORKFLOW.md](../../WORKFLOW.md) - Master workflow (RÈGLE MAÎTRE)
+- [CLAUDE.md](../../CLAUDE.md) - Tool configuration and usage
 - [Reference: Task Formalism](../reference/task-formalism.md) - Complete formalism spec
 - [GitOps Workflow](gitops-workflow.md) - Promoting changes
 - [Adding New Application](adding-new-application.md) - Implementation guide
 
 ---
 
-## Archon MCP Tools Reference
+## Command Reference
+
+### Beads CLI
+
+```bash
+# Task Operations
+bd create <title> [--assignee=<assignee>] [--priority=<priority>] [--label=<labels>] [--description=<desc>]
+bd list [--status=<status>] [--assignee=<assignee>] [--label=<label>] [--limit=<n>]
+bd show <task_id> [--json]
+bd update <task_id> [--status=<status>] [--assignee=<assignee>] [--priority=<priority>] [--notes=<notes>]
+bd close <task_id> [<task_id2> ...] [--reason=<reason>]
+
+# Dependencies
+bd dep add <task> <depends-on>
+bd blocked
+
+# Project Management
+bd ready          # Show tasks ready to work (no blockers)
+bd stats          # Project statistics
+bd doctor         # Check for issues
+bd sync           # Sync with git remote
+bd sync --status  # Check sync status
+```
+
+### Just Commands
+
+```bash
+just resume              # Entry point: find/resume current work
+just work <task_id>      # Full workflow orchestration
+just burst <title>       # Quick idea capture
+```
+
+### Archon RAG (Knowledge Base Only)
 
 ```python
-# Task Management
-find_tasks(query=None, task_id=None, filter_by=None, filter_value=None, per_page=10)
-manage_task(action, task_id=None, project_id=None, title=None, description=None, status=None, assignee=None, task_order=None, priority=None, feature=None)
-
-# Knowledge Base
 rag_search_knowledge_base(query, source_id=None, match_count=5)
 rag_search_code_examples(query, source_id=None, match_count=5)
 rag_get_available_sources()
 rag_read_full_page(page_id=None, url=None)
-
-# Project Management
-find_projects(project_id=None, query=None, page=1, per_page=10)
-manage_project(action, project_id=None, title=None, description=None)
+rag_list_pages_for_source(source_id, section=None)
 ```
 
 ---
 
-**Last Updated:** 2025-12-30
+## Session Close Protocol
+
+**CRITICAL:** Before saying "done" or "complete", you MUST run this checklist:
+
+```bash
+[ ] 1. git status              # Check what changed
+[ ] 2. git add <files>         # Stage code changes
+[ ] 3. bd sync                 # Commit beads changes
+[ ] 4. git commit -m "..."     # Commit code
+[ ] 5. bd sync                 # Commit any new beads changes
+[ ] 6. git push                # Push to remote
+```
+
+**NEVER skip this.** Work is not done until pushed.
+
+---
+
+**Last Updated:** 2026-01-08

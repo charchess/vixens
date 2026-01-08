@@ -14,7 +14,7 @@ Welcome to the Vixens Kubernetes homelab documentation! This is your central hub
 **Need to push to production?**
 → See [guides/gitops-workflow.md](guides/gitops-workflow.md)
 
-**Managing tasks in Archon?**
+**Managing tasks with Beads?**
 → See [guides/task-management.md](guides/task-management.md)
 
 ---
@@ -25,7 +25,7 @@ Welcome to the Vixens Kubernetes homelab documentation! This is your central hub
 Practical step-by-step guides for common tasks:
 - **[Adding a New Application](guides/adding-new-application.md)** - Deploy apps to the cluster
 - **[GitOps Workflow](guides/gitops-workflow.md)** - Push changes to production
-- **[Task Management](guides/task-management.md)** - Archon workflow and formalism
+- **[Task Management](guides/task-management.md)** - Beads workflow and formalism
 - **[Secret Management](guides/secret-management.md)** - Working with Infisical
 - **[Terraform Workflow](guides/terraform-workflow.md)** - Infrastructure changes
 
@@ -91,7 +91,7 @@ Templates for creating new documentation:
 |--------------|----------|
 | Add a new application | [guides/adding-new-application.md](guides/adding-new-application.md) |
 | Push changes to production | [guides/gitops-workflow.md](guides/gitops-workflow.md) |
-| Create/manage Archon tasks | [guides/task-management.md](guides/task-management.md) |
+| Create/manage Beads tasks | [guides/task-management.md](guides/task-management.md) |
 | Understand sync waves | [reference/argocd-sync-waves.md](reference/argocd-sync-waves.md) |
 | See naming conventions | [reference/naming-conventions.md](reference/naming-conventions.md) |
 | Find app documentation | [applications/](applications/) |
