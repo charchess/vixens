@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-      - name: amule
+        - name: amule
         resources:
           limits:
             cpu: 500m

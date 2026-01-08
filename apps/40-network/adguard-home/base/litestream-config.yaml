@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adguard-home-litestream-config
+data:
+  litestream.yml: |
+    dbs:
+      - path: /opt/adguardhome/work/data/querylog.kv
+        replicas:
+          - url: s3://$LITESTREAM_BUCKET/adguard-home/querylog.kv
+            endpoint: $LITESTREAM_ENDPOINT
+      - path: /opt/adguardhome/work/data/stats.db
+        replicas:
+          - url: s3://$LITESTREAM_BUCKET/adguard-home/stats.db
+            endpoint: $LITESTREAM_ENDPOINT

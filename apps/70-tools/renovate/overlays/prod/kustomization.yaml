@@ -4,6 +4,6 @@ commonLabels:
 kind: Kustomization
 namespace: tools
 patches:
-- path: patch-infisical-env.yaml
+  - path: patch-infisical-env.yaml
 resources:
-- ../../base
+  - ../../base

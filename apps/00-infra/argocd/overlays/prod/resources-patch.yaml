@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-      - name: argocd
+        - name: argocd
         resources:
           limits:
             cpu: 500m

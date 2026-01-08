@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-      - name: goldilocks
+        - name: goldilocks
         resources:
           limits:
             cpu: 500m

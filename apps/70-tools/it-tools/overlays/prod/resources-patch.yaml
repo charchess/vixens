@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-      - name: it-tools-ingress
+        - name: it-tools-ingress
         resources:
           limits:
             cpu: 500m

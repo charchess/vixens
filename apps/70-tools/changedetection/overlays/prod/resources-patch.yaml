@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-      - name: browserless
+        - name: browserless
         resources:
           limits:
             cpu: 500m
@@ -14,7 +14,7 @@ spec:
           requests:
             cpu: 11m
             memory: 120Mi
-      - name: changedetection
+        - name: changedetection
         resources:
           limits:
             cpu: 500m

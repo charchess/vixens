@@ -2,17 +2,17 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: media
 patches:
-- patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n\
+  - patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n\
     \  value: prod\n"
   target:
     kind: InfisicalSecret
     name: mylar-secrets-sync
-- path: litestream-secret-patch.yaml
+  - path: litestream-secret-patch.yaml
   target:
     kind: InfisicalSecret
     name: mylar-litestream-secret
 patchesStrategicMerge:
-- deployment-patch.yaml
+  - deployment-patch.yaml
 resources:
-- ../../base
-- ingress.yaml
+  - ../../base
+  - ingress.yaml

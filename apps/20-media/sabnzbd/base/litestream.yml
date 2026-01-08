@@ -1,5 +1,0 @@
-dbs:
-  - path: /config/admin/history1.db
-    replicas:
-      - url: s3://$LITESTREAM_BUCKET/sabnzbd/history1.db
-        endpoint: $LITESTREAM_ENDPOINT

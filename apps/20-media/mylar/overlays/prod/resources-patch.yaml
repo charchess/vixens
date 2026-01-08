@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-      - name: mylar
+        - name: mylar
         resources:
           limits:
             cpu: 1000m

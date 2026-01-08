@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-      - name: descheduler
+        - name: descheduler
         resources:
           limits:
             cpu: 500m

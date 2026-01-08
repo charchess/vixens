@@ -7,7 +7,7 @@ spec:
     spec:
       priorityClassName: vixens-medium
       containers:
-      - name: joex
+        - name: joex
         resources:
           requests:
             cpu: 200m
@@ -25,7 +25,7 @@ spec:
     spec:
       priorityClassName: vixens-medium
       containers:
-      - name: restserver
+        - name: restserver
         resources:
           requests:
             cpu: 200m

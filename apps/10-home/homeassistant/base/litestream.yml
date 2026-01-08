@@ -1,5 +1,0 @@
-dbs:
-  - path: /config/home-assistant_v2.db
-    replicas:
-      - url: s3://$LITESTREAM_BUCKET/homeassistant/home-assistant_v2.db
-        endpoint: $LITESTREAM_ENDPOINT

@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-      - name: whoami
+        - name: whoami
         resources:
           limits:
             cpu: 500m
