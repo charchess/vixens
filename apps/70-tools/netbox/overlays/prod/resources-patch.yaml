@@ -6,11 +6,11 @@ spec:
   template:
     spec:
       containers:
-    - name: netbox
-          resources:
-            limits:
-              cpu: 500m
-              memory: 1173Mi
-            requests:
-              cpu: 11m
-              memory: 640Mi
+      - name: netbox
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1173Mi
+          requests:
+            cpu: 11m
+            memory: 640Mi

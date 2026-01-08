@@ -267,7 +267,7 @@ spec:
         securityContext:
           readOnlyRootFilesystem: true
         volumeMounts:
-          - mountPath: /tmp/
+            - mountPath: /tmp/
             name: tmp-volume
         args:
           - "--log-level=info"

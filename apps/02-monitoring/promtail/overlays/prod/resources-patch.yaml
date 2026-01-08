@@ -6,11 +6,11 @@ spec:
   template:
     spec:
       containers:
-    - name: promtail
-          resources:
-            limits:
-              cpu: 500m
-              memory: 192Mi
-            requests:
-              cpu: 49m
-              memory: 128Mi
+      - name: promtail
+        resources:
+          limits:
+            cpu: 500m
+            memory: 192Mi
+          requests:
+            cpu: 49m
+            memory: 128Mi
