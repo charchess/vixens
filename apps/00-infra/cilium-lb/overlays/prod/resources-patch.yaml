@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: cilium-lb
+    - name: cilium-lb
           resources:
             limits:
               cpu: 500m

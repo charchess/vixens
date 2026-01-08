@@ -46,3 +46,6 @@ spec:
                 - ping
             initialDelaySeconds: 5
             periodSeconds: 10
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

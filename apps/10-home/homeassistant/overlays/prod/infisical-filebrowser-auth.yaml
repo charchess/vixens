@@ -19,3 +19,4 @@ spec:
   managedSecretReference:
     secretName: filebrowser-auth
     creationPolicy: Owner
+    secretNamespace: overlays

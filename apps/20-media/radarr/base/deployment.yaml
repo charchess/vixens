@@ -57,7 +57,7 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: litestream-config
+            - name: radarr-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
       containers:
@@ -118,7 +118,7 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: litestream-config
+            - name: radarr-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-syncer
@@ -153,6 +153,9 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Content
-        - name: litestream-config
+        - name: radarr-litestream-config
           configMap:
             name: radarr-litestream-config
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

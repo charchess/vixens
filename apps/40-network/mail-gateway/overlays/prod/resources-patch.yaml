@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: mail-gateway
+    - name: mail-gateway
           resources:
             limits:
               cpu: 500m

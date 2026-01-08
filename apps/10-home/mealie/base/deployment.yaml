@@ -45,3 +45,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: mealie-data
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

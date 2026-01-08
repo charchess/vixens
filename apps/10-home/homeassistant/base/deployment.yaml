@@ -64,7 +64,7 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: litestream-config
+            - name: homeassistant-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-init
@@ -168,7 +168,7 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: litestream-config
+            - name: homeassistant-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-syncer
@@ -200,6 +200,6 @@ spec:
         - name: ha-config
           secret:
             secretName: homeassistant-config
-        - name: litestream-config
+        - name: homeassistant-litestream-config
           configMap:
             name: homeassistant-litestream-config

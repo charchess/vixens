@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: music-assistant
+    - name: music-assistant
           resources:
             limits:
               cpu: 500m

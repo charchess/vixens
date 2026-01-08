@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: reloader
+    - name: reloader
           resources:
             limits:
               cpu: 500m

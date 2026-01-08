@@ -8,7 +8,7 @@ spec:
     spec:
       priorityClassName: vixens-critical
       containers:
-        - name: manager
+    - name: manager
           resources:
             requests:
               cpu: 200m

@@ -9,7 +9,7 @@ spec:
     spec:
       priorityClassName: vixens-medium
       containers:
-        - name: vaultwarden
+    - name: vaultwarden
           resources:
             requests:
               cpu: 50m
@@ -29,7 +29,7 @@ spec:
               port: 80
             initialDelaySeconds: 10
             periodSeconds: 10
-        - name: litestream
+    - name: litestream
           resources:
             requests:
               cpu: 10m

@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: netbox
+    - name: netbox
           resources:
             limits:
               cpu: 500m

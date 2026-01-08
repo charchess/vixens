@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: synology-csi-secrets
+    - name: synology-csi-secrets
           resources:
             limits:
               cpu: 500m

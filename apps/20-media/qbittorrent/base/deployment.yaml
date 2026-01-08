@@ -89,3 +89,6 @@ spec:
         - name: config-patcher
           configMap:
             name: qbittorrent-config-patcher
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

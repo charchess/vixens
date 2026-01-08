@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: vpa
+    - name: vpa
           resources:
             limits:
               cpu: 500m

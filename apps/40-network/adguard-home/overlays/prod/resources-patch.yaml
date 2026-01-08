@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: adguard-home
+    - name: adguard-home
           resources:
             limits:
               cpu: 1000m

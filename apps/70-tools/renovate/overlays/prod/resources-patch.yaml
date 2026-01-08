@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: renovate
+    - name: renovate
           resources:
             limits:
               cpu: 118959m

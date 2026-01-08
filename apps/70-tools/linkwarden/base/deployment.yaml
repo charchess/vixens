@@ -9,7 +9,7 @@ metadata:
 spec:
   replicas: 1
   strategy:
-    type: Recreate  # RWO PVC requires Recreate strategy
+    type: Recreate # RWO PVC requires Recreate strategy
   selector:
     matchLabels:
       app: linkwarden
@@ -81,3 +81,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: linkwarden-data
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

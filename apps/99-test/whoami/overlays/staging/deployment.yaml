@@ -23,3 +23,6 @@ spec:
           image: traefik/whoami
           ports:
             - containerPort: 80
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

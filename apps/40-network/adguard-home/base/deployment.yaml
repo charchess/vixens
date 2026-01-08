@@ -51,7 +51,7 @@ spec:
           volumeMounts:
             - name: adguard-work
               mountPath: /opt/adguardhome/work
-            - name: litestream-config
+            - name: adguard-home-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
       containers:
@@ -108,7 +108,7 @@ spec:
           volumeMounts:
             - name: adguard-work
               mountPath: /opt/adguardhome/work
-            - name: litestream-config
+            - name: adguard-home-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-syncer
@@ -138,6 +138,9 @@ spec:
         - name: adguard-conf
           persistentVolumeClaim:
             claimName: adguard-conf
-        - name: litestream-config
+        - name: adguard-home-litestream-config
           configMap:
             name: adguard-litestream-config
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

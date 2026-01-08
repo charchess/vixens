@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: frigate
+    - name: frigate
           resources:
             limits:
               cpu: 8000m

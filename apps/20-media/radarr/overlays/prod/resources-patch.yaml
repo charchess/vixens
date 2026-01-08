@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: radarr
+    - name: radarr
           resources:
             limits:
               cpu: 1000m

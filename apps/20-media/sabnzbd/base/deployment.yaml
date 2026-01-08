@@ -36,7 +36,7 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              
+
               echo "Restoring config from s3://$LITESTREAM_BUCKET/sabnzbd/config..."
               rclone copy s3:$LITESTREAM_BUCKET/sabnzbd/config /config --transfers 4 --exclude "*.db*" --exclude "*.log" 2>/dev/null || echo "No config found or restore failed (first run?)"
           envFrom:
@@ -57,7 +57,7 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: litestream-config
+            - name: sabnzbd-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
       containers:
@@ -91,7 +91,7 @@ spec:
               value: "1000"
             - name: TZ
               value: "Europe/Paris"
-            # HOST_WHITELIST_ENTRIES and SABNZBD_HOST are set per environment via overlays
+              # HOST_WHITELIST_ENTRIES and SABNZBD_HOST are set per environment via overlays
           volumeMounts:
             - name: config
               mountPath: /config
@@ -116,7 +116,7 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: litestream-config
+            - name: sabnzbd-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-syncer
@@ -125,22 +125,22 @@ spec:
           args:
             - |
               apk add --no-cache rclone inotify-tools
-              
+
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              
+
               echo "Starting Config-Syncer for /config -> s3://$LITESTREAM_BUCKET/sabnzbd/config"
-              
+
               sync_s3() {
                 echo "[$(date)] Syncing changes..."
                 rclone sync /config s3:$LITESTREAM_BUCKET/sabnzbd/config --exclude "*.db*" --exclude "*.db-wal" --exclude "*.db-shm" --exclude "*.log" --exclude "incomplete/**" --exclude "complete/**"
               }
-              
+
               sync_s3
-              
+
               while true; do
                 inotifywait -r -e modify,create,delete,move /config --exclude ".*\.db.*"
                 sync_s3
@@ -167,6 +167,9 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Downloads
-        - name: litestream-config
+        - name: sabnzbd-litestream-config
           configMap:
             name: sabnzbd-litestream-config
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
