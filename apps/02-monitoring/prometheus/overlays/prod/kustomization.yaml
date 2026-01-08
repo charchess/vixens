@@ -4,13 +4,13 @@ commonLabels:
 kind: Kustomization
 namespace: monitoring
 patches:
-  - path: patch-alertmanager-command.yaml
+- path: patch-alertmanager-command.yaml
   target:
     kind: StatefulSet
     name: prometheus-alertmanager
-  - path: patch-infisical-env.yaml
+- path: patch-infisical-env.yaml
   target:
     kind: InfisicalSecret
     name: alertmanager-secrets-sync
 resources:
-  - ../../base
+- ../../base

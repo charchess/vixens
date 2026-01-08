@@ -1,18 +1,18 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 patches:
-  - path: infisical-patch.yaml
+- path: infisical-patch.yaml
   target:
     kind: InfisicalSecret
     name: vaultwarden-secrets
-  - path: litestream-secret-patch.yaml
+- path: litestream-secret-patch.yaml
   target:
     kind: InfisicalSecret
     name: litestream-shared-secrets
-  - path: deployment-patch.yaml
+- path: deployment-patch.yaml
   target:
     kind: Deployment
     name: vaultwarden
 resources:
-  - ../../base
-  - ingress.yaml
+- ../../base
+- ingress.yaml
