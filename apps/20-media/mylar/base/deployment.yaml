@@ -95,12 +95,20 @@ spec:
               cpu: 1000m
               memory: 1Gi
           env:
+            - name: MYLAR__API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mylar-secrets
+                  key: API_KEY
             - name: PUID
               value: "1000"
             - name: PGID
               value: "1000"
             - name: TZ
               value: Europe/Paris
+          envFrom:
+            - secretRef:
+                name: mylar-secrets
           volumeMounts:
             - name: config
               mountPath: /config

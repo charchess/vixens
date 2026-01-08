@@ -1,6 +1,7 @@
 ---
 # Generic template for Helm-sourced applications
-# Used for apps like: traefik, cert-manager, cert-manager-webhook-gandi, synology-csi
+# Used for apps like: traefik, cert-manager, cert-manager-webhook-gandi,
+# synology-csi
 #
 # This template uses inline Helm values (to be externalized in Phase 2).
 # For Phase 2, we'll add support for ArgoCD's multiple sources feature to

@@ -18,6 +18,7 @@ spec:
         app: hydrus-client
         test-label: "true"
     spec:
+      priorityClassName: vixens-medium
       initContainers:
         - name: fix-permissions
           image: busybox:latest
@@ -127,6 +128,18 @@ spec:
           image: ghcr.io/hydrusnetwork/hydrus:v652
           ports:
             - containerPort: 5800
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5800
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5800
+            initialDelaySeconds: 10
+            periodSeconds: 10
           env:
             - name: PUID
               value: "1000"
