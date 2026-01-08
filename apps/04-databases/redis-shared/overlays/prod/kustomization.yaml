@@ -8,11 +8,6 @@ resources:
 
 patches:
   - path: patch-infisical-env.yaml
-    target:
-      group: secrets.infisical.com
-      version: v1alpha1
-      kind: InfisicalSecret
-      name: redis-shared-credentials
 
 labels:
   - pairs:
