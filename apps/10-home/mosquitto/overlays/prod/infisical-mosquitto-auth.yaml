@@ -1,22 +1,22 @@
----
 apiVersion: secrets.infisical.com/v1alpha1
 kind: InfisicalSecret
 metadata:
   name: mosquitto-password-sync
   namespace: mosquitto
 spec:
-  hostAPI: http://192.168.111.69:8085
-  resyncInterval: 60
   authentication:
     universalAuth:
       credentialsRef:
         secretName: infisical-universal-auth
         secretNamespace: argocd
       secretsScope:
-        projectSlug: vixens
         envSlug: prod
+        projectSlug: vixens
         secretsPath: /apps/10-home/mosquitto
+  hostAPI: http://192.168.111.69:8085
   managedSecretReference:
-    secretName: mosquitto-password-file
     creationPolicy: Owner
+    secretName: mosquitto-password-file
+    secretNamespace: mosquitto
     secretType: Opaque
+  resyncInterval: 60
