@@ -8,3 +8,5 @@ spec:
     universalAuth:
       secretsScope:
         envSlug: dev
+  managedSecretReference:
+    secretNamespace: monitoring
