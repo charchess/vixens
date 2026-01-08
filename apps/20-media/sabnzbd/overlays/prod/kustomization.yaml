@@ -14,7 +14,6 @@ patches:
       kind: InfisicalSecret
       name: sabnzbd-litestream-secret
 patchesStrategicMerge:
-  - deployment-patch.yaml
 resources:
   - ../../base
   - ingress.yaml
