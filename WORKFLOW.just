@@ -3,11 +3,13 @@
 
 set shell := ["bash", "-uc"]
 
+JUST := "just -f WORKFLOW.just"
+
 # ============================================
 # COMMANDE PRINCIPALE : Reprendre la bonne tâche
 # ============================================
 default:
-    @just resume
+    @{{JUST}} resume
 
 resume:
     #!/usr/bin/env python3
@@ -27,7 +29,7 @@ resume:
     if tasks:
         t = tasks[0]
         print(f"🔥 RESUME: {t['id']} | {t['title']}")
-        print(f"   Commande: just work {t['id']}")
+        print(f"   Commande: {{JUST}} work {t['id']}")
     else:
         print("📋 AUCUNE TÂCHE EN COURS. TODO:")
         subprocess.run(["bd", "list", "--status", "open", "--json", "--limit", "10"])
@@ -38,17 +40,17 @@ resume:
 work task_id:
     bd update {{task_id}} --status in_progress --assignee coding-agent
     @echo "=== Phase 1: Prérequis ==="
-    just _check-prereqs {{task_id}}
+    {{JUST}} _check-prereqs {{task_id}}
     
     @echo "=== Phase 2: Doc Application ==="
-    just _load-doc {{task_id}}
+    {{JUST}} _load-doc {{task_id}}
     
     @echo "=== Phase 3: Exécution (Gemini) ==="
     @echo "   💡 Gemini: analyse et propose des changements"
     @echo "   💡 Utiliser: @serena pour le code, @archon pour le RAG"
     
     @echo "=== Phase 4: Validation FORCÉE ==="
-    just _validate {{task_id}}
+    {{JUST}} _validate {{task_id}}
 
 # ============================================
 # SOUS-ÉTAPES (Privées)
@@ -64,17 +66,21 @@ _check-prereqs task_id:
             capture_output=True, text=True, check=True
         ).stdout
         
-        task = json.loads(task_data)
+        tasks = json.loads(task_data)
+        if not tasks:
+            print("   ⚠️  Tâche non trouvée")
+            sys.exit(1)
+        task = tasks[0]
         title = task.get("title", "")
         
         if "PVC" in title and "RWO" in title:
             print("   ⚠️  ALERTE: PVC RWO détecté → strategy: Recreate nécessaire")
             subprocess.run([
                 "bd", "update", "{{task_id}}", 
-                "--note", "AUTO: PVC RWO nécessite strategy: Recreate"
+                "--notes", "AUTO: PVC RWO nécessite strategy: Recreate"
             ])
-    except:
-        print("   ⚠️  Erreur lecture tâche")
+    except Exception as e:
+        print(f"   ⚠️  Erreur lecture tâche: {e}")
         sys.exit(1)
 
 _load-doc task_id:
@@ -87,7 +93,11 @@ _load-doc task_id:
             capture_output=True, text=True, check=True
         ).stdout
         
-        task = json.loads(task_data)
+        tasks = json.loads(task_data)
+        if not tasks:
+            print("   ⚠️  Tâche non trouvée")
+            sys.exit(0)
+        task = tasks[0]
         title = task.get("title", "")
         match = re.search(r'\(([^)]+)\)', title)
         
@@ -110,7 +120,11 @@ _validate task_id:
             capture_output=True, text=True, check=True
         ).stdout
         
-        task = json.loads(task_data)
+        tasks = json.loads(task_data)
+        if not tasks:
+            print("   ⚠️  Tâche non trouvée")
+            sys.exit(1)
+        task = tasks[0]
         title = task.get("title", "")
         match = re.search(r'\(([^)]+)\)', title)
         
@@ -129,14 +143,14 @@ _validate task_id:
             print(f"   ❌ VALIDATION ÉCHOUÉE")
             subprocess.run([
                 "bd", "update", "{{task_id}}", 
-                "--note", f"VALIDATION FAIL: {result.stderr}"
+                "--notes", f"VALIDATION FAIL: {result.stderr}"
             ])
             sys.exit(1)
         
         print("   ✅ VALIDATION DEV OK")
         subprocess.run([
             "bd", "update", "{{task_id}}", 
-            "--status", "review", "--assignee", "user"
+            "--status", "closed", "--assignee", "user"
         ])
     except Exception as e:
         print(f"   ❌ Erreur validation: {e}")
