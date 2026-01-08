@@ -4,5 +4,5 @@ commonLabels:
 kind: Kustomization
 namespace: monitoring
 resources:
-- ingress.yaml
-- ../../base
+  - ingress.yaml
+  - ../../base
