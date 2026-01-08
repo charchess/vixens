@@ -43,17 +43,7 @@ spec:
             runAsGroup: 1000
           command: ["/bin/sh", "-c"]
           args:
-            - |
-              for db in /opt/hydrus/db/*.db; do
-                [ -e "$db" ] || continue
-                echo "🔍 Checking $db..."
-                if ! sqlite3 "$db" "PRAGMA integrity_check;" | grep -q "ok"; then
-                  echo "❌ Corruption detected in $db! Deleting for fresh restore."
-                  rm "$db"
-                else
-                  echo "✅ $db is healthy."
-                fi
-              done
+            - "for db in /opt/hydrus/db/*.db; do\n  [ -e \"$db\" ] || continue\n  echo \"\U0001F50D Checking $db...\"\n  if ! sqlite3 \"$db\" \"PRAGMA integrity_check;\" | grep -q \"ok\"; then\n    echo \"❌ Corruption detected in $db! Deleting for fresh restore.\"\n    rm \"$db\"\n  else\n    echo \"✅ $db is healthy.\"\n  fi\ndone\n"
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
@@ -65,6 +55,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
+              rm -f /opt/hydrus/db/*.tmp* /opt/hydrus/db/*-wal;
               DB_PATH=/opt/hydrus/db/client.db
               if [ -f "$DB_PATH" ]; then
                 echo "✅ Local healthy DB found. Skipping restore."
@@ -89,6 +80,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
+              rm -f /opt/hydrus/db/*.tmp* /opt/hydrus/db/*-wal;
               DB_PATH=/opt/hydrus/db/client.mappings.db
               if [ -f "$DB_PATH" ]; then
                 echo "✅ Local healthy DB found. Skipping restore."
@@ -113,6 +105,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
+              rm -f /opt/hydrus/db/*.tmp* /opt/hydrus/db/*-wal;
               DB_PATH=/opt/hydrus/db/client.master.db
               if [ -f "$DB_PATH" ]; then
                 echo "✅ Local healthy DB found. Skipping restore."
@@ -137,6 +130,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
+              rm -f /opt/hydrus/db/*.tmp* /opt/hydrus/db/*-wal;
               DB_PATH=/opt/hydrus/db/client.caches.db
               if [ -f "$DB_PATH" ]; then
                 echo "✅ Local healthy DB found. Skipping restore."
