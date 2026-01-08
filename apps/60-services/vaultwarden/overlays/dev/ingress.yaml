@@ -5,11 +5,11 @@ metadata:
   name: vaultwarden-ingress
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
-    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Vaultwarden"
-    gethomepage.dev/icon: "vaultwarden.png"
-    gethomepage.dev/group: "Services"
+    gethomepage.dev/name: Vaultwarden
+    gethomepage.dev/icon: vaultwarden.png
+    gethomepage.dev/group: Services
     traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik

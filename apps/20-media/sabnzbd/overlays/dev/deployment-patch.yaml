@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,52 +12,18 @@ spec:
             name: sabnzbd-config-patcher
       initContainers:
         - name: configure-sabnzbd
-          image: ghcr.io/linuxserver/sabnzbd:version-4.5.5
+          image: python:3.12-slim
           command:
-        - python3
-        - /scripts/patcher.py
-        env:
-        - name: HOST_WHITELIST_ENTRIES
-          value: sabnzbd.dev.truxonline.com,sabnzbd,sabnzbd.media,sabnzbd.media.svc.cluster.local
-        - name: SABNZBD__API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: sabnzbd-secrets
-              key: API_KEY
-        - name: USENET_HOST
-          valueFrom:
-            secretKeyRef:
-              name: sabnzbd-secrets
-              key: USENET_HOST
-        - name: USENET_USER
-          valueFrom:
-            secretKeyRef:
-              name: sabnzbd-secrets
-              key: USENET_USER
-        - name: USENET_PASS
-          valueFrom:
-            secretKeyRef:
-              name: sabnzbd-secrets
-              key: USENET_PASS
-        - name: SABNZBD__ADMIN_USER
-          valueFrom:
-            secretKeyRef:
-              name: sabnzbd-secrets
-              key: ADMIN_USER
-        - name: SABNZBD__ADMIN_PASS
-          valueFrom:
-            secretKeyRef:
-              name: sabnzbd-secrets
-              key: ADMIN_PASS
-          volumeMounts:
-        - name: config
-          mountPath: /config
-        - name: config-patcher
-          mountPath: /scripts
-      containers:
-        - name: sabnzbd
+            - python3
+            - /scripts/patcher.py
           env:
-        - name: HOST_WHITELIST_ENTRIES
-          value: sabnzbd.dev.truxonline.com,sabnzbd,sabnzbd.media,sabnzbd.media.svc.cluster.local
-        - name: SABNZBD_HOST
-          value: sabnzbd.dev.truxonline.com
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sabnzbd-secrets
+                  key: API_KEY
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: config-patcher
+              mountPath: /scripts

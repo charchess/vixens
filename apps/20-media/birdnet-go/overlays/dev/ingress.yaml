@@ -29,12 +29,12 @@ metadata:
   name: birdnet-go-ingress
   namespace: birdnet-go
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "BirdNET-Go"
-    gethomepage.dev/icon: "birdnet.png"
-    gethomepage.dev/group: "Media"
+    gethomepage.dev/name: BirdNET-Go
+    gethomepage.dev/icon: birdnet.png
+    gethomepage.dev/group: Media
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik

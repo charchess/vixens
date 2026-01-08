@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,21 +14,16 @@ spec:
         - name: configure-whisparr
           image: python:3.12-slim
           command:
-        - python3
-        - /scripts/patcher.py
-        env:
-        - name: API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: whisparr-secrets
-              key: API_KEY
-        - name: SABNZBD__API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: whisparr-secrets
-              key: SABNZBD__API_KEY
+            - python3
+            - /scripts/patcher.py
+          env:
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: whisparr-secrets
+                  key: API_KEY
           volumeMounts:
-        - name: config
-          mountPath: /config
-        - name: config-patcher
-          mountPath: /scripts
+            - name: config
+              mountPath: /config
+            - name: config-patcher
+              mountPath: /scripts

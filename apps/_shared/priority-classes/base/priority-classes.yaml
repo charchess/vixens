@@ -1,10 +1,11 @@
+---
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
   name: vixens-critical
 value: 100000
 globalDefault: false
-description: "INFRA CORE: Ingress, CSI, DNS, Auth. Never evicted."
+description: 'INFRA CORE: Ingress, CSI, DNS, Auth. Never evicted.'
 ---
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
@@ -12,7 +13,7 @@ metadata:
   name: vixens-high
 value: 50000
 globalDefault: false
-description: "VITAL SERVICES: Home Assistant, Monitoring. High availability."
+description: 'VITAL SERVICES: Home Assistant, Monitoring. High availability.'
 ---
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
@@ -20,7 +21,7 @@ metadata:
   name: vixens-medium
 value: 10000
 globalDefault: false
-description: "STANDARD APPS: Media Managers (*arr), Web Apps. Default priority."
+description: 'STANDARD APPS: Media Managers (*arr), Web Apps. Default priority.'
 ---
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
@@ -28,4 +29,4 @@ metadata:
   name: vixens-low
 value: 0
 globalDefault: false
-description: "BACKGROUND: Downloaders, Transcoding. Sacrificable."
+description: 'BACKGROUND: Downloaders, Transcoding. Sacrificable.'

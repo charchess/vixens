@@ -11,6 +11,6 @@ resources:
 labels:
   - pairs:
       app.kubernetes.io/name: mosquitto
-      app.kubernetes.io/version: "2.0.20"
+      app.kubernetes.io/version: 2.0.20
       vixens.lab/managed-by: argocd
     includeSelectors: true

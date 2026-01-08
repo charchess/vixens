@@ -15,23 +15,20 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
-
   # Multiple sources: Helm chart + Git values
   sources:
     # Helm chart from Jetstack repository
     - repoURL: https://charts.jetstack.io
       chart: cert-manager
-      targetRevision: "v1.14.4"
+      targetRevision: v1.14.4
       helm:
         valueFiles:
           - $values/apps/00-infra/cert-manager/values/common.yaml
           - $values/apps/00-infra/cert-manager/values/prod.yaml
-
     # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
       ref: values
-
   syncPolicy:
     automated:
       prune: true

@@ -35,7 +35,7 @@ spec:
               protocol: TCP
           env:
             - name: JAVA_OPTS
-              value: "-Xmx1024m -Xms512m"
+              value: -Xmx1024m -Xms512m
             - name: JDBC_URI
               value: jdbc:postgresql://postgresql-shared-rw.databases.svc.cluster.local:5432/docspell
             - name: JDBC_USERNAME

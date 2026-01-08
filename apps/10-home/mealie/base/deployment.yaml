@@ -19,12 +19,12 @@ spec:
         app: mealie
     spec:
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: mealie
-          image: "ghcr.io/mealie-recipes/mealie:v1.12.0"
+          image: ghcr.io/mealie-recipes/mealie:v1.12.0
           ports:
             - containerPort: 9000
               name: http

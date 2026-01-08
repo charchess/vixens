@@ -24,11 +24,11 @@ spec:
       initContainers: # NEW SECTION
         - name: copy-mosquitto-password
           image: busybox:1.37.0 # A small image with basic utilities
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
-            - cp /secrets/MOSQUITTO_PASSWD_FILE /mnt/mosquitto-auth-writable/mosquitto.passwd &&
-              chmod 0700 /mnt/mosquitto-auth-writable/mosquitto.passwd &&
-              chown 1883:1883 /mnt/mosquitto-auth-writable/mosquitto.passwd # Assuming mosquitto user ID is 1883
+            - cp /secrets/MOSQUITTO_PASSWD_FILE /mnt/mosquitto-auth-writable/mosquitto.passwd && chmod 0700 /mnt/mosquitto-auth-writable/mosquitto.passwd && chown 1883:1883 /mnt/mosquitto-auth-writable/mosquitto.passwd # Assuming mosquitto user ID is 1883
           volumeMounts:
             - name: mosquitto-auth
               mountPath: /secrets
@@ -76,9 +76,9 @@ spec:
             timeoutSeconds: 3
             failureThreshold: 3
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       volumes:
         - name: config
           persistentVolumeClaim:

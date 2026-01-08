@@ -13,30 +13,25 @@ providers:
     enabled: true
     publishedService:
       enabled: true
-
 # ============================================================================
 # API and Dashboard
 # ============================================================================
 api:
   dashboard: true
-  insecure: true  # Dashboard accessible on internal network
-
+  insecure: true # Dashboard accessible on internal network
 # Dashboard IngressRoute disabled - managed by traefik-dashboard app
 ingressRoute:
   dashboard:
     enabled: false
-
 # ============================================================================
 # Priority and Tolerations
 # ============================================================================
 priorityClassName: homelab-critical
-
 # From terraform/modules/shared/locals.tf
 tolerations:
-  - key: "node-role.kubernetes.io/control-plane"
-    operator: "Exists"
-    effect: "NoSchedule"
-
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
 # ============================================================================
 # Entrypoints / Ports Configuration
 # ============================================================================

@@ -4,19 +4,16 @@
 # Deployment strategy
 deploymentStrategy:
   type: Recreate
-
 # Persistence
 persistence:
   enabled: true
   storageClassName: synelia-iscsi-retain
   size: 10Gi
-
 # Admin credentials via Infisical (configured separately)
 admin:
   existingSecret: grafana-admin
   userKey: admin-user
   passwordKey: admin-password
-
 # Datasources configuration
 datasources:
   datasources.yaml:
@@ -34,7 +31,6 @@ datasources:
         access: proxy
         isDefault: false
         editable: true
-
 # Resources
 resources:
   requests:
@@ -42,19 +38,16 @@ resources:
     memory: 256Mi
   limits:
     memory: 512Mi
-
 # Tolerations for control-plane nodes
 tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
     effect: NoSchedule
-
 # Service
 service:
   type: ClusterIP
   port: 80
   targetPort: 3000
-
 # Sidecar for dashboard discovery
 sidecar:
   dashboards:

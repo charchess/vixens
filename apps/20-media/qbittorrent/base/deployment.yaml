@@ -25,7 +25,9 @@ spec:
           image: lscr.io/linuxserver/qbittorrent:latest
           securityContext:
             runAsUser: 0
-          command: ["python3", "/scripts/patcher.py"]
+          command:
+            - python3
+            - /scripts/patcher.py
           env:
             - name: WEBUI_USERNAME
               valueFrom:

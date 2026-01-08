@@ -6,7 +6,7 @@ metadata:
   labels:
     app: frigate
   annotations:
-    secret.reloader.stakater.com/reload: "frigate-config-secret,frigate-secrets"
+    secret.reloader.stakater.com/reload: frigate-config-secret,frigate-secrets
 spec:
   replicas: 1
   strategy:
@@ -23,13 +23,15 @@ spec:
     spec:
       priorityClassName: vixens-high
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       initContainers:
         - name: restore-config
           image: rclone/rclone:1.65
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
             - |
               export RCLONE_CONFIG_S3_TYPE=s3
@@ -46,7 +48,13 @@ spec:
               mountPath: /config
         - name: restore-db
           image: litestream/litestream:0.3.13
-          args: ["restore", "-config", "/etc/litestream.yml", "-if-db-not-exists", "-if-replica-exists", "/config/frigate.db"]
+          args:
+            - restore
+            - -config
+            - /etc/litestream.yml
+            - -if-db-not-exists
+            - -if-replica-exists
+            - /config/frigate.db
           envFrom:
             - secretRef:
                 name: frigate-litestream-secret
@@ -58,7 +66,10 @@ spec:
               subPath: litestream.yml
         - name: copy-config
           image: alpine:latest
-          command: ["/bin/sh", "-c", "if [ ! -f /config-target/config.yml ]; then cp /config-source/config.yml /config-target/config.yml; fi"]
+          command:
+            - /bin/sh
+            - -c
+            - if [ ! -f /config-target/config.yml ]; then cp /config-source/config.yml /config-target/config.yml; fi
           volumeMounts:
             - name: config
               mountPath: /config-source
@@ -106,21 +117,24 @@ spec:
               mountPath: /dev/dri
           resources:
             requests:
-              cpu: "500m"
-              memory: "1Gi"
+              cpu: 500m
+              memory: 1Gi
             limits:
-              cpu: "2000m"
-              memory: "4Gi"
+              cpu: 2000m
+              memory: 4Gi
         - name: litestream
           image: litestream/litestream:0.3.13
-          args: ["replicate", "-config", "/etc/litestream.yml"]
+          args:
+            - replicate
+            - -config
+            - /etc/litestream.yml
           resources:
             requests:
-              cpu: "10m"
-              memory: "64Mi"
+              cpu: 10m
+              memory: 64Mi
             limits:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: 100m
+              memory: 128Mi
           envFrom:
             - secretRef:
                 name: frigate-litestream-secret
@@ -132,7 +146,9 @@ spec:
               subPath: litestream.yml
         - name: config-syncer
           image: alpine:3.19
-          command: ["sh", "-c"]
+          command:
+            - sh
+            - -c
           args:
             - |
               apk add --no-cache rclone inotify-tools

@@ -14,9 +14,9 @@ spec:
         app: tandoor
     spec:
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: tandoor
           image: vabene1111/recipes:latest
@@ -25,23 +25,23 @@ spec:
               name: http
           env:
             - name: SECRET_KEY
-              value: "super-secret-key-for-test-only"
+              value: super-secret-key-for-test-only
             - name: POSTGRES_HOST
-              value: "localhost"
+              value: localhost
             - name: POSTGRES_DB
-              value: "tandoor"
+              value: tandoor
             - name: POSTGRES_USER
-              value: "tandoor"
+              value: tandoor
             - name: POSTGRES_PASSWORD
-              value: "tandoor"
+              value: tandoor
             - name: ALLOWED_HOSTS
-              value: "*"
+              value: '*'
             - name: DEBUG
               value: "1"
             - name: TANDOOR_PORT
               value: "8080"
             - name: TZ
-              value: "Europe/Paris"
+              value: Europe/Paris
           volumeMounts:
             - name: static
               mountPath: /opt/recipes/staticfiles
@@ -51,11 +51,11 @@ spec:
           image: postgres:16-alpine
           env:
             - name: POSTGRES_DB
-              value: "tandoor"
+              value: tandoor
             - name: POSTGRES_USER
-              value: "tandoor"
+              value: tandoor
             - name: POSTGRES_PASSWORD
-              value: "tandoor"
+              value: tandoor
           volumeMounts:
             - name: db-data
               mountPath: /var/lib/postgresql/data

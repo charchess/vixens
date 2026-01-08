@@ -31,13 +31,13 @@ spec:
               name: http
           env:
             - name: NC_DB_TYPE
-              value: "pg"
+              value: pg
             - name: NC_DB_HOST
-              value: "postgresql-shared-rw.databases.svc.cluster.local"
+              value: postgresql-shared-rw.databases.svc.cluster.local
             - name: NC_DB_PORT
               value: "5432"
             - name: NC_DB_NAME
-              value: "nocodb"
+              value: nocodb
             - name: NC_DB_USER
               valueFrom:
                 secretKeyRef:

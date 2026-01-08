@@ -1,25 +1,25 @@
 ---
 replicaCount: 1
-
 config:
   global:
     resolve_timeout: 5m
   route:
-    group_by: ['alertname', 'cluster', 'service']
+    group_by:
+      - alertname
+      - cluster
+      - service
     group_wait: 30s
     group_interval: 5m
     repeat_interval: 12h
-    receiver: 'webhook'
+    receiver: webhook
   receivers:
-    - name: 'webhook'
+    - name: webhook
       webhook_configs:
-        - url: "WEBHOOK_URL_PLACEHOLDER"
-
+        - url: WEBHOOK_URL_PLACEHOLDER
 tolerations:
-  - key: "node-role.kubernetes.io/control-plane"
-    operator: "Exists"
-    effect: "NoSchedule"
-
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
 resources:
   requests:
     cpu: 10m
@@ -27,10 +27,8 @@ resources:
   limits:
     cpu: 100m
     memory: 128Mi
-
 persistence:
   enabled: true
   storageClass: synelia-iscsi-retain
   size: 2Gi
-
 # Ingress will be defined in overlays

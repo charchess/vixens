@@ -13,27 +13,24 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
-
   # Multiple sources: Helm chart + Git values
   sources:
     # Helm chart from Traefik repository
     - repoURL: https://helm.traefik.io/traefik
       chart: traefik
-      targetRevision: "v25.0.0"
+      targetRevision: v25.0.0
       helm:
         valueFiles:
           - $values/apps/00-infra/traefik/values/common.yaml
           - $values/apps/00-infra/traefik/values/dev.yaml
-
     # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: test
       ref: values
-
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - ServerSideApply=true  # Recommended for Helm
+      - ServerSideApply=true # Recommended for Helm

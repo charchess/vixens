@@ -9,85 +9,72 @@ metadata:
   namespace: argocd
   annotations:
     kustomize.config.k8s.io/behavior: create
-    description: "Environment configuration for test - used at build time"
+    description: Environment configuration for test - used at build time
 data:
   # ============================================================================
   # Environment Identification
   # ============================================================================
-  environment: "test"
-  git_branch: "test"
-  cluster_name: "vixens-test"
-
+  environment: test
+  git_branch: test
+  cluster_name: vixens-test
   # ============================================================================
   # Domain Configuration
   # ============================================================================
-  domain_suffix: "test"
-  base_domain: "truxonline.com"
-  full_domain: "test.truxonline.com"
-
+  domain_suffix: test
+  base_domain: truxonline.com
+  full_domain: test.truxonline.com
   # ============================================================================
   # Network Configuration - VLAN Services (209)
   # ============================================================================
   vlan_id: "209"
-  vlan_subnet: "192.168.209.0/24"
-  vlan_gateway: "192.168.209.1"
-
+  vlan_subnet: 192.168.209.0/24
+  vlan_gateway: 192.168.209.1
   # Internal VLAN (same for all environments)
   vlan_internal: "111"
-  vlan_internal_subnet: "192.168.111.0/24"
-
+  vlan_internal_subnet: 192.168.111.0/24
   # ============================================================================
   # LoadBalancer IP Pools (Cilium L2 Announcements)
   # ============================================================================
   # Assigned pool: .70-.79 (static IPs for specific services)
-  lb_pool_assigned_start: "192.168.209.70"
-  lb_pool_assigned_end: "192.168.209.79"
-
+  lb_pool_assigned_start: 192.168.209.70
+  lb_pool_assigned_end: 192.168.209.79
   # Auto pool: .80-.89 (dynamic allocation by Cilium)
-  lb_pool_auto_start: "192.168.209.80"
-  lb_pool_auto_end: "192.168.209.89"
-
+  lb_pool_auto_start: 192.168.209.80
+  lb_pool_auto_end: 192.168.209.89
   # Full pool range
-  lb_pool_start: "192.168.209.70"
-  lb_pool_end: "192.168.209.89"
-
+  lb_pool_start: 192.168.209.70
+  lb_pool_end: 192.168.209.89
   # ============================================================================
   # Service LoadBalancer IPs (from assigned pool .70-.79)
   # ============================================================================
-  traefik_lb_ip: "192.168.209.70"
-  argocd_server_ip: "192.168.209.71"
+  traefik_lb_ip: 192.168.209.70
+  argocd_server_ip: 192.168.209.71
   # Reserved for future services: .72-.79
 
   # ============================================================================
   # Cluster Configuration
   # ============================================================================
   # Kubernetes API VIP on VLAN 111
-  cluster_vip: "192.168.111.180"
-  cluster_endpoint: "https://192.168.111.180:6443"
-
+  cluster_vip: 192.168.111.180
+  cluster_endpoint: https://192.168.111.180:6443
   # ============================================================================
   # Control Plane Nodes (VLAN 111 IPs)
   # ============================================================================
-  node_carny_ip: "192.168.111.182"
-  node_celesty_ip: "192.168.111.184"
-  node_citrine_ip: "192.168.111.183"
-
+  node_carny_ip: 192.168.111.182
+  node_celesty_ip: 192.168.111.184
+  node_citrine_ip: 192.168.111.183
   # ============================================================================
   # Application-Specific Configuration
   # ============================================================================
   # Talos version
-  talos_version: "v1.11.5"
-
+  talos_version: v1.11.5
   # Kubernetes version
-  kubernetes_version: "v1.34.0"
-
+  kubernetes_version: v1.34.0
   # Cilium version
-  cilium_version: "v1.18.3"
-
+  cilium_version: v1.18.3
   # ArgoCD version
-  argocd_version: "v7.7.7"
-
+  argocd_version: v7.7.7
   # ============================================================================
   # Resource Limits (VM-based environment)
   # ============================================================================
-  resource_tier: "testing"  # development | testing | production
+  resource_tier: testing # development | testing | production

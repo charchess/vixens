@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -46,11 +47,11 @@ spec:
               mountPath: /var/loki
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "100m"
+              memory: 256Mi
+              cpu: 100m
             limits:
-              memory: "1024Mi"
-              cpu: "500m"
+              memory: 1024Mi
+              cpu: 500m
           readinessProbe:
             httpGet:
               path: /ready
@@ -64,14 +65,15 @@ spec:
             initialDelaySeconds: 30
             timeoutSeconds: 1
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
   volumeClaimTemplates:
     - metadata:
         name: storage
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes:
+          - ReadWriteOnce
         storageClassName: synelia-iscsi-retain
         resources:
           requests:

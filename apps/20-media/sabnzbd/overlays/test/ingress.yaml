@@ -5,12 +5,12 @@ metadata:
   name: sabnzbd-ingress
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging # Keep staging for test
-    traefik.ingress.kubernetes.io/router.entrypoints: "web, websecure"
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
-    - host: "sabnzbd.test.truxonline.com" # Adjusted for test environment
+    - host: sabnzbd.test.truxonline.com # Adjusted for test environment
       http:
         paths:
           - path: /
@@ -22,5 +22,5 @@ spec:
                   number: 8080
   tls:
     - hosts:
-        - "sabnzbd.test.truxonline.com"
+        - sabnzbd.test.truxonline.com
       secretName: sabnzbd-tls

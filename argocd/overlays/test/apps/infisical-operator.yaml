@@ -5,7 +5,7 @@ metadata:
   name: infisical-operator
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-3"  # Deployed before sealed-secrets (-1) and cilium-lb (-2)
+    argocd.argoproj.io/sync-wave: "-3" # Deployed before sealed-secrets (-1) and cilium-lb (-2)
   labels:
     app.kubernetes.io/part-of: vixens
     app.kubernetes.io/component: secrets-management

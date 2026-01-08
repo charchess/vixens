@@ -29,12 +29,12 @@ metadata:
   name: mail-gateway-ingress
   namespace: mail-gateway
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Mail Gateway"
-    gethomepage.dev/icon: "roundcube.png"
-    gethomepage.dev/group: "Services"
+    gethomepage.dev/name: Mail Gateway
+    gethomepage.dev/icon: roundcube.png
+    gethomepage.dev/group: Services
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik

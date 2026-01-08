@@ -10,4 +10,4 @@ spec:
         - name: server
           env:
             - name: SCANOPY_PUBLIC_URL
-              value: "https://netvisor.test.truxonline.com"
+              value: https://netvisor.test.truxonline.com

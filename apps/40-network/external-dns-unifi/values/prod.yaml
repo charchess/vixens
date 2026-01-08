@@ -1,8 +1,8 @@
+---
 # Prod Configuration
 txtOwnerId: prod-unifi
 domainFilters:
   - truxonline.com
-
 resources:
   requests:
     cpu: 20m

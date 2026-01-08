@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,8 +10,8 @@ spec:
         - name: mariadb
           resources:
             requests:
-              cpu: "15m"
-              memory: "334Mi"
+              cpu: 15m
+              memory: 334Mi
             limits:
-              cpu: "49m"
-              memory: "362Mi"
+              cpu: 49m
+              memory: 362Mi
