@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-      - name: metrics-server
+        - name: metrics-server
         resources:
           limits:
             cpu: 500m

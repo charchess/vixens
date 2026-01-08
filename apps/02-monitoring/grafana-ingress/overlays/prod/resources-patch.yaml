@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-      - name: grafana-ingress
+        - name: grafana-ingress
         resources:
           limits:
             cpu: 500m

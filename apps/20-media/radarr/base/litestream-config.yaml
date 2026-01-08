@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: radarr-litestream-config
+data:
+  litestream.yml: |
+    dbs:
+      - path: /config/radarr.db
+        replicas:
+          - url: s3://$LITESTREAM_BUCKET/radarr/radarr.db
+            endpoint: $LITESTREAM_ENDPOINT

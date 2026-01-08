@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-      - name: loki
+        - name: loki
         resources:
           limits:
             cpu: 500m

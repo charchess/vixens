@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-      - name: linkwarden
+        - name: linkwarden
         resources:
           requests:
             cpu: 50m

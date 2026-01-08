@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-      - name: birdnet-go
+        - name: birdnet-go
         resources:
           limits:
             cpu: 500m
