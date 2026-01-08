@@ -1,13 +1,13 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 patches:
-  - patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n\
+- patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n\
     \  value: prod"
   target:
     kind: InfisicalSecret
     name: booklore-secrets-sync
 patchesStrategicMerge:
-  - mariadb-resources-patch.yaml
+- mariadb-resources-patch.yaml
 resources:
-  - ../../base
-  - ingress.yaml
+- ../../base
+- ingress.yaml
