@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: controller
+    - name: controller
           resources:
             limits:
               cpu: 500m

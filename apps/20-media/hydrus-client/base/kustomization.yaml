@@ -9,7 +9,3 @@ resources:
   - infisical-secret.yaml
   - litestream-secret.yaml
   - litestream-config.yaml
-configMapGenerator:
-  - name: litestream-config
-    files:
-      - litestream.yml

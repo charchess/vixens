@@ -72,6 +72,7 @@ jobs:
           # Valider tous les fichiers YAML pertinents
           find apps argocd \( -name "*.yaml" -o -name "*.yml" \) \
             ! -path "*/crds/*" \
+            ! -path "*/charts/*" \
             ! -name "upstream.yaml" \
             ! -name "poolers.yaml" | \
             xargs yamllint -c yamllint-config.yml
@@ -95,9 +96,10 @@ jobs:
         run: |
           echo "🔍 Validation structure Kubernetes"
 
-          # Valider uniquement les ressources standards (exclure values/)
+          # Valider uniquement les ressources standards (exclure values/ et charts/)
           find apps argocd -type f \( -name '*.yaml' -o -name '*.yml' \) \
             ! -path '*/values/*' \
+            ! -path '*/charts/*' \
             ! -name 'values.yaml' \
             -print0 |
             xargs -0 kubeval \

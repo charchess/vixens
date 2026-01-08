@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: jellyseerr
+    - name: jellyseerr
           resources:
             limits:
               cpu: 500m

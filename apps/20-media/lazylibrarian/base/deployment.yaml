@@ -53,3 +53,6 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Content/ebooks
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

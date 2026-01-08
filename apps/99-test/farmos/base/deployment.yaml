@@ -55,3 +55,6 @@ spec:
           emptyDir: {}
         - name: db-data
           emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

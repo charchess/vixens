@@ -19,4 +19,5 @@ spec:
     secretName: filebrowser-auth
     creationPolicy: Owner
     secretType: Opaque
+    secretNamespace: overlays
   resyncInterval: 60

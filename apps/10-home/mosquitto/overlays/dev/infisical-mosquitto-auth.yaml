@@ -18,5 +18,5 @@ spec:
     secretName: mosquitto-password-file
     creationPolicy: Owner
     secretType: Opaque
-    secretNamespace: mosquitto
+    secretNamespace: overlays
   resyncInterval: 60

@@ -12,3 +12,6 @@ resources:
   - ingress.yaml
   - ingressroute-udp.yaml
   - infisical-filebrowser-auth.yaml
+spec:
+  managedSecretReference:
+    secretNamespace: overlays

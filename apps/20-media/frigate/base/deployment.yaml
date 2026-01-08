@@ -53,7 +53,7 @@ spec:
           volumeMounts:
             - name: db
               mountPath: /config
-            - name: litestream-config
+            - name: frigate-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: copy-config
@@ -127,7 +127,7 @@ spec:
           volumeMounts:
             - name: db
               mountPath: /config
-            - name: litestream-config
+            - name: frigate-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-syncer
@@ -171,6 +171,9 @@ spec:
         - name: dri
           hostPath:
             path: /dev/dri
-        - name: litestream-config
+        - name: frigate-litestream-config
           configMap:
             name: frigate-litestream-config
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

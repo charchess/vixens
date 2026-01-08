@@ -4,48 +4,4 @@ kind: ConfigMap
 metadata:
   name: adguard-home-config-patcher
 data:
-  patcher.py: |
-    import re
-    import os
-    import sys
-
-    CONFIG_FILE = "/opt/adguardhome/conf/AdGuardHome.yaml"
-
-    def patch_config():
-        if not os.path.exists(CONFIG_FILE):
-            print(f"Config file {CONFIG_FILE} not found. Skipping patch.")
-            return
-
-        with open(CONFIG_FILE, 'r') as f:
-            content = f.read()
-
-        changed = False
-        
-        # Patch Admin Username (first user in the list)
-        admin_user = os.environ.get("ADGUARD__ADMIN_USER")
-        if admin_user:
-            print(f"Patching Admin User...")
-            new_content = re.sub(r'users:.*?- name: \S+', f'users:\n  - name: {admin_user}', content, flags=re.DOTALL, count=1)
-            if new_content != content:
-                content = new_content
-                changed = True
-
-        # Patch Upstream DNS
-        upstreams = os.environ.get("ADGUARD__UPSTREAM_DNS")
-        if upstreams:
-            print(f"Patching Upstream DNS...")
-            # This is simplified, assumes a specific structure
-            new_content = re.sub(r'upstream_dns:.*?$', f'upstream_dns:\n{upstreams}', content, flags=re.MULTILINE | re.DOTALL, count=1)
-            # Actually, regex for multiline YAML block is tricky. 
-            # We'll stick to simpler replacements for now.
-
-        # Write back
-        if changed:
-            with open(CONFIG_FILE, 'w') as f:
-                f.write(content)
-            print("Configuration patched successfully.")
-        else:
-            print("No changes needed.")
-
-    if __name__ == "__main__":
-        patch_config()
+  patcher.py: "import re\nimport os\nimport sys\n\nCONFIG_FILE = \"/opt/adguardhome/conf/AdGuardHome.yaml\"\n\ndef patch_config():\n    if not os.path.exists(CONFIG_FILE):\n        print(f\"Config file {CONFIG_FILE} not found. Skipping patch.\")\n        return\n\n    with open(CONFIG_FILE, 'r') as f:\n        content = f.read()\n\n    changed = False\n    \n    # Patch Admin Username (first user in the list)\n    admin_user = os.environ.get(\"ADGUARD__ADMIN_USER\")\n    if admin_user:\n        print(f\"Patching Admin User...\")\n        new_content = re.sub(r'users:.*?- name: \\S+', f'users:\\n  - name: {admin_user}', content, flags=re.DOTALL, count=1)\n        if new_content != content:\n            content = new_content\n            changed = True\n\n    # Patch Upstream DNS\n    upstreams = os.environ.get(\"ADGUARD__UPSTREAM_DNS\")\n    if upstreams:\n        print(f\"Patching Upstream DNS...\")\n        # This is simplified, assumes a specific structure\n        new_content = re.sub(r'upstream_dns:.*?$', f'upstream_dns:\\n{upstreams}', content, flags=re.MULTILINE | re.DOTALL, count=1)\n        # Actually, regex for multiline YAML block is tricky. \n        # We'll stick to simpler replacements for now.\n\n    # Write back\n    if changed:\n        with open(CONFIG_FILE, 'w') as f:\n            f.write(content)\n        print(\"Configuration patched successfully.\")\n    else:\n        print(\"No changes needed.\")\n\nif __name__ == \"__main__\":\n    patch_config()\n"

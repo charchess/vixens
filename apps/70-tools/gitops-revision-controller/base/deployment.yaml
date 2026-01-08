@@ -40,3 +40,6 @@ spec:
         - name: src
           configMap:
             name: gitops-revision-controller-src
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

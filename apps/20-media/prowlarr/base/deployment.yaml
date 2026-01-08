@@ -57,7 +57,7 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: litestream-config
+            - name: prowlarr-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
       containers:
@@ -113,7 +113,7 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: litestream-config
+            - name: prowlarr-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-syncer
@@ -140,6 +140,9 @@ spec:
         - name: config
           persistentVolumeClaim:
             claimName: prowlarr-config-pvc
-        - name: litestream-config
+        - name: prowlarr-litestream-config
           configMap:
             name: prowlarr-litestream-config
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

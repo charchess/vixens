@@ -32,7 +32,6 @@ spec:
               value: "nordvpn"
             - name: VPN_TYPE
               value: "wireguard"
-
             # Wireguard credentials from Infisical-managed secret
             - name: WIREGUARD_PRIVATE_KEY
               valueFrom:
@@ -44,19 +43,15 @@ spec:
                 secretKeyRef:
                   name: gluetun-wireguard-secrets
                   key: WIREGUARD_ADDRESSES
-
             # VPN server location (CHANGE THIS to select country)
             - name: SERVER_COUNTRIES
               value: "Switzerland"
-
             # Timezone
             - name: TZ
               value: "Etc/UTC"
-
             # Kubernetes-specific DNS settings (required for kube-dns)
             - name: DNS_KEEP_NAMESERVER
               value: "on"
-
             # Firewall settings to allow access from other pods
             - name: FIREWALL_INPUT_PORTS
               value: "8888,1080"
@@ -73,7 +68,6 @@ spec:
               value: "on"
             - name: SOCKS5PROXY
               value: "on"
-
           ports:
             - containerPort: 8888
               name: http-proxy
@@ -81,3 +75,6 @@ spec:
             - containerPort: 1080
               name: socks5-proxy
               protocol: TCP
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

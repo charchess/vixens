@@ -20,4 +20,4 @@ spec:
     creationPolicy: Owner
     secretType: Opaque
   managedSecretReference:
-    secretNamespace: mosquitto
+    secretNamespace: overlays

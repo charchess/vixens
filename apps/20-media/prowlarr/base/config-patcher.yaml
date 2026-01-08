@@ -4,45 +4,4 @@ kind: ConfigMap
 metadata:
   name: prowlarr-config-patcher
 data:
-  patcher.py: |
-    import xml.etree.ElementTree as ET
-    import os
-    import sys
-
-    CONFIG_FILE = "/config/config.xml"
-
-    def patch_config():
-        if not os.path.exists(CONFIG_FILE):
-            print(f"Config file {CONFIG_FILE} not found. Skipping patch.")
-            return
-
-        try:
-            tree = ET.parse(CONFIG_FILE)
-            root = tree.getroot()
-        except Exception as e:
-            print(f"Error parsing {CONFIG_FILE}: {e}")
-            return
-
-        changed = False
-
-        # Patch API Key
-        api_key = os.environ.get("API_KEY")
-        if api_key:
-            api_key_elem = root.find("ApiKey")
-            if api_key_elem is None:
-                api_key_elem = ET.SubElement(root, "ApiKey")
-            
-            if api_key_elem.text != api_key:
-                print(f"Patching API Key...")
-                api_key_elem.text = api_key
-                changed = True
-
-        # Write back if changed
-        if changed:
-            tree.write(CONFIG_FILE, encoding="utf-8", xml_declaration=True)
-            print("Configuration patched successfully.")
-        else:
-            print("No changes needed.")
-
-    if __name__ == "__main__":
-        patch_config()
+  patcher.py: "import xml.etree.ElementTree as ET\nimport os\nimport sys\n\nCONFIG_FILE = \"/config/config.xml\"\n\ndef patch_config():\n    if not os.path.exists(CONFIG_FILE):\n        print(f\"Config file {CONFIG_FILE} not found. Skipping patch.\")\n        return\n\n    try:\n        tree = ET.parse(CONFIG_FILE)\n        root = tree.getroot()\n    except Exception as e:\n        print(f\"Error parsing {CONFIG_FILE}: {e}\")\n        return\n\n    changed = False\n\n    # Patch API Key\n    api_key = os.environ.get(\"API_KEY\")\n    if api_key:\n        api_key_elem = root.find(\"ApiKey\")\n        if api_key_elem is None:\n            api_key_elem = ET.SubElement(root, \"ApiKey\")\n        \n        if api_key_elem.text != api_key:\n            print(f\"Patching API Key...\")\n            api_key_elem.text = api_key\n            changed = True\n\n    # Write back if changed\n    if changed:\n        tree.write(CONFIG_FILE, encoding=\"utf-8\", xml_declaration=True)\n        print(\"Configuration patched successfully.\")\n    else:\n        print(\"No changes needed.\")\n\nif __name__ == \"__main__\":\n    patch_config()\n"

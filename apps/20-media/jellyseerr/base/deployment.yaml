@@ -39,3 +39,6 @@ spec:
         - name: config
           persistentVolumeClaim:
             claimName: jellyseerr-config-pvc
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

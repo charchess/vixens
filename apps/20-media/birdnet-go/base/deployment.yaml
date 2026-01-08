@@ -9,7 +9,7 @@ metadata:
 spec:
   replicas: 1
   strategy:
-    type: Recreate  # PVC can only be mounted by one pod at a time
+    type: Recreate # PVC can only be mounted by one pod at a time
   selector:
     matchLabels:
       app: birdnet-go
@@ -92,3 +92,6 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Internal
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

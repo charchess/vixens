@@ -60,3 +60,6 @@ spec:
         - name: datastore
           persistentVolumeClaim:
             claimName: changedetection-datastore-pvc
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

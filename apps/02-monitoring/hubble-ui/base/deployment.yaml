@@ -60,3 +60,6 @@ spec:
         - name: nginx-config
           configMap:
             name: hubble-ui-nginx-config
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch

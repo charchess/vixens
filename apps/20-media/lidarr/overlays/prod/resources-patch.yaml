@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: lidarr
+    - name: lidarr
           resources:
             limits:
               cpu: 1000m

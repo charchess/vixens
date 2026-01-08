@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: promtail
+    - name: promtail
           resources:
             limits:
               cpu: 500m

@@ -35,7 +35,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-            - name: litestream-config
+            - name: vaultwarden-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
       containers:
@@ -91,13 +91,13 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-            - name: litestream-config
+            - name: vaultwarden-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: vaultwarden-data-pvc
-        - name: litestream-config
+        - name: vaultwarden-litestream-config
           configMap:
-            name: litestream-config
+            name: vaultwarden-litestream-config
