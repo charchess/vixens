@@ -17,4 +17,5 @@ spec:
         secretsPath: "/apps/70-tools/homepage/config"
   managedSecretReference:
     secretName: homepage-config-secret
+    secretNamespace: tools
     creationPolicy: "Owner"
