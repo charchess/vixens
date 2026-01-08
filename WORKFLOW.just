@@ -113,13 +113,13 @@ _load-doc task_id:
 _validate task_id:
     #!/usr/bin/env python3
     import subprocess, json, re, sys
-    
+
     try:
         task_data = subprocess.run(
-            ["bd", "show", "{{task_id}}", "--json"], 
+            ["bd", "show", "{{task_id}}", "--json"],
             capture_output=True, text=True, check=True
         ).stdout
-        
+
         tasks = json.loads(task_data)
         if not tasks:
             print("   ⚠️  Tâche non trouvée")
@@ -127,29 +127,38 @@ _validate task_id:
         task = tasks[0]
         title = task.get("title", "")
         match = re.search(r'\(([^)]+)\)', title)
-        
+
         if not match:
             print("   ❌ ABORT: Pas d'application à valider")
             sys.exit(1)
-        
+
         app_name = match.group(1)
         print(f"   🎭 VALIDATION DEV: {app_name}")
-        
+
         result = subprocess.run([
             "python3", "scripts/validate.py", app_name, "dev"
         ], capture_output=True, text=True)
-        
+
         if result.returncode != 0:
             print(f"   ❌ VALIDATION ÉCHOUÉE")
             subprocess.run([
-                "bd", "update", "{{task_id}}", 
+                "bd", "update", "{{task_id}}",
                 "--notes", f"VALIDATION FAIL: {result.stderr}"
             ])
             sys.exit(1)
-        
+
         print("   ✅ VALIDATION DEV OK")
+
+        # Documentation reminder
+        print("\n   ⭐ RAPPEL DOCUMENTATION (OBLIGATOIRE) ⭐")
+        print(f"   [ ] 1. Mettre à jour docs/applications/<category>/{app_name}.md")
+        print("   [ ] 2. Mettre à jour docs/STATUS.md")
+        print("   [ ] 3. Committer les changements de documentation")
+        print("   [ ] 4. Vérifier que tout est poussé (git push)")
+        print()
+
         subprocess.run([
-            "bd", "update", "{{task_id}}", 
+            "bd", "update", "{{task_id}}",
             "--status", "closed", "--assignee", "user"
         ])
     except Exception as e:
@@ -163,3 +172,18 @@ _validate task_id:
 burst title:
     bd create "{{title}}" --status open --assignee coding-agent --label burst
     @echo "✅ Idée enregistrée dans Beads"
+
+lint:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🔍 Validation YAML avec yamllint..."
+    if yamllint -c yamllint-config.yml apps/**/*.yaml argocd/**/*.yaml; then
+        echo "✅ Validation YAML réussie"
+        exit 0
+    else
+        echo "❌ Validation YAML échouée"
+        echo ""
+        echo "⚠️  Ces erreurs bloqueront le push dans GitHub Actions"
+        echo "💡 Corrigez les erreurs avant de faire git push"
+        exit 1
+    fi
