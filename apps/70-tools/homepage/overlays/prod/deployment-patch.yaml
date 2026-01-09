@@ -8,6 +8,6 @@ spec:
     spec:
       containers:
         - name: homepage
-          env: null
-        - name: HOMEPAGE_ALLOWED_HOSTS
-          value: homepage.truxonline.com
+          env:
+            - name: HOMEPAGE_ALLOWED_HOSTS
+              value: homepage.truxonline.com
