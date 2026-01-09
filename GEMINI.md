@@ -33,6 +33,103 @@ En cas de conflit entre WORKFLOW.md et ce fichier, **WORKFLOW.md a toujours rais
 
 ---
 
+# 🚀 TL;DR - Quick Reference Cheatsheet
+
+**For Gemini agents who need a quick reference during work.**
+
+## Essential Commands (Copy-Paste Ready)
+
+```bash
+# 🎯 Entry Point (START HERE)
+just resume                          # Find work / resume current task
+
+# 📋 Task Management
+bd list --status open                # List available tasks
+bd update <id> --status in_progress --assignee coding-agent
+bd close <id> --reason "Done"
+bd sync                              # Push beads changes
+
+# 🔍 Code Search (instead of Serena)
+grep -r "pattern" apps/              # Find patterns
+find apps/ -name "*.yaml"            # Find files
+diff file1 file2                     # Compare files
+
+# ✅ Validation (MANDATORY before push)
+just lint                            # YAML validation
+kustomize build apps/<app>/overlays/dev  # Test build
+
+# 🚢 Git Workflow
+git add .
+git commit -m "type(scope): description"
+git push origin dev
+
+# 🌐 WebUI Validation (instead of Playwright)
+curl -I http://app.dev.truxonline.com     # Check redirect
+curl -k https://app.dev.truxonline.com    # Check HTTPS
+kubectl get pods -n <namespace>            # Check pods
+```
+
+## Mandatory Checklist (NEVER SKIP)
+
+```
+[ ] 1. yamllint passed (just lint)
+[ ] 2. git committed to dev
+[ ] 3. git pushed to remote
+[ ] 4. ArgoCD synced
+[ ] 5. App validated (curl)
+[ ] 6. docs/applications/<app>.md updated ⭐ MANDATORY
+[ ] 7. docs/STATUS.md updated ⭐ MANDATORY
+[ ] 8. bd close <id> + bd sync
+```
+
+## Documentation Updates (NON NÉGOCIABLES)
+
+```bash
+# 1. Update application doc
+vim docs/applications/<category>/<app>.md
+# Mark: [x] Déployé [x] Configuré [x] Testé, update version
+
+# 2. Update status dashboard
+vim docs/STATUS.md
+# Symbols: ✅ (OK) ⚠️ (Degraded) ❌ (Broken) 🚧 (WIP) 💤 (Paused)
+
+# 3. Commit docs
+git add docs/ && git commit -m "docs(<app>): update deployment status"
+```
+
+## Common Patterns (Learn by Example)
+
+```bash
+# Find existing patterns before implementing
+cat apps/20-media/radarr/base/kustomization.yaml   # Copy structure
+grep -r "kind: Ingress" apps/                       # Find ingress examples
+diff apps/<app>/overlays/dev/kustomization.yaml \
+     apps/<app>/overlays/prod/kustomization.yaml    # Compare envs
+```
+
+## Web Search Queries (instead of Archon RAG)
+
+```
+"Talos Linux [topic] configuration"
+"ArgoCD [topic] documentation"
+"Kustomize [topic] best practices"
+"Kubernetes [topic] example"
+```
+
+**Official docs:** talos.dev, kubernetes.io/docs, argo-cd.readthedocs.io, kustomize.io, docs.cilium.io
+
+## Key Differences vs Claude
+
+- ❌ No Serena (use grep/find instead of symbols)
+- ❌ No Archon RAG (use web search instead)
+- ❌ No Playwright (use curl + user validation)
+- ✅ Same Beads, Just, git workflow
+- ✅ Same documentation requirements
+
+**Remember:** Simple but effective. Standard CLI tools work everywhere.
+
+---
+
 # 🔧 Standard Tools (No Special Setup Required)
 
 Gemini and other standard AI agents use **universal CLI tools only**. No MCP servers or special integrations required.
@@ -402,10 +499,8 @@ cat docs/adr/008-trunk-based-gitops-workflow.md
 
 | Environment | Nodes | VIP | Status |
 |-------------|-------|-----|--------|
-| **Dev** | obsy, onyx, opale (3 CP HA) | 192.168.111.160 | ✅ Active |
-| **Test** | citrine, carny, celesty (3 CP HA) | 192.168.111.180 | ⏳ Planned |
-| **Staging** | TBD (3 nodes) | 192.168.111.190 | 📅 Future |
-| **Prod** | Physical nodes (3) | 192.168.111.200 | 📅 Phase 3 |
+| **Dev** | daphne, diva, dulce (3 CP HA) | 192.168.111.160 | ✅ Active |
+| **Prod** | Physical nodes (3) | 192.168.111.200 | 📅 Phase 3 |📅 Phase 3 |
 
 **Repository Structure:**
 
