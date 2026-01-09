@@ -2,7 +2,7 @@
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: global-redirect-https
+  name: redirect-https
   namespace: traefik
 spec:
   redirectScheme:
