@@ -7,18 +7,25 @@
 ## 🚨 CRITICAL: Tool Selection (Read This First)
 
 **IF YOU ARE GEMINI (or non-Claude agent):**
-- ❌ **DO NOT use Serena MCP tools** (even if available in environment)
-- ❌ **DO NOT use Archon MCP tools** (even if available in environment)
-- ❌ **DO NOT use Playwright MCP tools** (even if available in environment)
-- ❌ **DO NOT use any `mcp__*` tools**
-- ✅ **ONLY use standard Bash commands**: `grep`, `find`, `cat`, `ls`, `curl`, etc.
-- ✅ **ONLY use CLI tools**: `bd`, `just`, `git`, `kubectl`, `yamllint`
+
+Use MCP tools **sparingly and appropriately**:
+- ✅ **Serena**: File access ONLY (read_file, list_dir) - NOT for intensive symbol operations
+- ✅ **Archon RAG**: Documentation search ONLY (rag_search_knowledge_base, rag_search_code_examples) - NOT for task management
+- ✅ **Playwright**: WebUI validation ONLY when necessary - fallback to curl for simple checks
+- ❌ **Archon Task Management**: NEVER use (use Beads CLI: `bd` instead)
+- ❌ **Serena heavy operations**: Avoid find_symbol, replace_symbol_body (use grep/sed instead)
+
+**Primary tools for Gemini:**
+- ✅ **Bash commands**: `cat`, `grep`, `find`, `sed`, `awk`, `curl` (prefer these)
+- ✅ **CLI tools**: `bd`, `just`, `git`, `kubectl`, `yamllint`
 
 **IF YOU ARE CLAUDE CODE:**
-- ✅ Use Serena, Archon, Playwright MCP tools (optimized for you)
+- ✅ Use Serena intensively (symbols, AST operations)
+- ✅ Use Archon RAG extensively
+- ✅ Use Playwright for all WebUI validation
 - ✅ Use universal CLI tools as fallback
 
-**Why this matters:** Serena/Archon are Claude-specific optimizations. Gemini should use standard bash commands for portability and simplicity.
+**Why this matters:** MCP tools are optimizations. Gemini should use them lightly (file access, docs, validation) but rely primarily on bash for code work.
 
 ---
 
