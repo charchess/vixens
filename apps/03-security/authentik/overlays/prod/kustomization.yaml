@@ -25,6 +25,10 @@ patches:
     target:
       kind: Deployment
       name: authentik-server
+  - path: worker-patch.yaml
+    target:
+      kind: Deployment
+      name: authentik-worker
   - path: server-resources.yaml
     target:
       kind: Deployment
@@ -36,3 +40,4 @@ patches:
 resources:
   - ../../base
   - ingress.yaml
+  - infisical-redis-secret.yaml
