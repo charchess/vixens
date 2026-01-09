@@ -6,48 +6,56 @@ This file provides guidance to Gemini (and other standard AI agents) when workin
 
 ## 🎯 CRITICAL: MCP Tools Usage Guidelines
 
-**GEMINI: You CAN use MCP tools, but SPARINGLY and APPROPRIATELY.**
+**GEMINI: You CAN and SHOULD use MCP tools for their intended purpose.**
 
-### ✅ ALLOWED MCP Usage (Limited)
+### ✅ CORRECT MCP Usage
 
-**Serena (File Access Only):**
-- ✅ `read_file` - Reading files when needed
-- ✅ `list_dir` - Listing directories
-- ❌ `find_symbol` - Use `grep` instead
-- ❌ `replace_symbol_body` - Use `sed`/edit instead
+**Serena (File & Code Operations):**
+- ✅ **Use Serena for ALL file/code operations** - This is its primary purpose
+- ✅ `read_file`, `list_dir` - File access
+- ✅ `find_symbol`, `replace_symbol_body` - Symbol operations
+- ✅ `search_for_pattern`, `create_text_file` - Code search/edit
+- ✅ ALL Serena file operations are encouraged
 
-**Archon (Documentation ONLY):**
+**Archon (Documentation RAG):**
 - ✅ `rag_search_knowledge_base` - Search documentation (Talos, K8s, ArgoCD)
 - ✅ `rag_search_code_examples` - Find code patterns
 - ❌ `manage_task`, `manage_project` - Use Beads CLI (`bd`) instead
 
-**Playwright (WebUI Validation ONLY):**
-- ✅ `browser_navigate`, `browser_snapshot` - WebUI validation when needed
+**Playwright (WebUI Validation):**
+- ✅ `browser_navigate`, `browser_snapshot` - WebUI validation
 - ✅ Use `curl` as fallback for simple HTTP checks
 
-### 🚨 PREFER BASH FIRST
+### 🚨 CRITICAL DISTINCTION
 
-**Default approach: Use bash commands FIRST, MCP tools as backup.**
+**The ONLY restriction: Don't use Serena to execute CLI commands**
 
 ```bash
-# ✅ PREFERRED (bash first)
-cat justfile                    # Simple file reading
-grep -r "pattern" apps/         # Code search
-curl -I https://app.dev...      # HTTP checks
+# ✅ CORRECT - Use Serena for file/code operations
+mcp__serena__read_file(relative_path="justfile")
+mcp__serena__find_symbol(name_path_pattern="Deployment")
+mcp__serena__replace_symbol_body(name_path="MyClass/method", body="...")
+mcp__serena__search_for_pattern(substring_pattern="kind: Deployment")
 
-# ✅ ACCEPTABLE (MCP when appropriate)
-mcp__serena__read_file(relative_path="justfile")  # If bash fails
-mcp__archon__rag_search_knowledge_base(query="talos networking")  # Doc search
-mcp__playwright__browser_snapshot()  # Complex WebUI validation
+# ✅ CORRECT - Use Bash tool for CLI commands
+just resume
+bd list --status open
+git status
+kubectl get pods
+
+# ❌ WRONG - Don't use Serena to run CLI commands
+mcp__serena__execute_shell_command(command="just resume")  # NO!
+mcp__serena__execute_shell_command(command="bd list")      # NO!
 ```
 
 ### ❌ NEVER USE
 
-- ❌ Archon Task Management (`manage_task`, `find_tasks`, etc.) - Use `bd` CLI
-- ❌ Serena intensive operations (`find_symbol`, `replace_symbol_body`) - Use `grep`/`sed`
-- ❌ MCP for trivial operations (reading `justfile` with Serena is overkill, use `cat`)
+- ❌ Archon Task Management (`manage_task`, `find_tasks`) - Use `bd` CLI
+- ❌ Serena's `execute_shell_command` for CLI tools (`just`, `bd`, `git`) - Use Bash tool
 
-**Rule of thumb:** If you can do it with bash in one line, use bash. MCP is for complex operations only.
+**Rule of thumb:**
+- **Files/Code?** → Use Serena
+- **CLI commands?** → Use Bash tool
 
 ---
 
@@ -96,10 +104,9 @@ bd update <id> --status in_progress --assignee coding-agent
 bd close <id> --reason "Done"
 bd sync                              # Push beads changes
 
-# 🔍 Code Search (instead of Serena)
-grep -r "pattern" apps/              # Find patterns
-find apps/ -name "*.yaml"            # Find files
-diff file1 file2                     # Compare files
+# 🔍 File & Code Operations
+# Use Serena MCP for file/code work (encouraged!)
+# Use Bash for CLI commands only
 
 # ✅ Validation (MANDATORY before push)
 just lint                            # YAML validation
@@ -167,13 +174,13 @@ diff apps/<app>/overlays/dev/kustomization.yaml \
 
 ## Key Differences vs Claude
 
-- ❌ No Serena (use grep/find instead of symbols)
-- ❌ No Archon RAG (use web search instead)
-- ❌ No Playwright (use curl + user validation)
+- ✅ Same Serena (use for ALL file/code operations)
+- ✅ Same Archon RAG (documentation search)
+- ✅ Same Playwright (WebUI validation)
 - ✅ Same Beads, Just, git workflow
-- ✅ Same documentation requirements
+- ❌ Only restriction: Don't use Serena's execute_shell_command for CLI (`just`, `bd`, etc.) - Use Bash tool
 
-**Remember:** Simple but effective. Standard CLI tools work everywhere.
+**Remember:** Serena is for files/code, Bash is for CLI commands. Use tools for their intended purpose.
 
 ---
 
