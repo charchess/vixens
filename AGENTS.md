@@ -4,6 +4,24 @@
 
 ---
 
+## 🚨 CRITICAL: Tool Selection (Read This First)
+
+**IF YOU ARE GEMINI (or non-Claude agent):**
+- ❌ **DO NOT use Serena MCP tools** (even if available in environment)
+- ❌ **DO NOT use Archon MCP tools** (even if available in environment)
+- ❌ **DO NOT use Playwright MCP tools** (even if available in environment)
+- ❌ **DO NOT use any `mcp__*` tools**
+- ✅ **ONLY use standard Bash commands**: `grep`, `find`, `cat`, `ls`, `curl`, etc.
+- ✅ **ONLY use CLI tools**: `bd`, `just`, `git`, `kubectl`, `yamllint`
+
+**IF YOU ARE CLAUDE CODE:**
+- ✅ Use Serena, Archon, Playwright MCP tools (optimized for you)
+- ✅ Use universal CLI tools as fallback
+
+**Why this matters:** Serena/Archon are Claude-specific optimizations. Gemini should use standard bash commands for portability and simplicity.
+
+---
+
 ## 🎯 Purpose
 
 This guide ensures **any AI agent** can work on this project using universal tools and processes, with optional agent-specific optimizations.

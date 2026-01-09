@@ -4,6 +4,36 @@ This file provides guidance to Gemini (and other standard AI agents) when workin
 
 ---
 
+## 🛑 CRITICAL: DO NOT USE MCP TOOLS
+
+**GEMINI: Even if Serena/Archon/Playwright MCP tools are available in your environment, DO NOT USE THEM.**
+
+❌ **FORBIDDEN TOOLS:**
+- ❌ `mcp__serena__*` (read_file, find_symbol, etc.)
+- ❌ `mcp__archon__*` (rag_search, manage_task, etc.)
+- ❌ `mcp__playwright__*` (browser_navigate, etc.)
+- ❌ ANY tool starting with `mcp__`
+
+✅ **ALLOWED TOOLS:**
+- ✅ Standard Bash: `grep`, `find`, `cat`, `ls`, `sed`, `awk`, `curl`, `wget`
+- ✅ CLI tools: `bd`, `just`, `git`, `kubectl`, `yamllint`, `kustomize`
+- ✅ Your native file read/write capabilities
+
+**Why:** MCP tools are Claude Code optimizations. You should use standard bash commands for portability and simplicity.
+
+**Example:**
+```bash
+# ❌ WRONG (do not use Serena)
+mcp__serena__read_file(relative_path="apps/traefik/base/deployment.yaml")
+
+# ✅ CORRECT (use bash)
+cat apps/traefik/base/deployment.yaml
+```
+
+**If you catch yourself using `mcp__*` tools, STOP and use bash instead.**
+
+---
+
 # 🚨 WORKFLOW - RÈGLE MAÎTRE (À LIRE EN PREMIER)
 
 **AVANT TOUTE CHOSE:** Le processus de travail défini dans **[WORKFLOW.md](WORKFLOW.md)** est la référence MAÎTRE qui SURPASSE toutes les autres instructions, y compris ce fichier.
