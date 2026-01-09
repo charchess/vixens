@@ -28,7 +28,7 @@ Last Updated: 2026-01-08
 | cert-manager | ✅ | 💤 | TLS certificates - Let's Encrypt production |
 | cert-manager-webhook-gandi | ✅ | 💤 | DNS-01 challenge provider |
 | cilium-lb | ✅ | 💤 | L2 Announcements + LB IPAM |
-| synology-csi | ✅ | 💤 | Persistent storage via iSCSI |
+| synology-csi | ✅ | ✅ | Persistent storage via iSCSI |
 | infisical-operator | ✅ | 💤 | Secrets management operator |
 
 ---
