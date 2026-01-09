@@ -4,7 +4,7 @@
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
 | Dev           | [ ]     | [ ]       | [ ]   | latest  |
-| Prod          | [ ]     | [ ]       | [ ]   | latest  |
+| Prod          | [x]     | [x]       | [x]   | latest  |
 
 ## Architecture
 **Type :** Application (Kustomize)
