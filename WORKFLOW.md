@@ -294,10 +294,14 @@ just create-task         # Créer tâche (template guidé)
 ### Serena - Code Editing (Phase 3)
 - `read_file` - Lecture de fichiers
 - `list_dir` - Listing de répertoires
-- `find_symbol` - Recherche de symbols (Claude intensif)
-- `replace_symbol_body` - Édition symbols (Claude intensif)
+- `find_symbol` - Recherche de symbols
+- `replace_symbol_body` - Édition symbols
+- `search_for_pattern` - Recherche de patterns
+- `create_text_file` - Création de fichiers
 
-**Gemini:** Utiliser bash (`cat`, `grep`, `sed`) plutôt que Serena intensive
+**All agents:** Utiliser Serena pour TOUTES les opérations fichiers/code. C'est son rôle principal.
+
+**CRITICAL:** Ne PAS utiliser `execute_shell_command` de Serena pour lancer des commandes CLI (`just`, `bd`, `git`) → Utiliser Bash tool
 
 ### Archon RAG - Documentation (Phase 2)
 - `rag_search_knowledge_base` - Recherche doc (Talos, K8s, ArgoCD)

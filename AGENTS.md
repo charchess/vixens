@@ -8,16 +8,32 @@
 
 **IF YOU ARE GEMINI (or non-Claude agent):**
 
-Use MCP tools **sparingly and appropriately**:
-- ✅ **Serena**: File access ONLY (read_file, list_dir) - NOT for intensive symbol operations
+Use MCP tools **appropriately for their purpose**:
+- ✅ **Serena**: ALL file/code operations (read_file, write, edit, find_symbol, replace_symbol_body, search_for_pattern, etc.) - This is Serena's primary purpose
 - ✅ **Archon RAG**: Documentation search ONLY (rag_search_knowledge_base, rag_search_code_examples) - NOT for task management
-- ✅ **Playwright**: WebUI validation ONLY when necessary - fallback to curl for simple checks
+- ✅ **Playwright**: WebUI validation when needed
 - ❌ **Archon Task Management**: NEVER use (use Beads CLI: `bd` instead)
-- ❌ **Serena heavy operations**: Avoid find_symbol, replace_symbol_body (use grep/sed instead)
+- ❌ **Serena for CLI commands**: NEVER use Serena to execute shell commands (`just`, `bd`, `git`, etc.) - Use Bash tool for that
 
-**Primary tools for Gemini:**
-- ✅ **Bash commands**: `cat`, `grep`, `find`, `sed`, `awk`, `curl` (prefer these)
-- ✅ **CLI tools**: `bd`, `just`, `git`, `kubectl`, `yamllint`
+**Critical distinction:**
+- ✅ **Serena for files/code** - Reading, editing, searching code
+- ✅ **Bash for CLI commands** - Running `just resume`, `bd list`, `git status`, etc.
+
+**Example:**
+```bash
+# ✅ CORRECT - Use Serena for file operations
+mcp__serena__read_file(relative_path="apps/traefik/base/deployment.yaml")
+mcp__serena__find_symbol(name_path_pattern="Deployment")
+mcp__serena__replace_symbol_body(...)
+
+# ✅ CORRECT - Use Bash for CLI commands
+just resume
+bd list --status open
+git status
+
+# ❌ WRONG - Don't use Serena for CLI commands
+mcp__serena__execute_shell_command(command="just resume")  # NO!
+```
 
 **IF YOU ARE CLAUDE CODE:**
 - ✅ Use Serena intensively (symbols, AST operations)
