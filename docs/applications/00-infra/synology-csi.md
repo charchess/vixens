@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | edge    |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | -       |
 
 ## Validation
 **URL :** N/A (Storage Driver)
