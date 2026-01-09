@@ -16,6 +16,3 @@ resources:
   - ingress.yaml
   - ingress-redirect.yaml
   - infisical-secret.yaml
-spec:
-  managedSecretReference:
-    secretNamespace: tools
