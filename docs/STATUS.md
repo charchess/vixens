@@ -37,7 +37,8 @@ Last Updated: 2026-01-08
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| prometheus | ⏳ | 💤 | Metrics collection (planned) |
+| prometheus | ✅ | ✅ | Fixed missing InfisicalSecrets |
+| alertmanager | ✅ | ✅ | Fixed stuck ContainerCreating (secrets) |
 | grafana | ⏳ | 💤 | Dashboards & visualization (planned) |
 | loki | ⏳ | 💤 | Log aggregation (planned) |
 | promtail | ⏳ | 💤 | Log collector (planned) |

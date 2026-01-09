@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | v0.30.0 |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | v0.27.0 |
 
 ## Validation
 **URL :** https://alertmanager.[env].truxonline.com
