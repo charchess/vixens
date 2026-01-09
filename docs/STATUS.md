@@ -92,7 +92,7 @@ Last Updated: 2026-01-08
 |-------------|-----|------|-------|
 | mail-gateway | ✅ | 💤 | Email gateway (Roundcube) |
 | vaultwarden | ⏳ | 💤 | Password manager (planned) |
-| authentik | 🚧 | ❌ | Prod manifest fixed but Redis auth error | SSO/Auth (Sprint 8 in progress) |
+| authentik | 🚧 | ✅ | Prod fixed (Redis auth solved) |
 
 ---
 
