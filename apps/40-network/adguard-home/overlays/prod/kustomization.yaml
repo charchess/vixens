@@ -17,6 +17,3 @@ patchesStrategicMerge:
 resources:
   - ../../base
   - ingress.yaml
-spec:
-  managedSecretReference:
-    secretNamespace: networking
