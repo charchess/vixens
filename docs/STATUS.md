@@ -67,6 +67,7 @@ Last Updated: 2026-01-08
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
 | jellyfin | ⏳ | 💤 | Media server (planned) |
+| sabnzbd | ⏳ | ✅ | Prod fixed and synced |
 | radarr | ⏳ | 💤 | Movie management (planned) |
 | sonarr | ⏳ | 💤 | TV show management (planned) |
 | prowlarr | ⏳ | 💤 | Indexer manager (planned) |
@@ -128,6 +129,7 @@ vim docs/STATUS.md
 
 # Update status symbols and notes
 # Example: | jellyfin | ✅ | ⚠️ | Dev OK, Prod needs resource tuning |
+| sabnzbd | ⏳ | ✅ | Prod fixed and synced |
 
 # Commit changes
 git add docs/STATUS.md
