@@ -81,7 +81,7 @@ Last Updated: 2026-01-08
 | external-dns-unifi | ✅ | 💤 | Internal DNS management |
 | external-dns-gandi | ✅ | 💤 | Public DNS management |
 | contacts | ✅ | 💤 | Contacts redirection service |
-| adguard | ⏳ | 💤 | DNS-based ad blocking (planned) |
+| adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
 
 ---
 
