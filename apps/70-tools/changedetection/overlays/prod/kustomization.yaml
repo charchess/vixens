@@ -19,6 +19,3 @@ patches:
 resources:
   - ../../base
   - ingress.yaml
-spec:
-  managedSecretReference:
-    secretNamespace: tools
