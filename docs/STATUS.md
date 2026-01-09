@@ -100,7 +100,7 @@ Last Updated: 2026-01-08
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
 | whoami | ✅ | 💤 | Test service for ingress validation |
-| homepage | ⏳ | 💤 | Dashboard (planned) |
+| homepage | ✅ | 💤 | Prod fixed and synced |
 | linkwarden | ⏳ | 💤 | Bookmark manager (planned) |
 
 ---
