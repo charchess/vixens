@@ -102,7 +102,7 @@ Last Updated: 2026-01-08
 |-------------|-----|------|-------|
 | whoami | ✅ | 💤 | Test service for ingress validation |
 | homepage | ✅ | 💤 | Prod fixed and synced |
-| netbox | ✅ | ❌ | Manifest fixed but app in CrashLoop |
+| netbox | ✅ | ✅ | Prod fixed (Redis auth solved) |
 | linkwarden | ⏳ | 💤 | Bookmark manager (planned) |
 
 ---
