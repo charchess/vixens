@@ -69,9 +69,9 @@ Last Updated: 2026-01-08
 |-------------|-----|------|-------|
 | jellyfin | ⏳ | 💤 | Media server (planned) |
 | sabnzbd | ⏳ | ✅ | Prod fixed and synced |
-| radarr | ⏳ | 💤 | Movie management (planned) |
-| sonarr | ⏳ | 💤 | TV show management (planned) |
-| prowlarr | ⏳ | 💤 | Indexer manager (planned) |
+| radarr | ⏳ | ✅ | Prod fixed 
+| sonarr | ⏳ | ✅ | Prod fixed 
+| prowlarr | ⏳ | ✅ | Prod fixed 
 | jellyseerr | ⏳ | 💤 | Media request management (planned) |
 
 ---
