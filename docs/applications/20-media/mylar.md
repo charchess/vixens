@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | latest  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | -       |
 
 ## Validation
 **URL :** https://mylar.[env].truxonline.com
