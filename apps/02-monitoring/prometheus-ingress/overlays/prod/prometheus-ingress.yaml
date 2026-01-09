@@ -42,7 +42,7 @@ spec:
     - match: Host(`prometheus.truxonline.com`)
       kind: Rule
       middlewares:
-        - name: redirect-https
+        - name: traefik-redirect-https@kubernetescrd
       services:
         - name: prometheus-server
           port: 80
@@ -90,7 +90,7 @@ spec:
     - match: Host(`alertmanager.truxonline.com`)
       kind: Rule
       middlewares:
-        - name: redirect-https
+        - name: traefik-redirect-https@kubernetescrd
       services:
         - name: prometheus-alertmanager
           port: 9093
