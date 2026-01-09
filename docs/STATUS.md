@@ -104,6 +104,7 @@ Last Updated: 2026-01-08
 | whoami | ✅ | 💤 | Test service for ingress validation |
 | homepage | ✅ | 💤 | Prod fixed and synced |
 | netbox | ✅ | ✅ | Prod fixed (Redis auth solved) |
+| changedetection | ⏳ | ✅ | Fixed manifest error |
 | linkwarden | ⏳ | 💤 | Bookmark manager (planned) |
 
 ---
