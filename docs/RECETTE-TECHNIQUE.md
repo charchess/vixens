@@ -18,3 +18,4 @@ Validation des aspects techniques (infra, logs, perfs).
 | **docspell** | Stabilité CPU | ✅ OK | 2026-01-07 | Request 200m CPU : Arrêt des CrashLoops |
 | **external-dns** | Architecture Secret | ✅ OK | 2026-01-07 | Séparation Secret/Binaire pour contourner cache ArgoCD |
 | **vaultwarden** | Probes / Stability | ✅ OK | 2026-01-07 | Liveness assouplie (60s) : Arrêt des CrashLoops |
+| **traefik** | Shared Middleware | ✅ OK | 2026-01-09 | Centralisation de redirect-https (namespace traefik) |

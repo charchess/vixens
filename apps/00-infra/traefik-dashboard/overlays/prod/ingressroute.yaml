@@ -29,7 +29,7 @@ spec:
     - kind: Rule
       match: Host(`traefik.truxonline.com`)
       middlewares:
-        - name: redirect-https
+        - name: traefik-redirect-https@kubernetescrd
       services:
         - kind: TraefikService
           name: api@internal
