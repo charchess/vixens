@@ -25,6 +25,11 @@ spec:
               value: netbox@truxonline.com
             - name: SUPERUSER_API_TOKEN
               value: 0123456789abcdef0123456789abcdef01234567
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-redis-credentials
+                  key: password
           livenessProbe:
             httpGet:
               httpHeaders:
