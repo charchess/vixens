@@ -2,15 +2,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: authentik-server
+  name: authentik-worker
   namespace: auth
 spec:
-  strategy:
-    type: Recreate
   template:
     spec:
       containers:
-        - name: authentik-server
+        - name: authentik-worker
           env:
             - name: AUTHENTIK_REDIS__PASSWORD
               valueFrom:
