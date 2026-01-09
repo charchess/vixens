@@ -8,6 +8,6 @@ spec:
     spec:
       containers:
         - name: vaultwarden
-          env: null
-        - name: DOMAIN
-          value: https://vaultwarden.truxonline.com
+          env:
+            - name: DOMAIN
+              value: https://vaultwarden.truxonline.com
