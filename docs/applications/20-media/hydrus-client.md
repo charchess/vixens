@@ -6,31 +6,30 @@
 | Dev           | [x]     | [x]       | [x]   | latest  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | v652    |
 
 ## Validation
-**URL :** https://hydrus-web.[env].truxonline.com
+**URL :** https://hydrus.[env].truxonline.com
 
 ### Méthode Automatique (Curl)
 ```bash
 # 1. Vérifier la redirection HTTP -> HTTPS
-curl -I http://hydrus-web.dev.truxonline.com
+curl -I http://hydrus.dev.truxonline.com
 # Attendu: HTTP 301/302/308
 
 # 2. Vérifier l'accès HTTPS
-curl -L -k https://hydrus-web.dev.truxonline.com | grep "Hydrus"
-# Attendu: Présence de "Hydrus"
+curl -L -k https://hydrus.dev.truxonline.com
+# Attendu: Page noVNC chargée (HTTP 200)
 ```
 
-### Méthode Manuelle
-1. Accéder à l'URL.
-2. Vérifier l'affichage de la galerie.
-
 ## Notes Techniques
-- **Namespace :** `media-stack`
-- **Dépendances :** `Hydrus Server`
-- **Particularités :** Interface Web pour Hydrus.
+- **Namespace :** `media`
+- **Standard Gold** : Implémenté (Check d'intégrité sqlite3 + Restauration conditionnelle Litestream).
+- **Storage** : PVC iSCSI de **40Gi** (augmenté pour gérer les volumineux sets de WAL Litestream).
+- **Optimisation** : Restauration de la base `caches` désactivée en init-container pour accélérer le boot (reconstruit par l'app).
+- **PriorityClass** : `vixens-medium`.
+- **Health Probes** : Liveness (120s delay) et Readiness (30s delay) configurées.
+
 ---
 > ⚠️ **HIBERNATION DEV**
-> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
-> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
+> Cette application est activée par défaut en `dev` pour les tests actuels.
