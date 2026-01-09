@@ -93,7 +93,7 @@ Last Updated: 2026-01-08
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
 | mail-gateway | ✅ | 💤 | Email gateway (Roundcube) |
-| vaultwarden | ⏳ | 💤 | Password manager (planned) |
+| vaultwarden | ⏳ | ✅ | Fixed probes and Traefik ingress |
 | authentik | 🚧 | ✅ | Prod fixed (Redis auth solved) |
 
 ---
