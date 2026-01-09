@@ -9,6 +9,3 @@ patches:
       name: synology-csi-credentials-sync
 resources:
   - ../../base
-spec:
-  managedSecretReference:
-    secretNamespace: storage
