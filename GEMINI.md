@@ -4,33 +4,50 @@ This file provides guidance to Gemini (and other standard AI agents) when workin
 
 ---
 
-## 🛑 CRITICAL: DO NOT USE MCP TOOLS
+## 🎯 CRITICAL: MCP Tools Usage Guidelines
 
-**GEMINI: Even if Serena/Archon/Playwright MCP tools are available in your environment, DO NOT USE THEM.**
+**GEMINI: You CAN use MCP tools, but SPARINGLY and APPROPRIATELY.**
 
-❌ **FORBIDDEN TOOLS:**
-- ❌ `mcp__serena__*` (read_file, find_symbol, etc.)
-- ❌ `mcp__archon__*` (rag_search, manage_task, etc.)
-- ❌ `mcp__playwright__*` (browser_navigate, etc.)
-- ❌ ANY tool starting with `mcp__`
+### ✅ ALLOWED MCP Usage (Limited)
 
-✅ **ALLOWED TOOLS:**
-- ✅ Standard Bash: `grep`, `find`, `cat`, `ls`, `sed`, `awk`, `curl`, `wget`
-- ✅ CLI tools: `bd`, `just`, `git`, `kubectl`, `yamllint`, `kustomize`
-- ✅ Your native file read/write capabilities
+**Serena (File Access Only):**
+- ✅ `read_file` - Reading files when needed
+- ✅ `list_dir` - Listing directories
+- ❌ `find_symbol` - Use `grep` instead
+- ❌ `replace_symbol_body` - Use `sed`/edit instead
 
-**Why:** MCP tools are Claude Code optimizations. You should use standard bash commands for portability and simplicity.
+**Archon (Documentation ONLY):**
+- ✅ `rag_search_knowledge_base` - Search documentation (Talos, K8s, ArgoCD)
+- ✅ `rag_search_code_examples` - Find code patterns
+- ❌ `manage_task`, `manage_project` - Use Beads CLI (`bd`) instead
 
-**Example:**
+**Playwright (WebUI Validation ONLY):**
+- ✅ `browser_navigate`, `browser_snapshot` - WebUI validation when needed
+- ✅ Use `curl` as fallback for simple HTTP checks
+
+### 🚨 PREFER BASH FIRST
+
+**Default approach: Use bash commands FIRST, MCP tools as backup.**
+
 ```bash
-# ❌ WRONG (do not use Serena)
-mcp__serena__read_file(relative_path="apps/traefik/base/deployment.yaml")
+# ✅ PREFERRED (bash first)
+cat justfile                    # Simple file reading
+grep -r "pattern" apps/         # Code search
+curl -I https://app.dev...      # HTTP checks
 
-# ✅ CORRECT (use bash)
-cat apps/traefik/base/deployment.yaml
+# ✅ ACCEPTABLE (MCP when appropriate)
+mcp__serena__read_file(relative_path="justfile")  # If bash fails
+mcp__archon__rag_search_knowledge_base(query="talos networking")  # Doc search
+mcp__playwright__browser_snapshot()  # Complex WebUI validation
 ```
 
-**If you catch yourself using `mcp__*` tools, STOP and use bash instead.**
+### ❌ NEVER USE
+
+- ❌ Archon Task Management (`manage_task`, `find_tasks`, etc.) - Use `bd` CLI
+- ❌ Serena intensive operations (`find_symbol`, `replace_symbol_body`) - Use `grep`/`sed`
+- ❌ MCP for trivial operations (reading `justfile` with Serena is overkill, use `cat`)
+
+**Rule of thumb:** If you can do it with bash in one line, use bash. MCP is for complex operations only.
 
 ---
 
