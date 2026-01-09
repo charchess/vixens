@@ -41,6 +41,7 @@ Last Updated: 2026-01-08
 | grafana | ⏳ | 💤 | Dashboards & visualization (planned) |
 | loki | ⏳ | 💤 | Log aggregation (planned) |
 | promtail | ⏳ | 💤 | Log collector (planned) |
+| hubble-ui | ✅ | ✅ | Fixed secretNamespace error |
 
 ---
 
