@@ -102,7 +102,7 @@ Last Updated: 2026-01-08
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| whoami | ✅ | 💤 | Test service for ingress validation |
+| whoami | ✅ | 💤 | Test service, migrated to centralized middleware |
 | homepage | ✅ | 💤 | Prod fixed and synced |
 | netbox | ✅ | ✅ | Prod fixed (Redis auth solved) |
 | changedetection | ⏳ | ✅ | Fixed manifest error |
