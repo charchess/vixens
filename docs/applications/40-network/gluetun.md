@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | v3.39.1 |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | v3.39.1 |
 
 ## Validation
 **URL :** N/A (Proxy Service)
