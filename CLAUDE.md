@@ -87,7 +87,7 @@ bd close <task_id>                  # Mark complete
 
 ### 2. Just - Workflow Orchestration
 
-**Commands defined in `WORKFLOW.just`:**
+**Commands defined in `justfile`:**
 ```bash
 just resume              # Find/resume current work
 just work <task_id>      # Full workflow orchestration
@@ -285,7 +285,7 @@ vixens/
 │   └── hooks/                     # Workflow hooks
 │
 ├── WORKFLOW.md                    # Master workflow (RÈGLE MAÎTRE)
-├── WORKFLOW.just                  # Just commands (bd + workflow)
+├── justfile                       # Just commands (bd + workflow)
 └── CLAUDE.md                      # This file
 ```
 
@@ -469,7 +469,7 @@ kubectl -n argocd get applications                 # All should be Synced+Health
 
 ### Beads Task Management
 - Tasks tracked in Beads (`.beads/` directory)
-- Workflow orchestrated via Just (`WORKFLOW.just`)
+- Workflow orchestrated via Just (`justfile`)
 - Task status: open → in_progress → closed
 - NEVER use TodoWrite or Archon Task Management
 

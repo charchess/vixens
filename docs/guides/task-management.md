@@ -8,7 +8,7 @@ This guide explains how to create, update, and manage tasks using Beads and the 
 
 **Beads (bd)** is the **PRIMARY** and **ONLY** task management system for this project. All tasks are tracked in Beads (`.beads/` directory), NOT in TodoWrite, Archon Task Management, or markdown files.
 
-**Workflow Orchestration:** Just (`WORKFLOW.just`) provides convenient commands for task management and workflow automation.
+**Workflow Orchestration:** Just (`justfile`) provides convenient commands for task management and workflow automation.
 
 ---
 
