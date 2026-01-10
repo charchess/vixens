@@ -3,9 +3,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: headlamp
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
 spec:
+  ingressClassName: traefik
   rules:
-    - host: headlamp.dev.truxonline.com
+    - host: headlamp.truxonline.com
       http:
         paths:
           - path: /
@@ -17,5 +22,5 @@ spec:
                   number: 80
   tls:
     - hosts:
-        - headlamp.dev.truxonline.com
+        - headlamp.truxonline.com
       secretName: headlamp-tls
