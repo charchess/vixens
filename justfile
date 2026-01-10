@@ -347,44 +347,62 @@ next task_id:
         # Vérifier ArgoCD sync status
         print(f"🔍 Vérification ArgoCD pour: {app_name}")
 
-        # Try to get ArgoCD app status
-        argocd_result = subprocess.run(
-            ["kubectl", "-n", "argocd", "get", "application", app_name, "-o", "json"],
-            capture_output=True, text=True
-        )
+        # Détecter si l'app est hibernée (commentée dans kustomization.yaml)
+        hibernated = False
+        kustomization_path = f"argocd/overlays/{current_branch}/kustomization.yaml"
+        try:
+            with open(kustomization_path, 'r') as f:
+                content = f.read()
+                # Chercher si l'app est commentée
+                if f"# - apps/{app_name}.yaml" in content:
+                    print(f"   ℹ️  Application '{app_name}' est HIBERNÉE dans {current_branch}")
+                    print(f"   (Commentée dans {kustomization_path})")
+                    print("   ⏭️  Skip vérification ArgoCD (app non déployée intentionnellement)")
+                    hibernated = True
+        except FileNotFoundError:
+            pass  # Fichier pas trouvé, continuer la vérification normale
 
-        if argocd_result.returncode != 0:
-            print(f"⚠️  Application ArgoCD '{app_name}' non trouvée")
-            print("   Vérifiez le nom de l'application dans ArgoCD")
-            response = input("   Ignorer cette vérification? (y/N): ")
-            if response.lower() != 'y':
-                sys.exit(1)
-        else:
-            try:
-                import json as json_module
-                app_status = json_module.loads(argocd_result.stdout)
-                sync_status = app_status.get('status', {}).get('sync', {}).get('status', 'Unknown')
-                health_status = app_status.get('status', {}).get('health', {}).get('status', 'Unknown')
+        if not hibernated:
+            # Try to get ArgoCD app status
+            argocd_result = subprocess.run(
+                ["kubectl", "-n", "argocd", "get", "application", app_name, "-o", "json"],
+                capture_output=True, text=True
+            )
 
-                print(f"   Sync Status: {sync_status}")
-                print(f"   Health Status: {health_status}")
+            if argocd_result.returncode != 0:
+                print(f"⚠️  Application ArgoCD '{app_name}' non trouvée")
+                print("   Vérifiez le nom de l'application dans ArgoCD")
+                print("   💡 Si l'app est prod-only, c'est normal en dev")
+                response = input("   Ignorer cette vérification? (y/N): ")
+                if response.lower() != 'y':
+                    sys.exit(1)
+            else:
+                # App exists, check its status
+                try:
+                    import json as json_module
+                    app_status = json_module.loads(argocd_result.stdout)
+                    sync_status = app_status.get('status', {}).get('sync', {}).get('status', 'Unknown')
+                    health_status = app_status.get('status', {}).get('health', {}).get('status', 'Unknown')
 
-                if sync_status != 'Synced':
-                    print(f"   ⚠️  Application pas encore Synced (status: {sync_status})")
-                    print(f"   💡 Attendre avec: just wait-argocd {app_name}")
-                    response = input("   Ignorer et continuer? (y/N): ")
-                    if response.lower() != 'y':
-                        sys.exit(1)
+                    print(f"   Sync Status: {sync_status}")
+                    print(f"   Health Status: {health_status}")
 
-                if health_status not in ['Healthy', 'Progressing']:
-                    print(f"   ⚠️  Application pas Healthy (status: {health_status})")
-                    response = input("   Continuer quand même? (y/N): ")
-                    if response.lower() != 'y':
-                        sys.exit(1)
+                    if sync_status != 'Synced':
+                        print(f"   ⚠️  Application pas encore Synced (status: {sync_status})")
+                        print(f"   💡 Attendre avec: just wait-argocd {app_name}")
+                        response = input("   Ignorer et continuer? (y/N): ")
+                        if response.lower() != 'y':
+                            sys.exit(1)
 
-                print("   ✅ ArgoCD status OK")
-            except Exception as e:
-                print(f"   ⚠️  Erreur parsing status ArgoCD: {e}")
+                    if health_status not in ['Healthy', 'Progressing']:
+                        print(f"   ⚠️  Application pas Healthy (status: {health_status})")
+                        response = input("   Continuer quand même? (y/N): ")
+                        if response.lower() != 'y':
+                            sys.exit(1)
+
+                    print("   ✅ ArgoCD status OK")
+                except Exception as e:
+                    print(f"   ⚠️  Erreur parsing status ArgoCD: {e}")
 
         # Marquer le déploiement
         subprocess.run([
