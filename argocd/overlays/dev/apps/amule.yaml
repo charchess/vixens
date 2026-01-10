@@ -14,7 +14,7 @@ spec:
   source:
     path: apps/20-media/amule/overlays/dev
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: main
   syncPolicy:
     automated:
       prune: true
