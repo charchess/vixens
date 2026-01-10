@@ -1,5 +1,15 @@
 # ADR 007: Infisical pour la Gestion des Secrets
 
+
+> **⚠️ HISTORICAL DOCUMENT - REQUIRES REVIEW**
+>
+> This ADR was restored from archived state (commit fe1e1cab, 2025-12-21) for historical purposes.
+> The status and content need to be reviewed and updated to reflect current architecture.
+> 
+> Related task: vixens-0jt2
+
+---
+
 **Date**: 2025-11-16
 **Statut**: Active - ✅ Implémenté Multi-Environnement (2025-11-20)
 **Auteur**: Claude Code
