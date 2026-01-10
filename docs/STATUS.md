@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-10 (Task vixens-hjar completed)
+Last Updated: 2026-01-10 (Task vixens-k6c8 completed)
 
 ---
 
@@ -26,7 +26,7 @@ Last Updated: 2026-01-10 (Task vixens-hjar completed)
 | argocd | ✅ | 💤 | GitOps controller - v7.7.7 |
 | traefik | ✅ | 💤 | Ingress controller - v3.x |
 | cert-manager | ✅ | 💤 | TLS certificates - Let's Encrypt production |
-| cert-manager-webhook-gandi | ✅ | 💤 | DNS-01 challenge provider |
+| cert-manager-webhook-gandi | ✅ | ✅ | Fixed missing secretNamespace |
 | cilium-lb | ✅ | 💤 | L2 Announcements + LB IPAM |
 | synology-csi | ✅ | ✅ | Persistent storage via iSCSI |
 | infisical-operator | ✅ | 💤 | Secrets management operator |
@@ -39,9 +39,10 @@ Last Updated: 2026-01-10 (Task vixens-hjar completed)
 |-------------|-----|------|-------|
 | prometheus | ✅ | ✅ | Fixed missing InfisicalSecrets |
 | alertmanager | ✅ | ✅ | Fixed stuck ContainerCreating (secrets) |
-| grafana | ⏳ | 💤 | Dashboards & visualization (planned) |
-| loki | ⏳ | 💤 | Log aggregation (planned) |
-| promtail | ⏳ | 💤 | Log collector (planned) |
+| grafana | ✅ | ✅ | Fixed missing secretNamespace |
+| loki | ✅ | ✅ | Fixed missing secretNamespace |
+| promtail | ✅ | ✅ | Fixed missing secretNamespace |
+| goldilocks | ✅ | ✅ | Fixed missing secretNamespace |
 | hubble-ui | ✅ | ✅ | Fixed secretNamespace error |
 
 ---
@@ -87,6 +88,7 @@ Last Updated: 2026-01-10 (Task vixens-hjar completed)
 | contacts | ✅ | 💤 | Contacts redirection service |
 | netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
 | adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
+| gluetun | ✅ | ✅ | Fixed missing secretNamespace |
 
 ---
 
@@ -97,6 +99,7 @@ Last Updated: 2026-01-10 (Task vixens-hjar completed)
 | mail-gateway | ✅ | 💤 | Email gateway (Roundcube) |
 | vaultwarden | ✅ | ✅ | Migrated to standardized middleware |
 | authentik | 🚧 | ✅ | Prod fixed (Redis auth solved) |
+| docspell-native | ✅ | ✅ | Fixed missing secretNamespace |
 
 ---
 
@@ -166,7 +169,7 @@ git push origin dev
 
 ### Dev Cluster
 
-- **Nodes:** obsy, onyx, opale (3 CP HA)
+- **Nodes:** daphne, diva, dulce (3 CP HA)
 - **VIP:** 192.168.111.160
 - **VLAN Internal:** 111
 - **VLAN Services:** 208
