@@ -10,7 +10,7 @@ metadata:
     gethomepage.dev/name: Whoami
     gethomepage.dev/icon: whoami.png
     gethomepage.dev/group: Test
-    traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
