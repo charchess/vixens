@@ -105,7 +105,7 @@ Last Updated: 2026-01-08
 | whoami | ✅ | ✅ | Migrated to centralized middleware |
 | homepage | ✅ | 💤 | Prod fixed and synced |
 | netbox | ✅ | ✅ | Migrated to centralized middleware |
-| changedetection | ⏳ | ✅ | Fixed manifest error |
+| changedetection | ✅ | ✅ | Migrated to centralized middleware |
 | stirling-pdf | ✅ | ✅ | Migrated to centralized middleware |
 | it-tools | ✅ | ✅ | Migrated to centralized middleware |
 | headlamp | ✅ | ✅ | Migrated to centralized middleware |
