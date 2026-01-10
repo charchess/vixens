@@ -30,10 +30,21 @@ An **Architecture Decision Record** documents an important architectural decisio
 - **[ADR-009: Simplified Two-Branch Workflow](009-simplified-two-branch-workflow.md)**
   Retire test/staging branches for simplified workflow.
 
-### Architecture (Coming Soon)
+### Infrastructure & Disaster Recovery
 
-- **ADR-010: Shared Resources Organization** 🚧
-  Strategy for centralizing shared Kubernetes resources.
+- **[ADR-010: Static Manifests for Infrastructure Apps](010-static-manifests-for-infrastructure-apps.md)**
+  Use static manifests (not Helm) for infrastructure components.
+
+- **[ADR-013: Layered Configuration Disaster Recovery](013-layered-configuration-disaster-recovery.md)**
+  Disaster recovery strategy with layered configuration backups.
+
+- **[ADR-013: Renovate Discord Approval Workflow](013-renovate-discord-approval-workflow.md)**
+  Discord integration for Renovate PR approvals.
+
+- **[ADR-014: Litestream Backup Profiles and Recovery Patterns](014-litestream-backup-profiles-and-recovery-patterns.md)**
+  Light vs Heavy backup profiles for SQLite databases with standardized recovery patterns.
+
+### Future Architecture
 
 - **ADR-011: Namespace Ownership Strategy** 🚧
   Rules for namespace creation and ownership.
@@ -72,10 +83,13 @@ An **Architecture Decision Record** documents an important architectural decisio
 | 007 | Renovate Dev-First Workflow | Implemented | 2024-12 |
 | 008 | Trunk-Based GitOps Workflow | Implemented | 2024-12 |
 | 009 | Simplified Two-Branch Workflow | Implemented | 2024-12 |
-| 010 | Shared Resources Organization | Proposed | 2025-12 |
-| 011 | Namespace Ownership Strategy | Proposed | 2025-12 |
-| 012 | Middleware Management | Proposed | 2025-12 |
+| 010 | Static Manifests for Infrastructure Apps | Accepted | 2025-01 |
+| 011 | Namespace Ownership Strategy | Proposed | TBD |
+| 012 | Middleware Management | Proposed | TBD |
+| 013 | Layered Configuration Disaster Recovery | Accepted | 2026-01 |
+| 013 | Renovate Discord Approval Workflow | Accepted | 2026-01 |
+| 014 | Litestream Backup Profiles and Recovery Patterns | Accepted | 2026-01 |
 
 ---
 
-**Last Updated:** 2025-12-30
+**Last Updated:** 2026-01-10
