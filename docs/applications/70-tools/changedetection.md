@@ -3,10 +3,12 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | latest  |
+| Environnement | Déployé | Configuré | Testé | Version |
+|---------------|---------|-----------|-------|---------|
+| Dev           | [x]     | [x]       | [x]   | 0.51.4  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [x]     | [x]       | [x]   | -       |
+| Prod          | [x]     | [x]       | [x]   | 0.51.4  |
 
 ## Validation
 **URL :** https://changedetection.[env].truxonline.com

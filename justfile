@@ -646,7 +646,7 @@ wait-argocd app_name:
     echo "   Attente Sync Status = Synced..."
     timeout 300 bash -c '
         while true; do
-            STATUS=$(kubectl -n argocd get application {{app_name}} -o jsonpath="{.status.sync.status}" 2>/dev/null || echo "Unknown")
+            STATUS=$(kubectl -n argocd get application {{app_name}} -o jsonpath='\''{.status.sync.status}'\'' 2>/dev/null || echo "Unknown")
             echo "   → Current status: $STATUS"
             if [ "$STATUS" = "Synced" ]; then
                 break
@@ -663,20 +663,20 @@ wait-argocd app_name:
     echo "   Attente Health Status = Healthy..."
     timeout 120 bash -c '
         while true; do
-            HEALTH=$(kubectl -n argocd get application {{app_name}} -o jsonpath="{.status.health.status}" 2>/dev/null || echo "Unknown")
+            HEALTH=$(kubectl -n argocd get application {{app_name}} -o jsonpath='\''{.status.health.status}'\'' 2>/dev/null || echo "Unknown")
             echo "   → Current health: $HEALTH"
             if [ "$HEALTH" = "Healthy" ]; then
                 break
             fi
             if [ "$HEALTH" = "Degraded" ]; then
-                echo "   ⚠️  Application Degraded, arrêt de l'attente"
+                echo "   ⚠️  Application Degraded, arrêt de l'\''attente"
                 exit 1
             fi
             sleep 5
         done
     ' || {
         echo "⚠️  Warning: Health status non Healthy"
-        echo "   Continuer manuellement si c'est attendu"
+        echo "   Continuer manuellement si c'\''est attendu"
         exit 1
     }
 

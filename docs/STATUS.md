@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-08
+Last Updated: 2026-01-10 (Task vixens-hjar completed)
 
 ---
 
@@ -59,7 +59,8 @@ Last Updated: 2026-01-08
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| homeassistant | ✅ | 💤 | Home automation platform |
+| homeassistant | ✅ | ✅ | Fixed Kustomization syntax error |
+| mealie | ✅ | ✅ | Migrated to centralized middleware |
 | mosquitto | ✅ | 💤 | MQTT broker |
 
 ---
@@ -84,6 +85,7 @@ Last Updated: 2026-01-08
 | external-dns-unifi | ✅ | 💤 | Internal DNS management |
 | external-dns-gandi | ✅ | 💤 | Public DNS management |
 | contacts | ✅ | 💤 | Contacts redirection service |
+| netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
 | adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
 
 ---
@@ -93,7 +95,7 @@ Last Updated: 2026-01-08
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
 | mail-gateway | ✅ | 💤 | Email gateway (Roundcube) |
-| vaultwarden | ⏳ | ✅ | Fixed probes and Traefik ingress |
+| vaultwarden | ✅ | ✅ | Migrated to standardized middleware |
 | authentik | 🚧 | ✅ | Prod fixed (Redis auth solved) |
 
 ---
@@ -104,9 +106,12 @@ Last Updated: 2026-01-08
 |-------------|-----|------|-------|
 | whoami | ✅ | ✅ | Migrated to centralized middleware |
 | homepage | ✅ | 💤 | Prod fixed and synced |
-| netbox | ✅ | ✅ | Prod fixed (Redis auth solved) |
-| changedetection | ⏳ | ✅ | Fixed manifest error |
-| linkwarden | ⏳ | 💤 | Bookmark manager (planned) |
+| netbox | ✅ | ✅ | Migrated to centralized middleware |
+| changedetection | ✅ | ✅ | Migrated to centralized middleware |
+| stirling-pdf | ✅ | ✅ | Migrated to centralized middleware |
+| it-tools | ✅ | ✅ | Migrated to centralized middleware |
+| headlamp | ✅ | ✅ | Migrated to centralized middleware |
+| linkwarden | ✅ | ✅ | Migrated to centralized middleware |
 
 ---
 

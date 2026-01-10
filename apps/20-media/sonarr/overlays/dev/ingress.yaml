@@ -10,7 +10,7 @@ metadata:
     gethomepage.dev/name: Sonarr
     gethomepage.dev/icon: sonarr.png
     gethomepage.dev/group: Media
-    traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
