@@ -69,7 +69,7 @@ resources:
   - apps/postgresql-shared.yaml # Shared PostgreSQL Cluster (Docspell, ...)
   # - apps/docspell.yaml # OLD Helm-based (deprecated, use docspell-native)
   # - apps/docspell-native.yaml
-  - apps/changedetection.yaml
+  # - apps/changedetection.yaml
   # - apps/adguard-home.yaml
   # - apps/netvisor.yaml
   - apps/authentik.yaml
@@ -85,7 +85,7 @@ resources:
   - apps/external-dns-unifi.yaml
   - apps/external-dns-unifi-secrets.yaml
   - apps/farmos.yaml
-  # - apps/mealie.yaml
+  - apps/mealie.yaml
   # - apps/nocodb.yaml
   # - apps/vikunja.yaml
   - apps/mariadb-shared.yaml
