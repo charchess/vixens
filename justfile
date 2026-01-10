@@ -347,7 +347,57 @@ next task_id:
         # Vérifier ArgoCD sync status
         print(f"🔍 Vérification ArgoCD pour: {app_name}")
 
-        # Try to get ArgoCD app status
+        # Détecter si l'app est hibernée (commentée dans kustomization.yaml)
+        was_hibernated = False
+        kustomization_path = f"argocd/overlays/{current_branch}/kustomization.yaml"
+        try:
+            with open(kustomization_path, 'r') as f:
+                content = f.read()
+                # Chercher si l'app est commentée
+                if f"# - apps/{app_name}.yaml" in content:
+                    print(f"   ⚠️  Application '{app_name}' est HIBERNÉE dans {current_branch}")
+                    print(f"   (Commentée dans {kustomization_path})")
+                    print()
+                    print("   💡 Pour tester, l'app doit être RÉACTIVÉE puis RE-HIBERNÉE après validation")
+                    response = input("   → Décommenter automatiquement pour test? (y/N): ")
+                    
+                    if response.lower() == 'y':
+                        # Décommenter l'app
+                        new_content = content.replace(
+                            f"# - apps/{app_name}.yaml",
+                            f"- apps/{app_name}.yaml"
+                        )
+                        with open(kustomization_path, 'w') as f:
+                            f.write(new_content)
+                        
+                        print(f"   ✅ App décommentée dans {kustomization_path}")
+                        print("   📝 Commit des changements...")
+                        
+                        # Commit automatique
+                        subprocess.run(["git", "add", kustomization_path])
+                        subprocess.run([
+                            "git", "commit", "-m",
+                            f"test({app_name}): réactiver temporairement pour test (était hibernée)"
+                        ])
+                        subprocess.run(["git", "push", "origin", current_branch])
+                        
+                        print("   ⏳ Attendre ~30s pour ArgoCD auto-sync...")
+                        import time
+                        time.sleep(30)
+                        
+                        # Marquer qu'elle était hibernée (pour la re-hiberner en phase 6)
+                        was_hibernated = True
+                        subprocess.run([
+                            "bd", "update", "{{task_id}}",
+                            "--notes", f"{notes}\nWAS_HIBERNATED: {app_name} (à re-hiberner en Phase 6)"
+                        ])
+                    else:
+                        print("   ⏸️  Décommenter annulé - impossible de tester une app hibernée")
+                        sys.exit(1)
+        except FileNotFoundError:
+            pass  # Fichier pas trouvé, continuer la vérification normale
+
+        # Vérification ArgoCD (toujours effectuée maintenant)
         argocd_result = subprocess.run(
             ["kubectl", "-n", "argocd", "get", "application", app_name, "-o", "json"],
             capture_output=True, text=True
@@ -356,10 +406,12 @@ next task_id:
         if argocd_result.returncode != 0:
             print(f"⚠️  Application ArgoCD '{app_name}' non trouvée")
             print("   Vérifiez le nom de l'application dans ArgoCD")
+            print("   💡 Si l'app est prod-only, c'est normal en dev")
             response = input("   Ignorer cette vérification? (y/N): ")
             if response.lower() != 'y':
                 sys.exit(1)
         else:
+            # App exists, check its status
             try:
                 import json as json_module
                 app_status = json_module.loads(argocd_result.stdout)
@@ -483,6 +535,65 @@ close task_id:
         print("❌ BLOQUÉ: Déploiement obligatoire avant fermeture")
         print("💡 Retourner en phase 4: just reset-phase {{task_id}} 4")
         sys.exit(1)
+
+    # Vérifier si l'app était hibernée et proposer de la re-hiberner
+    if "WAS_HIBERNATED:" in notes:
+        # Extraire le nom de l'app des notes
+        hibernated_match = re.search(r'WAS_HIBERNATED: (\w+)', notes)
+        if hibernated_match:
+            app_name = hibernated_match.group(1)
+            print()
+            print(f"💤 HIBERNATION DÉTECTÉE: '{app_name}' était hibernée avant test")
+            print()
+            response = input("   → Re-hiberner l'application maintenant? (y/N): ")
+            
+            if response.lower() == 'y':
+                # Déterminer la branch
+                current_branch_result = subprocess.run(
+                    ["git", "branch", "--show-current"],
+                    capture_output=True, text=True
+                )
+                current_branch = current_branch_result.stdout.strip()
+                
+                # Re-commenter dans kustomization.yaml
+                kustomization_path = f"argocd/overlays/{current_branch}/kustomization.yaml"
+                try:
+                    with open(kustomization_path, 'r') as f:
+                        content = f.read()
+                    
+                    # Re-commenter l'app
+                    new_content = content.replace(
+                        f"  - apps/{app_name}.yaml",
+                        f"  # - apps/{app_name}.yaml"
+                    )
+                    
+                    with open(kustomization_path, 'w') as f:
+                        f.write(new_content)
+                    
+                    print(f"   ✅ App re-commentée dans {kustomization_path}")
+                    print("   📝 Commit des changements...")
+                    
+                    # Commit automatique
+                    subprocess.run(["git", "add", kustomization_path])
+                    subprocess.run([
+                        "git", "commit", "-m",
+                        f"chore({app_name}): re-hiberner après test (économie ressources)"
+                    ])
+                    subprocess.run(["git", "push", "origin", current_branch])
+                    
+                    print("   💤 Application re-hibernée avec succès")
+                    
+                    # Marquer la re-hibernation dans les notes
+                    subprocess.run([
+                        "bd", "update", "{{task_id}}",
+                        "--notes", f"{notes}\nRE_HIBERNATED: {app_name}"
+                    ])
+                except Exception as e:
+                    print(f"   ⚠️  Erreur lors de la re-hibernation: {e}")
+                    print("   💡 Vérifier manuellement le kustomization.yaml")
+            else:
+                print("   ⚠️  App laissée active - penser à la re-hiberner manuellement")
+            print()
 
     # Afficher checklist finale
     print("📋 CHECKLIST FINALE:")
