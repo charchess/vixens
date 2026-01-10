@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-10 (Task vixens-k6c8 completed)
+Last Updated: 2026-01-10 (Task vixens-04mo completed)
 
 ---
 
@@ -23,13 +23,13 @@ Last Updated: 2026-01-10 (Task vixens-k6c8 completed)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| argocd | ✅ | 💤 | GitOps controller - v7.7.7 |
-| traefik | ✅ | 💤 | Ingress controller - v3.x |
-| cert-manager | ✅ | 💤 | TLS certificates - Let's Encrypt production |
+| argocd | ✅ | ✅ | GitOps controller - v7.7.7 |
+| traefik | ✅ | ✅ | Ingress controller - v3.x |
+| cert-manager | ✅ | ✅ | TLS certificates - Let's Encrypt production |
 | cert-manager-webhook-gandi | ✅ | ✅ | Fixed missing secretNamespace |
-| cilium-lb | ✅ | 💤 | L2 Announcements + LB IPAM |
+| cilium-lb | ✅ | ✅ | L2 Announcements + LB IPAM |
 | synology-csi | ✅ | ✅ | Persistent storage via iSCSI |
-| infisical-operator | ✅ | 💤 | Secrets management operator |
+| infisical-operator | ✅ | ✅ | Secrets management operator |
 
 ---
 
@@ -61,8 +61,8 @@ Last Updated: 2026-01-10 (Task vixens-k6c8 completed)
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
 | homeassistant | ✅ | ✅ | Fixed Kustomization syntax error |
-| mealie | ✅ | ✅ | Migrated to centralized middleware |
-| mosquitto | ✅ | 💤 | MQTT broker |
+| mealie | ✅ | ✅ | Fixed DNS resolution (removed target annotation) |
+| mosquitto | ✅ | ✅ | MQTT broker |
 
 ---
 
@@ -83,8 +83,8 @@ Last Updated: 2026-01-10 (Task vixens-k6c8 completed)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| external-dns-unifi | ✅ | 💤 | Internal DNS management |
-| external-dns-gandi | ✅ | 💤 | Public DNS management |
+| external-dns-unifi | ✅ | ✅ | Internal DNS management |
+| external-dns-gandi | ✅ | ✅ | Public DNS management |
 | contacts | ✅ | 💤 | Contacts redirection service |
 | netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
 | adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
@@ -161,7 +161,7 @@ git push origin dev
 - 💤 Paused: 0 applications
 
 **Prod Environment:**
-- All applications: 💤 Paused (Phase 3)
+- ✅ Working: many applications (Phase 3 active)
 
 ---
 
@@ -177,11 +177,11 @@ git push origin dev
 
 ### Prod Cluster
 
-- **Nodes:** Physical nodes (3)
+- **Nodes:** pearl, phoebe, poison, powder
 - **VIP:** 192.168.111.200
 - **VLAN Internal:** 111
 - **VLAN Services:** 201
-- **Status:** 📅 Phase 3 (not yet deployed)
+- **Status:** ✅ Active
 
 ---
 
