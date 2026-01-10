@@ -340,9 +340,10 @@ next task_id:
             print("⚠️  Changements non committés détectés:")
             print(git_status.stdout)
             print("   Assurez-vous d'avoir commit+push tous les changements")
-            response = input("   Continuer la vérification ArgoCD? (y/N): ")
-            if response.lower() != 'y':
-                sys.exit(1)
+            sys.exit(1)
+    #            response = input("   Continuer la vérification ArgoCD? (y/N): ")
+    #            if response.lower() != 'y':
+    #                sys.exit(1)
 
         # Vérifier ArgoCD sync status
         print(f"🔍 Vérification ArgoCD pour: {app_name}")
@@ -407,9 +408,9 @@ next task_id:
             print(f"⚠️  Application ArgoCD '{app_name}' non trouvée")
             print("   Vérifiez le nom de l'application dans ArgoCD")
             print("   💡 Si l'app est prod-only, c'est normal en dev")
-            response = input("   Ignorer cette vérification? (y/N): ")
-            if response.lower() != 'y':
-                sys.exit(1)
+    #            response = input("   Ignorer cette vérification? (y/N): ")
+    #            if response.lower() != 'y':
+    #                sys.exit(1)
         else:
             # App exists, check its status
             try:

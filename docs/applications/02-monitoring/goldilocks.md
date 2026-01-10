@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | v10.2.0 |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | v10.2.0 |
 
 ## Validation
 **URL :** https://goldilocks.[env].truxonline.com
