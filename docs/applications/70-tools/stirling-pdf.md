@@ -3,10 +3,12 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | 1.3.2   |
+| Environnement | Déployé | Configuré | Testé | Version |
+|---------------|---------|-----------|-------|---------|
+| Dev           | [x]     | [x]       | [x]   | 1.6.0   |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [x]     | [ ]       | [ ]   | 1.3.2   |
+| Prod          | [x]     | [x]       | [x]   | 1.6.0   |
 
 ## Validation
 **URL :** https://pdf.[env].truxonline.com
