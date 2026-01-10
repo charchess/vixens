@@ -4,11 +4,4 @@ kind: Kustomization
 resources:
   - ../../base
   - middleware.yaml
-patches:
-  - target:
-      kind: Ingress
-      name: whoami
-    patch: |-
-      - op: add
-        path: /metadata/annotations/traefik.ingress.kubernetes.io~1router.middlewares
-        value: whoami-whoami-custom-header@kubernetescrd
+  - ingress.yaml

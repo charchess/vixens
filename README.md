@@ -61,10 +61,8 @@ just resume
 
 | Environment | Nodes | VIP | Status |
 |-------------|-------|-----|--------|
-| **Dev** | obsy, onyx, opale (3 CP HA) | 192.168.111.160 | ✅ Active |
-| **Test** | citrine, carny, celesty (3 CP HA) | 192.168.111.180 | ⏳ Planned |
-| **Staging** | TBD (3 nodes) | 192.168.111.190 | 📅 Future |
-| **Prod** | Physical nodes (3) | 192.168.111.200 | 📅 Phase 3 |
+| **Dev** | daphne, diva, dulce (3 CP HA) | 192.168.111.160 | ✅ Active |
+| **Prod** | Physical nodes (3) | 192.168.111.200 | 📅 Phase 3 |📅 Phase 3 |
 
 ### Repository Structure
 
@@ -133,7 +131,7 @@ just --version
 ```
 
 **What is Just?**
-Command runner (like Make, but better). Orchestrates the workflow defined in `WORKFLOW.just`.
+Command runner (like Make, but better). Orchestrates the workflow defined in `justfile`.
 
 ---
 

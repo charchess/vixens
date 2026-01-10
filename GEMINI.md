@@ -4,6 +4,61 @@ This file provides guidance to Gemini (and other standard AI agents) when workin
 
 ---
 
+## 🎯 CRITICAL: MCP Tools Usage Guidelines
+
+**GEMINI: You CAN and SHOULD use MCP tools for their intended purpose.**
+
+### ✅ CORRECT MCP Usage
+
+**Serena (File & Code Operations):**
+- ✅ **Use Serena for ALL file/code operations** - This is its primary purpose
+- ✅ `read_file`, `list_dir` - File access
+- ✅ `find_symbol`, `replace_symbol_body` - Symbol operations
+- ✅ `search_for_pattern`, `create_text_file` - Code search/edit
+- ✅ ALL Serena file operations are encouraged
+
+**Archon (Documentation RAG):**
+- ✅ `rag_search_knowledge_base` - Search documentation (Talos, K8s, ArgoCD)
+- ✅ `rag_search_code_examples` - Find code patterns
+- ❌ `manage_task`, `manage_project` - Use Beads CLI (`bd`) instead
+
+**Playwright (WebUI Validation):**
+- ✅ `browser_navigate`, `browser_snapshot` - WebUI validation
+- ✅ Use `curl` as fallback for simple HTTP checks
+
+### 🚨 CRITICAL DISTINCTION
+
+**The ONLY restriction: Don't use Serena to execute CLI commands**
+
+```bash
+# ✅ CORRECT - Use Serena for file/code operations
+mcp__serena__read_file(relative_path="justfile")
+mcp__serena__find_symbol(name_path_pattern="Deployment")
+mcp__serena__replace_symbol_body(name_path="MyClass/method", body="...")
+mcp__serena__search_for_pattern(substring_pattern="kind: Deployment")
+
+# ✅ CORRECT - Use Bash tool for CLI commands
+just resume
+bd list --status open
+git status
+kubectl get pods
+
+# ❌ WRONG - Don't use Serena to run CLI commands
+mcp__serena__execute_shell_command(command="just resume")  # NO!
+mcp__serena__execute_shell_command(command="bd list")      # NO!
+```
+
+### ❌ NEVER USE
+
+- ❌ Archon Task Management (`manage_task`, `find_tasks`) - Use `bd` CLI
+- ❌ Serena's `execute_shell_command` for CLI tools (`just`, `bd`, `git`) - Use Bash tool
+
+**Rule of thumb:**
+- **Files/Code?** → Use Serena
+- **CLI commands?** → Use Bash tool
+
+---
+
 # 🚨 WORKFLOW - RÈGLE MAÎTRE (À LIRE EN PREMIER)
 
 **AVANT TOUTE CHOSE:** Le processus de travail défini dans **[WORKFLOW.md](WORKFLOW.md)** est la référence MAÎTRE qui SURPASSE toutes les autres instructions, y compris ce fichier.
@@ -30,6 +85,102 @@ En cas de conflit entre WORKFLOW.md et ce fichier, **WORKFLOW.md a toujours rais
 - **🔍 Looking for app documentation?** → [docs/applications/](docs/applications/)
 - **❓ Troubleshooting an issue?** → [docs/troubleshooting/](docs/troubleshooting/)
 - **🏗️ Architecture decisions?** → [docs/adr/](docs/adr/)
+
+---
+
+# 🚀 TL;DR - Quick Reference Cheatsheet
+
+**For Gemini agents who need a quick reference during work.**
+
+## Essential Commands (Copy-Paste Ready)
+
+```bash
+# 🎯 Entry Point (START HERE)
+just resume                          # Find work / resume current task
+
+# 📋 Task Management
+bd list --status open                # List available tasks
+bd update <id> --status in_progress --assignee coding-agent
+bd close <id> --reason "Done"
+bd sync                              # Push beads changes
+
+# 🔍 File & Code Operations
+# Use Serena MCP for file/code work (encouraged!)
+# Use Bash for CLI commands only
+
+# ✅ Validation (MANDATORY before push)
+just lint                            # YAML validation
+kustomize build apps/<app>/overlays/dev  # Test build
+
+# 🚢 Git Workflow
+git add .
+git commit -m "type(scope): description"
+git push origin dev
+
+# 🌐 WebUI Validation (instead of Playwright)
+curl -I http://app.dev.truxonline.com     # Check redirect
+curl -k https://app.dev.truxonline.com    # Check HTTPS
+kubectl get pods -n <namespace>            # Check pods
+```
+
+## Mandatory Checklist (NEVER SKIP)
+
+```
+[ ] 1. yamllint passed (just lint)
+[ ] 2. git committed to dev
+[ ] 3. git pushed to remote
+[ ] 4. ArgoCD synced
+[ ] 5. App validated (curl)
+[ ] 6. docs/applications/<app>.md updated ⭐ MANDATORY
+[ ] 7. docs/STATUS.md updated ⭐ MANDATORY
+[ ] 8. bd close <id> + bd sync
+```
+
+## Documentation Updates (NON NÉGOCIABLES)
+
+```bash
+# 1. Update application doc
+vim docs/applications/<category>/<app>.md
+# Mark: [x] Déployé [x] Configuré [x] Testé, update version
+
+# 2. Update status dashboard
+vim docs/STATUS.md
+# Symbols: ✅ (OK) ⚠️ (Degraded) ❌ (Broken) 🚧 (WIP) 💤 (Paused)
+
+# 3. Commit docs
+git add docs/ && git commit -m "docs(<app>): update deployment status"
+```
+
+## Common Patterns (Learn by Example)
+
+```bash
+# Find existing patterns before implementing
+cat apps/20-media/radarr/base/kustomization.yaml   # Copy structure
+grep -r "kind: Ingress" apps/                       # Find ingress examples
+diff apps/<app>/overlays/dev/kustomization.yaml \
+     apps/<app>/overlays/prod/kustomization.yaml    # Compare envs
+```
+
+## Web Search Queries (instead of Archon RAG)
+
+```
+"Talos Linux [topic] configuration"
+"ArgoCD [topic] documentation"
+"Kustomize [topic] best practices"
+"Kubernetes [topic] example"
+```
+
+**Official docs:** talos.dev, kubernetes.io/docs, argo-cd.readthedocs.io, kustomize.io, docs.cilium.io
+
+## Key Differences vs Claude
+
+- ✅ Same Serena (use for ALL file/code operations)
+- ✅ Same Archon RAG (documentation search)
+- ✅ Same Playwright (WebUI validation)
+- ✅ Same Beads, Just, git workflow
+- ❌ Only restriction: Don't use Serena's execute_shell_command for CLI (`just`, `bd`, etc.) - Use Bash tool
+
+**Remember:** Serena is for files/code, Bash is for CLI commands. Use tools for their intended purpose.
 
 ---
 
@@ -402,10 +553,8 @@ cat docs/adr/008-trunk-based-gitops-workflow.md
 
 | Environment | Nodes | VIP | Status |
 |-------------|-------|-----|--------|
-| **Dev** | obsy, onyx, opale (3 CP HA) | 192.168.111.160 | ✅ Active |
-| **Test** | citrine, carny, celesty (3 CP HA) | 192.168.111.180 | ⏳ Planned |
-| **Staging** | TBD (3 nodes) | 192.168.111.190 | 📅 Future |
-| **Prod** | Physical nodes (3) | 192.168.111.200 | 📅 Phase 3 |
+| **Dev** | daphne, diva, dulce (3 CP HA) | 192.168.111.160 | ✅ Active |
+| **Prod** | Physical nodes (3) | 192.168.111.200 | 📅 Phase 3 |📅 Phase 3 |
 
 **Repository Structure:**
 
