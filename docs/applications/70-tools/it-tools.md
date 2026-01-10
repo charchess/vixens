@@ -3,10 +3,12 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | latest  |
+| Environnement | Déployé | Configuré | Testé | Version |
+|---------------|---------|-----------|-------|---------|
+| Dev           | [x]     | [x]       | [x]   | 2024.10.22 |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [x]     | [ ]       | [ ]   | latest  |
+| Prod          | [x]     | [x]       | [x]   | 2024.10.22 |
 
 ## Validation
 **URL :** https://it-tools.[env].truxonline.com
