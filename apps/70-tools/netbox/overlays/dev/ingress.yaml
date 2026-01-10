@@ -7,6 +7,10 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Netbox
+    gethomepage.dev/icon: netbox.png
+    gethomepage.dev/group: Tools
 spec:
   ingressClassName: traefik
   rules:
