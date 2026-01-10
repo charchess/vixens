@@ -25,7 +25,7 @@ resources:
   # Traefik Dashboard hostname redirect
   - apps/traefik-dashboard.yaml
   - apps/argocd.yaml # ArgoCD Ingress for UI
-  - apps/whoami.yaml                         # Test application
+  # - apps/whoami.yaml                         # Test application
   - apps/cert-manager.yaml # cert-manager (wave 0)
   - apps/cert-manager-secrets.yaml # Infisical secrets for cert-manager (wave 0)
   - apps/cert-manager-webhook-gandi.yaml # Gandi DNS webhook (wave 1)
@@ -42,7 +42,7 @@ resources:
   # - apps/grafana.yaml                        # Grafana standalone monitoring
   # - apps/grafana-ingress.yaml # Grafana IngressRoutes with HTTP→HTTPS redirect
   # - apps/homepage.yaml
-  # - apps/linkwarden.yaml
+  - apps/linkwarden.yaml
   # - apps/gluetun.yaml
   # HIBERNATED APPS (Uncomment to reactivate)
   # - apps/sabnzbd.yaml
@@ -73,14 +73,14 @@ resources:
   # - apps/adguard-home.yaml
   # - apps/netvisor.yaml
   - apps/authentik.yaml
-  - apps/netbox.yaml
+  # - apps/netbox.yaml
   # - apps/loki.yaml
   # - apps/promtail.yaml
   - apps/renovate.yaml
   # - apps/stirling-pdf.yaml
   # - apps/stirling-pdf-ingress.yaml
-  - apps/it-tools.yaml
-  - apps/it-tools-ingress.yaml
+  # - apps/it-tools.yaml
+  # - apps/it-tools-ingress.yaml
   # - apps/contacts.yaml
   - apps/external-dns-unifi.yaml
   - apps/external-dns-unifi-secrets.yaml
