@@ -25,7 +25,7 @@ resources:
   # Traefik Dashboard hostname redirect
   - apps/traefik-dashboard.yaml
   - apps/argocd.yaml # ArgoCD Ingress for UI
-  # - apps/whoami.yaml                         # Test application
+  - apps/whoami.yaml                         # Test application
   - apps/cert-manager.yaml # cert-manager (wave 0)
   - apps/cert-manager-secrets.yaml # Infisical secrets for cert-manager (wave 0)
   - apps/cert-manager-webhook-gandi.yaml # Gandi DNS webhook (wave 1)
