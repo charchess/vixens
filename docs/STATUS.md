@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-08
+Last Updated: 2026-01-10
 
 ---
 
@@ -94,7 +94,7 @@ Last Updated: 2026-01-08
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
 | mail-gateway | ✅ | 💤 | Email gateway (Roundcube) |
-| vaultwarden | ⏳ | ✅ | Fixed probes and Traefik ingress |
+| vaultwarden | ✅ | ✅ | Migrated to standardized middleware |
 | authentik | 🚧 | ✅ | Prod fixed (Redis auth solved) |
 
 ---
