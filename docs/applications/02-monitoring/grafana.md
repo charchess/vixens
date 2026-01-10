@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | v10.x   |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | v10.x   |
 
 ## Validation
 **URL :** https://grafana.[env].truxonline.com
