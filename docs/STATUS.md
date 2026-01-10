@@ -108,6 +108,7 @@ Last Updated: 2026-01-08
 | changedetection | ⏳ | ✅ | Fixed manifest error |
 | stirling-pdf | ✅ | ✅ | Migrated to centralized middleware |
 | it-tools | ✅ | ✅ | Migrated to centralized middleware |
+| headlamp | ✅ | ✅ | Migrated to centralized middleware |
 | linkwarden | ✅ | ✅ | Migrated to centralized middleware |
 
 ---
