@@ -1,5 +1,15 @@
 # Architecture Decision Records - Index
 
+
+> **⚠️ HISTORICAL DOCUMENT - REQUIRES REVIEW**
+>
+> This ADR was restored from archived state (commit fe1e1cab, 2025-12-21) for historical purposes.
+> The status and content need to be reviewed and updated to reflect current architecture.
+> 
+> Related task: vixens-0jt2
+
+---
+
 **Last Updated**: 2025-11-21
 
 ---
