@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | v0.5.2  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | v0.5.2  |
 
 ## Validation
 **URL :** N/A (Service Infrastructure)
