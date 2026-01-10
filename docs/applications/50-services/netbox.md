@@ -3,10 +3,12 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | v3.7.3  |
+| Environnement | Déployé | Configuré | Testé | Version |
+|---------------|---------|-----------|-------|---------|
+| Dev           | [x]     | [x]       | [x]   | v3.7.8  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [x]     | [x]       | [x]   | v3.7.3  |
+| Prod          | [x]     | [x]       | [x]   | v3.7.8  |
 
 ## Validation
 **URL :** https://netbox.[env].truxonline.com

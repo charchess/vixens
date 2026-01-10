@@ -6,7 +6,7 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
-    traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd, whoami-whoami-custom-header@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd, whoami-whoami-custom-header@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:

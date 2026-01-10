@@ -19,6 +19,3 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/env/0/value
         value: https://changedetection.dev.truxonline.com
-spec:
-  managedSecretReference:
-    secretNamespace: tools

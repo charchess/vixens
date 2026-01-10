@@ -5,7 +5,7 @@ resources:
   - ../../base
   - ingress.yaml
 patches:
-  - path: patch-infisical-env.yaml
+  - path: resources-patch.yaml
 labels:
   - pairs:
       environment: prod
