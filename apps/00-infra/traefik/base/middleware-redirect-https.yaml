@@ -8,3 +8,13 @@ spec:
   redirectScheme:
     scheme: https
     permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: global-redirect-https
+  namespace: traefik
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true

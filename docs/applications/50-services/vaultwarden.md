@@ -3,10 +3,12 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | latest  |
+| Environnement | Déployé | Configuré | Testé | Version |
+|---------------|---------|-----------|-------|---------|
+| Dev           | [x]     | [x]       | [x]   | 1.34.3  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [x]     | [x]       | [x]   | latest  |
+| Prod          | [x]     | [x]       | [x]   | 1.34.3  |
 
 ## Validation
 **URL :** https://vaultwarden.[env].truxonline.com
@@ -36,7 +38,7 @@ curl -L -k https://vaultwarden.dev.truxonline.com | grep "Vaultwarden"
     - **Profil :** Small (50m/256Mi).
     - **Stockage :** Stratégie `Recreate` pour PVC RWO (réparé le 07/01/2026).
     - **Backup :** Litestream S3 (MinIO) configuré.
-    - **Stabilité :** Liveness probe assouplie (60s delay) pour l'initialisation Litestream.
+    - **Stabilité :** Liveness probe corrigée (path `/alive`, 60s delay) pour l'initialisation Litestream.
 ---
 > ⚠️ **HIBERNATION DEV**
 > Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
