@@ -34,7 +34,7 @@ resources:
   - apps/synology-csi.yaml # Synology CSI driver
   - apps/nfs-storage.yaml # NFS PV/PVC
   # - apps/mail-gateway.yaml                   # Mail gateway external service
-  # - apps/homeassistant.yaml
+  - apps/homeassistant.yaml
   # - apps/mosquitto.yaml
   # - apps/birdnet-go.yaml
   # - apps/prometheus.yaml # Prometheus standalone monitoring
@@ -71,7 +71,7 @@ resources:
   # - apps/docspell-native.yaml
   # - apps/changedetection.yaml
   # - apps/adguard-home.yaml
-  # - apps/netvisor.yaml
+  - apps/netvisor.yaml
   - apps/authentik.yaml
   # - apps/netbox.yaml
   # - apps/loki.yaml
