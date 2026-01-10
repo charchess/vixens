@@ -27,7 +27,7 @@ spec:
           - $values/apps/00-infra/cert-manager/values/dev.yaml
     # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: dev
+      targetRevision: main
       ref: values
   syncPolicy:
     automated:
