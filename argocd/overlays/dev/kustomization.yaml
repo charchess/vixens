@@ -79,8 +79,8 @@ resources:
   - apps/renovate.yaml
   # - apps/stirling-pdf.yaml
   # - apps/stirling-pdf-ingress.yaml
-  # - apps/it-tools.yaml
-  # - apps/it-tools-ingress.yaml
+  - apps/it-tools.yaml
+  - apps/it-tools-ingress.yaml
   # - apps/contacts.yaml
   - apps/external-dns-unifi.yaml
   - apps/external-dns-unifi-secrets.yaml
