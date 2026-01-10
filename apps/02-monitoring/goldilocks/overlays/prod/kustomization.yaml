@@ -4,6 +4,8 @@ commonLabels:
   environment: prod
 kind: Kustomization
 namespace: monitoring
+patches:
+  - path: patch-infisical-env.yaml
 resources:
   - ingress.yaml
   - ../../base

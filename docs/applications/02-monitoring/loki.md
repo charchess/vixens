@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | v3.0.0  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | v3.0.0  |
 
 ## Validation
 **URL :** https://loki.[env].truxonline.com (API)
