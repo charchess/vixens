@@ -107,7 +107,7 @@ Last Updated: 2026-01-08
 | netbox | ✅ | ✅ | Migrated to centralized middleware |
 | changedetection | ⏳ | ✅ | Fixed manifest error |
 | it-tools | ✅ | ✅ | Migrated to centralized middleware |
-| linkwarden | ⏳ | 💤 | Bookmark manager (planned) |
+| linkwarden | ✅ | ✅ | Migrated to centralized middleware |
 
 ---
 
