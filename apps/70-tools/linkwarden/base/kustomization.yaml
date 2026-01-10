@@ -6,7 +6,6 @@ resources:
   - pvc.yaml
   - deployment.yaml
   - service.yaml
-  - middleware-redirect.yaml
 labels:
   - pairs:
       app: linkwarden
