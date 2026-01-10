@@ -6,7 +6,7 @@
 | Dev           | [x]     | [x]       | [x]   | latest  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [ ]   | latest  |
 
 ## Validation
 **URL :** https://homeassistant.[env].truxonline.com
