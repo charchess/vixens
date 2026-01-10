@@ -104,7 +104,7 @@ Last Updated: 2026-01-08
 |-------------|-----|------|-------|
 | whoami | ✅ | ✅ | Migrated to centralized middleware |
 | homepage | ✅ | 💤 | Prod fixed and synced |
-| netbox | ✅ | ✅ | Prod fixed (Redis auth solved) |
+| netbox | ✅ | ✅ | Migrated to centralized middleware |
 | changedetection | ⏳ | ✅ | Fixed manifest error |
 | it-tools | ✅ | ✅ | Migrated to centralized middleware |
 | linkwarden | ⏳ | 💤 | Bookmark manager (planned) |
