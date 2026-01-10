@@ -60,6 +60,7 @@ Last Updated: 2026-01-08
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
 | homeassistant | ✅ | 💤 | Home automation platform |
+| mealie | ✅ | ✅ | Migrated to centralized middleware |
 | mosquitto | ✅ | 💤 | MQTT broker |
 
 ---
