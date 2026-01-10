@@ -7,7 +7,7 @@ metadata:
   namespace: traefik
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -34,7 +34,7 @@ metadata:
     gethomepage.dev/name: Traefik Dashboard
     gethomepage.dev/icon: traefik.png
     gethomepage.dev/group: Infrastructure
-    traefik.ingress.kubernetes.io/router.middlewares: traefik-global-redirect-https@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
     cert-manager.io/cluster-issuer: letsencrypt-staging
 spec:
   ingressClassName: traefik
