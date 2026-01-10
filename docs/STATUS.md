@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-10
+Last Updated: 2026-01-10 (Task vixens-hjar completed)
 
 ---
 
@@ -59,7 +59,7 @@ Last Updated: 2026-01-10
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| homeassistant | ✅ | 💤 | Home automation platform |
+| homeassistant | ✅ | ✅ | Fixed Kustomization syntax error |
 | mealie | ✅ | ✅ | Migrated to centralized middleware |
 | mosquitto | ✅ | 💤 | MQTT broker |
 
@@ -85,6 +85,7 @@ Last Updated: 2026-01-10
 | external-dns-unifi | ✅ | 💤 | Internal DNS management |
 | external-dns-gandi | ✅ | 💤 | Public DNS management |
 | contacts | ✅ | 💤 | Contacts redirection service |
+| netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
 | adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
 
 ---
