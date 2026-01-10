@@ -106,6 +106,7 @@ Last Updated: 2026-01-08
 | homepage | ✅ | 💤 | Prod fixed and synced |
 | netbox | ✅ | ✅ | Prod fixed (Redis auth solved) |
 | changedetection | ⏳ | ✅ | Fixed manifest error |
+| it-tools | ✅ | ✅ | Migrated to centralized middleware |
 | linkwarden | ⏳ | 💤 | Bookmark manager (planned) |
 
 ---
