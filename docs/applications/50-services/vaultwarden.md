@@ -2,9 +2,6 @@
 
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
-|---------------|---------|-----------|-------|---------|
-| Environnement | Déployé | Configuré | Testé | Version |
-|---------------|---------|-----------|-------|---------|
 | Dev           | [x]     | [x]       | [x]   | 1.34.3  |
 | Test          | [ ]     | [ ]       | [ ]   | -       |
 | Staging       | [ ]     | [ ]       | [ ]   | -       |
