@@ -18,6 +18,10 @@ spec:
     metadata:
       labels:
         app: adguard-home
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
     spec:
       priorityClassName: vixens-critical
       tolerations:
@@ -106,6 +110,9 @@ spec:
             - replicate
             - -config
             - /etc/litestream.yml
+          ports:
+            - containerPort: 9090
+              name: metrics
           resources:
             requests:
               cpu: 10m

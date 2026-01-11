@@ -17,6 +17,10 @@ spec:
       labels:
         app: hydrus-client
         test-label: "true"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
     spec:
       priorityClassName: vixens-medium
       tolerations:
@@ -200,6 +204,9 @@ spec:
             - replicate
             - -config
             - /etc/litestream.yml
+          ports:
+            - containerPort: 9090
+              name: metrics
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets

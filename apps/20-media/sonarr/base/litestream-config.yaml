@@ -10,3 +10,5 @@ data:
         replicas:
           - url: s3://$LITESTREAM_BUCKET/sonarr/sonarr.db
             endpoint: $LITESTREAM_ENDPOINT
+    metrics:
+      addr: ":9090"
