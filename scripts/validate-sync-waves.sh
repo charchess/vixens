@@ -126,7 +126,7 @@ if [ $errors -eq 0 ]; then
   echo ""
   echo "Prochaines étapes:"
   echo "  1. Commit: git add -A && git commit -m 'feat(argocd): add sync waves'"
-  echo "  2. Push: git push origin dev"
+  echo "  2. Push: git push origin main (via PR)"
   echo "  3. Observer ArgoCD auto-sync"
   exit 0
 else
