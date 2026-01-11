@@ -36,6 +36,7 @@ Detailed technical documentation:
 - **[Kustomize Patterns](reference/kustomize-patterns.md)** - Common Kustomize patterns
 - **[Overlay Strategy](reference/overlay-strategy.md)** - Dev/Prod overlay strategy
 - **[Naming Conventions](reference/naming-conventions.md)** - Files, resources, namespaces
+- **[Quality Standards](reference/quality-standards.md)** - Application quality tiers (Bronze to Elite)
 
 ### [applications/](applications/) - Application Documentation
 Documentation for all deployed applications, organized by category:
@@ -54,6 +55,8 @@ Step-by-step operational procedures:
 - **[Disaster Recovery](procedures/disaster-recovery.md)** - DR procedures
 - **[Cluster Upgrade](procedures/cluster-upgrade.md)** - Upgrade procedures
 - **[Secret Rotation](procedures/secret-rotation.md)** - Secret rotation procedures
+- **[Application Testing](procedures/application-testing.md)** - Testing new applications
+- **[Dev Hibernation](procedures/dev-hibernation.md)** - Hibernating dev environment apps
 
 ### [adr/](adr/) - Architecture Decision Records
 Architecture decisions and their rationale:
@@ -97,6 +100,9 @@ Templates for creating new documentation:
 | Find app documentation | [applications/](applications/) |
 | Understand an architecture decision | [adr/](adr/) |
 | Troubleshoot an issue | [troubleshooting/common-issues.md](troubleshooting/common-issues.md) |
+| Understand quality standards | [reference/quality-standards.md](reference/quality-standards.md) |
+| Test multiple applications | [procedures/application-testing.md](procedures/application-testing.md) |
+| Hibernate dev applications | [procedures/dev-hibernation.md](procedures/dev-hibernation.md) |
 
 ---
 
@@ -130,4 +136,4 @@ Templates for creating new documentation:
 
 ---
 
-**Last Updated:** 2025-12-30
+**Last Updated:** 2026-01-11
