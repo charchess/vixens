@@ -29,7 +29,7 @@ docs/
 ├── code-review-report-2025-12-30.md           ❌ Should be in reports/
 ├── goldilocks-resource-recommendations-...md  ❌ Should be in reports/
 ├── adr/                                       ✅ OK
-│   ├── 007-renovate-dev-first-workflow.md
+│   ├── 007-renovate-trunk-based-workflow.md
 │   ├── 008-trunk-based-gitops-workflow.md
 │   └── 009-simplified-two-branch-workflow.md
 ├── applications/                              ⚠️  62 files - too many
@@ -125,7 +125,7 @@ docs/
 ├── adr/                               # Architecture Decision Records
 │   ├── README.md                      # 🆕 ADR index
 │   ├── 001-...md                      # 🆕 Earlier ADRs (from memory)
-│   ├── 007-renovate-dev-first-workflow.md
+│   ├── 007-renovate-trunk-based-workflow.md
 │   ├── 008-trunk-based-gitops-workflow.md
 │   ├── 009-simplified-two-branch-workflow.md
 │   ├── 010-shared-resources-organization.md     # 🆕 From code review

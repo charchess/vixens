@@ -118,16 +118,14 @@ apps/
 ### Workflow Promotion
 
 ```
-Branch dev → Cluster Dev (auto-sync)
+Feature Branch → Pull Request → Merge to main (HEAD)
   │
-  ├─> PR dev → test
-  │   └─> Review → Merge → Cluster Test sync
+  ├─> Cluster Dev (ArgoCD auto-sync from main HEAD)
+  │   └─> Validation
   │
-  ├─> PR test → staging
-  │   └─> Review → Merge → Cluster Staging sync
-  │
-  └─> PR staging → main
-      └─> Review → Merge → Cluster Prod sync
+  └─> gh workflow run promote-prod.yaml
+      └─> Create/Move prod-stable tag
+          └─> Cluster Prod (ArgoCD auto-sync from prod-stable tag)
 ```
 
 ## Références
@@ -148,7 +146,7 @@ spec:
   project: vixens
   source:
     repoURL: https://github.com/charchess/vixens
-    targetRevision: dev  # ou test, staging, main
+    targetRevision: main
     path: apps/cilium-lb/overlays/dev
   destination:
     server: https://kubernetes.default.svc
