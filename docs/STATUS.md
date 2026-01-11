@@ -76,6 +76,7 @@ Last Updated: 2026-01-10 (Task vixens-04mo completed)
 | sonarr | ⏳ | ✅ | Prod fixed 
 | prowlarr | ⏳ | ✅ | Prod fixed 
 | jellyseerr | ⏳ | 💤 | Media request management (planned) |
+| hydrus-client | ✅ | ✅ | Metrics Prometheus activées (v0.5.5) |
 
 ---
 
