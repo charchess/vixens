@@ -4,3 +4,13 @@ kind: Kustomization
 resources:
   - ../../base
   - ingress.yaml
+
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: contacts
+      spec:
+        replicas: 0
