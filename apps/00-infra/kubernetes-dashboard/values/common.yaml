@@ -2,59 +2,40 @@
 # apps/00-infra/kubernetes-dashboard/values/common.yaml
 # Official Chart: https://github.com/kubernetes/dashboard
 
-# Global tolerations for all components (if supported)
-tolerations:
+# Try every possible location for tolerations
+tolerations: &tol
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
     effect: NoSchedule
 
-# Kong integration settings (Default in v7.x)
-kong:
-  enabled: true
-  tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-      effect: NoSchedule
+app:
+  scheduling:
+    tolerations: *tol
+  tolerations: *tol
 
-# API component
 api:
+  tolerations: *tol
   app:
     scheduling:
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
-  ingress:
-    enabled: false
-  extraArgs:
-    - --enable-skip-login
-    - --enable-insecure-login
-    - --token-ttl=43200
+      tolerations: *tol
 
-# Auth component
 auth:
+  tolerations: *tol
   app:
     scheduling:
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
+      tolerations: *tol
 
-# Web component
 web:
+  tolerations: *tol
   app:
     scheduling:
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
+      tolerations: *tol
 
-# Metrics scraper component
 metrics-scraper:
+  tolerations: *tol
   app:
     scheduling:
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
-  enabled: true
+      tolerations: *tol
+
+kong:
+  tolerations: *tol
