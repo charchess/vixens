@@ -18,6 +18,9 @@ spec:
         app: lidarr
       annotations:
         reloader.stakater.com/auto: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
     spec:
       priorityClassName: vixens-medium
       tolerations:
@@ -48,7 +51,7 @@ spec:
             - name: config
               mountPath: /config
         - name: restore-db
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -115,7 +118,7 @@ spec:
             - name: music
               mountPath: /music
         - name: litestream
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -123,6 +126,9 @@ spec:
             - replicate
             - -config
             - /etc/litestream.yml
+          ports:
+            - containerPort: 9090
+              name: metrics
           resources:
             requests:
               cpu: 10m
