@@ -1036,3 +1036,58 @@ hibernated:
     @python3 scripts/hibernate.py list
 
 
+
+# ============================================
+# DEV TESTING: WAKE/SLEEP WORKFLOW
+# ============================================
+
+# Réveiller une application pour test (sans modifier Git)
+wake app_name:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🌅 Réveil de {{app_name}} pour test..."
+    
+    # 1. Forcer sync ArgoCD
+    echo "  1️⃣  Sync ArgoCD..."
+    argocd app sync {{app_name}} --prune || {
+        echo "⚠️  ArgoCD sync échouée, app peut-être pas dans ArgoCD"
+        echo "  Essai de scale direct..."
+    }
+    
+    # 2. Désactiver self-heal
+    echo "  2️⃣  Désactivation self-heal..."
+    argocd app set {{app_name}} --self-heal=false || {
+        echo "⚠️  Impossible de désactiver self-heal, l'app n'existe peut-être pas dans ArgoCD"
+    }
+    
+    # 3. Scaler à 1 replica
+    echo "  3️⃣  Scale à 1 replica..."
+    kubectl scale deployment {{app_name}} -n {{app_name}} --replicas=1 || {
+        echo "❌ Erreur: Deployment non trouvé"
+        echo "   Vérifier: kubectl get deployments -A | grep {{app_name}}"
+        exit 1
+    }
+    
+    echo ""
+    echo "✅ {{app_name}} réveillé (self-heal désactivé)"
+    echo "💡 Tester l'application, puis: just sleep {{app_name}}"
+
+# Remettre en veille après test (ArgoCD resync à replicas: 0)
+sleep app_name:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "💤 Mise en veille de {{app_name}}..."
+    
+    # Réactiver self-heal (ArgoCD va resyncer automatiquement)
+    echo "  🔄 Réactivation self-heal..."
+    argocd app set {{app_name}} --self-heal=true || {
+        echo "⚠️  Impossible de réactiver self-heal"
+        echo "  Scale manuel à 0..."
+        kubectl scale deployment {{app_name}} -n {{app_name}} --replicas=0
+        exit 0
+    }
+    
+    echo ""
+    echo "✅ Self-heal réactivé"
+    echo "⏳ ArgoCD va resyncer et remettre replicas: 0 (~30s)"
+    echo "💡 Vérifier: kubectl get deployment {{app_name}} -n {{app_name}}"
