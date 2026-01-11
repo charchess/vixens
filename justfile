@@ -484,9 +484,10 @@ next task_id:
                 print(f"   ⚠️  Erreur parsing status ArgoCD: {e}")
 
         # Marquer le déploiement
+        notes = f"{notes}\nDEPLOYED: {datetime.now().isoformat()} (branch: main)"
         subprocess.run([
             "bd", "update", "{{task_id}}",
-            "--notes", f"{notes}\nDEPLOYED: {datetime.now().isoformat()} (branch: main)"
+            "--notes", notes
         ])
         print("✅ Phase DEPLOYMENT complétée")
 
@@ -513,9 +514,10 @@ next task_id:
 
         print("✅ VALIDATION RÉUSSIE")
         # Marquer la validation dans les notes
+        notes = f"{notes}\nVALIDATION OK: {datetime.now().isoformat()}"
         subprocess.run([
             "bd", "update", "{{task_id}}",
-            "--notes", f"{notes}\nVALIDATION OK: {datetime.now().isoformat()}"
+            "--notes", notes
         ])
 
     # AVANCER À LA PHASE SUIVANTE
