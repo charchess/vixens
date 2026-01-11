@@ -27,17 +27,25 @@ resume:
     #!/usr/bin/env python3
     import subprocess, json, sys, re
 
-    # Récupérer la tâche en cours
+    # Récupérer la tâche en cours (supporte coding-agent, claude, gemini)
     result = subprocess.run(
-        ["bd", "list", "--status", "in_progress", "--assignee", "coding-agent", "--json"],
+        ["bd", "list", "--status", "in_progress", "--json"],
         capture_output=True, text=True
     )
+    
+    # Filtrer pour agents compatibles (coding-agent, claude, gemini)
+    if result.returncode == 0:
+        all_tasks = json.loads(result.stdout)
+        tasks = [t for t in all_tasks if t.get('assignee') in ['coding-agent', 'claude', 'gemini']]
+        result = type('obj', (object,), {'returncode': 0, 'stdout': json.dumps(tasks), 'stderr': ''})()
+    else:
+        tasks = []
 
     if result.returncode != 0:
         print("❌ Erreur bd:", result.stderr)
         sys.exit(1)
-
-    tasks = json.loads(result.stdout)
+    
+    # tasks déjà filtrées ci-dessus
 
     if not tasks:
         print("📋 AUCUNE TÂCHE EN COURS.")
@@ -236,11 +244,10 @@ start task_id:
     current_branch = branch_result.stdout.strip()
 
     if current_branch != "main":
-        print(f"⚠️  WARNING: Sur branch '{current_branch}', pas 'main'")
-        print("   Le workflow GitOps (ADR-017) nécessite d'être sur main")
-        response = input("   Continuer quand même? (y/N): ")
-        if response.lower() != 'y':
-            sys.exit(1)
+        print(f"❌ BLOQUÉ: Branch actuelle '{current_branch}', attendu 'main'")
+        print("   Le workflow requiert d'être sur main pour démarrer")
+        print("   💡 Solution: git checkout main")
+        sys.exit(1)
 
     # Mettre à jour le statut et initialiser la phase
     subprocess.run([
@@ -308,10 +315,13 @@ next task_id:
             capture_output=True, text=True
         )
         if not git_result.stdout.strip():
-            print("⚠️  Aucun changement détecté. Êtes-vous sûr d'avoir terminé l'implémentation?")
-            response = input("Continuer quand même? (y/N): ")
-            if response.lower() != 'y':
-                sys.exit(1)
+            print("❌ BLOQUÉ: Aucun changement détecté")
+            print("   L'implémentation (Phase 3) nécessite des modifications de code")
+            print("   💡 Solution:")
+            print("      - Vérifier que les changements sont bien effectués")
+            print("      - Si l'implémentation est complète: git add .")
+            print("      - Sinon: continuer le développement")
+            sys.exit(1)
         print("✅ Phase IMPLEMENTATION complétée")
 
     elif current_phase == 4:
@@ -351,45 +361,18 @@ next task_id:
                 content = f.read()
                 # Chercher si l'app est commentée
                 if f"# - apps/{app_name}.yaml" in content:
-                    print(f"   ⚠️  Application '{app_name}' est HIBERNÉE dans dev")
+                    print(f"❌ BLOQUÉ: Application '{app_name}' est HIBERNÉE dans dev")
                     print(f"   (Commentée dans {kustomization_path})")
                     print()
-                    print("   💡 Pour tester, l'app doit être RÉACTIVÉE puis RE-HIBERNÉE après validation")
-                    response = input("   → Décommenter automatiquement pour test? (y/N): ")
-                    
-                    if response.lower() == 'y':
-                        # Décommenter l'app
-                        new_content = content.replace(
-                            f"# - apps/{app_name}.yaml",
-                            f"- apps/{app_name}.yaml"
-                        )
-                        with open(kustomization_path, 'w') as f:
-                            f.write(new_content)
-                        
-                        print(f"   ✅ App décommentée dans {kustomization_path}")
-                        print("   📝 Commit des changements...")
-                        
-                        # Commit automatique
-                        subprocess.run(["git", "add", kustomization_path])
-                        subprocess.run([
-                            "git", "commit", "-m",
-                            f"test({app_name}): réactiver temporairement pour test (était hibernée)"
-                        ])
-                        subprocess.run(["git", "push", "origin", "main"])
-                        
-                        print("   ⏳ Attendre ~30s pour ArgoCD auto-sync...")
-                        import time
-                        time.sleep(30)
-                        
-                        # Marquer qu'elle était hibernée (pour la re-hiberner en phase 6)
-                        was_hibernated = True
-                        subprocess.run([
-                            "bd", "update", "{{task_id}}",
-                            "--notes", f"{notes}\nWAS_HIBERNATED: {app_name} (à re-hiberner en Phase 6)"
-                        ])
-                    else:
-                        print("   ⏸️  Décommenter annulé - impossible de tester une app hibernée")
-                        sys.exit(1)
+                    print("   💡 Solution - Décommenter MANUELLEMENT pour tester:")
+                    print(f"      1. Éditer {kustomization_path}")
+                    print(f"      2. Décommenter: # - apps/{app_name}.yaml → - apps/{app_name}.yaml")
+                    print("      3. Commit et push")
+                    print("      4. Attendre ArgoCD sync (~30s)")
+                    print("      5. Reprendre workflow: just next {{task_id}}")
+                    print()
+                    print("   ⚠️  IMPORTANT: Re-hiberner après test!")
+                    sys.exit(1)
         except FileNotFoundError:
             pass  # Fichier pas trouvé, continuer la vérification normale
 
@@ -415,17 +398,20 @@ next task_id:
                 print(f"   Health Status: {health_status}")
 
                 if sync_status != 'Synced':
-                    print(f"   ⚠️  Application pas encore Synced (status: {sync_status})")
-                    print(f"   💡 Attendre avec: just wait-argocd {app_name}")
-                    response = input("   Ignorer et continuer? (y/N): ")
-                    if response.lower() != 'y':
-                        sys.exit(1)
+                    print(f"   ❌ BLOQUÉ: Application pas Synced (status: {sync_status})")
+                    print(f"   💡 Solution: Attendre la synchronisation")
+                    print(f"      just wait-argocd {app_name}")
+                    print("   Ou vérifier manuellement:")
+                    print(f"      kubectl -n argocd get application {app_name}")
+                    sys.exit(1)
 
                 if health_status not in ['Healthy', 'Progressing']:
-                    print(f"   ⚠️  Application pas Healthy (status: {health_status})")
-                    response = input("   Continuer quand même? (y/N): ")
-                    if response.lower() != 'y':
-                        sys.exit(1)
+                    print(f"   ❌ BLOQUÉ: Application pas Healthy (status: {health_status})")
+                    print("   💡 Solution: Diagnostiquer le problème")
+                    print(f"      kubectl -n argocd describe application {app_name}")
+                    print(f"      kubectl -n <namespace> get pods")
+                    print("   Corriger les erreurs avant de continuer")
+                    sys.exit(1)
 
                 print("   ✅ ArgoCD status OK")
             except Exception as e:
@@ -529,57 +515,23 @@ close task_id:
         print("💡 Retourner en phase 4: just reset-phase {{task_id}} 4")
         sys.exit(1)
 
-    # Vérifier si l'app était hibernée et proposer de la re-hiberner
+    # Vérifier si l'app était hibernée → BLOQUER pour action manuelle
     if "WAS_HIBERNATED:" in notes:
         # Extraire le nom de l'app des notes
         hibernated_match = re.search(r'WAS_HIBERNATED: (\w+)', notes)
         if hibernated_match:
             app_name = hibernated_match.group(1)
             print()
-            print(f"💤 HIBERNATION DÉTECTÉE: '{app_name}' était hibernée avant test")
+            print(f"❌ BLOQUÉ: Application '{app_name}' était HIBERNÉE avant test")
             print()
-            response = input("   → Re-hiberner l'application maintenant? (y/N): ")
-            
-            if response.lower() == 'y':
-                # Re-commenter dans kustomization.yaml
-                kustomization_path = f"argocd/overlays/dev/kustomization.yaml"
-                try:
-                    with open(kustomization_path, 'r') as f:
-                        content = f.read()
-                    
-                    # Re-commenter l'app
-                    new_content = content.replace(
-                        f"  - apps/{app_name}.yaml",
-                        f"  # - apps/{app_name}.yaml"
-                    )
-                    
-                    with open(kustomization_path, 'w') as f:
-                        f.write(new_content)
-                    
-                    print(f"   ✅ App re-commentée dans {kustomization_path}")
-                    print("   📝 Commit des changements...")
-                    
-                    # Commit automatique
-                    subprocess.run(["git", "add", kustomization_path])
-                    subprocess.run([
-                        "git", "commit", "-m",
-                        f"chore({app_name}): re-hiberner après test (économie ressources)"
-                    ])
-                    subprocess.run(["git", "push", "origin", "main"])
-                    
-                    print("   💤 Application re-hibernée avec succès")
-                    
-                    # Marquer la re-hibernation dans les notes
-                    subprocess.run([
-                        "bd", "update", "{{task_id}}",
-                        "--notes", f"{notes}\nRE_HIBERNATED: {app_name}"
-                    ])
-                except Exception as e:
-                    print(f"   ⚠️  Erreur lors de la re-hibernation: {e}")
-                    print("   💡 Vérifier manuellement le kustomization.yaml")
-            else:
-                print("   ⚠️  App laissée active - penser à la re-hiberner manuellement")
+            print("   💡 Solution: Re-hiberner MANUELLEMENT avant de fermer")
+            print("      1. Éditer argocd/overlays/dev/kustomization.yaml")
+            print(f"      2. Re-commenter: - apps/{app_name}.yaml → # - apps/{app_name}.yaml")
+            print("      3. Commit: git add + git commit -m 'chore: re-hibernate...'")
+            print("      4. Push: git push")
+            print("      5. Reprendre: just close {{task_id}}")
             print()
+            sys.exit(1)
 
     # Afficher checklist finale
     print("📋 CHECKLIST FINALE:")
@@ -594,10 +546,16 @@ close task_id:
     print("   gh workflow run promote-prod.yaml -f version=vX.Y.Z")
     print()
 
-    response = input("✅ Tout est prêt pour fermer? (y/N): ")
-    if response.lower() != 'y':
-        print("⏸️  Fermeture annulée")
-        sys.exit(0)
+    # Vérification finale sans interaction
+    print("✅ Vérifications automatiques complètes:")
+    print("   [✓] Phase 6 atteinte")
+    print("   [✓] Validation OK présente")
+    print("   [✓] Déploiement présent")
+    print()
+    print("⚠️  RAPPEL: Vérifier que la documentation est à jour")
+    print("   - docs/applications/<category>/<app>.md")
+    print("   - docs/STATUS.md (si nécessaire)")
+    print()
 
     # Fermer la tâche
     subprocess.run([
