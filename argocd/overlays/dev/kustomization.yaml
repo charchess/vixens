@@ -75,7 +75,7 @@ resources:
   - apps/authentik.yaml
   - apps/netbox.yaml
   - apps/loki.yaml
-  # - apps/promtail.yaml
+  - apps/promtail.yaml
   - apps/renovate.yaml
   # - apps/stirling-pdf.yaml
   # - apps/stirling-pdf-ingress.yaml
