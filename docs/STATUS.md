@@ -37,7 +37,7 @@ Last Updated: 2026-01-11 (Task vixens-0h74 completed)
 | cilium-lb | ✅ | ✅ | L2 Announcements + LB IPAM |
 | synology-csi | ✅ | ✅ | Persistent storage via iSCSI |
 | infisical-operator | ✅ | ✅ | Secrets management operator |
-| kubernetes-dashboard | 🚧 | 💤 | Fix merged, awaiting cluster connectivity |
+| kubernetes-dashboard | ✅ | 💤 | Dashboard v7.x avec Kong gateway |
 
 ---
 
