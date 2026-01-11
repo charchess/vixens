@@ -37,6 +37,7 @@ Last Updated: 2026-01-11 (Task vixens-0h74 completed)
 | cilium-lb | ✅ | ✅ | L2 Announcements + LB IPAM |
 | synology-csi | ✅ | ✅ | Persistent storage via iSCSI |
 | infisical-operator | ✅ | ✅ | Secrets management operator |
+| kubernetes-dashboard | 🚧 | 💤 | Fix merged, awaiting cluster connectivity |
 
 ---
 
@@ -80,10 +81,10 @@ Last Updated: 2026-01-11 (Task vixens-0h74 completed)
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
 | jellyfin | ⏳ | 💤 | Media server (planned) |
-| sabnzbd | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
-| radarr | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) 
-| sonarr | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) 
-| prowlarr | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) 
+| sabnzbd | ⏳ | ✅ | Prod fixed and synced |
+| radarr | ⏳ | ✅ | Prod fixed 
+| sonarr | ⏳ | ✅ | Prod fixed 
+| prowlarr | ⏳ | ✅ | Prod fixed 
 | jellyseerr | ⏳ | 💤 | Media request management (planned) |
 | hydrus-client | ✅ | ✅ | Metrics Prometheus activées (v0.5.5) |
 
@@ -151,7 +152,7 @@ vim docs/STATUS.md
 
 # Update status symbols and notes
 # Example: | jellyfin | ✅ | ⚠️ | Dev OK, Prod needs resource tuning |
-| sabnzbd | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
+| sabnzbd | ⏳ | ✅ | Prod fixed and synced |
 
 # Commit changes
 git add docs/STATUS.md
