@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-11 (Task vixens-0h74 completed)
+Last Updated: 2026-01-12 (Task vixens-l31o completed - Cilium DNS proxy fix)
 
 ---
 
@@ -34,6 +34,7 @@ Last Updated: 2026-01-11 (Task vixens-0h74 completed)
 | traefik | ✅ | ✅ | Ingress controller - v3.x |
 | cert-manager | ✅ | ✅ | TLS certificates - Let's Encrypt production |
 | cert-manager-webhook-gandi | ✅ | ✅ | Fixed missing secretNamespace |
+| cilium | ✅ | ✅ | CNI v1.18.3 - DNS proxy transparent mode disabled |
 | cilium-lb | ✅ | ✅ | L2 Announcements + LB IPAM |
 | synology-csi | ✅ | ✅ | Persistent storage via iSCSI |
 | infisical-operator | ✅ | ✅ | Secrets management operator |

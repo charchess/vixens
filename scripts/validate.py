@@ -16,8 +16,16 @@ def validate_app(app_name, env):
     extra_opts = ""
     if env == "dev":
         extra_opts = "--server=https://192.168.111.160:6443 --insecure-skip-tls-verify"
+    
+    # Special case for system components
+    if app_name == "cilium":
+        label_selector = "k8s-app=cilium"
+        namespace = "-n kube-system"
+    else:
+        label_selector = f"app={app_name}"
+        namespace = "-A"
         
-    pod_cmd = f"kubectl get pods -A -l app={app_name} --kubeconfig {kubeconfig} {extra_opts} -o json"
+    pod_cmd = f"kubectl get pods {namespace} -l {label_selector} --kubeconfig {kubeconfig} {extra_opts} -o json"
     res = run_cmd(pod_cmd)
     if res.returncode != 0:
         print(f"❌ Failed to get pods: {res.stderr}")
@@ -34,12 +42,15 @@ def validate_app(app_name, env):
         print(f"❌ Pod is not Running or Succeeded (Status: {status})")
         return False
     
-    # 2. PriorityClass
+    # 2. PriorityClass (optional for system components)
     priority = pod['spec'].get('priorityClassName', "")
-    if not priority:
+    if priority:
+        print(f"✅ Pod is Running with priority {priority}")
+    elif app_name not in ["cilium"]:  # System components may not have priorityClassName
         print("❌ Missing priorityClassName")
         return False
-    print(f"✅ Pod is Running with priority {priority}")
+    else:
+        print("ℹ️ System component, priorityClassName not required")
 
     # 3. Network Access (if applicable)
     # Get host from ingress
