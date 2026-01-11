@@ -4,3 +4,4 @@ kind: Kustomization
 namespace: kubernetes-dashboard
 resources:
   - admin-user.yaml
+  - anonymous-rbac.yaml
