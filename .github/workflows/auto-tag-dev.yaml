@@ -3,7 +3,7 @@ name: Auto-tag Dev
 
 on:
   push:
-    branches: [dev]
+    branches: [main]
 
 jobs:
   auto-tag:
