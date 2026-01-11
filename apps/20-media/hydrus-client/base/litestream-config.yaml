@@ -6,7 +6,7 @@ metadata:
 data:
   litestream.yml: |
     metrics:
-      addr: ":9091"
+      addr: ":9090"
     dbs:
       - path: /opt/hydrus/db/client.db
         replicas:
