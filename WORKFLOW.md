@@ -111,21 +111,22 @@ just lint                # Valider YAML
 **Objectif:** Commit + Push + Wait ArgoCD sync ⭐ CRITIQUE
 
 ✅ À faire:
-1. Vérifier branch: `git branch --show-current` (doit être `dev`)
+1. Vérifier branch: `git branch --show-current` (doit être `main` ou feature branch)
 2. Commit: `git add . && git commit -m "..."`
-3. Push: `git push origin dev`
+3. Push: `git push origin main` (ou feature branch + PR)
 4. Attendre ArgoCD sync: `just wait-argocd <app_name>`
 5. Vérifier: Sync=Synced, Health=Healthy
 
 ❌ INTERDICTIONS:
-- ❌ Push vers `main` (uniquement via PR)
-- ❌ Créer des tags manuellement
+- ❌ Push directement vers `main` sans PR pour features majeures
+- ❌ Créer des tags manuellement (sauf prod promotion)
 - ❌ Avancer avant ArgoCD Synced+Healthy
 - ❌ `kubectl apply/edit` direct
 
 📜 Règles:
-- Branch: Toujours `dev` pour développement
-- GitOps: `git push` → ArgoCD auto-sync
+- Branch: `main` pour développement (trunk-based)
+- Feature branches pour features complexes (courtes, <24h)
+- GitOps: `git push` → ArgoCD auto-sync dev
 - Attente: ArgoCD peut prendre 1-3 minutes
 - Vérification: Synced + Healthy obligatoires
 
@@ -245,7 +246,7 @@ just next vixens-abc123  # Vérifie qu'il y a des changements
 just resume
 git add .
 git commit -m "feat(app): description"
-git push origin dev
+git push origin main
 just wait-argocd <app_name>  # Attendre sync
 just next vixens-abc123  # Vérifie ArgoCD status
 
@@ -258,12 +259,12 @@ just resume
 # Mettre à jour docs/applications/<category>/<app>.md
 # Mettre à jour docs/STATUS.md
 git add docs/ && git commit -m "docs(app): update deployment status"
-git push origin dev
+git push origin main
 just close vixens-abc123
 
-# 10. Promotion production (optionnel)
-gh pr create --base main --head dev --title "Release vX.Y.Z"
-# Review + Merge → tag auto → ArgoCD sync prod
+# 10. Promotion production
+gh workflow run promote-prod.yaml -f version=v1.2.3
+# Moves prod-stable tag → ArgoCD sync prod
 ```
 
 ---
@@ -355,24 +356,27 @@ spec:
 ## 🚀 Workflow GitOps (Trunk-Based)
 
 ### Branches
-- **`dev`** - Développement (cluster dev)
-- **`main`** - Production (cluster prod)
+- **`main`** - Unique branche (trunk-based development)
+
+### Environnements
+- **Dev**: ArgoCD watch `main` branch (HEAD)
+- **Prod**: ArgoCD watch `prod-stable` tag
 
 ### Flux
-1. Développement sur `dev`
-2. Push vers `dev`: `git push origin dev`
-3. ArgoCD auto-sync sur cluster dev
+1. Développement sur `main` (ou feature branch pour features complexes)
+2. Push vers `main`: `git push origin main` (ou PR depuis feature branch)
+3. ArgoCD auto-sync sur cluster **dev**
 4. Validation en dev (phase 5)
-5. Promotion: PR `dev → main`
-6. Review + Merge
-7. GitHub Actions crée tag `prod-vX.Y.Z`
-8. ArgoCD auto-sync sur cluster prod
+5. Promotion: `gh workflow run promote-prod.yaml -f version=v1.2.3`
+6. Workflow déplace tag `prod-stable` vers HEAD de main
+7. ArgoCD auto-sync sur cluster **prod**
 
 ### Règles
-- ❌ JAMAIS commit direct sur `main`
-- ❌ JAMAIS push force
-- ❌ JAMAIS créer tag manuellement
-- ✅ TOUJOURS passer par PR pour production
+- ✅ Commits directs sur `main` autorisés (pour petites modifications)
+- ✅ Feature branches pour features complexes (<24h)
+- ❌ JAMAIS push force sur `main`
+- ❌ JAMAIS créer tag `prod-stable` manuellement
+- ✅ Promotion production via GitHub Actions workflow uniquement
 
 Voir [ADR-008](docs/adr/008-trunk-based-gitops-workflow.md) et [ADR-009](docs/adr/009-simplified-two-branch-workflow.md) pour détails.
 
