@@ -23,11 +23,6 @@ jobs:
         run: |
           echo "🔍 Validation YAML syntax"
 
-          # Configuration yamllint inline
-      - name: Validate YAML syntax
-        run: |
-          echo "🔍 Validation YAML syntax"
-
           # Création du fichier ligne par ligne
           echo "---" > yamllint-config.yml
           echo "extends: default" >> yamllint-config.yml
@@ -152,13 +147,13 @@ jobs:
             fi
           done
 
-  # 4️⃣½  Vérification du flux de branches (trunk-based: dev → main)
+  # 4️⃣½  Vérification du flux de branches (pure trunk-based: feature → main)
   branch-flow:
     name: Branch Flow Check
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - name: Enforce trunk-based flow (feature → dev → main)
+      - name: Enforce pure trunk-based flow (feature → main directly)
         run: |
           # Branche source de la PR
           SOURCE="${{ github.head_ref }}"
@@ -168,28 +163,20 @@ jobs:
           echo "🔀 PR from '$SOURCE' into '$TARGET'"
 
           case "$TARGET" in
-            dev)
-              # Feature branches allowed, protected branches blocked
-              if [[ "$SOURCE" =~ ^(main|test|staging)$ ]]; then
-                echo "❌ Protected branch '$SOURCE' cannot merge to 'dev'"
-                echo "   Only feature branches can merge to dev"
-                exit 1
-              fi
-              echo "✅ Feature branch '$SOURCE' allowed to merge into 'dev'"
-              exit 0 ;;
             main)
-              # Only 'dev' can merge to 'main'
-              if [ "$SOURCE" != "dev" ]; then
-                echo "❌ Branch '$SOURCE' cannot merge to 'main'"
-                echo "   Only 'dev' branch can be promoted to 'main'"
-                echo "   Use: gh pr create -B main -H dev"
+              # Feature branches allowed, protected branches blocked
+              if [[ "$SOURCE" =~ ^(dev|test|staging)$ ]]; then
+                echo "❌ Protected branch '$SOURCE' cannot merge to 'main'"
+                echo "   Only feature branches can merge to main"
+                echo "   Note: dev/test/staging branches are archived (ADR-017)"
                 exit 1
               fi
-              echo "✅ Dev branch allowed to promote to main"
+              echo "✅ Feature branch '$SOURCE' allowed to merge into 'main'"
               exit 0 ;;
-            test|staging)
-              echo "❌ Branch '$TARGET' is archived"
-              echo "   Use new workflow: feature → dev → main"
+            dev|test|staging)
+              echo "❌ Branch '$TARGET' is archived (ADR-017)"
+              echo "   Use pure trunk-based workflow: feature → main"
+              echo "   Dev watches main (HEAD), Prod watches prod-stable tag"
               exit 1 ;;
             *)
               echo "❌ Unknown target branch '$TARGET'"
