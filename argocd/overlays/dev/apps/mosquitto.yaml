@@ -12,7 +12,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: main
     path: apps/10-home/mosquitto/overlays/dev
   destination:
     server: https://kubernetes.default.svc
