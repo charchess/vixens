@@ -22,8 +22,8 @@ api:
     enabled: false
   containers:
     args:
-      - --enable-skip-login
-      - --enable-insecure-login
+      - --namespace=kubernetes-dashboard
+      - --metrics-scraper-service-name=kubernetes-dashboard-metrics-scraper
       - --token-ttl=43200
 
 auth:
