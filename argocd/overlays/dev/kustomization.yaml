@@ -37,8 +37,8 @@ resources:
   # - apps/homeassistant.yaml
   # - apps/mosquitto.yaml
   # - apps/birdnet-go.yaml
-  # - apps/prometheus.yaml # Prometheus standalone monitoring
-  # - apps/prometheus-ingress.yaml             # Prometheus IngressRoutes
+  - apps/prometheus.yaml # Prometheus standalone monitoring
+  - apps/prometheus-ingress.yaml             # Prometheus IngressRoutes
   # - apps/grafana.yaml                        # Grafana standalone monitoring
   # - apps/grafana-ingress.yaml # Grafana IngressRoutes with HTTP→HTTPS redirect
   # - apps/homepage.yaml
