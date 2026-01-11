@@ -9,6 +9,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
     traefik.ingress.kubernetes.io/service.serversscheme: https
+    traefik.ingress.kubernetes.io/service.serverstransport: kubernetes-dashboard-dashboard-skip-verify@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
