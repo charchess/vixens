@@ -50,7 +50,7 @@ resources:
   - apps/qbittorrent.yaml
   - apps/amule.yaml
   - apps/radarr.yaml
-  # - apps/sonarr.yaml
+  - apps/sonarr.yaml
   # - apps/lidarr.yaml
   # - apps/lazylibrarian.yaml
   # - apps/booklore.yaml
