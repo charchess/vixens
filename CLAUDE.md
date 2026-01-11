@@ -84,17 +84,36 @@ bd close <task_id>                  # Mark complete
 - `just work <id>` orchestrates the full workflow (prereqs, doc, validation)
 - NEVER use Archon or TodoWrite for tasks
 
-**Assignee Convention:**
-- `coding-agent` = Claude Code (you)
+**Multi-Agent Support:**
+- `claude` = Claude Code (you) - Code analysis, architecture, documentation
+- `gemini` = Gemini Agent - Automation, workflows, batch processing
+- `coding-agent` = Generic agent (can be taken by any agent)
 - `user` = Human user
+
+**Agent Commands:**
+```bash
+just agents              # List available agents and capabilities
+just workload            # See workload by agent
+just assign <id> <agent> # Assign task to specific agent
+just claim <id>          # Claim task for current agent
+```
+
+See [docs/reference/multi-agent-orchestration.md](docs/reference/multi-agent-orchestration.md) for complete guide.
 
 ### 2. Just - Workflow Orchestration
 
 **Commands defined in `justfile`:**
 ```bash
+# Workflow commands
 just resume              # Find/resume current work
-just work <task_id>      # Full workflow orchestration
+just start <task_id>     # Start a task (preserves assignee)
 just burst <title>       # Quickly capture task ideas
+
+# Multi-agent orchestration (NEW)
+just agents              # List agents and capabilities
+just workload            # Show workload by agent
+just assign <id> <agent> # Assign task to agent (claude/gemini/coding-agent)
+just claim <id>          # Claim task for current agent
 ```
 
 **What `just work` does:**

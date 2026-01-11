@@ -25,18 +25,45 @@ default:
 
 resume:
     #!/usr/bin/env python3
-    import subprocess, json, sys, re
+    import subprocess, json, sys, re, os
 
-    # Récupérer la tâche en cours (supporte coding-agent, claude, gemini)
+    def get_current_agent():
+        """Détecter l'agent actuel de manière intelligente"""
+        # 1. Env var explicite (priorité)
+        agent = os.getenv("AGENT_NAME")
+        if agent:
+            return agent
+        
+        # 2. Détection via Claude Code context
+        if os.path.exists("/.claude") or os.path.exists(".claude"):
+            return "claude"
+        
+        # 3. Default fallback
+        return "coding-agent"
+
+    def filter_tasks_for_agent(all_tasks, current_agent):
+        """
+        Un agent peut prendre:
+        - Ses tâches spécifiques (assignee = agent_name)
+        - Les tâches génériques (assignee = 'coding-agent')
+        - Les tâches non assignées (assignee = null/empty)
+        """
+        return [t for t in all_tasks 
+                if t.get('assignee') in [current_agent, 'coding-agent', None, '']]
+
+    # Détecter l'agent actuel
+    current_agent = get_current_agent()
+    
+    # Récupérer toutes les tâches en cours
     result = subprocess.run(
         ["bd", "list", "--status", "in_progress", "--json"],
         capture_output=True, text=True
     )
     
-    # Filtrer pour agents compatibles (coding-agent, claude, gemini)
+    # Filtrer pour l'agent actuel
     if result.returncode == 0:
         all_tasks = json.loads(result.stdout)
-        tasks = [t for t in all_tasks if t.get('assignee') in ['coding-agent', 'claude', 'gemini']]
+        tasks = filter_tasks_for_agent(all_tasks, current_agent)
         result = type('obj', (object,), {'returncode': 0, 'stdout': json.dumps(tasks), 'stderr': ''})()
     else:
         tasks = []
@@ -234,7 +261,21 @@ resume:
 # ============================================
 start task_id:
     #!/usr/bin/env python3
-    import subprocess, json, re, sys
+    import subprocess, json, re, sys, os
+
+    def get_current_agent():
+        """Détecter l'agent actuel de manière intelligente"""
+        # 1. Env var explicite (priorité)
+        agent = os.getenv("AGENT_NAME")
+        if agent:
+            return agent
+        
+        # 2. Détection via Claude Code context
+        if os.path.exists("/.claude") or os.path.exists(".claude"):
+            return "claude"
+        
+        # 3. Default fallback
+        return "coding-agent"
 
     # Vérifier qu'on est sur main branch
     branch_result = subprocess.run(
@@ -249,12 +290,37 @@ start task_id:
         print("   💡 Solution: git checkout main")
         sys.exit(1)
 
-    # Mettre à jour le statut et initialiser la phase
+    # Récupérer les infos de la tâche pour vérifier l'assignee actuel
+    task_result = subprocess.run(
+        ["bd", "show", "{{task_id}}", "--json"],
+        capture_output=True, text=True
+    )
+    
+    # Déterminer l'assignee à utiliser
+    if task_result.returncode == 0:
+        task_data = json.loads(task_result.stdout)
+        # task_data est un array, prendre le premier élément
+        task_info = task_data[0] if isinstance(task_data, list) else task_data
+        current_assignee = task_info.get('assignee')
+        
+        # Ne définir l'assignee que s'il est vide/null
+        if not current_assignee or current_assignee in ['', 'null']:
+            assignee = get_current_agent()
+            print(f"📝 Attribution à: {assignee}")
+        else:
+            assignee = current_assignee
+            print(f"📝 Assignee préservé: {assignee}")
+    else:
+        # Fallback si on ne peut pas lire la tâche
+        assignee = get_current_agent()
+        print(f"📝 Attribution par défaut à: {assignee}")
+
+    # Mettre à jour le statut et initialiser la phase (préserve assignee)
     subprocess.run([
         "bd", "update", "{{task_id}}",
         "--status", "in_progress",
-        "--assignee", "coding-agent",
-        "--notes", f"PHASE:0 - Tâche démarrée (branch: {current_branch})"
+        "--assignee", assignee,
+        "--notes", f"PHASE:0 - Tâche démarrée (branch: {current_branch}, agent: {assignee})"
     ])
 
     print("✅ Tâche démarrée en Phase 0: SELECTION")
@@ -748,3 +814,168 @@ help:
     @echo "  • Scope limité à l'app dans le titre"
     @echo "  • Deployment + Validation OBLIGATOIRES"
     @echo "  • Production: Promotion via tag uniquement"
+
+# ============================================
+# HELPERS D'ORCHESTRATION MULTI-AGENT
+# ============================================
+
+# Réassigner une tâche à un agent spécifique
+assign task_id agent:
+    #!/usr/bin/env python3
+    import subprocess, sys
+    
+    valid_agents = ['claude', 'gemini', 'coding-agent']
+    agent = "{{agent}}"
+    
+    if agent not in valid_agents:
+        print(f"❌ Agent invalide: {agent}")
+        print(f"   Agents valides: {', '.join(valid_agents)}")
+        sys.exit(1)
+    
+    result = subprocess.run([
+        "bd", "update", "{{task_id}}",
+        "--assignee", agent
+    ])
+    
+    if result.returncode == 0:
+        print(f"✅ Tâche {{task_id}} assignée à: {agent}")
+    else:
+        print(f"❌ Erreur lors de l'assignation")
+        sys.exit(1)
+
+# Prendre une tâche pour l'agent actuel
+claim task_id:
+    #!/usr/bin/env python3
+    import subprocess, sys, os
+    
+    def get_current_agent():
+        """Détecter l'agent actuel"""
+        agent = os.getenv("AGENT_NAME")
+        if agent:
+            return agent
+        if os.path.exists("/.claude") or os.path.exists(".claude"):
+            return "claude"
+        return "coding-agent"
+    
+    current_agent = get_current_agent()
+    
+    result = subprocess.run([
+        "bd", "update", "{{task_id}}",
+        "--assignee", current_agent
+    ])
+    
+    if result.returncode == 0:
+        print(f"✅ Tâche {{task_id}} réclamée par: {current_agent}")
+    else:
+        print(f"❌ Erreur lors de la réclamation")
+        sys.exit(1)
+
+# Lister les agents disponibles et leurs capacités
+agents:
+    #!/usr/bin/env python3
+    import os
+    
+    def get_current_agent():
+        """Détecter l'agent actuel"""
+        agent = os.getenv("AGENT_NAME")
+        if agent:
+            return agent
+        if os.path.exists("/.claude") or os.path.exists(".claude"):
+            return "claude"
+        return "coding-agent"
+    
+    current_agent = get_current_agent()
+    
+    print("🤖 Agents Disponibles:\n")
+    
+    agents_info = {
+        'claude': {
+            'name': 'Claude Code',
+            'capabilities': ['Code analysis', 'File editing', 'Architecture design', 'Documentation'],
+            'types': ['feature', 'refactor', 'docs']
+        },
+        'gemini': {
+            'name': 'Gemini Agent',
+            'capabilities': ['Automation', 'Workflow execution', 'Batch processing'],
+            'types': ['task', 'chore', 'fix']
+        },
+        'coding-agent': {
+            'name': 'Generic Coding Agent',
+            'capabilities': ['General purpose'],
+            'types': ['all']
+        }
+    }
+    
+    for agent_id, info in agents_info.items():
+        marker = "👉" if agent_id == current_agent else "  "
+        print(f"{marker} {agent_id:15s} - {info['name']}")
+        print(f"   Capacités: {', '.join(info['capabilities'])}")
+        print(f"   Types préférés: {', '.join(info['types'])}")
+        print()
+    
+    print(f"Agent actuel détecté: {current_agent}")
+    print("\n💡 Pour changer d'agent:")
+    print("   export AGENT_NAME=claude")
+    print("   export AGENT_NAME=gemini")
+
+# Voir la charge de travail par agent
+workload:
+    #!/usr/bin/env python3
+    import subprocess, json, sys
+    from collections import defaultdict
+    
+    # Récupérer toutes les tâches
+    result_in_progress = subprocess.run(
+        ["bd", "list", "--status", "in_progress", "--json"],
+        capture_output=True, text=True
+    )
+    
+    result_open = subprocess.run(
+        ["bd", "list", "--status", "open", "--json"],
+        capture_output=True, text=True
+    )
+    
+    if result_in_progress.returncode != 0 or result_open.returncode != 0:
+        print("❌ Erreur lors de la récupération des tâches")
+        sys.exit(1)
+    
+    in_progress = json.loads(result_in_progress.stdout) if result_in_progress.stdout.strip() else []
+    open_tasks = json.loads(result_open.stdout) if result_open.stdout.strip() else []
+    
+    # Compter par agent
+    workload = defaultdict(lambda: {'in_progress': 0, 'open': 0})
+    
+    for task in in_progress:
+        assignee = task.get('assignee') or 'unassigned'
+        workload[assignee]['in_progress'] += 1
+    
+    for task in open_tasks:
+        assignee = task.get('assignee') or 'unassigned'
+        workload[assignee]['open'] += 1
+    
+    print("📊 Charge de Travail par Agent:\n")
+    
+    # Trier par nombre de tâches in_progress décroissant
+    sorted_agents = sorted(workload.items(), 
+                          key=lambda x: (x[1]['in_progress'], x[1]['open']), 
+                          reverse=True)
+    
+    for agent, counts in sorted_agents:
+        in_prog = counts['in_progress']
+        open_count = counts['open']
+        total = in_prog + open_count
+        
+        # Indicateur visuel de charge
+        if in_prog == 0:
+            indicator = "🟢"
+        elif in_prog == 1:
+            indicator = "🟡"
+        else:
+            indicator = "🔴"
+        
+        print(f"{indicator} {agent:15s}  {in_prog} in_progress, {open_count} open (total: {total})")
+    
+    print("\n💡 Utilisation:")
+    print("   just assign <task_id> <agent>  # Réassigner une tâche")
+    print("   just claim <task_id>            # Prendre une tâche")
+
