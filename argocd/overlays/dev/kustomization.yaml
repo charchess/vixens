@@ -43,7 +43,7 @@ resources:
   - apps/grafana-ingress.yaml # Grafana IngressRoutes with HTTP→HTTPS redirect
   - apps/homepage.yaml
   - apps/linkwarden.yaml
-  # - apps/gluetun.yaml
+  - apps/gluetun.yaml
   # HIBERNATED APPS (Uncomment to reactivate)
   # - apps/sabnzbd.yaml
   # - apps/pyload.yaml
