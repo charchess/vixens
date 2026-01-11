@@ -129,7 +129,7 @@ docs/_build/
 .secrets/
 
 # Beads issue tracking database
-.beads/
+# .beads/ is git-tracked, but some items inside might be ignored
 
 # Fichiers temporaires de test
 *.test
