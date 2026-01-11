@@ -116,6 +116,7 @@ Last Updated: 2026-01-10 (Task vixens-04mo completed)
 | it-tools | ✅ | ✅ | Migrated to centralized middleware |
 | headlamp | ✅ | ✅ | Migrated to centralized middleware |
 | linkwarden | ✅ | ✅ | Migrated to centralized middleware |
+| renovate | ✅ | ✅ | Auto-dependency updates (ADR-017) |
 
 ---
 
