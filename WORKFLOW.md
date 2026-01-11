@@ -171,12 +171,11 @@ just lint                # Valider YAML
 🎯 PROMOTION PRODUCTION:
 1. Validé sur dev ✅
 2. Pour déployer en prod:
-   - Créer PR: `dev → main`
-   - Attendre review + merge
-   - Tag auto-créé: `prod-vX.Y.Z`
+   - Lancer workflow: `gh workflow run promote-prod.yaml -f version=vX.Y.Z`
+   - Workflow déplace le tag `prod-stable` vers HEAD de main
    - ArgoCD sync automatique sur prod cluster
-3. Ne JAMAIS push direct sur `main`
-4. Ne JAMAIS créer de tag manuellement
+3. Ne JAMAIS créer de tag `prod-stable` manuellement
+4. Promotion via GitHub Actions workflow uniquement
 
 **Commande:** `just close <task_id>` (vérifie validation + déploiement OK)
 
@@ -187,8 +186,8 @@ just lint                # Valider YAML
 ### GitOps ONLY
 - ❌ **ZERO** `kubectl apply/edit/delete` direct
 - ✅ Tout passe par Git → ArgoCD auto-sync
-- ✅ Dev: push → `dev` branch
-- ✅ Prod: PR `dev → main` → auto-tag → ArgoCD sync
+- ✅ Dev: push → `main` branch (trunk-based)
+- ✅ Prod: Promotion via workflow → tag `prod-stable` → ArgoCD sync
 
 ### DRY (Don't Repeat Yourself)
 - ✅ Réutiliser `apps/_shared/` pour resources communes
@@ -205,11 +204,11 @@ just lint                # Valider YAML
 - ✅ Phase 5 (Validation) → `scripts/validate.py` DOIT passer
 - ❌ NE PAS fermer sans ces deux étapes
 
-### Production via PR UNIQUEMENT
-- ❌ JAMAIS push direct sur `main`
-- ❌ JAMAIS créer tag manuellement
-- ✅ TOUJOURS passer par PR `dev → main`
-- ✅ Tags auto: `prod-vX.Y.Z` créés par GitHub Actions
+### Production via Workflow UNIQUEMENT
+- ❌ JAMAIS créer tag `prod-stable` manuellement
+- ❌ JAMAIS push force sur `main`
+- ✅ TOUJOURS utiliser workflow: `gh workflow run promote-prod.yaml`
+- ✅ Tag `prod-stable` déplacé automatiquement par GitHub Actions
 
 ---
 
@@ -262,9 +261,9 @@ git add docs/ && git commit -m "docs(app): update deployment status"
 git push origin main
 just close vixens-abc123
 
-# 10. Promotion production
+# 10. Promotion production (après validation complète en dev)
 gh workflow run promote-prod.yaml -f version=v1.2.3
-# Moves prod-stable tag → ArgoCD sync prod
+# Déplace prod-stable tag vers HEAD de main → ArgoCD sync prod
 ```
 
 ---
@@ -378,7 +377,7 @@ spec:
 - ❌ JAMAIS créer tag `prod-stable` manuellement
 - ✅ Promotion production via GitHub Actions workflow uniquement
 
-Voir [ADR-008](docs/adr/008-trunk-based-gitops-workflow.md) et [ADR-009](docs/adr/009-simplified-two-branch-workflow.md) pour détails.
+Voir [ADR-017](docs/adr/017-pure-trunk-based-single-branch.md) pour détails (supersède ADR-008/009).
 
 ---
 
@@ -427,6 +426,6 @@ kubectl -n argocd describe application <app_name>
 
 ---
 
-**Last Updated:** 2026-01-09
+**Last Updated:** 2026-01-11
 
-**Version:** 2.0 (State Machine GitOps)
+**Version:** 2.1 (State Machine GitOps - Trunk-Based ADR-017)
