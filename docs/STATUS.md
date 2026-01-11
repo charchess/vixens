@@ -45,7 +45,7 @@ Last Updated: 2026-01-11 (Task vixens-0h74 completed)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| prometheus | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
+| prometheus | ✅ | ✅ | Activé pour monitoring Litestream |
 | alertmanager | ✅ | ✅ | Fixed stuck ContainerCreating (secrets) |
 | grafana | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
 | loki | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
