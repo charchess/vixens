@@ -73,7 +73,7 @@ resources:
   - apps/adguard-home.yaml
   - apps/netvisor.yaml
   - apps/authentik.yaml
-  # - apps/netbox.yaml
+  - apps/netbox.yaml
   # - apps/loki.yaml
   # - apps/promtail.yaml
   - apps/renovate.yaml
