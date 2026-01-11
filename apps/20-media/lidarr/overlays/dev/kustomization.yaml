@@ -9,3 +9,10 @@ patches:
     target:
       kind: Deployment
       name: lidarr
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: lidarr
+      spec:
+        replicas: 0
