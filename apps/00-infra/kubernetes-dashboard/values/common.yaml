@@ -2,7 +2,7 @@
 # apps/00-infra/kubernetes-dashboard/values/common.yaml
 # Official Chart: https://github.com/kubernetes/dashboard
 
-# Global tolerations for all components
+# Global tolerations for all components (if supported)
 tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
@@ -15,33 +15,46 @@ kong:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
-# We handle ingress via our standard traefik Ingress resource in overlays
+
+# API component
 api:
+  app:
+    scheduling:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
   ingress:
     enabled: false
   extraArgs:
     - --enable-skip-login
     - --enable-insecure-login
     - --token-ttl=43200
-  tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-      effect: NoSchedule
-# Metrics scraper integration
-metrics-scraper:
-  enabled: true
-  tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-      effect: NoSchedule
-# Auth and Web components
+
+# Auth component
 auth:
-  tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-      effect: NoSchedule
+  app:
+    scheduling:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+
+# Web component
 web:
-  tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-      effect: NoSchedule
+  app:
+    scheduling:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+
+# Metrics scraper component
+metrics-scraper:
+  app:
+    scheduling:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+  enabled: true
