@@ -9,3 +9,10 @@ patches:
     target:
       kind: Deployment
       name: whisparr
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: whisparr
+      spec:
+        replicas: 0

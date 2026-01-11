@@ -1017,3 +1017,22 @@ workload:
     print("   just assign <task_id> <agent>  # Réassigner une tâche")
     print("   just claim <task_id>            # Prendre une tâche")
 
+# ============================================
+# GESTION DE L'HIBERNATION
+# ============================================
+
+# Mettre une application en hibernation (replicas=0)
+hibernate app_name:
+    @python3 scripts/hibernate.py hibernate {{app_name}}
+    @git push origin main
+
+# Réactiver une application (replicas=1)
+unhibernate app_name:
+    @python3 scripts/hibernate.py unhibernate {{app_name}}
+    @git push origin main
+
+# Lister les applications hibernées
+hibernated:
+    @python3 scripts/hibernate.py list
+
+

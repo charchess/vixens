@@ -5,3 +5,13 @@ namespace: birdnet-go
 resources:
   - ../../base
   - ingress.yaml
+
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: birdnet-go
+      spec:
+        replicas: 0
