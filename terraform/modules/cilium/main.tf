@@ -85,6 +85,13 @@ resource "helm_release" "cilium" {
       replicas    = 1
       tolerations = var.control_plane_tolerations
     }
+
+    # DNS Proxy Configuration
+    # Disable transparent mode to fix CoreDNS timeout issues
+    # See: vixens-l31o (P0 bug - affects dev + prod)
+    dnsProxy = {
+      enableTransparentMode = false
+    }
   })]
 
   depends_on = [
