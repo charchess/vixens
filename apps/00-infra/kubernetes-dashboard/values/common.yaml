@@ -20,10 +20,11 @@ api:
       tolerations: *tol
   ingress:
     enabled: false
-  extraArgs:
-    - --enable-skip-login
-    - --enable-insecure-login
-    - --token-ttl=43200
+  containers:
+    args:
+      - --enable-skip-login
+      - --enable-insecure-login
+      - --token-ttl=43200
 
 auth:
   tolerations: *tol
