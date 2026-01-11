@@ -52,7 +52,7 @@ resources:
   - apps/radarr.yaml
   - apps/sonarr.yaml
   - apps/lidarr.yaml
-  # - apps/lazylibrarian.yaml
+  - apps/lazylibrarian.yaml
   # - apps/booklore.yaml
   # - apps/frigate.yaml
   # - apps/prowlarr.yaml
