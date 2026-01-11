@@ -21,7 +21,7 @@ An **Architecture Decision Record** documents an important architectural decisio
 
 ### GitOps & Workflow
 
-- **[ADR-007: Renovate Dev-First Workflow](007-renovate-dev-first-workflow.md)**
+- **[ADR-007: Renovate Trunk-Based Workflow](007-renovate-trunk-based-workflow.md)**
   Renovate bot updates dev branch first for validation. (⚠️ Needs update for single-branch)
 
 - **[ADR-017: Pure Trunk-Based Development (Single Branch)](017-pure-trunk-based-single-branch.md)** ⭐

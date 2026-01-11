@@ -146,7 +146,7 @@ vim docs/STATUS.md
 # Commit changes
 git add docs/STATUS.md
 git commit -m "docs: update STATUS.md - <application> <status>"
-git push origin dev
+git push origin main
 ```
 
 ---

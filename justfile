@@ -132,21 +132,21 @@ resume:
         4: {
             "name": "DEPLOYMENT",
             "todo": [
-                f"Vérifier branch actuelle: git branch --show-current (doit être 'dev')",
+                f"Vérifier branch actuelle: git branch --show-current (doit être 'main')",
                 "Commit les changements: git add + git commit -m '...'",
-                "Push vers dev: git push origin dev",
+                "Push vers main: git push origin main (ou feature branch + PR)",
                 f"Attendre ArgoCD sync: just wait-argocd {app_name}",
                 "Vérifier status: Health=Healthy, Sync=Synced"
             ],
             "forbidden": [
-                "❌ INTERDIT: Push vers main (uniquement via PR)",
-                "❌ INTERDIT: Créer des tags manuellement",
+                "❌ INTERDIT: Push direct vers main pour features majeures (utiliser PR)",
+                "❌ INTERDIT: Créer des tags manuellement (sauf prod promotion)",
                 "❌ INTERDIT: Avancer avant ArgoCD Synced+Healthy",
                 "❌ INTERDIT: kubectl apply/edit direct"
             ],
             "rules": [
-                "📜 Branch: Toujours dev pour développement",
-                "📜 GitOps: Git push → ArgoCD auto-sync",
+                "📜 Branch: Toujours main pour développement (trunk-based)",
+                "📜 GitOps: git push → ArgoCD auto-sync dev",
                 "📜 Attente: ArgoCD peut prendre 1-3 minutes",
                 "📜 Vérification: Synced + Healthy obligatoires"
             ],
@@ -181,15 +181,13 @@ resume:
             ],
             "forbidden": [],
             "promotion": [
-                "🎯 PROMOTION VERS PRODUCTION:",
+                "🎯 PROMOTION VERS PRODUCTION (ADR-017):",
                 "  1. Validé sur dev ✅",
-                "  2. Pour déployer en prod:",
-                "     → Créer PR: dev → main",
-                "     → Attendre review + merge",
-                "     → Tag auto-créé: prod-vX.Y.Z",
+                "  2. Lancer workflow de promotion:",
+                "     → gh workflow run promote-prod.yaml -f version=vX.Y.Z",
+                "     → Déplace le tag prod-stable",
                 "     → ArgoCD sync automatique sur prod cluster",
-                "  3. Ne JAMAIS push direct sur main",
-                "  4. Ne JAMAIS créer de tag manuellement"
+                "  3. Ne JAMAIS créer de tag manuellement"
             ],
             "next_cmd": f"just close {task_id}"
         }
@@ -230,16 +228,16 @@ start task_id:
     #!/usr/bin/env python3
     import subprocess, json, re, sys
 
-    # Vérifier qu'on est sur dev branch
+    # Vérifier qu'on est sur main branch
     branch_result = subprocess.run(
         ["git", "branch", "--show-current"],
         capture_output=True, text=True
     )
     current_branch = branch_result.stdout.strip()
 
-    if current_branch != "dev":
-        print(f"⚠️  WARNING: Sur branch '{current_branch}', pas 'dev'")
-        print("   Le workflow GitOps nécessite d'être sur dev")
+    if current_branch != "main":
+        print(f"⚠️  WARNING: Sur branch '{current_branch}', pas 'main'")
+        print("   Le workflow GitOps (ADR-017) nécessite d'être sur main")
         response = input("   Continuer quand même? (y/N): ")
         if response.lower() != 'y':
             sys.exit(1)
@@ -328,8 +326,8 @@ next task_id:
             capture_output=True, text=True
         )
         current_branch = branch_result.stdout.strip()
-        if current_branch != "dev":
-            print(f"⚠️  WARNING: Sur branch '{current_branch}', attendu 'dev'")
+        if current_branch != "main":
+            print(f"⚠️  WARNING: Sur branch '{current_branch}', attendu 'main'")
 
         # Vérifier qu'il n'y a plus de changements non committés
         git_status = subprocess.run(
@@ -341,22 +339,19 @@ next task_id:
             print(git_status.stdout)
             print("   Assurez-vous d'avoir commit+push tous les changements")
             sys.exit(1)
-    #            response = input("   Continuer la vérification ArgoCD? (y/N): ")
-    #            if response.lower() != 'y':
-    #                sys.exit(1)
 
         # Vérifier ArgoCD sync status
         print(f"🔍 Vérification ArgoCD pour: {app_name}")
 
         # Détecter si l'app est hibernée (commentée dans kustomization.yaml)
         was_hibernated = False
-        kustomization_path = f"argocd/overlays/{current_branch}/kustomization.yaml"
+        kustomization_path = f"argocd/overlays/dev/kustomization.yaml"
         try:
             with open(kustomization_path, 'r') as f:
                 content = f.read()
                 # Chercher si l'app est commentée
                 if f"# - apps/{app_name}.yaml" in content:
-                    print(f"   ⚠️  Application '{app_name}' est HIBERNÉE dans {current_branch}")
+                    print(f"   ⚠️  Application '{app_name}' est HIBERNÉE dans dev")
                     print(f"   (Commentée dans {kustomization_path})")
                     print()
                     print("   💡 Pour tester, l'app doit être RÉACTIVÉE puis RE-HIBERNÉE après validation")
@@ -380,7 +375,7 @@ next task_id:
                             "git", "commit", "-m",
                             f"test({app_name}): réactiver temporairement pour test (était hibernée)"
                         ])
-                        subprocess.run(["git", "push", "origin", current_branch])
+                        subprocess.run(["git", "push", "origin", "main"])
                         
                         print("   ⏳ Attendre ~30s pour ArgoCD auto-sync...")
                         import time
@@ -408,9 +403,6 @@ next task_id:
             print(f"⚠️  Application ArgoCD '{app_name}' non trouvée")
             print("   Vérifiez le nom de l'application dans ArgoCD")
             print("   💡 Si l'app est prod-only, c'est normal en dev")
-    #            response = input("   Ignorer cette vérification? (y/N): ")
-    #            if response.lower() != 'y':
-    #                sys.exit(1)
         else:
             # App exists, check its status
             try:
@@ -442,7 +434,7 @@ next task_id:
         # Marquer le déploiement
         subprocess.run([
             "bd", "update", "{{task_id}}",
-            "--notes", f"{notes}\nDEPLOYED: {datetime.now().isoformat()} (branch: {current_branch})"
+            "--notes", f"{notes}\nDEPLOYED: {datetime.now().isoformat()} (branch: main)"
         ])
         print("✅ Phase DEPLOYMENT complétée")
 
@@ -549,15 +541,8 @@ close task_id:
             response = input("   → Re-hiberner l'application maintenant? (y/N): ")
             
             if response.lower() == 'y':
-                # Déterminer la branch
-                current_branch_result = subprocess.run(
-                    ["git", "branch", "--show-current"],
-                    capture_output=True, text=True
-                )
-                current_branch = current_branch_result.stdout.strip()
-                
                 # Re-commenter dans kustomization.yaml
-                kustomization_path = f"argocd/overlays/{current_branch}/kustomization.yaml"
+                kustomization_path = f"argocd/overlays/dev/kustomization.yaml"
                 try:
                     with open(kustomization_path, 'r') as f:
                         content = f.read()
@@ -580,7 +565,7 @@ close task_id:
                         "git", "commit", "-m",
                         f"chore({app_name}): re-hiberner après test (économie ressources)"
                     ])
-                    subprocess.run(["git", "push", "origin", current_branch])
+                    subprocess.run(["git", "push", "origin", "main"])
                     
                     print("   💤 Application re-hibernée avec succès")
                     
@@ -598,18 +583,15 @@ close task_id:
 
     # Afficher checklist finale
     print("📋 CHECKLIST FINALE:")
-    print("   [✓] Code déployé sur dev (ArgoCD synced)")
+    print("   [✓] Code déployé sur dev (ArgoCD synced from main HEAD)")
     print("   [✓] Validation réussie")
     print("   [ ] Documentation à jour (docs/applications/<category>/<app>.md)")
     print("   [ ] STATUS.md à jour si nécessaire")
     print("   [ ] Changements de doc committés + pushés")
     print()
-    print("🎯 PROMOTION PRODUCTION:")
+    print("🎯 PROMOTION PRODUCTION (ADR-017):")
     print("   Pour déployer en production:")
-    print("   1. Créer PR: dev → main")
-    print("   2. Review + merge")
-    print("   3. Tag auto: prod-vX.Y.Z")
-    print("   4. ArgoCD sync auto sur prod")
+    print("   gh workflow run promote-prod.yaml -f version=vX.Y.Z")
     print()
 
     response = input("✅ Tout est prêt pour fermer? (y/N): ")
@@ -727,34 +709,27 @@ reset-phase task_id phase:
 # PROMOTION PRODUCTION (Instructions)
 # ============================================
 promote-prod:
-    @echo "🎯 PROCESSUS DE PROMOTION VERS PRODUCTION"
+    @echo "🎯 PROCESSUS DE PROMOTION VERS PRODUCTION (ADR-017)"
     @echo ""
     @echo "📋 Prérequis:"
-    @echo "   ✅ Changements validés sur dev"
+    @echo "   ✅ Changements validés sur dev cluster"
     @echo "   ✅ Tâche Beads fermée"
-    @echo "   ✅ Branch dev à jour"
     @echo ""
     @echo "🔄 Étapes de promotion:"
-    @echo "   1. Vérifier l'état:"
-    @echo "      git status"
-    @echo "      git log dev..main  # Voir ce qui sera promu"
+    @echo "   1. Déclencher le workflow GitHub:"
+    @echo "      gh workflow run promote-prod.yaml -f version=vX.Y.Z"
     @echo ""
-    @echo "   2. Créer Pull Request:"
-    @echo "      gh pr create --base main --head dev --title 'Release vX.Y.Z' --body '...'"
+    @echo "   2. Le workflow va:"
+    @echo "      - Créer un tag prod-vX.Y.Z"
+    @echo "      - Déplacer le tag prod-stable vers ce commit"
     @echo ""
-    @echo "   3. Review + Merge:"
-    @echo "      - Review dans GitHub UI"
-    @echo "      - Merge PR (crée tag auto prod-vX.Y.Z)"
-    @echo ""
-    @echo "   4. Vérifier déploiement prod:"
+    @echo "   3. Vérifier déploiement prod:"
     @echo "      kubectl -n argocd get applications  # cluster prod"
     @echo "      just wait-argocd <app_name>  # avec KUBECONFIG prod"
     @echo ""
     @echo "⚠️  RÈGLES:"
-    @echo "   • JAMAIS push direct sur main"
     @echo "   • JAMAIS créer de tag manuellement"
-    @echo "   • TOUJOURS passer par PR dev → main"
-    @echo "   • Tags auto: prod-vX.Y.Z créés par GitHub Actions"
+    @echo "   • Promotion via GitHub Actions uniquement"
 
 # ============================================
 # UTILITAIRES
@@ -764,157 +739,11 @@ burst title:
     bd create "{{title}}" --status open --assignee coding-agent --label burst
     @echo "✅ Idée enregistrée dans Beads"
 
-create-task:
-    #!/usr/bin/env python3
-    import subprocess, re, sys, os, glob
-
-    print("🎯 CRÉATION DE TÂCHE (Template Vixens)")
-    print("=" * 50)
-    print()
-    print("📋 Format requis: 'Action Description (app_name)'")
-    print("   Exemples:")
-    print("   • Migrer vers version 3.2 (traefik)")
-    print("   • Corriger sync loop (argocd)")
-    print("   • Ajouter widget monitoring (homepage)")
-    print()
-
-    # Action
-    print("1️⃣  ACTION (verbe)")
-    print("   Suggestions: Migrer, Corriger, Ajouter, Configurer, Mettre à jour")
-    action = input("   → Action: ").strip()
-
-    if not action:
-        print("❌ Action requise")
-        sys.exit(1)
-
-    # Description courte
-    print("\n2️⃣  DESCRIPTION COURTE")
-    print("   Ex: 'vers version 3.2', 'le bug de sync', 'support HTTPS'")
-    desc = input("   → Description: ").strip()
-
-    if not desc:
-        print("❌ Description requise")
-        sys.exit(1)
-
-    # Application
-    print("\n3️⃣  APPLICATION CIBLÉE")
-    print("   Chercher dans apps/...")
-    app_input = input("   → Application: ").strip()
-
-    if not app_input:
-        print("❌ Application requise")
-        sys.exit(1)
-
-    # Vérifier que l'app existe dans apps/
-    app_found = False
-    app_path = None
-
-    # Chercher dans apps/**/
-    for root, dirs, files in os.walk("apps"):
-        dir_name = os.path.basename(root)
-        if dir_name == app_input:
-            app_found = True
-            app_path = root
-            break
-
-    if not app_found:
-        print(f"   ⚠️  Application '{app_input}' non trouvée dans apps/")
-        print("   Applications disponibles:")
-
-        # Lister les apps
-        app_dirs = []
-        for root, dirs, files in os.walk("apps"):
-            # Ignorer _shared et les overlays
-            if os.path.basename(root) in ['_shared', 'overlays', 'base']:
-                continue
-            # Si contient base/ ou kustomization.yaml, c'est une app
-            if 'base' in dirs or any(f == 'kustomization.yaml' for f in files):
-                app_dirs.append(os.path.basename(root))
-
-        # Afficher triées
-        for app in sorted(set(app_dirs))[:20]:
-            print(f"      • {app}")
-
-        response = input(f"\n   Continuer avec '{app_input}' quand même? (y/N): ")
-        if response.lower() != 'y':
-            sys.exit(0)
-    else:
-        print(f"   ✅ Application trouvée: {app_path}")
-
-    app = app_input
-
-    # Construire le titre selon template
-    title = f"{action} {desc} ({app})"
-
-    # Description détaillée (optionnelle)
-    print("\n4️⃣  DESCRIPTION DÉTAILLÉE (optionnel)")
-    print("   Contexte supplémentaire, liens, notes...")
-    description = input("   → Description: ").strip()
-
-    # Priority
-    print("\n5️⃣  PRIORITÉ")
-    print("   0 = Critical (P0) - Bloquant, urgent")
-    print("   1 = High (P1) - Important, à faire rapidement")
-    print("   2 = Medium (P2) - Normal (défaut)")
-    print("   3 = Low (P3) - Peut attendre")
-    print("   4 = Backlog (P4) - Future")
-    priority_input = input("   → Priority [0-4] (défaut: 2): ").strip()
-    priority = priority_input if priority_input in ['0','1','2','3','4'] else '2'
-
-    # Récapitulatif
-    print("\n" + "=" * 50)
-    print("📋 RÉCAPITULATIF:")
-    print(f"   Titre: {title}")
-    if description:
-        print(f"   Description: {description}")
-    print(f"   Priority: {priority} (P{priority})")
-    print(f"   Assigné à: coding-agent")
-    print(f"   Status: open")
-    print("=" * 50)
-
-    # Confirmation
-    confirm = input("\n✅ Créer cette tâche? (y/N): ")
-    if confirm.lower() != 'y':
-        print("❌ Création annulée")
-        sys.exit(0)
-
-    # Créer avec bd
-    cmd = [
-        "bd", "create",
-        "--title", title,
-        "--status", "open",
-        "--assignee", "coding-agent",
-        "--priority", priority
-    ]
-
-    if description:
-        cmd.extend(["--description", description])
-
-    result = subprocess.run(cmd, capture_output=True, text=True)
-
-    if result.returncode == 0:
-        print("\n✅ Tâche créée avec succès!")
-
-        # Extraire task_id de la sortie bd
-        match = re.search(r'(beads-[a-z0-9]+)', result.stdout + result.stderr)
-        if match:
-            task_id = match.group(1)
-            print(f"   ID: {task_id}")
-            print(f"\n💡 Commandes suivantes:")
-            print(f"   just start {task_id}    # Démarrer la tâche")
-            print(f"   just resume             # Voir toutes les tâches")
-        else:
-            print("💡 Lancer: just resume")
-    else:
-        print(f"\n❌ Erreur lors de la création:")
-        print(result.stderr)
-        sys.exit(1)
-
 lint:
     #!/usr/bin/env bash
     set -euo pipefail
     echo "🔍 Validation YAML avec yamllint..."
-    if yamllint -c yamllint-config.yml apps/**/*.yaml argocd/**/*.yaml; then
+    if find apps/ argocd/ -name "*.yaml" | xargs yamllint -c yamllint-config.yml; then
         echo "✅ Validation YAML réussie"
         exit 0
     else
@@ -942,7 +771,6 @@ help:
     @echo "  just promote-prod        - Instructions promotion production"
     @echo ""
     @echo "Utilitaires:"
-    @echo "  just create-task           - Créer une tâche (template guidé) ⭐"
     @echo "  just reset-phase <id> <N>  - Réinitialiser à la phase N (debug)"
     @echo "  just burst <title>         - Créer une idée rapide"
     @echo "  just lint                  - Valider YAML"
@@ -961,4 +789,4 @@ help:
     @echo "  • DRY (réutiliser apps/_shared/)"
     @echo "  • Scope limité à l'app dans le titre"
     @echo "  • Deployment + Validation OBLIGATOIRES"
-    @echo "  • Production: PR dev→main uniquement"
+    @echo "  • Production: Promotion via tag uniquement"
