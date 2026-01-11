@@ -4,7 +4,7 @@
 
 set shell := ["bash", "-uc"]
 
-JUST := "just -f WORKFLOW.just"
+JUST := "just"
 
 # ============================================
 # PHASES DU WORKFLOW (State Machine)
@@ -754,6 +754,18 @@ promote-prod:
     @echo "⚠️  RÈGLES:"
     @echo "   • JAMAIS créer de tag manuellement"
     @echo "   • Promotion via GitHub Actions uniquement"
+
+# ============================================
+# AUTOMATION DES RAPPORTS
+# ============================================
+
+# Générer tous les rapports d'état (Actual, Conformity, Status)
+reports:
+    @echo "📊 Génération des rapports d'état..."
+    @python3 scripts/generate-actual-state.py --env dev
+    @python3 scripts/conformity-checker.py
+    @python3 scripts/generate-status-report.py
+    @echo "✅ Rapports générés dans docs/reports/"
 
 # ============================================
 # UTILITAIRES
