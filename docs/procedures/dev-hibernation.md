@@ -185,7 +185,22 @@ apps/04-databases/*
 
 ---
 
-## Quick Reference Commands
+## Quick Reference Commands (Recommended)
+
+Utilisez les commandes `just` pour une gestion GitOps simplifiée :
+
+```bash
+# Mettre une application en hibernation (replicas=0)
+just hibernate <app-name>
+
+# Réactiver une application (replicas=1)
+just unhibernate <app-name>
+
+# Lister toutes les applications hibernées via Git
+just hibernated
+```
+
+### Manual Commands (Fallback)
 
 ```bash
 # List all deployments with 0 replicas (hibernated)
@@ -194,12 +209,6 @@ kubectl get deployments -A | grep "0/0"
 # List all deployments with >0 replicas (active)
 kubectl get deployments -A | grep -v "0/0" | grep -v "READY"
 
-# Hibernate multiple apps in namespace
-kubectl scale deployment -n <namespace> --replicas=0 --all
-
-# Wake multiple apps in namespace
-kubectl scale deployment -n <namespace> --replicas=1 --all
-
 # Check resource usage (before/after hibernation)
 kubectl top nodes
 kubectl top pods -A
@@ -207,15 +216,15 @@ kubectl top pods -A
 
 ---
 
-## Automation (Future Enhancement)
+## Automation Logic
 
-Consider creating Just commands or scripts:
+Les commandes `just` effectuent les actions suivantes :
+1. Détection du répertoire de l'application dans `apps/`.
+2. Application d'un patch Kustomize `replicas: 0` (ou 1) dans `overlays/dev/kustomization.yaml`.
+3. Activation automatique dans ArgoCD (décommentage dans `argocd/overlays/dev/kustomization.yaml`).
+4. Commit GitOps automatique.
+5. Push sur la branche principale.
 
-```bash
-# Future: just hibernate <app-name>
-# Future: just wake <app-name>
-# Future: just hibernate-all --except infra
-```
 
 See Beads task: `vixens-xxxx` for automation implementation.
 
