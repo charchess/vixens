@@ -2,6 +2,12 @@
 # apps/00-infra/kubernetes-dashboard/values/common.yaml
 # Official Chart: https://github.com/kubernetes/dashboard
 
+# Global tolerations for all components
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
 # Kong integration settings (Default in v7.x)
 kong:
   enabled: true
@@ -22,7 +28,7 @@ api:
       operator: Exists
       effect: NoSchedule
 # Metrics scraper integration
-metricsScraper:
+metrics-scraper:
   enabled: true
   tolerations:
     - key: node-role.kubernetes.io/control-plane
