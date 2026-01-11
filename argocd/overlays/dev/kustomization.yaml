@@ -42,7 +42,7 @@ resources:
   - apps/grafana.yaml                        # Grafana standalone monitoring
   - apps/grafana-ingress.yaml # Grafana IngressRoutes with HTTP→HTTPS redirect
   - apps/homepage.yaml
-  # - apps/linkwarden.yaml
+  - apps/linkwarden.yaml
   # - apps/gluetun.yaml
   # HIBERNATED APPS (Uncomment to reactivate)
   # - apps/sabnzbd.yaml
