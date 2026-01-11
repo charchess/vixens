@@ -5,3 +5,13 @@ resources:
   - ../../base
   - middleware.yaml
   - ingress.yaml
+
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: whoami
+      spec:
+        replicas: 0
