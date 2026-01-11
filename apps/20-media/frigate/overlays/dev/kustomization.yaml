@@ -15,3 +15,10 @@ patches:
 spec:
   managedSecretReference:
     secretNamespace: media
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: frigate
+      spec:
+        replicas: 0
