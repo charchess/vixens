@@ -16,10 +16,10 @@ spec:
     metadata:
       labels:
         app: hydrus-client
-        test-label: "true"
       annotations:
+        reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
-        prometheus.io/port: "9090"
+        prometheus.io/port: "9091"
         prometheus.io/path: "/metrics"
     spec:
       priorityClassName: vixens-medium
@@ -205,7 +205,7 @@ spec:
             - -config
             - /etc/litestream.yml
           ports:
-            - containerPort: 9090
+            - containerPort: 9091
               name: metrics
           envFrom:
             - secretRef:
