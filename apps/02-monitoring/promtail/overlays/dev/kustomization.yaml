@@ -5,3 +5,13 @@ namespace: monitoring
 resources:
   - ../../base
   - ingress.yaml
+
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: promtail
+      spec:
+        replicas: 0

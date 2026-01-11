@@ -9,3 +9,10 @@ patches:
     target:
       kind: Deployment
       name: radarr
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: radarr
+      spec:
+        replicas: 0

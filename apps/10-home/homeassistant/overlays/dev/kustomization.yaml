@@ -7,3 +7,13 @@ resources:
   - ingress.yaml
   - ingressroute-udp.yaml
   - infisical-filebrowser-auth.yaml
+
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: homeassistant
+      spec:
+        replicas: 0

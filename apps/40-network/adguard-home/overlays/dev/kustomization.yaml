@@ -8,3 +8,10 @@ patches:
     target:
       kind: Deployment
       name: adguard-home
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: adguard-home
+      spec:
+        replicas: 0
