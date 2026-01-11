@@ -19,7 +19,7 @@ spec:
         valueFiles:
           - $values/apps/70-tools/stirling-pdf/base/values.yaml
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: dev
+      targetRevision: main
       ref: values
   destination:
     server: https://kubernetes.default.svc
