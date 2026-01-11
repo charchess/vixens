@@ -29,7 +29,7 @@ spec:
           effect: NoSchedule
       initContainers:
         - name: restore-db
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -97,7 +97,7 @@ spec:
               mountPath: /tv
               subPath: TV Show # Mounts /volume3/Content/TVShow
         - name: litestream
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
