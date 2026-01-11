@@ -9,3 +9,10 @@ patches:
     target:
       kind: Deployment
       name: prowlarr
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: prowlarr
+      spec:
+        replicas: 0

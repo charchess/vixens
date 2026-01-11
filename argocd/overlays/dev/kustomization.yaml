@@ -55,7 +55,7 @@ resources:
   - apps/lazylibrarian.yaml
   - apps/booklore.yaml
   - apps/frigate.yaml
-  # - apps/prowlarr.yaml
+  - apps/prowlarr.yaml
   # - apps/whisparr.yaml
   # - apps/mylar.yaml
   # - apps/jellyseerr.yaml
