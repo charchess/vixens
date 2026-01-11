@@ -10,5 +10,4 @@ data:
         replicas:
           - url: s3://$LITESTREAM_BUCKET/lidarr/lidarr.db
             endpoint: $LITESTREAM_ENDPOINT
-    metrics:
-      addr: ":9090"
+    addr: ":9090"
