@@ -19,3 +19,5 @@ Validation des aspects techniques (infra, logs, perfs).
 | **external-dns** | Architecture Secret | ✅ OK | 2026-01-07 | Séparation Secret/Binaire pour contourner cache ArgoCD |
 | **vaultwarden** | Probes / Stability | ✅ OK | 2026-01-07 | Liveness assouplie (60s) : Arrêt des CrashLoops |
 | **traefik** | Shared Middleware | ✅ OK | 2026-01-09 | Centralisation de redirect-https (namespace traefik) |
+| **renovate** | Priority Class | ✅ OK | 2026-01-11 | vixens-medium active on CronJob pods |
+| **renovate** | Base Branch | ✅ OK | 2026-01-11 | baseBranches set to main (ADR-017) |
