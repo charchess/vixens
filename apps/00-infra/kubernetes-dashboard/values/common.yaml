@@ -18,6 +18,12 @@ api:
   app:
     scheduling:
       tolerations: *tol
+  ingress:
+    enabled: false
+  extraArgs:
+    - --enable-skip-login
+    - --enable-insecure-login
+    - --token-ttl=43200
 
 auth:
   tolerations: *tol
@@ -36,6 +42,13 @@ metrics-scraper:
   app:
     scheduling:
       tolerations: *tol
+  enabled: true
 
 kong:
+  enabled: true
+  proxy:
+    http:
+      enabled: true
+    tls:
+      enabled: false
   tolerations: *tol
