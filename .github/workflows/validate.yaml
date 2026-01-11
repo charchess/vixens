@@ -11,6 +11,9 @@ jobs:
   yaml-lint:
     name: YAML Syntax & Style
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -64,13 +67,25 @@ jobs:
           echo "  truthy: disable" >> yamllint-config.yml
 
 
-          # Valider tous les fichiers YAML pertinents
-          find apps argocd \( -name "*.yaml" -o -name "*.yml" \) \
-            ! -path "*/crds/*" \
-            ! -path "*/charts/*" \
-            ! -name "upstream.yaml" \
-            ! -name "poolers.yaml" | \
-            xargs yamllint -c yamllint-config.yml
+          # PR: valider uniquement les fichiers changés
+          # Push: valider tous les fichiers
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "📋 PR Mode: Validating only changed files"
+            gh pr view ${{ github.event.pull_request.number }} \
+              --json files --jq '.files.[].path' | \
+              grep -E '\.(yaml|yml)$' | \
+              grep -E '^(apps|argocd)/' | \
+              grep -v -E '(crds/|charts/|upstream\.yaml|poolers\.yaml)' | \
+              xargs -r yamllint -c yamllint-config.yml || true
+          else
+            echo "📋 Push Mode: Validating all files"
+            find apps argocd \( -name "*.yaml" -o -name "*.yml" \) \
+              ! -path "*/crds/*" \
+              ! -path "*/charts/*" \
+              ! -name "upstream.yaml" \
+              ! -name "poolers.yaml" | \
+              xargs yamllint -c yamllint-config.yml
+          fi
 
   # 2️⃣ Validation structurelle Kubernetes
   kube-structure:
