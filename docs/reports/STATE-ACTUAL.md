@@ -41,9 +41,9 @@
 | **priority-classes**           | kube-system               | N/A     | N/A     | N/A     | N/A     | No VPA           | Unknown | N/A                     | -4        | None           | 0     |
 | **prometheus**                 | monitoring                | 100m    | N/A     | 128Mi   | 512Mi   | No VPA           | Small   | N/A                     | 5         | None           | 0     |
 | **prometheus-ingress**         | monitoring                | N/A     | N/A     | N/A     | N/A     | No VPA           | Unknown | N/A                     | 6         | None           | 0     |
-| **redis-shared**               | databases                 | N/A     | N/A     | N/A     | N/A     | 35m / 128Mi      | Unknown | N/A                     | -1        | None           | 0     |
+| **redis-shared**               | databases                 | N/A     | N/A     | N/A     | N/A     | 23m / 128Mi      | Unknown | N/A                     | -1        | None           | 0     |
 | **reloader**                   | tools                     | 10m     | 100m    | 128Mi   | 256Mi   | No VPA           | Small   | N/A                     | 10        | None           | 0     |
-| **renovate**                   | tools                     | N/A     | N/A     | N/A     | N/A     | No VPA           | Unknown | N/A                     | 20        | None           | 0     |
+| **renovate**                   | tools                     | N/A     | N/A     | N/A     | N/A     | No VPA           | Unknown | vixens-medium           | 20        | None           | 0     |
 | **synology-csi**               | synology-csi              | N/A     | N/A     | N/A     | N/A     | 11m / 63544758   | Unknown | N/A                     | 0         | None           | 0     |
 | **synology-csi-secrets**       | synology-csi              | N/A     | N/A     | N/A     | N/A     | No VPA           | Unknown | N/A                     | -1        | None           | 0     |
 | **traefik**                    | traefik                   | N/A     | N/A     | N/A     | N/A     | No VPA           | Unknown | N/A                     | 0         | None           | 0     |

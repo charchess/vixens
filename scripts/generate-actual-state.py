@@ -160,7 +160,7 @@ def main():
         print(content[:500] + "...")
     else:
         os.makedirs(os.path.dirname(args.output), exist_ok=True)
-        with open(args.output, 'w') as f:
+        with open(args.output, 'w', encoding='utf-8') as f:
             f.write(content)
         print(f"Report generated: {args.output}")
 
