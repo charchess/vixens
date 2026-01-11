@@ -77,13 +77,13 @@ def main():
                 score -= 10 # Rough scoring logic
 
         if score == 100:
-            status = "🟢 OK"
+            status = "✅ OK"
             summary["compliant"] += 1
         elif score > 70:
-            status = "🟡 PARTIAL"
+            status = "⚠️ PARTIAL"
             summary["partial"] += 1
         else:
-            status = "🔴 NOK"
+            status = "❌ NOK"
             summary["non_compliant"] += 1
 
         results.append({
@@ -96,9 +96,9 @@ def main():
     # Generate Report
     content = "# Conformity Report\n\n"
     content += f"**Total Apps:** {summary['total']}\n"
-    content += f"- 🟢 Compliant: {summary['compliant']}\n"
-    content += f"- 🟡 Partial: {summary['partial']}\n"
-    content += f"- 🔴 Non-compliant: {summary['non_compliant']}\n\n"
+    content += f"- ✅ Compliant: {summary['compliant']}\n"
+    content += f"- ⚠️ Partial: {summary['partial']}\n"
+    content += f"- ❌ Non-compliant: {summary['non_compliant']}\n\n"
     
     headers = ["App", "Status", "Score", "Issues"]
     content += "## Conformity Details\n\n"
@@ -106,7 +106,7 @@ def main():
     content += "\n"
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
-    with open(args.output, 'w') as f:
+    with open(args.output, 'w', encoding='utf-8') as f:
         f.write(content)
     
     print(f"Conformity report generated: {args.output}")
