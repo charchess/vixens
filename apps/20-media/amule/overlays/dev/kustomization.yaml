@@ -16,3 +16,10 @@ labels:
 spec:
   managedSecretReference:
     secretNamespace: media
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: amule
+      spec:
+        replicas: 0
