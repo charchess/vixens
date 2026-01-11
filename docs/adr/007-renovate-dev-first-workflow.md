@@ -1,15 +1,21 @@
 # ADR-007: Renovate Dev-First Workflow
 
 **Date:** 2025-12-28
-**Status:** ✅ Accepted
+**Status:** ⚠️ Superseded by ADR-017
 **Deciders:** System Architecture
 **Tags:** `renovate`, `gitops`, `workflow`, `automation`
 
+> **⚠️ WARNING: This ADR describes a deprecated 4-branch workflow.**
+> **Current workflow:** Pure trunk-based development (main branch only)
+> **See:** [ADR-017: Pure Trunk-Based Development](017-pure-trunk-based-single-branch.md)
+> **Renovate configuration needs update:** baseBranches: ["dev"] → baseBranches: ["main"]
+
 ## Context
 
-Vixens utilise un workflow de promotion strict à 4 étapes:
+~~Vixens utilise un workflow de promotion strict à 4 étapes:~~
 ```
-dev → test → staging → main (prod)
+~~dev → test → staging → main (prod)~~
+DEPRECATED - See ADR-017
 ```
 
 Les merges directs vers `main` sont interdits. Toute modification doit passer par le processus de promotion complet via `promote.sh`.

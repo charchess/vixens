@@ -146,7 +146,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: main
     path: apps/<category>/<app-name>/overlays/dev
   destination:
     server: https://kubernetes.default.svc
@@ -193,7 +193,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: main
     path: apps/04-databases/redis-shared/overlays/dev
   destination:
     server: https://kubernetes.default.svc
@@ -226,7 +226,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: main
     path: apps/01-storage/synology-csi/overlays/dev
   destination:
     server: https://kubernetes.default.svc
@@ -271,7 +271,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: main
     path: apps/70-tools/netbox/overlays/dev
   destination:
     server: https://kubernetes.default.svc
