@@ -50,7 +50,7 @@ spec:
               mountPath: /config
         # 2. Optionnel: Restauration SQLite (Litestream)
         - name: restore-db
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           args:
             - restore
             - -config
@@ -93,7 +93,7 @@ spec:
               mountPath: /config
         # 3. Optionnel: Sidecar Litestream
         - name: litestream
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           args:
             - replicate
             - -config
