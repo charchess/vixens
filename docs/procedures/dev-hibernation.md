@@ -141,6 +141,79 @@ Or remove the patch entirely to use the base value.
 
 ---
 
+## Quick Wake/Sleep Workflow for Dev Testing
+
+**For quick testing in dev without modifying Git, use the wake/sleep pattern.**
+
+### Concept
+
+1. **Default state in Git**: `replicas: 0` (hibernated)
+2. **Testing**: Temporarily wake up with `kubectl scale` + disable ArgoCD self-heal
+3. **After testing**: Re-enable self-heal → ArgoCD auto-syncs back to `replicas: 0`
+
+### Workflow Commands
+
+```bash
+# Quick commands (recommended)
+just wake <app-name>      # Sync + disable self-heal + scale to 1
+just sleep <app-name>     # Re-enable self-heal (ArgoCD resyncs to 0)
+
+# Manual workflow
+argocd app sync <app-name> --prune
+argocd app set <app-name> --self-heal=false
+kubectl scale deployment <app-name> -n <namespace> --replicas=1
+# ... test the application ...
+argocd app set <app-name> --self-heal=true  # ArgoCD will resync to replicas: 0
+```
+
+### Example: Testing HomeAssistant
+
+```bash
+# 1. Push your feature (if modifying the app)
+git push origin main
+
+# 2. Wake up the app
+just wake homeassistant
+# → ArgoCD syncs latest changes
+# → Disables self-heal
+# → Scales to 1 replica
+
+# 3. Wait for pod ready
+kubectl wait --for=condition=ready pod -l app=homeassistant -n homeassistant --timeout=300s
+
+# 4. Test your changes
+# ... validate the feature works ...
+
+# 5. Put back to sleep
+just sleep homeassistant
+# → Re-enables self-heal
+# → ArgoCD detects drift (replicas: 1 vs Git: 0)
+# → Auto-syncs back to replicas: 0
+```
+
+### Benefits
+
+✅ **Fast**: No Git commits for testing  
+✅ **Safe**: Git remains source of truth (replicas: 0)  
+✅ **GitOps-compliant**: ArgoCD auto-resyncs after testing  
+✅ **Simple**: 2 commands (wake/sleep)  
+✅ **Automatic cleanup**: Forgetting to sleep = ArgoCD resyncs after ~3min  
+
+### When to Use
+
+- **Quick feature testing** (< 1 hour)
+- **Validating deployments** after code changes
+- **Debugging** specific applications
+- **Iterative development** (wake → test → fix → test → sleep)
+
+### When NOT to Use
+
+- **Long-term active apps**: Modify Git overlay to `replicas: 1` instead
+- **Production**: Always use Git-based changes with PR
+- **Infrastructure apps**: Should never be hibernated
+
+---
+
 ## Workflow
 
 ### Before Testing Session
@@ -216,22 +289,34 @@ apps/04-databases/*
 
 ## Quick Reference Commands
 
-### Automated Commands (Planned - See vixens-6c9j)
+### Dev Testing (Recommended)
 
-The following commands will simplify hibernation management once implemented:
+Quick wake/sleep for testing without Git modifications:
 
 ```bash
-# Hibernate an application (set replicas=0 in overlay)
-just hibernate <app-name>
+# Wake up an app for testing
+just wake <app-name>
 
-# Wake up an application (set replicas=1 or remove patch)
-just unhibernate <app-name>
+# Put back to sleep after testing
+just sleep <app-name>
 
-# List all hibernated applications
+# List hibernated apps
 just hibernated
 ```
 
-**Status**: Not yet implemented. See Beads task `vixens-6c9j` for automation work.
+### GitOps Commands (Permanent Changes)
+
+For permanently changing hibernation state in Git:
+
+```bash
+# Hibernate an application (modify overlay to replicas=0)
+just hibernate <app-name>
+
+# Unhibernate permanently (modify overlay to replicas=1)
+just unhibernate <app-name>
+```
+
+**Note**: Use `wake/sleep` for testing, `hibernate/unhibernate` for permanent state changes.
 
 ### Manual Commands (Current Method)
 
