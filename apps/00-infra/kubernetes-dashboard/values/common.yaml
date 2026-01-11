@@ -22,8 +22,6 @@ api:
     enabled: false
   containers:
     args:
-      - --namespace=kubernetes-dashboard
-      - --metrics-scraper-service-name=kubernetes-dashboard-metrics-scraper
       - --token-ttl=43200
 
 auth:
