@@ -56,7 +56,7 @@ resources:
   - apps/booklore.yaml
   - apps/frigate.yaml
   - apps/prowlarr.yaml
-  # - apps/whisparr.yaml
+  - apps/whisparr.yaml
   # - apps/mylar.yaml
   # - apps/jellyseerr.yaml
   # - apps/jellyfin.yaml
