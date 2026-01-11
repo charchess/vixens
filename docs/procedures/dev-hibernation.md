@@ -25,61 +25,13 @@ Most applications in the dev environment should be put into hibernation mode whe
 
 ---
 
-## Hibernation Methods
+## Standard Hibernation Method: Git-Based Replicas Patch
 
-### Method 1: Scale to Zero (Preferred)
+**The official and ONLY method for hibernating applications in dev environment.**
 
-Best for applications that can be quickly restarted without data loss.
+### How It Works
 
-```bash
-# Hibernate
-kubectl scale deployment <app-name> -n <namespace> --replicas=0
-
-# Wake up
-kubectl scale deployment <app-name> -n <namespace> --replicas=1
-```
-
-**Advantages:**
-- Quick to hibernate/wake
-- No ArgoCD sync issues
-- PVC data preserved
-
-**Use For:**
-- Stateless applications
-- Applications with persistent storage
-- Quick testing iterations
-
-### Method 2: ArgoCD Suspend
-
-Best for complex applications or when you want ArgoCD to stop managing temporarily.
-
-```bash
-# Suspend ArgoCD sync
-kubectl patch application <app-name> -n argocd \
-  --type merge \
-  -p '{"spec":{"syncPolicy":null}}'
-
-# Then scale down
-kubectl scale deployment <app-name> -n <namespace> --replicas=0
-
-# Wake up: re-enable sync
-kubectl patch application <app-name> -n argocd \
-  --type merge \
-  -p '{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}'
-```
-
-**Advantages:**
-- Prevents ArgoCD from auto-healing
-- Useful for complex multi-resource apps
-
-**Use For:**
-- Complex applications (multiple deployments, statefulsets)
-- When testing manual changes
-- Long-term hibernation
-
-### Method 3: Git-Based Hibernation (Most GitOps-Compliant)
-
-Best for long-term hibernation or when coordinating across team.
+Applications are hibernated by patching their deployment replicas to 0 in the environment overlay:
 
 ```yaml
 # In apps/<category>/<app>/overlays/dev/kustomization.yaml
@@ -89,7 +41,6 @@ kind: Kustomization
 resources:
   - ../../base
 
-# Add replica override
 patches:
   - patch: |-
       apiVersion: apps/v1
@@ -97,18 +48,96 @@ patches:
       metadata:
         name: <app-name>
       spec:
-        replicas: 0
+        replicas: 0  # Hibernated
 ```
 
-**Advantages:**
-- Git-tracked (visible in version control)
-- Survives cluster resets
-- Clear intent in repository
+**Applications ALWAYS remain active in ArgoCD** (`argocd/overlays/dev/kustomization.yaml`). The hibernation state is managed entirely in the application's own overlay.
 
-**Use For:**
-- Long-term hibernation
-- Planned resource management
-- Clear documentation of hibernated apps
+### Advantages
+
+- **GitOps-compliant**: All state in Git, no manual kubectl commands
+- **Visible in ArgoCD**: App appears as "Synced" with 0 replicas (not disabled)
+- **Environment-specific**: Dev can be hibernated while prod stays active
+- **Clear intent**: Explicit replicas patch shows hibernation state
+- **Survives cluster resets**: Hibernation state persists through infrastructure changes
+- **No sync conflicts**: ArgoCD recognizes this as the desired state
+
+### Example: HomeAssistant (Already Hibernated)
+
+```yaml
+# apps/10-home/homeassistant/overlays/dev/kustomization.yaml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: homeassistant
+resources:
+  - ../../base
+  - ingress.yaml
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: homeassistant
+      spec:
+        replicas: 0  # ← Hibernated in dev
+```
+
+### Wake Up Process
+
+To wake up a hibernated application, simply change the replicas patch:
+
+```yaml
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: <app-name>
+      spec:
+        replicas: 1  # ← Active
+```
+
+Or remove the patch entirely to use the base value.
+
+### Step-by-Step: Hibernating a New Application
+
+1. **Navigate to the app's dev overlay:**
+   ```bash
+   cd apps/<category>/<app-name>/overlays/dev
+   ```
+
+2. **Edit or create `kustomization.yaml`:**
+   ```yaml
+   apiVersion: kustomize.config.k8s.io/v1beta1
+   kind: Kustomization
+   namespace: <namespace>
+   
+   resources:
+     - ../../base
+     # ... other resources
+   
+   patches:
+     - patch: |-
+         apiVersion: apps/v1
+         kind: Deployment
+         metadata:
+           name: <deployment-name>
+         spec:
+           replicas: 0
+   ```
+
+3. **Commit and push:**
+   ```bash
+   git add .
+   git commit -m "feat(dev): hibernate <app-name> - set replicas to 0"
+   git push
+   ```
+
+4. **Verify in ArgoCD:**
+   - App should show as "Synced" with 0/0 pods
+   - No "OutOfSync" warning
 
 ---
 
@@ -185,22 +214,26 @@ apps/04-databases/*
 
 ---
 
-## Quick Reference Commands (Recommended)
+## Quick Reference Commands
 
-Utilisez les commandes `just` pour une gestion GitOps simplifiée :
+### Automated Commands (Planned - See vixens-6c9j)
+
+The following commands will simplify hibernation management once implemented:
 
 ```bash
-# Mettre une application en hibernation (replicas=0)
+# Hibernate an application (set replicas=0 in overlay)
 just hibernate <app-name>
 
-# Réactiver une application (replicas=1)
+# Wake up an application (set replicas=1 or remove patch)
 just unhibernate <app-name>
 
-# Lister toutes les applications hibernées via Git
+# List all hibernated applications
 just hibernated
 ```
 
-### Manual Commands (Fallback)
+**Status**: Not yet implemented. See Beads task `vixens-6c9j` for automation work.
+
+### Manual Commands (Current Method)
 
 ```bash
 # List all deployments with 0 replicas (hibernated)
@@ -216,17 +249,15 @@ kubectl top pods -A
 
 ---
 
-## Automation Logic
+## Automation (Planned)
 
-Les commandes `just` effectuent les actions suivantes :
-1. Détection du répertoire de l'application dans `apps/`.
-2. Application d'un patch Kustomize `replicas: 0` (ou 1) dans `overlays/dev/kustomization.yaml`.
-3. Activation automatique dans ArgoCD (décommentage dans `argocd/overlays/dev/kustomization.yaml`).
-4. Commit GitOps automatique.
-5. Push sur la branche principale.
+Future automation via `just` commands will:
+1. Detect the application directory in `apps/`
+2. Add/modify the replicas patch in `overlays/dev/kustomization.yaml`
+3. Commit changes with descriptive message
+4. Push to main branch for ArgoCD auto-sync
 
-
-See Beads task: `vixens-xxxx` for automation implementation.
+See Beads task `vixens-6c9j` for implementation tracking.
 
 ---
 
@@ -238,9 +269,10 @@ See Beads task: `vixens-xxxx` for automation implementation.
 - PVC cleanup is separate operation (requires manual delete)
 
 ### ArgoCD Behavior
-- ArgoCD may auto-heal scaled-down apps if sync policy is automated
-- Use Method 2 (suspend sync) if ArgoCD fights hibernation
-- Method 3 (git-based) is GitOps-compliant and prevents auto-heal
+- Applications with `replicas: 0` appear as "Synced" in ArgoCD (desired state)
+- ArgoCD correctly recognizes the replicas patch as the intended configuration
+- No auto-heal conflicts since the git state matches the cluster state
+- Applications remain visible in ArgoCD UI (not disabled or removed)
 
 ### Resource Considerations
 - Hibernated apps still consume PVC storage
@@ -257,4 +289,4 @@ See Beads task: `vixens-xxxx` for automation implementation.
 
 ---
 
-**Last Updated:** 2026-01-11
+**Last Updated:** 2026-01-12
