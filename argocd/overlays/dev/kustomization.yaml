@@ -74,7 +74,7 @@ resources:
   - apps/netvisor.yaml
   - apps/authentik.yaml
   - apps/netbox.yaml
-  # - apps/loki.yaml
+  - apps/loki.yaml
   # - apps/promtail.yaml
   - apps/renovate.yaml
   # - apps/stirling-pdf.yaml
