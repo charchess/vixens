@@ -33,7 +33,7 @@ resources:
   - apps/synology-csi-secrets.yaml # Infisical secrets for Synology CSI (wave -1)
   - apps/synology-csi.yaml # Synology CSI driver
   - apps/nfs-storage.yaml # NFS PV/PVC
-  # - apps/mail-gateway.yaml                   # Mail gateway external service
+  - apps/mail-gateway.yaml                   # Mail gateway external service
   # - apps/homeassistant.yaml
   # - apps/mosquitto.yaml
   # - apps/birdnet-go.yaml
