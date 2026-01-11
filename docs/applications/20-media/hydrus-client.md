@@ -24,7 +24,7 @@ curl -L -k https://hydrus.dev.truxonline.com
 
 ## Notes Techniques
 - **Namespace :** `media`
-- **Standard Gold** : Implémenté (Check d'intégrité sqlite3 + Restauration conditionnelle Litestream).
+- **Standard Gold** : Implémenté (Check d'intégrité sqlite3 + Restauration conditionnelle Litestream + Métriques Prometheus).
 - **Storage** : PVC iSCSI de **40Gi** (augmenté pour gérer les volumineux sets de WAL Litestream).
 - **Optimisation** : Restauration de la base `caches` désactivée en init-container pour accélérer le boot (reconstruit par l'app).
 - **PriorityClass** : `vixens-medium`.
