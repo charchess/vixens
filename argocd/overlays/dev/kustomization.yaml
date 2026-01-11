@@ -15,7 +15,7 @@ resources:
   - apps/traefik-middlewares.yaml
   - apps/metrics-server.yaml
   - apps/vpa.yaml
-  # - apps/goldilocks.yaml                        # Traefik Ingress Controller
+  - apps/goldilocks.yaml                        # Traefik Ingress Controller
   - apps/reloader.yaml
   - apps/descheduler.yaml
   - apps/gitops-revision-controller.yaml
