@@ -13,7 +13,7 @@ data:
       "onboarding": false,
       "requireConfig": "optional",
       "repositories": ["charchess/vixens"],
-      "baseBranchPatterns": ["dev"],
+      "baseBranchPatterns": ["main"],
       "enabledManagers": ["terraform", "helm-values", "kubernetes", "regex"],
       "kubernetes": {
         "fileMatch": ["(^|/)kustomization\\.yaml$", "(^|/)[^/]*\\.yaml$"]
