@@ -22,7 +22,7 @@ spec:
           - $values/apps/40-network/external-dns-unifi/values/common.yaml
           - $values/apps/40-network/external-dns-unifi/values/dev.yaml
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: dev
+      targetRevision: main
       ref: values
   syncPolicy:
     automated:

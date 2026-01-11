@@ -13,7 +13,7 @@ spec:
   source:
     # Reverted to Kustomize source
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: main
     path: apps/70-tools/homepage/overlays/dev
   destination:
     server: https://kubernetes.default.svc
