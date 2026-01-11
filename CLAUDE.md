@@ -555,24 +555,41 @@ spec:
 
 ---
 
-## GitOps Workflow (Trunk-Based)
+## GitOps Workflow (Pure Trunk-Based)
 
-**Branches:** `dev` (development) and `main` (production)
+**Branch:** `main` (single source of truth)
 
-**Flow:**
-1. Work on `dev` branch
-2. Push changes: `git push origin dev`
-3. ArgoCD auto-syncs to dev cluster
-4. Validate in dev environment
-5. Promote to production: `gh workflow run promote-prod.yaml -f version=v1.2.3`
-6. ArgoCD auto-syncs to prod cluster
+**Environment Differentiation:**
+- **Dev**: ArgoCD watches `main` branch (HEAD)
+- **Prod**: ArgoCD watches `prod-stable` Git tag
 
-**Auto-Tagging:**
-- GitHub Action creates tag `dev-vX.Y.Z` after merge to `dev`
-- Promotion workflow uses tags for production
+**Development Flow:**
+1. Create feature branch from `main`
+2. Develop and commit changes
+3. Create PR to `main`: `gh pr create --base main --head feature/xyz`
+4. Merge PR → ArgoCD auto-syncs to **dev cluster**
+5. Validate in dev environment
 
-See [ADR-008](docs/adr/008-trunk-based-gitops-workflow.md) and [ADR-009](docs/adr/009-simplified-two-branch-workflow.md) for details.
+**Production Promotion:**
+1. After validation in dev: `gh workflow run promote-prod.yaml -f version=v1.2.3`
+2. Workflow moves `prod-stable` tag to current main HEAD
+3. ArgoCD auto-syncs to **prod cluster**
+
+**Rollback:**
+```bash
+# Move prod-stable tag to previous version
+git tag -f prod-stable prod-v1.2.2
+git push origin prod-stable --force
+```
+
+**Key Benefits:**
+- No merge conflicts between branches
+- Linear Git history
+- Faster dev deployment (no PR bottleneck)
+- Industry standard practice (Google, Netflix, Spotify)
+
+See [ADR-017](docs/adr/017-pure-trunk-based-single-branch.md) for details. Supersedes ADR-008/009.
 
 ---
 
-**Last Updated:** 2026-01-08
+**Last Updated:** 2026-01-11
