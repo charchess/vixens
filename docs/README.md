@@ -31,6 +31,7 @@ Practical step-by-step guides for common tasks:
 
 ### [reference/](reference/) - Technical References
 Detailed technical documentation:
+- **[Multi-Agent Orchestration](reference/multi-agent-orchestration.md)** - Multi-agent task orchestration (Claude, Gemini, coding-agent)
 - **[ArgoCD Sync Waves](reference/argocd-sync-waves.md)** - Sync wave patterns
 - **[Task Formalism](reference/task-formalism.md)** - Conventional commit task format
 - **[Kustomize Patterns](reference/kustomize-patterns.md)** - Common Kustomize patterns
@@ -95,6 +96,7 @@ Templates for creating new documentation:
 | Add a new application | [guides/adding-new-application.md](guides/adding-new-application.md) |
 | Push changes to production | [guides/gitops-workflow.md](guides/gitops-workflow.md) |
 | Create/manage Beads tasks | [guides/task-management.md](guides/task-management.md) |
+| Orchestrate multi-agent work | [reference/multi-agent-orchestration.md](reference/multi-agent-orchestration.md) |
 | Understand sync waves | [reference/argocd-sync-waves.md](reference/argocd-sync-waves.md) |
 | See naming conventions | [reference/naming-conventions.md](reference/naming-conventions.md) |
 | Find app documentation | [applications/](applications/) |
