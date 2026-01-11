@@ -1,36 +1,44 @@
 # GitOps Workflow
 
-This guide explains the trunk-based GitOps workflow for promoting changes from development to production.
+This guide explains the **pure trunk-based GitOps workflow** for the Vixens infrastructure.
 
 ---
 
 ## Overview
 
-**Workflow:** `dev` (development) → `main` (production via `prod-stable` tag)
+**Workflow:** Feature branch → `main` → Auto-deploy dev → Manual promotion to prod
 
-**Key Principle:** All changes start in `dev`, get validated, then promoted to `main` for production deployment.
+**Key Principle:** Single source of truth (`main` branch). Feature branches for all changes, direct merge to `main` via PR.
+
+**Reference:** [ADR-017: Pure Trunk-Based Development](../adr/017-pure-trunk-based-single-branch.md)
 
 ---
 
 ## Branch Strategy
 
-| Branch | Purpose | ArgoCD Target | Cluster |
-|--------|---------|---------------|---------|
-| `dev` | Development & testing | `dev` | Dev cluster |
-| `main` | Production-ready code | `prod-stable` | Prod cluster |
+| Branch | Purpose | ArgoCD Target | Cluster | Auto-Deploy |
+|--------|---------|---------------|---------|-------------|
+| `main` | Single source of truth | `main` (HEAD) | Dev cluster | ✅ Yes |
+| `prod-stable` (tag) | Production release | `prod-stable` | Prod cluster | ✅ Yes (after tag) |
+| `feature/*` | Development work | N/A | N/A | ❌ No |
 
-**Archived:** `test` and `staging` branches (no longer used)
+**Archived:** `dev`, `test`, and `staging` branches (ADR-017 migration)
 
 ---
 
 ## Standard Workflow
 
-### 1. Make Changes in Dev
+### 1. Create Feature Branch
 
 ```bash
-# Ensure you're on dev branch
-git checkout dev
-git pull origin dev
+# Start from latest main
+git checkout main
+git pull origin main
+
+# Create feature branch
+git checkout -b feature/add-new-service
+# OR: git checkout -b fix/resolve-issue
+# OR: git checkout -b refactor/cleanup-code
 
 # Make your changes
 # Edit files...
@@ -39,100 +47,149 @@ git pull origin dev
 git add .
 
 # Commit with conventional format
-git commit -m "feat: add new feature
+git commit -m "feat(media): add jellyfin application
 
-Detailed description of changes.
+Deploy Jellyfin media server with:
+- PVC for media storage
+- Ingress with HTTPS
+- Infisical secrets integration
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
-
-# Push to dev
-git push origin dev
 ```
 
-### 2. Validate in Dev Cluster
+### 2. Push and Create Pull Request
+
+```bash
+# Push feature branch
+git push origin feature/add-new-service
+
+# Create PR to main
+gh pr create --base main --head feature/add-new-service \
+  --title "feat(media): add jellyfin application" \
+  --body "## Summary
+
+Deploy Jellyfin media server for media streaming.
+
+## Changes
+
+- \`apps/20-media/jellyfin/\` - New application
+- ArgoCD Application manifest
+- Kustomize overlays for dev/prod
+
+## Test Plan
+
+- [ ] ArgoCD sync successful
+- [ ] Pod running
+- [ ] Ingress accessible
+- [ ] Storage mounted correctly
+
+## Validation
+
+\`\`\`bash
+kubectl -n media get pods
+curl -I https://jellyfin.dev.truxonline.com
+\`\`\`
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+```
+
+### 3. Wait for CI Checks and Review
+
+GitHub Actions will run validation checks:
+- YAML syntax and style
+- Kubernetes structure validation
+- ArgoCD application validation
+- Security best practices
+- Branch flow compliance
+
+**DO NOT** merge until all checks pass ✅
+
+### 4. Merge to Main (Auto-Deploy Dev)
+
+```bash
+# Merge PR (squash recommended)
+gh pr merge <pr-number> --squash --delete-branch
+
+# OR: via GitHub UI
+```
+
+**Result:** ArgoCD automatically syncs to **dev cluster** within 1-3 minutes.
+
+### 5. Validate in Dev Cluster
 
 ```bash
 # Set dev kubeconfig
 export KUBECONFIG=/root/vixens/terraform/environments/dev/kubeconfig-dev
 
 # Check ArgoCD sync status
-kubectl -n argocd get applications
+kubectl -n argocd get applications | grep jellyfin
 
 # Verify pods
-kubectl get pods -A
+kubectl -n media get pods -l app=jellyfin
 
 # Test functionality (web UI, APIs, etc.)
+curl -I https://jellyfin.dev.truxonline.com
+
+# Check logs
+kubectl -n media logs -l app=jellyfin --tail=50
 ```
 
 **Validation Checklist:**
-- [ ] ArgoCD apps synced and healthy
-- [ ] All pods running
+- [ ] ArgoCD app synced and healthy
+- [ ] Pods running (no crashes/restarts)
 - [ ] Web UI accessible (if applicable)
 - [ ] Functionality works as expected
 - [ ] No errors in logs
 - [ ] Secrets syncing correctly (if using Infisical)
+- [ ] Ingress HTTPS certificate valid
 
-### 3. Promote to Production
+### 6. Promote to Production
 
-**IMPORTANT:** Do NOT merge dev into main directly!
-
-#### Option A: Manual Promotion (Recommended)
+**IMPORTANT:** Production uses the `prod-stable` Git tag, NOT a branch!
 
 ```bash
-# Checkout main
+# After successful dev validation, promote to prod
+gh workflow run promote-prod.yaml -f version=v1.2.3
+
+# This GitHub Action will:
+# 1. Create/move prod-stable tag to current main HEAD
+# 2. Push tag to GitHub
+# 3. ArgoCD auto-syncs prod cluster from prod-stable tag
+```
+
+**Manual promotion (if workflow unavailable):**
+
+```bash
+# Tag current main as prod-stable
 git checkout main
 git pull origin main
+git tag -f prod-stable
+git push origin prod-stable --force
 
-# Cherry-pick commits from dev
-git log dev --oneline -10  # Find commit hash
-git cherry-pick <commit-hash>
-
-# OR: Merge specific changes
-git checkout main
-git checkout dev -- apps/path/to/changed/files
-git add .
-git commit -m "feat: promote feature to production
-
-Original commit: <commit-hash>
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
-
-# Push to main
-git push origin main
+# Verify ArgoCD syncs in prod
+export KUBECONFIG=/root/vixens/terraform/environments/prod/kubeconfig-prod
+kubectl -n argocd get applications
 ```
 
-#### Option B: Tag-based Promotion
-
-```bash
-# Tag the validated commit in dev
-git checkout dev
-git tag -a v1.2.3 -m "Release v1.2.3"
-git push origin v1.2.3
-
-# Merge to main
-git checkout main
-git merge v1.2.3
-git push origin main
-```
-
-### 4. Verify Production Deployment
+### 7. Verify Production Deployment
 
 ```bash
 # Set prod kubeconfig
 export KUBECONFIG=/root/vixens/terraform/environments/prod/kubeconfig-prod
 
 # Check ArgoCD sync
-kubectl -n argocd get applications
+kubectl -n argocd get applications | grep jellyfin
 
 # Verify pods
-kubectl get pods -A
+kubectl -n media get pods -l app=jellyfin
 
 # Test production URLs
-curl -I https://app.truxonline.com
+curl -I https://jellyfin.truxonline.com
+
+# Monitor for 5-10 minutes
+kubectl -n media get events --sort-by='.lastTimestamp' | tail -20
 ```
 
 ---
@@ -183,35 +240,39 @@ For urgent production fixes:
 # Create hotfix branch from main
 git checkout main
 git pull origin main
-git checkout -b hotfix/critical-fix
+git checkout -b hotfix/critical-security-fix
 
 # Make fix
 # Edit files...
 git add .
-git commit -m "fix: critical production issue
+git commit -m "fix(security): patch CVE-2024-12345
 
-Description of the fix.
+Critical security patch for exposed endpoint.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
-# Push hotfix
-git push origin hotfix/critical-fix
+# Push and create PR
+git push origin hotfix/critical-security-fix
+gh pr create --base main --head hotfix/critical-security-fix \
+  --title "fix(security): patch CVE-2024-12345" \
+  --body "## URGENT SECURITY FIX
 
-# Merge to main
-git checkout main
-git merge hotfix/critical-fix
-git push origin main
+Description of vulnerability and fix.
 
-# Backport to dev
-git checkout dev
-git merge hotfix/critical-fix
-git push origin dev
+## Validation
 
-# Delete hotfix branch
-git branch -d hotfix/critical-fix
-git push origin --delete hotfix/critical-fix
+Tested in dev cluster."
+
+# Fast-track approval and merge
+gh pr merge <pr-number> --squash --delete-branch
+
+# Validate in dev
+# ... validation steps ...
+
+# Fast promotion to prod (skip staging validation if critical)
+gh workflow run promote-prod.yaml -f version=v1.2.3-hotfix
 ```
 
 ---
@@ -220,67 +281,52 @@ git push origin --delete hotfix/critical-fix
 
 If production deployment fails:
 
-### Option 1: Revert Commit
+### Option 1: Revert via Git
 
 ```bash
-git checkout main
-git revert <bad-commit-hash>
-git push origin main
-```
-
-### Option 2: Hard Reset (Dangerous!)
-
-```bash
-# ONLY if safe (no other changes since)
-git checkout main
-git reset --hard <last-good-commit>
-git push origin main --force  # ⚠️ Requires force push
-```
-
-### Option 3: Redeploy Previous Version
-
-```bash
-# Find previous working commit
+# Identify bad commit
 git log main --oneline -10
 
-# Cherry-pick good commit
+# Create revert PR
 git checkout main
-git revert HEAD
-git cherry-pick <last-good-commit>
-git push origin main
+git pull origin main
+git checkout -b revert/bad-feature
+git revert <bad-commit-hash>
+git push origin revert/bad-feature
+
+# Create PR and merge
+gh pr create --base main --head revert/bad-feature \
+  --title "revert: rollback bad feature" \
+  --body "Reverts commit <hash> due to production issue."
+
+gh pr merge <pr-number> --squash --delete-branch
+
+# Promote reverted main to prod
+gh workflow run promote-prod.yaml -f version=v1.2.3-rollback
 ```
 
----
-
-## Pull Request Workflow (Optional)
-
-For team collaboration:
+### Option 2: Move prod-stable Tag Backward
 
 ```bash
-# Create feature branch from dev
-git checkout dev
-git checkout -b feature/new-feature
+# EMERGENCY ONLY: Move prod-stable to previous working commit
+git checkout main
+git log --oneline -20  # Find last working commit
 
-# Make changes
-git add .
-git commit -m "feat: new feature"
-git push origin feature/new-feature
+git tag -f prod-stable <last-good-commit>
+git push origin prod-stable --force
 
-# Create PR: feature/new-feature → dev
-gh pr create --base dev --head feature/new-feature \
-  --title "feat: new feature" \
-  --body "## Summary
-...
+# ArgoCD will auto-sync prod to previous version
+# Verify in prod cluster
+```
 
-## Test Plan
-...
+### Option 3: Manual ArgoCD Rollback
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+```bash
+# Via ArgoCD UI or CLI
+argocd app rollback <app-name> <previous-revision>
 
-# After approval & merge
-git checkout dev
-git pull origin dev
-git branch -d feature/new-feature
+# Verify
+kubectl -n <namespace> get pods
 ```
 
 ---
@@ -288,59 +334,115 @@ git branch -d feature/new-feature
 ## Best Practices
 
 ### DO ✅
-- Test thoroughly in dev before promoting to main
+- Always work in feature branches
+- Create PR for ALL changes (no direct push to main)
+- Wait for CI checks to pass before merging
+- Test thoroughly in dev before promoting to prod
 - Use conventional commit messages
-- Cherry-pick specific commits to main
-- Validate ArgoCD sync status
-- Keep dev and main synchronized
-- Document changes in commit messages
+- Squash merge PRs to keep main clean
+- Document changes in PR description
+- Monitor deployments for 5-10 minutes after promotion
 
 ### DON'T ❌
-- Push directly to main without testing in dev
-- Merge dev → main (creates merge commits)
-- Skip validation steps
-- Force push to main (unless rollback emergency)
+- Push directly to main (branch protection prevents this)
+- Skip CI/CD validation
+- Merge failing PRs
+- Force push to main (emergency only)
+- Promote to prod without dev validation
 - Commit secrets to Git
 - Use vague commit messages
+- Deploy on Friday afternoon (unless hotfix)
 
 ---
 
 ## Troubleshooting
 
-### ArgoCD not syncing after push
+### ArgoCD not syncing after merge
 
 ```bash
 # Check ArgoCD application
 kubectl -n argocd get application <app-name> -o yaml
 
+# Check sync status
+kubectl -n argocd get application <app-name> -o jsonpath='{.status.sync.status}'
+
 # Force refresh
-kubectl -n argocd patch application <app-name> \
-  --type merge \
-  --patch '{"operation":{"initiatedBy":{"username":"manual"}}}'
+argocd app get <app-name> --refresh
 
 # Manual sync
 argocd app sync <app-name>
 ```
 
-### Git conflicts during cherry-pick
+### Wrong targetRevision
 
 ```bash
-# Resolve conflicts manually
-git status
-# Edit conflicted files
-git add .
-git cherry-pick --continue
+# Dev cluster should point to main (HEAD)
+kubectl -n argocd get application vixens-app-of-apps -o jsonpath='{.spec.source.targetRevision}'
+# Output: main
+
+# Prod cluster should point to prod-stable (tag)
+kubectl -n argocd get application vixens-app-of-apps -o jsonpath='{.spec.source.targetRevision}'
+# Output: prod-stable
 ```
 
-### Wrong branch deployed
+### PR merge blocked by branch protection
 
 ```bash
-# Check ArgoCD targetRevision
-kubectl -n argocd get application vixens-app-of-apps -o yaml | grep targetRevision
+# Check required status checks
+gh pr checks <pr-number>
 
-# Should be:
-# - dev cluster: targetRevision: dev
-# - prod cluster: targetRevision: prod-stable
+# Wait for all checks to pass
+# If check is stuck, re-run via GitHub UI or:
+gh pr checks <pr-number> --watch
+
+# Check branch protection rules
+gh repo view --web
+# Navigate to: Settings > Branches > main
+```
+
+### Production deployment different from dev
+
+```bash
+# Compare commits
+git log main...prod-stable --oneline
+
+# Check if prod-stable tag is behind
+git log --oneline --graph --all
+
+# Promote latest main to prod
+gh workflow run promote-prod.yaml -f version=v1.2.4
+```
+
+---
+
+## Emergency Procedures
+
+### Complete Production Outage
+
+1. **Immediate rollback:**
+   ```bash
+   git tag -f prod-stable <last-known-good-commit>
+   git push origin prod-stable --force
+   ```
+
+2. **Verify recovery:**
+   ```bash
+   kubectl -n argocd get applications
+   kubectl get pods -A | grep -v Running
+   ```
+
+3. **Create incident report** in Beads
+4. **Root cause analysis** before re-deploying
+
+### ArgoCD Down
+
+```bash
+# If ArgoCD itself is down, manual kubectl needed
+kubectl apply -k apps/<app-path>/overlays/<env>/
+
+# Restart ArgoCD components
+kubectl -n argocd rollout restart deployment argocd-server
+kubectl -n argocd rollout restart deployment argocd-repo-server
 ```
 
 ---
@@ -348,10 +450,11 @@ kubectl -n argocd get application vixens-app-of-apps -o yaml | grep targetRevisi
 ## Related Documentation
 
 - [Adding New Application](adding-new-application.md) - Deploy new apps
-- [Task Management](task-management.md) - Archon workflow
-- [ADR-008: Trunk-Based GitOps](../adr/008-trunk-based-gitops-workflow.md)
-- [ADR-009: Two-Branch Workflow](../adr/009-simplified-two-branch-workflow.md)
+- [Task Management](task-management.md) - Beads workflow
+- [ADR-017: Pure Trunk-Based Development](../adr/017-pure-trunk-based-single-branch.md) ⭐
+- [ADR-008: Trunk-Based GitOps](../adr/008-trunk-based-gitops-workflow.md) (Superseded)
+- [ADR-009: Two-Branch Workflow](../adr/009-simplified-two-branch-workflow.md) (Superseded)
 
 ---
 
-**Last Updated:** 2025-12-30
+**Last Updated:** 2026-01-11 (ADR-017 migration)

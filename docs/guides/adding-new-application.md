@@ -418,7 +418,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/<your-org>/vixens.git
-    targetRevision: dev
+    targetRevision: main
     path: apps/<category>/<app-name>/overlays/dev
   destination:
     server: https://kubernetes.default.svc
@@ -479,8 +479,9 @@ git commit -m "feat: deploy <app-name> in <namespace> namespace
 
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
-# Push to dev branch
-git push origin dev
+# Push feature branch and create PR
+git push origin feature/add-<app-name>
+gh pr create --base main --head feature/add-<app-name>
 ```
 
 ### 11. Verify Deployment
