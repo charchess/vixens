@@ -21,3 +21,6 @@ Validation des aspects techniques (infra, logs, perfs).
 | **traefik** | Shared Middleware | ✅ OK | 2026-01-09 | Centralisation de redirect-https (namespace traefik) |
 | **renovate** | Priority Class | ✅ OK | 2026-01-11 | vixens-medium active on CronJob pods |
 | **renovate** | Base Branch | ✅ OK | 2026-01-11 | baseBranches set to main (ADR-017) |
+| **ArgoCD** | Resource Conflicts | ✅ Resolved | 2026-01-11 | Shared namespaces centralized, ownership conflicts fixed |
+| **mariadb-shared** | App Duplication | ✅ Fixed | 2026-01-11 | Removed duplicate mariadb-shared-config application |
+| **mariadb-shared** | Sync Waves | ✅ OK | 2026-01-11 | Internal sync waves (Secret -> StatefulSet) added |

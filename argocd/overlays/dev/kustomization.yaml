@@ -6,7 +6,7 @@ namespace: argocd
 resources:
   # All applications in apps/ subdirectory (new pattern)
   - apps/priority-classes.yaml
-  - apps/media-namespace.yaml
+  - apps/shared-namespaces.yaml
   # Infisical Operator for secrets management (wave -3)
   - apps/infisical-operator.yaml
   # Cilium L2 Announcements + LB IPAM (wave -2)
@@ -88,5 +88,4 @@ resources:
   # - apps/mealie.yaml
   # - apps/nocodb.yaml
   # - apps/vikunja.yaml
-  - apps/mariadb-shared.yaml
-  - apps/mariadb-shared-config.yaml
+  - apps/mariadb-shared.yaml\n
