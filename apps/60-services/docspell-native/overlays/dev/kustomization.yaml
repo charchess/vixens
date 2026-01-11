@@ -7,3 +7,13 @@ resources:
 labels:
   - pairs:
       environment: dev
+
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: docspell-native
+      spec:
+        replicas: 0

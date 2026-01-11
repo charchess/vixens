@@ -9,3 +9,13 @@ labels:
   - includeSelectors: false
     pairs:
       environment: dev
+
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: grafana-ingress
+      spec:
+        replicas: 0

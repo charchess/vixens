@@ -7,3 +7,13 @@ resources:
   - ingress.yaml
   - ingress-redirect.yaml
   - infisical-secret.yaml
+
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: homepage
+      spec:
+        replicas: 0

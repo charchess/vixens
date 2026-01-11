@@ -6,3 +6,13 @@ resources:
   - ../../base
   - infisical-mosquitto-auth.yaml
   - mosquitto-tcp-ingressroute.yaml
+
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: mosquitto
+      spec:
+        replicas: 0

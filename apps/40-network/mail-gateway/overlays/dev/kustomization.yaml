@@ -6,3 +6,13 @@ bases:
   - ../../base
 resources:
   - ingress.yaml
+
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: mail-gateway
+      spec:
+        replicas: 0
