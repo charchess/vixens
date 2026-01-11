@@ -9,3 +9,10 @@ patches:
     target:
       kind: Deployment
       name: mylar
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: mylar
+      spec:
+        replicas: 0
