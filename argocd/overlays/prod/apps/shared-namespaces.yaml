@@ -2,21 +2,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: media-namespace
+  name: shared-namespaces
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "-3"
 spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: main
-    path: apps/20-media/_namespace/base
+    targetRevision: prod-stable
+    path: apps/_shared/namespaces
   destination:
     server: https://kubernetes.default.svc
-    namespace: media
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true

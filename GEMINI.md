@@ -989,3 +989,5 @@ dev (development) → main (production)
 ---
 
 🤖 **Gemini agents can successfully work on this project using standard CLI tools and this guide.**
+
+prends connaissance de @AGENTS.md

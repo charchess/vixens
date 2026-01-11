@@ -762,12 +762,36 @@ promote-prod:
 # ============================================
 
 # Générer tous les rapports d'état (Actual, Conformity, Status)
-reports:
-    @echo "📊 Génération des rapports d'état..."
-    @python3 scripts/generate-actual-state.py --env dev
-    @python3 scripts/conformity-checker.py
-    @python3 scripts/generate-status-report.py
-    @echo "✅ Rapports générés dans docs/reports/"
+reports env="all":
+    #!/usr/bin/env bash
+    if [ "{{env}}" == "all" ]; then
+        echo "📊 Génération des rapports consolidés (DEV + PROD)..."
+        # DEV
+        python3 scripts/generate-actual-state.py --env dev --output docs/reports/STATE-ACTUAL-dev.md --json-output docs/reports/STATE-dev.json
+        python3 scripts/conformity-checker.py --actual docs/reports/STATE-ACTUAL-dev.md --output docs/reports/CONFORMITY-dev.md
+        # PROD
+        python3 scripts/generate-actual-state.py --env prod --output docs/reports/STATE-ACTUAL-prod.md --json-output docs/reports/STATE-prod.json
+        python3 scripts/conformity-checker.py --actual docs/reports/STATE-ACTUAL-prod.md --output docs/reports/CONFORMITY-prod.md
+        # CONSOLIDATED
+        python3 scripts/generate-status-report.py \
+            --dev-state docs/reports/STATE-dev.json \
+            --prod-state docs/reports/STATE-prod.json \
+            --dev-conformity docs/reports/CONFORMITY-dev.md \
+            --prod-conformity docs/reports/CONFORMITY-prod.md
+        # Final cleanup for main files
+        cp docs/reports/STATE-ACTUAL-prod.md docs/reports/STATE-ACTUAL.md
+        echo "✅ Rapports consolidés générés dans docs/reports/"
+    else
+        echo "📊 Génération des rapports d'état pour l'environnement {{env}}..."
+        python3 scripts/generate-actual-state.py --env {{env}} --output docs/reports/STATE-ACTUAL.md
+        python3 scripts/conformity-checker.py --actual docs/reports/STATE-ACTUAL.md --output docs/reports/CONFORMITY-REPORT.md
+        if [ "{{env}}" == "dev" ]; then
+            python3 scripts/generate-status-report.py --dev-conformity docs/reports/CONFORMITY-REPORT.md
+        else
+            python3 scripts/generate-status-report.py --prod-conformity docs/reports/CONFORMITY-REPORT.md
+        fi
+        echo "✅ Rapports générés dans docs/reports/"
+    fi
 
 # ============================================
 # UTILITAIRES

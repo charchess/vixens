@@ -3,6 +3,8 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mariadb-shared
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   serviceName: mariadb-shared
   replicas: 1
