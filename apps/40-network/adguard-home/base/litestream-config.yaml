@@ -14,5 +14,4 @@ data:
         replicas:
           - url: s3://$LITESTREAM_BUCKET/adguard-home/stats.db
             endpoint: $LITESTREAM_ENDPOINT
-    metrics:
-      addr: ":9090"
+    addr: ":9090"
