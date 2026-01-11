@@ -37,10 +37,10 @@ resources:
   # - apps/homeassistant.yaml
   # - apps/mosquitto.yaml
   # - apps/birdnet-go.yaml
-  # - apps/prometheus.yaml # Prometheus standalone monitoring
-  # - apps/prometheus-ingress.yaml             # Prometheus IngressRoutes
-  # - apps/grafana.yaml                        # Grafana standalone monitoring
-  # - apps/grafana-ingress.yaml # Grafana IngressRoutes with HTTP→HTTPS redirect
+  - apps/prometheus.yaml # Prometheus standalone monitoring
+  - apps/prometheus-ingress.yaml             # Prometheus IngressRoutes
+  - apps/grafana.yaml                        # Grafana standalone monitoring
+  - apps/grafana-ingress.yaml # Grafana IngressRoutes with HTTP→HTTPS redirect
   # - apps/homepage.yaml
   # - apps/linkwarden.yaml
   # - apps/gluetun.yaml
@@ -70,7 +70,7 @@ resources:
   # - apps/docspell.yaml # OLD Helm-based (deprecated, use docspell-native)
   # - apps/docspell-native.yaml
   # - apps/changedetection.yaml
-  - apps/adguard-home.yaml
+  # - apps/adguard-home.yaml
   # - apps/netvisor.yaml
   - apps/authentik.yaml
   # - apps/netbox.yaml
