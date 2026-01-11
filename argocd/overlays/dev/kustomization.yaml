@@ -71,7 +71,7 @@ resources:
   - apps/docspell-native.yaml
   - apps/changedetection.yaml
   - apps/adguard-home.yaml
-  # - apps/netvisor.yaml
+  - apps/netvisor.yaml
   - apps/authentik.yaml
   # - apps/netbox.yaml
   # - apps/loki.yaml
