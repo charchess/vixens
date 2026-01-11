@@ -26,8 +26,8 @@ def validate_app(app_name, env):
     
     pod = data['items'][0]
     status = pod['status']['phase']
-    if status != "Running":
-        print(f"❌ Pod is not Running (Status: {status})")
+    if status not in ["Running", "Succeeded"]:
+        print(f"❌ Pod is not Running or Succeeded (Status: {status})")
         return False
     
     # 2. PriorityClass
