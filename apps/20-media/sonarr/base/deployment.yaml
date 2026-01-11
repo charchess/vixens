@@ -18,6 +18,9 @@ spec:
         app: sonarr
       annotations:
         reloader.stakater.com/auto: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
     spec:
       priorityClassName: vixens-medium
       tolerations:
@@ -102,6 +105,9 @@ spec:
             - replicate
             - -config
             - /etc/litestream.yml
+          ports:
+            - containerPort: 9090
+              name: metrics
           resources:
             requests:
               cpu: 10m

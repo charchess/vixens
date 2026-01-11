@@ -22,3 +22,5 @@ data:
         replicas:
           - url: s3://$LITESTREAM_BUCKET/hydrus-client/client.caches.db
             endpoint: $LITESTREAM_ENDPOINT
+    metrics:
+      addr: ":9090"
