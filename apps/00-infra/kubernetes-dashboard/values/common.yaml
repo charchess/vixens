@@ -21,8 +21,7 @@ api:
   ingress:
     enabled: false
   containers:
-    args:
-      - --token-ttl=43200
+    args: []
 
 auth:
   tolerations: *tol
