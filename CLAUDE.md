@@ -30,6 +30,9 @@ En cas de conflit entre WORKFLOW.md et ce fichier, **WORKFLOW.md a toujours rais
 - **🔍 Looking for app documentation?** → [docs/applications/](docs/applications/)
 - **❓ Troubleshooting an issue?** → [docs/troubleshooting/](docs/troubleshooting/)
 - **🏗️ Architecture decisions?** → [docs/adr/](docs/adr/)
+- **⭐ Application quality standards?** → [docs/reference/quality-standards.md](docs/reference/quality-standards.md)
+- **🧪 Testing applications?** → [docs/procedures/application-testing.md](docs/procedures/application-testing.md)
+- **💤 Hibernating dev apps?** → [docs/procedures/dev-hibernation.md](docs/procedures/dev-hibernation.md)
 
 **IMPORTANT:** Documentation is now organized in `docs/` with clear categories (guides, reference, procedures, adr, reports). Always check `docs/README.md` first to find what you need.
 
@@ -81,17 +84,36 @@ bd close <task_id>                  # Mark complete
 - `just work <id>` orchestrates the full workflow (prereqs, doc, validation)
 - NEVER use Archon or TodoWrite for tasks
 
-**Assignee Convention:**
-- `coding-agent` = Claude Code (you)
+**Multi-Agent Support:**
+- `claude` = Claude Code (you) - Code analysis, architecture, documentation
+- `gemini` = Gemini Agent - Automation, workflows, batch processing
+- `coding-agent` = Generic agent (can be taken by any agent)
 - `user` = Human user
+
+**Agent Commands:**
+```bash
+just agents              # List available agents and capabilities
+just workload            # See workload by agent
+just assign <id> <agent> # Assign task to specific agent
+just claim <id>          # Claim task for current agent
+```
+
+See [docs/reference/multi-agent-orchestration.md](docs/reference/multi-agent-orchestration.md) for complete guide.
 
 ### 2. Just - Workflow Orchestration
 
 **Commands defined in `justfile`:**
 ```bash
+# Workflow commands
 just resume              # Find/resume current work
-just work <task_id>      # Full workflow orchestration
+just start <task_id>     # Start a task (preserves assignee)
 just burst <title>       # Quickly capture task ideas
+
+# Multi-agent orchestration (NEW)
+just agents              # List agents and capabilities
+just workload            # Show workload by agent
+just assign <id> <agent> # Assign task to agent (claude/gemini/coding-agent)
+just claim <id>          # Claim task for current agent
 ```
 
 **What `just work` does:**
@@ -124,6 +146,13 @@ uv run index-project     # Index project for performance
 - Memory persistence (write_memory, read_memory)
 
 **Use Serena for:** Reading/editing code, analyzing symbols, searching patterns.
+
+**IMPORTANT - Serena Usage Rules:**
+- ✅ **DO use Serena for:** Code editing, file reading, symbol analysis, pattern search
+- ❌ **DO NOT use Serena for:** Executing local commands (kubectl, git, bd, just, etc.)
+- ❌ **DO NOT use execute_shell_command:** Use Bash tool for shell commands instead
+- Serena = Code operations ONLY
+- Bash = System operations (git, kubectl, terraform, etc.)
 
 ### 4. Archon - Knowledge Base (RAG ONLY)
 
@@ -292,6 +321,34 @@ vixens/
 ---
 
 ## Development Workflow
+
+### Focus on Current Task
+
+**CRITICAL DISCIPLINE:** Always focus on the task at hand.
+
+**Rules:**
+1. ✅ **Work on ONE task at a time** (marked as `in_progress` in Beads)
+2. ✅ **Complete the current task** before starting a new one
+3. ✅ **Resist scope creep** - If you discover new work, create a Beads task for it
+4. ✅ **Close the task** when done before moving to the next
+5. ❌ **Do NOT start unrelated work** even if you notice issues
+6. ❌ **Do NOT refactor unrelated code** unless explicitly asked
+
+**When you discover new work:**
+```bash
+# Create a task for later
+bd create --title="fix: discovered issue in <component>" --type=bug --priority=2
+
+# Continue with current task
+# Do NOT switch to the new task immediately
+```
+
+**Benefits:**
+- Clear progress tracking
+- Easier debugging (know what changed)
+- Better git history
+- Reduced cognitive load
+- Fewer merge conflicts
 
 ### Task-Driven Development (Beads + Just)
 
@@ -511,10 +568,55 @@ spec:
 - Prod: `<app>.truxonline.com`
 
 ### Design Principles
-- **DRY (Don't Repeat Yourself):** Use shared resources when possible
-- **Maintainability:** Clear structure, good documentation
-- **State of the Art:** Follow Kubernetes/GitOps best practices
-- **Reproducibility:** Everything in git, infrastructure as code
+
+**MANDATORY for ALL work in this repository:**
+
+#### 1. DRY (Don't Repeat Yourself)
+- **Never duplicate code/configuration** - create shared resources instead
+- Use Kustomize bases and overlays for common patterns
+- Extract common values to `_shared/` directory
+- If you copy-paste, you're doing it wrong
+
+**Examples:**
+- Shared Helm values in `apps/_shared/helm-values/`
+- Common Kustomize components in `apps/_shared/components/`
+- Reusable Terraform modules in `terraform/modules/`
+
+#### 2. State of the Art
+- **Follow industry best practices** for Kubernetes/GitOps
+- Use latest stable versions when upgrading
+- Follow Kubernetes resource best practices (limits, probes, labels)
+- Implement proper observability (metrics, logs, traces)
+- Follow 12-factor app principles
+
+**Required Standards:**
+- All services must have health checks (Elite tier requires liveness probe)
+- All services must expose metrics
+- All services must have proper resource requests/limits
+- All ingress must use HTTPS with proper certificates
+
+#### 3. GitOps First
+- **Everything in Git** - no manual kubectl apply in production
+- All changes go through PR review
+- ArgoCD is the source of truth for cluster state
+- Infrastructure as Code with Terraform
+- Declarative configuration only
+
+**Exceptions:**
+- Dev environment: kubectl allowed for troubleshooting (must be consolidated to GitOps after)
+- Emergency production fixes: document and backport to Git immediately
+
+#### 4. Best Practices
+- **Security:** Follow security best practices (least privilege, secrets management, network policies)
+- **Reliability:** Implement proper HA, backups, monitoring
+- **Performance:** Resource optimization, efficient storage usage
+- **Maintainability:** Clear documentation, consistent naming, logical structure
+
+**Enforcement:**
+- Validation scripts check for common issues
+- PR reviews ensure compliance
+- Documentation must be updated with code changes
+- ADRs document architectural decisions
 
 ---
 
@@ -555,24 +657,41 @@ spec:
 
 ---
 
-## GitOps Workflow (Trunk-Based)
+## GitOps Workflow (Pure Trunk-Based)
 
-**Branches:** `dev` (development) and `main` (production)
+**Branch:** `main` (single source of truth)
 
-**Flow:**
-1. Work on `dev` branch
-2. Push changes: `git push origin dev`
-3. ArgoCD auto-syncs to dev cluster
-4. Validate in dev environment
-5. Promote to production: `gh workflow run promote-prod.yaml -f version=v1.2.3`
-6. ArgoCD auto-syncs to prod cluster
+**Environment Differentiation:**
+- **Dev**: ArgoCD watches `main` branch (HEAD)
+- **Prod**: ArgoCD watches `prod-stable` Git tag
 
-**Auto-Tagging:**
-- GitHub Action creates tag `dev-vX.Y.Z` after merge to `dev`
-- Promotion workflow uses tags for production
+**Development Flow:**
+1. Create feature branch from `main`
+2. Develop and commit changes
+3. Create PR to `main`: `gh pr create --base main --head feature/xyz`
+4. Merge PR → ArgoCD auto-syncs to **dev cluster**
+5. Validate in dev environment
 
-See [ADR-008](docs/adr/008-trunk-based-gitops-workflow.md) and [ADR-009](docs/adr/009-simplified-two-branch-workflow.md) for details.
+**Production Promotion:**
+1. After validation in dev: `gh workflow run promote-prod.yaml -f version=v1.2.3`
+2. Workflow moves `prod-stable` tag to current main HEAD
+3. ArgoCD auto-syncs to **prod cluster**
+
+**Rollback:**
+```bash
+# Move prod-stable tag to previous version
+git tag -f prod-stable prod-v1.2.2
+git push origin prod-stable --force
+```
+
+**Key Benefits:**
+- No merge conflicts between branches
+- Linear Git history
+- Faster dev deployment (no PR bottleneck)
+- Industry standard practice (Google, Netflix, Spotify)
+
+See [ADR-017](docs/adr/017-pure-trunk-based-single-branch.md) for details. Supersedes ADR-008/009.
 
 ---
 
-**Last Updated:** 2026-01-08
+**Last Updated:** 2026-01-11

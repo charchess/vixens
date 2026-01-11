@@ -28,6 +28,33 @@ just create-task         # Créer tâche (template guidé)
 just lint                # Valider YAML
 ```
 
+### Assignations Agents
+
+**Qui peut prendre quelles tâches:**
+
+- **`coding-agent`** - Tâches génériques (assignation par défaut)
+  - Peut être prise par: Claude, Gemini, autres agents
+
+- **`claude`** - Tâches spécifiques Claude
+  - Peut prendre: tâches `claude` ET tâches `coding-agent`
+
+- **`gemini`** - Tâches spécifiques Gemini
+  - Peut prendre: tâches `gemini` ET tâches `coding-agent`
+
+**En pratique:**
+```bash
+# Créer tâche pour tous agents
+bd create --title="..." --assignee=coding-agent
+
+# Créer tâche spécifique Claude
+bd create --title="..." --assignee=claude
+
+# Créer tâche spécifique Gemini
+bd create --title="..." --assignee=gemini
+
+# just resume fonctionne pour tous (claude, gemini, coding-agent)
+```
+
 ---
 
 ## 📋 Les 7 Phases du Workflow
@@ -108,25 +135,30 @@ just lint                # Valider YAML
 ---
 
 ### Phase 4: DEPLOYMENT
-**Objectif:** Commit + Push + Wait ArgoCD sync ⭐ CRITIQUE
+**Objectif:** Commit + Push via PR + Wait ArgoCD sync ⭐ CRITIQUE
 
 ✅ À faire:
-1. Vérifier branch: `git branch --show-current` (doit être `dev`)
-2. Commit: `git add . && git commit -m "..."`
-3. Push: `git push origin dev`
-4. Attendre ArgoCD sync: `just wait-argocd <app_name>`
-5. Vérifier: Sync=Synced, Health=Healthy
+1. Créer feature branch: `git checkout -b fix/<app-name>` ou `feat/<app-name>`
+2. Commit changements: `git add . && git commit -m "fix(app): description"`
+3. Push feature branch: `git push origin fix/<app-name>`
+4. Créer PR: `gh pr create --base main --head fix/<app-name>`
+5. Merger PR: Auto-merge après checks OU merge manuel
+6. ArgoCD auto-sync dev depuis main (après merge)
+7. Attendre sync: `just wait-argocd <app_name>`
+8. Vérifier: Sync=Synced, Health=Healthy
 
 ❌ INTERDICTIONS:
-- ❌ Push vers `main` (uniquement via PR)
+- ❌ Push directement vers `main` (branch protégée, repository rules)
 - ❌ Créer des tags manuellement
 - ❌ Avancer avant ArgoCD Synced+Healthy
 - ❌ `kubectl apply/edit` direct
 
 📜 Règles:
-- Branch: Toujours `dev` pour développement
-- GitOps: `git push` → ArgoCD auto-sync
-- Attente: ArgoCD peut prendre 1-3 minutes
+- **Feature branch OBLIGATOIRE** (main protégée par repository rules)
+- Naming: `fix/<app>`, `feat/<app>`, `chore/<app>`, `docs/<app>`
+- PR required checks: YAML lint, ArgoCD structure, Security
+- GitOps: PR merge → ArgoCD auto-sync dev
+- Attente: ArgoCD peut prendre 1-3 minutes après merge
 - Vérification: Synced + Healthy obligatoires
 
 **Commande:** `just next <task_id>` (vérifie ArgoCD status)
@@ -169,15 +201,29 @@ just lint                # Valider YAML
 
 🎯 PROMOTION PRODUCTION:
 1. Validé sur dev ✅
-2. Pour déployer en prod:
-   - Créer PR: `dev → main`
-   - Attendre review + merge
-   - Tag auto-créé: `prod-vX.Y.Z`
-   - ArgoCD sync automatique sur prod cluster
-3. Ne JAMAIS push direct sur `main`
-4. Ne JAMAIS créer de tag manuellement
+2. Promouvoir vers prod:
+   ```bash
+   gh workflow run promote-prod.yaml -f version=vX.Y.Z
+   ```
+3. Attendre déploiement prod (ArgoCD auto-sync depuis tag `prod-stable`)
+4. **Valider prod:**
+   ```bash
+   # Switch to prod kubeconfig
+   export KUBECONFIG=/path/to/prod/kubeconfig
+   
+   # Validate deployment
+   python3 scripts/validate.py <app_name> prod
+   just wait-argocd <app_name>  # If needed
+   ```
+5. Si validation prod OK → **Fermer tâche**
+6. Si validation prod échoue → **Rollback et corriger**
 
-**Commande:** `just close <task_id>` (vérifie validation + déploiement OK)
+**Important:**
+- Ne JAMAIS créer tag `prod-stable` manuellement
+- Promotion via GitHub Actions workflow uniquement
+- **Toujours valider prod avant de fermer**
+
+**Commande:** `just close <task_id>` (vérifie validation dev + déploiement OK)
 
 ---
 
@@ -186,8 +232,9 @@ just lint                # Valider YAML
 ### GitOps ONLY
 - ❌ **ZERO** `kubectl apply/edit/delete` direct
 - ✅ Tout passe par Git → ArgoCD auto-sync
-- ✅ Dev: push → `dev` branch
-- ✅ Prod: PR `dev → main` → auto-tag → ArgoCD sync
+- ✅ Dev: Feature branch → PR → merge main → ArgoCD sync
+- ✅ Prod: Promotion via workflow → tag `prod-stable` → ArgoCD sync
+- ⚠️ **Main branch PROTÉGÉE** (repository rules) → PR obligatoire
 
 ### DRY (Don't Repeat Yourself)
 - ✅ Réutiliser `apps/_shared/` pour resources communes
@@ -204,11 +251,11 @@ just lint                # Valider YAML
 - ✅ Phase 5 (Validation) → `scripts/validate.py` DOIT passer
 - ❌ NE PAS fermer sans ces deux étapes
 
-### Production via PR UNIQUEMENT
-- ❌ JAMAIS push direct sur `main`
-- ❌ JAMAIS créer tag manuellement
-- ✅ TOUJOURS passer par PR `dev → main`
-- ✅ Tags auto: `prod-vX.Y.Z` créés par GitHub Actions
+### Production via Workflow UNIQUEMENT
+- ❌ JAMAIS créer tag `prod-stable` manuellement
+- ❌ JAMAIS push force sur `main`
+- ✅ TOUJOURS utiliser workflow: `gh workflow run promote-prod.yaml`
+- ✅ Tag `prod-stable` déplacé automatiquement par GitHub Actions
 
 ---
 
@@ -243,9 +290,15 @@ just next vixens-abc123  # Vérifie qu'il y a des changements
 
 # 7. Phase 4: DEPLOYMENT
 just resume
+# Créer feature branch
+git checkout -b feat/app-feature
 git add .
 git commit -m "feat(app): description"
-git push origin dev
+git push origin feat/app-feature
+# Créer et merger PR
+gh pr create --base main --head feat/app-feature --title "feat(app): description"
+gh pr merge --auto --squash  # Auto-merge après checks
+# ArgoCD auto-sync dev depuis main (après merge)
 just wait-argocd <app_name>  # Attendre sync
 just next vixens-abc123  # Vérifie ArgoCD status
 
@@ -258,12 +311,12 @@ just resume
 # Mettre à jour docs/applications/<category>/<app>.md
 # Mettre à jour docs/STATUS.md
 git add docs/ && git commit -m "docs(app): update deployment status"
-git push origin dev
+git push origin main
 just close vixens-abc123
 
-# 10. Promotion production (optionnel)
-gh pr create --base main --head dev --title "Release vX.Y.Z"
-# Review + Merge → tag auto → ArgoCD sync prod
+# 10. Promotion production (après validation complète en dev)
+gh workflow run promote-prod.yaml -f version=v1.2.3
+# Déplace prod-stable tag vers HEAD de main → ArgoCD sync prod
 ```
 
 ---
@@ -355,26 +408,69 @@ spec:
 ## 🚀 Workflow GitOps (Trunk-Based)
 
 ### Branches
-- **`dev`** - Développement (cluster dev)
-- **`main`** - Production (cluster prod)
+- **`main`** - Unique branche (trunk-based development)
 
-### Flux
-1. Développement sur `dev`
-2. Push vers `dev`: `git push origin dev`
-3. ArgoCD auto-sync sur cluster dev
-4. Validation en dev (phase 5)
-5. Promotion: PR `dev → main`
-6. Review + Merge
-7. GitHub Actions crée tag `prod-vX.Y.Z`
-8. ArgoCD auto-sync sur cluster prod
+### Environnements
+- **Dev**: ArgoCD watch `main` branch (HEAD)
+- **Prod**: ArgoCD watch `prod-stable` tag
 
-### Règles
-- ❌ JAMAIS commit direct sur `main`
-- ❌ JAMAIS push force
-- ❌ JAMAIS créer tag manuellement
-- ✅ TOUJOURS passer par PR pour production
+### Flux Réel
+1. **Développement sur feature branch** (main est protégée)
+   ```bash
+   git checkout -b fix/app-name  # ou feat/, chore/, docs/
+   # Coder et tester localement
+   git add . && git commit -m "fix(app): description"
+   git push origin fix/app-name
+   ```
 
-Voir [ADR-008](docs/adr/008-trunk-based-gitops-workflow.md) et [ADR-009](docs/adr/009-simplified-two-branch-workflow.md) pour détails.
+2. **Pull Request vers main**
+   ```bash
+   gh pr create --base main --head fix/app-name
+   # Required checks: YAML lint, ArgoCD structure, Security
+   ```
+
+3. **Merge PR → ArgoCD auto-sync dev**
+   ```bash
+   gh pr merge --auto --squash  # Après checks passés
+   # ArgoCD détecte le nouveau commit sur main
+   # Auto-sync vers cluster dev (1-3 minutes)
+   ```
+
+4. **Validation dev** (Phase 5)
+   ```bash
+   python3 scripts/validate.py <app> dev
+   just wait-argocd <app_name>
+   ```
+
+5. **Promotion prod**
+   ```bash
+   gh workflow run promote-prod.yaml -f version=v1.2.3
+   # Workflow déplace tag prod-stable vers HEAD de main
+   ```
+
+6. **ArgoCD auto-sync prod**
+   ```bash
+   # ArgoCD prod watch le tag prod-stable
+   # Auto-sync vers cluster prod (1-3 minutes)
+   ```
+
+7. **Validation prod + Fermeture**
+   ```bash
+   export KUBECONFIG=/path/to/prod/kubeconfig
+   python3 scripts/validate.py <app> prod
+   bd close <task_id>  # Si validation OK
+   ```
+
+### Règles Critiques
+- ❌ **JAMAIS push direct sur `main`** (branch protégée par repository rules)
+- ✅ **Feature branch OBLIGATOIRE** pour tous les changements
+- ✅ **PR required** avec checks passés
+- ❌ JAMAIS push force sur `main`
+- ❌ JAMAIS créer tag `prod-stable` manuellement
+- ✅ Promotion production via GitHub Actions workflow uniquement
+- ✅ **Valider prod avant de fermer** la tâche
+
+Voir [ADR-017](docs/adr/017-pure-trunk-based-single-branch.md) pour détails (supersède ADR-008/009).
 
 ---
 
@@ -423,6 +519,6 @@ kubectl -n argocd describe application <app_name>
 
 ---
 
-**Last Updated:** 2026-01-09
+**Last Updated:** 2026-01-11
 
-**Version:** 2.0 (State Machine GitOps)
+**Version:** 3.0 (Non-Interactive GitOps - Feature Branch Required)

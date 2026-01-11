@@ -20,6 +20,9 @@ spec:
         app: frigate
       annotations:
         reloader.stakater.com/auto: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
     spec:
       priorityClassName: vixens-high
       tolerations:
@@ -47,7 +50,7 @@ spec:
             - name: db
               mountPath: /config
         - name: restore-db
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           args:
             - restore
             - -config
@@ -123,11 +126,14 @@ spec:
               cpu: 2000m
               memory: 4Gi
         - name: litestream
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           args:
             - replicate
             - -config
             - /etc/litestream.yml
+          ports:
+            - containerPort: 9090
+              name: metrics
           resources:
             requests:
               cpu: 10m

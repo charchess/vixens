@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-10 (Task vixens-04mo completed)
+Last Updated: 2026-01-11 (Task vixens-0h74 completed)
 
 ---
 
@@ -19,11 +19,18 @@ Last Updated: 2026-01-10 (Task vixens-04mo completed)
 
 ---
 
+## Shared Resources (_shared/)
+
+| Resource | Dev | Prod | Notes |
+|----------|-----|------|-------|
+| shared-namespaces | ✅ | ✅ | tools, databases, media centralized |
+| priority-classes | ✅ | ✅ | Pod priority classes |
+
 ## Infrastructure (00-infra/)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| argocd | ✅ | ✅ | GitOps controller - v7.7.7 |
+| argocd | ⚠️ | ✅ | Dev: Recovered from crash (Resource Pressure) |
 | traefik | ✅ | ✅ | Ingress controller - v3.x |
 | cert-manager | ✅ | ✅ | TLS certificates - Let's Encrypt production |
 | cert-manager-webhook-gandi | ✅ | ✅ | Fixed missing secretNamespace |
@@ -37,22 +44,24 @@ Last Updated: 2026-01-10 (Task vixens-04mo completed)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| prometheus | ✅ | ✅ | Fixed missing InfisicalSecrets |
+| prometheus | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
 | alertmanager | ✅ | ✅ | Fixed stuck ContainerCreating (secrets) |
-| grafana | ✅ | ✅ | Fixed missing secretNamespace |
-| loki | ✅ | ✅ | Fixed missing secretNamespace |
+| grafana | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
+| loki | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
 | promtail | ✅ | ✅ | Fixed missing secretNamespace |
 | goldilocks | ✅ | ✅ | Fixed missing secretNamespace |
 | hubble-ui | ✅ | ✅ | Fixed secretNamespace error |
 
 ---
 
-## Databases (10-databases/)
+## Databases (04-databases/)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| postgresql | ⏳ | 💤 | CloudNativePG (planned) |
-| redis | ⏳ | 💤 | In-memory cache (planned) |
+| postgresql-shared | ✅ | ✅ | CloudNativePG Shared Cluster |
+| redis-shared | ✅ | ✅ | Shared Redis Instance |
+| mariadb-shared | ✅ | ✅ | Shared MariaDB Instance |
+| cloudnative-pg | ✅ | ✅ | CloudNativePG Operator |
 
 ---
 
@@ -71,11 +80,12 @@ Last Updated: 2026-01-10 (Task vixens-04mo completed)
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
 | jellyfin | ⏳ | 💤 | Media server (planned) |
-| sabnzbd | ⏳ | ✅ | Prod fixed and synced |
-| radarr | ⏳ | ✅ | Prod fixed 
-| sonarr | ⏳ | ✅ | Prod fixed 
-| prowlarr | ⏳ | ✅ | Prod fixed 
+| sabnzbd | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
+| radarr | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) 
+| sonarr | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) 
+| prowlarr | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) 
 | jellyseerr | ⏳ | 💤 | Media request management (planned) |
+| hydrus-client | ✅ | ✅ | Metrics Prometheus activées (v0.5.5) |
 
 ---
 
@@ -115,6 +125,7 @@ Last Updated: 2026-01-10 (Task vixens-04mo completed)
 | it-tools | ✅ | ✅ | Migrated to centralized middleware |
 | headlamp | ✅ | ✅ | Migrated to centralized middleware |
 | linkwarden | ✅ | ✅ | Migrated to centralized middleware |
+| renovate | ✅ | ✅ | Auto-dependency updates (ADR-017) |
 
 ---
 
@@ -140,12 +151,12 @@ vim docs/STATUS.md
 
 # Update status symbols and notes
 # Example: | jellyfin | ✅ | ⚠️ | Dev OK, Prod needs resource tuning |
-| sabnzbd | ⏳ | ✅ | Prod fixed and synced |
+| sabnzbd | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
 
 # Commit changes
 git add docs/STATUS.md
 git commit -m "docs: update STATUS.md - <application> <status>"
-git push origin dev
+git push origin main
 ```
 
 ---

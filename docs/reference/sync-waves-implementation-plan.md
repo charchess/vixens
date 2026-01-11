@@ -146,7 +146,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: main
     path: apps/<category>/<app-name>/overlays/dev
   destination:
     server: https://kubernetes.default.svc
@@ -193,7 +193,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: main
     path: apps/04-databases/redis-shared/overlays/dev
   destination:
     server: https://kubernetes.default.svc
@@ -226,7 +226,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: main
     path: apps/01-storage/synology-csi/overlays/dev
   destination:
     server: https://kubernetes.default.svc
@@ -271,7 +271,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: dev
+    targetRevision: main
     path: apps/70-tools/netbox/overlays/dev
   destination:
     server: https://kubernetes.default.svc
@@ -330,13 +330,10 @@ argocd app get <app-name> --show-params
 ### Test 3: Déploiement Contrôlé (Dev)
 
 ```bash
-# 1. Sauvegarder l'état actuel
-kubectl get applications -n argocd -o yaml > /tmp/apps-backup.yaml
-
 # 2. Merger la branche
-git checkout dev
+git checkout main
 git merge feature/sync-waves
-git push origin dev
+git push origin main
 
 # 3. Observer le comportement (ArgoCD auto-sync)
 watch -n 5 'kubectl get applications -n argocd -o json | \
@@ -475,7 +472,7 @@ Si quelque chose ne fonctionne pas:
 ```bash
 # 1. Revenir au commit précédent
 git revert HEAD
-git push origin dev
+git push origin main
 
 # 2. ArgoCD auto-sync retirera les annotations
 # Les apps redémarreront dans l'ordre chaotique (comme avant)
@@ -487,15 +484,10 @@ watch kubectl get applications -n argocd
 ### Rollback Complet (avec redéploiement)
 
 ```bash
-# 1. Restaurer backup
-kubectl apply -f /tmp/apps-backup.yaml
-
-# 2. Ou revert Git + recreate cluster
-git checkout dev
+# 1. Restaurer avec un revert
+git checkout main
 git revert <commit-hash>
-git push origin dev
-terraform destroy -auto-approve
-terraform apply -auto-approve
+git push origin main
 ```
 
 ---

@@ -39,7 +39,7 @@ docs/
 │   └── deployment-standard.md
 ├── adr/                         # Architecture decisions
 │   ├── README.md
-│   ├── 007-renovate-dev-first-workflow.md
+│   ├── 007-renovate-trunk-based-workflow.md
 │   ├── 008-trunk-based-gitops-workflow.md
 │   └── 009-simplified-two-branch-workflow.md
 ├── reports/                     # 🆕 Analysis reports

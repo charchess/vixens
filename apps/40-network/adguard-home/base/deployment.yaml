@@ -18,6 +18,10 @@ spec:
     metadata:
       labels:
         app: adguard-home
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
     spec:
       priorityClassName: vixens-critical
       tolerations:
@@ -45,7 +49,7 @@ spec:
             - name: adguard-conf
               mountPath: /opt/adguardhome/conf
         - name: restore-db
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           args:
             - restore
             - -config
@@ -101,11 +105,14 @@ spec:
               memory: 1024Mi
               cpu: 1000m
         - name: litestream
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           args:
             - replicate
             - -config
             - /etc/litestream.yml
+          ports:
+            - containerPort: 9090
+              name: metrics
           resources:
             requests:
               cpu: 10m

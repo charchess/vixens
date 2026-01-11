@@ -95,7 +95,7 @@ just lint
 # 4. Git workflow
 git add .
 git commit -m "type(scope): description"
-git push origin dev
+git push origin main
 ```
 
 **Reference:** [WORKFLOW.md](WORKFLOW.md) is the MASTER workflow (all agents MUST follow)
@@ -263,7 +263,7 @@ Before closing a task, EVERY agent MUST complete this checklist:
 [ ] 2. yamllint passed (just lint)
 [ ] 3. Kustomize build OK (kustomize build apps/<app>/overlays/dev)
 [ ] 4. Git committed to dev branch
-[ ] 5. Pushed to remote (git push origin dev)
+[ ] 5. Pushed to remote (git push origin main)
 [ ] 6. ArgoCD synced (verify in cluster)
 [ ] 7. Application validated (curl or Playwright or manual)
 [ ] 8. docs/applications/<app>.md updated ⭐ MANDATORY
@@ -448,7 +448,7 @@ kustomize build apps/20-media/jellyfin/overlays/dev
 # 6. Commit and push
 git add apps/20-media/jellyfin
 git commit -m "feat(jellyfin): deploy to dev"
-git push origin dev
+git push origin main
 
 # 7. Wait for ArgoCD sync (30-60s)
 kubectl -n argocd get application jellyfin
@@ -466,7 +466,7 @@ vim docs/STATUS.md
 
 git add docs/
 git commit -m "docs(jellyfin): update deployment status"
-git push origin dev
+git push origin main
 
 # 10. Close task
 bd close <task_id> --reason "Deployed and validated in dev"
