@@ -19,10 +19,10 @@ spec:
         valueFiles:
           - $values/apps/02-monitoring/grafana/base/values.yaml
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: dev
+      targetRevision: main
       ref: values
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: dev
+      targetRevision: main
       path: apps/02-monitoring/grafana/overlays/dev
   destination:
     server: https://kubernetes.default.svc
