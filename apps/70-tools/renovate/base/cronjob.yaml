@@ -17,6 +17,7 @@ spec:
             app: renovate
         spec:
           restartPolicy: Never
+          priorityClassName: vixens-medium
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               operator: Exists

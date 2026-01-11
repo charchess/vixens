@@ -13,7 +13,11 @@ def validate_app(app_name, env):
     kubeconfig = f"terraform/environments/{env}/kubeconfig-{env}"
     
     # 1. Pod Status
-    pod_cmd = f"kubectl get pods -A -l app={app_name} --kubeconfig {kubeconfig} -o json"
+    extra_opts = ""
+    if env == "dev":
+        extra_opts = "--server=https://192.168.111.160:6443 --insecure-skip-tls-verify"
+        
+    pod_cmd = f"kubectl get pods -A -l app={app_name} --kubeconfig {kubeconfig} {extra_opts} -o json"
     res = run_cmd(pod_cmd)
     if res.returncode != 0:
         print(f"❌ Failed to get pods: {res.stderr}")
@@ -26,8 +30,8 @@ def validate_app(app_name, env):
     
     pod = data['items'][0]
     status = pod['status']['phase']
-    if status != "Running":
-        print(f"❌ Pod is not Running (Status: {status})")
+    if status not in ["Running", "Succeeded"]:
+        print(f"❌ Pod is not Running or Succeeded (Status: {status})")
         return False
     
     # 2. PriorityClass
@@ -39,13 +43,13 @@ def validate_app(app_name, env):
 
     # 3. Network Access (if applicable)
     # Get host from ingress
-    ing_cmd = f"kubectl get ingress -A -l app={app_name}-ingress --kubeconfig {kubeconfig} -o json"
+    ing_cmd = f"kubectl get ingress -A -l app={app_name}-ingress --kubeconfig {kubeconfig} {extra_opts} -o json"
     # Fallback to name search
     res = run_cmd(ing_cmd)
     data = json.loads(res.stdout) if res.returncode == 0 else {"items": []}
     
     if not data['items']:
-        ing_cmd = f"kubectl get ingress -A --kubeconfig {kubeconfig} -o json | jq '.items[] | select(.metadata.name | contains(\"{app_name}\"))' | jq -s ."
+        ing_cmd = f"kubectl get ingress -A --kubeconfig {kubeconfig} {extra_opts} -o json | jq '.items[] | select(.metadata.name | contains(\"{app_name}\"))' | jq -s ."
         res = run_cmd(ing_cmd)
         data = {"items": json.loads(res.stdout)} if res.returncode == 0 else {"items": []}
 

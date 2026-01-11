@@ -3,7 +3,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: argocd
 resources:
-  - apps/media-namespace.yaml
+  - apps/shared-namespaces.yaml
   - apps/infisical-operator.yaml
   - apps/cilium-lb.yaml
   - apps/traefik.yaml
@@ -79,5 +79,4 @@ resources:
   - apps/external-dns-gandi-secrets.yaml
   - apps/external-dns-unifi.yaml
   - apps/external-dns-unifi-secrets.yaml
-  - apps/mariadb-shared.yaml
-  - apps/mariadb-shared-config.yaml
+  - apps/mariadb-shared.yaml\n
