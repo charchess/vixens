@@ -503,10 +503,10 @@ next task_id:
         )
 
         if val_result.returncode != 0:
-            print(f"❌ VALIDATION ÉCHOUÉE:\n{val_result.stderr}")
+            print(f"❌ VALIDATION ÉCHOUÉE:\n{val_result.stdout}\n{val_result.stderr}")
             subprocess.run([
                 "bd", "update", "{{task_id}}",
-                "--notes", f"{notes}\nVALIDATION FAIL: {val_result.stderr[:200]}"
+                "--notes", f"{notes}\nVALIDATION FAIL: {val_result.stdout[:100]} {val_result.stderr[:100]}"
             ])
             print("\n💡 Pour corriger: just reset-phase {{task_id}} 3")
             sys.exit(1)
