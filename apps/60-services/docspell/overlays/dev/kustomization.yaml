@@ -9,3 +9,10 @@ patches:
   - path: patch-joex-tolerations.yaml
 commonLabels:
   environment: dev
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: docspell
+      spec:
+        replicas: 0
