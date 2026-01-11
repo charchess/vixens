@@ -21,13 +21,16 @@ An **Architecture Decision Record** documents an important architectural decisio
 
 ### GitOps & Workflow
 
-- **[ADR-007: Renovate Dev-First Workflow](007-renovate-dev-first-workflow.md)**
-  Renovate bot updates dev branch first for validation.
+- **[ADR-007: Renovate Trunk-Based Workflow](007-renovate-trunk-based-workflow.md)**
+  Renovate bot updates dev branch first for validation. (⚠️ Needs update for single-branch)
 
-- **[ADR-008: Trunk-Based GitOps Workflow](008-trunk-based-gitops-workflow.md)**
+- **[ADR-017: Pure Trunk-Based Development (Single Branch)](017-pure-trunk-based-single-branch.md)** ⭐
+  Single `main` branch workflow. Dev watches main HEAD, Prod watches prod-stable tag. **Supersedes ADR-008/009.**
+
+- ~~**[ADR-008: Trunk-Based GitOps Workflow](008-trunk-based-gitops-workflow.md)**~~ (Superseded by ADR-017)
   Two-branch strategy (dev/main) with trunk-based development.
 
-- **[ADR-009: Simplified Two-Branch Workflow](009-simplified-two-branch-workflow.md)**
+- ~~**[ADR-009: Simplified Two-Branch Workflow](009-simplified-two-branch-workflow.md)**~~ (Superseded by ADR-017)
   Retire test/staging branches for simplified workflow.
 
 ### Infrastructure & Disaster Recovery

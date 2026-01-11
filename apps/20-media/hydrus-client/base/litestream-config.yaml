@@ -5,6 +5,7 @@ metadata:
   name: hydrus-client-litestream-config
 data:
   litestream.yml: |
+    addr: ":9090"
     dbs:
       - path: /opt/hydrus/db/client.db
         replicas:

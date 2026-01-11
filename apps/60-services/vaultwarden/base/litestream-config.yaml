@@ -10,3 +10,4 @@ data:
         replicas:
           - url: s3://$LITESTREAM_BUCKET/vaultwarden/db.sqlite3
             endpoint: $LITESTREAM_ENDPOINT
+    addr: ":9090"

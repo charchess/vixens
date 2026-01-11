@@ -439,7 +439,7 @@ kustomize build apps/<category>/<app-name>/overlays/dev
 
 # 4. Push
 git add . && git commit -m "feat(<app>): description"
-git push origin dev
+git push origin main
 ```
 
 ### Promote to Production

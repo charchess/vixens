@@ -16,7 +16,11 @@ spec:
     metadata:
       labels:
         app: hydrus-client
-        test-label: "true"
+      annotations:
+        reloader.stakater.com/auto: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
     spec:
       priorityClassName: vixens-medium
       tolerations:
@@ -58,7 +62,7 @@ spec:
             - name: config
               mountPath: /opt/hydrus/db
         - name: restore-db
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -83,7 +87,7 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: restore-mappings
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -108,7 +112,7 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: restore-master
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -133,7 +137,7 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: restore-caches
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -192,7 +196,7 @@ spec:
             - name: client-files
               mountPath: /opt/hydrus/db/client_files
         - name: litestream
-          image: litestream/litestream:0.3.13
+          image: litestream/litestream:0.5.5
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -200,6 +204,9 @@ spec:
             - replicate
             - -config
             - /etc/litestream.yml
+          ports:
+            - containerPort: 9090
+              name: metrics
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets

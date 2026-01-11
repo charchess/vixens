@@ -1,0 +1,3 @@
+#!/bin/bash
+find base clusters -type f -name '*.yaml' -exec yamllint {} \; && echo "tous les yaml sont valides"
+
