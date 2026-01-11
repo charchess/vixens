@@ -10,3 +10,10 @@ labels:
       environment: dev
 patches:
   - path: patch-infisical-env.yaml
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: grafana
+      spec:
+        replicas: 0
