@@ -30,6 +30,9 @@ En cas de conflit entre WORKFLOW.md et ce fichier, **WORKFLOW.md a toujours rais
 - **🔍 Looking for app documentation?** → [docs/applications/](docs/applications/)
 - **❓ Troubleshooting an issue?** → [docs/troubleshooting/](docs/troubleshooting/)
 - **🏗️ Architecture decisions?** → [docs/adr/](docs/adr/)
+- **⭐ Application quality standards?** → [docs/reference/quality-standards.md](docs/reference/quality-standards.md)
+- **🧪 Testing applications?** → [docs/procedures/application-testing.md](docs/procedures/application-testing.md)
+- **💤 Hibernating dev apps?** → [docs/procedures/dev-hibernation.md](docs/procedures/dev-hibernation.md)
 
 **IMPORTANT:** Documentation is now organized in `docs/` with clear categories (guides, reference, procedures, adr, reports). Always check `docs/README.md` first to find what you need.
 
@@ -124,6 +127,13 @@ uv run index-project     # Index project for performance
 - Memory persistence (write_memory, read_memory)
 
 **Use Serena for:** Reading/editing code, analyzing symbols, searching patterns.
+
+**IMPORTANT - Serena Usage Rules:**
+- ✅ **DO use Serena for:** Code editing, file reading, symbol analysis, pattern search
+- ❌ **DO NOT use Serena for:** Executing local commands (kubectl, git, bd, just, etc.)
+- ❌ **DO NOT use execute_shell_command:** Use Bash tool for shell commands instead
+- Serena = Code operations ONLY
+- Bash = System operations (git, kubectl, terraform, etc.)
 
 ### 4. Archon - Knowledge Base (RAG ONLY)
 
@@ -292,6 +302,34 @@ vixens/
 ---
 
 ## Development Workflow
+
+### Focus on Current Task
+
+**CRITICAL DISCIPLINE:** Always focus on the task at hand.
+
+**Rules:**
+1. ✅ **Work on ONE task at a time** (marked as `in_progress` in Beads)
+2. ✅ **Complete the current task** before starting a new one
+3. ✅ **Resist scope creep** - If you discover new work, create a Beads task for it
+4. ✅ **Close the task** when done before moving to the next
+5. ❌ **Do NOT start unrelated work** even if you notice issues
+6. ❌ **Do NOT refactor unrelated code** unless explicitly asked
+
+**When you discover new work:**
+```bash
+# Create a task for later
+bd create --title="fix: discovered issue in <component>" --type=bug --priority=2
+
+# Continue with current task
+# Do NOT switch to the new task immediately
+```
+
+**Benefits:**
+- Clear progress tracking
+- Easier debugging (know what changed)
+- Better git history
+- Reduced cognitive load
+- Fewer merge conflicts
 
 ### Task-Driven Development (Beads + Just)
 
@@ -511,10 +549,55 @@ spec:
 - Prod: `<app>.truxonline.com`
 
 ### Design Principles
-- **DRY (Don't Repeat Yourself):** Use shared resources when possible
-- **Maintainability:** Clear structure, good documentation
-- **State of the Art:** Follow Kubernetes/GitOps best practices
-- **Reproducibility:** Everything in git, infrastructure as code
+
+**MANDATORY for ALL work in this repository:**
+
+#### 1. DRY (Don't Repeat Yourself)
+- **Never duplicate code/configuration** - create shared resources instead
+- Use Kustomize bases and overlays for common patterns
+- Extract common values to `_shared/` directory
+- If you copy-paste, you're doing it wrong
+
+**Examples:**
+- Shared Helm values in `apps/_shared/helm-values/`
+- Common Kustomize components in `apps/_shared/components/`
+- Reusable Terraform modules in `terraform/modules/`
+
+#### 2. State of the Art
+- **Follow industry best practices** for Kubernetes/GitOps
+- Use latest stable versions when upgrading
+- Follow Kubernetes resource best practices (limits, probes, labels)
+- Implement proper observability (metrics, logs, traces)
+- Follow 12-factor app principles
+
+**Required Standards:**
+- All services must have health checks (Elite tier requires liveness probe)
+- All services must expose metrics
+- All services must have proper resource requests/limits
+- All ingress must use HTTPS with proper certificates
+
+#### 3. GitOps First
+- **Everything in Git** - no manual kubectl apply in production
+- All changes go through PR review
+- ArgoCD is the source of truth for cluster state
+- Infrastructure as Code with Terraform
+- Declarative configuration only
+
+**Exceptions:**
+- Dev environment: kubectl allowed for troubleshooting (must be consolidated to GitOps after)
+- Emergency production fixes: document and backport to Git immediately
+
+#### 4. Best Practices
+- **Security:** Follow security best practices (least privilege, secrets management, network policies)
+- **Reliability:** Implement proper HA, backups, monitoring
+- **Performance:** Resource optimization, efficient storage usage
+- **Maintainability:** Clear documentation, consistent naming, logical structure
+
+**Enforcement:**
+- Validation scripts check for common issues
+- PR reviews ensure compliance
+- Documentation must be updated with code changes
+- ADRs document architectural decisions
 
 ---
 
