@@ -77,7 +77,7 @@ resources:
   - apps/loki.yaml
   - apps/promtail.yaml
   - apps/renovate.yaml
-  # - apps/stirling-pdf.yaml
+  - apps/stirling-pdf.yaml
   # - apps/stirling-pdf-ingress.yaml
   # - apps/it-tools.yaml
   # - apps/it-tools-ingress.yaml
