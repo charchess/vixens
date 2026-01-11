@@ -13,3 +13,10 @@ patches:
         value:
           name: VIKUNJA_SERVICE_FRONTENDURL
           value: "https://vikunja.dev.truxonline.com"
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: vikunja
+      spec:
+        replicas: 0
