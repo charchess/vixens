@@ -5,6 +5,8 @@ metadata:
   name: hydrus-client-litestream-config
 data:
   litestream.yml: |
+    metrics:
+      addr: ":9090"
     dbs:
       - path: /opt/hydrus/db/client.db
         replicas:
@@ -22,5 +24,3 @@ data:
         replicas:
           - url: s3://$LITESTREAM_BUCKET/hydrus-client/client.caches.db
             endpoint: $LITESTREAM_ENDPOINT
-    metrics:
-      addr: ":9090"
