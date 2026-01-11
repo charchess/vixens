@@ -2,7 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description": "Renovate configuration for Vixens GitOps - Auto-updates with approval workflow",
   "extends": ["config:base"],
-  "baseBranches": ["dev"],
+  "baseBranches": ["main"],
   "username": "renovate-bot",
   "gitAuthor": "Renovate Bot <renovate@vixens.local>",
   "onboarding": false,
@@ -73,5 +73,5 @@
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to {{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}",
   "prTitle": "chore(deps): update {{depName}} {{#if isMajor}}(major){{else}}{{#if isMinor}}(minor){{else}}{{#if isPatch}}(patch){{/if}}{{/if}}{{/if}}",
-  "prBodyTemplate": "{{{header}}}\n\n{{{table}}}\n\n{{{notes}}}\n\n{{{changelogs}}}\n\n---\n\n### 🚀 Deployment Strategy\n\n{{#if isMajor}}⚠️ **Major update** - Manual review required{{else}}✅ **Auto-merge enabled** - Will merge automatically after approval{{/if}}\n\n- [ ] Reviewed changes\n- [ ] Ready to deploy to dev cluster\n- [ ] Notify on Discord: `@everyone New dependency update ready for approval`\n\n---\n\n{{{footer}}}"
+  "prBodyTemplate": "{{{header}}}\n\n{{{table}}}\n\n{{{notes}}}\n\n{{{changelogs}}}\n\n---\n\n### 🚀 Deployment Strategy\n\n{{#if isMajor}}⚠️ **Major update** - Manual review required{{else}}✅ **Auto-merge enabled** - Will merge automatically after approval{{/if}}\n\n- [ ] Reviewed changes\n- [ ] Ready to deploy to main branch (dev cluster)\n- [ ] Notify on Discord: `@everyone New dependency update ready for approval`\n\n---\n\n{{{footer}}}"
 }
