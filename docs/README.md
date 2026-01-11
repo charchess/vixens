@@ -58,7 +58,7 @@ Step-by-step operational procedures:
 ### [adr/](adr/) - Architecture Decision Records
 Architecture decisions and their rationale:
 - **[ADR Index](adr/README.md)** - Complete list of ADRs
-- **[ADR-007](adr/007-renovate-dev-first-workflow.md)** - Renovate dev-first workflow
+- **[ADR-007](adr/007-renovate-trunk-based-workflow.md)** - Renovate dev-first workflow
 - **[ADR-008](adr/008-trunk-based-gitops-workflow.md)** - Trunk-based GitOps
 - **[ADR-009](adr/009-simplified-two-branch-workflow.md)** - Two-branch workflow
 - **[ADR-010](adr/010-shared-resources-organization.md)** - Shared resources organization

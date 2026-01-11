@@ -115,7 +115,7 @@ kustomize build apps/<app>/overlays/dev  # Test build
 # 🚢 Git Workflow
 git add .
 git commit -m "type(scope): description"
-git push origin dev
+git push origin main
 
 # 🌐 WebUI Validation (instead of Playwright)
 curl -I http://app.dev.truxonline.com     # Check redirect
@@ -359,7 +359,7 @@ git commit -m "feat(<app>): description"
 # Types: feat, fix, refactor, docs, chore, infra, security, monitor
 
 # Push to dev branch
-git push origin dev
+git push origin main
 ```
 
 **IMPORTANT:** ArgoCD will automatically sync changes to the dev cluster.
@@ -474,7 +474,7 @@ bd sync
 [ ] 2. yamllint passed (just lint)
 [ ] 3. Kustomize build OK (kustomize build apps/<app>/overlays/dev)
 [ ] 4. Git committed to dev branch
-[ ] 5. Pushed to remote (git push origin dev)
+[ ] 5. Pushed to remote (git push origin main)
 [ ] 6. ArgoCD synced (verify in cluster)
 [ ] 7. Application validated (curl or manual)
 [ ] 8. docs/applications/<app>.md updated ⭐ MANDATORY
@@ -665,7 +665,7 @@ git add <files>
 git commit -m "type(scope): description"
 
 # Push
-git push origin dev
+git push origin main
 
 # Compare branches
 git diff dev..main -- apps/
@@ -845,7 +845,7 @@ kustomize build apps/20-media/jellyfin/overlays/dev
 # 7. Commit and push
 git add apps/20-media/jellyfin
 git commit -m "feat(jellyfin): deploy to dev"
-git push origin dev
+git push origin main
 
 # 8. Wait for ArgoCD sync (30-60s)
 kubectl -n argocd get application jellyfin
@@ -863,7 +863,7 @@ curl -I https://jellyfin.dev.truxonline.com
 
 git add docs/
 git commit -m "docs(jellyfin): update deployment status"
-git push origin dev
+git push origin main
 
 # 11. Close task
 bd close <task_id> --reason "Deployed and validated in dev"
