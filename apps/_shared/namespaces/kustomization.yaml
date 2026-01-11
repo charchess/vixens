@@ -1,8 +1,7 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: tools
 resources:
-  - cronjob.yaml
-  - configmap.yaml
-  - infisical-secret.yaml
+  - tools/base
+  - databases/base
+  - media/base

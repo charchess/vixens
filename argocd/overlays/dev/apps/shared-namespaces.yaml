@@ -2,21 +2,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mariadb-shared-config
+  name: shared-namespaces
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-wave: "-3"
 spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: prod-stable
-    path: apps/04-databases/mariadb-shared/overlays/prod
+    targetRevision: main
+    path: apps/_shared/namespaces
   destination:
     server: https://kubernetes.default.svc
-    namespace: databases
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true

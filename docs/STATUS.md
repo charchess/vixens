@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-10 (Task vixens-04mo completed)
+Last Updated: 2026-01-11 (Task vixens-0h74 completed)
 
 ---
 
@@ -18,6 +18,13 @@ Last Updated: 2026-01-10 (Task vixens-04mo completed)
 | ⏳ | **Planned** | Not yet deployed, planned for future sprint |
 
 ---
+
+## Shared Resources (_shared/)
+
+| Resource | Dev | Prod | Notes |
+|----------|-----|------|-------|
+| shared-namespaces | ✅ | ✅ | tools, databases, media centralized |
+| priority-classes | ✅ | ✅ | Pod priority classes |
 
 ## Infrastructure (00-infra/)
 
@@ -47,12 +54,14 @@ Last Updated: 2026-01-10 (Task vixens-04mo completed)
 
 ---
 
-## Databases (10-databases/)
+## Databases (04-databases/)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| postgresql | ⏳ | 💤 | CloudNativePG (planned) |
-| redis | ⏳ | 💤 | In-memory cache (planned) |
+| postgresql-shared | ✅ | ✅ | CloudNativePG Shared Cluster |
+| redis-shared | ✅ | ✅ | Shared Redis Instance |
+| mariadb-shared | ✅ | ✅ | Shared MariaDB Instance |
+| cloudnative-pg | ✅ | ✅ | CloudNativePG Operator |
 
 ---
 
