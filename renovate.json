@@ -10,19 +10,19 @@
   "repositories": ["charchess/vixens"],
   "enabledManagers": ["terraform", "helm-values", "kubernetes", "regex", "dockerfile"],
   "kubernetes": {
-    "fileMatch": ["apps/.+\.yaml$", "argocd/.+\.yaml$"]
+    "fileMatch": ["apps/.+\\.yaml$", "argocd/.+\\.yaml$"]
   },
   "helm-values": {
-    "fileMatch": ["(^|/)"values.*\.yaml$"]
+    "fileMatch": ["(^|/)values.*\\.yaml$"]
   },
   "terraform": {
-    "fileMatch": ["(^|/)\.tf$"]
+    "fileMatch": ["(^|/)\\.tf$"]
   },
   "packageRules": [
     {
       "description": "LinuxServer.io images versioning",
-      "matchPackagePatterns": ["^lscr\.io/linuxserver/"],
-      "versioning": "regex:^version-v?(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(.*)?$"
+      "matchPackagePatterns": ["^lscr\\.io/linuxserver/"],
+      "versioning": "regex:^version-v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(.*)?$"
     },
     {
       "description": "Lazylibrarian hex versioning",
@@ -31,7 +31,7 @@
     },
     {
       "description": "Music Assistant beta versioning",
-      "matchPackagePatterns": ["^ghcr\.io/music-assistant/"],
+      "matchPackagePatterns": ["^ghcr\\.io/music-assistant/"],
       "versioning": "docker"
     },
     {
@@ -41,8 +41,8 @@
     },
     {
       "description": "BirdNET-Go nightly versioning",
-      "matchPackagePatterns": ["^ghcr\.io/tphakala/birdnet-go"],
-      "versioning": "regex:^nightly-(?<major>\d+)$"
+      "matchPackagePatterns": ["^ghcr\\.io/tphakala/birdnet-go"],
+      "versioning": "regex:^nightly-(?<major>\\d+)$"
     },
     {
       "description": "Home Assistant Auto-Update",
