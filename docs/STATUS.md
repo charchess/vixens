@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-12 (Task vixens-5ig completed - Metrics Server goldification)
+Last Updated: 2026-01-12 (Task vixens-2b6 completed - Cilium LB goldification)
 
 ---
 
