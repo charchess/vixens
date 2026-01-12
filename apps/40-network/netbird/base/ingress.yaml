@@ -13,7 +13,7 @@ spec:
       http:
         paths:
           - path: /
-            pathType: ImplementationSpecific
+            pathType: Prefix
             backend:
               service:
                 name: netbird-dashboard
@@ -38,7 +38,7 @@ spec:
       http:
         paths:
           - path: /
-            pathType: ImplementationSpecific
+            pathType: Prefix
             backend:
               service:
                 name: netbird-management
@@ -62,7 +62,7 @@ spec:
       http:
         paths:
           - path: /relay
-            pathType: ImplementationSpecific
+            pathType: Prefix
             backend:
               service:
                 name: netbird-relay
@@ -86,7 +86,7 @@ spec:
       http:
         paths:
           - path: /signalexchange.SignalExchange
-            pathType: ImplementationSpecific
+            pathType: Prefix
             backend:
               service:
                 name: netbird-signal
