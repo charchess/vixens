@@ -8,3 +8,4 @@ resources:
   - namespace.yaml
   - infisical-secret.yaml
   - middleware-redirect-https.yaml
+  - pvc.yaml

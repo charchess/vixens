@@ -105,17 +105,19 @@ netbird up --management-url https://netbird-api.dev.truxonline.com
 
 ### Base de données
 
-Netbird utilise le cluster PostgreSQL partagé CloudNativePG. La base `netbird` doit être créée manuellement :
+**Dev**: SQLite avec PVC persistant (5Gi, RWO, `synology-iscsi-retain`)
+- Stockage: `/var/lib/netbird` dans le pod management
+- Strategy: `Recreate` (required pour PVC RWO)
+- Backup: Peut être étendu avec Litestream si nécessaire
 
-```sql
--- Se connecter au cluster PostgreSQL shared
-kubectl exec -it -n databases postgresql-shared-1 -- psql -U postgres
-
--- Créer la base et l'utilisateur
-CREATE DATABASE netbird;
-CREATE USER netbird WITH ENCRYPTED PASSWORD 'password_from_infisical';
-GRANT ALL PRIVILEGES ON DATABASE netbird TO netbird;
-```
+**Prod**: PostgreSQL partagé CloudNativePG (recommandé pour HA)
+- Cluster: `postgresql-shared-rw.databases.svc.cluster.local`
+- Base `netbird` à créer manuellement:
+  ```sql
+  CREATE DATABASE netbird;
+  CREATE USER netbird WITH ENCRYPTED PASSWORD 'password_from_infisical';
+  GRANT ALL PRIVILEGES ON DATABASE netbird TO netbird;
+  ```
 
 ### Secrets Infisical
 
@@ -123,13 +125,18 @@ Les secrets suivants doivent être configurés dans Infisical (`/netbird` path):
 
 **Dev** (`vixens/dev/netbird`):
 ```yaml
-POSTGRES_DSN: "postgres://netbird:password@postgresql-shared-rw.databases.svc.cluster.local:5432/netbird?sslmode=disable"
 TURN_SECRET: "random_secret_for_turn_auth"
 RELAY_SECRET: "random_secret_for_relay_auth"
 AUTH_CLIENT_ID: "netbird"  # OAuth2 Client ID from Authentik
 ```
 
-**Prod** (`vixens/prod/netbird`): Mêmes clés avec valeurs différentes
+**Prod** (`vixens/prod/netbird`):
+```yaml
+POSTGRES_DSN: "postgres://netbird:password@postgresql-shared-rw.databases.svc.cluster.local:5432/netbird?sslmode=disable"
+TURN_SECRET: "random_secret_for_turn_auth"
+RELAY_SECRET: "random_secret_for_relay_auth"
+AUTH_CLIENT_ID: "netbird"  # OAuth2 Client ID from Authentik
+```
 
 ### Configuration Authentik
 

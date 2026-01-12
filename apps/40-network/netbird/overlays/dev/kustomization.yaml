@@ -18,18 +18,27 @@ helmCharts:
       management:
         enabled: true
         replicaCount: 1
+        strategy:
+          type: Recreate
         image:
           repository: netbirdio/management
           tag: "0.32.0"
           pullPolicy: IfNotPresent
+        
+        # Persistent storage for SQLite database
+        volumes:
+          - name: netbird-data
+            persistentVolumeClaim:
+              claimName: netbird-data
+        volumeMounts:
+          - name: netbird-data
+            mountPath: /var/lib/netbird
+        
         envRaw:
           - name: NETBIRD_STORE_ENGINE
-            value: "postgres"
-          - name: NETBIRD_STORE_ENGINE_POSTGRES_DSN
-            valueFrom:
-              secretKeyRef:
-                name: netbird-secrets
-                key: POSTGRES_DSN
+            value: "sqlite"
+          - name: NETBIRD_DATADIR
+            value: "/var/lib/netbird"
           - name: NETBIRD_MGMT_API_ENDPOINT
             value: "https://netbird-api.dev.truxonline.com"
           - name: NETBIRD_MGMT_GRPC_ENDPOINT

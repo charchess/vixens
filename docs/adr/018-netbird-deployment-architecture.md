@@ -39,22 +39,39 @@ Netbird a été choisi comme solution car :
 - Évite le travail de maintenance de manifestes custom
 - Facilite les mises à jour (bump de version)
 
-### 2. Base de Données PostgreSQL Partagée
+### 2. Base de Données: SQLite (Dev) / PostgreSQL (Prod)
 
-**Décision** : Utiliser le cluster PostgreSQL partagé CloudNativePG existant au lieu d'une instance dédiée.
+**Décision** : Utiliser SQLite pour dev/validation, PostgreSQL partagé CloudNativePG pour prod.
 
 **Alternatives considérées** :
+- PostgreSQL partout (dev + prod)
+- SQLite partout avec Litestream
 - PostgreSQL dédié dans le namespace networking
-- SQLite avec Litestream (comme AdGuard Home)
 
 **Justification** :
+
+**Dev (SQLite):**
+- Simplifie grandement les prérequis de validation
+- Pas de dépendance PostgreSQL à configurer
+- PVC 5Gi avec strategy Recreate (RWO)
+- Suffisant pour tests et développement (<10 devices)
+- Pattern éprouvé (AdGuard Home, autres apps)
+
+**Prod (PostgreSQL):**
 - CloudNativePG offre HA, backups automatiques, point-in-time recovery
 - Mutualisation des ressources (déjà utilisé par Netbox, Docspell, etc.)
+- Meilleure performance pour production (>50 devices)
 - Cohérence avec notre stratégie de bases de données centralisées
 - Netbird supporte nativement PostgreSQL (via POSTGRES_DSN)
-- Évite la maintenance d'une instance PostgreSQL supplémentaire
 
 **Configuration** :
+
+**Dev:**
+- PVC: `netbird-data` (5Gi, RWO, synology-iscsi-retain)
+- Path: `/var/lib/netbird`
+- Strategy: `Recreate` (requis pour RWO)
+
+**Prod:**
 ```sql
 -- Base créée manuellement sur postgresql-shared
 CREATE DATABASE netbird;
