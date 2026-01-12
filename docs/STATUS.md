@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-12 (Task vixens-yvs completed - Mail Gateway goldification)
+Last Updated: 2026-01-12 (Task vixens-5ig completed - Metrics Server goldification)
 
 ---
 
