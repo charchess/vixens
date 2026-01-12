@@ -168,3 +168,6 @@ current_state.json
 .envrc.example
 .serena
 .bd.db
+
+# Exception: commit README
+!.secrets/README.md
