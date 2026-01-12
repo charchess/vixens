@@ -24,6 +24,32 @@ spec:
     spec:
       serviceAccountName: netbird-management
       priorityClassName: vixens-medium
+      initContainers:
+        - name: init-config
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              cat <<EOF > /etc/netbird/management.json
+              {
+                "HttpConfig": {
+                  "Address": ":80",
+                  "AuthIssuer": "https://authentik.dev.truxonline.com/application/o/netbird/",
+                  "AuthAudience": "netbird"
+                },
+                "DeviceAuthorization": {
+                  "Provider": "oidc",
+                  "Config": {
+                    "Issuer": "https://authentik.dev.truxonline.com/application/o/netbird/",
+                    "Audience": "netbird"
+                  }
+                }
+              }
+              EOF
+          volumeMounts:
+            - name: config-writable
+              mountPath: /etc/netbird
       containers:
         - name: management
           image: netbirdio/management:0.61.0
@@ -35,6 +61,7 @@ spec:
             - --disable-anonymous-metrics=false
             - --single-account-mode-domain=netbird.selfhosted
             - --dns-domain=netbird.selfhosted
+            - --config=/etc/netbird/management.json
           env:
             - name: NETBIRD_STORE_ENGINE
               value: sqlite
