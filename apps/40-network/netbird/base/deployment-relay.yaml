@@ -27,7 +27,7 @@ spec:
           image: netbirdio/relay:0.32.0
           imagePullPolicy: IfNotPresent
           env:
-            - name: NETBIRD_RELAY_SECRET
+            - name: NB_AUTH_SECRET
               valueFrom:
                 secretKeyRef:
                   key: RELAY_SECRET
