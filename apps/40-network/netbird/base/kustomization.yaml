@@ -4,8 +4,22 @@ kind: Kustomization
 
 namespace: networking
 
+labels:
+  - pairs:
+      app.kubernetes.io/instance: netbird
+      app.kubernetes.io/part-of: network-stack
+      app.kubernetes.io/managed-by: argocd
+    includeSelectors: false
+
 resources:
   - namespace.yaml
   - infisical-secret.yaml
   - middleware-redirect-https.yaml
   - pvc.yaml
+  - deployment-management.yaml
+  - deployment-signal.yaml
+  - deployment-relay.yaml
+  - deployment-dashboard.yaml
+  - service.yaml
+  - rbac.yaml
+  - ingress.yaml
