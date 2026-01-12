@@ -1,0 +1,96 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-management
+  namespace: networking
+  labels:
+    app.kubernetes.io/name: netbird-management
+    app.kubernetes.io/instance: netbird
+    app.kubernetes.io/part-of: network-stack
+    app.kubernetes.io/managed-by: argocd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: netbird-management
+      app.kubernetes.io/instance: netbird
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: netbird-management
+        app.kubernetes.io/instance: netbird
+    spec:
+      serviceAccountName: netbird-management
+      priorityClassName: vixens-medium
+      containers:
+        - name: management
+          image: netbirdio/management:0.32.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --port=80
+            - --log-file=console
+            - --log-level=info
+            - --disable-anonymous-metrics=false
+            - --single-account-mode-domain=netbird.selfhosted
+            - --dns-domain=netbird.selfhosted
+          env:
+            - name: NETBIRD_STORE_ENGINE
+              value: sqlite
+            - name: NETBIRD_DATADIR
+              value: /var/lib/netbird
+            - name: NETBIRD_MGMT_API_ENDPOINT
+              value: https://netbird-api.dev.truxonline.com
+            - name: NETBIRD_MGMT_GRPC_ENDPOINT
+              value: netbird-management:443
+            - name: NETBIRD_SIGNAL_ENDPOINT
+              value: https://netbird-signal.dev.truxonline.com:443
+            - name: NETBIRD_RELAY_ENDPOINT
+              value: https://netbird-relay.dev.truxonline.com:443
+            - name: NETBIRD_TURN_SERVER_ADDRESS
+              value: turn:netbird-turn.dev.truxonline.com:3478
+            - name: NETBIRD_TURN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: TURN_SECRET
+                  name: netbird-secrets
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+            - containerPort: 33073
+              name: grpc
+              protocol: TCP
+            - containerPort: 9090
+              name: metrics
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            tcpSocket:
+              port: http
+            timeoutSeconds: 3
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            tcpSocket:
+              port: http
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 200m
+              memory: 512Mi
+          volumeMounts:
+            - mountPath: /var/lib/netbird
+              name: netbird-data
+      volumes:
+        - name: netbird-data
+          persistentVolumeClaim:
+            claimName: netbird-data
