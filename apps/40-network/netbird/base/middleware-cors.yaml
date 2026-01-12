@@ -4,8 +4,9 @@ kind: Middleware
 metadata:
   name: netbird-cors
 spec:
-  cors:
-    accessControlAllowMethods:
+  headers:
+    cors:
+      accessControlAllowMethods:
       - GET
       - OPTIONS
       - POST
