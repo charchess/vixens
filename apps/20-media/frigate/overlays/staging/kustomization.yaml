@@ -13,7 +13,7 @@ patches:
         path: /spec/authentication/universalAuth/secretsScope/envSlug
         value: staging
   - path: infisical-config-patch.yaml
-    target:
+  - target:
       kind: InfisicalSecret
       name: frigate-config-sync
 spec:

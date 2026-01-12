@@ -7,11 +7,11 @@ patches:
       - op: replace
         path: /spec/authentication/universalAuth/secretsScope/envSlug
         value: prod
-    target:
+  - target:
       kind: InfisicalSecret
       name: whisparr-secrets-sync
   - path: litestream-secret-patch.yaml
-    target:
+  - target:
       kind: InfisicalSecret
       name: whisparr-litestream-secret
 patchesStrategicMerge:

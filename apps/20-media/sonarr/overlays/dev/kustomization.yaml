@@ -6,7 +6,7 @@ resources:
   - ../../base
   - ingress.yaml
 patches:
-    target:
+  - target:
       kind: Deployment
       name: sonarr
   - patch: |-

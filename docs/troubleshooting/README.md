@@ -20,8 +20,9 @@ Incident logs, post-mortems, and common issues for the Vixens project.
 
 ## Post-Mortems
 
-Detailed incident analyses in [post-mortems/](post-mortems/):
-- **2024-12-25 Cluster Rebuild** (see reports for detailed analysis)
+Detailed incident analyses in **[post-mortems/](post-mortems/)**:
+- **[2026-01-05 Cluster Production Reset](post-mortems/2026-01-05-cluster-reset.md)** - Critical Terraform incident.
+- **2024-12-25 Cluster Rebuild** (see [reports/](../reports/2024-12-25-cluster-redeploy-analysis.md) for detailed analysis).
 
 ---
 

@@ -6,11 +6,11 @@ patches:
       - op: replace
         path: /spec/authentication/universalAuth/secretsScope/envSlug
         value: prod
-    target:
+  - target:
       kind: InfisicalSecret
       name: sabnzbd-secrets-sync
   - path: litestream-secret-patch.yaml
-    target:
+  - target:
       kind: InfisicalSecret
       name: sabnzbd-litestream-secret
 patchesStrategicMerge:
