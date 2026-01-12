@@ -9,13 +9,6 @@ patches:
     target:
       kind: InfisicalSecret
       name: pyload-secrets
-labels:
-  - pairs:
-      environment: dev
-    includeSelectors: false
-spec:
-  managedSecretReference:
-    secretNamespace: media
   - patch: |-
       apiVersion: apps/v1
       kind: Deployment
