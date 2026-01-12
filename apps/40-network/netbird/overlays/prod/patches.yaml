@@ -55,24 +55,18 @@ spec:
         - netbird-signal.truxonline.com
       secretName: netbird-signal-tls
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: netbird-management
-data:
-  management.json: |
-    {
-      "HttpConfig": {
-        "Address": ":80",
-        "AuthIssuer": "https://authentik.truxonline.com/application/o/netbird/",
-        "AuthAudience": "netbird"
-      }
-    }
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: netbird-management
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: init-config
+          env:
+            - name: NETBIRD_AUTH_ISSUER
+              value: "https://authentik.truxonline.com/application/o/netbird/"
 spec:
   template:
     spec:
