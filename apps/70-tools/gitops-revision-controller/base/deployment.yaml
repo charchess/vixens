@@ -41,11 +41,17 @@ spec:
             readOnlyRootFilesystem: false # Needs to install packages with pip
             runAsNonRoot: true
             runAsUser: 1000
+          env:
+            - name: PIP_TARGET
+              value: /tmp/pip_packages
+            - name: PYTHONPATH
+              value: /tmp/pip_packages
           command:
             - /bin/sh
             - -c
           args:
             - |
+              mkdir -p /tmp/pip_packages &&
               pip install --no-cache-dir -r /src/requirements.txt &&
               kopf run /src/main.py --verbose
           volumeMounts:
