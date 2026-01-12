@@ -1,6 +1,12 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+commonLabels:
+  app.kubernetes.io/name: mail-gateway
+  app.kubernetes.io/instance: mail-gateway
+  app.kubernetes.io/part-of: network-stack
+  app.kubernetes.io/managed-by: argocd
+
 resources:
   - namespace.yaml
   - service.yaml
