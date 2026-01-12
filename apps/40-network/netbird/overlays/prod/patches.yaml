@@ -1,0 +1,103 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netbird-dashboard
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  rules:
+    - host: netbird.truxonline.com
+  tls:
+    - hosts:
+        - netbird.truxonline.com
+      secretName: netbird-dashboard-tls
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netbird-api
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  rules:
+    - host: netbird-api.truxonline.com
+  tls:
+    - hosts:
+        - netbird-api.truxonline.com
+      secretName: netbird-api-tls
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netbird-relay
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  rules:
+    - host: netbird-relay.truxonline.com
+  tls:
+    - hosts:
+        - netbird-relay.truxonline.com
+      secretName: netbird-relay-tls
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netbird-signal
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  rules:
+    - host: netbird-signal.truxonline.com
+  tls:
+    - hosts:
+        - netbird-signal.truxonline.com
+      secretName: netbird-signal-tls
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-management
+spec:
+  template:
+    spec:
+      containers:
+        - name: management
+          env:
+            - name: NETBIRD_STORE_ENGINE
+              value: postgres
+            - name: NETBIRD_STORE_ENGINE_POSTGRES_DSN
+              valueFrom:
+                secretKeyRef:
+                  key: POSTGRES_DSN
+                  name: netbird-secrets
+            - name: NETBIRD_MGMT_API_ENDPOINT
+              value: https://netbird-api.truxonline.com
+            - name: NETBIRD_SIGNAL_ENDPOINT
+              value: https://netbird-signal.truxonline.com:443
+            - name: NETBIRD_RELAY_ENDPOINT
+              value: https://netbird-relay.truxonline.com:443
+            - name: NETBIRD_TURN_SERVER_ADDRESS
+              value: turn:netbird-turn.truxonline.com:3478
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-dashboard
+spec:
+  template:
+    spec:
+      containers:
+        - name: dashboard
+          env:
+            - name: NETBIRD_MGMT_API_ENDPOINT
+              value: https://netbird-api.truxonline.com
+            - name: NETBIRD_MGMT_GRPC_API_ENDPOINT
+              value: https://netbird-api.truxonline.com
+            - name: AUTH_AUTHORITY
+              value: https://authentik.truxonline.com/application/o/netbird/
+            - name: AUTH_REDIRECT_URI
+              value: https://netbird.truxonline.com
+            - name: AUTH_SILENT_REDIRECT_URI
+              value: https://netbird.truxonline.com/silent-auth

@@ -1,0 +1,101 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netbird-dashboard
+  namespace: networking
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.middlewares: networking-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: netbird.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: netbird-dashboard
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - netbird.dev.truxonline.com
+      secretName: netbird-dashboard-tls
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netbird-api
+  namespace: networking
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: netbird-api.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: netbird-management
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - netbird-api.dev.truxonline.com
+      secretName: netbird-api-tls
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netbird-relay
+  namespace: networking
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: netbird-relay.dev.truxonline.com
+      http:
+        paths:
+          - path: /relay
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: netbird-relay
+                port:
+                  number: 33080
+  tls:
+    - hosts:
+        - netbird-relay.dev.truxonline.com
+      secretName: netbird-relay-tls
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netbird-signal
+  namespace: networking
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: netbird-signal.dev.truxonline.com
+      http:
+        paths:
+          - path: /signalexchange.SignalExchange
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: netbird-signal
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - netbird-signal.dev.truxonline.com
+      secretName: netbird-signal-tls
