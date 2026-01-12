@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-12 (Task vixens-hidr completed - Renovate automated updates)
+Last Updated: 2026-01-12 (Task vixens-yvs completed - Mail Gateway goldification)
 
 ---
 
@@ -108,7 +108,7 @@ Last Updated: 2026-01-12 (Task vixens-hidr completed - Renovate automated update
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| mail-gateway | ✅ | 💤 | Email gateway (Roundcube) |
+| mail-gateway | ✅ | ✅ | Email gateway (External) |
 | vaultwarden | ✅ | ✅ | Migrated to standardized middleware |
 | authentik | 🚧 | ✅ | Prod fixed (Redis auth solved) |
 | docspell-native | ✅ | ✅ | Fixed missing secretNamespace |
