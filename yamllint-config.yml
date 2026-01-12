@@ -1,6 +1,9 @@
 ---
 extends: default
 
+ignore: |
+  apps/02-monitoring/alertmanager/base/charts/
+
 yaml-files:
   - '*.yaml'
   - '*.yml'

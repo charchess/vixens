@@ -7,10 +7,10 @@ resources:
   - ingress.yaml
 patches:
   - path: infisical-patch.yaml
-    target:
+  - target:
       kind: InfisicalSecret
       name: sabnzbd-secrets-sync
-    target:
+  - target:
       kind: Deployment
       name: sabnzbd
 spec:

@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-11 (Task vixens-0h74 completed)
+Last Updated: 2026-01-12 (Task vixens-l31o completed - Cilium DNS proxy fix)
 
 ---
 
@@ -34,6 +34,7 @@ Last Updated: 2026-01-11 (Task vixens-0h74 completed)
 | traefik | ✅ | ✅ | Ingress controller - v3.x |
 | cert-manager | ✅ | ✅ | TLS certificates - Let's Encrypt production |
 | cert-manager-webhook-gandi | ✅ | ✅ | Fixed missing secretNamespace |
+| cilium | ✅ | ✅ | CNI v1.18.3 - DNS proxy transparent mode disabled |
 | cilium-lb | ✅ | ✅ | L2 Announcements + LB IPAM |
 | synology-csi | ✅ | ✅ | Persistent storage via iSCSI |
 | infisical-operator | ✅ | ✅ | Secrets management operator |
@@ -200,10 +201,10 @@ git push origin main
 ## Related Documentation
 
 - **[Application Documentation](applications/)** - Detailed per-app documentation
-- **[RECETTE-FONCTIONNELLE.md](RECETTE-FONCTIONNELLE.md)** - Functional validation checklist
-- **[RECETTE-TECHNIQUE.md](RECETTE-TECHNIQUE.md)** - Technical validation checklist
-- **[reports/APP_AUDIT.md](reports/APP_AUDIT.md)** - Detailed application audit
-- **[reports/ULTIMATE-AUDIT.md](reports/ULTIMATE-AUDIT.md)** - Resource optimization analysis
+- **[reports/validation/RECETTE-FONCTIONNELLE.md](reports/validation/RECETTE-FONCTIONNELLE.md)** - Functional validation checklist
+- **[reports/validation/RECETTE-TECHNIQUE.md](reports/validation/RECETTE-TECHNIQUE.md)** - Technical validation checklist
+- **[reports/audits/APP_AUDIT.md](reports/audits/APP_AUDIT.md)** - Detailed application audit
+- **[reports/audits/ULTIMATE-AUDIT.md](reports/audits/ULTIMATE-AUDIT.md)** - Resource optimization analysis
 
 ---
 
@@ -217,4 +218,4 @@ git push origin main
 
 ---
 
-**Last Updated:** 2026-01-08
+**Last Updated:** 2026-01-12

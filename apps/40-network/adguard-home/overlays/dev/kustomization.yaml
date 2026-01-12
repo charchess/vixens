@@ -5,10 +5,10 @@ resources:
   - ../../base
   - ingress.yaml
 patches:
-    target:
+  - target:
       kind: Deployment
       name: adguard-home
-  - patch: |-
+    patch: |-
       apiVersion: apps/v1
       kind: Deployment
       metadata:
