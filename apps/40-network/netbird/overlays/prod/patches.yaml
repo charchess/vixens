@@ -74,7 +74,8 @@ spec:
                   "Address": ":80",
                   "AuthIssuer": "https://authentik.truxonline.com/application/o/netbird/",
                   "AuthAudience": "netbird",
-                  "AuthKeysLocation": "https://authentik.truxonline.com/application/o/netbird/jwks/"
+                  "AuthKeysLocation": "https://authentik.truxonline.com/application/o/netbird/jwks/",
+                  "AllowedOrigins": ["https://netbird.truxonline.com"]
                 },
                 "DeviceAuthorization": {
                   "Provider": "oidc",
@@ -113,7 +114,6 @@ spec:
             - --single-account-mode-domain=netbird.selfhosted
             - --dns-domain=netbird.selfhosted
             - --config=/etc/netbird/management.json
-            - --mgmt-api-allowed-origins=https://netbird.truxonline.com
 ---
 apiVersion: apps/v1
 kind: Deployment
