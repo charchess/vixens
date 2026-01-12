@@ -3,7 +3,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: netbird-dashboard
-  namespace: networking
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.middlewares: networking-redirect-https@kubernetescrd
@@ -29,7 +28,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: netbird-api
-  namespace: networking
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
 spec:
@@ -54,7 +52,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: netbird-relay
-  namespace: networking
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
 spec:
@@ -79,7 +76,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: netbird-signal
-  namespace: networking
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
 spec:

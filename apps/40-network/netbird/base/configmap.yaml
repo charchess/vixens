@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: netbird-management
+data:
+  management.json: |
+    {
+      "HttpConfig": {
+        "Address": ":80",
+        "AuthIssuer": "https://authentik.dev.truxonline.com/application/o/netbird/",
+        "AuthAudience": "netbird"
+      }
+    }

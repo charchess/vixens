@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: netbird-relay
-  namespace: networking
   labels:
     app.kubernetes.io/name: netbird-relay
     app.kubernetes.io/instance: netbird
@@ -33,6 +32,8 @@ spec:
                 secretKeyRef:
                   key: RELAY_SECRET
                   name: netbird-secrets
+            - name: NETBIRD_RELAY_EXPOSED_ADDRESS
+              value: "netbird-relay.dev.truxonline.com:443"
           ports:
             - containerPort: 33080
               name: http
