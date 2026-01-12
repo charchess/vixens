@@ -53,7 +53,7 @@ spec:
             - name: config
               mountPath: /config
         - name: restore-db
-          image: litestream/litestream:0.5.5
+          image: litestream/litestream:0.5.6
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -121,7 +121,7 @@ spec:
               mountPath: /comics
               subPath: comics
         - name: litestream
-          image: litestream/litestream:0.5.5
+          image: litestream/litestream:0.5.6
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
