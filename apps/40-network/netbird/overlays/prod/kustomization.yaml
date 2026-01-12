@@ -1,0 +1,186 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: networking
+
+resources:
+  - ../../base
+
+helmCharts:
+  - name: netbird
+    releaseName: netbird
+    version: 1.8.2
+    repo: https://totmicro.github.io/helms
+    namespace: networking
+    includeCRDs: false
+    valuesInline:
+      management:
+        enabled: true
+        replicaCount: 1
+        image:
+          repository: netbirdio/management
+          tag: "0.32.0"
+        envRaw:
+          - name: NETBIRD_STORE_ENGINE
+            value: "postgres"
+          - name: NETBIRD_STORE_ENGINE_POSTGRES_DSN
+            valueFrom:
+              secretKeyRef:
+                name: netbird-secrets
+                key: POSTGRES_DSN
+          - name: NETBIRD_MGMT_API_ENDPOINT
+            value: "https://netbird-api.truxonline.com"
+          - name: NETBIRD_MGMT_GRPC_ENDPOINT
+            value: "netbird-management:443"
+          - name: NETBIRD_SIGNAL_ENDPOINT
+            value: "https://netbird-signal.truxonline.com:443"
+          - name: NETBIRD_RELAY_ENDPOINT
+            value: "https://netbird-relay.truxonline.com:443"
+          - name: NETBIRD_TURN_SERVER_ADDRESS
+            value: "turn:netbird-turn.truxonline.com:3478"
+          - name: NETBIRD_TURN_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: netbird-secrets
+                key: TURN_SECRET
+        ingress:
+          enabled: true
+          className: traefik
+          hosts:
+            - host: netbird-api.truxonline.com
+              paths:
+                - path: /
+                  pathType: ImplementationSpecific
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+          tls:
+            - secretName: netbird-api-tls
+              hosts:
+                - netbird-api.truxonline.com
+        resources:
+          requests:
+            memory: 512Mi
+            cpu: 200m
+          limits:
+            memory: 1Gi
+            cpu: 1000m
+      
+      signal:
+        enabled: true
+        replicaCount: 1
+        image:
+          repository: netbirdio/signal
+          tag: "0.32.0"
+        ingress:
+          enabled: true
+          className: traefik
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+          hosts:
+            - host: netbird-signal.truxonline.com
+              paths:
+                - path: /signalexchange.SignalExchange
+                  pathType: ImplementationSpecific
+          tls:
+            - secretName: netbird-signal-tls
+              hosts:
+                - netbird-signal.truxonline.com
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+      
+      relay:
+        enabled: true
+        replicaCount: 1
+        image:
+          repository: netbirdio/relay
+          tag: "0.32.0"
+        envRaw:
+          - name: NETBIRD_RELAY_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: netbird-secrets
+                key: RELAY_SECRET
+        ingress:
+          enabled: true
+          className: traefik
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+          hosts:
+            - host: netbird-relay.truxonline.com
+              paths:
+                - path: /relay
+                  pathType: ImplementationSpecific
+          tls:
+            - secretName: netbird-relay-tls
+              hosts:
+                - netbird-relay.truxonline.com
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+      
+      dashboard:
+        enabled: true
+        replicaCount: 1
+        image:
+          repository: netbirdio/dashboard
+          tag: "v2.22.2"
+        envRaw:
+          - name: NETBIRD_MGMT_API_ENDPOINT
+            value: "https://netbird-api.truxonline.com"
+          - name: NETBIRD_MGMT_GRPC_API_ENDPOINT
+            value: "https://netbird-api.truxonline.com"
+          - name: AUTH_AUDIENCE
+            value: "netbird"
+          - name: AUTH_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: netbird-secrets
+                key: AUTH_CLIENT_ID
+          - name: AUTH_AUTHORITY
+            value: "https://authentik.truxonline.com/application/o/netbird/"
+          - name: USE_AUTH0
+            value: "false"
+          - name: AUTH_SUPPORTED_SCOPES
+            value: "openid profile email offline_access"
+          - name: AUTH_REDIRECT_URI
+            value: "https://netbird.truxonline.com"
+          - name: AUTH_SILENT_REDIRECT_URI
+            value: "https://netbird.truxonline.com/silent-auth"
+        ingress:
+          enabled: true
+          className: traefik
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            traefik.ingress.kubernetes.io/router.middlewares: networking-redirect-https@kubernetescrd
+          hosts:
+            - host: netbird.truxonline.com
+              paths:
+                - path: /
+                  pathType: ImplementationSpecific
+          tls:
+            - secretName: netbird-dashboard-tls
+              hosts:
+                - netbird.truxonline.com
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+
+patches:
+  - path: infisical-secret-patch.yaml
+    target:
+      kind: InfisicalSecret
+      name: netbird-secrets-sync
