@@ -4,6 +4,11 @@ kind: Deployment
 metadata:
   name: gitops-revision-controller
   namespace: tools
+  labels:
+    app.kubernetes.io/name: gitops-revision-controller
+    app.kubernetes.io/instance: gitops-revision-controller
+    app.kubernetes.io/part-of: network-stack
+    app.kubernetes.io/managed-by: argocd
 spec:
   replicas: 1
   selector:
@@ -13,28 +18,46 @@ spec:
     metadata:
       labels:
         app: gitops-revision-controller
+        app.kubernetes.io/name: gitops-revision-controller
+        app.kubernetes.io/instance: gitops-revision-controller
     spec:
       serviceAccountName: gitops-revision-controller
+      priorityClassName: vixens-medium
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: controller
           image: python:3.11-slim
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false # Needs to install packages with pip
+            runAsNonRoot: true
+            runAsUser: 1000
           command:
             - /bin/sh
             - -c
           args:
             - |
-              pip install -r /src/requirements.txt &&
+              pip install --no-cache-dir -r /src/requirements.txt &&
               kopf run /src/main.py --verbose
           volumeMounts:
             - name: src
               mountPath: /src
           resources:
             requests:
-              cpu: 50m
-              memory: 128Mi
+              cpu: 100m
+              memory: 256Mi
             limits:
-              cpu: 200m
-              memory: 512Mi
+              cpu: 100m
+              memory: 256Mi
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
@@ -43,6 +66,3 @@ spec:
         - name: src
           configMap:
             name: gitops-revision-controller-src
-      securityContext:
-        fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
