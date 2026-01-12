@@ -46,6 +46,9 @@ spec:
                     "Issuer": "https://authentik.dev.truxonline.com/application/o/netbird/",
                     "Audience": "netbird"
                   }
+                },
+                "IdpConfig": {
+                  "SkipVerify": true
                 }
               }
               EOF
