@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: netbird-management
-  namespace: networking
   labels:
     app.kubernetes.io/name: netbird-management
     app.kubernetes.io/instance: netbird
