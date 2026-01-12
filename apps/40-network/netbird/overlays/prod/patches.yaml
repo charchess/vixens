@@ -62,31 +62,6 @@ metadata:
 spec:
   template:
     spec:
-      initContainers:
-        - name: init-config
-          command:
-            - sh
-            - -c
-            - |
-              cat <<EOF > /etc/netbird/management.json
-              {
-                "HttpConfig": {
-                  "Address": ":80",
-                  "AuthIssuer": "https://authentik.truxonline.com/application/o/netbird/",
-                  "AuthAudience": "netbird"
-                },
-                "DeviceAuthorization": {
-                  "Provider": "oidc",
-                  "Config": {
-                    "Issuer": "https://authentik.truxonline.com/application/o/netbird/",
-                    "Audience": "netbird"
-                  }
-                }
-              }
-              EOF
-spec:
-  template:
-    spec:
       containers:
         - name: management
           env:
@@ -105,6 +80,8 @@ spec:
               value: https://netbird-relay.truxonline.com:443
             - name: NETBIRD_TURN_SERVER_ADDRESS
               value: turn:netbird-turn.truxonline.com:3478
+            - name: NETBIRD_AUTH_ISSUER
+              value: "https://authentik.truxonline.com/application/o/netbird/"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -116,7 +93,7 @@ spec:
       containers:
         - name: relay
           env:
-            - name: NETBIRD_RELAY_EXPOSED_ADDRESS
+            - name: NB_EXPOSED_ADDRESS
               value: "netbird-relay.truxonline.com:443"
 ---
 apiVersion: apps/v1
