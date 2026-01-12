@@ -19,6 +19,14 @@ Welcome to the Vixens Kubernetes homelab documentation! This is your central hub
 
 ---
 
+## 📊 Dashboards & Status
+
+- **[Application Status Dashboard](STATUS.md)** - Real-time deployment status across environments
+- **[Functional Validation](reports/validation/RECETTE-FONCTIONNELLE.md)** - Latest functional test results
+- **[Technical Validation](reports/validation/RECETTE-TECHNIQUE.md)** - Latest technical audit results
+
+---
+
 ## 📚 Documentation Structure
 
 ### [guides/](guides/) - How-To Guides
@@ -70,15 +78,16 @@ Architecture decisions and their rationale:
 - **[ADR-012](adr/012-middleware-management.md)** - Middleware management
 
 ### [reports/](reports/) - Analysis Reports
-Technical reports and audits:
+Technical reports, audits, and validation:
+- **[Validation Reports](reports/validation/)** - Functional and technical validation logs
+- **[Audits & Analysis](reports/audits/)** - Resource, conformity, and architecture audits
 - **[2025-12-30 Code Review](reports/2025-12-30-code-review.md)** - Architecture review
 - **[2025-12-30 Archon Migration](reports/2025-12-30-archon-migration-summary.md)** - Task migration
-- **[2025-12-29 Goldilocks](reports/2025-12-29-goldilocks-recommendations.md)** - Resource recommendations
 
 ### [troubleshooting/](troubleshooting/) - Troubleshooting
-Incident logs and common issues:
+Incident logs, post-mortems and common issues:
 - **[Common Issues](troubleshooting/common-issues.md)** - Quick fixes for common problems
-- **[Post-Mortems](troubleshooting/post-mortems/)** - Detailed incident analyses
+- **[Post-Mortems](troubleshooting/post-mortems/)** - Detailed incident analyses (e.g., [Cluster Reset 2026-01-05](troubleshooting/post-mortems/2026-01-05-cluster-reset.md))
 
 ### [templates/](templates/) - Document Templates
 Templates for creating new documentation:
@@ -105,6 +114,8 @@ Templates for creating new documentation:
 | Understand quality standards | [reference/quality-standards.md](reference/quality-standards.md) |
 | Test multiple applications | [procedures/application-testing.md](procedures/application-testing.md) |
 | Hibernate dev applications | [procedures/dev-hibernation.md](procedures/dev-hibernation.md) |
+| See cluster status | [STATUS.md](STATUS.md) |
+| Check validation results | [reports/validation/](reports/validation/) |
 
 ---
 

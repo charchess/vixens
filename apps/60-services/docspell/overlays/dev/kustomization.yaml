@@ -7,8 +7,6 @@ resources:
 patches:
   - path: patch-restserver-tolerations.yaml
   - path: patch-joex-tolerations.yaml
-commonLabels:
-  environment: dev
   - patch: |-
       apiVersion: apps/v1
       kind: Deployment

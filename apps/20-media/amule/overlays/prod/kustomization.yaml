@@ -7,7 +7,7 @@ labels:
       environment: prod
 patches:
   - path: patch-infisical-env.yaml
-    target:
+  - target:
       kind: InfisicalSecret
       name: amule-secrets
 resources:

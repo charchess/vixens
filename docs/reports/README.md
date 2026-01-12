@@ -8,19 +8,26 @@
 
 These reports are actively maintained and reflect the current state of the infrastructure:
 
-### **[STATUS.md](STATUS.md)** - Application Status Dashboard
-**Purpose:** High-level overview of all applications across environments
-**Updated:** On every significant infrastructure change
-**Contains:**
-- Status matrix (OK/NOK/Hibernate/Absent) per environment
-- Last production change dates
-- Conformity scores (actual vs desired state)
-- Priority actions and critical issues
+### **[Application Status Dashboard](../STATUS.md)**
+**Purpose:** High-level overview of all applications across environments.
+**Updated:** On every significant infrastructure change.
 
-**Quick Stats:**
-- 75 total applications
-- 45 OK, 12 NOK in production
-- 37% Elite/Gold conformity (90-100 score)
+### **[AUDIT-CONFORMITY.md](AUDIT-CONFORMITY.md)** - Application Audit & Conformity
+**Purpose:** Detailed technical audit results and conformity scores.
+**Updated:** Automated audits.
+
+---
+
+### **[validation/](validation/)** - Validation Results
+**Purpose:** Latest functional and technical validation reports (Recettes).
+**Contains:**
+- **[RECETTE-FONCTIONNELLE.md](validation/RECETTE-FONCTIONNELLE.md)**
+- **[RECETTE-TECHNIQUE.md](validation/RECETTE-TECHNIQUE.md)**
+
+---
+
+### **[audits/](audits/)** - Technical Audits
+**Purpose:** Deep-dive analysis on resources, conformity, and architecture.
 
 ---
 
@@ -91,8 +98,8 @@ Point-in-time analysis reports for reference:
 
 These reports have been replaced by the consolidated STATUS/STATE-* system:
 
-- ~~**APP_AUDIT.md**~~ → Replaced by **STATUS.md** + **STATE-ACTUAL.md**
-- ~~**ULTIMATE-AUDIT.md**~~ → Replaced by **STATE-ACTUAL.md**
+- ~~**audits/APP_AUDIT.md**~~ → Replaced by **AUDIT-CONFORMITY.md** + **STATE-ACTUAL.md**
+- ~~**audits/ULTIMATE-AUDIT.md**~~ → Replaced by **STATE-ACTUAL.md**
 
 **Note:** Legacy files are retained for historical reference but should not be actively maintained.
 
