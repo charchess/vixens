@@ -32,8 +32,10 @@ spec:
                 secretKeyRef:
                   key: RELAY_SECRET
                   name: netbird-secrets
-            - name: NETBIRD_RELAY_EXPOSED_ADDRESS
+            - name: NB_EXPOSED_ADDRESS
               value: "netbird-relay.dev.truxonline.com:443"
+            - name: NB_LISTEN_ADDRESS
+              value: ":33080"
           ports:
             - containerPort: 33080
               name: http
