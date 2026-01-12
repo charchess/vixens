@@ -71,3 +71,7 @@ spec:
             limits:
               cpu: 100m
               memory: 256Mi
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule

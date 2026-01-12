@@ -90,6 +90,10 @@ spec:
           volumeMounts:
             - mountPath: /var/lib/netbird
               name: netbird-data
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       volumes:
         - name: netbird-data
           persistentVolumeClaim:
