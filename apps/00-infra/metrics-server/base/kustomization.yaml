@@ -1,8 +1,15 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+commonLabels:
+  app.kubernetes.io/name: metrics-server
+  app.kubernetes.io/instance: metrics-server
+  app.kubernetes.io/part-of: infrastructure
+  app.kubernetes.io/managed-by: argocd
+
 resources:
-  - https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+  - https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.2/components.yaml
+
 patches:
   - patch: |
       - op: add
@@ -18,6 +25,13 @@ patches:
           - key: node-role.kubernetes.io/control-plane
             operator: Exists
             effect: NoSchedule
+    target:
+      kind: Deployment
+      name: metrics-server
+  - patch: |
+      - op: add
+        path: /spec/template/spec/priorityClassName
+        value: vixens-medium
     target:
       kind: Deployment
       name: metrics-server
