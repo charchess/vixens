@@ -90,6 +90,10 @@ spec:
               value: "netbird"
             - name: NETBIRD_USE_AUTH0
               value: "false"
+            - name: NETBIRD_MGMT_IDP_SKIP_VERIFY
+              value: "true"
+            - name: NETBIRD_IDP_SKIP_TLS_VERIFY
+              value: "true"
           ports:
             - containerPort: 80
               name: http
