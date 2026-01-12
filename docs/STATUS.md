@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-12 (Task vixens-lo3 completed - GitOps Revision Controller goldification)
+Last Updated: 2026-01-12 (Task vixens-yufn completed - Netbird goldified deployment)
 
 ---
 
@@ -99,6 +99,7 @@ Last Updated: 2026-01-12 (Task vixens-lo3 completed - GitOps Revision Controller
 | external-dns-gandi | ✅ | ✅ | Public DNS management |
 | contacts | ✅ | 💤 | Contacts redirection service |
 | netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
+| netbird | ✅ | ✅ | Mesh VPN - Elite Status (Static Manifests) |
 | adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
 | gluetun | ✅ | ✅ | Fixed missing secretNamespace |
 
