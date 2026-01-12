@@ -24,7 +24,7 @@ spec:
       priorityClassName: vixens-medium
       containers:
         - name: signal
-          image: netbirdio/signal:0.32.0
+          image: netbirdio/signal:0.61.0
           imagePullPolicy: IfNotPresent
           args:
             - --port
