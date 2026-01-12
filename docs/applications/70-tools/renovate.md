@@ -46,6 +46,13 @@ kubectl get configmap -n tools renovate-config -o yaml
 - **Politique de concurrence :** `Forbid` (pas de jobs simultanés)
 - **Historique :** 3 jobs réussis + 3 jobs échoués conservés
 
+### Automated Updates (vixens-hidr)
+Renovate is configured for automated version updates across the codebase (apps/ and argocd/):
+- **Auto-merge:** Enabled for `minor` and `patch` updates after PR approval.
+- **Home Assistant:** Specific rules for automated updates of Home Assistant core.
+- **Approval Workflow:** PRs are created and require a manual check/approval (PR comment or check) before automated merging.
+- **Major Updates:** Always require manual intervention and merge.
+
 ### Gestionnaires Activés
 - **Terraform** - Mise à jour des modules et providers
 - **Helm Values** - Mise à jour des versions de charts dans values.yaml
@@ -76,7 +83,4 @@ Renovate est configuré avec des `packageRules` pour gérer les tags non-standar
 - [Kubernetes Manager](https://docs.renovatebot.com/modules/manager/kubernetes/)
 - [Terraform Manager](https://docs.renovatebot.com/modules/manager/terraform/)
 
----
-> ⚠️ **HIBERNATION DEV**
-> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
-> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
+
