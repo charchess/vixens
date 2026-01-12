@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-12 (Task vixens-2b6 completed - Cilium LB goldification)
+Last Updated: 2026-01-12 (Task vixens-lo3 completed - GitOps Revision Controller goldification)
 
 ---
 
@@ -128,6 +128,7 @@ Last Updated: 2026-01-12 (Task vixens-2b6 completed - Cilium LB goldification)
 | headlamp | ✅ | ✅ | Migrated to centralized middleware |
 | linkwarden | ✅ | ✅ | Migrated to centralized middleware |
 | renovate | ✅ | ✅ | Auto-dependency updates (ADR-017) |
+| gitops-revision-controller | ✅ | ✅ | Synchronise les révisions Git (Elite Status) |
 
 ---
 
