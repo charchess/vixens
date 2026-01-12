@@ -14,38 +14,6 @@ data:
       "requireConfig": "optional",
       "repositories": ["charchess/vixens"],
       "baseBranchPatterns": ["main"],
-      "enabledManagers": ["terraform", "helm-values", "kubernetes", "regex"],
-      "kubernetes": {
-        "fileMatch": ["(^|/)kustomization\\.yaml$", "(^|/)[^/]*\\.yaml$"]
-      },
-      "helm-values": {
-        "fileMatch": ["(^|/)values.*\\.yaml$"]
-      },
-      "terraform": {
-        "fileMatch": ["(^|/)\\.tf$"]
-      },
-      "packageRules": [
-        {
-          "matchPackagePatterns": ["^lscr\\.io/linuxserver/"],
-          "versioning": "regex:^version-v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(.*)?$"
-        },
-        {
-          "matchPackageNames": ["lscr.io/linuxserver/lazylibrarian"],
-          "versioning": "regex:^version-(?<major>[a-f0-9]+)$"
-        },
-        {
-          "matchPackagePatterns": ["^ghcr\\.io/music-assistant/"],
-          "versioning": "docker"
-        },
-        {
-          "matchPackagePatterns": ["^adguard/adguardhome"],
-          "versioning": "docker"
-        },
-        {
-          "matchPackagePatterns": ["^ghcr\\.io/tphakala/birdnet-go"],
-          "versioning": "regex:^nightly-(?<major>\\d+)$"
-        }
-      ],
       "prConcurrentLimit": 10,
       "prHourlyLimit": 0,
       "automerge": false,
