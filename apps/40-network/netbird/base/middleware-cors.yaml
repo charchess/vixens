@@ -1,0 +1,21 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: netbird-cors
+spec:
+  cors:
+    accessControlAllowMethods:
+      - GET
+      - OPTIONS
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+    accessControlAllowHeaders:
+      - "*"
+    accessControlAllowOriginList:
+      - "https://netbird.dev.truxonline.com"
+      - "https://netbird.truxonline.com"
+    accessControlMaxAge: 100
+    accessControlAllowCredentials: true
