@@ -9,11 +9,11 @@ patches:
         path: /spec/template/spec/containers/0/resources
         value:
           requests:
-            cpu: 50m
-            memory: 128Mi
+            cpu: 100m
+            memory: 200Mi
           limits:
-            cpu: 200m
-            memory: 256Mi
+            cpu: 100m
+            memory: 200Mi
     target:
       kind: Deployment
       name: metrics-server
