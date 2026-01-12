@@ -1,0 +1,71 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-management
+  namespace: networking
+  labels:
+    app.kubernetes.io/name: netbird-management
+    app.kubernetes.io/instance: netbird
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+    - name: grpc
+      port: 33073
+      targetPort: grpc
+  selector:
+    app.kubernetes.io/name: netbird-management
+    app.kubernetes.io/instance: netbird
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-signal
+  namespace: networking
+  labels:
+    app.kubernetes.io/name: netbird-signal
+    app.kubernetes.io/instance: netbird
+spec:
+  ports:
+    - name: grpc
+      port: 80
+      targetPort: grpc
+  selector:
+    app.kubernetes.io/name: netbird-signal
+    app.kubernetes.io/instance: netbird
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-relay
+  namespace: networking
+  labels:
+    app.kubernetes.io/name: netbird-relay
+    app.kubernetes.io/instance: netbird
+spec:
+  ports:
+    - name: http
+      port: 33080
+      targetPort: http
+  selector:
+    app.kubernetes.io/name: netbird-relay
+    app.kubernetes.io/instance: netbird
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-dashboard
+  namespace: networking
+  labels:
+    app.kubernetes.io/name: netbird-dashboard
+    app.kubernetes.io/instance: netbird
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+  selector:
+    app.kubernetes.io/name: netbird-dashboard
+    app.kubernetes.io/instance: netbird
