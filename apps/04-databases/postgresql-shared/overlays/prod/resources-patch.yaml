@@ -8,8 +8,8 @@ spec:
   priorityClassName: vixens-critical
   resources:
     requests:
-      cpu: 200m
-      memory: 512Mi
+      cpu: 1000m
+      memory: 1Gi
     limits:
       cpu: 1000m
       memory: 1Gi
