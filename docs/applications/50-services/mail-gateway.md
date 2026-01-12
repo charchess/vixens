@@ -26,7 +26,4 @@ kubectl get endpoints mail-gateway-svc -n mail-gateway
 - **Namespace :** `mail-gateway`
 - **Dépendances :** Synology MailPlus (Service Externe)
 - **Particularités :** Service "Headless" (via Endpoints manuels) pointant vers le serveur mail externe (Synology NAS). Permet aux applications du cluster d'envoyer des mails.
----
-> ⚠️ **HIBERNATION DEV**
-> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
-> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
+
