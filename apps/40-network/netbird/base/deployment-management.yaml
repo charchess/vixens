@@ -87,6 +87,8 @@ spec:
               cpu: 200m
               memory: 512Mi
           volumeMounts:
+            - mountPath: /etc/netbird
+              name: config
             - mountPath: /var/lib/netbird
               name: netbird-data
       tolerations:
@@ -94,6 +96,9 @@ spec:
           operator: Exists
           effect: NoSchedule
       volumes:
+        - name: config
+          configMap:
+            name: netbird-management
         - name: netbird-data
           persistentVolumeClaim:
             claimName: netbird-data
