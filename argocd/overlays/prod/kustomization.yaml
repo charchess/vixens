@@ -64,6 +64,7 @@ resources:
   - apps/docspell-native.yaml
   - apps/changedetection.yaml
   - apps/adguard-home.yaml
+  - apps/netbird.yaml
   - apps/netvisor.yaml
   - apps/authentik.yaml
   - apps/netbox.yaml
