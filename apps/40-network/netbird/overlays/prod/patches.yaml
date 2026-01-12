@@ -64,9 +64,26 @@ spec:
     spec:
       initContainers:
         - name: init-config
-          env:
-            - name: NETBIRD_AUTH_ISSUER
-              value: "https://authentik.truxonline.com/application/o/netbird/"
+          command:
+            - sh
+            - -c
+            - |
+              cat <<EOF > /etc/netbird/management.json
+              {
+                "HttpConfig": {
+                  "Address": ":80",
+                  "AuthIssuer": "https://authentik.truxonline.com/application/o/netbird/",
+                  "AuthAudience": "netbird"
+                },
+                "DeviceAuthorization": {
+                  "Provider": "oidc",
+                  "Config": {
+                    "Issuer": "https://authentik.truxonline.com/application/o/netbird/",
+                    "Audience": "netbird"
+                  }
+                }
+              }
+              EOF
 spec:
   template:
     spec:
