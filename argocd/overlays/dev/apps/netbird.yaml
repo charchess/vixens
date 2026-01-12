@@ -14,9 +14,6 @@ spec:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: main
     path: apps/40-network/netbird/overlays/dev
-    kustomize:
-      helm:
-        enabled: true
   destination:
     server: https://kubernetes.default.svc
     namespace: networking
