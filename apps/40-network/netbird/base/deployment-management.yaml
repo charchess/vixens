@@ -24,15 +24,6 @@ spec:
     spec:
       serviceAccountName: netbird-management
       priorityClassName: vixens-medium
-      initContainers:
-        - name: init-config
-          image: busybox:1.36
-          command: ["sh", "-c", "cp /tmp/config/management.json /etc/netbird/management.json && chmod 644 /etc/netbird/management.json"]
-          volumeMounts:
-            - name: config-source
-              mountPath: /tmp/config
-            - name: config-writable
-              mountPath: /etc/netbird
       containers:
         - name: management
           image: netbirdio/management:0.32.0
@@ -44,6 +35,8 @@ spec:
             - --disable-anonymous-metrics=false
             - --single-account-mode-domain=netbird.selfhosted
             - --dns-domain=netbird.selfhosted
+            - --oidc-issuer=https://authentik.dev.truxonline.com/application/o/netbird/
+            - --oidc-audience=netbird
           env:
             - name: NETBIRD_STORE_ENGINE
               value: sqlite
@@ -96,8 +89,6 @@ spec:
               cpu: 200m
               memory: 512Mi
           volumeMounts:
-            - mountPath: /etc/netbird
-              name: config-writable
             - mountPath: /var/lib/netbird
               name: netbird-data
       tolerations:
@@ -105,11 +96,6 @@ spec:
           operator: Exists
           effect: NoSchedule
       volumes:
-        - name: config-source
-          configMap:
-            name: netbird-management
-        - name: config-writable
-          emptyDir: {}
         - name: netbird-data
           persistentVolumeClaim:
             claimName: netbird-data
