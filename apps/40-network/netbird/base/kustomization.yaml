@@ -15,6 +15,7 @@ resources:
   - configmap.yaml
   - infisical-secret.yaml
   - middleware-redirect-https.yaml
+  - middleware-cors.yaml
   - pvc.yaml
   - deployment-management.yaml
   - deployment-signal.yaml
