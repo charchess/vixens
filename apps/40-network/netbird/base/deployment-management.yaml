@@ -37,7 +37,8 @@ spec:
                   "Address": ":80",
                   "AuthIssuer": "https://authentik.dev.truxonline.com/application/o/netbird/",
                   "AuthAudience": "netbird",
-                  "AuthKeysLocation": "https://authentik.dev.truxonline.com/application/o/netbird/jwks/"
+                  "AuthKeysLocation": "https://authentik.dev.truxonline.com/application/o/netbird/jwks/",
+                  "AllowedOrigins": ["https://netbird.dev.truxonline.com", "https://netbird.truxonline.com"]
                 },
                 "DeviceAuthorization": {
                   "Provider": "oidc",
@@ -63,7 +64,6 @@ spec:
             - --single-account-mode-domain=netbird.selfhosted
             - --dns-domain=netbird.selfhosted
             - --config=/etc/netbird/management.json
-            - --mgmt-api-allowed-origins=https://netbird.dev.truxonline.com,https://netbird.truxonline.com
           env:
             - name: NETBIRD_STORE_ENGINE
               value: sqlite
