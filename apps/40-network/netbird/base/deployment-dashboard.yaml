@@ -24,7 +24,7 @@ spec:
       priorityClassName: vixens-medium
       containers:
         - name: dashboard
-          image: netbirdio/dashboard:v2.22.2
+          image: netbirdio/dashboard:v2.26.1
           imagePullPolicy: IfNotPresent
           env:
             - name: NETBIRD_MGMT_API_ENDPOINT
