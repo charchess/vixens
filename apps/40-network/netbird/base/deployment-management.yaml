@@ -35,16 +35,18 @@ spec:
               {
                 "HttpConfig": {
                   "Address": ":80",
-                  "AuthIssuer": "${NETBIRD_AUTH_ISSUER}",
-                  "AuthAudience": "${NETBIRD_AUTH_AUDIENCE}"
+                  "AuthIssuer": "https://authentik.dev.truxonline.com/application/o/netbird/",
+                  "AuthAudience": "netbird"
+                },
+                "DeviceAuthorization": {
+                  "Provider": "oidc",
+                  "Config": {
+                    "Issuer": "https://authentik.dev.truxonline.com/application/o/netbird/",
+                    "Audience": "netbird"
+                  }
                 }
               }
               EOF
-          env:
-            - name: NETBIRD_AUTH_ISSUER
-              value: "https://authentik.dev.truxonline.com/application/o/netbird/"
-            - name: NETBIRD_AUTH_AUDIENCE
-              value: "netbird"
           volumeMounts:
             - name: config-writable
               mountPath: /etc/netbird
