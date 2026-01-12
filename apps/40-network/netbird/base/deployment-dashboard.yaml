@@ -55,14 +55,14 @@ spec:
           livenessProbe:
             httpGet:
               path: /
-              port: http
-            periodSeconds: 5
+              port: 80
+            periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /
-              port: http
-            initialDelaySeconds: 5
-            periodSeconds: 5
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
           resources:
             requests:
               cpu: 100m
