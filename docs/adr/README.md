@@ -47,6 +47,11 @@ An **Architecture Decision Record** documents an important architectural decisio
 - **[ADR-014: Litestream Backup Profiles and Recovery Patterns](014-litestream-backup-profiles-and-recovery-patterns.md)**
   Light vs Heavy backup profiles for SQLite databases with standardized recovery patterns.
 
+### Network & Security
+
+- **[ADR-018: Netbird VPN Deployment Architecture](018-netbird-deployment-architecture.md)**
+  Netbird VPN deployment with Helm chart, PostgreSQL shared, and Authentik integration.
+
 ### Future Architecture
 
 - **ADR-011: Namespace Ownership Strategy** 🚧
@@ -92,7 +97,8 @@ An **Architecture Decision Record** documents an important architectural decisio
 | 013 | Layered Configuration Disaster Recovery | Accepted | 2026-01 |
 | 013 | Renovate Discord Approval Workflow | Accepted | 2026-01 |
 | 014 | Litestream Backup Profiles and Recovery Patterns | Accepted | 2026-01 |
+| 018 | Netbird VPN Deployment Architecture | Accepted | 2026-01 |
 
 ---
 
-**Last Updated:** 2026-01-10
+**Last Updated:** 2026-01-12
