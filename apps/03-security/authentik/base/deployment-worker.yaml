@@ -66,10 +66,15 @@ spec:
           volumeMounts:
             - name: authentik-data
               mountPath: /var/lib/authentik
+            - name: blueprints
+              mountPath: /blueprints/vixens/
       volumes:
         - name: authentik-data
           persistentVolumeClaim:
             claimName: authentik-data
+        - name: blueprints
+          configMap:
+            name: authentik-config
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
