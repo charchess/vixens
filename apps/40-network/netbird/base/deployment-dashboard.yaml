@@ -45,9 +45,9 @@ spec:
             - name: AUTH_SUPPORTED_SCOPES
               value: openid profile email offline_access
             - name: AUTH_REDIRECT_URI
-              value: https://netbird.dev.truxonline.com
+              value: https://netbird.dev.truxonline.com/
             - name: AUTH_SILENT_REDIRECT_URI
-              value: https://netbird.dev.truxonline.com/silent-auth
+              value: https://netbird.dev.truxonline.com/silent-auth/
           ports:
             - containerPort: 80
               name: http
