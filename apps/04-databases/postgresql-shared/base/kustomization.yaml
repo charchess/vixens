@@ -13,6 +13,7 @@ resources:
   - credentials/scanopy-secret.yaml
   - credentials/vaultwarden-secret.yaml
   - credentials/nocodb-secret.yaml
+  - credentials/netbird-postgresql-credentials.yaml
   - databases/docspell.yaml
   - databases/scanopy.yaml
   - databases/linkwarden.yaml
