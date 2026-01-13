@@ -25,6 +25,9 @@ spec:
         - name: authentik-data
           persistentVolumeClaim:
             claimName: authentik-data
+        - name: blueprints
+          configMap:
+            name: authentik-config
       containers:
         - name: authentik-server
           image: ghcr.io/goauthentik/server:2025.2
@@ -69,6 +72,8 @@ spec:
           volumeMounts:
             - name: authentik-data
               mountPath: /var/lib/authentik
+            - name: blueprints
+              mountPath: /blueprints/vixens/
           resources:
             requests:
               memory: 512Mi
