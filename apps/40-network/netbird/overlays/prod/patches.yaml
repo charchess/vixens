@@ -8,15 +8,6 @@ metadata:
 spec:
   rules:
     - host: netbird.truxonline.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: netbird-dashboard
-                port:
-                  number: 80
   tls:
     - hosts:
         - netbird.truxonline.com
@@ -31,15 +22,6 @@ metadata:
 spec:
   rules:
     - host: netbird-api.truxonline.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: netbird-management
-                port:
-                  number: 80
   tls:
     - hosts:
         - netbird-api.truxonline.com
@@ -54,15 +36,6 @@ metadata:
 spec:
   rules:
     - host: netbird-relay.truxonline.com
-      http:
-        paths:
-          - path: /relay
-            pathType: Prefix
-            backend:
-              service:
-                name: netbird-relay
-                port:
-                  number: 33080
   tls:
     - hosts:
         - netbird-relay.truxonline.com
@@ -77,15 +50,6 @@ metadata:
 spec:
   rules:
     - host: netbird-signal.truxonline.com
-      http:
-        paths:
-          - path: /signalexchange.SignalExchange
-            pathType: Prefix
-            backend:
-              service:
-                name: netbird-signal
-                port:
-                  number: 80
   tls:
     - hosts:
         - netbird-signal.truxonline.com
@@ -184,6 +148,6 @@ spec:
             - name: AUTH_AUTHORITY
               value: https://authentik.truxonline.com/application/o/netbird/
             - name: AUTH_REDIRECT_URI
-              value: https://netbird.truxonline.com
+              value: https://netbird.truxonline.com/
             - name: AUTH_SILENT_REDIRECT_URI
-              value: https://netbird.truxonline.com/silent-auth
+              value: https://netbird.truxonline.com/silent-auth/
