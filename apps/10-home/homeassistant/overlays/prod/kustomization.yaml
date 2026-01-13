@@ -14,7 +14,7 @@ patches:
     patch: |
       - op: replace
         path: /spec/resources/requests/storage
-        value: 20Gi
+        value: 150Gi
 resources:
   - ../../base
   - ingress.yaml
