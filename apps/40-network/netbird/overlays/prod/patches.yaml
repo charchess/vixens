@@ -19,6 +19,7 @@ metadata:
   name: netbird-api
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: networking-netbird-api-cors@kubernetescrd
 spec:
   rules:
     - host: netbird-api.truxonline.com
@@ -148,6 +149,6 @@ spec:
             - name: AUTH_AUTHORITY
               value: https://authentik.truxonline.com/application/o/netbird/
             - name: AUTH_REDIRECT_URI
-              value: /
+              value: https://netbird.truxonline.com
             - name: AUTH_SILENT_REDIRECT_URI
-              value: /silent-auth/
+              value: https://netbird.truxonline.com/silent-auth
