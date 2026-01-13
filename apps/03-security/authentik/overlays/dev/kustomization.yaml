@@ -10,3 +10,7 @@ patches:
     target:
       kind: Deployment
       name: authentik-server
+  - path: middleware-patch.yaml
+    target:
+      kind: Middleware
+      name: authentik-forward-auth
