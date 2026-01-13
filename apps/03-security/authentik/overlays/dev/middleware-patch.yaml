@@ -1,0 +1,8 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: authentik-forward-auth
+spec:
+  forwardAuth:
+    address: https://authentik.dev.truxonline.com/outpost.goauthentik.io/auth/traefik

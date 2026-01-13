@@ -12,3 +12,4 @@ resources:
   - litestream-secret.yaml
   - configmap.yaml
   - pvc.yaml
+  - middleware-forward-auth.yaml
