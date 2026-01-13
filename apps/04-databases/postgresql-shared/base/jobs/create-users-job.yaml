@@ -36,106 +36,65 @@ spec:
                 secretKeyRef:
                   name: postgresql-admin-credentials
                   key: password
-            # Authentik (POSTGRES_*)
-            - name: AUTHENTIK_USER
-              valueFrom:
-                secretKeyRef:
-                  name: authentik-postgresql-credentials
-                  key: POSTGRES_USER
+            # Authentik (via individual keys if present)
             - name: AUTHENTIK_PASS
               valueFrom:
                 secretKeyRef:
                   name: authentik-postgresql-credentials
                   key: POSTGRES_PASSWORD
-            # Netbird (POSTGRES_*)
-            - name: NETBIRD_USER
+                  optional: true
+            # Netbird (via DSN ONLY - The smart way)
+            - name: NETBIRD_DSN
               valueFrom:
                 secretKeyRef:
                   name: netbird-postgresql-credentials
-                  key: POSTGRES_USER
-            - name: NETBIRD_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: netbird-postgresql-credentials
-                  key: POSTGRES_PASSWORD
-            # Docspell (Standard)
-            - name: DOCSPELL_USER
-              valueFrom:
-                secretKeyRef:
-                  name: docspell-postgresql-credentials
-                  key: username
+                  key: POSTGRES_DSN
+                  optional: true
+            # Standard Apps
             - name: DOCSPELL_PASS
               valueFrom:
                 secretKeyRef:
                   name: docspell-postgresql-credentials
                   key: password
-            # Linkwarden (Standard)
-            - name: LINKWARDEN_USER
-              valueFrom:
-                secretKeyRef:
-                  name: linkwarden-postgresql-credentials
-                  key: username
-            - name: LINKWARDEN_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: linkwarden-postgresql-credentials
-                  key: password
-            # Netbox (Standard)
-            - name: NETBOX_USER
-              valueFrom:
-                secretKeyRef:
-                  name: netbox-postgresql-credentials
-                  key: username
-            - name: NETBOX_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: netbox-postgresql-credentials
-                  key: password
-            # Scanopy (Standard)
-            - name: SCANOPY_USER
-              valueFrom:
-                secretKeyRef:
-                  name: scanopy-postgresql-credentials
-                  key: username
-            - name: SCANOPY_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: scanopy-postgresql-credentials
-                  key: password
-            # Vaultwarden (Standard)
-            - name: VAULTWARDEN_USER
-              valueFrom:
-                secretKeyRef:
-                  name: vaultwarden-postgresql-credentials
-                  key: username
+                  optional: true
             - name: VAULTWARDEN_PASS
               valueFrom:
                 secretKeyRef:
                   name: vaultwarden-postgresql-credentials
                   key: password
+                  optional: true
           command:
             - /bin/bash
             - -c
             - |
               set -e
-              create_user() {
+              sync_db() {
                 local user=$1
                 local pass=$2
-                if [ -z "$user" ] || [ -z "$pass" ]; then
-                  echo "⚠️ Skipping: user or password missing"
+                if [ -z "$pass" ]; then
+                  echo "⚠️ Skipping $user: password secret not found"
                   return
                 fi
-                echo "Syncing user: $user"
+                echo "Syncing database and user: $user"
                 psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$user'" | grep -q 1 || psql -c "CREATE USER \"$user\" WITH PASSWORD '$pass';"
                 psql -c "ALTER USER \"$user\" WITH PASSWORD '$pass';"
                 psql -lqt | cut -d '|' -f 1 | grep -qw "$user" || psql -c "CREATE DATABASE \"$user\" OWNER \"$user\";"
               }
+              
               until psql -c '\q' 2>/dev/null; do echo "Waiting for DB..."; sleep 2; done
-              create_user "$AUTHENTIK_USER" "$AUTHENTIK_PASS"
-              create_user "$NETBIRD_USER" "$NETBIRD_PASS"
-              create_user "$DOCSPELL_USER" "$DOCSPELL_PASS"
-              create_user "$LINKWARDEN_USER" "$LINKWARDEN_PASS"
-              create_user "$NETBOX_USER" "$NETBOX_PASS"
-              create_user "$SCANOPY_USER" "$SCANOPY_PASS"
-              create_user "$VAULTWARDEN_USER" "$VAULTWARDEN_PASS"
-              echo "=== Synchronization Complete ==="
+              
+              # Sync Authentik
+              sync_db "authentik" "$AUTHENTIK_PASS"
+              
+              # Sync Netbird (Intelligent parsing of DSN)
+              if [ ! -z "$NETBIRD_DSN" ]; then
+                echo "Parsing Netbird DSN..."
+                NB_USER=$(echo "$NETBIRD_DSN" | sed -E 's|.*//([^:]+):.*|\1|')
+                NB_PASS=$(echo "$NETBIRD_DSN" | sed -E 's|.*//[^:]+:([^@]+)@.*|\1|')
+                sync_db "$NB_USER" "$NB_PASS"
+              fi
+
+              # Sync others
+              sync_db "docspell" "$DOCSPELL_PASS"
+              sync_db "vaultwarden" "$VAULTWARDEN_PASS"
+              echo "=== Sync Finished ==="
