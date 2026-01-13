@@ -8,6 +8,15 @@ metadata:
 spec:
   rules:
     - host: netbird.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: netbird-dashboard
+                port:
+                  number: 80
   tls:
     - hosts:
         - netbird.truxonline.com
@@ -22,6 +31,15 @@ metadata:
 spec:
   rules:
     - host: netbird-api.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: netbird-management
+                port:
+                  number: 80
   tls:
     - hosts:
         - netbird-api.truxonline.com
@@ -36,6 +54,15 @@ metadata:
 spec:
   rules:
     - host: netbird-relay.truxonline.com
+      http:
+        paths:
+          - path: /relay
+            pathType: Prefix
+            backend:
+              service:
+                name: netbird-relay
+                port:
+                  number: 33080
   tls:
     - hosts:
         - netbird-relay.truxonline.com
@@ -50,6 +77,15 @@ metadata:
 spec:
   rules:
     - host: netbird-signal.truxonline.com
+      http:
+        paths:
+          - path: /signalexchange.SignalExchange
+            pathType: Prefix
+            backend:
+              service:
+                name: netbird-signal
+                port:
+                  number: 80
   tls:
     - hosts:
         - netbird-signal.truxonline.com
@@ -75,7 +111,7 @@ spec:
                   "AuthIssuer": "https://authentik.truxonline.com/application/o/netbird/",
                   "AuthAudience": "netbird",
                   "AuthKeysLocation": "https://authentik.truxonline.com/application/o/netbird/jwks/",
-                  "AllowedOrigins": ["https://netbird.truxonline.com"]
+                  "AllowedOrigins": ["https://netbird.truxonline.com/"]
                 },
                 "DeviceAuthorization": {
                   "Provider": "oidc",
