@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - ../../base
+  - api-cors-middleware.yaml
 
 patches:
   - path: patches.yaml

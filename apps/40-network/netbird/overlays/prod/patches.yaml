@@ -19,6 +19,7 @@ metadata:
   name: netbird-api
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: networking-netbird-api-cors@kubernetescrd
 spec:
   rules:
     - host: netbird-api.truxonline.com
