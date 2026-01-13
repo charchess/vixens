@@ -37,7 +37,44 @@ patches:
     target:
       kind: Deployment
       name: authentik-worker
+patches:
+  - patch: |
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
+    target:
+      kind: InfisicalSecret
+      name: authentik-secrets-sync
+  - patch: |
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
+    target:
+      kind: InfisicalSecret
+      name: authentik-litestream-sync
+  - patch: |
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
+    target:
+      kind: InfisicalSecret
+      name: authentik-redis-secret-sync
+  - path: deployment-patch.yaml
+    target:
+      kind: Deployment
+      name: authentik-server
+  - path: worker-patch.yaml
+    target:
+      kind: Deployment
+      name: authentik-worker
+  - path: server-resources.yaml
+    target:
+      kind: Deployment
+      name: authentik-server
+  - path: worker-resources.yaml
+    target:
+      kind: Deployment
+      name: authentik-worker
 resources:
   - ../../base
   - ingress.yaml
-  - infisical-redis-secret.yaml
