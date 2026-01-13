@@ -33,4 +33,4 @@ curl -L -k https://authentik.dev.truxonline.com/flows/-/default/authentication/ 
     - `Redis` (Cluster partagé `redis-shared`)
     - `PostgreSQL` (Cluster partagé `postgresql-shared`)
     - `Infisical` (Secrets)
-- **Particularités :** Identity Provider (IdP) pour le SSO. Gère les utilisateurs et les flows d'authentification. Standard **🏆 Elite** (Priorité `vixens-critical`, Profil Medium, stratégie `Recreate` pour RWO).
+- **Particularités :** Identity Provider (IdP) pour le SSO. Gère les utilisateurs et les flows d'authentification. Configuration automatisée via **Blueprints** (`apps/03-security/authentik/base/configmap.yaml`) montés dans `/blueprints/vixens/`. Setup OIDC initial incluant Netbird. Standard **🏆 Elite** (Priorité `vixens-critical`, Profil Medium, stratégie `Recreate` pour RWO).

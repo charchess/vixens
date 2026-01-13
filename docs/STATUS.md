@@ -60,7 +60,7 @@ Last Updated: 2026-01-12 (Task vixens-yufn completed - Netbird goldified deploym
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| postgresql-shared | ✅ | ✅ | CloudNativePG Shared Cluster |
+| postgresql-shared | ✅ | ✅ | CloudNativePG Shared Cluster (Elite Status) |
 | redis-shared | ✅ | ✅ | Shared Redis Instance |
 | mariadb-shared | ✅ | ✅ | Shared MariaDB Instance |
 | cloudnative-pg | ✅ | ✅ | CloudNativePG Operator |
@@ -111,7 +111,7 @@ Last Updated: 2026-01-12 (Task vixens-yufn completed - Netbird goldified deploym
 |-------------|-----|------|-------|
 | mail-gateway | ✅ | ✅ | Email gateway (External) |
 | vaultwarden | ✅ | ✅ | Migrated to standardized middleware |
-| authentik | 🚧 | ✅ | Prod fixed (Redis auth solved) |
+| authentik | ✅ | ✅ | OIDC Config Initialisée (Netbird) |
 | docspell-native | ✅ | ✅ | Fixed missing secretNamespace |
 
 ---
