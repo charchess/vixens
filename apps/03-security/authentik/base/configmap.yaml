@@ -17,12 +17,9 @@ data:
         attrs:
           client_id: netbird
           client_type: public
-          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
           redirect_uris:
             - https://netbird.dev.truxonline.com/
-            - https://netbird.dev.truxonline.com/silent-auth
             - https://netbird.truxonline.com/
-            - https://netbird.truxonline.com/silent-auth
       - model: authentik_core.application
         id: netbird-app
         identifiers:
@@ -30,4 +27,3 @@ data:
         attrs:
           name: Netbird
           provider: !KeyOf netbird-provider
-          launch_url: https://netbird.truxonline.com
