@@ -67,6 +67,8 @@ spec:
                 secretKeyRef:
                   name: authentik-secrets
                   key: SECRET_KEY
+            - name: AUTHENTIK_HTTP__CORS_ORIGINS
+              value: "https://netbird.dev.truxonline.com,https://netbird.truxonline.com"
                   # Add other environment variables from Authentik documentation
                   # if needed
           volumeMounts:
