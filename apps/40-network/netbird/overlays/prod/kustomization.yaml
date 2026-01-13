@@ -1,15 +1,77 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
-namespace: networking
 
 resources:
   - ../../base
 
 patches:
-  - path: infisical-secret-patch.yaml
-    target:
-      kind: InfisicalSecret
-      name: netbird-secrets-sync
   - path: patches.yaml
+  - path: infisical-secret-patch.yaml
+  - target:
+      group: networking.k8s.io
+      version: v1
+      kind: Ingress
+      name: netbird-dashboard
+    patch: |-
+      - op: add
+        path: /spec/rules/0/http
+        value:
+          paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: netbird-dashboard
+                  port:
+                    number: 80
+  - target:
+      group: networking.k8s.io
+      version: v1
+      kind: Ingress
+      name: netbird-api
+    patch: |-
+      - op: add
+        path: /spec/rules/0/http
+        value:
+          paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: netbird-management
+                  port:
+                    number: 80
+  - target:
+      group: networking.k8s.io
+      version: v1
+      kind: Ingress
+      name: netbird-relay
+    patch: |-
+      - op: add
+        path: /spec/rules/0/http
+        value:
+          paths:
+            - path: /relay
+              pathType: Prefix
+              backend:
+                service:
+                  name: netbird-relay
+                  port:
+                    number: 33080
+  - target:
+      group: networking.k8s.io
+      version: v1
+      kind: Ingress
+      name: netbird-signal
+    patch: |-
+      - op: add
+        path: /spec/rules/0/http
+        value:
+          paths:
+            - path: /signalexchange.SignalExchange
+              pathType: Prefix
+              backend:
+                service:
+                  name: netbird-signal
+                  port:
+                    number: 80
