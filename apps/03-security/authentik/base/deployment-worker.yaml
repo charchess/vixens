@@ -71,7 +71,7 @@ spec:
             - name: authentik-data
               mountPath: /var/lib/authentik
             - name: blueprints
-              mountPath: /blueprints/vixens-netbird.yaml
+              mountPath: /blueprints/default/vixens-netbird.yaml
               subPath: vixens-netbird.yaml
       volumes:
         - name: authentik-data
