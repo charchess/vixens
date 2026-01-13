@@ -28,6 +28,7 @@ curl -L -k https://hydrus.dev.truxonline.com
 - **Storage** : PVC iSCSI de **40Gi** (augmenté pour gérer les volumineux sets de WAL Litestream).
 - **Optimisation** : Restauration de la base `caches` désactivée en init-container pour accélérer le boot (reconstruit par l'app).
 - **PriorityClass** : `vixens-medium`.
+- **Authentication** : Integrated with Authentik via Traefik ForwardAuth middleware (`authentik-forward-auth`).
 - **Health Probes** : Liveness (120s delay) et Readiness (30s delay) configurées.
 
 ---
