@@ -9,6 +9,16 @@ spec:
     type: Recreate
   template:
     spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - authentik-worker
+              topologyKey: "kubernetes.io/hostname"
       containers:
         - name: authentik-server
           env:
