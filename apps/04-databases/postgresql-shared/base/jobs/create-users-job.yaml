@@ -36,7 +36,7 @@ spec:
                 secretKeyRef:
                   name: postgresql-admin-credentials
                   key: password
-            # Authentik (format POSTGRES_*)
+            # Authentik (POSTGRES_*)
             - name: AUTHENTIK_USER
               valueFrom:
                 secretKeyRef:
@@ -47,7 +47,7 @@ spec:
                 secretKeyRef:
                   name: authentik-postgresql-credentials
                   key: POSTGRES_PASSWORD
-            # Netbird (format POSTGRES_*) - Attention, on utilise le secret copié
+            # Netbird (POSTGRES_*)
             - name: NETBIRD_USER
               valueFrom:
                 secretKeyRef:
@@ -58,7 +58,7 @@ spec:
                 secretKeyRef:
                   name: netbird-postgresql-credentials
                   key: POSTGRES_PASSWORD
-            # Les autres (format standard username/password)
+            # Docspell (Standard)
             - name: DOCSPELL_USER
               valueFrom:
                 secretKeyRef:
@@ -69,6 +69,50 @@ spec:
                 secretKeyRef:
                   name: docspell-postgresql-credentials
                   key: password
+            # Linkwarden (Standard)
+            - name: LINKWARDEN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: linkwarden-postgresql-credentials
+                  key: username
+            - name: LINKWARDEN_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: linkwarden-postgresql-credentials
+                  key: password
+            # Netbox (Standard)
+            - name: NETBOX_USER
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-postgresql-credentials
+                  key: username
+            - name: NETBOX_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-postgresql-credentials
+                  key: password
+            # Scanopy (Standard)
+            - name: SCANOPY_USER
+              valueFrom:
+                secretKeyRef:
+                  name: scanopy-postgresql-credentials
+                  key: username
+            - name: SCANOPY_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: scanopy-postgresql-credentials
+                  key: password
+            # Vaultwarden (Standard)
+            - name: VAULTWARDEN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-postgresql-credentials
+                  key: username
+            - name: VAULTWARDEN_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-postgresql-credentials
+                  key: password
           command:
             - /bin/bash
             - -c
@@ -77,6 +121,10 @@ spec:
               create_user() {
                 local user=$1
                 local pass=$2
+                if [ -z "$user" ] || [ -z "$pass" ]; then
+                  echo "⚠️ Skipping: user or password missing"
+                  return
+                fi
                 echo "Syncing user: $user"
                 psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$user'" | grep -q 1 || psql -c "CREATE USER \"$user\" WITH PASSWORD '$pass';"
                 psql -c "ALTER USER \"$user\" WITH PASSWORD '$pass';"
@@ -86,3 +134,8 @@ spec:
               create_user "$AUTHENTIK_USER" "$AUTHENTIK_PASS"
               create_user "$NETBIRD_USER" "$NETBIRD_PASS"
               create_user "$DOCSPELL_USER" "$DOCSPELL_PASS"
+              create_user "$LINKWARDEN_USER" "$LINKWARDEN_PASS"
+              create_user "$NETBOX_USER" "$NETBOX_PASS"
+              create_user "$SCANOPY_USER" "$SCANOPY_PASS"
+              create_user "$VAULTWARDEN_USER" "$VAULTWARDEN_PASS"
+              echo "=== Synchronization Complete ==="
