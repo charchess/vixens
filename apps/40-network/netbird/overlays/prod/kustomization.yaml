@@ -74,4 +74,8 @@ patches:
                 service:
                   name: netbird-signal
                   port:
+<<<<<<< Updated upstream
                     number: 80
+=======
+                    number: 80
+>>>>>>> Stashed changes
