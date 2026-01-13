@@ -46,8 +46,8 @@ spec:
             - name: AUTHENTIK_REDIS__PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: authentik-secrets
-                  key: REDIS_PASSWORD
+                  name: authentik-redis-credentials
+                  key: password
             - name: AUTHENTIK_POSTGRESQL__HOST
               value: postgresql-shared-rw.databases.svc.cluster.local
             - name: AUTHENTIK_POSTGRESQL__NAME
