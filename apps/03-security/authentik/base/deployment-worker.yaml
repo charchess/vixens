@@ -63,6 +63,8 @@ spec:
                 secretKeyRef:
                   name: authentik-secrets
                   key: SECRET_KEY
+            - name: AUTHENTIK_HTTP__CORS_ORIGINS
+              value: "https://netbird.dev.truxonline.com,https://netbird.truxonline.com"
           volumeMounts:
             - name: authentik-data
               mountPath: /var/lib/authentik
