@@ -24,3 +24,6 @@ Validation des aspects techniques (infra, logs, perfs).
 | **ArgoCD** | Resource Conflicts | ✅ Resolved | 2026-01-11 | Shared namespaces centralized, ownership conflicts fixed |
 | **mariadb-shared** | App Duplication | ✅ Fixed | 2026-01-11 | Removed duplicate mariadb-shared-config application |
 | **mariadb-shared** | Sync Waves | ✅ OK | 2026-01-11 | Internal sync waves (Secret -> StatefulSet) added |
+| **postgresql-shared** | User Mapping | ✅ Fixed | 2026-01-13 | Managed roles mapping logic restored for Authentik |
+| **authentik** | Redis Credentials | ✅ Fixed | 2026-01-13 | Secret path aligned with shared Redis instance |
+| **authentik** | OIDC Blueprints | ✅ Ready | 2026-01-13 | Netbird blueprint mounted in /blueprints/vixens/ |
