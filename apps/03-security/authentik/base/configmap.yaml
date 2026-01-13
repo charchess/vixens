@@ -12,8 +12,9 @@ data:
     entries:
       - model: authentik_providers_oauth2.oauth2provider
         id: netbird-provider
-        attrs:
+        identifiers:
           name: netbird
+        attrs:
           client_id: netbird
           client_type: public
           redirect_uris:
@@ -28,8 +29,9 @@ data:
             - !Find [authentik_core.propertymapping, [managed, goauthentik.io/providers/oauth2/scope-offline_access]]
       - model: authentik_core.application
         id: netbird-app
-        attrs:
-          name: Netbird Vixens
+        identifiers:
           slug: netbird
+        attrs:
+          name: Netbird
           provider: !KeyOf netbird-provider
           launch_url: https://netbird.truxonline.com
