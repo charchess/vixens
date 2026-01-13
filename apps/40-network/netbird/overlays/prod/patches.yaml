@@ -98,7 +98,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: POSTGRES_DSN
-                  name: netbird-secrets
+                  name: netbird-postgresql-credentials
             - name: NETBIRD_MGMT_API_ENDPOINT
               value: https://netbird-api.truxonline.com
             - name: NETBIRD_SIGNAL_ENDPOINT

@@ -101,6 +101,16 @@ spec:
                 secretKeyRef:
                   name: vaultwarden-postgresql-credentials
                   key: password
+            - name: NETBIRD_USER
+              valueFrom:
+                secretKeyRef:
+                  name: netbird-postgresql-credentials
+                  key: username
+            - name: NETBIRD_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: netbird-postgresql-credentials
+                  key: password
           command:
             - /bin/bash
             - -c
