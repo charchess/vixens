@@ -8,6 +8,15 @@ metadata:
 spec:
   rules:
     - host: netbird.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: netbird-dashboard
+                port:
+                  number: 80
   tls:
     - hosts:
         - netbird.truxonline.com
@@ -22,6 +31,15 @@ metadata:
 spec:
   rules:
     - host: netbird-api.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: netbird-management
+                port:
+                  number: 80
   tls:
     - hosts:
         - netbird-api.truxonline.com
@@ -36,6 +54,15 @@ metadata:
 spec:
   rules:
     - host: netbird-relay.truxonline.com
+      http:
+        paths:
+          - path: /relay
+            pathType: Prefix
+            backend:
+              service:
+                name: netbird-relay
+                port:
+                  number: 33080
   tls:
     - hosts:
         - netbird-relay.truxonline.com
@@ -50,6 +77,15 @@ metadata:
 spec:
   rules:
     - host: netbird-signal.truxonline.com
+      http:
+        paths:
+          - path: /signalexchange.SignalExchange
+            pathType: Prefix
+            backend:
+              service:
+                name: netbird-signal
+                port:
+                  number: 80
   tls:
     - hosts:
         - netbird-signal.truxonline.com
@@ -98,7 +134,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: POSTGRES_DSN
-                  name: netbird-secrets
+                  name: netbird-postgresql-credentials
             - name: NETBIRD_MGMT_API_ENDPOINT
               value: https://netbird-api.truxonline.com
             - name: NETBIRD_SIGNAL_ENDPOINT
