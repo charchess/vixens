@@ -1,0 +1,19 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: authentik-cors
+  namespace: auth
+spec:
+  headers:
+    accessControlAllowMethods:
+      - GET
+      - OPTIONS
+      - POST
+    accessControlAllowHeaders:
+      - "*"
+    accessControlAllowOriginList:
+      - "https://netbird.truxonline.com"
+      - "https://netbird.dev.truxonline.com"
+    accessControlMaxAge: 100
+    accessControlAllowCredentials: true
