@@ -5,7 +5,7 @@ metadata:
   name: authentik-config
   namespace: auth
 data:
-  netbird.yaml: |
+  vixens-netbird.yaml: |
     version: 1
     metadata:
       name: netbird-oidc
@@ -16,7 +16,6 @@ data:
           name: netbird
           client_id: netbird
           client_type: public
-          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
           redirect_uris:
             - https://netbird.dev.truxonline.com/
             - https://netbird.dev.truxonline.com/silent-auth
