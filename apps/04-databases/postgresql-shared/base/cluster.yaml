@@ -29,11 +29,11 @@ spec:
         login: true
         passwordSecret:
           name: netbox-postgresql-credentials
-      - name: authentik
-        ensure: present
-        login: true
-        passwordSecret:
-          name: authentik-postgresql-credentials
+#      - name: authentik
+#        ensure: present
+#        login: true
+#        passwordSecret:
+#          name: authentik-postgresql-credentials
       - name: scanopy
         ensure: present
         login: true
