@@ -29,6 +29,7 @@ data:
       - model: authentik_core.application
         id: netbird-app
         attrs:
-          name: Netbird
+          name: Netbird Vixens
           slug: netbird
           provider: !KeyOf netbird-provider
+          launch_url: https://netbird.truxonline.com
