@@ -77,7 +77,7 @@ spec:
               memory: 1024Mi
               cpu: 500m
         - name: config-syncer
-          image: alpine:3.19
+          image: alpine:3.23
           command:
             - sh
             - -c

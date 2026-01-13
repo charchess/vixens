@@ -112,7 +112,7 @@ spec:
               subPath: litestream.yml
         # 4. Optionnel: Sidecar Config-Syncer
         - name: config-syncer
-          image: alpine:3.19
+          image: alpine:3.23
           command:
             - sh
             - -c
