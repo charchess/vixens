@@ -3,10 +3,8 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [ ]     | [ ]       | [ ]   | 0.32.0  |
-| Test          | [ ]     | [ ]       | [ ]   | -       |
-| Staging       | [ ]     | [ ]       | [ ]   | -       |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Dev           | [x]     | [x]       | [x]   | 0.62.3  |
+| Prod          | [x]     | [x]       | [x]   | 0.62.3  |
 
 ## Description
 
@@ -137,6 +135,14 @@ TURN_SECRET: "random_secret_for_turn_auth"
 RELAY_SECRET: "random_secret_for_relay_auth"
 AUTH_CLIENT_ID: "netbird"  # OAuth2 Client ID from Authentik
 ```
+
+> **Note:** Les secrets PostgreSQL (`POSTGRES_DSN`) sont synchronisés dans le namespace `networking` via un `InfisicalSecret` dédié (`netbird-postgresql-credentials-sync`) qui pointe correctement vers l'environnement `prod` ou `dev` d'Infisical.
+
+### CORS & API Access
+
+- **Middleware:** `netbird-api-cors` (apiVersion: `traefik.io/v1alpha1`)
+- **Allowed Origin:** `https://netbird.[env].truxonline.com`
+- **Credentials:** `access-control-allow-credentials: true` (requis pour le dashboard)
 
 ### Configuration Authentik
 

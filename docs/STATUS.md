@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-14 (Hydrus goldified and Authentik integration validated)
+Last Updated: 2026-01-14 (Netbird API fixed and fully operational in Prod)
 
 ---
 
@@ -99,7 +99,7 @@ Last Updated: 2026-01-14 (Hydrus goldified and Authentik integration validated)
 | external-dns-gandi | ✅ | ✅ | Public DNS management |
 | contacts | ✅ | 💤 | Contacts redirection service |
 | netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
-| netbird | ✅ | ✅ | Mesh VPN - Elite Status (Static Manifests) |
+| netbird | ✅ | ✅ | Elite Status + API CORS fixed + PostgreSQL Sync |
 | adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
 | gluetun | ✅ | ✅ | Fixed missing secretNamespace |
 
