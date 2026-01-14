@@ -131,24 +131,3 @@ spec:
           env:
             - name: NB_EXPOSED_ADDRESS
               value: "netbird-relay.truxonline.com:443"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: netbird-dashboard
-spec:
-  template:
-    spec:
-      containers:
-        - name: dashboard
-          env:
-            - name: NETBIRD_MGMT_API_ENDPOINT
-              value: https://netbird-api.truxonline.com
-            - name: NETBIRD_MGMT_GRPC_API_ENDPOINT
-              value: https://netbird-api.truxonline.com
-            - name: AUTH_AUTHORITY
-              value: https://authentik.truxonline.com/application/o/netbird/
-            - name: AUTH_REDIRECT_URI
-              value: https://netbird.truxonline.com/
-            - name: AUTH_SILENT_REDIRECT_URI
-              value: https://netbird.truxonline.com/silent-auth/
