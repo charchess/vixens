@@ -18,8 +18,12 @@ data:
           client_id: netbird
           client_type: public
           redirect_uris:
+            - https://netbird.dev.truxonline.com
             - https://netbird.dev.truxonline.com/
+            - https://netbird.dev.truxonline.com/silent-auth
+            - https://netbird.truxonline.com
             - https://netbird.truxonline.com/
+            - https://netbird.truxonline.com/silent-auth
       - model: authentik_core.application
         id: netbird-app
         identifiers:
