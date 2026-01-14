@@ -8,12 +8,12 @@ data:
   vixens-netbird.yaml: |
     version: 1
     metadata:
-      name: netbird-oidc
+      name: netbird-v2-oidc
     entries:
       - model: authentik_providers_oauth2.oauth2provider
-        id: netbird-provider
+        id: netbird-provider-v2
         identifiers:
-          name: netbird
+          name: netbird-v2
         attrs:
           client_id: netbird
           client_type: public
@@ -33,7 +33,7 @@ data:
           slug: netbird
         attrs:
           name: Netbird
-          provider: !KeyOf netbird-provider
+          provider: !KeyOf netbird-provider-v2
   vixens-hydrus.yaml: |
     version: 1
     metadata:
