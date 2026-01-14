@@ -26,8 +26,8 @@ curl -L -k https://hydrus.dev.truxonline.com
 - **Namespace :** `media`
 - **Standard Elite** : QoS Guaranteed (Requests=Limits), Intégrité sqlite3, Litestream HA, Métriques Prometheus.
 - **Resources** : 1 CPU / 2Gi RAM (Guaranteed).
-- **Storage** : PVC iSCSI de **40Gi** (augmenté pour gérer les volumineux sets de WAL Litestream).
-- **Optimisation** : Restauration de la base `caches` désactivée en init-container pour accélérer le boot.
+- **Storage** : PVC iSCSI de **100Gi** (augmenté pour accommoder la persistance du cache et les WAL Litestream).
+- **Optimisation** : Persistance de la base `caches` activée (plus de suppression au boot) pour éviter les popups GUI. Nettoyage automatique en cas de corruption via l'init-container d'intégrité.
 - **PriorityClass** : `vixens-medium`.
 - **Authentication** : Intégration SSO via Authentik ForwardAuth (`authentik-forward-auth`).
 - **Health Probes** : Liveness (120s delay) et Readiness (30s delay) configurées.
