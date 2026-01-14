@@ -25,6 +25,7 @@ data:
             - https://netbird.truxonline.com
             - https://netbird.truxonline.com/
             - https://netbird.truxonline.com/#callback
+            - https://netbird.truxonline.com/#callback/
             - https://netbird.truxonline.com/silent-auth
       - model: authentik_core.application
         id: netbird-app
