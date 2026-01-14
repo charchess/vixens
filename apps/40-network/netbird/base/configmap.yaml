@@ -8,7 +8,7 @@ data:
     {
       "HttpConfig": {
         "Address": ":80",
-        "AuthIssuer": "https://authentik.dev.truxonline.com/application/o/netbird/",
+        "AuthIssuer": "https://authentik.truxonline.com/application/o/netbird/",
         "AuthAudience": "netbird"
       }
     }

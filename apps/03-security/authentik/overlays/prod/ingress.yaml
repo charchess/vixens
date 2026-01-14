@@ -21,7 +21,18 @@ spec:
                 name: authentik
                 port:
                   number: 9000
+    - host: authentik.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: authentik
+                port:
+                  number: 9000
   tls:
     - hosts:
         - authentik.truxonline.com
+        - authentik.dev.truxonline.com
       secretName: authentik-tls
