@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-12 (Task vixens-yufn completed - Netbird goldified deployment)
+Last Updated: 2026-01-14 (Hydrus goldified and Authentik integration validated)
 
 ---
 
@@ -87,7 +87,7 @@ Last Updated: 2026-01-12 (Task vixens-yufn completed - Netbird goldified deploym
 | sonarr | ⏳ | ✅ | Prod fixed 
 | prowlarr | ⏳ | ✅ | Prod fixed 
 | jellyseerr | ⏳ | 💤 | Media request management (planned) |
-| hydrus-client | ✅ | ✅ | Metrics Prometheus activées (v0.5.5) |
+| hydrus-client | ✅ | ✅ | Elite Status + Authentik SSO |
 
 ---
 
@@ -111,7 +111,7 @@ Last Updated: 2026-01-12 (Task vixens-yufn completed - Netbird goldified deploym
 |-------------|-----|------|-------|
 | mail-gateway | ✅ | ✅ | Email gateway (External) |
 | vaultwarden | ✅ | ✅ | Migrated to standardized middleware |
-| authentik | ✅ | ✅ | OIDC Config Initialisée (Netbird) |
+| authentik | ✅ | ✅ | Elite Status + Blueprints (Netbird, Hydrus) |
 | docspell-native | ✅ | ✅ | Fixed missing secretNamespace |
 
 ---
@@ -168,10 +168,10 @@ git push origin main
 ## Quick Stats
 
 **Dev Environment:**
-- ✅ Working: 11 applications
+- ✅ Working: 12 applications
 - ⚠️ Degraded: 0 applications
 - ❌ Broken: 0 applications
-- 🚧 WIP: 1 application (authentik)
+- 🚧 WIP: 0 application
 - ⏳ Planned: 12 applications
 - 💤 Paused: 0 applications
 
