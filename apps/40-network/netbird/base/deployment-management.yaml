@@ -57,7 +57,7 @@ spec:
               mountPath: /etc/netbird
       containers:
         - name: management
-          image: netbirdio/management:0.62.2
+          image: netbirdio/management:0.62.3
           imagePullPolicy: IfNotPresent
           args:
             - --port=80
