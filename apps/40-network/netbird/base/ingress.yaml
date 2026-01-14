@@ -5,7 +5,7 @@ metadata:
   name: netbird-dashboard
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
-    traefik.ingress.kubernetes.io/router.middlewares: networking-redirect-https@kubernetescrd,networking-netbird-cors@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: networking-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -30,7 +30,6 @@ metadata:
   name: netbird-api
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
-    traefik.ingress.kubernetes.io/router.middlewares: networking-netbird-cors@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
