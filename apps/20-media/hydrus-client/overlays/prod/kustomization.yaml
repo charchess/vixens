@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: media
 patchesStrategicMerge:
   - infisical-shared-patch.yaml
+  - resources-patch.yaml
 resources:
   - ../../base
   - ingress.yaml
