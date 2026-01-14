@@ -141,8 +141,8 @@ bd create --title="..." --assignee=gemini
 1. Créer feature branch: `git checkout -b fix/<app-name>` ou `feat/<app-name>`
 2. Commit changements: `git add . && git commit -m "fix(app): description"`
 3. Push feature branch: `git push origin fix/<app-name>`
-4. Créer PR: `gh pr create --base main --head fix/<app-name>`
-5. Merger PR: Auto-merge après checks OU merge manuel
+4. Créer PR: `gh pr create --base main --head fix/<app-name> --title "..." --body "..."`
+5. Merger PR: `gh pr merge --auto --squash --delete-branch` (L'agent GÈRE le cycle de vie complet)
 6. ArgoCD auto-sync dev depuis main (après merge)
 7. Attendre sync: `just wait-argocd <app_name>`
 8. Vérifier: Sync=Synced, Health=Healthy
@@ -464,7 +464,7 @@ spec:
 ### Règles Critiques
 - ❌ **JAMAIS push direct sur `main`** (branch protégée par repository rules)
 - ✅ **Feature branch OBLIGATOIRE** pour tous les changements
-- ✅ **PR required** avec checks passés
+- ✅ **PR required** (L'agent doit créer et merger la PR via `gh`)
 - ❌ JAMAIS push force sur `main`
 - ❌ JAMAIS créer tag `prod-stable` manuellement
 - ✅ Promotion production via GitHub Actions workflow uniquement
