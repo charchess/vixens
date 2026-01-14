@@ -24,7 +24,7 @@ spec:
       priorityClassName: vixens-medium
       containers:
         - name: relay
-          image: netbirdio/relay:0.62.2
+          image: netbirdio/relay:0.62.3
           imagePullPolicy: IfNotPresent
           env:
             - name: NB_AUTH_SECRET
