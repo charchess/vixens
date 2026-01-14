@@ -4,3 +4,4 @@ apps/02-monitoring/alertmanager/base/charts/*
 **/values/*.yaml
 apps/40-network/netbird/overlays/prod/api-cors-middleware.yaml
 **/api-cors-middleware.yaml
+apps/40-network/netbird/base/infisical-postgresql-secret.yaml
