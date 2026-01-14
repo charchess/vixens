@@ -149,6 +149,6 @@ spec:
             - name: AUTH_AUTHORITY
               value: https://authentik.truxonline.com/application/o/netbird/
             - name: AUTH_REDIRECT_URI
-              value: https://netbird.truxonline.com
+              value: https://netbird.truxonline.com/
             - name: AUTH_SILENT_REDIRECT_URI
-              value: https://netbird.truxonline.com/silent-auth
+              value: https://netbird.truxonline.com/silent-auth/
