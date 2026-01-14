@@ -5,11 +5,13 @@ kind: Kustomization
 
 labels:
   - pairs:
+      app.kubernetes.io/instance: netbird
       app.kubernetes.io/part-of: network-stack
       app.kubernetes.io/managed-by: argocd
     includeSelectors: false
 
 resources:
+  - namespace.yaml
   - configmap.yaml
   - infisical-secret.yaml
   - infisical-postgresql-secret.yaml

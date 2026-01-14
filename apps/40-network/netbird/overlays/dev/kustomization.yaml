@@ -4,14 +4,6 @@ kind: Kustomization
 
 namespace: networking
 
-nameSuffix: -dev
-
-labels:
-  - pairs:
-      vixens.lab/environment: dev
-      app.kubernetes.io/instance: netbird-dev
-    includeSelectors: true
-
 resources:
   - ../../base
 
