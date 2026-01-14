@@ -27,3 +27,41 @@ data:
         attrs:
           name: Netbird
           provider: !KeyOf netbird-provider
+  vixens-hydrus.yaml: |
+    version: 1
+    metadata:
+      name: hydrus-auth
+    entries:
+      - model: authentik_providers_proxy.proxyprovider
+        id: hydrus-provider-dev
+        identifiers:
+          name: hydrus-dev
+        attrs:
+          mode: forward_auth
+          external_host: https://hydrus.dev.truxonline.com
+          authentication_flow: !Find [authentik_core.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_core.flow, [slug, default-authorization-flow]]
+      - model: authentik_core.application
+        id: hydrus-app-dev
+        identifiers:
+          slug: hydrus-dev
+        attrs:
+          name: Hydrus (Dev)
+          provider: !KeyOf hydrus-provider-dev
+
+      - model: authentik_providers_proxy.proxyprovider
+        id: hydrus-provider-prod
+        identifiers:
+          name: hydrus-prod
+        attrs:
+          mode: forward_auth
+          external_host: https://hydrus.truxonline.com
+          authentication_flow: !Find [authentik_core.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_core.flow, [slug, default-authorization-flow]]
+      - model: authentik_core.application
+        id: hydrus-app-prod
+        identifiers:
+          slug: hydrus-prod
+        attrs:
+          name: Hydrus (Prod)
+          provider: !KeyOf hydrus-provider-prod

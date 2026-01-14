@@ -144,8 +144,10 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              rm -f /opt/hydrus/db/client.caches.db* /opt/hydrus/db/*.tmp* /opt/hydrus/db/*-wal;
-              echo "✅ Cache DB and tmp files cleaned. Skipping restore for caches."
+              # Stop deleting client.caches.db to avoid GUI popups at startup.
+              # Only clean technical remnants and other db WALs.
+              rm -f /opt/hydrus/db/*.tmp* /opt/hydrus/db/client.db-wal /opt/hydrus/db/client.mappings.db-wal /opt/hydrus/db/client.master.db-wal;
+              echo "✅ Technical artifacts cleaned. Healthy cache preserved if present."
               exit 0
           envFrom:
             - secretRef:
