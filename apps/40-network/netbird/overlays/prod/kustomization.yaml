@@ -17,6 +17,10 @@ patches:
       name: netbird-secrets-sync
     path: infisical-env-patch.yaml
   - target:
+      kind: Deployment
+      name: netbird-dashboard
+    path: dashboard-env-patch.yaml
+  - target:
       group: networking.k8s.io
       version: v1
       kind: Ingress

@@ -1,0 +1,15 @@
+- op: replace
+  path: /spec/template/spec/containers/0/env/0/value
+  value: https://netbird-api.truxonline.com
+- op: replace
+  path: /spec/template/spec/containers/0/env/1/value
+  value: https://netbird-api.truxonline.com
+- op: replace
+  path: /spec/template/spec/containers/0/env/4/value
+  value: https://authentik.truxonline.com/application/o/netbird/
+- op: replace
+  path: /spec/template/spec/containers/0/env/7/value
+  value: /
+- op: replace
+  path: /spec/template/spec/containers/0/env/8/value
+  value: /silent-auth/
