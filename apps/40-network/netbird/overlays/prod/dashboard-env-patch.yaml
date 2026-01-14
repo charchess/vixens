@@ -9,7 +9,7 @@
   value: https://authentik.truxonline.com/application/o/netbird/
 - op: replace
   path: /spec/template/spec/containers/0/env/7/value
-  value: /
+  value: https://netbird.truxonline.com
 - op: replace
   path: /spec/template/spec/containers/0/env/8/value
-  value: /silent-auth/
+  value: https://netbird.truxonline.com/silent-auth
