@@ -9,6 +9,14 @@ patches:
   - path: patches.yaml
   - path: infisical-secret-patch.yaml
   - target:
+      kind: InfisicalSecret
+      name: netbird-postgresql-credentials-sync
+    path: infisical-env-patch.yaml
+  - target:
+      kind: InfisicalSecret
+      name: netbird-secrets-sync
+    path: infisical-env-patch.yaml
+  - target:
       group: networking.k8s.io
       version: v1
       kind: Ingress
