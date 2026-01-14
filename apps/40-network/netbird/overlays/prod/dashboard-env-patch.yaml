@@ -1,3 +1,4 @@
+---
 - op: replace
   path: /spec/template/spec/containers/0/env/0/value
   value: https://netbird-api.truxonline.com
