@@ -15,7 +15,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: prod-stable
+    targetRevision: dev
     path: apps/03-security/authentik/overlays/prod
   destination:
     server: https://kubernetes.default.svc
