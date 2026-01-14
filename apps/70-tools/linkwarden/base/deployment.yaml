@@ -24,7 +24,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: linkwarden
-          image: ghcr.io/linkwarden/linkwarden:v2.4.9
+          image: ghcr.io/linkwarden/linkwarden:v2.13.5
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
