@@ -10,8 +10,8 @@ spec:
         - name: hydrus-client
           resources:
             limits:
-              cpu: 500m
-              memory: 2930Mi
+              cpu: 1000m
+              memory: 2048Mi
             requests:
-              cpu: 63m
-              memory: 1953Mi
+              cpu: 1000m
+              memory: 2048Mi
