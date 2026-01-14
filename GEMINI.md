@@ -113,9 +113,13 @@ just lint                            # YAML validation
 kustomize build apps/<app>/overlays/dev  # Test build
 
 # 🚢 Git Workflow
+git checkout -b feat/my-feature
 git add .
 git commit -m "type(scope): description"
-git push origin main
+git push origin feat/my-feature
+# Create and Merge Pull Request
+gh pr create --base main --head feat/my-feature --title "type(scope): description" --body "Detailed description..."
+gh pr merge --auto --squash --delete-branch
 
 # 🌐 WebUI Validation (instead of Playwright)
 curl -I http://app.dev.truxonline.com     # Check redirect
@@ -127,8 +131,8 @@ kubectl get pods -n <namespace>            # Check pods
 
 ```
 [ ] 1. yamllint passed (just lint)
-[ ] 2. git committed to dev
-[ ] 3. git pushed to remote
+[ ] 2. git committed to feature branch (feat/...)
+[ ] 3. git pushed to remote (Open Pull Request)
 [ ] 4. ArgoCD synced
 [ ] 5. App validated (curl)
 [ ] 6. docs/applications/<app>.md updated ⭐ MANDATORY
@@ -658,17 +662,20 @@ kubectl describe pod <pod-name> -n <namespace>
 ```bash
 # Check status
 git status
-git branch --show-current  # MUST be "dev"
+git branch --show-current  # MUST be a feature branch (feat/...)
 
 # Stage and commit
 git add <files>
 git commit -m "type(scope): description"
 
 # Push
-git push origin main
+git push origin feat/my-feature
+# Create and Merge Pull Request
+gh pr create --base main --head feat/my-feature --title "type(scope): description" --body "Detailed description..."
+gh pr merge --auto --squash --delete-branch
 
 # Compare branches
-git diff dev..main -- apps/
+git diff main..feat/my-feature -- apps/
 ```
 
 ## Terraform (Infrastructure)
@@ -945,12 +952,13 @@ bd sync
 ## Branch Strategy
 
 ```
-dev (development) → main (production)
+feat/my-feature (development) → main (trunk)
 ```
 
-- **ALWAYS work on dev branch**
-- **NEVER commit directly to main**
-- Promotion to main via GitHub Actions (user-triggered)
+- **ALWAYS work on short-lived feature branch**
+- **NEVER commit directly to main** (unless authorized)
+- **NEVER use long-lived dev branch**
+- Merge to main via Pull Request
 
 ## Validation Flow
 
@@ -966,7 +974,7 @@ dev (development) → main (production)
 
 1. **Forgetting documentation updates** - Most common issue
 2. **Not running yamllint** - Will fail GitHub Actions
-3. **Wrong branch** - Always work on `dev`, never `main`
+3. **Wrong branch** - Always work on feature branch (feat/...), never directly on `main`
 4. **Missing validation** - Always test after deployment
 5. **Incomplete tasks** - Don't close until fully done
 
