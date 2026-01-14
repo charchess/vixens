@@ -4,6 +4,13 @@ kind: Kustomization
 
 namespace: networking
 
+nameSuffix: -dev
+
+labels:
+  - pairs:
+      vixens.lab/environment: dev
+    includeSelectors: true
+
 resources:
   - ../../base
 
