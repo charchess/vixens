@@ -12,3 +12,17 @@ patches:
     target:
       kind: InfisicalSecret
       name: netbird-secrets-sync
+  - target:
+      kind: ConfigMap
+      name: netbird-management
+    patch: |-
+      - op: replace
+        path: /data/management.json
+        value: |
+          {
+            "HttpConfig": {
+              "Address": ":80",
+              "AuthIssuer": "https://authentik.dev.truxonline.com/application/o/netbird/",
+              "AuthAudience": "netbird"
+            }
+          }
