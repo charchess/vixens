@@ -5,7 +5,6 @@ kind: Kustomization
 
 labels:
   - pairs:
-      app.kubernetes.io/instance: netbird
       app.kubernetes.io/part-of: network-stack
       app.kubernetes.io/managed-by: argocd
     includeSelectors: false

@@ -4,6 +4,11 @@ kind: Kustomization
 
 namespace: networking
 
+labels:
+  - pairs:
+      app.kubernetes.io/instance: netbird
+    includeSelectors: true
+
 resources:
   - ../../base
   - api-cors-middleware.yaml
