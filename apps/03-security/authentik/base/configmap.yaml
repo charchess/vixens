@@ -20,9 +20,11 @@ data:
           redirect_uris:
             - https://netbird.dev.truxonline.com
             - https://netbird.dev.truxonline.com/
+            - https://netbird.dev.truxonline.com/#callback
             - https://netbird.dev.truxonline.com/silent-auth
             - https://netbird.truxonline.com
             - https://netbird.truxonline.com/
+            - https://netbird.truxonline.com/#callback
             - https://netbird.truxonline.com/silent-auth
       - model: authentik_core.application
         id: netbird-app
