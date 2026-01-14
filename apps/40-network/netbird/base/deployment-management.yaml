@@ -108,15 +108,15 @@ spec:
               name: metrics
               protocol: TCP
           livenessProbe:
-            failureThreshold: 3
-            initialDelaySeconds: 15
+            failureThreshold: 5
+            initialDelaySeconds: 60
             periodSeconds: 10
             tcpSocket:
               port: http
             timeoutSeconds: 3
           readinessProbe:
-            failureThreshold: 3
-            initialDelaySeconds: 15
+            failureThreshold: 5
+            initialDelaySeconds: 30
             periodSeconds: 10
             tcpSocket:
               port: http

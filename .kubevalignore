@@ -2,3 +2,5 @@ apps/02-monitoring/alertmanager/base/charts/*
 **/charts/*
 **/values.yaml
 **/values/*.yaml
+apps/40-network/netbird/overlays/prod/api-cors-middleware.yaml
+**/api-cors-middleware.yaml
