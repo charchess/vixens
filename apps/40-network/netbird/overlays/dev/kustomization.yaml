@@ -29,14 +29,7 @@ patches:
           {
             "HttpConfig": {
               "Address": ":80",
-              "AuthIssuer": "https://authentik.truxonline.com/application/o/netbird/",
+              "AuthIssuer": "https://authentik.dev.truxonline.com/application/o/netbird/",
               "AuthAudience": "netbird"
             }
           }
-  - target:
-      kind: Deployment
-      name: netbird-dashboard
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/env/4/value
-        value: https://authentik.truxonline.com/application/o/netbird/
