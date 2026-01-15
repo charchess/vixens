@@ -64,6 +64,18 @@ spec:
   template:
     spec:
       initContainers:
+        - name: cleanup-corrupted-geo
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - |
+              echo "Cleaning up potentially corrupted geolocation files..."
+              rm -f /var/lib/netbird/GeoLite2-City*.mmdb /var/lib/netbird/geonames*.db 2>/dev/null || true
+              echo "Cleanup done"
+          volumeMounts:
+            - name: netbird-data
+              mountPath: /var/lib/netbird
         - name: init-config
           command:
             - sh
