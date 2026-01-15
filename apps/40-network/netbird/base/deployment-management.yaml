@@ -109,14 +109,14 @@ spec:
               protocol: TCP
           livenessProbe:
             failureThreshold: 5
-            initialDelaySeconds: 60
+            initialDelaySeconds: 180
             periodSeconds: 10
             tcpSocket:
               port: http
             timeoutSeconds: 3
           readinessProbe:
             failureThreshold: 5
-            initialDelaySeconds: 30
+            initialDelaySeconds: 60
             periodSeconds: 10
             tcpSocket:
               port: http
