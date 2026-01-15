@@ -200,3 +200,4 @@ AUTH_CLIENT_ID: "netbird"  # OAuth2 Client ID from Authentik
 1. Vérifier que la base existe: `kubectl exec -it -n databases postgresql-shared-1 -- psql -U postgres -c "\l"`
 2. Vérifier la connexion: `kubectl logs -n networking netbird-management-xxx | grep postgres`
 3. Vérifier le DSN dans le secret: `kubectl get secret -n networking netbird-secrets -o jsonpath='{.data.POSTGRES_DSN}' | base64 -d`
+Last update: 2026-01-15 - Fixed OIDC login issues.
