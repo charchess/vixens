@@ -1,0 +1,82 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-management
+spec:
+  template:
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: management
+          env:
+            - name: NETBIRD_STORE_ENGINE
+              value: "postgres"
+            - name: NB_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbird-secrets
+                  key: POSTGRES_PASSWORD
+            - name: NETBIRD_STORE_ENGINE_POSTGRES_DSN
+              value: "host=postgresql-shared-rw.databases.svc.cluster.local user=netbird password=$(NB_POSTGRES_PASSWORD) dbname=netbird port=5432 sslmode=disable"
+            - name: NETBIRD_AUTH_OIDC_CONFIGURATION_ENDPOINT
+              value: "https://authentik.truxonline.com/application/o/netbird/.well-known/openid-configuration"
+            - name: NETBIRD_AUTH_AUDIENCE
+              value: "netbird"
+            - name: NETBIRD_AUTH_CLIENT_ID
+              value: "netbird"
+            - name: NETBIRD_AUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: netbird-secrets
+                  key: NETBIRD_AUTH_CLIENT_SECRET
+            - name: NETBIRD_DOMAIN_NAME
+              value: "netbird.truxonline.com"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-dashboard
+spec:
+  template:
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: netbird
+          env:
+            - name: NETBIRD_AUTH_AUDIENCE
+              value: "netbird"
+            - name: NETBIRD_AUTH_CLIENT_ID
+              value: "netbird"
+            - name: NETBIRD_AUTH_AUTHORITY
+              value: "https://authentik.truxonline.com/application/o/netbird/"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-signal
+spec:
+  template:
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-relay
+spec:
+  template:
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
