@@ -23,3 +23,15 @@ patches:
     target:
       kind: InfisicalSecret
       name: netbird-secrets-sync
+  - path: patch-env.yaml
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: netbird-management
+  - path: patch-env-dashboard.yaml
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: netbird-dashboard
