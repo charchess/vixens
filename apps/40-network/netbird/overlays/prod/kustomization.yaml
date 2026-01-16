@@ -1,4 +1,3 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: networking
@@ -23,3 +22,9 @@ patches:
     target:
       kind: InfisicalSecret
       name: netbird-secrets-sync
+  - path: patch-env.yaml
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: netbird-management

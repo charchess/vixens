@@ -1,0 +1,33 @@
+- op: replace
+  path: /spec/template/spec/containers/0/env
+  value:
+    - name: NETBIRD_STORE_ENGINE
+      value: "postgres"
+    - name: NETBIRD_STORE_ENGINE_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: netbird-secrets
+          key: NETBIRD_STORE_ENGINE_POSTGRES_DSN
+    - name: NETBIRD_AUTH_OIDC_CONFIGURATION_ENDPOINT
+      value: "https://authentik.dev.truxonline.com/application/o/netbird/.well-known/openid-configuration"
+    - name: NETBIRD_AUTH_AUDIENCE
+      value: "netbird"
+    - name: NETBIRD_AUTH_CLIENT_ID
+      value: "netbird"
+    - name: NETBIRD_AUTH_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: netbird-secrets
+          key: NETBIRD_AUTH_CLIENT_SECRET
+    - name: NETBIRD_AUTH_USER_ID_CLAIM
+      value: "sub"
+    - name: NETBIRD_DOMAIN_NAME
+      value: "netbird.dev.truxonline.com"
+    - name: NETBIRD_MGMT_API_ENDPOINT
+      value: "https://netbird-api.dev.truxonline.com"
+    - name: NETBIRD_SIGNAL_ENDPOINT
+      value: "https://netbird-signal.dev.truxonline.com"
+    - name: NETBIRD_RELAY_ENDPOINT
+      value: "https://netbird-relay.dev.truxonline.com"
+    - name: NETBIRD_IDP_SKIP_TLS_VERIFY
+      value: "true"

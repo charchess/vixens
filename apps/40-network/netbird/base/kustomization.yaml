@@ -5,11 +5,3 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - infisical-secret.yaml
-
-patches:
-  - path: force-postgres-json.yaml
-    target:
-      group: apps
-      version: v1
-      kind: Deployment
-      name: netbird-management
