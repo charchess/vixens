@@ -58,8 +58,6 @@ spec:
               value: "netbird"
             - name: AUTH_AUTHORITY
               value: "https://authentik.dev.truxonline.com/application/o/netbird/"
-            - name: AUTH_REDIRECT_URI
-              value: "https://netbird.dev.truxonline.com"
             - name: AUTH_SUPPORTED_SCOPES
               value: "openid profile email offline_access"
             - name: NETBIRD_MGMT_API_ENDPOINT

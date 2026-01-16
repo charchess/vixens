@@ -44,9 +44,17 @@ spec:
       containers:
         - name: dashboard
           env:
-            - name: NETBIRD_AUTH_AUDIENCE
+            - name: AUTH_AUDIENCE
               value: "netbird"
-            - name: NETBIRD_AUTH_CLIENT_ID
+            - name: AUTH_CLIENT_ID
               value: "netbird"
-            - name: NETBIRD_AUTH_AUTHORITY
+            - name: AUTH_AUTHORITY
               value: "https://authentik.truxonline.com/application/o/netbird/"
+            - name: AUTH_SUPPORTED_SCOPES
+              value: "openid profile email offline_access"
+            - name: NETBIRD_MGMT_API_ENDPOINT
+              value: "https://netbird-api.truxonline.com"
+            - name: NETBIRD_MGMT_GRPC_API_ENDPOINT
+              value: "https://netbird-api.truxonline.com"
+            - name: USE_AUTH0
+              value: "false"
