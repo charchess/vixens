@@ -1,35 +1,16 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: networking
-
-nameSuffix: -dev
-
-labels:
-  - pairs:
-      vixens.lab/environment: dev
-    includeSelectors: true
 
 resources:
   - ../../base
 
-patches:
-  - path: infisical-secret-patch.yaml
-    target:
-      kind: InfisicalSecret
-      name: netbird-secrets-sync
-  - target:
-      kind: ConfigMap
-      name: netbird-management
-    patch: |-
-      - op: replace
-        path: /data/management.json
-        value: |
-          {
-            "HttpConfig": {
-              "Address": ":80",
-              "AuthIssuer": "https://authentik.dev.truxonline.com/application/o/netbird/",
-              "AuthAudience": "netbird"
-            }
-          }
+helmCharts:
+  - name: netbird
+    repo: https://netbirdio.github.io/helms
+    version: 1.9.0
+    releaseName: netbird
+    namespace: networking
+    includeCRDs: true
+    valuesFile: values.yaml
