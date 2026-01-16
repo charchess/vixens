@@ -51,3 +51,17 @@ kubectl get pods -n networking -l app.kubernetes.io/instance=netbird
 # Vérifier les Ingress
 kubectl get ingress -n networking -l app.kubernetes.io/instance=netbird
 ```
+
+## Troubleshooting
+
+### Dashboard ne charge pas ou boucle "Unauthenticated"
+
+1. Vérifier que l'API Management répond: `curl -k https://netbird-api.[env].truxonline.com/api/health` (devrait retourner 401 ou 200).
+2. Vérifier la configuration Authentik (client ID, redirect URIs).
+3. **IMPORTANT :** Vérifier que le `NETBIRD_AUTH_CLIENT_SECRET` dans Infisical correspond bien au Client Secret du provider `netbird` dans Authentik. Si le provider a été recréé, le secret a changé.
+
+### Clients ne peuvent pas se connecter
+
+1. Vérifier le Signal service: `kubectl logs -n networking -l app.kubernetes.io/name=netbird-signal`
+2. Vérifier le Relay service (fallback): `kubectl logs -n networking -l app.kubernetes.io/name=netbird-relay`
+3. Vérifier les règles firewall (UDP 51820 pour WireGuard, ports TURN).
