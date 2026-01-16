@@ -3,11 +3,13 @@
   value:
     - name: NETBIRD_STORE_ENGINE
       value: "postgres"
-    - name: NETBIRD_STORE_ENGINE_POSTGRES_DSN
+    - name: NB_POSTGRES_PASSWORD
       valueFrom:
         secretKeyRef:
           name: netbird-secrets
-          key: NETBIRD_STORE_ENGINE_POSTGRES_DSN
+          key: POSTGRES_PASSWORD
+    - name: NETBIRD_STORE_ENGINE_POSTGRES_DSN
+      value: "host=postgresql-shared-rw.databases.svc.cluster.local user=netbird password=$(NB_POSTGRES_PASSWORD) dbname=netbird port=5432 sslmode=disable"
     - name: NETBIRD_AUTH_OIDC_CONFIGURATION_ENDPOINT
       value: "https://authentik.dev.truxonline.com/application/o/netbird/.well-known/openid-configuration"
     - name: NETBIRD_AUTH_AUDIENCE
