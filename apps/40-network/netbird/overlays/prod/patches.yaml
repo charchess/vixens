@@ -6,10 +6,6 @@ metadata:
 spec:
   template:
     spec:
-      tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
       containers:
         - name: management
           env:
@@ -33,6 +29,8 @@ spec:
                 secretKeyRef:
                   name: netbird-secrets
                   key: NETBIRD_AUTH_CLIENT_SECRET
+            - name: NETBIRD_AUTH_USER_ID_CLAIM
+              value: "sub"
             - name: NETBIRD_DOMAIN_NAME
               value: "netbird.truxonline.com"
 ---
@@ -43,12 +41,8 @@ metadata:
 spec:
   template:
     spec:
-      tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
       containers:
-        - name: netbird
+        - name: dashboard
           env:
             - name: NETBIRD_AUTH_AUDIENCE
               value: "netbird"
@@ -56,27 +50,3 @@ spec:
               value: "netbird"
             - name: NETBIRD_AUTH_AUTHORITY
               value: "https://authentik.truxonline.com/application/o/netbird/"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: netbird-signal
-spec:
-  template:
-    spec:
-      tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: netbird-relay
-spec:
-  template:
-    spec:
-      tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"

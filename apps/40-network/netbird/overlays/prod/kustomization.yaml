@@ -5,15 +5,7 @@ namespace: networking
 
 resources:
   - ../../base
-
-helmCharts:
-  - name: netbird
-    repo: https://netbirdio.github.io/helms
-    version: 1.9.0
-    releaseName: netbird
-    namespace: networking
-    includeCRDs: true
-    valuesFile: values.yaml
+  - ingress.yaml
 
 patches:
   - patch: |
@@ -23,4 +15,4 @@ patches:
     target:
       kind: InfisicalSecret
       name: netbird-secrets-sync
-  - path: all-patches.yaml
+  - path: patches.yaml

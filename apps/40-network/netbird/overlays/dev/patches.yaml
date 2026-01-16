@@ -6,10 +6,6 @@ metadata:
 spec:
   template:
     spec:
-      tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
       containers:
         - name: management
           env:
@@ -33,8 +29,16 @@ spec:
                 secretKeyRef:
                   name: netbird-secrets
                   key: NETBIRD_AUTH_CLIENT_SECRET
+            - name: NETBIRD_AUTH_USER_ID_CLAIM
+              value: "sub"
             - name: NETBIRD_DOMAIN_NAME
               value: "netbird.dev.truxonline.com"
+            - name: NETBIRD_MGMT_API_ENDPOINT
+              value: "https://netbird-api.dev.truxonline.com"
+            - name: NETBIRD_SIGNAL_ENDPOINT
+              value: "https://netbird-signal.dev.truxonline.com"
+            - name: NETBIRD_RELAY_ENDPOINT
+              value: "https://netbird-relay.dev.truxonline.com"
             - name: NETBIRD_IDP_SKIP_TLS_VERIFY
               value: "true"
 ---
@@ -45,40 +49,22 @@ metadata:
 spec:
   template:
     spec:
-      tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
       containers:
-        - name: netbird
+        - name: dashboard
           env:
-            - name: NETBIRD_AUTH_AUDIENCE
+            - name: AUTH_AUDIENCE
               value: "netbird"
-            - name: NETBIRD_AUTH_CLIENT_ID
+            - name: AUTH_CLIENT_ID
               value: "netbird"
-            - name: NETBIRD_AUTH_AUTHORITY
+            - name: AUTH_AUTHORITY
               value: "https://authentik.dev.truxonline.com/application/o/netbird/"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: netbird-signal
-spec:
-  template:
-    spec:
-      tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: netbird-relay
-spec:
-  template:
-    spec:
-      tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+            - name: AUTH_REDIRECT_URI
+              value: "https://netbird.dev.truxonline.com"
+            - name: AUTH_SUPPORTED_SCOPES
+              value: "openid profile email offline_access"
+            - name: NETBIRD_MGMT_API_ENDPOINT
+              value: "https://netbird-api.dev.truxonline.com"
+            - name: NETBIRD_MGMT_GRPC_API_ENDPOINT
+              value: "https://netbird-api.dev.truxonline.com"
+            - name: USE_AUTH0
+              value: "false"

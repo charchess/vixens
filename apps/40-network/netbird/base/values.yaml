@@ -1,4 +1,0 @@
----
-# Minimal base values
-postgresql:
-  enabled: false
