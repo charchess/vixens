@@ -21,3 +21,9 @@ patches:
       version: v1
       kind: Deployment
       name: netbird-management
+  - path: patch-env-dashboard.yaml
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: netbird-dashboard
