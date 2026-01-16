@@ -1,0 +1,96 @@
+---
+# Production Values for Netbird
+
+image:
+  tag: "0.36.0"
+
+management:
+  replicaCount: 1
+  env:
+    - name: NETBIRD_STORE_ENGINE
+      value: "postgres"
+    - name: NETBIRD_STORE_ENGINE_POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: netbird-secrets
+          key: NETBIRD_STORE_ENGINE_POSTGRES_DSN
+    - name: NETBIRD_AUTH_OIDC_CONFIGURATION_ENDPOINT
+      value: "https://authentik.truxonline.com/application/o/netbird/.well-known/openid-configuration"
+    - name: NETBIRD_AUTH_AUDIENCE
+      value: "netbird"
+    - name: NETBIRD_AUTH_CLIENT_ID
+      value: "netbird"
+    - name: NETBIRD_AUTH_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: netbird-secrets
+          key: NETBIRD_AUTH_CLIENT_SECRET
+    - name: NETBIRD_AUTH_USER_ID_CLAIM
+      value: "sub"
+    # Production Domains
+    - name: NETBIRD_DOMAIN_NAME
+      value: "netbird.truxonline.com"
+    - name: NETBIRD_MGMT_API_ENDPOINT
+      value: "https://netbird-api.truxonline.com"
+    - name: NETBIRD_SIGNAL_ENDPOINT
+      value: "https://netbird-signal.truxonline.com"
+    - name: NETBIRD_RELAY_ENDPOINT
+      value: "https://netbird-relay.truxonline.com"
+
+dashboard:
+  ingress:
+    enabled: true
+    hosts:
+      - host: netbird.truxonline.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: netbird-dashboard-tls
+        hosts:
+          - netbird.truxonline.com
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  env:
+    - name: NETBIRD_AUTH_AUDIENCE
+      value: "netbird"
+    - name: NETBIRD_AUTH_CLIENT_ID
+      value: "netbird"
+    - name: NETBIRD_AUTH_AUTHORITY
+      value: "https://authentik.truxonline.com/application/o/netbird/"
+
+signal:
+  ingress:
+    enabled: true
+    hosts:
+      - host: netbird-signal.truxonline.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: netbird-signal-tls
+        hosts:
+          - netbird-signal.truxonline.com
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+
+relay:
+  ingress:
+    enabled: true
+    hosts:
+      - host: netbird-relay.truxonline.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: netbird-relay-tls
+        hosts:
+          - netbird-relay.truxonline.com
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+
+postgresql:
+  enabled: false
