@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-management
+spec:
+  template:
+    spec:
+      containers:
+        - name: management
+          env:
+            - name: NETBIRD_STORE_ENGINE
+              value: "postgres"
+            - name: NETBIRD_STORE_ENGINE_POSTGRES_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: netbird-secrets
+                  key: NETBIRD_STORE_ENGINE_POSTGRES_DSN
