@@ -16,7 +16,9 @@ data:
           name: netbird-v2
         attrs:
           client_id: netbird
-          client_type: public
+          client_type: confidential
+          authentication_flow: !Find [authentik_core.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_core.flow, [slug, default-provider-authorization-explicit-consent]]
           redirect_uris:
             - https://netbird.dev.truxonline.com
             - https://netbird.dev.truxonline.com/
