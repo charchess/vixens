@@ -1,0 +1,84 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-signal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netbird-signal
+  template:
+    metadata:
+      labels:
+        app: netbird-signal
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: signal
+          image: netbirdio/signal:0.62.2
+          args: ["--port=80"]
+          ports:
+            - containerPort: 80
+              name: grpc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-signal
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      name: grpc
+  selector:
+    app: netbird-signal
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-relay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netbird-relay
+  template:
+    metadata:
+      labels:
+        app: netbird-relay
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: relay
+          image: netbirdio/relay:0.62.2
+          env:
+            - name: NB_RELAY_PORT
+              value: "33080"
+            - name: NB_RELAY_EXPOSED_ADDRESS
+              value: "netbird-relay.truxonline.com:443"
+            - name: NETBIRD_RELAY_PORT
+              value: "33080"
+            - name: NETBIRD_RELAY_EXPOSED_ADDRESS
+              value: "netbird-relay.truxonline.com:443"
+          ports:
+            - containerPort: 33080
+              name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-relay
+spec:
+  ports:
+    - port: 33080
+      targetPort: 33080
+      name: http
+  selector:
+    app: netbird-relay
