@@ -3,8 +3,8 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [ ]   | 0.36.0  |
-| Prod          | [x]     | [x]       | [ ]   | 0.36.0  |
+| Dev           | [x]     | [x]       | [x]   | v3.1.111|
+| Prod          | [x]     | [x]       | [ ]   | v3.1.111|
 
 ## Description
 
@@ -12,19 +12,20 @@ Netbird est une solution VPN moderne basée sur WireGuard qui crée un réseau m
 
 ### Composants déployés
 
-1. **Management Service** : Service central de coordination.
-2. **Signal Service** : Négociation P2P.
-3. **Relay Service** : Relay TURN pour fallback.
-4. **Dashboard** : Interface UI.
+1. **Management Service** : Service central de coordination (Go).
+2. **Signal Service** : Négociation P2P (Go).
+3. **Relay Service** : Relay TURN pour fallback (Go).
+4. **Dashboard v2** : Interface UI (SPA).
 
 ## Architecture
 
-Migration effectuée vers le Chart Helm Officiel `netbirdio/netbird` (v1.9.0).
+Déployé via des manifestes Kubernetes natifs (Kustomize) pour une meilleure stabilité.
 
 - **Namespace**: `networking`
-- **Authentification**: OIDC via Authentik.
+- **Authentification**: OIDC via Authentik (Client Type: Public pour le Dashboard).
 - **Stockage**: PostgreSQL externe (partagé).
-- **Ingress**: Traefik (géré par le Chart Helm).
+- **Ingress**: Traefik avec redirection HTTPS.
+- **Sécurité**: JWKS backend récupéré via URL interne (Authentik Service) pour bypasser les problèmes de confiance TLS en Dev.
 
 ## Validation
 
