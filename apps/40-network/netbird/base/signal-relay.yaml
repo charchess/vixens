@@ -58,7 +58,11 @@ spec:
       containers:
         - name: relay
           image: netbirdio/relay:0.62.2
-          args: ["-port", "33080", "-exposed-address", "netbird-relay.truxonline.com:443"]
+          env:
+            - name: NETBIRD_RELAY_PORT
+              value: "33080"
+            - name: NETBIRD_RELAY_EXPOSED_ADDRESS
+              value: "netbird-relay.truxonline.com:443"
           ports:
             - containerPort: 33080
               name: http
