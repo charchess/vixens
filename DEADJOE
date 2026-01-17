@@ -1,0 +1,44 @@
+
+*** These modified files were found in JOE when it aborted on Fri Jan 16 19:53:44 2026
+*** JOE was aborted by UNIX signal 15
+
+*** Fichier '(Sans nom)'
+$KUBECONFIG
+null_resource.wait_install_ip
+3.17
+3.1.7
+quay.io/argoproj/argocd:v3.1.7
+tmux send-keys
+environments
+daphne
+diva
+dulce
+
+*** Fichier '(Sans nom)'
+Ignorez cette
+ignorez cet
+Ignorer cet
+_command
+bash
+execute
+Continuer quand
+worker
+Stop says
+Stop say
+
+*** Fichier '(Sans nom)'
+../.claude/plugins/marketplaces/claude-plugins-official/plugins/ralph-loop/hooks/stop-hook.sh
+../.claude/plugins/marketplaces/claude-plugins-official/plugins/ralph-loop/hooks/stop-hook.sh
+../.claude/plugins/marketplaces/claude-plugins-official/plugins/ralph-loop/hooks/hooks.json
+../.claude/plugins/marketplaces/claude-plugins-official/plugins/ralph-loop/hooks/stop-hook.sh
+../.claude/plugins/marketplaces/claude-plugins-official/plugins/ralph-loop/hooks/stop-hook.sh
+../.claude/plugins/cache/claude-plugins-official/ralph-loop/96276205880a/hooks/stop-hook.sh
+../.claude/plugins/cache/claude-plugins-official/ralph-loop/96276205880a/hooks/stop-hook.sh
+../.claude/plugins/cache/claude-plugins-official/ralph-loop/96276205880a/hooks/stop-hook.sh
+../.claude/plugins/cache/claude-plugins-official/ralph-loop/96276205880a/hooks/stop-hook.sh
+../.claude/plugins/cache/claude-plugins-official/ralph-loop/96276205880a/hooks/stop-hook.sh
+/root/vixens/.git/MERGE_MSG
+
+*** Fichier '* Startup Log *'
+Traitement de '/etc/joe/editorrc'...Traitement de '/etc/joe/ftyperc'...Finished processing /etc/joe/ftyperc
+Finished processing /etc/joe/editorrc

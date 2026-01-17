@@ -1,4 +1,16 @@
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: netbird-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: synelia-iscsi-retain
+  resources:
+    requests:
+      storage: 5Gi
+---
 apiVersion: secrets.infisical.com/v1alpha1
 kind: InfisicalSecret
 metadata:
