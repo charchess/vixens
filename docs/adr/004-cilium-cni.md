@@ -1,17 +1,16 @@
 # ADR-004: Cilium comme CNI
 
-
-> **⚠️ HISTORICAL DOCUMENT - REQUIRES REVIEW**
->
-> This ADR was restored from archived state (commit fe1e1cab, 2025-12-21) for historical purposes.
-> The status and content need to be reviewed and updated to reflect current architecture.
-> 
-> Related task: vixens-0jt2
+**Date:** 2025-11-15
+**Status:** Accepted
+**Deciders:** User, Architecture Team
+**Tags:** networking, cilium, cni
 
 ---
 
-## Statut
-✅ Accepté
+> **Note Historique :** Ce document a été restauré pour archive. 
+> Son statut a été mis à jour pour refléter l'architecture actuelle.
+
+---
 
 ## Contexte
 

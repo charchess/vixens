@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vikunja
-  namespace: 99-test
   labels:
     app.kubernetes.io/name: vikunja
 spec:

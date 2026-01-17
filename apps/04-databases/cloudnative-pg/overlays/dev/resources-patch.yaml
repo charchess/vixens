@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cloudnative-pg
-  namespace: cnpg-system
 spec:
   template:
     spec:

@@ -4,7 +4,8 @@ kind: Kustomization
 namespace: cnpg-system
 resources:
   - ../../base
-  - resources-patch.yaml
+patches:
+  - path: resources-patch.yaml
 labels:
   - pairs:
       environment: dev
