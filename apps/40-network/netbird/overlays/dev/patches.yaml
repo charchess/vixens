@@ -51,7 +51,9 @@ spec:
     spec:
       containers:
         - name: relay
-          args: ["-port", "33080", "-exposed-address", "netbird-relay.dev.truxonline.com:443"]
+          env:
+            - name: NETBIRD_RELAY_EXPOSED_ADDRESS
+              value: "netbird-relay.dev.truxonline.com:443"
 ---
 apiVersion: apps/v1
 kind: Deployment
