@@ -1,10 +1,10 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 resources:
   - namespace.yaml
-  - infisical-secret.yaml
-
-patches:
-  - path: tolerations-patch.yaml
+  - infra.yaml
+  - management.yaml
+  - dashboard.yaml
+  - signal-relay.yaml
+  - ca-bundle.yaml
