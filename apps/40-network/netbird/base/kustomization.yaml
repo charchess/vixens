@@ -7,3 +7,4 @@ resources:
   - management.yaml
   - dashboard.yaml
   - signal-relay.yaml
+  - ca-bundle.yaml

@@ -29,7 +29,14 @@ spec:
               cat <<EOF > /etc/netbird/management.json
               {
                 "HttpConfig": {
-                  "Address": ":80"
+                  "Address": ":80",
+                  "AuthIssuer": "https://authentik.dev.truxonline.com/application/o/netbird/",
+                  "AuthAudience": "netbird",
+                  "AuthKeysLocation": "http://authentik.auth.svc.cluster.local:9000/application/o/netbird/jwks/",
+                  "IdpSignKeyRefreshEnabled": true
+                },
+                "DatastoreConfig": {
+                  "Engine": "postgres"
                 }
               }
               EOF
@@ -40,6 +47,16 @@ spec:
         - name: management
           image: netbirdio/management:0.62.2
           args: ["--port=80", "--log-file=console", "--log-level=info", "--config=/etc/netbird/management.json"]
+          env:
+            - name: NETBIRD_STORE_ENGINE
+              value: "postgres"
+            - name: NB_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbird-secrets
+                  key: POSTGRES_PASSWORD
+            - name: NETBIRD_STORE_ENGINE_POSTGRES_DSN
+              value: "host=postgresql-shared-rw.databases.svc.cluster.local user=netbird password=$(NB_POSTGRES_PASSWORD) dbname=netbird port=5432 sslmode=disable"
           ports:
             - containerPort: 80
               name: http
@@ -50,12 +67,18 @@ spec:
               mountPath: /etc/netbird
             - name: netbird-data
               mountPath: /var/lib/netbird
+            - name: ca-bundle
+              mountPath: /etc/ssl/certs/ca-certificates.crt
+              subPath: ca-certificates.crt
       volumes:
         - name: config-writable
           emptyDir: {}
         - name: netbird-data
           persistentVolumeClaim:
             claimName: netbird-data
+        - name: ca-bundle
+          configMap:
+            name: netbird-ca-bundle
 ---
 apiVersion: v1
 kind: Service
