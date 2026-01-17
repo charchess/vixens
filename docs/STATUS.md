@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-15 (Netbird migration to official Helm Chart)
+Last Updated: 2026-01-17 (Netbird migration to native manifests)
 
 ---
 
@@ -99,7 +99,7 @@ Last Updated: 2026-01-15 (Netbird migration to official Helm Chart)
 | external-dns-gandi | ✅ | ✅ | Public DNS management |
 | contacts | ✅ | 💤 | Contacts redirection service |
 | netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
-| netbird | ✅ | ✅ | Mesh VPN - Helm Chart v1.9.0 |
+| netbird | ✅ | ✅ | Mesh VPN - Native manifests (Postgres + SSO) |
 | adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
 | gluetun | ✅ | ✅ | Fixed missing secretNamespace |
 
