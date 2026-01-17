@@ -52,6 +52,8 @@ spec:
       containers:
         - name: relay
           env:
+            - name: NB_RELAY_EXPOSED_ADDRESS
+              value: "netbird-relay.dev.truxonline.com:443"
             - name: NETBIRD_RELAY_EXPOSED_ADDRESS
               value: "netbird-relay.dev.truxonline.com:443"
 ---
