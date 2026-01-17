@@ -30,7 +30,7 @@ spec:
                 path: loki.yaml
       containers:
         - name: loki
-          image: grafana/loki:3.0.0
+          image: grafana/loki:3.6.3
           args:
             - -config.file=/etc/loki/loki.yaml
           ports:
