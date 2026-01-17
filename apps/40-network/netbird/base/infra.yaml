@@ -17,9 +17,15 @@ metadata:
   name: netbird-secrets-sync
   namespace: networking
 spec:
+  hostAPI: http://192.168.111.69:8085
+  resyncInterval: 60
   authentication:
     universalAuth:
+      credentialsRef:
+        secretName: infisical-universal-auth
+        secretNamespace: argocd
       secretsScope:
+        projectSlug: vixens
         envSlug: dev
         secretsPath: /apps/40-network/netbird
   managedSecretReference:
