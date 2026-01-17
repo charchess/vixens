@@ -43,12 +43,12 @@ spec:
                   name: authentik-postgresql-credentials
                   key: POSTGRES_PASSWORD
                   optional: true
-            # Netbird (via DSN ONLY - The smart way)
-            - name: NETBIRD_DSN
+            # Netbird (via Password direct)
+            - name: NETBIRD_PASS
               valueFrom:
                 secretKeyRef:
                   name: netbird-postgresql-credentials
-                  key: POSTGRES_DSN
+                  key: POSTGRES_PASSWORD
                   optional: true
             # Standard Apps
             - name: DOCSPELL_PASS
@@ -86,13 +86,8 @@ spec:
               # Sync Authentik
               sync_db "authentik" "$AUTHENTIK_PASS"
               
-              # Sync Netbird (Intelligent parsing of DSN)
-              if [ ! -z "$NETBIRD_DSN" ]; then
-                echo "Parsing Netbird DSN..."
-                NB_USER=$(echo "$NETBIRD_DSN" | sed -E 's|.*//([^:]+):.*|\1|')
-                NB_PASS=$(echo "$NETBIRD_DSN" | sed -E 's|.*//[^:]+:([^@]+)@.*|\1|')
-                sync_db "$NB_USER" "$NB_PASS"
-              fi
+              # Sync Netbird
+              sync_db "netbird" "$NETBIRD_PASS"
 
               # Sync others
               sync_db "docspell" "$DOCSPELL_PASS"
