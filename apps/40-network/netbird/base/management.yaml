@@ -21,7 +21,7 @@ spec:
           effect: "NoSchedule"
       initContainers:
         - name: init-config
-          image: busybox:1.36
+          image: busybox:1.37
           env:
             - name: AUTH_ISSUER
               value: "https://authentik.dev.truxonline.com/application/o/netbird/"
