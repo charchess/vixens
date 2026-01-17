@@ -59,6 +59,10 @@ spec:
         - name: relay
           image: netbirdio/relay:0.62.2
           env:
+            - name: NB_RELAY_PORT
+              value: "33080"
+            - name: NB_RELAY_EXPOSED_ADDRESS
+              value: "netbird-relay.truxonline.com:443"
             - name: NETBIRD_RELAY_PORT
               value: "33080"
             - name: NETBIRD_RELAY_EXPOSED_ADDRESS
