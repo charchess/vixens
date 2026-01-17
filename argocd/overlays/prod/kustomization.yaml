@@ -65,7 +65,6 @@ resources:
   - apps/changedetection.yaml
   - apps/adguard-home.yaml
   - apps/netbird.yaml
-  - apps/netbird-dev.yaml
   - apps/netvisor.yaml
   - apps/authentik.yaml
   - apps/netbox.yaml
