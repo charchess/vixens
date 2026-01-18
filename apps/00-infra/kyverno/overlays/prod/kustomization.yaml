@@ -9,6 +9,5 @@ labels:
     pairs:
       environment: prod
 # Production: HA configuration with 3 replicas per controller
-# Uncomment and use values-ha.yaml when ready for HA
-# patches:
-#   - path: values-ha.yaml
+# See values/ha.yaml for HA configuration reference
+# To enable HA, merge values into base/values.yaml or use valuesInline
