@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: amule
-  namespace: downloads
 spec:
   replicas: 1
   strategy:

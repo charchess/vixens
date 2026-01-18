@@ -1,9 +1,9 @@
 # ADR-014: Litestream Backup Profiles and Recovery Patterns
 
-**Status:** Accepted  
-**Date:** 2026-01-10  
-**Authors:** Coding Agent  
-**Tags:** backup, disaster-recovery, litestream, sqlite, architecture  
+**Date:** 2026-01-10
+**Status:** Accepted
+**Deciders:** Coding Agent
+**Tags:** backup, litestream, sqlite
 
 ---
 

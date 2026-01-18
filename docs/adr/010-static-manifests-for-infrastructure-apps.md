@@ -1,7 +1,11 @@
 # ADR-010: Use Static (Hydrated) Manifests for Infrastructure Applications
 
-## Status
-Accepted
+**Date:** 2026-01-01
+**Status:** Deprecated
+**Deciders:** User, Coding Agent
+**Tags:** infra, manifests
+
+---
 
 ## Context
 The project currently uses the "inline" `helmCharts` generator feature of Kustomize (via ArgoCD) for several infrastructure applications, notably Reloader.

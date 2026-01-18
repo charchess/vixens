@@ -6,9 +6,6 @@ resources:
   - ../../base
   - ingress.yaml
 patches:
-  - target:
-      kind: Deployment
-      name: sonarr
   - patch: |-
       apiVersion: apps/v1
       kind: Deployment

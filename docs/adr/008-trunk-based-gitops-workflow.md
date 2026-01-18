@@ -1,9 +1,11 @@
 # ADR-008: Migration vers Trunk-Based GitOps Workflow
 
 **Date:** 2025-12-28
-**Status:** ✅ Accepted
+**Status:** Superseded by [ADR-017](017-pure-trunk-based-single-branch.md)
 **Deciders:** Architecture, DevOps
-**Tags:** `gitops`, `workflow`, `migration`, `best-practices`
+**Tags:** gitops, workflow, migration
+
+---
 
 ## Context
 

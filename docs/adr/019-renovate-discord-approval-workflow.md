@@ -1,9 +1,9 @@
 # ADR-013: Renovate Discord Approval Workflow
 
 **Date:** 2026-01-02
-**Status:** ✅ Implemented
+**Status:** Accepted
 **Deciders:** DevOps, Automation Team
-**Tags:** `automation`, `renovate`, `discord`, `approval-workflow`, `gitops`
+**Tags:** automation, renovate, discord
 
 ---
 

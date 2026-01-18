@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mosquitto
-  namespace: mosquitto
   annotations:
     reloader.stakater.com/auto: "true"
   labels:
