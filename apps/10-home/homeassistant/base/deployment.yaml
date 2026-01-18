@@ -97,7 +97,7 @@ spec:
               mountPath: /tmp/ha-config
               readOnly: true
         - name: filebrowser-init
-          image: filebrowser/filebrowser:v2.54.0
+          image: filebrowser/filebrowser:v2.55.0
           command:
             - sh
             - -c
@@ -149,7 +149,7 @@ spec:
               cpu: 1000m
               memory: 2048Mi
         - name: filebrowser
-          image: filebrowser/filebrowser:v2.54.0
+          image: filebrowser/filebrowser:v2.55.0
           ports:
             - name: fb-http
               containerPort: 8080
