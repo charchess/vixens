@@ -57,7 +57,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: relay
-          image: netbirdio/relay:0.62.2
+          image: netbirdio/relay:0.63.0
           env:
             - name: NB_RELAY_PORT
               value: "33080"
