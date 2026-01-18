@@ -1,0 +1,51 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-revision-history-limit
+  annotations:
+    policies.kyverno.io/title: Require Revision History Limit
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Deployment, StatefulSet
+    policies.kyverno.io/description: >-
+      Deployments and StatefulSets should have revisionHistoryLimit set to 3 or less
+      to prevent accumulation of old ReplicaSets.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-revision-history-limit-deployment
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      validate:
+        message: "Deployments must have revisionHistoryLimit set to 3 or less."
+        pattern:
+          spec:
+            revisionHistoryLimit: "<=3"
+    - name: check-revision-history-limit-statefulset
+      match:
+        any:
+          - resources:
+              kinds:
+                - StatefulSet
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      validate:
+        message: "StatefulSets must have revisionHistoryLimit set to 3 or less."
+        pattern:
+          spec:
+            revisionHistoryLimit: "<=3"

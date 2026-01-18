@@ -1,0 +1,35 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-default-labels
+  annotations:
+    policies.kyverno.io/title: Add Default Labels
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Pod, Deployment, StatefulSet
+    policies.kyverno.io/description: >-
+      Mutates resources to add default labels for consistency.
+      Adds 'managed-by: kyverno' label if not present.
+spec:
+  background: true
+  rules:
+    - name: add-managed-by-label
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              +(app.kubernetes.io/managed-by): argocd
