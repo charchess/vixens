@@ -1,9 +1,9 @@
 # ADR 009: Simplified Two-Branch Workflow (dev → main)
 
 **Date:** 2025-12-29
-**Status:** Accepted
-**Deciders:** System Architect, DevOps Team
-**Related:** ADR-008 (Trunk-based GitOps Workflow)
+**Status:** Superseded by [ADR-017](017-pure-trunk-based-single-branch.md)
+**Deciders:** System Architect, DevOps
+**Tags:** gitops, workflow
 
 ---
 

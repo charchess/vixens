@@ -1,17 +1,16 @@
 # ADR-009: WORKFLOW.md comme Référence Maître du Processus de Développement
 
-
-> **⚠️ HISTORICAL DOCUMENT - REQUIRES REVIEW**
->
-> This ADR was restored from archived state (commit fe1e1cab, 2025-12-21) for historical purposes.
-> The status and content need to be reviewed and updated to reflect current architecture.
-> 
-> Related task: vixens-0jt2
+**Date:** 2025-12-09
+**Status:** Superseded by [WORKFLOW.md](../../WORKFLOW.md)
+**Deciders:** Claude Code, User
+**Tags:** workflow, process
 
 ---
 
-## Statut
-✅ Accepté
+> **Note Historique :** Ce document a été restauré pour archive. 
+> Son statut a été mis à jour pour refléter l'architecture actuelle.
+
+---
 
 ## Contexte
 

@@ -1,9 +1,11 @@
 # ADR-007: Renovate Trunk-Based Workflow
 
 **Date:** 2026-01-11
-**Status:** ✅ Accepted (Supersedes previous Dev-First version)
-**Deciders:** System Architecture
-**Tags:** `renovate`, `gitops`, `workflow`, `automation`, `trunk-based`
+**Status:** Accepted
+**Deciders:** Architecture Team
+**Tags:** renovate, gitops, trunk-based
+
+---
 
 ## Context
 

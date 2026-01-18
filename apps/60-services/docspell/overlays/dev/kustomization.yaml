@@ -4,13 +4,3 @@ kind: Kustomization
 namespace: services
 resources:
   - ../../base
-patches:
-  - path: patch-restserver-tolerations.yaml
-  - path: patch-joex-tolerations.yaml
-  - patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: docspell
-      spec:
-        replicas: 0

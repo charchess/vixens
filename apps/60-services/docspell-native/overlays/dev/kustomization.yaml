@@ -12,8 +12,15 @@ labels:
 patches:
   - patch: |-
       apiVersion: apps/v1
-      kind: Deployment
+      kind: StatefulSet
       metadata:
-        name: docspell-native
+        name: docspell-restserver
+      spec:
+        replicas: 0
+  - patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: docspell-joex
       spec:
         replicas: 0
