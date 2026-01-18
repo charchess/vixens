@@ -3,8 +3,8 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | v3.1.111|
-| Prod          | [x]     | [x]       | [ ]   | v3.1.111|
+| Dev           | [x]     | [x]       | [x]   | v0.63.0 |
+| Prod          | [x]     | [x]       | [ ]   | v0.63.0 |
 
 ## Description
 

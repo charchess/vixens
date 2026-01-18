@@ -116,7 +116,7 @@ Last Updated: 2026-01-17 (Infrastructure Alignment + Netbird Migration)
 | external-dns-gandi | ✅ | ✅ | Public DNS management |
 | contacts | ✅ | 💤 | Contacts redirection service |
 | netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
-| netbird | ✅ | ⚠️ | Prod: Rate Limit Let's Encrypt (unlock ~19:42 UTC) |
+| netbird | ✅ | ⚠️ | Dev: Fixed management crash |
 | adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
 
 ---
