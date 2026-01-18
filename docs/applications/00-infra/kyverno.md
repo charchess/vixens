@@ -8,6 +8,15 @@ Kyverno is a Kubernetes-native policy engine that manages policies as Kubernetes
 **Namespace:** `kyverno`
 **Helm Chart:** [kyverno/kyverno](https://kyverno.github.io/kyverno/) v3.4.0
 
+## Web UI
+
+Policy Reporter provides a web interface to visualize policy violations.
+
+| Environment | URL |
+|-------------|-----|
+| Dev | https://policy-reporter.dev.truxonline.com |
+| Prod | https://policy-reporter.truxonline.com |
+
 ## Architecture
 
 Kyverno consists of 4 controllers:
@@ -46,6 +55,14 @@ Kyverno consists of 4 controllers:
 - Ready for Enforce mode when policies are validated
 
 ## Accessing Policy Reports
+
+### Via Web UI (Recommended)
+
+Access Policy Reporter UI:
+- **Dev:** https://policy-reporter.dev.truxonline.com
+- **Prod:** https://policy-reporter.truxonline.com
+
+### Via CLI
 
 Policy reports are available as Kubernetes resources:
 

@@ -14,6 +14,7 @@ resources:
   - apps/goldilocks.yaml
   - apps/reloader.yaml
   - apps/kyverno.yaml
+  - apps/policy-reporter.yaml
   - apps/descheduler.yaml
   - apps/gitops-revision-controller.yaml
   - apps/headlamp.yaml
