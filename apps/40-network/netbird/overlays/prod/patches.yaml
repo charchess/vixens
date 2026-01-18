@@ -19,6 +19,8 @@ spec:
               value: "netbird"
             - name: AUTH_AUTHORIZATION_ENDPOINT
               value: "https://authentik.truxonline.com/application/o/authorize/"
+            - name: AUTH_DEVICE_AUTH_ENDPOINT
+              value: "https://authentik.truxonline.com/application/o/device/"
             - name: AUTH_TOKEN_ENDPOINT
               value: "https://authentik.truxonline.com/application/o/token/"
       containers:

@@ -33,6 +33,8 @@ spec:
               value: "netbird"
             - name: AUTH_AUTHORIZATION_ENDPOINT
               value: "https://authentik.dev.truxonline.com/application/o/authorize/"
+            - name: AUTH_DEVICE_AUTH_ENDPOINT
+              value: "https://authentik.dev.truxonline.com/application/o/device/"
             - name: AUTH_TOKEN_ENDPOINT
               value: "https://authentik.dev.truxonline.com/application/o/token/"
           command:
@@ -49,10 +51,11 @@ spec:
                   "IdpSignKeyRefreshEnabled": true
                 },
                 "DeviceAuthorizationFlow": {
-                  "Provider": "oidc",
+                  "Provider": "hosted",
                   "ProviderConfig": {
                     "ClientID": "$AUTH_CLIENT_ID",
                     "AuthorizationEndpoint": "$AUTH_AUTHORIZATION_ENDPOINT",
+                    "DeviceAuthEndpoint": "$AUTH_DEVICE_AUTH_ENDPOINT",
                     "TokenEndpoint": "$AUTH_TOKEN_ENDPOINT",
                     "Scope": "openid profile email offline_access",
                     "Audience": "$AUTH_AUDIENCE",
@@ -60,7 +63,7 @@ spec:
                   }
                 },
                 "PKCEAuthorizationFlow": {
-                  "Provider": "oidc",
+                  "Provider": "hosted",
                   "ProviderConfig": {
                     "ClientID": "$AUTH_CLIENT_ID",
                     "AuthorizationEndpoint": "$AUTH_AUTHORIZATION_ENDPOINT",
