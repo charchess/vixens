@@ -2,8 +2,8 @@
 
 **Date:** 2026-01-05
 **Status:** Accepted
-**Context:** Post-incident 2026-01-05 (cluster production reset)
-**Related:** [INCIDENT-2026-01-05-cluster-reset.md](../INCIDENT-2026-01-05-cluster-reset.md)
+**Deciders:** User, Coding Agent
+**Tags:** backup, disaster-recovery, persistence
 
 ---
 

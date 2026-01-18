@@ -1,10 +1,9 @@
 # ADR-017: Pure Trunk-Based Development (Single Branch main)
 
 **Date:** 2026-01-11
-**Status:** ✅ Accepted
+**Status:** Accepted
 **Deciders:** System Architect, DevOps
-**Supersedes:** ADR-009 (Simplified Two-Branch Workflow)
-**Related:** ADR-008 (Trunk-based GitOps Workflow)
+**Tags:** gitops, workflow, trunk-based
 
 ---
 
