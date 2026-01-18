@@ -49,7 +49,7 @@ spec:
                   "IdpSignKeyRefreshEnabled": true
                 },
                 "DeviceAuthorizationFlow": {
-                  "Provider": "hosted",
+                  "Provider": "oidc",
                   "ProviderConfig": {
                     "ClientID": "$AUTH_CLIENT_ID",
                     "AuthorizationEndpoint": "$AUTH_AUTHORIZATION_ENDPOINT",
@@ -60,7 +60,7 @@ spec:
                   }
                 },
                 "PKCEAuthorizationFlow": {
-                  "Provider": "hosted",
+                  "Provider": "oidc",
                   "ProviderConfig": {
                     "ClientID": "$AUTH_CLIENT_ID",
                     "AuthorizationEndpoint": "$AUTH_AUTHORIZATION_ENDPOINT",
