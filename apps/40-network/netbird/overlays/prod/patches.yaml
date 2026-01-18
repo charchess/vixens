@@ -13,6 +13,14 @@ spec:
               value: "http://authentik.auth.svc.cluster.local:9000/application/o/netbird/"
             - name: AUTH_KEYS_LOCATION
               value: "http://authentik.auth.svc.cluster.local:9000/application/o/netbird/jwks/"
+            - name: AUTH_CLIENT_ID
+              value: "netbird"
+            - name: AUTH_AUDIENCE
+              value: "netbird"
+            - name: AUTH_AUTHORIZATION_ENDPOINT
+              value: "https://authentik.truxonline.com/application/o/authorize/"
+            - name: AUTH_TOKEN_ENDPOINT
+              value: "https://authentik.truxonline.com/application/o/token/"
       containers:
         - name: management
           env:
