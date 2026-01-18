@@ -5,13 +5,3 @@ namespace: tools
 resources:
   - ../../base
   - ingress.yaml
-
-
-patches:
-  - patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: it-tools
-      spec:
-        replicas: 0

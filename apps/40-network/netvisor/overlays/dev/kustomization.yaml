@@ -16,6 +16,6 @@ patches:
       apiVersion: apps/v1
       kind: Deployment
       metadata:
-        name: netvisor
+        name: netvisor-server
       spec:
         replicas: 0
