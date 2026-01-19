@@ -1,0 +1,37 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-namespace-pod-security
+  annotations:
+    policies.kyverno.io/title: Require Namespace Pod Security
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Namespace
+    policies.kyverno.io/description: >-
+      All namespaces must define a Pod Security Standard enforcement level
+      using the 'pod-security.kubernetes.io/enforce' label.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-psa-label
+      match:
+        any:
+          - resources:
+              kinds:
+                - Namespace
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - kyverno
+      validate:
+        message: "The label 'pod-security.kubernetes.io/enforce' is required on all namespaces."
+        pattern:
+          metadata:
+            labels:
+              pod-security.kubernetes.io/enforce: "?*"
