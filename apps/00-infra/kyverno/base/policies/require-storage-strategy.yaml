@@ -1,0 +1,42 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-storage-strategy
+  annotations:
+    policies.kyverno.io/title: Require Storage Strategy
+    policies.kyverno.io/category: Storage
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Ensures that Dev uses disposable storage (delete) and Prod uses persistent storage (retain).
+spec:
+  validationFailureAction: audit
+  background: true
+  rules:
+    - name: check-dev-storage
+      match:
+        any:
+          - resources:
+              kinds:
+                - PersistentVolumeClaim
+              namespaceSelector:
+                matchLabels:
+                  environment: dev
+      validate:
+        message: "Development environments must use disposable storage (StorageClass ending in -delete)."
+        pattern:
+          spec:
+            storageClassName: "*-delete"
+    - name: check-prod-storage
+      match:
+        any:
+          - resources:
+              kinds:
+                - PersistentVolumeClaim
+              namespaceSelector:
+                matchLabels:
+                  environment: prod
+      validate:
+        message: "Production environments must use persistent storage (StorageClass ending in -retain)."
+        pattern:
+          spec:
+            storageClassName: "*-retain"
