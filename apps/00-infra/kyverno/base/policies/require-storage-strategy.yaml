@@ -9,7 +9,7 @@ metadata:
     policies.kyverno.io/description: >-
       Ensures that Dev uses disposable storage (delete) and Prod uses persistent storage (retain).
 spec:
-  validationFailureAction: audit
+  validationFailureAction: Audit
   background: true
   rules:
     - name: check-dev-storage

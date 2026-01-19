@@ -12,6 +12,7 @@ metadata:
       Mutates resources to add default labels for consistency.
       Adds 'managed-by: kyverno' label if not present.
 spec:
+  validationFailureAction: Audit
   background: true
   rules:
     - name: add-managed-by-label
@@ -28,8 +29,9 @@ spec:
               namespaces:
                 - kube-system
                 - kyverno
-      mutate:
-        patchStrategicMerge:
+      validate:
+        message: "Resource should have app.kubernetes.io/managed-by label."
+        pattern:
           metadata:
             labels:
-              +(app.kubernetes.io/managed-by): argocd
+              app.kubernetes.io/managed-by: "*?"
