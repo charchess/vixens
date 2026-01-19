@@ -76,6 +76,8 @@ spec:
 
           webhooksCleanup:
             enabled: true
+            image:
+              tag: latest
             tolerations:
               - key: node-role.kubernetes.io/control-plane
                 operator: Exists
@@ -83,6 +85,8 @@ spec:
 
           policyReportsCleanup:
             enabled: true
+            image:
+              tag: latest
             tolerations:
               - key: node-role.kubernetes.io/control-plane
                 operator: Exists
