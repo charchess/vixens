@@ -1,10 +1,10 @@
 # Reloader
 
 ## Informations de Déploiement
-| Environnement | Déployé | Configuré | Testé | Version |
-|---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | v1.4.12 |
-| Prod          | [x]     | [x]       | [ ]   | v1.4.12 |
+| Environnement | Déployé | Configuré | Testé | Version | Statut |
+|---------------|---------|-----------|-------|---------|--------|
+| Dev           | [x]     | [x]       | [x]   | v1.4.12 | 🏆 Elite |
+| Prod          | [x]     | [x]       | [ ]   | v1.4.12 | 🏆 Elite |
 
 ## Architecture
 **Type :** Infrastructure (Static Manifests)
