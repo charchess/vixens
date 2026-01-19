@@ -4,3 +4,12 @@ kind: Kustomization
 resources:
   - ../../base
   - ingress.yaml
+
+patches:
+  - patch: |
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: whoami
+      labels:
+        environment: prod
