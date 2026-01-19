@@ -3,8 +3,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: netbird-management
+  annotations:
+    vpa.kubernetes.io/updateMode: "Off"
+    goldilocks.fairwinds.com/enabled: "true"
 spec:
   replicas: 1
+  revisionHistoryLimit: 3
   strategy:
     type: Recreate
   selector:
@@ -15,6 +19,7 @@ spec:
       labels:
         app: netbird-management
     spec:
+      priorityClassName: vixens-high
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
@@ -22,6 +27,13 @@ spec:
       initContainers:
         - name: init-config
           image: busybox:1.37
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           env:
             - name: AUTH_ISSUER
               value: "https://authentik.dev.truxonline.com/application/o/netbird/"
@@ -37,6 +49,8 @@ spec:
               value: "https://authentik.dev.truxonline.com/application/o/device/"
             - name: AUTH_TOKEN_ENDPOINT
               value: "https://authentik.dev.truxonline.com/application/o/token/"
+            - name: AUTH_OIDC_CONFIG_ENDPOINT
+              value: "http://authentik.auth.svc.cluster.local:9000/application/o/netbird/.well-known/openid-configuration"
           command:
             - sh
             - -c
@@ -48,7 +62,7 @@ spec:
                   "AuthIssuer": "$AUTH_ISSUER",
                   "AuthAudience": "$AUTH_AUDIENCE",
                   "AuthKeysLocation": "$AUTH_KEYS_LOCATION",
-                  "OIDCConfigEndpoint": "",
+                  "OIDCConfigEndpoint": "$AUTH_OIDC_CONFIG_ENDPOINT",
                   "IdpSignKeyRefreshEnabled": true,
                   "IdpSkipTlsVerify": true
                 },
@@ -87,6 +101,23 @@ spec:
         - name: management
           image: netbirdio/management:0.63.0
           args: ["--port=80", "--log-file=console", "--log-level=info", "--config=/etc/netbird/management.json"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 5
           env:
             - name: NETBIRD_STORE_ENGINE
               value: "postgres"
