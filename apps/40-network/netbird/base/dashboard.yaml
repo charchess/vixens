@@ -3,8 +3,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: netbird-dashboard
+  annotations:
+    vpa.kubernetes.io/updateMode: "Off"
+    goldilocks.fairwinds.com/enabled: "true"
 spec:
   replicas: 1
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: netbird-dashboard
@@ -13,6 +17,7 @@ spec:
       labels:
         app: netbird-dashboard
     spec:
+      priorityClassName: vixens-medium
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
@@ -20,6 +25,23 @@ spec:
       containers:
         - name: dashboard
           image: netbirdio/dashboard:v2.27.1
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          livenessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 5
           ports:
             - containerPort: 80
               name: http
