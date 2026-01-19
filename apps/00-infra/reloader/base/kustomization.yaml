@@ -4,3 +4,28 @@ kind: Kustomization
 namespace: tools
 resources:
   - manifests.yaml
+
+patches:
+  - patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: reloader-reloader
+        namespace: tools
+      spec:
+        template:
+          metadata:
+            annotations:
+              prometheus.io/scrape: "true"
+              prometheus.io/port: "9090"
+          spec:
+            priorityClassName: vixens-critical
+            containers:
+              - name: reloader-reloader
+                resources:
+                  requests:
+                    cpu: 100m
+                    memory: 256Mi
+                  limits:
+                    cpu: 100m
+                    memory: 256Mi
