@@ -23,6 +23,8 @@ spec:
               value: "https://authentik.truxonline.com/application/o/device/"
             - name: AUTH_TOKEN_ENDPOINT
               value: "https://authentik.truxonline.com/application/o/token/"
+            - name: AUTH_OIDC_CONFIG_ENDPOINT
+              value: "https://authentik.truxonline.com/application/o/netbird/.well-known/openid-configuration"
       containers:
         - name: management
           env:
