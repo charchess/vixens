@@ -8,10 +8,17 @@ resources:
 
 
 patches:
+  - patch: |
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: whoami
+      labels:
+        environment: dev
   - patch: |-
       apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: whoami
       spec:
-        replicas: 0
+        replicas: 1
