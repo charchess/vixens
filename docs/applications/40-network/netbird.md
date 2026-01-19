@@ -22,7 +22,7 @@ Netbird est une solution VPN moderne basée sur WireGuard qui crée un réseau m
 Déployé via des manifestes Kubernetes natifs (Kustomize) pour une meilleure stabilité.
 
 - **Namespace**: `networking`
-- **Authentification**: OIDC via Authentik (Client Type: Public pour le Dashboard).
+- **Authentification**: OIDC via Authentik (Client Type: Public pour le Dashboard, Hosted pour Management).
 - **Stockage**: PostgreSQL externe (partagé).
 - **Ingress**: Traefik avec redirection HTTPS.
 - **Sécurité**: JWKS backend récupéré via URL interne (Authentik Service) pour bypasser les problèmes de confiance TLS en Dev.
