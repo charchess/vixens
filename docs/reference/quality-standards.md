@@ -103,6 +103,8 @@ This document defines the quality tiers for applications deployed in the Vixens 
 - ✅ **Liveness probe** (mandatory for Elite)
 - ✅ **Readiness probe** (mandatory for Elite)
 - ✅ **Startup probe** (for slow-starting apps)
+- ✅ **Pod Security Admission (PSA):** Enforce label mandatory on namespace.
+- ✅ **Storage Strategy:** Environment-specific StorageClass (see below).
 - ✅ Automated backup validation (if applicable)
 - ✅ SLO/SLI definitions
 - ✅ Chaos engineering tested
@@ -111,6 +113,23 @@ This document defines the quality tiers for applications deployed in the Vixens 
 
 **Not Required:**
 - Nothing - this is the highest tier
+
+---
+
+## Infrastructure Standards
+
+### Storage Strategy (PVC)
+To ensure data safety in production and clean environments in development, the following StorageClass strategy must be followed:
+
+| Environment | Strategy | StorageClass Pattern | Goal |
+|-------------|----------|----------------------|------|
+| **Dev** | Disposable | `*-delete` | Auto-cleanup of volumes on PVC deletion. |
+| **Prod** | Persistent | `*-retain` | Protect data from accidental PVC deletion. |
+
+### Pod Security Admission (PSA)
+Every namespace must have a PSA label defined:
+- `pod-security.kubernetes.io/enforce: [privileged|baseline|restricted]`
+- **Elite tier** namespaces should aim for `baseline` or `restricted` unless infrastructure requirements (CNI, CSI) mandate `privileged`.
 
 **Use Cases:**
 - Infrastructure components (ArgoCD, Traefik, Cilium)
