@@ -15,8 +15,6 @@ patches:
       spec:
         template:
           metadata:
-            labels:
-              app: reloader
             annotations:
               prometheus.io/scrape: "true"
               prometheus.io/port: "9090"
@@ -31,3 +29,10 @@ patches:
                   limits:
                     cpu: 100m
                     memory: 256Mi
+  - target:
+      kind: Deployment
+      name: reloader-reloader
+    patch: |
+      - op: replace
+        path: /spec/template/metadata/labels/app
+        value: reloader
