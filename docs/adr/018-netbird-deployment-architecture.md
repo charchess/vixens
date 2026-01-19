@@ -1,10 +1,11 @@
 # ADR-018: Netbird VPN Deployment Architecture
 
-## Status
-Accepted
+**Date:** 2026-01-12
+**Status:** Superseded by [ADR-021](021-netbird-native-manifests.md)
+**Deciders:** User, Coding Agent
+**Tags:** networking, netbird, helm
 
-## Date
-2026-01-12
+---
 
 ## Context
 

@@ -19,7 +19,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: signal
-          image: netbirdio/signal:0.62.2
+          image: netbirdio/signal:0.63.0
           args: ["--port=80"]
           ports:
             - containerPort: 80
@@ -57,7 +57,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: relay
-          image: netbirdio/relay:0.62.2
+          image: netbirdio/relay:0.63.0
           env:
             - name: NB_RELAY_PORT
               value: "33080"

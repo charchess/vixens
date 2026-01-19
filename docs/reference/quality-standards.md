@@ -206,8 +206,27 @@ startupProbe:
 
 ---
 
+## Documentation Standards (ADR)
+
+Toutes les décisions architecturales (ADR) doivent suivre le format standard Vixens pour garantir la traçabilité et l'interopérabilité entre les agents.
+
+### ADR Header Template
+```markdown
+# ADR-XXX: [TITRE]
+
+**Date:** YYYY-MM-DD
+**Status:** [Accepted | Deprecated | Superseded by [ADR-YYY](Lien.md)]
+**Deciders:** [Deciders List]
+**Tags:** [tags]
+
+---
+```
+
+---
+
 ## Related Documentation
 
+- [ADR Template](../templates/adr-template.md)
 - [Application Template](../templates/application-template.md)
 - [Adding New Applications](../guides/adding-new-application.md)
 - [Monitoring Setup](../guides/monitoring-setup.md)
@@ -215,4 +234,4 @@ startupProbe:
 
 ---
 
-**Last Updated:** 2026-01-11
+**Last Updated:** 2026-01-17

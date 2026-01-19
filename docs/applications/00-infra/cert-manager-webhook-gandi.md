@@ -4,8 +4,6 @@
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
 | Dev           | [x]     | [x]       | [x]   | v0.5.2  |
-| Test          | [ ]     | [ ]       | [ ]   | -       |
-| Staging       | [ ]     | [ ]       | [ ]   | -       |
 | Prod          | [x]     | [x]       | [x]   | v0.5.2  |
 
 ## Validation

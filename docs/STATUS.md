@@ -2,7 +2,16 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-17 (Netbird migration to native manifests)
+Last Updated: 2026-01-17 (Infrastructure Alignment + Netbird Migration)
+
+---
+
+## 🔥 Global Build Status
+
+| Component | Status | Description |
+|-----------|--------|-------------|
+| **Kustomize Build** | ❌ **CRITICAL** | 30+ applications failing build due to structure issues (See Issue #831) |
+| **CI/CD Pipelines** | ❌ **BLOCKED** | All Pull Requests blocked by global build failure |
 
 ---
 
@@ -11,7 +20,7 @@ Last Updated: 2026-01-17 (Netbird migration to native manifests)
 | Symbol | Status | Description |
 |--------|--------|-------------|
 | ✅ | **Working** | Deployed, configured, tested, no known issues |
-| ⚠️ | **Degraded** | Working but needs attention (resources, config, minor issues) |
+| ⚠️ | **Degraded** | Working but needs attention (resources, config, rate limits) |
 | ❌ | **Broken** | Not working, needs immediate fix |
 | 🚧 | **WIP** | Work in progress, deployment ongoing |
 | 💤 | **Paused** | Intentionally not deployed (planned for future) |
@@ -53,6 +62,14 @@ Last Updated: 2026-01-17 (Netbird migration to native manifests)
 | promtail | ✅ | ✅ | Fixed missing secretNamespace |
 | goldilocks | ✅ | ✅ | Fixed missing secretNamespace |
 | hubble-ui | ✅ | ✅ | Fixed secretNamespace error |
+
+---
+
+## Security (03-security/)
+
+| Application | Dev | Prod | Notes |
+|-------------|-----|------|-------|
+| authentik | ✅ | ✅ | Elite Status + Blueprints (Netbird, Hydrus) |
 
 ---
 
@@ -99,20 +116,19 @@ Last Updated: 2026-01-17 (Netbird migration to native manifests)
 | external-dns-gandi | ✅ | ✅ | Public DNS management |
 | contacts | ✅ | 💤 | Contacts redirection service |
 | netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
-| netbird | ✅ | ✅ | Mesh VPN - Native manifests (Postgres + SSO) |
+| netbird | ✅ | ⚠️ | Prod: Rate Limit Let's Encrypt (unlock ~19:42 UTC) |
 | adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
-| gluetun | ✅ | ✅ | Fixed missing secretNamespace |
 
 ---
 
-## Services (50-services/)
+## Services (60-services/)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
 | mail-gateway | ✅ | ✅ | Email gateway (External) |
 | vaultwarden | ✅ | ✅ | Migrated to standardized middleware |
-| authentik | ✅ | ✅ | Elite Status + Blueprints (Netbird, Hydrus) |
 | docspell-native | ✅ | ✅ | Fixed missing secretNamespace |
+| gluetun | ✅ | ✅ | Fixed missing secretNamespace |
 
 ---
 
@@ -168,15 +184,16 @@ git push origin main
 ## Quick Stats
 
 **Dev Environment:**
-- ✅ Working: 12 applications
-- ⚠️ Degraded: 0 applications
+- ✅ Working: 34 applications
+- ⚠️ Degraded: 1 application (ArgoCD)
 - ❌ Broken: 0 applications
 - 🚧 WIP: 0 application
-- ⏳ Planned: 12 applications
-- 💤 Paused: 0 applications
+- ⏳ Planned: 6 applications
+- 💤 Paused: 2 applications
 
 **Prod Environment:**
-- ✅ Working: many applications (Phase 3 active)
+- ✅ Working: 38 applications (Phase 3 active)
+- ⚠️ Degraded: 1 application (Netbird Certs)
 
 ---
 
@@ -220,4 +237,4 @@ git push origin main
 
 ---
 
-**Last Updated:** 2026-01-12
+**Last Updated:** 2026-01-17

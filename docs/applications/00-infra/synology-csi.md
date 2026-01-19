@@ -4,8 +4,6 @@
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
 | Dev           | [x]     | [x]       | [x]   | edge    |
-| Test          | [ ]     | [ ]       | [ ]   | -       |
-| Staging       | [ ]     | [ ]       | [ ]   | -       |
 | Prod          | [x]     | [x]       | [x]   | -       |
 
 ## Validation

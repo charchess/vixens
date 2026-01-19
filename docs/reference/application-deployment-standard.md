@@ -610,7 +610,29 @@ spec:
 
 ---
 
-### 11. SQLite Database Management (Fail-Safe Integrity)
+### 11. Automated Housekeeping (Sanitization)
+
+**RÈGLE:** Tous les Deployments et StatefulSets DOIVENT limiter leur historique de révisions pour éviter la prolifération de ressources orphelines (ReplicaSets inactifs).
+
+#### Pourquoi?
+
+- 🧹 **Cluster Hygiene:** Empêche l'accumulation de dizaines de ReplicaSets à `desired: 0`.
+- 🚀 **Performance:** Réduit la charge de travail de l'API Server et d'ArgoCD lors du scan des ressources.
+- 🛡️ **Clarity:** Facilite le débogage en ne gardant que les versions récentes et pertinentes.
+
+#### Implémentation Standard (Goldenization)
+
+L'implémentation privilégiée est l'usage d'un **patch Kustomize partagé** (`apps/_shared/patches/resource-cleanup.yaml`) appliqué à toutes les applications.
+
+```yaml
+# Configuration dans le manifest de base
+spec:
+  revisionHistoryLimit: 3  # Garder les 3 dernières versions (Rollback OK)
+```
+
+---
+
+### 12. SQLite Database Management (Fail-Safe Integrity)
 
 **RÈGLE:** Les applications utilisant SQLite DOIVENT implémenter le pattern "Fail-Safe Integrity" pour garantir un boot rapide et une auto-réparation en cas de corruption.
 
@@ -692,6 +714,7 @@ Avant de déployer une nouvelle application, vérifier:
 ### Reliability
 - [ ] Health checks définis (liveness + readiness)
 - [ ] Strategy appropriée (RollingUpdate vs Recreate)
+- [ ] Revision history limit configuré (max 3)
 - [ ] PVC storageClass correct (retain vs delete)
 - [ ] Backup/restore pattern implémenté (si config persistante)
 
