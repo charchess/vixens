@@ -26,7 +26,7 @@ spec:
             - name: AUTH_ISSUER
               value: "https://authentik.dev.truxonline.com/application/o/netbird/"
             - name: AUTH_KEYS_LOCATION
-              value: "https://authentik.dev.truxonline.com/application/o/netbird/jwks/"
+              value: "http://authentik.auth.svc.cluster.local:9000/application/o/netbird/jwks/"
             - name: AUTH_CLIENT_ID
               value: "netbird"
             - name: AUTH_AUDIENCE
@@ -37,8 +37,6 @@ spec:
               value: "https://authentik.dev.truxonline.com/application/o/device/"
             - name: AUTH_TOKEN_ENDPOINT
               value: "https://authentik.dev.truxonline.com/application/o/token/"
-            - name: AUTH_OIDC_CONFIG_ENDPOINT
-              value: "https://authentik.dev.truxonline.com/application/o/netbird/.well-known/openid-configuration"
           command:
             - sh
             - -c
@@ -49,8 +47,8 @@ spec:
                   "Address": ":80",
                   "AuthIssuer": "$AUTH_ISSUER",
                   "AuthAudience": "$AUTH_AUDIENCE",
-                  "AuthKeysLocation": "https://authentik.dev.truxonline.com/application/o/netbird/jwks/",
-                  "OIDCConfigEndpoint": "$AUTH_OIDC_CONFIG_ENDPOINT",
+                  "AuthKeysLocation": "$AUTH_KEYS_LOCATION",
+                  "OIDCConfigEndpoint": "",
                   "IdpSignKeyRefreshEnabled": true,
                   "IdpSkipTlsVerify": true
                 },
@@ -99,8 +97,6 @@ spec:
                   key: POSTGRES_PASSWORD
             - name: NETBIRD_STORE_ENGINE_POSTGRES_DSN
               value: "host=postgresql-shared-rw.databases.svc.cluster.local user=netbird password=$(NB_POSTGRES_PASSWORD) dbname=netbird port=5432 sslmode=disable"
-            - name: SSL_CERT_FILE
-              value: "/etc/ssl/certs/ca-certificates.crt"
           ports:
             - containerPort: 80
               name: http
