@@ -48,6 +48,7 @@ Last Updated: 2026-01-17 (Infrastructure Alignment + Netbird Migration)
 | synology-csi | ✅ | ✅ | Persistent storage via iSCSI |
 | infisical-operator | ✅ | ✅ | Secrets management operator |
 | kubernetes-dashboard | ✅ | 🚧 | Dashboard v7.x (Prod en cours de sync) |
+| reloader | ✅ | ✅ | Elite Status + Prometheus Scraping |
 
 ---
 
