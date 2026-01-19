@@ -9,28 +9,6 @@ spec:
       containers:
         - name: management
           env:
-            - name: NETBIRD_STORE_ENGINE
-              value: "postgres"
-            - name: NB_POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: netbird-secrets
-                  key: POSTGRES_PASSWORD
-            - name: NETBIRD_STORE_ENGINE_POSTGRES_DSN
-              value: "host=postgresql-shared-rw.databases.svc.cluster.local user=netbird password=$(NB_POSTGRES_PASSWORD) dbname=netbird port=5432 sslmode=disable"
-            - name: NETBIRD_AUTH_OIDC_CONFIGURATION_ENDPOINT
-              value: "http://authentik.auth.svc.cluster.local:9000/application/o/netbird/.well-known/openid-configuration"
-            - name: NETBIRD_AUTH_AUDIENCE
-              value: "netbird"
-            - name: NETBIRD_AUTH_CLIENT_ID
-              value: "netbird"
-            - name: NETBIRD_AUTH_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: netbird-secrets
-                  key: NETBIRD_AUTH_CLIENT_SECRET
-            - name: NETBIRD_AUTH_USER_ID_CLAIM
-              value: "sub"
             - name: NETBIRD_DOMAIN_NAME
               value: "netbird.dev.truxonline.com"
             - name: NETBIRD_MGMT_API_ENDPOINT
@@ -72,9 +50,9 @@ spec:
             - name: AUTH_CLIENT_ID
               value: "netbird"
             - name: AUTH_AUTHORITY
-              value: "http://authentik.auth.svc.cluster.local:9000/application/o/netbird/"
+              value: "https://authentik.dev.truxonline.com/application/o/netbird/"
             - name: NETBIRD_AUTH_OIDC_CONFIGURATION_ENDPOINT
-              value: "http://authentik.auth.svc.cluster.local:9000/application/o/netbird/.well-known/openid-configuration"
+              value: "https://authentik.dev.truxonline.com/application/o/netbird/.well-known/openid-configuration"
             - name: AUTH_SUPPORTED_SCOPES
               value: "openid profile email offline_access"
             - name: NETBIRD_MGMT_API_ENDPOINT
