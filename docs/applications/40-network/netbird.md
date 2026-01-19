@@ -1,10 +1,10 @@
 # Netbird VPN
 
 ## Informations de Déploiement
-| Environnement | Déployé | Configuré | Testé | Version |
-|---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | v3.1.111|
-| Prod          | [x]     | [x]       | [ ]   | v3.1.111|
+| Environnement | Déployé | Configuré | Testé | Version | Tier |
+|---------------|---------|-----------|-------|---------|------|
+| Dev           | [x]     | [x]       | [x]   | v0.63.0 | Elite|
+| Prod          | [x]     | [x]       | [ ]   | v0.63.0 | Gold |
 
 ## Description
 
