@@ -10,10 +10,75 @@ metadata:
     argocd.argoproj.io/sync-wave: "6"
 spec:
   project: default
-  source:
-    repoURL: https://github.com/charchess/vixens.git
-    targetRevision: prod-stable
-    path: apps/00-infra/policy-reporter/overlays/prod
+  sources:
+    # Helm chart
+    - repoURL: https://kyverno.github.io/policy-reporter
+      chart: policy-reporter
+      targetRevision: 2.24.2
+      helm:
+        releaseName: policy-reporter
+        values: |
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
+
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+
+          kyvernoPlugin:
+            enabled: true
+            tolerations:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+                effect: NoSchedule
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
+
+          ui:
+            enabled: true
+            tolerations:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+                effect: NoSchedule
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
+
+          rest:
+            enabled: true
+
+          metrics:
+            enabled: true
+
+          logging:
+            logSize: 500
+
+          reportFilter:
+            namespaces:
+              exclude:
+                - kube-system
+                - kyverno
+                - policy-reporter
+    # Ingress from git repo
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: prod-stable
+      path: apps/00-infra/policy-reporter/overlays/prod
+      kustomize: {}
   destination:
     server: https://kubernetes.default.svc
     namespace: policy-reporter
@@ -24,3 +89,9 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
