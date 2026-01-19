@@ -30,7 +30,7 @@ spec:
       initContainers:
         # 1. Optionnel: Restauration des fichiers de config plats
         - name: restore-config
-          image: rclone/rclone:1.65
+          image: rclone/rclone:1.72
           command:
             - sh
             - -c
