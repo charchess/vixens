@@ -116,7 +116,7 @@ Last Updated: 2026-01-17 (Infrastructure Alignment + Netbird Migration)
 | external-dns-gandi | ✅ | ✅ | Public DNS management |
 | contacts | ✅ | 💤 | Contacts redirection service |
 | netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
-| netbird | ✅ | ⚠️ | Dev: Fixed management crash |
+| netbird | ✅ | ⚠️ | Dev: Functional. CLI needs Staging CA (see Troubleshooting) |
 | adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
 
 ---
