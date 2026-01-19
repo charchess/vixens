@@ -2,20 +2,20 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: require-resources
+  name: require-priority-class
   annotations:
-    policies.kyverno.io/title: Require Resources
+    policies.kyverno.io/title: Require Priority Class
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: medium
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
-      Resources requests and limits are required for all containers.
-      This policy audits containers that do not have resource limits defined.
+      All pods must have a priorityClassName defined to ensure predictable
+      scheduling and eviction during resource pressure.
 spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: validate-resources
+    - name: check-priority-class
       match:
         any:
           - resources:
@@ -28,14 +28,7 @@ spec:
                 - kube-system
                 - kyverno
       validate:
-        message: "CPU and memory resource requests and limits are required."
+        message: "A priorityClassName (starting with 'vixens-') is required for all pods."
         pattern:
           spec:
-            containers:
-              - resources:
-                  requests:
-                    memory: "?*"
-                    cpu: "?*"
-                  limits:
-                    memory: "?*"
-                    cpu: "?*"
+            priorityClassName: "vixens-*"
