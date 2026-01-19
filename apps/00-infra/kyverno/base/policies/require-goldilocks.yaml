@@ -1,0 +1,37 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-goldilocks
+  annotations:
+    policies.kyverno.io/title: Require Goldilocks Annotations
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Deployment, StatefulSet
+    policies.kyverno.io/description: >-
+      Deployments and StatefulSets must have Goldilocks and VPA annotations
+      to enable resource usage analysis and optimization recommendations.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-goldilocks-annotations
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      validate:
+        message: "Goldilocks and VPA annotations are required."
+        pattern:
+          metadata:
+            annotations:
+              goldilocks.fairwinds.com/enabled: "true"
+              vpa.kubernetes.io/updateMode: "Off"
