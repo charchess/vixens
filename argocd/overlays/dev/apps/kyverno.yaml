@@ -92,6 +92,13 @@ spec:
                 operator: Exists
                 effect: NoSchedule
 
+          crds:
+            migration:
+              tolerations:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: Exists
+                  effect: NoSchedule
+
           features:
             policyExceptions:
               enabled: true
