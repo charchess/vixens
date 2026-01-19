@@ -137,7 +137,7 @@ Last Updated: 2026-01-17 (Infrastructure Alignment + Netbird Migration)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| whoami | ✅ | ✅ | Migrated to centralized middleware |
+| whoami | ✅ | ✅ | Elite Status + PSA baseline |
 | homepage | ✅ | 💤 | Prod fixed and synced |
 | netbox | ✅ | ✅ | Migrated to centralized middleware |
 | changedetection | ✅ | ✅ | Migrated to centralized middleware |
