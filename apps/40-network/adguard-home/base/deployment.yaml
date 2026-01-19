@@ -30,7 +30,7 @@ spec:
           effect: NoSchedule
       initContainers:
         - name: restore-config
-          image: rclone/rclone:1.65
+          image: rclone/rclone:1.72
           command:
             - sh
             - -c
