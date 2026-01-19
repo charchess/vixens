@@ -76,6 +76,17 @@ spec:
 
           webhooksCleanup:
             enabled: true
+            tolerations:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+                effect: NoSchedule
+
+          policyReportsCleanup:
+            enabled: true
+            tolerations:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+                effect: NoSchedule
 
           features:
             policyExceptions:
