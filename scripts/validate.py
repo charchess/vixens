@@ -20,7 +20,21 @@ def validate_app(app_name, env):
     if env == "dev":
         extra_opts = "--server=https://192.168.111.160:6443 --insecure-skip-tls-verify"
         
-    pod_cmd = f"kubectl get pods -A -l app={app_name} --kubeconfig {kubeconfig} {extra_opts} -o json"
+    # Try multiple label patterns
+    labels = [f"app={app_name}", f"app={app_name}-{app_name}", f"app.kubernetes.io/name={app_name}"]
+    data = {"items": []}
+    for label in labels:
+        pod_cmd = f"kubectl get pods -A -l {label} --kubeconfig {kubeconfig} {extra_opts} -o json"
+        res = run_cmd(pod_cmd)
+        if res.returncode == 0:
+            current_data = json.loads(res.stdout)
+            if current_data['items']:
+                data = current_data
+                break
+    
+    if not data['items']:
+        print(f"❌ No pods found for app {app_name} (tried labels: {labels})")
+        return False
     res = run_cmd(pod_cmd)
     if res.returncode != 0:
         print(f"❌ Failed to get pods: {res.stderr}")
