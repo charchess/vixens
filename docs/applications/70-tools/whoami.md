@@ -3,8 +3,8 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | traefik/whoami |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Dev           | [x]     | [x]       | [x]   | traefik/whoami | 🏆 Elite |
+| Prod          | [x]     | [x]       | [ ]   | traefik/whoami | 🏆 Elite |
 
 ## Validation
 **URL :** https://whoami.[env].truxonline.com
@@ -28,8 +28,4 @@ curl -L -k https://whoami.dev.truxonline.com
 ## Notes Techniques
 - **Namespace :** `whoami`
 - **Dépendances :** Aucune
-- **Particularités :** Application de test légère pour valider l'Ingress, les certificats et le routage.
----
-> ⚠️ **HIBERNATION DEV**
-> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
-> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
+- **Particularités :** Application de test légère pour valider l'Ingress, les certificats et le routage. Standard **🏆 Elite**.
