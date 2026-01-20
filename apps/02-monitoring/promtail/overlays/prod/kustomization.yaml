@@ -18,3 +18,21 @@ patches:
 resources:
   - ingress.yaml
   - ../../base
+patches:
+  - patch: |
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: monitoring
+        labels:
+          environment: prod
+  - patch: |
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
+      - op: add
+        path: /spec/managedSecretReference/secretNamespace
+        value: monitoring
+    target:
+      kind: InfisicalSecret
+      name: promtail-secrets-sync
