@@ -104,6 +104,7 @@ Last Updated: 2026-01-17 (Infrastructure Alignment + Netbird Migration)
 | radarr | ⏳ | ✅ | Prod fixed 
 | sonarr | ⏳ | ✅ | Prod fixed 
 | prowlarr | ⏳ | ✅ | Prod fixed 
+| frigate | ✅ | ✅ | Elite Status + 50Gi PVC fixed |
 | jellyseerr | ⏳ | 💤 | Media request management (planned) |
 | hydrus-client | ✅ | ✅ | Elite Status + Authentik SSO |
 
