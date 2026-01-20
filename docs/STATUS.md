@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-17 (Infrastructure Alignment + Netbird Migration)
+Last Updated: 2026-01-20 (Promtail/Grafana Elite + Infra Fixes)
 
 ---
 
@@ -10,8 +10,8 @@ Last Updated: 2026-01-17 (Infrastructure Alignment + Netbird Migration)
 
 | Component | Status | Description |
 |-----------|--------|-------------|
-| **Kustomize Build** | ❌ **CRITICAL** | 30+ applications failing build due to structure issues (See Issue #831) |
-| **CI/CD Pipelines** | ❌ **BLOCKED** | All Pull Requests blocked by global build failure |
+| **Kustomize Build** | ✅ **PASSING** | Infrastructure build fixed (Duplicate keys + Kyverno syntax resolved) |
+| **CI/CD Pipelines** | ✅ **ACTIVE** | Promotion pipeline active (v3.1.193) |
 
 ---
 
@@ -57,10 +57,10 @@ Last Updated: 2026-01-17 (Infrastructure Alignment + Netbird Migration)
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
 | prometheus | ✅ | ✅ | Elite Status (Restore QoS + config fixed) |
-| alertmanager | ✅ | ✅ | Fixed stuck ContainerCreating (secrets) |
-| grafana | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
+| alertmanager | ✅ | ✅ | Cleanup: Standalone app removed (Subchart) |
+| grafana | 💤 | ✅ | Elite Status + Probes + Guaranteed QoS |
 | loki | ✅ | ✅ | Elite Status (Restore QoS + config fixed) |
-| promtail | ✅ | ✅ | Fixed missing secretNamespace |
+| promtail | ✅ | ✅ | Elite Status + Probes + Guaranteed QoS |
 | goldilocks | ✅ | ✅ | Fixed missing secretNamespace |
 | hubble-ui | ✅ | ✅ | Fixed secretNamespace error |
 
@@ -239,4 +239,4 @@ git push origin main
 
 ---
 
-**Last Updated:** 2026-01-17
+**Last Updated:** 2026-01-20
