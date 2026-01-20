@@ -147,7 +147,7 @@ Last Updated: 2026-01-20 (Promtail/Grafana Elite + Infra Fixes)
 | headlamp | ✅ | ✅ | Migrated to centralized middleware |
 | linkwarden | ✅ | ✅ | Migrated to centralized middleware |
 | renovate | ✅ | ✅ | Auto-dependency updates (ADR-017) |
-| gitops-revision-controller | ✅ | ✅ | Synchronise les révisions Git (Elite Status) |
+| gitops-revision-controller | 💤 | 💤 | Déprécié et supprimé (remplacé par Renovate/PR) |
 
 ---
 
