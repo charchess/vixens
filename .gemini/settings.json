@@ -1,0 +1,72 @@
+{
+  "mcpServers": {
+    "simplemem": {
+      "httpUrl": "http://192.168.200.61:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiOTZiNTA5ZTUtZTljMy00N2M5LThlODYtNGIwMTYzZTg2MzIwIiwidGFibGVfbmFtZSI6Im1lbV85NmI1MDllNV9lOWMzXzQ3YzlfOGU4Nl80YjAxNjNlODYzMjAiLCJjcmVhdGVkX2F0IjoiMjAyNi0wMS0xNFQyMjowMToxNy43OTMwNDkiLCJleHAiOjE3NzEwMTY0Nzd9.bUJ85hHVVvjlilsigB7BzD6FgxgT3LKJ02_MEshv1nk"
+      }
+    },
+    "archon": {
+      "httpUrl": "http://192.168.199.119:8051/mcp"
+    },
+    "serena": {
+      "httpUrl": "http://localhost:9121/mcp"
+    },
+    "kubernetes": {
+      "command": "/root/.npm/_npx/acdc49484db51b02/node_modules/kubernetes-mcp-server-linux-amd64/bin/kubernetes-mcp-server-linux-amd64",
+      "args": [],
+      "env": {
+        "KUBECONFIG": "/root/vixens/.secrets/prod/kubeconfig-prod"
+      }
+    },
+    "playwright": {
+      "url": "http://192.168.200.67:3000/sse"
+    }
+  },
+  "security": {
+    "auth": {
+      "selectedType": "oauth-personal"
+    },
+    "enablePermanentToolApproval": true
+  },
+  "ui": {
+    "theme": "ANSI",
+    "showStatusInTitle": true,
+    "footer": {
+      "hideContextPercentage": false
+    },
+    "hideFooter": false,
+    "showMemoryUsage": true,
+    "showLineNumbers": true,
+    "showCitations": true,
+    "useAlternateBuffer": true
+  },
+  "general": {
+    "vimMode": false,
+    "previewFeatures": true,
+    "enablePromptCompletion": false,
+    "sessionRetention": {
+      "enabled": false
+    }
+  },
+  "output": {
+    "format": "text"
+  },
+  "context": {
+    "loadMemoryFromIncludeDirectories": true
+  },
+  "tools": {
+    "shell": {
+      "showColor": true
+    },
+    "useRipgrep": true
+  },
+  "ide": {
+    "enabled": true
+  },
+  "experimental": {
+    "introspectionAgentSettings": {
+      "enabled": true
+    }
+  }
+}

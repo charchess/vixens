@@ -117,9 +117,10 @@ spec:
         - /status
         - /spec/admission
         - /spec/emitWarning
-        - /spec/rules/*/skipBackgroundRequests
-        - /spec/rules/*/validate/allowExistingViolations
-        - /spec/rules/*/match/resources/kinds
+        - /spec/rules/0/skipBackgroundRequests
+        - /spec/rules/0/validate/allowExistingViolations
+        - /spec/rules/1/skipBackgroundRequests
+        - /spec/rules/1/validate/allowExistingViolations
   syncPolicy:
     automated:
       prune: true
