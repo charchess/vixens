@@ -20,6 +20,23 @@ spec:
       helm:
         valueFiles:
           - $values/apps/00-infra/kubernetes-dashboard/values/common.yaml
+        values: |
+          api:
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
+          auth:
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
       ref: values
