@@ -310,7 +310,7 @@ Terraform is powerful but dangerous. Destructive operations must be:
 ## 🔗 Related Documentation
 
 - `/root/vixens/docs/procedures/adding-new-talos-node.md` - Created during this incident
-- `/root/vixens/terraform/modules/talos/main.tf` - The problematic code
+- `terravixens:terraform/modules/talos/main.tf` - The problematic code
 - Recovery script: `/tmp/recover-prod-cluster.sh`
 
 ---

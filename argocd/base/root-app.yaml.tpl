@@ -3,7 +3,7 @@
 # It watches argocd/overlays/${environment}/ and deploys all Applications defined there
 #
 # This file is a Terraform template - DO NOT apply manually!
-# Rendered by: terraform/environments/${environment}/argocd.tf
+# Rendered by: terravixens:terraform/environments/${environment}/argocd.tf
 #
 # Variables:
 #   - environment: ${environment}
