@@ -9,10 +9,6 @@ patches:
     target:
       kind: InfisicalSecret
       name: loki-secrets-sync
-resources:
-  - ../../base
-  - ingress.yaml
-patches:
   - patch: |
       apiVersion: v1
       kind: Namespace
@@ -20,3 +16,6 @@ patches:
         name: monitoring
         labels:
           environment: prod
+resources:
+  - ../../base
+  - ingress.yaml
