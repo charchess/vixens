@@ -110,6 +110,13 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: kyverno
+  ignoreDifferences:
+    - group: kyverno.io
+      kind: ClusterPolicy
+      jsonPointers:
+        - /status
+        - /metadata/annotations
+        - /spec/rules
   syncPolicy:
     automated:
       prune: true

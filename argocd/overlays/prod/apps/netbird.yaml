@@ -17,6 +17,12 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: networking
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: netbird-secrets
+      jsonPointers:
+        - /data
   syncPolicy:
     automated:
       prune: true

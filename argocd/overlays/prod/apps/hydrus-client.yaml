@@ -15,6 +15,12 @@ spec:
     path: apps/20-media/hydrus-client/overlays/prod
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: prod-stable
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: litestream-shared-secrets
+      jsonPointers:
+        - /data
   syncPolicy:
     automated:
       prune: true

@@ -1,0 +1,21 @@
+apiVersion: v1
+data:
+  AUTH_CLIENT_ID: bmV0YmlyZA==
+  NETBIRD_AUTH_CLIENT_SECRET: bHkyRzBVZFNsRWx4ejlad3BHS1JhRlRqUlhlMmI1NmVUWDdUb3NVWm5BVFlmUFd4d0x3c0I4Q2tzakhXN1VnZThUbHp4ZjJmOGJaWXdacGpRU0pwUmlnRFBqNGF4eklGRmhMUEdoOVpPa2lPeUZ3Q3VYUzBraktFbmRhQW11MTI=
+  POSGRES_USER: bmV0YmlyZA==
+  POSTGRES_DSN: cG9zdGdyZXM6Ly9uZXRiaXJkOnZpeGVucy1OQi1wcm9kLTdIOXhRMnBMNW1SOHpXQHBvc3RncmVzcWwtc2hhcmVkLXJ3LmRhdGFiYXNlcy5zdmMuY2x1c3Rlci5sb2NhbDo1NDMyL25ldGJpcmQ/c3NsbW9kZT1kaXNhYmxl
+  POSTGRES_PASSWORD: dml4ZW5zLU5CLXByb2QtN0g5eFEycEw1bVI4elc=
+  RELAY_SECRET: YUIyY0Q0ZUY2Z0g4aUowa0wxbU4zb1A1cVI3c1Q5dVY=
+  TURN_SECRET: d0c4a04ybVA5cVI1c1Q3dlg0eVo2YkMzZEUxZkgwakw=
+kind: Secret
+metadata:
+  annotations:
+    secrets.infisical.com/version: W/"secrets-977-43514EEB"
+  creationTimestamp: "2026-01-20T07:06:24Z"
+  labels:
+    argocd.argoproj.io/instance: netbird
+  name: netbird-secrets
+  namespace: networking
+  resourceVersion: "10805140"
+  uid: 5c1eec9b-9671-4c2e-a861-b9359bce45a0
+type: Opaque
