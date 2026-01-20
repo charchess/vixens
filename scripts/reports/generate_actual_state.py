@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 
 # Add lib to path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'lib'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
 
 from report_utils import (
     get_kubectl_json,
