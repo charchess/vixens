@@ -65,10 +65,12 @@ kubectl -n media get ingressroutetcp
 - **NFS Storage :** `/media/frigate` -> `/volume3/Internal/frigate` (Synology NAS) - Stockage des clips vidéo.
 - **Traefik LoadBalancer :** Ports 5000/8554/8555 exposés via IngressRouteTCP pour Home Assistant.
 
-### Ressources & Performance
+### Ressources & Performance (Elite Status)
 - **CPU/RAM (Production) :**
-    - Requests: 1000m / 2Gi
-    - Limits: 4000m / 8Gi
+    - Requests: 2000m / 4Gi
+    - Limits: 2000m / 4Gi
+    - QoS: **Guaranteed**
+- **PVC Config :** **50Gi** (synelia-iscsi-retain) - Fixé car 2Gi était plein (Litestream cache).
 - **SHM :** Taille augmentée à **4Gi** (production) pour supporter la haute résolution et éviter les crashs de `go2rtc`.
 - **Cache :** Volume emptyDir (Memory) à `/tmp/cache` pour performances.
 
