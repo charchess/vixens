@@ -16,7 +16,7 @@
     "fileMatch": ["apps/.+\\.yaml$", "argocd/.+\\.yaml$"]
   },
   "helm-values": {
-    "fileMatch": ["(^|/)"values.*\\.yaml$"]
+    "fileMatch": ["(^|/)values.*\\.yaml$"]
   },
   "terraform": {
     "fileMatch": ["(^|/)\\.tf$"]
@@ -53,7 +53,7 @@
     {
       "description": "BirdNET-Go nightly versioning",
       "matchPackagePatterns": ["^ghcr\\.io/tphakala/birdnet-go"],
-      "versioning": "regex:^nightly-(?<major>\\d+)$
+      "versioning": "regex:^nightly-(?<major>\\d+)$"
     },
     {
       "description": "Home Assistant Auto-Update",
@@ -91,25 +91,5 @@
   "commitMessageAction": "update",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to {{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}",
-  "prBodyTemplate": "{{{header}}}
-
-{{{table}}}
-
-{{{notes}}}
-
-{{{changelogs}}}
-
----
-
-### 🚀 Deployment Strategy
-
-{{#if isMajor}}⚠️ **Major update** - Manual review required{{else}}✅ **Auto-merge enabled** - Will merge automatically after approval{{/if}}
-
-- [ ] Reviewed changes
-- [ ] Ready to deploy to main branch (dev cluster)
-- [ ] Notify on Discord: `@everyone New dependency update ready for approval`
-
----
-
-{{{footer}}}"
+  "prBodyTemplate": "{{{header}}}\n\n{{{table}}}\n\n{{{notes}}}\n\n{{{changelogs}}}\n\n---\n\n### 🚀 Deployment Strategy\n\n{{#if isMajor}}⚠️ **Major update** - Manual review required{{else}}✅ **Auto-merge enabled** - Will merge automatically after approval{{/if}}\n\n- [ ] Reviewed changes\n- [ ] Ready to deploy to main branch (dev cluster)\n- [ ] Notify on Discord: `@everyone New dependency update ready for approval`\n\n---\n\n{{{footer}}}"
 }
