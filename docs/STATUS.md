@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-20 (Promtail/Grafana Elite + Infra Fixes)
+Last Updated: 2026-01-20 (Scripts Consolidation + Infra Fixes)
 
 ---
 
