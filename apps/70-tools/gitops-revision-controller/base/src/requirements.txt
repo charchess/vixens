@@ -1,2 +1,0 @@
-kopf==1.40.0
-kubernetes==31.0.0

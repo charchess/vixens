@@ -13,3 +13,10 @@ patches:
       - op: replace
         path: /spec/authentication/universalAuth/secretsScope/envSlug
         value: prod
+  - target:
+      kind: InfisicalSecret
+      name: radarr-litestream-secret
+    patch: |-
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
