@@ -3,6 +3,7 @@
 
 # Server configuration
 server:
+  priorityClassName: vixens-critical
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
@@ -14,41 +15,21 @@ server:
   retention: 30d
   resources:
     requests:
-      cpu: 300m
-      memory: 1Gi
+      cpu: 1000m
+      memory: 2Gi
     limits:
+      cpu: 1000m
       memory: 2Gi
 
-# Extra scrape configurations for annotated pods
+# Extra scrape configurations
 extraScrapeConfigs: |
-  - job_name: 'kubernetes-pods'
-    kubernetes_sd_configs:
-    - role: pod
-    relabel_configs:
-    - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-      action: keep
-      regex: true
-    - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-      action: replace
-      target_label: __metrics_path__
-      regex: (.+)
-    - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-      action: replace
-      regex: ([^:]+)(?::\d+)?;(\d+)
-      replacement: $1:$2
-      target_label: __address__
-    - action: labelmap
-      regex: __meta_kubernetes_pod_label_(.+)
-    - source_labels: [__meta_kubernetes_namespace]
-      action: replace
-      target_label: kubernetes_namespace
-    - source_labels: [__meta_kubernetes_pod_name]
-      action: replace
-      target_label: kubernetes_pod_name
+  # Removed redundant kubernetes-pods job causing config errors.
+  # The helm chart provides standard kubernetes scrape jobs by default.
 
 # Alertmanager configuration
 alertmanager:
   enabled: true
+  priorityClassName: vixens-critical
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
@@ -59,9 +40,10 @@ alertmanager:
     size: 10Gi
   resources:
     requests:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 200m
+      memory: 512Mi
     limits:
+      cpu: 200m
       memory: 512Mi
   extraVolumes:
     - name: alertmanager-secrets
@@ -103,6 +85,7 @@ alertmanager:
 # Node exporter
 nodeExporter:
   enabled: true
+  priorityClassName: vixens-critical
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
@@ -111,8 +94,8 @@ nodeExporter:
   hostPID: true
   resources:
     requests:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 200m
+      memory: 256Mi
     limits:
       cpu: 200m
       memory: 256Mi
@@ -122,14 +105,15 @@ prometheus-pushgateway:
 # Kube-state-metrics subchart (metrics on Kubernetes objects)
 kube-state-metrics:
   enabled: true
+  priorityClassName: vixens-critical
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
   resources:
     requests:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 200m
+      memory: 256Mi
     limits:
       cpu: 200m
       memory: 256Mi
