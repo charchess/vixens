@@ -16,6 +16,7 @@ spec:
       labels:
         app: loki
     spec:
+      priorityClassName: vixens-critical
       securityContext:
         fsGroup: 10001
         runAsGroup: 10001
@@ -46,8 +47,8 @@ spec:
               mountPath: /var/loki
           resources:
             requests:
-              memory: 256Mi
-              cpu: 100m
+              memory: 1024Mi
+              cpu: 500m
             limits:
               memory: 1024Mi
               cpu: 500m
