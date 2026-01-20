@@ -7,3 +7,6 @@ resources:
   - media/base
   - networking/base
   - monitoring/base
+  - auth/base
+  - services/base
+  - downloads/base
