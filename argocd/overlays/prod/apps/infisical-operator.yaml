@@ -22,13 +22,14 @@ spec:
             image:
               repository: infisical/kubernetes-operator
               tag: v0.10.1
+            priorityClassName: vixens-critical
             resources:
               limits:
                 cpu: 500m
                 memory: 256Mi
               requests:
-                cpu: 100m
-                memory: 128Mi
+                cpu: 10m
+                memory: 64Mi
           kubeRbacProxy:
             image:
               repository: gcr.io/kubebuilder/kube-rbac-proxy
@@ -38,8 +39,8 @@ spec:
                 cpu: 100m
                 memory: 64Mi
               requests:
-                cpu: 50m
-                memory: 32Mi
+                cpu: 5m
+                memory: 16Mi
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               operator: Exists
