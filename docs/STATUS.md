@@ -56,7 +56,7 @@ Last Updated: 2026-01-17 (Infrastructure Alignment + Netbird Migration)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| prometheus | ✅ | ✅ | Activé pour monitoring Litestream |
+| prometheus | ✅ | ✅ | Elite Status (Restore QoS + config fixed) |
 | alertmanager | ✅ | ✅ | Fixed stuck ContainerCreating (secrets) |
 | grafana | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
 | loki | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
