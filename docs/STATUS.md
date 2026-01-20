@@ -59,7 +59,7 @@ Last Updated: 2026-01-17 (Infrastructure Alignment + Netbird Migration)
 | prometheus | ✅ | ✅ | Elite Status (Restore QoS + config fixed) |
 | alertmanager | ✅ | ✅ | Fixed stuck ContainerCreating (secrets) |
 | grafana | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
-| loki | 💤 | ✅ | Dev: Scaled down to 0 (Resource Pressure) |
+| loki | ✅ | ✅ | Elite Status (Restore QoS + config fixed) |
 | promtail | ✅ | ✅ | Fixed missing secretNamespace |
 | goldilocks | ✅ | ✅ | Fixed missing secretNamespace |
 | hubble-ui | ✅ | ✅ | Fixed secretNamespace error |
