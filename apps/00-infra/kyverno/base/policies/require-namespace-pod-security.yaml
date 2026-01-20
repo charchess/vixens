@@ -2,6 +2,8 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
+  labels:
+    argocd.argoproj.io/instance: kyverno
   name: require-namespace-pod-security
   annotations:
     policies.kyverno.io/title: Require Namespace Pod Security
@@ -33,5 +35,7 @@ spec:
         message: "The label 'pod-security.kubernetes.io/enforce' is required on all namespaces."
         pattern:
           metadata:
+  labels:
+    argocd.argoproj.io/instance: kyverno
             labels:
               pod-security.kubernetes.io/enforce: "?*"
