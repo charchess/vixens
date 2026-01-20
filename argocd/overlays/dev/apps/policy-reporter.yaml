@@ -31,6 +31,11 @@ spec:
               cpu: 200m
               memory: 256Mi
 
+          podAnnotations:
+            prometheus.io/scrape: "true"
+            prometheus.io/port: "2112"
+            prometheus.io/path: "/metrics"
+
           kyvernoPlugin:
             enabled: true
             tolerations:
@@ -95,3 +100,4 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 3m
+
