@@ -30,4 +30,5 @@ spec:
         secretsPath: /apps/40-network/netbird
   managedSecretReference:
     secretName: netbird-secrets
+    creationPolicy: Owner
     secretNamespace: networking
