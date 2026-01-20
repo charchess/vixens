@@ -28,8 +28,8 @@ curl -L -k https://alertmanager.dev.truxonline.com | grep "Alertmanager"
 - **Namespace :** `monitoring`
 - **Dépendances :**
     - `Infisical` (Webhook URL)
-    - `Prometheus` (Source des alertes)
-- **Particularités :** Déployé via Helm Chart `prometheus-alertmanager`.
+    - `Prometheus` (Chart parent)
+- **Particularités :** Déployé en tant que **Subchart** via le chart `prometheus`. Configuration définie dans `apps/02-monitoring/prometheus/base/values.yaml`.
 - **Secrets :**
     - Path Infisical : `/apps/02-monitoring/alertmanager`
     - Variables requises : `DISCORD_WEBHOOK_URL`

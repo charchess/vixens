@@ -3,8 +3,14 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | v3.0.0  |
-| Prod          | [x]     | [x]       | [x]   | v3.0.0  |
+| Dev           | [x]     | [x]       | [x]   | v3.6.3  |
+| Prod          | [x]     | [x]       | [x]   | v3.6.3  |
+
+## Status Elite ✅
+- **PriorityClass:** `vixens-critical`
+- **QoS:** **Guaranteed** (Requests = Limits)
+- **PSA:** `privileged` (requis pour monitoring global)
+- **PVC:** 10Gi (Retain en Prod)
 
 ## Validation
 **URL :** https://loki.[env].truxonline.com (API)
@@ -12,11 +18,11 @@
 ### Méthode Automatique (Curl)
 ```bash
 # 1. Vérifier la redirection HTTP -> HTTPS
-curl -I http://loki.dev.truxonline.com
+curl -I http://loki.truxonline.com
 # Attendu: HTTP 301/302/308
 
 # 2. Vérifier l'état "Ready" de l'API
-curl -L -k https://loki.dev.truxonline.com/ready
+curl -L -k https://loki.truxonline.com/ready
 # Attendu: HTTP 200 (ready)
 ```
 
