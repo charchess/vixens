@@ -28,3 +28,4 @@ patches:
       kind: InfisicalSecret
       name: frigate-litestream-secret
     path: litestream-secret-patch.yaml
+  - path: pvc-patch.yaml
