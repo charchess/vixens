@@ -4,6 +4,14 @@ kind: Kustomization
 namespace: monitoring
 resources:
   - ../../base
+patches:
+  - patch: |
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: monitoring
+      labels:
+        environment: dev
   # prometheus-ingress.yaml managed by separate ArgoCD app
 patches:
   - target:
