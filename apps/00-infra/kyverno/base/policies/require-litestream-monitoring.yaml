@@ -1,0 +1,41 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-litestream-monitoring
+  labels:
+    argocd.argoproj.io/instance: kyverno
+  annotations:
+    policies.kyverno.io/title: Require Litestream Monitoring
+    policies.kyverno.io/category: Observability
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Deployment, StatefulSet
+    policies.kyverno.io/description: >-
+      Deployments utilizing Litestream for SQLite replication must expose metrics
+      via Prometheus scraping on port 9090 to ensure backup health monitoring.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-litestream-scraping
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.template.spec.containers[?contains(image, 'litestream')] | length(@) }}"
+            operator: GreaterThan
+            value: 0
+      validate:
+        message: "Litestream detected: pod must have 'prometheus.io/scrape: true' and 'prometheus.io/port: 9090' annotations."
+        pattern:
+          spec:
+            template:
+              metadata:
+                annotations:
+                  prometheus.io/scrape: "true"
+                  prometheus.io/port: "9090"
+
