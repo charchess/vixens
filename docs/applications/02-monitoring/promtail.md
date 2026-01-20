@@ -3,8 +3,13 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | v3.0.0  |
-| Prod          | [x]     | [x]       | [x]   | v3.0.0  |
+| Dev           | [x]     | [x]       | [x]   | v3.6.3  |
+| Prod          | [x]     | [x]       | [x]   | v3.6.3  |
+
+## Status Elite ✅
+- **PriorityClass:** `vixens-critical`
+- **QoS:** **Guaranteed** (Requests = Limits)
+- **PSA:** `privileged` (requis pour accès logs hôte)
 
 ## Validation
 **URL :** N/A (Agent)
@@ -24,7 +29,7 @@ kubectl get daemonset promtail -n monitoring
 - **Namespace :** `monitoring`
 - **Dépendances :**
     - `Loki` (Destination des logs)
-- **Particularités :** Déployé via DaemonSet. Monte `/var/log` et `/var/lib/docker/containers` (ou équivalent containerd) de l'hôte.
+- **Particularités :** Déployé via DaemonSet. Monte `/var/log` de l'hôte.
 ---
 > ⚠️ **HIBERNATION DEV**
 > Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.

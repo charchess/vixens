@@ -11,9 +11,13 @@ spec:
       app: promtail
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9080"
       labels:
         app: promtail
     spec:
+      priorityClassName: vixens-critical
       serviceAccountName: promtail
       containers:
         - name: promtail
@@ -32,13 +36,29 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: http-metrics
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http-metrics
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
           resources:
             requests:
-              memory: 100Mi
-              cpu: 50m
+              memory: 256Mi
+              cpu: 200m
             limits:
               memory: 256Mi
-              cpu: 100m
+              cpu: 200m
       volumes:
         - name: config
           configMap:
