@@ -20,7 +20,6 @@ resources:
   - apps/kyverno.yaml
   - apps/policy-reporter.yaml
   - apps/descheduler.yaml
-  - apps/gitops-revision-controller.yaml
   - apps/headlamp.yaml
   - apps/hubble-ui.yaml
   - apps/kubernetes-dashboard.yaml
