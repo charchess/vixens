@@ -22,9 +22,7 @@ server:
       memory: 2Gi
 
 # Extra scrape configurations
-extraScrapeConfigs: |
-  # Removed redundant kubernetes-pods job causing config errors.
-  # The helm chart provides standard kubernetes scrape jobs by default.
+extraScrapeConfigs: ""
 
 # Alertmanager configuration
 alertmanager:
