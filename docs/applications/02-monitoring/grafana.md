@@ -6,6 +6,12 @@
 | Dev           | [x]     | [x]       | [x]   | v10.x   |
 | Prod          | [x]     | [x]       | [x]   | v10.x   |
 
+## Status Elite ✅
+- **PriorityClass:** `vixens-critical`
+- **QoS:** **Guaranteed** (Requests = Limits = 200m/512Mi)
+- **Probes:** Liveness & Readiness configured
+- **Storage:** RWO (Retain in Prod) with Recreate strategy
+
 ## Validation
 **URL :** https://grafana.[env].truxonline.com
 
