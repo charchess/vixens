@@ -6,3 +6,4 @@ resources:
   - databases/base
   - media/base
   - networking/base
+  - monitoring/base
