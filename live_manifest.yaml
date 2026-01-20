@@ -1,0 +1,61 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  annotations:
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/description: 'Mutates resources to add default labels for
+      consistency. Adds ''managed-by: kyverno'' label if not present.'
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Pod, Deployment, StatefulSet
+    policies.kyverno.io/title: Add Default Labels
+  creationTimestamp: "2026-01-19T09:34:33Z"
+  generation: 2
+  labels:
+    argocd.argoproj.io/instance: kyverno
+  name: add-default-labels
+  resourceVersion: "10469489"
+  uid: faa0a43f-3998-4295-af8b-b8c581e5c038
+spec:
+  admission: true
+  background: true
+  emitWarning: false
+  rules:
+  - exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+    match:
+      any:
+      - resources:
+          kinds:
+          - Deployment
+          - StatefulSet
+          - DaemonSet
+    name: add-managed-by-label
+    skipBackgroundRequests: true
+    validate:
+      allowExistingViolations: true
+      message: Resource should have app.kubernetes.io/managed-by label.
+      pattern:
+        metadata:
+          labels:
+            app.kubernetes.io/managed-by: '*?'
+  validationFailureAction: Audit
+status:
+  autogen: {}
+  conditions:
+  - lastTransitionTime: "2026-01-19T09:35:02Z"
+    message: Ready
+    reason: Succeeded
+    status: "True"
+    type: Ready
+  rulecount:
+    generate: 0
+    mutate: 0
+    validate: 1
+    verifyimages: 0
+  validatingadmissionpolicy:
+    generated: false
+    message: ""
