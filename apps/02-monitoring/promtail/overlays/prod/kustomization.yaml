@@ -1,18 +1,18 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
-commonLabels:
-  environment: prod
 kind: Kustomization
 namespace: monitoring
+commonLabels:
+  environment: prod
+resources:
+  - ../../base
+  - ingress.yaml
 patches:
-        value: prod
-      - op: add
-        path: /spec/managedSecretReference/secretNamespace
-        value: monitoring
-    target:
+  - target:
       kind: InfisicalSecret
       name: promtail-secrets-sync
+    patch: |-
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
   - path: resources-patch.yaml
-resources:
-  - ingress.yaml
-  - ../../base
