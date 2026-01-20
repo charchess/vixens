@@ -13,7 +13,7 @@ def validate_app(app_name, env):
     import os
     kubeconfig = os.getenv("KUBECONFIG")
     if not kubeconfig:
-        kubeconfig = f"terraform/environments/{env}/kubeconfig-{env}"
+        kubeconfig = f".secrets/{env}/kubeconfig-{env}"
     
     # 1. Pod Status
     extra_opts = ""

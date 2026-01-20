@@ -54,7 +54,7 @@ Cilium propose depuis la version 1.14 une fonctionnalité native de L2 Announcem
 
 ## Implementation
 
-### Configuration Cilium (terraform/environments/dev/cilium.tf)
+### Configuration Cilium (/root/terravixens/terraform/environments/dev/cilium.tf)
 
 ```hcl
 # Enable L2 Announcements
