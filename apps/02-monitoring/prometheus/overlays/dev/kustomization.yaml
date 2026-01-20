@@ -7,13 +7,6 @@ commonLabels:
 resources:
   - ../../base
 patches:
-  - patch: |
-      apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: monitoring
-        labels:
-          environment: dev
   - target:
       kind: StatefulSet
       name: prometheus-alertmanager

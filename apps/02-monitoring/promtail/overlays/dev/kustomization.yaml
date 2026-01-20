@@ -5,11 +5,3 @@ namespace: monitoring
 resources:
   - ../../base
   - ingress.yaml
-patches:
-  - patch: |
-      apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: monitoring
-        labels:
-          environment: dev
