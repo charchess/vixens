@@ -93,6 +93,9 @@ ENV/
 *.sublime-project
 *.sublime-workspace
 
+# ============= GEMINI =============
+.gemini/
+
 # ============= OS FILES =============
 # macOS
 .DS_Store

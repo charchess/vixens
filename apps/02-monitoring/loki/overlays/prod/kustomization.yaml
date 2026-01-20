@@ -1,9 +1,11 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
-commonLabels:
-  environment: prod
 kind: Kustomization
 namespace: monitoring
+commonLabels:
+  environment: prod
+resources:
+  - ../../base
 patches:
   - path: infisical-patch.yaml
     target:
