@@ -6,6 +6,13 @@ kind: Kustomization
 namespace: monitoring
 patches:
   - patch: |
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: monitoring
+        labels:
+          environment: prod
+  - patch: |
       - op: replace
         path: /spec/authentication/universalAuth/secretsScope/envSlug
         value: prod
@@ -15,6 +22,7 @@ patches:
     target:
       kind: InfisicalSecret
       name: promtail-secrets-sync
+  - path: resources-patch.yaml
 resources:
   - ingress.yaml
   - ../../base
