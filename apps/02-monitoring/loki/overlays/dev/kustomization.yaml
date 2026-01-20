@@ -7,6 +7,13 @@ resources:
 
 
 patches:
+  - patch: |
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: monitoring
+      labels:
+        environment: dev
   - patch: |-
       apiVersion: apps/v1
       kind: StatefulSet
