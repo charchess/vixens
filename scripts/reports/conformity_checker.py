@@ -5,7 +5,7 @@ import os
 import json
 
 # Add lib to path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'lib'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
 
 from report_utils import parse_markdown_table, save_markdown_table
 
