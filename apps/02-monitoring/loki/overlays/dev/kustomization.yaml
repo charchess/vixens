@@ -12,8 +12,8 @@ patches:
       kind: Namespace
       metadata:
         name: monitoring
-      labels:
-        environment: dev
+        labels:
+          environment: dev
   - patch: |-
       apiVersion: apps/v1
       kind: StatefulSet

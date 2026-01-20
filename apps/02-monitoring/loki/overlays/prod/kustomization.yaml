@@ -18,5 +18,5 @@ patches:
       kind: Namespace
       metadata:
         name: monitoring
-      labels:
-        environment: prod
+        labels:
+          environment: prod
