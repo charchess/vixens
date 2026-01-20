@@ -4,5 +4,7 @@ kind: Namespace
 metadata:
   name: services
   labels:
-    pod-security.kubernetes.io/enforce: privileged
     goldilocks.fairwinds.com/enabled: "true"
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
