@@ -31,13 +31,37 @@ datasources:
         access: proxy
         isDefault: false
         editable: true
-# Resources
+# Resources (Elite: Guaranteed QoS)
+priorityClassName: vixens-critical
 resources:
   requests:
-    cpu: 100m
-    memory: 256Mi
-  limits:
+    cpu: 200m
     memory: 512Mi
+  limits:
+    cpu: 200m
+    memory: 512Mi
+# Probes (Elite Status)
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 60
+  timeoutSeconds: 30
+  failureThreshold: 10
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 60
+  timeoutSeconds: 30
+  failureThreshold: 10
+  periodSeconds: 10
+# Pod Annotations for scraping
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "3000"
+  prometheus.io/path: "/metrics"
 # Tolerations for control-plane nodes
 tolerations:
   - key: node-role.kubernetes.io/control-plane
@@ -54,3 +78,12 @@ sidecar:
     enabled: true
     label: grafana_dashboard
     searchNamespace: ALL
+    # Sidecar resources
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 50m
+        memory: 128Mi
+

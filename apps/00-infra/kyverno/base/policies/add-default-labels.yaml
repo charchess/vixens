@@ -35,7 +35,5 @@ spec:
         message: "Resource should have app.kubernetes.io/managed-by label."
         pattern:
           metadata:
-  labels:
-    argocd.argoproj.io/instance: kyverno
             labels:
               app.kubernetes.io/managed-by: "*?"

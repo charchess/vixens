@@ -6,20 +6,6 @@ kind: Kustomization
 namespace: monitoring
 patches:
   - patch: |
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-      - op: add
-        path: /spec/managedSecretReference/secretNamespace
-        value: monitoring
-    target:
-      kind: InfisicalSecret
-      name: promtail-secrets-sync
-resources:
-  - ingress.yaml
-  - ../../base
-patches:
-  - patch: |
       apiVersion: v1
       kind: Namespace
       metadata:
@@ -36,3 +22,7 @@ patches:
     target:
       kind: InfisicalSecret
       name: promtail-secrets-sync
+  - path: resources-patch.yaml
+resources:
+  - ingress.yaml
+  - ../../base
