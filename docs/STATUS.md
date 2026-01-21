@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-20 (Scripts Consolidation + Infra Fixes)
+Last Updated: 2026-01-21 (Home Assistant OOM Fix)
 
 ---
 
@@ -89,7 +89,7 @@ Last Updated: 2026-01-20 (Scripts Consolidation + Infra Fixes)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| homeassistant | ✅ | ✅ | Fixed Kustomization syntax error |
+| homeassistant | ✅ | ✅ | Fixed OOMKills & DB Locks (QoS update) |
 | mealie | ✅ | ✅ | Fixed DNS resolution (removed target annotation) |
 | mosquitto | ✅ | ✅ | MQTT broker |
 
@@ -239,4 +239,4 @@ git push origin main
 
 ---
 
-**Last Updated:** 2026-01-20
+**Last Updated:** 2026-01-21

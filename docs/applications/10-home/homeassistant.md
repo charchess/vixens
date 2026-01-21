@@ -3,8 +3,8 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | latest  |
-| Prod          | [x]     | [x]       | [ ]   | latest  |
+| Dev           | [x]     | [x]       | [x]   | 2026.1.2 |
+| Prod          | [x]     | [x]       | [x]   | 2026.1.2 |
 
 ## Validation
 **URL :** https://homeassistant.[env].truxonline.com
@@ -27,6 +27,9 @@ curl -L -k https://homeassistant.dev.truxonline.com | grep "Home Assistant"
 
 ## Notes Techniques
 - **Namespace :** `homeassistant`
+- **Ressources :**
+    - **Prod** : QoS Burstable (Requests: 2Gi, Limits: 4Gi) pour éviter les OOMKills et database locks.
+    - **Dev** : Profil léger (512Mi/1Gi).
 - **Dépendances :**
     - `Infisical` (Secret `homeassistant-config`)
     - `Reloader` (Redémarrage auto sur modif config)
