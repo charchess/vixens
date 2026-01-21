@@ -45,6 +45,13 @@ spec:
           envFrom:
             - secretRef:
                 name: adguard-litestream-secret
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: adguard-conf
               mountPath: /opt/adguardhome/conf
@@ -60,6 +67,13 @@ spec:
           envFrom:
             - secretRef:
                 name: adguard-litestream-secret
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: adguard-work
               mountPath: /opt/adguardhome/work
@@ -113,6 +127,9 @@ spec:
           ports:
             - containerPort: 9090
               name: metrics
+          envFrom:
+            - secretRef:
+                name: adguard-litestream-secret
           resources:
             requests:
               cpu: 10m
@@ -120,9 +137,6 @@ spec:
             limits:
               cpu: 100m
               memory: 128Mi
-          envFrom:
-            - secretRef:
-                name: adguard-litestream-secret
           volumeMounts:
             - name: adguard-work
               mountPath: /opt/adguardhome/work
@@ -148,6 +162,13 @@ spec:
           envFrom:
             - secretRef:
                 name: adguard-litestream-secret
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: adguard-conf
               mountPath: /opt/adguardhome/conf

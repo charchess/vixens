@@ -90,6 +90,13 @@ spec:
               memory: 1024Mi
               cpu: 500m
         - name: config-syncer
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           image: alpine:3.23
           command:
             - sh
