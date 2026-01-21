@@ -143,6 +143,9 @@ spec:
           ports:
             - containerPort: 9090
               name: metrics
+          envFrom:
+            - secretRef:
+                name: sabnzbd-litestream-secret
           resources:
             requests:
               cpu: 10m
@@ -150,9 +153,6 @@ spec:
             limits:
               cpu: 100m
               memory: 128Mi
-          envFrom:
-            - secretRef:
-                name: sabnzbd-litestream-secret
           volumeMounts:
             - name: config
               mountPath: /config
@@ -191,7 +191,7 @@ spec:
           resources:
             requests:
               cpu: 10m
-              memory: 32Mi
+              memory: 64Mi
             limits:
               cpu: 100m
               memory: 128Mi
