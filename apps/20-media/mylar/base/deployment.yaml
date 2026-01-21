@@ -49,6 +49,13 @@ spec:
           envFrom:
             - secretRef:
                 name: mylar-litestream-secret
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -67,6 +74,13 @@ spec:
           envFrom:
             - secretRef:
                 name: mylar-litestream-secret
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -167,6 +181,13 @@ spec:
           envFrom:
             - secretRef:
                 name: mylar-litestream-secret
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
