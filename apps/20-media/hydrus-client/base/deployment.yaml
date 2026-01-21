@@ -80,6 +80,13 @@ spec:
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
@@ -105,6 +112,13 @@ spec:
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
@@ -130,6 +144,13 @@ spec:
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
@@ -152,6 +173,13 @@ spec:
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
@@ -163,7 +191,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: hydrus-client
-          image: ghcr.io/hydrusnetwork/hydrus:v652
+          image: ghcr.io/hydrusnetwork/hydrus:v655
           ports:
             - containerPort: 5800
           livenessProbe:
@@ -212,6 +240,13 @@ spec:
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
