@@ -144,4 +144,4 @@ When adding new application documentation:
 
 ---
 
-**Last Updated:** 2025-12-30
+**Last Updated:** 2026-01-20 (After Terraform migration to terravixens)

@@ -1,6 +1,6 @@
 ---
 # ArgoCD installation managed by Terraform
-# (see /root/terravixens/terraform/environments/dev/argocd.tf)
+# (see terravixens:terraform/environments/dev/argocd.tf)
 # This file is kept for reference and future GitOps self-management (Sprint 4+)
 #
 # Currently ArgoCD is deployed via:
