@@ -54,6 +54,13 @@ spec:
           envFrom:
             - secretRef:
                 name: homeassistant-litestream-secret
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -72,6 +79,13 @@ spec:
           envFrom:
             - secretRef:
                 name: homeassistant-litestream-secret
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -143,11 +157,11 @@ spec:
               mountPath: /config
           resources:
             requests:
-              cpu: 500m
-              memory: 2048Mi
+              cpu: 100m
+              memory: 512Mi
             limits:
-              cpu: 2000m
-              memory: 4096Mi
+              cpu: 1000m
+              memory: 1Gi
         - name: filebrowser
           image: filebrowser/filebrowser:v2.55.0
           ports:
