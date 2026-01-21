@@ -224,7 +224,7 @@ mcp__playwright__browser_snapshot()
 
 **Vixens** is a multi-cluster Kubernetes homelab following GitOps best practices.
 
-**IMPORTANT:** This repository contains the GitOps application layer. Infrastructure provisioning (Terraform, Talos) is in the **[terravixens](../terravixens)** repository (`/root/terravixens`).
+**IMPORTANT:** This repository contains the GitOps application layer. Infrastructure provisioning (Terraform, Talos) is in the **[terravixens](../terravixens)** repository.
 
 ## Repository Separation
 
@@ -234,7 +234,7 @@ mcp__playwright__browser_snapshot()
 - Application documentation
 - Development workflow (Beads, Just)
 
-**terravixens** (`/root/terravixens`):
+**terravixens** (infrastructure repository):
 - Terraform infrastructure code
 - Talos cluster provisioning
 - Cilium CNI bootstrap
@@ -444,7 +444,8 @@ just burst "Implement feature X"
 
 ```bash
 # Working directory
-cd /root/terravixens/terraform/environments/dev
+# Go to terravixens repository:
+# cd terraform/environments/dev
 
 # Standard workflow
 terraform fmt -recursive
@@ -472,8 +473,8 @@ export KUBECONFIG=/root/vixens/.secrets/dev/kubeconfig-dev
 export TALOSCONFIG=/root/vixens/.secrets/dev/talosconfig-dev
 
 # Alternative: direct access from terravixens (for infrastructure work)
-# export KUBECONFIG=/root/terravixens/terraform/environments/dev/kubeconfig-dev
-# export TALOSCONFIG=/root/terravixens/terraform/environments/dev/talosconfig-dev
+# export KUBECONFIG=terravixens:terraform/environments/dev/kubeconfig-dev
+# export TALOSCONFIG=terravixens:terraform/environments/dev/talosconfig-dev
 
 # Check cluster
 kubectl get nodes -o wide
@@ -524,7 +525,7 @@ python3 scripts/validate.py <app_name> dev
 
 **Quick checks:**
 ```bash
-terraform -chdir=/root/terravixens/terraform/environments/dev plan  # Should show no changes
+terraform -chdir=<terravixens_path>/terraform/environments/dev plan  # Should show no changes
 kubectl get nodes                                  # All should be Ready
 kubectl -n argocd get applications                 # All should be Synced+Healthy
 ```

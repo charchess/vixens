@@ -644,8 +644,8 @@ kustomize build apps/<app>/overlays/dev | kubectl apply --dry-run=client -f -
 
 ```bash
 # Set environment
-export KUBECONFIG=/root/vixens/.secrets/dev/kubeconfig-dev
-export TALOSCONFIG=/root/vixens/.secrets/dev/talosconfig-dev
+export KUBECONFIG=.secrets/dev/kubeconfig-dev
+export TALOSCONFIG=.secrets/dev/talosconfig-dev
 
 # Check cluster
 kubectl get nodes

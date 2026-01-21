@@ -488,7 +488,7 @@ gh pr create --base main --head feature/add-<app-name>
 
 ```bash
 # Set dev kubeconfig
-export KUBECONFIG=/root/vixens/.secrets/dev/kubeconfig-dev
+export KUBECONFIG=.secrets/dev/kubeconfig-dev
 
 # Check ArgoCD app
 kubectl -n argocd get application <app-name>

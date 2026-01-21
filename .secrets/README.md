@@ -18,7 +18,7 @@ Each environment contains:
 
 They are **copied here** for convenience so that agents working on vixens can access the clusters.
 
-**Source of truth:** `/root/terravixens/terraform/environments/<env>/`
+**Source of truth:** `terravixens:terraform/environments/<env>/`
 
 ## Usage
 
@@ -38,17 +38,17 @@ If cluster credentials change (after Terraform apply in terravixens), copy the u
 
 ```bash
 # From terravixens to vixens
-cp /root/terravixens/terraform/environments/dev/kubeconfig-dev \
+cp terravixens:terraform/environments/dev/kubeconfig-dev \
    /root/vixens/.secrets/dev/
 
-cp /root/terravixens/terraform/environments/dev/talosconfig-dev \
+cp terravixens:terraform/environments/dev/talosconfig-dev \
    /root/vixens/.secrets/dev/
 
 # Same for prod
-cp /root/terravixens/terraform/environments/prod/kubeconfig-prod \
+cp terravixens:terraform/environments/prod/kubeconfig-prod \
    /root/vixens/.secrets/prod/
 
-cp /root/terravixens/terraform/environments/prod/talosconfig-prod \
+cp terravixens:terraform/environments/prod/talosconfig-prod \
    /root/vixens/.secrets/prod/
 ```
 
