@@ -22,6 +22,7 @@ spec:
             image:
               repository: infisical/kubernetes-operator
               tag: v0.10.1
+            priorityClassName: vixens-critical
             resources:
               limits:
                 cpu: 500m

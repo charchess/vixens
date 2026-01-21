@@ -499,7 +499,7 @@ next task_id:
 
         print(f"🎭 VALIDATION OBLIGATOIRE (post-deployment): {app_name}")
         val_result = subprocess.run(
-            ["python3", "scripts/validate.py", app_name, "dev"],
+            ["python3", "scripts/validation/validate.py", app_name, "dev"],
             capture_output=True, text=True
         )
 
@@ -767,13 +767,13 @@ reports env="all":
     if [ "{{env}}" == "all" ]; then
         echo "📊 Génération des rapports consolidés (DEV + PROD)..."
         # DEV
-        python3 scripts/generate-actual-state.py --env dev --output docs/reports/STATE-ACTUAL-dev.md --json-output docs/reports/STATE-dev.json
-        python3 scripts/conformity-checker.py --actual docs/reports/STATE-ACTUAL-dev.md --output docs/reports/CONFORMITY-dev.md
+        python3 scripts/reports/generate_actual_state.py --env dev --output docs/reports/STATE-ACTUAL-dev.md --json-output docs/reports/STATE-dev.json
+        python3 scripts/reports/conformity_checker.py --actual docs/reports/STATE-ACTUAL-dev.md --output docs/reports/CONFORMITY-dev.md
         # PROD
-        python3 scripts/generate-actual-state.py --env prod --output docs/reports/STATE-ACTUAL-prod.md --json-output docs/reports/STATE-prod.json
-        python3 scripts/conformity-checker.py --actual docs/reports/STATE-ACTUAL-prod.md --output docs/reports/CONFORMITY-prod.md
+        python3 scripts/reports/generate_actual_state.py --env prod --output docs/reports/STATE-ACTUAL-prod.md --json-output docs/reports/STATE-prod.json
+        python3 scripts/reports/conformity_checker.py --actual docs/reports/STATE-ACTUAL-prod.md --output docs/reports/CONFORMITY-prod.md
         # CONSOLIDATED
-        python3 scripts/generate-status-report.py \
+        python3 scripts/reports/generate_status_report.py \
             --dev-state docs/reports/STATE-dev.json \
             --prod-state docs/reports/STATE-prod.json \
             --dev-conformity docs/reports/CONFORMITY-dev.md \
@@ -783,12 +783,12 @@ reports env="all":
         echo "✅ Rapports consolidés générés dans docs/reports/"
     else
         echo "📊 Génération des rapports d'état pour l'environnement {{env}}..."
-        python3 scripts/generate-actual-state.py --env {{env}} --output docs/reports/STATE-ACTUAL.md
-        python3 scripts/conformity-checker.py --actual docs/reports/STATE-ACTUAL.md --output docs/reports/CONFORMITY-REPORT.md
+        python3 scripts/reports/generate_actual_state.py --env {{env}} --output docs/reports/STATE-ACTUAL.md
+        python3 scripts/reports/conformity_checker.py --actual docs/reports/STATE-ACTUAL.md --output docs/reports/CONFORMITY-REPORT.md
         if [ "{{env}}" == "dev" ]; then
-            python3 scripts/generate-status-report.py --dev-conformity docs/reports/CONFORMITY-REPORT.md
+            python3 scripts/reports/generate_status_report.py --dev-conformity docs/reports/CONFORMITY-REPORT.md
         else
-            python3 scripts/generate-status-report.py --prod-conformity docs/reports/CONFORMITY-REPORT.md
+            python3 scripts/reports/generate_status_report.py --prod-conformity docs/reports/CONFORMITY-REPORT.md
         fi
         echo "✅ Rapports générés dans docs/reports/"
     fi
@@ -1023,17 +1023,17 @@ workload:
 
 # Mettre une application en hibernation (replicas=0)
 hibernate app_name:
-    @python3 scripts/hibernate.py hibernate {{app_name}}
+    @python3 scripts/infra/hibernate.py hibernate {{app_name}}
     @git push origin main
 
 # Réactiver une application (replicas=1)
 unhibernate app_name:
-    @python3 scripts/hibernate.py unhibernate {{app_name}}
+    @python3 scripts/infra/hibernate.py unhibernate {{app_name}}
     @git push origin main
 
 # Lister les applications hibernées
 hibernated:
-    @python3 scripts/hibernate.py list
+    @python3 scripts/infra/hibernate.py list
 
 
 

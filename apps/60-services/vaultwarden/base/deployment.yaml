@@ -42,6 +42,13 @@ spec:
           envFrom:
             - secretRef:
                 name: litestream-shared-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /data
@@ -50,7 +57,7 @@ spec:
               subPath: litestream.yml
       containers:
         - name: vaultwarden
-          image: vaultwarden/server:1.34.3
+          image: vaultwarden/server:1.35.2
           ports:
             - containerPort: 80
           livenessProbe:

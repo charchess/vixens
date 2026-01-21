@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-20 (Promtail/Grafana Elite + Infra Fixes)
+Last Updated: 2026-01-20 (Scripts Consolidation + Infra Fixes)
 
 ---
 
@@ -11,7 +11,7 @@ Last Updated: 2026-01-20 (Promtail/Grafana Elite + Infra Fixes)
 | Component | Status | Description |
 |-----------|--------|-------------|
 | **Kustomize Build** | ✅ **PASSING** | Infrastructure build fixed (Duplicate keys + Kyverno syntax resolved) |
-| **CI/CD Pipelines** | ✅ **ACTIVE** | Promotion pipeline active (v3.1.193) |
+| **CI/CD Pipelines** | ✅ **ACTIVE** | Promotion pipeline active (v3.1.203) |
 
 ---
 
