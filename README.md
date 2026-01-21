@@ -75,7 +75,8 @@ vixens/
 │   ├── 40-network/     # Network services (AdGuard, DNS)
 │   └── ...
 ├── argocd/             # ArgoCD App-of-Apps (self-management)
-├── terraform/          # Infrastructure as Code (Talos clusters)
+# (Moved to /root/terravixens)
+# ├── terraform/          # Infrastructure as Code (Talos clusters)
 ├── docs/               # Documentation
 ├── scripts/            # Automation scripts
 ├── .beads/             # Task management (git-tracked)
@@ -493,7 +494,7 @@ kubectl apply --dry-run=client -k apps/<app>/overlays/dev  # Dry run
 ### Terraform
 
 ```bash
-cd terraform/environments/dev
+cd /root/terravixens/terraform/environments/dev
 terraform plan                   # Show changes
 terraform apply                  # Apply changes
 ```

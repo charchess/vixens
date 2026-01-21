@@ -138,7 +138,9 @@ ps aux | grep terraform | awk '{print $2}' | xargs kill -9
 
 ### Phase 2: Revert Code Changes
 ```bash
-git checkout terraform/modules/talos/main.tf
+# Go to terravixens repo to fix:
+# cd /root/terravixens
+# git checkout terraform/modules/talos/main.tf
 ```
 
 ### Phase 3: Extract Configurations

@@ -51,14 +51,14 @@ def get_recommended_priority(ns, name):
     return "vixens-medium"
 
 print("Collecting Pods...")
-pods = run_kubectl("kubectl get pods -A -o json --kubeconfig terraform/environments/prod/kubeconfig-prod")
+pods = run_kubectl("kubectl get pods -A -o json --kubeconfig .secrets/prod/kubeconfig-prod")
 
 print("Collecting ArgoCD Apps...")
-apps = run_kubectl("kubectl get applications -n argocd -o json --kubeconfig terraform/environments/prod/kubeconfig-prod")
+apps = run_kubectl("kubectl get applications -n argocd -o json --kubeconfig .secrets/prod/kubeconfig-prod")
 app_health = {a['metadata']['name']: a.get('status', {}).get('health', {}).get('status', 'Unknown') for a in apps.get('items', [])}
 
 print("Collecting VPAs...")
-vpas = run_kubectl("kubectl get vpa -A -o json --kubeconfig terraform/environments/prod/kubeconfig-prod")
+vpas = run_kubectl("kubectl get vpa -A -o json --kubeconfig .secrets/prod/kubeconfig-prod")
 
 vpa_map = {}
 if vpas:
