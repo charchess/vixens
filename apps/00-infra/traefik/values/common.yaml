@@ -1,6 +1,6 @@
 ---
 # Common Traefik Helm values for all environments
-# Based on terraform/modules/shared/locals.tf and current deployment
+# Based on /root/terravixens/terraform/modules/shared/locals.tf and current deployment
 # Source: argocd/overlays/dev/apps/traefik.yaml
 
 # ============================================================================
@@ -28,7 +28,7 @@ ingressRoute:
 # Priority and Tolerations
 # ============================================================================
 priorityClassName: homelab-critical
-# From terraform/modules/shared/locals.tf
+# From /root/terravixens/terraform/modules/shared/locals.tf
 tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists

@@ -138,7 +138,9 @@ ps aux | grep terraform | awk '{print $2}' | xargs kill -9
 
 ### Phase 2: Revert Code Changes
 ```bash
-git checkout terraform/modules/talos/main.tf
+# Go to terravixens repo to fix:
+# cd /root/terravixens
+# git checkout terraform/modules/talos/main.tf
 ```
 
 ### Phase 3: Extract Configurations
@@ -310,7 +312,7 @@ Terraform is powerful but dangerous. Destructive operations must be:
 ## 🔗 Related Documentation
 
 - `/root/vixens/docs/procedures/adding-new-talos-node.md` - Created during this incident
-- `/root/vixens/terraform/modules/talos/main.tf` - The problematic code
+- `terravixens:terraform/modules/talos/main.tf` - The problematic code
 - Recovery script: `/tmp/recover-prod-cluster.sh`
 
 ---
