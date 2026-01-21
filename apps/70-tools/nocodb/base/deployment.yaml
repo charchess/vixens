@@ -23,7 +23,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: nocodb
-          image: nocodb/nocodb:0.301.1
+          image: nocodb/nocodb:0.301.2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
