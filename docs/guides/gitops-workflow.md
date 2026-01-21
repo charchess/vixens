@@ -121,7 +121,7 @@ gh pr merge <pr-number> --squash --delete-branch
 
 ```bash
 # Set dev kubeconfig
-export KUBECONFIG=/root/vixens/terraform/environments/dev/kubeconfig-dev
+export KUBECONFIG=/root/vixens/.secrets/dev/kubeconfig-dev
 
 # Check ArgoCD sync status
 kubectl -n argocd get applications | grep jellyfin
@@ -169,7 +169,7 @@ git tag -f prod-stable
 git push origin prod-stable --force
 
 # Verify ArgoCD syncs in prod
-export KUBECONFIG=/root/vixens/terraform/environments/prod/kubeconfig-prod
+export KUBECONFIG=/root/vixens/.secrets/prod/kubeconfig-prod
 kubectl -n argocd get applications
 ```
 
@@ -177,7 +177,7 @@ kubectl -n argocd get applications
 
 ```bash
 # Set prod kubeconfig
-export KUBECONFIG=/root/vixens/terraform/environments/prod/kubeconfig-prod
+export KUBECONFIG=/root/vixens/.secrets/prod/kubeconfig-prod
 
 # Check ArgoCD sync
 kubectl -n argocd get applications | grep jellyfin
