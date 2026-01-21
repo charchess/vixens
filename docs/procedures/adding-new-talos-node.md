@@ -61,7 +61,7 @@ worker_nodes = {
 ### Step 3: Run Targeted Terraform Apply
 
 ```bash
-cd terraform/environments/prod
+cd /root/terravixens/terraform/environments/prod
 
 # Apply ONLY the new node resources
 terraform apply \
@@ -326,9 +326,9 @@ resource "talos_machine_configuration_apply" "worker" {
 
 ## Related Files
 
-- `terraform/modules/talos/main.tf` - Talos cluster module
-- `terraform/modules/talos/variables.tf` - Node configuration schema
-- `terraform/environments/*/terraform.tfvars` - Per-environment node configs
+- `/root/terravixens/terraform/modules/talos/main.tf` - Talos cluster module
+- `/root/terravixens/terraform/modules/talos/variables.tf` - Node configuration schema
+- `/root/terravixens/terraform/environments/*/terraform.tfvars` - Per-environment node configs
 - `docs/adr/XXX-talos-node-bootstrap.md` - (To be created) ADR on chosen solution
 
 ## References

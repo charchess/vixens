@@ -350,7 +350,7 @@ watch -n 5 'kubectl get pods -A | grep -v Running | grep -v Completed'
 
 ```bash
 # 1. Destroy cluster
-cd terraform/environments/dev
+cd /root/terravixens/terraform/environments/dev
 terraform destroy -auto-approve
 
 # 2. Recreate cluster avec sync waves

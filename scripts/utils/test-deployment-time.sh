@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Configuration
-KUBECONFIG="${KUBECONFIG:-/root/vixens/terraform/environments/dev/kubeconfig-dev}"
+KUBECONFIG="${KUBECONFIG:-/root/vixens/.secrets/dev/kubeconfig-dev}"
 export KUBECONFIG
 
 # Colors
