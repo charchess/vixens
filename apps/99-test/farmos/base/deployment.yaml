@@ -39,7 +39,7 @@ spec:
             - name: farmos-data
               mountPath: /opt/drupal/web/sites
         - name: db
-          image: postgres:14
+          image: postgres:18
           env:
             - name: POSTGRES_DB
               value: farm
