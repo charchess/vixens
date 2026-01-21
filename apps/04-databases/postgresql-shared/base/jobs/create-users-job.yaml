@@ -23,7 +23,7 @@ spec:
       serviceAccountName: default
       containers:
         - name: create-users
-          image: postgres:17
+          image: postgres:18
           env:
             - name: PGHOST
               value: postgresql-shared-rw
