@@ -108,6 +108,13 @@ spec:
           envFrom:
             - secretRef:
                 name: authentik-litestream-secret
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: authentik-data
               mountPath: /data
