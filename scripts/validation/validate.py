@@ -15,8 +15,8 @@ def validate_app(app_name, env):
         return True
     import os
     kubeconfig = os.getenv("KUBECONFIG")
-    # Force use of .secrets/ for safety
-    kubeconfig = f".secrets/{env}/kubeconfig-{env}"
+    if not kubeconfig:
+        kubeconfig = f".secrets/{env}/kubeconfig-{env}"
     
     # 1. Pod Status
     extra_opts = ""
