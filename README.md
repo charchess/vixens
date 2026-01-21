@@ -382,8 +382,8 @@ bd init
 
 ```bash
 # Set environment variables (example for dev)
-export KUBECONFIG=/root/vixens/.secrets/dev/kubeconfig-dev
-export TALOSCONFIG=/root/vixens/.secrets/dev/talosconfig-dev
+export KUBECONFIG=.secrets/dev/kubeconfig-dev
+export TALOSCONFIG=.secrets/dev/talosconfig-dev
 
 # Verify access
 kubectl get nodes
