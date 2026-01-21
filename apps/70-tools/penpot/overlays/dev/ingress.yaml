@@ -1,0 +1,18 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: penpot
+  namespace: tools
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`penpot.dev.truxonline.com`)
+      kind: Rule
+      services:
+        - name: penpot-frontend
+          port: 80
+  tls:
+    secretName: penpot-dev-tls
+    certResolver: letsencrypt-staging

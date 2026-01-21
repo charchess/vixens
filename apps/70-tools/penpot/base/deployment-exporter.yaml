@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: penpot-exporter
+  namespace: tools
+  labels:
+    app: penpot
+    component: exporter
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: penpot
+      component: exporter
+  template:
+    metadata:
+      labels:
+        app: penpot
+        component: exporter
+      annotations:
+        reloader.stakater.com/auto: "true"
+    spec:
+      priorityClassName: vixens-medium
+      containers:
+        - name: exporter
+          image: penpotapp/exporter:latest
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: penpot-config
+            - secretRef:
+                name: penpot-secrets
+          env:
+            - name: PENPOT_PUBLIC_URI
+              value: "http://penpot-frontend" # Internal communication
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule

@@ -1,0 +1,57 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: penpot-backend
+  namespace: tools
+  labels:
+    app: penpot
+    component: backend
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6060
+      targetPort: 6060
+      protocol: TCP
+      name: http
+  selector:
+    app: penpot
+    component: backend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: penpot-frontend
+  namespace: tools
+  labels:
+    app: penpot
+    component: frontend
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
+  selector:
+    app: penpot
+    component: frontend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: penpot-exporter
+  namespace: tools
+  labels:
+    app: penpot
+    component: exporter
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6061 # Check default port
+      targetPort: 6061
+      protocol: TCP
+      name: http
+  selector:
+    app: penpot
+    component: exporter

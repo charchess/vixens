@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: penpot-config
+  namespace: tools
+data:
+  PENPOT_PUBLIC_URI: "https://penpot.truxonline.com"

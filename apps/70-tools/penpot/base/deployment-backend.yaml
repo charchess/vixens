@@ -1,0 +1,67 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: penpot-backend
+  namespace: tools
+  labels:
+    app: penpot
+    component: backend
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: penpot
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: penpot
+        component: backend
+      annotations:
+        reloader.stakater.com/auto: "true"
+    spec:
+      priorityClassName: vixens-medium
+      containers:
+        - name: backend
+          image: penpotapp/backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 6060
+              name: http
+          envFrom:
+            - configMapRef:
+                name: penpot-config
+            - secretRef:
+                name: penpot-secrets
+          env:
+            - name: PENPOT_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: penpot-secrets
+                  key: POSTGRES_PASSWORD
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 6060
+            initialDelaySeconds: 120
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 6060
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
