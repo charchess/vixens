@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-20 (Scripts Consolidation + Infra Fixes)
+Last Updated: 2026-01-21 (Penpot Deployment)
 
 ---
 
@@ -89,7 +89,7 @@ Last Updated: 2026-01-20 (Scripts Consolidation + Infra Fixes)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| homeassistant | ✅ | ✅ | Fixed Kustomization syntax error |
+| homeassistant | ✅ | ✅ | Fixed OOMKills & DB Locks (QoS update) |
 | mealie | ✅ | ✅ | Fixed DNS resolution (removed target annotation) |
 | mosquitto | ✅ | ✅ | MQTT broker |
 
@@ -147,6 +147,7 @@ Last Updated: 2026-01-20 (Scripts Consolidation + Infra Fixes)
 | headlamp | ✅ | ✅ | Migrated to centralized middleware |
 | linkwarden | ✅ | ✅ | Migrated to centralized middleware |
 | renovate | ✅ | ✅ | Auto-dependency updates (ADR-017) |
+| penpot | 🚧 | 🚧 | Deployed, waiting for secrets & sync |
 | gitops-revision-controller | 💤 | 💤 | Déprécié et supprimé (remplacé par Renovate/PR) |
 
 ---
@@ -189,13 +190,14 @@ git push origin main
 - ✅ Working: 34 applications
 - ⚠️ Degraded: 1 application (ArgoCD)
 - ❌ Broken: 0 applications
-- 🚧 WIP: 0 application
+- 🚧 WIP: 1 application (Penpot)
 - ⏳ Planned: 6 applications
 - 💤 Paused: 2 applications
 
 **Prod Environment:**
 - ✅ Working: 38 applications (Phase 3 active)
 - ⚠️ Degraded: 1 application (Netbird Certs)
+- 🚧 WIP: 1 application (Penpot)
 
 ---
 
@@ -239,4 +241,4 @@ git push origin main
 
 ---
 
-**Last Updated:** 2026-01-20
+**Last Updated:** 2026-01-21
