@@ -5,7 +5,7 @@ set -e
 # Usage: ./scripts/bootstrap-secrets.sh <environment>
 
 ENVIRONMENT=${1:-dev}
-KUBECONFIG="$HOME/vixens/terraform/environments/${ENVIRONMENT}/kubeconfig-${ENVIRONMENT}"
+KUBECONFIG="$HOME/vixens/.secrets/${ENVIRONMENT}/kubeconfig-${ENVIRONMENT}"
 
 if [[ ! -f "$KUBECONFIG" ]]; then
   echo "❌ Kubeconfig not found: ${KUBECONFIG}"

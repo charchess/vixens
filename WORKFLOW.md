@@ -209,7 +209,7 @@ bd create --title="..." --assignee=gemini
 4. **Valider prod:**
    ```bash
    # Switch to prod kubeconfig
-   export KUBECONFIG=/path/to/prod/kubeconfig
+   export KUBECONFIG=/root/vixens/.secrets/prod/kubeconfig-prod
    
    # Validate deployment
    python3 scripts/validate.py <app_name> prod
@@ -456,7 +456,7 @@ spec:
 
 7. **Validation prod + Fermeture**
    ```bash
-   export KUBECONFIG=/path/to/prod/kubeconfig
+   export KUBECONFIG=/root/vixens/.secrets/prod/kubeconfig-prod
    python3 scripts/validate.py <app> prod
    bd close <task_id>  # Si validation OK
    ```

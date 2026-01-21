@@ -39,15 +39,15 @@ environments/dev/main.tf → base/main.tf → modules/{talos,cilium,argocd}
 ```
 environments/dev/main.tf → modules/environment/ → modules/{shared,talos,cilium,argocd}
 ```
-The `terraform/base/` directory is now considered **deprecated and unused** in favor of `modules/environment`.
+The `/root/terravixens/terraform/base/` directory is now considered **deprecated and unused** in favor of `modules/environment`.
 
 ### Key Improvements
 
 #### 1. Environment Orchestration Module (`modules/environment`)
-A new module, `terraform/modules/environment/`, was introduced to act as a central orchestration layer for each environment. This module encapsulates the common logic for deploying core infrastructure components (Talos cluster, Cilium CNI, ArgoCD GitOps) in a DRY manner.
+A new module, `/root/terravixens/terraform/modules/environment/`, was introduced to act as a central orchestration layer for each environment. This module encapsulates the common logic for deploying core infrastructure components (Talos cluster, Cilium CNI, ArgoCD GitOps) in a DRY manner.
 
 #### 2. Shared Module (`modules/shared`)
-The `terraform/modules/shared/` module continues to serve as a single source of truth for global, reusable configurations such as:
+The `/root/terravixens/terraform/modules/shared/` module continues to serve as a single source of truth for global, reusable configurations such as:
 - **Chart versions**: Cilium 1.18.3, ArgoCD 7.7.7, Traefik 25.0.0, cert-manager v1.14.4
 - **Control plane tolerations**: Reusable across Cilium, ArgoCD, Hubble
 - **Cilium capabilities**: Validated set of 11 Linux capabilities for Talos
@@ -184,7 +184,7 @@ S3 backend credentials handling:
 2. **Transform variables** to typed objects in environments.
 3. **Create `modules/environment`** to orchestrate core infrastructure components.
 4. **Update `environments/{env}/main.tf`** to call `modules/environment`.
-5. **Deprecate `terraform/base/`** (no longer actively used).
+5. **Deprecate `/root/terravixens/terraform/base/`** (no longer actively used).
 6. **Test destroy/recreate** workflow thoroughly.
 7. **Update documentation** (CLAUDE.md, ADRs, README.md).
 
@@ -201,20 +201,20 @@ Completed 5+ destroy/recreate cycles in dev environment:
 ### Files Modified
 
 **Created:**
-- `terraform/modules/shared/` (locals.tf, outputs.tf, variables.tf, versions.tf)
-- `terraform/modules/environment/` (main.tf, argocd.tf, cilium.tf, outputs.tf, providers.tf, talos.tf, variables.tf)
+- `/root/terravixens/terraform/modules/shared/` (locals.tf, outputs.tf, variables.tf, versions.tf)
+- `/root/terravixens/terraform/modules/environment/` (main.tf, argocd.tf, cilium.tf, outputs.tf, providers.tf, talos.tf, variables.tf)
 - `docs/adr/006-terraform-3-level-architecture.md` (this file)
 
 **Updated:**
-- `terraform/environments/dev/main.tf` (now calls `modules/environment`)
-- `terraform/environments/dev/variables.tf` (8 typed objects)
-- `terraform/environments/dev/terraform.tfvars` (restructured values)
-- `terraform/modules/{talos,cilium,argocd}/` (now called by `modules/environment`)
+- `/root/terravixens/terraform/environments/dev/main.tf` (now calls `modules/environment`)
+- `/root/terravixens/terraform/environments/dev/variables.tf` (8 typed objects)
+- `/root/terravixens/terraform/environments/dev/terraform.tfvars` (restructured values)
+- `/root/terravixens/terraform/modules/{talos,cilium,argocd}/` (now called by `modules/environment`)
 - `CLAUDE.md` (architecture documentation)
 - `.gitignore` (added .envrc)
 
 **Deprecated:**
-- `terraform/base/` (entire directory is no longer actively used)
+- `/root/terravixens/terraform/base/` (entire directory is no longer actively used)
 
 ## Related
 
