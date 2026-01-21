@@ -191,7 +191,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: hydrus-client
-          image: ghcr.io/hydrusnetwork/hydrus:v652
+          image: ghcr.io/hydrusnetwork/hydrus:v655
           ports:
             - containerPort: 5800
           livenessProbe:
