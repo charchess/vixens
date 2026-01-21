@@ -36,7 +36,7 @@ spec:
               mountPath: /nfs-root
       containers:
         - name: birdnet-go
-          image: ghcr.io/tphakala/birdnet-go:nightly-20251026
+          image: ghcr.io/tphakala/birdnet-go:nightly-20251223
           imagePullPolicy: Always
           ports:
             - name: http
