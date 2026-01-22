@@ -18,15 +18,15 @@ spec:
         - name: litestream
           resources:
             requests:
-              cpu: 20m
-              memory: 128Mi
-            limits:
-              cpu: 200m
+              cpu: 100m
               memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
         - name: config-syncer
           resources:
             requests:
-              cpu: 20m
+              cpu: 50m
               memory: 128Mi
             limits:
               cpu: 200m
