@@ -2,6 +2,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: homeassistant
+resources:
+  - ../../base
+  - ingress.yaml
+  - ingressroute-udp.yaml
+  - infisical-filebrowser-auth.yaml
 patches:
   - path: infisical-config-patch.yaml
   - path: litestream-secret-patch.yaml
@@ -15,8 +20,4 @@ patches:
       - op: replace
         path: /spec/resources/requests/storage
         value: 150Gi
-resources:
-  - ../../base
-  - ingress.yaml
-  - ingressroute-udp.yaml
-  - infisical-filebrowser-auth.yaml
+  - path: resources-patch.yaml
