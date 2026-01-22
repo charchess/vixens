@@ -3,7 +3,6 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: renovate
-  namespace: tools
 spec:
   schedule: 0 */6 * * * # Every 6 hours
   concurrencyPolicy: Forbid
