@@ -5,3 +5,14 @@
   path: /spec/jobTemplate/spec/template/spec/volumes/1/persistentVolumeClaim
   value:
     claimName: renovate-cache
+- op: add
+  path: /spec/jobTemplate/spec/template/spec/initContainers
+  value:
+    - name: fix-permissions
+      image: busybox:latest
+      command: ["sh", "-c", "chown -R 1000:1000 /tmp/renovate"]
+      securityContext:
+        runAsUser: 0
+      volumeMounts:
+        - name: work
+          mountPath: /tmp/renovate
