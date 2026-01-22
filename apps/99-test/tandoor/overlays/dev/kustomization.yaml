@@ -6,3 +6,12 @@ resources:
   - ../../base
 commonLabels:
   environment: dev
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: tandoor
+      spec:
+        replicas: 0
