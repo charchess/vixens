@@ -8,19 +8,10 @@ data:
   config.json: |
     {
       "platform": "github",
-      "username": "renovate-bot",
       "gitAuthor": "Renovate Bot <renovate@vixens.local>",
       "onboarding": false,
       "requireConfig": "optional",
       "repositories": ["charchess/vixens"],
       "baseBranchPatterns": ["main"],
-      "dependencyDashboard": true,
-      "prConcurrentLimit": 10,
-      "prHourlyLimit": 0,
-      "automerge": false,
-      "ignoreTests": true,
-      "labels": ["dependencies", "renovate"],
-      "assignees": ["@charchess"],
-      "reviewers": ["@charchess"],
       "schedule": ["at any time"]
     }
