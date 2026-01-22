@@ -9,9 +9,25 @@ spec:
       containers:
         - name: adguard-home
           resources:
-            limits:
-              cpu: 1000m
-              memory: 1Gi
             requests:
-              cpu: 200m
+              cpu: 250m
               memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+        - name: litestream
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+        - name: config-syncer
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi

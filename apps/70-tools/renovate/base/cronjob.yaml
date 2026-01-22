@@ -3,7 +3,6 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: renovate
-  namespace: tools
 spec:
   schedule: 0 */6 * * * # Every 6 hours
   concurrencyPolicy: Forbid
@@ -18,6 +17,10 @@ spec:
         spec:
           restartPolicy: Never
           priorityClassName: vixens-medium
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               operator: Exists
