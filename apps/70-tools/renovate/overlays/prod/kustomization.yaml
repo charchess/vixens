@@ -4,7 +4,9 @@ commonLabels:
   environment: prod
 kind: Kustomization
 namespace: tools
-patches:
-  - path: patch-infisical-env.yaml
 resources:
   - ../../base
+  - pvc.yaml
+patches:
+  - path: patch-infisical-env.yaml
+  - path: cronjob-patch.yaml
