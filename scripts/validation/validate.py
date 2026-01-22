@@ -10,7 +10,7 @@ def run_cmd(cmd):
 
 def validate_app(app_name, env):
     print(f"🔍 Validating {app_name} in {env}...")
-    if app_name == "scripts" or app_name == "infra":
+    if app_name == "scripts" or app_name == "infra" or app_name == "storage":
         print(f"✅ Validation skipped for virtual application '{app_name}'")
         return True
     import os
