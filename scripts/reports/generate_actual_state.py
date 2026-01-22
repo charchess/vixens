@@ -26,12 +26,14 @@ def main():
     args = parser.parse_args()
 
     # Set KUBECONFIG if not set or according to env
-    if args.env == "dev":
-        os.environ['KUBECONFIG'] = "terraform/environments/dev/kubeconfig-dev"
-        if 'KUBECONFIG_EXTRA_OPTS' not in os.environ:
-            os.environ['KUBECONFIG_EXTRA_OPTS'] = "--server=https://192.168.111.160:6443 --insecure-skip-tls-verify"
-    else:
-        os.environ['KUBECONFIG'] = "terraform/environments/prod/kubeconfig-prod"
+    if 'KUBECONFIG' not in os.environ:
+        if args.env == "dev":
+            os.environ['KUBECONFIG'] = ".secrets/dev/kubeconfig-dev"
+        else:
+            os.environ['KUBECONFIG'] = ".secrets/prod/kubeconfig-prod"
+            
+    if args.env == "dev" and 'KUBECONFIG_EXTRA_OPTS' not in os.environ:
+        os.environ['KUBECONFIG_EXTRA_OPTS'] = "--server=https://192.168.111.160:6443 --insecure-skip-tls-verify"
 
     print(f"Collecting data for {args.env} environment...")
 

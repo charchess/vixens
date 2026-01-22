@@ -10,13 +10,13 @@ def run_cmd(cmd):
 
 def validate_app(app_name, env):
     print(f"🔍 Validating {app_name} in {env}...")
-    if app_name == "scripts" or app_name == "infra" or app_name == "storage" or app_name == "resources":
+    if app_name == "scripts" or app_name == "infra" or app_name == "storage":
         print(f"✅ Validation skipped for virtual application '{app_name}'")
         return True
     import os
     kubeconfig = os.getenv("KUBECONFIG")
-    if not kubeconfig:
-        kubeconfig = f".secrets/{env}/kubeconfig-{env}"
+    # Force use of .secrets/ for safety
+    kubeconfig = f".secrets/{env}/kubeconfig-{env}"
     
     # 1. Pod Status
     extra_opts = ""
