@@ -3,8 +3,8 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | v1.12.0  |
-| Prod          | [x]     | [x]       | [x]   | v1.12.0  |
+| Dev           | [x]     | [x]       | [x]   | v3.9.2  |
+| Prod          | [x]     | [x]       | [x]   | v3.9.2  |
 
 Mealie est un gestionnaire de recettes auto-hébergé.
 
@@ -12,7 +12,7 @@ Mealie est un gestionnaire de recettes auto-hébergé.
 
 - **Namespace**: `mealie`
 - **Port**: `9000` (HTTP)
-- **Image**: `ghcr.io/mealie-recipes/mealie:v1.12.0`
+- **Image**: `ghcr.io/mealie-recipes/mealie:v3.9.2`
 - **Storage**: 1Gi PVC via `synelia-iscsi-retain` (RWO)
 - **Strategy**: `Recreate`
 
