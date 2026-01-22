@@ -5,6 +5,13 @@ namespace: tools
 resources:
   - ../../base
 patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: renovate
+      spec:
+        replicas: 0
   - path: patch-infisical-env.yaml
 # Testing schedule removed - back to 6-hour schedule from base
 
