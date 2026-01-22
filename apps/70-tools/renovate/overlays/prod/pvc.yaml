@@ -10,4 +10,4 @@ spec:
   resources:
     requests:
       storage: 2Gi
-  storageClassName: synology-iscsi-delete
+  storageClassName: synelia-iscsi-retain
