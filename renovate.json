@@ -8,6 +8,7 @@
   "dependencyDashboard": true,
   "dependencyDashboardTitle": "📦 Dependency Dashboard - Control Tower",
   "dependencyDashboardAutoclose": true,
+  "dependencyDashboardLabels": ["dependencies", "renovate"],
   "baseBranches": ["main"],
   "gitAuthor": "Renovate Bot <renovate@vixens.local>",
   "platformAutomerge": true,
