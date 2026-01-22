@@ -6,6 +6,23 @@ metadata:
 spec:
   template:
     spec:
+      initContainers:
+        - name: restore-config
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 512Mi
+        - name: restore-db
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 512Mi
       containers:
         - name: homeassistant
           resources:
