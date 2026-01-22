@@ -1,0 +1,19 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: renovate
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: renovate
+              volumeMounts:
+                - name: work
+                  mountPath: /tmp/renovate
+          volumes:
+            - name: work
+              persistentVolumeClaim:
+                claimName: renovate-cache
