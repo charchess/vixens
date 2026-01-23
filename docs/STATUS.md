@@ -63,6 +63,7 @@ Last Updated: 2026-01-20 (Scripts Consolidation + Infra Fixes)
 | promtail | ✅ | ✅ | Elite Status + Probes + Guaranteed QoS |
 | goldilocks | ✅ | ✅ | Fixed missing secretNamespace |
 | hubble-ui | ✅ | ✅ | Fixed secretNamespace error |
+| descheduler | ✅ | ✅ | Eviction active (--dry-run=false) |
 
 ---
 

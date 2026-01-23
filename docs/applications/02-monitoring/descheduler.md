@@ -14,7 +14,7 @@ Le Descheduler est déployé pour rééquilibrer automatiquement les pods entre 
 
 ## Policy (Conservative)
 - **Schedule**: `0 */4 * * *` (CronJob)
-- **Mode**: DryRun Enabled (`--dry-run=true`)
+- **Mode**: DryRun Disabled (`--dry-run=false`)
 - **Strategy**: `LowNodeUtilization`
   - **Thresholds**: 30% (Underutilized)
   - **Target Thresholds**: 60% (Overutilized)
