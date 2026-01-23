@@ -7,6 +7,12 @@ labels:
       vixens.lab/environment: prod
 namespace: synology-csi
 patches:
+  - path: ../../../../_shared/patches/revision-history-limit-statefulset.yaml
+    target:
+      kind: StatefulSet
+  - path: ../../../../_shared/patches/revision-history-limit-deployment.yaml
+    target:
+      kind: Deployment
   - patch: |-
       - op: replace
         path: /parameters/igroup
