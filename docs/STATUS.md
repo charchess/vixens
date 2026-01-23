@@ -148,6 +148,7 @@ Last Updated: 2026-01-23 (Global Revision History Limit Implementation)
 | headlamp | ✅ | ✅ | Migrated to centralized middleware |
 | linkwarden | ✅ | ✅ | Migrated to centralized middleware |
 | renovate | ✅ | ✅ | Auto-dependency updates (ADR-017) |
+| penpot | ⏳ | ⏳ | Design platform (Deployed, awaiting cluster sync) |
 | gitops-revision-controller | 💤 | 💤 | Déprécié et supprimé (remplacé par Renovate/PR) |
 
 ---
