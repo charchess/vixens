@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: penpot-ingress
+  namespace: tools
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+spec:
+  tls:
+    - hosts:
+        - design.dev.truxonline.com
+      secretName: penpot-tls
+  rules:
+    - host: design.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: penpot-frontend
+                port:
+                  number: 80
