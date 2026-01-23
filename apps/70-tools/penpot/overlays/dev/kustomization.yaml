@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+components:
+  - ../../../../_shared/patches
+resources:
+  - ../../base
+patches:
+  - path: ingress.yaml
+  - target:
+      kind: Deployment
+      name: penpot-backend
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/1/value
+        value: "https://design.dev.truxonline.com"
+  - target:
+      kind: Deployment
+      name: penpot-exporter
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0/value
+        value: "https://design.dev.truxonline.com"
+labels:
+  - pairs:
+      environment: dev
+    includeSelectors: false
