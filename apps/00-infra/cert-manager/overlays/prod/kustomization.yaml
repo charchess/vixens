@@ -5,4 +5,7 @@ namespace: cert-manager
 resources:
   - cluster-issuer-prod.yaml
 
+components:
+  - ../../../../_shared/components/revision-history-limit
+
 patches:

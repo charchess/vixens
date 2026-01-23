@@ -6,4 +6,7 @@ resources:
   - certificate.yaml
   - ingressroute.yaml
 
+components:
+  - ../../../../_shared/components/revision-history-limit
+
 patches:
