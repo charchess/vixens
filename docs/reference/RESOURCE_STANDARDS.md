@@ -34,6 +34,7 @@ Ajustez ensuite selon les recommandations de **Goldilocks/VPA**.
 2.  **Limits = Sécurité.** C'est le plafond avant que le process ne soit throttled (CPU) ou tué (RAM).
 3.  **Burstable par défaut.** Nous privilégions le modèle `Burstable` (`requests < limits`) pour mutualiser les ressources CPU inactives.
 4.  **Java/JVM.** Pour les apps Java, définissez toujours `RAM Request = RAM Limit` pour éviter que le Garbage Collector ne devienne fou.
+5.  **Revision History Limit.** Pour éviter l'encombrement de l'API Kubernetes, toutes les ressources (Deployments, StatefulSets) doivent limiter leur historique à **3 révisions**. Ce standard est appliqué globalement via un composant Kustomize partagé (`apps/_shared/patches`).
 
 ## 4. Snippet YAML Standard
 
