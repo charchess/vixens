@@ -5,6 +5,12 @@ components:
   - ../../../../_shared/patches
 namespace: tools
 patches:
+  - path: ../../../../_shared/patches/revision-history-limit-statefulset.yaml
+    target:
+      kind: StatefulSet
+  - path: ../../../../_shared/patches/revision-history-limit-deployment.yaml
+    target:
+      kind: Deployment
   - path: infisical-config-patch.yaml
     target:
       kind: InfisicalSecret

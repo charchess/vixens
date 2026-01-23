@@ -7,3 +7,11 @@ namespace: kubernetes-dashboard
 resources:
   - ../../base
   - ingress.yaml
+
+patches:
+  - path: ../../../../_shared/patches/revision-history-limit-statefulset.yaml
+    target:
+      kind: StatefulSet
+  - path: ../../../../_shared/patches/revision-history-limit-deployment.yaml
+    target:
+      kind: Deployment
