@@ -5,6 +5,12 @@ commonLabels:
 kind: Kustomization
 namespace: monitoring
 patches:
+  - path: ../../../../_shared/patches/revision-history-limit-statefulset.yaml
+    target:
+      kind: StatefulSet
+  - path: ../../../../_shared/patches/revision-history-limit-deployment.yaml
+    target:
+      kind: Deployment
   - path: patch-infisical-env.yaml
 resources:
   - ingress.yaml
