@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: penpot
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/manifest-generate-paths: .
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: prod-stable
+    path: apps/70-tools/penpot/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tools
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  retry:
+    limit: 3
+    backoff:
+      duration: 5s
+      factor: 2
+      maxDuration: 3m

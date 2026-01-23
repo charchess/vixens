@@ -7,10 +7,7 @@ resources:
   - ingress.yaml
   - infisical-patch.yaml
 
+components:
+  - ../../../../_shared/components/revision-history-limit
+
 patches:
-  - path: ../../../../_shared/patches/revision-history-limit-statefulset.yaml
-    target:
-      kind: StatefulSet
-  - path: ../../../../_shared/patches/revision-history-limit-deployment.yaml
-    target:
-      kind: Deployment
