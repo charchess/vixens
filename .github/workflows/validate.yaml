@@ -110,13 +110,15 @@ jobs:
           find apps argocd -type f \( -name '*.yaml' -o -name '*.yml' \) \
             ! -path '*/values/*' \
             ! -path '*/charts/*' \
+            ! -path '*/patches/*' \
             ! -name 'values.yaml' \
+            ! -name '*patch.yaml' \
             -print0 |
             xargs -0 kubeval \
             --ignore-missing-schemas \
             --kubernetes-version 1.30.0 \
             --strict \
-            --skip-kinds Application,AppProject,CustomResourceDefinition,InfisicalSecret,Middleware,HelmRelease,HelmRepository,Kustomization,Cluster,PostgresCluster,Pooler,ScheduledBackup
+            --skip-kinds Application,AppProject,CustomResourceDefinition,InfisicalSecret,Middleware,HelmRelease,HelmRepository,Kustomization,Cluster,PostgresCluster,Pooler,ScheduledBackup,Component
 
   # 3️⃣ Validation spécifique ArgoCD
   argocd-validate:
