@@ -49,6 +49,11 @@ spec:
         login: true
         passwordSecret:
           name: nocodb-postgresql-credentials
+      - name: penpot
+        ensure: present
+        login: true
+        passwordSecret:
+          name: penpot-postgresql-credentials
   postgresql:
     pg_hba:
       - host all postgres all trust
