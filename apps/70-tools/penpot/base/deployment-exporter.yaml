@@ -39,6 +39,9 @@ spec:
                 secretKeyRef:
                   name: penpot-secrets
                   key: PENPOT_REDIS_URI
+          ports:
+            - containerPort: 6061
+              name: http
           resources:
             requests:
               cpu: "100m"
