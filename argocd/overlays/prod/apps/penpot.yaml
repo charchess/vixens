@@ -1,0 +1,45 @@
+---
+# Generic template for Git-sourced Kustomize applications
+# Used for apps like: whoami, argocd, cilium-lb, cert-manager-config, etc.
+#
+# This template will be customized per environment using Kustomize patches
+# and replacements to inject environment-specific values.
+#
+# Placeholders:
+# - penpot: Will be set via patch metadata.name
+# - TARGET_REVISION: Will be replaced with environment (dev/test/staging/main
+# for prod)
+# - APP_apps/70-tools/penpot/overlays/prod: Will be replaced with environment-specific path
+# - tools: Will be set via patch
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: penpot
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/manifest-generate-paths: .
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: TARGET_REVISION
+    path: APP_apps/70-tools/penpot/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tools
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  # Retry configuration for transient failures
+  retry:
+    limit: 3
+    backoff:
+      duration: 5s
+      factor: 2
+      maxDuration: 3m
