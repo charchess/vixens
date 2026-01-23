@@ -63,6 +63,12 @@ spec:
                   name: vaultwarden-postgresql-credentials
                   key: password
                   optional: true
+            - name: PENPOT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: penpot-postgresql-credentials
+                  key: password
+                  optional: true
           command:
             - /bin/bash
             - -c
@@ -92,4 +98,5 @@ spec:
               # Sync others
               sync_db "docspell" "$DOCSPELL_PASS"
               sync_db "vaultwarden" "$VAULTWARDEN_PASS"
+              sync_db "penpot" "$PENPOT_PASS"
               echo "=== Sync Finished ==="
