@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,15 +19,25 @@ spec:
         app: penpot-frontend
         component: frontend
     spec:
+      priorityClassName: vixens-medium
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: frontend
-          image: penpotapp/frontend:latest
+          image: penpotapp/frontend:2.12.1
           imagePullPolicy: IfNotPresent
           env:
             - name: PENPOT_BACKEND_URI
               value: "http://penpot-backend:6060"
             - name: PENPOT_FLAGS
-              value: "enable-registration enable-login-with-password disable-secure-session-cookies enable-smtp enable-email-verification"
+              value: >
+                enable-registration
+                enable-login-with-password
+                disable-secure-session-cookies
+                enable-smtp
+                enable-email-verification
           ports:
             - containerPort: 80
               name: http
