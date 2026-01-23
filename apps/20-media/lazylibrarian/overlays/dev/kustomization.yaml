@@ -5,14 +5,11 @@ resources:
   - ../../base
   - ingress.yaml
 
+components:
+  - ../../../../_shared/components/revision-history-limit
+
 
 patches:
-  - path: ../../../../_shared/patches/revision-history-limit-statefulset.yaml
-    target:
-      kind: StatefulSet
-  - path: ../../../../_shared/patches/revision-history-limit-deployment.yaml
-    target:
-      kind: Deployment
   - patch: |-
       apiVersion: apps/v1
       kind: Deployment

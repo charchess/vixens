@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: penpot-backend
+  namespace: tools
+  labels:
+    app: penpot-backend
+    component: backend
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: penpot-backend
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: penpot-backend
+        component: backend
+    spec:
+      containers:
+        - name: backend
+          image: penpotapp/backend:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: penpot-secrets
+          env:
+            - name: PENPOT_FLAGS
+              value: "enable-registration enable-login-with-password disable-secure-session-cookies enable-smtp enable-email-verification"
+            - name: PENPOT_PUBLIC_URI
+              value: "https://design.truxonline.com"
+            - name: PENPOT_DATABASE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: penpot-secrets
+                  key: PENPOT_DATABASE_URI
+            - name: PENPOT_REDIS_URI
+              valueFrom:
+                secretKeyRef:
+                  name: penpot-secrets
+                  key: PENPOT_REDIS_URI
+            - name: PENPOT_OBJECTS_STORAGE_BACKEND
+              value: "s3"
+            - name: PENPOT_OBJECTS_STORAGE_S3_REGION
+              value: "eu-west-3"
+            - name: PENPOT_OBJECTS_STORAGE_S3_BUCKET
+              value: "penpot-assets"
+          ports:
+            - containerPort: 6060
+              name: http
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      restartPolicy: Always
