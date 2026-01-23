@@ -91,4 +91,3 @@ resources:
   - apps/nocodb.yaml
   - apps/vikunja.yaml
   - apps/mariadb-shared.yaml
-  - apps/penpot.yaml
