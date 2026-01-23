@@ -15,10 +15,9 @@ Enforce a global limit on revision history for all controllers.
 
 1. **Standard Value:** `revisionHistoryLimit` set to `3` (balance between safety/rollback and cleanliness).
 2. **Implementation Pattern:** 
-   - A shared Kustomize **Component** in `apps/_shared/patches/`.
-   - Included via the `components` section in application overlays.
-   - Separate patches for `Deployment` and `StatefulSet` to avoid schema issues.
-3. **Enforcement:** A Kyverno ClusterPolicy `require-revision-history-limit` audits this standard.
+   - A shared Kustomize patch in `apps/_shared/patches/resource-cleanup.yaml`.
+   - Systematic inclusion in all application overlays.
+3. **Enforcement:** Future deployment of Kyverno will audit/enforce this field automatically.
 
 ## Consequences
 ### Positives ✅
