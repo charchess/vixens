@@ -6,3 +6,11 @@ resources:
   - cluster-issuer-staging.yaml
 # Note: gandi-credentials Secret déployé manuellement (hors GitOps)
 # car contient API key sensible
+
+patches:
+  - path: ../../../../_shared/patches/revision-history-limit-statefulset.yaml
+    target:
+      kind: StatefulSet
+  - path: ../../../../_shared/patches/revision-history-limit-deployment.yaml
+    target:
+      kind: Deployment
