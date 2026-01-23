@@ -5,3 +5,5 @@ apps/02-monitoring/alertmanager/base/charts/*
 apps/40-network/netbird/overlays/prod/api-cors-middleware.yaml
 **/api-cors-middleware.yaml
 apps/40-network/netbird/base/infisical-postgresql-secret.yaml
+apps/70-tools/renovate/overlays/prod/cronjob-patch.yaml
+apps/_shared/patches/*.yaml
