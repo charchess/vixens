@@ -146,7 +146,8 @@ Last Updated: 2026-01-20 (Scripts Consolidation + Infra Fixes)
 | stirling-pdf | ✅ | ✅ | Migrated to centralized middleware |
 | it-tools | ✅ | ✅ | Migrated to centralized middleware |
 | headlamp | ✅ | ✅ | Migrated to centralized middleware |
-| linkwarden | ✅ | ✅ | Migrated to centralized middleware |
+| linkwarden | ✅ | ✅ | Migrated to standardized middleware |
+| penpot | 🚧 | 🚧 | Implementation in progress |
 | renovate | ✅ | ✅ | Auto-dependency updates (ADR-017) |
 | gitops-revision-controller | 💤 | 💤 | Déprécié et supprimé (remplacé par Renovate/PR) |
 
