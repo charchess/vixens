@@ -25,8 +25,8 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: TARGET_REVISION
-    path: APP_apps/70-tools/penpot/overlays/prod
+    targetRevision: prod-stable
+    path: apps/70-tools/penpot/overlays/prod
   destination:
     server: https://kubernetes.default.svc
     namespace: tools
