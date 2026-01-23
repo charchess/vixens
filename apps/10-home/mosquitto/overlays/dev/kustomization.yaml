@@ -7,6 +7,9 @@ resources:
   - infisical-mosquitto-auth.yaml
   - mosquitto-tcp-ingressroute.yaml
 
+components:
+  - ../../../../_shared/components/revision-history-limit
+
 
 patches:
   - patch: |-

@@ -7,4 +7,7 @@ resources:
   - ingress.yaml
   - transport.yaml
 
+components:
+  - ../../../../_shared/components/revision-history-limit
+
 patches:

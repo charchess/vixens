@@ -5,4 +5,7 @@ resources:
   - ../../base
   - ingress.yaml
 
+components:
+  - ../../../../_shared/components/revision-history-limit
+
 patches:

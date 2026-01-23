@@ -10,4 +10,7 @@ resources:
   - ../../base
   - prometheus-ingress.yaml
 
+components:
+  - ../../../../_shared/components/revision-history-limit
+
 patches:
