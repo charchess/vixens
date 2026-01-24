@@ -70,7 +70,9 @@ tolerations:
     effect: NoSchedule
 
 # Upgrade CRDs with Helm
-upgradeCRDs: true
+# Note: Disabled due to library compatibility issue in velero image for upgrade job
+# CRDs are installed manually or via pre-sync hook
+upgradeCRDs: false
 
 # Clean up completed upgrade jobs
 cleanUpCRDs: false
