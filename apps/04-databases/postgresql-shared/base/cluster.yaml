@@ -69,7 +69,7 @@ spec:
       secret:
         name: postgresql-admin-credentials
   storage:
-    size: 50Gi # Shared across multiple databases
+    size: 200Gi # Shared across multiple databases
     storageClass: synelia-iscsi-retain
   resources:
     requests:
