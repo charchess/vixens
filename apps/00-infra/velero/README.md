@@ -8,7 +8,7 @@ Velero provides backup and restore capabilities for Kubernetes cluster resources
 
 Before deploying Velero, create the following secret in Infisical:
 
-**Path:** `/shared/velero`
+**Path:** `/apps/00-infra/velero`
 **Environment:** `prod` (or `dev` for development)
 
 **Required key:**
