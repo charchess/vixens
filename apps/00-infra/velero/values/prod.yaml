@@ -4,21 +4,21 @@
 credentials:
   useSecret: false
 
-# Map LITESTREAM_* to AWS_* via environment variables
-extraEnvVars:
-  - name: AWS_ACCESS_KEY_ID
-    valueFrom:
-      secretKeyRef:
-        name: velero-s3-credentials
-        key: LITESTREAM_ACCESS_KEY_ID
-  - name: AWS_SECRET_ACCESS_KEY
-    valueFrom:
-      secretKeyRef:
-        name: velero-s3-credentials
-        key: LITESTREAM_SECRET_ACCESS_KEY
-
 # Backup storage location - MinIO on Synology NAS
 configuration:
+  # Map LITESTREAM_* to AWS_* via environment variables
+  extraEnvVars:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: velero-s3-credentials
+          key: LITESTREAM_ACCESS_KEY_ID
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: velero-s3-credentials
+          key: LITESTREAM_SECRET_ACCESS_KEY
+
   backupStorageLocation:
     - name: default
       provider: aws
