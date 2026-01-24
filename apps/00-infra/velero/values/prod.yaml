@@ -1,13 +1,9 @@
 # Velero - Production Environment Values
 
-# Disable file-based credentials, use env vars instead
+# Use velero secret for AWS credentials (created by credentials-sync CronJob)
 credentials:
   useSecret: false
-  # Map litestream secret keys to AWS_ env vars
-  extraEnvVars:
-    AWS_ACCESS_KEY_ID: LITESTREAM_ACCESS_KEY_ID
-    AWS_SECRET_ACCESS_KEY: LITESTREAM_SECRET_ACCESS_KEY
-  extraSecretRef: velero-s3-credentials
+  extraSecretRef: velero
 
 # Backup storage location - MinIO on Synology NAS
 configuration:
