@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: penpot-data
+  namespace: tools
+  labels:
+    app: penpot
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: synelia-iscsi-retain
+  resources:
+    requests:
+      storage: 50Gi
