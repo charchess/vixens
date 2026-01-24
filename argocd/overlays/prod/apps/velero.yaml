@@ -7,7 +7,7 @@ metadata:
   name: velero
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-wave: "1"  # After velero-secrets
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -24,14 +24,10 @@ spec:
         valueFiles:
           - $values/apps/00-infra/velero/values/common.yaml
           - $values/apps/00-infra/velero/values/prod.yaml
-    # Values and additional resources from Git
+    # Values from Git repository
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
       ref: values
-    # Kustomize overlay for secrets
-    - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: prod-stable
-      path: apps/00-infra/velero/overlays/prod
   syncPolicy:
     automated:
       prune: true
