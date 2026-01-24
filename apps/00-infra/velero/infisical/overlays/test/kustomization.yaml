@@ -7,12 +7,8 @@ resources:
 patches:
   - target:
       kind: InfisicalSecret
-      name: velero-s3-credentials
+      name: velero-credentials-sync
     patch: |-
       - op: replace
         path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-labels:
-  - pairs:
-      environment: prod
-    includeSelectors: false
+        value: test
