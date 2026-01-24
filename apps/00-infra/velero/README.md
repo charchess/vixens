@@ -4,22 +4,13 @@ Velero provides backup and restore capabilities for Kubernetes cluster resources
 
 ## Configuration
 
-### Infisical Secret Setup
+### Credentials
 
-Before deploying Velero, create the following secret in Infisical:
+Velero uses the **shared litestream credentials** from `/shared/litestream` in Infisical.
 
-**Path:** `/apps/00-infra/velero`
-**Environment:** `prod` (or `dev` for development)
+No additional secret creation needed - the existing litestream S3 credentials are reused.
 
-**Required key:**
-- `cloud` - AWS credentials file format:
-  ```
-  [default]
-  aws_access_key_id=<your_minio_access_key>
-  aws_secret_access_key=<your_minio_secret_key>
-  ```
-
-You can reuse the same credentials as litestream if they have access to the backup bucket.
+The Helm values map `LITESTREAM_ACCESS_KEY_ID` → `AWS_ACCESS_KEY_ID` automatically.
 
 ### Backup Schedules (Production)
 

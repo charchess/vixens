@@ -6,6 +6,20 @@ image:
   tag: v1.15.2
   pullPolicy: IfNotPresent
 
+# Kubectl image for CRD upgrade jobs
+# Note: bitnami/kubectl no longer provides versioned tags after Aug 2025
+kubectl:
+  image:
+    repository: docker.io/bitnami/kubectl
+    tag: latest
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
 # Use AWS plugin for S3-compatible storage (MinIO)
 initContainers:
   - name: velero-plugin-for-aws
@@ -24,6 +38,9 @@ resources:
     cpu: 500m
     memory: 512Mi
 
+# Priority class for Kyverno compliance
+priorityClassName: vixens-infrastructure
+
 # Node agent (for PV backups via restic/kopia)
 nodeAgent:
   enabled: true
@@ -34,6 +51,10 @@ nodeAgent:
     limits:
       cpu: 500m
       memory: 512Mi
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
 
 # Metrics for Prometheus
 metrics:
@@ -42,18 +63,11 @@ metrics:
     enabled: false  # Enable when Prometheus operator is ready
     additionalLabels: {}
 
-# Tolerations for control plane nodes
+# Tolerations for control plane nodes (main deployment)
 tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
     effect: NoSchedule
-
-# Node agent tolerations
-nodeAgent:
-  tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-      effect: NoSchedule
 
 # Upgrade CRDs with Helm
 upgradeCRDs: true
