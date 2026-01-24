@@ -1,0 +1,62 @@
+# Velero - Common Helm Values
+# Shared configuration across all environments
+
+image:
+  repository: velero/velero
+  tag: v1.15.2
+  pullPolicy: IfNotPresent
+
+# Use AWS plugin for S3-compatible storage (MinIO)
+initContainers:
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.11.1
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+
+# Resource limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Node agent (for PV backups via restic/kopia)
+nodeAgent:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Metrics for Prometheus
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false  # Enable when Prometheus operator is ready
+    additionalLabels: {}
+
+# Tolerations for control plane nodes
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+# Node agent tolerations
+nodeAgent:
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
+# Upgrade CRDs with Helm
+upgradeCRDs: true
+
+# Clean up completed upgrade jobs
+cleanUpCRDs: false
