@@ -6,6 +6,10 @@ resources:
   - ../../base
 patches:
   - path: patch-credentials-env.yaml
+  - target:
+      kind: InfisicalSecret
+      name: postgresql-backup-s3
+    path: backup-s3-secret-patch.yaml
   - path: backup-patch.yaml
     target:
       group: postgresql.cnpg.io

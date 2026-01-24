@@ -11,8 +11,8 @@ spec:
       s3Credentials:
         accessKeyId:
           name: postgresql-backup-s3
-          key: accessKey
+          key: LITESTREAM_ACCESS_KEY_ID
         secretAccessKey:
           name: postgresql-backup-s3
-          key: secretKey
+          key: LITESTREAM_SECRET_ACCESS_KEY
     retentionPolicy: 30d
