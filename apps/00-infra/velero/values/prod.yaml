@@ -1,9 +1,21 @@
 # Velero - Production Environment Values
 
-# Use existing secret for credentials (created by InfisicalSecret)
+# Disable built-in credentials - we use env vars from shared litestream secret
 credentials:
-  useSecret: true
-  existingSecret: velero-s3-credentials
+  useSecret: false
+
+# Map LITESTREAM_* to AWS_* via environment variables
+extraEnvVars:
+  AWS_ACCESS_KEY_ID:
+    valueFrom:
+      secretKeyRef:
+        name: velero-s3-credentials
+        key: LITESTREAM_ACCESS_KEY_ID
+  AWS_SECRET_ACCESS_KEY:
+    valueFrom:
+      secretKeyRef:
+        name: velero-s3-credentials
+        key: LITESTREAM_SECRET_ACCESS_KEY
 
 # Backup storage location - MinIO on Synology NAS
 configuration:
