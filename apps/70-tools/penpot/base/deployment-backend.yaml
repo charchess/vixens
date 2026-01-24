@@ -49,11 +49,9 @@ spec:
                   name: penpot-secrets
                   key: PENPOT_REDIS_URI
             - name: PENPOT_OBJECTS_STORAGE_BACKEND
-              value: "s3"
-            - name: PENPOT_OBJECTS_STORAGE_S3_REGION
-              value: "eu-west-3"
-            - name: PENPOT_OBJECTS_STORAGE_S3_BUCKET
-              value: "penpot-assets"
+              value: "fs"
+            - name: PENPOT_OBJECTS_STORAGE_FS_DIRECTORY
+              value: "/opt/data/objects"
           ports:
             - containerPort: 6060
               name: http
@@ -77,4 +75,11 @@ spec:
             initialDelaySeconds: 120
             periodSeconds: 30
             failureThreshold: 5
+          volumeMounts:
+            - name: data
+              mountPath: /opt/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: penpot-data
       restartPolicy: Always
