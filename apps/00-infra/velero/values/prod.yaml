@@ -6,12 +6,12 @@ credentials:
 
 # Map LITESTREAM_* to AWS_* via environment variables
 extraEnvVars:
-  AWS_ACCESS_KEY_ID:
+  - name: AWS_ACCESS_KEY_ID
     valueFrom:
       secretKeyRef:
         name: velero-s3-credentials
         key: LITESTREAM_ACCESS_KEY_ID
-  AWS_SECRET_ACCESS_KEY:
+  - name: AWS_SECRET_ACCESS_KEY
     valueFrom:
       secretKeyRef:
         name: velero-s3-credentials
