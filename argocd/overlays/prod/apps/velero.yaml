@@ -1,0 +1,46 @@
+---
+# Velero - Kubernetes Backup Solution
+# prod environment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: velero
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: velero
+  sources:
+    # Helm chart from VMware-Tanzu repository
+    - repoURL: https://vmware-tanzu.github.io/helm-charts
+      chart: velero
+      targetRevision: 8.5.0
+      helm:
+        valueFiles:
+          - $values/apps/00-infra/velero/values/common.yaml
+          - $values/apps/00-infra/velero/values/prod.yaml
+    # Values and additional resources from Git
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: prod-stable
+      ref: values
+    # Kustomize overlay for secrets
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: prod-stable
+      path: apps/00-infra/velero/overlays/prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+    syncOptions:
+      - CreateNamespace=true
