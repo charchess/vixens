@@ -140,7 +140,7 @@ spec:
               mountPath: /database
       containers:
         - name: homeassistant
-          image: ghcr.io/home-assistant/home-assistant:2026.1.2
+          image: ghcr.io/home-assistant/home-assistant:2026.1.3
           imagePullPolicy: Always
           ports:
             - name: http
