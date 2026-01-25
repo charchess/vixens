@@ -1,4 +1,23 @@
 ---
+# Headless service for StatefulSet (required for serviceName)
+apiVersion: v1
+kind: Service
+metadata:
+  name: adguard-home-headless
+  labels:
+    app: adguard-home
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: adguard-home
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+---
+# Regular service for load balancing
 apiVersion: v1
 kind: Service
 metadata:
