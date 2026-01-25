@@ -4,9 +4,9 @@ kind: Kustomization
 namespace: networking
 resources:
   - middleware.yaml
-  - deployment.yaml
+  - statefulset.yaml
   - service.yaml
-  - pvc.yaml
+  # pvc.yaml removed - now managed by StatefulSet volumeClaimTemplates
   - ingressroute-dns.yaml
   - infisical-secret.yaml
   - litestream-secret.yaml
