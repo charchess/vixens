@@ -3,7 +3,7 @@
 
 image:
   repository: velero/velero
-  tag: v1.15.2
+  tag: v1.17.2
   pullPolicy: IfNotPresent
 
 # Kubectl image for CRD upgrade jobs
@@ -23,7 +23,7 @@ kubectl:
 # Use AWS plugin for S3-compatible storage (MinIO)
 initContainers:
   - name: velero-plugin-for-aws
-    image: velero/velero-plugin-for-aws:v1.11.1
+    image: velero/velero-plugin-for-aws:v1.13.2
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target
