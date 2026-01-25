@@ -6,11 +6,11 @@ resources:
   - ingress.yaml
 patches:
   - target:
-      kind: Deployment
+      kind: StatefulSet
       name: adguard-home
     patch: |-
       apiVersion: apps/v1
-      kind: Deployment
+      kind: StatefulSet
       metadata:
         name: adguard-home
       spec:
