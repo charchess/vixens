@@ -1,35 +1,54 @@
 # Penpot
 
-## Deployment Information
-| Environment | Deployed | Configured | Tested | Version |
-|-------------|----------|-----------|-------|---------|
-| Dev         | [x]      | [x]       | [ ]   | 2.12.1  |
-| Prod        | [ ]      | [ ]       | [ ]   | 2.12.1  |
+**Penpot** is the first Open Source design and prototyping platform meant for cross-domain teams.
 
-## Validation
-**URL:** https://design.dev.truxonline.com
+## 📋 Status
 
-### Automatic Validation (CLI)
-```bash
-# Check pod status
-kubectl get pods -n tools -l app.kubernetes.io/name=penpot
+| Environment | Deployed | Configured | Verified | Version |
+| :--- | :--- | :--- | :--- | :--- |
+| **Dev** | [x] | [x] | [ ] | latest |
+| **Prod** | [x] | [x] | [ ] | latest |
 
-# Check ingress
-kubectl get ingress -n tools penpot-ingress
-```
+*Note: Verified [ ] because dev cluster is offline.*
 
-### Manual Validation
-1. Open URL in browser.
-2. Login or create an account.
-3. Verify core functionality: Create a new project, add a design element.
+## 🚀 Access
 
-## Technical Notes
+- **Public URL:** https://design.truxonline.com (Prod)
+- **Dev URL:** https://design.dev.truxonline.com (Dev)
+
+## 🛠️ Configuration
+
+### Infrastructure
 - **Namespace:** `tools`
-- **Category:** `70-tools`
-- **Dependencies:**
-    - PostgreSQL (managed via Infisical connection string)
-    - Redis (managed via Infisical connection string)
-    - S3 Bucket (for assets storage)
-- **Specifics:**
-    - Infisical secrets management for all sensitive configurations.
-    - Three-tier deployment: Frontend, Backend, and Exporter.
+- **Replicas:** 1 (each component)
+- **Ingress:** Traefik + Cert-Manager
+
+### Dependencies
+- **Database:** PostgreSQL Shared (`penpot` database)
+- **Cache:** Redis Shared (db 0)
+- **Storage:** S3 (AWS/MinIO) via Infisical secrets
+- **Mail:** SMTP via Mail Gateway
+
+### Secrets (Infisical)
+Path: `/tools/penpot`
+- `PENPOT_SECRET_KEY`
+- `PENPOT_DATABASE_URI`
+- `PENPOT_REDIS_URI`
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `PENPOT_SMTP_USERNAME`
+- `PENPOT_SMTP_PASSWORD`
+
+## 📦 Deployment Details
+
+Deployed via ArgoCD App-of-Apps.
+- **Backend:** `penpotapp/backend`
+- **Frontend:** `penpotapp/frontend`
+- **Exporter:** `penpotapp/exporter`
+
+## 🔧 Troubleshooting
+
+### Common Issues
+- **Database connection:** Ensure PostgreSQL user and database are created.
+- **S3 connection:** Verify AWS credentials and bucket existence.
+- **Assets not loading:** Check `PENPOT_PUBLIC_URI` matches the ingress host.
