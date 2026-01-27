@@ -24,7 +24,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: dashboard
-          image: netbirdio/dashboard:v2.29.0
+          image: netbirdio/dashboard:v2.30.0
           resources:
             requests:
               cpu: 50m
