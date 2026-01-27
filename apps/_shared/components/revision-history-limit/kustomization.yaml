@@ -1,0 +1,36 @@
+---
+# Kustomize Component: revisionHistoryLimit
+#
+# Sets revisionHistoryLimit=3 on all Deployments and StatefulSets.
+# This reduces etcd storage by limiting stored ReplicaSet revisions.
+#
+# Usage in overlay:
+#   components:
+#     - ../../../../_shared/components/revision-history-limit
+#
+# Reference: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#revision-history-limit
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  # Apply revisionHistoryLimit to all Deployments
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+      spec:
+        revisionHistoryLimit: 3
+    target:
+      kind: Deployment
+
+  # Apply revisionHistoryLimit to all StatefulSets
+  - patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: all-statefulsets
+      spec:
+        revisionHistoryLimit: 3
+    target:
+      kind: StatefulSet

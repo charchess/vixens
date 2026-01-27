@@ -1,0 +1,77 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: penpot-backend
+  namespace: tools
+  labels:
+    app.kubernetes.io/name: penpot
+    app.kubernetes.io/component: backend
+spec:
+  selector:
+    app: penpot-backend
+  ports:
+    - protocol: TCP
+      port: 6060
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: penpot-frontend
+  namespace: tools
+  labels:
+    app.kubernetes.io/name: penpot
+    app.kubernetes.io/component: frontend
+spec:
+  selector:
+    app: penpot-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: penpot-exporter
+  namespace: tools
+  labels:
+    app.kubernetes.io/name: penpot
+    app.kubernetes.io/component: exporter
+spec:
+  selector:
+    app: penpot-exporter
+  ports:
+    - protocol: TCP
+      port: 6061
+      targetPort: 6061
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: penpot-ingress
+  namespace: tools
+  labels:
+    app.kubernetes.io/name: penpot
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - design.truxonline.com
+      secretName: penpot-tls
+  rules:
+    - host: design.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: penpot-frontend
+                port:
+                  number: 80

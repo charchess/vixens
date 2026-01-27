@@ -1,8 +1,6 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-components:
-  - ../../../../_shared/patches
 namespace: test
 resources:
   - ../../base
@@ -10,12 +8,6 @@ commonLabels:
   environment: dev
 
 patches:
-  - path: ../../../../_shared/patches/revision-history-limit-statefulset.yaml
-    target:
-      kind: StatefulSet
-  - path: ../../../../_shared/patches/revision-history-limit-deployment.yaml
-    target:
-      kind: Deployment
   - patch: |-
       apiVersion: apps/v1
       kind: Deployment

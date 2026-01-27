@@ -1,8 +1,6 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-components:
-  - ../../../../_shared/patches
 namespace: tools
 labels:
   - pairs:
@@ -11,12 +9,6 @@ resources:
   - ../../base
   - pvc.yaml
 patches:
-  - path: ../../../../_shared/patches/revision-history-limit-statefulset.yaml
-    target:
-      kind: StatefulSet
-  - path: ../../../../_shared/patches/revision-history-limit-deployment.yaml
-    target:
-      kind: Deployment
   - path: patch-infisical-env.yaml
   - target:
       kind: CronJob

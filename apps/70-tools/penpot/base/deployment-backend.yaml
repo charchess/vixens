@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,16 +21,21 @@ spec:
         app: penpot-backend
         component: backend
     spec:
+      priorityClassName: vixens-medium
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: backend
-          image: penpotapp/backend:latest
+          image: penpotapp/backend:2.12.1
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:
                 name: penpot-secrets
           env:
             - name: PENPOT_FLAGS
-              value: "enable-registration enable-login-with-password disable-secure-session-cookies enable-smtp enable-email-verification"
+              value: "enable-registration enable-login-with-password disable-secure-session-cookies disable-email-verification"
             - name: PENPOT_PUBLIC_URI
               value: "https://design.truxonline.com"
             - name: PENPOT_DATABASE_URI
@@ -43,25 +49,37 @@ spec:
                   name: penpot-secrets
                   key: PENPOT_REDIS_URI
             - name: PENPOT_OBJECTS_STORAGE_BACKEND
-              value: "s3"
-            - name: PENPOT_OBJECTS_STORAGE_S3_REGION
-              value: "eu-west-3" # Placeholder, adapt in secret or overlay if needed
-            - name: PENPOT_OBJECTS_STORAGE_S3_BUCKET
-              value: "penpot-assets"
+              value: "fs"
+            - name: PENPOT_OBJECTS_STORAGE_FS_DIRECTORY
+              value: "/opt/data/objects"
           ports:
             - containerPort: 6060
               name: http
           resources:
             requests:
-              cpu: "100m"
+              cpu: "200m"
               memory: "512Mi"
             limits:
-              cpu: "500m"
-              memory: "1Gi"
+              cpu: "1000m"
+              memory: "1536Mi"
           readinessProbe:
             httpGet:
-              path: /api/health
+              path: /readyz
               port: http
-            initialDelaySeconds: 30
+            initialDelaySeconds: 60
             periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 5
+          volumeMounts:
+            - name: data
+              mountPath: /opt/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: penpot-data
       restartPolicy: Always

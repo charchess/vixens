@@ -1,6 +1,6 @@
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: adguard-home
   labels:
@@ -8,9 +8,10 @@ metadata:
   annotations:
     secret.reloader.stakater.com/reload: adguard-home-secrets
 spec:
-  replicas: 1
-  strategy:
-    type: Recreate
+  serviceName: adguard-home-headless
+  replicas: 2
+  updateStrategy:
+    type: RollingUpdate
   selector:
     matchLabels:
       app: adguard-home
@@ -113,11 +114,11 @@ spec:
               mountPath: /opt/adguardhome/conf
           resources:
             requests:
-              memory: 1024Mi
-              cpu: 1000m
+              memory: 256Mi
+              cpu: 100m
             limits:
-              memory: 1024Mi
-              cpu: 1000m
+              memory: 512Mi
+              cpu: 500m
         - name: litestream
           image: litestream/litestream:0.5.6
           args:
@@ -173,15 +174,28 @@ spec:
             - name: adguard-conf
               mountPath: /opt/adguardhome/conf
       volumes:
-        - name: adguard-work
-          persistentVolumeClaim:
-            claimName: adguard-work
-        - name: adguard-conf
-          persistentVolumeClaim:
-            claimName: adguard-conf
         - name: adguard-home-litestream-config
           configMap:
             name: adguard-home-litestream-config
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+  volumeClaimTemplates:
+    - metadata:
+        name: adguard-work
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: synelia-iscsi-retain
+        resources:
+          requests:
+            storage: 5Gi
+    - metadata:
+        name: adguard-conf
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: synelia-iscsi-retain
+        resources:
+          requests:
+            storage: 1Gi

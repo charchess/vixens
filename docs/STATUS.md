@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-23 (Global Revision History Limit Implementation)
+Last Updated: 2026-01-20 (Scripts Consolidation + Infra Fixes)
 
 ---
 
@@ -10,7 +10,7 @@ Last Updated: 2026-01-23 (Global Revision History Limit Implementation)
 
 | Component | Status | Description |
 |-----------|--------|-------------|
-| **Kustomize Build** | ✅ **PASSING** | All apps patched with revisionHistoryLimit: 3 via shared components |
+| **Kustomize Build** | ✅ **PASSING** | Infrastructure build fixed (Duplicate keys + Kyverno syntax resolved) |
 | **CI/CD Pipelines** | ✅ **ACTIVE** | Promotion pipeline active (v3.1.203) |
 
 ---
@@ -146,7 +146,8 @@ Last Updated: 2026-01-23 (Global Revision History Limit Implementation)
 | stirling-pdf | ✅ | ✅ | Migrated to centralized middleware |
 | it-tools | ✅ | ✅ | Migrated to centralized middleware |
 | headlamp | ✅ | ✅ | Migrated to centralized middleware |
-| linkwarden | ✅ | ✅ | Migrated to centralized middleware |
+| linkwarden | ✅ | ✅ | Migrated to standardized middleware |
+| penpot | 🚧 | 🚧 | Implementation in progress |
 | renovate | ✅ | ✅ | Auto-dependency updates (ADR-017) |
 | penpot | ⏳ | ⏳ | Design platform (Deployed, awaiting cluster sync) |
 | gitops-revision-controller | 💤 | 💤 | Déprécié et supprimé (remplacé par Renovate/PR) |

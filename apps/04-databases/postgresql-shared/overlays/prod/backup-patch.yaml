@@ -6,13 +6,13 @@ metadata:
 spec:
   backup:
     barmanObjectStore:
-      destinationPath: s3://postgresql-backups/
+      destinationPath: s3://backups-vixens-prod/postgresql/
       endpointURL: http://192.168.111.69:9000
       s3Credentials:
         accessKeyId:
           name: postgresql-backup-s3
-          key: accessKey
+          key: LITESTREAM_ACCESS_KEY_ID
         secretAccessKey:
           name: postgresql-backup-s3
-          key: secretKey
+          key: LITESTREAM_SECRET_ACCESS_KEY
     retentionPolicy: 30d

@@ -1,0 +1,78 @@
+# Velero - Common Helm Values
+# Shared configuration across all environments
+
+image:
+  repository: velero/velero
+  tag: v1.17.2
+  pullPolicy: IfNotPresent
+
+# Kubectl image for CRD upgrade jobs
+# Note: bitnami/kubectl no longer provides versioned tags after Aug 2025
+kubectl:
+  image:
+    repository: docker.io/bitnami/kubectl
+    tag: latest
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# Use AWS plugin for S3-compatible storage (MinIO)
+initContainers:
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.13.2
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+
+# Resource limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Priority class for Kyverno compliance
+priorityClassName: vixens-critical
+
+# Node agent (for PV backups via restic/kopia)
+nodeAgent:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
+# Metrics for Prometheus
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false  # Enable when Prometheus operator is ready
+    additionalLabels: {}
+
+# Tolerations for control plane nodes (main deployment)
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+# Upgrade CRDs with Helm
+# Note: Disabled due to library compatibility issue in velero image for upgrade job
+# CRDs are installed manually or via pre-sync hook
+upgradeCRDs: false
+
+# Clean up completed upgrade jobs
+cleanUpCRDs: false
