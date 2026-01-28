@@ -177,13 +177,13 @@ spec:
                   --exclude "*.db*" \
                   --exclude "*.log" \
                   --exclude ".litestream/**" \
-                  --exclude "*litestream/**"
-              } 
+                  --exclude "*litestream/**"; 
+              }
               sync_s3
               while true; do 
                 inotifywait -r -e modify,create,delete,move /config \
                   --exclude ".*\.db.*" \
-                  --exclude ".*litestream.*"
+                  --exclude ".*litestream.*"; 
                 sync_s3; 
                 sleep 10; 
               done
