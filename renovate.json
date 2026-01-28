@@ -2,90 +2,159 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description": "Renovate configuration for Vixens GitOps - Auto-updates with approval workflow",
   "extends": [
-    "config:base",
+    "config:recommended",
     ":dependencyDashboard"
   ],
   "dependencyDashboard": true,
   "dependencyDashboardTitle": "📦 Dependency Dashboard - Control Tower",
   "dependencyDashboardAutoclose": true,
-  "dependencyDashboardLabels": ["dependencies", "renovate"],
-  "baseBranches": ["main"],
+  "dependencyDashboardLabels": [
+    "dependencies",
+    "renovate"
+  ],
+  "baseBranchPatterns": [
+    "main"
+  ],
   "gitAuthor": "Renovate Bot <renovate@vixens.local>",
   "platformAutomerge": true,
-  "enabledManagers": ["terraform", "helm-values", "kubernetes", "regex", "dockerfile"],
+  "enabledManagers": [
+    "terraform",
+    "helm-values",
+    "kubernetes",
+    "custom.regex",
+    "dockerfile"
+  ],
   "kubernetes": {
-    "fileMatch": ["apps/.+\\.yaml$", "argocd/.+\\.yaml$"]
+    "managerFilePatterns": [
+      "/apps/.+\\.yaml$/",
+      "/argocd/.+\\.yaml$/"
+    ]
   },
   "helm-values": {
-    "fileMatch": ["(^|/)values.*\\.yaml$"]
+    "managerFilePatterns": [
+      "/(^|/)values.*\\.yaml$/"
+    ]
   },
   "terraform": {
-    "fileMatch": ["(^|/)\\.tf$"]
+    "managerFilePatterns": [
+      "/(^|/)\\.tf$/"
+    ]
   },
   "packageRules": [
     {
       "description": "Group all minor and patch updates for non-critical dependencies",
-      "matchUpdateTypes": ["minor", "patch"],
-      "matchPackageNames": ["*"],
-      "excludePackageNames": ["ghcr.io/home-assistant/home-assistant", "grafana/promtail", "grafana/loki"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "matchPackageNames": [
+        "*",
+        "!ghcr.io/home-assistant/home-assistant",
+        "!grafana/promtail",
+        "!grafana/loki"
+      ],
       "groupName": "minor and patch updates",
       "groupSlug": "minor-patch-all"
     },
     {
       "description": "LinuxServer.io images versioning",
-      "matchPackagePatterns": ["^lscr\\.io/linuxserver/"],
-      "versioning": "regex:^version-v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(.*)?$"
+      "versioning": "regex:^version-v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(.*)?$",
+      "matchPackageNames": [
+        "/^lscr\\.io/linuxserver//"
+      ]
     },
     {
       "description": "Lazylibrarian hex versioning",
-      "matchPackageNames": ["lscr.io/linuxserver/lazylibrarian"],
+      "matchPackageNames": [
+        "lscr.io/linuxserver/lazylibrarian"
+      ],
       "versioning": "regex:^version-(?<major>[a-f0-9]+)$"
     },
     {
       "description": "Music Assistant beta versioning",
-      "matchPackagePatterns": ["^ghcr\\.io/music-assistant/"],
-      "versioning": "docker"
+      "versioning": "docker",
+      "matchPackageNames": [
+        "/^ghcr\\.io/music-assistant//"
+      ]
     },
     {
       "description": "AdGuard Home versioning",
-      "matchPackagePatterns": ["^adguard/adguardhome"],
-      "versioning": "docker"
+      "versioning": "docker",
+      "matchPackageNames": [
+        "/^adguard/adguardhome/"
+      ]
     },
     {
       "description": "BirdNET-Go nightly versioning",
-      "matchPackagePatterns": ["^ghcr\\.io/tphakala/birdnet-go"],
-      "versioning": "regex:^nightly-(?<major>\\d+)$"
+      "versioning": "regex:^nightly-(?<major>\\d+)$",
+      "matchPackageNames": [
+        "/^ghcr\\.io/tphakala/birdnet-go/"
+      ]
     },
     {
       "description": "Home Assistant Auto-Update",
-      "matchPackageNames": ["ghcr.io/home-assistant/home-assistant"],
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchPackageNames": [
+        "ghcr.io/home-assistant/home-assistant"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
       "automerge": true,
       "automergeType": "pr",
       "automergeStrategy": "squash",
-      "labels": ["dependencies", "renovate", "automerge", "home-assistant"]
+      "labels": [
+        "dependencies",
+        "renovate",
+        "automerge",
+        "home-assistant"
+      ]
     },
     {
       "description": "Auto-merge minor and patch updates after approval",
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
       "automerge": true,
       "automergeType": "pr",
       "automergeStrategy": "squash",
-      "labels": ["dependencies", "renovate", "automerge"]
+      "labels": [
+        "dependencies",
+        "renovate",
+        "automerge"
+      ]
     },
     {
       "description": "Manual review required for major updates",
-      "matchUpdateTypes": ["major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "automerge": false,
-      "labels": ["dependencies", "renovate", "major-update"]
+      "labels": [
+        "dependencies",
+        "renovate",
+        "major-update"
+      ]
     }
   ],
   "prConcurrentLimit": 10,
   "prHourlyLimit": 0,
   "branchConcurrentLimit": 20,
-  "labels": ["dependencies", "renovate"],
-  "assignees": ["@charchess"],
-  "reviewers": ["@charchess"],
+  "labels": [
+    "dependencies",
+    "renovate"
+  ],
+  "assignees": [
+    "@charchess"
+  ],
+  "reviewers": [
+    "@charchess"
+  ],
   "timezone": "Europe/Paris",
   "semanticCommits": "enabled",
   "commitMessagePrefix": "chore(deps):",
