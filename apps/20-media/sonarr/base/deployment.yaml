@@ -1,4 +1,4 @@
----
+--- 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,6 +28,41 @@ spec:
           operator: Exists
           effect: NoSchedule
       initContainers:
+        - name: restore-config
+          image: rclone/rclone:1.72
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              rclone copy s3:$LITESTREAM_BUCKET/sonarr/config /config \
+                --transfers 4 \
+                --exclude "*.db*" \
+                --exclude "*.log" \
+                --exclude ".litestream/**" \
+                --exclude "*litestream/**" \
+                || true
+          envFrom:
+            - secretRef:
+                name: sonarr-litestream-secret
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: config
+              mountPath: /config
         - name: restore-db
           image: litestream/litestream:0.5.6
           securityContext:
@@ -61,16 +96,17 @@ spec:
           image: ghcr.io/linuxserver/sonarr:version-4.0.16.2944
           ports:
             - containerPort: 8989 # Default Sonarr UI port
+              name: http
           livenessProbe:
             httpGet:
               path: /ping
-              port: 8989
+              port: http
             initialDelaySeconds: 30
             periodSeconds: 20
           readinessProbe:
             httpGet:
               path: /ping
-              port: 8989
+              port: http
             initialDelaySeconds: 15
             periodSeconds: 10
           resources:
@@ -102,7 +138,7 @@ spec:
               mountPath: /downloads
             - name: tv
               mountPath: /tv
-              subPath: TV Show # Mounts /volume3/Content/TVShow
+              subPath: TV Show
         - name: litestream
           image: litestream/litestream:0.5.6
           securityContext:
@@ -131,6 +167,50 @@ spec:
             - name: sonarr-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
+        - name: config-syncer
+          image: alpine:3.23
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              apk add --no-cache rclone inotify-tools
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              sync_s3() { 
+                rclone sync /config s3:$LITESTREAM_BUCKET/sonarr/config \
+                  --exclude "*.db*" \
+                  --exclude "*.log" \
+                  --exclude ".litestream/**" \
+                  --exclude "*litestream/**"; 
+              }
+              sync_s3
+              while true; do 
+                inotifywait -r -e modify,create,delete,move /config \
+                  --exclude ".*\.db.*" \
+                  --exclude ".*litestream.*"; 
+                sync_s3; 
+                sleep 10; 
+              done
+          envFrom:
+            - secretRef:
+                name: sonarr-litestream-secret
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: config
+              mountPath: /config
       volumes:
         - name: config
           persistentVolumeClaim:

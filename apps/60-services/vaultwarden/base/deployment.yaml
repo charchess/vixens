@@ -6,9 +6,9 @@ metadata:
   labels:
     app: vaultwarden
 spec:
-  replicas: 1
   strategy:
     type: Recreate
+  replicas: 1
   selector:
     matchLabels:
       app: vaultwarden
@@ -17,21 +17,57 @@ spec:
       labels:
         app: vaultwarden
       annotations:
+        reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
     spec:
-      priorityClassName: vixens-high
-      securityContext:
-        fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
+      priorityClassName: vixens-medium
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
       initContainers:
+        - name: restore-config
+          image: rclone/rclone:1.72
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              rclone copy s3:$LITESTREAM_BUCKET/vaultwarden/config /data \
+                --transfers 4 \
+                --exclude "*.sqlite3*"
+                --exclude "*.log"
+                --exclude ".litestream/**"
+                --exclude "*litestream/**"
+                || true
+          envFrom:
+            - secretRef:
+                name: vaultwarden-litestream-secret
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
         - name: restore-db
           image: litestream/litestream:0.5.6
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           args:
             - restore
             - -config
@@ -41,7 +77,7 @@ spec:
             - /data/db.sqlite3
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: vaultwarden-litestream-secret
           resources:
             requests:
               cpu: 10m
@@ -57,43 +93,44 @@ spec:
               subPath: litestream.yml
       containers:
         - name: vaultwarden
-          image: vaultwarden/server:1.35.2
+          image: vaultwarden/server:1.33.0
           ports:
             - containerPort: 80
+              name: http
+          env:
+            - name: DATA_FOLDER
+              value: /data
+            - name: DATABASE_URL
+              value: /data/db.sqlite3
           livenessProbe:
             httpGet:
               path: /alive
-              port: 80
-            initialDelaySeconds: 60
-            periodSeconds: 20
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /alive
-              port: 80
-            initialDelaySeconds: 10
+              port: http
+            initialDelaySeconds: 5
             periodSeconds: 10
+            timeoutSeconds: 3
           resources:
             requests:
               cpu: 50m
-              memory: 256Mi
+              memory: 128Mi
             limits:
               cpu: 500m
               memory: 512Mi
-          env:
-            - name: DOMAIN
-              value: https://vaultwarden.dev.truxonline.com
-            - name: SIGNUPS_ALLOWED
-              value: "true"
-            - name: ADMIN_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: vaultwarden-secrets
-                  key: ADMIN_TOKEN
           volumeMounts:
             - name: data
               mountPath: /data
         - name: litestream
           image: litestream/litestream:0.5.6
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           args:
             - replicate
             - -config
@@ -110,13 +147,57 @@ spec:
               memory: 128Mi
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: vaultwarden-litestream-secret
           volumeMounts:
             - name: data
               mountPath: /data
             - name: vaultwarden-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
+        - name: config-syncer
+          image: alpine:3.23
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              apk add --no-cache rclone inotify-tools
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              sync_s3() { 
+                rclone sync /data s3:$LITESTREAM_BUCKET/vaultwarden/config \
+                  --exclude "*.sqlite3*"
+                  --exclude "*.log"
+                  --exclude ".litestream/**"
+                  --exclude "*litestream/**"; 
+              }
+              sync_s3
+              while true; do 
+                inotifywait -r -e modify,create,delete,move /data \
+                  --exclude ".*\.sqlite3.*"
+                  --exclude ".*litestream.*"; 
+                sync_s3; 
+                sleep 60; 
+              done
+          envFrom:
+            - secretRef:
+                name: vaultwarden-litestream-secret
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
       volumes:
         - name: data
           persistentVolumeClaim:
@@ -124,3 +205,6 @@ spec:
         - name: vaultwarden-litestream-config
           configMap:
             name: vaultwarden-litestream-config
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
