@@ -8,6 +8,7 @@ resources:
   - ingressroute-udp.yaml
   - infisical-filebrowser-auth.yaml
 patches:
+  - path: rclone-patch.yaml
   - path: infisical-config-patch.yaml
   - path: litestream-secret-patch.yaml
     target:
