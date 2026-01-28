@@ -5,12 +5,10 @@ metadata:
   name: frigate
   labels:
     app: frigate
-  annotations:
-    secret.reloader.stakater.com/reload: frigate-config-secret,frigate-secrets
 spec:
-  replicas: 1
   strategy:
     type: Recreate
+  replicas: 1
   selector:
     matchLabels:
       app: frigate
@@ -24,7 +22,7 @@ spec:
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
     spec:
-      priorityClassName: vixens-high
+      priorityClassName: vixens-medium
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
@@ -32,6 +30,9 @@ spec:
       initContainers:
         - name: restore-config
           image: rclone/rclone:1.72
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           command:
             - sh
             - -c
@@ -42,7 +43,7 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/frigate/config /config --transfers 4 --exclude "*.db*" --exclude "*.log" 2>/dev/null || true
+              rclone copy s3:$LITESTREAM_BUCKET/frigate/config /config --transfers 4 --exclude "*.db*" --exclude "*.log" --exclude ".*litestream/**" 2>/dev/null || true
           envFrom:
             - secretRef:
                 name: frigate-litestream-secret
@@ -54,10 +55,13 @@ spec:
               cpu: 100m
               memory: 128Mi
           volumeMounts:
-            - name: db
+            - name: config
               mountPath: /config
         - name: restore-db
           image: litestream/litestream:0.5.6
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           args:
             - restore
             - -config
@@ -76,71 +80,45 @@ spec:
               cpu: 100m
               memory: 128Mi
           volumeMounts:
-            - name: db
+            - name: config
               mountPath: /config
             - name: frigate-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
-        - name: copy-config
-          image: alpine:latest
-          command:
-            - /bin/sh
-            - -c
-            - if [ ! -f /config-target/config.yml ]; then cp /config-source/config.yml /config-target/config.yml; fi
-          volumeMounts:
-            - name: config
-              mountPath: /config-source
-            - name: db
-              mountPath: /config-target
       containers:
         - name: frigate
-          image: ghcr.io/blakeblackshear/frigate:stable
-          securityContext:
-            privileged: true
+          image: ghcr.io/blakeblackshear/frigate:0.15.0-beta6
+          shmSize: 1024Mi
           ports:
             - containerPort: 5000
               name: http
-            - containerPort: 1935
-              name: rtmp
             - containerPort: 8554
               name: rtsp
-            - containerPort: 8555
-              name: webrtc
-          livenessProbe:
-            httpGet:
-              path: /api/version
-              port: 5000
-            initialDelaySeconds: 60
-            periodSeconds: 30
-          readinessProbe:
-            httpGet:
-              path: /api/version
-              port: 5000
-            initialDelaySeconds: 30
-            periodSeconds: 15
-          env:
-            - name: LIBVA_DRIVER_NAME
-              value: iHD
-          volumeMounts:
-            - name: db
-              mountPath: /config
-            - name: media
-              mountPath: /media/frigate
-            - name: cache
-              mountPath: /tmp/cache
-            - name: shm
-              mountPath: /dev/shm
-            - name: dri
-              mountPath: /dev/dri
           resources:
             requests:
-              cpu: 2000m
-              memory: 4Gi
+              cpu: 100m
+              memory: 512Mi
             limits:
               cpu: 2000m
-              memory: 4Gi
+              memory: 2Gi
+          env:
+            - name: FRIGATE_RTSP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: frigate-secrets
+                  key: RTSP_PASSWORD
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: storage
+              mountPath: /media/frigate
+            - name: shm
+              mountPath: /dev/shm
         - name: litestream
           image: litestream/litestream:0.5.6
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           args:
             - replicate
             - -config
@@ -159,7 +137,7 @@ spec:
             - secretRef:
                 name: frigate-litestream-secret
           volumeMounts:
-            - name: db
+            - name: config
               mountPath: /config
             - name: frigate-litestream-config
               mountPath: /etc/litestream.yml
@@ -177,7 +155,7 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              sync_s3() { rclone sync /config s3:$LITESTREAM_BUCKET/frigate/config --exclude "*.db*" --exclude "*.log"; }
+              sync_s3() { rclone sync /config s3:$LITESTREAM_BUCKET/frigate/config --exclude "*.db*" --exclude "*.log" --exclude ".*litestream/**"; }
               sync_s3
               while true; do inotifywait -r -e modify,create,delete,move /config --exclude ".*\.db.*"; sync_s3; sleep 10; done
           envFrom:
@@ -191,29 +169,20 @@ spec:
               cpu: 100m
               memory: 128Mi
           volumeMounts:
-            - name: db
+            - name: config
               mountPath: /config
       volumes:
         - name: config
-          secret:
-            secretName: frigate-config-secret
-        - name: db
           persistentVolumeClaim:
             claimName: frigate-config-pvc
-        - name: media
+        - name: storage
           nfs:
             server: 192.168.111.69
-            path: /volume3/Internal/frigate
-        - name: cache
-          emptyDir:
-            medium: Memory
+            path: /volume3/Content/Frigate
         - name: shm
           emptyDir:
             medium: Memory
-            sizeLimit: 256Mi
-        - name: dri
-          hostPath:
-            path: /dev/dri
+            sizeLimit: 1024Mi
         - name: frigate-litestream-config
           configMap:
             name: frigate-litestream-config

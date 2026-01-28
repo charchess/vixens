@@ -43,7 +43,7 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/lidarr/config /config --transfers 4 --exclude "*.db*" --exclude "*.log" 2>/dev/null || true
+              rclone copy s3:$LITESTREAM_BUCKET/lidarr/config /config --transfers 4 --exclude "*.db*" --exclude "*.log" --exclude ".*litestream/**" 2>/dev/null || true
           envFrom:
             - secretRef:
                 name: lidarr-litestream-secret
@@ -87,7 +87,7 @@ spec:
               subPath: litestream.yml
       containers:
         - name: lidarr
-          image: ghcr.io/linuxserver/lidarr:version-3.1.0.4875
+          image: ghcr.io/linuxserver/lidarr:version-2.9.6.4552
           ports:
             - containerPort: 8686 # Default Lidarr UI port
           livenessProbe:
@@ -131,6 +131,7 @@ spec:
               mountPath: /downloads
             - name: music
               mountPath: /music
+              subPath: Music
         - name: litestream
           image: litestream/litestream:0.5.6
           securityContext:
@@ -172,7 +173,7 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              sync_s3() { rclone sync /config s3:$LITESTREAM_BUCKET/lidarr/config --exclude "*.db*" --exclude "*.log"; }
+              sync_s3() { rclone sync /config s3:$LITESTREAM_BUCKET/lidarr/config --exclude "*.db*" --exclude "*.log" --exclude ".*litestream/**"; }
               sync_s3
               while true; do inotifywait -r -e modify,create,delete,move /config --exclude ".*\.db.*"; sync_s3; sleep 10; done
           envFrom:
@@ -199,7 +200,7 @@ spec:
         - name: music
           nfs:
             server: 192.168.111.69
-            path: /volume3/Content/music
+            path: /volume3/Content
         - name: lidarr-litestream-config
           configMap:
             name: lidarr-litestream-config
