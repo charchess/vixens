@@ -565,7 +565,13 @@ Add S3 credentials to Infisical at `/infra/backup-s3` (or app-specific path):
 - `LITESTREAM_BUCKET`
 - `LITESTREAM_ENDPOINT` (e.g., `s3.fr-par.scw.cloud`)
 
-### 3. Implementation Example
+### 3. Safety Exclusions for Rclone
+
+When using **Rclone** for configuration backup alongside **Litestream** for SQLite replication, you **MUST** exclude Litestream's working directories to prevent storage saturation and circular backups.
+
+**Rule:** Always add `--exclude ".*litestream/**"` to your `rclone copy` and `rclone sync` commands.
+
+### 4. Implementation Example
 
 **In `base/deployment.yaml`:**
 

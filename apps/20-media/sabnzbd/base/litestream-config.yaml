@@ -10,4 +10,8 @@ data:
         replicas:
           - url: s3://$LITESTREAM_BUCKET/sabnzbd/history1.db
             endpoint: $LITESTREAM_ENDPOINT
+      - path: /config/sabnzbd.db
+        replicas:
+          - url: s3://$LITESTREAM_BUCKET/sabnzbd/sabnzbd.db
+            endpoint: $LITESTREAM_ENDPOINT
     addr: ":9090"

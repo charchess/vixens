@@ -6,9 +6,9 @@ metadata:
   labels:
     app: sabnzbd
 spec:
-  replicas: 1
   strategy:
     type: Recreate
+  replicas: 1
   selector:
     matchLabels:
       app: sabnzbd
@@ -17,11 +17,12 @@ spec:
       labels:
         app: sabnzbd
       annotations:
+        reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
     spec:
-      priorityClassName: vixens-low
+      priorityClassName: vixens-medium
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
@@ -42,9 +43,13 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-
-              echo "Restoring config from s3://$LITESTREAM_BUCKET/sabnzbd/config..."
-              rclone copy s3:$LITESTREAM_BUCKET/sabnzbd/config /config --transfers 4 --exclude "*.db*" --exclude "*.log" 2>/dev/null || echo "No config found or restore failed (first run?)"
+              rclone copy s3:$LITESTREAM_BUCKET/sabnzbd/config /config \
+                --transfers 4 \
+                --exclude "*.db*" \
+                --exclude "*.log" \
+                --exclude ".litestream/**" \
+                --exclude "*litestream/**" \
+                || true
           envFrom:
             - secretRef:
                 name: sabnzbd-litestream-secret
@@ -69,7 +74,7 @@ spec:
             - /etc/litestream.yml
             - -if-db-not-exists
             - -if-replica-exists
-            - /config/admin/history1.db
+            - /config/sabnzbd.db
           envFrom:
             - secretRef:
                 name: sabnzbd-litestream-secret
@@ -88,58 +93,36 @@ spec:
               subPath: litestream.yml
       containers:
         - name: sabnzbd
-          image: ghcr.io/linuxserver/sabnzbd:version-4.5.5 # Placeholder image
+          image: ghcr.io/linuxserver/sabnzbd:version-4.4.1
           ports:
-            - containerPort: 8080 # Default SABnzbd UI port
+            - containerPort: 8080 # Default Sabnzbd UI port
+              name: http
           livenessProbe:
             httpGet:
               path: /
-              port: 8080
+              port: http
             initialDelaySeconds: 30
-            periodSeconds: 15
+            periodSeconds: 20
           readinessProbe:
             httpGet:
               path: /
-              port: 8080
-            initialDelaySeconds: 10
+              port: http
+            initialDelaySeconds: 15
             periodSeconds: 10
           resources:
             requests:
-              cpu: 50m
+              cpu: 100m
               memory: 256Mi
             limits:
-              cpu: 2000m
-              memory: 4Gi
+              cpu: 1000m
+              memory: 1Gi
           env:
-            - name: SABNZBD__CONFIG__API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: sabnzbd-secrets
-                  key: API_KEY
-            - name: SABNZBD__CONFIG__NZB_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: sabnzbd-secrets
-                  key: API_KEY
-            - name: SABNZBD__CONFIG__USER
-              valueFrom:
-                secretKeyRef:
-                  name: sabnzbd-secrets
-                  key: ADMIN_USER
-            - name: SABNZBD__CONFIG__PASS
-              valueFrom:
-                secretKeyRef:
-                  name: sabnzbd-secrets
-                  key: ADMIN_PASS
             - name: PUID
               value: "1000"
             - name: PGID
               value: "1000"
             - name: TZ
               value: Europe/Paris
-          envFrom:
-            - secretRef:
-                name: sabnzbd-secrets
           volumeMounts:
             - name: config
               mountPath: /config
@@ -175,33 +158,38 @@ spec:
               subPath: litestream.yml
         - name: config-syncer
           image: alpine:3.23
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           command:
             - sh
             - -c
           args:
             - |
               apk add --no-cache rclone inotify-tools
-
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-
-              echo "Starting Config-Syncer for /config -> s3://$LITESTREAM_BUCKET/sabnzbd/config"
-
-              sync_s3() {
-                echo "[$(date)] Syncing changes..."
-                rclone sync /config s3:$LITESTREAM_BUCKET/sabnzbd/config --exclude "*.db*" --exclude "*.db-wal" --exclude "*.db-shm" --exclude "*.log" --exclude "incomplete/**" --exclude "complete/**"
+              sync_s3() { 
+                rclone sync /config s3:$LITESTREAM_BUCKET/sabnzbd/config \
+                  --exclude "*.db*" \
+                  --exclude "*.log" \
+                  --exclude ".litestream/**" \
+                  --exclude "*litestream/**"; 
               }
-
               sync_s3
-
-              while true; do
-                inotifywait -r -e modify,create,delete,move /config --exclude ".*\.db.*"
-                sync_s3
-                sleep 10
+              while true; do 
+                inotifywait -r -e modify,create,delete,move /config \
+                  --exclude ".*\.db.*" \
+                  --exclude ".*litestream.*"; 
+                sync_s3; 
+                sleep 10; 
               done
+          envFrom:
+            - secretRef:
+                name: sabnzbd-litestream-secret
           resources:
             requests:
               cpu: 10m
@@ -209,9 +197,6 @@ spec:
             limits:
               cpu: 100m
               memory: 128Mi
-          envFrom:
-            - secretRef:
-                name: sabnzbd-litestream-secret
           volumeMounts:
             - name: config
               mountPath: /config
