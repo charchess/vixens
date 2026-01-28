@@ -1,4 +1,6 @@
---exclude ".litestream/**"
+--exclude "*.db*"
+                --exclude "*.log"
+                --exclude ".litestream/**"
                 --exclude "*litestream/**"
                 || true
           envFrom:
