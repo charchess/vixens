@@ -1,49 +1,6 @@
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: prowlarr
-  labels:
-    app: prowlarr
-spec:
-  strategy:
-    type: Recreate
-  replicas: 1
-  selector:
-    matchLabels:
-      app: prowlarr
-  template:
-    metadata:
-      labels:
-        app: prowlarr
-      annotations:
-        reloader.stakater.com/auto: "true"
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9090"
-        prometheus.io/path: "/metrics"
-    spec:
-      priorityClassName: vixens-medium
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
-      initContainers:
-        - name: restore-config
-          image: rclone/rclone:1.72
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/prowlarr/config /config --transfers 4  --exclude "*.db*"  --exclude "*.log"  --exclude ".*litestream/**" 2>/dev/null || true
+--exclude ".litestream/**"
+                --exclude "*litestream/**"
+                || true
           envFrom:
             - secretRef:
                 name: prowlarr-litestream-secret
@@ -87,19 +44,20 @@ spec:
               subPath: litestream.yml
       containers:
         - name: prowlarr
-          image: ghcr.io/linuxserver/prowlarr:version-1.31.2.4975
+          image: ghcr.io/linuxserver/prowlarr:version-2.3.0.5236
           ports:
             - containerPort: 9696 # Default Prowlarr UI port
+              name: http
           livenessProbe:
             httpGet:
               path: /ping
-              port: 9696
+              port: http
             initialDelaySeconds: 30
             periodSeconds: 20
           readinessProbe:
             httpGet:
               path: /ping
-              port: 9696
+              port: http
             initialDelaySeconds: 15
             periodSeconds: 10
           resources:
@@ -157,6 +115,9 @@ spec:
               subPath: litestream.yml
         - name: config-syncer
           image: alpine:3.23
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           command:
             - sh
             - -c
@@ -168,9 +129,21 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              sync_s3() { rclone sync /config s3:$LITESTREAM_BUCKET/prowlarr/config  --exclude "*.db*"  --exclude "*.log"  --exclude ".*litestream/**"; }
+              sync_s3() { 
+                rclone sync /config s3:$LITESTREAM_BUCKET/prowlarr/config \
+                  --exclude "*.db*"
+                  --exclude "*.log"
+                  --exclude ".litestream/**"
+                  --exclude "*litestream/**"; 
+              }
               sync_s3
-              while true; do inotifywait -r -e modify,create,delete,move /config --exclude ".*\.db.*"; sync_s3; sleep 10; done
+              while true; do 
+                inotifywait -r -e modify,create,delete,move /config \
+                  --exclude ".*\.db.*"
+                  --exclude ".*litestream.*"; 
+                sync_s3; 
+                sleep 10; 
+              done
           envFrom:
             - secretRef:
                 name: prowlarr-litestream-secret
