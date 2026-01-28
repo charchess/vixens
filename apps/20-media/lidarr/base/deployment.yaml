@@ -93,19 +93,20 @@ spec:
               subPath: lidarr.yml
       containers:
         - name: lidarr
-          image: ghcr.io/linuxserver/lidarr:version-2.9.6.4552
+          image: ghcr.io/linuxserver/lidarr:version-3.1.0.4875
           ports:
             - containerPort: 8686 # Default Lidarr UI port
+              name: http
           livenessProbe:
             httpGet:
               path: /ping
-              port: 8686
+              port: http
             initialDelaySeconds: 30
             periodSeconds: 20
           readinessProbe:
             httpGet:
               path: /ping
-              port: 8686
+              port: http
             initialDelaySeconds: 15
             periodSeconds: 10
           resources:
@@ -168,6 +169,9 @@ spec:
               subPath: lidarr.yml
         - name: config-syncer
           image: alpine:3.23
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           command:
             - sh
             - -c

@@ -1,5 +1,54 @@
---exclude ".*litestream/**"
-                --exclude "*litestream/**"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frigate
+  labels:
+    app: frigate
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frigate
+  template:
+    metadata:
+      labels:
+        app: frigate
+      annotations:
+        reloader.stakater.com/auto: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      priorityClassName: vixens-medium
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      initContainers:
+        - name: restore-config
+          image: rclone/rclone:1.72
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              rclone copy s3:$LITESTREAM_BUCKET/frigate/config /config \
+                --transfers 4 \
+                --exclude "*.db*" \
+                --exclude "*.log" \
+                --exclude ".litestream/**" \
+                --exclude "*litestream/**" \
                 || true
           envFrom:
             - secretRef:
@@ -45,12 +94,21 @@
       containers:
         - name: frigate
           image: ghcr.io/blakeblackshear/frigate:0.15.0-beta6
-          shmSize: 1024Mi
           ports:
             - containerPort: 5000
               name: http
             - containerPort: 8554
               name: rtsp
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
           resources:
             requests:
               cpu: 100m
@@ -101,6 +159,9 @@
               subPath: litestream.yml
         - name: config-syncer
           image: alpine:3.23
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           command:
             - sh
             - -c
@@ -112,9 +173,21 @@
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              sync_s3() { rclone sync /config s3:$LITESTREAM_BUCKET/frigate/config  --exclude "*.db*"  --exclude "*.log"  --exclude ".*litestream/**"  --exclude "*litestream/**"; }
+              sync_s3() { 
+                rclone sync /config s3:$LITESTREAM_BUCKET/frigate/config \
+                  --exclude "*.db*" \
+                  --exclude "*.log" \
+                  --exclude ".litestream/**" \
+                  --exclude "*litestream/**"; 
+              }
               sync_s3
-              while true; do inotifywait -r -e modify,create,delete,move /config --exclude ".*\.db.*" --exclude ".*litestream.*"; sync_s3; sleep 10; done
+              while true; do 
+                inotifywait -r -e modify,create,delete,move /config \
+                  --exclude ".*\.db.*" \
+                  --exclude ".*litestream.*"; 
+                sync_s3; 
+                sleep 10; 
+              done
           envFrom:
             - secretRef:
                 name: frigate-litestream-secret
