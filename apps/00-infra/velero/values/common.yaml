@@ -76,3 +76,6 @@ upgradeCRDs: false
 
 # Clean up completed upgrade jobs
 cleanUpCRDs: false
+
+configuration:
+  uploaderType: restic
