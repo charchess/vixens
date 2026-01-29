@@ -6,30 +6,41 @@ Technical references and specifications for the Vixens project.
 
 ## Available References
 
-### Architecture & Patterns
+### Architecture & Standards
 
-- **[ArgoCD Sync Waves](argocd-sync-waves.md)**
-  Sync wave ordering and dependencies for ArgoCD applications.
+- **[Vixens Master Architecture](../architecture.md)**
+  The technical blueprint for the V4.0 Goldification campaign.
+
+- **[Quality Standards](quality-standards.md)**
+  Definition of Bronze, Silver, Gold, Platinum, and Elite tiers.
+
+- **[Resource Standards](RESOURCE_STANDARDS.md)**
+  Technical standards for CPU and Memory allocation.
+
+- **[Application Scoring Model](APPLICATION_SCORING_MODEL.md)**
+  The logic behind conformity scoring.
+
+### Workflows & Orchestration
+
+- **[Workflow State Machine](workflow-state-machine.md)**
+  Detailed guide of the Phases 0-6 managed by `justfile`.
+
+- **[Multi-Agent Orchestration](multi-agent-orchestration.md)**
+  Agent selection and task assignment logic (Claude, Gemini, etc.).
 
 - **[Task Formalism](task-formalism.md)**
-  Conventional commit-based task format for Archon.
+  Conventional commit-based task format.
+
+### K8s & GitOps Patterns
+
+- **[ArgoCD Sync Waves](argocd-sync-waves.md)**
+  Sync wave ordering and dependencies.
+
+- **[Application Deployment Standard](application-deployment-standard.md)**
+  The canonical way to structure an application manifest.
 
 - **[Sync Waves Implementation Plan](sync-waves-implementation-plan.md)**
-  Detailed plan for implementing sync waves across all apps.
-
-- **[Documentation Restructuring Proposal](docs-restructuring-proposal.md)**
-  Documentation organization strategy.
-
-### Coming Soon
-
-- **Kustomize Patterns** 🚧
-  Common Kustomize patterns and best practices.
-
-- **Overlay Strategy** 🚧
-  Dev/Prod overlay configuration strategy.
-
-- **Naming Conventions** 🚧
-  Naming rules for files, resources, and namespaces.
+  Historical plan for sync wave rollout.
 
 ---
 

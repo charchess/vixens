@@ -21,9 +21,10 @@ Welcome to the Vixens Kubernetes homelab documentation! This is your central hub
 
 ## 📊 Dashboards & Status
 
-- **[Application Status Dashboard](STATUS.md)** - Real-time deployment status across environments
-- **[Functional Validation](reports/validation/RECETTE-FONCTIONNELLE.md)** - Latest functional test results
-- **[Technical Validation](reports/validation/RECETTE-TECHNIQUE.md)** - Latest technical audit results
+- **[Master Architecture (V4.0)](architecture.md)** - The technical blueprint for Goldification.
+- **[Application Status Dashboard](STATUS.md)** - Real-time deployment status across environments.
+- **[Functional Validation](reports/validation/RECETTE-FONCTIONNELLE.md)** - Latest functional test results.
+- **[Technical Validation](reports/validation/RECETTE-TECHNIQUE.md)** - Latest technical audit results.
 
 ---
 
@@ -39,62 +40,12 @@ Practical step-by-step guides for common tasks:
 
 ### [reference/](reference/) - Technical References
 Detailed technical documentation:
-- **[Multi-Agent Orchestration](reference/multi-agent-orchestration.md)** - Multi-agent task orchestration (Claude, Gemini, coding-agent)
-- **[ArgoCD Sync Waves](reference/argocd-sync-waves.md)** - Sync wave patterns
-- **[Task Formalism](reference/task-formalism.md)** - Conventional commit task format
-- **[Kustomize Patterns](reference/kustomize-patterns.md)** - Common Kustomize patterns
-- **[Overlay Strategy](reference/overlay-strategy.md)** - Dev/Prod overlay strategy
-- **[Naming Conventions](reference/naming-conventions.md)** - Files, resources, namespaces
-- **[Quality Standards](reference/quality-standards.md)** - Application quality tiers (Bronze to Elite)
-
-### [applications/](applications/) - Application Documentation
-Documentation for all deployed applications, organized by category:
-- **[00-infra/](applications/00-infra/)** - Infrastructure (ArgoCD, Traefik, Cilium, Cert-Manager)
-- **[02-monitoring/](applications/02-monitoring/)** - Monitoring stack (Prometheus, Grafana, Loki)
-- **[10-databases/](applications/10-databases/)** - Database services (PostgreSQL, Redis)
-- **[20-media/](applications/20-media/)** - Media applications (Jellyfin, *arr stack)
-- **[40-network/](applications/40-network/)** - Network services (AdGuard, External-DNS)
-- **[50-services/](applications/50-services/)** - General services (Home Assistant, Vaultwarden)
-- **[70-tools/](applications/70-tools/)** - Tools & utilities (Homepage, Linkwarden)
-
-### [procedures/](procedures/) - Operational Procedures
-Step-by-step operational procedures:
-- **[Deployment Standard](procedures/deployment-standard.md)** - Standard deployment process
-- **[Backup & Restore](procedures/backup-restore.md)** - Backup/restore procedures
-- **[Disaster Recovery](procedures/disaster-recovery.md)** - DR procedures
-- **[Cluster Upgrade](procedures/cluster-upgrade.md)** - Upgrade procedures
-- **[Secret Rotation](procedures/secret-rotation.md)** - Secret rotation procedures
-- **[Application Testing](procedures/application-testing.md)** - Testing new applications
-- **[Dev Hibernation](procedures/dev-hibernation.md)** - Hibernating dev environment apps
-
-### [adr/](adr/) - Architecture Decision Records
-Architecture decisions and their rationale:
-- **[ADR Index](adr/README.md)** - Complete list of ADRs
-- **[ADR-007](adr/007-renovate-trunk-based-workflow.md)** - Renovate dev-first workflow
-- **[ADR-008](adr/008-trunk-based-gitops-workflow.md)** - Trunk-based GitOps
-- **[ADR-009](adr/009-simplified-two-branch-workflow.md)** - Two-branch workflow
-- **[ADR-010](adr/010-shared-resources-organization.md)** - Shared resources organization
-- **[ADR-011](adr/011-namespace-ownership-strategy.md)** - Namespace ownership
-- **[ADR-012](adr/012-middleware-management.md)** - Middleware management
-
-### [reports/](reports/) - Analysis Reports
-Technical reports, audits, and validation:
-- **[Validation Reports](reports/validation/)** - Functional and technical validation logs
-- **[Audits & Analysis](reports/audits/)** - Resource, conformity, and architecture audits
-- **[2025-12-30 Code Review](reports/2025-12-30-code-review.md)** - Architecture review
-- **[2025-12-30 Archon Migration](reports/2025-12-30-archon-migration-summary.md)** - Task migration
-
-### [troubleshooting/](troubleshooting/) - Troubleshooting
-Incident logs, post-mortems and common issues:
-- **[Common Issues](troubleshooting/common-issues.md)** - Quick fixes for common problems
-- **[Post-Mortems](troubleshooting/post-mortems/)** - Detailed incident analyses (e.g., [Cluster Reset 2026-01-05](troubleshooting/post-mortems/2026-01-05-cluster-reset.md))
-
-### [templates/](templates/) - Document Templates
-Templates for creating new documentation:
-- **[ADR Template](templates/adr-template.md)** - Architecture decision record
-- **[Application Doc Template](templates/application-doc-template.md)** - Application documentation
-- **[Procedure Template](templates/procedure-template.md)** - Operational procedure
-- **[Troubleshooting Template](templates/troubleshooting-template.md)** - Troubleshooting guide
+- **[Workflow State Machine](reference/workflow-state-machine.md)** - Guide to Justfile Phases 0-6.
+- **[Quality Standards](reference/quality-standards.md)** - Application quality tiers (Elite V4.0).
+- **[Multi-Agent Orchestration](reference/multi-agent-orchestration.md)** - Agent task assignment logic.
+- **[ArgoCD Sync Waves](reference/argocd-sync-waves.md)** - Sync wave patterns.
+- **[Resource Standards](reference/RESOURCE_STANDARDS.md)** - CPU/Memory allocation rules.
+- **[Naming Conventions](reference/naming-conventions.md)** - Files, resources, namespaces.
 
 ---
 
