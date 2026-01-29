@@ -10,7 +10,6 @@ resources:
 patches:
   - path: rclone-patch.yaml
   - path: infisical-config-patch.yaml
-  - path: litestream-secret-patch.yaml
     target:
       kind: InfisicalSecret
       name: homeassistant-litestream-secret

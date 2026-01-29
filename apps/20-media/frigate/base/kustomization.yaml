@@ -10,5 +10,4 @@ resources:
   - configmap.yaml
   - infisical-secret.yaml
   - infisical-config.yaml
-  - litestream-secret.yaml
   - litestream-config.yaml

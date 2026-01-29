@@ -8,7 +8,6 @@ resources:
   - service.yaml
   - infisical-secret.yaml
   - infisical-redis-secret.yaml
-  - litestream-secret.yaml
   - configmap.yaml
   - pvc.yaml
   - middleware-forward-auth.yaml
