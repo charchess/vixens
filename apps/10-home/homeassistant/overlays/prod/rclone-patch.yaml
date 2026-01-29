@@ -8,6 +8,9 @@ spec:
     spec:
       initContainers:
         - name: restore-config
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           args:
             - |
               export RCLONE_CONFIG_S3_TYPE=s3
@@ -17,6 +20,8 @@ spec:
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               rclone copy s3:$LITESTREAM_BUCKET/homeassistant/config /config \
                 --transfers 4 \
+                --no-utime \
+                --ignore-existing \
                 --exclude "*.db*" \
                 --exclude "*.log" \
                 --exclude "tts/**" \
@@ -26,6 +31,9 @@ spec:
                 || true
       containers:
         - name: config-syncer
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           args:
             - |
               apk add --no-cache rclone inotify-tools
@@ -36,6 +44,8 @@ spec:
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() { 
                 rclone sync /config s3:$LITESTREAM_BUCKET/homeassistant/config \
+                  --no-utime \
+                  --exclude ".storage/**" \
                   --exclude "*.db*" \
                   --exclude "*.log" \
                   --exclude "tts/**" \
@@ -47,7 +57,8 @@ spec:
               while true; do 
                 inotifywait -r -e modify,create,delete,move /config \
                   --exclude ".*\.db.*" \
-                  --exclude ".*litestream.*"; 
+                  --exclude ".*litestream.*" \
+                  --exclude ".*\.storage.*"; 
                 sync_s3; 
-                sleep 10; 
+                sleep 60; 
               done

@@ -53,7 +53,7 @@ spec:
               rclone copy s3:$LITESTREAM_BUCKET/homeassistant/config /config --transfers 4  --exclude "*.log" --exclude "tts/**" --exclude "tmp_backups/**" 2>/dev/null || true
           envFrom:
             - secretRef:
-                name: homeassistant-litestream-secret
+                name: litestream-shared-secrets
           resources:
             requests:
               cpu: 10m
@@ -78,7 +78,7 @@ spec:
             - /config/home-assistant_v2.db
           envFrom:
             - secretRef:
-                name: homeassistant-litestream-secret
+                name: litestream-shared-secrets
           resources:
             requests:
               cpu: 10m
@@ -199,7 +199,7 @@ spec:
               name: metrics
           envFrom:
             - secretRef:
-                name: homeassistant-litestream-secret
+                name: litestream-shared-secrets
           volumeMounts:
             - name: config
               mountPath: /config
@@ -231,7 +231,7 @@ spec:
               while true; do inotifywait -r -e modify,create,delete,move /config --exclude ".*\.db.*"; sync_s3; sleep 10; done
           envFrom:
             - secretRef:
-                name: homeassistant-litestream-secret
+                name: litestream-shared-secrets
           volumeMounts:
             - name: config
               mountPath: /config
