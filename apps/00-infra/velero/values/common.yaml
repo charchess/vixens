@@ -3,7 +3,7 @@
 
 image:
   repository: velero/velero
-  tag: v1.15.0
+  tag: v1.14.1
   pullPolicy: IfNotPresent
 
 # Kubectl image for CRD upgrade jobs

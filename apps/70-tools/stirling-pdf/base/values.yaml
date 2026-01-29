@@ -37,4 +37,6 @@ probes:
     periodSeconds: 10
 envs:
   - name: SYSTEM_ROOTURIPATH
+  - name: SECURITY_ENABLELOGIN
+    value: "false"
     value: /
