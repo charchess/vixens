@@ -13,4 +13,3 @@ patches:
     target:
       kind: InfisicalSecret
       name: adguard-home-secrets-sync
-  - path: resources-patch.yaml
