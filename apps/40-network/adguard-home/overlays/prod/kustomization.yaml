@@ -13,7 +13,4 @@ patches:
     target:
       kind: InfisicalSecret
       name: adguard-home-secrets-sync
-    target:
-      kind: InfisicalSecret
-      name: adguard-litestream-secret
   - path: resources-patch.yaml
