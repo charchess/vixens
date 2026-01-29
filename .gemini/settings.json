@@ -1,14 +1,5 @@
 {
   "mcpServers": {
-    "simplemem": {
-      "httpUrl": "http://192.168.200.61:8000/mcp",
-      "headers": {
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiOTZiNTA5ZTUtZTljMy00N2M5LThlODYtNGIwMTYzZTg2MzIwIiwidGFibGVfbmFtZSI6Im1lbV85NmI1MDllNV9lOWMzXzQ3YzlfOGU4Nl80YjAxNjNlODYzMjAiLCJjcmVhdGVkX2F0IjoiMjAyNi0wMS0xNFQyMjowMToxNy43OTMwNDkiLCJleHAiOjE3NzEwMTY0Nzd9.bUJ85hHVVvjlilsigB7BzD6FgxgT3LKJ02_MEshv1nk"
-      }
-    },
-    "archon": {
-      "httpUrl": "http://192.168.199.119:8051/mcp"
-    },
     "serena": {
       "httpUrl": "http://localhost:9121/mcp"
     },
