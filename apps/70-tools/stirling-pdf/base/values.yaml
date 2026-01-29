@@ -11,22 +11,7 @@ resources:
   limits:
     cpu: 1000m
     memory: 1Gi
-livenessProbe:
-  enabled: true
-  httpGet:
-    path: /
-    port: 8080
-  initialDelaySeconds: 180
-  periodSeconds: 20
-  failureThreshold: 10
-readinessProbe:
-  enabled: true
-  httpGet:
-    path: /
-    port: 8080
-  initialDelaySeconds: 60
-  periodSeconds: 20
-  failureThreshold: 10
 envs:
   - name: SYSTEM_ROOTURIPATH
     value: /
+
