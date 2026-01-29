@@ -34,10 +34,20 @@ spec:
               mountPath: /opt/adguardhome/conf
             - name: data
               mountPath: /opt/adguardhome/work
-      volumes:
-        - name: config
-          persistentVolumeClaim:
-            claimName: config-adguard-home-0
-        - name: data
-          persistentVolumeClaim:
-            claimName: data-adguard-home-0
+  volumeClaimTemplates:
+    - metadata:
+        name: config
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: synelia-iscsi-retain
+        resources:
+          requests:
+            storage: 1Gi
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: synelia-iscsi-retain
+        resources:
+          requests:
+            storage: 5Gi
