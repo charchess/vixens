@@ -76,7 +76,7 @@ spec:
               cpu: 100m
               memory: 128Mi
           volumeMounts:
-            - name: adguard-work
+            - name: data
               mountPath: /opt/adguardhome/work
             - name: adguard-home-litestream-config
               mountPath: /etc/litestream.yml
@@ -108,7 +108,7 @@ spec:
             - secretRef:
                 name: litestream-shared-secrets
           volumeMounts:
-            - name: adguard-work
+            - name: data
               mountPath: /opt/adguardhome/work
             - name: adguard-conf
               mountPath: /opt/adguardhome/conf
@@ -139,7 +139,7 @@ spec:
             - secretRef:
                 name: litestream-shared-secrets
           volumeMounts:
-            - name: adguard-work
+            - name: data
               mountPath: /opt/adguardhome/work
             - name: adguard-home-litestream-config
               mountPath: /etc/litestream.yml
@@ -174,7 +174,7 @@ spec:
             - name: adguard-conf
               mountPath: /opt/adguardhome/conf
       volumes:
-        - name: adguard-work
+        - name: data
           persistentVolumeClaim:
             claimName: adguard-work
         - name: adguard-conf
