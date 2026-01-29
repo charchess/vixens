@@ -51,7 +51,7 @@ spec:
                 || true
           envFrom:
             - secretRef:
-                name: adguard-home-litestream-secret
+                name: litestream-shared-secrets
           resources:
             requests:
               cpu: 10m
@@ -76,7 +76,7 @@ spec:
             - /opt/adguardhome/conf/adguard-home.db
           envFrom:
             - secretRef:
-                name: adguard-home-litestream-secret
+                name: litestream-shared-secrets
           resources:
             requests:
               cpu: 10m
@@ -138,7 +138,7 @@ spec:
               memory: 128Mi
           envFrom:
             - secretRef:
-                name: adguard-home-litestream-secret
+                name: litestream-shared-secrets
           volumeMounts:
             - name: config
               mountPath: /opt/adguardhome/conf
@@ -178,7 +178,7 @@ spec:
               done
           envFrom:
             - secretRef:
-                name: adguard-home-litestream-secret
+                name: litestream-shared-secrets
           resources:
             requests:
               cpu: 10m
