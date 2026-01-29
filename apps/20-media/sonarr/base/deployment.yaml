@@ -52,7 +52,7 @@ spec:
                 || true
           envFrom:
             - secretRef:
-                name: sonarr-litestream-secret
+                name: litestream-shared-secrets
           resources:
             requests:
               cpu: 10m
@@ -77,7 +77,7 @@ spec:
             - /config/sonarr.db
           envFrom:
             - secretRef:
-                name: sonarr-litestream-secret
+                name: litestream-shared-secrets
           resources:
             requests:
               cpu: 10m
@@ -160,7 +160,7 @@ spec:
               memory: 128Mi
           envFrom:
             - secretRef:
-                name: sonarr-litestream-secret
+                name: litestream-shared-secrets
           volumeMounts:
             - name: config
               mountPath: /config
@@ -200,7 +200,7 @@ spec:
               done
           envFrom:
             - secretRef:
-                name: sonarr-litestream-secret
+                name: litestream-shared-secrets
           resources:
             requests:
               cpu: 10m
