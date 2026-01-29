@@ -10,4 +10,3 @@ components:
   - ../../../../_shared/components/revision-history-limit
 
 patches:
-  - path: probes-patch.yaml
