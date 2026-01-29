@@ -2,6 +2,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - adguard-litestream-credentials.yaml
   - ../../base
   - ingress.yaml
 patches:
@@ -12,7 +13,4 @@ patches:
     target:
       kind: InfisicalSecret
       name: adguard-home-secrets-sync
-    target:
-      kind: InfisicalSecret
-      name: adguard-litestream-secret
   - path: resources-patch.yaml
