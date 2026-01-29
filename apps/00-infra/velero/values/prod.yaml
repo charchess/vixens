@@ -26,10 +26,8 @@ configuration:
   defaultBackupTTL: 720h  # 30 days
 
   # Garbage collection frequency
-  garbageCollectionFrequency: 1h
 
   # Default repo maintenance frequency
-  defaultRepoMaintainFrequency: 1h
 
 # Backup schedules
 schedules:
