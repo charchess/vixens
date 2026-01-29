@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: networking
 resources:
   - middleware.yaml
-  - statefulset.yaml
+  - adguard-ss.yaml
   - service.yaml
   # pvc.yaml removed - now managed by StatefulSet volumeClaimTemplates
   - ingressroute-dns.yaml
