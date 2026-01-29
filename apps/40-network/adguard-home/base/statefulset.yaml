@@ -29,9 +29,6 @@ spec:
       initContainers:
         - name: restore-config
           image: rclone/rclone:1.72
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
           command:
             - sh
             - -c
@@ -64,9 +61,6 @@ spec:
               mountPath: /opt/adguardhome/conf
         - name: restore-db
           image: litestream/litestream:0.5.6
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
           args:
             - restore
             - -config
@@ -93,9 +87,6 @@ spec:
       containers:
         - name: adguard-home
           image: adguard/adguardhome:v0.107.71
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
           ports:
             - containerPort: 3000
               name: http
@@ -119,9 +110,6 @@ spec:
               mountPath: /opt/adguardhome/work
         - name: litestream
           image: litestream/litestream:0.5.6
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
           args:
             - replicate
             - -config
@@ -147,9 +135,6 @@ spec:
               subPath: litestream.yml
         - name: config-syncer
           image: alpine:3.23
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
           command:
             - sh
             - -c
