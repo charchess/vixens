@@ -96,45 +96,23 @@ This document defines the quality tiers for applications deployed in the Vixens 
 
 ---
 
-### Elite (Mission-Critical)
-**Status:** Maximum reliability and observability
+### Elite (Mission-Critical) - V4.0 Goldification
+**Status:** Maximum reliability and observability. The target for all Vixens applications.
 
 **Requirements (Platinum +):**
-- ✅ **Liveness probe** (mandatory for Elite)
-- ✅ **Readiness probe** (mandatory for Elite)
-- ✅ **Startup probe** (for slow-starting apps)
-- ✅ **Pod Security Admission (PSA):** Enforce label mandatory on namespace.
-- ✅ **Storage Strategy:** Environment-specific StorageClass (see below).
-- ✅ Automated backup validation (if applicable)
-- ✅ SLO/SLI definitions
-- ✅ Chaos engineering tested
-- ✅ Comprehensive runbooks
-- ✅ Security scanning results documented
+- ✅ **Durability (SQLite):** Mandatory **Litestream** sidecar for all SQLite databases.
+- ✅ **Durability (Files):** Mandatory **Config-Syncer** (rclone) sidecar for persistent configuration.
+- ✅ **Recovery-First:** InitContainers for automated restoration before app startup.
+- ✅ **Resource Hygiene:** Memory **Limit MUST equal Request** (Guaranteed QoS) to prevent OOMKills.
+- ✅ **Startup Probes:** Mandatory (min 180s) to protect the app during initial data restoration.
+- ✅ **Liveness/Readiness probes:** Mandatory with standardized thresholds.
+- ✅ **Pod Security Admission (PSA):** Enforce baseline/restricted label on namespace.
+- ✅ **Storage Strategy:** Environment-specific StorageClass (Dev: Delete, Prod: Retain).
+- ✅ Automated backup validation via conformity scripts.
+- ✅ SLO/SLI definitions and comprehensive runbooks.
 
 **Not Required:**
-- Nothing - this is the highest tier
-
----
-
-## Infrastructure Standards
-
-### Storage Strategy (PVC)
-To ensure data safety in production and clean environments in development, the following StorageClass strategy must be followed:
-
-| Environment | Strategy | StorageClass Pattern | Goal |
-|-------------|----------|----------------------|------|
-| **Dev** | Disposable | `*-delete` | Auto-cleanup of volumes on PVC deletion. |
-| **Prod** | Persistent | `*-retain` | Protect data from accidental PVC deletion. |
-
-### Pod Security Admission (PSA)
-Every namespace must have a PSA label defined:
-- `pod-security.kubernetes.io/enforce: [privileged|baseline|restricted]`
-- **Elite tier** namespaces should aim for `baseline` or `restricted` unless infrastructure requirements (CNI, CSI) mandate `privileged`.
-
-**Use Cases:**
-- Infrastructure components (ArgoCD, Traefik, Cilium)
-- Critical data services (databases)
-- Core homelab services
+- Nothing - this is the highest tier.
 
 ---
 
