@@ -1,0 +1,47 @@
+---
+# Kustomize Component: Elite Standard
+#
+# Enforces the Vixens "Elite" baseline:
+# - revisionHistoryLimit: 3
+# - Standard Resource Requests (Minimal baseline)
+# - SecurityContext baseline (fsGroup 1000)
+#
+# Usage:
+#   components:
+#     - ../../../../_shared/components/elite-standard
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+      spec:
+        revisionHistoryLimit: 3
+        template:
+          spec:
+            securityContext:
+              fsGroup: 1000
+              fsGroupChangePolicy: OnRootMismatch
+            containers:
+              - name: .* # Targets all containers in the pod
+                resources:
+                  requests:
+                    cpu: 10m
+                    memory: 64Mi
+                  limits:
+                    cpu: 100m
+                    # Note: Elite standard requires Limit == Request for Memory
+                    # This must be refined per-app in the overlay.
+                    memory: 64Mi
+                startupProbe:
+                  tcpSocket:
+                    port: http
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                  failureThreshold: 30
