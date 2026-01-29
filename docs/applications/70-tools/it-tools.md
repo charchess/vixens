@@ -3,8 +3,6 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Environnement | Déployé | Configuré | Testé | Version |
-|---------------|---------|-----------|-------|---------|
 | Dev           | [x]     | [x]       | [x]   | 2024.10.22 |
 | Prod          | [x]     | [x]       | [x]   | 2024.10.22 |
 
