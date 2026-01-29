@@ -25,17 +25,16 @@ tolerations:
 probes:
   liveness:
     enabled: true
+    tcpSocket:
+      port: 8080
     initialDelaySeconds: 60
     periodSeconds: 10
-    failureThreshold: 5
-    timeoutSeconds: 5
   readiness:
     enabled: true
+    tcpSocket:
+      port: 8080
     initialDelaySeconds: 30
     periodSeconds: 10
-    failureThreshold: 5
-    timeoutSeconds: 5
-# Env variables
 envs:
   - name: SYSTEM_ROOTURIPATH
     value: /
