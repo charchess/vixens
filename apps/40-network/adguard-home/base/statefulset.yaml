@@ -92,7 +92,7 @@ spec:
               subPath: litestream.yml
       containers:
         - name: adguard-home
-          image: adguard/adguardhome:v0.107.56
+          image: adguard/adguardhome:v0.107.71
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
