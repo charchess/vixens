@@ -116,12 +116,12 @@ spec:
             limits:
               cpu: 2000m
               memory: 2Gi
-          env:
-            - name: FRIGATE_RTSP_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: frigate-secrets
-                  key: RTSP_PASSWORD
+          # env:
+          #   - name: FRIGATE_RTSP_PASSWORD
+          #     valueFrom:
+          #       secretKeyRef:
+          #         name: frigate-secrets
+          #         key: RTSP_PASSWORD
           volumeMounts:
             - name: config
               mountPath: /config
