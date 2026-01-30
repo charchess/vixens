@@ -9,5 +9,6 @@ resources:
 components:
   - ../../../../_shared/components/revision-history-limit
 
-patches:
-  - path: probes-patch.yaml
+# patches:
+#   - path: probes-patch.yaml # Disabled: blocks ingress generation as Deployment is managed by Helm app
+
