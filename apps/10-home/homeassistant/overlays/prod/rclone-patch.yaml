@@ -12,6 +12,9 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+          command:
+            - sh
+            - -c
           args:
             - |
               export RCLONE_CONFIG_S3_TYPE=s3
@@ -35,6 +38,9 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+          command:
+            - sh
+            - -c
           args:
             - |
               export RCLONE_CONFIG_S3_TYPE=s3
