@@ -8,6 +8,6 @@ data:
     dbs:
       - path: /config/sonarr.db
         replicas:
-          - url: s3://$LITESTREAM_BUCKET/sonarr/sonarr.db
+          - url: s3://$LITESTREAM_BUCKET/sonarr.db
             endpoint: $LITESTREAM_ENDPOINT
     addr: ":9090"
