@@ -1,4 +1,4 @@
----
+--- 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -38,7 +38,7 @@ spec:
             - sh
             - -c
           args:
-            - |
+            - | 
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
@@ -124,12 +124,15 @@ spec:
               memory: 1024Mi
               cpu: 500m
         - name: config-syncer
-          image: alpine:3.23
+          image: rclone/rclone:1.72
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           command:
             - sh
             - -c
           args:
-            - |
+            - | 
               apk add --no-cache rclone inotify-tools
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
@@ -143,8 +146,10 @@ spec:
                   --exclude ".*-litestream" \
                   --exclude ".*-litestream/**"; 
               }
-              sync_s3
-              while true; do inotifywait -r -e modify,create,delete,move /data; sync_s3; sleep 60; done
+              while true; do 
+                sync_s3; 
+                sleep 60; 
+              done
           envFrom:
             - secretRef:
                 name: authentik-secrets
@@ -158,7 +163,7 @@ spec:
           volumeMounts:
             - name: authentik-data
               mountPath: /data
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
