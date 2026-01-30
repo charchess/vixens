@@ -8,6 +8,6 @@ data:
     dbs:
       - path: /config/frigate.db
         replicas:
-          - url: s3://$LITESTREAM_BUCKET/frigate/frigate.db
-            endpoint: $LITESTREAM_ENDPOINT
+          - url: s3://vixens-litestream/frigate/frigate.db
+            endpoint: http://192.168.111.69:9000
     addr: ":9090"
