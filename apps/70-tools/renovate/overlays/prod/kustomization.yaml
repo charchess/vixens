@@ -14,3 +14,15 @@ patches:
       kind: CronJob
       name: renovate
     path: cronjob-patch.yaml
+  - target:
+      group: batch
+      version: v1
+      kind: CronJob
+      name: renovate
+    patch: |-
+      - op: replace
+        path: /spec/jobTemplate/spec/template/spec/volumes/1
+        value:
+          name: work
+          persistentVolumeClaim:
+            claimName: renovate-cache
