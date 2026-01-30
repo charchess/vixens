@@ -1,4 +1,4 @@
-# Velero - Final SOTA 2026
+# Velero - Final SOTA 2026 Configuration
 image:
   repository: velero/velero
   tag: v1.17.2
@@ -7,13 +7,57 @@ image:
 configuration:
   uploaderType: kopia
   repoMaintenanceJobConfigMap: velero-repo-maintenance-config
-  # This might be the trigger
   defaultRepoMaintainFrequency: 24h
+  
+  # STORAGE LOCATION
+  backupStorageLocation:
+    - name: default
+      provider: aws
+      bucket: backups-vixens-prod
+      prefix: velero
+      default: true
+      accessMode: ReadWrite
+      config:
+        region: us-east-1
+        s3ForcePathStyle: "true"
+        s3Url: http://192.168.111.69:9000
 
-# Force disable all maintenance features in the chart to stop flag injection
+  volumeSnapshotLocation:
+    - name: default
+      provider: aws
+      config:
+        region: us-east-1
+
+# BACKUP SCHEDULES
+schedules:
+  daily-critical:
+    disabled: false
+    schedule: "0 2 * * *"
+    template:
+      ttl: "720h"
+      includedNamespaces: ["databases", "tools", "security"]
+      snapshotVolumes: true
+  daily-home:
+    disabled: false
+    schedule: "0 4 * * *"
+    template:
+      ttl: "168h"
+      includedNamespaces: ["home"]
+      snapshotVolumes: true
+  weekly-full:
+    disabled: false
+    schedule: "0 3 * * 0"
+    template:
+      ttl: "2160h"
+      includedNamespaces: ["*"]
+      excludedNamespaces: ["kube-system", "kube-public", "kube-node-lease"]
+      snapshotVolumes: true
+
+# CLEANUP SETTINGS
 maintenanceCronJob:
   enabled: false
-schedules: {}
+upgradeCRDs: false
+cleanUpCRDs: false
 
 resources:
   requests:
