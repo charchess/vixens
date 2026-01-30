@@ -13,7 +13,3 @@ patches:
       - op: replace
         path: /spec/authentication/universalAuth/secretsScope/envSlug
         value: prod
-  - target:
-      kind: InfisicalSecret
-      name: sonarr-litestream-secret
-patchesStrategicMerge:
