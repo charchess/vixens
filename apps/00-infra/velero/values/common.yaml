@@ -1,4 +1,4 @@
-# Velero - SOTA 2026 Common Configuration
+# Velero - Final SOTA 2026
 image:
   repository: velero/velero
   tag: v1.17.2
@@ -6,18 +6,14 @@ image:
 
 configuration:
   uploaderType: kopia
-  # THIS IS THE KEY: Using ConfigMap disables the legacy flag injection
   repoMaintenanceJobConfigMap: velero-repo-maintenance-config
-  # Explicitly set to null to avoid default injection by chart
-  keepLatestMaintenanceJobs: 0
+  # This might be the trigger
+  defaultRepoMaintainFrequency: 24h
 
-initContainers:
-  - name: velero-plugin-for-aws
-    image: velero/velero-plugin-for-aws:v1.13.2
-    imagePullPolicy: IfNotPresent
-    volumeMounts:
-      - mountPath: /target
-        name: plugins
+# Force disable all maintenance features in the chart to stop flag injection
+maintenanceCronJob:
+  enabled: false
+schedules: {}
 
 resources:
   requests:
@@ -34,21 +30,11 @@ nodeAgent:
     requests:
       cpu: 100m
       memory: 256Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
-  tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-      effect: NoSchedule
 
-metrics:
-  enabled: true
-
-tolerations:
-  - key: node-role.kubernetes.io/control-plane
-    operator: Exists
-    effect: NoSchedule
-
-upgradeCRDs: false
-cleanUpCRDs: false
+initContainers:
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.13.2
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
