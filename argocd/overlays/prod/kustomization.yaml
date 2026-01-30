@@ -47,6 +47,7 @@ resources:
   - apps/pyload.yaml
   - apps/qbittorrent.yaml
   - apps/amule.yaml
+  - apps/media-shared-secrets.yaml
   - apps/radarr.yaml
   - apps/frigate.yaml
   - apps/lidarr.yaml
