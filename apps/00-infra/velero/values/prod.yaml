@@ -1,16 +1,12 @@
 # Velero - Production Environment Values
+# All core configuration centralized in common.yaml to avoid Helm merge conflicts.
 
-# Use velero secret for AWS credentials
 credentials:
   useSecret: false
   extraSecretRef: velero
 
+# Specific production storage location
 configuration:
-  # Maintain the SOTA settings from common.yaml
-  uploaderType: kopia
-  repoMaintenanceJobConfigMap: velero-repo-maintenance-config
-  keepLatestMaintenanceJobs: 0
-
   backupStorageLocation:
     - name: default
       provider: aws
@@ -22,39 +18,3 @@ configuration:
         region: us-east-1
         s3ForcePathStyle: "true"
         s3Url: http://192.168.111.69:9000
-
-  volumeSnapshotLocation: []
-  defaultBackupTTL: 720h
-
-schedules:
-  daily-critical:
-    disabled: false
-    schedule: "0 2 * * *"
-    template:
-      ttl: "720h"
-      storageLocation: default
-      includedNamespaces:
-        - databases
-        - tools
-        - security
-      snapshotVolumes: true
-      snapshotMoveData: false
-  weekly-full:
-    disabled: false
-    schedule: "0 3 * * 0"
-    template:
-      ttl: "2160h"
-      includedNamespaces: ["*"]
-      excludedNamespaces:
-        - kube-system
-        - kube-public
-        - kube-node-lease
-      snapshotVolumes: true
-  daily-home:
-    disabled: false
-    schedule: "0 4 * * *"
-    template:
-      ttl: "168h"
-      includedNamespaces:
-        - home
-      snapshotVolumes: true
