@@ -130,3 +130,47 @@ justfile
 *** Fichier '* Startup Log *'
 Traitement de '/etc/joe/editorrc'...Traitement de '/etc/joe/ftyperc'...Finished processing /etc/joe/ftyperc
 Finished processing /etc/joe/editorrc
+
+*** These modified files were found in JOE when it aborted on Fri Jan 30 09:47:43 2026
+*** JOE was aborted by UNIX signal 15
+
+*** Fichier '(Sans nom)'
+null_resource.wait_install_ip
+3.17
+3.1.7
+quay.io/argoproj/argocd:v3.1.7
+tmux send-keys
+environments
+daphne
+diva
+dulce
+                             | 
+
+*** Fichier '(Sans nom)'
+comyui
+nano
+uuid
+^    
+   | 
+github
+token
+token
+Lisa
+lisa
+
+*** Fichier '(Sans nom)'
+/root/vixens/.git/MERGE_MSG
+/root/vixens/.git/MERGE_MSG
+/root/vixens/.git/MERGE_MSG
+/root/vixens/.git/MERGE_MSG
+/root/vixens/.git/MERGE_MSG
+/root/vixens/.git/MERGE_MSG
+/root/vixens/.git/MERGE_MSG
+/root/vixens/.git/MERGE_MSG
+/root/vixens/.git/MERGE_MSG
+/root/vixens/.git/MERGE_MSG
+/root/vixens/.git/MERGE_MSG
+
+*** Fichier '* Startup Log *'
+Traitement de '/etc/joe/editorrc'...Traitement de '/etc/joe/ftyperc'...Finished processing /etc/joe/ftyperc
+Finished processing /etc/joe/editorrc
