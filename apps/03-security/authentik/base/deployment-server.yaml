@@ -1,4 +1,4 @@
----
+--- 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -42,7 +42,7 @@ spec:
             - sh
             - -c
           args:
-            - |
+            - | 
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
@@ -52,6 +52,7 @@ spec:
                 --transfers 4  \
                 --exclude "*.db*" \
                 --exclude "*.log" \
+                --exclude "lost+found/**" \
                 --exclude ".*-litestream" \
                 --exclude ".*-litestream/**" \
                 2>/dev/null || true
@@ -136,8 +137,7 @@ spec:
             - sh
             - -c
           args:
-            - |
-              apk add --no-cache rclone inotify-tools
+            - | 
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
@@ -147,6 +147,7 @@ spec:
                 rclone sync /data s3:$LITESTREAM_BUCKET/config \
                   --exclude "*.db*" \
                   --exclude "*.log" \
+                  --exclude "lost+found/**" \
                   --exclude ".*-litestream" \
                   --exclude ".*-litestream/**"; 
               }
