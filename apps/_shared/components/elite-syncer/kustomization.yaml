@@ -43,6 +43,7 @@ patches:
                     rclone copy s3:$LITESTREAM_BUCKET/${APP_NAME}/config /config \
                       --transfers 4 \
                       --exclude "*.log" \
+                      --exclude ".*-litestream" \
                       --exclude ".*-litestream/**" \
                       2>/dev/null || true
                 envFrom:
@@ -69,6 +70,7 @@ patches:
                       rclone sync /config s3:$LITESTREAM_BUCKET/${APP_NAME}/config \
                         --exclude "*.log" \
                         --exclude ".*\.db.*" \
+                        --exclude ".*-litestream" \
                         --exclude ".*-litestream/**"; 
                     }
                     sync_s3

@@ -8,6 +8,6 @@ data:
     dbs:
       - path: /config/mylar.db
         replicas:
-          - url: s3://$LITESTREAM_BUCKET/mylar/mylar.db
+          - url: s3://$LITESTREAM_BUCKET/mylar.db
             endpoint: $LITESTREAM_ENDPOINT
     addr: ":9090"

@@ -8,6 +8,6 @@ data:
     dbs:
       - path: /config/radarr.db
         replicas:
-          - url: s3://$LITESTREAM_BUCKET/radarr/radarr.db
+          - url: s3://$LITESTREAM_BUCKET/radarr.db
             endpoint: $LITESTREAM_ENDPOINT
     addr: ":9090"

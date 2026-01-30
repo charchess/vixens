@@ -43,16 +43,17 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/vaultwarden/config /data \
+              rclone copy s3:$LITESTREAM_BUCKET/config /data \
                 --transfers 4 \
                 --no-utime \
                 --exclude "*.sqlite3*" \
                 --exclude "*.log" \
+                --exclude ".*-litestream" \
                 --exclude ".*-litestream/**" \
                 || true
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: vaultwarden-secrets
           resources:
             requests:
               cpu: 10m
@@ -63,21 +64,9 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-        - name: restore-db
-          image: litestream/litestream:0.5.6
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - restore
-            - -config
-            - /etc/litestream.yml
-            - -if-db-not-exists
-            - -if-replica-exists
-            - /data/db.sqlite3
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: vaultwarden-secrets
           resources:
             requests:
               cpu: 10m
@@ -135,19 +124,9 @@ spec:
             - replicate
             - -config
             - /etc/litestream.yml
-          ports:
-            - containerPort: 9090
-              name: metrics
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: vaultwarden-secrets
           volumeMounts:
             - name: data
               mountPath: /data
@@ -171,10 +150,11 @@ spec:
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() {
-                rclone sync /data s3:$LITESTREAM_BUCKET/vaultwarden/config \
+                rclone sync /data s3:$LITESTREAM_BUCKET/config \
                   --no-utime \
                   --exclude "*.sqlite3*" \
                   --exclude "*.log" \
+                  --exclude ".*-litestream" \
                   --exclude ".*-litestream/**"; 
               }
               sync_s3
@@ -187,7 +167,7 @@ spec:
               done
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: vaultwarden-secrets
           resources:
             requests:
               cpu: 10m

@@ -9,17 +9,17 @@ data:
     dbs:
       - path: /opt/hydrus/db/client.db
         replicas:
-          - url: s3://vixens-litestream/hydrus-client/client.db
-            endpoint: http://192.168.111.69:9000
+          - url: s3://$LITESTREAM_BUCKET/client.db
+            endpoint: $LITESTREAM_ENDPOINT
       - path: /opt/hydrus/db/client.mappings.db
         replicas:
-          - url: s3://vixens-litestream/hydrus-client/client.mappings.db
-            endpoint: http://192.168.111.69:9000
+          - url: s3://$LITESTREAM_BUCKET/client.mappings.db
+            endpoint: $LITESTREAM_ENDPOINT
       - path: /opt/hydrus/db/client.master.db
         replicas:
-          - url: s3://vixens-litestream/hydrus-client/client.master.db
-            endpoint: http://192.168.111.69:9000
+          - url: s3://$LITESTREAM_BUCKET/client.master.db
+            endpoint: $LITESTREAM_ENDPOINT
       - path: /opt/hydrus/db/client.caches.db
         replicas:
-          - url: s3://vixens-litestream/hydrus-client/client.caches.db
-            endpoint: http://192.168.111.69:9000
+          - url: s3://$LITESTREAM_BUCKET/client.caches.db
+            endpoint: $LITESTREAM_ENDPOINT

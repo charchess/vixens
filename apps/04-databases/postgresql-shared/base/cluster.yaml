@@ -85,15 +85,15 @@ spec:
         effect: NoSchedule
   monitoring:
     enablePodMonitor: false # Enable later with Prometheus integration
-# backup:
-#   barmanObjectStore:
-#     destinationPath: s3://postgresql-backups/
-#     endpointURL: http://synelia.internal.truxonline.com:9000
-#     s3Credentials:
-#       accessKeyId:
-#         name: postgresql-backup-s3
-#         key: accessKey
-#       secretAccessKey:
-#         name: postgresql-backup-s3
-#         key: secretKey
-#   retentionPolicy: "30d"
+  backup:
+    barmanObjectStore:
+      destinationPath: s3://vixens-prod-postgresql-shared/
+      endpointURL: http://synelia.internal.truxonline.com:9000
+      s3Credentials:
+        accessKeyId:
+          name: postgresql-backup-s3
+          key: LITESTREAM_ACCESS_KEY_ID
+        secretAccessKey:
+          name: postgresql-backup-s3
+          key: LITESTREAM_SECRET_ACCESS_KEY
+    retentionPolicy: "30d"
