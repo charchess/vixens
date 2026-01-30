@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-agent
+  namespace: velero
+spec:
+  template:
+    spec:
+      containers:
+        - name: node-agent
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 8085
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 8085
+            initialDelaySeconds: 10
+            periodSeconds: 30
