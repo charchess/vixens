@@ -28,14 +28,14 @@ probes:
     httpGet:
       path: /
       port: 8080
-    initialDelaySeconds: 60
+    initialDelaySeconds: 120
     periodSeconds: 10
   readiness:
     enabled: true
     httpGet:
       path: /
       port: 8080
-    initialDelaySeconds: 30
+    initialDelaySeconds: 60
     periodSeconds: 10
 envs:
   - name: SYSTEM_ROOTURIPATH
