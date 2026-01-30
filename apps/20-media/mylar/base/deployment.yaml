@@ -47,8 +47,7 @@ spec:
                 --transfers 4 \
                 --exclude "*.db*" \
                 --exclude "*.log" \
-                --exclude ".litestream/**" \
-                --exclude "*litestream/**" \
+                --exclude ".*-litestream/**" \
                 || true
           envFrom:
             - secretRef:
@@ -179,8 +178,7 @@ spec:
                 rclone sync /config s3:$LITESTREAM_BUCKET/mylar/config \
                   --exclude "*.db*" \
                   --exclude "*.log" \
-                  --exclude ".litestream/**" \
-                  --exclude "*litestream/**"; 
+                  --exclude ".*-litestream/**"; 
               }
               sync_s3
               while true; do 
