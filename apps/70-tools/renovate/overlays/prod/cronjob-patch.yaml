@@ -16,7 +16,3 @@ spec:
               volumeMounts:
                 - name: work
                   mountPath: /tmp/renovate
-          volumes:
-            - name: work
-              persistentVolumeClaim:
-                claimName: renovate-cache
