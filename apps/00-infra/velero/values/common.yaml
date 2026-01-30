@@ -62,7 +62,7 @@ cleanUpCRDs: false
 kubectl:
   image:
     repository: bitnami/kubectl
-    tag: 1.31.1
+    tag: latest
   resources:
     requests:
       cpu: 50m
