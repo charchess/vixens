@@ -127,6 +127,7 @@ spec:
               mountPath: /config
             - name: storage
               mountPath: /media/frigate
+              subPath: Frigate
             - name: shm
               mountPath: /dev/shm
         - name: litestream
@@ -208,7 +209,7 @@ spec:
         - name: storage
           nfs:
             server: 192.168.111.69
-            path: /volume3/Internal/Frigate
+            path: /volume3/Internal
         - name: shm
           emptyDir:
             medium: Memory
