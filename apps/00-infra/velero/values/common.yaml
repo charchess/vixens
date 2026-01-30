@@ -56,7 +56,7 @@ schedules:
 # CLEANUP SETTINGS
 maintenanceCronJob:
   enabled: false
-upgradeCRDs: true
+upgradeCRDs: false
 cleanUpCRDs: false
 
 kubectl:
