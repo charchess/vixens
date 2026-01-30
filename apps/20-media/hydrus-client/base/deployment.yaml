@@ -79,7 +79,7 @@ spec:
               litestream restore -config /etc/litestream.yml -if-db-not-exists -if-replica-exists "$DB_PATH"
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: hydrus-client-secrets
           resources:
             requests:
               cpu: 10m
@@ -111,7 +111,7 @@ spec:
               litestream restore -config /etc/litestream.yml -if-db-not-exists -if-replica-exists "$DB_PATH"
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: hydrus-client-secrets
           resources:
             requests:
               cpu: 10m
@@ -143,7 +143,7 @@ spec:
               litestream restore -config /etc/litestream.yml -if-db-not-exists -if-replica-exists "$DB_PATH"
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: hydrus-client-secrets
           resources:
             requests:
               cpu: 10m
@@ -172,7 +172,7 @@ spec:
               exit 0
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: hydrus-client-secrets
           resources:
             requests:
               cpu: 10m
@@ -239,7 +239,7 @@ spec:
               name: metrics
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: hydrus-client-secrets
           resources:
             requests:
               cpu: 10m
