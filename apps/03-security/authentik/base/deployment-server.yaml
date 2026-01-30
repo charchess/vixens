@@ -48,6 +48,7 @@ spec:
                 --transfers 4  \
                 --exclude "*.db*" \
                 --exclude "*.log" \
+                --exclude ".*-litestream" \
                 --exclude ".*-litestream/**" \
                 2>/dev/null || true
           envFrom:
@@ -139,6 +140,7 @@ spec:
                 rclone sync /data s3:$LITESTREAM_BUCKET/authentik/data \
                   --exclude "*.db*" \
                   --exclude "*.log" \
+                  --exclude ".*-litestream" \
                   --exclude ".*-litestream/**"; 
               }
               sync_s3
