@@ -55,6 +55,7 @@ spec:
                 --exclude "*.log" \
                 --exclude "tts/**" \
                 --exclude "tmp_backups/**" \
+                --exclude ".*-litestream" \
                 --exclude ".*-litestream/**" \
                 2>/dev/null || true
           envFrom:
@@ -237,6 +238,7 @@ spec:
                   --exclude "*.log" \
                   --exclude "tts/**" \
                   --exclude "tmp_backups/**" \
+                  --exclude ".*-litestream" \
                   --exclude ".*-litestream/**"; 
               }
               sync_s3
