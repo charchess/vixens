@@ -1,0 +1,14 @@
+{
+    "Rules": [
+        {
+            "ID": "PurgeOldVersions",
+            "Status": "Enabled",
+            "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 1
+            },
+            "Expiration": {
+                "ExpiredObjectDeleteMarker": true
+            }
+        }
+    ]
+}

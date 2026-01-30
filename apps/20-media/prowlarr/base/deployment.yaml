@@ -43,7 +43,7 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/prowlarr/config /config \
+              rclone copy s3:$LITESTREAM_BUCKET/config /config \
                 --transfers 4 \
                 --exclude "*.db*" \
                 --exclude "*.log" \
@@ -52,7 +52,7 @@ spec:
                 || true
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: prowlarr-secrets
           resources:
             requests:
               cpu: 10m
@@ -74,10 +74,9 @@ spec:
             - /etc/litestream.yml
             - -if-db-not-exists
             - -if-replica-exists
-            - /config/prowlarr.db
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: prowlarr-secrets
           resources:
             requests:
               cpu: 10m
@@ -143,19 +142,9 @@ spec:
             - replicate
             - -config
             - /etc/litestream.yml
-          ports:
-            - containerPort: 9090
-              name: metrics
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: prowlarr-secrets
           volumeMounts:
             - name: config
               mountPath: /config
@@ -179,7 +168,7 @@ spec:
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() { 
-                rclone sync /config s3:$LITESTREAM_BUCKET/prowlarr/config \
+                rclone sync /config s3:$LITESTREAM_BUCKET/config \
                   --exclude "*.db*" \
                   --exclude "*.log" \
                   --exclude ".*-litestream" \
@@ -195,7 +184,7 @@ spec:
               done
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: prowlarr-secrets
           resources:
             requests:
               cpu: 10m
