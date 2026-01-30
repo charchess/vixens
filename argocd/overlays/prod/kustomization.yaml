@@ -7,6 +7,7 @@ resources:
   - apps/infisical-operator.yaml
   - apps/velero-secrets.yaml
   - apps/velero.yaml
+  - apps/velero-maintenance-config.yaml
   - apps/cilium-lb.yaml
   - apps/traefik.yaml
   - apps/traefik-middlewares.yaml
