@@ -48,11 +48,11 @@ resources:
   - apps/qbittorrent.yaml
   - apps/amule.yaml
   - apps/radarr.yaml
-  - apps/sonarr.yaml
+  - apps/frigate.yaml
   - apps/lidarr.yaml
   - apps/lazylibrarian.yaml
   - apps/booklore.yaml
-  - apps/frigate.yaml
+  - apps/sonarr.yaml
   - apps/prowlarr.yaml
   - apps/whisparr.yaml
   - apps/mylar.yaml
