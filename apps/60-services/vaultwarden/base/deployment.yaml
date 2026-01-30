@@ -48,6 +48,7 @@ spec:
                 --no-utime \
                 --exclude "*.sqlite3*" \
                 --exclude "*.log" \
+                --exclude ".*-litestream" \
                 --exclude ".*-litestream/**" \
                 || true
           envFrom:
@@ -175,6 +176,7 @@ spec:
                   --no-utime \
                   --exclude "*.sqlite3*" \
                   --exclude "*.log" \
+                  --exclude ".*-litestream" \
                   --exclude ".*-litestream/**"; 
               }
               sync_s3

@@ -45,6 +45,7 @@ spec:
                 --transfers 4 \
                 --exclude "*.db*" \
                 --exclude "*.log" \
+                --exclude ".*-litestream" \
                 --exclude ".*-litestream/**" \
                 2>/dev/null || true
           envFrom:
@@ -154,6 +155,7 @@ spec:
                 rclone sync /config s3:$LITESTREAM_BUCKET/template-app/config \
                   --exclude "*.db*" \
                   --exclude "*.log" \
+                  --exclude ".*-litestream" \
                   --exclude ".*-litestream/**"; 
               }
               sync_s3
