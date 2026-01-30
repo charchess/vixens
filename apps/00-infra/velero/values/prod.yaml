@@ -1,12 +1,16 @@
 # Velero - Production Environment Values
 
-# Use velero secret for AWS credentials (created by credentials-sync CronJob)
+# Use velero secret for AWS credentials
 credentials:
   useSecret: false
   extraSecretRef: velero
 
-# Backup storage location - MinIO on Synology NAS
 configuration:
+  # Maintain the SOTA settings from common.yaml
+  uploaderType: kopia
+  repoMaintenanceJobConfigMap: velero-repo-maintenance-config
+  keepLatestMaintenanceJobs: 0
+
   backupStorageLocation:
     - name: default
       provider: aws
@@ -15,28 +19,19 @@ configuration:
       default: true
       accessMode: ReadWrite
       config:
-        region: us-east-1  # MinIO default
+        region: us-east-1
         s3ForcePathStyle: "true"
         s3Url: http://192.168.111.69:9000
 
-  # Volume snapshot location (optional, for CSI snapshots)
   volumeSnapshotLocation: []
+  defaultBackupTTL: 720h
 
-  # Default backup TTL
-  defaultBackupTTL: 720h  # 30 days
-
-  # Garbage collection frequency
-
-  # Default repo maintenance frequency
-
-# Backup schedules
 schedules:
-  # Daily backup of critical namespaces
   daily-critical:
     disabled: false
-    schedule: "0 2 * * *"  # 2 AM daily
+    schedule: "0 2 * * *"
     template:
-      ttl: "720h"  # 30 days retention
+      ttl: "720h"
       storageLocation: default
       includedNamespaces:
         - databases
@@ -44,29 +39,22 @@ schedules:
         - security
       snapshotVolumes: true
       snapshotMoveData: false
-
-  # Weekly full cluster backup
   weekly-full:
     disabled: false
-    schedule: "0 3 * * 0"  # 3 AM Sunday
+    schedule: "0 3 * * 0"
     template:
-      ttl: "2160h"  # 90 days retention
-      storageLocation: default
-      includedNamespaces:
-        - "*"
+      ttl: "2160h"
+      includedNamespaces: ["*"]
       excludedNamespaces:
         - kube-system
         - kube-public
         - kube-node-lease
       snapshotVolumes: true
-
-  # Daily backup of home automation
   daily-home:
     disabled: false
-    schedule: "0 4 * * *"  # 4 AM daily
+    schedule: "0 4 * * *"
     template:
-      ttl: "168h"  # 7 days retention
-      storageLocation: default
+      ttl: "168h"
       includedNamespaces:
         - home
       snapshotVolumes: true

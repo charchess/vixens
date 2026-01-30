@@ -1,4 +1,4 @@
-# Velero - Final Stabilization 2026
+# Velero - SOTA 2026 Common Configuration
 image:
   repository: velero/velero
   tag: v1.17.2
@@ -6,16 +6,10 @@ image:
 
 configuration:
   uploaderType: kopia
-  # Use ConfigMap for maintenance to avoid flag injection
+  # THIS IS THE KEY: Using ConfigMap disables the legacy flag injection
   repoMaintenanceJobConfigMap: velero-repo-maintenance-config
-
-# Disable chart-managed maintenance jobs to stop --keep-latest-maintenance-jobs
-schedules: {}
-maintenanceCronJob:
-  enabled: false
-
-# Force clean server start
-extraArgs: []
+  # Explicitly set to null to avoid default injection by chart
+  keepLatestMaintenanceJobs: 0
 
 initContainers:
   - name: velero-plugin-for-aws
