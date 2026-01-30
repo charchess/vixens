@@ -79,8 +79,9 @@ resources:
     cpu: 500m
     memory: 512Mi
 
+deployNodeAgent: true
+
 nodeAgent:
-  enabled: true
   uploaderType: kopia
   resources:
     requests:
