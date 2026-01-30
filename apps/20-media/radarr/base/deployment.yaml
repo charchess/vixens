@@ -157,9 +157,6 @@ spec:
               subPath: litestream.yml
         - name: config-syncer
           image: alpine:3.23
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
           command:
             - sh
             - -c
