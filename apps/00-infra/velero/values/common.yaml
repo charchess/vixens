@@ -56,7 +56,7 @@ schedules:
 # CLEANUP SETTINGS
 maintenanceCronJob:
   enabled: false
-upgradeCRDs: false
+upgradeCRDs: true
 cleanUpCRDs: false
 
 resources:
