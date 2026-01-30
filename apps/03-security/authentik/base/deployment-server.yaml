@@ -1,4 +1,4 @@
---- 
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,6 +21,10 @@ spec:
         reloader.stakater.com/auto: "true"
     spec:
       priorityClassName: vixens-critical
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       volumes:
         - name: authentik-data
           persistentVolumeClaim:
@@ -38,7 +42,7 @@ spec:
             - sh
             - -c
           args:
-            - | 
+            - |
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
@@ -132,7 +136,7 @@ spec:
             - sh
             - -c
           args:
-            - | 
+            - |
               apk add --no-cache rclone inotify-tools
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
@@ -163,7 +167,3 @@ spec:
           volumeMounts:
             - name: authentik-data
               mountPath: /data
-tolerations:
-  - key: node-role.kubernetes.io/control-plane
-    operator: Exists
-    effect: NoSchedule
