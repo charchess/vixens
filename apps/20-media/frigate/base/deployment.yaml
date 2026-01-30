@@ -208,7 +208,7 @@ spec:
         - name: storage
           nfs:
             server: 192.168.111.69
-            path: /volume3/Content/Frigate
+            path: /volume3/Internal/Frigate
         - name: shm
           emptyDir:
             medium: Memory
