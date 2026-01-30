@@ -93,7 +93,7 @@ spec:
               subPath: litestream.yml
       containers:
         - name: frigate
-          image: ghcr.io/blakeblackshear/frigate:0.15.0-beta6
+          image: ghcr.io/blakeblackshear/frigate:0.16.0-beta1
           ports:
             - containerPort: 5000
               name: http
