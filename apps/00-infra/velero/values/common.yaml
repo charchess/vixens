@@ -83,10 +83,14 @@ deployNodeAgent: true
 
 nodeAgent:
   uploaderType: kopia
+  priorityClassName: vixens-critical
   resources:
     requests:
       cpu: 100m
       memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
 
 initContainers:
   - name: velero-plugin-for-aws
