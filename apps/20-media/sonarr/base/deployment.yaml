@@ -43,15 +43,16 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/sonarr/config /config \
+              rclone copy s3:$LITESTREAM_BUCKET/config /config \
                 --transfers 4 \
                 --exclude "*.db*" \
                 --exclude "*.log" \
+                --exclude ".*-litestream" \
                 --exclude ".*-litestream/**" \
                 || true
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: sonarr-secrets
           resources:
             requests:
               cpu: 10m
@@ -62,21 +63,9 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-        - name: restore-db
-          image: litestream/litestream:0.5.6
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - restore
-            - -config
-            - /etc/litestream.yml
-            - -if-db-not-exists
-            - -if-replica-exists
-            - /config/sonarr.db
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: sonarr-secrets
           resources:
             requests:
               cpu: 10m
@@ -159,7 +148,7 @@ spec:
               memory: 128Mi
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: sonarr-secrets
           volumeMounts:
             - name: config
               mountPath: /config
@@ -183,9 +172,10 @@ spec:
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() { 
-                rclone sync /config s3:$LITESTREAM_BUCKET/sonarr/config \
+                rclone sync /config s3:$LITESTREAM_BUCKET/config \
                   --exclude "*.db*" \
                   --exclude "*.log" \
+                  --exclude ".*-litestream" \
                   --exclude ".*-litestream/**"; 
               }
               sync_s3
@@ -198,7 +188,7 @@ spec:
               done
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: sonarr-secrets
           resources:
             requests:
               cpu: 10m
