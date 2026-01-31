@@ -45,10 +45,10 @@ spec:
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               rclone copy s3:$LITESTREAM_BUCKET/config /config \
                 --transfers 4 \
-                --exclude "*.db*"
-                --exclude "*.log"
-                --exclude ".*-litestream"
-                --exclude ".*-litestream/**"
+                --exclude "*.db*" \
+                --exclude "*.log" \
+                --exclude ".*-litestream" \
+                --exclude ".*-litestream/**" \
                 || true
           envFrom:
             - secretRef:
@@ -183,9 +183,9 @@ spec:
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() { 
                 rclone sync /config s3:$LITESTREAM_BUCKET/config \
-                  --exclude "*.db*"
-                  --exclude "*.log"
-                  --exclude ".*-litestream"
+                  --exclude "*.db*" \
+                  --exclude "*.log" \
+                  --exclude ".*-litestream" \
                   --exclude ".*-litestream/**"; 
               }
               while true; do 
