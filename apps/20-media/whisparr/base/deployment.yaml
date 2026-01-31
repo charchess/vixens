@@ -28,6 +28,12 @@ spec:
           operator: Exists
           effect: NoSchedule
       initContainers:
+        - name: fix-permissions
+          image: busybox:latest
+          command: ["sh", "-c", "chown -R 1000:1000 /config && rm -rf /config/*.db-litestream /config/.*-litestream"]
+          volumeMounts:
+            - name: config
+              mountPath: /config
         - name: restore-config
           image: rclone/rclone:1.72
           securityContext:
