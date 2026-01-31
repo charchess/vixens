@@ -182,7 +182,11 @@ spec:
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() { 
+<<<<<<< HEAD
                 rclone sync /config s3:$LITESTREAM_BUCKET/config --exclude "*.log" --exclude "tts/**" --exclude "tmp_backups/**" --exclude ".*-litestream" --exclude ".*-litestream/**"; 
+=======
+                rclone sync /config s3:$LITESTREAM_BUCKET/config --exclude "*.log" --exclude "tts/**" --exclude "tmp_backups/**" --exclude ".*-litestream" --exclude ".*-litestream/**"
+>>>>>>> 2368b717c3f0f00aada4fd1ee48ff72ce9a3dc32
               }
               while true; do 
                 sync_s3; 
