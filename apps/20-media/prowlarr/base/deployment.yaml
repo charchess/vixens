@@ -1,4 +1,4 @@
---- 
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -35,7 +35,7 @@ spec:
             - name: config
               mountPath: /config
         - name: restore-config
-          image: rclone/rclone:1.73
+          image: rclone/rclone:1.72
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -43,19 +43,13 @@ spec:
             - sh
             - -c
           args:
-            - | 
+            - |
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/config /config \
-                --transfers 4 \
-                --exclude "*.db*" \
-                --exclude "*.log" \
-                --exclude ".*-litestream" \
-                --exclude ".*-litestream/**" \
-                || true
+              rclone copy s3:$LITESTREAM_BUCKET/config /config --transfers 4 --exclude "*.db*" --exclude "*.log" --exclude ".*-litestream" --exclude ".*-litestream/**" || true
           envFrom:
             - secretRef:
                 name: prowlarr-secrets
@@ -80,6 +74,7 @@ spec:
             - /etc/litestream.yml
             - -if-db-not-exists
             - -if-replica-exists
+            - /config/prowlarr.db
           envFrom:
             - secretRef:
                 name: prowlarr-secrets
@@ -98,7 +93,7 @@ spec:
               subPath: litestream.yml
       containers:
         - name: prowlarr
-          image: ghcr.io/linuxserver/prowlarr:version-2.3.0.5236
+          image: ghcr.io/linuxserver/prowlarr:version-1.31.2.4975
           ports:
             - containerPort: 9696 # Default Prowlarr UI port
               name: http
@@ -119,8 +114,8 @@ spec:
               cpu: 100m
               memory: 256Mi
             limits:
-              cpu: 1000m
-              memory: 1Gi
+              cpu: 500m
+              memory: 512Mi
           env:
             - name: PROWLARR__API_KEY
               valueFrom:
@@ -148,6 +143,16 @@ spec:
             - replicate
             - -config
             - /etc/litestream.yml
+          ports:
+            - containerPort: 9090
+              name: metrics
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           envFrom:
             - secretRef:
                 name: prowlarr-secrets
@@ -166,18 +171,14 @@ spec:
             - sh
             - -c
           args:
-            - | 
+            - |
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() { 
-                rclone sync /config s3:$LITESTREAM_BUCKET/config \
-                  --exclude "*.db*" \
-                  --exclude "*.log" \
-                  --exclude ".*-litestream" \
-                  --exclude ".*-litestream/**"; 
+                rclone sync /config s3:$LITESTREAM_BUCKET/config --exclude "*.db*" --exclude "*.log" --exclude ".*-litestream" --exclude ".*-litestream/**"
               }
               while true; do 
                 sync_s3; 
