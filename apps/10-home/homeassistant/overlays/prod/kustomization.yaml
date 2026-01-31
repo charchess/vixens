@@ -6,7 +6,6 @@ resources:
   - ../../base
   - ingress.yaml
   - ingressroute-udp.yaml
-  - infisical-filebrowser-auth.yaml
 patches:
   - path: rclone-patch.yaml
   - target:
