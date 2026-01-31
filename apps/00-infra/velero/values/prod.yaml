@@ -10,8 +10,7 @@ configuration:
   backupStorageLocation:
     - name: default
       provider: aws
-      bucket: backups-vixens-prod
-      prefix: velero
+      bucket: vixens-prod-velero
       default: true
       accessMode: ReadWrite
       config:
