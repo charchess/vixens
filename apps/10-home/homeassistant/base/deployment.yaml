@@ -50,10 +50,10 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/homeassistant/config /config --transfers 4  --exclude "*.log" --exclude "tts/**" --exclude "tmp_backups/**" 2>/dev/null || true
+              rclone copy s3:$LITESTREAM_BUCKET/config /config --transfers 4 --exclude "*.log" --exclude "tts/**" --exclude "tmp_backups/**" --exclude ".*-litestream" --exclude ".*-litestream/**" 2>/dev/null || true
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: homeassistant-secrets
           resources:
             requests:
               cpu: 10m
@@ -78,7 +78,7 @@ spec:
             - /config/home-assistant_v2.db
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: homeassistant-secrets
           resources:
             requests:
               cpu: 10m
@@ -110,60 +110,99 @@ spec:
             - name: ha-config
               mountPath: /tmp/ha-config
               readOnly: true
-        - name: filebrowser-init
-          image: filebrowser/filebrowser:v2.56.0
+      containers:
+        - name: homeassistant
+          image: ghcr.io/home-assistant/home-assistant:2025.1.2
+          ports:
+            - containerPort: 8123
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /alive
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /alive
+              port: http
+            initialDelaySeconds: 90
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+        - name: litestream
+          image: litestream/litestream:0.5.6
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args:
+            - replicate
+            - -config
+            - /etc/litestream.yml
+          ports:
+            - containerPort: 9090
+              name: metrics
+          envFrom:
+            - secretRef:
+                name: homeassistant-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: homeassistant-litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+        - name: config-syncer
+          image: rclone/rclone:1.72
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           command:
             - sh
             - -c
           args:
             - |
-              set -e
-              if [ ! -f /database/filebrowser.db ]; then
-                filebrowser config init --database /database/filebrowser.db
-              fi
-              filebrowser config set --database /database/filebrowser.db --port 8080 --address 0.0.0.0
-              filebrowser users rm admin --database /database/filebrowser.db 2>/dev/null || true
-              filebrowser users add "$FB_USERNAME" "$FB_PASSWORD" --database /database/filebrowser.db --perm.admin
-          env:
-            - name: FB_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: filebrowser-auth
-                  key: USERNAME
-            - name: FB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: filebrowser-auth
-                  key: PASSWORD
-          volumeMounts:
-            - name: filebrowser-db
-              mountPath: /database
-      containers:
-        - name: homeassistant
-          image: ghcr.io/home-assistant/home-assistant:2026.1.3
-          imagePullPolicy: Always
-          ports:
-            - name: http
-              containerPort: 8123
-              protocol: TCP
-            - name: coiot
-              containerPort: 5683
-              protocol: UDP
-          env:
-            - name: TZ
-              value: Europe/Paris
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              sync_s3() { 
+                rclone sync /config s3:$LITESTREAM_BUCKET/config --exclude "*.log" --exclude "tts/**" --exclude "tmp_backups/**" --exclude ".*-litestream" --exclude ".*-litestream/**"; 
+              }
+              while true; do 
+                sync_s3; 
+                sleep 60; 
+              done
+          envFrom:
+            - secretRef:
+                name: homeassistant-secrets
           volumeMounts:
             - name: config
               mountPath: /config
           resources:
             requests:
-              cpu: 100m
-              memory: 512Mi
+              cpu: 10m
+              memory: 64Mi
             limits:
-              cpu: 1000m
-              memory: 1Gi
+              cpu: 100m
+              memory: 128Mi
         - name: filebrowser
-          image: filebrowser/filebrowser:v2.56.0
+          image: filebrowser/filebrowser:v2.23.0
           ports:
             - name: fb-http
               containerPort: 8080
@@ -185,63 +224,6 @@ spec:
             limits:
               memory: 256Mi
               cpu: 200m
-        - name: litestream
-          image: litestream/litestream:0.5.6
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - replicate
-            - -config
-            - /etc/litestream.yml
-          ports:
-            - containerPort: 9090
-              name: metrics
-          envFrom:
-            - secretRef:
-                name: litestream-shared-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: homeassistant-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
-        - name: config-syncer
-          image: alpine:3.23
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              apk add --no-cache rclone inotify-tools
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              sync_s3() { rclone sync /config s3:$LITESTREAM_BUCKET/homeassistant/config  --exclude "*.log" --exclude "tts/**" --exclude "tmp_backups/**"; }
-              sync_s3
-              while true; do inotifywait -r -e modify,create,delete,move /config --exclude ".*\.db.*"; sync_s3; sleep 10; done
-          envFrom:
-            - secretRef:
-                name: litestream-shared-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /config
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
       volumes:
         - name: config
           persistentVolumeClaim:
