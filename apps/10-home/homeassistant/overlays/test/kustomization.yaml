@@ -6,7 +6,6 @@ resources:
   - ../../base
   - ingress.yaml
   - ingressroute-udp.yaml
-  - infisical-filebrowser-auth.yaml
 
 components:
   - ../../../../_shared/components/revision-history-limit
