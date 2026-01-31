@@ -38,8 +38,8 @@ spec:
         - name: restore-config
           image: rclone/rclone:1.73
           securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
+            runAsUser:  0
+            runAsGroup:  0
           command:
             - sh
             - -c
@@ -56,7 +56,9 @@ spec:
                 --exclude "tts/**" \
                 --exclude "tmp_backups/**" \
                 --exclude ".*-litestream" \
-                --exclude ".*-litestream/**" \
+                --exclude ".*-litestream/**" \ \
+                --exclude "lost+found/**" \
+                  --exclude "lost+found/**";
                 2>/dev/null || true
           envFrom:
             - secretRef:
@@ -183,8 +185,8 @@ spec:
         - name: litestream
           image: litestream/litestream:0.5.6
           securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
+            runAsUser:  0
+            runAsGroup:  0
           args:
             - replicate
             - -config
@@ -209,13 +211,15 @@ spec:
               cpu: 100m
               memory: 128Mi
         - name: config-syncer
-          image: alpine:3.23
+          image: rclone/rclone:1.72
+          securityContext:
+            runAsUser:  0
+            runAsGroup:  0
           command:
             - sh
             - -c
           args:
             - |
-              apk add --no-cache rclone inotify-tools
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
@@ -227,10 +231,12 @@ spec:
                   --exclude "tts/**" \
                   --exclude "tmp_backups/**" \
                   --exclude ".*-litestream" \
-                  --exclude ".*-litestream/**"; 
+                  --exclude ".*-litestream/**";  \
               }
-              sync_s3
-              while true; do inotifywait -r -e modify,create,delete,move /config --exclude ".*\.db.*"; sync_s3; sleep 10; done
+              while true; do 
+                sync_s3; 
+                sleep 60; 
+              done
           envFrom:
             - secretRef:
                 name: homeassistant-secrets

@@ -28,6 +28,12 @@ spec:
           operator: Exists
           effect: NoSchedule
       initContainers:
+        - name: fix-permissions
+          image: busybox:latest
+          command: ["sh", "-c", "chown -R 1000:1000 /config && rm -rf /config/*.db-litestream /config/.*-litestream"]
+          volumeMounts:
+            - name: config
+              mountPath: /config
         - name: restore-config
           image: rclone/rclone:1.73
           securityContext:
@@ -43,13 +49,7 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/config /config \
-                --transfers 4 \
-                --exclude "*.db*" \
-                --exclude "*.log" \
-                --exclude ".*-litestream" \
-                --exclude ".*-litestream/**" \
-                || true
+              rclone copy s3:$LITESTREAM_BUCKET/config /config --transfers 4 --exclude "*.db*" --exclude "*.log" --exclude ".*-litestream" --exclude ".*-litestream/**" || true
           envFrom:
             - secretRef:
                 name: sonarr-secrets
@@ -139,6 +139,16 @@ spec:
           ports:
             - containerPort: 9090
               name: metrics
+          livenessProbe:
+            tcpSocket:
+              port: 9090
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: 9090
+            initialDelaySeconds: 10
+            periodSeconds: 30
           resources:
             requests:
               cpu: 10m
@@ -156,7 +166,7 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-syncer
-          image: alpine:3.23
+          image: rclone/rclone:1.72
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -165,30 +175,18 @@ spec:
             - -c
           args:
             - |
-              apk add --no-cache rclone inotify-tools
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() { 
-                rclone sync /config s3:$LITESTREAM_BUCKET/config \
-                  --exclude "*.db*" \
-                  --exclude "*.log" \
-                  --exclude ".*-litestream" \
-                  --exclude ".*-litestream/**"; 
+                rclone sync /config s3:$LITESTREAM_BUCKET/config --exclude "*.db*" --exclude "*.log" --exclude ".*-litestream" --exclude ".*-litestream/**"
               }
-              sync_s3
               while true; do 
-                inotifywait -r -e modify,create,delete,move /config \
-                  --exclude ".*\.db.*" \
-                  --exclude ".*litestream.*"; 
                 sync_s3; 
-                sleep 10; 
+                sleep 60; 
               done
-          envFrom:
-            - secretRef:
-                name: sonarr-secrets
           resources:
             requests:
               cpu: 10m
