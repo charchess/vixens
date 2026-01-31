@@ -178,7 +178,7 @@ spec:
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() { 
-                rclone sync /config s3:$LITESTREAM_BUCKET/config --exclude "*.db*" --exclude "*.log" --exclude ".*-litestream" --exclude ".*-litestream/**"
+                rclone sync /config s3:\$LITESTREAM_BUCKET/config --exclude "*.db*" --exclude "*.log" --exclude ".*-litestream" --exclude ".*-litestream/**"
               }
               while true; do 
                 sync_s3; 

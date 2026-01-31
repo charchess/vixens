@@ -1,4 +1,4 @@
---- 
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -63,6 +63,18 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+        - name: restore-db
+          image: litestream/litestream:0.5.6
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args:
+            - restore
+            - -config
+            - /etc/litestream.yml
+            - -if-db-not-exists
+            - -if-replica-exists
+            - /config/sonarr.db
           envFrom:
             - secretRef:
                 name: sonarr-secrets
@@ -187,6 +199,9 @@ spec:
                 sync_s3; 
                 sleep 60; 
               done
+          envFrom:
+            - secretRef:
+                name: sonarr-secrets
           resources:
             requests:
               cpu: 10m

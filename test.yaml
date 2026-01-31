@@ -1,0 +1,313 @@
+apiVersion: v1
+data:
+  litestream.yml: |
+    dbs:
+      - path: /config/lidarr.db
+        replicas:
+          - url: s3://$LITESTREAM_BUCKET/lidarr.db
+            endpoint: $LITESTREAM_ENDPOINT
+    addr: ":9090"
+kind: ConfigMap
+metadata:
+  name: lidarr-litestream-config
+  namespace: media
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: lidarr
+  name: lidarr
+  namespace: media
+spec:
+  ports:
+  - port: 8686
+    protocol: TCP
+    targetPort: 8686
+  selector:
+    app: lidarr
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: lidarr-config-pvc
+  namespace: media
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: synelia-iscsi-retain
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: lidarr
+  name: lidarr
+  namespace: media
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lidarr
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9090"
+        prometheus.io/scrape: "true"
+        reloader.stakater.com/auto: "true"
+      labels:
+        app: lidarr
+    spec:
+      containers:
+      - env:
+        - name: LIDARR__API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: API_KEY
+              name: lidarr-secrets
+        - name: PUID
+          value: "1000"
+        - name: PGID
+          value: "1000"
+        - name: TZ
+          value: Europe/Paris
+        envFrom:
+        - secretRef:
+            name: lidarr-secrets
+        image: ghcr.io/linuxserver/lidarr:version-3.1.0.4875
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 20
+        name: lidarr
+        ports:
+        - containerPort: 8686
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        volumeMounts:
+        - mountPath: /config
+          name: config
+        - mountPath: /downloads
+          name: downloads
+        - mountPath: /music
+          name: music
+          subPath: music
+      - args:
+        - replicate
+        - -config
+        - /etc/litestream.yml
+        envFrom:
+        - secretRef:
+            name: lidarr-secrets
+        image: litestream/litestream:0.5.6
+        name: litestream
+        ports:
+        - containerPort: 9090
+          name: metrics
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          runAsGroup: 1000
+          runAsUser: 1000
+        volumeMounts:
+        - mountPath: /config
+          name: config
+        - mountPath: /etc/litestream.yml
+          name: lidarr-litestream-config
+          subPath: litestream.yml
+      - args:
+        - "export RCLONE_CONFIG_S3_TYPE=s3\nexport RCLONE_CONFIG_S3_PROVIDER=Other\nexport
+          RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID\nexport RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY\nexport
+          RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT\nsync_s3() { \n  rclone sync
+          /config s3:$LITESTREAM_BUCKET/config --exclude \"*.db*\" --exclude \"*.log\"
+          --exclude \".*-litestream\" --exclude \".*-litestream/**\"\n}\nwhile true;
+          do \n  sync_s3; \n  sleep 60; \ndone\n"
+        command:
+        - sh
+        - -c
+        envFrom:
+        - secretRef:
+            name: lidarr-secrets
+        image: rclone/rclone:1.72
+        name: config-syncer
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          runAsGroup: 1000
+          runAsUser: 1000
+        volumeMounts:
+        - mountPath: /config
+          name: config
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - chown -R 1000:1000 /config && rm -rf /config/*.db-litestream /config/.*-litestream
+        image: busybox:latest
+        name: fix-permissions
+        volumeMounts:
+        - mountPath: /config
+          name: config
+      - args:
+        - |
+          export RCLONE_CONFIG_S3_TYPE=s3
+          export RCLONE_CONFIG_S3_PROVIDER=Other
+          export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+          export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+          export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+          rclone copy s3:$LITESTREAM_BUCKET/config /config --transfers 4 --exclude "*.db*" --exclude "*.log" --exclude ".*-litestream" --exclude ".*-litestream/**" || true
+        command:
+        - sh
+        - -c
+        envFrom:
+        - secretRef:
+            name: lidarr-secrets
+        image: rclone/rclone:1.72
+        name: restore-config
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          runAsGroup: 1000
+          runAsUser: 1000
+        volumeMounts:
+        - mountPath: /config
+          name: config
+      - args:
+        - restore
+        - -config
+        - /etc/litestream.yml
+        - -if-db-not-exists
+        - -if-replica-exists
+        - /config/lidarr.db
+        envFrom:
+        - secretRef:
+            name: lidarr-secrets
+        image: litestream/litestream:0.5.6
+        name: restore-db
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          runAsGroup: 1000
+          runAsUser: 1000
+        volumeMounts:
+        - mountPath: /config
+          name: config
+        - mountPath: /etc/litestream.yml
+          name: lidarr-litestream-config
+          subPath: litestream.yml
+      priorityClassName: vixens-medium
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: lidarr-config-pvc
+      - name: downloads
+        nfs:
+          path: /volume3/Downloads
+          server: 192.168.111.69
+      - name: music
+        nfs:
+          path: /volume3/Content
+          server: 192.168.111.69
+      - configMap:
+          name: lidarr-litestream-config
+        name: lidarr-litestream-config
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Media
+    gethomepage.dev/icon: lidarr.png
+    gethomepage.dev/name: Lidarr
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+  name: lidarr-ingress
+  namespace: media
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: lidarr.truxonline.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: lidarr
+            port:
+              number: 8686
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - lidarr.truxonline.com
+    secretName: lidarr-tls
+---
+apiVersion: secrets.infisical.com/v1alpha1
+kind: InfisicalSecret
+metadata:
+  name: lidarr-secrets-sync
+  namespace: media
+spec:
+  authentication:
+    universalAuth:
+      credentialsRef:
+        secretName: infisical-universal-auth
+        secretNamespace: argocd
+      secretsScope:
+        envSlug: prod
+        projectSlug: vixens
+        secretsPath: /apps/20-media/lidarr
+  hostAPI: http://192.168.111.69:8085
+  managedSecretReference:
+    creationPolicy: Owner
+    secretName: lidarr-secrets
+    secretNamespace: media
+  resyncInterval: 60
