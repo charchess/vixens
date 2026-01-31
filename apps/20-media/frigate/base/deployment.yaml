@@ -100,6 +100,34 @@ spec:
               mountPath: /dev/shm
             - name: dri
               mountPath: /dev/dri
+        - name: litestream
+          image: litestream/litestream:0.5.6
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args:
+            - replicate
+            - -config
+            - /etc/litestream.yml
+          ports:
+            - containerPort: 9090
+              name: metrics
+          envFrom:
+            - secretRef:
+                name: frigate-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: frigate-litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
         - name: config-syncer
           image: rclone/rclone:1.73
           securityContext:
