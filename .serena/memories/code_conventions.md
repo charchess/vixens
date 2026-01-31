@@ -17,8 +17,8 @@
 *   **Footer:** Add `🤖 Generated with [Claude Code]` and `Co-Authored-By: Claude Sonnet 4.5` for AI-generated commits
 
 ## Task Management
-*   **Primary System:** Archon MCP Server (never use TodoWrite)
-*   **Task Status Flow:** `todo` → `doing` → `review` → `done`
+*   **Primary System:** Beads CLI (`bd`)
+*   **Task Status Flow:** `open` → `in_progress` → `closed`
 *   **Priority:** Higher `task_order` (0-100) = higher priority
 *   **Assignment:** Tasks assigned to "Coding Agent" for AI work
 
