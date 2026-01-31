@@ -125,15 +125,15 @@ spec:
               value: Europe/Paris
           livenessProbe:
             httpGet:
-              path: /alive
+              path: /
               port: http
-            initialDelaySeconds: 60
+            initialDelaySeconds: 120
             periodSeconds: 30
           readinessProbe:
             httpGet:
-              path: /alive
+              path: /
               port: http
-            initialDelaySeconds: 90
+            initialDelaySeconds: 30
             periodSeconds: 15
           resources:
             requests:
