@@ -35,7 +35,7 @@ spec:
             - name: config
               mountPath: /config
         - name: restore-config
-          image: rclone/rclone:1.72
+          image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -69,18 +69,6 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-        - name: restore-db
-          image: litestream/litestream:0.5.6
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - restore
-            - -config
-            - /etc/litestream.yml
-            - -if-db-not-exists
-            - -if-replica-exists
-            - /config/whisparr.db
           envFrom:
             - secretRef:
                 name: whisparr-secrets
@@ -153,16 +141,6 @@ spec:
             - replicate
             - -config
             - /etc/litestream.yml
-          ports:
-            - containerPort: 9090
-              name: metrics
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           envFrom:
             - secretRef:
                 name: whisparr-secrets
