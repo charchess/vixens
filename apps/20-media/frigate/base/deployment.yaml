@@ -63,22 +63,6 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-          envFrom:
-            - secretRef:
-                name: frigate-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: frigate-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
       containers:
         - name: frigate
           image: ghcr.io/blakeblackshear/frigate:0.17.0-beta2
@@ -116,15 +100,6 @@ spec:
               mountPath: /dev/shm
             - name: dri
               mountPath: /dev/dri
-          envFrom:
-            - secretRef:
-                name: frigate-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: frigate-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
         - name: config-syncer
           image: rclone/rclone:1.73
           securityContext:
