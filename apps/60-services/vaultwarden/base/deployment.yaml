@@ -63,22 +63,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-          envFrom:
-            - secretRef:
-                name: vaultwarden-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
-          volumeMounts:
-            - name: data
-              mountPath: /data
-            - name: vaultwarden-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
       containers:
         - name: vaultwarden
           image: vaultwarden/server:1.35.2
