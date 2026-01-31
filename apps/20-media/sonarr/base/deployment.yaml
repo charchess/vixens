@@ -199,16 +199,6 @@ spec:
                 sync_s3; 
                 sleep 60; 
               done
-          livenessProbe:
-            exec:
-              command: ["sh", "-c", "pgrep rclone"]
-            initialDelaySeconds: 10
-            periodSeconds: 60
-          readinessProbe:
-            exec:
-              command: ["sh", "-c", "pgrep rclone"]
-            initialDelaySeconds: 10
-            periodSeconds: 60
           resources:
             requests:
               cpu: 10m
