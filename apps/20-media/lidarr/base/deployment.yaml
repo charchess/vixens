@@ -161,7 +161,7 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-syncer
-          image: rclone/rclone:1.72
+          image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
