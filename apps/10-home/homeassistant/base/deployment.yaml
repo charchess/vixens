@@ -56,7 +56,9 @@ spec:
                 --exclude "tts/**" \
                 --exclude "tmp_backups/**" \
                 --exclude ".*-litestream" \
-                --exclude ".*-litestream/**" \
+                --exclude ".*-litestream/**" \ \
+                --exclude "lost+found/**" \
+                  --exclude "lost+found/**";
                 2>/dev/null || true
           envFrom:
             - secretRef:
@@ -241,7 +243,7 @@ spec:
                   --exclude "tts/**" \
                   --exclude "tmp_backups/**" \
                   --exclude ".*-litestream" \
-                  --exclude ".*-litestream/**"; 
+                  --exclude ".*-litestream/**";  \
               }
               while true; do 
                 sync_s3; 
