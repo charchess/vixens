@@ -28,7 +28,7 @@ patches:
           spec:
             initContainers:
               - name: restore-config
-                image: rclone/rclone:1.72
+                image: rclone/rclone:1.73
                 command:
                   - sh
                   - -c
