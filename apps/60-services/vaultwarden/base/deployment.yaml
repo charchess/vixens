@@ -35,7 +35,7 @@ spec:
             - name: data
               mountPath: /data
         - name: restore-config
-          image: rclone/rclone:1.72
+          image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -63,18 +63,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-        - name: restore-db
-          image: litestream/litestream:0.5.6
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - restore
-            - -config
-            - /etc/litestream.yml
-            - -if-db-not-exists
-            - -if-replica-exists
-            - /data/db.sqlite3
           envFrom:
             - secretRef:
                 name: vaultwarden-secrets

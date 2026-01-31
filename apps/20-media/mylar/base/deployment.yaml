@@ -29,7 +29,7 @@ spec:
           effect: NoSchedule
       initContainers:
         - name: restore-config
-          image: rclone/rclone:1.72
+          image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -68,13 +68,6 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          args:
-            - restore
-            - -config
-            - /etc/litestream.yml
-            - -if-db-not-exists
-            - -if-replica-exists
-            - /config/mylar.db
           envFrom:
             - secretRef:
                 name: mylar-secrets
