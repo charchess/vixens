@@ -15,13 +15,79 @@ spec:
     metadata:
       labels:
         app: adguard-home
+      annotations:
+        reloader.stakater.com/auto: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
     spec:
+      priorityClassName: vixens-critical
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      initContainers:
+        - name: restore-config
+          image: rclone/rclone:1.72
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              rclone copy s3:$LITESTREAM_BUCKET/config /opt/adguardhome/conf \
+                --transfers 4 \
+                --exclude "*.db*" \
+                --exclude "*.log" \
+                --exclude ".*-litestream" \
+                --exclude ".*-litestream/**" \
+                || true
+          envFrom:
+            - secretRef:
+                name: adguard-home-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /opt/adguardhome/conf
+        - name: restore-db
+          image: litestream/litestream:0.5.6
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          args:
+            - restore
+            - -config
+            - /etc/litestream.yml
+            - -if-db-not-exists
+            - -if-replica-exists
+            - /opt/adguardhome/work/data/querylog.kv
+          envFrom:
+            - secretRef:
+                name: adguard-home-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /opt/adguardhome/work
+            - name: adguard-home-litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
       containers:
         - name: adguard-home
           image: adguard/adguardhome:v0.107.71
           ports:
             - containerPort: 3000
               name: http
+            - containerPort: 53
+              name: dns-udp
+              protocol: UDP
+            - containerPort: 53
+              name: dns-tcp
+              protocol: TCP
           resources:
             requests:
               cpu: 100m
@@ -34,6 +100,77 @@ spec:
               mountPath: /opt/adguardhome/conf
             - name: data
               mountPath: /opt/adguardhome/work
+        - name: litestream
+          image: litestream/litestream:0.5.6
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          args:
+            - replicate
+            - -config
+            - /etc/litestream.yml
+          ports:
+            - containerPort: 9090
+              name: metrics
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          envFrom:
+            - secretRef:
+                name: adguard-home-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /opt/adguardhome/work
+            - name: adguard-home-litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
+        - name: config-syncer
+          image: rclone/rclone:1.72
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              sync_s3() { 
+                rclone sync /opt/adguardhome/conf s3:$LITESTREAM_BUCKET/config \
+                  --exclude "*.db*" \
+                  --exclude "*.log" \
+                  --exclude ".*-litestream" \
+                  --exclude ".*-litestream/**"; 
+              }
+              while true; do 
+                sync_s3; 
+                sleep 60; 
+              done
+          envFrom:
+            - secretRef:
+                name: adguard-home-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: config
+              mountPath: /opt/adguardhome/conf
+      volumes:
+        - name: adguard-home-litestream-config
+          configMap:
+            name: adguard-home-litestream-config
   volumeClaimTemplates:
     - metadata:
         name: config

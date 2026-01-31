@@ -3,10 +3,7 @@ kind: Kustomization
 resources:
   - ../../base
 patches:
-  - target:
-      kind: Deployment
-      name: velero
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/args
-        value: ["server", "--uploader-type=kopia", "--repo-maintenance-job-configmap=velero-repo-maintenance-config", "--default-backup-ttl=720h"]
+  - path: node-agent-probes.yaml
+    target:
+      kind: DaemonSet
+      name: node-agent

@@ -1,4 +1,3 @@
----
 # Kustomize Component: Elite Syncer (Config-Syncer)
 #
 # Adds an rclone-based sidecar to sync /config to S3 (MinIO).
@@ -18,7 +17,7 @@ kind: Component
 patches:
   - target:
       kind: Deployment
-    patch: |-
+    patch: |
       apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -29,6 +28,9 @@ patches:
             initContainers:
               - name: restore-config
                 image: rclone/rclone:1.72
+                securityContext:
+                  runAsUser: 1000
+                  runAsGroup: 1000
                 command:
                   - sh
                   - -c
@@ -40,7 +42,12 @@ patches:
                     export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
                     export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
                     # Sync FROM S3 TO /config on startup
-                    rclone copy s3:$LITESTREAM_BUCKET/${APP_NAME}/config /config --transfers 4 --exclude "*.log" 2>/dev/null || true
+                    rclone copy s3:$LITESTREAM_BUCKET/config /config \
+                      --transfers 4 \
+                      --exclude "*.log" \
+                      --exclude ".*-litestream" \
+                      --exclude ".*-litestream/**" \
+                      2>/dev/null || true
                 envFrom:
                   - secretRef:
                       name: litestream-shared-secrets
@@ -49,21 +56,31 @@ patches:
                     mountPath: /config
             containers:
               - name: config-syncer
-                image: alpine:3.23
+                image: rclone/rclone:1.72
+                securityContext:
+                  runAsUser: 1000
+                  runAsGroup: 1000
                 command:
                   - sh
                   - -c
                 args:
                   - |
-                    apk add --no-cache rclone inotify-tools
                     export RCLONE_CONFIG_S3_TYPE=s3
                     export RCLONE_CONFIG_S3_PROVIDER=Other
                     export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
                     export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
                     export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-                    sync_s3() { rclone sync /config s3:$LITESTREAM_BUCKET/${APP_NAME}/config --exclude "*.log" --exclude ".*\.db.*"; }
-                    sync_s3
-                    while true; do inotifywait -r -e modify,create,delete,move /config --exclude ".*\.db.*"; sync_s3; sleep 10; done
+                    sync_s3() { 
+                      rclone sync /config s3:$LITESTREAM_BUCKET/config \
+                        --exclude "*.log" \
+                        --exclude ".*\.db.*" \
+                        --exclude ".*-litestream" \
+                        --exclude ".*-litestream/**"; 
+                    }
+                    while true; do 
+                      sync_s3; 
+                      sleep 60; 
+                    done
                 envFrom:
                   - secretRef:
                       name: litestream-shared-secrets

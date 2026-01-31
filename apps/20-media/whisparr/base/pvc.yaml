@@ -9,4 +9,4 @@ spec:
   storageClassName: synelia-iscsi-retain
   resources:
     requests:
-      storage: 1Gi
+      storage: 2Gi

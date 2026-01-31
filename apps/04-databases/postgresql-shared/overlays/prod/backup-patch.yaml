@@ -6,7 +6,7 @@ metadata:
 spec:
   backup:
     barmanObjectStore:
-      destinationPath: s3://backups-vixens-prod/postgresql/
+      destinationPath: s3://vixens-prod-postgresql-shared/
       endpointURL: http://192.168.111.69:9000
       s3Credentials:
         accessKeyId:

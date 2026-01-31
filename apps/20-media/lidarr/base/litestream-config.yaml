@@ -8,6 +8,6 @@ data:
     dbs:
       - path: /config/lidarr.db
         replicas:
-          - url: s3://$LITESTREAM_BUCKET/lidarr/lidarr.db
+          - url: s3://$LITESTREAM_BUCKET/lidarr.db
             endpoint: $LITESTREAM_ENDPOINT
     addr: ":9090"

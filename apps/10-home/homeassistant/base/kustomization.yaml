@@ -9,4 +9,5 @@ resources:
   - pvc.yaml
   - configmap.yaml
   - infisical-config.yaml
+  - infisical-secret.yaml
   - litestream-config.yaml
