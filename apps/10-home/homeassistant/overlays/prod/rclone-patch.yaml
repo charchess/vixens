@@ -10,7 +10,7 @@ spec:
         - name: restore-config
           image: rclone/rclone:1.72
           securityContext:
-            runAsUser: 1000
+            runAsUser: 0
             runAsGroup: 1000
           command:
             - sh
@@ -36,7 +36,7 @@ spec:
         - name: config-syncer
           image: rclone/rclone:1.72
           securityContext:
-            runAsUser: 1000
+            runAsUser: 0
             runAsGroup: 1000
           command:
             - sh
