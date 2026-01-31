@@ -69,22 +69,6 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-          envFrom:
-            - secretRef:
-                name: whisparr-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: whisparr-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
       containers:
         - name: whisparr
           image: ghcr.io/hotio/whisparr:nightly
