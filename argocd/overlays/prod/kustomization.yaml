@@ -16,6 +16,7 @@ resources:
   - apps/vpa.yaml
   - apps/goldilocks.yaml
   - apps/reloader.yaml
+  - apps/kube-janitor.yaml
   - apps/kyverno.yaml
   - apps/policy-reporter.yaml
   - apps/descheduler.yaml
