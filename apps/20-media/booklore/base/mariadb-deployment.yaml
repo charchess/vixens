@@ -51,6 +51,45 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+        - name: db-backup
+          image: alpine:3.21
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              apk add --no-cache mariadb-client rclone > /dev/null 2>&1
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              while true; do
+                TIMESTAMP=$(date +%Y%m%d-%H%M)
+                mariadb-dump -h localhost -u booklore -p"$DB_PASSWORD" booklore > /tmp/booklore.sql 2>/dev/null
+                if [ $? -eq 0 ] && [ -s /tmp/booklore.sql ]; then
+                  rclone copyto /tmp/booklore.sql "s3:$LITESTREAM_BUCKET/booklore/mariadb/booklore-${TIMESTAMP}.sql"
+                  rclone copyto /tmp/booklore.sql "s3:$LITESTREAM_BUCKET/booklore/mariadb/booklore-latest.sql"
+                fi
+                rm -f /tmp/booklore.sql
+                sleep 900
+              done
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: booklore-secrets
+                  key: DB_PASSWORD
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
       volumes:
         - name: config
           persistentVolumeClaim:

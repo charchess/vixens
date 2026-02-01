@@ -7,4 +7,6 @@ resources:
   - deployment.yaml
   - service.yaml
   - infisical-secret.yaml
+  - infisical-litestream-shared.yaml
+  - litestream-config.yaml
   - pvc.yaml

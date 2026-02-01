@@ -21,6 +21,37 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      initContainers:
+        - name: restore-config
+          image: rclone/rclone:1.73
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              rclone copy s3:$LITESTREAM_BUCKET/changedetection/config /datastore \
+                --transfers 4 \
+                --exclude "*.log" \
+                --exclude "lost+found/**" \
+                || true
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: datastore
+              mountPath: /datastore
       containers:
         - name: changedetection
           image: ghcr.io/dgtlmoon/changedetection.io:0.52.9
@@ -57,6 +88,40 @@ spec:
               value: "10"
             - name: CHROME_REFRESH_TIME
               value: "600000"
+        - name: config-syncer
+          image: rclone/rclone:1.73
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              sync_s3() {
+                rclone sync /datastore s3:$LITESTREAM_BUCKET/changedetection/config \
+                  --exclude "*.log" \
+                  --exclude "lost+found/**";
+              }
+              while true; do
+                sync_s3;
+                sleep 60;
+              done
+          envFrom:
+            - secretRef:
+                name: litestream-shared-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: datastore
+              mountPath: /datastore
       volumes:
         - name: datastore
           persistentVolumeClaim:
