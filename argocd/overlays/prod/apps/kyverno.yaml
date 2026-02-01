@@ -48,6 +48,15 @@ spec:
 
           cleanupController:
             replicas: 1
+            rbac:
+              clusterRole:
+                extraResources:
+                  - apiGroups: [""]
+                    resources: ["pods"]
+                    verbs: ["delete", "list"]
+                  - apiGroups: ["apps"]
+                    resources: ["replicasets"]
+                    verbs: ["delete", "list"]
             tolerations:
               - key: node-role.kubernetes.io/control-plane
                 operator: Exists
