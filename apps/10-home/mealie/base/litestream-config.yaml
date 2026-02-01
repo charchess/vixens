@@ -8,6 +8,6 @@ data:
     dbs:
       - path: /app/data/mealie.db
         replicas:
-          - url: s3://$LITESTREAM_BUCKET/mealie/mealie.db
+          - url: s3://$LITESTREAM_BUCKET/mealie.db
             endpoint: $LITESTREAM_ENDPOINT
     addr: ":9090"

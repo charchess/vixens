@@ -8,7 +8,6 @@ resources:
   - pvc.yaml
   - statefulset.yaml
   - service.yaml
-  - infisical-litestream-shared.yaml
 labels:
   - pairs:
       app.kubernetes.io/name: mosquitto
