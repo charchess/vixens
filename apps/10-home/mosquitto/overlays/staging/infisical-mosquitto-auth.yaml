@@ -16,8 +16,8 @@ spec:
         projectSlug: vixens
         envSlug: staging
         secretsPath: /apps/10-home/mosquitto
+  managedSecretReference:
     secretName: mosquitto-password-file
     creationPolicy: Owner
     secretType: Opaque
-  managedSecretReference:
-    secretNamespace: overlays
+    secretNamespace: mosquitto
