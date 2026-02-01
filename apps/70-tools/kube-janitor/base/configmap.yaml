@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kube-janitor-rules
+data:
+  rules.yaml: |
+    # Clean up Failed/Succeeded Pods after 24h
+    - id: clean-pods-completed
+      resources:
+        - pods
+      jmespath: "status.phase == 'Succeeded' || status.phase == 'Failed'"
+      ttl: 24h
+
+    # Clean up Evicted Pods faster (1h)
+    - id: clean-pods-evicted
+      resources:
+        - pods
+      jmespath: "status.reason == 'Evicted'"
+      ttl: 1h
+
+    # Clean up old ReplicaSets (history) after 7 days
+    - id: clean-replicasets-history
+      resources:
+        - replicasets
+      jmespath: "spec.replicas == 0"
+      ttl: 7d

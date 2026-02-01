@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-janitor
+  labels:
+    app: kube-janitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kube-janitor
+  template:
+    metadata:
+      labels:
+        app: kube-janitor
+      annotations:
+        checksum/config: "init" # Will be managed by Kustomize if ConfigMapGenerator is used, but hardcoding for now
+    spec:
+      serviceAccountName: kube-janitor
+      priorityClassName: vixens-low
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: kube-janitor
+          image: hjacobs/kube-janitor:21.5.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --rules-file=/config/rules.yaml
+            - --interval=60
+            - --dry-run=false
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+      volumes:
+        - name: config
+          configMap:
+            name: kube-janitor-rules
