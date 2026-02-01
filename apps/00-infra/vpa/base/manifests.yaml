@@ -1895,7 +1895,7 @@ metadata:
 spec:
   containers:
     - name: tests
-      image: ghcr.io/cowboysysop/pytest:1.2.32
+      image: ghcr.io/cowboysysop/pytest:1.2.34
       imagePullPolicy: IfNotPresent
       volumeMounts:
         - name: tests
