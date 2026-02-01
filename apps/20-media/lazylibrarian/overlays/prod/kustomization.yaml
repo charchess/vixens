@@ -9,3 +9,10 @@ components:
   - ../../../../_shared/components/revision-history-limit
 
 patches:
+  - target:
+      kind: InfisicalSecret
+      name: lazylibrarian-secrets-sync
+    patch: |-
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
