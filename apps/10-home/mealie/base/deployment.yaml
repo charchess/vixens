@@ -42,7 +42,7 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/mealie/config /app/data \
+              rclone copy s3:$LITESTREAM_BUCKET/config /app/data \
                 --transfers 4 \
                 --exclude "*.db*" \
                 --exclude "*.log" \
@@ -53,7 +53,7 @@ spec:
                 || true
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: mealie-secrets
           resources:
             requests:
               cpu: 10m
@@ -78,7 +78,7 @@ spec:
             - /app/data/mealie.db
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: mealie-secrets
           resources:
             requests:
               cpu: 10m
@@ -125,7 +125,7 @@ spec:
               name: metrics
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: mealie-secrets
           resources:
             requests:
               cpu: 10m
@@ -155,7 +155,7 @@ spec:
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() {
-                rclone sync /app/data s3:$LITESTREAM_BUCKET/mealie/config \
+                rclone sync /app/data s3:$LITESTREAM_BUCKET/config \
                   --exclude "*.db*" \
                   --exclude "*.log" \
                   --exclude "backups/**" \
@@ -169,7 +169,7 @@ spec:
               done
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: mealie-secrets
           resources:
             requests:
               cpu: 10m
