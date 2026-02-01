@@ -20,4 +20,4 @@ spec:
     secretName: mosquitto-password-file
     creationPolicy: Owner
     secretType: Opaque
-    secretNamespace: overlays
+    secretNamespace: mosquitto
