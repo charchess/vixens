@@ -8,6 +8,6 @@ data:
     dbs:
       - path: /config/lazylibrarian.db
         replicas:
-          - url: s3://$LITESTREAM_BUCKET/lazylibrarian/lazylibrarian.db
+          - url: s3://$LITESTREAM_BUCKET/lazylibrarian.db
             endpoint: $LITESTREAM_ENDPOINT
     addr: ":9090"
