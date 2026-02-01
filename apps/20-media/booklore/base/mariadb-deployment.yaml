@@ -68,8 +68,8 @@ spec:
                 TIMESTAMP=$(date +%Y%m%d-%H%M)
                 mariadb-dump -h localhost -u booklore -p"$DB_PASSWORD" booklore > /tmp/booklore.sql 2>/dev/null
                 if [ $? -eq 0 ] && [ -s /tmp/booklore.sql ]; then
-                  rclone copyto /tmp/booklore.sql "s3:$LITESTREAM_BUCKET/booklore/mariadb/booklore-${TIMESTAMP}.sql"
-                  rclone copyto /tmp/booklore.sql "s3:$LITESTREAM_BUCKET/booklore/mariadb/booklore-latest.sql"
+                  rclone copyto /tmp/booklore.sql "s3:$LITESTREAM_BUCKET/mariadb/booklore-${TIMESTAMP}.sql"
+                  rclone copyto /tmp/booklore.sql "s3:$LITESTREAM_BUCKET/mariadb/booklore-latest.sql"
                 fi
                 rm -f /tmp/booklore.sql
                 sleep 900
@@ -82,7 +82,7 @@ spec:
                   key: DB_PASSWORD
           envFrom:
             - secretRef:
-                name: litestream-shared-secrets
+                name: booklore-secrets
           resources:
             requests:
               cpu: 10m
