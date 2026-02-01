@@ -1,0 +1,59 @@
+apiVersion: kyverno.io/v2beta1
+kind: ClusterCleanupPolicy
+metadata:
+  name: cleanup-failed-pods
+spec:
+  match:
+    any:
+    - resources:
+        kinds:
+          - Pod
+  conditions:
+    all:
+    - key: "{{ target.status.phase }}"
+      operator: Equals
+      value: Failed
+    - key: "{{ target.status.startTime }}"
+      operator: DurationGreaterThan
+      value: 24h
+  schedule: "*/30 * * * *"
+---
+apiVersion: kyverno.io/v2beta1
+kind: ClusterCleanupPolicy
+metadata:
+  name: cleanup-succeeded-pods
+spec:
+  match:
+    any:
+    - resources:
+        kinds:
+          - Pod
+  conditions:
+    all:
+    - key: "{{ target.status.phase }}"
+      operator: Equals
+      value: Succeeded
+    - key: "{{ target.status.startTime }}"
+      operator: DurationGreaterThan
+      value: 24h
+  schedule: "*/30 * * * *"
+---
+apiVersion: kyverno.io/v2beta1
+kind: ClusterCleanupPolicy
+metadata:
+  name: cleanup-old-replicasets
+spec:
+  match:
+    any:
+    - resources:
+        kinds:
+          - ReplicaSet
+  conditions:
+    all:
+    - key: "{{ target.spec.replicas }}"
+      operator: Equals
+      value: 0
+    - key: "{{ target.metadata.creationTimestamp }}"
+      operator: DurationGreaterThan
+      value: 7d
+  schedule: "@daily"
