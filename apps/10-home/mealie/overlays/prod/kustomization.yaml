@@ -6,6 +6,13 @@ resources:
   - ingress.yaml
 patches:
   - path: resources-patch.yaml
+  - target:
+      kind: InfisicalSecret
+      name: mealie-secrets-sync
+    patch: |-
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
 labels:
   - pairs:
       environment: prod
