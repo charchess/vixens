@@ -10,6 +10,6 @@ sinksConfig:
       url: "{{ env.DISCORD_WEBHOOK_URL }}"
 
 runner:
-  envFrom:
+  additional_env_froms:
     - secretRef:
         name: robusta-secrets
