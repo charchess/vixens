@@ -12,12 +12,3 @@ helmCharts:
     namespace: robusta
     valuesFile: values.yaml
     includeCRDs: true
-
-patches:
-  - target:
-      kind: InfisicalSecret
-      name: robusta-secrets-sync
-    patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
