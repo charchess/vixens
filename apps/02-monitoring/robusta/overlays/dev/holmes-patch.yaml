@@ -14,8 +14,10 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              echo "Interpolating ROBUSTA_UI_TOKEN..."
-              sed "s|{{ env.ROBUSTA_UI_TOKEN }}|$ROBUSTA_UI_TOKEN|g" /etc/robusta/config-src/active_playbooks.yaml > /etc/robusta/config/active_playbooks.yaml
+              echo "Interpolating secrets for Holmes..."
+              cp /etc/robusta/config-src/active_playbooks.yaml /etc/robusta/config/active_playbooks.yaml
+              sed -i "s|{{ env.ROBUSTA_UI_TOKEN }}|$ROBUSTA_UI_TOKEN|g" /etc/robusta/config/active_playbooks.yaml
+              sed -i "s|{{ env.ROBUSTA_ACCOUNT_ID }}|$ROBUSTA_ACCOUNT_ID|g" /etc/robusta/config/active_playbooks.yaml
               echo "Done."
           env:
             - name: ROBUSTA_UI_TOKEN
@@ -23,6 +25,11 @@ spec:
                 secretKeyRef:
                   name: robusta-secrets
                   key: ROBUSTA_UI_TOKEN
+            - name: ROBUSTA_ACCOUNT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: robusta-secrets
+                  key: ROBUSTA_ACCOUNT_ID
           volumeMounts:
             - name: playbooks-config-secret
               mountPath: /etc/robusta/config-src
