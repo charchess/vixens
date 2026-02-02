@@ -2,13 +2,13 @@ clusterName: "vixens-prod"
 
 globalConfig:
   account_id: "vixens-prod"
-  signing_key: "{{ env.ROBUSTA_SIGNING_KEY }}"
+  signing_key: "$ROBUSTA_SIGNING_KEY"
   prometheus_url: "http://prometheus-server.monitoring.svc.cluster.local"
 
 sinksConfig:
   - discord_sink:
       name: discord_sink
-      url: "{{ env.DISCORD_WEBHOOK_URL }}"
+      url: "$DISCORD_WEBHOOK_URL"
 
 runner:
   envFrom:
