@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: robusta-holmes
+spec:
+  template:
+    spec:
+      volumes:
+        - name: playbooks-config-processed
+          emptyDir: {}
+      initContainers:
+        - name: config-interpolator
+          image: busybox
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Interpolating ROBUSTA_UI_TOKEN..."
+              sed "s|{{ env.ROBUSTA_UI_TOKEN }}|$ROBUSTA_UI_TOKEN|g" /etc/robusta/config-src/active_playbooks.yaml > /etc/robusta/config/active_playbooks.yaml
+              echo "Done."
+          env:
+            - name: ROBUSTA_UI_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: robusta-secrets
+                  key: ROBUSTA_UI_TOKEN
+          volumeMounts:
+            - name: playbooks-config-secret
+              mountPath: /etc/robusta/config-src
+            - name: playbooks-config-processed
+              mountPath: /etc/robusta/config
+      containers:
+        - name: holmes
+          volumeMounts:
+            - name: playbooks-config-processed
+              mountPath: /etc/robusta/config
