@@ -9,7 +9,7 @@ runner:
         name: robusta-secrets
   additional_init_containers:
     - name: config-interpolator
-      image: alpine:3.18
+      image: alpine:3.23
       command: ["sh", "-c"]
       args:
         - |
