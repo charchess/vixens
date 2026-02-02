@@ -1,0 +1,12 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: firefly-iii
+  namespace: databases
+spec:
+  cluster:
+    name: postgresql-shared
+  name: firefly_iii
+  owner: firefly
+  ensure: present
