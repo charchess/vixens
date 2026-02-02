@@ -15,43 +15,8 @@ helmCharts:
     includeCRDs: true
 
 patches:
-  - target:
+  - path: deployment-patch.yaml
+    target:
       kind: Deployment
       name: robusta-deployment-runner
-    patch: |-
-      - op: add
-        path: /spec/template/spec/initContainers
-        value:
-          - name: config-interpolator
-            image: bhgedigital/envsubst:latest
-            command: ["sh", "-c"]
-            args:
-              - |
-                echo "Interpolating Robusta config..."
-                envsubst < /config-template/active_playbooks.yaml.tmpl > /config-final/active_playbooks.yaml
-                echo "Done."
-            envFrom:
-              - secretRef:
-                  name: robusta-secrets
-            volumeMounts:
-              - name: config-template
-                mountPath: /config-template
-              - name: config-final
-                mountPath: /config-final
-      - op: add
-        path: /spec/template/spec/volumes/-
-        value:
-          name: config-template
-          configMap:
-            name: robusta-config-template
-      - op: add
-        path: /spec/template/spec/volumes/-
-        value:
-          name: config-final
-          emptyDir: {}
-      - op: add
-        path: /spec/template/spec/containers/0/volumeMounts/-
-        value:
-          name: config-final
-          mountPath: /etc/robusta/config/active_playbooks.yaml
-          subPath: active_playbooks.yaml
+      namespace: robusta
