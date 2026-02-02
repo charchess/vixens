@@ -1,8 +1,11 @@
 ---
 clusterName: "vixens-dev"
 
+enablePlatformPlaybooks: true
+
 globalConfig:
   signing_key: "{{ env.ROBUSTA_SIGNING_KEY }}"
+  token: "{{ env.ROBUSTA_UI_TOKEN }}"
 
 sinksConfig:
   - discord_sink:
