@@ -9,12 +9,6 @@ spec:
     path: apps/02-monitoring/robusta/overlays/prod
     repoURL: https://github.com/charchess/vixens
     targetRevision: prod-stable
-    helm:
-      parameters:
-        - name: "sinksConfig[0].discord_sink.url"
-          value: "https://discord.com/api/webhooks/1467870777364709438/GgdrHwH0YpMxs5L_7wHH-9CUDQI2Ma3MPVwnQ1CaqywBXta6MZ72EYuJfHQbjcrM4-Iy"
-        - name: "globalConfig.signing_key"
-          value: "912A5vk8QOl39RUniVcNkGh0eAcX4oq5kyueohxhaEg="
   destination:
     server: https://kubernetes.default.svc
     namespace: robusta
