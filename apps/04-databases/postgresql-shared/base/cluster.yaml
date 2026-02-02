@@ -54,6 +54,11 @@ spec:
         login: true
         passwordSecret:
           name: penpot-postgresql-credentials
+      - name: firefly
+        ensure: present
+        login: true
+        passwordSecret:
+          name: firefly-iii-postgresql-credentials
   postgresql:
     pg_hba:
       - host all postgres all trust
