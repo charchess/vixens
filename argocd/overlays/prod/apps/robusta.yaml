@@ -6,20 +6,11 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://robusta-charts.storage.googleapis.com
-    chart: robusta
-    targetRevision: 0.15.0
-    helm:
-      values: |
-        clusterName: "vixens-prod"
-        globalConfig:
-          account_id: "vixens-prod"
-          signing_key: "912A5vk8QOl39RUniVcNkGh0eAcX4oq5kyueohxhaEg="
-          prometheus_url: "http://prometheus-server.monitoring.svc.cluster.local"
-        sinksConfig:
-          - discord_sink:
-              name: main_discord_sink
-              url: "https://discord.com/api/webhooks/1467870777364709438/GgdrHwH0YpMxs5L_7wHH-9CUDQI2Ma3MPVwnQ1CaqywBXta6MZ72EYuJfHQbjcrM4-Iy"
+    path: apps/02-monitoring/robusta/overlays/prod
+    repoURL: https://github.com/charchess/vixens
+    targetRevision: prod-stable
+    kustomize:
+      buildOptions: --enable-helm
   destination:
     server: https://kubernetes.default.svc
     namespace: robusta
@@ -29,3 +20,4 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
