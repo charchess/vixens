@@ -1,0 +1,94 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firefly-iii
+  labels:
+    app.kubernetes.io/name: firefly-iii
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: firefly-iii
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: firefly-iii
+      annotations:
+        reloader.stakater.com/auto: "true"
+    spec:
+      priorityClassName: vixens-low
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: firefly-iii
+          image: fireflyiii/core:version-6.1.22
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: APP_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: firefly-iii-secrets
+                  key: APP_KEY
+            - name: APP_URL
+              value: "https://firefly.truxonline.com"
+            - name: TRUSTED_PROXIES
+              value: "*"
+            - name: DB_CONNECTION
+              value: pgsql
+            - name: DB_HOST
+              value: postgresql-shared-rw.databases.svc.cluster.local
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_DATABASE
+              value: firefly_iii
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: firefly-iii-postgresql-credentials
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: firefly-iii-postgresql-credentials
+                  key: password
+            - name: APP_ENV
+              value: local
+            - name: APP_DEBUG
+              value: "false"
+            - name: SITE_OWNER
+              value: "admin@truxonline.com"
+            - name: TZ
+              value: "Europe/Paris"
+          volumeMounts:
+            - name: static
+              mountPath: /var/www/html/storage/upload
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+      volumes:
+        - name: static
+          persistentVolumeClaim:
+            claimName: firefly-iii-static
