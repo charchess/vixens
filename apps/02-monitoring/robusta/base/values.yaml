@@ -1,0 +1,18 @@
+clusterName: "vixens-prod"
+
+globalConfig:
+  signing_key: "{{ .Values.robusta_signing_key }}"
+
+sinksConfig:
+  - discord_sink:
+      name: discord_sink
+      url: "{{ .Values.discord_webhook_url }}"
+
+# Configuration des automatisations de base
+playbookRepos:
+  robusta_playbooks:
+    url: "https://github.com/robusta-dev/robusta-playbooks.git"
+
+# On utilise le Prometheus interne
+prometheus:
+  url: "http://prometheus-server.monitoring.svc.cluster.local"
