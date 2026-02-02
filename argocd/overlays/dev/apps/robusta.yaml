@@ -9,6 +9,8 @@ spec:
     path: apps/02-monitoring/robusta/overlays/dev
     repoURL: https://github.com/charchess/vixens
     targetRevision: main
+    kustomize:
+      buildOptions: --enable-helm
   destination:
     server: https://kubernetes.default.svc
     namespace: robusta
