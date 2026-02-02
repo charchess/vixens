@@ -2,17 +2,28 @@
 clusterName: "vixens-prod"
 
 enablePlatformPlaybooks: true
+enableHolmesGPT: true
+enabledManagedConfiguration: true
 
 globalConfig:
   signing_key: "{{ env.ROBUSTA_SIGNING_KEY }}"
-  token: "{{ env.ROBUSTA_UI_TOKEN }}"
+  account_id: "{{ env.ROBUSTA_ACCOUNT_ID }}"
 
 sinksConfig:
+  - robusta_sink:
+      name: robusta_ui_sink
+      token: "{{ env.ROBUSTA_UI_TOKEN }}"
   - discord_sink:
       name: main_discord_sink
       url: "{{ env.DISCORD_WEBHOOK_URL }}"
 
 runner:
+  sendAdditionalTelemetry: true
   additional_env_froms:
     - secretRef:
         name: robusta-secrets
+
+holmes:
+  additionalEnvVars:
+    - name: ROBUSTA_AI
+      value: "true"
