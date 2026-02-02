@@ -13,10 +13,3 @@ helmCharts:
     namespace: robusta
     valuesFile: values.yaml
     includeCRDs: true
-
-patches:
-  - path: deployment-patch.yaml
-    target:
-      kind: Deployment
-      name: robusta-deployment-runner
-      namespace: robusta
