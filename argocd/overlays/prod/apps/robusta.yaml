@@ -10,7 +10,7 @@ spec:
     repoURL: https://github.com/charchess/vixens
     targetRevision: prod-stable
     kustomize:
-      buildOptions: "--enable-helm"
+      buildOptions: --enable-helm
   destination:
     server: https://kubernetes.default.svc
     namespace: robusta

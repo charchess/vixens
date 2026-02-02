@@ -32,3 +32,18 @@ holmes:
         secretKeyRef:
           name: robusta-secrets
           key: ROBUSTA_UI_TOKEN
+    - name: ROBUSTA_ACCOUNT_ID
+      valueFrom:
+        secretKeyRef:
+          name: robusta-secrets
+          key: ROBUSTA_ACCOUNT_ID
+    - name: ROBUSTA_SIGNING_KEY
+      valueFrom:
+        secretKeyRef:
+          name: robusta-secrets
+          key: ROBUSTA_SIGNING_KEY
+    - name: DISCORD_WEBHOOK_URL
+      valueFrom:
+        secretKeyRef:
+          name: robusta-secrets
+          key: DISCORD_WEBHOOK_URL
