@@ -1,20 +1,12 @@
 clusterName: "vixens-prod"
 
 globalConfig:
-  account_id: "vixens-prod"
-  signing_key: "$ROBUSTA_SIGNING_KEY"
-  prometheus_url: "http://prometheus-server.monitoring.svc.cluster.local"
-
-sinksConfig:
-  - slack_sink:
-      name: discord_via_slack_sink
-      url: "${DISCORD_WEBHOOK_URL}/slack"
+  signing_key: "placeholder"
 
 runner:
   envFrom:
     - secretRef:
         name: robusta-secrets
-  # UTILISATION DU PARAMÈTRE NATIF DU CHART
   additional_init_containers:
     - name: config-interpolator
       image: alpine:3.18
@@ -33,16 +25,12 @@ runner:
           mountPath: /config-template
         - name: config-final
           mountPath: /config-final
-  
-  # Montage des volumes
   additional_volumes:
     - name: config-template
       configMap:
         name: robusta-config-template
     - name: config-final
       emptyDir: {}
-  
-  # Montage du fichier final dans le runner
   additional_volume_mounts:
     - name: config-final
       mountPath: /etc/robusta/config/active_playbooks.yaml
