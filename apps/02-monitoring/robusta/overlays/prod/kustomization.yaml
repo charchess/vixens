@@ -5,6 +5,10 @@ resources:
   - ../../base
 
 patches:
+  - path: holmes-patch.yaml
+    target:
+      kind: Deployment
+      name: robusta-holmes
   - target:
       kind: InfisicalSecret
       name: robusta-secrets-sync
