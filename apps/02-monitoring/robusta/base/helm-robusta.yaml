@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: robusta-deployment
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://robusta-charts.storage.googleapis.com
+    chart: robusta
+    targetRevision: 0.15.0
+    helm:
+      values: |
+        clusterName: "vixens-prod"
+        globalConfig:
+          # Les variables seront prises depuis l'envFrom si possible, 
+          # mais Robusta préfère souvent les voir dans sa config.
+          # On va utiliser une astuce : pointer vers les variables d'env.
+          signing_key: "$ROBUSTA_SIGNING_KEY"
+        sinksConfig:
+          - discord_sink:
+              name: discord_sink
+              url: "$DISCORD_WEBHOOK_URL"
+        prometheus:
+          url: "http://prometheus-server.monitoring.svc.cluster.local"
+        
+        # Injection des secrets Infisical dans les containers Robusta
+        runner:
+          envFrom:
+            - secretRef:
+                name: robusta-secrets
+        forwarder:
+          envFrom:
+            - secretRef:
+                name: robusta-secrets
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: robusta
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
