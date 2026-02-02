@@ -51,12 +51,12 @@ spec:
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: firefly-iii-postgresql-credentials
+                  name: firefly-iii-secrets
                   key: username
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: firefly-iii-postgresql-credentials
+                  name: firefly-iii-secrets
                   key: password
             - name: APP_ENV
               value: local
