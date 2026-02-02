@@ -14,6 +14,11 @@ helmCharts:
     includeCRDs: true
 
 patches:
+  - path: ../../base/deployment-patch.yaml
+    target:
+      kind: Deployment
+      # On cible le nom exact généré par le Chart Helm
+      name: robusta-deployment-runner
   - target:
       kind: InfisicalSecret
       name: robusta-secrets-sync
