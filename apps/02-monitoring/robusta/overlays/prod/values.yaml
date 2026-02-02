@@ -1,0 +1,11 @@
+clusterName: "vixens-prod"
+globalConfig:
+  account_id: "vixens-prod-6f03752b"
+  signing_key: "912A5vk8QOl39RUniVcNkGh0eAcX4oq5kyueohxhaEg="
+  prometheus_url: "http://prometheus-server.monitoring.svc.cluster.local"
+sinksConfig:
+  - webhook_sink:
+      name: discord_webhook
+      url: "https://discord.com/api/webhooks/1467870777364709438/GgdrHwH0YpMxs5L_7wHH-9CUDQI2Ma3MPVwnQ1CaqywBXta6MZ72EYuJfHQbjcrM4-Iy"
+      headers:
+        User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
