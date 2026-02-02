@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: finance
+  labels:
+    vixens.lab/environment: shared
+    vixens.lab/managed-by: argocd
+    pod-security.kubernetes.io/enforce: baseline
