@@ -27,3 +27,8 @@ holmes:
   additionalEnvVars:
     - name: ROBUSTA_AI
       value: "true"
+    - name: ROBUSTA_UI_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: robusta-secrets
+          key: ROBUSTA_UI_TOKEN
