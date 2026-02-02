@@ -12,22 +12,3 @@ helmCharts:
     namespace: robusta
     valuesFile: values.yaml
     includeCRDs: true
-
-patches:
-  - target:
-      kind: Deployment
-      name: robusta-deployment-runner
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/command
-        value: ["/bin/bash", "-c"]
-      - op: replace
-        path: /spec/template/spec/containers/0/args
-        value: 
-          - |
-            echo "Interpolating secrets..."
-            cp /etc/robusta/config/active_playbooks.yaml /tmp/active_playbooks.yaml
-            sed -i "s|\$DISCORD_WEBHOOK_URL|$DISCORD_WEBHOOK_URL|g" /tmp/active_playbooks.yaml
-            sed -i "s|\$ROBUSTA_SIGNING_KEY|$ROBUSTA_SIGNING_KEY|g" /tmp/active_playbooks.yaml
-            export PLAYBOOKS_CONFIG_FILE_PATH=/tmp/active_playbooks.yaml
-            exec python3 -m robusta.runner
