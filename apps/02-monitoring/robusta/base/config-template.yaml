@@ -11,6 +11,6 @@ data:
       signing_key: "$ROBUSTA_SIGNING_KEY"
       prometheus_url: "http://prometheus-server.monitoring.svc.cluster.local"
     sinksConfig:
-      - discord_sink:
-          name: main_discord_sink
-          url: "$DISCORD_WEBHOOK_URL"
+      - slack_sink:
+          name: discord_via_slack_sink
+          url: "${DISCORD_WEBHOOK_URL}/slack"

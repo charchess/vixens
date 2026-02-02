@@ -11,7 +11,6 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
-              # On installe envsubst (via gettext)
               apk add --no-cache gettext
               echo "Interpolating Robusta config..."
               envsubst < /config-template/active_playbooks.yaml.tmpl > /config-final/active_playbooks.yaml

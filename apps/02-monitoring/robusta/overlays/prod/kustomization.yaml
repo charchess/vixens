@@ -4,6 +4,11 @@ resources:
   - ../../base
 
 patches:
+  - path: ../../base/deployment-patch.yaml
+    target:
+      kind: Deployment
+      name: robusta-deployment-runner
+      namespace: robusta
   - target:
       kind: InfisicalSecret
       name: robusta-secrets-sync
