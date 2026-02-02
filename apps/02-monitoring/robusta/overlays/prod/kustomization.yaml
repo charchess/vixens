@@ -1,7 +1,17 @@
+---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../base
+
+helmCharts:
+  - name: robusta
+    repo: https://robusta-charts.storage.googleapis.com
+    version: 0.15.0
+    releaseName: robusta
+    namespace: robusta
+    valuesFile: values.yaml
+    includeCRDs: true
 
 patches:
   - path: ../../base/deployment-patch.yaml

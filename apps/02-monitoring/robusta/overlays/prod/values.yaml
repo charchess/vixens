@@ -1,0 +1,15 @@
+---
+clusterName: "vixens-prod"
+
+globalConfig:
+  signing_key: "{{ env.ROBUSTA_SIGNING_KEY }}"
+
+sinksConfig:
+  - discord_sink:
+      name: main_discord_sink
+      url: "{{ env.DISCORD_WEBHOOK_URL }}"
+
+runner:
+  envFrom:
+    - secretRef:
+        name: robusta-secrets
