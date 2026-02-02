@@ -5,20 +5,12 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  sources:
-    - repoURL: https://robusta-charts.storage.googleapis.com
-      chart: robusta
-      targetRevision: 0.15.0
-      helm:
-        valueFiles:
-          - $vixens/apps/02-monitoring/robusta/overlays/dev/values.yaml
-        skipCrds: false
-    - repoURL: https://github.com/charchess/vixens
-      targetRevision: main
-      ref: vixens
-    - repoURL: https://github.com/charchess/vixens
-      targetRevision: main
-      path: apps/02-monitoring/robusta/overlays/dev
+  source:
+    path: apps/02-monitoring/robusta/overlays/dev
+    repoURL: https://github.com/charchess/vixens
+    targetRevision: main
+    kustomize:
+      buildOptions: "--enable-helm"
   destination:
     server: https://kubernetes.default.svc
     namespace: robusta
