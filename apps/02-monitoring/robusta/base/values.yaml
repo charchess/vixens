@@ -1,18 +1,17 @@
-clusterName: "vixens-cluster"
+clusterName: "vixens-prod"
 
 globalConfig:
   account_id: "vixens-prod"
-  # Robusta résoudra cette variable depuis son environnement au démarrage
-  signing_key: "{{ env.ROBUSTA_SIGNING_KEY }}"
+  signing_key: "$ROBUSTA_SIGNING_KEY"
   prometheus_url: "http://prometheus-server.monitoring.svc.cluster.local"
 
 sinksConfig:
-  - discord_sink:
-      name: discord_sink
-      # Idem pour le webhook
-      url: "{{ env.DISCORD_WEBHOOK_URL }}"
+  - webhook_sink:
+      name: discord_webhook
+      url: "$DISCORD_WEBHOOK_URL"
+      headers:
+        User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 
-# Injection des secrets Infisical dans le container Runner
 runner:
   envFrom:
     - secretRef:
