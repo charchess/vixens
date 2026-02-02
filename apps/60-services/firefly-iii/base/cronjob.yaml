@@ -1,0 +1,47 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: firefly-iii-cron
+spec:
+  schedule: "0 3 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: firefly-iii-cron
+              image: fireflyiii/core:version-6.1.22
+              command:
+                - php
+                - artisan
+                - firefly-iii:cron
+              envFrom:
+                - secretRef:
+                    name: firefly-iii-postgresql-credentials
+              env:
+                - name: APP_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: firefly-iii-secrets
+                      key: APP_KEY
+                - name: DB_CONNECTION
+                  value: pgsql
+                - name: DB_HOST
+                  value: postgresql-shared-rw.databases.svc.cluster.local
+                - name: DB_DATABASE
+                  value: firefly_iii
+                - name: DB_PORT
+                  value: "5432"
+                - name: DB_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: firefly-iii-postgresql-credentials
+                      key: username
+                - name: DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: firefly-iii-postgresql-credentials
+                      key: password

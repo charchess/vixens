@@ -5,17 +5,17 @@ metadata:
 spec:
   match:
     any:
-    - resources:
-        kinds:
-          - Pod
+      - resources:
+          kinds:
+            - Pod
   conditions:
     all:
-    - key: "{{ target.status.phase }}"
-      operator: Equals
-      value: Failed
-    - key: "{{ target.status.startTime }}"
-      operator: DurationGreaterThan
-      value: 24h
+      - key: "{{ target.status.phase }}"
+        operator: Equals
+        value: Failed
+      - key: "{{ target.status.startTime }}"
+        operator: DurationGreaterThan
+        value: 24h
   schedule: "*/30 * * * *"
 ---
 apiVersion: kyverno.io/v2beta1
@@ -25,17 +25,17 @@ metadata:
 spec:
   match:
     any:
-    - resources:
-        kinds:
-          - Pod
+      - resources:
+          kinds:
+            - Pod
   conditions:
     all:
-    - key: "{{ target.status.phase }}"
-      operator: Equals
-      value: Succeeded
-    - key: "{{ target.status.startTime }}"
-      operator: DurationGreaterThan
-      value: 24h
+      - key: "{{ target.status.phase }}"
+        operator: Equals
+        value: Succeeded
+      - key: "{{ target.status.startTime }}"
+        operator: DurationGreaterThan
+        value: 24h
   schedule: "*/30 * * * *"
 ---
 apiVersion: kyverno.io/v2beta1
@@ -45,15 +45,15 @@ metadata:
 spec:
   match:
     any:
-    - resources:
-        kinds:
-          - ReplicaSet
+      - resources:
+          kinds:
+            - ReplicaSet
   conditions:
     all:
-    - key: "{{ target.spec.replicas }}"
-      operator: Equals
-      value: 0
-    - key: "{{ target.metadata.creationTimestamp }}"
-      operator: DurationGreaterThan
-      value: 7d
+      - key: "{{ target.spec.replicas }}"
+        operator: Equals
+        value: 0
+      - key: "{{ target.metadata.creationTimestamp }}"
+        operator: DurationGreaterThan
+        value: 7d
   schedule: "@daily"

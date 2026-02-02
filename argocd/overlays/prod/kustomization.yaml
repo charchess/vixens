@@ -50,6 +50,7 @@ resources:
   - apps/media-shared-secrets.yaml
   - apps/radarr.yaml
   - apps/frigate.yaml
+  - apps/firefly-iii.yaml
   - apps/lidarr.yaml
   - apps/lazylibrarian.yaml
   - apps/booklore.yaml

@@ -86,6 +86,7 @@ resources:
   - apps/contacts.yaml
   - apps/external-dns-unifi.yaml
   - apps/external-dns-unifi-secrets.yaml
+  - apps/firefly-iii.yaml
   - apps/mealie.yaml
   - apps/nocodb.yaml
   - apps/vikunja.yaml
