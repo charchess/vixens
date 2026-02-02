@@ -1,18 +1,19 @@
-clusterName: "vixens-prod"
+clusterName: "vixens-cluster"
 
 globalConfig:
-  signing_key: "{{ .Values.robusta_signing_key }}"
+  account_id: "vixens-prod"
+  # Robusta résoudra cette variable depuis son environnement au démarrage
+  signing_key: "{{ env.ROBUSTA_SIGNING_KEY }}"
+  prometheus_url: "http://prometheus-server.monitoring.svc.cluster.local"
 
 sinksConfig:
   - discord_sink:
       name: discord_sink
-      url: "{{ .Values.discord_webhook_url }}"
+      # Idem pour le webhook
+      url: "{{ env.DISCORD_WEBHOOK_URL }}"
 
-# Configuration des automatisations de base
-playbookRepos:
-  robusta_playbooks:
-    url: "https://github.com/robusta-dev/robusta-playbooks.git"
-
-# On utilise le Prometheus interne
-prometheus:
-  url: "http://prometheus-server.monitoring.svc.cluster.local"
+# Injection des secrets Infisical dans le container Runner
+runner:
+  envFrom:
+    - secretRef:
+        name: robusta-secrets
