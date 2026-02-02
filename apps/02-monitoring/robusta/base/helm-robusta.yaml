@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: robusta-deployment
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://robusta-charts.storage.googleapis.com
+    chart: robusta
+    targetRevision: 0.15.0
+    helm:
+      values: |
+        clusterName: "vixens-prod"
+        globalConfig:
+          account_id: "vixens-prod-id"
+          signing_key: "912A5vk8QOl39RUniVcNkGh0eAcX4oq5kyueohxhaEg="
+        sinksConfig:
+          - discord_sink:
+              name: discord_sink
+              url: "https://discord.com/api/webhooks/1467870777364709438/GgdrHwH0YpMxs5L_7wHH-9CUDQI2Ma3MPVwnQ1CaqywBXta6MZ72EYuJfHQbjcrM4-Iy"
+        prometheus:
+          url: "http://prometheus-server.monitoring.svc.cluster.local"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: robusta
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
