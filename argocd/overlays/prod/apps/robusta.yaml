@@ -10,7 +10,8 @@ spec:
     repoURL: https://github.com/charchess/vixens
     targetRevision: prod-stable
     kustomize:
-      buildOptions: --enable-helm
+      # FLAG CRITIQUE pour permettre à Kustomize d'appeler Helm
+      buildOptions: "--enable-helm"
   destination:
     server: https://kubernetes.default.svc
     namespace: robusta
