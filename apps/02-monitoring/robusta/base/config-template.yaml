@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: robusta-config-template
+  namespace: robusta
+data:
+  active_playbooks.yaml.tmpl: |
+    clusterName: "vixens-prod"
+    globalConfig:
+      account_id: "vixens-prod"
+      signing_key: "$ROBUSTA_SIGNING_KEY"
+      prometheus_url: "http://prometheus-server.monitoring.svc.cluster.local"
+    sinksConfig:
+      - discord_sink:
+          name: main_discord_sink
+          url: "$DISCORD_WEBHOOK_URL"
