@@ -70,6 +70,7 @@ resources:
   - apps/adguard-home.yaml
   - apps/netbird.yaml
   - apps/netvisor.yaml
+  - apps/nocodb.yaml
   - apps/authentik.yaml
   - apps/netbox.yaml
   - apps/loki.yaml
