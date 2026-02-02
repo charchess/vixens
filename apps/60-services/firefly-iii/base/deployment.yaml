@@ -45,7 +45,7 @@ spec:
               export RCLONE_CONFIG_S3_FORCE_PATH_STYLE=true
               export RCLONE_CONFIG_S3_REGION=us-east-1
               export RCLONE_CONFIG_S3_DISABLE_SSL=true
-              rclone copy s3:$(LITESTREAM_BUCKET)/upload /upload --transfers 4 --ignore-existing || true
+              rclone copy s3:$LITESTREAM_BUCKET/upload /upload --transfers 4 --ignore-existing || true
           envFrom:
             - secretRef:
                 name: firefly-iii-secrets
@@ -136,7 +136,7 @@ spec:
               export RCLONE_CONFIG_S3_REGION=us-east-1
               export RCLONE_CONFIG_S3_DISABLE_SSL=true
               sync_s3() { 
-                rclone sync /upload s3:$(LITESTREAM_BUCKET)/upload
+                rclone sync /upload s3:$LITESTREAM_BUCKET/upload
               }
               while true; do 
                 sync_s3; 
