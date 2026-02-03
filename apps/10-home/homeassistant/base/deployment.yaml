@@ -9,6 +9,7 @@ metadata:
     secret.reloader.stakater.com/reload: homeassistant-config
 spec:
   replicas: 1
+  revisionHistoryLimit: 3
   strategy:
     type: Recreate
   selector:
@@ -166,13 +167,25 @@ spec:
             - name: homeassistant-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 10
           resources:
             requests:
-              cpu: 10m
-              memory: 64Mi
+              cpu: 100m
+              memory: 1Gi
             limits:
               cpu: 100m
-              memory: 128Mi
+              memory: 1Gi
         - name: config-syncer
           image: rclone/rclone:1.73
           securityContext:
