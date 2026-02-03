@@ -2,7 +2,7 @@
 clusterName: "vixens-dev"
 
 enablePlatformPlaybooks: true
-enableHolmesGPT: true
+enableHolmesGPT: false # On le gère à part
 enabledManagedConfiguration: true
 
 globalConfig:
@@ -22,8 +22,3 @@ runner:
   additional_env_froms:
     - secretRef:
         name: robusta-secrets
-
-holmes:
-  additionalEnvVars:
-    - name: ROBUSTA_AI
-      value: "true"
