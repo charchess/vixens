@@ -12,8 +12,8 @@ spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: main
-    path: apps/70-tools/vikunja/overlays/dev
+    targetRevision: prod-stable
+    path: apps/70-tools/vikunja/overlays/prod
   destination:
     server: https://kubernetes.default.svc
     namespace: tools
