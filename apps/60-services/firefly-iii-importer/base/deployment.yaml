@@ -27,7 +27,9 @@ spec:
             - name: APP_URL
               value: "https://importer.truxonline.com"
             - name: TRUSTED_PROXIES
-              value: "*"
+              value: "**"
+            - name: HTTPS_ONLY
+              value: "true"
             - name: TZ
               value: "Europe/Paris"
             - name: IGNORE_DUPLICATE_ERRORS
