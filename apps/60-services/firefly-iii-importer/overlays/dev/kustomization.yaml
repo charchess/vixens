@@ -22,5 +22,8 @@ patches:
       name: firefly-iii-importer
     patch: |-
       - op: replace
+        path: /spec/template/spec/containers/0/env/0/value
+        value: "https://firefly.dev.truxonline.com"
+      - op: replace
         path: /spec/template/spec/containers/0/env/1/value
         value: "https://importer.dev.truxonline.com"

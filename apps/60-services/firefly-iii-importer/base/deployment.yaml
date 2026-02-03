@@ -21,7 +21,7 @@ spec:
               name: http
           env:
             - name: FIREFLY_III_URL
-              value: "http://firefly-iii.finance.svc.cluster.local"
+              value: "https://firefly.truxonline.com"
             - name: VANITY_URL
               value: "https://importer.truxonline.com"
             - name: TZ
