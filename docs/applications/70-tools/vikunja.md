@@ -4,7 +4,7 @@
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
 | Dev           | [x]     | [x]       | [ ]   | v0.24.2 |
-| Prod          | [x]     | [x]       | [ ]   | v0.24.2 |
+| Prod          | [x]     | [x]       | [x]   | v0.24.2 |
 
 ## Validation
 **URL :** https://vikunja.[env].truxonline.com
