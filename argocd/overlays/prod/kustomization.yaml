@@ -89,4 +89,5 @@ resources:
   - apps/external-dns-unifi-secrets.yaml
   - apps/mariadb-shared.yaml
   - apps/penpot.yaml
+  - apps/vikunja.yaml
   - apps/robusta.yaml
