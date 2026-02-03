@@ -5,12 +5,23 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  source:
-    path: apps/02-monitoring/robusta/overlays/prod
-    repoURL: https://github.com/charchess/vixens
-    targetRevision: prod-stable
-    kustomize:
-      buildOptions: --enable-helm
+  sources:
+    # Source 1: The official Robusta Helm Chart
+    - repoURL: https://robusta-charts.storage.googleapis.com
+      chart: robusta
+      targetRevision: 0.15.0
+      helm:
+        valueFiles:
+          - $vixens/apps/02-monitoring/robusta/overlays/prod/values.yaml
+        skipCrds: false
+    # Source 2: Our Git repository (aliased as $vixens)
+    - repoURL: https://github.com/charchess/vixens
+      targetRevision: prod-stable
+      ref: vixens
+    # Source 3: The Kustomize overlay (Namespace, InfisicalSecret, Holmes)
+    - repoURL: https://github.com/charchess/vixens
+      targetRevision: prod-stable
+      path: apps/02-monitoring/robusta/overlays/prod
   destination:
     server: https://kubernetes.default.svc
     namespace: robusta
