@@ -1,0 +1,120 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: robusta-holmes-service-account
+  namespace: robusta
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: robusta-holmes-cluster-role
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "daemonsets", "deployments", "events", "namespaces", "persistentvolumes", "persistentvolumeclaims", "pods", "pods/status", "pods/log", "replicasets", "replicationcontrollers", "services", "serviceaccounts", "endpoints"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apiregistration.k8s.io"]
+    resources: ["apiservices"]
+    verbs: ["get", "list"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["clusterroles", "clusterrolebindings"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: robusta-holmes-cluster-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: robusta-holmes-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: robusta-holmes-service-account
+    namespace: robusta
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: robusta-holmes
+  namespace: robusta
+  labels:
+    app: holmes
+spec:
+  selector:
+    app: holmes
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 5050
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: robusta-holmes
+  namespace: robusta
+  labels:
+    app: holmes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: holmes
+  template:
+    metadata:
+      labels:
+        app: holmes
+    spec:
+      serviceAccountName: robusta-holmes-service-account
+      volumes:
+        - name: playbooks-config-secret
+          secret:
+            secretName: robusta-playbooks-config-secret
+            optional: true
+        - name: playbooks-config-processed
+          emptyDir: {}
+      initContainers:
+        - name: config-interpolator
+          image: busybox
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Interpolating secrets for Holmes..."
+              cp /etc/robusta/config-src/active_playbooks.yaml /etc/robusta/config/active_playbooks.yaml
+              sed -i "s|{{ env.ROBUSTA_UI_TOKEN }}|$ROBUSTA_UI_TOKEN|g" /etc/robusta/config/active_playbooks.yaml
+              sed -i "s|{{ env.ROBUSTA_ACCOUNT_ID }}|$ROBUSTA_ACCOUNT_ID|g" /etc/robusta/config/active_playbooks.yaml
+              echo "Done."
+          env:
+            - name: ROBUSTA_UI_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: robusta-secrets
+                  key: ROBUSTA_UI_TOKEN
+            - name: ROBUSTA_ACCOUNT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: robusta-secrets
+                  key: ROBUSTA_ACCOUNT_ID
+          volumeMounts:
+            - name: playbooks-config-secret
+              mountPath: /etc/robusta/config-src
+            - name: playbooks-config-processed
+              mountPath: /etc/robusta/config
+      containers:
+        - name: holmes
+          image: "us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:0.2.6"
+          imagePullPolicy: Always
+          command: ["python3", "-u", "server.py"]
+          env:
+            - name: LOG_LEVEL
+              value: INFO
+            - name: ALLOWED_TOOLSETS
+              value: kubernetes/core
+            - name: ROBUSTA_AI
+              value: "true"
+          volumeMounts:
+            - name: playbooks-config-processed
+              mountPath: /etc/robusta/config
