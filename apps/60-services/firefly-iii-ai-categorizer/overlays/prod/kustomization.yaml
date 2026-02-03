@@ -6,7 +6,7 @@ resources:
 patches:
   - target:
       kind: InfisicalSecret
-      name: firefly-iii-bot-secrets-sync
+      name: firefly-iii-ai-categorizer-secrets-sync
     patch: |-
       - op: replace
         path: /spec/authentication/universalAuth/secretsScope/envSlug
