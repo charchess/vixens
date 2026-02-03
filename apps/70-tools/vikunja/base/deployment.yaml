@@ -23,7 +23,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: vikunja
-          image: vikunja/vikunja:0.24.2
+          image: vikunja/vikunja:0.24.6
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3456
