@@ -54,7 +54,7 @@ spec:
               mountPath: /upload
       containers:
         - name: firefly-iii
-          image: fireflyiii/core:version-6.1.22
+          image: fireflyiii/core:version-6.2.9
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
