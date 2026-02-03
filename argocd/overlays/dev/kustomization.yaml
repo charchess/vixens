@@ -94,5 +94,4 @@ resources:
   - apps/penpot.yaml
   - apps/robusta.yaml
   - apps/firefly-iii-importer.yaml
-  - apps/firefly-iii-bot.yaml
-  - apps/firefly-iii-ai-categorizer.yaml
+
