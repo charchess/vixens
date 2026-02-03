@@ -15,10 +15,10 @@ spec:
           - $vixens/apps/02-monitoring/robusta/overlays/dev/values.yaml
         skipCrds: false
     - repoURL: https://github.com/charchess/vixens
-      targetRevision: fix/robusta-upgrade-0.32.0
+      targetRevision: main
       ref: vixens
     - repoURL: https://github.com/charchess/vixens
-      targetRevision: fix/robusta-upgrade-0.32.0
+      targetRevision: main
       path: apps/02-monitoring/robusta/overlays/dev
   destination:
     server: https://kubernetes.default.svc
