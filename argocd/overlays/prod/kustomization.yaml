@@ -52,8 +52,6 @@ resources:
   - apps/frigate.yaml
   - apps/firefly-iii.yaml
   - apps/firefly-iii-importer.yaml
-  - apps/firefly-iii-bot.yaml
-  - apps/firefly-iii-ai-categorizer.yaml
   - apps/lidarr.yaml
   - apps/lazylibrarian.yaml
   - apps/booklore.yaml
