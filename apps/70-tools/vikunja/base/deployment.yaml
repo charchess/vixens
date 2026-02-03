@@ -53,6 +53,11 @@ spec:
               value: "true"
             - name: VIKUNJA_REDIS_HOST
               value: redis-shared.databases.svc.cluster.local:6379
+            - name: VIKUNJA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vikunja-secrets
+                  key: VIKUNJA_REDIS_PASSWORD
             # Service
             - name: VIKUNJA_SERVICE_JWTSECRET
               valueFrom:
