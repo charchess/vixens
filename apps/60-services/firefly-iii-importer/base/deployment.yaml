@@ -24,6 +24,10 @@ spec:
               value: "https://firefly.truxonline.com"
             - name: VANITY_URL
               value: "https://importer.truxonline.com"
+            - name: APP_URL
+              value: "https://importer.truxonline.com"
+            - name: TRUSTED_PROXIES
+              value: "*"
             - name: TZ
               value: "Europe/Paris"
             - name: IGNORE_DUPLICATE_ERRORS
