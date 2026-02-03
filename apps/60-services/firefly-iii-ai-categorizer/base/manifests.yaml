@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firefly-iii-ai-categorizer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: firefly-iii-ai-categorizer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: firefly-iii-ai-categorizer
+    spec:
+      priorityClassName: vixens-low
+      containers:
+        - name: categorizer
+          image: ghcr.io/bahuma20/firefly-iii-ai-categorize:latest
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: FIREFLY_URL
+              value: "https://firefly.truxonline.com"
+            - name: ENABLE_UI
+              value: "true"
+            - name: FIREFLY_TAG
+              value: "AI categorized"
+          envFrom:
+            - secretRef:
+                name: firefly-iii-ai-categorizer-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: firefly-iii-ai-categorizer
+spec:
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: firefly-iii-ai-categorizer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: firefly-iii-ai-categorizer
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  rules:
+    - host: ai-finance.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: firefly-iii-ai-categorizer
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - ai-finance.truxonline.com
+      secretName: firefly-iii-ai-categorizer-tls
