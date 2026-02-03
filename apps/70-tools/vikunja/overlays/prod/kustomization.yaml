@@ -33,3 +33,17 @@ patches:
                 env:
                   - name: VIKUNJA_SERVICE_PUBLICURL
                     value: https://vikunja.truxonline.com
+  - target:
+      kind: InfisicalSecret
+      name: vikunja-db-secrets-sync
+    patch: |-
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
+  - target:
+      kind: InfisicalSecret
+      name: vikunja-secrets-sync
+    patch: |-
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
