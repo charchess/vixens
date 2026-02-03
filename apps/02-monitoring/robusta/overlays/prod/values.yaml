@@ -2,7 +2,9 @@
 clusterName: "vixens-prod"
 
 enablePlatformPlaybooks: true
-enableHolmesGPT: false # On le gère à part
+enableHolmesGPT: true # On le gère à part
+holmes:
+  enabled: false
 enabledManagedConfiguration: true
 
 globalConfig:
