@@ -149,6 +149,7 @@ Last Updated: 2026-01-30 (Velero Restore + Infisical Integration)
 | it-tools | ✅ | ✅ | Migrated to centralized middleware |
 | headlamp | ✅ | ✅ | Migrated to centralized middleware |
 | linkwarden | ✅ | ✅ | Migrated to standardized middleware |
+| vikunja | ✅ | ✅ | Kanban tool deployed with Postgres/Redis |
 | penpot | 🚧 | 🚧 | Implementation in progress |
 | renovate | ✅ | ✅ | Auto-dependency updates (ADR-017) |
 | penpot | ⏳ | ⏳ | Design platform (Deployed, awaiting cluster sync) |
