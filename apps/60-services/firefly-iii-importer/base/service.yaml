@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: firefly-iii-importer
+spec:
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: firefly-iii-importer
