@@ -62,7 +62,7 @@ Last Updated: 2026-01-30 (Velero Restore + Infisical Integration)
 | grafana | 💤 | ✅ | Elite Status + Probes + Guaranteed QoS |
 | loki | ✅ | ✅ | Elite Status (Restore QoS + config fixed) |
 | promtail | ✅ | ✅ | Elite Status + Probes + Guaranteed QoS |
-| robusta | ✅ | ✅ | Fixed deployment & Discord integration |
+| robusta | ✅ | ✅ | Upgraded to v0.32.0 & Discord integration |
 | goldilocks | ✅ | ✅ | Fixed missing secretNamespace |
 | hubble-ui | ✅ | ✅ | Fixed secretNamespace error |
 | descheduler | ✅ | ✅ | Eviction active (--dry-run=false) |

@@ -9,7 +9,7 @@ spec:
   sources:
     - repoURL: https://robusta-charts.storage.googleapis.com
       chart: robusta
-      targetRevision: 0.15.0
+      targetRevision: 0.32.0
       helm:
         valueFiles:
           - $vixens/apps/02-monitoring/robusta/overlays/dev/values.yaml
