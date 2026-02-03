@@ -51,6 +51,7 @@ resources:
   - apps/radarr.yaml
   - apps/frigate.yaml
   - apps/firefly-iii.yaml
+  - apps/firefly-iii-importer.yaml
   - apps/lidarr.yaml
   - apps/lazylibrarian.yaml
   - apps/booklore.yaml
