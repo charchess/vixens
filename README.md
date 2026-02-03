@@ -581,13 +581,13 @@ yamllint -c yamllint-config.yml apps/<app>/**/*.yaml
 4. Create PR to `dev` branch
 5. After merge, promote to `main` via GitHub workflow
 
-### Branch Strategy (Trunk-Based)
+### Branch Strategy (Pure Trunk-Based)
 
 ```
-feature-branch → dev (development) → main (production)
+feature-branch → main (HEAD = Dev) → prod-stable tag (Production)
 ```
 
-**Important:** Never commit directly to `main`. Use promotion workflow.
+**Important:** Never commit directly to `main`. Use Pull Requests. Promotion to production is handled via Git tags (`prod-stable`). `prod-working` serves as a reference for the last known working configuration.
 
 ### Pull Request Guidelines
 

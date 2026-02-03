@@ -687,7 +687,7 @@ spec:
 
 **Environment Differentiation:**
 - **Dev**: ArgoCD watches `main` branch (HEAD)
-- **Prod**: ArgoCD watches `prod-stable` Git tag
+- **Prod**: ArgoCD watches `prod-stable` Git tag (`prod-working` pour backup config fonctionnelle)
 
 **Development Flow:**
 1. Create feature branch from `main`
@@ -705,6 +705,10 @@ spec:
 ```bash
 # Move prod-stable tag to previous version
 git tag -f prod-stable prod-v1.2.2
+git push origin prod-stable --force
+
+# OR use prod-working (last known working config)
+git tag -f prod-stable prod-working
 git push origin prod-stable --force
 ```
 
