@@ -12,6 +12,7 @@ spec:
       labels:
         app.kubernetes.io/name: firefly-iii-importer
     spec:
+      priorityClassName: vixens-low
       containers:
         - name: importer
           image: fireflyiii/data-importer:latest
@@ -49,6 +50,7 @@ spec:
           resources:
             requests:
               cpu: 10m
-              memory: 64Mi
+              memory: 128Mi
             limits:
-              memory: 256Mi
+              cpu: 500m
+              memory: 512Mi
