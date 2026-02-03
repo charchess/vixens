@@ -26,6 +26,18 @@ spec:
               value: "true"
             - name: FIREFLY_TAG
               value: "AI categorized"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
           envFrom:
             - secretRef:
                 name: firefly-iii-ai-categorizer-secrets
