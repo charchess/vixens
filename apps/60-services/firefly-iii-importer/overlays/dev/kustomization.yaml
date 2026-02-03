@@ -27,3 +27,6 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/env/1/value
         value: "https://importer.dev.truxonline.com"
+      - op: replace
+        path: /spec/template/spec/containers/0/env/2/value
+        value: "https://importer.dev.truxonline.com"
