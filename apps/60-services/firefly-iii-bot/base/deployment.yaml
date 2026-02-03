@@ -15,7 +15,7 @@ spec:
       priorityClassName: vixens-low
       containers:
         - name: bot
-          image: leoanterior/firefly-iii-discord-bot:latest
+          image: ghcr.io/firefly-iii/discord-bot:latest
           env:
             - name: FIREFLY_III_URL
               value: "http://firefly-iii.finance.svc.cluster.local"
