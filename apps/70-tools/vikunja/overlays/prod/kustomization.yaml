@@ -39,11 +39,11 @@ patches:
     patch: |-
       - op: replace
         path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
+        value: dev
   - target:
       kind: InfisicalSecret
       name: vikunja-secrets-sync
     patch: |-
       - op: replace
         path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
+        value: dev
