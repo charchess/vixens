@@ -12,9 +12,3 @@ helmCharts:
     namespace: robusta
     valuesFile: values.yaml
     includeCRDs: true
-
-patches:
-  - path: holmes-patch.yaml
-    target:
-      kind: Deployment
-      name: robusta-holmes
