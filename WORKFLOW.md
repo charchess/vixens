@@ -253,6 +253,7 @@ bd create --title="..." --assignee=gemini
 
 ### Production via Workflow UNIQUEMENT
 - ❌ JAMAIS créer tag `prod-stable` manuellement
+- ✅ Tag `prod-working` : Mis à jour manuellement pour référencer la dernière configuration connue fonctionnelle
 - ❌ JAMAIS push force sur `main`
 - ✅ TOUJOURS utiliser workflow: `gh workflow run promote-prod.yaml`
 - ✅ Tag `prod-stable` déplacé automatiquement par GitHub Actions
@@ -412,7 +413,7 @@ spec:
 
 ### Environnements
 - **Dev**: ArgoCD watch `main` branch (HEAD)
-- **Prod**: ArgoCD watch `prod-stable` tag
+- **Prod**: ArgoCD watch `prod-stable` tag (`prod-working` comme référence de secours fonctionnelle)
 
 ### Flux Réel
 1. **Développement sur feature branch** (main est protégée)
