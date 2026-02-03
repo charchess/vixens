@@ -1,0 +1,35 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+patches:
+  - target:
+      kind: Ingress
+      name: vikunja
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/cert-manager.io~1cluster-issuer
+        value: letsencrypt-prod
+      - op: replace
+        path: /spec/rules/0/host
+        value: vikunja.truxonline.com
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: vikunja.truxonline.com
+  - target:
+      kind: Deployment
+      name: vikunja
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: vikunja
+      spec:
+        template:
+          spec:
+            containers:
+              - name: vikunja
+                env:
+                  - name: VIKUNJA_SERVICE_PUBLICURL
+                    value: https://vikunja.truxonline.com

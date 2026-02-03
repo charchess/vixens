@@ -16,6 +16,7 @@ resources:
   - credentials/firefly-iii-secret.yaml
   - credentials/netbird-postgresql-credentials.yaml
   - credentials/penpot-secret.yaml
+  - credentials/vikunja-secret.yaml
   - databases/docspell.yaml
   - databases/scanopy.yaml
   - databases/linkwarden.yaml
@@ -25,3 +26,4 @@ resources:
   - databases/nocodb.yaml
   - databases/firefly-iii.yaml
   - databases/penpot.yaml
+  - databases/vikunja.yaml
