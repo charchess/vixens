@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firefly-iii-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: firefly-iii-bot
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: firefly-iii-bot
+    spec:
+      priorityClassName: vixens-low
+      containers:
+        - name: bot
+          image: arisk/firefly-iii-discord-bot:latest
+          env:
+            - name: FIREFLY_III_URL
+              value: "http://firefly-iii.finance.svc.cluster.local"
+          envFrom:
+            - secretRef:
+                name: firefly-iii-bot-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
