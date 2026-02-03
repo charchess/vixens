@@ -4,4 +4,3 @@ kind: Kustomization
 resources:
   - velero-infisical-secret.yaml
   - velero-repo-secret.yaml
-  - velero-credentials-transform.yaml
