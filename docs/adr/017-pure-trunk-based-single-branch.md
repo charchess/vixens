@@ -86,6 +86,7 @@ spec:
 
 **Production Tags:**
 - `prod-stable` - Current production version (moved manually)
+- `prod-working` - Last known working configuration (manually updated)
 - `prod-v1.2.3` - Specific production releases
 
 **Dev Tags (optional):**

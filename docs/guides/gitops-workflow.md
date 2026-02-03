@@ -20,6 +20,7 @@ This guide explains the **pure trunk-based GitOps workflow** for the Vixens infr
 |--------|---------|---------------|---------|-------------|
 | `main` | Single source of truth | `main` (HEAD) | Dev cluster | ✅ Yes |
 | `prod-stable` (tag) | Production release | `prod-stable` | Prod cluster | ✅ Yes (after tag) |
+| `prod-working` (tag)| Last known working config| N/A | N/A | ❌ No |
 | `feature/*` | Development work | N/A | N/A | ❌ No |
 
 **Archived:** `dev`, `test`, and `staging` branches (ADR-017 migration)
@@ -312,7 +313,12 @@ gh workflow run promote-prod.yaml -f version=v1.2.3-rollback
 git checkout main
 git log --oneline -20  # Find last working commit
 
-git tag -f prod-stable <last-good-commit>
+# Use prod-working (last known working configuration)
+git tag -f prod-stable prod-working
+git push origin prod-stable --force
+
+# OR use a specific commit/tag
+git tag -f prod-stable <last-good-commit-or-tag>
 git push origin prod-stable --force
 
 # ArgoCD will auto-sync prod to previous version

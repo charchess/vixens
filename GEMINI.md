@@ -950,16 +950,17 @@ bd sync
 
 # 🛡️ Safety & Best Practices
 
-## Branch Strategy
+## Branch Strategy (Pure Trunk-Based)
 
 ```
-feat/my-feature (development) → main (trunk)
+feature-branch → main (HEAD = Dev) → prod-stable tag (Production)
 ```
 
 - **ALWAYS work on short-lived feature branch**
-- **NEVER commit directly to main** (unless authorized)
-- **NEVER use long-lived dev branch**
-- Merge to main via Pull Request
+- **NEVER commit directly to main** (branch protection)
+- **PR required** for all changes to main
+- **Promotion to production** via `prod-stable` tag
+- **`prod-working`** tag for last known working configuration reference
 
 ## Validation Flow
 
