@@ -32,3 +32,4 @@ curl -L -k https://vikunja.dev.truxonline.com | grep "Vikunja"
     - Redis Shared Instance
     - Infisical Secrets
 - **Particularités :** Outil de Kanban/gestion de tâches. Configuré avec Postgres et Redis pour la performance.
+Last validated: mar. 03 févr. 2026 17:42:27 CET
