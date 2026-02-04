@@ -21,8 +21,6 @@ resources:
   - apps/policy-reporter.yaml
   - apps/descheduler.yaml
   - apps/headlamp.yaml
-  - apps/hubble-ui.yaml
-  - apps/kubernetes-dashboard.yaml
   # Traefik Dashboard hostname redirect
   - apps/traefik-dashboard.yaml
   - apps/argocd.yaml # ArgoCD Ingress for UI
@@ -95,4 +93,5 @@ resources:
   - apps/robusta.yaml
   - apps/trivy.yaml
   - apps/firefly-iii-importer.yaml
+  - apps/radar.yaml
 
