@@ -51,6 +51,7 @@ Last Updated: 2026-02-04 (VPA Goldification v3.1.505)
 | kubernetes-dashboard | ✅ | 🚧 | Dashboard v7.x (Prod en cours de sync) |
 | reloader | ✅ | ✅ | Elite Status + Prometheus Scraping |
 | vpa | ✅ | ✅ | Elite Status + QoS Guaranteed + Critical Priority |
+| trivy | ⚠️ | 🚧 | Stabilizing: Resource tuning & SecurityContext fixes |
 
 ---
 
