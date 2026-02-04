@@ -3,8 +3,8 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [ ]   | v0.24.2 |
-| Prod          | [x]     | [x]       | [x]   | v0.24.2 |
+| Dev           | [x]     | [x]       | [x]   | v1.0.0  |
+| Prod          | [x]     | [x]       | [x]   | v1.0.0  |
 
 ## Validation
 **URL :** https://vikunja.[env].truxonline.com
@@ -32,4 +32,3 @@ curl -L -k https://vikunja.dev.truxonline.com | grep "Vikunja"
     - Redis Shared Instance
     - Infisical Secrets
 - **Particularités :** Outil de Kanban/gestion de tâches. Configuré avec Postgres et Redis pour la performance.
-Last validated: mar. 03 févr. 2026 17:42:27 CET
