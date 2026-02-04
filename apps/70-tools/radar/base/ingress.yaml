@@ -9,6 +9,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.middlewares: traefik-traefik-forward-auth@kubernetescrd
 spec:
+  ingressClassName: traefik
   rules:
     - host: radar.dev.truxonline.com
       http:
