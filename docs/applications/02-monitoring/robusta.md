@@ -3,8 +3,8 @@
 ## Deployment Information
 | Environment | Deployed | Configured | Tested | Version |
 |-------------|----------|-----------|-------|---------|
-| Dev         | [x]      | [x]       | [ ]   | v0.32.0 |
-| Prod        | [x]      | [x]       | [ ]   | v0.32.0 |
+| Dev         | [x]      | [x]       | [x]   | v0.32.0 |
+| Prod        | [x]      | [x]       | [x]   | v0.32.0 |
 
 ## Validation
 **URL:** N/A (Background Service)
