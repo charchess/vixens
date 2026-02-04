@@ -4,6 +4,8 @@ extends: default
 ignore: |
   apps/02-monitoring/alertmanager/base/charts/
   **/templates/
+  **/manifests.yaml
+  **/manifests.raw.yaml
 
 rules:
   # ============ ERREURS CRITIQUES ============
