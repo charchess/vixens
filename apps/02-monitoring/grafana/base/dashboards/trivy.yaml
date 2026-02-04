@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-trivy
+  labels:
+    grafana_dashboard: "1"
+data:
+  trivy.json: '{} # Placeholder - user to populate with JSON from https://grafana.com/grafana/dashboards/17813'
