@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-02-04 (Prod Stable Promotion v3.1.494)
+Last Updated: 2026-02-04 (VPA Goldification v3.1.505)
 
 ---
 
@@ -50,6 +50,7 @@ Last Updated: 2026-02-04 (Prod Stable Promotion v3.1.494)
 | infisical-operator | ✅ | ✅ | Secrets management operator |
 | kubernetes-dashboard | ✅ | 🚧 | Dashboard v7.x (Prod en cours de sync) |
 | reloader | ✅ | ✅ | Elite Status + Prometheus Scraping |
+| vpa | ✅ | ✅ | Elite Status + QoS Guaranteed + Critical Priority |
 
 ---
 
