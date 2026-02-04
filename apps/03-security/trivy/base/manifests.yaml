@@ -3824,6 +3824,8 @@ spec:
           name: cache-policies
 ---
 # Source: trivy-operator/templates/specs/k8s-cis-1.23.yaml
+apiVersion: aquasecurity.github.io/v1alpha1
+kind: ClusterComplianceReport
 metadata:
   name: k8s-cis-1.23
   labels:
@@ -4736,6 +4738,8 @@ spec:
       severity: MEDIUM
 ---
 # Source: trivy-operator/templates/specs/k8s-nsa-1.0.yaml
+apiVersion: aquasecurity.github.io/v1alpha1
+kind: ClusterComplianceReport
 metadata:
   name: k8s-nsa-1.0
   labels:
@@ -4925,6 +4929,8 @@ spec:
         severity: MEDIUM
 ---
 # Source: trivy-operator/templates/specs/k8s-pss-baseline-0.1.yaml
+apiVersion: aquasecurity.github.io/v1alpha1
+kind: ClusterComplianceReport
 metadata:
   name: k8s-pss-baseline-0.1
   labels:
@@ -5027,6 +5033,8 @@ spec:
         severity: MEDIUM
 ---
 # Source: trivy-operator/templates/specs/k8s-pss-restricted-0.1.yaml
+apiVersion: aquasecurity.github.io/v1alpha1
+kind: ClusterComplianceReport
 metadata:
   name: k8s-pss-restricted-0.1
   labels:
