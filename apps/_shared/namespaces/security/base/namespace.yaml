@@ -4,4 +4,4 @@ kind: Namespace
 metadata:
   name: security
   labels:
-    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce: privileged
