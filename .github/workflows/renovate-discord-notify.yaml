@@ -4,7 +4,7 @@ name: Renovate Discord Notifications
 on:
   pull_request:
     types: [opened, synchronize, labeled, unlabeled, closed]
-    branches: [dev]
+    branches: [main]
 
 jobs:
   notify-discord:
