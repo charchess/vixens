@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-01-30 (Velero Restore + Infisical Integration)
+Last Updated: 2026-02-04 (Prod Stable Promotion v3.1.494)
 
 ---
 
@@ -92,7 +92,7 @@ Last Updated: 2026-01-30 (Velero Restore + Infisical Integration)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| homeassistant | ✅ | ✅ | Fixed Kustomization syntax error |
+| homeassistant | ✅ | ✅ | Litestream memory limits increased (OOM fix) |
 | mealie | ✅ | ✅ | Fixed DNS resolution (removed target annotation) |
 | mosquitto | ✅ | ✅ | MQTT broker |
 
@@ -121,7 +121,7 @@ Last Updated: 2026-01-30 (Velero Restore + Infisical Integration)
 | external-dns-gandi | ✅ | ✅ | Public DNS management |
 | contacts | ✅ | 💤 | Contacts redirection service |
 | netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
-| netbird | ✅ | ⚠️ | Prod: Rate Limit Let's Encrypt (unlock ~19:42 UTC) |
+| netbird | ✅ | ✅ | Rate limit resolved, certificates active |
 | adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
 
 ---
@@ -149,7 +149,7 @@ Last Updated: 2026-01-30 (Velero Restore + Infisical Integration)
 | it-tools | ✅ | ✅ | Migrated to centralized middleware |
 | headlamp | ✅ | ✅ | Migrated to centralized middleware |
 | linkwarden | ✅ | ✅ | Migrated to standardized middleware |
-| vikunja | ✅ | ✅ | Kanban tool deployed with Postgres/Redis |
+| vikunja | ✅ | ✅ | Upgraded to v1.0.0 (Postgres/Redis) |
 | penpot | 🚧 | 🚧 | Implementation in progress |
 | renovate | ✅ | ✅ | Auto-dependency updates (ADR-017) |
 | penpot | ⏳ | ⏳ | Design platform (Deployed, awaiting cluster sync) |
