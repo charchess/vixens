@@ -10,13 +10,7 @@
 **URL:** N/A (Operator-based / Grafana Dashboard ID 17813)
 
 ### Automatic Validation (CLI)
-```bash
-# Check pod status
-kubectl get pods -n security
 
-# Check vulnerability reports
-kubectl get vulnerabilityreports -A
-```
 
 ### Manual Validation
 1. Verify reports are generated in the cluster.
