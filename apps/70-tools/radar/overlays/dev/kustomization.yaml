@@ -8,6 +8,9 @@ patches:
       kind: Ingress
       name: radar
     patch: |-
-      - op: replace
-        path: /spec/rules/0/host
-        value: radar.dev.truxonline.com
+      - op: add
+        path: /spec/tls
+        value:
+          - hosts:
+              - radar.dev.truxonline.com
+            secretName: radar-tls

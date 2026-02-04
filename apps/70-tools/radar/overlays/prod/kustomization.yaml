@@ -9,5 +9,14 @@ patches:
       name: radar
     patch: |-
       - op: replace
+        path: /metadata/annotations/cert-manager.io~1cluster-issuer
+        value: letsencrypt-prod
+      - op: replace
         path: /spec/rules/0/host
         value: radar.truxonline.com
+      - op: add
+        path: /spec/tls
+        value:
+          - hosts:
+              - radar.truxonline.com
+            secretName: radar-tls
