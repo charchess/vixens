@@ -91,3 +91,4 @@ resources:
   - apps/penpot.yaml
   - apps/vikunja.yaml
   - apps/robusta.yaml
+  - apps/trivy.yaml
