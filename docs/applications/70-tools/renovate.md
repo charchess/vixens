@@ -3,8 +3,8 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | 42.66.10 |
-| Prod          | [ ]     | [ ]       | [ ]   | 42.66.10 |
+| Dev           | [x]     | [x]       | [x]   | v43.2.8 |
+| Prod          | [x]     | [x]       | [x]   | v43.2.8 |
 
 ## Validation
 
@@ -47,11 +47,12 @@ kubectl get configmap -n tools renovate-config -o yaml
 - **Historique :** 3 jobs réussis + 3 jobs échoués conservés
 
 ### Automated Updates (vixens-hidr)
-Renovate is configured for automated version updates across the codebase (apps/ and argocd/):
-- **Auto-merge:** Enabled for `minor` and `patch` updates after PR approval.
-- **Home Assistant:** Specific rules for automated updates of Home Assistant core.
-- **Approval Workflow:** PRs are created and require a manual check/approval (PR comment or check) before automated merging.
-- **Major Updates:** Always require manual intervention and merge.
+Renovate is configured for fully automated version updates (Elite Status):
+- **Auto-merge:** Enabled for **ALL** updates including `major`, `minor`, and `patch`.
+- **Platform Auto-merge:** Utilizes GitHub API for reliable merging once CI passes.
+- **Single Trunk Strategy:** Direct updates to `main` via automated Pull Requests.
+- **Notifications:** Discord notifications enabled for all PR lifecycle events (Open, Approved, Merged).
+- **QoS:** Guaranteed resources (500m/512Mi -> 1000m/1Gi) for reliable execution.
 
 ### Gestionnaires Activés
 - **Terraform** - Mise à jour des modules et providers

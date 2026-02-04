@@ -21,6 +21,7 @@ spec:
             runAsUser: 1000
             runAsGroup: 1000
             fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               operator: Exists
@@ -28,6 +29,13 @@ spec:
           containers:
             - name: renovate
               image: renovate/renovate:43.2.8 # Renovate latest stable
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 512Mi
+                limits:
+                  cpu: 1000m
+                  memory: 1Gi
               env:
                 - name: RENOVATE_TOKEN
                   valueFrom:
