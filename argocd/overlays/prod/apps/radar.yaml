@@ -2,21 +2,19 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: hubble-ui
+  name: radar
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
-  annotations:
-    argocd.argoproj.io/sync-wave: "10"
 spec:
   project: default
   source:
     repoURL: https://github.com/charchess/vixens.git
-    targetRevision: main
-    path: apps/02-monitoring/hubble-ui/overlays/dev
+    targetRevision: prod-stable
+    path: apps/70-tools/radar/overlays/prod
   destination:
     server: https://kubernetes.default.svc
-    namespace: monitoring
+    namespace: tools
   syncPolicy:
     automated:
       prune: true

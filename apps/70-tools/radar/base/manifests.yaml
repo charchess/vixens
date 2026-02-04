@@ -1,0 +1,210 @@
+---
+# Source: radar/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: radar
+  labels:
+    helm.sh/chart: radar-0.1.0
+    app.kubernetes.io/name: radar
+    app.kubernetes.io/instance: radar
+    app.kubernetes.io/version: "0.4.2"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: radar/templates/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: radar
+  labels:
+    helm.sh/chart: radar-0.1.0
+    app.kubernetes.io/name: radar
+    app.kubernetes.io/instance: radar
+    app.kubernetes.io/version: "0.4.2"
+    app.kubernetes.io/managed-by: Helm
+rules:
+  # Core resources (read-only)
+  - apiGroups: [""]
+    resources:
+      - pods
+      - services
+      - configmaps
+      - events
+      - namespaces
+      - nodes
+      - persistentvolumeclaims
+      - serviceaccounts
+      - endpoints
+    verbs: ["get", "list", "watch"]
+
+  # Workload resources (read-only)
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - daemonsets
+      - statefulsets
+      - replicasets
+    verbs: ["get", "list", "watch"]
+
+  # Networking resources (read-only)
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - ingresses
+      - networkpolicies
+    verbs: ["get", "list", "watch"]
+
+  # Batch resources (read-only)
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - cronjobs
+    verbs: ["get", "list", "watch"]
+
+  # Autoscaling resources (read-only)
+  - apiGroups: ["autoscaling"]
+    resources:
+      - horizontalpodautoscalers
+    verbs: ["get", "list", "watch"]
+
+  # Authorization (required for capability detection via SelfSubjectAccessReview)
+  - apiGroups: ["authorization.k8s.io"]
+    resources:
+      - selfsubjectaccessreviews
+    verbs: ["create"]
+  # Pod logs (opt-in - enables log viewer)
+  - apiGroups: [""]
+    resources:
+      - pods/log
+    verbs: ["get"]
+
+  # CRD discovery
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources:
+      - customresourcedefinitions
+    verbs: ["get", "list", "watch"]
+
+  # Common CRDs (Argo, Knative, etc.) - read-only
+  - apiGroups:
+      - argoproj.io
+      - serving.knative.dev
+      - eventing.knative.dev
+      - cert-manager.io
+      - gateway.networking.k8s.io
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+---
+# Source: radar/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: radar
+  labels:
+    helm.sh/chart: radar-0.1.0
+    app.kubernetes.io/name: radar
+    app.kubernetes.io/instance: radar
+    app.kubernetes.io/version: "0.4.2"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: radar
+subjects:
+  - kind: ServiceAccount
+    name: radar
+    namespace: tools
+---
+# Source: radar/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: radar
+  labels:
+    helm.sh/chart: radar-0.1.0
+    app.kubernetes.io/name: radar
+    app.kubernetes.io/instance: radar
+    app.kubernetes.io/version: "0.4.2"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9280
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: radar
+    app.kubernetes.io/instance: radar
+---
+# Source: radar/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radar
+  labels:
+    helm.sh/chart: radar-0.1.0
+    app.kubernetes.io/name: radar
+    app.kubernetes.io/instance: radar
+    app.kubernetes.io/version: "0.4.2"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: radar
+      app.kubernetes.io/instance: radar
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: radar
+        app.kubernetes.io/instance: radar
+    spec:
+      serviceAccountName: radar
+      securityContext:
+        fsGroup: 65532
+        runAsGroup: 65532
+        runAsNonRoot: true
+        runAsUser: 65532
+      containers:
+        - name: radar
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+          image: "ghcr.io/skyhook-io/radar:0.4.2"
+          imagePullPolicy: IfNotPresent
+          args:
+            - --port=9280
+            - --no-browser
+            - --timeline-storage=memory
+            - --history-limit=10000
+          ports:
+            - name: http
+              containerPort: 9280
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
