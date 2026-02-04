@@ -92,3 +92,4 @@ resources:
   - apps/vikunja.yaml
   - apps/robusta.yaml
   - apps/trivy.yaml
+  - apps/radar.yaml
