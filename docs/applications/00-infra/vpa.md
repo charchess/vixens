@@ -4,7 +4,7 @@
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
 | Dev           | [x]     | [x]       | [x]   | v1.5.0  |
-| Prod          | [x]     | [x]       | [x]   | v1.5.0  |
+| Prod          | [x]     | [x]       | [ ]   | v1.5.0  |
 
 ## Architecture
 **Type :** Infrastructure (Static Manifests)
@@ -18,17 +18,19 @@ VPA est déployé via des manifestes statiques générés (hydratés) à partir 
 **⚠️ Attention :** Lors de la génération manuelle via `helm template`, bien vérifier l'absence de duplication de clés (notamment `tolerations`) et l'indentation via `yamllint`.
 
 ## Configuration
-Les manifestes sont générés avec les ressources suivantes :
-- **admissionController :**
-  - Requests: 50m CPU / 100Mi RAM
-  - Limits: 200m CPU / 500Mi RAM
-- **recommender :**
-  - Requests: 50m CPU / 250Mi RAM
-  - Limits: 200m CPU / 1Gi RAM
-  - *Extra Args:* min-cpu: 10m, min-memory: 128Mi (pour Goldilocks)
-- **updater :**
-  - Requests: 50m CPU / 100Mi RAM
-  - Limits: 200m CPU / 500Mi RAM
+VPA suit le standard "Elite" avec une QoS **Guaranteed** (Requests = Limits) et une priorité critique.
+
+### Ressources (Prod)
+- **admissionController :** 200m CPU / 500Mi RAM
+- **recommender :** 200m CPU / 1Gi RAM
+- **updater :** 200m CPU / 500Mi RAM
+
+### Ressources (Dev)
+- **Tous composants :** 100m CPU / 256Mi RAM
+
+**Priority Class :**
+- Prod: `vixens-critical`
+- Dev: `vixens-high`
 
 **Tolerations :** Tous les composants ont des tolérations pour le Control Plane.
 
