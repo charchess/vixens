@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vpa-vertical-pod-autoscaler-admission-controller
+  namespace: vpa
 spec:
   revisionHistoryLimit: 3
   template:
@@ -22,6 +23,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vpa-vertical-pod-autoscaler-recommender
+  namespace: vpa
 spec:
   revisionHistoryLimit: 3
   template:
@@ -41,6 +43,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vpa-vertical-pod-autoscaler-updater
+  namespace: vpa
 spec:
   revisionHistoryLimit: 3
   template:
