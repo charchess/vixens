@@ -11,3 +11,4 @@ resources:
   - services/base
   - downloads/base
   - velero/base
+  - security/base

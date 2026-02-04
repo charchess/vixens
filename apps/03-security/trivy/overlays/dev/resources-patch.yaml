@@ -1,0 +1,19 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trivy-trivy-operator
+  namespace: security
+spec:
+  template:
+    spec:
+      priorityClassName: vixens-medium
+      containers:
+        - name: trivy-operator
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi

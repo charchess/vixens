@@ -7,4 +7,5 @@ resources:
   - dashboards/traefik.yaml
   - dashboards/postgresql.yaml
   - dashboards/homeassistant.yaml
+  - dashboards/trivy.yaml
 # Helm chart managed by ArgoCD
