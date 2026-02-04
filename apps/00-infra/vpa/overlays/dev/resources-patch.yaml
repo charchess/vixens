@@ -7,16 +7,16 @@ spec:
   revisionHistoryLimit: 3
   template:
     spec:
-      priorityClassName: vixens-critical
+      priorityClassName: vixens-high
       containers:
         - name: admission-controller
           resources:
             requests:
-              cpu: 200m
-              memory: 500Mi
+              cpu: 100m
+              memory: 256Mi
             limits:
-              cpu: 200m
-              memory: 500Mi
+              cpu: 100m
+              memory: 256Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -26,16 +26,16 @@ spec:
   revisionHistoryLimit: 3
   template:
     spec:
-      priorityClassName: vixens-critical
+      priorityClassName: vixens-high
       containers:
         - name: recommender
           resources:
             requests:
-              cpu: 200m
-              memory: 1Gi
+              cpu: 100m
+              memory: 256Mi
             limits:
-              cpu: 200m
-              memory: 1Gi
+              cpu: 100m
+              memory: 256Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -45,13 +45,13 @@ spec:
   revisionHistoryLimit: 3
   template:
     spec:
-      priorityClassName: vixens-critical
+      priorityClassName: vixens-high
       containers:
         - name: updater
           resources:
             requests:
-              cpu: 200m
-              memory: 500Mi
+              cpu: 100m
+              memory: 256Mi
             limits:
-              cpu: 200m
-              memory: 500Mi
+              cpu: 100m
+              memory: 256Mi
