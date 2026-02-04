@@ -3,7 +3,7 @@
 
 credentials:
   useSecret: false
-  extraSecretRef: velero-manual
+  extraSecretRef: velero
 
 # Specific production storage location
 configuration:
