@@ -93,6 +93,10 @@ data:
     #       arming_time: 0
     #       delay_time: 0
 
+    netatmo:
+      client_id: !env_var NETATMO_CLIENT_ID
+      client_secret: !env_var NETATMO_CLIENT_SECRET
+
     notify:
       - name: notify_charchess_SMS
         platform: free_mobile
