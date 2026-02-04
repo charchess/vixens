@@ -4,3 +4,29 @@ kind: Kustomization
 namespace: security
 resources:
   - manifests.yaml
+
+patches:
+  - target:
+      kind: ServiceMonitor
+    patch: |-
+      apiVersion: monitoring.coreos.com/v1
+      kind: ServiceMonitor
+      metadata:
+        name: unused
+      $patch: delete
+  - target:
+      kind: ClusterComplianceReport
+    patch: |-
+      apiVersion: aquasecurity.github.io/v1alpha1
+      kind: ClusterComplianceReport
+      metadata:
+        name: unused
+      $patch: delete
+  - target:
+      kind: ClusterSbomReport
+    patch: |-
+      apiVersion: aquasecurity.github.io/v1alpha1
+      kind: ClusterSbomReport
+      metadata:
+        name: unused
+      $patch: delete
