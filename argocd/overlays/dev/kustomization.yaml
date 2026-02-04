@@ -93,5 +93,6 @@ resources:
   - apps/mariadb-shared.yaml
   - apps/penpot.yaml
   - apps/robusta.yaml
+  - apps/trivy.yaml
   - apps/firefly-iii-importer.yaml
 
