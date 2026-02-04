@@ -5,3 +5,15 @@ namespace: tools
 resources:
   - manifests.yaml
   - ingress.yaml
+
+patches:
+  - target:
+      kind: ClusterRole
+      name: radar
+    patch: |-
+      - op: add
+        path: /rules/-
+        value:
+          apiGroups: [""]
+          resources: ["pods/portforward"]
+          verbs: ["create"]
