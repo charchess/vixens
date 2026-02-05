@@ -99,13 +99,18 @@
     "health": "Healthy",
     "sync": "Synced"
   },
-  "frigate": {
-    "namespace": "media",
+  "firefly-iii": {
+    "namespace": "finance",
     "health": "Healthy",
     "sync": "Synced"
   },
-  "gitops-revision-controller": {
-    "namespace": "tools",
+  "firefly-iii-importer": {
+    "namespace": "finance",
+    "health": "Healthy",
+    "sync": "Synced"
+  },
+  "frigate": {
+    "namespace": "media",
     "health": "Healthy",
     "sync": "Synced"
   },
@@ -136,7 +141,7 @@
   },
   "homeassistant": {
     "namespace": "homeassistant",
-    "health": "Progressing",
+    "health": "Healthy",
     "sync": "Synced"
   },
   "homepage": {
@@ -144,15 +149,10 @@
     "health": "Healthy",
     "sync": "Synced"
   },
-  "hubble-ui": {
-    "namespace": "monitoring",
-    "health": "Healthy",
-    "sync": "Synced"
-  },
   "hydrus-client": {
     "namespace": "media",
     "health": "Healthy",
-    "sync": "OutOfSync"
+    "sync": "Synced"
   },
   "infisical-operator": {
     "namespace": "infisical-operator-system",
@@ -179,8 +179,8 @@
     "health": "Healthy",
     "sync": "Synced"
   },
-  "kubernetes-dashboard": {
-    "namespace": "kubernetes-dashboard",
+  "kyverno": {
+    "namespace": "kyverno",
     "health": "Healthy",
     "sync": "Synced"
   },
@@ -212,19 +212,14 @@
   "mariadb-shared": {
     "namespace": "databases",
     "health": "Healthy",
-    "sync": "OutOfSync"
-  },
-  "mariadb-shared-config": {
-    "namespace": "databases",
-    "health": "Healthy",
     "sync": "Synced"
   },
-  "mealie-prod": {
+  "mealie": {
     "namespace": "mealie",
     "health": "Healthy",
     "sync": "Synced"
   },
-  "media-namespace": {
+  "media-shared-secrets": {
     "namespace": "media",
     "health": "Healthy",
     "sync": "Synced"
@@ -247,20 +242,40 @@
   "mylar": {
     "namespace": "media",
     "health": "Healthy",
-    "sync": "OutOfSync"
+    "sync": "Synced"
+  },
+  "netbird": {
+    "namespace": "networking",
+    "health": "Healthy",
+    "sync": "Synced"
   },
   "netbox": {
     "namespace": "tools",
     "health": "Healthy",
-    "sync": "OutOfSync"
+    "sync": "Synced"
   },
   "netvisor": {
     "namespace": "networking",
     "health": "Healthy",
-    "sync": "OutOfSync"
+    "sync": "Synced"
   },
   "nfs-storage": {
     "namespace": "media-stack",
+    "health": "Healthy",
+    "sync": "Synced"
+  },
+  "nocodb": {
+    "namespace": "tools",
+    "health": "Healthy",
+    "sync": "Synced"
+  },
+  "penpot": {
+    "namespace": "tools",
+    "health": "Healthy",
+    "sync": "Synced"
+  },
+  "policy-reporter": {
+    "namespace": "policy-reporter",
     "health": "Healthy",
     "sync": "Synced"
   },
@@ -304,6 +319,11 @@
     "health": "Healthy",
     "sync": "Synced"
   },
+  "radar": {
+    "namespace": "tools",
+    "health": "Healthy",
+    "sync": "Synced"
+  },
   "radarr": {
     "namespace": "media",
     "health": "Healthy",
@@ -322,10 +342,20 @@
   "renovate": {
     "namespace": "tools",
     "health": "Healthy",
-    "sync": "OutOfSync"
+    "sync": "Synced"
+  },
+  "robusta": {
+    "namespace": "robusta",
+    "health": "Healthy",
+    "sync": "Synced"
   },
   "sabnzbd": {
     "namespace": "media",
+    "health": "Healthy",
+    "sync": "Synced"
+  },
+  "shared-namespaces": {
+    "namespace": "argocd",
     "health": "Healthy",
     "sync": "Synced"
   },
@@ -369,8 +399,33 @@
     "health": "Healthy",
     "sync": "Synced"
   },
+  "trivy": {
+    "namespace": "security",
+    "health": "Healthy",
+    "sync": "Synced"
+  },
   "vaultwarden": {
     "namespace": "services",
+    "health": "Healthy",
+    "sync": "Synced"
+  },
+  "velero": {
+    "namespace": "velero",
+    "health": "Healthy",
+    "sync": "Synced"
+  },
+  "velero-maintenance-config": {
+    "namespace": "velero",
+    "health": "Healthy",
+    "sync": "Synced"
+  },
+  "velero-secrets": {
+    "namespace": "velero",
+    "health": "Healthy",
+    "sync": "Synced"
+  },
+  "vikunja": {
+    "namespace": "tools",
     "health": "Healthy",
     "sync": "Synced"
   },
@@ -387,7 +442,7 @@
   "whisparr": {
     "namespace": "media",
     "health": "Healthy",
-    "sync": "OutOfSync"
+    "sync": "Synced"
   },
   "whoami": {
     "namespace": "whoami",
