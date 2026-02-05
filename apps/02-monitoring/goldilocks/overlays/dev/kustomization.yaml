@@ -8,11 +8,3 @@ resources:
 
 components:
   - ../../../../_shared/components/revision-history-limit
-
-patches:
-  - target:
-      kind: Deployment
-    patch: |
-      - op: add
-        path: /spec/template/metadata/labels/environment
-        value: dev
