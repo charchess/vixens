@@ -7,3 +7,4 @@ resources:
   - service.yaml
   - infisical-secret.yaml
   - serviceaccount.yaml
+  - vpa.yaml
