@@ -29,11 +29,11 @@ spec:
         login: true
         passwordSecret:
           name: netbox-postgresql-credentials
-#      - name: authentik
-#        ensure: present
-#        login: true
-#        passwordSecret:
-#          name: authentik-postgresql-credentials
+      - name: authentik
+        ensure: present
+        login: true
+        passwordSecret:
+          name: authentik-postgresql-credentials
       - name: scanopy
         ensure: present
         login: true
@@ -64,8 +64,8 @@ spec:
       - host all postgres all trust
       - host all all all md5
     parameters:
-      max_connections: "200"
-      shared_buffers: 128MB
+      max_connections: "500"
+      shared_buffers: 512MB
       effective_cache_size: 512MB
   bootstrap:
     initdb:
