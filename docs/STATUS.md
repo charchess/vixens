@@ -66,91 +66,6 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 | promtail | ✅ | ✅ | Elite Status + Probes + Guaranteed QoS |
 | robusta | ✅ | ✅ | Upgraded to v0.32.0, Discord & HolmesGPT UI enabled |
 | goldilocks | ✅ | ✅ | Fixed missing secretNamespace |
-| hubble-ui | ✅ | ✅ | Fixed secretNamespace error |
-| descheduler | ✅ | ✅ | Eviction active (--dry-run=false) |
-
----
-
-## Security (03-security/)
-
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| authentik | ✅ | ✅ | Elite Status + Blueprints (Netbird, Hydrus) |
-
----
-
-## Databases (04-databases/)
-
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| postgresql-shared | ✅ | ✅ | CloudNativePG Shared Cluster (Elite Status) |
-| redis-shared | ✅ | ✅ | Shared Redis Instance |
-| mariadb-shared | ✅ | ✅ | Shared MariaDB Instance |
-| cloudnative-pg | ✅ | ✅ | CloudNativePG Operator |
-
----
-
-## Home Automation (10-home/)
-
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| homeassistant | ✅ | ✅ | Litestream memory limits increased (OOM fix) |
-| mealie | ✅ | ✅ | Fixed DNS resolution (removed target annotation) |
-| mosquitto | ✅ | ✅ | MQTT broker |
-
----
-
-## Media (20-media/)
-
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| jellyfin | ⏳ | 💤 | Media server (planned) |
-| sabnzbd | ⏳ | ✅ | Prod fixed and synced |
-| radarr | ⏳ | ✅ | Prod fixed 
-| sonarr | ⏳ | ✅ | Prod fixed 
-| prowlarr | ⏳ | ✅ | Prod fixed 
-| frigate | ✅ | ✅ | Elite Status + 50Gi PVC fixed |
-| jellyseerr | ⏳ | 💤 | Media request management (planned) |
-| hydrus-client | ✅ | ✅ | Elite Status + Authentik SSO |
-
----
-
-## Network (40-network/)
-
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| external-dns-unifi | ✅ | ✅ | Internal DNS management |
-| external-dns-gandi | ✅ | ✅ | Public DNS management |
-| contacts | ✅ | 💤 | Contacts redirection service |
-| netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
-| netbird | ✅ | ✅ | Rate limit resolved, certificates active |
-| adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
-
----
-
-## Services (60-services/)
-
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| mail-gateway | ✅ | ✅ | Email gateway (External) |
-| vaultwarden | ✅ | ✅ | Migrated to standardized middleware |
-| docspell-native | ✅ | ✅ | Fixed missing secretNamespace |
-| gluetun | ✅ | ✅ | Fixed missing secretNamespace |
-| firefly-iii | ✅ | 💤 | Elite Status + VPA + Security Hardened |
-
----
-
-## Tools (70-tools/)
-
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| whoami | ✅ | ✅ | Elite Status + PSA baseline |
-| homepage | ✅ | 💤 | Prod fixed and synced |
-| netbox | ✅ | ✅ | Migrated to centralized middleware |
-| changedetection | ✅ | ✅ | Migrated to centralized middleware |
-| stirling-pdf | ✅ | ✅ | Migrated to centralized middleware |
-| it-tools | ✅ | ✅ | Migrated to centralized middleware |
-| headlamp | ✅ | ✅ | Elite Status + VPA + Probes |
 
 # Commit changes
 git add docs/STATUS.md
@@ -163,7 +78,7 @@ git push origin main
 ## Quick Stats
 
 **Dev Environment:**
-- ✅ Working: 36 applications
+- ✅ Working: 35 applications
 - ⚠️ Degraded: 0 applications
 - ❌ Broken: 0 applications
 - 🚧 WIP: 0 application
