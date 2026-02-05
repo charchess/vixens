@@ -1,6 +1,6 @@
 # Application State - Desired (Reference Standard)
 
-**Last Updated:** 2026-01-10
+**Last Updated:** 2026-02-05 (Stabilization Milestone)
 **Purpose:** Reference configuration serving as single source of truth for application profiles
 **Maintenance:** Updated manually or by agent during architectural decisions
 
@@ -30,34 +30,32 @@ Decision: "Upgrade homeassistant to Critical backup profile"
 
 | App                            | NS                         | CPU Req  | CPU Lim  | Mem Req  | Mem Lim  | Profile | Priority      | Sync Wave | Backup Profile | Target Score |
 |:-------------------------------|:---------------------------|:---------|:---------|:---------|:---------|:--------|:--------------|:---------:|:---------------|:------------:|
-| **adguard-home**               | networking                 | 50m      | 500m     | 128Mi    | 512Mi    | Small   | vixens-high   | 0         | Standard       | 100          |
-| **alertmanager**               | monitoring                 | 100m     | 500m     | 256Mi    | 512Mi    | Small   | vixens-high   | 0         | Relaxed        | 100          |
-| **amule**                      | downloads                  | 50m      | 500m     | 128Mi    | 512Mi    | Small   | vixens-low    | 0         | None           | 85           |
+| **adguard-home**               | networking                 | 100m     | 500m     | 256Mi    | 512Mi    | Small   | vixens-high   | 0         | Standard       | 100          |
+| **amule**                      | media                      | 50m      | 500m     | 128Mi    | 512Mi    | Small   | vixens-low    | 0         | None           | 85           |
 | **argocd**                     | argocd                     | 200m     | 1000m    | 512Mi    | 1Gi      | Medium  | vixens-critical| -2        | Relaxed        | 100          |
-| **authentik**                  | auth                       | 500m     | 1000m    | 1536Mi   | 2Gi      | Medium  | vixens-critical| 0         | Standard       | 100          |
-| **birdnet-go**                 | birdnet-go                 | 50m      | 500m     | 256Mi    | 512Mi    | Small   | vixens-medium | 0         | Relaxed        | 85           |
-| **booklore**                   | media                      | 200m     | 1000m    | 512Mi    | 3Gi      | Medium  | vixens-medium | 0         | Relaxed        | 85           |
+| **authentik**                  | auth                       | 300m     | 1000m    | 1536Mi   | 2Gi      | Medium  | vixens-critical| 0         | Standard       | 100          |
+| **birdnet-go**                 | birdnet-go                 | 100m     | 500m     | 256Mi    | 512Mi    | Small   | vixens-medium | 0         | Relaxed        | 85           |
+| **booklore**                   | media                      | 200m     | 1000m    | 1536Mi   | 3Gi      | Medium  | vixens-medium | 0         | Relaxed        | 85           |
 | **cert-manager**               | cert-manager               | 100m     | 500m     | 256Mi    | 512Mi    | Small   | vixens-critical| -4        | None           | 100          |
 | **cert-manager-config**        | cert-manager               | 10m      | 100m     | 64Mi     | 128Mi    | Micro   | vixens-critical| -3        | None           | 100          |
 | **cert-manager-secrets**       | cert-manager               | 10m      | 100m     | 64Mi     | 128Mi    | Micro   | vixens-critical| -3        | None           | 100          |
 | **cert-manager-webhook-gandi** | cert-manager               | 10m      | 100m     | 64Mi     | 128Mi    | Micro   | vixens-critical| -4        | None           | 100          |
 | **changedetection**            | tools                      | 50m      | 500m     | 128Mi    | 256Mi    | Small   | vixens-medium | 0         | Relaxed        | 85           |
+| **cilium**                     | kube-system                | 100m     | 1000m    | 256Mi    | 512Mi    | Small   | vixens-critical| -2        | None           | 100          |
 | **cilium-lb**                  | kube-system                | 50m      | 500m     | 128Mi    | 256Mi    | Small   | vixens-critical| -2        | None           | 100          |
 | **cloudnative-pg**             | cnpg-system                | 200m     | 1000m    | 512Mi    | 1Gi      | Medium  | vixens-critical| -4        | None           | 100          |
-| **contacts**                   | contacts                   | 50m      | 500m     | 256Mi    | 512Mi    | Small   | vixens-medium | 0         | Standard       | 85           |
+| **contacts**                   | networking                 | 50m      | 500m     | 256Mi    | 512Mi    | Small   | vixens-medium | 0         | Standard       | 85           |
 | **descheduler**                | kube-system                | 50m      | 200m     | 128Mi    | 256Mi    | Micro   | vixens-medium | 0         | None           | 85           |
-| **docspell**                   | services                   | 500m     | 2000m    | 2048Mi   | 4096Mi   | Large   | vixens-medium | 0         | Standard       | 100          |
+| **docspell-native**            | services                   | 500m     | 2000m    | 2048Mi   | 4096Mi   | Large   | vixens-medium | 0         | Standard       | 100          |
 | **external-dns-gandi**         | networking                 | 50m      | 500m     | 128Mi    | 256Mi    | Small   | vixens-critical| 0         | Relaxed        | 100          |
-| **external-dns-gandi-secrets** | networking                 | 10m      | 100m     | 64Mi     | 128Mi    | Micro   | vixens-critical| -3        | None           | 100          |
 | **external-dns-unifi**         | networking                 | 50m      | 500m     | 64Mi     | 128Mi    | Small   | vixens-critical| 0         | Relaxed        | 100          |
-| **external-dns-unifi-secrets** | networking                 | 10m      | 100m     | 64Mi     | 128Mi    | Micro   | vixens-critical| -3        | None           | 100          |
-| **frigate**                    | media                      | 2500m    | 4000m    | 4Gi      | 8Gi      | XLarge  | vixens-high   | 0         | Standard       | 100          |
-| **gitops-revision-controller** | tools                      | 50m      | 200m     | 128Mi    | 512Mi    | Small   | vixens-medium | 0         | None           | 85           |
+| **firefly-iii**                | finance                    | 200m     | 500m     | 256Mi    | 512Mi    | Medium  | vixens-medium | 0         | Standard       | 100          |
+| **frigate**                    | media                      | 3000m    | 8000m    | 4Gi      | 8Gi      | XLarge  | vixens-medium | 0         | Standard       | 100          |
 | **gluetun**                    | services                   | 50m      | 500m     | 128Mi    | 256Mi    | Small   | vixens-medium | 0         | None           | 85           |
 | **goldilocks**                 | monitoring                 | 50m      | 500m     | 128Mi    | 256Mi    | Small   | vixens-medium | 0         | None           | 85           |
 | **grafana**                    | monitoring                 | 100m     | 500m     | 256Mi    | 512Mi    | Small   | vixens-high   | 0         | Relaxed        | 100          |
 | **headlamp**                   | tools                      | 100m     | 200m     | 128Mi    | 256Mi    | Small   | vixens-medium | 0         | None           | 85           |
-| **homeassistant**              | homeassistant              | 300m     | 1000m    | 1024Mi   | 2048Mi   | Medium  | vixens-high   | 0         | Critical       | 100          |
+| **homeassistant**              | homeassistant              | 300m     | 1000m    | 1536Mi   | 3072Mi   | Medium  | vixens-high   | 0         | Critical       | 100          |
 | **homepage**                   | tools                      | 50m      | 500m     | 256Mi    | 512Mi    | Small   | vixens-medium | 0         | None           | 85           |
 | **hubble-ui**                  | monitoring                 | 100m     | 200m     | 128Mi    | 256Mi    | Small   | vixens-medium | 0         | None           | 85           |
 | **hydrus-client**              | media                      | 100m     | 1000m    | 2Gi      | 4Gi      | Large   | vixens-medium | 0         | Mixed          | 100          |
@@ -65,42 +63,47 @@ Decision: "Upgrade homeassistant to Critical backup profile"
 | **it-tools**                   | tools                      | 50m      | 500m     | 128Mi    | 512Mi    | Small   | vixens-medium | 0         | None           | 85           |
 | **jellyfin**                   | media                      | 100m     | 2000m    | 1Gi      | 4Gi      | Large   | vixens-medium | 0         | Relaxed        | 100          |
 | **jellyseerr**                 | media                      | 100m     | 500m     | 512Mi    | 1Gi      | Medium  | vixens-medium | 0         | Standard       | 100          |
+| **kyverno**                    | kyverno                    | 100m     | 500m     | 256Mi    | 512Mi    | Small   | vixens-critical| -4        | None           | 100          |
 | **lazylibrarian**              | media                      | 50m      | 500m     | 256Mi    | 512Mi    | Small   | vixens-low    | 0         | Standard       | 85           |
-| **lidarr**                     | media                      | 50m      | 500m     | 256Mi    | 512Mi    | Small   | vixens-medium | 0         | Standard       | 100          |
+| **lidarr**                     | media                      | 100m     | 1000m    | 256Mi    | 1Gi      | Small   | vixens-medium | 0         | Standard       | 100          |
 | **linkwarden**                 | tools                      | 100m     | 1000m    | 1Gi      | 2Gi      | Medium  | vixens-medium | 0         | Standard       | 100          |
 | **loki**                       | monitoring                 | 100m     | 500m     | 512Mi    | 1024Mi   | Small   | vixens-high   | 0         | Relaxed        | 100          |
-| **mail-gateway**               | mail-gateway               | 100m     | 500m     | 256Mi    | 512Mi    | Small   | vixens-critical| 0         | Relaxed        | 100          |
+| **mail-gateway**               | services                   | 100m     | 500m     | 256Mi    | 512Mi    | Small   | vixens-critical| 0         | Relaxed        | 100          |
 | **mariadb-shared**             | databases                  | 200m     | 1000m    | 512Mi    | 1024Mi   | Medium  | vixens-critical| -1        | Standard       | 100          |
 | **mealie**                     | mealie                     | 200m     | 1000m    | 512Mi    | 1Gi      | Medium  | vixens-medium | 0         | Standard       | 100          |
 | **metrics-server**             | kube-system                | 100m     | 500m     | 200Mi    | 500Mi    | Small   | vixens-critical| -2        | None           | 100          |
 | **mosquitto**                  | mosquitto                  | 50m      | 200m     | 128Mi    | 256Mi    | Micro   | vixens-high   | 0         | Relaxed        | 100          |
 | **music-assistant**            | media                      | 50m      | 500m     | 256Mi    | 512Mi    | Small   | vixens-medium | 0         | Standard       | 85           |
 | **mylar**                      | media                      | 50m      | 500m     | 128Mi    | 256Mi    | Small   | vixens-medium | 0         | Standard       | 100          |
+| **netbird**                    | networking                 | 100m     | 1000m    | 512Mi    | 1Gi      | Medium  | vixens-high   | 0         | Standard       | 100          |
 | **netbox**                     | tools                      | 100m     | 1000m    | 1Gi      | 2Gi      | Medium  | vixens-medium | 0         | Standard       | 100          |
 | **netvisor**                   | networking                 | 50m      | 500m     | 128Mi    | 256Mi    | Small   | vixens-medium | 0         | None           | 85           |
 | **nfs-storage**                | media-stack                | 50m      | 200m     | 128Mi    | 256Mi    | Micro   | vixens-critical| -2        | None           | 100          |
-| **postgresql-shared**          | databases                  | 200m     | 1000m    | 512Mi    | 1Gi      | Medium  | vixens-critical| -1        | Standard       | 100          |
+| **nocodb**                     | tools                      | 100m     | 1000m    | 512Mi    | 1Gi      | Medium  | vixens-medium | 0         | Standard       | 100          |
+| **penpot**                     | tools                      | 200m     | 1000m    | 1Gi      | 2Gi      | Medium  | vixens-medium | 0         | Standard       | 100          |
+| **postgresql-shared**          | databases                  | 200m     | 1000m    | 1024Mi   | 2Gi      | Medium  | vixens-critical| -1        | Standard       | 100          |
 | **priority-classes**           | kube-system                | N/A      | N/A      | N/A      | N/A      | N/A     | N/A           | -5        | None           | 100          |
 | **prometheus**                 | monitoring                 | 500m     | 2000m    | 1Gi      | 2Gi      | Medium  | vixens-high   | 0         | Relaxed        | 100          |
 | **promtail**                   | monitoring                 | 50m      | 100m     | 128Mi    | 256Mi    | Micro   | vixens-medium | 0         | None           | 85           |
 | **prowlarr**                   | media                      | 50m      | 500m     | 200Mi    | 512Mi    | Small   | vixens-medium | 0         | Standard       | 100          |
-| **pyload**                     | downloads                  | 50m      | 500m     | 128Mi    | 512Mi    | Small   | vixens-low    | 0         | None           | 85           |
-| **qbittorrent**                | downloads                  | 50m      | 500m     | 256Mi    | 1Gi      | Small   | vixens-low    | 0         | None           | 85           |
+| **pyload**                     | media                      | 50m      | 500m     | 128Mi    | 512Mi    | Small   | vixens-low    | 0         | None           | 85           |
+| **qbittorrent**                | media                      | 50m      | 500m     | 256Mi    | 1Gi      | Small   | vixens-low    | 0         | None           | 85           |
+| **radar**                      | tools                      | 100m     | 500m     | 128Mi    | 512Mi    | Small   | vixens-medium | 0         | None           | 100          |
 | **radarr**                     | media                      | 100m     | 500m     | 512Mi    | 1Gi      | Medium  | vixens-medium | 0         | Standard       | 100          |
 | **redis-shared**               | databases                  | 50m      | 500m     | 128Mi    | 256Mi    | Small   | vixens-critical| -1        | Relaxed        | 100          |
 | **reloader**                   | tools                      | 10m      | 100m     | 128Mi    | 256Mi    | Micro   | vixens-medium | 0         | None           | 85           |
 | **renovate**                   | tools                      | 1000m    | 2000m    | 1Gi      | 2Gi      | Large   | vixens-medium | 0         | None           | 85           |
 | **sabnzbd**                    | media                      | 100m     | 500m     | 256Mi    | 1Gi      | Small   | vixens-low    | 0         | Standard       | 100          |
-| **sonarr**                     | media                      | 50m      | 500m     | 256Mi    | 512Mi    | Small   | vixens-medium | 0         | Standard       | 100          |
+| **sonarr**                     | media                      | 100m     | 1000m    | 512Mi    | 1Gi      | Small   | vixens-medium | 0         | Standard       | 100          |
 | **stirling-pdf**               | tools                      | 100m     | 1000m    | 512Mi    | 1Gi      | Medium  | vixens-medium | 0         | None           | 85           |
 | **synology-csi**               | synology-csi               | 50m      | 500m     | 128Mi    | 256Mi    | Small   | vixens-critical| -4        | None           | 100          |
-| **synology-csi-secrets**       | synology-csi               | 10m      | 100m     | 64Mi     | 128Mi    | Micro   | vixens-critical| -3        | None           | 100          |
-| **traefik**                    | traefik                    | 200m     | 1000m    | 512Mi    | 1Gi      | Medium  | vixens-critical| -2        | Relaxed        | 100          |
-| **traefik-dashboard**          | traefik                    | 10m      | 100m     | 64Mi     | 128Mi    | Micro   | vixens-medium | 0         | None           | 85           |
+| **traefik**                    | traefik                    | 250m     | 2000m    | 512Mi    | 2Gi      | Medium  | vixens-critical| -2        | Relaxed        | 100          |
+| **trivy**                      | security                   | 200m     | 1000m    | 1Gi      | 1Gi      | Medium  | vixens-medium | 0         | None           | 100          |
 | **vaultwarden**                | services                   | 100m     | 500m     | 256Mi    | 512Mi    | Small   | vixens-high   | 0         | Standard       | 100          |
-| **vixens-app-of-apps**         | argocd                     | 10m      | 100m     | 64Mi     | 128Mi    | Micro   | vixens-critical| -5        | None           | 100          |
+| **velero**                     | velero                     | 100m     | 500m     | 256Mi    | 512Mi    | Small   | vixens-critical| -4        | None           | 100          |
+| **vikunja**                    | tools                      | 100m     | 500m     | 256Mi    | 512Mi    | Small   | vixens-medium | 0         | Standard       | 100          |
 | **vpa**                        | vpa                        | 50m      | 200m     | 200Mi    | 500Mi    | Small   | vixens-medium | -2        | None           | 85           |
-| **whisparr**                   | media                      | 50m      | 500m     | 256Mi    | 512Mi    | Small   | vixens-medium | 0         | Standard       | 100          |
+| **whisparr**                   | media                      | 100m     | 1000m    | 512Mi    | 1Gi      | Small   | vixens-medium | 0         | Standard       | 100          |
 | **whoami**                     | whoami                     | 10m      | 100m     | 64Mi     | 128Mi    | Micro   | vixens-low    | 0         | None           | 85           |
 
 ---
@@ -180,54 +183,38 @@ Record of architectural decisions reflected in this document:
 - Set target scores to 85+ for all applications (100 for Elite/Gold)
 - Identified legacy ingress resources for removal
 
-### Planned Changes
+### 🏆 Elite Compliance Standards (Kyverno & Policies)
 
-**Resource Optimization (Priority 1)**:
-- Increase frigate CPU request to 2500m (currently throttled)
-- Increase authentik memory limit to 2Gi (OOM risk)
-- Restore QoS for 28 apps affected by 2026-01-07 GitOps repair
+To achieve a "Gold" status and 100% conformity, applications must adhere to these policy-driven standards:
 
-**Backup Consolidation (Priority 2)**:
-- Enable Prometheus metrics for all Litestream configs (vixens-wfxk)
-- Review metrics after 1 week (vixens-yx42)
-- Configure MinIO lifecycle policy (vixens-s5ch)
+### 1. Metadata & Labels
+- **Managed By:** Every resource must have the label `app.kubernetes.io/managed-by: argocd`.
+- **Environment:** Namespaces must have the label `vixens.lab/environment: shared` (or prod/dev).
+- **Goldilocks:** Namespaces must have `goldilocks.fairwinds.com/enabled: "true"` for VPA visibility.
 
-**Legacy Cleanup (Priority 3)**:
-- Remove 4 standalone ingress resources
-- Migrate to consolidated middleware pattern
+### 2. Reliability (Probes)
+- **Primary Container:** Must have both `livenessProbe` and `readinessProbe` (HTTP or TCP).
+- **Sidecars (Standard):** Sidecars like `config-syncer` (rclone) or `litestream` **MUST** have a `readinessProbe` to ensure sync is operational.
+- **Sidecars (Graceful):** Ensure `terminationGracePeriodSeconds` is set to at least 30s for database-heavy sidecars.
 
----
-
-## Maintenance Instructions
-
-### When Making Decisions
-
-1. **Update this document FIRST** with the new desired state
-2. **Apply changes** to GitOps manifests (`apps/*/overlays/prod/`)
-3. **Verify in production** using kubectl or ArgoCD UI
-4. **Update STATE-ACTUAL.md** to reflect reality
-5. **Update STATUS.md** conformity scores
-
-### Editing Guidelines
-
-- **Add date** to Decision History when making changes
-- **Reference tasks** (Beads IDs) when relevant
-- **Explain rationale** for non-obvious decisions
-- **Keep alphabetical** order in main table
-- **Validate** against reference standards before committing
-
-### Automation Potential
-
-Scripts can be developed to:
-- Generate Kustomize patches from this table
-- Compare STATE-ACTUAL vs STATE-DESIRED (conformity scoring)
-- Auto-update STATUS.md from other reports
-- Validate consistency with reference docs
+### 3. Resources (Elite QoS)
+- **QoS Guaranteed:** CPU/Mem Requests **MUST** equal Limits for all "Critical" and "High" priority apps.
+- **Priority Class:** Every Deployment/StatefulSet must have a valid `priorityClassName` (defaulting to `vixens-medium`).
 
 ---
 
-**References:**
-- docs/reference/RESOURCE_STANDARDS.md
-- docs/reference/APPLICATION_SCORING_MODEL.md
-- docs/reference/argocd-sync-waves.md
-- docs/adr/014-litestream-backup-profiles-and-recovery-patterns.md
+## Decision History
+
+### 2026-02-05 - Stabilization Milestone (v3.1.536)
+- Adjusted Frigate CPU requests to 3000m based on live usage (Prometheus).
+- Increased Home Assistant Mem requests to 1536Mi to ensure Guaranteed QoS.
+- Standardized Booklore RAM at 1.5Gi (Medium profile) after VPA observations.
+- Formalized Kyverno sidecar probe requirements in Elite Standards.
+- Aligned namespaces for media apps (amule, pyload, qbittorrent moved to media).
+- Added Trivy, Radar, and Cilium to the baseline inventory.
+
+### 2026-01-10 - Initial Reference Creation
+- Established baseline desired state from production analysis
+- Aligned backup profiles with ADR-014 (Litestream profiles)
+- Set target scores to 85+ for all applications (100 for Elite/Gold)
+- Identified legacy ingress resources for removal.md
