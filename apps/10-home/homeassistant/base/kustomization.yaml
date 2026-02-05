@@ -11,3 +11,4 @@ resources:
   - infisical-config.yaml
   - infisical-secret.yaml
   - litestream-config.yaml
+  - vpa.yaml
