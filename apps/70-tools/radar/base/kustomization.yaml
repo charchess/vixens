@@ -29,7 +29,6 @@ patches:
             verbs: ["create", "get"]
 
           # Wildcard for all custom groups (SOTA Observability)
-          # This excludes the core group "" to avoid accidental secret access
           - apiGroups: 
               - "traefik.io"
               - "traefik.containo.us"
@@ -41,6 +40,7 @@ patches:
               - "policies.kyverno.io"
               - "configuration.konghq.com"
               - "admissionregistration.k8s.io"
+              - "apiregistration.k8s.io"
               - "resource.k8s.io"
               - "monitoring.coreos.com"
               - "cert-manager.io"
