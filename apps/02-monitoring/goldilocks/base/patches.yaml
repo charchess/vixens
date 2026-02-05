@@ -5,6 +5,10 @@ metadata:
 <<<<<<< HEAD
   namespace: monitoring
 =======
+<<<<<<< HEAD
+  namespace: monitoring
+=======
+>>>>>>> origin/main
 >>>>>>> origin/main
 spec:
   template:
@@ -36,6 +40,10 @@ metadata:
 <<<<<<< HEAD
   namespace: monitoring
 =======
+<<<<<<< HEAD
+  namespace: monitoring
+=======
+>>>>>>> origin/main
 >>>>>>> origin/main
 spec:
   template:
