@@ -7,3 +7,4 @@ metadata:
     vixens.lab/environment: shared
     vixens.lab/managed-by: argocd
     pod-security.kubernetes.io/enforce: baseline
+    goldilocks.fairwinds.com/enabled: "true"

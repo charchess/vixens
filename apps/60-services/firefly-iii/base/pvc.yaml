@@ -3,6 +3,8 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: firefly-iii-static
+  labels:
+    vixens.lab/managed-by: argocd
 spec:
   accessModes:
     - ReadWriteOnce
