@@ -65,7 +65,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 | loki | ✅ | ✅ | Elite Status (Restore QoS + config fixed) |
 | promtail | ✅ | ✅ | Elite Status + Probes + Guaranteed QoS |
 | robusta | ✅ | ✅ | Upgraded to v0.32.0, Discord & HolmesGPT UI enabled |
-| goldilocks | ✅ | ✅ | Fixed missing secretNamespace |
+| goldilocks | ✅ | ✅ | Elite Status + VPA + Security Hardened |
 
 # Commit changes
 git add docs/STATUS.md
