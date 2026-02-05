@@ -45,5 +45,8 @@ patches:
               - "monitoring.coreos.com"
               - "cert-manager.io"
               - "postgresql.cnpg.io"
+              - "autoscaling.k8s.io"
+              - "secrets.infisical.com"
+              - "storage.k8s.io"
             resources: ["*"]
             verbs: ["get", "list", "watch"]
