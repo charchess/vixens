@@ -33,4 +33,5 @@ kubectl get ingress -n finance
 - **Specifics:**
     - Uses `rclone` sidecar for Litestream S3 sync.
     - Uses `firefly-iii/core` image.
-    - **Elite Status:** VPA enabled, Security Context hardened, Resources defined.
+    - **Elite Status:** VPA enabled, Resources defined, Probes updated.
+- **Security Note:** Container runs without explicit container-level `securityContext` because the entrypoint (`serversideup/php`) requires root privileges to dynamically configure Nginx/PHP at startup. Pod-level isolation (`fsGroup`) is maintained.
