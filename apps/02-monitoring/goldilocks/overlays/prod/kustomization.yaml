@@ -6,6 +6,12 @@ kind: Kustomization
 namespace: monitoring
 patches:
   - path: patch-infisical-env.yaml
+  - target:
+      kind: Deployment
+    patch: |
+      - op: add
+        path: /spec/template/metadata/labels/environment
+        value: prod
 resources:
   - ingress.yaml
   - ../../base
