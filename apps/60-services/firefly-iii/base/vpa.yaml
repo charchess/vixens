@@ -1,0 +1,13 @@
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: firefly-iii
+  labels:
+    app.kubernetes.io/name: firefly-iii
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: firefly-iii
+  updatePolicy:
+    updateMode: "Off"

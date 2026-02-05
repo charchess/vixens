@@ -3,6 +3,8 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: firefly-iii-cron
+  labels:
+    vixens.lab/managed-by: argocd
 spec:
   schedule: "0 3 * * *"
   concurrencyPolicy: Forbid
