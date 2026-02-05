@@ -15,15 +15,41 @@ spec:
     metadata:
       labels:
         app: hubble-ui
+      annotations:
+        reloader.stakater.com/auto: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
     spec:
       serviceAccountName: hubble-ui
+      priorityClassName: vixens-medium
       containers:
         - name: hubble-ui
           image: quay.io/cilium/hubble-ui:v0.13.3
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 101 # nginx user in quay image often
+            runAsGroup: 101
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 8080
               name: http
               protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
           resources:
             requests:
               memory: 128Mi
@@ -37,6 +63,15 @@ spec:
               subPath: default.conf
         - name: hubble-ui-backend
           image: quay.io/cilium/hubble-ui-backend:v0.13.3
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           env:
             - name: EVENTS_SERVER_PORT
               value: "8081"
@@ -46,6 +81,16 @@ spec:
             - containerPort: 8081
               name: grpc
               protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: grpc
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: grpc
+            initialDelaySeconds: 5
+            periodSeconds: 5
           resources:
             requests:
               memory: 64Mi
