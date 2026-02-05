@@ -7,5 +7,5 @@ resources:
   - infisical-secret.yaml
   - vpa.yaml
 
-patches:
-  - path: patches.yaml
+patchesStrategicMerge:
+  - patches.yaml
