@@ -3,27 +3,59 @@ kind: Deployment
 metadata:
   name: goldilocks-controller
   namespace: monitoring
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: goldilocks
+    app.kubernetes.io/name: goldilocks
 spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: controller
+      app.kubernetes.io/instance: goldilocks
+      app.kubernetes.io/name: goldilocks
   template:
     metadata:
+      labels:
+        app.kubernetes.io/component: controller
+        app.kubernetes.io/instance: goldilocks
+        app.kubernetes.io/name: goldilocks
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
     spec:
       priorityClassName: vixens-medium
+      containers:
+        - name: goldilocks
+          image: us-docker.pkg.dev/fairwinds-ops/oss/goldilocks:v4.14.1
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: goldilocks-dashboard
   namespace: monitoring
+  labels:
+    app.kubernetes.io/component: dashboard
+    app.kubernetes.io/instance: goldilocks
+    app.kubernetes.io/name: goldilocks
 spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: dashboard
+      app.kubernetes.io/instance: goldilocks
+      app.kubernetes.io/name: goldilocks
   template:
     metadata:
+      labels:
+        app.kubernetes.io/component: dashboard
+        app.kubernetes.io/instance: goldilocks
+        app.kubernetes.io/name: goldilocks
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
     spec:
       priorityClassName: vixens-medium
+      containers:
+        - name: goldilocks
+          image: us-docker.pkg.dev/fairwinds-ops/oss/goldilocks:v4.14.1
