@@ -3,8 +3,8 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | latest  |
-| Prod          | [x]     | [x]       | [x]   | latest  |
+| Dev           | [x]     | [x]       | [x]   | v0.13.3 |
+| Prod          | [x]     | [x]       | [x]   | v0.13.3 |
 
 ## Validation
 **URL :** https://hubble.[env].truxonline.com

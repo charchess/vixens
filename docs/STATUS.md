@@ -66,7 +66,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 | promtail | ✅ | ✅ | Elite Status + Probes + Guaranteed QoS |
 | robusta | ✅ | ✅ | Upgraded to v0.32.0, Discord & HolmesGPT UI enabled |
 | goldilocks | ✅ | ✅ | Fixed missing secretNamespace |
-| hubble-ui | ✅ | ✅ | Fixed secretNamespace error |
+| hubble-ui | ✅ | ✅ | Elite Status + VPA + Probes |
 | descheduler | ✅ | ✅ | Eviction active (--dry-run=false) |
 
 ---
