@@ -11,23 +11,10 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
-  sources:
-    # Source 1: Helm Chart
-    - repoURL: https://charts.fairwinds.com/stable
-      chart: goldilocks
-      targetRevision: 10.2.0
-      helm:
-        valueFiles:
-          - $values/apps/02-monitoring/goldilocks/values/common.yaml
-          - $values/apps/02-monitoring/goldilocks/values/prod.yaml
-    # Source 2: Values from Git
-    - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: prod-stable
-      ref: values
-    # Source 3: Kustomize manifests from Git
-    - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: prod-stable
-      path: apps/02-monitoring/goldilocks/overlays/prod
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: prod-stable
+    path: apps/02-monitoring/goldilocks/overlays/prod
   syncPolicy:
     automated:
       prune: true
