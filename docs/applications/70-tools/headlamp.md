@@ -6,7 +6,7 @@
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
 | Dev           | [x]     | [x]       | [x]   | v0.39.0 |
-| Prod          | [x]     | [x]       | [ ]   | v0.39.0 |
+| Prod          | [x]     | [x]       | [x]   | v0.39.0 |
 
 ## Validation
 **URL :** https://headlamp.[env].truxonline.com
@@ -29,3 +29,5 @@ curl -L -k https://headlamp.dev.truxonline.com | grep "Headlamp"
 ## Notes Techniques
 - **Namespace :** `tools`
 - **Particularités :** Interface graphique pour Kubernetes.
+- **Elite Status:** VPA enabled, Resources defined, Probes updated.
+- **Security Note:** Container runs without explicit container-level `securityContext` to allow the creation of configuration directories (`/.config`) at startup. Pod-level isolation is maintained.
