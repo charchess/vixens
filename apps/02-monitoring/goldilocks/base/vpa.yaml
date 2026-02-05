@@ -1,0 +1,25 @@
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: goldilocks-controller
+  namespace: monitoring
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: goldilocks-controller
+  updatePolicy:
+    updateMode: "Off"
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: goldilocks-dashboard
+  namespace: monitoring
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: goldilocks-dashboard
+  updatePolicy:
+    updateMode: "Off"
