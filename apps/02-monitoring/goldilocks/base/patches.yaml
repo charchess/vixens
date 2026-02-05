@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: goldilocks-controller
+  namespace: monitoring
 spec:
   template:
     spec:
@@ -29,6 +30,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: goldilocks-dashboard
+  namespace: monitoring
 spec:
   template:
     spec:
