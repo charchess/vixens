@@ -17,3 +17,27 @@ patches:
           apiGroups: [""]
           resources: ["pods/portforward"]
           verbs: ["create"]
+      - op: add
+        path: /rules/-
+        value:
+          apiGroups: ["traefik.io"]
+          resources: ["ingressroutes", "middlewares", "tlsoptions"]
+          verbs: ["get", "list", "watch"]
+      - op: add
+        path: /rules/-
+        value:
+          apiGroups: [""]
+          resources: ["persistentvolumes"]
+          verbs: ["get", "list", "watch"]
+      - op: add
+        path: /rules/-
+        value:
+          apiGroups: ["aquasecurity.github.io"]
+          resources: ["vulnerabilityreports", "configauditreports", "exposedsecretreports", "rbacassessmentreports", "sbomreports"]
+          verbs: ["get", "list", "watch"]
+      - op: add
+        path: /rules/-
+        value:
+          apiGroups: ["apiextensions.k8s.io"]
+          resources: ["customresourcedefinitions"]
+          verbs: ["get", "list", "watch"]
