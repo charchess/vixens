@@ -11,7 +11,6 @@ controller:
     limits:
       cpu: 100m
       memory: 128Mi
-  priorityClassName: vixens-medium
   podSecurityContext:
     runAsNonRoot: true
     runAsUser: 1000
@@ -35,7 +34,6 @@ dashboard:
     limits:
       cpu: 100m
       memory: 128Mi
-  priorityClassName: vixens-medium
   podSecurityContext:
     runAsNonRoot: true
     runAsUser: 1000
