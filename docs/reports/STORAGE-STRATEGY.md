@@ -73,3 +73,17 @@ spec:
 - **Databases:** 10Gi - 20Gi (Shared PG uses 50Gi)
 - **Media Cache:** 50Gi - 100Gi
 - **Media Library:** Direct NFS mount (No PVC)
+
+---
+
+## 6. iSCSI Stabilization (Crucial)
+
+To prevent volume corruption and the `emergency_ro` kernel flag on Talos nodes during I/O errors or network instability:
+
+### Strategy: Recreate
+- **Rule:** ALL Deployments using iSCSI PVCs with `ReadWriteOnce` (RWO) **MUST** use `strategy: type: Recreate`.
+- **Reason:** `RollingUpdate` attempts to mount the volume on a new pod before the old one is terminated, causing "multi-attach" errors and stale locks on the Synology side.
+
+### Recovery from `emergency_ro`
+- **Detection:** Pod logs show `Read-only file system` or node dmesg shows iSCSI timeout.
+- **Fix:** Perform a clean `kubectl rollout restart deployment <app>` to cycle the session. **DO NOT** use `delete --force` as it leaves stale handles on the node.
