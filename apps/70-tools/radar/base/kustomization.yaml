@@ -4,7 +4,6 @@ kind: Kustomization
 namespace: tools
 resources:
   - manifests.yaml
-  - ingress.yaml
   - rbac-view-binding.yaml
 
 patches:
