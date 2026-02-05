@@ -5,6 +5,7 @@ metadata:
   name: firefly-iii
   labels:
     app.kubernetes.io/name: firefly-iii
+    vixens.lab/managed-by: argocd
 spec:
   replicas: 1
   strategy:
@@ -22,7 +23,7 @@ spec:
         prometheus.io/port: "8080"
         prometheus.io/path: "/metrics"
     spec:
-      priorityClassName: vixens-low
+      priorityClassName: vixens-medium
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
@@ -49,6 +50,13 @@ spec:
           envFrom:
             - secretRef:
                 name: firefly-iii-secrets
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: static
               mountPath: /upload
@@ -59,6 +67,14 @@ spec:
           ports:
             - containerPort: 8080
               name: http
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           env:
             - name: APP_KEY
               valueFrom:
@@ -100,10 +116,10 @@ spec:
               mountPath: /var/www/html/storage/upload
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
+              cpu: 200m
+              memory: 512Mi
             limits:
-              cpu: 500m
+              cpu: 200m
               memory: 512Mi
           livenessProbe:
             httpGet:
@@ -150,8 +166,15 @@ spec:
               cpu: 10m
               memory: 64Mi
             limits:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 10m
+              memory: 64Mi
+          readinessProbe:
+            exec:
+              command:
+                - ls
+                - /upload
+            initialDelaySeconds: 5
+            periodSeconds: 10
           volumeMounts:
             - name: static
               mountPath: /upload

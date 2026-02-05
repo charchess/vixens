@@ -10,3 +10,4 @@ resources:
   - pvc.yaml
   - infisical-secret.yaml
   - cronjob.yaml
+  - vpa.yaml
