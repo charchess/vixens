@@ -55,7 +55,7 @@ Decision: "Upgrade homeassistant to Critical backup profile"
 | **goldilocks**                 | monitoring                 | 100m     | 100m     | 128Mi    | 128Mi    | Small   | vixens-medium | 0         | None           | 100          |
 | **grafana**                    | monitoring                 | 100m     | 500m     | 256Mi    | 512Mi    | Small   | vixens-high   | 0         | Relaxed        | 100          |
 | **headlamp**                   | tools                      | 100m     | 200m     | 128Mi    | 256Mi    | Small   | vixens-medium | 0         | None           | 100          |
-| **homeassistant**              | homeassistant              | 300m     | 1000m    | 1536Mi   | 3072Mi   | Medium  | vixens-high   | 0         | Critical       | 100          |
+| **homeassistant**              | homeassistant              | 500m     | 2000m    | 2Gi      | 4Gi      | Medium  | vixens-high   | 0         | Critical       | 100          |
 | **homepage**                   | tools                      | 50m      | 500m     | 256Mi    | 512Mi    | Small   | vixens-medium | 0         | None           | 85           |
 
 ---
