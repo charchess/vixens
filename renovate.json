@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Renovate configuration for Vixens GitOps - Auto-updates with approval workflow",
+  "description": "Renovate configuration for Vixens GitOps - Elite Automation",
   "extends": [
     "config:recommended",
     ":dependencyDashboard"
@@ -15,8 +15,12 @@
   "baseBranchPatterns": [
     "main"
   ],
+  "rebaseWhen": "behind-base-branch",
   "gitAuthor": "Renovate Bot <renovate@vixens.local>",
   "platformAutomerge": true,
+  "automergeType": "pr",
+  "automergeStrategy": "squash",
+  "deleteConflictingBranches": true,
   "enabledManagers": [
     "terraform",
     "helm-values",
@@ -103,8 +107,6 @@
         "digest"
       ],
       "automerge": true,
-      "automergeType": "pr",
-      "automergeStrategy": "squash",
       "labels": [
         "dependencies",
         "renovate",
@@ -121,8 +123,6 @@
         "digest"
       ],
       "automerge": true,
-      "automergeType": "pr",
-      "automergeStrategy": "squash",
       "labels": [
         "dependencies",
         "renovate",
@@ -161,5 +161,25 @@
   "commitMessageAction": "update",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to {{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}",
-  "prBodyTemplate": "{{{header}}}\n\n{{{table}}}\n\n{{{notes}}}\n\n{{{changelogs}}}\n\n---\n\n### 🚀 Deployment Strategy\n\n{{#if isMajor}}⚠️ **Major update** - Manual review required{{else}}✅ **Auto-merge enabled** - Will merge automatically after approval{{/if}}\n\n- [ ] Reviewed changes\n- [ ] Ready to deploy to main branch (dev cluster)\n- [ ] Notify on Discord: `@everyone New dependency update ready for approval`\n\n---\n\n{{{footer}}}"
+  "prBodyTemplate": "{{{header}}}
+
+{{{table}}}
+
+{{{notes}}}
+
+{{{changelogs}}}
+
+---
+
+### 🚀 Deployment Strategy
+
+{{#if isMajor}}⚠️ **Major update** - Manual review required{{else}}✅ **Auto-merge enabled** - Will merge automatically after approval{{/if}}
+
+- [ ] Reviewed changes
+- [ ] Ready to deploy to main branch (dev cluster)
+- [ ] Notify on Discord: `@everyone New dependency update ready for approval`
+
+---
+
+{{{footer}}}"
 }
