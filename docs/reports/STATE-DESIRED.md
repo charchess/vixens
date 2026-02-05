@@ -57,7 +57,7 @@ Decision: "Upgrade homeassistant to Critical backup profile"
 | **headlamp**                   | tools                      | 100m     | 200m     | 128Mi    | 256Mi    | Small   | vixens-medium | 0         | None           | 100          |
 | **homeassistant**              | homeassistant              | 300m     | 1000m    | 1536Mi   | 3072Mi   | Medium  | vixens-high   | 0         | Critical       | 100          |
 | **homepage**                   | tools                      | 50m      | 500m     | 256Mi    | 512Mi    | Small   | vixens-medium | 0         | None           | 85           |
-| **hubble-ui**                  | monitoring                 | 100m     | 200m     | 128Mi    | 256Mi    | Small   | vixens-medium | 0         | None           | 85           |
+| **hubble-ui**                  | monitoring                 | 100m     | 200m     | 128Mi    | 256Mi    | Small   | vixens-medium | 0         | None           | 100          |
 | **hydrus-client**              | media                      | 100m     | 1000m    | 2Gi      | 4Gi      | Large   | vixens-medium | 0         | Mixed          | 100          |
 | **infisical-operator**         | infisical-operator-system  | 100m     | 500m     | 256Mi    | 512Mi    | Small   | vixens-critical| -4        | None           | 100          |
 | **it-tools**                   | tools                      | 50m      | 500m     | 128Mi    | 512Mi    | Small   | vixens-medium | 0         | None           | 85           |
