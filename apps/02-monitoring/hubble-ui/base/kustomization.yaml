@@ -9,3 +9,4 @@ resources:
   - infisical-secret.yaml
   - configmap.yaml
   - rbac.yaml
+  - vpa.yaml
