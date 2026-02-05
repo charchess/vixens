@@ -10,8 +10,8 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 
 | Component | Status | Description |
 |-----------|--------|-------------|
-| **Kustomize Build** | ✅ **PASSING** | Infrastructure build fixed (Radar conflict resolved) |
-| **CI/CD Pipelines** | ✅ **ACTIVE** | Promotion pipeline active (v3.1.536) |
+| **Kustomize Build** | ✅ **PASSING** | Infrastructure build fixed (Duplicate keys + Kyverno syntax resolved) |
+| **CI/CD Pipelines** | ✅ **ACTIVE** | Promotion pipeline active (v3.1.381) |
 
 ---
 
@@ -39,8 +39,8 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| argocd | ⚠️ | ✅ | Dev: Recovered from crash (Resource Pressure) |
-| velero | ✅ | ✅ | Prod: v1.17.2 + Infisical + Node Agent |
+| argocd | ✅ | ✅ | Fixed (Recovered) |
+| velero | ⏳ | ✅ | Prod: v1.17.2 + Infisical + Node Agent |
 | traefik | ✅ | ✅ | Ingress controller - v3.x |
 | cert-manager | ✅ | ✅ | TLS certificates - Let's Encrypt production |
 | cert-manager-webhook-gandi | ✅ | ✅ | Fixed missing secretNamespace |
@@ -48,6 +48,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 | cilium-lb | ✅ | ✅ | L2 Announcements + LB IPAM |
 | synology-csi | ✅ | ✅ | Persistent storage via iSCSI |
 | infisical-operator | ✅ | ✅ | Secrets management operator |
+| kubernetes-dashboard | ✅ | 🚧 | Dashboard v7.x (Prod en cours de sync) |
 | reloader | ✅ | ✅ | Elite Status + Prometheus Scraping |
 | vpa | ✅ | ✅ | Elite Status + QoS Guaranteed + Critical Priority |
 | trivy | ✅ | ✅ | Elite Status + Gentleman Mode (Concurrent Limit = 2) |
@@ -65,6 +66,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 | promtail | ✅ | ✅ | Elite Status + Probes + Guaranteed QoS |
 | robusta | ✅ | ✅ | Upgraded to v0.32.0, Discord & HolmesGPT UI enabled |
 | goldilocks | ✅ | ✅ | Fixed missing secretNamespace |
+| hubble-ui | ✅ | ✅ | Fixed secretNamespace error |
 | descheduler | ✅ | ✅ | Eviction active (--dry-run=false) |
 
 ---
@@ -81,7 +83,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| postgresql-shared | ✅ | ✅ | 500 max_connections + 512MB RAM |
+| postgresql-shared | ✅ | ✅ | CloudNativePG Shared Cluster (Elite Status) |
 | redis-shared | ✅ | ✅ | Shared Redis Instance |
 | mariadb-shared | ✅ | ✅ | Shared MariaDB Instance |
 | cloudnative-pg | ✅ | ✅ | CloudNativePG Operator |
@@ -104,10 +106,10 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 |-------------|-----|------|-------|
 | jellyfin | ⏳ | 💤 | Media server (planned) |
 | sabnzbd | ⏳ | ✅ | Prod fixed and synced |
-| radarr | ⏳ | ✅ | Prod fixed |
-| sonarr | ⏳ | ✅ | Recovered from iSCSI RO issue |
-| prowlarr | ⏳ | ✅ | Recovered from iSCSI RO issue |
-| frigate | ✅ | ✅ | Recovered from iSCSI RO issue |
+| radarr | ⏳ | ✅ | Prod fixed 
+| sonarr | ⏳ | ✅ | Prod fixed 
+| prowlarr | ⏳ | ✅ | Prod fixed 
+| frigate | ✅ | ✅ | Elite Status + 50Gi PVC fixed |
 | jellyseerr | ⏳ | 💤 | Media request management (planned) |
 | hydrus-client | ✅ | ✅ | Elite Status + Authentik SSO |
 
@@ -122,7 +124,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 | contacts | ✅ | 💤 | Contacts redirection service |
 | netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
 | netbird | ✅ | ✅ | Rate limit resolved, certificates active |
-| adguard | ⏳ | ✅ | DNS-based ad blocking |
+| adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
 
 ---
 
@@ -150,9 +152,10 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 | headlamp | ✅ | ✅ | Migrated to centralized middleware |
 | linkwarden | ✅ | ✅ | Migrated to standardized middleware |
 | vikunja | ✅ | ✅ | Upgraded to v1.0.0 (Postgres/Redis) |
+| penpot | 🚧 | 🚧 | Implementation in progress |
 | renovate | ✅ | ✅ | Auto-dependency updates (ADR-017) |
-| penpot | ✅ | ✅ | Recovered from Postgres outage |
-| radar | ✅ | ✅ | v0.8.0 + TLS Prod + Comprehensive RBAC |
+| penpot | ⏳ | ⏳ | Design platform (Deployed, awaiting cluster sync) |
+| gitops-revision-controller | 💤 | 💤 | Déprécié et supprimé (remplacé par Renovate/PR) |
 
 ---
 
@@ -170,21 +173,37 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 | Fix issue | Change status to ✅ |
 | Remove service | Mark as 💤 (if temporary) or delete row |
 
+### How to Update
+
+```bash
+# Edit this file
+vim docs/STATUS.md
+
+# Update status symbols and notes
+# Example: | jellyfin | ✅ | ⚠️ | Dev OK, Prod needs resource tuning |
+| sabnzbd | ⏳ | ✅ | Prod fixed and synced |
+
+# Commit changes
+git add docs/STATUS.md
+git commit -m "docs: update STATUS.md - <application> <status>"
+git push origin main
+```
+
 ---
 
 ## Quick Stats
 
 **Dev Environment:**
-- ✅ Working: 34 applications
-- ⚠️ Degraded: 1 application (ArgoCD)
+- ✅ Working: 35 applications
+- ⚠️ Degraded: 0 applications
 - ❌ Broken: 0 applications
 - 🚧 WIP: 0 application
 - ⏳ Planned: 6 applications
 - 💤 Paused: 2 applications
 
 **Prod Environment:**
-- ✅ Working: 42 applications
-- ⚠️ Degraded: 0 application
+- ✅ Working: 38 applications (Phase 3 active)
+- ⚠️ Degraded: 1 application (Netbird Certs)
 
 ---
 
@@ -211,7 +230,20 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 ## Related Documentation
 
 - **[Application Documentation](applications/)** - Detailed per-app documentation
+- **[reports/validation/RECETTE-FONCTIONNELLE.md](reports/validation/RECETTE-FONCTIONNELLE.md)** - Functional validation checklist
 - **[reports/validation/RECETTE-TECHNIQUE.md](reports/validation/RECETTE-TECHNIQUE.md)** - Technical validation checklist
+- **[reports/audits/APP_AUDIT.md](reports/audits/APP_AUDIT.md)** - Detailed application audit
+- **[reports/audits/ULTIMATE-AUDIT.md](reports/audits/ULTIMATE-AUDIT.md)** - Resource optimization analysis
+
+---
+
+## Notes
+
+- This dashboard is a **quick reference** for deployment status
+- For detailed information, see per-application documentation in [docs/applications/](applications/)
+- Update this file **immediately** when deploying or discovering issues
+- Keep notes column concise (max 80 characters)
+- Use emoji symbols consistently
 
 ---
 
