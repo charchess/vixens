@@ -3,7 +3,7 @@
 ## Deployment Information
 | Environment | Deployed | Configured | Tested | Version |
 |-------------|----------|-----------|-------|---------|
-| Dev         | [x]      | [x]       | [ ]   | v6.4.16 |
+| Dev         | [x]      | [x]       | [x]   | v6.4.16 |
 | Prod        | [ ]      | [ ]       | [ ]   | -       |
 
 ## Validation

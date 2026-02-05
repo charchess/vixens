@@ -136,6 +136,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 | vaultwarden | ✅ | ✅ | Migrated to standardized middleware |
 | docspell-native | ✅ | ✅ | Fixed missing secretNamespace |
 | gluetun | ✅ | ✅ | Fixed missing secretNamespace |
+| firefly-iii | ✅ | 💤 | Elite Status + VPA + Security Hardened |
 
 ---
 
@@ -194,7 +195,7 @@ git push origin main
 ## Quick Stats
 
 **Dev Environment:**
-- ✅ Working: 35 applications
+- ✅ Working: 36 applications
 - ⚠️ Degraded: 0 applications
 - ❌ Broken: 0 applications
 - 🚧 WIP: 0 application
