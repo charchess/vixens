@@ -63,6 +63,13 @@ spec:
               value: https://changedetection.dev.truxonline.com # Will be patched in overlays
             - name: PLAYWRIGHT_DRIVER_URL
               value: ws://localhost:3000/?stealth=1&--disable-web-security=true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           volumeMounts:
             - name: datastore
               mountPath: /datastore
@@ -88,6 +95,13 @@ spec:
               value: "10"
             - name: CHROME_REFRESH_TIME
               value: "600000"
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
         - name: config-syncer
           image: rclone/rclone:1.73
           command:

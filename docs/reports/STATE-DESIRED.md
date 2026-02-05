@@ -40,7 +40,7 @@ Decision: "Upgrade homeassistant to Critical backup profile"
 | **cert-manager-config**        | cert-manager               | 10m      | 100m     | 64Mi     | 128Mi    | Micro   | vixens-critical| -3        | None           | 100          |
 | **cert-manager-secrets**       | cert-manager               | 10m      | 100m     | 64Mi     | 128Mi    | Micro   | vixens-critical| -3        | None           | 100          |
 | **cert-manager-webhook-gandi** | cert-manager               | 10m      | 100m     | 64Mi     | 128Mi    | Micro   | vixens-critical| -4        | None           | 100          |
-| **changedetection**            | tools                      | 50m      | 500m     | 128Mi    | 256Mi    | Small   | vixens-medium | 0         | Relaxed        | 85           |
+| **changedetection**            | tools                      | 50m      | 500m     | 256Mi    | 512Mi    | Small   | vixens-medium | 0         | Relaxed        | 85           |
 | **cilium**                     | kube-system                | 100m     | 1000m    | 256Mi    | 512Mi    | Small   | vixens-critical| -2        | None           | 100          |
 | **cilium-lb**                  | kube-system                | 50m      | 500m     | 128Mi    | 256Mi    | Small   | vixens-critical| -2        | None           | 100          |
 | **cloudnative-pg**             | cnpg-system                | 200m     | 1000m    | 512Mi    | 1Gi      | Medium  | vixens-critical| -4        | None           | 100          |
@@ -92,6 +92,7 @@ Decision: "Upgrade homeassistant to Critical backup profile"
 | **radarr**                     | media                      | 100m     | 500m     | 512Mi    | 1Gi      | Medium  | vixens-medium | 0         | Standard       | 100          |
 | **redis-shared**               | databases                  | 50m      | 500m     | 128Mi    | 256Mi    | Small   | vixens-critical| -1        | Relaxed        | 100          |
 | **reloader**                   | tools                      | 10m      | 100m     | 128Mi    | 256Mi    | Micro   | vixens-medium | 0         | None           | 85           |
+| **robusta**                    | robusta                    | 250m     | 500m     | 1Gi      | 1Gi      | Medium  | vixens-high   | 0         | None           | 100          |
 | **renovate**                   | tools                      | 1000m    | 2000m    | 1Gi      | 2Gi      | Large   | vixens-medium | 0         | None           | 85           |
 | **sabnzbd**                    | media                      | 100m     | 500m     | 256Mi    | 1Gi      | Small   | vixens-low    | 0         | Standard       | 100          |
 | **sonarr**                     | media                      | 100m     | 1000m    | 512Mi    | 1Gi      | Small   | vixens-medium | 0         | Standard       | 100          |
