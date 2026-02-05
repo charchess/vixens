@@ -6,7 +6,7 @@
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
 | Dev           | [x]     | [x]       | [x]   | v0.39.0 |
-| Prod          | [x]     | [x]       | [x]   | v0.39.0 |
+| Prod          | [x]     | [x]       | [ ]   | v0.39.0 |
 
 ## Validation
 **URL :** https://headlamp.[env].truxonline.com
