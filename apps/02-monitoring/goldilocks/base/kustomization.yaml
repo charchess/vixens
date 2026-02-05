@@ -1,8 +1,18 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: monitoring
+
+helmCharts:
+  - name: goldilocks
+    releaseName: goldilocks
+    version: 10.2.0
+    repo: https://charts.fairwinds.com/stable
+    valuesFile: ../values/common.yaml
+
 resources:
   - infisical-secret.yaml
   - vpa.yaml
+
 patches:
   - path: patches.yaml
