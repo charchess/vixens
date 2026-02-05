@@ -41,3 +41,9 @@ patches:
           apiGroups: ["apiextensions.k8s.io"]
           resources: ["customresourcedefinitions"]
           verbs: ["get", "list", "watch"]
+      - op: add
+        path: /rules/-
+        value:
+          apiGroups: ["velero.io"]
+          resources: ["backups", "schedules", "restores", "backupstoragelocations"]
+          verbs: ["get", "list", "watch"]
