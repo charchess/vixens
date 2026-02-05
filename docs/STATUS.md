@@ -136,6 +136,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 | vaultwarden | ✅ | ✅ | Migrated to standardized middleware |
 | docspell-native | ✅ | ✅ | Fixed missing secretNamespace |
 | gluetun | ✅ | ✅ | Fixed missing secretNamespace |
+| firefly-iii | ✅ | 💤 | Elite Status + VPA + Security Hardened |
 
 ---
 
@@ -149,39 +150,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 | changedetection | ✅ | ✅ | Migrated to centralized middleware |
 | stirling-pdf | ✅ | ✅ | Migrated to centralized middleware |
 | it-tools | ✅ | ✅ | Migrated to centralized middleware |
-| headlamp | ✅ | ✅ | Migrated to centralized middleware |
-| linkwarden | ✅ | ✅ | Migrated to standardized middleware |
-| vikunja | ✅ | ✅ | Upgraded to v1.0.0 (Postgres/Redis) |
-| penpot | 🚧 | 🚧 | Implementation in progress |
-| renovate | ✅ | ✅ | Auto-dependency updates (ADR-017) |
-| penpot | ⏳ | ⏳ | Design platform (Deployed, awaiting cluster sync) |
-| gitops-revision-controller | 💤 | 💤 | Déprécié et supprimé (remplacé par Renovate/PR) |
-
----
-
-## Update Protocol
-
-**MANDATORY:** When deploying or discovering issues, update this dashboard.
-
-### When to Update
-
-| Event | Action |
-|-------|--------|
-| Deploy to dev | Update dev column |
-| Deploy to prod | Update prod column |
-| Discover issue | Change status to ⚠️ or ❌ |
-| Fix issue | Change status to ✅ |
-| Remove service | Mark as 💤 (if temporary) or delete row |
-
-### How to Update
-
-```bash
-# Edit this file
-vim docs/STATUS.md
-
-# Update status symbols and notes
-# Example: | jellyfin | ✅ | ⚠️ | Dev OK, Prod needs resource tuning |
-| sabnzbd | ⏳ | ✅ | Prod fixed and synced |
+| headlamp | ✅ | ✅ | Elite Status + VPA + Probes |
 
 # Commit changes
 git add docs/STATUS.md
@@ -194,7 +163,7 @@ git push origin main
 ## Quick Stats
 
 **Dev Environment:**
-- ✅ Working: 35 applications
+- ✅ Working: 36 applications
 - ⚠️ Degraded: 0 applications
 - ❌ Broken: 0 applications
 - 🚧 WIP: 0 application
