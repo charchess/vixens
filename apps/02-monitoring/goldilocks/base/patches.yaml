@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goldilocks-controller
+  namespace: monitoring
+spec:
+  template:
+    metadata:
+      annotations:
+        reloader.stakater.com/auto: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      priorityClassName: vixens-medium
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goldilocks-dashboard
+  namespace: monitoring
+spec:
+  template:
+    metadata:
+      annotations:
+        reloader.stakater.com/auto: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      priorityClassName: vixens-medium
