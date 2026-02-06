@@ -11,3 +11,4 @@ resources:
   - namespace.yaml
   - service.yaml
   - endpoints.yaml
+  - middleware.yaml
