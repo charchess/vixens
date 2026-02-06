@@ -220,7 +220,8 @@ git push origin main
 ### Prod Cluster
 
 - **Nodes:** pearl, phoebe, poison, powder
-- **VIP:** 192.168.111.200
+- **VIP:** 192.168.111.190
+- **IP Range:** 192.168.111.191 - 192.168.111.195
 - **VLAN Internal:** 111
 - **VLAN Services:** 201
 - **Status:** ✅ Active
