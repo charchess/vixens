@@ -115,14 +115,6 @@ spec:
         - name: homeassistant
           image: ghcr.io/home-assistant/home-assistant:2026.2.0
           imagePullPolicy: Always
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-              add:
-                - NET_RAW
-                - NET_ADMIN
           ports:
             - containerPort: 8123
               name: http
@@ -159,10 +151,6 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
           args:
             - replicate
             - -config
@@ -203,10 +191,6 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
           command:
             - sh
             - -c
