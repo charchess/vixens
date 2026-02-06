@@ -1,0 +1,11 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-webmail
+  namespace: mail-gateway
+spec:
+  redirectRegex:
+    regex: ^(https?://[^/]+)/?$
+    replacement: ${1}/mail/
+    permanent: false
