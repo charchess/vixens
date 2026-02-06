@@ -42,7 +42,7 @@ schedules:
     schedule: "0 4 * * *"
     template:
       ttl: "168h"
-      includedNamespaces: ["home"]
+      includedNamespaces: ["homeassistant", "mealie", "mosquitto"]
       snapshotVolumes: true
   weekly-full:
     disabled: false
