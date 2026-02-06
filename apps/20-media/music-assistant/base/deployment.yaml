@@ -38,7 +38,7 @@ spec:
               value: Europe/Paris
           volumeMounts:
             - name: config
-              mountPath: /config
+              mountPath: /data
             - name: media
               mountPath: /media
       volumes:
