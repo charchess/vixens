@@ -35,6 +35,7 @@ metadata:
     gethomepage.dev/name: Mail Gateway
     gethomepage.dev/icon: roundcube.png
     gethomepage.dev/group: Services
+    traefik.ingress.kubernetes.io/router.middlewares: mail-gateway-redirect-webmail@kubernetescrd
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik
