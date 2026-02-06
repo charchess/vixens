@@ -42,8 +42,9 @@ schedules:
     schedule: "0 4 * * *"
     template:
       ttl: "168h"
-      includedNamespaces: ["home"]
+      includedNamespaces: ["home", "homeassistant"]
       snapshotVolumes: true
+      defaultVolumesToFsBackup: true
   weekly-full:
     disabled: false
     schedule: "0 3 * * 0"
@@ -84,6 +85,10 @@ deployNodeAgent: true
 nodeAgent:
   uploaderType: kopia
   priorityClassName: vixens-critical
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
   resources:
     requests:
       cpu: 100m
