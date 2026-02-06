@@ -558,7 +558,7 @@ cat docs/adr/008-trunk-based-gitops-workflow.md
 | Environment | Nodes | VIP | Status |
 |-------------|-------|-----|--------|
 | **Dev** | daphne, diva, dulce (3 CP HA) | 192.168.111.160 | ✅ Active |
-| **Prod** | Physical nodes (3) | 192.168.111.200 | 📅 Phase 3 |📅 Phase 3 |
+| **Prod** | Physical nodes (3) | 192.168.111.190 | 📅 Phase 3 |📅 Phase 3 |
 
 **Repository Structure:**
 
