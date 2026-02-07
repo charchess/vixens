@@ -113,6 +113,35 @@ La grille de notation initiale utilisait des pénalités "au doigt mouillé", ce
 
 **Rationnel** : Traçabilité des décisions techniques, preuve que le code s'appuie sur docs officielles.
 
+## 🎖️ Application Ranking Standards (Ruby Level)
+
+Le projet suit une progression qualitative stricte pour chaque application, de son déploiement initial à sa stabilisation finale en production.
+
+### 🥉 Bronze (Candidate/Test)
+- **Critères** : Nouvelle application, déploiement initial en environnement `dev` ou `test`.
+- **Statut** : Fonctionnalité basique validée, mais configuration non optimisée.
+
+### 🥈 Silver (Production Ready)
+- **Critères** : Validée pour le déploiement en `prod`.
+- **Statut** : Ingress configuré, secrets gérés, persistence active.
+
+### 🥇 Gold (Standard Quality)
+- **Critères** : Respecte les standards de base du cluster.
+- **Statut** : Ressources CPU/RAM définies, probes (liveness/readiness) actives, labels standards.
+
+### 🟢 Emerald (Infrastructure & Robustesse)
+- **QoS Guaranteed** : `requests` == `limits` pour TOUS les containers (app + sidecars).
+- **Infisical Unicity** : Un seul chemin de secret par application, standardisé et unique.
+- **Sidecar Governance** : Ressources CPU/RAM bridées pour Litestream, Config-patchers, etc.
+- **Backup Assurance** : Confirmation du backup Velero pour les volumes persistants.
+- **Clean Code** : Zéro warning linter, zéro tag `:latest`.
+
+### 💎 Diamond (Elite Production)
+- **Cilium Security** : NetworkPolicies (L4/L7) appliquées et testées.
+- **Authentik SSO** : Intégration complète du SSO et des rôles.
+- **Homepage Full** : Dashboard complet avec widgets API fonctionnels.
+- **Stability Gate** : Validation finale après 1 semaine de stabilité (RAM/CPU, zero restarts).
+
 ### Seuils de Décision
 
 - **PASS (≥85)** : Code production-ready, aucune restriction

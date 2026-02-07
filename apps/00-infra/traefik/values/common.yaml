@@ -27,7 +27,7 @@ ingressRoute:
 # ============================================================================
 # Priority and Tolerations
 # ============================================================================
-priorityClassName: homelab-critical
+priorityClassName: vixens-high
 # From /root/terravixens/terraform/modules/shared/locals.tf
 tolerations:
   - key: node-role.kubernetes.io/control-plane

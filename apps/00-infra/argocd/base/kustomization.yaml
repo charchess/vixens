@@ -5,9 +5,4 @@ resources:
   - namespace.yaml
   - argocd-install.yaml
 patches:
-  - target:
-      kind: Deployment
-    patch: |
-      - op: add
-        path: /spec/template/spec/priorityClassName
-        value: vixens-critical
+  - path: emerald-patch.yaml
