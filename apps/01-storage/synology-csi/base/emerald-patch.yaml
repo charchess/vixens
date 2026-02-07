@@ -1,0 +1,71 @@
+---
+# Synology CSI Emerald Lockdown Patch
+# Standardizes resources (Req == Lim), priority classes, and stable tags
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: synology-csi-controller
+spec:
+  template:
+    spec:
+      priorityClassName: vixens-critical
+      containers:
+        - name: csi-provisioner
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 64Mi
+        - name: csi-attacher
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 64Mi
+        - name: csi-resizer
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 64Mi
+        - name: synology-csi-plugin
+          image: ghcr.io/zebernst/synology-csi:v1.2.0
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 50m
+              memory: 128Mi
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: synology-csi-node
+spec:
+  template:
+    spec:
+      priorityClassName: vixens-critical
+      containers:
+        - name: csi-node-driver-registrar
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 64Mi
+        - name: synology-csi-plugin
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 50m
+              memory: 128Mi
