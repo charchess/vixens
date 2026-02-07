@@ -21,7 +21,7 @@ spec:
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
     spec:
-      priorityClassName: vixens-critical
+      priorityClassName: vixens-high
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
@@ -32,6 +32,13 @@ spec:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
           command:
             - sh
             - -c
@@ -60,6 +67,13 @@ spec:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
           args:
             - restore
             - -config
@@ -90,10 +104,10 @@ spec:
               protocol: TCP
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
+              cpu: 200m
+              memory: 512Mi
             limits:
-              cpu: 500m
+              cpu: 200m
               memory: 512Mi
           volumeMounts:
             - name: config
@@ -114,10 +128,10 @@ spec:
               name: metrics
           resources:
             requests:
-              cpu: 10m
-              memory: 64Mi
+              cpu: 50m
+              memory: 128Mi
             limits:
-              cpu: 100m
+              cpu: 50m
               memory: 128Mi
           envFrom:
             - secretRef:
@@ -159,10 +173,10 @@ spec:
                 name: adguard-home-secrets
           resources:
             requests:
-              cpu: 10m
-              memory: 64Mi
+              cpu: 50m
+              memory: 128Mi
             limits:
-              cpu: 100m
+              cpu: 50m
               memory: 128Mi
           volumeMounts:
             - name: config
