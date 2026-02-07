@@ -253,7 +253,7 @@ bd create --title="..." --assignee=gemini
 
 ### Production via Workflow UNIQUEMENT
 - ❌ JAMAIS créer tag `prod-stable` manuellement
-- ✅ Tag `prod-working` : Mis à jour manuellement pour référencer la dernière configuration connue fonctionnelle
+- ⛔ **Tag `prod-working` : NE JAMAIS MODIFIER OU DÉPLACER SANS ACCORD EXPLICITE.** Ce tag est une référence de secours manuelle. L'agent ne doit jamais l'automatiser.
 - ❌ JAMAIS push force sur `main`
 - ✅ TOUJOURS utiliser workflow: `gh workflow run promote-prod.yaml`
 - ✅ Tag `prod-stable` déplacé automatiquement par GitHub Actions
