@@ -18,13 +18,13 @@ logs:
     level: WARN
   access:
     enabled: true
-# Production-grade resource limits (Emerald - Guaranteed QoS)
+# Production-grade resource limits (Burstable)
 resources:
   requests:
     cpu: 250m
-    memory: 2Gi
+    memory: 256Mi
   limits:
-    cpu: 250m
+    cpu: 2000m
     memory: 2Gi
 # High availability with multiple replicas
 deployment:
