@@ -5,4 +5,3 @@ resources:
   - namespace.yaml
   - argocd-install.yaml
 patches:
-  - path: emerald-patch.yaml

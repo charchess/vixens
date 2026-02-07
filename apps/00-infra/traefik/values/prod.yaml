@@ -21,11 +21,11 @@ logs:
 # Production-grade resource limits (Emerald - Guaranteed QoS)
 resources:
   requests:
-    cpu: 500m
-    memory: 512Mi
+    cpu: 250m
+    memory: 2Gi
   limits:
-    cpu: 500m
-    memory: 512Mi
+    cpu: 250m
+    memory: 2Gi
 # High availability with multiple replicas
 deployment:
   replicas: 2
