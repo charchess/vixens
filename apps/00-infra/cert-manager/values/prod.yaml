@@ -5,32 +5,34 @@
 # ============================================================================
 # Production-Specific Settings
 # ============================================================================
-# Higher resource limits for production
+# Production-grade resource limits (Emerald - Guaranteed QoS)
 resources:
   requests:
     cpu: 100m
     memory: 128Mi
   limits:
-    cpu: 500m
-    memory: 512Mi
+    cpu: 100m
+    memory: 128Mi
 # Webhook resources
 webhook:
+  priorityClassName: vixens-high
   resources:
     requests:
-      cpu: 50m
-      memory: 64Mi
+      cpu: 100m
+      memory: 128Mi
     limits:
-      cpu: 200m
-      memory: 256Mi
+      cpu: 100m
+      memory: 128Mi
 # CA Injector resources
 cainjector:
+  priorityClassName: vixens-high
   resources:
     requests:
-      cpu: 50m
-      memory: 64Mi
+      cpu: 100m
+      memory: 128Mi
     limits:
-      cpu: 200m
-      memory: 256Mi
+      cpu: 100m
+      memory: 128Mi
 # Production-grade replica count
 replicaCount: 2
 # ============================================================================

@@ -1,6 +1,7 @@
 ---
 # ExternalDNS UniFi Configuration (Private/LAN)
 provider: webhook
+priorityClassName: vixens-high
 logLevel: debug
 image:
   registry: registry.k8s.io
@@ -35,6 +36,13 @@ sidecars:
         value: debug
       - name: UNIFI_SKIP_TLS_VERIFY
         value: "true"
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 50m
+        memory: 64Mi
 tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists

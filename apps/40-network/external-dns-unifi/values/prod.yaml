@@ -5,8 +5,8 @@ domainFilters:
   - truxonline.com
 resources:
   requests:
-    cpu: 20m
-    memory: 64Mi
+    cpu: 100m
+    memory: 128Mi
   limits:
     cpu: 100m
     memory: 128Mi
