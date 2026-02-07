@@ -9,6 +9,11 @@ resources:
   - controller.yaml
   - node.yaml
   - storage-class.yaml
+patches:
+  - path: emerald-patch.yaml
+
+patches:
+  - path: emerald-patch.yaml
 labels:
   - pairs:
       app.kubernetes.io/name: synology-csi
