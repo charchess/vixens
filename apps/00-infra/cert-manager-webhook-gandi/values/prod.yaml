@@ -5,13 +5,14 @@
 # ============================================================================
 # Production-Specific Settings
 # ============================================================================
-# Higher resource limits for production
+priorityClassName: vixens-high
+# Production-grade resource limits (Emerald - Guaranteed QoS)
 resources:
   requests:
     cpu: 50m
     memory: 64Mi
   limits:
-    cpu: 200m
-    memory: 256Mi
+    cpu: 50m
+    memory: 64Mi
 # Production-grade replica count
 replicaCount: 2

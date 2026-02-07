@@ -11,6 +11,7 @@ installCRDs: true
 # Global Configuration
 # ============================================================================
 global:
+  priorityClassName: vixens-high
   leaderElection:
     # Leader election namespace (should match deployment namespace)
     namespace: cert-manager

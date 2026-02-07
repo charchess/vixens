@@ -28,10 +28,10 @@ spec:
           args: ["--port=80"]
           resources:
             requests:
-              cpu: 50m
-              memory: 128Mi
+              cpu: 100m
+              memory: 256Mi
             limits:
-              cpu: 200m
+              cpu: 100m
               memory: 256Mi
           livenessProbe:
             tcpSocket:
@@ -97,10 +97,10 @@ spec:
               value: "netbird-relay-secret-change-me"
           resources:
             requests:
-              cpu: 50m
-              memory: 128Mi
+              cpu: 100m
+              memory: 256Mi
             limits:
-              cpu: 200m
+              cpu: 100m
               memory: 256Mi
           livenessProbe:
             tcpSocket:

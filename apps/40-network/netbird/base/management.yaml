@@ -32,8 +32,8 @@ spec:
               cpu: 50m
               memory: 64Mi
             limits:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 50m
+              memory: 64Mi
           env:
             - name: AUTH_ISSUER
               value: "https://authentik.dev.truxonline.com/application/o/netbird/"
@@ -103,10 +103,10 @@ spec:
           args: ["--port=80", "--log-file=console", "--log-level=info", "--config=/etc/netbird/management.json"]
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
+              cpu: 200m
+              memory: 512Mi
             limits:
-              cpu: 500m
+              cpu: 200m
               memory: 512Mi
           livenessProbe:
             tcpSocket:
