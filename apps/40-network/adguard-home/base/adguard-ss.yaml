@@ -28,7 +28,7 @@ spec:
           effect: NoSchedule
       initContainers:
         - name: restore-config
-          image: rclone/rclone:1.73
+          image: rclone/rclone:1.65
           securityContext:
             runAsUser: 0
             runAsGroup: 0
@@ -143,7 +143,7 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-syncer
-          image: rclone/rclone:1.73
+          image: rclone/rclone:1.65
           securityContext:
             runAsUser: 0
             runAsGroup: 0

@@ -27,7 +27,7 @@ patches:
           spec:
             initContainers:
               - name: restore-config
-                image: rclone/rclone:1.73
+                image: rclone/rclone:1.65
                 securityContext:
                   runAsUser: 1000
                   runAsGroup: 1000
@@ -56,7 +56,7 @@ patches:
                     mountPath: /config
             containers:
               - name: config-syncer
-                image: rclone/rclone:1.73
+                image: rclone/rclone:1.65
                 securityContext:
                   runAsUser: 1000
                   runAsGroup: 1000
