@@ -30,7 +30,7 @@ spec:
       initContainers:
         # 1. Optionnel: Restauration des fichiers de config plats
         - name: restore-config
-          image: rclone/rclone:1.65
+          image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -148,7 +148,7 @@ spec:
               subPath: litestream.yml
         # 4. Optionnel: Sidecar Config-Syncer
         - name: config-syncer
-          image: rclone/rclone:1.65
+          image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
