@@ -12,6 +12,7 @@ resources:
 
 patches:
   - path: emerald-patch.yaml
+
 labels:
   - pairs:
       app.kubernetes.io/name: synology-csi
