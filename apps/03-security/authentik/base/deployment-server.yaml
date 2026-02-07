@@ -34,7 +34,7 @@ spec:
             name: authentik-config
       initContainers:
         - name: restore-config
-          image: rclone/rclone:1.65
+          image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -122,7 +122,7 @@ spec:
               memory: 1024Mi
               cpu: 500m
         - name: config-syncer
-          image: rclone/rclone:1.65
+          image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000

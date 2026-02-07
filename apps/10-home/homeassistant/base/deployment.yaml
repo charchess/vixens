@@ -51,7 +51,7 @@ spec:
             - name: config
               mountPath: /config
         - name: restore-config
-          image: rclone/rclone:1.65
+          image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -201,7 +201,7 @@ spec:
               cpu: 100m
               memory: 1Gi
         - name: config-syncer
-          image: rclone/rclone:1.65
+          image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
