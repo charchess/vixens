@@ -4,13 +4,4 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - argocd-install.yaml
-
-helmCharts:
-  - name: argo-cd
-    repo: https://argoproj.github.io/argo-helm
-    version: 7.7.7
-    releaseName: argocd
-    namespace: argocd
-    includeCRDs: false
-
 patches:
