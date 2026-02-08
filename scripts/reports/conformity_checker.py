@@ -21,8 +21,9 @@ def main():
     parser.add_argument("--output", default="docs/reports/CONFORMITY-REPORT.md", help="Output report file")
     args = parser.parse_args()
 
-    actual_rows = parse_markdown_table(args.actual)
-    desired_rows = parse_markdown_table(args.desired)
+    # Parse tables - use header_contains to find the App table (not Node table)
+    actual_rows = parse_markdown_table(args.actual, header_contains="App")
+    desired_rows = parse_markdown_table(args.desired, header_contains="App")
 
     if not desired_rows:
         print("Error: Could not parse desired state file")

@@ -75,16 +75,59 @@ def get_pods():
 
 
 def extract_app_name(pod):
-    """Extract app name from pod labels."""
+    """Extract app name from pod labels (normalized for STATE-DESIRED matching)."""
     labels = pod.get('metadata', {}).get('labels', {})
+    metadata = pod.get('metadata', {})
 
-    # Try various label keys
-    for key in ['app.kubernetes.io/name', 'app', 'name']:
-        if key in labels:
-            return labels[key]
+    # 1. Try app.kubernetes.io/part-of (parent app)
+    if 'app.kubernetes.io/part-of' in labels:
+        return labels['app.kubernetes.io/part-of']
 
-    # Fallback to pod name
-    return pod.get('metadata', {}).get('name', 'unknown')
+    # 2. Try app.kubernetes.io/name
+    if 'app.kubernetes.io/name' in labels:
+        app_name = labels['app.kubernetes.io/name']
+        # Normalize component names to parent app
+        # e.g., argocd-server → argocd, authentik-worker → authentik
+        app_name = normalize_app_name(app_name, metadata.get('namespace', ''))
+        return app_name
+
+    # 3. Try app label
+    if 'app' in labels:
+        app_name = labels['app']
+        app_name = normalize_app_name(app_name, metadata.get('namespace', ''))
+        return app_name
+
+    # 4. Fallback to pod name (normalized)
+    pod_name = metadata.get('name', 'unknown')
+    return normalize_app_name(pod_name, metadata.get('namespace', ''))
+
+
+def normalize_app_name(name, namespace):
+    """Normalize app name to match STATE-DESIRED conventions."""
+    # Remove common suffixes that indicate components
+    suffixes_to_remove = [
+        '-server', '-worker', '-controller', '-redis', '-postgresql',
+        '-repo-server', '-application-controller', '-applicationset-controller',
+        '-notifications-controller', '-webhook', '-cainjector', '-mariadb',
+        '-deployment', '-statefulset', '-daemonset'
+    ]
+
+    original_name = name
+    for suffix in suffixes_to_remove:
+        if name.endswith(suffix):
+            name = name[:-len(suffix)]
+            break
+
+    # Special cases for well-known apps
+    special_cases = {
+        'webhook': 'cert-manager',  # cert-manager webhook
+        'cainjector': 'cert-manager',  # cert-manager cainjector
+    }
+
+    if name in special_cases:
+        return special_cases[name]
+
+    return name
 
 
 def get_vpa_recommendation(app_name, vpas):
@@ -149,8 +192,9 @@ def calculate_elite_score(pod_data):
 
 
 def process_pods(pods, vpas):
-    """Process pods and extract application data."""
+    """Process pods and extract application data (aggregated by app)."""
     apps_data = {}
+    apps_pods = {}  # Track pods per app for aggregation
 
     for pod in pods:
         metadata = pod.get('metadata', {})
@@ -161,39 +205,70 @@ def process_pods(pods, vpas):
         app_name = extract_app_name(pod)
         key = f"{ns}/{app_name}"
 
-        # Skip if already processed (deduplication)
-        if key in apps_data:
-            continue
+        # Collect pods per app for aggregation
+        if key not in apps_pods:
+            apps_pods[key] = []
+        apps_pods[key].append(pod)
 
-        # Get first container
-        containers = spec.get('containers', [])
-        if not containers:
-            continue
+    # Process each app (aggregated)
+    for key, pod_list in apps_pods.items():
+        # Use first pod as representative
+        pod = pod_list[0]
+        metadata = pod.get('metadata', {})
 
-        container = containers[0]
-        resources = container.get('resources', {})
-        requests = resources.get('requests', {})
-        limits = resources.get('limits', {})
+        # Aggregate resources from all pods/containers
+        cpu_reqs = []
+        cpu_lims = []
+        mem_reqs = []
+        mem_lims = []
 
-        # Extract resource values
-        cpu_req = requests.get('cpu', 'N/A')
-        cpu_lim = limits.get('cpu', 'N/A')
-        mem_req = requests.get('memory', 'N/A')
-        mem_lim = limits.get('memory', 'N/A')
+        for pod in pod_list:
+            containers = pod.get('spec', {}).get('containers', [])
+            for container in containers:
+                resources = container.get('resources', {})
+                requests = resources.get('requests', {})
+                limits = resources.get('limits', {})
+
+                if 'cpu' in requests:
+                    cpu_reqs.append(requests['cpu'])
+                if 'cpu' in limits:
+                    cpu_lims.append(limits['cpu'])
+                if 'memory' in requests:
+                    mem_reqs.append(requests['memory'])
+                if 'memory' in limits:
+                    mem_lims.append(limits['memory'])
+
+        # Use most common value or first value
+        cpu_req = cpu_reqs[0] if cpu_reqs else 'N/A'
+        cpu_lim = cpu_lims[0] if cpu_lims else 'N/A'
+        mem_req = mem_reqs[0] if mem_reqs else 'N/A'
+        mem_lim = mem_lims[0] if mem_lims else 'N/A'
+
+        # Get from first pod
+        spec = pod.get('spec', {})
+        status = pod.get('status', {})
 
         # Priority class
         prio = spec.get('priorityClassName', 'N/A')
 
-        # QoS class
+        # QoS class (from first pod)
         qos = status.get('qosClass', 'BestEffort')
 
         # Sync wave (from annotations)
         annotations = metadata.get('annotations', {})
         wave = annotations.get('argocd.argoproj.io/sync-wave', '0')
 
-        # Backup (check for litestream sidecar)
-        has_litestream = any('litestream' in c.get('name', '') for c in containers)
+        # Backup (check for litestream sidecar in any pod)
+        has_litestream = False
+        for p in pod_list:
+            containers = p.get('spec', {}).get('containers', [])
+            if any('litestream' in c.get('name', '') for c in containers):
+                has_litestream = True
+                break
         backup = 'Active' if has_litestream else 'None'
+
+        ns = key.split('/')[0]
+        app_name = key.split('/')[1]
 
         # VPA recommendation
         vpa_rec = get_vpa_recommendation(app_name, vpas)

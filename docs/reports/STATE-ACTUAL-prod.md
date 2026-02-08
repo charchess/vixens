@@ -1,102 +1,95 @@
-# Application State - Actual (Prod Reality)
+# 📊 État Réel du Cluster - 2026-02-08 11:47:57
 
-**Last Updated:** 2026-02-05
-**Environment:** Prod Cluster
-**Data Source:** Live cluster state + GitOps manifests
+## 🖥️ Node Summary
 
----
+| Node Name | Role          | CPU Cap | RAM Cap    | OS              | Kernel       |
+| --------- | ------------- | ------- | ---------- | --------------- | ------------ |
+| peach     | worker        | 8       | 8096984Ki  | Talos (v1.12.2) | 6.18.5-talos |
+| pearl     | worker        | 4       | 8002644Ki  | Talos (v1.12.2) | 6.18.5-talos |
+| phoebe    | control-plane | 4       | 7969528Ki  | Talos (v1.12.2) | 6.18.5-talos |
+| poison    | control-plane | 4       | 16094408Ki | Talos (v1.12.2) | 6.18.5-talos |
+| powder    | control-plane | 4       | 16128584Ki | Talos (v1.12.2) | 6.18.5-talos |
 
-## Production Application Inventory
+## 📦 Application Details
 
-| App                            | NS                        | CPU Req | CPU Lim | Mem Req | Mem Lim | VPA Target        | Profile | Priority                | Sync Wave | Backup Profile | Score |
-| ------------------------------ | ------------------------- | ------- | ------- | ------- | ------- | ----------------- | ------- | ----------------------- | --------- | -------------- | ----- |
-| **adguard-home**               | networking                | 100m    | 500m    | 256Mi   | 512Mi   | 93m / 126805489   | Small   | vixens-critical         | 10        | Standard       | 0     |
-| **amule**                      | downloads                 | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 10        | None           | 0     |
-| **argocd**                     | argocd                    | N/A     | N/A     | N/A     | N/A     | 203m / 1038683533 | Unknown | N/A                     | 0         | None           | 0     |
-| **authentik**                  | auth                      | N/A     | N/A     | N/A     | N/A     | 93m / 1389197403  | Unknown | N/A                     | 10        | None           | 0     |
-| **birdnet-go**                 | birdnet-go                | 200m    | 1       | 256Mi   | 1Gi     | 35m / 323522422   | Medium  | N/A                     | 10        | None           | 0     |
-| **booklore**                   | media                     | N/A     | N/A     | N/A     | N/A     | 35m / 2823238195  | Unknown | N/A                     | 10        | None           | 0     |
-| **cert-manager**               | cert-manager              | 100m    | 500m    | 128Mi   | 512Mi   | No VPA            | Small   | N/A                     | 0         | None           | 0     |
-| **cert-manager-config**        | cert-manager              | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 2         | None           | 0     |
-| **cert-manager-secrets**       | cert-manager              | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 0         | None           | 0     |
-| **cert-manager-webhook-gandi** | cert-manager              | 50m     | 200m    | 64Mi    | 256Mi   | No VPA            | Small   | N/A                     | 1         | None           | 0     |
-| **changedetection**            | tools                     | N/A     | N/A     | N/A     | N/A     | 11m / 144645763   | Unknown | N/A                     | 10        | None           | 0     |
-| **cilium-lb**                  | kube-system               | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | -2        | None           | 0     |
-| **cloudnative-pg**             | cnpg-system               | 100m    | 500m    | 128Mi   | 512Mi   | No VPA            | Small   | homelab-critical        | 3         | None           | 0     |
-| **contacts**                   | contacts                  | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 0         | None           | 0     |
-| **descheduler**                | kube-system               | 50m     | 200m    | 64Mi    | 128Mi   | No VPA            | Micro   | system-cluster-critical | 10        | None           | 0     |
-| **docspell-native**            | services                  | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 7         | None           | 0     |
-| **external-dns-gandi**         | networking                | 20m     | 100m    | 64Mi    | 128Mi   | 11m / 128Mi       | Micro   | N/A                     | 5         | None           | 0     |
-| **external-dns-gandi-secrets** | networking                | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 4         | None           | 0     |
-| **external-dns-unifi**         | networking                | 20m     | 100m    | 64Mi    | 128Mi   | 11m / 64Mi        | Micro   | N/A                     | 5         | None           | 0     |
-| **external-dns-unifi-secrets** | networking                | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 4         | None           | 0     |
-| **firefly-iii**                | finance                   | 100m    | 500m    | 256Mi   | 512Mi   | No VPA            | Small   | vixens-low              | 0         | None           | 0     |
-| **firefly-iii-importer**       | finance                   | 10m     | 500m    | 128Mi   | 512Mi   | No VPA            | Small   | vixens-low              | 0         | None           | 0     |
-| **frigate**                    | media                     | 500m    | 8       | 4Gi     | 8Gi     | 11m / 44739242    | Large   | vixens-medium           | 10        | Standard       | 0     |
-| **gluetun**                    | services                  | N/A     | N/A     | N/A     | N/A     | 11m / 248153480   | Unknown | N/A                     | 10        | None           | 0     |
-| **goldilocks**                 | monitoring                | 25m     | N/A     | 256Mi   | N/A     | 11m / 128Mi       | Unknown | N/A                     | 0         | None           | 0     |
-| **grafana**                    | monitoring                | N/A     | N/A     | N/A     | N/A     | 11m / 272061154   | Unknown | vixens-critical         | 6         | None           | 0     |
-| **grafana-ingress**            | monitoring                | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 7         | None           | 0     |
-| **headlamp**                   | tools                     | 100m    | 200m    | 128Mi   | 256Mi   | 11m / 128Mi       | Small   | N/A                     | 10        | None           | 0     |
-| **homeassistant**              | homeassistant             | 500m    | 2       | 2Gi     | 4Gi     | 247m / 78221997   | Large   | vixens-high             | 10        | Standard       | 0     |
-| **homepage**                   | tools                     | N/A     | N/A     | N/A     | N/A     | 11m / 128Mi       | Unknown | N/A                     | 10        | None           | 0     |
-| **hydrus-client**              | media                     | 1       | 1       | 2Gi     | 2Gi     | 11m / 442809964   | Medium  | vixens-medium           | 10        | Standard       | 0     |
-| **infisical-operator**         | infisical-operator-system | 10m     | 500m    | 64Mi    | 256Mi   | No VPA            | Small   | N/A                     | -3        | None           | 0     |
-| **it-tools**                   | tools                     | 10m     | 100m    | 32Mi    | 128Mi   | 11m / 128Mi       | Micro   | N/A                     | 5         | None           | 0     |
-| **it-tools-ingress**           | tools                     | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 6         | None           | 0     |
-| **jellyfin**                   | media                     | N/A     | N/A     | N/A     | N/A     | 11m / 203699302   | Unknown | homelab-important       | 10        | None           | 0     |
-| **jellyseerr**                 | media                     | N/A     | N/A     | N/A     | N/A     | 11m / 323522422   | Unknown | N/A                     | 10        | None           | 0     |
-| **kyverno**                    | kyverno                   | 100m    | N/A     | 128Mi   | 384Mi   | No VPA            | Small   | N/A                     | 5         | None           | 0     |
-| **lazylibrarian**              | media                     | N/A     | N/A     | N/A     | N/A     | 11m / 44739242    | Unknown | N/A                     | 10        | Standard       | 0     |
-| **lidarr**                     | media                     | 100m    | 1       | 256Mi   | 1Gi     | 93m / 63544758    | Medium  | vixens-medium           | 10        | Standard       | 0     |
-| **linkwarden**                 | tools                     | 100m    | 1       | 1Gi     | 2Gi     | 671m / 813749082  | Medium  | N/A                     | 5         | None           | 0     |
-| **loki**                       | monitoring                | 500m    | 500m    | 1Gi     | 1Gi     | 49m / 511772986   | Medium  | vixens-critical         | 10        | None           | 0     |
-| **mail-gateway**               | mail-gateway              | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 10        | None           | 0     |
-| **mariadb-shared**             | databases                 | N/A     | N/A     | N/A     | N/A     | 11m / 128Mi       | Unknown | N/A                     | 4         | None           | 0     |
-| **mealie**                     | mealie                    | 100m    | 500m    | 256Mi   | 512Mi   | 23m / 44739242    | Small   | N/A                     | 10        | Standard       | 0     |
-| **media-shared-secrets**       | media                     | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 9         | None           | 0     |
-| **metrics-server**             | kube-system               | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 10        | None           | 0     |
-| **mosquitto**                  | mosquitto                 | 50m     | 200m    | 64Mi    | 256Mi   | 23m / 64Mi        | Small   | N/A                     | 10        | None           | 0     |
-| **music-assistant**            | media                     | N/A     | N/A     | N/A     | N/A     | 11m / 163378051   | Unknown | N/A                     | 10        | None           | 0     |
-| **mylar**                      | media                     | 100m    | 500m    | 256Mi   | 512Mi   | 11m / 49566436    | Small   | vixens-medium           | 10        | Standard       | 0     |
-| **netbird**                    | networking                | N/A     | N/A     | N/A     | N/A     | 11m / 128Mi       | Unknown | N/A                     | 15        | None           | 0     |
-| **netbox**                     | tools                     | N/A     | N/A     | N/A     | N/A     | 11m / 1102117711  | Unknown | N/A                     | 5         | None           | 0     |
-| **netvisor**                   | networking                | N/A     | N/A     | N/A     | N/A     | 11m / 128Mi       | Unknown | N/A                     | 10        | None           | 0     |
-| **nfs-storage**                | media-stack               | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | -1        | None           | 0     |
-| **nocodb**                     | tools                     | 100m    | 500m    | 256Mi   | 1Gi     | 11m / 297164212   | Medium  | vixens-low              | 0         | None           | 0     |
-| **penpot**                     | tools                     | N/A     | N/A     | N/A     | N/A     | 23m / 865936536   | Unknown | N/A                     | 0         | None           | 0     |
-| **policy-reporter**            | policy-reporter           | 50m     | 200m    | 128Mi   | 256Mi   | No VPA            | Small   | N/A                     | 6         | None           | 0     |
-| **postgresql-shared**          | databases                 | 500m    | 500m    | 512Mi   | 512Mi   | No VPA            | Small   | vixens-critical         | 4         | None           | 0     |
-| **priority-classes**           | kube-system               | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | -4        | None           | 0     |
-| **prometheus**                 | monitoring                | 200m    | 200m    | 512Mi   | 512Mi   | 11m / 128Mi       | Small   | vixens-critical         | 5         | None           | 0     |
-| **prometheus-ingress**         | monitoring                | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 6         | None           | 0     |
-| **promtail**                   | monitoring                | 200m    | 200m    | 256Mi   | 256Mi   | 63m / 163378051   | Small   | vixens-critical         | 10        | None           | 0     |
-| **prowlarr**                   | media                     | 100m    | 500m    | 256Mi   | 512Mi   | 23m / 44739242    | Small   | vixens-medium           | 10        | Standard       | 0     |
-| **pyload**                     | downloads                 | 50m     | N/A     | 128Mi   | 512Mi   | 11m / 128Mi       | Small   | N/A                     | 10        | None           | 0     |
-| **qbittorrent**                | downloads                 | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 10        | None           | 0     |
-| **radar**                      | tools                     | 100m    | 500m    | 128Mi   | 512Mi   | 49m / 764046746   | Small   | N/A                     | 0         | None           | 0     |
-| **radarr**                     | media                     | 100m    | 1       | 256Mi   | 1Gi     | 23m / 44739242    | Medium  | vixens-medium           | 10        | Standard       | 0     |
-| **redis-shared**               | databases                 | N/A     | N/A     | N/A     | N/A     | 23m / 128Mi       | Unknown | N/A                     | -1        | None           | 0     |
-| **reloader**                   | tools                     | 100m    | 100m    | 256Mi   | 256Mi   | 11m / 128Mi       | Small   | vixens-critical         | 10        | None           | 0     |
-| **renovate**                   | tools                     | 500m    | 1       | 512Mi   | 1Gi     | 1238m / 813749082 | Medium  | vixens-medium           | 20        | None           | 0     |
-| **robusta**                    | robusta                   | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 0         | None           | 0     |
-| **sabnzbd**                    | media                     | 100m    | 1       | 256Mi   | 1Gi     | 23m / 44739242    | Medium  | vixens-medium           | 10        | Standard       | 0     |
-| **shared-namespaces**          | argocd                    | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | -3        | None           | 0     |
-| **sonarr**                     | media                     | 100m    | 1       | 256Mi   | 1Gi     | 35m / 44739242    | Medium  | vixens-medium           | 10        | Standard       | 0     |
-| **stirling-pdf**               | tools                     | 100m    | 1       | 256Mi   | 1Gi     | 11m / 1102117711  | Medium  | N/A                     | 5         | None           | 0     |
-| **stirling-pdf-ingress**       | tools                     | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 6         | None           | 0     |
-| **synology-csi**               | synology-csi              | N/A     | N/A     | N/A     | N/A     | 11m / 49566436    | Unknown | N/A                     | 0         | None           | 0     |
-| **synology-csi-secrets**       | synology-csi              | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | -1        | None           | 0     |
-| **traefik**                    | traefik                   | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 0         | None           | 0     |
-| **traefik-dashboard**          | traefik                   | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 1         | None           | 0     |
-| **traefik-middlewares**        | traefik                   | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 1         | None           | 0     |
-| **trivy**                      | security                  | 200m    | 1       | 1Gi     | 1Gi     | No VPA            | Medium  | vixens-medium           | 0         | None           | 0     |
-| **vaultwarden**                | services                  | 50m     | 500m    | 256Mi   | 512Mi   | 23m / 49566436    | Small   | vixens-medium           | 10        | Standard       | 0     |
-| **velero**                     | velero                    | 100m    | 500m    | 256Mi   | 512Mi   | No VPA            | Small   | vixens-critical         | 1         | None           | 0     |
-| **velero-maintenance-config**  | velero                    | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 0         | None           | 0     |
-| **velero-secrets**             | velero                    | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 0         | None           | 0     |
-| **vikunja**                    | tools                     | 100m    | N/A     | 256Mi   | 512Mi   | 11m / 128Mi       | Small   | N/A                     | 5         | None           | 0     |
-| **vixens-app-of-apps**         | argocd                    | N/A     | N/A     | N/A     | N/A     | No VPA            | Unknown | N/A                     | 0         | None           | 0     |
-| **vpa**                        | vpa                       | 200m    | 200m    | 500Mi   | 500Mi   | No VPA            | Small   | vixens-critical         | 0         | None           | 0     |
-| **whisparr**                   | media                     | 100m    | 1       | 256Mi   | 1Gi     | 23m / 49566436    | Medium  | vixens-medium           | 10        | Standard       | 0     |
-| **whoami**                     | whoami                    | 50m     | 50m     | 128Mi   | 128Mi   | 11m / 128Mi       | Micro   | vixens-medium           | 10        | None           | 0     |
+| App                                           | NS                        | CPU Req | CPU Lim | Mem Req | Mem Lim | VPA Target   | Priority          | Wave | Backup | QoS        | Score |
+| --------------------------------------------- | ------------------------- | ------- | ------- | ------- | ------- | ------------ | ----------------- | ---- | ------ | ---------- | ----- |
+| **argocd**                                    | argocd                    | N/A     | N/A     | N/A     | N/A     | None         | N/A               | 0    | None   | BestEffort | 0     |
+| **authentik**                                 | auth                      | 500m    | 1       | 1Gi     | 2Gi     | None         | vixens-critical   | 0    | None   | Burstable  | 55    |
+| **birdnet-go**                                | birdnet-go                | 200m    | 1       | 256Mi   | 1Gi     | 35m / 214Mi  | N/A               | 0    | None   | Burstable  | 35    |
+| **cert-manager**                              | cert-manager              | 100m    | 100m    | 128Mi   | 128Mi   | None         | vixens-high       | 0    | None   | Guaranteed | 80    |
+| **cert-manager-webhook-gandi**                | cert-manager              | 50m     | 50m     | 64Mi    | 64Mi    | None         | N/A               | 0    | None   | Guaranteed | 60    |
+| **cloudnative-pg**                            | cnpg-system               | 100m    | 500m    | 128Mi   | 512Mi   | None         | homelab-critical  | 0    | None   | Burstable  | 55    |
+| **mariadb-shared**                            | databases                 | N/A     | N/A     | N/A     | N/A     | 11m / 128Mi  | N/A               | 0    | None   | BestEffort | 0     |
+| **postgresql**                                | databases                 | 500m    | 500m    | 512Mi   | 512Mi   | None         | vixens-critical   | 0    | None   | Guaranteed | 80    |
+| **redis-shared**                              | databases                 | N/A     | N/A     | N/A     | N/A     | 23m / 128Mi  | N/A               | 0    | None   | BestEffort | 0     |
+| **pyload**                                    | downloads                 | 50m     | N/A     | 128Mi   | 512Mi   | 11m / 128Mi  | N/A               | 0    | None   | Burstable  | 15    |
+| **firefly-iii**                               | finance                   | 200m    | 200m    | 512Mi   | 512Mi   | 23m / 64Mi   | vixens-medium     | 0    | None   | Guaranteed | 80    |
+| **firefly-iii-importer**                      | finance                   | 10m     | 500m    | 128Mi   | 512Mi   | 11m / 214Mi  | vixens-low        | 0    | None   | Burstable  | 55    |
+| **homeassistant**                             | homeassistant             | 500m    | 2       | 2Gi     | 4Gi     | 247m / 104Mi | vixens-high       | 0    | Active | Burstable  | 75    |
+| **secrets-operator**                          | infisical-operator-system | 10m     | 500m    | 64Mi    | 256Mi   | None         | N/A               | 0    | None   | Burstable  | 35    |
+| **kyverno**                                   | kyverno                   | 100m    | 200m    | 128Mi   | 384Mi   | None         | N/A               | 0    | None   | Burstable  | 35    |
+| **mealie**                                    | mealie                    | 100m    | 500m    | 256Mi   | 512Mi   | 23m / 42Mi   | N/A               | 0    | Active | Burstable  | 55    |
+| **amule**                                     | media                     | 50m     | N/A     | 128Mi   | 512Mi   | 11m / 128Mi  | N/A               | 0    | None   | Burstable  | 15    |
+| **booklore**                                  | media                     | 10m     | 100m    | 64Mi    | 128Mi   | 11m / 2553Mi | N/A               | 0    | None   | Burstable  | 35    |
+| **frigate**                                   | media                     | 500m    | 8       | 4Gi     | 8Gi     | 23m / 60Mi   | vixens-medium     | 0    | Active | Burstable  | 75    |
+| **hydrus-client**                             | media                     | 1       | 1       | 2Gi     | 2Gi     | 11m / 560Mi  | vixens-medium     | 0    | Active | Burstable  | 75    |
+| **jellyfin**                                  | media                     | N/A     | N/A     | N/A     | N/A     | 11m / 683Mi  | homelab-important | 0    | None   | BestEffort | 20    |
+| **jellyseerr**                                | media                     | N/A     | N/A     | N/A     | N/A     | 11m / 422Mi  | N/A               | 0    | None   | BestEffort | 0     |
+| **lazylibrarian**                             | media                     | 10m     | 100m    | 64Mi    | 128Mi   | 11m / 42Mi   | N/A               | 0    | Active | Burstable  | 55    |
+| **lidarr**                                    | media                     | 100m    | 1       | 256Mi   | 1Gi     | 78m / 74Mi   | vixens-medium     | 0    | Active | Burstable  | 75    |
+| **music-assistant**                           | media                     | N/A     | N/A     | N/A     | N/A     | 11m / 488Mi  | N/A               | 0    | None   | BestEffort | 0     |
+| **mylar**                                     | media                     | 100m    | 500m    | 256Mi   | 512Mi   | 11m / 42Mi   | vixens-medium     | 0    | Active | Burstable  | 75    |
+| **prowlarr**                                  | media                     | 100m    | 500m    | 256Mi   | 512Mi   | 23m / 42Mi   | vixens-medium     | 0    | Active | Burstable  | 75    |
+| **qbittorrent**                               | media                     | 50m     | N/A     | 256Mi   | 1Gi     | 11m / 128Mi  | N/A               | 0    | None   | Burstable  | 15    |
+| **radarr**                                    | media                     | 100m    | 1       | 256Mi   | 1Gi     | 126m / 47Mi  | vixens-medium     | 0    | Active | Burstable  | 75    |
+| **sabnzbd**                                   | media                     | 100m    | 1       | 256Mi   | 1Gi     | 11m / 89Mi   | vixens-medium     | 0    | Active | Burstable  | 75    |
+| **sonarr**                                    | media                     | 100m    | 1       | 256Mi   | 1Gi     | 93m / 47Mi   | vixens-medium     | 0    | Active | Burstable  | 75    |
+| **whisparr**                                  | media                     | 100m    | 1       | 256Mi   | 1Gi     | 11m / 89Mi   | vixens-medium     | 0    | Active | Burstable  | 75    |
+| **alertmanager**                              | monitoring                | 200m    | 200m    | 512Mi   | 512Mi   | None         | vixens-critical   | 0    | None   | Guaranteed | 80    |
+| **goldilocks**                                | monitoring                | 25m     | N/A     | 256Mi   | N/A     | None         | N/A               | 0    | None   | Burstable  | 15    |
+| **grafana**                                   | monitoring                | 200m    | 200m    | 512Mi   | 512Mi   | 11m / 259Mi  | vixens-critical   | 0    | None   | Burstable  | 55    |
+| **kube-state-metrics**                        | monitoring                | 200m    | 200m    | 256Mi   | 256Mi   | None         | vixens-critical   | 0    | None   | Guaranteed | 80    |
+| **loki**                                      | monitoring                | 500m    | 500m    | 1Gi     | 1Gi     | 35m / 599Mi  | vixens-critical   | 0    | None   | Guaranteed | 80    |
+| **prometheus**                                | monitoring                | 1       | 1       | 2Gi     | 2Gi     | None         | vixens-critical   | 0    | None   | Burstable  | 55    |
+| **prometheus-node-exporter**                  | monitoring                | N/A     | N/A     | N/A     | N/A     | None         | N/A               | 0    | None   | BestEffort | 0     |
+| **promtail**                                  | monitoring                | 50m     | 200m    | 256Mi   | 256Mi   | 49m / 155Mi  | vixens-critical   | 0    | None   | Burstable  | 55    |
+| **mosquitto**                                 | mosquitto                 | 50m     | 200m    | 64Mi    | 256Mi   | 23m / 89Mi   | N/A               | 0    | None   | Burstable  | 35    |
+| **adguard-home**                              | networking                | 200m    | 200m    | 512Mi   | 512Mi   | 93m / 104Mi  | vixens-high       | 0    | Active | Guaranteed | 100   |
+| **external-dns**                              | networking                | 20m     | 100m    | 64Mi    | 128Mi   | None         | vixens-high       | 0    | None   | Burstable  | 55    |
+| **netbird-dashboard**                         | networking                | 100m    | 100m    | 256Mi   | 256Mi   | 11m / 128Mi  | vixens-high       | 0    | None   | Guaranteed | 80    |
+| **netbird-management**                        | networking                | 200m    | 200m    | 512Mi   | 512Mi   | 11m / 128Mi  | vixens-high       | 0    | None   | Guaranteed | 80    |
+| **netbird-relay**                             | networking                | 100m    | 100m    | 256Mi   | 256Mi   | 11m / 128Mi  | vixens-high       | 0    | None   | Guaranteed | 80    |
+| **netbird-signal**                            | networking                | 100m    | 100m    | 256Mi   | 256Mi   | 11m / 128Mi  | vixens-high       | 0    | None   | Guaranteed | 80    |
+| **netvisor**                                  | networking                | N/A     | N/A     | N/A     | N/A     | None         | N/A               | 0    | None   | BestEffort | 0     |
+| **netvisor-daemon**                           | networking                | N/A     | N/A     | N/A     | N/A     | 11m / 128Mi  | N/A               | 0    | None   | BestEffort | 0     |
+| **policy-reporter**                           | policy-reporter           | 50m     | 200m    | 128Mi   | 256Mi   | None         | N/A               | 0    | None   | Burstable  | 35    |
+| **holmes**                                    | robusta                   | N/A     | N/A     | N/A     | N/A     | None         | N/A               | 0    | None   | BestEffort | 0     |
+| **robusta-forwarder**                         | robusta                   | 10m     | N/A     | 512Mi   | 512Mi   | None         | N/A               | 0    | None   | Burstable  | 15    |
+| **robusta-runner**                            | robusta                   | 250m    | 500m    | 1Gi     | 1Gi     | None         | N/A               | 0    | None   | Burstable  | 35    |
+| **node-collector**                            | security                  | 100m    | 500m    | 100M    | 500M    | None         | N/A               | 0    | None   | Burstable  | 35    |
+| **scan-vulnerabilityreport-799fb5d6df-gsqpl** | security                  | 100m    | 500m    | 100M    | 500M    | None         | N/A               | 0    | None   | Burstable  | 35    |
+| **scan-vulnerabilityreport-c8f7c868f-2p765**  | security                  | 100m    | 500m    | 100M    | 500M    | None         | N/A               | 0    | None   | Burstable  | 35    |
+| **trivy-operator**                            | security                  | 200m    | 1       | 1Gi     | 1Gi     | None         | vixens-medium     | 0    | None   | Burstable  | 55    |
+| **docspell**                                  | services                  | 200m    | 1       | 1Gi     | 2Gi     | None         | vixens-medium     | 0    | None   | Burstable  | 55    |
+| **gluetun**                                   | services                  | N/A     | N/A     | N/A     | N/A     | 11m / 236Mi  | N/A               | 0    | None   | BestEffort | 0     |
+| **vaultwarden**                               | services                  | 50m     | 500m    | 256Mi   | 512Mi   | 23m / 89Mi   | vixens-medium     | 0    | Active | Burstable  | 75    |
+| **synology-csi**                              | synology-csi              | N/A     | N/A     | N/A     | N/A     | None         | N/A               | 0    | None   | BestEffort | 0     |
+| **changedetection**                           | tools                     | 50m     | 500m    | 256Mi   | 512Mi   | 11m / 334Mi  | N/A               | 0    | None   | Burstable  | 35    |
+| **headlamp**                                  | tools                     | 100m    | 200m    | 128Mi   | 256Mi   | 11m / 128Mi  | vixens-medium     | 0    | None   | Burstable  | 55    |
+| **homepage**                                  | tools                     | N/A     | N/A     | N/A     | N/A     | 11m / 137Mi  | N/A               | 0    | None   | BestEffort | 0     |
+| **it-tools**                                  | tools                     | 10m     | 100m    | 32Mi    | 128Mi   | 11m / 128Mi  | N/A               | 0    | None   | Burstable  | 35    |
+| **linkwarden**                                | tools                     | 100m    | 1       | 1Gi     | 2Gi     | 11m / 932Mi  | N/A               | 0    | None   | Burstable  | 35    |
+| **netbox**                                    | tools                     | N/A     | N/A     | N/A     | N/A     | 11m / 1051Mi | N/A               | 0    | None   | BestEffort | 0     |
+| **nocodb**                                    | tools                     | 100m    | 500m    | 256Mi   | 1Gi     | 11m / 362Mi  | vixens-low        | 0    | None   | Burstable  | 55    |
+| **penpot-backend**                            | tools                     | 200m    | 1       | 512Mi   | 1536Mi  | 23m / 825Mi  | vixens-medium     | 0    | None   | Burstable  | 55    |
+| **penpot-exporter**                           | tools                     | 100m    | 1       | 512Mi   | 1Gi     | 11m / 174Mi  | vixens-medium     | 0    | None   | Burstable  | 55    |
+| **penpot-frontend**                           | tools                     | 50m     | 200m    | 128Mi   | 256Mi   | 11m / 128Mi  | vixens-medium     | 0    | None   | Burstable  | 55    |
+| **radar**                                     | tools                     | 100m    | 500m    | 128Mi   | 512Mi   | 78m / 728Mi  | N/A               | 0    | None   | Burstable  | 35    |
+| **reloader**                                  | tools                     | 100m    | 100m    | 256Mi   | 256Mi   | None         | vixens-critical   | 0    | None   | Guaranteed | 80    |
+| **stirling-pdf-chart**                        | tools                     | 100m    | 1       | 256Mi   | 1Gi     | None         | N/A               | 0    | None   | Burstable  | 35    |
+| **vikunja**                                   | tools                     | 100m    | N/A     | 256Mi   | 512Mi   | 11m / 128Mi  | N/A               | 0    | None   | Burstable  | 15    |
+| **traefik**                                   | traefik                   | 250m    | 2       | 256Mi   | 2Gi     | None         | vixens-high       | 0    | None   | Burstable  | 55    |
+| **velero**                                    | velero                    | 100m    | 500m    | 256Mi   | 512Mi   | None         | N/A               | 0    | None   | Burstable  | 35    |
+| **vertical-pod-autoscaler**                   | vpa                       | 200m    | 200m    | 500Mi   | 500Mi   | None         | vixens-critical   | 0    | None   | Guaranteed | 80    |
+| **whoami**                                    | whoami                    | 50m     | 50m     | 128Mi   | 128Mi   | 11m / 128Mi  | vixens-medium     | 0    | None   | Guaranteed | 80    |
