@@ -15,24 +15,42 @@ Le système de rapports Vixens génère plusieurs types de rapports pour assurer
 
 ---
 
-## Commande principale: `just lint-report`
+## Commande principale: `just reports`
 
 ### Usage
 
 ```bash
-# Générer tous les rapports
-just lint-report
+# Générer TOUS les rapports (consolidé)
+just reports
 ```
 
 **Ce que ça fait:**
 
-1. ✅ **Lint YAML** (yamllint sur apps/ et argocd/)
-2. ✅ **Détection violations DRY** (configurations dupliquées)
-3. ✅ **Vérification standards** (ADR-008: resources, labels)
-4. ✅ **Génération LINT-REPORT.md** avec score qualité
-5. ✅ **Mise à jour STATE-ACTUAL** (dev + prod)
-6. ✅ **Mise à jour CONFORMITY** (dev + prod)
-7. ✅ **Mise à jour STATUS.md** (dashboard)
+**Phase 1 - Cluster State (VPA + Resources):**
+1. ✅ Exécute `vpa.sh` pour extraire état cluster avec VPA recommendations
+2. ✅ Génère **STATE-ACTUAL-dev.md** et **STATE-ACTUAL-prod.md**
+
+**Phase 2 - Application Versions:**
+3. ✅ Scanne tous les deployments/statefulsets
+4. ✅ Génère **APP-VERSIONS.md** (inventaire automatique)
+
+**Phase 3 - Lint & Quality:**
+5. ✅ **Yamllint** sur apps/ et argocd/
+6. ✅ **Détection violations DRY** (configurations dupliquées)
+7. ✅ **Vérification standards** (ADR-008: resources, labels)
+8. ✅ Génère **LINT-REPORT.md** avec score qualité
+
+**Phase 4 - Conformity:**
+9. ✅ Compare STATE-ACTUAL vs STATE-DESIRED
+10. ✅ Génère **CONFORMITY-dev.md** et **CONFORMITY-prod.md**
+
+**Phase 5 - Dashboard:**
+11. ✅ Consolide toutes les données
+12. ✅ Génère **STATUS.md** (dashboard multi-environnements)
+
+**Phase 6 - Cleanup:**
+13. ✅ Déplace fichiers obsolètes vers `trash/`
+14. ✅ Nettoie fichiers temporaires (JSON)
 
 **Durée:** ~30-60 secondes (selon taille cluster)
 

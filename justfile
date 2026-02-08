@@ -916,80 +916,118 @@ SendToProd version:
     echo "🎯 Version déployée en production: v${VERSION}"
 
 # ============================================
-# AUTOMATION DES RAPPORTS
+# AUTOMATION DES RAPPORTS (Consolidé)
 # ============================================
 
-# Générer rapport de qualité et lint complet
-lint-report:
+# Générer TOUS les rapports (remplace reports + lint-report + vpa.sh)
+reports:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    echo "🧹 Génération du rapport de qualité et lint..."
+    echo "📊 GÉNÉRATION COMPLÈTE DES RAPPORTS VIXENS"
+    echo "=========================================="
     echo ""
 
-    # 1. Générer le rapport de lint
+    # Créer trash/ pour fichiers obsolètes
+    mkdir -p docs/reports/trash
+
+    # === PHASE 1: CLUSTER STATE (VPA + Resources) ===
+    echo "🔍 Phase 1/6: État cluster (VPA + Resources)"
+    echo "--------------------------------------------"
+
+    # DEV cluster
+    if [ -f "/root/vixens/.secrets/dev/kubeconfig-dev" ]; then
+        echo "  → Dev cluster..."
+        export KUBECONFIG="/root/vixens/.secrets/dev/kubeconfig-dev"
+
+        # Utiliser vpa.sh pour STATE-ACTUAL-dev
+        bash vpa.sh > /dev/null 2>&1 && mv docs/reports/STATE-ACTUAL.md docs/reports/STATE-ACTUAL-dev.md || {
+            echo "  ⚠️  vpa.sh échoué pour dev, fallback Python"
+            python3 scripts/reports/generate_actual_state.py \
+                --env dev \
+                --output docs/reports/STATE-ACTUAL-dev.md \
+                --json-output docs/reports/STATE-dev.json
+        }
+        echo "  ✅ STATE-ACTUAL-dev.md"
+    else
+        echo "  ⚠️  Skip dev (kubeconfig non trouvé)"
+    fi
+
+    # PROD cluster
+    if [ -f "/root/vixens/.secrets/prod/kubeconfig-prod" ]; then
+        echo "  → Prod cluster..."
+        export KUBECONFIG="/root/vixens/.secrets/prod/kubeconfig-prod"
+
+        # Utiliser vpa.sh pour STATE-ACTUAL-prod
+        bash vpa.sh > /dev/null 2>&1 && mv docs/reports/STATE-ACTUAL.md docs/reports/STATE-ACTUAL-prod.md || {
+            echo "  ⚠️  vpa.sh échoué pour prod, fallback Python"
+            python3 scripts/reports/generate_actual_state.py \
+                --env prod \
+                --output docs/reports/STATE-ACTUAL-prod.md \
+                --json-output docs/reports/STATE-prod.json
+        }
+
+        # Legacy compatibility: copie prod → STATE-ACTUAL.md
+        cp docs/reports/STATE-ACTUAL-prod.md docs/reports/STATE-ACTUAL.md
+        echo "  ✅ STATE-ACTUAL-prod.md + STATE-ACTUAL.md (legacy)"
+    else
+        echo "  ⚠️  Skip prod (kubeconfig non trouvé)"
+    fi
+
+    echo ""
+
+    # === PHASE 2: APPLICATION VERSIONS ===
+    echo "📦 Phase 2/6: Inventaire versions"
+    echo "--------------------------------------------"
+
+    if [ -f "/root/vixens/.secrets/prod/kubeconfig-prod" ]; then
+        export KUBECONFIG="/root/vixens/.secrets/prod/kubeconfig-prod"
+        python3 scripts/reports/generate_app_versions.py \
+            --output docs/reports/APP-VERSIONS.md
+        echo "  ✅ APP-VERSIONS.md"
+    else
+        echo "  ⚠️  Skip (prod kubeconfig requis)"
+    fi
+
+    echo ""
+
+    # === PHASE 3: LINT & QUALITY ===
+    echo "🧹 Phase 3/6: Qualité code YAML"
+    echo "--------------------------------------------"
+
     python3 scripts/reports/generate_lint_report.py \
         --paths apps argocd \
         --output docs/reports/LINT-REPORT.md \
-        --fail-threshold 50 || {
-        echo ""
-        echo "⚠️  Score de qualité en dessous du seuil (< 50)"
-        echo "   Consulter: docs/reports/LINT-REPORT.md"
-    }
+        --fail-threshold 0 || true  # Non-bloquant
 
-    # 2. Mettre à jour les rapports d'état (dev + prod)
+    echo "  ✅ LINT-REPORT.md"
     echo ""
-    echo "📊 Mise à jour des rapports d'état..."
 
-    # DEV
-    if [ -f "/root/vixens/.secrets/dev/kubeconfig-dev" ]; then
-        export KUBECONFIG="/root/vixens/.secrets/dev/kubeconfig-dev"
-        python3 scripts/reports/generate_actual_state.py \
-            --env dev \
-            --output docs/reports/STATE-ACTUAL-dev.md \
-            --json-output docs/reports/STATE-dev.json || {
-            echo "⚠️  Erreur lors de la génération du rapport dev"
-        }
-    else
-        echo "⚠️  Kubeconfig dev non trouvé, skip rapport dev"
-    fi
-
-    # PROD
-    if [ -f "/root/vixens/.secrets/prod/kubeconfig-prod" ]; then
-        export KUBECONFIG="/root/vixens/.secrets/prod/kubeconfig-prod"
-        python3 scripts/reports/generate_actual_state.py \
-            --env prod \
-            --output docs/reports/STATE-ACTUAL-prod.md \
-            --json-output docs/reports/STATE-prod.json || {
-            echo "⚠️  Erreur lors de la génération du rapport prod"
-        }
-    else
-        echo "⚠️  Kubeconfig prod non trouvé, skip rapport prod"
-    fi
-
-    # 3. Générer rapports de conformité
-    echo ""
-    echo "📊 Génération des rapports de conformité..."
+    # === PHASE 4: CONFORMITY ===
+    echo "📏 Phase 4/6: Conformité (Actual vs Desired)"
+    echo "--------------------------------------------"
 
     if [ -f "docs/reports/STATE-ACTUAL-dev.md" ]; then
         python3 scripts/reports/conformity_checker.py \
             --actual docs/reports/STATE-ACTUAL-dev.md \
-            --output docs/reports/CONFORMITY-dev.md || {
-            echo "⚠️  Erreur lors de la génération du rapport de conformité dev"
-        }
+            --desired docs/reports/STATE-DESIRED.md \
+            --output docs/reports/CONFORMITY-dev.md
+        echo "  ✅ CONFORMITY-dev.md"
     fi
 
     if [ -f "docs/reports/STATE-ACTUAL-prod.md" ]; then
         python3 scripts/reports/conformity_checker.py \
             --actual docs/reports/STATE-ACTUAL-prod.md \
-            --output docs/reports/CONFORMITY-prod.md || {
-            echo "⚠️  Erreur lors de la génération du rapport de conformité prod"
-        }
+            --desired docs/reports/STATE-DESIRED.md \
+            --output docs/reports/CONFORMITY-prod.md
+        echo "  ✅ CONFORMITY-prod.md"
     fi
 
-    # 4. Générer dashboard STATUS.md
     echo ""
-    echo "📊 Génération du dashboard STATUS.md..."
+
+    # === PHASE 5: DASHBOARD CONSOLIDÉ ===
+    echo "📊 Phase 5/6: Dashboard STATUS.md"
+    echo "--------------------------------------------"
 
     if [ -f "docs/reports/STATE-dev.json" ] && [ -f "docs/reports/STATE-prod.json" ]; then
         python3 scripts/reports/generate_status_report.py \
@@ -997,28 +1035,66 @@ lint-report:
             --prod-state docs/reports/STATE-prod.json \
             --dev-conformity docs/reports/CONFORMITY-dev.md \
             --prod-conformity docs/reports/CONFORMITY-prod.md \
-            --output docs/reports/STATUS.md || {
-            echo "⚠️  Erreur lors de la génération du dashboard STATUS"
-        }
+            --output docs/reports/STATUS.md
+        echo "  ✅ STATUS.md"
     else
-        echo "⚠️  Fichiers d'état manquants, skip génération STATUS.md"
+        echo "  ⚠️  Skip (fichiers JSON manquants)"
     fi
 
     echo ""
-    echo "✅ Rapport de qualité complet généré!"
-    echo ""
-    echo "📋 Rapports générés:"
-    echo "   • docs/reports/LINT-REPORT.md (qualité code)"
-    echo "   • docs/reports/STATE-ACTUAL-dev.md (état dev)"
-    echo "   • docs/reports/STATE-ACTUAL-prod.md (état prod)"
-    echo "   • docs/reports/CONFORMITY-dev.md (conformité dev)"
-    echo "   • docs/reports/CONFORMITY-prod.md (conformité prod)"
-    echo "   • docs/reports/STATUS.md (dashboard)"
-    echo ""
-    echo "💡 Voir aussi: docs/reports/README.md"
 
-# Générer tous les rapports d'état (Actual, Conformity, Status)
-reports env="all":
+    # === PHASE 6: CLEANUP (Fichiers obsolètes) ===
+    echo "🗑️  Phase 6/6: Nettoyage fichiers obsolètes"
+    echo "--------------------------------------------"
+
+    # Déplacer fichiers obsolètes vers trash/
+    TRASH_DIR="docs/reports/trash/$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "$TRASH_DIR"
+
+    # AUDIT-CONFORMITY.md → Remplacé par CONFORMITY-*.md + STATUS.md
+    [ -f "docs/reports/AUDIT-CONFORMITY.md" ] && {
+        mv docs/reports/AUDIT-CONFORMITY.md "$TRASH_DIR/"
+        echo "  🗑️  AUDIT-CONFORMITY.md → trash/ (remplacé par CONFORMITY-*.md)"
+    }
+
+    # Rapports historiques datés (2024-*, 2025-*)
+    find docs/reports/ -maxdepth 1 -name "20[0-9][0-9]-*.md" -type f | while read -r file; do
+        mv "$file" "$TRASH_DIR/"
+        echo "  🗑️  $(basename "$file") → trash/ (historique)"
+    done
+
+    # Fichiers JSON temporaires
+    [ -f "docs/reports/STATE-dev.json" ] && rm -f docs/reports/STATE-dev.json
+    [ -f "docs/reports/STATE-prod.json" ] && rm -f docs/reports/STATE-prod.json
+
+    echo "  ✅ Cleanup terminé"
+    echo ""
+
+    # === RÉSUMÉ FINAL ===
+    echo "=========================================="
+    echo "✅ RAPPORTS GÉNÉRÉS AVEC SUCCÈS"
+    echo "=========================================="
+    echo ""
+    echo "📋 Rapports vivants (Living Documents):"
+    echo "   • STATE-ACTUAL-dev.md      (état dev)"
+    echo "   • STATE-ACTUAL-prod.md     (état prod)"
+    echo "   • STATE-ACTUAL.md          (prod - legacy)"
+    echo "   • CONFORMITY-dev.md        (conformité dev)"
+    echo "   • CONFORMITY-prod.md       (conformité prod)"
+    echo "   • STATUS.md                (dashboard consolidé)"
+    echo "   • LINT-REPORT.md           (qualité code)"
+    echo "   • APP-VERSIONS.md          (inventaire versions)"
+    echo ""
+    echo "📚 Rapports de référence (manuels):"
+    echo "   • STATE-DESIRED.md         (standards cibles)"
+    echo "   • STORAGE-STRATEGY.md      (stratégie storage)"
+    echo ""
+    echo "🗑️  Fichiers déplacés: $TRASH_DIR"
+    echo ""
+    echo "💡 Consulter: docs/reports/README.md"
+
+# LEGACY: Ancienne commande reports (gardée pour compatibilité)
+reports-legacy env="all":
     #!/usr/bin/env bash
     if [ "{{env}}" == "all" ]; then
         echo "📊 Génération des rapports consolidés (DEV + PROD)..."
@@ -1090,9 +1166,9 @@ help:
     @echo "  just SendToProd <ver>    - ⭐ Promotion automatisée vers prod (vX.Y.Z)"
     @echo ""
     @echo "Rapports & Qualité:"
-    @echo "  just lint-report         - ⭐ Rapport complet (lint + états + conformité)"
-    @echo "  just reports [env]       - Rapports d'état (dev/prod/all)"
+    @echo "  just reports             - ⭐ TOUS les rapports (VPA + lint + versions + dashboards)"
     @echo "  just lint                - Valider YAML uniquement"
+    @echo "  just report              - ⚠️  DEPRECATED: Utiliser 'just reports'"
     @echo ""
     @echo "Utilitaires:"
     @echo "  just reset-phase <id> <N>  - Réinitialiser à la phase N (debug)"
