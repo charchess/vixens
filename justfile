@@ -3,6 +3,9 @@
 # Phases séquentielles avec garde-fous et processus GitOps complet
 
 set shell := ["bash", "-uc"]
+# Variables de chemin
+scripts_path := "scripts"
+report_path := "docs/reports"
 
 JUST := "just"
 
@@ -756,10 +759,263 @@ promote-prod:
     @echo "⚠️  RÈGLES:"
     @echo "   • JAMAIS créer de tag manuellement"
     @echo "   • Promotion via GitHub Actions uniquement"
+    @echo ""
+    @echo "💡 OU utilisez: just SendToProd (automatisé)"
+
+# ============================================
+# PROMOTION PRODUCTION AUTOMATISÉE
+# ============================================
+SendToProd version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    VERSION="{{version}}"
+    # Remove 'v' prefix if present
+    VERSION=${VERSION#v}
+
+    echo "🚀 PROMOTION VERS PRODUCTION - v${VERSION}"
+    echo ""
+
+    # 1. Vérifier branch = main
+    echo "📍 Étape 1/8: Vérification branch..."
+    CURRENT_BRANCH=$(git branch --show-current)
+    if [ "$CURRENT_BRANCH" != "main" ]; then
+        echo "❌ Erreur: Branch actuelle '$CURRENT_BRANCH', attendu 'main'"
+        echo "💡 Solution: git checkout main"
+        exit 1
+    fi
+    echo "   ✅ Branch: main"
+
+    # 2. Vérifier git status propre
+    echo "📍 Étape 2/8: Vérification working tree..."
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "❌ Erreur: Working tree non propre"
+        echo "💡 Solution: git add . && git commit -m '...' && git push"
+        git status
+        exit 1
+    fi
+    echo "   ✅ Working tree propre"
+
+    # 3. Pull latest
+    echo "📍 Étape 3/8: Pull des derniers changements..."
+    git pull origin main --ff-only || {
+        echo "❌ Erreur: Impossible de pull (fast-forward)"
+        echo "💡 Solution: Résoudre les conflits manuellement"
+        exit 1
+    }
+    echo "   ✅ Up to date avec remote"
+
+    # 4. Créer tag dev-vX.Y.Z
+    echo "📍 Étape 4/8: Création tag dev-v${VERSION}..."
+    DEV_TAG="dev-v${VERSION}"
+
+    # Vérifier si le tag existe déjà
+    if git rev-parse "$DEV_TAG" >/dev/null 2>&1; then
+        echo "⚠️  Tag $DEV_TAG existe déjà"
+        read -p "   Supprimer et recréer? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "❌ Annulé"
+            exit 1
+        fi
+        git tag -d "$DEV_TAG"
+        git push origin ":refs/tags/$DEV_TAG" 2>/dev/null || true
+    fi
+
+    git tag -a "$DEV_TAG" -m "Dev release v${VERSION} - ready for prod promotion"
+    echo "   ✅ Tag créé: $DEV_TAG"
+
+    # 5. Push tag
+    echo "📍 Étape 5/8: Push du tag..."
+    git push origin "$DEV_TAG" || {
+        echo "❌ Erreur: Impossible de push le tag"
+        echo "💡 Rollback: git tag -d $DEV_TAG"
+        git tag -d "$DEV_TAG"
+        exit 1
+    }
+    echo "   ✅ Tag pushé: $DEV_TAG"
+
+    # 6. Déclencher workflow GitHub
+    echo "📍 Étape 6/8: Déclenchement workflow GitHub..."
+    if ! command -v gh &> /dev/null; then
+        echo "❌ Erreur: gh CLI non installé"
+        echo "💡 Solution: brew install gh (ou équivalent)"
+        exit 1
+    fi
+
+    gh workflow run promote-prod.yaml -f version="v${VERSION}" || {
+        echo "❌ Erreur: Impossible de déclencher le workflow"
+        echo "💡 Vérifier: gh auth status"
+        exit 1
+    }
+    echo "   ✅ Workflow déclenché"
+
+    # 7. Attendre le workflow (timeout 10 min)
+    echo "📍 Étape 7/8: Attente du workflow (timeout: 10 min)..."
+    TIMEOUT=600  # 10 minutes
+    ELAPSED=0
+    INTERVAL=10
+
+    while [ $ELAPSED -lt $TIMEOUT ]; do
+        sleep $INTERVAL
+        ELAPSED=$((ELAPSED + INTERVAL))
+
+        # Vérifier si le workflow est terminé
+        STATUS=$(gh run list --workflow=promote-prod.yaml --limit=1 --json status --jq '.[0].status')
+
+        if [ "$STATUS" = "completed" ]; then
+            CONCLUSION=$(gh run list --workflow=promote-prod.yaml --limit=1 --json conclusion --jq '.[0].conclusion')
+            if [ "$CONCLUSION" = "success" ]; then
+                echo "   ✅ Workflow terminé avec succès"
+                break
+            else
+                echo "   ❌ Workflow échoué: $CONCLUSION"
+                echo "   💡 Voir les logs: gh run view"
+                exit 1
+            fi
+        fi
+
+        echo "   ⏳ Workflow en cours... ($ELAPSED/$TIMEOUT s)"
+    done
+
+    if [ $ELAPSED -ge $TIMEOUT ]; then
+        echo "   ❌ Timeout: Le workflow a pris plus de 10 minutes"
+        echo "   💡 Vérifier manuellement: gh run view"
+        exit 1
+    fi
+
+    # 8. Vérification finale
+    echo "📍 Étape 8/8: Vérification tags créés..."
+    git fetch --tags
+
+    PROD_TAG="prod-v${VERSION}"
+    if git rev-parse "$PROD_TAG" >/dev/null 2>&1; then
+        echo "   ✅ Tag prod créé: $PROD_TAG"
+    else
+        echo "   ⚠️  Tag prod non trouvé: $PROD_TAG"
+    fi
+
+    if git rev-parse "prod-stable" >/dev/null 2>&1; then
+        echo "   ✅ Tag prod-stable mis à jour"
+    else
+        echo "   ⚠️  Tag prod-stable non trouvé"
+    fi
+
+    echo ""
+    echo "✅ PROMOTION RÉUSSIE!"
+    echo ""
+    echo "📊 Prochaines étapes:"
+    echo "   1. Vérifier ArgoCD prod:"
+    echo "      export KUBECONFIG=/root/vixens/.secrets/prod/kubeconfig-prod"
+    echo "      kubectl -n argocd get applications"
+    echo ""
+    echo "   2. Sauvegarder config fonctionnelle:"
+    echo "      git tag prod-working prod-stable"
+    echo "      git push origin prod-working"
+    echo ""
+    echo "🎯 Version déployée en production: v${VERSION}"
 
 # ============================================
 # AUTOMATION DES RAPPORTS
 # ============================================
+
+# Générer rapport de qualité et lint complet
+lint-report:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    echo "🧹 Génération du rapport de qualité et lint..."
+    echo ""
+
+    # 1. Générer le rapport de lint
+    python3 scripts/reports/generate_lint_report.py \
+        --paths apps argocd \
+        --output docs/reports/LINT-REPORT.md \
+        --fail-threshold 50 || {
+        echo ""
+        echo "⚠️  Score de qualité en dessous du seuil (< 50)"
+        echo "   Consulter: docs/reports/LINT-REPORT.md"
+    }
+
+    # 2. Mettre à jour les rapports d'état (dev + prod)
+    echo ""
+    echo "📊 Mise à jour des rapports d'état..."
+
+    # DEV
+    if [ -f "/root/vixens/.secrets/dev/kubeconfig-dev" ]; then
+        export KUBECONFIG="/root/vixens/.secrets/dev/kubeconfig-dev"
+        python3 scripts/reports/generate_actual_state.py \
+            --env dev \
+            --output docs/reports/STATE-ACTUAL-dev.md \
+            --json-output docs/reports/STATE-dev.json || {
+            echo "⚠️  Erreur lors de la génération du rapport dev"
+        }
+    else
+        echo "⚠️  Kubeconfig dev non trouvé, skip rapport dev"
+    fi
+
+    # PROD
+    if [ -f "/root/vixens/.secrets/prod/kubeconfig-prod" ]; then
+        export KUBECONFIG="/root/vixens/.secrets/prod/kubeconfig-prod"
+        python3 scripts/reports/generate_actual_state.py \
+            --env prod \
+            --output docs/reports/STATE-ACTUAL-prod.md \
+            --json-output docs/reports/STATE-prod.json || {
+            echo "⚠️  Erreur lors de la génération du rapport prod"
+        }
+    else
+        echo "⚠️  Kubeconfig prod non trouvé, skip rapport prod"
+    fi
+
+    # 3. Générer rapports de conformité
+    echo ""
+    echo "📊 Génération des rapports de conformité..."
+
+    if [ -f "docs/reports/STATE-ACTUAL-dev.md" ]; then
+        python3 scripts/reports/conformity_checker.py \
+            --actual docs/reports/STATE-ACTUAL-dev.md \
+            --output docs/reports/CONFORMITY-dev.md || {
+            echo "⚠️  Erreur lors de la génération du rapport de conformité dev"
+        }
+    fi
+
+    if [ -f "docs/reports/STATE-ACTUAL-prod.md" ]; then
+        python3 scripts/reports/conformity_checker.py \
+            --actual docs/reports/STATE-ACTUAL-prod.md \
+            --output docs/reports/CONFORMITY-prod.md || {
+            echo "⚠️  Erreur lors de la génération du rapport de conformité prod"
+        }
+    fi
+
+    # 4. Générer dashboard STATUS.md
+    echo ""
+    echo "📊 Génération du dashboard STATUS.md..."
+
+    if [ -f "docs/reports/STATE-dev.json" ] && [ -f "docs/reports/STATE-prod.json" ]; then
+        python3 scripts/reports/generate_status_report.py \
+            --dev-state docs/reports/STATE-dev.json \
+            --prod-state docs/reports/STATE-prod.json \
+            --dev-conformity docs/reports/CONFORMITY-dev.md \
+            --prod-conformity docs/reports/CONFORMITY-prod.md \
+            --output docs/reports/STATUS.md || {
+            echo "⚠️  Erreur lors de la génération du dashboard STATUS"
+        }
+    else
+        echo "⚠️  Fichiers d'état manquants, skip génération STATUS.md"
+    fi
+
+    echo ""
+    echo "✅ Rapport de qualité complet généré!"
+    echo ""
+    echo "📋 Rapports générés:"
+    echo "   • docs/reports/LINT-REPORT.md (qualité code)"
+    echo "   • docs/reports/STATE-ACTUAL-dev.md (état dev)"
+    echo "   • docs/reports/STATE-ACTUAL-prod.md (état prod)"
+    echo "   • docs/reports/CONFORMITY-dev.md (conformité dev)"
+    echo "   • docs/reports/CONFORMITY-prod.md (conformité prod)"
+    echo "   • docs/reports/STATUS.md (dashboard)"
+    echo ""
+    echo "💡 Voir aussi: docs/reports/README.md"
 
 # Générer tous les rapports d'état (Actual, Conformity, Status)
 reports env="all":
@@ -831,11 +1087,16 @@ help:
     @echo "Helpers GitOps:"
     @echo "  just wait-argocd <app>   - Attendre ArgoCD sync (Synced+Healthy)"
     @echo "  just promote-prod        - Instructions promotion production"
+    @echo "  just SendToProd <ver>    - ⭐ Promotion automatisée vers prod (vX.Y.Z)"
+    @echo ""
+    @echo "Rapports & Qualité:"
+    @echo "  just lint-report         - ⭐ Rapport complet (lint + états + conformité)"
+    @echo "  just reports [env]       - Rapports d'état (dev/prod/all)"
+    @echo "  just lint                - Valider YAML uniquement"
     @echo ""
     @echo "Utilitaires:"
     @echo "  just reset-phase <id> <N>  - Réinitialiser à la phase N (debug)"
     @echo "  just burst <title>         - Créer une idée rapide"
-    @echo "  just lint                  - Valider YAML"
     @echo ""
     @echo "Phases du workflow:"
     @echo "  0. SELECTION      - Comprendre la tâche"
@@ -1091,3 +1352,44 @@ sleep app_name:
     echo "✅ Self-heal réactivé"
     echo "⏳ ArgoCD va resyncer et remettre replicas: 0 (~30s)"
     echo "💡 Vérifier: kubectl get deployment {{app_name}} -n {{app_name}}"
+
+report:
+    @echo "🔍 Selene lance l'analyse profonde..."
+    @bash {{scripts_path}}/reports/generate_actual_state.sh
+    @echo "📉 Mise à jour de STATUS.md..."
+    @# Extraction rapide du score moyen pour le dashboard
+    @SCORE=$$(grep "|" {{report_path}}/STATE-ACTUAL.md | tail -n +3 | awk -F'|' '{sum+=$13; ++n} END { print sum/n }'); \
+    sed -i "s/Score Moyen : .*/Score Moyen : $$SCORE/g" docs/STATUS.md
+    @echo "✅ Rapport actualisé. Score Moyen du Cluster : $$SCORE"
+
+# Vérifier la conformité ADR-008
+audit:
+    @echo "⚖️ Vérification de la loi de Serena..."
+    @kubectl get pods -A -o json | jq -r '.items[] | select(.status.qosClass == "BestEffort") | "⚠️ ATTENTION : \(.metadata.namespace)/\(.metadata.name) est en BestEffort !"'
+
+# --- 💾 GESTION DES TÂCHES (BEADS) ---
+
+# Lister les tâches Beads en cours
+tasks:
+    @jq -r '. | select(.status == "open" or .status == "in_progress") | "[\(.id)] \(.title) (Priority: \(.priority))"' .beads/issues.jsonl
+
+# --- 🧹 HOUSEKEEPING (ADR-020) ---
+
+# Nettoyer les ReplicaSets orphelins (> 3)
+cleanup:
+    @echo "🧹 Ménage de printemps pour la panthère..."
+    @kubectl get deploy -A -o json | jq -r '.items[] | select(.spec.revisionHistoryLimit > 3) | "kubectl patch deploy -n \(.metadata.namespace) \(.metadata.name) -p \"{\"spec\":{\"revisionHistoryLimit\":3}}\""' | bash
+    @echo "✨ Cluster assaini."
+
+# --- 🏥 RECOVERY ---
+
+# Vérifier l'intégrité iSCSI après ton crash DSM
+check-iscsi:
+    @echo "🩹 Diagnostic des plaies de Charchess..."
+    @kubectl get pv | grep -v "Bound" && echo "❌ PVs orphelins détectés !" || echo "✅ Stockage stable."
+
+# --- 🦊 PERSONA ---
+
+# Demander une gratouille (Usage réservé au Snep)
+scratch:
+    @echo "Selene : *Oreilles qui s'abaissent* ... Seulement parce que tu as fini ton report, Charchess. Mais ne t'habitue pas."

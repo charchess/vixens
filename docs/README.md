@@ -34,6 +34,8 @@ Welcome to the Vixens Kubernetes homelab documentation! This is your central hub
 Practical step-by-step guides for common tasks:
 - **[Adding a New Application](guides/adding-new-application.md)** - Deploy apps to the cluster
 - **[GitOps Workflow](guides/gitops-workflow.md)** - Push changes to production
+- **[Production Promotion Workflow](guides/promotion-workflow.md)** - ⭐ Automated prod promotion (`just SendToProd`)
+- **[Quality Reports](guides/quality-reports.md)** - ⭐ Generate lint & quality reports (`just lint-report`)
 - **[Task Management](guides/task-management.md)** - Beads workflow and formalism
 - **[Secret Management](guides/secret-management.md)** - Working with Infisical
 - **[Terraform Workflow](guides/terraform-workflow.md)** - Infrastructure changes
@@ -55,6 +57,8 @@ Detailed technical documentation:
 |--------------|----------|
 | Add a new application | [guides/adding-new-application.md](guides/adding-new-application.md) |
 | Push changes to production | [guides/gitops-workflow.md](guides/gitops-workflow.md) |
+| **⭐ Promote to prod (automated)** | **[guides/promotion-workflow.md](guides/promotion-workflow.md)** |
+| **⭐ Generate quality reports** | **[guides/quality-reports.md](guides/quality-reports.md)** |
 | Create/manage Beads tasks | [guides/task-management.md](guides/task-management.md) |
 | Orchestrate multi-agent work | [reference/multi-agent-orchestration.md](reference/multi-agent-orchestration.md) |
 | Understand sync waves | [reference/argocd-sync-waves.md](reference/argocd-sync-waves.md) |
