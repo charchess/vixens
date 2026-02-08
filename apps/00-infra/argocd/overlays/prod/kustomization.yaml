@@ -10,3 +10,5 @@ components:
   - ../../../../_shared/components/revision-history-limit
 
 patches:
+  - path: patches/redis-resources.yaml
+  - path: patches/redis-probes.yaml
