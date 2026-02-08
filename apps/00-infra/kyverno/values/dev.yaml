@@ -1,0 +1,9 @@
+---
+admissionController:
+  replicas: 0
+backgroundController:
+  replicas: 0
+cleanupController:
+  replicas: 0
+reportsController:
+  replicas: 0

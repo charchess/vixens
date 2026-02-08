@@ -1,13 +1,7 @@
 ---
 # Dev environment overrides for cert-manager
-# VLAN 208 (192.168.208.0/24)
-
-# ============================================================================
-# Development-Specific Settings
-# ============================================================================
-# Currently using all common values
-# Add dev-specific overrides here if needed in the future
-# Examples:
-# - Lower resource limits for VM environment
-# - Debug logging
-# - Development-specific webhooks
+replicaCount: 0
+webhook:
+  replicaCount: 0
+cainjector:
+  replicaCount: 0

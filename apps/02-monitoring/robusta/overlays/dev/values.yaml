@@ -1,34 +1,6 @@
 ---
-clusterName: "vixens-dev"
-
-enablePlatformPlaybooks: true
-enableHolmesGPT: true # On le gère à part
-holmes:
-  enabled: false
-enabledManagedConfiguration: true
-
-globalConfig:
-  signing_key: "{{ env.ROBUSTA_SIGNING_KEY }}"
-  account_id: "{{ env.ROBUSTA_ACCOUNT_ID }}"
-  prometheus_url: "http://prometheus-server.monitoring.svc.cluster.local"
-
-sinksConfig:
-  - robusta_sink:
-      name: robusta_ui_sink
-      token: "{{ env.ROBUSTA_UI_TOKEN }}"
-  - discord_sink:
-      name: main_discord_sink
-      url: "{{ env.DISCORD_WEBHOOK_URL }}"
-
-runner:
-  resources:
-    requests:
-      cpu: 250m
-      memory: 1Gi
-    limits:
-      cpu: 500m
-      memory: 1Gi
-  sendAdditionalTelemetry: true
-  additional_env_froms:
-    - secretRef:
-        name: robusta-secrets
+robusta:
+  runner:
+    replicas: 0
+  relay:
+    enabled: false
