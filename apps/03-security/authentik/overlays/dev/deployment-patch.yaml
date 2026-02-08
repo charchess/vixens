@@ -1,9 +1,9 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: authentik-server
   namespace: auth
 spec:
+  replicas: 0
   strategy:
     type: Recreate
