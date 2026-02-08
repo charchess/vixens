@@ -49,39 +49,64 @@ def get_kubectl_json(args):
         return json.loads(out)
     return None
 
-def parse_markdown_table(file_path):
+def parse_markdown_table(file_path, table_index=0, header_contains=None):
+    """
+    Parse markdown table from file.
+
+    Args:
+        file_path: Path to markdown file
+        table_index: Index of table to parse (0 = first, 1 = second, etc.)
+        header_contains: String that must be in header row to identify table (e.g., "App")
+    """
     if not os.path.exists(file_path):
         return []
-    
+
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
-    
+
     table_started = False
     headers = []
     rows = []
-    
+    tables_found = 0
+
     for line in lines:
         line = line.strip()
         if line.startswith('|') and '|' in line:
             parts = [p.strip() for p in line.split('|')]
             if len(parts) > 2:
                 parts = parts[1:-1] # Remove first and last empty parts
-            
+
             if not table_started:
                 # Check if it's the header line
                 if any(c.isalnum() for c in "".join(parts)):
-                    headers = parts
-                    table_started = True
+                    # Check if this is the table we want
+                    if header_contains:
+                        if not any(header_contains in p for p in parts):
+                            continue  # Skip this table, not the one we want
+
+                    if tables_found == table_index:
+                        headers = parts
+                        table_started = True
+                    else:
+                        # Skip to next table
+                        headers = parts  # Temporary set to detect table end
+                        table_started = False
             elif line.replace(' ', '').replace('-', '').replace(':', '').replace('|', '') == '':
                 # Separator line
                 continue
             else:
-                row = dict(zip(headers, parts))
-                rows.append(row)
-        elif table_started and line == "":
-            # Table ended
-            return rows
-            
+                if len(headers) > 0 and tables_found == table_index:
+                    row = dict(zip(headers, parts))
+                    rows.append(row)
+        elif line == "":
+            if table_started:
+                # Table ended - return if it's the one we want
+                return rows
+            elif len(headers) > 0:
+                # A table ended but it wasn't the one we want
+                headers = []
+                tables_found += 1
+
     return rows
 
 def get_char_display_width(char):

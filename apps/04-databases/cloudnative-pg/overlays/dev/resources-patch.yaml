@@ -1,18 +1,18 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cloudnative-pg
 spec:
+  replicas: 0
   template:
     spec:
-      priorityClassName: vixens-critical
       containers:
-        - name: manager
-          resources:
-            requests:
-              cpu: 100m
-              memory: 512Mi
-            limits:
-              cpu: 100m
-              memory: 512Mi
+      - name: manager
+        resources:
+          limits:
+            cpu: 100m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 512Mi
+      priorityClassName: vixens-critical

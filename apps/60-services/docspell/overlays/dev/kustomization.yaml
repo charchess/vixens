@@ -1,18 +1,19 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-namespace: services
-resources:
-  - ../../base
-
 components:
   - ../../../../_shared/components/revision-history-limit
-
+kind: Kustomization
+namespace: services
 patches:
-  - patch: |-
-      apiVersion: apps/v1
+  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: docspell\nspec:\n\
+      \  replicas: 0"
+  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n\
+      \  replicas: 0"
+    target:
       kind: Deployment
-      metadata:
-        name: docspell
-      spec:
-        replicas: 0
+  - patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
+      \  replicas: 0"
+    target:
+      kind: StatefulSet
+resources:
+  - ../../base

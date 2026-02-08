@@ -9,12 +9,18 @@ resources:
 components:
   - ../../../../_shared/components/revision-history-limit
 
-patches:
-  - path: patches/redis-resources.yaml
-    target:
+patchesJson6902:
+  - target:
+      group: apps
+      version: v1
       kind: Deployment
       name: argocd-redis
-  - path: patches/redis-probes.yaml
-    target:
+      namespace: argocd
+    path: patches/redis-resources-json.yaml
+  - target:
+      group: apps
+      version: v1
       kind: Deployment
       name: argocd-redis
+      namespace: argocd
+    path: patches/redis-probes-json.yaml

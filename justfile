@@ -3,6 +3,9 @@
 # Phases séquentielles avec garde-fous et processus GitOps complet
 
 set shell := ["bash", "-uc"]
+# Variables de chemin
+scripts_path := "scripts"
+report_path := "docs/reports"
 
 JUST := "just"
 
@@ -756,13 +759,351 @@ promote-prod:
     @echo "⚠️  RÈGLES:"
     @echo "   • JAMAIS créer de tag manuellement"
     @echo "   • Promotion via GitHub Actions uniquement"
+    @echo ""
+    @echo "💡 OU utilisez: just SendToProd (automatisé)"
 
 # ============================================
-# AUTOMATION DES RAPPORTS
+# PROMOTION PRODUCTION AUTOMATISÉE
+# ============================================
+SendToProd version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    VERSION="{{version}}"
+    # Remove 'v' prefix if present
+    VERSION=${VERSION#v}
+
+    echo "🚀 PROMOTION VERS PRODUCTION - v${VERSION}"
+    echo ""
+
+    # 1. Vérifier branch = main
+    echo "📍 Étape 1/8: Vérification branch..."
+    CURRENT_BRANCH=$(git branch --show-current)
+    if [ "$CURRENT_BRANCH" != "main" ]; then
+        echo "❌ Erreur: Branch actuelle '$CURRENT_BRANCH', attendu 'main'"
+        echo "💡 Solution: git checkout main"
+        exit 1
+    fi
+    echo "   ✅ Branch: main"
+
+    # 2. Vérifier git status propre
+    echo "📍 Étape 2/8: Vérification working tree..."
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "❌ Erreur: Working tree non propre"
+        echo "💡 Solution: git add . && git commit -m '...' && git push"
+        git status
+        exit 1
+    fi
+    echo "   ✅ Working tree propre"
+
+    # 3. Pull latest
+    echo "📍 Étape 3/8: Pull des derniers changements..."
+    git pull origin main --ff-only || {
+        echo "❌ Erreur: Impossible de pull (fast-forward)"
+        echo "💡 Solution: Résoudre les conflits manuellement"
+        exit 1
+    }
+    echo "   ✅ Up to date avec remote"
+
+    # 4. Créer tag dev-vX.Y.Z
+    echo "📍 Étape 4/8: Création tag dev-v${VERSION}..."
+    DEV_TAG="dev-v${VERSION}"
+
+    # Vérifier si le tag existe déjà
+    if git rev-parse "$DEV_TAG" >/dev/null 2>&1; then
+        echo "⚠️  Tag $DEV_TAG existe déjà"
+        read -p "   Supprimer et recréer? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "❌ Annulé"
+            exit 1
+        fi
+        git tag -d "$DEV_TAG"
+        git push origin ":refs/tags/$DEV_TAG" 2>/dev/null || true
+    fi
+
+    git tag -a "$DEV_TAG" -m "Dev release v${VERSION} - ready for prod promotion"
+    echo "   ✅ Tag créé: $DEV_TAG"
+
+    # 5. Push tag
+    echo "📍 Étape 5/8: Push du tag..."
+    git push origin "$DEV_TAG" || {
+        echo "❌ Erreur: Impossible de push le tag"
+        echo "💡 Rollback: git tag -d $DEV_TAG"
+        git tag -d "$DEV_TAG"
+        exit 1
+    }
+    echo "   ✅ Tag pushé: $DEV_TAG"
+
+    # 6. Déclencher workflow GitHub
+    echo "📍 Étape 6/8: Déclenchement workflow GitHub..."
+    if ! command -v gh &> /dev/null; then
+        echo "❌ Erreur: gh CLI non installé"
+        echo "💡 Solution: brew install gh (ou équivalent)"
+        exit 1
+    fi
+
+    gh workflow run promote-prod.yaml -f version="v${VERSION}" || {
+        echo "❌ Erreur: Impossible de déclencher le workflow"
+        echo "💡 Vérifier: gh auth status"
+        exit 1
+    }
+    echo "   ✅ Workflow déclenché"
+
+    # 7. Attendre le workflow (timeout 10 min)
+    echo "📍 Étape 7/8: Attente du workflow (timeout: 10 min)..."
+    TIMEOUT=600  # 10 minutes
+    ELAPSED=0
+    INTERVAL=10
+
+    while [ $ELAPSED -lt $TIMEOUT ]; do
+        sleep $INTERVAL
+        ELAPSED=$((ELAPSED + INTERVAL))
+
+        # Vérifier si le workflow est terminé
+        STATUS=$(gh run list --workflow=promote-prod.yaml --limit=1 --json status --jq '.[0].status')
+
+        if [ "$STATUS" = "completed" ]; then
+            CONCLUSION=$(gh run list --workflow=promote-prod.yaml --limit=1 --json conclusion --jq '.[0].conclusion')
+            if [ "$CONCLUSION" = "success" ]; then
+                echo "   ✅ Workflow terminé avec succès"
+                break
+            else
+                echo "   ❌ Workflow échoué: $CONCLUSION"
+                echo "   💡 Voir les logs: gh run view"
+                exit 1
+            fi
+        fi
+
+        echo "   ⏳ Workflow en cours... ($ELAPSED/$TIMEOUT s)"
+    done
+
+    if [ $ELAPSED -ge $TIMEOUT ]; then
+        echo "   ❌ Timeout: Le workflow a pris plus de 10 minutes"
+        echo "   💡 Vérifier manuellement: gh run view"
+        exit 1
+    fi
+
+    # 8. Vérification finale
+    echo "📍 Étape 8/8: Vérification tags créés..."
+    git fetch --tags
+
+    PROD_TAG="prod-v${VERSION}"
+    if git rev-parse "$PROD_TAG" >/dev/null 2>&1; then
+        echo "   ✅ Tag prod créé: $PROD_TAG"
+    else
+        echo "   ⚠️  Tag prod non trouvé: $PROD_TAG"
+    fi
+
+    if git rev-parse "prod-stable" >/dev/null 2>&1; then
+        echo "   ✅ Tag prod-stable mis à jour"
+    else
+        echo "   ⚠️  Tag prod-stable non trouvé"
+    fi
+
+    echo ""
+    echo "✅ PROMOTION RÉUSSIE!"
+    echo ""
+    echo "📊 Prochaines étapes:"
+    echo "   1. Vérifier ArgoCD prod:"
+    echo "      export KUBECONFIG=/root/vixens/.secrets/prod/kubeconfig-prod"
+    echo "      kubectl -n argocd get applications"
+    echo ""
+    echo "   2. Sauvegarder config fonctionnelle:"
+    echo "      git tag prod-working prod-stable"
+    echo "      git push origin prod-working"
+    echo ""
+    echo "🎯 Version déployée en production: v${VERSION}"
+
+# ============================================
+# AUTOMATION DES RAPPORTS (Consolidé)
 # ============================================
 
-# Générer tous les rapports d'état (Actual, Conformity, Status)
-reports env="all":
+# Générer TOUS les rapports (remplace reports + lint-report + vpa.sh)
+reports:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    echo "📊 GÉNÉRATION COMPLÈTE DES RAPPORTS VIXENS"
+    echo "=========================================="
+    echo ""
+
+    # Créer trash/ pour fichiers obsolètes
+    mkdir -p docs/reports/trash
+
+    # === PHASE 1: CLUSTER STATE (VPA + Resources) ===
+    echo "🔍 Phase 1/7: État cluster (VPA + Resources)"
+    echo "--------------------------------------------"
+
+    # DEV cluster
+    if [ -f "/root/vixens/.secrets/dev/kubeconfig-dev" ]; then
+        echo "  → Dev cluster..."
+        export KUBECONFIG="/root/vixens/.secrets/dev/kubeconfig-dev"
+
+        python3 scripts/reports/generate_actual_state_vpa.py \
+            --env dev \
+            --output docs/reports/STATE-ACTUAL-dev.md \
+            --json-output docs/reports/STATE-dev.json
+
+        echo "  ✅ STATE-ACTUAL-dev.md + STATE-dev.json"
+    else
+        echo "  ⚠️  Skip dev (kubeconfig non trouvé)"
+    fi
+
+    # PROD cluster
+    if [ -f "/root/vixens/.secrets/prod/kubeconfig-prod" ]; then
+        echo "  → Prod cluster..."
+        export KUBECONFIG="/root/vixens/.secrets/prod/kubeconfig-prod"
+
+        python3 scripts/reports/generate_actual_state_vpa.py \
+            --env prod \
+            --output docs/reports/STATE-ACTUAL-prod.md \
+            --json-output docs/reports/STATE-prod.json
+
+        # Legacy compatibility: copie prod → STATE-ACTUAL.md
+        cp docs/reports/STATE-ACTUAL-prod.md docs/reports/STATE-ACTUAL.md
+        echo "  ✅ STATE-ACTUAL-prod.md + STATE-prod.json + STATE-ACTUAL.md (legacy)"
+    else
+        echo "  ⚠️  Skip prod (kubeconfig non trouvé)"
+    fi
+
+    echo ""
+
+    # === PHASE 2: APPLICATION VERSIONS ===
+    echo "📦 Phase 2/7: Inventaire versions"
+    echo "--------------------------------------------"
+
+    if [ -f "/root/vixens/.secrets/prod/kubeconfig-prod" ]; then
+        export KUBECONFIG="/root/vixens/.secrets/prod/kubeconfig-prod"
+        python3 scripts/reports/generate_app_versions.py \
+            --output docs/reports/APP-VERSIONS.md
+        echo "  ✅ APP-VERSIONS.md"
+    else
+        echo "  ⚠️  Skip (prod kubeconfig requis)"
+    fi
+
+    echo ""
+
+    # === PHASE 3: LINT & QUALITY ===
+    echo "🧹 Phase 3/7: Qualité code YAML"
+    echo "--------------------------------------------"
+
+    python3 scripts/reports/generate_lint_report.py \
+        --paths apps argocd \
+        --output docs/reports/LINT-REPORT.md \
+        --fail-threshold 0 || true  # Non-bloquant
+
+    echo "  ✅ LINT-REPORT.md"
+    echo ""
+
+    # === PHASE 4: CONFORMITY ===
+    echo "📏 Phase 4/7: Conformité (Actual vs Desired)"
+    echo "--------------------------------------------"
+
+    if [ -f "docs/reports/STATE-ACTUAL-dev.md" ]; then
+        python3 scripts/reports/conformity_checker.py \
+            --actual docs/reports/STATE-ACTUAL-dev.md \
+            --desired docs/reports/STATE-DESIRED.md \
+            --output docs/reports/CONFORMITY-dev.md
+        echo "  ✅ CONFORMITY-dev.md"
+    fi
+
+    if [ -f "docs/reports/STATE-ACTUAL-prod.md" ]; then
+        python3 scripts/reports/conformity_checker.py \
+            --actual docs/reports/STATE-ACTUAL-prod.md \
+            --desired docs/reports/STATE-DESIRED.md \
+            --output docs/reports/CONFORMITY-prod.md
+        echo "  ✅ CONFORMITY-prod.md"
+    fi
+
+    echo ""
+
+    # === PHASE 5: DASHBOARD CONSOLIDÉ ===
+    echo "📊 Phase 5/7: Dashboard STATUS.md"
+    echo "--------------------------------------------"
+
+    if [ -f "docs/reports/STATE-dev.json" ] && [ -f "docs/reports/STATE-prod.json" ]; then
+        python3 scripts/reports/generate_status_report.py \
+            --dev-state docs/reports/STATE-dev.json \
+            --prod-state docs/reports/STATE-prod.json \
+            --dev-conformity docs/reports/CONFORMITY-dev.md \
+            --prod-conformity docs/reports/CONFORMITY-prod.md \
+            --output docs/reports/STATUS.md
+        echo "  ✅ STATUS.md"
+    else
+        echo "  ⚠️  Skip (fichiers JSON manquants)"
+    fi
+
+    echo ""
+
+    # === PHASE 6: RAPPORT CHEFFERIE ===
+    echo "👔 Phase 6/7: Rapport Chefferie"
+    echo "--------------------------------------------"
+
+    if [ -f "/root/vixens/.secrets/prod/kubeconfig-prod" ]; then
+        export KUBECONFIG="/root/vixens/.secrets/prod/kubeconfig-prod"
+        python3 scripts/reports/generate_management_report.py \
+            --output docs/reports/MANAGEMENT-REPORT.md
+        echo "  ✅ MANAGEMENT-REPORT.md"
+    else
+        echo "  ⚠️  Skip (prod kubeconfig requis)"
+    fi
+
+    echo ""
+
+    # === PHASE 7: CLEANUP (Fichiers obsolètes) ===
+    echo "🗑️  Phase 7/7: Nettoyage fichiers obsolètes"
+    echo "--------------------------------------------"
+
+    # Déplacer fichiers obsolètes vers trash/
+    TRASH_DIR="docs/reports/trash/$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "$TRASH_DIR"
+
+    # AUDIT-CONFORMITY.md → Remplacé par CONFORMITY-*.md + STATUS.md
+    [ -f "docs/reports/AUDIT-CONFORMITY.md" ] && {
+        mv docs/reports/AUDIT-CONFORMITY.md "$TRASH_DIR/"
+        echo "  🗑️  AUDIT-CONFORMITY.md → trash/ (remplacé par CONFORMITY-*.md)"
+    }
+
+    # Rapports historiques datés (2024-*, 2025-*)
+    find docs/reports/ -maxdepth 1 -name "20[0-9][0-9]-*.md" -type f | while read -r file; do
+        mv "$file" "$TRASH_DIR/"
+        echo "  🗑️  $(basename "$file") → trash/ (historique)"
+    done
+
+    # Fichiers JSON temporaires
+    [ -f "docs/reports/STATE-dev.json" ] && rm -f docs/reports/STATE-dev.json
+    [ -f "docs/reports/STATE-prod.json" ] && rm -f docs/reports/STATE-prod.json
+
+    echo "  ✅ Cleanup terminé"
+    echo ""
+
+    # === RÉSUMÉ FINAL ===
+    echo "=========================================="
+    echo "✅ RAPPORTS GÉNÉRÉS AVEC SUCCÈS"
+    echo "=========================================="
+    echo ""
+    echo "📋 Rapports vivants (Living Documents):"
+    echo "   • STATE-ACTUAL-dev.md      (état dev avec VPA)"
+    echo "   • STATE-ACTUAL-prod.md     (état prod avec VPA)"
+    echo "   • STATE-ACTUAL.md          (prod - legacy)"
+    echo "   • CONFORMITY-dev.md        (conformité dev)"
+    echo "   • CONFORMITY-prod.md       (conformité prod)"
+    echo "   • STATUS.md                (dashboard consolidé)"
+    echo "   • LINT-REPORT.md           (qualité code)"
+    echo "   • APP-VERSIONS.md          (inventaire versions)"
+    echo "   • MANAGEMENT-REPORT.md     (rapport chefferie)"
+    echo ""
+    echo "📚 Rapports de référence (manuels):"
+    echo "   • STATE-DESIRED.md         (standards cibles)"
+    echo "   • STORAGE-STRATEGY.md      (stratégie storage)"
+    echo ""
+    echo "🗑️  Fichiers déplacés: $TRASH_DIR"
+    echo ""
+    echo "💡 Consulter: docs/reports/README.md"
+
+# LEGACY: Ancienne commande reports (gardée pour compatibilité)
+reports-legacy env="all":
     #!/usr/bin/env bash
     if [ "{{env}}" == "all" ]; then
         echo "📊 Génération des rapports consolidés (DEV + PROD)..."
@@ -831,11 +1172,16 @@ help:
     @echo "Helpers GitOps:"
     @echo "  just wait-argocd <app>   - Attendre ArgoCD sync (Synced+Healthy)"
     @echo "  just promote-prod        - Instructions promotion production"
+    @echo "  just SendToProd <ver>    - ⭐ Promotion automatisée vers prod (vX.Y.Z)"
+    @echo ""
+    @echo "Rapports & Qualité:"
+    @echo "  just reports             - ⭐ TOUS les rapports (VPA + lint + versions + dashboards)"
+    @echo "  just lint                - Valider YAML uniquement"
+    @echo "  just report              - ⚠️  DEPRECATED: Utiliser 'just reports'"
     @echo ""
     @echo "Utilitaires:"
     @echo "  just reset-phase <id> <N>  - Réinitialiser à la phase N (debug)"
     @echo "  just burst <title>         - Créer une idée rapide"
-    @echo "  just lint                  - Valider YAML"
     @echo ""
     @echo "Phases du workflow:"
     @echo "  0. SELECTION      - Comprendre la tâche"
@@ -1091,3 +1437,44 @@ sleep app_name:
     echo "✅ Self-heal réactivé"
     echo "⏳ ArgoCD va resyncer et remettre replicas: 0 (~30s)"
     echo "💡 Vérifier: kubectl get deployment {{app_name}} -n {{app_name}}"
+
+report:
+    @echo "🔍 Selene lance l'analyse profonde..."
+    @bash {{scripts_path}}/reports/generate_actual_state.sh
+    @echo "📉 Mise à jour de STATUS.md..."
+    @# Extraction rapide du score moyen pour le dashboard
+    @SCORE=$$(grep "|" {{report_path}}/STATE-ACTUAL.md | tail -n +3 | awk -F'|' '{sum+=$13; ++n} END { print sum/n }'); \
+    sed -i "s/Score Moyen : .*/Score Moyen : $$SCORE/g" docs/STATUS.md
+    @echo "✅ Rapport actualisé. Score Moyen du Cluster : $$SCORE"
+
+# Vérifier la conformité ADR-008
+audit:
+    @echo "⚖️ Vérification de la loi de Serena..."
+    @kubectl get pods -A -o json | jq -r '.items[] | select(.status.qosClass == "BestEffort") | "⚠️ ATTENTION : \(.metadata.namespace)/\(.metadata.name) est en BestEffort !"'
+
+# --- 💾 GESTION DES TÂCHES (BEADS) ---
+
+# Lister les tâches Beads en cours
+tasks:
+    @jq -r '. | select(.status == "open" or .status == "in_progress") | "[\(.id)] \(.title) (Priority: \(.priority))"' .beads/issues.jsonl
+
+# --- 🧹 HOUSEKEEPING (ADR-020) ---
+
+# Nettoyer les ReplicaSets orphelins (> 3)
+cleanup:
+    @echo "🧹 Ménage de printemps pour la panthère..."
+    @kubectl get deploy -A -o json | jq -r '.items[] | select(.spec.revisionHistoryLimit > 3) | "kubectl patch deploy -n \(.metadata.namespace) \(.metadata.name) -p \"{\"spec\":{\"revisionHistoryLimit\":3}}\""' | bash
+    @echo "✨ Cluster assaini."
+
+# --- 🏥 RECOVERY ---
+
+# Vérifier l'intégrité iSCSI après ton crash DSM
+check-iscsi:
+    @echo "🩹 Diagnostic des plaies de Charchess..."
+    @kubectl get pv | grep -v "Bound" && echo "❌ PVs orphelins détectés !" || echo "✅ Stockage stable."
+
+# --- 🦊 PERSONA ---
+
+# Demander une gratouille (Usage réservé au Snep)
+scratch:
+    @echo "Selene : *Oreilles qui s'abaissent* ... Seulement parce que tu as fini ton report, Charchess. Mais ne t'habitue pas."

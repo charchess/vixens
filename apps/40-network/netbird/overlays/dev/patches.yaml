@@ -1,61 +1,63 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: netbird-management
 spec:
+  replicas: 0
   template:
     spec:
       containers:
-        - name: management
-          env:
-            - name: NETBIRD_DOMAIN_NAME
-              value: "netbird.dev.truxonline.com"
-            - name: NETBIRD_MGMT_API_ENDPOINT
-              value: "https://netbird-api.dev.truxonline.com"
-            - name: NETBIRD_SIGNAL_ENDPOINT
-              value: "https://netbird-signal.dev.truxonline.com"
-            - name: NETBIRD_RELAY_ENDPOINT
-              value: "https://netbird-relay.dev.truxonline.com"
-            - name: NETBIRD_IDP_SKIP_TLS_VERIFY
-              value: "true"
+      - env:
+        - name: NETBIRD_DOMAIN_NAME
+          value: netbird.dev.truxonline.com
+        - name: NETBIRD_MGMT_API_ENDPOINT
+          value: https://netbird-api.dev.truxonline.com
+        - name: NETBIRD_SIGNAL_ENDPOINT
+          value: https://netbird-signal.dev.truxonline.com
+        - name: NETBIRD_RELAY_ENDPOINT
+          value: https://netbird-relay.dev.truxonline.com
+        - name: NETBIRD_IDP_SKIP_TLS_VERIFY
+          value: 'true'
+        name: management
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: netbird-relay
 spec:
+  replicas: 0
   template:
     spec:
       containers:
-        - name: relay
-          env:
-            - name: NB_EXPOSED_ADDRESS
-              value: "rels://netbird-relay.dev.truxonline.com:443"
+      - env:
+        - name: NB_EXPOSED_ADDRESS
+          value: rels://netbird-relay.dev.truxonline.com:443
+        name: relay
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: netbird-dashboard
 spec:
+  replicas: 0
   template:
     spec:
       containers:
-        - name: dashboard
-          env:
-            - name: AUTH_AUDIENCE
-              value: "netbird"
-            - name: AUTH_CLIENT_ID
-              value: "netbird"
-            - name: AUTH_AUTHORITY
-              value: "https://authentik.dev.truxonline.com/application/o/netbird/"
-            - name: NETBIRD_AUTH_OIDC_CONFIGURATION_ENDPOINT
-              value: "https://authentik.dev.truxonline.com/application/o/netbird/.well-known/openid-configuration"
-            - name: AUTH_SUPPORTED_SCOPES
-              value: "openid profile email offline_access"
-            - name: NETBIRD_MGMT_API_ENDPOINT
-              value: "https://netbird-api.dev.truxonline.com"
-            - name: NETBIRD_MGMT_GRPC_API_ENDPOINT
-              value: "https://netbird-api.dev.truxonline.com"
-            - name: USE_AUTH0
-              value: "false"
+      - env:
+        - name: AUTH_AUDIENCE
+          value: netbird
+        - name: AUTH_CLIENT_ID
+          value: netbird
+        - name: AUTH_AUTHORITY
+          value: https://authentik.dev.truxonline.com/application/o/netbird/
+        - name: NETBIRD_AUTH_OIDC_CONFIGURATION_ENDPOINT
+          value: https://authentik.dev.truxonline.com/application/o/netbird/.well-known/openid-configuration
+        - name: AUTH_SUPPORTED_SCOPES
+          value: openid profile email offline_access
+        - name: NETBIRD_MGMT_API_ENDPOINT
+          value: https://netbird-api.dev.truxonline.com
+        - name: NETBIRD_MGMT_GRPC_API_ENDPOINT
+          value: https://netbird-api.dev.truxonline.com
+        - name: USE_AUTH0
+          value: 'false'
+        name: dashboard

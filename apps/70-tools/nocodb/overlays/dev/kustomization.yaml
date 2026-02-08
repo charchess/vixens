@@ -1,32 +1,26 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources:
-  - ../../base
 patches:
-  - target:
+  - patch: "- op: replace\n  path: /spec/rules/0/host\n  value: nocodb.dev.truxonline.com\n\
+      - op: replace\n  path: /spec/tls/0/hosts/0\n  value: nocodb.dev.truxonline.com"
+    target:
       kind: Ingress
       name: nocodb
-    patch: |-
-      - op: replace
-        path: /spec/rules/0/host
-        value: nocodb.dev.truxonline.com
-      - op: replace
-        path: /spec/tls/0/hosts/0
-        value: nocodb.dev.truxonline.com
-  - target:
+  - patch: "- op: add\n  path: /spec/template/spec/containers/0/env/-\n  value:\n\
+      \    name: NC_PUBLIC_URL\n    value: \"https://nocodb.dev.truxonline.com\""
+    target:
       kind: Deployment
       name: nocodb
-    patch: |-
-      - op: add
-        path: /spec/template/spec/containers/0/env/-
-        value:
-          name: NC_PUBLIC_URL
-          value: "https://nocodb.dev.truxonline.com"
-  - patch: |-
-      apiVersion: apps/v1
+  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nocodb\nspec:\n\
+      \  replicas: 0"
+  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n\
+      \  replicas: 0"
+    target:
       kind: Deployment
-      metadata:
-        name: nocodb
-      spec:
-        replicas: 0
+  - patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
+      \  replicas: 0"
+    target:
+      kind: StatefulSet
+resources:
+  - ../../base
