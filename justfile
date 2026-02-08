@@ -932,7 +932,7 @@ reports:
     mkdir -p docs/reports/trash
 
     # === PHASE 1: CLUSTER STATE (VPA + Resources) ===
-    echo "🔍 Phase 1/6: État cluster (VPA + Resources)"
+    echo "🔍 Phase 1/7: État cluster (VPA + Resources)"
     echo "--------------------------------------------"
 
     # DEV cluster
@@ -940,15 +940,12 @@ reports:
         echo "  → Dev cluster..."
         export KUBECONFIG="/root/vixens/.secrets/dev/kubeconfig-dev"
 
-        # Utiliser vpa.sh pour STATE-ACTUAL-dev
-        bash vpa.sh > /dev/null 2>&1 && mv docs/reports/STATE-ACTUAL.md docs/reports/STATE-ACTUAL-dev.md || {
-            echo "  ⚠️  vpa.sh échoué pour dev, fallback Python"
-            python3 scripts/reports/generate_actual_state.py \
-                --env dev \
-                --output docs/reports/STATE-ACTUAL-dev.md \
-                --json-output docs/reports/STATE-dev.json
-        }
-        echo "  ✅ STATE-ACTUAL-dev.md"
+        python3 scripts/reports/generate_actual_state_vpa.py \
+            --env dev \
+            --output docs/reports/STATE-ACTUAL-dev.md \
+            --json-output docs/reports/STATE-dev.json
+
+        echo "  ✅ STATE-ACTUAL-dev.md + STATE-dev.json"
     else
         echo "  ⚠️  Skip dev (kubeconfig non trouvé)"
     fi
@@ -958,18 +955,14 @@ reports:
         echo "  → Prod cluster..."
         export KUBECONFIG="/root/vixens/.secrets/prod/kubeconfig-prod"
 
-        # Utiliser vpa.sh pour STATE-ACTUAL-prod
-        bash vpa.sh > /dev/null 2>&1 && mv docs/reports/STATE-ACTUAL.md docs/reports/STATE-ACTUAL-prod.md || {
-            echo "  ⚠️  vpa.sh échoué pour prod, fallback Python"
-            python3 scripts/reports/generate_actual_state.py \
-                --env prod \
-                --output docs/reports/STATE-ACTUAL-prod.md \
-                --json-output docs/reports/STATE-prod.json
-        }
+        python3 scripts/reports/generate_actual_state_vpa.py \
+            --env prod \
+            --output docs/reports/STATE-ACTUAL-prod.md \
+            --json-output docs/reports/STATE-prod.json
 
         # Legacy compatibility: copie prod → STATE-ACTUAL.md
         cp docs/reports/STATE-ACTUAL-prod.md docs/reports/STATE-ACTUAL.md
-        echo "  ✅ STATE-ACTUAL-prod.md + STATE-ACTUAL.md (legacy)"
+        echo "  ✅ STATE-ACTUAL-prod.md + STATE-prod.json + STATE-ACTUAL.md (legacy)"
     else
         echo "  ⚠️  Skip prod (kubeconfig non trouvé)"
     fi
@@ -977,7 +970,7 @@ reports:
     echo ""
 
     # === PHASE 2: APPLICATION VERSIONS ===
-    echo "📦 Phase 2/6: Inventaire versions"
+    echo "📦 Phase 2/7: Inventaire versions"
     echo "--------------------------------------------"
 
     if [ -f "/root/vixens/.secrets/prod/kubeconfig-prod" ]; then
@@ -992,7 +985,7 @@ reports:
     echo ""
 
     # === PHASE 3: LINT & QUALITY ===
-    echo "🧹 Phase 3/6: Qualité code YAML"
+    echo "🧹 Phase 3/7: Qualité code YAML"
     echo "--------------------------------------------"
 
     python3 scripts/reports/generate_lint_report.py \
@@ -1004,7 +997,7 @@ reports:
     echo ""
 
     # === PHASE 4: CONFORMITY ===
-    echo "📏 Phase 4/6: Conformité (Actual vs Desired)"
+    echo "📏 Phase 4/7: Conformité (Actual vs Desired)"
     echo "--------------------------------------------"
 
     if [ -f "docs/reports/STATE-ACTUAL-dev.md" ]; then
@@ -1026,7 +1019,7 @@ reports:
     echo ""
 
     # === PHASE 5: DASHBOARD CONSOLIDÉ ===
-    echo "📊 Phase 5/6: Dashboard STATUS.md"
+    echo "📊 Phase 5/7: Dashboard STATUS.md"
     echo "--------------------------------------------"
 
     if [ -f "docs/reports/STATE-dev.json" ] && [ -f "docs/reports/STATE-prod.json" ]; then
@@ -1043,8 +1036,23 @@ reports:
 
     echo ""
 
-    # === PHASE 6: CLEANUP (Fichiers obsolètes) ===
-    echo "🗑️  Phase 6/6: Nettoyage fichiers obsolètes"
+    # === PHASE 6: RAPPORT CHEFFERIE ===
+    echo "👔 Phase 6/7: Rapport Chefferie"
+    echo "--------------------------------------------"
+
+    if [ -f "/root/vixens/.secrets/prod/kubeconfig-prod" ]; then
+        export KUBECONFIG="/root/vixens/.secrets/prod/kubeconfig-prod"
+        python3 scripts/reports/generate_management_report.py \
+            --output docs/reports/MANAGEMENT-REPORT.md
+        echo "  ✅ MANAGEMENT-REPORT.md"
+    else
+        echo "  ⚠️  Skip (prod kubeconfig requis)"
+    fi
+
+    echo ""
+
+    # === PHASE 7: CLEANUP (Fichiers obsolètes) ===
+    echo "🗑️  Phase 7/7: Nettoyage fichiers obsolètes"
     echo "--------------------------------------------"
 
     # Déplacer fichiers obsolètes vers trash/
@@ -1076,14 +1084,15 @@ reports:
     echo "=========================================="
     echo ""
     echo "📋 Rapports vivants (Living Documents):"
-    echo "   • STATE-ACTUAL-dev.md      (état dev)"
-    echo "   • STATE-ACTUAL-prod.md     (état prod)"
+    echo "   • STATE-ACTUAL-dev.md      (état dev avec VPA)"
+    echo "   • STATE-ACTUAL-prod.md     (état prod avec VPA)"
     echo "   • STATE-ACTUAL.md          (prod - legacy)"
     echo "   • CONFORMITY-dev.md        (conformité dev)"
     echo "   • CONFORMITY-prod.md       (conformité prod)"
     echo "   • STATUS.md                (dashboard consolidé)"
     echo "   • LINT-REPORT.md           (qualité code)"
     echo "   • APP-VERSIONS.md          (inventaire versions)"
+    echo "   • MANAGEMENT-REPORT.md     (rapport chefferie)"
     echo ""
     echo "📚 Rapports de référence (manuels):"
     echo "   • STATE-DESIRED.md         (standards cibles)"
