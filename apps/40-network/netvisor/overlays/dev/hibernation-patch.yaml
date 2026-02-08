@@ -1,0 +1,9 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: netvisor-daemon
+spec:
+  template:
+    spec:
+      nodeSelector:
+        vixens.lab/hibernated: "true"
