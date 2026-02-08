@@ -5,12 +5,20 @@ components:
 kind: Kustomization
 namespace: cert-manager
 patches:
-  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n\
-      \  replicas: 0"
+  - patch: "apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: any
+spec:
+  replicas: 1"
     target:
       kind: Deployment
-  - patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
-      \  replicas: 0"
+  - patch: "apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: any
+spec:
+  replicas: 1"
     target:
       kind: StatefulSet
 resources:

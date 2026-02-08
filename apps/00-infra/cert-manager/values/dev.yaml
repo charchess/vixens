@@ -1,7 +1,7 @@
 ---
 # Dev environment overrides for cert-manager
-replicaCount: 0
+replicaCount: 1
 webhook:
-  replicaCount: 0
+  replicaCount: 1
 cainjector:
-  replicaCount: 0
+  replicaCount: 1

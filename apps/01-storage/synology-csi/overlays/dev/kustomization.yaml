@@ -8,22 +8,18 @@ labels:
       vixens.lab/environment: dev
 namespace: synology-csi
 patches:
-  - patch: "- op: replace\n  path: /parameters/igroup\n  value: \"vixens-dev-iscsi-group\"\
-      \n- op: add\n  path: /parameters/targetIps\n  value: \"192.168.111.70,192.168.111.71\""
+  - patch: "- op: replace\n  path: /parameters/igroup\n  value: \"vixens-dev-iscsi-group\"
     target:
       kind: StorageClass
       name: synelia-iscsi-retain
-  - patch: "- op: add\n  path: /parameters/igroup\n  value: \"vixens-dev-iscsi-group\"\
-      \n- op: add\n  path: /parameters/targetIps\n  value: \"192.168.111.70,192.168.111.71\""
+  - patch: "- op: add\n  path: /parameters/igroup\n  value: \"vixens-dev-iscsi-group\"
     target:
       kind: StorageClass
       name: synelia-iscsi-delete
-  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n\
-      \  replicas: 0"
+  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n\n  replicas: 1"
     target:
       kind: Deployment
-  - patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
-      \  replicas: 0"
+  - patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\n  replicas: 1"
     target:
       kind: StatefulSet
 resources:

@@ -28,4 +28,4 @@ resources:
     memory: 512Mi
 # Single replica for dev
 deployment:
-  replicas: 0
+  replicas: 1
