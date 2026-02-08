@@ -11,4 +11,10 @@ components:
 
 patches:
   - path: patches/redis-resources.yaml
+    target:
+      kind: Deployment
+      name: argocd-redis
   - path: patches/redis-probes.yaml
+    target:
+      kind: Deployment
+      name: argocd-redis
