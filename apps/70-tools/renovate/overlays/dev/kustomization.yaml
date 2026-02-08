@@ -5,16 +5,14 @@ commonLabels:
 kind: Kustomization
 namespace: tools
 patches:
-  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: renovate\nspec:\n\
-      \  replicas: 0"
-  - path: patch-infisical-env.yaml
-  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n\
-      \  replicas: 0"
-    target:
-      kind: Deployment
-  - patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
-      \  replicas: 0"
-    target:
-      kind: StatefulSet
+- path: patch-infisical-env.yaml
+- patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n \
+    \ replicas: 0"
+  target:
+    kind: Deployment
+- patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
+    \  replicas: 0"
+  target:
+    kind: StatefulSet
 resources:
-  - ../../base
+- ../../base
