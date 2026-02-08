@@ -1,12 +1,18 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: policy-reporter
-resources:
-  - ingress.yaml
 labels:
-  - includeSelectors: false
-    pairs:
-      environment: dev
-
+- includeSelectors: false
+  pairs:
+    environment: dev
+namespace: policy-reporter
 patches:
+- patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n \
+    \ replicas: 0"
+  target:
+    kind: Deployment
+- patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
+    \  replicas: 0"
+  target:
+    kind: StatefulSet
+resources:
+- ingress.yaml

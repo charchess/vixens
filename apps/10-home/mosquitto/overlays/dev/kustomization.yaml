@@ -1,21 +1,20 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
+components:
+- ../../../../_shared/components/revision-history-limit
 kind: Kustomization
 namespace: mosquitto
-resources:
-  - ../../base
-  - infisical-mosquitto-auth.yaml
-  - mosquitto-tcp-ingressroute.yaml
-
-components:
-  - ../../../../_shared/components/revision-history-limit
-
-
 patches:
-  - patch: |-
-      apiVersion: apps/v1
-      kind: StatefulSet
-      metadata:
-        name: mosquitto
-      spec:
-        replicas: 0
+- patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: mosquitto\nspec:\n\
+    \  replicas: 0"
+- patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n \
+    \ replicas: 0"
+  target:
+    kind: Deployment
+- patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
+    \  replicas: 0"
+  target:
+    kind: StatefulSet
+resources:
+- ../../base
+- infisical-mosquitto-auth.yaml
+- mosquitto-tcp-ingressroute.yaml

@@ -1,22 +1,20 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-# Database and credentials managed centrally in postgresql-shared app
-# Individual resources set their own namespace
-resources:
-  - ../../base
-  - infisical-secret.yaml
-  - ingress.yaml
 labels:
-  - pairs:
-      environment: dev
-
-
+- pairs:
+    environment: dev
 patches:
-  - patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: linkwarden
-      spec:
-        replicas: 0
+- patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: linkwarden\nspec:\n\
+    \  replicas: 0"
+- patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n \
+    \ replicas: 0"
+  target:
+    kind: Deployment
+- patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
+    \  replicas: 0"
+  target:
+    kind: StatefulSet
+resources:
+- ../../base
+- infisical-secret.yaml
+- ingress.yaml

@@ -1,19 +1,19 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources:
-  - ../../base
 patches:
-  - patch: |
-      - op: add
-        path: /spec/template/spec/containers/0/resources
-        value:
-          requests:
-            cpu: 100m
-            memory: 200Mi
-          limits:
-            cpu: 100m
-            memory: 200Mi
-    target:
-      kind: Deployment
-      name: metrics-server
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 100m\n      memory: 200Mi\n    limits:\n      cpu:\
+    \ 100m\n      memory: 200Mi\n"
+  target:
+    kind: Deployment
+    name: metrics-server
+- patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n \
+    \ replicas: 0"
+  target:
+    kind: Deployment
+- patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
+    \  replicas: 0"
+  target:
+    kind: StatefulSet
+resources:
+- ../../base

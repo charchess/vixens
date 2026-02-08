@@ -1,28 +1,26 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources:
-  - ../../base
-  - ingress.yaml
 patches:
-  - target:
-      kind: InfisicalSecret
-      name: changedetection-secrets-sync
-    patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: dev
-  - target:
-      kind: Deployment
-      name: changedetection
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/env/0/value
-        value: https://changedetection.dev.truxonline.com
-  - patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: changedetection
-      spec:
-        replicas: 0
+- patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n\
+    \  value: dev"
+  target:
+    kind: InfisicalSecret
+    name: changedetection-secrets-sync
+- patch: "- op: replace\n  path: /spec/template/spec/containers/0/env/0/value\n  value:\
+    \ https://changedetection.dev.truxonline.com"
+  target:
+    kind: Deployment
+    name: changedetection
+- patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: changedetection\n\
+    spec:\n  replicas: 0"
+- patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n \
+    \ replicas: 0"
+  target:
+    kind: Deployment
+- patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
+    \  replicas: 0"
+  target:
+    kind: StatefulSet
+resources:
+- ../../base
+- ingress.yaml
