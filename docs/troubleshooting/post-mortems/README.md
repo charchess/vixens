@@ -4,8 +4,9 @@ Detailed incident analyses and lessons learned from major cluster incidents.
 
 ## 📝 List of Post-Mortems
 
-- **[2026-01-05 - Cluster Production Reset](2026-01-05-cluster-reset.md)** - Critical incident where the production cluster was accidentally reset via Terraform.
+- **[2026-02-07 - DSM Password Cascade Failure](2026-02-07-dsm-password-cascade-failure.md)** - Critical cascade failure affecting 50+ applications after DSM password change without proper credential synchronization.
 - **[2026-02-06 - Home Assistant Data Reset & Recovery](2026-02-06-homeassistant-reset-recovery.md)** - Critical incident involving data loss and recovery from backup after security hardening attempt.
+- **[2026-01-05 - Cluster Production Reset](2026-01-05-cluster-reset.md)** - Critical incident where the production cluster was accidentally reset via Terraform.
 
 ---
 

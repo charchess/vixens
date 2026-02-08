@@ -6,6 +6,9 @@ Incident logs, post-mortems, and common issues for the Vixens project.
 
 ## Quick Fixes
 
+- **[Cascade Failure Recovery](cascade-failure-recovery.md)** ✅
+  Generic runbook for detecting, diagnosing, and recovering from cascade failures (storage, database, webhook failures).
+
 - **[Common Issues](common-issues.md)** 🚧 Coming soon
   Quick fixes for frequently encountered problems.
 

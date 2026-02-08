@@ -5,8 +5,7 @@ components:
 kind: Kustomization
 namespace: services
 patches:
-  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: docspell\nspec:\n\
-      \  replicas: 0"
+
   - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n\
       \  replicas: 0"
     target:

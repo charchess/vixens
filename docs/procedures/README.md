@@ -11,7 +11,10 @@ Step-by-step operational procedures for the Vixens project.
 - **[Deployment Standard](deployment-standard.md)**
   Standard procedure for deploying applications to the cluster.
 
-### Operations (Coming Soon)
+### Operations
+
+- **[DSM Password Change](dsm-password-change.md)** ✅
+  Procedure for changing Synology DSM password and updating CSI credentials. Includes impact analysis and recovery steps.
 
 - **Backup & Restore** 🚧
   Backup and restore procedures using Velero.
@@ -23,7 +26,7 @@ Step-by-step operational procedures for the Vixens project.
   Upgrading Kubernetes and Talos versions.
 
 - **Secret Rotation** 🚧
-  Rotating secrets in Infisical and Kubernetes.
+  Rotating secrets in Infisical and Kubernetes (general case).
 
 - **Certificate Renewal** 🚧
   Renewing TLS certificates (manual process if needed).

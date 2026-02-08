@@ -11,6 +11,9 @@ Technical references and specifications for the Vixens project.
 - **[Vixens Master Architecture](../architecture.md)**
   The technical blueprint for the V4.0 Goldification campaign.
 
+- **[Infrastructure Dependencies](infrastructure-dependencies.md)** ✅
+  Dependency mapping (CSI → Databases → Apps) with failure cascade analysis and troubleshooting guides.
+
 - **[Quality Standards](quality-standards.md)**
   Definition of Bronze, Silver, Gold, Platinum, and Elite tiers.
 
