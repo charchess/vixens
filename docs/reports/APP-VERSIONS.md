@@ -1,74 +1,93 @@
 # Application Version Inventory
 
-**Last Updated:** 2026-02-05 (Stabilization Milestone v3.1.536)
+**Last Updated:** 2026-02-08 13:38:45
+**Total Applications:** 86
 
-| Application | Namespace | Version (Dev/Live) | Version (Prod/Git) | Note |
-| :--- | :--- | :--- | :--- | :--- |
-| adguard-home | networking | N/A | prod-stable | |
-| amule | media | N/A | prod-stable | |
-| argocd | argocd | v2.13.1 | prod-stable | |
-| authentik | auth | N/A | 2025.12 | |
-| birdnet-go | birdnet-go | N/A | nightly-20251223 | |
-| booklore | media | N/A | v1.14.1 | |
-| cert-manager | cert-manager | v1.14.4 | v1.14.4 | |
-| cert-manager-webhook-gandi | cert-manager | 0.5.1 | v0.5.1 | |
-| changedetection | tools | N/A | 0.52.9 | |
-| cilium | kube-system | v1.18.3 | v1.18.3 | |
-| cloudnative-pg | cnpg-system | 1.28.0 | 1.28.0 | |
-| descheduler | kube-system | N/A | prod-stable | |
-| docspell-native | services | N/A | prod-stable | |
-| external-dns-gandi | networking | v0.20.0 | v0.20.0 | |
-| external-dns-unifi | networking | v0.20.0 | v0.20.0 | |
-| firefly-iii | finance | N/A | 6.4.16 | |
-| frigate | media | N/A | 0.17.0-beta2 | |
-| gluetun | services | N/A | v3.41.0 | |
-| goldilocks | monitoring | v4.14.1 | v4.14.1 | |
-| grafana | monitoring | 2.1.2 | prod-stable | |
-| headlamp | tools | v0.39.0 | v0.39.0 | |
-| homeassistant | homeassistant | N/A | 2026.2.0 | |
-| homepage | tools | N/A | v1.9 | |
-| hydrus-client | media | N/A | v658 | |
-| infisical-operator | infisical-operator-system | v0.10.1 | v0.10.1 | |
-| it-tools | tools | 2024.10.22 | prod-stable | |
-| jellyfin | media | N/A | 10.11.6 | |
-| jellyseerr | media | N/A | 2.7 | |
-| kyverno | kyverno | v1.14.0 | v1.14.0 | |
-| lazylibrarian | media | latest | prod-stable | |
-| lidarr | media | version-3.1.0 | prod-stable | |
-| linkwarden | tools | N/A | v2.13.5 | |
-| loki | monitoring | 3.6.3 | 3.6.3 | |
-| mail-gateway | services | N/A | prod-stable | |
-| mariadb-shared | databases | N/A | 11.4.8 | |
-| mealie | mealie | N/A | v3.10.2 | |
-| metrics-server | kube-system | N/A | v0.7.2 | |
-| mosquitto | mosquitto | N/A | prod-stable | |
-| music-assistant | media | N/A | 2.8.0b9 | |
-| mylar | media | N/A | v0.8.1 | |
-| netbird | networking | N/A | 0.64.5 | |
-| netbox | tools | N/A | v4.5.2 | |
-| netvisor | networking | N/A | v0.14.3 | |
-| nocodb | tools | N/A | 0.301.2 | |
-| penpot | tools | N/A | 2.13.0 | |
-| policy-reporter | policy-reporter | 2.20.2 | 2.20.2 | |
-| postgresql-shared | databases | N/A | 17.6 | |
-| prometheus | monitoring | N/A | prod-stable | |
-| promtail | monitoring | 3.6.3 | 3.6.3 | |
-| prowlarr | media | N/A | 1.31.2 | |
-| pyload | downloads | N/A | latest | |
-| qbittorrent | media | N/A | latest | |
-| radar | tools | N/A | 0.8.0 | |
-| radarr | media | N/A | 6.0.4 | |
-| redis-shared | databases | N/A | 8-alpine | |
-| reloader | tools | v1.4.12 | v1.4.12 | |
-| renovate | tools | N/A | 42.66.10 | |
-| sabnzbd | media | N/A | 4.4.1 | |
-| sonarr | media | N/A | 4.0.16 | |
-| stirling-pdf | tools | N/A | 2.4.4 | |
-| synology-csi | synology-csi | N/A | prod-stable | |
-| traefik | traefik | N/A | 2.10.5 | |
-| vaultwarden | services | N/A | 1.35.2 | |
-| velero | velero | N/A | v1.17.2 | |
-| vikunja | tools | N/A | 1.0.0 | |
-| vpa | vpa | 1.5.1 | 1.5.1 | |
-| whisparr | media | N/A | nightly | |
-| whoami | whoami | v1.11.0 | v1.11.0 | |
+| Application                          | Namespace                 | Version                 | Image                                                                |
+| ------------------------------------ | ------------------------- | ----------------------- | -------------------------------------------------------------------- |
+| **argocd-application-controller**    | argocd                    | 7.7.7                   | quay.io/argoproj/argocd:v2.13.1                                      |
+| **argocd-applicationset-controller** | argocd                    | 7.7.7                   | quay.io/argoproj/argocd:v2.13.1                                      |
+| **argocd-notifications-controller**  | argocd                    | 7.7.7                   | quay.io/argoproj/argocd:v2.13.1                                      |
+| **argocd-redis**                     | argocd                    | 7.7.7                   | public.ecr.aws/docker/library/redis:7.4.1-alpine                     |
+| **argocd-repo-server**               | argocd                    | 7.7.7                   | quay.io/argoproj/argocd:v2.13.1                                      |
+| **argocd-server**                    | argocd                    | 7.7.7                   | quay.io/argoproj/argocd:v2.13.1                                      |
+| **authentik-server**                 | auth                      | 2025.12                 | ghcr.io/goauthentik/server:2025.12                                   |
+| **authentik-worker**                 | auth                      | 2025.12                 | ghcr.io/goauthentik/server:2025.12                                   |
+| **birdnet-go**                       | birdnet-go                | nightly-20251223        | ghcr.io/tphakala/birdnet-go:nightly-20251223                         |
+| **cainjector**                       | cert-manager              | v1.14.4                 | quay.io/jetstack/cert-manager-cainjector:v1.14.4                     |
+| **cert-manager**                     | cert-manager              | v1.14.4                 | quay.io/jetstack/cert-manager-controller:v1.14.4                     |
+| **cert-manager-webhook-gandi**       | cert-manager              | v0.5.2                  | ghcr.io/sintef/cert-manager-webhook-gandi:0.5.1                      |
+| **webhook**                          | cert-manager              | v1.14.4                 | quay.io/jetstack/cert-manager-webhook:v1.14.4                        |
+| **cloudnative-pg**                   | cnpg-system               | 0.27.0                  | ghcr.io/cloudnative-pg/cloudnative-pg:1.28.0                         |
+| **mariadb-shared**                   | databases                 | 12.1                    | mariadb:12.1                                                         |
+| **redis-shared**                     | databases                 | 8-alpine                | redis:8-alpine                                                       |
+| **pyload**                           | downloads                 | latest                  | lscr.io/linuxserver/pyload-ng:latest                                 |
+| **firefly-iii**                      | finance                   | version-6.4.16          | fireflyiii/core:version-6.4.16                                       |
+| **firefly-iii-importer**             | finance                   | latest                  | fireflyiii/data-importer:latest                                      |
+| **homeassistant**                    | homeassistant             | 2026.2.0                | ghcr.io/home-assistant/home-assistant:2026.2.0                       |
+| **secrets-operator**                 | infisical-operator-system | v0.10.5                 | infisical/kubernetes-operator:v0.10.1                                |
+| **kyverno-admission-controller**     | kyverno                   | 3.4.0                   | reg.kyverno.io/kyverno/kyverno:v1.14.0                               |
+| **kyverno-background-controller**    | kyverno                   | 3.4.0                   | reg.kyverno.io/kyverno/background-controller:v1.14.0                 |
+| **kyverno-cleanup-controller**       | kyverno                   | 3.4.0                   | reg.kyverno.io/kyverno/cleanup-controller:v1.14.0                    |
+| **kyverno-reports-controller**       | kyverno                   | 3.4.0                   | reg.kyverno.io/kyverno/reports-controller:v1.14.0                    |
+| **mealie**                           | mealie                    | 3.10.2                  | ghcr.io/mealie-recipes/mealie:v3.10.2                                |
+| **amule**                            | media                     | latest                  | tchabaud/amule:latest                                                |
+| **booklore**                         | media                     | 1.14.1-develop-055e86df | ghcr.io/booklore-app/booklore:v1.14.1-develop-055e86df               |
+| **booklore-mariadb**                 | media                     | 11.4.8                  | lscr.io/linuxserver/mariadb:11.4.8                                   |
+| **frigate**                          | media                     | 0.17.0-beta2            | ghcr.io/blakeblackshear/frigate:0.17.0-beta2                         |
+| **hydrus-client**                    | media                     | 658                     | ghcr.io/hydrusnetwork/hydrus:v658                                    |
+| **jellyfin**                         | media                     | 10.11.6                 | jellyfin/jellyfin:10.11.6                                            |
+| **jellyseerr**                       | media                     | 2.7                     | fallenbagel/jellyseerr:2.7                                           |
+| **lazylibrarian**                    | media                     | latest                  | lscr.io/linuxserver/lazylibrarian:latest                             |
+| **lidarr**                           | media                     | version-3.1.0.4875      | ghcr.io/linuxserver/lidarr:version-3.1.0.4875                        |
+| **music-assistant**                  | media                     | 2.8.0b9                 | ghcr.io/music-assistant/server:2.8.0b9                               |
+| **mylar**                            | media                     | version-v0.8.1          | ghcr.io/linuxserver/mylar3:version-v0.8.1                            |
+| **prowlarr**                         | media                     | version-1.31.2.4975     | ghcr.io/linuxserver/prowlarr:version-1.31.2.4975                     |
+| **qbittorrent**                      | media                     | latest                  | lscr.io/linuxserver/qbittorrent:latest                               |
+| **radarr**                           | media                     | version-6.0.4.10291     | ghcr.io/linuxserver/radarr:version-6.0.4.10291                       |
+| **sabnzbd**                          | media                     | version-4.4.1           | ghcr.io/linuxserver/sabnzbd:version-4.4.1                            |
+| **sonarr**                           | media                     | version-4.0.16.2944     | ghcr.io/linuxserver/sonarr:version-4.0.16.2944                       |
+| **whisparr**                         | media                     | nightly                 | ghcr.io/hotio/whisparr:nightly                                       |
+| **alertmanager**                     | monitoring                | 1.13.1                  | quay.io/prometheus/alertmanager:v0.27.0                              |
+| **goldilocks**                       | monitoring                | 10.2.0                  | us-docker.pkg.dev/fairwinds-ops/oss/goldilocks:v4.14.1               |
+| **grafana**                          | monitoring                | 10.3.0                  | quay.io/kiwigrid/k8s-sidecar:2.1.2                                   |
+| **kube-state-metrics**               | monitoring                | 5.27.0                  | registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.14.0        |
+| **loki**                             | monitoring                | 3.6.4                   | grafana/loki:3.6.4                                                   |
+| **prometheus**                       | monitoring                | 25.30.1                 | quay.io/prometheus-operator/prometheus-config-reloader:v0.78.1       |
+| **mosquitto**                        | mosquitto                 | 2.0.22                  | eclipse-mosquitto:2.0.22                                             |
+| **adguard-home**                     | networking                | 0.107.71                | adguard/adguardhome:v0.107.71                                        |
+| **external-dns**                     | networking                | 6.14.3                  | registry.k8s.io/external-dns/external-dns:v0.20.0                    |
+| **netbird-dashboard**                | networking                | 2.31.0                  | netbirdio/dashboard:v2.31.0                                          |
+| **netbird-management**               | networking                | 0.64.5                  | netbirdio/management:0.64.5                                          |
+| **netbird-relay**                    | networking                | 0.64.5                  | netbirdio/relay:0.64.5                                               |
+| **netbird-signal**                   | networking                | 0.64.5                  | netbirdio/signal:0.64.5                                              |
+| **netvisor-server**                  | networking                | 0.14.3                  | ghcr.io/scanopy/scanopy/server:v0.14.3                               |
+| **kyverno-plugin**                   | policy-reporter           | 1.6.5                   | ghcr.io/kyverno/policy-reporter-kyverno-plugin:1.6.3                 |
+| **policy-reporter**                  | policy-reporter           | 2.24.2                  | ghcr.io/kyverno/policy-reporter:2.20.2                               |
+| **ui**                               | policy-reporter           | 2.10.5                  | ghcr.io/kyverno/policy-reporter-ui:1.9.2                             |
+| **holmes**                           | robusta                   | 0.19.0                  | us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:0.19.0 |
+| **robusta-forwarder**                | robusta                   | 2.12.0                  | robustadev/kubewatch:v2.12.0                                         |
+| **robusta-runner**                   | robusta                   | 0.32.0                  | robustadev/robusta-runner:0.32.0                                     |
+| **trivy-operator**                   | security                  | 0.31.0                  | mirror.gcr.io/aquasec/trivy-operator:0.29.0                          |
+| **docspell**                         | services                  | 0.43.0                  | ghcr.io/docspell/joex:v0.43.0                                        |
+| **gluetun**                          | services                  | 3.41.0                  | ghcr.io/qdm12/gluetun:v3.41.0                                        |
+| **vaultwarden**                      | services                  | 1.35.2                  | vaultwarden/server:1.35.2                                            |
+| **synology-csi**                     | synology-csi              | 6.1.0                   | registry.k8s.io/sig-storage/csi-provisioner:v6.1.0                   |
+| **changedetection**                  | tools                     | 0.52.9                  | ghcr.io/dgtlmoon/changedetection.io:0.52.9                           |
+| **headlamp**                         | tools                     | 0.39.0                  | ghcr.io/headlamp-k8s/headlamp:v0.39.0                                |
+| **homepage**                         | tools                     | 1.9                     | ghcr.io/gethomepage/homepage:v1.9                                    |
+| **it-tools**                         | tools                     | 0.1.4                   | ghcr.io/corentinth/it-tools:2024.10.22-7ca5933                       |
+| **linkwarden**                       | tools                     | 2.13.5                  | ghcr.io/linkwarden/linkwarden:v2.13.5                                |
+| **netbox**                           | tools                     | 4.5.2                   | netboxcommunity/netbox:v4.5.2                                        |
+| **nocodb**                           | tools                     | 0.301.2                 | nocodb/nocodb:0.301.2                                                |
+| **penpot-backend**                   | tools                     | 2.13.0                  | penpotapp/backend:2.13.0                                             |
+| **penpot-exporter**                  | tools                     | 2.13.0                  | penpotapp/exporter:2.13.0                                            |
+| **penpot-frontend**                  | tools                     | 2.13.0                  | penpotapp/frontend:2.13.0                                            |
+| **radar**                            | tools                     | 0.1.0                   | ghcr.io/skyhook-io/radar:0.8.0                                       |
+| **reloader**                         | tools                     | 2.2.7                   | ghcr.io/stakater/reloader:v1.4.12                                    |
+| **stirling-pdf-chart**               | tools                     | 2.2.0                   | docker.stirlingpdf.com/stirlingtools/stirling-pdf:2.4.4              |
+| **vikunja**                          | tools                     | 1.0.0                   | vikunja/vikunja:1.0.0                                                |
+| **traefik**                          | traefik                   | 25.0.0                  | docker.io/traefik:v2.10.5                                            |
+| **velero**                           | velero                    | 11.3.2                  | velero/velero:v1.17.2                                                |
+| **vertical-pod-autoscaler**          | vpa                       | 11.1.1                  | registry.k8s.io/autoscaling/vpa-admission-controller:1.5.1           |
+| **whoami**                           | whoami                    | 1.11.0                  | traefik/whoami:v1.11.0                                               |

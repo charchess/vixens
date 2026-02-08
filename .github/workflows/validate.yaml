@@ -111,6 +111,7 @@ jobs:
             ! -path '*/values/*' \
             ! -path '*/charts/*' \
             ! -name 'values.yaml' \
+            ! -name '*-json.yaml' \
             -print0 |
             xargs -0 kubeval \
             --ignore-missing-schemas \
