@@ -13,7 +13,7 @@ resources:
   - apps/cilium-lb.yaml
   - apps/traefik.yaml
   - apps/traefik-middlewares.yaml
-  - apps/metrics-server.yaml
+  # - apps/metrics-server.yaml
   - apps/vpa.yaml
   - apps/goldilocks.yaml                        # Traefik Ingress Controller
   - apps/reloader.yaml
@@ -71,11 +71,11 @@ resources:
   - apps/changedetection.yaml
   - apps/adguard-home.yaml
   - apps/netbird.yaml
-  - apps/netvisor.yaml
+  # - apps/netvisor.yaml
   - apps/authentik.yaml
   - apps/netbox.yaml
   - apps/loki.yaml
-  - apps/promtail.yaml
+  # - apps/promtail.yaml
   - apps/renovate.yaml
   - apps/stirling-pdf.yaml
   # - apps/stirling-pdf-ingress.yaml
