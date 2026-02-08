@@ -1,12 +1,20 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: monitoring
-resources:
-  - ../../base
 labels:
   - includeSelectors: false
     pairs:
       environment: dev
+namespace: monitoring
 patches:
   - path: patch-infisical-env.yaml
+  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n\
+      \  replicas: 0"
+    target:
+      kind: Deployment
+  - patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
+      \  replicas: 0"
+    target:
+      kind: StatefulSet
+resources:
+  - ../../base

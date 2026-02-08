@@ -1,52 +1,44 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - ../../base
 components:
   - ../../../../_shared/components/revision-history-limit
+kind: Kustomization
+labels:
+  - includeSelectors: false
+    pairs:
+      environment: dev
 patches:
-  - target:
+  - patch: "- op: replace\n  path: /metadata/annotations/cert-manager.io~1cluster-issuer\n\
+      \  value: letsencrypt-staging\n- op: replace\n  path: /spec/tls/0/hosts/0\n\
+      \  value: design.dev.truxonline.com\n- op: replace\n  path: /spec/rules/0/host\n\
+      \  value: design.dev.truxonline.com"
+    target:
       kind: Ingress
       name: penpot-ingress
-    patch: |-
-      - op: replace
-        path: /metadata/annotations/cert-manager.io~1cluster-issuer
-        value: letsencrypt-staging
-      - op: replace
-        path: /spec/tls/0/hosts/0
-        value: design.dev.truxonline.com
-      - op: replace
-        path: /spec/rules/0/host
-        value: design.dev.truxonline.com
-  - target:
+  - patch: "- op: replace\n  path: /spec/template/spec/containers/0/env/1/value\n\
+      \  value: \"https://design.dev.truxonline.com\""
+    target:
       kind: Deployment
       name: penpot-backend
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/env/1/value
-        value: "https://design.dev.truxonline.com"
-  - target:
+  - patch: "- op: replace\n  path: /spec/template/spec/containers/0/env/0/value\n\
+      \  value: \"https://design.dev.truxonline.com\""
+    target:
       kind: Deployment
       name: penpot-exporter
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/env/0/value
-        value: "https://design.dev.truxonline.com"
-  - target:
+  - patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n\
+      \  value: dev\n- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/projectSlug\n\
+      \  value: vixens\n- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/secretsPath\n\
+      \  value: /apps/70-tools/penpot"
+    target:
       kind: InfisicalSecret
       name: penpot-secrets-sync
-    patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: dev
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/projectSlug
-        value: vixens
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/secretsPath
-        value: /apps/70-tools/penpot
-labels:
-  - pairs:
-      environment: dev
-    includeSelectors: false
+  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n\
+      \  replicas: 0"
+    target:
+      kind: Deployment
+  - patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
+      \  replicas: 0"
+    target:
+      kind: StatefulSet
+resources:
+  - ../../base

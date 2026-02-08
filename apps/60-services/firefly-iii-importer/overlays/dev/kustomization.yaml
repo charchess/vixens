@@ -1,32 +1,28 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources:
-  - ../../base
 patches:
-  - target:
+  - patch: "- op: replace\n  path: /spec/rules/0/host\n  value: importer.dev.truxonline.com\n\
+      - op: replace\n  path: /spec/tls/0/hosts/0\n  value: importer.dev.truxonline.com\n\
+      - op: replace\n  path: /metadata/annotations/cert-manager.io~1cluster-issuer\n\
+      \  value: letsencrypt-staging"
+    target:
       kind: Ingress
       name: firefly-iii-importer
-    patch: |-
-      - op: replace
-        path: /spec/rules/0/host
-        value: importer.dev.truxonline.com
-      - op: replace
-        path: /spec/tls/0/hosts/0
-        value: importer.dev.truxonline.com
-      - op: replace
-        path: /metadata/annotations/cert-manager.io~1cluster-issuer
-        value: letsencrypt-staging
-  - target:
+  - patch: "- op: replace\n  path: /spec/template/spec/containers/0/env/0/value\n\
+      \  value: \"https://firefly.dev.truxonline.com\"\n- op: replace\n  path: /spec/template/spec/containers/0/env/1/value\n\
+      \  value: \"https://importer.dev.truxonline.com\"\n- op: replace\n  path: /spec/template/spec/containers/0/env/2/value\n\
+      \  value: \"https://importer.dev.truxonline.com\""
+    target:
       kind: Deployment
       name: firefly-iii-importer
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/env/0/value
-        value: "https://firefly.dev.truxonline.com"
-      - op: replace
-        path: /spec/template/spec/containers/0/env/1/value
-        value: "https://importer.dev.truxonline.com"
-      - op: replace
-        path: /spec/template/spec/containers/0/env/2/value
-        value: "https://importer.dev.truxonline.com"
+  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n\
+      \  replicas: 0"
+    target:
+      kind: Deployment
+  - patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
+      \  replicas: 0"
+    target:
+      kind: StatefulSet
+resources:
+  - ../../base

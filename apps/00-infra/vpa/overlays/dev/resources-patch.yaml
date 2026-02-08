@@ -1,23 +1,23 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vpa-vertical-pod-autoscaler-admission-controller
   namespace: vpa
 spec:
+  replicas: 0
   revisionHistoryLimit: 3
   template:
     spec:
-      priorityClassName: vixens-high
       containers:
-        - name: admission-controller
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 100m
-              memory: 256Mi
+      - name: admission-controller
+        resources:
+          limits:
+            cpu: 100m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+      priorityClassName: vixens-high
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -25,19 +25,20 @@ metadata:
   name: vpa-vertical-pod-autoscaler-recommender
   namespace: vpa
 spec:
+  replicas: 0
   revisionHistoryLimit: 3
   template:
     spec:
-      priorityClassName: vixens-high
       containers:
-        - name: recommender
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 100m
-              memory: 256Mi
+      - name: recommender
+        resources:
+          limits:
+            cpu: 100m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+      priorityClassName: vixens-high
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -45,16 +46,17 @@ metadata:
   name: vpa-vertical-pod-autoscaler-updater
   namespace: vpa
 spec:
+  replicas: 0
   revisionHistoryLimit: 3
   template:
     spec:
-      priorityClassName: vixens-high
       containers:
-        - name: updater
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 100m
-              memory: 256Mi
+      - name: updater
+        resources:
+          limits:
+            cpu: 100m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+      priorityClassName: vixens-high
