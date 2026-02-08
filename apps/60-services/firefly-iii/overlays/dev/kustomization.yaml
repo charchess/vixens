@@ -1,25 +1,26 @@
+---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 patches:
-- patch: "- op: replace\n  path: /spec/rules/0/host\n  value: firefly.dev.truxonline.com\n\
-    - op: replace\n  path: /spec/tls/0/hosts/0\n  value: firefly.dev.truxonline.com\n\
-    - op: replace\n  path: /metadata/annotations/cert-manager.io~1cluster-issuer\n\
-    \  value: letsencrypt-staging"
-  target:
-    kind: Ingress
-    name: firefly-iii
-- patch: "- op: replace\n  path: /spec/template/spec/containers/0/env/1/value\n  value:\
-    \ \"https://firefly.dev.truxonline.com\""
-  target:
-    kind: Deployment
-    name: firefly-iii
-- patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n \
-    \ replicas: 0"
-  target:
-    kind: Deployment
-- patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
-    \  replicas: 0"
-  target:
-    kind: StatefulSet
+  - patch: "- op: replace\n  path: /spec/rules/0/host\n  value: firefly.dev.truxonline.com\n\
+      - op: replace\n  path: /spec/tls/0/hosts/0\n  value: firefly.dev.truxonline.com\n\
+      - op: replace\n  path: /metadata/annotations/cert-manager.io~1cluster-issuer\n\
+      \  value: letsencrypt-staging"
+    target:
+      kind: Ingress
+      name: firefly-iii
+  - patch: "- op: replace\n  path: /spec/template/spec/containers/0/env/1/value\n\
+      \  value: \"https://firefly.dev.truxonline.com\""
+    target:
+      kind: Deployment
+      name: firefly-iii
+  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n\
+      \  replicas: 0"
+    target:
+      kind: Deployment
+  - patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
+      \  replicas: 0"
+    target:
+      kind: StatefulSet
 resources:
-- ../../base
+  - ../../base
