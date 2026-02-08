@@ -1,0 +1,18 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-redis
+  namespace: argocd
+spec:
+  template:
+    spec:
+      containers:
+        - name: redis
+          resources:
+            requests:
+              cpu: 23m      # VPA recommendation
+              memory: 128Mi
+            limits:
+              cpu: 23m      # == requests → Guaranteed QoS
+              memory: 128Mi
