@@ -5,6 +5,8 @@
 - ⚠️ Partial: 0
 - ❌ Non-compliant: 27
 
+**Goldification Tiers:** 🥉 Bronze (0-20) | 🥈 Silver (21-40) | 🥇 Gold (41-60) | 💎 Platinum (61-80) | ⭐ Elite (81-100)
+
 ## Conformity Details
 
 | App                            | Status    | Score | Issues                                |

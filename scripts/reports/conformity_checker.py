@@ -9,6 +9,44 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
 
 from report_utils import parse_markdown_table, save_markdown_table
 
+def get_goldification_tier(score):
+    """Map score to goldification tier."""
+    if score >= 81:
+        return "⭐ Elite"
+    elif score >= 61:
+        return "💎 Platinum"
+    elif score >= 41:
+        return "🥇 Gold"
+    elif score >= 21:
+        return "🥈 Silver"
+    else:
+        return "🥉 Bronze"
+
+def auto_generate_standard(app_name, actual):
+    """
+    Auto-generate a default standard for apps not in STATE-DESIRED.
+    Uses actual values as baseline with reasonable defaults.
+    """
+    standard = {
+        "App": f"**{app_name}**",
+        "NS": actual.get("NS", "N/A"),
+        "CPU Req": actual.get("CPU Req", "N/A"),
+        "CPU Lim": actual.get("CPU Lim", "N/A"),
+        "Mem Req": actual.get("Mem Req", "N/A"),
+        "Mem Lim": actual.get("Mem Lim", "N/A"),
+        "Profile": "Auto",
+        "Priority": "vixens-medium",  # Default reasonable priority
+        "Sync Wave": "0",  # Default sync wave
+        "Backup Profile": "None",  # Default, unless Litestream detected
+        "Target Score": "85"  # Default target
+    }
+
+    # If backup is Active in actual state, set Relaxed profile
+    if actual.get("Backup", "None") == "Active":
+        standard["Backup Profile"] = "Relaxed"
+
+    return standard
+
 def compare_values(actual, desired, name, app):
     if actual == desired:
         return True, ""
@@ -37,8 +75,22 @@ def main():
     actual_map = {row['App'].replace('**', ''): row for row in actual_rows if 'App' in row}
     desired_map = {row['App'].replace('**', ''): row for row in desired_rows if 'App' in row}
 
+    # Auto-generate standards for apps in ACTUAL but not in DESIRED
+    auto_generated = []
+    for app_name, actual in actual_map.items():
+        if app_name not in desired_map:
+            standard = auto_generate_standard(app_name, actual)
+            desired_map[app_name] = standard
+            auto_generated.append(app_name)
+
     results = []
-    summary = {"total": 0, "compliant": 0, "partial": 0, "non_compliant": 0}
+    summary = {
+        "total": 0,
+        "compliant": 0,
+        "partial": 0,
+        "non_compliant": 0,
+        "auto_generated": len(auto_generated)
+    }
 
     # Sort apps by name for deterministic report
     for app_name in sorted(desired_map.keys()):
@@ -87,10 +139,19 @@ def main():
             status = "❌ NOK"
             summary["non_compliant"] += 1
 
+        # Get goldification tier
+        tier = get_goldification_tier(score)
+        score_display = f"{max(0, score)}/100 ({tier})"
+
+        # Mark auto-generated standards
+        app_display = f"**{app_name}**"
+        if app_name in auto_generated:
+            app_display += " 🤖"
+
         results.append({
-            "App": f"**{app_name}**",
+            "App": app_display,
             "Status": status,
-            "Score": f"{max(0, score)}/100",
+            "Score": score_display,
             "Issues": "; ".join(issues) if issues else "Full compliance"
         })
 
@@ -99,7 +160,11 @@ def main():
     content += f"**Total Apps:** {summary['total']}\n"
     content += f"- ✅ Compliant: {summary['compliant']}\n"
     content += f"- ⚠️ Partial: {summary['partial']}\n"
-    content += f"- ❌ Non-compliant: {summary['non_compliant']}\n\n"
+    content += f"- ❌ Non-compliant: {summary['non_compliant']}\n"
+    if summary['auto_generated'] > 0:
+        content += f"- 🤖 Auto-generated standards: {summary['auto_generated']}\n"
+    content += "\n"
+    content += "**Goldification Tiers:** 🥉 Bronze (0-20) | 🥈 Silver (21-40) | 🥇 Gold (41-60) | 💎 Platinum (61-80) | ⭐ Elite (81-100)\n\n"
     
     headers = ["App", "Status", "Score", "Issues"]
     content += "## Conformity Details\n\n"

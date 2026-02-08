@@ -1,6 +1,6 @@
 # 📊 Rapport Chefferie de Projet
 
-**Généré:** 2026-02-08 11:49:31
+**Généré:** 2026-02-08 13:40:17
 **Environnement:** admin@vixens
 
 ---
@@ -27,7 +27,7 @@
 | Statut | Count |
 |--------|-------|
 | ⚪ open | 62 |
-| 🟡 in_progress | 3 |
+| 🟡 in_progress | 4 |
 | 🔴 blocked | 1 |
 | ✅ closed | 239 |
 
@@ -38,7 +38,7 @@
 | coding-agent | 198 |
 | user | 65 |
 | claude | 22 |
-| unassigned | 18 |
+| unassigned | 19 |
 | @coding-agent | 2 |
 
 ## 🔍 Détails Ressources (Top 20)
@@ -74,6 +74,7 @@ auth               pod/authentik-worker-596cfdc58b-ptx8s        0/1 Complete
 
 | ID | Titre | Statut | Assignee | Priorité |
 |----|-------|--------|----------|----------|
+| vixens-2hr1 | feat: goldification-based conformity scoring (0-10 | 🟡 in_progress | unassigned | P1 |
 | vixens-yx42 | analysis(litestream): review métriques prod et val | ⚪ open | user | P1 |
 | vixens-klz | consolidation: authentik score boost (70 -> 100) | 🟡 in_progress | user | P1 |
 | vixens-aka5 | créer un just de push, attente de merge, modificat | ⚪ open | unassigned | P2 |
@@ -93,9 +94,8 @@ auth               pod/authentik-worker-596cfdc58b-ptx8s        0/1 Complete
 | vixens-5xz | changedetection (gold) : emeraldify (qos guarantee | ⚪ open | coding-agent | P2 |
 | vixens-4vy | birdnet-go (bronze) : silverify (validate prod dep | ⚪ open | coding-agent | P2 |
 | vixens-92f | netbox (gold) : emeraldify (qos guaranteed & clean | ⚪ open | coding-agent | P2 |
-| vixens-8ac | linkwarden (gold) : emeraldify (qos guaranteed & c | ⚪ open | coding-agent | P2 |
 
-*... et 45 tâches actives supplémentaires*
+*... et 46 tâches actives supplémentaires*
 
 ---
 
@@ -217,6 +217,20 @@ auth               pod/authentik-worker-596cfdc58b-ptx8s        0/1 Complete
     "updated_at": "2026-01-12T00:58:35.9889127+01:00",
     "closed_at": "2026-01-12T00:58:35.9889127+01:00",
     "close_reason": "Closed",
+    "dependency_count": 0,
+    "dependent_count": 0
+  },
+  {
+    "id": "vixens-2hr1",
+    "title": "feat: goldification-based conformity scoring (0-100 tiers)",
+    "description": "Refactor conformity scoring to reflect goldification tiers:\n- Bronze (0-20): Basic resources\n- Silver (21-40): Limits + readiness probe  \n- Gold (41-60): Liveness probe + metrics\n- Platinum (61-80): QoS + Backup + VPA\n- Elite (81-100): Guaranteed QoS + Sidecars + Startup probe\n\nChanges needed:\n1. Enrich STATE-ACTUAL with probe/QoS/sidecar data\n2. Rewrite conformity_checker.py scoring logic\n3. Auto-generate standards for missing apps (59/86)\n4. Update STATUS.md to show tier distribution",
+    "status": "in_progress",
+    "priority": 1,
+    "issue_type": "feature",
+    "owner": "charchess@gmail.com",
+    "created_at": "2026-02-08T12:01:03.8418034+01:00",
+    "created_by": "Charchess",
+    "updated_at": "2026-02-08T12:01:12.7374658+01:00",
     "dependency_count": 0,
     "dependent_count": 0
   },
