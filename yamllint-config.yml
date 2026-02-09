@@ -3,6 +3,7 @@ extends: default
 
 ignore: |
   apps/02-monitoring/alertmanager/base/charts/
+  **/charts/
   **/templates/
   **/manifests.yaml
   **/manifests.raw.yaml

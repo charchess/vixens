@@ -143,12 +143,12 @@ spec:
               export RCLONE_CONFIG_S3_FORCE_PATH_STYLE=true
               export RCLONE_CONFIG_S3_REGION=us-east-1
               export RCLONE_CONFIG_S3_DISABLE_SSL=true
-              sync_s3() { 
+              sync_s3() {
                 rclone sync /upload s3:$LITESTREAM_BUCKET/upload
               }
-              while true; do 
-                sync_s3; 
-                sleep 60; 
+              while true; do
+                sync_s3;
+                sleep 60;
               done
           envFrom:
             - secretRef:

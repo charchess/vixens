@@ -1,4 +1,4 @@
---- 
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -42,7 +42,7 @@ spec:
             - sh
             - -c
           args:
-            - | 
+            - |
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
@@ -130,18 +130,18 @@ spec:
             - sh
             - -c
           args:
-            - | 
+            - |
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              sync_s3() { 
+              sync_s3() {
                 rclone sync /var/lib/authentik s3:$LITESTREAM_BUCKET/config --exclude "*.db*" --exclude "*.log" --exclude "lost+found/**" --exclude ".*-litestream" --exclude ".*-litestream/**"
               }
-              while true; do 
-                sync_s3; 
-                sleep 60; 
+              while true; do
+                sync_s3;
+                sleep 60;
               done
           envFrom:
             - secretRef:
