@@ -86,12 +86,12 @@ spec:
                 psql -c "ALTER USER \"$user\" WITH PASSWORD '$pass';"
                 psql -lqt | cut -d '|' -f 1 | grep -qw "$user" || psql -c "CREATE DATABASE \"$user\" OWNER \"$user\";"
               }
-              
+
               until psql -c '\q' 2>/dev/null; do echo "Waiting for DB..."; sleep 2; done
-              
+
               # Sync Authentik
               sync_db "authentik" "$AUTHENTIK_PASS"
-              
+
               # Sync Netbird
               sync_db "netbird" "$NETBIRD_PASS"
 

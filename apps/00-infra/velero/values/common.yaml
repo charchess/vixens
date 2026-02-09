@@ -8,7 +8,7 @@ configuration:
   uploaderType: kopia
   repoMaintenanceJobConfigMap: velero-repo-maintenance-config
   defaultRepoMaintainFrequency: 24h
-  
+
   # STORAGE LOCATION
   backupStorageLocation:
     - name: default
