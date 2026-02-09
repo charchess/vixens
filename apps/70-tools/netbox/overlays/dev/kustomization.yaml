@@ -2,27 +2,27 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 patches:
-- patch: "- op: replace\n  path: /spec/template/spec/containers/0/env\n  value:\n\
-    \    - name: DB_HOST\n      value: \"postgresql-shared-rw.databases.svc.cluster.local\"\
-    \n    - name: DB_PORT\n      value: \"5432\"\n    - name: DB_NAME\n      value:\
-    \ \"netbox\"\n    - name: DB_USER\n      valueFrom:\n        secretKeyRef:\n \
-    \         name: netbox-db-secrets\n          key: username\n    - name: DB_PASSWORD\n\
-    \      valueFrom:\n        secretKeyRef:\n          name: netbox-db-secrets\n\
-    \          key: password\n    - name: SECRET_KEY\n      value: \"vixens-temporary-long-secret-key-at-least-50-characters-long-1234567890\"\
-    \n    - name: REDIS_HOST\n      value: \"redis-shared.databases.svc.cluster.local\"\
-    \n    - name: REDIS_PORT\n      value: \"6379\"\n    - name: ALLOWED_HOSTS\n \
-    \     value: \"*\"\n    - name: DB_WAIT_DEBUG\n      value: \"1\""
-  target:
-    kind: Deployment
-    name: netbox
-- patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n \
-    \ replicas: 0"
-  target:
-    kind: Deployment
-- patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
-    \  replicas: 0"
-  target:
-    kind: StatefulSet
+  - patch: "- op: replace\n  path: /spec/template/spec/containers/0/env\n  value:\n\
+      \    - name: DB_HOST\n      value: \"postgresql-shared-rw.databases.svc.cluster.local\"\
+      \n    - name: DB_PORT\n      value: \"5432\"\n    - name: DB_NAME\n      value:\
+      \ \"netbox\"\n    - name: DB_USER\n      valueFrom:\n        secretKeyRef:\n \
+      \         name: netbox-db-secrets\n          key: username\n    - name: DB_PASSWORD\n\
+      \      valueFrom:\n        secretKeyRef:\n          name: netbox-db-secrets\n\
+      \          key: password\n    - name: SECRET_KEY\n      value: \"vixens-temporary-long-secret-key-at-least-50-characters-long-1234567890\"\
+      \n    - name: REDIS_HOST\n      value: \"redis-shared.databases.svc.cluster.local\"\
+      \n    - name: REDIS_PORT\n      value: \"6379\"\n    - name: ALLOWED_HOSTS\n \
+      \     value: \"*\"\n    - name: DB_WAIT_DEBUG\n      value: \"1\""
+    target:
+      kind: Deployment
+      name: netbox
+  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n \
+      \ replicas: 0"
+    target:
+      kind: Deployment
+  - patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
+      \  replicas: 0"
+    target:
+      kind: StatefulSet
 resources:
-- ../../base
-- ingress.yaml
+  - ../../base
+  - ingress.yaml

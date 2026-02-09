@@ -11,4 +11,3 @@ components:
 
 # patches:
 #   - path: probes-patch.yaml # Disabled: blocks ingress generation as Deployment is managed by Helm app
-

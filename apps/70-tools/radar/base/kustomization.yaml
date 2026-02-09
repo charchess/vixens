@@ -21,19 +21,19 @@ patches:
           - apiGroups: ["authorization.k8s.io"]
             resources: ["selfsubjectaccessreviews"]
             verbs: ["create"]
-          
+
           # Core Resources (Read-only, NO SECRETS)
           - apiGroups: [""]
             resources: ["pods", "services", "nodes", "configmaps", "events", "namespaces", "persistentvolumes", "persistentvolumeclaims", "endpoints", "limitranges", "resourcequotas", "replicationcontrollers", "serviceaccounts"]
             verbs: ["get", "list", "watch"]
-          
+
           # Pod Operations (Port-forward & Logs)
           - apiGroups: [""]
             resources: ["pods/portforward", "pods/log"]
             verbs: ["create", "get"]
 
           # Standard and Custom Groups (Full Observability)
-          - apiGroups: 
+          - apiGroups:
               - "apps"
               - "batch"
               - "autoscaling.k8s.io"
