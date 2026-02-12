@@ -68,13 +68,14 @@ spec:
               # Format: package==version
               PACKAGES="hass-web-proxy-lib==0.0.7"
               
-              pip install --no-cache-dir --target=/usr/local/lib/python3.13/site-packages $PACKAGES
+              # Install to separate directory to avoid overwriting HA packages
+              pip install --no-cache-dir --target=/opt/python-packages $PACKAGES
               
               echo "Installed packages:"
-              ls -la /usr/local/lib/python3.13/site-packages/ | grep -E "hass-web-proxy|dist-info" || echo "No packages found"
+              ls -la /opt/python-packages/ | grep -E "hass-web-proxy|dist-info" || echo "No packages found"
           volumeMounts:
             - name: python-site-packages
-              mountPath: /usr/local/lib/python3.13/site-packages
+              mountPath: /opt/python-packages
           resources:
             requests:
               cpu: 50m
@@ -170,6 +171,8 @@ spec:
           env:
             - name: TZ
               value: Europe/Paris
+            - name: PYTHONPATH
+              value: /opt/python-packages:/usr/local/lib/python3.13/site-packages
           livenessProbe:
             httpGet:
               path: /
@@ -193,7 +196,7 @@ spec:
             - name: config
               mountPath: /config
             - name: python-site-packages
-              mountPath: /usr/local/lib/python3.13/site-packages
+              mountPath: /opt/python-packages
         - name: litestream
           image: litestream/litestream:0.5.7
           securityContext:
