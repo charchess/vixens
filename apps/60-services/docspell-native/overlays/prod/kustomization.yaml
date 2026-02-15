@@ -9,6 +9,7 @@ patches:
   - path: patch-infisical-secrets.yaml
 patchesStrategicMerge:
   - patch-resources.yaml
+  - patch-configmap.yaml
 resources:
   - ../../base
   - ingress.yaml
