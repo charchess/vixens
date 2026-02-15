@@ -1,0 +1,22 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: services
+resources:
+  - ../../base
+  - ingress.yaml
+patches:
+  - target:
+      kind: InfisicalSecret
+      name: openclaw-secrets
+    patch: |-
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
+  - target:
+      kind: PersistentVolumeClaim
+      name: openclaw-data
+    patch: |-
+      - op: replace
+        path: /spec/resources/requests/storage
+        value: 20Gi
