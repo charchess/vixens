@@ -3,5 +3,16 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: services
 resources:
-  - infisical-secret.yaml
-  - db-credentials-secret.yaml
+  - statefulset-restserver.yaml
+  - statefulset-joex.yaml
+  - service-restserver.yaml
+  - service-joex.yaml
+  - configmap-restserver.yaml
+  - configmap-joex.yaml
+  - configmap-joex-entrypoint.yaml
+  - infisical-secrets.yaml
+  - middleware-redirect.yaml
+  - middleware.yaml
+labels:
+  - pairs:
+      app: docspell
