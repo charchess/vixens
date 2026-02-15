@@ -66,7 +66,7 @@ spec:
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               while true; do
                 TIMESTAMP=$(date +%Y%m%d-%H%M)
-                mariadb-dump -h 127.0.0.1 -u booklore -p"$DB_PASSWORD" booklore > /tmp/booklore.sql
+                mariadb-dump -h booklore-mariadb -u booklore -p"$DB_PASSWORD" booklore > /tmp/booklore.sql
                 if [ $? -eq 0 ] && [ -s /tmp/booklore.sql ]; then
                   rclone copyto /tmp/booklore.sql "s3:$LITESTREAM_BUCKET/mariadb/booklore-${TIMESTAMP}.sql"
                   rclone copyto /tmp/booklore.sql "s3:$LITESTREAM_BUCKET/mariadb/booklore-latest.sql"
