@@ -1,0 +1,35 @@
+---
+restserver:
+  ingress:
+    enabled: true
+    className: traefik
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+      traefik.ingress.kubernetes.io/router.middlewares: services-docspell-http-redirect@kubernetescrd
+    host: docspell.truxonline.com
+    tlsSecretName: docspell-tls-prod
+  appName: Docspell
+  bindPort: 7880
+  publicDomain: docspell.truxonline.com
+  serverSecret: docspell-secrets # Name of the Kubernetes Secret containing the server secret
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+joex:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+jdbc:
+  host: postgresql-shared-rw.databases.svc.cluster.local # Shared PostgreSQL cluster (read-write service)
+  port: 5432
+  database: docspell
+  credentialsSecretName: docspell-db-credentials # Synced from databases namespace
