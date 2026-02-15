@@ -91,11 +91,6 @@ spec:
               port: 18789
             initialDelaySeconds: 120
             periodSeconds: 30
-          readinessProbe:
-            tcpSocket:
-              port: 18789
-            initialDelaySeconds: 90
-            periodSeconds: 10
           resources:
             requests:
               cpu: 500m
