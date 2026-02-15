@@ -5,3 +5,11 @@ namespace: services
 resources:
   - ../../base
   - ingress.yaml
+patches:
+  - target:
+      kind: Deployment
+      name: openclaw
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 0
