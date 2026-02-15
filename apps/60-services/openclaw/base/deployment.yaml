@@ -128,8 +128,25 @@ spec:
               }
               while true; do
                 sync_s3;
+                touch /tmp/healthy;
                 sleep 60;
               done
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "test -f /tmp/healthy"
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "test -f /tmp/healthy"
+            initialDelaySeconds: 5
+            periodSeconds: 10
           envFrom:
             - secretRef:
                 name: openclaw-secrets
