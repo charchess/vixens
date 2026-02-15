@@ -66,8 +66,7 @@ resources:
   - apps/cloudnative-pg.yaml # CloudNativePG Operator (databases)
   - apps/redis-shared.yaml
   - apps/postgresql-shared.yaml # Shared PostgreSQL Cluster (Docspell, ...)
-  - apps/docspell.yaml # OLD Helm-based (deprecated, use docspell-native)
-  - apps/docspell-native.yaml
+  - apps/docspell.yaml
   - apps/changedetection.yaml
   - apps/adguard-home.yaml
   - apps/netbird.yaml
