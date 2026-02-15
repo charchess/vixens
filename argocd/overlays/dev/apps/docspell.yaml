@@ -7,23 +7,13 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd.argoproj.io/sync-wave: "5" # After postgresql-shared (wave 4)
+    argocd.argoproj.io/sync-wave: "7" # After postgresql-shared (wave 4)
 spec:
   project: default
-  sources:
-    - repoURL: https://github.com/docspell/docker.git
-      targetRevision: main
-      path: charts/docspell
-      helm:
-        releaseName: docspell
-        valueFiles:
-          - $values/apps/60-services/docspell/overlays/dev/values.yaml
-    - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: main
-      ref: values
-    - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: main
-      path: apps/60-services/docspell/overlays/dev
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: main
+    path: apps/60-services/docspell/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: services
