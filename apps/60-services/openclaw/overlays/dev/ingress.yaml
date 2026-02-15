@@ -23,7 +23,7 @@ spec:
               service:
                 name: openclaw
                 port:
-                  number: 8080
+                  number: 18789
   tls:
     - hosts:
         - openclaw.dev.truxonline.com
