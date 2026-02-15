@@ -9,7 +9,7 @@ metadata:
 spec:
   ports:
     - port: 18789
-      targetPort: 18789
+      targetPort: http
       name: http
   selector:
     app: openclaw
