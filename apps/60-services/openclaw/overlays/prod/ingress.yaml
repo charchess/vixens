@@ -1,0 +1,30 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openclaw-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: OpenClaw
+    gethomepage.dev/icon: openclaw.svg
+    gethomepage.dev/group: AI Agents
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: openclaw.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: openclaw
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - openclaw.truxonline.com
+      secretName: openclaw-tls

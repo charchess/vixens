@@ -1,0 +1,149 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openclaw
+  namespace: services
+  labels:
+    app: openclaw
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: openclaw
+  template:
+    metadata:
+      labels:
+        app: openclaw
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      priorityClassName: vixens-high
+      initContainers:
+        - name: fix-perms
+          image: busybox:latest
+          securityContext:
+            runAsUser: 0
+          command:
+            - sh
+            - -c
+          args:
+            - chown -R 1000:1000 /data
+          volumeMounts:
+            - name: data
+              mountPath: /data
+        - name: restore-data
+          image: rclone/rclone:1.73
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$RCLONE_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$RCLONE_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$RCLONE_ENDPOINT
+              rclone copy s3:$RCLONE_BUCKET/openclaw /data --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
+          envFrom:
+            - secretRef:
+                name: openclaw-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      containers:
+        - name: openclaw
+          image: ghcr.io/openclaw/openclaw:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: TZ
+              value: Europe/Paris
+            - name: OPENCLAW_DATA_DIR
+              value: /data
+            - name: OPENCLAW_PLUGINS
+              value: discord,github,telegram
+            - name: OPENCLAW_LOG_LEVEL
+              value: info
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+        - name: data-syncer
+          image: rclone/rclone:1.73
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$RCLONE_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$RCLONE_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$RCLONE_ENDPOINT
+              sync_s3() {
+                rclone sync /data s3:$RCLONE_BUCKET/openclaw --exclude "lost+found/**"
+              }
+              while true; do
+                sync_s3;
+                sleep 60;
+              done
+          envFrom:
+            - secretRef:
+                name: openclaw-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: openclaw-data
