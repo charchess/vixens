@@ -37,12 +37,44 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/config /app/data \
-                --transfers 4 \
-                --exclude "*.log" \
-                --exclude "bookdrop_temp/**" \
-                --exclude "lost+found/**" \
-                || true
+              
+              # Marker logic to avoid full re-download
+              # Count existing files in images directory
+              FILE_COUNT=$(find /app/data/images -type f 2>/dev/null | wc -l)
+              MARKER_FILE="/app/data/.restore_marker"
+              LAST_COUNT=0
+              if [ -f "$MARKER_FILE" ]; then
+                LAST_COUNT=$(cat "$MARKER_FILE")
+              fi
+              
+              echo "Found $FILE_COUNT files (Last count: $LAST_COUNT)"
+              
+              # Logic:
+              # 1. If empty or < 10 files -> FULL RESTORE
+              # 2. If significant difference (>20% loss) -> SYNC
+              # 3. Otherwise -> SKIP (assume healthy PVC)
+              
+              if [ "$FILE_COUNT" -lt 10 ]; then
+                echo "Directory mostly empty. Starting FULL RESTORE..."
+                rclone copy s3:$LITESTREAM_BUCKET/config /app/data \
+                  --transfers 8 \
+                  --exclude "*.log" \
+                  --exclude "bookdrop_temp/**" \
+                  --exclude "lost+found/**"
+              elif [ "$LAST_COUNT" -gt 0 ] && [ "$FILE_COUNT" -lt $(($LAST_COUNT * 80 / 100)) ]; then
+                 echo "Significant file loss detected ($FILE_COUNT < $LAST_COUNT). Syncing..."
+                 rclone sync s3:$LITESTREAM_BUCKET/config /app/data \
+                   --transfers 8 \
+                   --exclude "*.log" \
+                   --exclude "bookdrop_temp/**" \
+                   --exclude "lost+found/**"
+              else
+                echo "Data present and looks healthy. Skipping heavy restore."
+              fi
+              
+              # Update marker
+              NEW_COUNT=$(find /app/data/images -type f 2>/dev/null | wc -l)
+              echo "$NEW_COUNT" > "$MARKER_FILE"
           envFrom:
             - secretRef:
                 name: booklore-secrets
