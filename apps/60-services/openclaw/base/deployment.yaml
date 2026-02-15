@@ -75,7 +75,7 @@ spec:
           image: ghcr.io/openclaw/openclaw:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 8080
+            - containerPort: 18789
               name: http
           env:
             - name: TZ
@@ -89,14 +89,14 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: http
-            initialDelaySeconds: 30
+              port: 18789
+            initialDelaySeconds: 60
             periodSeconds: 30
           readinessProbe:
             httpGet:
               path: /health
-              port: http
-            initialDelaySeconds: 10
+              port: 18789
+            initialDelaySeconds: 30
             periodSeconds: 10
           resources:
             requests:
