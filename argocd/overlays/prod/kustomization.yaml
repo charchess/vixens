@@ -66,7 +66,7 @@ resources:
   - apps/cloudnative-pg.yaml
   - apps/redis-shared.yaml
   - apps/postgresql-shared.yaml
-  - apps/docspell-native.yaml
+  - apps/docspell.yaml
   - apps/changedetection.yaml
   - apps/adguard-home.yaml
   - apps/netbird.yaml
