@@ -8,8 +8,13 @@ metadata:
     app: openclaw
 spec:
   ports:
+<<<<<<< HEAD
     - port: 18789
       targetPort: 18789
+=======
+    - port: 8080
+      targetPort: http
+>>>>>>> origin/main
       name: http
   selector:
     app: openclaw
