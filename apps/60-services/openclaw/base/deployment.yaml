@@ -20,7 +20,7 @@ spec:
         app: openclaw
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "8080"
+        prometheus.io/port: "18789"
         prometheus.io/path: "/metrics"
     spec:
       securityContext:
@@ -75,11 +75,7 @@ spec:
           image: ghcr.io/openclaw/openclaw:latest
           imagePullPolicy: Always
           ports:
-<<<<<<< HEAD
             - containerPort: 18789
-=======
-            - containerPort: 8080
->>>>>>> origin/main
               name: http
           env:
             - name: TZ
@@ -93,24 +89,14 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-<<<<<<< HEAD
               port: 18789
             initialDelaySeconds: 60
-=======
-              port: http
-            initialDelaySeconds: 30
->>>>>>> origin/main
             periodSeconds: 30
           readinessProbe:
             httpGet:
               path: /health
-<<<<<<< HEAD
               port: 18789
             initialDelaySeconds: 30
-=======
-              port: http
-            initialDelaySeconds: 10
->>>>>>> origin/main
             periodSeconds: 10
           resources:
             requests:
@@ -142,7 +128,6 @@ spec:
               }
               while true; do
                 sync_s3;
-<<<<<<< HEAD
                 touch /tmp/healthy;
                 sleep 60;
               done
@@ -162,10 +147,6 @@ spec:
                 - "test -f /tmp/healthy"
             initialDelaySeconds: 5
             periodSeconds: 10
-=======
-                sleep 60;
-              done
->>>>>>> origin/main
           envFrom:
             - secretRef:
                 name: openclaw-secrets
