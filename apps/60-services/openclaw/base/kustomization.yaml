@@ -6,3 +6,8 @@ resources:
   - service.yaml
   - pvc.yaml
   - infisical-secret.yaml
+
+configMapGenerator:
+  - name: openclaw-config
+    files:
+      - config.json
