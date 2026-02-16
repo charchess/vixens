@@ -175,3 +175,4 @@ current_state.json
 # Exception: commit README
 !.secrets/README.md
 **/charts/
+.gemini_env/
