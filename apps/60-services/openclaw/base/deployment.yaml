@@ -86,6 +86,8 @@ spec:
               value: discord,github,telegram
             - name: OPENCLAW_LOG_LEVEL
               value: info
+            - name: OPENCLAW_HOST
+              value: 0.0.0.0
           livenessProbe:
             tcpSocket:
               port: 18789
