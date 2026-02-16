@@ -155,7 +155,13 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: config
+              mountPath: /data/config.json
+              subPath: config.json
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: openclaw-data
+        - name: config
+          configMap:
+            name: openclaw-config
