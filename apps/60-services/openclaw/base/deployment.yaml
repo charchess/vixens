@@ -78,9 +78,9 @@ spec:
             - node
             - /app/openclaw.mjs
             - gateway
-            - start
             - --bind
             - lan
+            - run
           ports:
             - containerPort: 18789
               name: http
