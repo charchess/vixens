@@ -78,9 +78,10 @@ spec:
             - node
             - /app/openclaw.mjs
             - gateway
+            - start
             - --bind
             - lan
-            - run
+            - --allow-unconfigured
           ports:
             - containerPort: 18789
               name: http
@@ -163,6 +164,9 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: config
+              mountPath: /data/openclaw.json
+              subPath: openclaw.json
       volumes:
         - name: data
           persistentVolumeClaim:
