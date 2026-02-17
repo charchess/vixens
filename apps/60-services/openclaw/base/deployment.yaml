@@ -74,6 +74,13 @@ spec:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           imagePullPolicy: Always
+          command:
+            - node
+            - /app/openclaw.mjs
+            - gateway
+            - start
+            - --bind
+            - lan
           ports:
             - containerPort: 18789
               name: http
@@ -86,8 +93,6 @@ spec:
               value: discord,github,telegram
             - name: OPENCLAW_LOG_LEVEL
               value: info
-            - name: OPENCLAW_GATEWAY_BIND
-              value: lan
           livenessProbe:
             tcpSocket:
               port: 18789
@@ -103,9 +108,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-            - name: config
-              mountPath: /data/openclaw.json
-              subPath: openclaw.json
         - name: data-syncer
           image: rclone/rclone:1.73
           securityContext:
@@ -158,13 +160,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-            - name: config
-              mountPath: /data/config.json
-              subPath: config.json
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: openclaw-data
-        - name: config
-          configMap:
-            name: openclaw-config
