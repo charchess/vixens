@@ -9,10 +9,5 @@ resources:
 
 configMapGenerator:
   - name: openclaw-config
-    data:
-      openclaw.json: |-
-        {
-          "gateway": {
-            "bind": "lan"
-          }
-        }
+    literals:
+      - openclaw.json={"gateway":{"bind":"lan"}}
