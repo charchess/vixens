@@ -3,8 +3,8 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | latest  |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+| Dev           | [ ]     | [ ]       | [ ]   | -       |
+| Prod          | [x]     | [x]       | [x]   | nightly-20251223 |
 
 ## Validation
 **URL :** https://birdnet.[env].truxonline.com
@@ -25,13 +25,17 @@ curl -L -k https://birdnet.dev.truxonline.com | grep "BirdNET-Go"
 2. Vérifier que l'analyse audio fonctionne (si flux audio configuré) et que le spectrogramme s'affiche.
 
 ## Notes Techniques
-- **Namespace :** `media-stack`
-- **Dépendances :** Flux audio (RTSP/Microphone)
+- **Namespace :** `birdnet-go`
+- **Dépendances :** Flux audio RTSP (frigate.media)
+- **Configuration :**
+  - Locale: Configurée via l'interface web (persistée dans config.yaml)
+  - Coordonnées: latitude=46.923, longitude=-0.353
 - **Stockage :**
   - `/config` : PVC `birdnet-go-config` (iSCSI)
   - `/data` : PVC `birdnet-go-data` (iSCSI)
-  - `/data/clips` : NFS `192.168.111.69:/volume3/Internal/birdnet/clips` (Stockage des enregistrements audio)
-- **Particularités :** Analyse et identification de chants d'oiseaux en temps réel (Version Go légère).
+  - `/data/clips` : NFS `192.168.111.69:/volume3/Internal/birdnet/clips`
+- **PriorityClass :** `vixens-medium` (antipréemption)
+- **Particularités :** Analyse et identification de chants d'oiseaux en temps réel
 ---
 > ⚠️ **HIBERNATION DEV**
 > Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
