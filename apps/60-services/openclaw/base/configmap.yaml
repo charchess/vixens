@@ -27,7 +27,11 @@ data:
         "mode": "local",
         "bind": "lan",
         "port": 18789,
-        "trustedProxies": ["10.244.0.0/16", "10.100.0.0/16"]
+        "trustedProxies": ["10.244.0.0/16", "10.100.0.0/16"],
+        "auth": {
+          "mode": "token",
+          "token": "REDACTED_OPENCLAW_KEY"
+        }
       },
       "logging": {
         "level": "info"
