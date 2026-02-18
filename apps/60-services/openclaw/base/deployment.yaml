@@ -74,6 +74,14 @@ spec:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           imagePullPolicy: Always
+          command:
+            - node
+            - /app/openclaw.mjs
+            - gateway
+            - --bind
+            - lan
+            - run
+            - --allow-unconfigured
           ports:
             - containerPort: 18789
               name: http
@@ -88,8 +96,6 @@ spec:
               value: info
             - name: OPENCLAW_GATEWAY_MODE
               value: local
-            - name: OPENCLAW_GATEWAY_TOKEN
-              value: dev-token-for-testing
           livenessProbe:
             tcpSocket:
               port: 18789
@@ -106,7 +112,7 @@ spec:
             - name: data
               mountPath: /data
             - name: config
-              mountPath: /home/node/.openclaw/openclaw.json
+              mountPath: /data/openclaw.json
               subPath: openclaw.json
         - name: data-syncer
           image: rclone/rclone:1.73
