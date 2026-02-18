@@ -81,6 +81,7 @@ spec:
             - --bind
             - lan
             - run
+            - --allow-unconfigured
           ports:
             - containerPort: 18789
               name: http
@@ -93,6 +94,8 @@ spec:
               value: discord,github,telegram
             - name: OPENCLAW_LOG_LEVEL
               value: info
+            - name: OPENCLAW_GATEWAY_MODE
+              value: local
           livenessProbe:
             tcpSocket:
               port: 18789
