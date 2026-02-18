@@ -6,4 +6,8 @@ resources:
   - service.yaml
   - pvc.yaml
   - infisical-secret.yaml
-  - configmap.yaml
+
+configMapGenerator:
+  - name: openclaw-config
+    literals:
+      - openclaw.json={"gateway":{"bind":"lan"}}

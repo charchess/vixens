@@ -6,6 +6,7 @@ resources:
   - namespace.yaml
   - pvc-config.yaml
   - pvc-data.yaml
+  - litestream-config.yaml
   - infisical-secret.yaml
   - deployment.yaml
   - service.yaml
