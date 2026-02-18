@@ -8,7 +8,8 @@ data:
   openclaw.json: |
     {
       "gateway": {
-        "mode": "local"
+        "mode": "local",
+        "bind": "0.0.0.0"
       },
       "agents": {
         "defaults": {
