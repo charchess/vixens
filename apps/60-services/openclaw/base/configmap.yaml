@@ -7,20 +7,27 @@ metadata:
 data:
   openclaw.json: |
     {
-      "identity": {
-        "name": "Clawd",
-        "emoji": "🦞"
+      "agents": {
+        "list": [
+          {
+            "id": "main",
+            "identity": {
+              "name": "Clawd",
+              "emoji": "🦞"
+            }
+          }
+        ],
+        "defaults": {
+          "model": {
+            "primary": "anthropic/claude-sonnet-4-5"
+          }
+        }
       },
       "gateway": {
         "mode": "local",
         "bind": "lan",
         "port": 18789,
         "trustedProxies": ["10.244.0.0/16", "10.100.0.0/16"]
-      },
-      "agent": {
-        "model": {
-          "primary": "anthropic/claude-sonnet-4-5"
-        }
       },
       "logging": {
         "level": "info"
