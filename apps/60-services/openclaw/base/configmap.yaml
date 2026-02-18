@@ -27,7 +27,10 @@ data:
         "mode": "local",
         "bind": "lan",
         "port": 18789,
-        "trustedProxies": ["10.244.0.0/16", "10.100.0.0/16", "192.168.0.0/16"]
+        "trustedProxies": ["10.244.0.0/16", "10.100.0.0/16", "192.168.0.0/16"],
+        "controlUi": {
+          "allowInsecureAuth": true
+        }
       },
       "logging": {
         "level": "info"
