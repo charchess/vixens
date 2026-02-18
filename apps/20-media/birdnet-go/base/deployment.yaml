@@ -5,6 +5,7 @@ metadata:
   name: birdnet-go
   labels:
     app: birdnet-go
+    app.kubernetes.io/managed-by: argocd
 spec:
   replicas: 1
   strategy:
@@ -16,7 +17,10 @@ spec:
     metadata:
       labels:
         app: birdnet-go
+      annotations:
+        goldilocks.fairwinds.com/enabled: "true"
     spec:
+      priorityClassName: vixens-medium
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
@@ -47,8 +51,6 @@ spec:
               value: Europe/Paris
             - name: WEB_PORT
               value: "8080"
-            - name: BIRDNET_LOCALE
-              value: en-uk
           volumeMounts:
             - name: config
               mountPath: /home/birdnet/.config/birdnet-go
