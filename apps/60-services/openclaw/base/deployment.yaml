@@ -88,6 +88,8 @@ spec:
               value: info
             - name: OPENCLAW_GATEWAY_MODE
               value: local
+            - name: OPENCLAW_GATEWAY_TOKEN
+              value: dev-token-for-testing
           livenessProbe:
             tcpSocket:
               port: 18789
