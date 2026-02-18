@@ -136,6 +136,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 | docspell-native | ✅ | ✅ | Fixed missing secretNamespace |
 | gluetun | ✅ | ✅ | Fixed missing secretNamespace |
 | firefly-iii | ✅ | ✅ | Elite Status + VPA + Security Hardened |
+| openclaw | ✅ | ✅ | AI Agent - gateway mode with lan binding |
 
 ---
 
