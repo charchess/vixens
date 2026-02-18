@@ -103,11 +103,12 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
+| birdnet-go | ⏳ | ✅ | Running with vixens-medium priority |
 | jellyfin | ⏳ | 💤 | Media server (planned) |
 | sabnzbd | ⏳ | ✅ | Prod fixed and synced |
-| radarr | ⏳ | ✅ | Prod fixed 
-| sonarr | ⏳ | ✅ | Prod fixed 
-| prowlarr | ⏳ | ✅ | Prod fixed 
+| radarr | ⏳ | ✅ | Prod fixed |
+| sonarr | ⏳ | ✅ | Prod fixed |
+| prowlarr | ⏳ | ✅ | Prod fixed |
 | frigate | ✅ | ✅ | Elite Status + 50Gi PVC fixed |
 | jellyseerr | ⏳ | 💤 | Media request management (planned) |
 | hydrus-client | ✅ | ✅ | Elite Status + Authentik SSO |
