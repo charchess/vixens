@@ -88,7 +88,7 @@ spec:
           env:
             - name: TZ
               value: Europe/Paris
-            - name: OPENCLAW_DATA_DIR
+            - name: OPENCLAW_HOME
               value: /data
             - name: OPENCLAW_PLUGINS
               value: discord,github,telegram
@@ -96,6 +96,11 @@ spec:
               value: info
             - name: OPENCLAW_GATEWAY_MODE
               value: local
+            - name: OPENCLAW_GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: OPENCLAW_GATEWAY_TOKEN
           livenessProbe:
             tcpSocket:
               port: 18789
