@@ -9,7 +9,7 @@ data:
     {
       "gateway": {
         "mode": "local",
-        "bind": "0.0.0.0"
+        "bind": "lan"
       },
       "agents": {
         "defaults": {
