@@ -9,7 +9,7 @@ metadata:
 spec:
   replicas: 1
   strategy:
-    type: Recreate # PVC can only be mounted by one pod at a time
+    type: Recreate
   selector:
     matchLabels:
       app: birdnet-go
@@ -19,6 +19,7 @@ spec:
         app: birdnet-go
       annotations:
         goldilocks.fairwinds.com/enabled: "true"
+        reloader.stakater.com/auto: "true"
     spec:
       priorityClassName: vixens-medium
       tolerations:
@@ -26,18 +27,17 @@ spec:
           operator: Exists
           effect: NoSchedule
       initContainers:
-        - name: setup-nfs-permissions
+        - name: fix-permissions
           image: busybox:latest
           command:
             - sh
             - -c
             - |
-              mkdir -p /nfs-root/birdnet/clips
-              chmod -R 777 /nfs-root/birdnet
-              echo "NFS directory created and permissions set"
+              chown -R 1000:1000 /data
+              rm -rf /data/*.db-litestream /data/.*-litestream
           volumeMounts:
-            - name: internals
-              mountPath: /nfs-root
+            - name: data
+              mountPath: /data
       containers:
         - name: birdnet-go
           image: ghcr.io/tphakala/birdnet-go:nightly-20251223
@@ -82,6 +82,34 @@ spec:
             limits:
               memory: 1Gi
               cpu: 1000m
+        - name: litestream
+          image: litestream/litestream:0.5.7
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args:
+            - replicate
+            - -config
+            - /etc/litestream.yml
+          ports:
+            - containerPort: 9090
+              name: metrics
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          envFrom:
+            - secretRef:
+                name: birdnet-go-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
         - name: data-syncer
           image: rclone/rclone:1.73
           securityContext:
@@ -98,11 +126,14 @@ spec:
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() {
-                rclone sync /data s3:backups-vixens-birdnet-go --exclude "lost+found/**" --exclude "*.tmp"
+                rclone sync /data s3:$LITESTREAM_BUCKET/birdnet-go \
+                  --exclude "*.db*" \
+                  --exclude "lost+found/**" \
+                  --exclude "clips/**" \
+                  --exclude "*.tmp"
               }
               while true; do
                 sync_s3;
-                touch /tmp/healthy;
                 sleep 60;
               done
           envFrom:
@@ -118,22 +149,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-          livenessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - "test -f /tmp/healthy"
-            initialDelaySeconds: 10
-            periodSeconds: 30
-          readinessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - "test -f /tmp/healthy"
-            initialDelaySeconds: 5
-            periodSeconds: 10
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -145,6 +160,9 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Internal
+        - name: litestream-config
+          configMap:
+            name: birdnet-go-litestream-config
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
