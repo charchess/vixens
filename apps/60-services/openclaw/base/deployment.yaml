@@ -74,6 +74,12 @@ spec:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           imagePullPolicy: Always
+          command:
+            - gateway
+            - run
+            - --bind
+            - "0.0.0.0"
+            - --allow-unconfigured
           ports:
             - containerPort: 18789
               name: http
