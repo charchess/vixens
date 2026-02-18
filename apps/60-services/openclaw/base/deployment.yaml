@@ -90,6 +90,8 @@ spec:
               value: Europe/Paris
             - name: OPENCLAW_HOME
               value: /data
+            - name: OPENCLAW_CONFIG_PATH
+              value: /data/openclaw.json
             - name: OPENCLAW_PLUGINS
               value: discord,github,telegram
             - name: OPENCLAW_LOG_LEVEL
