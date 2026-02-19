@@ -6,4 +6,4 @@ resources:
   - service.yaml
   - pvc.yaml
   - infisical-secret.yaml
-  - configmap.yaml
+  - infisical-config.yaml
