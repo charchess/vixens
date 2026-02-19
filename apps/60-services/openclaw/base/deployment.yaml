@@ -72,7 +72,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-        # Layer 2: Apply config from Infisical ONLY if no config exists
+        # Layer 2: Apply minimal working config (always, to fix broken backups)
         - name: config-init
           image: busybox:latest
           command:
@@ -80,19 +80,27 @@ spec:
             - -c
           args:
             - |
-              if [ ! -s /data/openclaw.json ]; then
-                echo "No openclaw.json found, applying Layer 2 config from Infisical..."
-                cp /tmp/config/openclaw.json /data/openclaw.json
-                chown 1000:1000 /data/openclaw.json
-              else
-                echo "openclaw.json already exists, preserving backup config"
-              fi
+              # Always apply a minimal working config to ensure valid setup
+              cat > /data/openclaw.json << 'EOF'
+              {
+                "gateway": {
+                  "port": 18789,
+                  "mode": "local", 
+                  "bind": "lan",
+                  "trustedProxies": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+                },
+                "plugins": {
+                  "entries": {
+                    "google-gemini-cli-auth": {"enabled": true}
+                  }
+                }
+              }
+              EOF
+              chown 1000:1000 /data/openclaw.json
+              echo "Applied working config"
           volumeMounts:
             - name: data
               mountPath: /data
-            - name: openclaw-config
-              mountPath: /tmp/config
-              readOnly: true
         # Install npm and gemini-cli-auth plugin
         - name: install-gemini-plugin
           image: node:22-bookworm
