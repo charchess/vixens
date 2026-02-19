@@ -72,7 +72,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-        # Layer 2: Fallback config from Infisical (only if no config exists)
+        # Layer 2: Apply config from Infisical (always, to override backup)
         - name: config-init
           image: busybox:latest
           command:
@@ -80,16 +80,18 @@ spec:
             - -c
           args:
             - |
-              if [ ! -s /data/openclaw.json ]; then
-                echo "No openclaw.json found, applying Layer 2 config..."
-                cp /tmp/config/openclaw.json /data/openclaw.json
-                chown 1000:1000 /data/openclaw.json
-              else
-                echo "openclaw.json already exists, fixing config..."
-                # Fix unsupported config keys
-                sed -i 's/"controlUi":.*,//g' /data/openclaw.json
-                # Ensure allowInsecureAuth via env is set (handled by deployment)
+              echo "Applying Layer 2 config from Infisical..."
+              cp /tmp/config/openclaw.json /data/openclaw.json
+              # Fix unsupported config keys
+              sed -i 's/"controlUi":.*,//g' /data/openclaw.json
+              # Ensure token auth mode uses env var token
+              sed -i 's/"mode": "password"/"mode": "token"/g' /data/openclaw.json
+              # Add trustedProxies if not present
+              if ! grep -q "trustedProxies" /data/openclaw.json; then
+                sed -i 's/"gateway": {/"gateway": {"trustedProxies": ["10.244.0.0\/16", "192.168.0.0\/16"],/' /data/openclaw.json
               fi
+              chown 1000:1000 /data/openclaw.json
+              echo "Config applied successfully"
           volumeMounts:
             - name: data
               mountPath: /data
