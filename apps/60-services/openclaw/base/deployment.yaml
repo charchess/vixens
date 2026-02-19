@@ -104,9 +104,12 @@ spec:
             - -c
           args:
             - |
-              npm install -g @clawdbot/google-gemini-cli-auth@2026.1.22 2>/dev/null || true
+              echo "Installing npm and plugin..."
+              npm install -g @clawdbot/google-gemini-cli-auth@2026.1.22
+              echo "Copying plugin to data volume..."
               mkdir -p /data/node_modules
-              cp -r /usr/local/lib/node_modules/@clawdbot /data/node_modules/ 2>/dev/null || true
+              cp -r /usr/local/lib/node_modules/@clawdbot /data/node_modules/
+              ls -la /data/node_modules/
           volumeMounts:
             - name: data
               mountPath: /data
@@ -172,6 +175,8 @@ spec:
               value: /data/openclaw.json
             - name: OPENCLAW_PLUGINS
               value: discord,github,telegram,@clawdbot/google-gemini-cli-auth
+            - name: NODE_PATH
+              value: /data/node_modules
             - name: OPENCLAW_LOG_LEVEL
               value: info
             - name: OPENCLAW_GATEWAY_MODE
