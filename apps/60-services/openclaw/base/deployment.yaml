@@ -72,7 +72,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-        # Layer 2: Apply minimal working config (always, to fix broken backups)
+        # Layer 2: Apply minimal working config with password auth
         - name: config-init
           image: busybox:latest
           command:
@@ -80,14 +80,14 @@ spec:
             - -c
           args:
             - |
-              # Always apply a minimal working config to ensure valid setup
               cat > /data/openclaw.json << 'EOF'
               {
                 "gateway": {
                   "port": 18789,
                   "mode": "local", 
                   "bind": "lan",
-                  "trustedProxies": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+                  "trustedProxies": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
+                  "auth": {"mode": "password", "password": "Chaton!3"}
                 },
                 "plugins": {
                   "entries": {
@@ -97,7 +97,7 @@ spec:
               }
               EOF
               chown 1000:1000 /data/openclaw.json
-              echo "Applied working config"
+              echo "Applied working config with password auth"
           volumeMounts:
             - name: data
               mountPath: /data
