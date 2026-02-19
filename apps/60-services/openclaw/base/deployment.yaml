@@ -85,7 +85,10 @@ spec:
                 cp /tmp/config/openclaw.json /data/openclaw.json
                 chown 1000:1000 /data/openclaw.json
               else
-                echo "openclaw.json already exists, skipping Layer 2 config"
+                echo "openclaw.json already exists, fixing config..."
+                # Fix unsupported config keys
+                sed -i 's/"controlUi":.*,//g' /data/openclaw.json
+                # Ensure allowInsecureAuth via env is set (handled by deployment)
               fi
           volumeMounts:
             - name: data
@@ -183,6 +186,8 @@ spec:
               value: local
             - name: OPENCLAW_GATEWAY_BIND
               value: lan
+            - name: OPENCLAW_GATEWAY_INSECURE_AUTH
+              value: "true"
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef:
