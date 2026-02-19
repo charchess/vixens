@@ -41,6 +41,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+        # Layer 3: Restore full backup from MinIO (Lisa persona)
         - name: restore-data
           image: rclone/rclone:1.73
           securityContext:
@@ -56,7 +57,8 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$RCLONE_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$RCLONE_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$RCLONE_ENDPOINT
-              rclone copy s3:$RCLONE_BUCKET/openclaw /data --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
+              rclone copy s3:$RCLONE_BUCKET/.openclaw /data/.openclaw --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
+              rclone copy s3:$RCLONE_BUCKET/extensions /data/extensions --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
           envFrom:
             - secretRef:
                 name: openclaw-secrets
@@ -70,6 +72,27 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+        # Layer 2: Fallback config from Infisical (only if no config exists)
+        - name: config-init
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              if [ ! -s /data/openclaw.json ]; then
+                echo "No openclaw.json found, applying Layer 2 config..."
+                cp /tmp/config/openclaw.json /data/openclaw.json
+                chown 1000:1000 /data/openclaw.json
+              else
+                echo "openclaw.json already exists, skipping Layer 2 config"
+              fi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: openclaw-config
+              mountPath: /tmp/config
+              readOnly: true
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
@@ -98,6 +121,8 @@ spec:
               value: info
             - name: OPENCLAW_GATEWAY_MODE
               value: local
+            - name: OPENCLAW_GATEWAY_BIND
+              value: lan
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -118,9 +143,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-            - name: config
-              mountPath: /data/openclaw.json
-              subPath: openclaw.json
         - name: data-syncer
           image: rclone/rclone:1.73
           securityContext:
@@ -177,6 +199,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: openclaw-data
-        - name: config
-          configMap:
-            name: openclaw-config
+        - name: openclaw-config
+          secret:
+            secretName: openclaw-config
