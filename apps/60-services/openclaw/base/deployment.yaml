@@ -72,7 +72,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-        # Layer 2: Apply minimal working config with password auth
+        # Layer 2: Apply minimal working config with password auth and Discord
         - name: config-init
           image: busybox:latest
           command:
@@ -80,7 +80,7 @@ spec:
             - -c
           args:
             - |
-              cat > /data/openclaw.json << 'EOF'
+              cat > /data/openclaw.json << EOF
               {
                 "gateway": {
                   "port": 18789,
@@ -88,6 +88,13 @@ spec:
                   "bind": "lan",
                   "trustedProxies": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
                   "auth": {"mode": "password", "password": "Chaton!3"}
+                },
+                "channels": {
+                  "discord": {
+                    "enabled": true,
+                    "token": "${DISCORD_TOKEN}",
+                    "groupPolicy": "open"
+                  }
                 },
                 "plugins": {
                   "entries": {
@@ -97,10 +104,17 @@ spec:
               }
               EOF
               chown 1000:1000 /data/openclaw.json
-              echo "Applied working config with password auth"
+              echo "Applied working config with Discord"
           volumeMounts:
             - name: data
               mountPath: /data
+          env:
+            - name: DISCORD_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: OPENCLAW_DISCORD_TOKEN
+                  optional: true
         # Install npm and gemini-cli-auth plugin
         - name: install-gemini-plugin
           image: node:22-bookworm
