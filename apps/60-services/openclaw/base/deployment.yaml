@@ -93,6 +93,61 @@ spec:
             - name: openclaw-config
               mountPath: /tmp/config
               readOnly: true
+        # Install npm and gemini-cli-auth plugin
+        - name: install-gemini-plugin
+          image: node:22-bookworm
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              npm install -g @clawdbot/google-gemini-cli-auth@2026.1.22 2>/dev/null || true
+              mkdir -p /data/node_modules
+              cp -r /usr/local/lib/node_modules/@clawdbot /data/node_modules/ 2>/dev/null || true
+          volumeMounts:
+            - name: data
+              mountPath: /data
+        # Setup Gemini config from Infisical secrets
+        - name: setup-gemini-config
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              mkdir -p /data/.gemini
+              echo "$GEMINI_OAUTH_CREDS_B64" | base64 -d > /data/.gemini/oauth_creds.json
+              echo "$GEMINI_GOOGLE_ACCOUNTS_B64" | base64 -d > /data/.gemini/google_accounts.json
+              echo "$GEMINI_SETTINGS_B64" | base64 -d > /data/.gemini/settings.json
+              echo "$GEMINI_INSTALLATION_ID_B64" | base64 -d > /data/.gemini/installation_id
+              chown -R 1000:1000 /data/.gemini
+          env:
+            - name: GEMINI_OAUTH_CREDS_B64
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: GEMINI_OAUTH_CREDS_B64
+            - name: GEMINI_GOOGLE_ACCOUNTS_B64
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: GEMINI_GOOGLE_ACCOUNTS_B64
+            - name: GEMINI_SETTINGS_B64
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: GEMINI_SETTINGS_B64
+            - name: GEMINI_INSTALLATION_ID_B64
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: GEMINI_INSTALLATION_ID_B64
+          volumeMounts:
+            - name: data
+              mountPath: /data
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
@@ -116,7 +171,7 @@ spec:
             - name: OPENCLAW_CONFIG_PATH
               value: /data/openclaw.json
             - name: OPENCLAW_PLUGINS
-              value: discord,github,telegram
+              value: discord,github,telegram,@clawdbot/google-gemini-cli-auth
             - name: OPENCLAW_LOG_LEVEL
               value: info
             - name: OPENCLAW_GATEWAY_MODE
