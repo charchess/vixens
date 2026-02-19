@@ -97,8 +97,8 @@ spec:
         - name: install-gemini-plugin
           image: node:22-bookworm
           securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
+            runAsUser: 0
+            runAsGroup: 0
           command:
             - sh
             - -c
