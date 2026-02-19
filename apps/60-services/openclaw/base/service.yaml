@@ -7,9 +7,12 @@ metadata:
   labels:
     app: openclaw
 spec:
+  type: NodePort
   ports:
     - port: 18789
-      targetPort: http
+      targetPort: 18789
+      nodePort: 18789
+      protocol: TCP
       name: http
   selector:
     app: openclaw
