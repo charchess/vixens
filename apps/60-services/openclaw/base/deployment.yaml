@@ -116,6 +116,12 @@ spec:
               # Add node user to sudoers with NOPASSWD
               echo "node ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/node
               
+              # Copy installed tools to shared volume for main container
+              mkdir -p /data/tools/{bin,lib}
+              cp -r /usr/bin/* /data/tools/bin/ 2>/dev/null || true
+              cp -r /usr/local/bin/* /data/tools/bin/ 2>/dev/null || true
+              cp -r /usr/lib/* /data/tools/lib/ 2>/dev/null || true
+              
               # Clean up
               apt-get clean
               rm -rf /var/lib/apt/lists/*
@@ -303,7 +309,7 @@ spec:
             - name: TZ
               value: Europe/Paris
             - name: PATH
-              value: /data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
+              value: /data/tools/bin:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
             - name: GEMINI_CLI_AUTH_DIR
               value: /data/.gemini
             - name: OPENCLAW_HOME
