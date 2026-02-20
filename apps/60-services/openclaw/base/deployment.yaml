@@ -324,7 +324,7 @@ spec:
             - name: PATH
               value: /data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
             - name: LD_LIBRARY_PATH
-              value: /data/tools/lib:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu
+              value: /data/tools/lib:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/lib:/usr/lib
             - name: GEMINI_CLI_AUTH_DIR
               value: /data/.gemini
             - name: OPENCLAW_HOME
