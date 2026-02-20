@@ -164,9 +164,21 @@ spec:
           args:
             - |
               echo "DEBUG: RCLONE_BUCKET=$RCLONE_BUCKET"
-              rclone lsd s3:$RCLONE_BUCKET --s3-access-key-id=$RCLONE_ACCESS_KEY_ID --s3-secret-access-key=$RCLONE_SECRET_ACCESS_KEY --s3-endpoint=$RCLONE_ENDPOINT --s3-provider=Other || echo "Rclone list failed"
-              rclone copy s3:$RCLONE_BUCKET/.openclaw /data/.openclaw --s3-access-key-id=$RCLONE_ACCESS_KEY_ID --s3-secret-access-key=$RCLONE_SECRET_ACCESS_KEY --s3-endpoint=$RCLONE_ENDPOINT --s3-provider=Other --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
-              rclone copy s3:$RCLONE_BUCKET/extensions /data/extensions --s3-access-key-id=$RCLONE_ACCESS_KEY_ID --s3-secret-access-key=$RCLONE_SECRET_ACCESS_KEY --s3-endpoint=$RCLONE_ENDPOINT --s3-provider=Other --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
+              
+              # Create rclone config file
+              mkdir -p ~/.config/rclone
+              cat > ~/.config/rclone/rclone.conf << EOF
+[s3]
+type = s3
+provider = Other
+access_key_id = $RCLONE_ACCESS_KEY_ID
+secret_access_key = $RCLONE_SECRET_ACCESS_KEY
+endpoint = $RCLONE_ENDPOINT
+EOF
+              
+              rclone lsd s3: --config ~/.config/rclone/rclone.conf || echo "Rclone list failed"
+              rclone copy s3:.openclaw /data/.openclaw --config ~/.config/rclone/rclone.conf --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
+              rclone copy s3:extensions /data/extensions --config ~/.config/rclone/rclone.conf --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
           envFrom:
             - secretRef:
                 name: openclaw-secrets
@@ -193,10 +205,21 @@ spec:
             - |
               echo "DEBUG: RCLONE_BUCKET=$RCLONE_BUCKET"
               
+              # Create rclone config file
+              mkdir -p ~/.config/rclone
+              cat > ~/.config/rclone/rclone.conf << EOF
+[s3]
+type = s3
+provider = Other
+access_key_id = $RCLONE_ACCESS_KEY_ID
+secret_access_key = $RCLONE_SECRET_ACCESS_KEY
+endpoint = $RCLONE_ENDPOINT
+EOF
+              
               # If PVC has no config, try to restore from MinIO
               if [ ! -s /data/openclaw.json ]; then
                 echo "No config found in PVC, checking MinIO backup..."
-                rclone copy s3:$RCLONE_BUCKET/openclaw.json /data/ --s3-access-key-id=$RCLONE_ACCESS_KEY_ID --s3-secret-access-key=$RCLONE_SECRET_ACCESS_KEY --s3-endpoint=$RCLONE_ENDPOINT --s3-provider=Other --transfers 4 2>/dev/null || echo "MinIO restore failed"
+                rclone copy s3:openclaw.json /data/ --config ~/.config/rclone/rclone.conf --transfers 4 2>/dev/null || echo "MinIO restore failed"
               fi
               
               # If still no config, use default from ConfigMap
@@ -378,8 +401,20 @@ spec:
           args:
             - |
               echo "DEBUG: RCLONE_BUCKET=$RCLONE_BUCKET"
+              
+              # Create rclone config file
+              mkdir -p ~/.config/rclone
+              cat > ~/.config/rclone/rclone.conf << EOF
+[s3]
+type = s3
+provider = Other
+access_key_id = $RCLONE_ACCESS_KEY_ID
+secret_access_key = $RCLONE_SECRET_ACCESS_KEY
+endpoint = $RCLONE_ENDPOINT
+EOF
+              
               sync_s3() {
-                rclone sync /data s3:$RCLONE_BUCKET/openclaw --s3-access-key-id=$RCLONE_ACCESS_KEY_ID --s3-secret-access-key=$RCLONE_SECRET_ACCESS_KEY --s3-endpoint=$RCLONE_ENDPOINT --s3-provider=Other --exclude "lost+found/**" || echo "Sync failed"
+                rclone sync /data s3:openclaw --config ~/.config/rclone/rclone.conf --exclude "lost+found/**" || echo "Sync failed"
               }
               while true; do
                 sync_s3;
