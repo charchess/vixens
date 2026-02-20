@@ -135,6 +135,11 @@ spec:
               chmod +x /data/tools/bin/himalaya
               rm /tmp/himalaya.tar.gz
               
+              # pip - download get-pip.py and install to shared volume
+              curl -sSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+              python3 /tmp/get-pip.py --prefix=/data/tools
+              rm /tmp/get-pip.py
+              
               # Add node user to sudoers with NOPASSWD
               echo "node ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/node
               
@@ -326,7 +331,7 @@ spec:
             - name: TZ
               value: Europe/Paris
             - name: PATH
-              value: /data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
+              value: /data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin:/data/tools/scripts:/data/tools/bin/scripts
             - name: LD_LIBRARY_PATH
               value: /data/tools/lib:/data/tools/lib/blas:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/lib:/usr/lib
             - name: GEMINI_CLI_AUTH_DIR
