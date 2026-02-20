@@ -135,11 +135,10 @@ spec:
               chmod +x /data/tools/bin/himalaya
               rm /tmp/himalaya.tar.gz
               
-              # pip - use ensurepip to bootstrap pip, then copy to shared volume
-              python3 -m ensurepip --upgrade
-              cp -r /usr/lib/python3*/dist-packages/pip /data/tools/lib/
-              cp /usr/bin/pip* /data/tools/local/bin/ || true
-              cp /usr/bin/pip3* /data/tools/local/bin/ || true
+              # pip - install using get-pip.py to /data/tools
+              curl -sSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+              python3 /tmp/get-pip.py --root=/data/tools --ignore-installed
+              rm /tmp/get-pip.py
               
               # Add node user to sudoers with NOPASSWD
               echo "node ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/node
@@ -335,6 +334,8 @@ spec:
               value: /data/tools/local/bin:/data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
             - name: LD_LIBRARY_PATH
               value: /data/tools/lib:/data/tools/lib/blas:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/lib:/usr/lib
+            - name: PYTHONPATH
+              value: /data/tools/lib/python3.11/site-packages:/data/tools/local/lib/python3.11/site-packages
             - name: GEMINI_CLI_AUTH_DIR
               value: /data/.gemini
             - name: OPENCLAW_HOME
