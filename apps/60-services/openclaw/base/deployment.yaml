@@ -84,10 +84,15 @@ spec:
                 zip \
                 gzip
               
-              # Copy installed binaries to shared volume
+              # Copy installed binaries to shared volume with their dependencies
               for bin in jq rsync tree nano htop git nmap dnsutils netcat ffmpeg convert sqlite3; do
                 cp /usr/bin/$bin /data/tools/bin/ 2>/dev/null || true
+                # Copy required libraries
+                ldd /usr/bin/$bin 2>/dev/null | grep "=>" | awk '{print $3}' | xargs -I {} cp {} /data/tools/lib/ 2>/dev/null || true
               done
+              
+              # Copy all libraries from /usr/lib
+              cp -r /usr/lib/x86_64-linux-gnu/* /data/tools/lib/ 2>/dev/null || true
               
               # kubectl - download directly to shared volume
               curl -sLo /data/tools/bin/kubectl "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -317,7 +322,9 @@ spec:
             - name: TZ
               value: Europe/Paris
             - name: PATH
-              value: /data/tools/bin:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
+              value: /data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
+            - name: LD_LIBRARY_PATH
+              value: /data/tools/lib:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu
             - name: GEMINI_CLI_AUTH_DIR
               value: /data/.gemini
             - name: OPENCLAW_HOME
