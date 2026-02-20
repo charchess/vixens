@@ -129,8 +129,8 @@ spec:
               chmod +x /data/tools/bin/infisical
               rm /tmp/infisical.tar.gz
               
-              # himalaya email CLI - download binary directly
-              curl -sSL "https://github.com/pimalaya/himalaya/releases/download/v1.2.0/himalaya-linux-x86_64.tar.gz" -o /tmp/himalaya.tar.gz
+              # himalaya email CLI - download tar.gz and extract
+              curl -sSL "https://github.com/pimalaya/himalaya/releases/download/v1.2.0/himalaya.x86_64-linux.tgz" -o /tmp/himalaya.tar.gz
               tar -xzf /tmp/himalaya.tar.gz -C /data/tools/bin/ himalaya
               chmod +x /data/tools/bin/himalaya
               rm /tmp/himalaya.tar.gz
