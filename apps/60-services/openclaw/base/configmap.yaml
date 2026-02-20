@@ -1,0 +1,40 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-config
+  namespace: services
+data:
+  openclaw.json: |
+    {
+      "gateway": {
+        "port": 18789,
+        "mode": "local",
+        "bind": "lan",
+        "trustedProxies": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
+        "auth": {"mode": "password", "password": "Chaton!3"}
+      },
+      "agents": {
+        "defaults": {
+          "model": {
+            "primary": "google-gemini-cli/gemini-3-pro-preview",
+            "fallbacks": [
+              "google-gemini-cli/gemini-3-flash-preview",
+              "google-gemini-cli/gemini-2.5-flash"
+            ]
+          }
+        }
+      },
+      "channels": {
+        "discord": {
+          "enabled": true,
+          "token": "${DISCORD_TOKEN}",
+          "groupPolicy": "open"
+        }
+      },
+      "plugins": {
+        "entries": {
+          "google-gemini-cli-auth": {"enabled": true}
+        }
+      }
+    }
