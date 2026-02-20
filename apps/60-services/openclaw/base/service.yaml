@@ -11,7 +11,7 @@ spec:
   ports:
     - port: 18789
       targetPort: 18789
-      nodePort: 18789
+      nodePort: 30089
       protocol: TCP
       name: http
   selector:
