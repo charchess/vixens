@@ -331,7 +331,7 @@ spec:
             - name: TZ
               value: Europe/Paris
             - name: PATH
-              value: /data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin:/data/tools/scripts:/data/tools/bin/scripts
+              value: /data/tools/local/bin:/data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
             - name: LD_LIBRARY_PATH
               value: /data/tools/lib:/data/tools/lib/blas:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/lib:/usr/lib
             - name: GEMINI_CLI_AUTH_DIR
