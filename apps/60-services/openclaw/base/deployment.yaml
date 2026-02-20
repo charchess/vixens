@@ -75,7 +75,10 @@ spec:
                 ca-certificates \
                 gnupg \
                 lsb-release \
-                build-essential
+                build-essential \
+                unzip \
+                zip \
+                gzip
               
               # kubectl
               curl -sLo /usr/local/bin/kubectl "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -118,9 +121,12 @@ spec:
               
               # Copy installed tools to shared volume for main container
               mkdir -p /data/tools/{bin,lib}
-              cp -r /usr/bin/* /data/tools/bin/ 2>/dev/null || true
-              cp -r /usr/local/bin/* /data/tools/bin/ 2>/dev/null || true
-              cp -r /usr/lib/* /data/tools/lib/ 2>/dev/null || true
+              echo "Creating tools directory..."
+              cp -r /usr/bin/* /data/tools/bin/ 2>/dev/null || echo "Failed to copy /usr/bin"
+              cp -r /usr/local/bin/* /data/tools/bin/ 2>/dev/null || echo "Failed to copy /usr/local/bin"
+              cp -r /usr/lib/* /data/tools/lib/ 2>/dev/null || echo "Failed to copy /usr/lib"
+              ls -la /data/tools/bin/ | head -20 || echo "Directory not found"
+              echo "Copy complete"
               
               # Clean up
               apt-get clean
