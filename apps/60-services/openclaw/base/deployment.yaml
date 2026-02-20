@@ -53,7 +53,11 @@ spec:
             - |
               export DEBIAN_FRONTEND=noninteractive
               
-              # Update and install base tools
+              # Create tools directory in shared volume
+              mkdir -p /data/tools/bin /data/tools/lib
+              
+              # Update and install base tools directly to shared volume
+              # First install to temp, then copy
               apt-get update
               apt-get install -y --no-install-recommends \
                 jq \
@@ -75,43 +79,61 @@ spec:
                 ca-certificates \
                 gnupg \
                 lsb-release \
-                build-essential
+                build-essential \
+                unzip \
+                zip \
+                gzip
               
-              # kubectl
-              curl -sLo /usr/local/bin/kubectl "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-              chmod +x /usr/local/bin/kubectl
+              # Copy installed binaries to shared volume with their dependencies
+              for bin in jq rsync tree nano htop git nmap dnsutils netcat ffmpeg convert sqlite3; do
+                cp /usr/bin/$bin /data/tools/bin/ 2>/dev/null || true
+                # Copy required libraries
+                ldd /usr/bin/$bin 2>/dev/null | grep "=>" | awk '{print $3}' | xargs -I {} cp {} /data/tools/lib/ 2>/dev/null || true
+              done
               
-              # rclone
-              curl -sOs https://downloads.rclone.org/rclone-current-linux-amd64.zip
-              unzip -j rclone-current-linux-amd64.zip -d /usr/local/bin/ rclone
-              chmod +x /usr/local/bin/rclone
-              rm -f rclone-current-linux-amd64.zip
+              # Copy all libraries from /usr/lib
+              cp -r /usr/lib/x86_64-linux-gnu/* /data/tools/lib/ 2>/dev/null || true
               
-              # argocd
-              curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-              chmod +x /usr/local/bin/argocd
+              # kubectl - download directly to shared volume
+              curl -sLo /data/tools/bin/kubectl "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+              chmod +x /data/tools/bin/kubectl
               
-              # talosctl
-              curl -sLo /usr/local/bin/talosctl "https://github.com/siderolabs/talos/releases/download/$(curl -sL https://api.github.com/repos/siderolabs/talos/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+')/talosctl-linux-amd64"
-              chmod +x /usr/local/bin/talosctl
+              # rclone - download directly to shared volume
+              curl -sOs /tmp/rclone.zip https://downloads.rclone.org/rclone-current-linux-amd64.zip
+              unzip -j /tmp/rclone.zip rclone -d /data/tools/bin/
+              chmod +x /data/tools/bin/rclone
+              rm -f /tmp/rclone.zip
+              
+              # argocd - download directly to shared volume
+              curl -sSL -o /data/tools/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+              chmod +x /data/tools/bin/argocd
+              
+              # talosctl - download directly to shared volume
+              curl -sLo /data/tools/bin/talosctl "https://github.com/siderolabs/talos/releases/download/$(curl -sL https://api.github.com/repos/siderolabs/talos/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+')/talosctl-linux-amd64"
+              chmod +x /data/tools/bin/talosctl
               
               # GitHub CLI
               curl -sSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
               echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
               apt-get update
               apt-get install -y gh
+              cp /usr/bin/gh /data/tools/bin/
               
               # minio client (mc)
-              curl -sSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
-              chmod +x /usr/local/bin/mc
+              curl -sSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /data/tools/bin/mc
+              chmod +x /data/tools/bin/mc
               
-              # infisical CLI
-              curl -sSL https://github.com/Infisical/infisical/releases/download/cli-v0.25.0/infisical-linux-amd64.tar.gz | tar -xz -C /usr/local/bin/ infisical
-              chmod +x /usr/local/bin/infisical
+              # infisical CLI - download tar.gz and extract
+              curl -sSL "https://github.com/Infisical/cli/releases/download/v0.43.57/cli_0.43.57_linux_amd64.tar.gz" -o /tmp/infisical.tar.gz
+              tar -xzf /tmp/infisical.tar.gz -C /data/tools/bin/ infisical
+              chmod +x /data/tools/bin/infisical
+              rm /tmp/infisical.tar.gz
               
-              # himalaya email CLI
-              curl -sSL https://github.com/soywod/himalaya/releases/download/v0.7.2/himalaya-linux-x86_64.tar.gz | tar -xz -C /usr/local/bin/ himalaya
-              chmod +x /usr/local/bin/himalaya
+              # himalaya email CLI - download binary directly
+              curl -sSL "https://github.com/pimalaya/himalaya/releases/download/v1.2.0/himalaya-linux-x86_64.tar.gz" -o /tmp/himalaya.tar.gz
+              tar -xzf /tmp/himalaya.tar.gz -C /data/tools/bin/ himalaya
+              chmod +x /data/tools/bin/himalaya
+              rm /tmp/himalaya.tar.gz
               
               # Add node user to sudoers with NOPASSWD
               echo "node ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/node
@@ -120,6 +142,7 @@ spec:
               apt-get clean
               rm -rf /var/lib/apt/lists/*
               
+              ls -la /data/tools/bin/
               echo "Tools installed successfully"
           volumeMounts:
             - name: data
@@ -303,7 +326,9 @@ spec:
             - name: TZ
               value: Europe/Paris
             - name: PATH
-              value: /data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
+              value: /data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
+            - name: LD_LIBRARY_PATH
+              value: /data/tools/lib:/data/tools/lib/blas:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/lib:/usr/lib
             - name: GEMINI_CLI_AUTH_DIR
               value: /data/.gemini
             - name: OPENCLAW_HOME
