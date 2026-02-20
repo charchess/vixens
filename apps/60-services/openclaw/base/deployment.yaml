@@ -135,10 +135,11 @@ spec:
               chmod +x /data/tools/bin/himalaya
               rm /tmp/himalaya.tar.gz
               
-              # pip - download get-pip.py and install to shared volume
-              curl -sSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
-              python3 /tmp/get-pip.py --prefix=/data/tools
-              rm /tmp/get-pip.py
+              # pip - use ensurepip to bootstrap pip, then copy to shared volume
+              python3 -m ensurepip --upgrade
+              cp -r /usr/lib/python3*/dist-packages/pip /data/tools/lib/
+              cp /usr/bin/pip* /data/tools/local/bin/ || true
+              cp /usr/bin/pip3* /data/tools/local/bin/ || true
               
               # Add node user to sudoers with NOPASSWD
               echo "node ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/node
