@@ -123,12 +123,12 @@ spec:
               curl -sSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /data/tools/bin/mc
               chmod +x /data/tools/bin/mc
               
-              # infisical CLI
-              curl -sSL https://github.com/Infisical/infisical/releases/download/cli-v0.25.0/infisical-linux-amd64.tar.gz | tar -xz -C /data/tools/bin/ infisical 2>/dev/null || true
+              # infisical CLI - download directly
+              curl -sSL -o /data/tools/bin/infisical "https://github.com/Infisical/infisical/releases/download/cli-v0.25.0/infisical-linux-amd64"
               chmod +x /data/tools/bin/infisical 2>/dev/null || true
               
-              # himalaya email CLI
-              curl -sSL https://github.com/pimalaya/himalaya/releases/download/v1.2.0/himalaya-linux-x86_64.tar.gz | tar -xz -C /data/tools/bin/ himalaya 2>/dev/null || true
+              # himalaya email CLI - download directly
+              curl -sSL -o /data/tools/bin/himalaya "https://github.com/pimalaya/himalaya/releases/download/v1.2.0/himalaya-linux-x86_64"
               chmod +x /data/tools/bin/himalaya 2>/dev/null || true
               
               # Add node user to sudoers with NOPASSWD
