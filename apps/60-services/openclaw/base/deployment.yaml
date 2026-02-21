@@ -207,7 +207,7 @@ spec:
               # If PVC has no config, try to restore from MinIO
               if [ ! -s /data/openclaw.json ]; then
                 echo "No config found in PVC, checking MinIO backup..."
-                rclone copy s3:openclaw.json /data/ --config /tmp/.config/rclone/rclone.conf --transfers 4 2>/dev/null || echo "MinIO restore failed"
+                rclone copy s3:$RCLONE_BUCKET/openclaw.json /data/ --config /tmp/.config/rclone/rclone.conf --transfers 4 2>/dev/null || echo "MinIO restore failed"
               fi
               
               # If still no config, use default from ConfigMap
@@ -395,9 +395,9 @@ spec:
               mkdir -p /tmp/.config/rclone
               printf '[s3]\ntype = s3\nprovider = Other\naccess_key_id = %s\nsecret_access_key = %s\nendpoint = %s\n' "$RCLONE_ACCESS_KEY_ID" "$RCLONE_SECRET_ACCESS_KEY" "$RCLONE_ENDPOINT" > /tmp/.config/rclone/rclone.conf
               
-              sync_s3() {
-                rclone sync /data s3:openclaw --config /tmp/.config/rclone/rclone.conf --exclude "lost+found/**" || echo "Sync failed"
-              }
+sync_s3() {
+  rclone sync /data s3:$RCLONE_BUCKET --config /tmp/.config/rclone/rclone.conf --exclude "lost+found/**" || echo "Sync failed"
+}
               while true; do
                 sync_s3;
                 touch /tmp/healthy;
