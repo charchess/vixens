@@ -65,7 +65,7 @@ spec:
               mountPath: /data
       containers:
         - name: vaultwarden
-          image: vaultwarden/server:1.35.2
+          image: vaultwarden/server:1.35.3
           ports:
             - containerPort: 80
               name: http
@@ -99,7 +99,7 @@ spec:
             - name: data
               mountPath: /data
         - name: litestream
-          image: litestream/litestream:0.5.7
+          image: litestream/litestream:0.5.8
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000

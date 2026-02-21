@@ -21,7 +21,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: netbox
-          image: netboxcommunity/netbox:v4.5.2 # Pinned image version
+          image: netboxcommunity/netbox:v4.5.3 # Pinned image version
           ports:
             - name: http
               containerPort: 8080
