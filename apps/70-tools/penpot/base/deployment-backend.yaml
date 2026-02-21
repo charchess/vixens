@@ -28,7 +28,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: backend
-          image: penpotapp/backend:2.13.0
+          image: penpotapp/backend:2.13.3
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:

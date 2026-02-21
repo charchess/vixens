@@ -3771,7 +3771,7 @@ spec:
       automountServiceAccountToken: true
       containers:
         - name: "trivy-operator"
-          image: "mirror.gcr.io/aquasec/trivy-operator:0.29.0"
+          image: "mirror.gcr.io/aquasec/trivy-operator:0.30.0"
           imagePullPolicy: IfNotPresent
           env:
             - name: OPERATOR_NAMESPACE

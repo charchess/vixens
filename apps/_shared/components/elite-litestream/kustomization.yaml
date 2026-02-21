@@ -36,7 +36,7 @@ patches:
           spec:
             initContainers:
               - name: restore-db
-                image: litestream/litestream:0.5.7
+                image: litestream/litestream:0.5.8
                 args:
                   - restore
                   - -config
@@ -55,7 +55,7 @@ patches:
                     subPath: litestream.yml
             containers:
               - name: litestream
-                image: litestream/litestream:0.5.7
+                image: litestream/litestream:0.5.8
                 args:
                   - replicate
                   - -config
