@@ -395,9 +395,9 @@ spec:
               mkdir -p /tmp/.config/rclone
               printf '[s3]\ntype = s3\nprovider = Other\naccess_key_id = admin\nsecret_access_key = S0d0m!e69\nendpoint = %s\n' "$RCLONE_ENDPOINT" > /tmp/.config/rclone/rclone.conf
               
-sync_s3() {
-  rclone sync /data s3:$RCLONE_BUCKET --config /tmp/.config/rclone/rclone.conf --exclude "lost+found/**" || echo "Sync failed"
-}
+              sync_s3() {
+                rclone sync /data s3:$RCLONE_BUCKET --config /tmp/.config/rclone/rclone.conf --exclude "lost+found/**" || echo "Sync failed"
+              }
               while true; do
                 sync_s3;
                 touch /tmp/healthy;
