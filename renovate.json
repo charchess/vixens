@@ -20,7 +20,6 @@
   "platformAutomerge": true,
   "automergeType": "pr",
   "automergeStrategy": "squash",
-  "deleteConflictingBranches": true,
   "enabledManagers": [
     "terraform",
     "helm-values",
