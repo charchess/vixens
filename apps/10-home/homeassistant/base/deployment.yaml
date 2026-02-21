@@ -160,7 +160,7 @@ spec:
               readOnly: true
       containers:
         - name: homeassistant
-          image: ghcr.io/home-assistant/home-assistant:2026.2.0
+          image: ghcr.io/home-assistant/home-assistant:2026.2.3
           imagePullPolicy: Always
           ports:
             - containerPort: 8123
