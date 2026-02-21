@@ -118,7 +118,7 @@ spec:
               mountPath: /movies
               subPath: movies
         - name: litestream
-          image: litestream/litestream:0.5.7
+          image: litestream/litestream:0.5.8
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000

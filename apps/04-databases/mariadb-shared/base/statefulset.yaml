@@ -22,7 +22,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: mariadb
-          image: mariadb:12.1
+          image: mariadb:12.2
           ports:
             - containerPort: 3306
               name: mysql

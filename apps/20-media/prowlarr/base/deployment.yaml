@@ -64,7 +64,7 @@ spec:
             - name: config
               mountPath: /config
         - name: restore-db
-          image: litestream/litestream:0.5.7
+          image: litestream/litestream:0.5.8
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -135,7 +135,7 @@ spec:
             - name: config
               mountPath: /config
         - name: litestream
-          image: litestream/litestream:0.5.7
+          image: litestream/litestream:0.5.8
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000

@@ -65,7 +65,7 @@ spec:
             - name: data
               mountPath: /app/data
         - name: restore-db
-          image: litestream/litestream:0.5.7
+          image: litestream/litestream:0.5.8
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -94,7 +94,7 @@ spec:
               subPath: litestream.yml
       containers:
         - name: mealie
-          image: ghcr.io/mealie-recipes/mealie:v3.10.2
+          image: ghcr.io/mealie-recipes/mealie:v3.11.0
           ports:
             - containerPort: 9000
               name: http
@@ -112,7 +112,7 @@ spec:
             - name: data
               mountPath: /app/data
         - name: litestream
-          image: litestream/litestream:0.5.7
+          image: litestream/litestream:0.5.8
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
