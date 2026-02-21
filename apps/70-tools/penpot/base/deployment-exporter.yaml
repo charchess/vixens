@@ -26,7 +26,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: exporter
-          image: penpotapp/exporter:2.13.0
+          image: penpotapp/exporter:2.13.3
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:

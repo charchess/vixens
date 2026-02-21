@@ -23,7 +23,7 @@ spec:
       priorityClassName: vixens-medium
       containers:
         - name: headlamp
-          image: ghcr.io/headlamp-k8s/headlamp:v0.39.0
+          image: ghcr.io/headlamp-k8s/headlamp:v0.40.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4466

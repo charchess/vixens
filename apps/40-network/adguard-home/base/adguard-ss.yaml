@@ -63,7 +63,7 @@ spec:
             - name: config
               mountPath: /opt/adguardhome/conf
         - name: restore-db
-          image: litestream/litestream:0.5.7
+          image: litestream/litestream:0.5.8
           securityContext:
             runAsUser: 0
             runAsGroup: 0
@@ -92,7 +92,7 @@ spec:
               subPath: litestream.yml
       containers:
         - name: adguard-home
-          image: adguard/adguardhome:v0.107.71
+          image: adguard/adguardhome:v0.107.72
           ports:
             - containerPort: 3000
               name: http
@@ -115,7 +115,7 @@ spec:
             - name: data
               mountPath: /opt/adguardhome/work
         - name: litestream
-          image: litestream/litestream:0.5.7
+          image: litestream/litestream:0.5.8
           securityContext:
             runAsUser: 0
             runAsGroup: 0

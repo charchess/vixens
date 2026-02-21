@@ -12,7 +12,7 @@ extraArgs:
 # Sidecar Webhook
 sidecars:
   - name: unifi-webhook
-    image: ghcr.io/kashalls/external-dns-unifi-webhook:v0.8.1
+    image: ghcr.io/kashalls/external-dns-unifi-webhook:v0.8.2
     ports:
       - containerPort: 8888
         name: webhook

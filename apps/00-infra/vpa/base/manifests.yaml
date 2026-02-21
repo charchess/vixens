@@ -662,7 +662,7 @@ spec:
             runAsGroup: 65534
             runAsNonRoot: true
             runAsUser: 65534
-          image: registry.k8s.io/autoscaling/vpa-admission-controller:1.5.1
+          image: registry.k8s.io/autoscaling/vpa-admission-controller:1.6.0
           imagePullPolicy: IfNotPresent
           args:
             - --address=:8944
@@ -763,7 +763,7 @@ spec:
             runAsGroup: 65534
             runAsNonRoot: true
             runAsUser: 65534
-          image: registry.k8s.io/autoscaling/vpa-recommender:1.5.1
+          image: registry.k8s.io/autoscaling/vpa-recommender:1.6.0
           imagePullPolicy: IfNotPresent
           args:
             - --address=:8942
@@ -850,7 +850,7 @@ spec:
             runAsGroup: 65534
             runAsNonRoot: true
             runAsUser: 65534
-          image: registry.k8s.io/autoscaling/vpa-updater:1.5.1
+          image: registry.k8s.io/autoscaling/vpa-updater:1.6.0
           imagePullPolicy: IfNotPresent
           args:
             - --address=:8943
