@@ -54,7 +54,7 @@ spec:
         - name: create-mosquitto-users
           image: eclipse-mosquitto:2.0.22
           command:
-            - bash
+            - sh
             - -c
           args:
             - |
@@ -63,10 +63,9 @@ spec:
               chmod 0600 /auth/mosquitto.passwd
               if [ -n "$MQTT_USERS" ]; then
                 echo "Creating MQTT users from MQTT_USERS..."
-                IFS=',' read -ra USERS <<< "$MQTT_USERS"
-                for USER in "${USERS[@]}"; do
-                  NAME="${USER%%:*}"
-                  PASS="${USER##*:}"
+                echo "$MQTT_USERS" | tr ',' '\n' | while read -r USER; do
+                  NAME=$(echo "$USER" | cut -d: -f1)
+                  PASS=$(echo "$USER" | cut -d: -f2)
                   if [ -n "$NAME" ] && [ -n "$PASS" ]; then
                     mosquitto_passwd -b /auth/mosquitto.passwd "$NAME" "$PASS"
                     echo "Created user: $NAME"
