@@ -54,7 +54,7 @@ spec:
         - name: create-mosquitto-users
           image: eclipse-mosquitto:2.0.22
           command:
-            - sh
+            - bash
             - -c
           args:
             - |
