@@ -51,19 +51,47 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /mosquitto/data
-        - name: copy-mosquitto-password
-          image: busybox:1.37.0 # A small image with basic utilities
+        - name: create-mosquitto-users
+          image: eclipse-mosquitto:2.0.22
           command:
             - sh
             - -c
           args:
-            - cp /secrets/MOSQUITTO_PASSWD_FILE /mnt/mosquitto-auth-writable/mosquitto.passwd && chmod 0700 /mnt/mosquitto-auth-writable/mosquitto.passwd && chown 1883:1883 /mnt/mosquitto-auth-writable/mosquitto.passwd # Assuming mosquitto user ID is 1883
+            - |
+              set -e
+              touch /auth/mosquitto.passwd
+              chmod 0600 /auth/mosquitto.passwd
+              if [ -n "$MQTT_USERS" ]; then
+                echo "Creating MQTT users from MQTT_USERS..."
+                IFS=',' read -ra USERS <<< "$MQTT_USERS"
+                for USER in "${USERS[@]}"; do
+                  NAME="${USER%%:*}"
+                  PASS="${USER##*:}"
+                  if [ -n "$NAME" ] && [ -n "$PASS" ]; then
+                    mosquitto_passwd -b /auth/mosquitto.passwd "$NAME" "$PASS"
+                    echo "Created user: $NAME"
+                  fi
+                done
+              else
+                echo "MQTT_USERS not set, using existing MOSQUITTO_PASSWD_FILE..."
+                if [ -f /secrets/MOSQUITTO_PASSWD_FILE ]; then
+                  cp /secrets/MOSQUITTO_PASSWD_FILE /auth/mosquitto.passwd
+                fi
+              fi
+              chown 1883:1883 /auth/mosquitto.passwd
+          env:
+            - name: MQTT_USERS
+              valueFrom:
+                secretKeyRef:
+                  name: mosquitto-password-file
+                  key: MQTT_USERS
+                  optional: true
           volumeMounts:
             - name: mosquitto-auth
               mountPath: /secrets
               readOnly: true
             - name: mosquitto-auth-writable
-              mountPath: /mnt/mosquitto-auth-writable
+              mountPath: /auth
       containers:
         - name: mosquitto
           image: eclipse-mosquitto:2.0.22
