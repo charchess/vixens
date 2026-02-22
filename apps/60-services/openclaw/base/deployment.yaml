@@ -327,7 +327,7 @@ spec:
             - name: PATH
               value: /data/tools/usr/local/bin:/data/tools/local/bin:/data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
             - name: LD_LIBRARY_PATH
-              value: /data/tools/lib:/data/tools/lib/blas:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/lib:/usr/lib
+              value: /usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/lib:/usr/lib:/data/tools/lib/blas
             - name: PYTHONPATH
               value: /data/tools/usr/local/lib/python3.11/dist-packages:/data/tools/local/lib/python3.11/dist-packages
             - name: GEMINI_CLI_AUTH_DIR
