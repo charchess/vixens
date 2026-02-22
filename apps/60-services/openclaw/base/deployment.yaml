@@ -228,7 +228,7 @@ spec:
               readOnly: true
         # Install npm and gemini-cli-auth plugin
         - name: install-gemini-plugin
-          image: node:22-bookworm
+          image: node:24-bookworm
           securityContext:
             runAsUser: 0
             runAsGroup: 0
@@ -248,7 +248,7 @@ spec:
               mountPath: /data
         # Install @google/gemini-cli
         - name: install-gemini-cli
-          image: node:22-bookworm
+          image: node:24-bookworm
           securityContext:
             runAsUser: 0
             runAsGroup: 0
