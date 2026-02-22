@@ -43,7 +43,7 @@ spec:
               mountPath: /data
         # Install all required tools
         - name: install-tools
-          image: debian:bookworm
+          image: debian:trixie
           securityContext:
             runAsUser: 0
           command:
