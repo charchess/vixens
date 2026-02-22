@@ -50,39 +50,36 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-        # Install Python dependencies in system site-packages
-        # This allows custom integrations (like Frigate) to find their requirements
-        # even when HA runs as non-root user (UID 1000)
-        # To add more packages, edit the PACKAGES variable below
-        - name: install-python-deps
-          image: python:3.14-alpine
-          securityContext:
-            runAsUser: 0
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              echo "Installing Python dependencies for custom integrations..."
-              # List packages here (space-separated)
-              # Format: package==version
-              PACKAGES="hass-web-proxy-lib==0.0.7"
-              
-              # Install to separate directory to avoid overwriting HA packages
-              pip install --no-cache-dir --target=/opt/python-packages $PACKAGES
-              
-              echo "Installed packages:"
-              ls -la /opt/python-packages/ | grep -E "hass-web-proxy|dist-info" || echo "No packages found"
-          volumeMounts:
-            - name: python-site-packages
-              mountPath: /opt/python-packages
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 200m
-              memory: 128Mi
+        # DISABLED - Let HACS manage dependencies
+        # - name: install-python-deps
+        #   image: python:3.14-alpine
+        #   securityContext:
+        #     runAsUser: 0
+        #   command:
+        #     - sh
+        #     - -c
+        #   args:
+        #     - |
+        #       echo "Installing Python dependencies for custom integrations..."
+        #       # List packages here (space-separated)
+        #       # Format: package==version
+        #       PACKAGES="hass-web-proxy-lib==0.0.7"
+        #       
+        #       # Install to separate directory to avoid overwriting HA packages
+        #       pip install --no-cache-dir --target=/opt/python-packages $PACKAGES
+        #       
+        #       echo "Installed packages:"
+        #       ls -la /opt/python-packages/ | grep -E "hass-web-proxy|dist-info" || echo "No packages found"
+        #   volumeMounts:
+        #     - name: python-site-packages
+        #       mountPath: /opt/python-packages
+        #   resources:
+        #     requests:
+        #       cpu: 50m
+        #       memory: 64Mi
+        #     limits:
+        #       cpu: 200m
+        #       memory: 128Mi
         - name: restore-config
           image: rclone/rclone:1.73
           securityContext:
