@@ -32,7 +32,7 @@ spec:
             - name: PENPOT_BACKEND_URI
               value: "http://penpot-backend:6060"
             - name: PENPOT_FLAGS
-              value: "enable-registration enable-login-with-password disable-secure-session-cookies enable-smtp enable-email-verification"
+              value: "enable-registration enable-login-with-password disable-secure-session-cookies enable-smtp enable-email-verification enable-access-tokens"
           ports:
             - containerPort: 8080
               name: http

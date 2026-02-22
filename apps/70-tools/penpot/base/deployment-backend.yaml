@@ -35,7 +35,7 @@ spec:
                 name: penpot-secrets
           env:
             - name: PENPOT_FLAGS
-              value: "enable-registration enable-login-with-password disable-secure-session-cookies disable-email-verification"
+              value: "enable-registration enable-login-with-password disable-secure-session-cookies disable-email-verification enable-access-tokens"
             - name: PENPOT_PUBLIC_URI
               value: "https://design.truxonline.com"
             - name: PENPOT_DATABASE_URI
