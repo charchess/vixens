@@ -133,7 +133,7 @@
       "matchUpdateTypes": [
         "major"
       ],
-      "automerge": false,
+      "automerge": true,
       "labels": [
         "dependencies",
         "renovate",
