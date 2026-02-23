@@ -91,8 +91,14 @@ spec:
                     echo "✅ Restored from backup_config.yaml"
                     exit 0
                   fi
-                  echo "❌ No valid backup found!"
-                  exit 1
+                  # Fallback: copy backup_config.yaml even if not explicitly a backup
+                  if [ -f /config/backup_config.yaml ]; then
+                    cp /config/backup_config.yaml /config/config.yml
+                    echo "✅ Restored from backup_config.yaml (fallback)"
+                    exit 0
+                  fi
+                  echo "❌ No valid backup found! Using default config."
+                  exit 0
                 fi
               else
                 echo "⚠️ No config.yml found"
