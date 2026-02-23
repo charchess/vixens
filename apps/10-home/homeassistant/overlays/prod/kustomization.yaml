@@ -7,7 +7,6 @@ resources:
   - ingress.yaml
   - ingressroute-udp.yaml
 patches:
-  - path: rclone-patch.yaml
   - target:
       kind: InfisicalSecret
       name: homeassistant-config-sync
