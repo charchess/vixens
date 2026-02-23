@@ -1,0 +1,36 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-ttl-jobs
+  annotations:
+    policies.kyverno.io/title: Add TTL to Jobs
+    policies.kyverno.io/category: Maintenance
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Automatically adds ttlSecondsAfterFinished to all Jobs and CronJobs
+      to ensure completed pods are cleaned up automatically.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: add-ttl-to-jobs
+      match:
+        resources:
+          kinds:
+            - Job
+      mutate:
+        patchStrategicMerge:
+          spec:
+            ttlSecondsAfterFinished: 3600
+    
+    - name: add-ttl-to-cronjobs
+      match:
+        resources:
+          kinds:
+            - CronJob
+      mutate:
+        patchStrategicMerge:
+          spec:
+            jobTemplate:
+              spec:
+                ttlSecondsAfterFinished: 3600
