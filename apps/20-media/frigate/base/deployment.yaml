@@ -63,6 +63,57 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+        - name: validate-config
+          image: python:3.13-alpine
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              echo "Validating Frigate config..."
+              if [ -f /config/config.yml ]; then
+                if python3 -c "import yaml; yaml.safe_load(open('/config/config.yml'))" 2>/dev/null; then
+                  echo "✅ Config is valid YAML"
+                  exit 0
+                else
+                  echo "❌ Config is corrupted, restoring from backup..."
+                  # Find most recent valid backup
+                  for backup in $(ls -t /config/config.yml.backup.* 2>/dev/null); do
+                    if python3 -c "import yaml; yaml.safe_load(open('$backup'))" 2>/dev/null; then
+                      cp "$backup" /config/config.yml
+                      echo "✅ Restored from $backup"
+                      exit 0
+                    fi
+                  done
+                  # If no valid backup, try backup_config.yaml
+                  if [ -f /config/backup_config.yaml ] && python3 -c "import yaml; yaml.safe_load(open('/config/backup_config.yaml'))" 2>/dev/null; then
+                    cp /config/backup_config.yaml /config/config.yml
+                    echo "✅ Restored from backup_config.yaml"
+                    exit 0
+                  fi
+                  # Fallback: copy backup_config.yaml even if not explicitly a backup
+                  if [ -f /config/backup_config.yaml ]; then
+                    cp /config/backup_config.yaml /config/config.yml
+                    echo "✅ Restored from backup_config.yaml (fallback)"
+                    exit 0
+                  fi
+                  echo "❌ No valid backup found! Using default config."
+                  exit 0
+                fi
+              else
+                echo "⚠️ No config.yml found"
+                exit 0
+              fi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
       containers:
         - name: frigate
           image: ghcr.io/blakeblackshear/frigate:0.17.0-beta2
@@ -143,12 +194,33 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              # Backup config.yml with validation
+              backup_config() {
+                if [ -f /config/config.yml ]; then
+                  # Validate YAML syntax
+                  if python3 -c "import yaml; yaml.safe_load(open('/config/config.yml'))" 2>/dev/null; then
+                    # Create timestamped backup
+                    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                    cp /config/config.yml "/config/config.yml.backup.${TIMESTAMP}"
+                    # Keep only last 10 backups
+                    ls -t /config/config.yml.backup.* 2>/dev/null | tail -n +11 | xargs -r rm -f
+                    echo "✅ Config backed up at ${TIMESTAMP}"
+                  else
+                    echo "⚠️ WARNING: config.yml is invalid YAML, skipping backup"
+                  fi
+                fi
+              }
+              
               sync_s3() {
+                # Backup before sync
+                backup_config
+                # Sync to S3
                 rclone sync /config s3:$LITESTREAM_BUCKET/config \
                   --exclude "*.db*" \
                   --exclude "*.log" \
                   --exclude ".*-litestream" \
-                  --exclude ".*-litestream/**";
+                  --exclude ".*-litestream/**" \
+                  --exclude "*.backup.*";
               }
               while true; do
                 sync_s3;
