@@ -51,7 +51,7 @@ spec:
             - name: config
               mountPath: /config
         - name: install-python-deps
-          image: python:3.14-alpine
+          image: python:3.12-alpine
           securityContext:
             runAsUser: 0
           command:
@@ -271,4 +271,3 @@ spec:
         - name: homeassistant-litestream-config
           configMap:
             name: homeassistant-litestream-config
-
