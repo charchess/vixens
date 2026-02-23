@@ -51,7 +51,7 @@ spec:
             - name: config
               mountPath: /config
         - name: install-python-deps
-          image: python:3.13-alpine
+          image: python:3.14-alpine
           securityContext:
             runAsUser: 0
           command:
@@ -104,7 +104,7 @@ spec:
             - name: config
               mountPath: /config
         - name: restore-db
-          image: litestream/litestream:0.5.8
+          image: litestream/litestream:0.5.9
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -189,7 +189,7 @@ spec:
             - name: python-site-packages
               mountPath: /opt/python-packages
         - name: litestream
-          image: litestream/litestream:0.5.8
+          image: litestream/litestream:0.5.9
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
