@@ -1,24 +1,49 @@
 #!/usr/bin/env sh
-# bd-shim v1
-# bd-hooks-version: 0.55.4
-#
-# bd (beads) post-merge hook - thin shim
-#
-# This shim delegates to 'bd hook post-merge' which contains
-# the actual hook logic. This pattern ensures hook behavior is always
-# in sync with the installed bd version - no manual updates needed.
-#
-# The 'bd hook' command (singular) supports:
-# - Branch-then-merge pattern for Dolt (cell-level conflict resolution)
-# - Per-worktree state tracking
-# - Hook chaining configuration
+# Custom post-merge hook for beads with Dolt backend
+# Workaround for https://github.com/steveyegge/beads/issues/1771
 
-# Check if bd is available
 if ! command -v bd >/dev/null 2>&1; then
-    echo "Warning: bd command not found in PATH, skipping post-merge hook" >&2
-    echo "  Install bd: brew install beads" >&2
-    echo "  Or add bd to your PATH" >&2
     exit 0
 fi
 
-exec bd hook post-merge "$@"
+echo "🔄 Syncing beads issues..."
+
+# Get the latest issues.jsonl from beads-sync
+LATEST_JSONL=$(mktemp)
+git show origin/beads-sync:.beads/issues.jsonl > "$LATEST_JSONL" 2>/dev/null || exit 0
+
+# Count issues in JSONL
+REMOTE_COUNT=$(wc -l < "$LATEST_JSONL" 2>/dev/null || echo 0)
+
+# Get local issue count
+LOCAL_COUNT=$(bd status 2>/dev/null | grep "Total Issues" | awk '{print $3}' || echo 0)
+
+if [ "$REMOTE_COUNT" != "$LOCAL_COUNT" ]; then
+    echo "📥 Sync needed: local=$LOCAL_COUNT, remote=$REMOTE_COUNT"
+    
+    # Get list of local issue IDs
+    LOCAL_IDS=$(bd list --limit 0 --json 2>/dev/null | grep -o '"id":"[^"]*"' | cut -d'"' -f4 | sort -u)
+    
+    # Create temp file with only new issues
+    NEW_JSONL=$(mktemp)
+    while IFS= read -r line; do
+        ISSUE_ID=$(echo "$line" | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
+        if ! echo "$LOCAL_IDS" | grep -q "^${ISSUE_ID}$"; then
+            echo "$line" >> "$NEW_JSONL"
+        fi
+    done < "$LATEST_JSONL"
+    
+    NEW_COUNT=$(wc -l < "$NEW_JSONL" 2>/dev/null || echo 0)
+    
+    if [ "$NEW_COUNT" -gt 0 ]; then
+        echo "📥 Importing $NEW_COUNT new issues..."
+        bd import -i "$NEW_JSONL" 2>/dev/null || echo "⚠️ Import had issues, but continuing..."
+    fi
+    
+    rm -f "$NEW_JSONL"
+    echo "✅ Sync complete"
+else
+    echo "✅ Already in sync ($LOCAL_COUNT issues)"
+fi
+
+rm -f "$LATEST_JSONL"
