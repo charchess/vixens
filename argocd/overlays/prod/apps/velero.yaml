@@ -35,3 +35,7 @@ spec:
       kind: Deployment
       jsonPointers:
         - /spec/template/spec/containers/0/args
+    - group: velero.io
+      kind: Backup
+      jsonPointers:
+        - /status
