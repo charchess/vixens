@@ -4,7 +4,20 @@ kind: Kustomization
 namespace: monitoring
 patches:
   - path: patch-infisical-env.yaml
-  - path: patch-labels.yaml
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/environment
+        value: prod
+    target:
+      kind: Deployment
+      name: goldilocks-controller
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/environment
+        value: prod
+    target:
+      kind: Deployment
+      name: goldilocks-dashboard
 resources:
   - ingress.yaml
   - ../../base
