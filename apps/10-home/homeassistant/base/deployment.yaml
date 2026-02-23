@@ -46,7 +46,7 @@ spec:
             - sh
             - -c
           args:
-            - chown -R 1000:1000 /config
+            - mkdir -p /config/python_packages && chown -R 1000:1000 /config
           volumeMounts:
             - name: config
               mountPath: /config
@@ -61,12 +61,12 @@ spec:
             - |
               echo "Installing Python dependencies for custom integrations..."
               PACKAGES="hass-web-proxy-lib==0.0.7"
-              pip install --no-cache-dir --target=/opt/python-packages $PACKAGES
+              pip install --no-cache-dir --target=/config/python_packages $PACKAGES
               echo "Installed packages:"
-              ls -la /opt/python-packages/ | grep -E "hass-web-proxy|dist-info" || echo "No packages found"
+              ls -la /config/python_packages/ | grep -E "hass-web-proxy|dist-info" || echo "No packages found"
           volumeMounts:
-            - name: python-site-packages
-              mountPath: /opt/python-packages
+            - name: config
+              mountPath: /config
           resources:
             requests:
               cpu: 50m
@@ -163,7 +163,7 @@ spec:
             - name: TZ
               value: Europe/Paris
             - name: PYTHONPATH
-              value: /opt/python-packages:/usr/local/lib/python3.13/site-packages
+              value: /config/python_packages:/usr/local/lib/python3.13/site-packages
           livenessProbe:
             httpGet:
               path: /
@@ -186,8 +186,6 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: python-site-packages
-              mountPath: /opt/python-packages
         - name: litestream
           image: litestream/litestream:0.5.9
           securityContext:
@@ -273,7 +271,4 @@ spec:
         - name: homeassistant-litestream-config
           configMap:
             name: homeassistant-litestream-config
-        # Shared volume for Python packages installed by initContainer
-        # This allows non-root HA to use packages installed by root initContainer
-        - name: python-site-packages
-          emptyDir: {}
+
