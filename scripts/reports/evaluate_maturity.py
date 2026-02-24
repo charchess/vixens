@@ -230,6 +230,129 @@ def check_pdb(ns, app):
 
 
 def get_backup_config(ns, app):
+    """Check if backup is configured (Velero or Litestream)
+    
+    Returns:
+        True - backup is configured
+        False - no backup configured (has volumes)
+        None - N/A (no persistent volumes to backup)
+    """
+    # First check if app uses any PVCs (Persistent Volume Claims)
+    # or if there are volumes that need backup
+    cmd = f"kubectl get pods -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    
+    has_persistent_volumes = False
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for pod in data.get('items', []):
+            # Check volumes - only count PVCs and hostPath volumes as persistent
+            volumes = pod.get('spec', {}).get('volumes', [])
+            for vol in volumes:
+                # Check for PVC volume
+                if 'persistentVolumeClaim' in vol:
+                    has_persistent_volumes = True
+                    break
+                # Check for hostPath volume
+                if 'hostPath' in vol:
+                    has_persistent_volumes = True
+                    break
+                # Check for NFS volume
+                if 'nfs' in vol:
+                    has_persistent_volumes = True
+                    break
+            if has_persistent_volumes:
+                break
+    
+    # Also check if there are any PVCs directly attached to the app
+    if not has_persistent_volumes:
+        cmd = f"kubectl get pvc -n {ns} -o json 2>/dev/null"
+        stdout, _, rc = run_cmd(cmd)
+        if rc == 0 and stdout:
+            data = json.loads(stdout)
+            for item in data.get('items', []):
+                # Check if PVC is used by this app
+                labels = item.get('metadata', {}).get('labels', {})
+                if labels.get('app') == app:
+                    has_persistent_volumes = True
+                    break
+    
+    # If no persistent volumes, backup is N/A
+    if not has_persistent_volumes:
+        return None
+    
+    # Has persistent volumes - check for backup configuration
+    # Check for Velero backup annotations
+    cmd = f"kubectl get deploy -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for item in data.get('items', []):
+            annotations = item.get('metadata', {}).get('annotations', {})
+            if 'backup.velero.io' in annotations:
+                return True
+
+    # Check for Litestream sidecar
+    cmd = f"kubectl get pods -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for pod in data.get('items', []):
+            for container in pod.get('spec', {}).get('containers', []):
+                if 'litestream' in container.get('image', '').lower():
+                    return True
+    return False
+    """Check if backup is configured (Velero or Litestream)
+    
+    Returns:
+        True - backup is configured
+        False - no backup configured (has volumes)
+        None - N/A (no persistent volumes to backup)
+    """
+    # First check if app uses any persistent volumes
+    cmd = f"kubectl get pods -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    
+    has_volumes = False
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for pod in data.get('items', []):
+            # Check for volume mounts
+            for container in pod.get('spec', {}).get('containers', []):
+                if container.get('volumeMounts'):
+                    has_volumes = True
+                    break
+            # Also check pod volumes
+            if pod.get('spec', {}).get('volumes'):
+                has_volumes = True
+            if has_volumes:
+                break
+    
+    # If no volumes, backup is N/A
+    if not has_volumes:
+        return None
+    
+    # Has volumes - check for backup configuration
+    # Check for Velero backup annotations
+    cmd = f"kubectl get deploy -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for item in data.get('items', []):
+            annotations = item.get('metadata', {}).get('annotations', {})
+            if 'backup.velero.io' in annotations:
+                return True
+
+    # Check for Litestream sidecar
+    cmd = f"kubectl get pods -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for pod in data.get('items', []):
+            for container in pod.get('spec', {}).get('containers', []):
+                if 'litestream' in container.get('image', '').lower():
+                    return True
+    return False
     """Check if backup is configured (Velero or Litestream)"""
     # Check for Velero backup annotations
     cmd = f"kubectl get deploy -n {ns} -l app={app} -o json 2>/dev/null"
@@ -403,6 +526,19 @@ def evaluate_emerald(ns, app, deploy_kind):
 
     checks["Backup configured"] = get_backup_config(ns, app)
 
+    # Filter out N/A (None) values - they don't count as failures
+    # Only check that non-None values are True
+    meaningful_checks = {k: v for k, v in checks.items() if v is not None}
+    
+    # If all meaningful checks pass, or if there are no meaningful checks
+    passed = all(meaningful_checks.values()) if meaningful_checks else True
+    
+    return passed, checks
+    """Level 5: Emerald - Data Durability"""
+    checks = {}
+
+    checks["Backup configured"] = get_backup_config(ns, app)
+
     return all(checks.values()), checks
 
 
@@ -511,7 +647,7 @@ def main():
             current_tier = tier_name
         else:
             failed_tier = tier_name
-            missing_for_next = [k for k, v in checks.items() if not v]
+            missing_for_next = [k for k, v in checks.items() if not v and v is not None]
             break
 
     if current_tier is None:
