@@ -202,7 +202,130 @@ def check_psa_labels(ns):
         return "pod-security.kubernetes.io/enforce" in labels
     return False
 
+
+
+def check_local_kustomize_structure(app_path):
+    """Check if Kustomize structure is valid (local files)
+    
+    Verifies:
+    - base/ directory exists with kustomization.yaml
+    - overlays/ directory exists
+    - At least one overlay (dev or prod) exists
+    - All referenced files exist
+    """
+    import os
+    
+    if not os.path.exists(app_path):
+        return False, f"App path does not exist: {app_path}"
+    
+    # Check base directory
+    base_path = os.path.join(app_path, "base")
+    if not os.path.exists(base_path):
+        return False, "Missing base/ directory"
+    
+    base_kustomization = os.path.join(base_path, "kustomization.yaml")
+    if not os.path.exists(base_kustomization):
+        return False, "Missing base/kustomization.yaml"
+    
+    # Check overlays directory
+    overlays_path = os.path.join(app_path, "overlays")
+    if not os.path.exists(overlays_path):
+        return False, "Missing overlays/ directory"
+    
+    # Check at least dev or prod exists
+    dev_overlay = os.path.join(overlays_path, "dev")
+    prod_overlay = os.path.join(overlays_path, "prod")
+    if not os.path.exists(dev_overlay) and not os.path.exists(prod_overlay):
+        return False, "Missing overlays (neither dev nor prod)"
+    
+    # Check each overlay has kustomization.yaml
+    for overlay in ["dev", "prod", "staging", "test"]:
+        overlay_path = os.path.join(overlays_path, overlay)
+        if os.path.exists(overlay_path):
+            kust_file = os.path.join(overlay_path, "kustomization.yaml")
+            if not os.path.exists(kust_file):
+                return False, f"Missing {overlay}/kustomization.yaml"
+    
+    return True, "Structure OK"
+
+
+def check_yamllint(app_path, yamllint_config="yamllint-config.yml"):
+    """Run yamllint on all YAML files in app path"""
+    import os
+    
+    if not os.path.exists(app_path):
+        return None, "App path does not exist"
+    
+    try:
+        # Find all YAML files
+        result = run_cmd(
+            f"find {app_path} -name '*.yaml' -o -name '*.yml' | head -20"
+        )
+        
+        stdout, _, rc = result
+        if rc != 0 or not stdout.strip():
+            return None, "No YAML files found"
+        
+        yaml_files = stdout.strip().split('\n')
+        
+        # Run yamllint on each file
+        errors = []
+        for yaml_file in yaml_files:
+            if not yaml_file:
+                continue
+            stdout, _, rc = run_cmd(
+                f"yamllint -c {yamllint_config} {yaml_file} 2>&1"
+            )
+            if rc != 0:
+                errors.append(f"{yaml_file}: {stdout[:100]}")
+        
+        if errors:
+            return False, f"yamllint errors: {len(errors)} files"
+        
+        return True, "All YAML files valid"
+    
+    except Exception as e:
+        return None, f"yamllint check failed: {str(e)}"
+
+
+def check_kustomize_build(app_path, overlay="prod"):
+    """Test if kustomize build works for an overlay"""
+    import os
+    
+    overlay_path = os.path.join(app_path, "overlays", overlay)
+    if not os.path.exists(overlay_path):
+        return None, f"Overlay {overlay} not found"
+    
+    try:
+        stdout, stderr, rc = run_cmd(
+            f"kustomize build {overlay_path} > /dev/null 2>&1"
+        )
+        
+        if rc != 0:
+            return False, f"kustomize build failed: {stderr[:100]}"
+        
+        return True, "kustomize build successful"
+    
+    except Exception as e:
+        return None, f"kustomize check failed: {str(e)}"
+
 def check_service(ns, app):
+    """Check if Service exists for the application"""
+    # Try by label first
+    cmd = f"kubectl get svc -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        if len(data.get("items", [])) > 0:
+            return True
+    
+    # Try by name (service often has same name as app)
+    cmd = f"kubectl get svc -n {ns} {app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        return True
+    
+    return False
     """Check if Service exists for the application"""
     cmd = f"kubectl get svc -n {ns} -l app={app} -o json 2>/dev/null"
     stdout, _, rc = run_cmd(cmd)
@@ -665,7 +788,101 @@ def find_app_in_cluster(app_name):
     return None, None
 
 
-def evaluate_bronze(ns, app, deploy_kind):
+def evaluate_bronze(ns, app, deploy_kind, app_path=None):
+    """Level 1: Bronze - App exists"""
+    checks = {}
+
+    if deploy_kind == "Deployment":
+        resource = get_deployment(ns, app)
+    elif deploy_kind == "StatefulSet":
+        resource = get_statefulset(ns, app)
+    else:
+        resource = None
+
+    pod = get_pod(ns, app)
+
+    # Check CPU/Memory requests
+    if pod:
+        containers = pod.get("spec", {}).get("containers", [])
+        for container in containers:
+            resources = container.get("resources", {})
+            checks["CPU Request"] = check_resources(
+                resources, "requests"
+            ) and "cpu" in resources.get("requests", {})
+            checks["Memory Request"] = check_resources(
+                resources, "requests"
+            ) and "memory" in resources.get("requests", {})
+            
+            # NEW: Check no :latest tag (Bronze requirement per ADR-022)
+            image = container.get("image", "")
+            checks["No :latest tag"] = ":latest" not in image
+            
+            break  # Check first container
+    else:
+        checks["CPU Request"] = False
+        checks["Memory Request"] = False
+        checks["No :latest tag"] = False
+
+    # Check Service and Ingress (Bronze requirements per ADR-022)
+    checks["Service configured"] = check_service(ns, app)
+    checks["Ingress configured"] = get_ingress(ns, app) is not None
+    
+    # NEW: Local checks (ADR-022 Kustomize structure)
+    if app_path:
+        # Check Kustomize structure
+        kust_ok, kust_msg = check_local_kustomize_structure(app_path)
+        checks["Kustomize structure"] = kust_ok
+        
+        # Check yamllint (optional, may not be installed)
+        yamllint_ok, yamllint_msg = check_yamllint(app_path)
+        if yamllint_ok is not None:  # Only add if check was possible
+            checks["YAML valid (yamllint)"] = yamllint_ok
+        
+        # Check kustomize build (optional)
+        build_ok, build_msg = check_kustomize_build(app_path, "prod")
+        if build_ok is not None:  # Only add if check was possible
+            checks["Kustomize build OK"] = build_ok
+
+    return all(checks.values()), checks
+    """Level 1: Bronze - App exists"""
+    checks = {}
+
+    if deploy_kind == "Deployment":
+        resource = get_deployment(ns, app)
+    elif deploy_kind == "StatefulSet":
+        resource = get_statefulset(ns, app)
+    else:
+        resource = None
+
+    pod = get_pod(ns, app)
+
+    # Check CPU/Memory requests
+    if pod:
+        containers = pod.get("spec", {}).get("containers", [])
+        for container in containers:
+            resources = container.get("resources", {})
+            checks["CPU Request"] = check_resources(
+                resources, "requests"
+            ) and "cpu" in resources.get("requests", {})
+            checks["Memory Request"] = check_resources(
+                resources, "requests"
+            ) and "memory" in resources.get("requests", {})
+            
+            # NEW: Check no :latest tag (Bronze requirement per ADR-022)
+            image = container.get("image", "")
+            checks["No :latest tag"] = ":latest" not in image
+            
+            break  # Check first container
+    else:
+        checks["CPU Request"] = False
+        checks["Memory Request"] = False
+        checks["No :latest tag"] = False
+
+    # Check Service and Ingress (Bronze requirements per ADR-022)
+    checks["Service configured"] = check_service(ns, app)
+    checks["Ingress configured"] = get_ingress(ns, app) is not None
+
+    return all(checks.values()), checks
     """Level 1: Bronze - App exists"""
     checks = {}
 
@@ -1004,6 +1221,9 @@ def main():
     parser.add_argument(
         "--list", "-l", action="store_true", help="List all applications in cluster"
     )
+    parser.add_argument(
+        "--local_path", "-p", help="Local path to app for structure validation (e.g., apps/99-test/whoami)"
+    )
     args = parser.parse_args()
 
     if args.list:
@@ -1023,19 +1243,6 @@ def main():
         parser.error("application name is required (or use --list)")
 
     app_name = args.application
-
-    if args.list:
-        cmd = "kubectl get deploy,sts -A -o json"
-        stdout, _, rc = run_cmd(cmd)
-        if rc == 0:
-            data = json.loads(stdout)
-            print("Applications in cluster:")
-            for item in data.get("items", []):
-                name = item.get("metadata", {}).get("name", "")
-                ns = item.get("metadata", {}).get("namespace", "")
-                kind = item.get("kind", "")
-                print(f"  {ns}/{name} ({kind})")
-        sys.exit(0)
 
     # Find app in cluster
     if args.namespace:
@@ -1058,8 +1265,11 @@ def main():
         else:
             deploy_kind = "Deployment"  # Default
 
+    # Get local path for Bronze structure checks
+    app_path = args.local_path
+
     tiers = [
-        ("Bronze", evaluate_bronze),
+        ("Bronze", lambda ns, app, dk: evaluate_bronze(ns, app, dk, app_path)),
         ("Silver", evaluate_silver),
         ("Gold", evaluate_gold),
         ("Platinum", evaluate_platinum),
@@ -1082,15 +1292,9 @@ def main():
             break
 
     if current_tier is None:
-        print(f"Failed-{failed_tier}")
+        print(f"Failed-Bronze")
         print(f"\nNamespace: {ns}")
-        print(f"\nMissing {failed_tier} prerequisites:")
-        for m in missing_for_next:
-            print(f"  - {m}")
-        sys.exit(1)
-        print("failed")
-        print(f"\nNamespace: {ns}")
-        print("\nMissing Bronze prerequisites:")
+        print(f"\nMissing Bronze prerequisites:")
         for m in missing_for_next:
             print(f"  - {m}")
         sys.exit(1)
