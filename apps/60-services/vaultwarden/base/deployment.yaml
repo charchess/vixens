@@ -65,7 +65,7 @@ spec:
               mountPath: /data
       containers:
         - name: vaultwarden
-          image: vaultwarden/server:1.35.3
+          image: vaultwarden/server:1.35.4
           ports:
             - containerPort: 80
               name: http
