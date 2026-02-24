@@ -1,9 +1,9 @@
-
+#
 # Kustomize Component: Default Requirements
 #
 # Enforces the Vixens minimum Kyverno requirements:
 # - revisionHistoryLimit: 3
-# - SecurityContext baseline (fsGroup 1000)
+# - SecurityContext hardened (fsGroup, allowPrivilegeEscalation)
 #
 # Resources and probes are now managed by Kyverno policies:
 # - sizing-mutate (resource sizing)
@@ -31,3 +31,7 @@ patches:
             securityContext:
               fsGroup: 1000
               fsGroupChangePolicy: OnRootMismatch
+            containers:
+              - name: "*"
+                securityContext:
+                  allowPrivilegeEscalation: false
