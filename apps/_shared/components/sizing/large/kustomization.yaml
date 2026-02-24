@@ -1,0 +1,34 @@
+---
+# Kustomize Component: Large Sizing
+#
+# Enforces large resource sizing:
+# - CPU: 1000m (request) / 2000m (limit)
+# - Memory: 2Gi (request) / 4Gi (limit)
+#
+# Usage:
+#   components:
+#     - ../../../../_shared/components/sizing/large
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+      spec:
+        template:
+          spec:
+            containers:
+              - name: .*
+                resources:
+                  requests:
+                    cpu: 1000m
+                    memory: 2Gi
+                  limits:
+                    cpu: 2000m
+                    memory: 4Gi

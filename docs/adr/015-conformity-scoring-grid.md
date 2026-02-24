@@ -134,7 +134,7 @@ Le projet suit une progression qualitative stricte pour chaque application, de s
 - **Infisical Unicity** : Un seul chemin de secret par application, standardisé et unique.
 - **Sidecar Governance** : Ressources CPU/RAM bridées pour Litestream, Config-patchers, etc.
 - **Backup Assurance** : Confirmation du backup Velero pour les volumes persistants.
-- **Clean Code** : Zéro warning linter, zéro tag `:latest`.
+- **Revision Control** : `revisionHistoryLimit: 3` for all Deployments.
 
 ### 💎 Diamond (Elite Production)
 - **Cilium Security** : NetworkPolicies (L4/L7) appliquées et testées.
