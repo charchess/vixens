@@ -8,4 +8,3 @@ resources:
 
 components:
   - ../../../../_shared/components/default
-  - ../../../../_shared/components/probes/basic
