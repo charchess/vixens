@@ -10,7 +10,7 @@ components:
   - ../../../../_shared/components/default
   - ../../../../_shared/components/priority/low
 
-# Add sizing label to all resources
+# Add sizing label to all resources AND pod templates
 transformers:
   - |
     apiVersion: builtin
@@ -22,3 +22,6 @@ transformers:
     fieldSpecs:
       - path: metadata/labels
         create: true
+      - path: spec/template/metadata/labels
+        create: true
+        kind: Deployment
