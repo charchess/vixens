@@ -1,0 +1,33 @@
+
+# Kustomize Component: Medium Sizing
+#
+# Enhanced resource allocation for medium-traffic applications
+#
+# Usage:
+#   components:
+#     - ../../../../_shared/components/sizing/medium
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+      spec:
+        template:
+          spec:
+            containers:
+              - name: "*"
+                resources:
+                  requests:
+                    cpu: 100m
+                    memory: 256Mi
+                  limits:
+                    cpu: 500m
+                    memory: 1Gi
+
