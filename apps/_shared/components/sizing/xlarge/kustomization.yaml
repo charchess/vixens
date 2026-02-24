@@ -1,0 +1,33 @@
+
+# Kustomize Component: XLarge Sizing
+#
+# Maximum resource allocation for critical applications
+#
+# Usage:
+#   components:
+#     - ../../../../_shared/components/sizing/xlarge
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+      spec:
+        template:
+          spec:
+            containers:
+              - name: "*"
+                resources:
+                  requests:
+                    cpu: 500m
+                    memory: 1Gi
+                  limits:
+                    cpu: 2
+                    memory: 4Gi
+

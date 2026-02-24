@@ -135,6 +135,9 @@ Le projet suit une progression qualitative stricte pour chaque application, de s
 - **Sidecar Governance** : Ressources CPU/RAM bridées pour Litestream, Config-patchers, etc.
 - **Backup Assurance** : Confirmation du backup Velero pour les volumes persistants.
 - **Revision Control** : `revisionHistoryLimit: 3` for all Deployments.
+- **Component Modularity** : Uses granular Kustomize components from `apps/_shared/components/`
+- **Sizing Standards** : Adheres to defined sizing tiers (micro/small/medium/large/xlarge)
+- **Priority Management** : Implements appropriate priority classes (high/medium/low)
 
 ### 💎 Diamond (Elite Production)
 - **Cilium Security** : NetworkPolicies (L4/L7) appliquées et testées.
