@@ -105,7 +105,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 |-------------|-----|------|-------|
 | jellyfin | ⏳ | 💤 | Media server (planned) |
 | sabnzbd | ⏳ | ✅ | Prod fixed and synced |
-| radarr | ⏳ | ✅ | Prod fixed 
+| radarr | ⏳ | ✅ | Silver tier (2026-02-24)
 | sonarr | ⏳ | ✅ | Prod fixed 
 | prowlarr | ⏳ | ✅ | Prod fixed 
 | frigate | ✅ | ✅ | Elite Status + 50Gi PVC fixed |
