@@ -1,0 +1,47 @@
+---
+# Kyverno Policy: Sizing Audit
+# 
+# This policy audits pods that don't have the vixens.io/sizing label
+# and generates a report of which apps need to be configured.
+#
+# Usage: kubectl get policyreports -n kyverno
+# 
+# PHASE: Audit (read-only, never blocks deployments)
+
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: sizing-audit
+  annotations:
+    policies.kyverno.io/title: Sizing Audit
+    policies.kyverno.io/category: Resource Management
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Audits all pods to identify which ones are missing the vixens.io/sizing label.
+      This helps prepare for the migration to standardized resource sizing.
+      Run: kubectl get policyreports -n kyverno to see the audit results.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-sizing-label
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - kube-public
+                - kube-node-lease
+      validate:
+        message: "Pod is missing label 'vixens.io/sizing'. Will default to 'micro' sizing when mutation is enabled."
+        pattern:
+          metadata:
+            labels:
+              vixens.io/sizing: "?*"
