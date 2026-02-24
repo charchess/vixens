@@ -25,6 +25,7 @@ Ces documents représentent l'état actuel et obligatoire de l'architecture Vixe
 | [019](019-renovate-discord-approval-workflow.md) | Renovate Discord Approval | 2026-01-02 | automation, renovate |
 | [020](020-automated-housekeeping-sanitization.md) | Automated Housekeeping | 2026-01-17 | infra, sanitization |
 | [021](021-netbird-native-manifests.md) | Netbird Native Manifests | 2026-01-17 | networking, netbird |
+| [022](022-7-tier-goldification-system.md) | 7-Tier Goldification System | 2026-02-24 | quality, goldification |
 
 ---
 
@@ -48,4 +49,4 @@ Décisions abandonnées ou inactives.
 | ADR | Title | Status | Reason |
 |-----|-------|--------|--------|
 | [010](010-static-manifests-for-infrastructure-apps.md) | Static Manifests for Infra | Deprecated | Manual maintenance too high |
-| [015](015-conformity-scoring-grid.md) | Conformity Scoring Grid | Deprecated | Agent inactive / No enforcement |
+| [015](015-conformity-scoring-grid.md) | Conformity Scoring Grid | Deprecated | Superseded by [ADR-022](022-7-tier-goldification-system.md) |
