@@ -1,7 +1,6 @@
 # Guaranteed QoS Sizing
 
-Kyverno policy for Orichalcum tier applications requiring Guaranteed QoS class.
-
+Kyverno sizing profiles for Orichalcum tier applications requiring Guaranteed QoS class.
 ## Overview
 
 This policy provides **Guaranteed Quality of Service (QoS)** resource sizing through Kyverno mutation. Unlike Burstable sizing (the default), Guaranteed QoS requires:
@@ -80,10 +79,10 @@ Kyverno will automatically mutate the pod to add matching requests and limits.
 
 ## Policy Reference
 
-- **Policy Name:** `sizing-guaranteed`
-- **Location:** `apps/00-infra/kyverno/base/policies/sizing-guaranteed.yaml`
-- **Action:** Enforce (mutates pods automatically)
-- **Scope:** Cluster-wide
+- **Policy Name:** `sizing-mutate` (includes Guaranteed profiles)
+- **Location:** `apps/00-infra/kyverno/base/policies/sizing-mutate.yaml`
+- **Guaranteed profiles:** G-small, G-medium, G-large, G-xl
+- **Burstable profiles:** micro, small, medium, large, xlarge
 
 ## Migration Guide
 
@@ -119,7 +118,7 @@ kubectl get pod <pod> -o yaml | grep -A5 resources
 If requests != limits, verify:
 1. Label is correct: `vixens.io/sizing: G-small`
 2. Kyverno is running: `kubectl get pods -n kyverno`
-3. Policy is active: `kubectl get clusterpolicy sizing-guaranteed`
+3. Policy is active: `kubectl get clusterpolicy sizing-mutate`
 
 ## See Also
 
