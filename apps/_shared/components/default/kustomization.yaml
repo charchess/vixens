@@ -3,10 +3,11 @@
 #
 # Enforces the Vixens minimum Kyverno requirements:
 # - revisionHistoryLimit: 3
-# - Standard Resource Requests (Minimal baseline)
 # - SecurityContext baseline (fsGroup 1000)
-# - Basic health probes
-# - Standard labels and annotations
+#
+# Resources and probes are now managed by Kyverno policies:
+# - sizing-mutate (resource sizing)
+# - require-probes (health probes)
 #
 # Usage:
 #   components:
@@ -30,18 +31,3 @@ patches:
             securityContext:
               fsGroup: 1000
               fsGroupChangePolicy: OnRootMismatch
-            containers:
-              - name: .*
-                resources:
-                  requests:
-                    cpu: 10m
-                    memory: 64Mi
-                  limits:
-                    cpu: 100m
-                    memory: 128Mi
-                startupProbe:
-                  tcpSocket:
-                    port: http
-                  initialDelaySeconds: 5
-                  periodSeconds: 10
-                  failureThreshold: 30
