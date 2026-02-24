@@ -377,6 +377,67 @@ def get_backup_config(ns, app):
 
 
 def find_app_in_cluster(app_name):
+    """Find application in cluster and return its namespace (optimized)
+    
+    Returns:
+        (namespace, kind) - Best match found
+        Prefers namespace that matches app_name exactly
+    """
+    best_match = None
+    best_kind = None
+    
+    # Get all deployments and statefulsets at once
+    cmd = "kubectl get deploy,sts -A -o json"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0:
+        data = json.loads(stdout)
+        for item in data.get("items", []):
+            item_name = item.get("metadata", {}).get("name", "")
+            ns = item.get("metadata", {}).get("namespace")
+            kind = item.get("kind", "Deployment")
+            
+            # Check for exact match first
+            if app_name.lower() == item_name.lower():
+                # Exact name match - check if namespace also matches
+                if ns.lower() == app_name.lower():
+                    return ns, kind  # Perfect match: name and namespace match
+                if not best_match:
+                    best_match = ns
+                    best_kind = kind
+            elif app_name.lower() in item_name.lower():
+                # Partial match - only use if no exact match found
+                if not best_match:
+                    best_match = ns
+                    best_kind = kind
+    
+    if best_match:
+        return best_match, best_kind
+    
+    # Also check pods (for apps without deploy/sts)
+    cmd = "kubectl get pods -A -o json"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0:
+        data = json.loads(stdout)
+        for item in data.get("items", []):
+            labels = item.get("metadata", {}).get("labels", {})
+            ns = item.get("metadata", {}).get("namespace")
+            
+            # Check common app labels
+            app_label = labels.get("app", "") or labels.get("name", "")
+            
+            # Exact match preferred
+            if app_name.lower() == app_label.lower():
+                if ns.lower() == app_name.lower():
+                    return ns, "Pod"
+                if not best_match:
+                    best_match = ns
+                    best_kind = "Pod"
+            elif app_name.lower() in app_label.lower():
+                if not best_match:
+                    best_match = ns
+                    best_kind = "Pod"
+    
+    return best_match, best_kind
     """Find application in cluster and return its namespace (optimized)"""
 
     # Get all deployments and statefulsets at once
