@@ -364,6 +364,33 @@ def check_pvc(ns, app):
         False - No PVC but app has volumes that should be persistent
         None - N/A (no persistent storage needed)
     """
+    # Check if app has any PVCs by label
+    cmd = f"kubectl get pvc -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        if len(data.get("items", [])) > 0:
+            return True
+    
+    # Also check by name pattern (<app>-config-pvc, etc.)
+    cmd = f"kubectl get pvc -n {ns} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for item in data.get("items", []):
+            name = item.get("metadata", {}).get("name", "").lower()
+            # Common patterns: <app>-config-pvc, <app>-data-pvc, etc.
+            if app.lower() in name and "pvc" in name:
+                return True
+    
+    # Check if deployment has volumeClaimTemplates (StatefulSet)
+    """Check if PVC exists (contextual - only if app has persistent data)
+    
+    Returns:
+        True - PVC exists
+        False - No PVC but app has volumes that should be persistent
+        None - N/A (no persistent storage needed)
+    """
     # Check if app has any PVCs
     cmd = f"kubectl get pvc -n {ns} -l app={app} -o json 2>/dev/null"
     stdout, _, rc = run_cmd(cmd)
