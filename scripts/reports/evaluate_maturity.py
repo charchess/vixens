@@ -371,6 +371,29 @@ def check_pvc(ns, app):
     return None  # N/A - no persistent storage needed
 
 def check_metrics(pod):
+    """Check if metrics are exposed (prometheus annotations)
+    
+    Returns:
+        True - metrics annotations present
+        False - no metrics (will fail Gold)
+        None - exempted via vixens.io/nometrics annotation
+    """
+    if not pod:
+        return False
+    
+    annotations = pod.get("metadata", {}).get("annotations", {})
+    
+    # Check for exemption: vixens.io/nometrics: "true"
+    if annotations.get("vixens.io/nometrics") == "true":
+        return None  # N/A - app exempted from metrics requirement
+    
+    # Check for prometheus annotations
+    has_metrics = (
+        "prometheus.io/scrape" in annotations
+        or "prometheus.io/port" in annotations
+    )
+    
+    return has_metrics
     """Check if metrics are exposed (prometheus annotations)"""
     annotations = pod.get("metadata", {}).get("annotations", {})
     return (
