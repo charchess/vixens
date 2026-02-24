@@ -1,8 +1,7 @@
----
-# Kustomize Component: Priority Class - Low
+
+# Kustomize Component: Low Priority
 #
-# Enforces vixens-low priority class (0).
-# Usage: Background tasks (Downloaders, Scrapers, Transcoding)
+# Low priority class for non-critical applications
 #
 # Usage:
 #   components:
@@ -22,4 +21,5 @@ patches:
       spec:
         template:
           spec:
-            priorityClassName: vixens-low
+            priorityClassName: low-priority
+
