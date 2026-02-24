@@ -83,7 +83,7 @@ spec:
         - name: restore-config
           image: rclone/rclone:1.73
           securityContext:
-            runAsUser: 0
+            runAsUser: 1000
             runAsGroup: 1000
           command:
             - sh
