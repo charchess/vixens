@@ -9,6 +9,7 @@
 #     - ../../../../_shared/components/revision-history-limit
 #
 # Reference: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#revision-history-limit
+
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
 

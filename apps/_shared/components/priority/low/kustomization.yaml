@@ -1,0 +1,25 @@
+---
+# Kustomize Component: Priority Class - Low
+#
+# Enforces vixens-low priority class (0).
+# Usage: Background tasks (Downloaders, Scrapers, Transcoding)
+#
+# Usage:
+#   components:
+#     - ../../../../_shared/components/priority/low
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+      spec:
+        template:
+          spec:
+            priorityClassName: vixens-low

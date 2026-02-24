@@ -1,0 +1,25 @@
+---
+# Kustomize Component: Priority Class - High
+#
+# Enforces vixens-high priority class (50000).
+# Usage: Vital Services (Home Assistant, MQTT, Prometheus)
+#
+# Usage:
+#   components:
+#     - ../../../../_shared/components/priority/high
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+      spec:
+        template:
+          spec:
+            priorityClassName: vixens-high
