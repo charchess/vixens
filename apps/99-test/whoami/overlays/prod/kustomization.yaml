@@ -8,6 +8,5 @@ resources:
 
 components:
   - ../../../../_shared/components/default
-  - ../../../../_shared/components/sizing/small
   - ../../../../_shared/components/priority/low
   - ../../../../_shared/components/probes/basic
