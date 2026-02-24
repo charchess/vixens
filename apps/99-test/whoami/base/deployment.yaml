@@ -17,7 +17,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "80"
         goldilocks.fairwinds.com/enabled: "true"
-        vpa.recommendations.apps.kubernetes.io: "true"
+        autoscaling.k8s.io/vpa: "true"
     spec:
       priorityClassName: vixens-medium
       tolerations:
