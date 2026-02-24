@@ -357,6 +357,154 @@ def check_service(ns, app):
     return False
 
 def check_pvc(ns, app):
+    """Check if PVC uses Retain policy (data safety)
+    
+    Returns:
+        True - No PVC needed OR PVC uses Retain policy
+        False - PVC exists but uses Delete policy (data loss risk)
+    """
+    # Get deployment to check if it references any PVCs
+    cmd = f"kubectl get deploy -n {ns} {app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    
+    if rc != 0 or not stdout:
+        # Try StatefulSet
+        cmd = f"kubectl get sts -n {ns} {app} -o json 2>/dev/null"
+        stdout, _, rc = run_cmd(cmd)
+    
+    if rc != 0 or not stdout:
+        return True  # No deployment found, assume no PVC needed
+    
+    data = json.loads(stdout)
+    
+    # Get all PVC names referenced in volumes
+    referenced_pvcs = set()
+    
+    # Check volumes in spec (Deployment/StatefulSet)
+    spec = data.get("spec", {})
+    
+    # For StatefulSet, check volumeClaimTemplates
+    if data.get("kind") == "StatefulSet":
+        vct = spec.get("volumeClaimTemplates", [])
+        if vct:
+            # StatefulSet has volumeClaimTemplates - check their reclaim policy
+            for v in vct:
+                # Get storage class and check reclaim policy
+                sc_name = v.get("spec", {}).get("storageClassName", "")
+                if sc_name:
+                    sc_cmd = f"kubectl get sc {sc_name} -o jsonpath='{{.reclaimPolicy}}' 2>/dev/null"
+                    sc_stdout, _, sc_rc = run_cmd(sc_cmd)
+                    if sc_rc == 0 and sc_stdout.strip().lower() != "retain":
+                        return False  # PVC uses Delete policy
+            return True
+    
+    # For Deployment, check volumes
+    template_spec = spec.get("template", {}).get("spec", {})
+    volumes = template_spec.get("volumes", [])
+    
+    for vol in volumes:
+        if "persistentVolumeClaim" in vol:
+            claim_name = vol.get("persistentVolumeClaim", {}).get("claimName", "")
+            if claim_name:
+                referenced_pvcs.add(claim_name)
+    
+    # If no PVCs referenced, OK (no persistent storage)
+    if not referenced_pvcs:
+        return True
+    
+    # Check reclaim policy of each referenced PVC
+    for pvc_name in referenced_pvcs:
+        # Get PVC reclaim policy
+        pvc_cmd = f"kubectl get pvc {pvc_name} -n {ns} -o json 2>/dev/null"
+        pvc_stdout, _, pvc_rc = run_cmd(pvc_cmd)
+        
+        if pvc_rc != 0 or not pvc_stdout:
+            return False  # PVC doesn't exist
+        
+        pvc_data = json.loads(pvc_stdout)
+        
+        # Check PVC-level reclaim policy first
+        pvc_reclaim = pvc_data.get("spec", {}).get("persistentVolumeReclaimPolicy", "")
+        if pvc_reclaim and pvc_reclaim.lower() != "retain":
+            return False
+        
+        # Check StorageClass reclaim policy if not set on PVC
+        sc_name = pvc_data.get("spec", {}).get("storageClassName", "")
+        if sc_name:
+            sc_cmd = f"kubectl get sc {sc_name} -o jsonpath='{{.reclaimPolicy}}' 2>/dev/null"
+            sc_stdout, sc_rc, _ = run_cmd(sc_cmd)
+            if sc_rc == 0 and sc_stdout.strip().lower() != "retain":
+                return False
+    
+    return True  # All PVCs use Retain policy
+    """Check if PVC exists (contextual - only if app has persistent data)
+    
+    Returns:
+        True - PVC exists and is referenced by deployment
+        False - Deployment references PVC but it doesn't exist
+        None - N/A (no persistent storage needed)
+    """
+    # Get deployment to check if it references any PVCs
+    cmd = f"kubectl get deploy -n {ns} {app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    
+    if rc != 0 or not stdout:
+        # Try StatefulSet
+        cmd = f"kubectl get sts -n {ns} {app} -o json 2>/dev/null"
+        stdout, _, rc = run_cmd(cmd)
+    
+    if rc != 0 or not stdout:
+        return None  # No deployment/STS found
+    
+    data = json.loads(stdout)
+    
+    # Get all PVC names referenced in volumes
+    referenced_pvcs = set()
+    
+    # Check volumes in spec (Deployment/StatefulSet)
+    spec = data.get("spec", {})
+    
+    # For StatefulSet, check volumeClaimTemplates
+    if data.get("kind") == "StatefulSet":
+        vct = spec.get("volumeClaimTemplates", [])
+        if vct:
+            # StatefulSet has volumeClaimTemplates - PVCs should exist
+            # Get all PVCs in namespace
+            cmd = f"kubectl get pvc -n {ns} -o jsonpath='{{.items[*].metadata.name}}' 2>/dev/null"
+            stdout, _, rc = run_cmd(cmd)
+            if rc == 0 and stdout:
+                return True  # PVCs exist in namespace
+            return False  # StatefulSet expects PVCs but none found
+    
+    # For Deployment, check volumes
+    template_spec = spec.get("template", {}).get("spec", {})
+    volumes = template_spec.get("volumes", [])
+    
+    for vol in volumes:
+        if "persistentVolumeClaim" in vol:
+            claim_name = vol.get("persistentVolumeClaim", {}).get("claimName", "")
+            if claim_name:
+                referenced_pvcs.add(claim_name)
+    
+    # If no PVCs referenced, N/A
+    if not referenced_pvcs:
+        return None
+    
+    # Check if referenced PVCs exist
+    all_pvcs_cmd = f"kubectl get pvc -n {ns} -o jsonpath='{{.items[*].metadata.name}}' 2>/dev/null"
+    stdout, _, rc = run_cmd(all_pvcs_cmd)
+    
+    if rc != 0 or not stdout:
+        return False  # Has PVC reference but no PVCs exist
+    
+    existing_pvcs = set(stdout.split())
+    
+    # Check if all referenced PVCs exist
+    for pvc in referenced_pvcs:
+        if pvc not in existing_pvcs:
+            return False  # Referenced PVC doesn't exist
+    
+    return True  # All referenced PVCs exist
     """Check if PVC exists (contextual - only if app has persistent data)
     
     Returns:
