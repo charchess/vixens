@@ -1,0 +1,36 @@
+# Component: PodDisruptionBudget - 50percent (High Availability Budget)
+#
+# This component sets minAvailable: 50% on PodDisruptionBudget resources.
+# Use for:
+#   - High-availability applications
+#   - Multi-replica stateless services
+#   - Production apps requiring quorum/split-brain prevention
+#
+# Usage:
+#   components:
+#     - ../../../../_shared/components/poddisruptionbudget/50percent
+#
+# Example result (for 4 replicas):
+#   spec:
+#     minAvailable: 50%  # Ensures 2 pods remain
+#     selector:
+#       matchLabels:
+#         app: <your-app>
+#
+# Note: This maintains quorum during rolling updates and node maintenance.
+# For a 3-replica deployment, 50% = 2 pods (Kubernetes rounds up).
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: PodDisruptionBudget
+      name: ".*"
+    patch: |-
+      apiVersion: policy/v1
+      kind: PodDisruptionBudget
+      metadata:
+        name: any
+      spec:
+        minAvailable: 50%
