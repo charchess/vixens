@@ -13,6 +13,7 @@ spec:
     metadata:
       labels:
         app: whoami
+        vixens.io/sizing: "G-small"
       annotations:
         vixens.io/nometrics: "true"
         goldilocks.fairwinds.com/enabled: "true"
