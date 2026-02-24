@@ -2,10 +2,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-metadata:
-  labels:
-    vixens.io/sizing: small
-
 resources:
   - ../../base
   - ingress.yaml
@@ -13,3 +9,16 @@ resources:
 components:
   - ../../../../_shared/components/default
   - ../../../../_shared/components/priority/low
+
+# Add sizing label to all resources
+transformers:
+  - |
+    apiVersion: builtin
+    kind: LabelTransformer
+    metadata:
+      name: add-sizing-label
+    labels:
+      vixens.io/sizing: small
+    fieldSpecs:
+      - path: metadata/labels
+        create: true
