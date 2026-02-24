@@ -875,7 +875,7 @@ def evaluate_bronze(ns, app, deploy_kind, app_path=None):
         if build_ok is not None:  # Only add if check was possible
             checks["Kustomize build OK"] = build_ok
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
     """Level 1: Bronze - App exists"""
     checks = {}
 
@@ -914,7 +914,7 @@ def evaluate_bronze(ns, app, deploy_kind, app_path=None):
     checks["Service configured"] = check_service(ns, app)
     checks["Ingress configured"] = get_ingress(ns, app) is not None
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
     """Level 1: Bronze - App exists"""
     checks = {}
 
@@ -947,7 +947,7 @@ def evaluate_bronze(ns, app, deploy_kind, app_path=None):
     checks["Service configured"] = check_service(ns, app)
     checks["Ingress configured"] = get_ingress(ns, app) is not None
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
     """Level 1: Bronze - App exists"""
     checks = {}
 
@@ -976,7 +976,7 @@ def evaluate_bronze(ns, app, deploy_kind, app_path=None):
         checks["CPU Request"] = False
         checks["Memory Request"] = False
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
 
 
 def evaluate_silver(ns, app, deploy_kind):
@@ -1018,7 +1018,7 @@ def evaluate_silver(ns, app, deploy_kind):
     if pvc_check is not None:  # Only add check if applicable
         checks["PVC configured"] = pvc_check
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
     """Level 2: Silver - Production Ready"""
     checks = {}
 
@@ -1051,13 +1051,13 @@ def evaluate_silver(ns, app, deploy_kind):
     secret_check = get_secret(ns, app)
     checks["Secrets via Infisical"] = secret_check in [True, None]
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
     # None = app doesn't use secrets (N/A), True = uses Infisical, False = uses secrets but not Infisical
     secret_check = get_secret(ns, app)
     checks["Secrets via Infisical"] = secret_check in [True, None]
     checks["Secrets via Infisical"] = get_secret(ns, app)
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
 
 
 def evaluate_gold(ns, app, deploy_kind):
@@ -1090,7 +1090,7 @@ def evaluate_gold(ns, app, deploy_kind):
         if sm_check:  # Only add if ServiceMonitor exists
             checks["ServiceMonitor"] = True
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
     """Level 3: Gold - Standard Quality"""
     checks = {}
 
@@ -1110,7 +1110,7 @@ def evaluate_gold(ns, app, deploy_kind):
     checks["Goldilocks Enabled"] = check_goldilocks_annotation(pod) if pod else False
     checks["VPA Annotations"] = check_vpa_annotation(pod) if pod else False
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
 
 
 def evaluate_platinum(ns, app, deploy_kind):
@@ -1135,7 +1135,7 @@ def evaluate_platinum(ns, app, deploy_kind):
     checks["Sync-wave configured"] = check_sync_wave(ns, app)
     checks["Sync-wave configured"] = check_sync_wave(ns, app)
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
     """Level 4: Platinum - Reliability"""
     checks = {}
 
@@ -1147,7 +1147,7 @@ def evaluate_platinum(ns, app, deploy_kind):
     )
     checks["PodDisruptionBudget"] = check_pdb(ns, app)
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
 
 
 def evaluate_emerald(ns, app, deploy_kind):
@@ -1193,7 +1193,7 @@ def evaluate_emerald(ns, app, deploy_kind):
 
     checks["Backup configured"] = get_backup_config(ns, app)
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
 
 
 def evaluate_diamond(ns, app, deploy_kind):
@@ -1207,14 +1207,14 @@ def evaluate_diamond(ns, app, deploy_kind):
     pod = get_pod(ns, app)
     checks["SecurityContext hardened"] = check_security_context_hardened(pod) if pod else False
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
     """Level 6: Diamond - Security & Integration"""
     checks = {}
 
     checks["PSA Labels"] = check_psa_labels(ns)
     checks["NetworkPolicies"] = check_network_policy(ns, app)
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
 
 
 def evaluate_orichalcum(ns, app, deploy_kind):
@@ -1233,14 +1233,14 @@ def evaluate_orichalcum(ns, app, deploy_kind):
     # - SLO/SLI defined (requires monitoring system integration)
     # - DR testing (requires manual verification)
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
     """Level 7: Orichalcum - Perfection"""
     checks = {}
 
     pod = get_pod(ns, app)
     checks["Guaranteed QoS"] = get_qos_class(pod) == "Guaranteed" if pod else False
 
-    return all(checks.values()), checks
+    return all(v for v in checks.values() if v is not None), checks
 
 
 def main():
