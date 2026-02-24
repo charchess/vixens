@@ -427,7 +427,16 @@ def check_revision_history_limit(deploy):
     limit = deploy.get("spec", {}).get("revisionHistoryLimit")
     return limit is not None and limit <= 3
 
-def check_sync_wave(deploy):
+def check_sync_wave(ns, app):
+    """Check if sync-wave annotation is present on ArgoCD Application"""
+    # ArgoCD Applications are in the argocd namespace
+    cmd = f"kubectl get application {app} -n argocd -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        annotations = data.get("metadata", {}).get("annotations", {})
+        return "argocd.argoproj.io/sync-wave" in annotations
+    return False
     """Check if sync-wave annotation is present"""
     if not deploy:
         return False
@@ -1123,7 +1132,8 @@ def evaluate_platinum(ns, app, deploy_kind):
     checks["revisionHistoryLimit: 3"] = check_revision_history_limit(deploy)
     
     # NEW: Check sync-wave configured (per ADR-022)
-    checks["Sync-wave configured"] = check_sync_wave(deploy)
+    checks["Sync-wave configured"] = check_sync_wave(ns, app)
+    checks["Sync-wave configured"] = check_sync_wave(ns, app)
 
     return all(checks.values()), checks
     """Level 4: Platinum - Reliability"""
