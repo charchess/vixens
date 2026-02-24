@@ -1,4 +1,166 @@
-# Migration Guide: Standardized Resource Sizing
+# Migration Guide: Standardized Resource Sizing & Priority
+
+## Current State (Feb 2026)
+
+| Aspect | Method | Status |
+|----------|---------|---------|
+| **Resource Sizing** | Kyverno mutate policy | ✅ Active |
+| **Priority Class** | `priorityClassName` in base YAML | ✅ Active |
+| **Components sizing/** | **DEPRECATED** | ❌ Do not use |
+| **Components priority/** | **DEPRECATED** | ❌ Do not use |
+
+## Quick Start
+
+### For New Applications
+
+```yaml
+# base/deployment.yaml
+spec:
+  priorityClassName: vixens-medium  # Set in base
+  containers:
+    - name: myapp
+      resources: {}  # Leave empty, Kyverno will populate
+
+# overlays/prod/kustomization.yaml
+metadata:
+  labels:
+    vixens.io/sizing: medium  # Kyverno uses this label
+```
+
+### For Existing Applications Using Components
+
+**Remove these obsolete components:**
+```yaml
+# ❌ REMOVE THESE LINES:
+components:
+  - ../../../../_shared/components/sizing/small    # OBSOLETE
+  - ../../../../_shared/components/priority/low      # OBSOLETE
+```
+
+**Replace with:**
+```yaml
+# ✅ CORRECT PATTERN:
+# In base/deployment.yaml:
+spec:
+  priorityClassName: vixens-medium
+
+# In overlay kustomization.yaml:
+metadata:
+  labels:
+    vixens.io/sizing: medium  # micro/small/medium/large/xlarge
+```
+
+## Resource Sizing (Kyverno)
+
+Kyverno mutation policies automatically apply resource sizing based on the `vixens.io/sizing` label.
+
+### Sizing Reference
+
+| Sizing | CPU (Req/Lim) | Memory (Req/Lim) | Typical Use |
+|--------|---------------|------------------|-------------|
+| **micro** | 10m/100m | 64Mi/128Mi | Sidecars, exporters |
+| **small** | 50m/500m | 256Mi/512Mi | Optimized apps (Go/Rust) |
+| **medium** | 200m/1000m | 512Mi/1Gi | Standard web apps |
+| **large** | 1000m/2000m | 2Gi/4Gi | Databases, heavy apps |
+| **xlarge** | 2000m/4000m | 4Gi/8Gi | AI processing, indexing |
+
+### How It Works
+
+1. Add label to overlay: `vixens.io/sizing: medium`
+2. Kyverno intercepts pod creation
+3. Kyverno injects resources based on sizing profile
+4. Pod is admitted with mutated resources
+
+### Check Audit Results
+
+```bash
+# View sizing-audit policy report
+kubectl get policyreports -n kyverno -o yaml | grep -A10 sizing-audit
+```
+
+## Priority Classes (Base YAML)
+
+Define `priorityClassName` directly in base/deployment.yaml:
+
+```yaml
+spec:
+  priorityClassName: vixens-critical  # or high/medium/low
+```
+
+**Available classes:**
+- `vixens-critical` - Infrastructure apps (ArgoCD, databases)
+- `vixens-high` - User-facing production apps
+- `vixens-medium` - Standard apps (default)
+- `vixens-low` - Background jobs, batch processing
+
+## Migration from Old Components
+
+### What Was Changed
+
+| Old Approach | New Approach |
+|--------------|--------------|
+| `components/sizing/small` | `vixens.io/sizing` label |
+| `components/priority/low` | `priorityClassName` in base |
+
+### Example: whoami Migration
+
+**Before (OBSOLETE):**
+```yaml
+# overlays/dev/kustomization.yaml
+components:
+  - ../../../../_shared/components/sizing/micro
+  - ../../../../_shared/components/priority/low
+```
+
+**After (CURRENT):**
+```yaml
+# base/deployment.yaml
+spec:
+  priorityClassName: vixens-medium
+
+# overlays/dev/kustomization.yaml
+metadata:
+  labels:
+    vixens.io/sizing: small
+```
+
+## Policy Status
+
+```bash
+# Check Kyverno policies
+kubectl get clusterpolicy sizing-audit sizing-mutate
+
+# Check recent mutations
+kubectl get events --field-selector reason=PolicyApplied
+
+# Check policy reports
+kubectl get policyreports -n kyverno
+```
+
+## FAQ
+
+**Q: What if my app already has resources defined?**
+A: Kyverno will overwrite them. Remove resources from base YAML.
+
+**Q: Can I override sizing for one environment?**
+A: Use different sizing labels per overlay:
+```yaml
+# overlays/dev: smaller sizing
+metadata:
+  labels:
+    vixens.io/sizing: small
+
+# overlays/prod: larger sizing
+metadata:
+  labels:
+    vixens.io/sizing: medium
+```
+
+**Q: Will this affect running pods?**
+A: No, Kyverno only mutates on creation/update. Restart pods to apply changes.
+
+**Q: Are the old sizing/* and priority/* components still working?**
+A: Yes but **deprecated**. They will be removed. Migrate to the new approach.
 
 This guide explains how to migrate to the new standardized resource sizing system using Kyverno policies.
 
