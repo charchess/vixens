@@ -1,0 +1,24 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: whoami
+spec:
+  podSelector:
+    matchLabels:
+      app: whoami
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow ingress only from Traefik namespace (port 80)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 80
+  egress:
+    # Allow all egress (needed for health checks, etc.)
+    - {}
