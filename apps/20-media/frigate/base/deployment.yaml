@@ -64,7 +64,7 @@ spec:
             - name: config
               mountPath: /config
         - name: validate-config
-          image: python:3.13-alpine
+          image: python:3.14-alpine
           command:
             - sh
             - -c
@@ -180,7 +180,7 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-syncer
-          image: python:3.13-alpine
+          image: python:3.14-alpine
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000

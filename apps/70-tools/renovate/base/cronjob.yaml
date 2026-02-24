@@ -28,7 +28,7 @@ spec:
               effect: NoSchedule
           containers:
             - name: renovate
-              image: renovate/renovate:43.31.6 # Renovate latest stable
+              image: renovate/renovate:43.31.7 # Renovate latest stable
               resources:
                 requests:
                   cpu: 500m

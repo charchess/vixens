@@ -106,7 +106,7 @@ spec:
               mountPath: /etc/robusta/config
       containers:
         - name: holmes
-          image: "us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:0.19.60"
+          image: "us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:0.20.0"
           imagePullPolicy: Always
           command: ["python3", "-u", "server.py"]
           env:
