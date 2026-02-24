@@ -1,8 +1,7 @@
----
-# Kustomize Component: Priority Class - Medium
+
+# Kustomize Component: Medium Priority
 #
-# Enforces vixens-medium priority class (10000).
-# Usage: Standard Apps (Plex/Jellyfin, *arr apps, Vaultwarden)
+# Medium priority class for standard applications
 #
 # Usage:
 #   components:
@@ -22,4 +21,5 @@ patches:
       spec:
         template:
           spec:
-            priorityClassName: vixens-medium
+            priorityClassName: medium-priority
+

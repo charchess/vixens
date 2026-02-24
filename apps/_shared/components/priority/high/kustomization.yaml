@@ -1,8 +1,7 @@
----
-# Kustomize Component: Priority Class - High
+
+# Kustomize Component: High Priority
 #
-# Enforces vixens-high priority class (50000).
-# Usage: Vital Services (Home Assistant, MQTT, Prometheus)
+# High priority class for critical applications
 #
 # Usage:
 #   components:
@@ -22,4 +21,5 @@ patches:
       spec:
         template:
           spec:
-            priorityClassName: vixens-high
+            priorityClassName: high-priority
+
