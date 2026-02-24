@@ -1,4 +1,11 @@
-
+#
+# ⚠️  DEPRECATED - DO NOT USE
+#
+# This component is obsolete. Resource sizing is now handled by Kyverno
+# via the vixens.io/sizing label. See docs/guides/sizing-migration.md
+#
+# Kustomize Component: Small Sizing
+#
 # Kustomize Component: Small Sizing
 #
 # Standard resource allocation for typical applications
