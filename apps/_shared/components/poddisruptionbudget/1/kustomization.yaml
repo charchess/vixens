@@ -1,0 +1,36 @@
+# Component: PodDisruptionBudget - 1 (Single Pod Budget)
+#
+# This component sets minAvailable: 1 on PodDisruptionBudget resources.
+# Use for:
+#   - Single-replica applications
+#   - Apps where at least one pod must remain running
+#   - Stateful applications that can't tolerate full downtime
+#
+# Usage:
+#   components:
+#     - ../../../../_shared/components/poddisruptionbudget/1
+#
+# Example result:
+#   spec:
+#     minAvailable: 1
+#     selector:
+#       matchLabels:
+#         app: <your-app>
+#
+# Note: This ensures at least one pod survives during node maintenance
+# or voluntary disruptions.
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: PodDisruptionBudget
+      name: ".*"
+    patch: |-
+      apiVersion: policy/v1
+      kind: PodDisruptionBudget
+      metadata:
+        name: any
+      spec:
+        minAvailable: 1

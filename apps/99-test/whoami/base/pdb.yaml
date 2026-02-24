@@ -4,7 +4,7 @@ kind: PodDisruptionBudget
 metadata:
   name: whoami
 spec:
-  minAvailable: 0
+  # minAvailable will be set by the poddisruptionbudget component
   selector:
     matchLabels:
       app: whoami
