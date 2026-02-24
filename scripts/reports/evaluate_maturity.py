@@ -357,6 +357,95 @@ def check_service(ns, app):
     return False
 
 def check_pvc(ns, app):
+    """Check PVC data safety - Retain for non-iSCSI, Delete OK for iSCSI
+    
+    Returns:
+        True - PVC is safe (iSCSI with Delete OR non-iSCSI with Retain)
+        False - PVC has data loss risk
+    """
+    # Get deployment to check if it references any PVCs
+    cmd = f"kubectl get deploy -n {ns} {app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    
+    if rc != 0 or not stdout:
+        # Try StatefulSet
+        cmd = f"kubectl get sts -n {ns} {app} -o json 2>/dev/null"
+        stdout, _, rc = run_cmd(cmd)
+    
+    if rc != 0 or not stdout:
+        return True  # No deployment found, assume no PVC needed
+    
+    data = json.loads(stdout)
+    
+    # Get all PVC names referenced in volumes
+    referenced_pvcs = set()
+    
+    # Check volumes in spec (Deployment/StatefulSet)
+    spec = data.get("spec", {})
+    
+    # For StatefulSet, check volumeClaimTemplates
+    if data.get("kind") == "StatefulSet":
+        vct = spec.get("volumeClaimTemplates", [])
+        if vct:
+            for v in vct:
+                sc_name = v.get("spec", {}).get("storageClassName", "")
+                if sc_name:
+                    if not is_safe_storage_class(sc_name):
+                        return False
+            return True
+    
+    # For Deployment, check volumes
+    template_spec = spec.get("template", {}).get("spec", {})
+    volumes = template_spec.get("volumes", [])
+    
+    for vol in volumes:
+        if "persistentVolumeClaim" in vol:
+            claim_name = vol.get("persistentVolumeClaim", {}).get("claimName", "")
+            if claim_name:
+                referenced_pvcs.add(claim_name)
+    
+    # If no PVCs referenced, OK (no persistent storage)
+    if not referenced_pvcs:
+        return True
+    
+    # Check each referenced PVC
+    for pvc_name in referenced_pvcs:
+        pvc_cmd = f"kubectl get pvc {pvc_name} -n {ns} -o json 2>/dev/null"
+        pvc_stdout, _, pvc_rc = run_cmd(pvc_cmd)
+        
+        if pvc_rc != 0 or not pvc_stdout:
+            return False  # PVC doesn't exist
+        
+        pvc_data = json.loads(pvc_stdout)
+        
+        # Check StorageClass name
+        sc_name = pvc_data.get("spec", {}).get("storageClassName", "")
+        
+        if sc_name and not is_safe_storage_class(sc_name):
+            return False
+    
+    return True
+
+
+def is_safe_storage_class(sc_name):
+    """Check if storage class is safe (Retain for non-iSCSI, Delete OK for iSCSI)"""
+    # Get StorageClass reclaim policy
+    sc_cmd = f"kubectl get sc {sc_name} -o json 2>/dev/null"
+    sc_stdout, sc_rc, _ = run_cmd(sc_cmd)
+    
+    if sc_rc != 0 or not sc_stdout:
+        return True  # Assume safe if SC not found
+    
+    sc_data = json.loads(sc_stdout)
+    reclaim = sc_data.get("reclaimPolicy", "").lower()
+    provisioner = sc_data.get("provisioner", "")
+    
+    # iSCSI storage - Delete is OK (acts like Recycle)
+    if "iscsi" in sc_name.lower() or "iscsi" in provisioner.lower():
+        return True  # iSCSI with Delete is safe
+    
+    # Non-iSCSI storage - must be Retain
+    return reclaim == "retain"
     """Check if PVC uses Retain policy (data safety)
     
     Returns:
