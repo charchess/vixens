@@ -104,6 +104,28 @@ def get_secret(ns, app):
     if not uses_secrets:
         return None
     
+    # Check for InfisicalSecret CRD (the proper way to detect Infisical)
+    cmd = f"kubectl get infisicalsecret -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        if len(data.get("items", [])) > 0:
+            return True
+    
+    # Also check by name pattern (InfisicalSecret often named <app>-secrets-sync)
+    cmd = f"kubectl get infisicalsecret -n {ns} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for item in data.get("items", []):
+            name = item.get("metadata", {}).get("name", "").lower()
+            if app.lower() in name:
+                return True
+    
+    # Check for standard Kubernetes secrets (fallback)
+    if not uses_secrets:
+        return None
+    
     # App uses secrets - check if they're via Infisical
     cmd = f"kubectl get secret -n {ns} -l app={app} -o json 2>/dev/null"
     stdout, _, rc = run_cmd(cmd)
