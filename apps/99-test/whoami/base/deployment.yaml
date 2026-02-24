@@ -14,8 +14,7 @@ spec:
       labels:
         app: whoami
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "80"
+        vixens.io/nometrics: "true"
         goldilocks.fairwinds.com/enabled: "true"
         autoscaling.k8s.io/vpa: "true"
     spec:
