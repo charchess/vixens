@@ -1,5 +1,16 @@
 # Radarr
 
+## Tier de Maturity
+
+| Tier | Statut | Date |
+|------|--------|------|
+| 🥉 Bronze | ✅ | 2026-02-24 |
+| 🥈 Silver | ✅ | 2026-02-24 |
+| 🥇 Gold | ⏳ | - |
+
+## Informations de Déploiement
+# Radarr
+
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
