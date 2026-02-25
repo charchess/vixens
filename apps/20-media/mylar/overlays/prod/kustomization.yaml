@@ -1,10 +1,19 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
 namespace: media
+
 resources:
   - ../../base
   - ingress.yaml
+
+components:
+  - ../../../../_shared/components/base
+  - ../../../../_shared/components/resources
+  - ../../../../_shared/components/metrics
+  - ../../../../_shared/components/poddisruptionbudget/0
+
 patches:
   - target:
       kind: InfisicalSecret
