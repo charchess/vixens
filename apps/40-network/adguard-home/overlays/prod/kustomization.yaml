@@ -21,3 +21,13 @@ patches:
     target:
       kind: InfisicalSecret
       name: adguard-home-secrets-sync
+  - patch: |
+      - op: add
+        path: /spec/template/metadata/annotations/goldilocks.fairwinds.com~1enabled
+        value: "true"
+      - op: add
+        path: /spec/template/metadata/annotations/autoscaling.k8s.io~1vpa
+        value: "auto"
+    target:
+      kind: StatefulSet
+      name: adguard-home
