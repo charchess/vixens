@@ -9,5 +9,6 @@ resources:
   - service.yaml
   - pvc.yaml
   - pdb.yaml
+  - networkpolicy.yaml
   - infisical-secret.yaml
   - litestream-config.yaml
