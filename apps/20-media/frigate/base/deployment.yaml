@@ -118,6 +118,11 @@ spec:
         - name: frigate
           image: ghcr.io/blakeblackshear/frigate:0.17.0-beta2
           securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
             privileged: true
           ports:
             - containerPort: 5000
