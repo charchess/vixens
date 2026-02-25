@@ -21,6 +21,12 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
+        goldilocks.fairwinds.com/enabled: "true"
+        autoscaling.k8s.io/vpa: "auto"
+        reloader.stakater.com/auto: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
     spec:
       priorityClassName: vixens-medium
       tolerations:
