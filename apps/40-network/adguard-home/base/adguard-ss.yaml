@@ -122,7 +122,6 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 20
           volumeMounts:
-          volumeMounts:
             - name: config
               mountPath: /opt/adguardhome/conf
             - name: data
