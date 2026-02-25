@@ -116,6 +116,12 @@ spec:
             limits:
               cpu: 1000m
               memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
           env:
             - name: SONARR__API_KEY
               valueFrom:
