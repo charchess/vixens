@@ -3,12 +3,12 @@
 #
 # Minimal requirements for ALL applications:
 # - revisionHistoryLimit: 3
-# - SecurityContext hardened (fsGroup)
+# - SecurityContext hardened (pod level)
 #
 # Usage:
 #   components:
 #     - ../../../../_shared/components/base
-
+#
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
 
@@ -27,3 +27,7 @@ patches:
             securityContext:
               fsGroup: 1000
               fsGroupChangePolicy: OnRootMismatch
+              runAsNonRoot: true
+              runAsUser: 1000
+              seccompProfile:
+                type: RuntimeDefault
