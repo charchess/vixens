@@ -26,7 +26,8 @@ spec:
     spec:
       priorityClassName: vixens-high
       nodeSelector:
-        kubernetes.io/hostname: peach
+    spec:
+      priorityClassName: vixens-high
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
@@ -142,7 +143,21 @@ spec:
             - /etc/litestream.yml
           ports:
             - containerPort: 9090
+          ports:
+            - containerPort: 9090
               name: metrics
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9090
+            initialDelaySeconds: 15
+            periodSeconds: 20
           resources:
             requests:
               cpu: 50m
@@ -194,7 +209,20 @@ spec:
               memory: 128Mi
             limits:
               cpu: 50m
+          resources:
+            requests:
+              cpu: 50m
               memory: 128Mi
+            limits:
+              cpu: 50m
+              memory: 128Mi
+          livenessProbe:
+            exec:
+              command:
+                - pgrep
+                - rclone
+            initialDelaySeconds: 30
+            periodSeconds: 30
           volumeMounts:
             - name: config
               mountPath: /opt/adguardhome/conf
