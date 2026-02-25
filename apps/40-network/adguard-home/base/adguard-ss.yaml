@@ -8,6 +8,7 @@ metadata:
 spec:
   serviceName: adguard-home-headless
   replicas: 1
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: adguard-home
@@ -112,12 +113,6 @@ spec:
               memory: 512Mi
             limits:
               cpu: 200m
-          resources:
-            requests:
-              cpu: 200m
-              memory: 512Mi
-            limits:
-              cpu: 200m
               memory: 512Mi
           securityContext:
             runAsUser: 0
@@ -149,8 +144,6 @@ spec:
           image: litestream/litestream:0.5.9
           securityContext:
             runAsUser: 0
-          securityContext:
-            runAsUser: 0
             runAsGroup: 0
             allowPrivilegeEscalation: false
             capabilities:
@@ -164,14 +157,13 @@ spec:
           ports:
             - containerPort: 9090
               name: metrics
-          readinessProbe:
-              name: metrics
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-            seccompProfile:
-              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 50m
+              memory: 128Mi
           readinessProbe:
             httpGet:
               path: /metrics
@@ -184,13 +176,6 @@ spec:
               port: 9090
             initialDelaySeconds: 15
             periodSeconds: 20
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              cpu: 50m
-              memory: 128Mi
           envFrom:
             - secretRef:
                 name: adguard-home-secrets
@@ -202,19 +187,6 @@ spec:
               subPath: litestream.yml
         - name: config-syncer
           image: rclone/rclone:1.73
-          securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-            seccompProfile:
-              type: RuntimeDefault
-          command:
-            - sh
-            - -c
-          args:
-          command:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
