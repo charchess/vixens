@@ -25,9 +25,6 @@ spec:
         autoscaling.k8s.io/vpa: auto
     spec:
       priorityClassName: vixens-high
-      nodeSelector:
-    spec:
-      priorityClassName: vixens-high
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
@@ -143,8 +140,6 @@ spec:
             - /etc/litestream.yml
           ports:
             - containerPort: 9090
-          ports:
-            - containerPort: 9090
               name: metrics
           readinessProbe:
             httpGet:
@@ -203,12 +198,6 @@ spec:
           envFrom:
             - secretRef:
                 name: adguard-home-secrets
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              cpu: 50m
           resources:
             requests:
               cpu: 50m
