@@ -1,17 +1,13 @@
 #
-# Kustomize Component: Default Requirements
+# Kustomize Component: Base Requirements
 #
-# Enforces the Vixens minimum Kyverno requirements:
+# Minimal requirements for ALL applications:
 # - revisionHistoryLimit: 3
-# - SecurityContext hardened (fsGroup, allowPrivilegeEscalation)
-#
-# Resources and probes are now managed by Kyverno policies:
-# - sizing-mutate (resource sizing)
-# - require-probes (health probes)
+# - SecurityContext hardened (fsGroup)
 #
 # Usage:
 #   components:
-#     - ../../../../_shared/components/default
+#     - ../../../../_shared/components/base
 
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
