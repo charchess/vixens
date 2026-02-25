@@ -1,0 +1,9 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: adguard-home
+spec:
+  selector:
+    matchLabels:
+      app: adguard-home
