@@ -123,6 +123,16 @@ spec:
               drop:
                 - ALL
           ports:
+            - containerPort: 5000
+              name: http
+            - containerPort: 8554
+              name: rtsp
+          livenessProbe:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
             privileged: true
           ports:
             - containerPort: 5000
