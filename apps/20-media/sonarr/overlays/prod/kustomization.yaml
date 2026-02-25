@@ -4,7 +4,10 @@ kind: Kustomization
 namespace: media
 resources:
   - ../../base
-  - ingress.yaml
+  components:
+  - ../../../../_shared/components/base
+  - ../../../../_shared/components/resources
+  - ../../../../_shared/components/metrics
 patches:
   - target:
       kind: InfisicalSecret
