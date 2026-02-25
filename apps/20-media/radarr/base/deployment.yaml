@@ -9,7 +9,6 @@ spec:
   strategy:
     type: Recreate
   replicas: 1
-  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: radarr

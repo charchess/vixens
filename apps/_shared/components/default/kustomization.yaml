@@ -27,6 +27,27 @@ patches:
       spec:
         revisionHistoryLimit: 3
         template:
+          metadata:
+            annotations:
+              goldilocks.fairwinds.com/enabled: "true"
+              autoscaling.k8s.io/vpa: "auto"
+              prometheus.io/scrape: "true"
+              prometheus.io/port: "9090"
+              prometheus.io/path: "/metrics"
+          spec:
+            securityContext:
+              fsGroup: 1000
+              fsGroupChangePolicy: OnRootMismatch
+  - target:
+      kind: Deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+      spec:
+        revisionHistoryLimit: 3
+        template:
           spec:
             securityContext:
               fsGroup: 1000
