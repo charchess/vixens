@@ -7,8 +7,8 @@ spec:
   podSelector:
     matchLabels:
       app: prowlarr
-  - Ingress
-    policyTypes:
+  policyTypes:
+    - Ingress
     - Egress
   ingress:
     - from:
