@@ -23,6 +23,7 @@ spec:
         prometheus.io/path: "/metrics"
         goldilocks.fairwinds.com/enabled: "true"
         autoscaling.k8s.io/vpa: auto
+        vixens.io/explicitly-allow-root: "true"
     spec:
       priorityClassName: vixens-high
       tolerations:
