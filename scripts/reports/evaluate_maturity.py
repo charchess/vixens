@@ -1720,6 +1720,11 @@ def main():
     parser.add_argument(
         "--local_path", "-p", help="Local path to app for structure validation (e.g., apps/99-test/whoami)"
     )
+    parser.add_argument(
+        "--target", "-t",
+        choices=["Bronze", "Silver", "Gold", "Platinum", "Emerald", "Diamond", "Orichalcum"],
+        help="Target tier - show all missing prerequisites to reach this level from current state"
+    )
     args = parser.parse_args()
 
     if args.list:
@@ -1773,6 +1778,38 @@ def main():
         ("Diamond", evaluate_diamond),
         ("Orichalcum", evaluate_orichalcum),
     ]
+
+    # If target specified, validate it and show all missing prerequisites
+    target_tier = args.target
+    if target_tier:
+        target_index = None
+        for i, (name, _) in enumerate(tiers):
+            if name == target_tier:
+                target_index = i + 1
+                break
+        
+        all_missing = {}
+        
+        # Evaluate all tiers up to target
+        for i, (tier_name, eval_func) in enumerate(tiers[:target_index]):
+            passed, checks = eval_func(ns, app_name, deploy_kind)
+            missing = [k for k, v in checks.items() if not v and v is not None]
+            if missing:
+                all_missing[tier_name] = missing
+        
+        print(f"Target: {target_tier}")
+        print(f"\nNamespace: {ns}")
+        
+        if all_missing:
+            print(f"\nAll missing prerequisites to reach {target_tier}:")
+            for tier, missing_items in all_missing.items():
+                print(f"\n  [{tier}]:")
+                for m in missing_items:
+                    print(f"    - {m}")
+        else:
+            print(f"\n✓ All prerequisites satisfied for {target_tier}!")
+        
+        sys.exit(0)
 
     current_tier = None
     failed_tier = None
