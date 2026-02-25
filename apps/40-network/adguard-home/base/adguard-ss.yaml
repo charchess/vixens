@@ -27,6 +27,10 @@ spec:
         vixens.io/explicitly-allow-root: "true"
     spec:
       priorityClassName: vixens-high
+      securityContext:
+        runAsNonRoot: false
+        seccompProfile:
+          type: RuntimeDefault
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
