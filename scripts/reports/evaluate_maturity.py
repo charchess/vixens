@@ -408,9 +408,9 @@ def check_pvc(ns, app):
                 reclaim = sc_stdout.strip().lower() if sc_stdout else ""
                 
                 if reclaim == "retain":
-                    # iSCSI + Retain - must have restartPolicy: Recreate
-                    restart_policy = template_spec.get("restartPolicy", "Always")
-                    if restart_policy != "Recreate":
+                    # iSCSI + Retain - must have strategy.type: Recreate
+                    strategy_type = spec.get("strategy", {}).get("type", "RollingUpdate")
+                    if strategy_type != "Recreate":
                         return False
     
     return True
@@ -1062,7 +1062,7 @@ def evaluate_silver(ns, app, deploy_kind):
     # Only applies if app has persistent storage needs
     pvc_check = check_pvc(ns, app)
     if pvc_check is not None:  # Only add check if applicable
-        checks["PVC restartPolicy (iSCSI+Retain→Recreate)"] = pvc_check
+        checks["PVC strategy (iSCSI+Retain→Recreate)"] = pvc_check
 
     return all(v for v in checks.values() if v is not None), checks
     """Level 2: Silver - Production Ready"""
