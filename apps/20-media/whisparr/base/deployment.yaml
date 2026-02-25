@@ -93,6 +93,12 @@ spec:
             limits:
               cpu: 1000m
               memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
           env:
             - name: WHISPARR__API_KEY
               valueFrom:
