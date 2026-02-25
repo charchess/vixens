@@ -1455,7 +1455,9 @@ def evaluate_platinum(ns, app, deploy_kind):
 
     pod = get_pod(ns, app)
     
-    # Get deployment resource for revisionHistoryLimit and sync-wave checks
+    # Get deployment/statefulset resource for revisionHistoryLimit and sync-wave checks
+    deploy = get_deployment(ns, app) if deploy_kind == "Deployment" else None
+    statefulset = get_statefulset(ns, app) if deploy_kind == "StatefulSet" else None
     deploy = get_deployment(ns, app) if deploy_kind == "Deployment" else None
 
     checks["PriorityClass"] = get_priority_class(pod) is not None if pod else False
@@ -1465,7 +1467,7 @@ def evaluate_platinum(ns, app, deploy_kind):
     checks["PodDisruptionBudget"] = check_pdb(ns, app)
     
     # NEW: Check revisionHistoryLimit: 3 (per ADR-022)
-    checks["revisionHistoryLimit: 3"] = check_revision_history_limit(deploy)
+    checks["revisionHistoryLimit: 3"] = check_revision_history_limit(deploy) or check_revision_history_limit(statefulset)
     
     # NEW: Check sync-wave configured (per ADR-022)
     checks["Sync-wave configured"] = check_sync_wave(ns, app)
