@@ -200,21 +200,6 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           command:
-          readinessProbe:
-            exec:
-              command:
-                - pgrep
-                - rclone
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          livenessProbe:
-            exec:
-              command:
-                - pgrep
-                - rclone
-            initialDelaySeconds: 30
-            periodSeconds: 30
-          command:
             - sh
             - -c
           args:
