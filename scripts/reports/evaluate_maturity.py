@@ -513,6 +513,37 @@ def check_security_context_hardened(pod):
     if not pod:
         return False
     
+    # Check for explicit root allowance annotation
+    annotations = pod.get("metadata", {}).get("annotations", {})
+    explicitly_allow_root = annotations.get("vixens.io/explicitly-allow-root", "false").lower() == "true"
+    
+    # If explicitly allowed to run as root, check for other hardening measures
+    if explicitly_allow_root:
+        spec = pod.get("spec", {})
+        pod_security = spec.get("securityContext", {})
+        
+        # Check container-level security context
+        containers = spec.get("containers", [])
+        all_hardened = True
+        for container in containers:
+            container_security = container.get("securityContext", {})
+            # Must have allowPrivilegeEscalation: false and seccompProfile
+            if container_security.get("allowPrivilegeEscalation") != False:
+                all_hardened = False
+                break
+            # Check for capabilities drop ALL
+            caps = container_security.get("capabilities", {})
+            if not (caps.get("drop") and "ALL" in caps.get("drop", [])):
+                all_hardened = False
+                break
+        
+        # Also need seccompProfile at pod level
+        if all_hardened and pod_security.get("seccompProfile", {}).get("type") == "RuntimeDefault":
+            return True
+        return False
+    
+    spec = pod.get("spec", {})
+    
     spec = pod.get("spec", {})
     
     # Check pod-level security context
