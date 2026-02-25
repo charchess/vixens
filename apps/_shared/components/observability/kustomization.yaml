@@ -1,0 +1,32 @@
+#
+# Kustomize Component: Observability
+#
+# Adds observability annotations for apps with metrics:
+# - Goldilocks for resource recommendations
+# - VPA for autoscaling
+# - Prometheus scraping
+#
+# Usage:
+#   components:
+#     - ../../../../_shared/components/observability
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+      spec:
+        template:
+          metadata:
+            annotations:
+              goldilocks.fairwinds.com/enabled: "true"
+              autoscaling.k8s.io/vpa: "auto"
+              prometheus.io/scrape: "true"
+              prometheus.io/port: "9090"
+              prometheus.io/path: "/metrics"
