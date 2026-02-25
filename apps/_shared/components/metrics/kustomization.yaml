@@ -1,0 +1,30 @@
+#
+# Kustomize Component: Application Metrics
+#
+# Prometheus scraping for applications WITH a /metrics endpoint.
+#
+# Usage:
+#   components:
+#     - ../../../../_shared/components/metrics
+#
+# Note: This is ONLY for apps that expose their own metrics.
+# For apps without metrics, use vixens.io/nometrics: "true" annotation
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+      spec:
+        template:
+          metadata:
+            annotations:
+              prometheus.io/scrape: "true"
+              prometheus.io/port: "9090"
+              prometheus.io/path: "/metrics"

@@ -9,5 +9,6 @@ resources:
   - ingress.yaml
 
 components:
-  - ../../../../_shared/components/default
+  - ../../../../_shared/components/base
+  - ../../../../_shared/components/resources
   - ../../../../_shared/components/poddisruptionbudget/0

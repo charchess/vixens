@@ -357,67 +357,64 @@ def check_service(ns, app):
     return False
 
 def check_pvc(ns, app):
-    """Check if PVC exists (contextual - only if app has persistent data)
+    """Check PVC safety - Recreate policy for iSCSI Retain PVCs
     
     Returns:
-        True - PVC exists
-        False - No PVC but app has volumes that should be persistent
-        None - N/A (no persistent storage needed)
+        True - Safe (no PVC, NFS, or iSCSI with Recreate)
+        False - iSCSI Retain PVC without Recreate policy
     """
-    # Check if app has any PVCs by label
-    cmd = f"kubectl get pvc -n {ns} -l app={app} -o json 2>/dev/null"
+    # Get deployment
+    cmd = f"kubectl get deploy -n {ns} {app} -o json 2>/dev/null"
     stdout, _, rc = run_cmd(cmd)
-    if rc == 0 and stdout:
-        data = json.loads(stdout)
-        if len(data.get("items", [])) > 0:
-            return True
     
-    # Also check by name pattern (<app>-config-pvc, etc.)
-    cmd = f"kubectl get pvc -n {ns} -o json 2>/dev/null"
-    stdout, _, rc = run_cmd(cmd)
-    if rc == 0 and stdout:
-        data = json.loads(stdout)
-        for item in data.get("items", []):
-            name = item.get("metadata", {}).get("name", "").lower()
-            # Common patterns: <app>-config-pvc, <app>-data-pvc, etc.
-            if app.lower() in name and "pvc" in name:
-                return True
+    if rc != 0 or not stdout:
+        # Try StatefulSet
+        cmd = f"kubectl get sts -n {ns} {app} -o json 2>/dev/null"
+        stdout, _, rc = run_cmd(cmd)
     
-    # Check if deployment has volumeClaimTemplates (StatefulSet)
-    """Check if PVC exists (contextual - only if app has persistent data)
+    if rc != 0 or not stdout:
+        return True
     
-    Returns:
-        True - PVC exists
-        False - No PVC but app has volumes that should be persistent
-        None - N/A (no persistent storage needed)
-    """
-    # Check if app has any PVCs
-    cmd = f"kubectl get pvc -n {ns} -l app={app} -o json 2>/dev/null"
-    stdout, _, rc = run_cmd(cmd)
-    if rc == 0 and stdout:
-        data = json.loads(stdout)
-        if len(data.get("items", [])) > 0:
-            return True
+    data = json.loads(stdout)
     
-    # Check if deployment has volumeClaimTemplates (StatefulSet)
-    cmd = f"kubectl get deploy,sts -n {ns} -l app={app} -o json 2>/dev/null"
-    stdout, _, rc = run_cmd(cmd)
-    if rc == 0 and stdout:
-        data = json.loads(stdout)
-        for item in data.get("items", []):
-            # Check for StatefulSet volumeClaimTemplates
-            if item.get("kind") == "StatefulSet":
-                if item.get("spec", {}).get("volumeClaimTemplates"):
-                    return False  # Should have PVC but check if it exists
+    # StatefulSet - always OK
+    if data.get("kind") == "StatefulSet":
+        return True
+    
+    spec = data.get("spec", {})
+    template_spec = spec.get("template", {}).get("spec", {})
+    volumes = template_spec.get("volumes", [])
+    
+    for vol in volumes:
+        if "persistentVolumeClaim" in vol:
+            claim_name = vol.get("persistentVolumeClaim", {}).get("claimName", "")
             
-            # Check spec for volumes that indicate need for persistence
-            spec = item.get("spec", {}).get("template", {}).get("spec", {})
-            volumes = spec.get("volumes", [])
-            for vol in volumes:
-                if "persistentVolumeClaim" in vol:
-                    return False  # Has PVC reference but no PVC found
+            if not claim_name:
+                continue
+            
+            # Get PVC storage class
+            pvc_cmd = f"kubectl get pvc {claim_name} -n {ns} -o jsonpath='{{.spec.storageClassName}}' 2>/dev/null"
+            pvc_stdout, _, _ = run_cmd(pvc_cmd)
+            sc_name = pvc_stdout.strip() if pvc_stdout else ""
+            
+            if not sc_name:
+                continue
+            
+            # Check if iSCSI + Retain
+            if "iscsi" in sc_name.lower():
+                # Get StorageClass reclaim policy
+                sc_cmd = f"kubectl get sc {sc_name} -o jsonpath='{{.reclaimPolicy}}' 2>/dev/null"
+                sc_stdout, _, _ = run_cmd(sc_cmd)
+                reclaim = sc_stdout.strip().lower() if sc_stdout else ""
+                
+                if reclaim == "retain":
+                    # iSCSI + Retain - must have strategy.type: Recreate
+                    strategy_type = spec.get("strategy", {}).get("type", "RollingUpdate")
+                    if strategy_type != "Recreate":
+                        return False
     
-    return None  # N/A - no persistent storage needed
+    return True
+
 
 def check_metrics(pod):
     """Check if metrics are exposed (prometheus annotations)
@@ -1065,7 +1062,7 @@ def evaluate_silver(ns, app, deploy_kind):
     # Only applies if app has persistent storage needs
     pvc_check = check_pvc(ns, app)
     if pvc_check is not None:  # Only add check if applicable
-        checks["PVC configured"] = pvc_check
+        checks["PVC strategy (iSCSI+Retain→Recreate)"] = pvc_check
 
     return all(v for v in checks.values() if v is not None), checks
     """Level 2: Silver - Production Ready"""
