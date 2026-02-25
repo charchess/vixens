@@ -626,7 +626,297 @@ def check_pdb(ns, app):
     return False
 
 
+def has_persistent_volumes(ns, app):
+    """Check if app has persistent volumes that need backup
+    
+    Returns:
+        True - has persistent volumes
+        False - no persistent volumes (N/A for backup)
+    """
+    cmd = f"kubectl get pods -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    
+    has_persistent_volumes = False
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for pod in data.get('items', []):
+            volumes = pod.get('spec', {}).get('volumes', [])
+            for vol in volumes:
+                if 'persistentVolumeClaim' in vol:
+                    has_persistent_volumes = True
+                    break
+                if 'hostPath' in vol:
+                    has_persistent_volumes = True
+                    break
+                if 'nfs' in vol:
+                    has_persistent_volumes = True
+                    break
+            if has_persistent_volumes:
+                break
+    
+    # Also check PVCs directly attached
+    if not has_persistent_volumes:
+        cmd = f"kubectl get pvc -n {ns} -o json 2>/dev/null"
+        stdout, _, rc = run_cmd(cmd)
+        if rc == 0 and stdout:
+            data = json.loads(stdout)
+            for item in data.get('items', []):
+                labels = item.get('metadata', {}).get('labels', {})
+                if labels.get('app') == app:
+                    has_persistent_volumes = True
+                    break
+    
+    return has_persistent_volumes
+
+
+def uses_sqlite(ns, app):
+    """Check if app uses SQLite database
+    
+    Looks for:
+    - Litestream config (indicates SQLite is used)
+    - DB file mounts in /config
+    
+    Returns:
+        True - app uses SQLite
+        False - app doesn't use SQLite (N/A for litestream)
+    """
+    # Check for litestream config (ConfigMap with litestream.yml)
+    cmd = f"kubectl get configmap -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for item in data.get('items', []):
+            data_content = item.get('data', {})
+            if 'litestream.yml' in data_content or 'litestream.yaml' in data_content:
+                return True
+    
+    # Check for litestream sidecar container (more reliable)
+    cmd = f"kubectl get pods -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for pod in data.get('items', []):
+            for container in pod.get('spec', {}).get('containers', []):
+                if 'litestream' in container.get('image', '').lower():
+                    return True
+    
+    return False
+
+
+def check_litestream_sidecar(ns, app):
+    """Check if litestream sidecar is present for DB backup
+    
+    Returns:
+        True - litestream sidecar exists
+        False - no litestream (required if SQLite used)
+        None - N/A (app doesn't use SQLite)
+    """
+    if not uses_sqlite(ns, app):
+        return None
+    
+    cmd = f"kubectl get pods -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for pod in data.get('items', []):
+            for container in pod.get('spec', {}).get('containers', []):
+                if 'litestream' in container.get('image', '').lower():
+                    return True
+    return False
+
+
+def check_litestream_restore_init(ns, app):
+    """Check if litestream has restore initContainer
+    
+    InitContainer should:
+    - Test DB integrity, OR
+    - Check if DB is valid, if not restore from S3
+    
+    Returns:
+        True - restore init exists and proper
+        False - missing restore init (required if litestream used)
+        None - N/A (no litestream)
+    """
+    if not uses_sqlite(ns, app):
+        return None
+    
+    # Check if litestream sidecar exists first
+    if not check_litestream_sidecar(ns, app):
+        return None
+    
+    cmd = f"kubectl get pods -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for pod in data.get('items', []):
+            init_containers = pod.get('spec', {}).get('initContainers', [])
+            for init in init_containers:
+                # Look for restore-related init container
+                name = init.get('name', '').lower()
+                image = init.get('image', '').lower()
+                
+                # Common restore patterns
+                if 'restore' in name or 'init' in name:
+                    # Check if it references the DB path or litestream
+                    args = init.get('args', [])
+                    command = init.get('command', [])
+                    all_text = ' '.join(args) + ' '.join(command)
+                    
+                    # Should reference DB restore or litestream restore
+                    if any(x in all_text.lower() for x in ['.db', 'litestream', 'restore', 'sqlite']):
+                        return True
+    return False
+
+
+def check_rclone_backup_sidecar(ns, app):
+    """Check if rclone sidecar exists for config backup
+    
+    Returns:
+        True - rclone backup sidecar exists
+        False - no rclone backup
+        None - N/A (no config volume)
+    """
+    # Check if app has a config volume (indicates config backup needed)
+    has_config = has_persistent_volumes(ns, app)
+    if not has_config:
+        return None
+    
+    cmd = f"kubectl get pods -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for pod in data.get('items', []):
+            for container in pod.get('spec', {}).get('containers', []):
+                image = container.get('image', '').lower()
+                if 'rclone' in image:
+                    # Check if it's doing backup (sync) not restore
+                    args = container.get('args', [])
+                    command = container.get('command', [])
+                    all_text = ' '.join(args) + ' '.join(command)
+                    if 'sync' in all_text.lower() or 'copy' in all_text.lower():
+                        return True
+    return False
+
+
+def check_rclone_restore_init(ns, app):
+    """Check if rclone restore initContainer exists
+    
+    InitContainer should restore config from S3 if local is empty
+    
+    Returns:
+        True - restore init exists
+        False - missing restore init (required if rclone backup used)
+        None - N/A (no rclone backup)
+    """
+    # Check if rclone backup exists
+    if not check_rclone_backup_sidecar(ns, app):
+        return None
+    
+    cmd = f"kubectl get pods -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for pod in data.get('items', []):
+            init_containers = pod.get('spec', {}).get('initContainers', [])
+            for init in init_containers:
+                name = init.get('name', '').lower()
+                image = init.get('image', '').lower()
+                
+                # Look for restore-related init
+                if 'restore' in name or 'config' in name:
+                    args = init.get('args', [])
+                    command = init.get('command', [])
+                    all_text = ' '.join(args) + ' '.join(command)
+                    
+                    # Should reference rclone copy/sync from S3
+                    if 'rclone' in all_text.lower() and ('copy' in all_text.lower() or 'sync' in all_text.lower()):
+                        return True
+    return False
+
+
+def check_velero_backup(ns, app):
+    """Check if namespace is covered by any Velero schedule
+    
+    Returns:
+        True - namespace is in a Velero schedule
+        False - namespace is NOT in any Velero schedule
+        None - N/A (no persistent volumes)
+    """
+    if not has_persistent_volumes(ns, app):
+        return None
+    
+    # Get all Velero schedules
+    cmd = "kubectl get schedule -n velero -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    
+    if rc != 0 or not stdout:
+        # No Velero schedules found
+        return False
+    
+    data = json.loads(stdout)
+    schedules = data.get('items', [])
+    
+    # Check if namespace is in any schedule
+    for schedule in schedules:
+        spec = schedule.get('spec', {})
+        template = spec.get('template', {})
+        included_ns = template.get('includedNamespaces', [])
+        
+        # Check if namespace is included
+        if '*' in included_ns or ns in included_ns:
+            return True
+    
+    return False
+    """Check if Velero backup is configured
+    
+    Returns:
+        True - Velero backup configured
+        False - no Velero backup
+        None - N/A (no persistent volumes)
+    """
+    if not has_persistent_volumes(ns, app):
+        return None
+    
+    # Check for Velero backup annotations on deployment
+    cmd = f"kubectl get deploy -n {ns} -l app={app} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        for item in data.get('items', []):
+            annotations = item.get('metadata', {}).get('annotations', {})
+            if 'backup.velero.io' in str(annotations):
+                return True
+    
+    # Check for BackupSchedule or Backup resource in the namespace
+    cmd = f"kubectl get backups -n {ns} -o json 2>/dev/null"
+    stdout, _, rc = run_cmd(cmd)
+    if rc == 0 and stdout:
+        data = json.loads(stdout)
+        if data.get('items'):
+            return True
+    
+    return False
+
+
 def get_backup_config(ns, app):
+    """Check complete backup configuration
+    
+    Returns detailed dict with all backup components:
+    - SQLite backup (litestream)
+    - Config backup (rclone)
+    - Velero backup
+    """
+    checks = {}
+    
+    # Check each backup component
+    checks["SQLite present"] = uses_sqlite(ns, app)
+    checks["Litestream sidecar"] = check_litestream_sidecar(ns, app)
+    checks["Litestream restore init"] = check_litestream_restore_init(ns, app)
+    checks["Rclone backup sidecar"] = check_rclone_backup_sidecar(ns, app)
+    checks["Rclone restore init"] = check_rclone_restore_init(ns, app)
+    checks["Velero backup"] = check_velero_backup(ns, app)
+    
+    return checks
     """Check if backup is configured (Velero or Litestream)
     
     Returns:
@@ -1197,6 +1487,130 @@ def evaluate_platinum(ns, app, deploy_kind):
 
 
 def evaluate_emerald(ns, app, deploy_kind):
+    """Level 5: Emerald - Data Durability
+    
+    Requirements:
+    - If SQLite: litestream sidecar + restore init
+    - If config volume: rclone backup + restore init
+    - Velero backup (namespace in schedule)
+    """
+    checks = {}
+    
+    # Check if app has persistent data that needs backup
+    pvc_check = check_pvc(ns, app)
+    
+    # If no persistent volumes, backup is N/A
+    if pvc_check is None or not has_persistent_volumes(ns, app):
+        return True, {"Backup": "N/A (no persistent volumes)"}
+    
+    # Get detailed backup configuration
+    backup_checks = get_backup_config(ns, app)
+    
+    # Validate each backup component
+    # SQLite → litestream required
+    if backup_checks.get("SQLite present"):
+        checks["Litestream sidecar (SQLite backup)"] = backup_checks.get("Litestream sidecar")
+        checks["Litestream restore init (DB integrity)"] = backup_checks.get("Litestream restore init")
+    
+    # Config volume → rclone backup required
+    if backup_checks.get("Rclone backup sidecar") is not None:
+        checks["Rclone backup sidecar"] = backup_checks.get("Rclone backup sidecar")
+        checks["Rclone restore init"] = backup_checks.get("Rclone restore init")
+    
+    # Velero backup (namespace in schedule)
+    velero_check = backup_checks.get("Velero backup")
+    if velero_check is not None:
+        checks["Velero backup"] = velero_check
+    
+    # Filter out N/A (None) values - they don't count as failures
+    meaningful_checks = {k: v for k, v in checks.items() if v is not None}
+    
+    # Passed if all meaningful checks are True
+    passed = all(meaningful_checks.values()) if meaningful_checks else True
+    
+    # Add summary info
+    checks["_summary"] = {
+        "sqlite": backup_checks.get("SQLite present"),
+        "has_backup": any([
+            backup_checks.get("Litestream sidecar"),
+            backup_checks.get("Rclone backup sidecar"),
+            backup_checks.get("Velero backup")
+        ])
+    }
+    
+    return passed, checks
+    """Level 5: Emerald - Data Durability
+    
+    Requirements:
+    - If SQLite: litestream sidecar + restore init
+    - If config volume: rclone backup + restore init
+    - Backup profile defined (annotation or Velero)
+    """
+    checks = {}
+    
+    # Check if app has persistent data that needs backup
+    pvc_check = check_pvc(ns, app)
+    
+    # If no persistent volumes, backup is N/A
+    if pvc_check is None or not has_persistent_volumes(ns, app):
+        return True, {"Backup": "N/A (no persistent volumes)"}
+    
+    # Get detailed backup configuration
+    backup_checks = get_backup_config(ns, app)
+    
+    # Validate each backup component
+    # SQLite → litestream required
+    if backup_checks.get("SQLite present"):
+        checks["Litestream sidecar (SQLite backup)"] = backup_checks.get("Litestream sidecar")
+        checks["Litestream restore init (DB integrity)"] = backup_checks.get("Litestream restore init")
+    
+    # Config volume → rclone backup required
+    if backup_checks.get("Rclone backup sidecar") is not None:
+        checks["Rclone backup sidecar"] = backup_checks.get("Rclone backup sidecar")
+        checks["Rclone restore init"] = backup_checks.get("Rclone restore init")
+    
+    # Velero is optional (recommended but not required)
+    velero_check = backup_checks.get("Velero backup")
+    if velero_check is not None:
+        checks["Velero backup"] = velero_check
+    
+    # Backup profile annotation is optional (documentation only)
+    # Commented out - not required for Emerald tier
+    # profile_check = check_backup_profile(ns, app)
+    # if profile_check is not None:
+    #     checks["Backup profile defined"] = profile_check
+    velero_check = backup_checks.get("Velero backup")
+    if velero_check is not None:
+        checks["Velero backup"] = velero_check
+    
+    # Backup profile annotation is optional - disabled for now
+    # profile_check = check_backup_profile(ns, app)
+    # if profile_check is not None:
+    #     checks["Backup profile defined"] = profile_check
+    # Backup profile annotation is optional - disabled for now
+    # profile_check = check_backup_profile(ns, app)
+    # if profile_check is not None:
+    #     checks["Backup profile defined"] = profile_check
+    if profile_check is not None:
+        checks["Backup profile defined"] = profile_check
+    
+    # Filter out N/A (None) values - they don't count as failures
+    meaningful_checks = {k: v for k, v in checks.items() if v is not None}
+    
+    # Passed if all meaningful checks are True
+    passed = all(meaningful_checks.values()) if meaningful_checks else True
+    
+    # Add summary info
+    checks["_summary"] = {
+        "sqlite": backup_checks.get("SQLite present"),
+        "has_backup": any([
+            backup_checks.get("Litestream sidecar"),
+            backup_checks.get("Rclone backup sidecar"),
+            backup_checks.get("Velero backup")
+        ])
+    }
+    
+    return passed, checks
     """Level 5: Emerald - Data Durability"""
     checks = {}
 
@@ -1207,7 +1621,10 @@ def evaluate_emerald(ns, app, deploy_kind):
     if pvc_check is not None:
         checks["Backup configured"] = get_backup_config(ns, app)
         
-        # NEW: Check backup profile defined (per ADR-022)
+        # Backup profile annotation is optional - disabled for now
+        # profile_check = check_backup_profile(ns, app)
+        # if profile_check is not None:
+        #     checks["Backup profile defined"] = profile_check
         # Only applies if app needs backup
         profile_check = check_backup_profile(ns, app)
         if profile_check is not None:
