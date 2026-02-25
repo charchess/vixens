@@ -1,0 +1,10 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: radarr
+spec:
+  # minAvailable will be set by the poddisruptionbudget component
+  selector:
+    matchLabels:
+      app: radarr
