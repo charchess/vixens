@@ -15,13 +15,18 @@ spec:
     metadata:
       labels:
         app: adguard-home
+        vixens.io/sizing: medium
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
+        goldilocks.fairwinds.com/enabled: "true"
+        autoscaling.k8s.io/vpa: auto
     spec:
       priorityClassName: vixens-high
+      nodeSelector:
+        kubernetes.io/hostname: peach
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
@@ -111,13 +116,13 @@ spec:
               memory: 512Mi
           readinessProbe:
             httpGet:
-              path: /control.html
+              path: /
               port: 3000
             initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /control.html
+              path: /
               port: 3000
             initialDelaySeconds: 30
             periodSeconds: 20
