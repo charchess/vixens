@@ -32,5 +32,14 @@ spec:
           port: 53
         - protocol: UDP
           port: 53
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
   egress:
     - {}
