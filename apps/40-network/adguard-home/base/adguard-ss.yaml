@@ -231,8 +231,24 @@ spec:
               command:
                 - pgrep
                 - rclone
-            initialDelaySeconds: 30
-            periodSeconds: 30
+              memory: 128Mi
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "pgrep -f 'rclone sync' || exit 1"
+            initialDelaySeconds: 60
+            periodSeconds: 60
+          volumeMounts:
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "pgrep -f 'rclone sync' || exit 1"
+            initialDelaySeconds: 60
+            periodSeconds: 60
           volumeMounts:
             - name: config
               mountPath: /opt/adguardhome/conf
