@@ -214,6 +214,58 @@ def check_vpa_annotation(pod):
     )
 
 
+def check_sizing_component(pod):
+    """Check if sizing component is used (vixens.io/sizing annotation/label)"""
+    if not pod:
+        return False
+    annotations = pod.get("metadata", {}).get("annotations", {})
+    if "vixens.io/sizing" in annotations:
+        return True
+    labels = pod.get("metadata", {}).get("labels", {})
+    if "vixens.io/sizing" in labels:
+        return True
+    return False
+
+
+def check_components_used(app_path, overlay="prod"):
+    """Check if app uses shared components from apps/_shared/components/"""
+    import os
+    result = {
+        "sizing": False,
+        "priority": False,
+        "resources": False,
+        "metrics": False,
+        "poddisruptionbudget": False,
+        "revisionHistoryLimit": False,
+    }
+    if not app_path or not os.path.exists(app_path):
+        return result
+    overlay_path = os.path.join(app_path, "overlays", overlay)
+    if not os.path.exists(overlay_path):
+        return result
+    kust_file = os.path.join(overlay_path, "kustomization.yaml")
+    if not os.path.exists(kust_file):
+        return result
+    try:
+        with open(kust_file, 'r') as f:
+            content = f.read()
+        if "components/sizing" in content:
+            result["sizing"] = True
+        if "components/priority" in content:
+            result["priority"] = True
+        if "components/resources" in content:
+            result["resources"] = True
+        if "components/metrics" in content:
+            result["metrics"] = True
+        if "components/poddisruptionbudget" in content:
+            result["poddisruptionbudget"] = True
+        if "components/revision-history-limit" in content:
+            result["revisionHistoryLimit"] = True
+    except Exception:
+        pass
+    return result
+
+
 def check_psa_labels(ns):
     """Check PSA labels on namespace"""
     cmd = f"kubectl get ns {ns} -o json 2>/dev/null"
@@ -1480,7 +1532,7 @@ def evaluate_gold(ns, app, deploy_kind):
     return all(v for v in checks.values() if v is not None), checks
 
 
-def evaluate_platinum(ns, app, deploy_kind):
+def evaluate_platinum(ns, app, deploy_kind, app_path=None):
     """Level 4: Platinum - Reliability"""
     checks = {}
 
@@ -1502,7 +1554,18 @@ def evaluate_platinum(ns, app, deploy_kind):
     
     # NEW: Check sync-wave configured (per ADR-022)
     checks["Sync-wave configured"] = check_sync_wave(ns, app)
-    checks["Sync-wave configured"] = check_sync_wave(ns, app)
+    # NEW: Check shared components are used
+    if app_path:
+        component_usage = check_components_used(app_path)
+        checks["Sizing component"] = component_usage.get("sizing", False)
+        checks["Priority component"] = component_usage.get("priority", False)
+        checks["Resources component"] = component_usage.get("resources", False)
+        checks["PDB component"] = component_usage.get("poddisruptionbudget", False)
+        checks["RevisionHistoryLimit component"] = component_usage.get("revisionHistoryLimit", False)
+    # Also check sizing annotation on pod (what component adds)
+    checks["Sizing annotation"] = check_sizing_component(pod) if pod else False
+
+    return all(v for v in checks.values() if v is not None), checks
 
     return all(v for v in checks.values() if v is not None), checks
     """Level 4: Platinum - Reliability"""
@@ -1806,7 +1869,7 @@ def main():
         ("Bronze", lambda ns, app, dk: evaluate_bronze(ns, app, dk, app_path)),
         ("Silver", evaluate_silver),
         ("Gold", evaluate_gold),
-        ("Platinum", evaluate_platinum),
+    ("Platinum", lambda ns, app, dk: evaluate_platinum(ns, app, dk, app_path)),
         ("Emerald", evaluate_emerald),
         ("Diamond", evaluate_diamond),
         ("Orichalcum", evaluate_orichalcum),
