@@ -56,9 +56,9 @@ spec:
               mountPath: /opt/adguardhome/conf
           readinessProbe:
             exec:
-              command: ["sh", "-c", "pgrep rclone"]
+              command: ["sh", "-c", "pgrep -f rclone"]
             periodSeconds: 30
           livenessProbe:
             exec:
-              command: ["sh", "-c", "pgrep rclone"]
+              command: ["sh", "-c", "pgrep -f rclone"]
             periodSeconds: 60
