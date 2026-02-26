@@ -4,4 +4,4 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - argocd-install.yaml
-patches:
+  - deployments.yaml
