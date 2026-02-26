@@ -1,0 +1,16 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-repo-server
+  namespace: argocd
+spec:
+  template:
+    spec:
+      containers:
+        - name: repo-server
+          resources:
+            limits:
+              memory: 2Gi
+            requests:
+              memory: 1Gi
