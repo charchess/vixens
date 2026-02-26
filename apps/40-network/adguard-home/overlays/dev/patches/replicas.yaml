@@ -1,0 +1,65 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: adguard-home
+spec:
+  replicas: 1
+  volumeClaimTemplates: []
+  template:
+    spec:
+      volumes:
+        - name: config
+          emptyDir: {}
+        - name: data
+          emptyDir: {}
+        - name: adguard-home-litestream-config
+          configMap:
+            name: adguard-home-litestream-config
+      containers:
+        - name: adguard-home
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi
+          volumeMounts:
+            - name: config
+              mountPath: /opt/adguardhome/conf
+            - name: data
+              mountPath: /opt/adguardhome/work
+        - name: litestream
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
+          volumeMounts:
+            - name: data
+              mountPath: /opt/adguardhome/work
+            - name: adguard-home-litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
+        - name: config-syncer
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
+          volumeMounts:
+            - name: config
+              mountPath: /opt/adguardhome/conf
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pgrep rclone"]
+            periodSeconds: 30
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pgrep rclone"]
+            periodSeconds: 60
