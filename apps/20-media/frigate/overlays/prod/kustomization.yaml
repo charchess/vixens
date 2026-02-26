@@ -32,5 +32,29 @@ patches:
       kind: Deployment
       name: frigate
     path: node-affinity-patch.yaml
+  - target:
+      kind: Deployment
+      name: frigate
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: frigate
+      spec:
+        template:
+          metadata:
+            annotations:
+              vixens.io/explicitly-allow-root: "true"
+          spec:
+            securityContext:
+              runAsNonRoot: false
+              runAsUser: 0
+              fsGroup: 0
+            containers:
+              - name: frigate
+                securityContext:
+                  privileged: true
+                  runAsUser: 0
+                  runAsGroup: 0
   - path: pvc-patch.yaml
   - path: resources-patch.yaml
