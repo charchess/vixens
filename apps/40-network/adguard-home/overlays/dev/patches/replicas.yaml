@@ -5,7 +5,6 @@ metadata:
   name: adguard-home
 spec:
   replicas: 1
-  volumeClaimTemplates: []
   template:
     spec:
       volumes:
