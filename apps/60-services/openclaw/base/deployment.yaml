@@ -18,6 +18,7 @@ spec:
     metadata:
       labels:
         app: openclaw
+        vixens.io/sizing: "large"
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "18789"
@@ -171,13 +172,6 @@ spec:
           envFrom:
             - secretRef:
                 name: openclaw-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /data
@@ -213,13 +207,6 @@ spec:
           envFrom:
             - secretRef:
                 name: openclaw-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /data
@@ -358,13 +345,6 @@ spec:
               port: 18789
             initialDelaySeconds: 120
             periodSeconds: 30
-          resources:
-            requests:
-              cpu: 500m
-              memory: 1Gi
-            limits:
-              cpu: 2000m
-              memory: 2Gi
           volumeMounts:
             - name: data
               mountPath: /data
@@ -407,13 +387,6 @@ spec:
           envFrom:
             - secretRef:
                 name: openclaw-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /data
