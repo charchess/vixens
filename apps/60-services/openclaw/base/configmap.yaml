@@ -12,7 +12,8 @@ data:
         "mode": "local",
         "bind": "lan",
         "trustedProxies": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
-        "auth": {"mode": "password", "password": "Chaton!3"}
+        "auth": {"mode": "password", "password": "Chaton!3"},
+        "controlUi": {"dangerouslyAllowHostHeaderOriginFallback": true}
       },
       "agents": {
         "defaults": {
