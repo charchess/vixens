@@ -26,6 +26,5 @@ patches:
       name: homeassistant-config
     patch: |
       - op: replace
-        path: /spec/resources/requests/storage
-        value: 150Gi
+        value: 250Gi
   - path: resources-patch.yaml
