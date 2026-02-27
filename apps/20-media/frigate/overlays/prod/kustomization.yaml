@@ -43,6 +43,8 @@ patches:
       spec:
         template:
           metadata:
+            labels:
+              vixens.io/sizing: xlarge
             annotations:
               vixens.io/explicitly-allow-root: "true"
           spec:
