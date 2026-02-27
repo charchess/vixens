@@ -188,6 +188,15 @@ spec:
             - |
               echo "DEBUG: RCLONE_BUCKET=$RCLONE_BUCKET"
               
+              # Check if external tool has a pending backup (lock file)
+              if [ -f /data/backup.lock ]; then
+                echo "backup.lock found - preserving local config changes"
+                cp /data/openclaw.json /data/openclaw.json.bak 2>/dev/null || true
+                rm -f /data/backup.lock
+                echo "Local config preserved, lock removed - ready to start"
+                exit 0
+              fi
+              
               # If PVC has no config, try to restore from MinIO
               if [ ! -s /data/openclaw.json ]; then
                 echo "No config found in PVC, checking MinIO backup..."
@@ -359,6 +368,14 @@ spec:
           args:
             - |
               echo "DEBUG: RCLONE_BUCKET=$RCLONE_BUCKET"
+              
+              # Handle pending backup lock from external tool
+              if [ -f /data/backup.lock ]; then
+                echo "backup.lock found - performing immediate backup before sync loop"
+                rclone sync /data s3:$RCLONE_BUCKET --s3-access-key-id=admin --s3-secret-access-key='S0d0m!e69' --s3-endpoint=$RCLONE_ENDPOINT --exclude "lost+found/**" --exclude "node_modules/**" --exclude "tools/**" --exclude "gemini-cli/**" --exclude "browser/**" --exclude "canvas/**" --exclude "extensions/**" --exclude ".openclaw/**" --exclude "media/**" --exclude "netbox-mcp-server/**" || echo "Backup failed"
+                rm -f /data/backup.lock
+                echo "Backup complete, lock removed"
+              fi
               
               sync_s3() {
                 rclone sync /data s3:$RCLONE_BUCKET --s3-access-key-id=admin --s3-secret-access-key='S0d0m!e69' --s3-endpoint=$RCLONE_ENDPOINT --exclude "lost+found/**" --exclude "node_modules/**" --exclude "tools/**" --exclude "gemini-cli/**" --exclude "browser/**" --exclude "canvas/**" --exclude "extensions/**" --exclude ".openclaw/**" --exclude "media/**" --exclude "netbox-mcp-server/**" || echo "Sync failed"
