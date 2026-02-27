@@ -44,7 +44,7 @@ patches:
         template:
           metadata:
             labels:
-              vixens.io/sizing: large
+              vixens.io/sizing: custom
             annotations:
               vixens.io/explicitly-allow-root: "true"
           spec:
