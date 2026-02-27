@@ -24,7 +24,8 @@ patches:
   - target:
       kind: PersistentVolumeClaim
       name: homeassistant-config
-    patch: |
+    patch: |-
       - op: replace
+        path: /spec/resources/requests/storage
         value: 250Gi
   - path: resources-patch.yaml
