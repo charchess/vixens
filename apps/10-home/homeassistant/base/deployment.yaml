@@ -8,6 +8,7 @@ metadata:
     vixens.io/sizing: large
   annotations:
     secret.reloader.stakater.com/reload: homeassistant-config
+    argocd.argoproj.io/sync-wave: "10"
 spec:
   replicas: 1
   revisionHistoryLimit: 3
@@ -34,7 +35,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
-      priorityClassName: vixens-high
+      priorityClassName: vixens-critical
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
