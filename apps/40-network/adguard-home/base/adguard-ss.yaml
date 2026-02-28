@@ -26,7 +26,7 @@ spec:
         autoscaling.k8s.io/vpa: auto
         vixens.io/explicitly-allow-root: "true"
     spec:
-      priorityClassName: vixens-high
+      priorityClassName: vixens-critical
       securityContext:
         runAsNonRoot: false
         seccompProfile:
@@ -41,13 +41,6 @@ spec:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 50m
-              memory: 64Mi
           command:
             - sh
             - -c
@@ -60,11 +53,13 @@ spec:
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               rclone copy s3:$LITESTREAM_BUCKET/config /opt/adguardhome/conf \
                 --transfers 4 \
-                --exclude "*.db*" \
                 --exclude "*.log" \
+                --exclude "tts/**" \
+                --exclude "backups/**" \
+                --exclude "tmp_backups/**" \
+                --exclude "lost+found/**" \
                 --exclude ".*-litestream" \
-                --exclude ".*-litestream/**" \
-                || true
+                --exclude ".*-litestream/**" 2>/dev/null || true
           envFrom:
             - secretRef:
                 name: adguard-home-secrets
@@ -76,13 +71,6 @@ spec:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 50m
-              memory: 64Mi
           args:
             - restore
             - -config
@@ -111,13 +99,6 @@ spec:
             - containerPort: 53
               name: dns-tcp
               protocol: TCP
-          resources:
-            requests:
-              cpu: 200m
-              memory: 512Mi
-            limits:
-              cpu: 200m
-              memory: 512Mi
           securityContext:
             runAsUser: 0
             runAsGroup: 0
@@ -161,13 +142,6 @@ spec:
           ports:
             - containerPort: 9090
               name: metrics
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              cpu: 50m
-              memory: 128Mi
           readinessProbe:
             httpGet:
               path: /metrics
@@ -210,11 +184,7 @@ spec:
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() {
-                rclone sync /opt/adguardhome/conf s3:$LITESTREAM_BUCKET/config \
-                  --exclude "*.db*" \
-                  --exclude "*.log" \
-                  --exclude ".*-litestream" \
-                  --exclude ".*-litestream/**";
+                rclone sync /opt/adguardhome/conf s3:$LITESTREAM_BUCKET/config --exclude "*.log" --exclude "tts/**" --exclude "backups/**" --exclude "tmp_backups/**" --exclude "lost+found/**" --exclude ".*-litestream" --exclude ".*-litestream/**"
               }
               while true; do
                 sync_s3;
@@ -223,13 +193,6 @@ spec:
           envFrom:
             - secretRef:
                 name: adguard-home-secrets
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              cpu: 50m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /opt/adguardhome/conf
