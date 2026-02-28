@@ -1,0 +1,37 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-qos-guaranteed
+  annotations:
+    policies.kyverno.io/title: Require Guaranteed QoS
+    policies.kyverno.io/category: Maturity (Orichalcum)
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Orichalcum tier requires Guaranteed QoS (Requests == Limits).
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: validate-guaranteed-qos
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              selector:
+                matchLabels:
+                  vixens.io/tier: "orichalcum"
+      validate:
+        message: "Orichalcum tier requires Guaranteed QoS: CPU and Memory Requests must equal Limits."
+        foreach:
+          - list: "request.object.spec.containers"
+            deny:
+              conditions:
+                any:
+                - key: "{{ element.resources.requests.cpu }}"
+                  operator: NotEquals
+                  value: "{{ element.resources.limits.cpu }}"
+                - key: "{{ element.resources.requests.memory }}"
+                  operator: NotEquals
+                  value: "{{ element.resources.limits.memory }}"
