@@ -79,6 +79,11 @@ ports:
     exposedPort: 3483
     expose: true
     protocol: UDP
+  mass-stream: # MusicAssistant Stream Server
+    port: 8097
+    exposedPort: 8097
+    expose: true
+    protocol: TCP
   frigate-api: # Frigate HTTP API (Home Assistant integration)
     port: 5000
     exposedPort: 5000

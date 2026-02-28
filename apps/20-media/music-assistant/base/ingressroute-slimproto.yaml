@@ -25,3 +25,17 @@ spec:
     - services:
         - name: music-assistant
           port: 3483
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: music-assistant-stream-tcp
+  namespace: media
+spec:
+  entryPoints:
+    - mass-stream
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: music-assistant
+          port: 8097

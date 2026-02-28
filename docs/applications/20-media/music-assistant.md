@@ -28,7 +28,10 @@ curl -L -k https://music-assistant.dev.truxonline.com | grep "Music Assistant"
 - **Namespace :** `media-stack`
 - **Dépendances :** `Home Assistant` (Optionnel mais recommandé)
 - **Particularités :** Agrégateur de sources musicales.
-- **Ports supplémentaires :** Le port 3483 (TCP/UDP) est redirigé via Traefik pour le protocole SlimProto (SlimServer).
+- **Sizing :** `medium` (1Gi RAM limit) - Nécessaire pour éviter les OOMKilled.
+- **Ports supplémentaires :** 
+    - **3483 (TCP/UDP) :** Redirigé via Traefik pour le protocole SlimProto (SlimServer).
+    - **8097 (TCP) :** Stream Server (interne/externe).
 ---
 > ⚠️ **HIBERNATION DEV**
 > Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.

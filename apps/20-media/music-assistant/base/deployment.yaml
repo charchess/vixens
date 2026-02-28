@@ -39,6 +39,9 @@ spec:
             - containerPort: 3483
               name: slimproto-udp
               protocol: UDP
+            - containerPort: 8097
+              name: mass-stream
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /
