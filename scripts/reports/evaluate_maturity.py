@@ -1562,6 +1562,20 @@ def evaluate_platinum(ns, app, deploy_kind, app_path=None):
         checks["Resources component"] = component_usage.get("resources", False)
         checks["PDB component"] = component_usage.get("poddisruptionbudget", False)
         checks["RevisionHistoryLimit component"] = component_usage.get("revisionHistoryLimit", False)
+        
+        # Add detailed source info for Platinum
+        sources = {}
+        if component_usage.get("sizing") or (pod and check_sizing_component(pod)):
+            sources["Sizing"] = "Component" if component_usage.get("sizing") else "Kyverno"
+        if component_usage.get("priority"):
+            sources["Priority"] = "Component"
+        if component_usage.get("resources"):
+            sources["Goldilocks/VPA"] = "Component"
+        if component_usage.get("poddisruptionbudget"):
+            sources["PDB"] = "Component"
+        if component_usage.get("revisionHistoryLimit"):
+            sources["revisionHistoryLimit"] = "Component"
+        checks["_sources"] = sources
     # Also check sizing annotation on pod (what component adds)
     checks["Sizing annotation"] = check_sizing_component(pod) if pod else False
 
@@ -1862,6 +1876,24 @@ def main():
         else:
             deploy_kind = "Deployment"  # Default
 
+    # Auto-detect local path if not provided
+    if not args.local_path:
+        import os
+        apps_dir = "apps"
+        if os.path.exists(apps_dir):
+            # Search for app in subdirectories of apps/
+            for item in os.listdir(apps_dir):
+                item_path = os.path.join(apps_dir, item)
+                if os.path.isdir(item_path):
+                    # Check if app name is in this subdirectory
+                    app_dir = os.path.join(item_path, app_name)
+                    if os.path.isdir(app_dir):
+                        if os.path.exists(os.path.join(app_dir, "base")):
+                            args.local_path = app_dir
+                        else:
+                            args.local_path = app_dir
+                        break
+    
     # Get local path for Bronze structure checks
     app_path = args.local_path
 
@@ -1928,13 +1960,28 @@ def main():
             print(f"  - {m}")
         sys.exit(1)
 
-    print(f"{current_tier}")
+    print(f"{current_tier} ✅")
     print(f"\nNamespace: {ns}")
 
     if current_tier != "Orichalcum" and missing_for_next:
         print(f"\nMissing {failed_tier} prerequisites:")
+        # Get source info if available
+        sources = checks.get("_sources", {})
         for m in missing_for_next:
-            print(f"  - {m}")
+            # Check if this is a component check and what the actual source is
+            base_name = m.replace(" component", "").replace(" component", "")
+            if base_name in sources:
+                print(f"  - {m} [via {sources[base_name]}]")
+            elif "Sizing" in m and "Sizing" in sources:
+                print(f"  - {m} [via {sources['Sizing']}]")
+            elif "Priority" in m and "Priority" in sources:
+                print(f"  - {m} [via {sources['Priority']}]")
+            elif "Goldilocks" in m and "Goldilocks/VPA" in sources:
+                print(f"  - {m} [via {sources['Goldilocks/VPA']}]")
+            elif "PDB" in m and "PDB" in sources:
+                print(f"  - {m} [via {sources['PDB']}]")
+            else:
+                print(f"  - {m}")
 
 
 if __name__ == "__main__":
