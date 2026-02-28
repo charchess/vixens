@@ -1,0 +1,40 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-security-context
+  annotations:
+    policies.kyverno.io/title: Require Hardened SecurityContext
+    policies.kyverno.io/category: Maturity (Diamond)
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Diamond tier requires rootless execution and restricted capabilities.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: validate-hardened-security
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              annotations:
+                vixens.io/explicitly-allow-root: "true"
+      validate:
+        message: "SecurityContext must be hardened for maturity Level 6 (Diamond): runAsNonRoot=true, allowPrivilegeEscalation=false, drop ALL capabilities."
+        pattern:
+          spec:
+            securityContext:
+              runAsNonRoot: true
+              seccompProfile:
+                type: RuntimeDefault
+            containers:
+              - securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                      - ALL
