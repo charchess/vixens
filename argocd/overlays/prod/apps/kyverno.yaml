@@ -20,6 +20,7 @@ spec:
         values: |
           admissionController:
             replicas: 3
+            webhookTimeout: 30
             tolerations:
               - key: node-role.kubernetes.io/control-plane
                 operator: Exists
