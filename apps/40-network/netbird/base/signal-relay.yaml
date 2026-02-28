@@ -24,7 +24,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: signal
-          image: netbirdio/signal:0.65.3
+          image: netbirdio/signal:0.66.0
           args: ["--port=80"]
           resources:
             requests:
@@ -84,7 +84,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: relay
-          image: netbirdio/relay:0.65.3
+          image: netbirdio/relay:0.66.0
           args: ["run", "--auth-secret", "netbird-relay-secret-change-me"]
           env:
             - name: NB_LISTEN_ADDRESS
