@@ -3,15 +3,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: music-assistant
+  labels:
+    vixens.io/sizing: medium
 spec:
   template:
+    metadata:
+      labels:
+        vixens.io/sizing: medium
     spec:
       containers:
         - name: music-assistant
-          resources:
-            limits:
-              cpu: 500m
-              memory: 322Mi
-            requests:
-              cpu: 11m
-              memory: 214Mi
+          # Let Kyverno handle resources via sizing label

@@ -5,6 +5,7 @@ metadata:
   name: music-assistant
   labels:
     app: music-assistant
+    vixens.io/sizing: medium
 spec:
   replicas: 1
   strategy:
@@ -16,10 +17,12 @@ spec:
     metadata:
       labels:
         app: music-assistant
+        vixens.io/sizing: medium
     spec:
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+      priorityClassName: vixens-medium
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
@@ -36,6 +39,18 @@ spec:
             - containerPort: 3483
               name: slimproto-udp
               protocol: UDP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: web
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: web
+            initialDelaySeconds: 30
+            periodSeconds: 15
           env:
             - name: PUID
               value: "1000"
