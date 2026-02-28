@@ -1,0 +1,40 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-service-binding
+  annotations:
+    policies.kyverno.io/title: Verify Service Binding
+    policies.kyverno.io/category: Maturity (Bronze)
+    policies.kyverno.io/description: >-
+      Ensures that each pod is targeted by at least one Service.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-service-exists
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - monitoring
+      context:
+        - name: service_count
+          apiCall:
+            urlPath: "/api/v1/namespaces/{{request.namespace}}/services"
+            jmesPath: "items[?spec.selector.app == '{{request.object.metadata.labels.app}}'] | length(@)"
+      validate:
+        message: "No Service found targeting app={{request.object.metadata.labels.app}} in namespace {{request.namespace}}."
+        deny:
+          conditions:
+            all:
+            - key: "{{ service_count }}"
+              operator: Equals
+              value: 0

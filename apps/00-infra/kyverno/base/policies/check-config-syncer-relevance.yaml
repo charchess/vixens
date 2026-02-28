@@ -1,0 +1,33 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-config-syncer-relevance
+  annotations:
+    policies.kyverno.io/title: Check Config-Syncer Relevance
+    policies.kyverno.io/category: Maturity (Emerald)
+    policies.kyverno.io/description: >-
+      Ensures config-syncer is present if an NFS configuration volume is used.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-config-syncer-for-nfs
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      preconditions:
+        all:
+        - key: "{{ request.object.spec.volumes[?contains(nfs.server, '192.168.111.69')] | length(@) }}"
+          operator: GreaterThan
+          value: 0
+      validate:
+        message: "NFS configuration volume detected but config-syncer sidecar is missing (Level 5 Emerald)."
+        deny:
+          conditions:
+            all:
+            - key: "{{ request.object.spec.containers[?contains(image, 'rclone')] | length(@) }}"
+              operator: Equals
+              value: 0
