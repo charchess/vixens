@@ -99,7 +99,7 @@ spec:
               mountPath: /etc/netbird
       containers:
         - name: management
-          image: netbirdio/management:0.65.3
+          image: netbirdio/management:0.66.0
           args: ["--port=80", "--log-file=console", "--log-level=info", "--config=/etc/netbird/management.json"]
           resources:
             requests:

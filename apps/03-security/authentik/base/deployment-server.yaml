@@ -64,7 +64,7 @@ spec:
               mountPath: /var/lib/authentik
       containers:
         - name: authentik-server
-          image: ghcr.io/goauthentik/server:2025.12
+          image: ghcr.io/goauthentik/server:2026.2
           args:
             - server
           ports:
