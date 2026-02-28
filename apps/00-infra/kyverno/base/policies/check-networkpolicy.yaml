@@ -1,0 +1,36 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-networkpolicy
+  annotations:
+    policies.kyverno.io/title: Require NetworkPolicy
+    policies.kyverno.io/category: Maturity (Diamond)
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      To ensure network isolation, pods must be covered by a NetworkPolicy.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: validate-network-policy
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      validate:
+        message: "Pod must have network isolation for maturity Level 6 (Diamond)."
+        anyPattern:
+          - metadata:
+              labels:
+                vixens.io/network-policy: "true"
+          - metadata:
+              annotations:
+                vixens.io/network-policy: "true"
