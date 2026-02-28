@@ -10,4 +10,4 @@ resources:
 configMapGenerator:
   - name: maturity-script
     files:
-      - sync_maturity.py=../../../../scripts/reports/sync_cluster_maturity.py
+      - sync_maturity.py=scripts/sync_maturity.py
