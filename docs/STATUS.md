@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
+Last Updated: 2026-02-28 (Post-Incident Stabilization)
 
 ---
 
@@ -10,7 +10,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 
 | Component | Status | Description |
 |-----------|--------|-------------|
-| **Kustomize Build** | ✅ **PASSING** | Infrastructure build fixed (Duplicate keys + Kyverno syntax resolved) |
+| **Kustomize Build** | ✅ **PASSING** | Infrastructure build fixed (Kyverno foreach loops + Burstable QoS) |
 | **CI/CD Pipelines** | ✅ **ACTIVE** | Promotion pipeline active (v3.1.381) |
 
 ---
@@ -39,7 +39,8 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| argocd | ✅ | ✅ | Fixed (Recovered) |
+| argocd | ✅ | ✅ | Recovered (Kyverno unblocked) |
+| kyverno | ✅ | ✅ | Boosted (3 replicas, 1 CPU, Timeout 30s) |
 | velero | ⏳ | ✅ | Prod: v1.17.2 + Infisical + Node Agent |
 | traefik | ✅ | ✅ | Ingress controller - v3.x |
 | cert-manager | ✅ | ✅ | TLS certificates - Let's Encrypt production |
@@ -93,7 +94,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| homeassistant | ✅ | ✅ | Elite Status + VPA + Security Hardened |
+| homeassistant | ✅ | ✅ | Fixed: Critical Priority + 4Gi RAM |
 | mealie | ✅ | ✅ | Fixed DNS resolution (removed target annotation) |
 | mosquitto | ✅ | ✅ | MQTT broker |
 
@@ -105,10 +106,10 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 |-------------|-----|------|-------|
 | jellyfin | ⏳ | 💤 | Media server (planned) |
 | sabnzbd | ⏳ | ✅ | Prod fixed and synced |
-| radarr | ⏳ | ✅ | Silver tier (2026-02-24)
-| sonarr | ⏳ | ✅ | Prod fixed 
-| prowlarr | ⏳ | ✅ | Prod fixed 
-| music-assistant | 💤 | ✅ | SlimProto 3483 redirected |
+| radarr | ⏳ | ✅ | Silver tier (2026-02-24) |
+| sonarr | ⏳ | ✅ | Prod fixed |
+| prowlarr | ⏳ | ✅ | Prod fixed |
+| music-assistant | 💤 | ✅ | Ports 3483 (SlimProto) + 8097 (Stream) |
 | frigate | ✅ | ✅ | Elite Status + 50Gi PVC fixed |
 | jellyseerr | ⏳ | 💤 | Media request management (planned) |
 | hydrus-client | ✅ | ✅ | Elite Status + Authentik SSO |
@@ -124,7 +125,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 | contacts | ✅ | 💤 | Contacts redirection service |
 | netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
 | netbird | ✅ | ✅ | Rate limit resolved, certificates active |
-| adguard | ⏳ | ✅ | DNS-based ad blocking (planned) |
+| adguard | ✅ | ✅ | DNS Restored + Critical Priority |
 
 ---
 
@@ -204,7 +205,7 @@ git push origin main
 - 💤 Paused: 2 applications
 
 **Prod Environment:**
-- ✅ Working: 41 applications (Phase 3 active)
+- ✅ Working: 42 applications (Phase 3 active)
 - ⚠️ Degraded: 1 application (Netbird Certs)
 
 ---
@@ -250,4 +251,4 @@ git push origin main
 
 ---
 
-**Last Updated:** 2026-02-05
+**Last Updated:** 2026-02-28
