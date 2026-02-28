@@ -108,6 +108,7 @@ Last Updated: 2026-02-05 (Stabilization Milestone v3.1.536)
 | radarr | ⏳ | ✅ | Silver tier (2026-02-24)
 | sonarr | ⏳ | ✅ | Prod fixed 
 | prowlarr | ⏳ | ✅ | Prod fixed 
+| music-assistant | 💤 | ✅ | SlimProto 3483 redirected |
 | frigate | ✅ | ✅ | Elite Status + 50Gi PVC fixed |
 | jellyseerr | ⏳ | 💤 | Media request management (planned) |
 | hydrus-client | ✅ | ✅ | Elite Status + Authentik SSO |
