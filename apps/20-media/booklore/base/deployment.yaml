@@ -90,7 +90,7 @@ spec:
               mountPath: /app/data
       containers:
         - name: booklore
-          image: ghcr.io/booklore-app/booklore:v2.0.0
+          image: ghcr.io/booklore-app/booklore:v2.0.4
           ports:
             - containerPort: 6060
               name: http
