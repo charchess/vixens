@@ -7,6 +7,15 @@ spec:
   selector:
     app: music-assistant
   ports:
-    - protocol: TCP
+    - name: web
+      protocol: TCP
       port: 8095
       targetPort: 8095
+    - name: slimproto-tcp
+      protocol: TCP
+      port: 3483
+      targetPort: 3483
+    - name: slimproto-udp
+      protocol: UDP
+      port: 3483
+      targetPort: 3483
