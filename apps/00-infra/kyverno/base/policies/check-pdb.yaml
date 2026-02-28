@@ -1,0 +1,49 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-pdb
+  annotations:
+    policies.kyverno.io/title: Require PodDisruptionBudget
+    policies.kyverno.io/category: Maturity (Platinum)
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      To ensure availability during maintenance, critical applications must have a PDB.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-pdb-exists
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      generate:
+        kind: PolicyReport
+        apiVersion: wgpolicyk8s.io/v1alpha2
+        name: pdb-check
+    - name: validate-pod-has-pdb
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Pod should be covered by a PodDisruptionBudget for maturity Level 4 (Platinum)."
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.metadata.labels.app }}"
+                operator: NotIn
+                value: ["traefik", "argocd-server"]
+              - key: "{{ target_pdb }}"
+                operator: Equals
+                value: ""
