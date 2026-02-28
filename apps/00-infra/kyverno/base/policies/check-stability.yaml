@@ -1,0 +1,33 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-stability
+  annotations:
+    policies.kyverno.io/title: Verify Operational Stability
+    policies.kyverno.io/category: Maturity (Orichalcum)
+    policies.kyverno.io/description: >-
+      Orichalcum tier requires zero restarts and proven uptime.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-zero-restarts
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              selector:
+                matchLabels:
+                  vixens.io/tier: "orichalcum"
+      validate:
+        message: "Orichalcum pods must have 0 restarts. Current pod has experienced failures."
+        foreach:
+          - list: "request.object.status.containerStatuses"
+            deny:
+              conditions:
+                all:
+                - key: "{{ element.restartCount }}"
+                  operator: GreaterThan
+                  value: 0

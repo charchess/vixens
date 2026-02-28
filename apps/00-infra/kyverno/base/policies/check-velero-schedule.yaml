@@ -1,0 +1,36 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-velero-schedule
+  annotations:
+    policies.kyverno.io/title: Verify Velero Schedule
+    policies.kyverno.io/category: Maturity (Diamond)
+    policies.kyverno.io/description: >-
+      Diamond tier apps must be included in a Velero backup schedule.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-ns-in-schedule
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              selector:
+                matchLabels:
+                  vixens.io/tier: "diamond"
+      context:
+        - name: velero_schedules
+          apiCall:
+            urlPath: "/apis/velero.io/v1/namespaces/velero/schedules"
+            jmesPath: "items[?spec.template.includedNamespaces[0] == '*' || contains(spec.template.includedNamespaces, '{{request.namespace}}')] | length(@)"
+      validate:
+        message: "Diamond tier pod namespace {{request.namespace}} is not covered by any Velero Schedule."
+        deny:
+          conditions:
+            all:
+            - key: "{{ velero_schedules }}"
+              operator: Equals
+              value: 0

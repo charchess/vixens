@@ -1,0 +1,31 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-restore-init
+  annotations:
+    policies.kyverno.io/title: Verify Restore InitContainer
+    policies.kyverno.io/category: Maturity (Emerald)
+    policies.kyverno.io/description: >-
+      Emerald tier requires an initContainer to restore data/config from backups.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: validate-restore-init
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              selector:
+                matchLabels:
+                  vixens.io/tier: "emerald"
+      validate:
+        message: "Emerald tier pod must have at least one initContainer with 'restore' or 'init' in the name."
+        deny:
+          conditions:
+            all:
+            - key: "{{ request.object.spec.initContainers[?contains(name, 'restore') || contains(name, 'init')] | length(@) }}"
+              operator: Equals
+              value: 0
