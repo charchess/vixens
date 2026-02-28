@@ -1102,6 +1102,16 @@ reports:
     echo ""
     echo "💡 Consulter: docs/reports/README.md"
 
+# Voir la maturité réelle des applications du cluster
+maturity:
+    @echo "📊 MATURITÉ RÉELLE DES APPLICATIONS (Cluster Prod)"
+    @echo "-----------------------------------------------"
+    @export KUBECONFIG=.secrets/prod/kubeconfig-prod; \
+    (printf "NAMESPACE APPLICATION MATURITY\n-------- ----------- --------\n" && \
+    kubectl get deployment,statefulset,daemonset -A -o json | \
+    jq -r '.items[] | "\(.metadata.namespace) \(.metadata.name) \(.metadata.labels["vixens.io/maturity"] // "none")"' | \
+    sort -k3,3 -k1,1) | column -t
+
 # LEGACY: Ancienne commande reports (gardée pour compatibilité)
 reports-legacy env="all":
     #!/usr/bin/env bash
