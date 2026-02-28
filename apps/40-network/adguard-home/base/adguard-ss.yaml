@@ -5,6 +5,11 @@ metadata:
   name: adguard-home
   labels:
     app: adguard-home
+    vixens.io/sizing: medium
+    vixens.io/sizing.restore-config: micro
+    vixens.io/sizing.restore-db: micro
+    vixens.io/sizing.litestream: micro
+    vixens.io/sizing.config-syncer: micro
 spec:
   serviceName: adguard-home-headless
   replicas: 1
@@ -17,7 +22,10 @@ spec:
       labels:
         app: adguard-home
         vixens.io/sizing: medium
-        vixens.io/sidecar-sizing: micro
+        vixens.io/sizing.restore-config: micro
+        vixens.io/sizing.restore-db: micro
+        vixens.io/sizing.litestream: micro
+        vixens.io/sizing.config-syncer: micro
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
@@ -42,13 +50,6 @@ spec:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           command:
             - sh
             - -c
@@ -71,13 +72,6 @@ spec:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           args:
             - restore
             - -config
@@ -106,13 +100,6 @@ spec:
             - containerPort: 53
               name: dns-tcp
               protocol: TCP
-          resources:
-            requests:
-              cpu: 200m
-              memory: 512Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
           securityContext:
             runAsUser: 0
             runAsGroup: 0
@@ -144,11 +131,6 @@ spec:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-            seccompProfile:
-              type: RuntimeDefault
           args:
             - replicate
             - -config
@@ -156,13 +138,6 @@ spec:
           ports:
             - containerPort: 9090
               name: metrics
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           readinessProbe:
             httpGet:
               path: /metrics
@@ -189,13 +164,6 @@ spec:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           command:
             - sh
             - -c

@@ -1,93 +1,52 @@
 ---
-# Kyverno Policy: Sizing Mutation (Double Label Standard)
+# Kyverno Policy: Granular Sizing Mutation
 #
-# vixens.io/sizing: Applied to the main container (name matches pod's 'app' label)
-# vixens.io/sidecar-sizing: Applied to all other containers and init-containers
+# vixens.io/sizing: Sizing for the main container (name matches pod's 'app' label)
+# vixens.io/sizing.<container-name>: Sizing for a specific container
 #
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: sizing-mutate
   annotations:
-    policies.kyverno.io/title: Sizing Mutation
+    policies.kyverno.io/title: Granular Sizing Mutation
     policies.kyverno.io/category: Resource Management
     policies.kyverno.io/description: >-
-      Declarative resource management using main and sidecar labels.
+      Declarative resource management using per-container labels.
 spec:
   validationFailureAction: Audit
   background: false
   rules:
-    # Rule 1: Main Container Sizing
-    # Matches the container whose name is equal to the pod's 'app' label
-    - name: main-container-sizing
+    # Rule 1: Per-container Sizing (Explicit container labels)
+    - name: granular-container-sizing
       match:
         any:
           - resources:
               kinds:
                 - Pod
-              selector:
-                matchLabels:
-                  vixens.io/sizing: "?*"
       mutate:
         foreach:
           - list: "request.object.spec.containers"
-            preconditions:
-              all:
-              - key: "{{ element.name }}"
-                operator: Equals
-                value: "{{ request.object.metadata.labels.app }}"
             patchStrategicMerge:
               spec:
                 containers:
                   - (name): "{{ element.name }}"
                     resources:
+                      # Logic: Check for vixens.io/sizing.{{name}}, then fallback to vixens.io/sizing if it's the app, then default to micro
                       requests:
-                        cpu: "{{ (request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '1000m' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '200m' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '50m' || '10m' }}"
-                        memory: "{{ (request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '2Gi' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '512Mi' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '256Mi' || '64Mi' }}"
+                        cpu: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '1000m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '200m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '50m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'micro' && '10m' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '1000m' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '200m' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '50m' || '10m' }}"
+                        memory: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '2Gi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '512Mi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '256Mi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'micro' && '64Mi' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '2Gi' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '512Mi' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '256Mi' || '64Mi' }}"
                       limits:
-                        cpu: "{{ (request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '2000m' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '1000m' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '500m' || '100m' }}"
-                        memory: "{{ (request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '4Gi' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '1Gi' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '512Mi' || '128Mi' }}"
+                        cpu: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '2000m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '1000m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '500m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'micro' && '100m' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '2000m' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '1000m' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '500m' || '100m' }}"
+                        memory: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '4Gi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '1Gi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '512Mi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'micro' && '128Mi' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '4Gi' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '1Gi' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '512Mi' || '128Mi' }}"
 
-    # Rule 2: Sidecars Sizing (Defaults to micro if label missing)
-    - name: sidecar-containers-sizing
+    # Rule 2: Init Containers Sizing (Granular)
+    - name: granular-init-container-sizing
       match:
         any:
           - resources:
               kinds:
                 - Pod
-              selector:
-                matchLabels:
-                  vixens.io/sizing: "?*"
-      mutate:
-        foreach:
-          - list: "request.object.spec.containers"
-            preconditions:
-              all:
-              - key: "{{ element.name }}"
-                operator: NotEquals
-                value: "{{ request.object.metadata.labels.app }}"
-            patchStrategicMerge:
-              spec:
-                containers:
-                  - (name): "{{ element.name }}"
-                    resources:
-                      requests:
-                        cpu: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '50m' || '10m' }}"
-                        memory: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '256Mi' || '64Mi' }}"
-                      limits:
-                        cpu: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '500m' || '100m' }}"
-                        memory: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '512Mi' || '128Mi' }}"
-
-    # Rule 3: Init Containers Sizing (Always use sidecar-sizing)
-    - name: init-containers-sizing
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              selector:
-                matchLabels:
-                  vixens.io/sizing: "?*"
       mutate:
         foreach:
           - list: "request.object.spec.initContainers"
@@ -97,8 +56,8 @@ spec:
                   - (name): "{{ element.name }}"
                     resources:
                       requests:
-                        cpu: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '50m' || '10m' }}"
-                        memory: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '256Mi' || '64Mi' }}"
+                        cpu: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '50m' || '10m' }}"
+                        memory: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '256Mi' || '64Mi' }}"
                       limits:
-                        cpu: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '500m' || '100m' }}"
-                        memory: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '512Mi' || '128Mi' }}"
+                        cpu: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '500m' || '100m' }}"
+                        memory: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '512Mi' || '128Mi' }}"
