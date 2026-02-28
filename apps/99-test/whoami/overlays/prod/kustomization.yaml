@@ -12,3 +12,6 @@ components:
   - ../../../../_shared/components/base
   - ../../../../_shared/components/resources
   - ../../../../_shared/components/poddisruptionbudget/0
+  - ../../../../_shared/components/sizing/small
+  - ../../../../_shared/components/priority/low
+  - ../../../../_shared/components/revision-history-limit
