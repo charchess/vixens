@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: adguard-test
+  namespace: networking
+spec:
+  containers:
+  - name: adguard
+    image: adguard/adguardhome:v0.107.72
+    ports:
+    - containerPort: 3000
+      name: http
+    - containerPort: 53
+      name: dns-udp
+      protocol: UDP
+    - containerPort: 53
+      name: dns-tcp
+      protocol: TCP
+    securityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      allowPrivilegeEscalation: false
+      capabilities:
+        add: ["NET_BIND_SERVICE"]
+        drop: ["ALL"]
+      seccompProfile:
+        type: RuntimeDefault
+    volumeMounts:
+    - name: config
+      mountPath: /opt/adguardhome/conf
+    - name: data
+      mountPath: /opt/adguardhome/work
+    livenessProbe:
+      httpGet:
+        path: /
+        port: 3000
+      initialDelaySeconds: 30
+      periodSeconds: 20
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 3000
+      initialDelaySeconds: 10
+      periodSeconds: 10
+  volumes:
+  - name: config
+    emptyDir: {}
+  - name: data
+    emptyDir: {}
+  restartPolicy: Never
+  priorityClassName: vixens-high

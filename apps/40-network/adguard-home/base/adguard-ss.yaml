@@ -242,7 +242,7 @@ spec:
         name: config
       spec:
         accessModes: [ "ReadWriteOnce" ]
-        storageClassName: synelia-iscsi-retain
+        storageClassName: synelia-iscsi
         resources:
           requests:
             storage: 1Gi
@@ -250,7 +250,7 @@ spec:
         name: data
       spec:
         accessModes: [ "ReadWriteOnce" ]
-        storageClassName: synelia-iscsi-retain
+        storageClassName: synelia-iscsi
         resources:
           requests:
             storage: 5Gi
