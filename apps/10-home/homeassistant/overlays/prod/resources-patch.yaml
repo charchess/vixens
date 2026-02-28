@@ -4,13 +4,13 @@ kind: Deployment
 metadata:
   name: homeassistant
   labels:
-    vixens.io/sizing: large
+    vixens.io/sizing: medium
 spec:
   template:
     metadata:
       labels:
         app: homeassistant
-        vixens.io/sizing: large
+        vixens.io/sizing: medium
     spec:
       containers:
         - name: homeassistant
