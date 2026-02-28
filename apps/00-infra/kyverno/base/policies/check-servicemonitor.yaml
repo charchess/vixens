@@ -1,0 +1,38 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-servicemonitor
+  annotations:
+    policies.kyverno.io/title: Verify ServiceMonitor Presence
+    policies.kyverno.io/category: Maturity (Gold)
+    policies.kyverno.io/description: >-
+      Ensures that applications exposing metrics have an associated ServiceMonitor.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-servicemonitor-exists
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      preconditions:
+        all:
+        - key: "{{ request.object.metadata.annotations."prometheus.io/scrape" || 'false' }}"
+          operator: Equals
+          value: "true"
+      context:
+        - name: sm_count
+          apiCall:
+            urlPath: "/apis/monitoring.coreos.com/v1/namespaces/{{request.namespace}}/servicemonitors"
+            jmesPath: "items[?spec.selector.matchLabels.app == '{{request.object.metadata.labels.app}}'] | length(@)"
+      validate:
+        message: "Metrics annotations found but no ServiceMonitor targets app={{request.object.metadata.labels.app}} (Level 3 Gold)."
+        deny:
+          conditions:
+            all:
+            - key: "{{ sm_count }}"
+              operator: Equals
+              value: 0
