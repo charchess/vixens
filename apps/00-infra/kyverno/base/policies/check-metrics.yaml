@@ -1,0 +1,35 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-metrics
+  annotations:
+    policies.kyverno.io/title: Require Metrics Exposure
+    policies.kyverno.io/category: Maturity (Gold)
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      To ensure observability, applications must expose metrics via Prometheus annotations.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: validate-metrics-annotations
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              annotations:
+                vixens.io/nometrics: "true"
+      validate:
+        message: "Metrics annotations (prometheus.io/scrape) are required for maturity Level 3 (Gold)."
+        anyPattern:
+          - metadata:
+              annotations:
+                prometheus.io/scrape: "true"
+          - metadata:
+              annotations:
+                prometheus.io/port: "?*"

@@ -1,0 +1,39 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-backup
+  annotations:
+    policies.kyverno.io/title: Require Backup Profile
+    policies.kyverno.io/category: Maturity (Emerald)
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      To ensure data durability, applications must define a backup profile.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: validate-backup-profile
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      validate:
+        message: "A backup profile (vixens.io/backup-profile) is required for maturity Level 5 (Emerald)."
+        anyPattern:
+          - metadata:
+              labels:
+                vixens.io/backup-profile: "?*"
+          - metadata:
+              annotations:
+                vixens.io/backup-profile: "?*"
+          - metadata:
+              annotations:
+                backup.velero.io/backup-volumes: "?*"
