@@ -1,0 +1,47 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-qos-class
+  annotations:
+    policies.kyverno.io/title: Validate QoS Class
+    policies.kyverno.io/category: Maturity (Reliability)
+    policies.kyverno.io/description: >-
+      Audits the Quality of Service class. Platinum requires Burstable or Guaranteed.
+      Orichalcum requires Guaranteed.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-platinum-qos
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              selector:
+                matchLabels:
+                  vixens.io/tier: "platinum"
+      validate:
+        message: "Platinum apps should be Burstable or Guaranteed QoS."
+        deny:
+          conditions:
+            all:
+            - key: "{{ request.object.status.qosClass || 'BestEffort' }}"
+              operator: Equals
+              value: "BestEffort"
+
+    - name: check-orichalcum-qos
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              selector:
+                matchLabels:
+                  vixens.io/tier: "orichalcum"
+      validate:
+        message: "Orichalcum apps MUST be Guaranteed QoS (Requests == Limits)."
+        pattern:
+          status:
+            qosClass: "Guaranteed"
