@@ -51,6 +51,7 @@ spec:
                 - kyverno
                 - kube-public
                 - kube-node-lease
+                - homeassistant
           - resources:
               selector:
                 matchLabels:

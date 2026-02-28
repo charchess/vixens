@@ -154,6 +154,13 @@ spec:
       containers:
         - name: homeassistant
           image: ghcr.io/home-assistant/home-assistant:2026.2.3
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "2Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
           imagePullPolicy: Always
           ports:
             - containerPort: 8123
