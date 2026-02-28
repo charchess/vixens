@@ -16,6 +16,7 @@ spec:
     metadata:
       labels:
         app: radarr
+        vixens.io/sizing: large
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
