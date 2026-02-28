@@ -4,30 +4,17 @@ kind: Deployment
 metadata:
   name: homeassistant
   labels:
-    vixens.io/sizing: G-xl
+    vixens.io/sizing: large
 spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing: G-xl
+        app: homeassistant
+        vixens.io/sizing: large
     spec:
       containers:
         - name: homeassistant
-          resources:
-            requests:
-              cpu: 500m
-              memory: 2Gi
-            limits:
-              cpu: 2000m
-              memory: 4Gi
         - name: litestream
-          resources:
-            requests:
-              cpu: 100m
-              memory: 1Gi
-            limits:
-              cpu: 500m
-              memory: 1Gi
         - name: config-syncer
           image: rclone/rclone:1.73
           securityContext:
@@ -53,38 +40,10 @@ spec:
                   --exclude ".*-litestream/**";
                 sleep 60;
               done
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              cpu: 200m
-              memory: 256Mi
       initContainers:
         - name: fix-perms
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 200m
-              memory: 128Mi
         - name: install-python-deps
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 200m
-              memory: 128Mi
         - name: config-init
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
         - name: restore-config
           image: rclone/rclone:1.73
           securityContext:
@@ -110,18 +69,4 @@ spec:
                 --exclude ".*-litestream" \
                 --exclude ".*-litestream/**" \
                 || true
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              cpu: 200m
-              memory: 512Mi
         - name: restore-db
-          resources:
-            requests:
-              cpu: 100m
-              memory: 512Mi
-            limits:
-              cpu: 500m
-              memory: 1Gi
