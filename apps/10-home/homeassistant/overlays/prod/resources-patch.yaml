@@ -9,6 +9,7 @@ spec:
   template:
     metadata:
       labels:
+        app: homeassistant
         vixens.io/sizing: G-xl
     spec:
       containers:
