@@ -1,0 +1,30 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-operational-docs
+  annotations:
+    policies.kyverno.io/title: Require Operational Documentation
+    policies.kyverno.io/category: Maturity (Orichalcum)
+    policies.kyverno.io/description: >-
+      Orichalcum tier requires links to runbooks and dashboards for rapid incident response.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: validate-doc-links
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              selector:
+                matchLabels:
+                  vixens.io/tier: "orichalcum"
+      validate:
+        message: "Orichalcum pods must have vixens.io/runbook and vixens.io/dashboard annotations."
+        pattern:
+          metadata:
+            annotations:
+              vixens.io/runbook: "http*"
+              vixens.io/dashboard: "http*"
