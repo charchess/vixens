@@ -17,6 +17,7 @@ spec:
       labels:
         app: adguard-home
         vixens.io/sizing: medium
+        vixens.io/sidecar-sizing: micro
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
@@ -143,13 +144,11 @@ spec:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
           args:
             - replicate
             - -config
@@ -157,6 +156,13 @@ spec:
           ports:
             - containerPort: 9090
               name: metrics
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           readinessProbe:
             httpGet:
               path: /metrics

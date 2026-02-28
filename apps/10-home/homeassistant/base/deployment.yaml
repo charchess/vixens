@@ -6,6 +6,7 @@ metadata:
   labels:
     app: homeassistant
     vixens.io/sizing: large
+    vixens.io/sidecar-sizing: micro
   annotations:
     secret.reloader.stakater.com/reload: homeassistant-config
     argocd.argoproj.io/sync-wave: "10"
@@ -22,6 +23,7 @@ spec:
       labels:
         app: homeassistant
         vixens.io/sizing: large
+        vixens.io/sidecar-sizing: micro
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"

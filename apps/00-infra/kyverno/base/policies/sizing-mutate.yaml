@@ -1,11 +1,8 @@
 ---
-# Kyverno Policy: Sizing Mutation
+# Kyverno Policy: Sizing Mutation (Double Label Standard)
 #
-# This policy automatically applies resource sizing based on the
-# vixens.io/sizing label. If no label is present, defaults to 'micro'.
-#
-# PHASE: Enforce (mutation active)
-# STATUS: Active
+# vixens.io/sizing: Applied to the main container (name matches pod's 'app' label)
+# vixens.io/sidecar-sizing: Applied to all other containers and init-containers
 #
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -14,31 +11,20 @@ metadata:
   annotations:
     policies.kyverno.io/title: Sizing Mutation
     policies.kyverno.io/category: Resource Management
-    policies.kyverno.io/severity: medium
-    policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
-      Automatically applies resource requests/limits based on vixens.io/sizing label.
-      This version uses foreach loops to prevent index conflicts and panics.
+      Declarative resource management using main and sidecar labels.
 spec:
   validationFailureAction: Audit
   background: false
   rules:
-    # Rule 1: Default to micro if no sizing label (Main container only)
-    - name: default-micro
+    # Rule 1: Main Container Sizing
+    # Matches the container whose name is equal to the pod's 'app' label
+    - name: main-container-sizing
       match:
         any:
           - resources:
               kinds:
                 - Pod
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kyverno
-                - kube-public
-                - kube-node-lease
-          - resources:
               selector:
                 matchLabels:
                   vixens.io/sizing: "?*"
@@ -48,22 +34,22 @@ spec:
             preconditions:
               all:
               - key: "{{ element.name }}"
-                operator: NotIn
-                value: ["litestream", "config-syncer", "node-agent", "cloudnative-pg"]
+                operator: Equals
+                value: "{{ request.object.metadata.labels.app }}"
             patchStrategicMerge:
               spec:
                 containers:
                   - (name): "{{ element.name }}"
                     resources:
                       requests:
-                        cpu: "10m"
-                        memory: "64Mi"
+                        cpu: "{{ (request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '1000m' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '200m' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '50m' || '10m' }}"
+                        memory: "{{ (request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '2Gi' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '512Mi' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '256Mi' || '64Mi' }}"
                       limits:
-                        cpu: "100m"
-                        memory: "128Mi"
+                        cpu: "{{ (request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '2000m' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '1000m' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '500m' || '100m' }}"
+                        memory: "{{ (request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '4Gi' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '1Gi' || (request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '512Mi' || '128Mi' }}"
 
-    # Rule 2: Small sizing
-    - name: small-sizing
+    # Rule 2: Sidecars Sizing (Defaults to micro if label missing)
+    - name: sidecar-containers-sizing
       match:
         any:
           - resources:
@@ -71,29 +57,29 @@ spec:
                 - Pod
               selector:
                 matchLabels:
-                  vixens.io/sizing: "small"
+                  vixens.io/sizing: "?*"
       mutate:
         foreach:
           - list: "request.object.spec.containers"
             preconditions:
               all:
               - key: "{{ element.name }}"
-                operator: NotIn
-                value: ["litestream", "config-syncer", "node-agent", "cloudnative-pg"]
+                operator: NotEquals
+                value: "{{ request.object.metadata.labels.app }}"
             patchStrategicMerge:
               spec:
                 containers:
                   - (name): "{{ element.name }}"
                     resources:
                       requests:
-                        cpu: "50m"
-                        memory: "256Mi"
+                        cpu: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '50m' || '10m' }}"
+                        memory: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '256Mi' || '64Mi' }}"
                       limits:
-                        cpu: "500m"
-                        memory: "512Mi"
+                        cpu: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '500m' || '100m' }}"
+                        memory: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '512Mi' || '128Mi' }}"
 
-    # Rule 3: Medium sizing
-    - name: medium-sizing
+    # Rule 3: Init Containers Sizing (Always use sidecar-sizing)
+    - name: init-containers-sizing
       match:
         any:
           - resources:
@@ -101,121 +87,7 @@ spec:
                 - Pod
               selector:
                 matchLabels:
-                  vixens.io/sizing: "medium"
-      mutate:
-        foreach:
-          - list: "request.object.spec.containers"
-            preconditions:
-              all:
-              - key: "{{ element.name }}"
-                operator: NotIn
-                value: ["litestream", "config-syncer", "node-agent", "cloudnative-pg"]
-            patchStrategicMerge:
-              spec:
-                containers:
-                  - (name): "{{ element.name }}"
-                    resources:
-                      requests:
-                        cpu: "200m"
-                        memory: "512Mi"
-                      limits:
-                        cpu: "1000m"
-                        memory: "1Gi"
-
-    # Rule 4: Large sizing
-    - name: large-sizing
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              selector:
-                matchLabels:
-                  vixens.io/sizing: "large"
-      mutate:
-        foreach:
-          - list: "request.object.spec.containers"
-            preconditions:
-              all:
-              - key: "{{ element.name }}"
-                operator: NotIn
-                value: ["litestream", "config-syncer", "node-agent", "cloudnative-pg"]
-            patchStrategicMerge:
-              spec:
-                containers:
-                  - (name): "{{ element.name }}"
-                    resources:
-                      requests:
-                        cpu: "1000m"
-                        memory: "2Gi"
-                      limits:
-                        cpu: "2000m"
-                        memory: "4Gi"
-
-    # Rule 5: XLarge sizing
-    - name: xlarge-sizing
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              selector:
-                matchLabels:
-                  vixens.io/sizing: "xlarge"
-      mutate:
-        foreach:
-          - list: "request.object.spec.containers"
-            preconditions:
-              all:
-              - key: "{{ element.name }}"
-                operator: NotIn
-                value: ["litestream", "config-syncer", "node-agent", "cloudnative-pg"]
-            patchStrategicMerge:
-              spec:
-                containers:
-                  - (name): "{{ element.name }}"
-                    resources:
-                      requests:
-                        cpu: "2000m"
-                        memory: "4Gi"
-                      limits:
-                        cpu: "4000m"
-                        memory: "8Gi"
-
-    # Rule 6: Sidecars (Always Micro)
-    - name: sidecar-sizing
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      mutate:
-        foreach:
-          - list: "request.object.spec.containers"
-            preconditions:
-              all:
-              - key: "{{ element.name }}"
-                operator: In
-                value: ["litestream", "config-syncer", "node-agent", "cloudnative-pg"]
-            patchStrategicMerge:
-              spec:
-                containers:
-                  - (name): "{{ element.name }}"
-                    resources:
-                      requests:
-                        cpu: "10m"
-                        memory: "64Mi"
-                      limits:
-                        cpu: "100m"
-                        memory: "128Mi"
-
-    # Rule 7: Init Containers (Always Micro)
-    - name: init-container-sizing
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
+                  vixens.io/sizing: "?*"
       mutate:
         foreach:
           - list: "request.object.spec.initContainers"
@@ -225,8 +97,8 @@ spec:
                   - (name): "{{ element.name }}"
                     resources:
                       requests:
-                        cpu: "10m"
-                        memory: "64Mi"
+                        cpu: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '50m' || '10m' }}"
+                        memory: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '256Mi' || '64Mi' }}"
                       limits:
-                        cpu: "100m"
-                        memory: "128Mi"
+                        cpu: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '500m' || '100m' }}"
+                        memory: "{{ (request.object.metadata.labels.\"vixens.io/sidecar-sizing\" == 'small') && '512Mi' || '128Mi' }}"
