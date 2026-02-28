@@ -274,3 +274,39 @@ spec:
                   limits:
                     cpu: "2000m"
                     memory: "4Gi"
+
+    # Rule 11: Sidecar sizing (Always micro)
+    - name: sidecar-resources
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      mutate:
+        patchStrategicMerge:
+          spec:
+            containers:
+              - (name): "litestream"
+                resources:
+                  requests:
+                    cpu: "10m"
+                    memory: "64Mi"
+                  limits:
+                    cpu: "100m"
+                    memory: "128Mi"
+              - (name): "config-syncer"
+                resources:
+                  requests:
+                    cpu: "10m"
+                    memory: "64Mi"
+                  limits:
+                    cpu: "100m"
+                    memory: "128Mi"
+              - (name): "node-agent"
+                resources:
+                  requests:
+                    cpu: "10m"
+                    memory: "64Mi"
+                  limits:
+                    cpu: "100m"
+                    memory: "128Mi"
