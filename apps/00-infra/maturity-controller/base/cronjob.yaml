@@ -1,13 +1,4 @@
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: maturity-script
-  namespace: kyverno
-data:
-  sync_maturity.py: |
-    # (Le contenu du script ci-dessus sera injecté ici par Kustomize ou via ce ConfigMap)
----
 apiVersion: batch/v1
 kind: CronJob
 metadata:
