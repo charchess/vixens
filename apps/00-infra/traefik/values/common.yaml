@@ -69,6 +69,16 @@ ports:
     exposedPort: 53
     expose: true
     protocol: UDP
+  slimproto-tcp: # MusicAssistant SlimProto TCP
+    port: 3483
+    exposedPort: 3483
+    expose: true
+    protocol: TCP
+  slimproto-udp: # MusicAssistant SlimProto UDP
+    port: 3483
+    exposedPort: 3483
+    expose: true
+    protocol: UDP
   frigate-api: # Frigate HTTP API (Home Assistant integration)
     port: 5000
     exposedPort: 5000

@@ -29,6 +29,13 @@ spec:
           image: ghcr.io/music-assistant/server:2.8.0b9
           ports:
             - containerPort: 8095
+              name: web
+            - containerPort: 3483
+              name: slimproto-tcp
+              protocol: TCP
+            - containerPort: 3483
+              name: slimproto-udp
+              protocol: UDP
           env:
             - name: PUID
               value: "1000"
