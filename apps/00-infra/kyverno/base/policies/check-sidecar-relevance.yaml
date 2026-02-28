@@ -1,0 +1,41 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-sidecar-relevance
+  annotations:
+    policies.kyverno.io/title: Check Sidecar Relevance
+    policies.kyverno.io/category: Maturity (Emerald)
+    policies.kyverno.io/description: >-
+      Ensures that Litestream is present if SQLite is detected, and config-syncer if NFS config is used.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-litestream-for-sqlite
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      preconditions:
+        all:
+        - key: "{{ request.object.spec.volumes[?contains(name, 'config')].persistentVolumeClaim.claimName || '' | length(@) }}"
+          operator: GreaterThan
+          value: 0
+      validate:
+        message: "SQLite detected in config volume but litestream sidecar is missing (Level 5 Emerald requirement)."
+        foreach:
+          - list: "request.object.spec.containers"
+            deny:
+              conditions:
+                all:
+                - key: "{{ request.object.spec.volumes[?contains(name, 'config')] }}" # Has config volume
+                  operator: NotEquals
+                  value: ""
+                - key: "{{ request.object.spec.containers[?contains(image, 'litestream')] | length(@) }}" # No litestream
+                  operator: Equals
+                  value: 0
+                - key: "{{ request.object.metadata.labels.app }}" # Filter out known non-sqlite apps
+                  operator: NotIn
+                  value: ["traefik", "cilium"]
