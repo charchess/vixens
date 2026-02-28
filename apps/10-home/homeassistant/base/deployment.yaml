@@ -69,13 +69,6 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 200m
-              memory: 128Mi
         - name: restore-config
           image: rclone/rclone:1.73
           securityContext:
@@ -95,13 +88,6 @@ spec:
           envFrom:
             - secretRef:
                 name: homeassistant-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -120,13 +106,6 @@ spec:
           envFrom:
             - secretRef:
                 name: homeassistant-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -154,13 +133,6 @@ spec:
       containers:
         - name: homeassistant
           image: ghcr.io/home-assistant/home-assistant:2026.2.3
-          resources:
-            requests:
-              cpu: "1000m"
-              memory: "2Gi"
-            limits:
-              cpu: "2000m"
-              memory: "4Gi"
           imagePullPolicy: Always
           ports:
             - containerPort: 8123
@@ -185,13 +157,6 @@ spec:
               port: http
             initialDelaySeconds: 30
             periodSeconds: 15
-          resources:
-            requests:
-              cpu: 200m
-              memory: 512Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -228,13 +193,6 @@ spec:
               port: metrics
             initialDelaySeconds: 5
             periodSeconds: 10
-          resources:
-            requests:
-              cpu: 100m
-              memory: 1Gi
-            limits:
-              cpu: 100m
-              memory: 1Gi
         - name: config-syncer
           image: rclone/rclone:1.73
           securityContext:
@@ -260,13 +218,6 @@ spec:
           envFrom:
             - secretRef:
                 name: homeassistant-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
