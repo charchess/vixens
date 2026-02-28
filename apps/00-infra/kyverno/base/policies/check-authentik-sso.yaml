@@ -1,0 +1,29 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-authentik-sso
+  annotations:
+    policies.kyverno.io/title: Verify Authentik SSO
+    policies.kyverno.io/category: Maturity (Diamond)
+    policies.kyverno.io/description: >-
+      Diamond tier apps must be protected by Authentik ForwardAuth middleware.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: validate-authentik-middleware
+      match:
+        any:
+          - resources:
+              kinds:
+                - Ingress
+              selector:
+                matchLabels:
+                  vixens.io/tier: "diamond"
+      validate:
+        message: "Diamond tier Ingress must use Authentik SSO middleware (traefik-forward-auth)."
+        pattern:
+          metadata:
+            annotations:
+              traefik.ingress.kubernetes.io/router.middlewares: "*authentik*"
