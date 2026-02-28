@@ -41,6 +41,13 @@ spec:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           command:
             - sh
             - -c
@@ -51,15 +58,7 @@ spec:
               export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/config /opt/adguardhome/conf \
-                --transfers 4 \
-                --exclude "*.log" \
-                --exclude "tts/**" \
-                --exclude "backups/**" \
-                --exclude "tmp_backups/**" \
-                --exclude "lost+found/**" \
-                --exclude ".*-litestream" \
-                --exclude ".*-litestream/**" 2>/dev/null || true
+              rclone copy s3:$LITESTREAM_BUCKET/config /opt/adguardhome/conf --transfers 4 --exclude "*.log" --exclude "tts/**" --exclude "backups/**" --exclude "tmp_backups/**" --exclude "lost+found/**" --exclude ".*-litestream" --exclude ".*-litestream/**" 2>/dev/null || true
           envFrom:
             - secretRef:
                 name: adguard-home-secrets
@@ -71,6 +70,13 @@ spec:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           args:
             - restore
             - -config
@@ -99,6 +105,13 @@ spec:
             - containerPort: 53
               name: dns-tcp
               protocol: TCP
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
           securityContext:
             runAsUser: 0
             runAsGroup: 0
@@ -130,11 +143,13 @@ spec:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-            seccompProfile:
-              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           args:
             - replicate
             - -config
@@ -168,11 +183,13 @@ spec:
           securityContext:
             runAsUser: 0
             runAsGroup: 0
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-            seccompProfile:
-              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           command:
             - sh
             - -c
