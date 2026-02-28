@@ -5,10 +5,8 @@
 # vixens.io/sizing label. If no label is present, defaults to 'micro'.
 #
 # PHASE: Enforce (mutation active)
-# STATUS: Disabled by default - enable when ready for migration
+# STATUS: Active
 #
-# To enable: kubectl patch clusterpolicy sizing-mutate -p '{"spec":{"validationFailureAction":"Enforce"}}'
-
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -20,23 +18,12 @@ metadata:
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
       Automatically applies resource requests/limits based on vixens.io/sizing label.
-      Supported values: micro, small, medium, large, xlarge (Burstable),
-      and G-small, G-medium, G-large, G-xl (Guaranteed QoS).
-      Defaults to 'micro' if no label is present.
-      
-      Burstable (requests < limits): micro, small, medium, large, xlarge
-      Guaranteed (requests = limits): G-small, G-medium, G-large, G-xl
-      
-      Migration guide:
-      1. Run sizing-audit policy to identify apps
-      2. Add vixens.io/sizing labels to critical apps
-      3. Test sizing-mutate in dev cluster
-      4. Enable sizing-mutate in prod when ready
+      This version uses foreach loops to prevent index conflicts and panics.
 spec:
-  validationFailureAction: Audit  # ← Disabled by default
+  validationFailureAction: Audit
   background: false
   rules:
-    # Rule 1: Default to micro if no sizing label
+    # Rule 1: Default to micro if no sizing label (Main container only)
     - name: default-micro
       match:
         any:
@@ -56,17 +43,24 @@ spec:
                 matchLabels:
                   vixens.io/sizing: "?*"
       mutate:
-        patchStrategicMerge:
-          spec:
-            containers:
-              - (name): "*"
-                resources:
-                  requests:
-                    cpu: "10m"
-                    memory: "64Mi"
-                  limits:
-                    cpu: "100m"
-                    memory: "128Mi"
+        foreach:
+          - list: "request.object.spec.containers"
+            preconditions:
+              all:
+              - key: "{{ element.name }}"
+                operator: NotIn
+                value: ["litestream", "config-syncer", "node-agent", "cloudnative-pg"]
+            patchStrategicMerge:
+              spec:
+                containers:
+                  - (name): "{{ element.name }}"
+                    resources:
+                      requests:
+                        cpu: "10m"
+                        memory: "64Mi"
+                      limits:
+                        cpu: "100m"
+                        memory: "128Mi"
 
     # Rule 2: Small sizing
     - name: small-sizing
@@ -79,17 +73,24 @@ spec:
                 matchLabels:
                   vixens.io/sizing: "small"
       mutate:
-        patchStrategicMerge:
-          spec:
-            containers:
-              - (name): "*"
-                resources:
-                  requests:
-                    cpu: "50m"
-                    memory: "256Mi"
-                  limits:
-                    cpu: "500m"
-                    memory: "512Mi"
+        foreach:
+          - list: "request.object.spec.containers"
+            preconditions:
+              all:
+              - key: "{{ element.name }}"
+                operator: NotIn
+                value: ["litestream", "config-syncer", "node-agent", "cloudnative-pg"]
+            patchStrategicMerge:
+              spec:
+                containers:
+                  - (name): "{{ element.name }}"
+                    resources:
+                      requests:
+                        cpu: "50m"
+                        memory: "256Mi"
+                      limits:
+                        cpu: "500m"
+                        memory: "512Mi"
 
     # Rule 3: Medium sizing
     - name: medium-sizing
@@ -102,17 +103,24 @@ spec:
                 matchLabels:
                   vixens.io/sizing: "medium"
       mutate:
-        patchStrategicMerge:
-          spec:
-            containers:
-              - (name): "*"
-                resources:
-                  requests:
-                    cpu: "200m"
-                    memory: "512Mi"
-                  limits:
-                    cpu: "1000m"
-                    memory: "1Gi"
+        foreach:
+          - list: "request.object.spec.containers"
+            preconditions:
+              all:
+              - key: "{{ element.name }}"
+                operator: NotIn
+                value: ["litestream", "config-syncer", "node-agent", "cloudnative-pg"]
+            patchStrategicMerge:
+              spec:
+                containers:
+                  - (name): "{{ element.name }}"
+                    resources:
+                      requests:
+                        cpu: "200m"
+                        memory: "512Mi"
+                      limits:
+                        cpu: "1000m"
+                        memory: "1Gi"
 
     # Rule 4: Large sizing
     - name: large-sizing
@@ -125,17 +133,24 @@ spec:
                 matchLabels:
                   vixens.io/sizing: "large"
       mutate:
-        patchStrategicMerge:
-          spec:
-            containers:
-              - (name): "*"
-                resources:
-                  requests:
-                    cpu: "1000m"
-                    memory: "2Gi"
-                  limits:
-                    cpu: "2000m"
-                    memory: "4Gi"
+        foreach:
+          - list: "request.object.spec.containers"
+            preconditions:
+              all:
+              - key: "{{ element.name }}"
+                operator: NotIn
+                value: ["litestream", "config-syncer", "node-agent", "cloudnative-pg"]
+            patchStrategicMerge:
+              spec:
+                containers:
+                  - (name): "{{ element.name }}"
+                    resources:
+                      requests:
+                        cpu: "1000m"
+                        memory: "2Gi"
+                      limits:
+                        cpu: "2000m"
+                        memory: "4Gi"
 
     # Rule 5: XLarge sizing
     - name: xlarge-sizing
@@ -148,165 +163,70 @@ spec:
                 matchLabels:
                   vixens.io/sizing: "xlarge"
       mutate:
-        patchStrategicMerge:
-          spec:
-            containers:
-              - (name): "*"
-                resources:
-                  requests:
-                    cpu: "2000m"
-                    memory: "4Gi"
-                  limits:
-                    cpu: "4000m"
-                    memory: "8Gi"
+        foreach:
+          - list: "request.object.spec.containers"
+            preconditions:
+              all:
+              - key: "{{ element.name }}"
+                operator: NotIn
+                value: ["litestream", "config-syncer", "node-agent", "cloudnative-pg"]
+            patchStrategicMerge:
+              spec:
+                containers:
+                  - (name): "{{ element.name }}"
+                    resources:
+                      requests:
+                        cpu: "2000m"
+                        memory: "4Gi"
+                      limits:
+                        cpu: "4000m"
+                        memory: "8Gi"
 
-    # Rule 6: Micro sizing (explicit label)
-    - name: micro-sizing
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              selector:
-                matchLabels:
-                  vixens.io/sizing: "micro"
-      mutate:
-        patchStrategicMerge:
-          spec:
-            containers:
-              - (name): "*"
-                resources:
-                  requests:
-                    cpu: "10m"
-                    memory: "64Mi"
-                  limits:
-                    cpu: "100m"
-                    memory: "128Mi"
-
-    # Rule 7: Guaranteed Small (G-small) - 50m/128Mi (requests=limits)
-    - name: guaranteed-small
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              selector:
-                matchLabels:
-                  vixens.io/sizing: "G-small"
-      mutate:
-        patchStrategicMerge:
-          spec:
-            containers:
-              - (name): "*"
-                resources:
-                  requests:
-                    cpu: "50m"
-                    memory: "128Mi"
-                  limits:
-                    cpu: "50m"
-                    memory: "128Mi"
-
-    # Rule 8: Guaranteed Medium (G-medium) - 200m/512Mi (requests=limits)
-    - name: guaranteed-medium
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              selector:
-                matchLabels:
-                  vixens.io/sizing: "G-medium"
-      mutate:
-        patchStrategicMerge:
-          spec:
-            containers:
-              - (name): "*"
-                resources:
-                  requests:
-                    cpu: "200m"
-                    memory: "512Mi"
-                  limits:
-                    cpu: "200m"
-                    memory: "512Mi"
-
-    # Rule 9: Guaranteed Large (G-large) - 1000m/2Gi (requests=limits)
-    - name: guaranteed-large
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              selector:
-                matchLabels:
-                  vixens.io/sizing: "G-large"
-      mutate:
-        patchStrategicMerge:
-          spec:
-            containers:
-              - (name): "*"
-                resources:
-                  requests:
-                    cpu: "1000m"
-                    memory: "2Gi"
-                  limits:
-                    cpu: "1000m"
-                    memory: "2Gi"
-
-    # Rule 10: Guaranteed XLarge (G-xl) - 2000m/4Gi (requests=limits)
-    - name: guaranteed-xlarge
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              selector:
-                matchLabels:
-                  vixens.io/sizing: "G-xl"
-      mutate:
-        patchStrategicMerge:
-          spec:
-            containers:
-              - (name): "*"
-                resources:
-                  requests:
-                    cpu: "2000m"
-                    memory: "4Gi"
-                  limits:
-                    cpu: "2000m"
-                    memory: "4Gi"
-
-    # Rule 11: Sidecar sizing (Always micro)
-    - name: sidecar-resources
+    # Rule 6: Sidecars (Always Micro)
+    - name: sidecar-sizing
       match:
         any:
           - resources:
               kinds:
                 - Pod
       mutate:
-        patchStrategicMerge:
-          spec:
-            containers:
-              - (name): "litestream"
-                resources:
-                  requests:
-                    cpu: "10m"
-                    memory: "64Mi"
-                  limits:
-                    cpu: "100m"
-                    memory: "128Mi"
-              - (name): "config-syncer"
-                resources:
-                  requests:
-                    cpu: "10m"
-                    memory: "64Mi"
-                  limits:
-                    cpu: "100m"
-                    memory: "128Mi"
-              - (name): "node-agent"
-                resources:
-                  requests:
-                    cpu: "10m"
-                    memory: "64Mi"
-                  limits:
-                    cpu: "100m"
-                    memory: "128Mi"
+        foreach:
+          - list: "request.object.spec.containers"
+            preconditions:
+              all:
+              - key: "{{ element.name }}"
+                operator: In
+                value: ["litestream", "config-syncer", "node-agent", "cloudnative-pg"]
+            patchStrategicMerge:
+              spec:
+                containers:
+                  - (name): "{{ element.name }}"
+                    resources:
+                      requests:
+                        cpu: "10m"
+                        memory: "64Mi"
+                      limits:
+                        cpu: "100m"
+                        memory: "128Mi"
+
+    # Rule 7: Init Containers (Always Micro)
+    - name: init-container-sizing
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      mutate:
+        foreach:
+          - list: "request.object.spec.initContainers"
+            patchStrategicMerge:
+              spec:
+                initContainers:
+                  - (name): "{{ element.name }}"
+                    resources:
+                      requests:
+                        cpu: "10m"
+                        memory: "64Mi"
+                      limits:
+                        cpu: "100m"
+                        memory: "128Mi"
