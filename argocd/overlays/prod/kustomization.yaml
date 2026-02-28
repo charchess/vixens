@@ -93,3 +93,4 @@ resources:
   - apps/robusta.yaml
   - apps/trivy.yaml
   - apps/radar.yaml
+  - apps/maturity-controller.yaml
