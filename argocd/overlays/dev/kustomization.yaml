@@ -3,38 +3,29 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: argocd
-resources:
-  # Core infra (keep)
-  - apps/priority-classes.yaml
-  - apps/shared-namespaces.yaml
-  - apps/infisical-operator.yaml
-  - apps/cilium-lb.yaml
-  - apps/traefik.yaml
-  - apps/traefik-middlewares.yaml
-  - apps/vpa.yaml
-  - apps/reloader.yaml
-  - apps/kyverno.yaml
-  - apps/policy-reporter.yaml
-  - apps/descheduler.yaml
-  - apps/cert-manager.yaml
-  - apps/cert-manager-secrets.yaml
-  - apps/cert-manager-webhook-gandi.yaml
-  - apps/cert-manager-config.yaml
-  - apps/synology-csi-secrets.yaml
-  - apps/synology-csi.yaml
-  - apps/nfs-storage.yaml
-  - apps/external-dns-unifi.yaml
-  - apps/external-dns-unifi-secrets.yaml
-  - apps/renovate.yaml
-  - apps/trivy.yaml
-
-  # Commented out for minimal dev cluster
-  # - apps/metrics-server.yaml
-  # - apps/goldilocks.yaml
-  # - apps/headlamp.yaml
-  # - apps/traefik-dashboard.yaml
+  # - apps/priority-classes.yaml
+  # - apps/shared-namespaces.yaml
+  # - apps/infisical-operator.yaml
+  # - apps/cilium-lb.yaml
+  # - apps/traefik.yaml
+  # - apps/traefik-middlewares.yaml
+  # - apps/vpa.yaml
+  # - apps/reloader.yaml
+  # - apps/kyverno.yaml
+  # - apps/policy-reporter.yaml
+  # - apps/descheduler.yaml
+  # - apps/cert-manager.yaml
+  # - apps/cert-manager-secrets.yaml
+  # - apps/cert-manager-webhook-gandi.yaml
+  # - apps/cert-manager-config.yaml
+  # - apps/synology-csi-secrets.yaml
+  # - apps/synology-csi.yaml
+  # - apps/nfs-storage.yaml
+  # - apps/external-dns-unifi.yaml
+  # - apps/external-dns-unifi-secrets.yaml
+  # - apps/renovate.yaml
+  # - apps/trivy.yaml
   - apps/argocd.yaml
-  # - apps/whoami.yaml
   
   # Media (commented)
   # - apps/sabnzbd.yaml
