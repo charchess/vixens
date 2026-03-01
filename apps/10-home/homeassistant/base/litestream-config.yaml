@@ -8,6 +8,14 @@ data:
     dbs:
       - path: /config/home-assistant_v2.db
         replicas:
-          - url: s3://$LITESTREAM_BUCKET/home-assistant_v2.db
-            endpoint: $LITESTREAM_ENDPOINT
+          - url: s3://${LITESTREAM_BUCKET}/home-assistant_v2.db
+            endpoint: ${LITESTREAM_ENDPOINT}
+            # Rétention stricte pour éviter l'accumulation
+            retention: 168h          # 7 jours de snapshots/WAL
+            snapshot-interval: 24h   # 1 snapshot complet par jour max
+            validation-interval: 12h # Vérification intégrité 2x/jour
+            # Sync fréquente mais pas de stockage local excessif
+            sync-interval: 10s
     addr: ":9090"
+    
+    
