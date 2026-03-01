@@ -6,6 +6,7 @@ metadata:
     app.kubernetes.io/component: repo-server
     app.kubernetes.io/name: argocd-repo-server
     app.kubernetes.io/part-of: argocd
+        vixens.io/sizing: medium
   name: argocd-repo-server
   namespace: argocd
 spec:
@@ -19,6 +20,7 @@ spec:
       labels:
         app.kubernetes.io/name: argocd-repo-server
         app.kubernetes.io/part-of: argocd
+        vixens.io/sizing: medium
     spec:
       affinity:
         podAntiAffinity:
@@ -46,10 +48,6 @@ spec:
             port: 8081
           initialDelaySeconds: 10
           periodSeconds: 20
-        resources:
-          requests:
-            cpu: 200m
-            memory: 256Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
