@@ -5,6 +5,7 @@ components:
   - ../../../../_shared/components/revision-history-limit
 patches:
   - path: patches/repo-server-resources.yaml
+  - path: patches/argocd-params.yaml
 resources:
   - ../../base
   - ingress.yaml
