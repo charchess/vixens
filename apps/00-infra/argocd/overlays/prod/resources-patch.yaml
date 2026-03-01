@@ -2,16 +2,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: argocd
+  name: argocd-server
+  labels:
+    vixens.io/sizing: small
 spec:
   template:
-    spec:
-      containers:
-        - name: argocd
-          resources:
-            limits:
-              cpu: 500m
-              memory: 256Mi
-            requests:
-              cpu: 50m
-              memory: 64Mi
+    metadata:
+      labels:
+        app: argocd-server
+        vixens.io/sizing: small
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-repo-server
+  labels:
+    vixens.io/sizing: small
+spec:
+  template:
+    metadata:
+      labels:
+        app: argocd-repo-server
+        vixens.io/sizing: small
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: argocd-application-controller
+  labels:
+    vixens.io/sizing: small
+spec:
+  template:
+    metadata:
+      labels:
+        app: argocd-application-controller
+        vixens.io/sizing: small
