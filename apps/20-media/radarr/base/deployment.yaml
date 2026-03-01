@@ -7,6 +7,7 @@ metadata:
     app: radarr
     vixens.io/sizing: large
     vixens.io/sidecar-sizing: micro
+    vixens.io/backup-profile: "app-sqlite"
 spec:
   strategy:
     type: Recreate
@@ -20,6 +21,7 @@ spec:
         app: radarr
         vixens.io/sizing: large
         vixens.io/sidecar-sizing: micro
+        vixens.io/backup-profile: "app-sqlite"
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
