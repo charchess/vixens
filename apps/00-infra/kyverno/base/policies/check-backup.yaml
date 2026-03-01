@@ -8,12 +8,12 @@ metadata:
     policies.kyverno.io/category: Maturity (Emerald)
     policies.kyverno.io/severity: high
     policies.kyverno.io/description: >-
-      To ensure data durability, applications must define a backup profile.
+      To ensure data durability, applications must define a backup profile level (critical, standard, relaxed).
 spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: validate-backup-profile
+    - name: validate-backup-profile-value
       match:
         any:
           - resources:
@@ -26,14 +26,8 @@ spec:
                 - kube-system
                 - kyverno
       validate:
-        message: "A backup profile (vixens.io/backup-profile) is required for maturity Level 5 (Emerald)."
-        anyPattern:
-          - metadata:
-              labels:
-                vixens.io/backup-profile: "?*"
-          - metadata:
-              annotations:
-                vixens.io/backup-profile: "?*"
-          - metadata:
-              annotations:
-                backup.velero.io/backup-volumes: "?*"
+        message: "A valid backup profile (critical, standard, relaxed) is required for Level 5 (Emerald)."
+        pattern:
+          metadata:
+            labels:
+              vixens.io/backup-profile: "critical | standard | relaxed"

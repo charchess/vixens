@@ -18,7 +18,7 @@ def get_resources(kind):
     return json.loads(stdout).get("items", [])
 
 def sync_maturity():
-    # 1. Map all Deployments/StatefulSets by their 'app' label
+    # 1. Map all Deployments/StatefulSets by name and app label
     resource_map = {}
     for kind in ["deployment", "statefulset"]:
         items = get_resources(kind)
@@ -26,6 +26,9 @@ def sync_maturity():
             ns = item["metadata"]["namespace"]
             name = item["metadata"]["name"]
             app_label = item["metadata"].get("labels", {}).get("app")
+            
+            # Map by full name AND app label
+            resource_map[f"{ns}/{name}"] = {"kind": kind, "name": name, "ns": ns}
             if app_label:
                 resource_map[f"{ns}/{app_label}"] = {"kind": kind, "name": name, "ns": ns}
 
@@ -49,29 +52,36 @@ def sync_maturity():
             except IndexError:
                 continue
             
-            # Find the app label from the resource entry in results
+            # Find target resource
             resource_info = res.get("resources", [{}])[0]
-            # Use 'app' label as the primary key for grouping results
+            res_name = resource_info.get("name", "")
             app_label = resource_info.get("labels", {}).get("app")
             
-            if not app_label: continue
+            # Try to find a match in our resource map
+            target_key = None
+            if f"{ns}/{app_label}" in resource_map:
+                target_key = f"{ns}/{app_label}"
+            elif f"{ns}/{res_name}" in resource_map:
+                target_key = f"{ns}/{res_name}"
+            else:
+                # If it's a pod, try to find the deployment by prefix
+                for key in resource_map.keys():
+                    if key.startswith(f"{ns}/") and res_name.startswith(key.split("/")[1]):
+                        target_key = key
+                        break
             
-            app_id = f"{ns}/{app_label}"
-            if app_id not in app_results:
-                app_results[app_id] = {t: True for t in TIERS}
+            if not target_key: continue
+            
+            if target_key not in app_results:
+                app_results[target_key] = {t: True for t in TIERS}
 
-            # If a single rule fails for a tier, the whole tier is False for this app
             if res.get("result") != "pass":
-                app_results[app_id][tier_name] = False
+                app_results[target_key][tier_name] = False
 
     # 3. Apply labels to resources
-    for app_id, results in app_results.items():
-        if app_id not in resource_map:
-            continue
-            
-        target = resource_map[app_id]
+    for target_key, results in app_results.items():
+        target = resource_map[target_key]
         
-        # Calculate highest reached tier sequentially
         current_maturity = "none"
         for tier in TIERS:
             if results[tier]:
@@ -79,13 +89,12 @@ def sync_maturity():
             else:
                 break
         
-        logging.info(f"App {app_id} -> maturity: {current_maturity}")
+        logging.info(f"App {target_key} -> maturity: {current_maturity}")
         
-        # Label the resource
         cmd = f"kubectl label {target['kind']} -n {target['ns']} {target['name']} vixens.io/maturity={current_maturity} --overwrite"
         _, rc = run_cmd(cmd)
         if rc != 0:
-            logging.error(f"Failed to label {app_id}")
+            logging.error(f"Failed to label {target_key}")
 
 if __name__ == "__main__":
     sync_maturity()
