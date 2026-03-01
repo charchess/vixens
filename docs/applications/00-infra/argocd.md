@@ -3,7 +3,7 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | v2.13.1 |
+| Dev           | [x]     | [x]       | [x]   | v3.3.0  |
 | Prod          | [ ]     | [ ]       | [ ]   | -       |
 
 ## Validation
@@ -27,7 +27,8 @@ curl -L -k https://argocd.dev.truxonline.com | grep "Argo CD"
 ## Notes Techniques
 - **Namespace :** `argocd`
 - **Dépendances :**
-    - `Terraform` (Déploiement initial via Helm)
+    - `Terraform` (Déploiement initial via Helm - Version Helm 7.7.7)
+    - `GitOps Self-Managed` (Depuis Sprint 4+, version v3.3.0)
     - `Traefik` (Ingress)
     - `Cilium` (LoadBalancer)
-- **Particularités :** Déployé initialement via Terraform (`helm_release`), puis gère ses propres applications via le pattern App-of-Apps (`root-app`). La version indiquée correspond au Chart Helm 7.7.7.
+- **Particularités :** Argo CD se gère désormais lui-même via le pattern App-of-Apps. L'utilisation du Server-Side Apply (SSA) permet la coexistence avec la release Helm initiale de Terraform. La transition a nécessité une application forcée des CRDs v3.3.0.

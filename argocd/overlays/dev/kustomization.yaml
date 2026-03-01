@@ -33,9 +33,8 @@ resources:
   # - apps/goldilocks.yaml
   # - apps/headlamp.yaml
   # - apps/traefik-dashboard.yaml
-  # - apps/argocd.yaml
-  # - apps/whoami.yaml
-  
+  - apps/argocd.yaml
+  - apps/whoami.yaml
   # Media (commented)
   # - apps/sabnzbd.yaml
   # - apps/pyload.yaml
