@@ -1,0 +1,26 @@
+# This Application is for adopting the existing Helm-installed Argo CD
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # Point to the official argo-cd Helm chart repository
+    repoURL: https://argoproj.github.io/argo-helm
+    # The chart name
+    chart: argo-cd
+    # The exact chart version currently installed
+    targetRevision: 7.7.7
+    helm:
+      # This MUST match the Helm release name deployed by Terraform
+      releaseName: argocd
+      # We will manage values via Git later. For takeover, we let Helm's last-applied values be the source of truth.
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  # Disable automated sync for the initial takeover to inspect the diff
+  syncPolicy: {}
