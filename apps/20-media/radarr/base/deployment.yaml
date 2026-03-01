@@ -5,6 +5,8 @@ metadata:
   name: radarr
   labels:
     app: radarr
+    vixens.io/sizing: large
+    vixens.io/sidecar-sizing: micro
 spec:
   strategy:
     type: Recreate
@@ -17,6 +19,7 @@ spec:
       labels:
         app: radarr
         vixens.io/sizing: large
+        vixens.io/sidecar-sizing: micro
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
@@ -60,13 +63,6 @@ spec:
           envFrom:
             - secretRef:
                 name: radarr-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -88,13 +84,6 @@ spec:
               port: http
             initialDelaySeconds: 15
             periodSeconds: 10
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -135,13 +124,6 @@ spec:
           ports:
             - containerPort: 9090
               name: metrics
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           envFrom:
             - secretRef:
                 name: radarr-secrets
@@ -168,8 +150,11 @@ spec:
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() {
                 rclone sync /config s3:$LITESTREAM_BUCKET/config \
-                  --exclude "*.db*" \
                   --exclude "*.log" \
+                  --exclude "tts/**" \
+                  --exclude "backups/**" \
+                  --exclude "tmp_backups/**" \
+                  --exclude "lost+found/**" \
                   --exclude ".*-litestream" \
                   --exclude ".*-litestream/**";
               }
@@ -180,13 +165,6 @@ spec:
           envFrom:
             - secretRef:
                 name: radarr-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
