@@ -25,6 +25,7 @@ spec:
                 - kube-system
                 - kyverno
                 - monitoring
+                - velero
       context:
         - name: service_count
           apiCall:
@@ -35,6 +36,6 @@ spec:
         deny:
           conditions:
             all:
-            - key: "{{ service_count }}"
+            - key: "{{ service_count || '0' }}"
               operator: Equals
               value: 0
