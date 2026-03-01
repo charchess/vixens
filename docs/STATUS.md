@@ -39,7 +39,7 @@ Last Updated: 2026-02-28 (Post-Incident Stabilization)
 
 | Application | Dev | Prod | Notes |
 |-------------|-----|------|-------|
-| argocd | ✅ | ✅ | Recovered (Kyverno unblocked) |
+| argocd | ✅ | ✅ | Upgraded to v3.3.0 (Self-Managed GitOps) |
 | kyverno | ✅ | ✅ | Boosted (3 replicas, 1 CPU, Timeout 30s) |
 | velero | ⏳ | ✅ | Prod: v1.17.2 + Infisical + Node Agent |
 | traefik | ✅ | ✅ | Ingress controller - v3.x |
