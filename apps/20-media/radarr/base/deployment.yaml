@@ -8,6 +8,8 @@ metadata:
     vixens.io/sizing: large
     vixens.io/sidecar-sizing: micro
     vixens.io/backup-profile: "standard"
+    vixens.io/tier: "diamond"
+    vixens.io/network-policy: "true"
 spec:
   strategy:
     type: Recreate
@@ -22,6 +24,8 @@ spec:
         vixens.io/sizing: large
         vixens.io/sidecar-sizing: micro
         vixens.io/backup-profile: "standard"
+        vixens.io/tier: "diamond"
+        vixens.io/network-policy: "true"
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
@@ -87,10 +91,14 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 10
           securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: RADARR__API_KEY
               valueFrom:
