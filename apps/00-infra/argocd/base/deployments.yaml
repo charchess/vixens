@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/component: repo-server
     app.kubernetes.io/name: argocd-repo-server
     app.kubernetes.io/part-of: argocd
-        vixens.io/sizing: medium
+    vixens.io/sizing: medium
   name: argocd-repo-server
   namespace: argocd
 spec:
