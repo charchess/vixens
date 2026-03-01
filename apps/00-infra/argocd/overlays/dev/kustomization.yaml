@@ -5,24 +5,6 @@ components:
   - ../../../../_shared/components/revision-history-limit
 patches:
   - path: patches/repo-server-resources.yaml
-  - patch: |
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: any
-      spec:
-        replicas: 0
-    target:
-      kind: Deployment
-  - patch: |
-      apiVersion: apps/v1
-      kind: StatefulSet
-      metadata:
-        name: any
-      spec:
-        replicas: 0
-    target:
-      kind: StatefulSet
 resources:
   - ../../base
   - ingress.yaml

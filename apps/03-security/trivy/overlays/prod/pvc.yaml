@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trivy-server-data
+  namespace: security
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: synelia-iscsi
+  resources:
+    requests:
+      storage: 5Gi
