@@ -19,6 +19,13 @@ spec:
           - resources:
               kinds:
                 - Pod
+      exclude:
+        any:
+          - resources:
+              names:
+                - trivy-server # Exclude trivy-server from sizing mutation
+              namespaces:
+                - security
       mutate:
         foreach:
           - list: "request.object.spec.containers || '[]'" # Safety for empty containers list
@@ -41,6 +48,13 @@ spec:
           - resources:
               kinds:
                 - Pod
+      exclude:
+        any:
+          - resources:
+              names:
+                - trivy-server # Exclude trivy-server from sizing mutation
+              namespaces:
+                - security
       mutate:
         foreach:
           - list: "request.object.spec.initContainers || '[]'" # Safety for missing initContainers
