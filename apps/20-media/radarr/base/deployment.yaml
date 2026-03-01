@@ -126,6 +126,18 @@ spec:
           ports:
             - containerPort: 9090
               name: metrics
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 10
           envFrom:
             - secretRef:
                 name: radarr-secrets
