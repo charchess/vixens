@@ -10,6 +10,7 @@ metadata:
     vixens.io/sizing.config-syncer: micro
     vixens.io/sizing.restore-config: micro
     vixens.io/sizing.restore-db: micro
+    vixens.io/backup-profile: "standard"
   annotations:
     secret.reloader.stakater.com/reload: homeassistant-config
     argocd.argoproj.io/sync-wave: "10"
@@ -30,6 +31,7 @@ spec:
         vixens.io/sizing.config-syncer: micro
         vixens.io/sizing.restore-config: micro
         vixens.io/sizing.restore-db: micro
+        vixens.io/backup-profile: "standard"
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"

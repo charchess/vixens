@@ -10,6 +10,7 @@ metadata:
     vixens.io/sizing.restore-db: micro
     vixens.io/sizing.litestream: micro
     vixens.io/sizing.config-syncer: micro
+    vixens.io/backup-profile: "relaxed"
 spec:
   serviceName: adguard-home-headless
   replicas: 1
@@ -26,6 +27,7 @@ spec:
         vixens.io/sizing.restore-db: micro
         vixens.io/sizing.litestream: micro
         vixens.io/sizing.config-syncer: micro
+        vixens.io/backup-profile: "relaxed"
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
