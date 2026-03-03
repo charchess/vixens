@@ -17,12 +17,10 @@ spec:
     targetRevision: prod-stable
   ignoreDifferences:
     - kind: Secret
-      kind: Secret
       name: litestream-shared-secrets
       jsonPointers:
         - /data
     - kind: Secret
-      kind: Secret
       name: hydrus-client-secrets
       jsonPointers:
         - /data
