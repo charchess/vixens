@@ -4,10 +4,9 @@ kind: Deployment
 metadata:
   name: firefly-iii
   labels:
-    vixens.io/sizing: medium
+    vixens.io/sizing.firefly-iii: medium
 spec:
   template:
     metadata:
       labels:
-        app: firefly-iii
-        vixens.io/sizing: medium
+        vixens.io/sizing.firefly-iii: medium
