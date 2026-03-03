@@ -16,6 +16,7 @@ spec:
     metadata:
       labels:
         app: booklore-mariadb
+        vixens.io/sizing.mariadb: G-medium
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
