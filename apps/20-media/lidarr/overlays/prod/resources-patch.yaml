@@ -4,13 +4,13 @@ kind: Deployment
 metadata:
   name: lidarr
   labels:
-    vixens.io/sizing.lidarr: medium
-    vixens.io/sizing.litestream: small
-    vixens.io/sizing.config-syncer: small
+    vixens.io/sizing.lidarr: G-small
+    vixens.io/sizing.litestream: micro
+    vixens.io/sizing.config-syncer: micro
 spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.lidarr: medium
-        vixens.io/sizing.litestream: small
-        vixens.io/sizing.config-syncer: small
+        vixens.io/sizing.lidarr: G-small
+        vixens.io/sizing.litestream: micro
+        vixens.io/sizing.config-syncer: micro
