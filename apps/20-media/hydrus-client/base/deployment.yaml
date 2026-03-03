@@ -220,12 +220,6 @@ spec:
             limits:
               cpu: "2"
               memory: 4Gi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-          volumeMounts:
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
