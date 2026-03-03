@@ -44,7 +44,7 @@ patches:
         template:
           metadata:
             labels:
-              vixens.io/sizing.frigate: G-medium
+              vixens.io/sizing.frigate: medium
               vixens.io/sizing.litestream: micro
               vixens.io/sizing.config-syncer: micro
             annotations:
