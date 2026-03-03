@@ -11,3 +11,16 @@ patches:
     target:
       kind: InfisicalSecret
       name: loki-secrets-sync
+  - target:
+      kind: StatefulSet
+      name: loki
+    patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: loki
+      spec:
+        template:
+          metadata:
+            labels:
+              vixens.io/sizing.loki: G-medium
