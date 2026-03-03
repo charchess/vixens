@@ -20,3 +20,4 @@ components:
   - ../../../../_shared/components/poddisruptionbudget/0
 
 patches:
+  - path: securitycontext-patch.yaml
