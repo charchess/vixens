@@ -17,13 +17,13 @@ kind: Deployment
 metadata:
   name: argocd-repo-server
   labels:
-    vixens.io/sizing: small
+    vixens.io/sizing: medium
 spec:
   template:
     metadata:
       labels:
         app: argocd-repo-server
-        vixens.io/sizing: small
+        vixens.io/sizing: medium
 ---
 apiVersion: apps/v1
 kind: StatefulSet
