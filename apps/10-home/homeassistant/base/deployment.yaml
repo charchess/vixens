@@ -6,7 +6,7 @@ metadata:
   labels:
     app: homeassistant
     vixens.io/sizing: large
-    vixens.io/sizing.litestream: micro
+    vixens.io/sizing.litestream: small
     vixens.io/sizing.config-syncer: micro
     vixens.io/sizing.restore-config: micro
     vixens.io/sizing.restore-db: micro
@@ -27,7 +27,7 @@ spec:
       labels:
         app: homeassistant
         vixens.io/sizing: large
-        vixens.io/sizing.litestream: micro
+        vixens.io/sizing.litestream: small
         vixens.io/sizing.config-syncer: micro
         vixens.io/sizing.restore-config: micro
         vixens.io/sizing.restore-db: micro

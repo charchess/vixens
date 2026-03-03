@@ -49,11 +49,11 @@ spec:
         login: true
         passwordSecret:
           name: nocodb-postgresql-credentials
-      - name: penpot
-        ensure: present
-        login: true
-        passwordSecret:
-          name: penpot-postgresql-credentials
+      #      - name: penpot  # TODO: re-enable once Infisical vault has 'username: penpot' at
+        #        ensure: present  #       /apps/04-databases/postgresql-shared/penpot (prod env)
+        #        login: true  #       Without this key, CNPG loops on 'username key doesn't exist'
+        #        passwordSecret:  #       blocking the entire cluster from becoming Ready.
+          #          name: penpot-postgresql-credentials  # penpot role still exists in DB, app still connects.
       - name: firefly
         ensure: present
         login: true

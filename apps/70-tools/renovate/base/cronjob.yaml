@@ -32,10 +32,10 @@ spec:
               resources:
                 requests:
                   cpu: 500m
-                  memory: 512Mi
+                  memory: 1Gi
                 limits:
                   cpu: 1000m
-                  memory: 1Gi
+                  memory: 4Gi
               env:
                 - name: RENOVATE_TOKEN
                   valueFrom:
