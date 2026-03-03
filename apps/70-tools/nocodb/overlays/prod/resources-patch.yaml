@@ -2,11 +2,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: amule
+  name: nocodb
   labels:
-    vixens.io/sizing: small
+    vixens.io/sizing: medium
 spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing: small
+        vixens.io/sizing: medium

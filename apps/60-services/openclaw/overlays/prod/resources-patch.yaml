@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: amule
+  name: openclaw
   labels:
     vixens.io/sizing: small
 spec:
