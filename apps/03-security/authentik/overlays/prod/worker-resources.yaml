@@ -7,15 +7,6 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.authentik-worker: G-large
+        vixens.io/sizing.authentik-worker: G-medium
     spec:
       priorityClassName: vixens-critical
-      containers:
-        - name: authentik-worker
-          resources:
-            requests:
-              cpu: 200m
-              memory: 768Mi
-            limits:
-              cpu: 500m
-              memory: 2Gi
