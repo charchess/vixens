@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: openclaw
+  namespace: services
   labels:
     vixens.io/sizing.openclaw: small
     vixens.io/sizing.data-syncer: small
