@@ -1,0 +1,26 @@
+---
+# PolicyException for mealie to bypass Kyverno sizing mutation.
+# Allows explicit resource overrides (256Mi request / 512Mi limit) since:
+# - Kyverno 'small' sizing forces 512Mi request (too large for cluster)
+# - Explicit resources in resources-patch.yaml: 256Mi req / 512Mi limit
+# - Actual usage ~314Mi, comfortably within 512Mi limit
+# - 256Mi request allows scheduling on cluster with limited free memory
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: mealie-sizing-exception
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: sizing-mutate
+      ruleNames:
+        - granular-container-sizing
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - mealie
+          names:
+            - "mealie-*"
