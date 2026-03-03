@@ -9,4 +9,5 @@ spec:
   template:
     metadata:
       labels:
+        app: firefly-iii
         vixens.io/sizing: medium
