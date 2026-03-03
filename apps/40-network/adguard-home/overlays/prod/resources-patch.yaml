@@ -1,0 +1,25 @@
+---
+# Explicit resource override for adguard-home prod.
+# Bypasses Kyverno 'medium' sizing (512Mi request / 1Gi limit) via
+# PolicyException (policy-exception-adguard.yaml in kyverno namespace).
+# Actual usage: ~76Mi. Using 128Mi request / 512Mi limit to:
+# - Reduce memory pressure on cluster (512Mi -> 128Mi request = 384Mi freed)
+# - Keep 512Mi limit to avoid OOMKill during DNS traffic spikes
+# - Allow mealie pod to schedule (needs 384Mi free on powder node)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: adguard-home
+  namespace: networking
+spec:
+  template:
+    spec:
+      containers:
+        - name: adguard-home
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
