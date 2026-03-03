@@ -46,11 +46,16 @@ spec:
           - resources:
               kinds:
                 - Pod
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.labels.app || '' }}"
+            operator: NotEquals
+            value: ""
       context:
         - name: has_netpol
           apiCall:
             urlPath: "/apis/networking.k8s.io/v1/namespaces/{{request.namespace}}/networkpolicies"
-            jmesPath: "items[?spec.podSelector.matchLabels.app == '{{request.object.metadata.labels.app}}'] | length(@)"
+            jmesPath: "items[?spec.podSelector.matchLabels.app == '{{request.object.metadata.labels.app || 'NO_APP_LABEL'}}'] | length(@)"
       mutate:
         patchStrategicMerge:
           metadata:
