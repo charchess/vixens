@@ -1,0 +1,16 @@
+---
+# Override _shared/components/base securityContext for s6-overlay images.
+# linuxserver images need to start as root (s6-overlay runs usermod before dropping to PUID).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mylar
+  namespace: media
+spec:
+  template:
+    spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: false
+        runAsUser: 0

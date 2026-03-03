@@ -42,3 +42,6 @@ envs:
     value: /
   - name: SECURITY_ENABLELOGIN
     value: "false"
+podSecurityContext:
+  seccompProfile:
+    type: Unconfined
