@@ -5,11 +5,11 @@ metadata:
   name: openclaw
   namespace: services
   labels:
-    vixens.io/sizing.openclaw: small
+    vixens.io/sizing.openclaw: medium
     vixens.io/sizing.data-syncer: small
 spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.openclaw: small
+        vixens.io/sizing.openclaw: medium
         vixens.io/sizing.data-syncer: small
