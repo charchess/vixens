@@ -10,4 +10,3 @@ spec:
         vixens.io/sizing.birdnet-go: G-medium
         vixens.io/sizing.litestream: G-small
         vixens.io/sizing.data-syncer: G-small
-    spec:
