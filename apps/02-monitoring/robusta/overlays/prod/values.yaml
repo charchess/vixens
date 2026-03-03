@@ -28,6 +28,8 @@ runner:
     limits:
       cpu: 500m
       memory: 2Gi
+  labels:
+    vixens.io/sizing.runner: G-large
   sendAdditionalTelemetry: true
   additional_env_froms:
     - secretRef:
