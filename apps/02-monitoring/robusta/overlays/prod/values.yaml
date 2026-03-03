@@ -21,9 +21,9 @@ sinksConfig:
       url: "{{ env.DISCORD_WEBHOOK_URL }}"
 
 runner:
-  # resources managed by Kyverno sizing (small tier: 512Mi/512Mi)
+  # resources managed by Kyverno sizing (G-small tier: 128Mi/128Mi - matches actual 124Mi usage)
   labels:
-    vixens.io/sizing.runner: small
+    vixens.io/sizing.runner: G-small
   sendAdditionalTelemetry: true
   additional_env_froms:
     - secretRef:
