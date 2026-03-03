@@ -6,6 +6,7 @@ patches:
     target:
       kind: Deployment
       name: netbox
+  - path: resources-patch.yaml
   - patch: |-
       - op: replace
         path: /spec/authentication/universalAuth/secretsScope/envSlug
