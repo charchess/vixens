@@ -30,10 +30,10 @@ kind: StatefulSet
 metadata:
   name: argocd-application-controller
   labels:
-    vixens.io/sizing: small
+    vixens.io/sizing: large
 spec:
   template:
     metadata:
       labels:
         app: argocd-application-controller
-        vixens.io/sizing: small
+        vixens.io/sizing: large
