@@ -13,37 +13,25 @@ spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: check-pdb-exists
-      match:
-        any:
-          - resources:
-              kinds:
-                - Deployment
-                - StatefulSet
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kyverno
-      generate:
-        kind: PolicyReport
-        apiVersion: wgpolicyk8s.io/v1alpha2
-        name: pdb-check
     - name: validate-pod-has-pdb
       match:
         any:
           - resources:
               kinds:
                 - Pod
+      context:
+        - name: pdb_count
+          apiCall:
+            urlPath: "/apis/policy/v1/namespaces/{{request.namespace}}/poddisruptionbudgets"
+            jmesPath: "items[?spec.selector.matchLabels.app == '{{request.object.metadata.labels.app}}'] | length(@)"
       validate:
         message: "Pod should be covered by a PodDisruptionBudget for maturity Level 4 (Platinum)."
         deny:
           conditions:
             all:
               - key: "{{ request.object.metadata.labels.app }}"
-                operator: NotIn
+                operator: AnyNotIn
                 value: ["traefik", "argocd-server"]
-              - key: "{{ target_pdb }}"
+              - key: "{{ pdb_count }}"
                 operator: Equals
-                value: ""
+                value: 0

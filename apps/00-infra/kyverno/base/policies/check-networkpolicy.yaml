@@ -55,4 +55,4 @@ spec:
         patchStrategicMerge:
           metadata:
             labels:
-              vixens.io/network-policy: "{{ (has_netpol > 0) && 'true' || 'false' }}"
+              vixens.io/network-policy: "{{ has_netpol != `0` && 'true' || 'false' }}"
