@@ -15,6 +15,7 @@ spec:
     metadata:
       labels:
         app: loki
+        vixens.io/sizing.loki: G-large
     spec:
       priorityClassName: vixens-critical
       securityContext:
