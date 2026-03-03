@@ -21,5 +21,5 @@ patches:
       spec:
         template:
           spec:
-            priorityClassName: low-priority
+            priorityClassName: vixens-low
 
