@@ -4,10 +4,13 @@ kind: Deployment
 metadata:
   name: prowlarr
   labels:
-    vixens.io/sizing: medium
+    vixens.io/sizing.prowlarr: medium
+    vixens.io/sizing.litestream: small
+    vixens.io/sizing.config-syncer: small
 spec:
   template:
     metadata:
       labels:
-        app: prowlarr
-        vixens.io/sizing: medium
+        vixens.io/sizing.prowlarr: medium
+        vixens.io/sizing.litestream: small
+        vixens.io/sizing.config-syncer: small

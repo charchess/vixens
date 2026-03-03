@@ -4,10 +4,9 @@ kind: Deployment
 metadata:
   name: amule
   labels:
-    vixens.io/sizing: small
+    vixens.io/sizing.amule: small
 spec:
   template:
     metadata:
       labels:
-        app: amule
-        vixens.io/sizing: small
+        vixens.io/sizing.amule: small
