@@ -6,6 +6,7 @@ labels:
       environment: prod
 patches:
   - path: patch-nextauth-url.yaml
+  - path: resources-patch.yaml
 resources:
   - ../../base
   - infisical-secret.yaml

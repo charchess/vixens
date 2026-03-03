@@ -13,3 +13,4 @@ patches:
         path: /spec/authentication/universalAuth/secretsScope/envSlug
         value: prod
   - path: mariadb-resources-patch.yaml
+  - path: resources-patch.yaml
