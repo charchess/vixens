@@ -5,6 +5,9 @@ metadata:
   name: headlamp
 spec:
   template:
+    metadata:
+      labels:
+        vixens.io/sizing.headlamp: G-small
     spec:
       containers:
         - name: headlamp
