@@ -1,0 +1,24 @@
+---
+# Patch to add Kyverno sizing labels to robusta pod templates
+# Without these labels, Kyverno sizing-mutate overrides all resources to 128Mi
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: robusta-runner
+  namespace: robusta
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.runner: G-large
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: robusta-forwarder
+  namespace: robusta
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.kubewatch: G-medium
