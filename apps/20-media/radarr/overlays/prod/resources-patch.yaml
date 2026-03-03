@@ -4,10 +4,13 @@ kind: Deployment
 metadata:
   name: radarr
   labels:
-    vixens.io/sizing: medium
+    vixens.io/sizing.radarr: medium
+    vixens.io/sizing.litestream: small
+    vixens.io/sizing.config-syncer: small
 spec:
   template:
     metadata:
       labels:
-        app: radarr
-        vixens.io/sizing: medium
+        vixens.io/sizing.radarr: medium
+        vixens.io/sizing.litestream: small
+        vixens.io/sizing.config-syncer: small

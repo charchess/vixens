@@ -4,10 +4,9 @@ kind: Deployment
 metadata:
   name: linkwarden
   labels:
-    vixens.io/sizing: medium
+    vixens.io/sizing.linkwarden: medium
 spec:
   template:
     metadata:
       labels:
-        app: linkwarden
-        vixens.io/sizing: medium
+        vixens.io/sizing.linkwarden: medium
