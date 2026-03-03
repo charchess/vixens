@@ -4,10 +4,11 @@ kind: Deployment
 metadata:
   name: openclaw
   labels:
-    vixens.io/sizing: small
+    vixens.io/sizing.openclaw: small
+    vixens.io/sizing.data-syncer: small
 spec:
   template:
     metadata:
       labels:
-        app: openclaw
-        vixens.io/sizing: small
+        vixens.io/sizing.openclaw: small
+        vixens.io/sizing.data-syncer: small

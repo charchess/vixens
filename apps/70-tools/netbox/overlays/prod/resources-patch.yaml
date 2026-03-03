@@ -4,10 +4,9 @@ kind: Deployment
 metadata:
   name: netbox
   labels:
-    vixens.io/sizing: medium
+    vixens.io/sizing.netbox: medium
 spec:
   template:
     metadata:
       labels:
-        app: netbox
-        vixens.io/sizing: medium
+        vixens.io/sizing.netbox: medium
