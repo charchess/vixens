@@ -22,13 +22,13 @@ kind: Deployment
 metadata:
   name: argocd-repo-server
   labels:
-    vixens.io/sizing: medium
+    vixens.io/sizing: small
 spec:
   template:
     metadata:
       labels:
         app: argocd-repo-server
-        vixens.io/sizing: medium
+        vixens.io/sizing: small
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
