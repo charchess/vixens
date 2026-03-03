@@ -12,9 +12,9 @@ replicaCount: 1
 resources:
   requests:
     cpu: 100m
-    memory: 256Mi
+    memory: 1Gi
   limits:
-    cpu: 1000m
+    cpu: 2000m
     memory: 1Gi
 # Tolerations for control-plane nodes if needed
 tolerations:
@@ -45,5 +45,5 @@ envs:
 securityContext:
   enabled: true
   fsGroup: 1000
-  seccompProfile:
-    type: Unconfined
+  podLabels:
+  vixens.io/sizing.stirling-pdf-chart: G-large

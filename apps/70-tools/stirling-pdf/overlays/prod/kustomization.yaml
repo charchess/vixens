@@ -5,7 +5,6 @@ namespace: tools
 resources:
   - ../../base
   - ingress.yaml
-  - seccomp-deployment.yaml
 
 components:
   - ../../../../_shared/components/revision-history-limit
