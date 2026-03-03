@@ -3,8 +3,13 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: docspell-joex
+  labels:
+    vixens.io/sizing: G-large
 spec:
   template:
+    metadata:
+      labels:
+        vixens.io/sizing: G-large
     spec:
       priorityClassName: vixens-medium
       containers:
@@ -21,8 +26,13 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: docspell-restserver
+  labels:
+    vixens.io/sizing: G-large
 spec:
   template:
+    metadata:
+      labels:
+        vixens.io/sizing: G-large
     spec:
       priorityClassName: vixens-medium
       containers:
