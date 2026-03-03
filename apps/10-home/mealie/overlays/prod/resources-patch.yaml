@@ -6,6 +6,11 @@ metadata:
   namespace: mealie
 spec:
   template:
+    metadata:
+      labels:
+        vixens.io/sizing.mealie: small
+        vixens.io/sizing.litestream: G-small
+        vixens.io/sizing.config-syncer: G-small
     spec:
       containers:
         - name: mealie
