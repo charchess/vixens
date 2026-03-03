@@ -44,7 +44,9 @@ patches:
         template:
           metadata:
             labels:
-              vixens.io/sizing: custom
+              vixens.io/sizing.frigate: G-xl
+              vixens.io/sizing.litestream: micro
+              vixens.io/sizing.config-syncer: micro
             annotations:
               vixens.io/explicitly-allow-root: "true"
           spec:
@@ -76,4 +78,3 @@ patches:
                   runAsUser: 0
                   runAsGroup: 0
   - path: pvc-patch.yaml
-  - path: resources-patch.yaml

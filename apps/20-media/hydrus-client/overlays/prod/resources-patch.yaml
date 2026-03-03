@@ -3,20 +3,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: hydrus-client
-  labels:
-    vixens.io/sizing: G-xl
 spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing: G-xl
-    spec:
-      containers:
-        - name: hydrus-client
-          resources:
-            limits:
-              cpu: 1000m
-              memory: 4Gi
-            requests:
-              cpu: 100m
-              memory: 1Gi
+        vixens.io/sizing.hydrus-client: G-xl
+        vixens.io/sizing.litestream: micro
