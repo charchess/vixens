@@ -11,6 +11,11 @@ spec:
       labels:
         app: argocd-server
         vixens.io/sizing: small
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -24,6 +29,11 @@ spec:
       labels:
         app: argocd-repo-server
         vixens.io/sizing: medium
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -35,6 +45,10 @@ spec:
       labels:
         app: argocd-application-controller
     spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: argocd-application-controller
           resources:
