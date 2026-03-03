@@ -9,3 +9,7 @@ components:
   - ../../../../_shared/components/revision-history-limit
 
 patches:
+  - target:
+      kind: Deployment
+      name: music-assistant
+    path: resources-patch.yaml
