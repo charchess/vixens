@@ -9,4 +9,5 @@ spec:
   template:
     metadata:
       labels:
+        app: linkwarden
         vixens.io/sizing: medium
