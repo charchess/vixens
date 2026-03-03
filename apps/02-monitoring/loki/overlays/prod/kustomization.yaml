@@ -24,3 +24,4 @@ patches:
           metadata:
             labels:
               vixens.io/sizing.loki: G-medium
+  - path: resources-patch.yaml
