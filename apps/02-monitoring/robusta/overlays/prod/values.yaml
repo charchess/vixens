@@ -21,15 +21,9 @@ sinksConfig:
       url: "{{ env.DISCORD_WEBHOOK_URL }}"
 
 runner:
-  resources:
-    requests:
-      cpu: 250m
-      memory: 2Gi
-    limits:
-      cpu: 500m
-      memory: 2Gi
+  # resources managed by Kyverno sizing (small tier: 512Mi/512Mi)
   labels:
-    vixens.io/sizing.runner: G-large
+    vixens.io/sizing.runner: small
   sendAdditionalTelemetry: true
   additional_env_froms:
     - secretRef:
