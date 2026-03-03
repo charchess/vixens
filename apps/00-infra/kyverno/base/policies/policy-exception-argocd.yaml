@@ -1,0 +1,23 @@
+---
+# PolicyException for argocd-application-controller to bypass Kyverno sizing mutation.
+# This allows explicit resource overrides (1200Mi request) to prevent Kyverno from
+# injecting G-controller tier (2Gi) which cannot schedule on memory-constrained nodes.
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: argocd-application-controller-sizing-exception
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: sizing-mutate
+      ruleNames:
+        - granular-container-sizing
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - argocd
+          names:
+            - "argocd-application-controller-*"
