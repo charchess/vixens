@@ -7,7 +7,7 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.joex: medium
+        vixens.io/sizing.joex: G-medium
     spec:
       priorityClassName: vixens-medium
 ---
