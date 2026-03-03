@@ -21,13 +21,20 @@ sinksConfig:
       url: "{{ env.DISCORD_WEBHOOK_URL }}"
 
 runner:
-  # resources managed by Kyverno sizing (small tier: 512Mi/512Mi - needed due to OOMKills at 128Mi)
+  # PolicyException bypasses Kyverno sizing-mutate. Explicit resources set here.
   labels:
     vixens.io/sizing.runner: small
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
+  resources:
+    requests:
+      memory: 384Mi
+      cpu: 250m
+    limits:
+      memory: 768Mi
+      cpu: 500m
   sendAdditionalTelemetry: true
   additional_env_froms:
     - secretRef:
