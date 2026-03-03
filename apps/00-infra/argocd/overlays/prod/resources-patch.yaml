@@ -29,12 +29,18 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: argocd-application-controller
-  labels:
-    vixens.io/sizing: G-controller
 spec:
   template:
     metadata:
       labels:
         app: argocd-application-controller
-        vixens.io/sizing: G-controller
-        vixens.io/sizing.argocd-application-controller: G-controller
+    spec:
+      containers:
+        - name: argocd-application-controller
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1200Mi
+            limits:
+              cpu: "1"
+              memory: 2Gi
