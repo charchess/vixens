@@ -9,7 +9,7 @@ image:
   pullPolicy: IfNotPresent
   tag: 2.5.3
 replicaCount: 1
-# resources managed by Kyverno sizing (G-large tier)
+# resources managed by Kyverno sizing (medium tier: 512Mi request/1Gi limit)
 # Tolerations for control-plane nodes if needed
 tolerations:
   - key: node-role.kubernetes.io/control-plane
@@ -40,4 +40,4 @@ securityContext:
   enabled: true
   fsGroup: 1000
 podLabels:
-  vixens.io/sizing.stirling-pdf-chart: G-large
+  vixens.io/sizing.stirling-pdf-chart: medium
