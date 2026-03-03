@@ -11,6 +11,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: firefly-iii-importer
+        vixens.io/sizing.importer: "small"
     spec:
       priorityClassName: vixens-low
       containers:

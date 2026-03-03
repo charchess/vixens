@@ -64,8 +64,8 @@ spec:
                   - (name): "{{ element.name }}"
                     resources:
                       requests:
-                        cpu: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '50m' || '10m' }}"
-                        memory: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '256Mi' || '64Mi' }}"
+                        cpu: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '1000m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '200m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '50m' || '10m' }}"
+                        memory: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '2Gi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '512Mi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '256Mi' || '64Mi' }}"
                       limits:
-                        cpu: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '500m' || '100m' }}"
-                        memory: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '512Mi' || '128Mi' }}"
+                        cpu: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '2000m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '1000m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '500m' || '100m' }}"
+                        memory: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '4Gi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '1Gi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '512Mi' || '128Mi' }}"
