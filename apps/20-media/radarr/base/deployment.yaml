@@ -88,15 +88,6 @@ spec:
               port: http
             initialDelaySeconds: 15
             periodSeconds: 10
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 1000
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            seccompProfile:
-              type: RuntimeDefault
           env:
             - name: RADARR__API_KEY
               valueFrom:

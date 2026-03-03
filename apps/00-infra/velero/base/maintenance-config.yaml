@@ -8,6 +8,12 @@ data:
   config.json: |
     {
       "global": {
-        "keepLatestMaintenanceJobs": 0
+        "keepLatestMaintenanceJobs": 3,
+        "podResources": {
+          "cpuRequest": "100m",
+          "memoryRequest": "256Mi",
+          "cpuLimit": "500m",
+          "memoryLimit": "1Gi"
+        }
       }
     }
