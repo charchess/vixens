@@ -19,6 +19,11 @@ spec:
       labels:
         app: openclaw
         vixens.io/sizing: "large"
+        vixens.io/sizing.install-tools: "large"
+        vixens.io/sizing.install-gemini-plugin: "medium"
+        vixens.io/sizing.install-gemini-cli: "medium"
+        vixens.io/sizing.restore-data: "small"
+        vixens.io/sizing.restore-config: "small"
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "18789"
