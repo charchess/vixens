@@ -30,11 +30,11 @@ kind: StatefulSet
 metadata:
   name: argocd-application-controller
   labels:
-    vixens.io/sizing: G-large
+    vixens.io/sizing: G-controller
 spec:
   template:
     metadata:
       labels:
         app: argocd-application-controller
-        vixens.io/sizing: G-large
-        vixens.io/sizing.argocd-application-controller: G-large
+        vixens.io/sizing: G-controller
+        vixens.io/sizing.argocd-application-controller: G-controller
