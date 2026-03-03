@@ -6,3 +6,5 @@ metadata:
 data:
   # Run server without TLS - Traefik handles TLS termination
   server.insecure: "true"
+  # Disable authentication for anonymous admin access
+  server.disable.auth: "true"
