@@ -20,7 +20,7 @@ spec:
       labels:
         app: penpot-backend
         component: backend
-        vixens.io/sizing.backend: G-xl  # Penpot JVM needs 4Gi - prevents Kyverno 128Mi OOMKill
+        vixens.io/sizing.backend: G-large  # Reduced from G-xl (4Gi) to G-large (2Gi) to reduce memory pressure
     spec:
       priorityClassName: vixens-medium
       tolerations:
