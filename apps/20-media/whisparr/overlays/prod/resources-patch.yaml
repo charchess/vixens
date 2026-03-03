@@ -9,4 +9,5 @@ spec:
   template:
     metadata:
       labels:
+        app: whisparr
         vixens.io/sizing: medium

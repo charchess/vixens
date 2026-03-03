@@ -9,4 +9,5 @@ spec:
   template:
     metadata:
       labels:
+        app: nocodb
         vixens.io/sizing: medium

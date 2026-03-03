@@ -9,4 +9,5 @@ spec:
   template:
     metadata:
       labels:
+        app: booklore
         vixens.io/sizing: medium
