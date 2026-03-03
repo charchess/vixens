@@ -32,3 +32,4 @@ patches:
     target:
       kind: StatefulSet
       name: adguard-home
+  - path: resources-patch.yaml
