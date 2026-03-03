@@ -131,6 +131,7 @@ spec:
         - .spec.rules[].skipBackgroundRequests
         - ".spec.rules[].validate.allowExistingViolations"
         - ".spec.rules[].context[].apiCall.method"
+        - ".spec.rules[].validate.foreach[].context[].apiCall.method"
       jsonPointers:
         - /status
   syncPolicy:
