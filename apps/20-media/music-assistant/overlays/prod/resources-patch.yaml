@@ -3,8 +3,13 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: music-assistant
+  labels:
+    vixens.io/sizing: medium
 spec:
   template:
+    metadata:
+      labels:
+        vixens.io/sizing: medium
     spec:
       containers:
         - name: music-assistant
