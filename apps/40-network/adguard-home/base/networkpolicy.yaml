@@ -10,19 +10,18 @@ spec:
     - Ingress
     - Egress
   ingress:
+    # Allow Traefik to access AdGuard web interface (port 3000) and DNS (port 53)
     - from:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: traefik
       ports:
         - protocol: TCP
-          port: 80
+          port: 3000  # AdGuard web interface
         - protocol: TCP
-          port: 443
-        - protocol: TCP
-          port: 53
+          port: 53    # DNS over TCP
         - protocol: UDP
-          port: 53
+          port: 53    # DNS over UDP
     - from:
         - namespaceSelector:
             matchLabels:
