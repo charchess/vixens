@@ -1,0 +1,11 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radar
+  namespace: tools
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.radar: small
