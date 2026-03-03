@@ -34,6 +34,15 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      containers:
+        - name: argocd-repo-server
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
 ---
 apiVersion: apps/v1
 kind: StatefulSet
