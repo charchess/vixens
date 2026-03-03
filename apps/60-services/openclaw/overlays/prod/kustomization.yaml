@@ -5,6 +5,7 @@ namespace: services
 resources:
   - ../../base
   - ingress.yaml
+  - resources-patch.yaml
 patches:
   - target:
       kind: InfisicalSecret

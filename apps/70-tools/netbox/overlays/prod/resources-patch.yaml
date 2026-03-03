@@ -3,15 +3,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: netbox
+  labels:
+    vixens.io/sizing: medium
 spec:
   template:
-    spec:
-      containers:
-        - name: netbox
-          resources:
-            limits:
-              cpu: 500m
-              memory: 1173Mi
-            requests:
-              cpu: 11m
-              memory: 640Mi
+    metadata:
+      labels:
+        vixens.io/sizing: medium

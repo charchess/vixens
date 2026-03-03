@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: tools
 resources:
   - ../../base
+  - resources-patch.yaml
 patches:
   - target:
       kind: InfisicalSecret
