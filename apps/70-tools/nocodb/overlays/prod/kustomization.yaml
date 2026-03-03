@@ -4,8 +4,8 @@ kind: Kustomization
 namespace: tools
 resources:
   - ../../base
-  - resources-patch.yaml
 patches:
+  - path: resources-patch.yaml
   - target:
       kind: InfisicalSecret
       name: nocodb-secrets-sync

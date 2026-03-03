@@ -5,8 +5,8 @@ namespace: services
 resources:
   - ../../base
   - ingress.yaml
-  - resources-patch.yaml
 patches:
+  - path: resources-patch.yaml
   - target:
       kind: InfisicalSecret
       name: openclaw-secrets
