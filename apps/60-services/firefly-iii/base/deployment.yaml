@@ -19,6 +19,7 @@ spec:
         app.kubernetes.io/name: firefly-iii
       annotations:
         reloader.stakater.com/auto: "true"
+        vixens.io/health-bump: "1"
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
         prometheus.io/path: "/metrics"
