@@ -125,8 +125,12 @@ spec:
   ignoreDifferences:
     - group: kyverno.io
       kind: ClusterPolicy
-      managedFieldsManagers:
-        - kyverno
+      jqPathExpressions:
+        - .spec.admission
+        - .spec.emitWarning
+        - .spec.rules[].skipBackgroundRequests
+        - ".spec.rules[].validate.allowExistingViolations"
+        - ".spec.rules[].context[].apiCall.method"
       jsonPointers:
         - /status
   syncPolicy:
