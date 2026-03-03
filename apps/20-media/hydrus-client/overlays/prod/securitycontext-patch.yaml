@@ -1,0 +1,17 @@
+---
+# Override _shared/components/base securityContext.
+# hydrus supervisord needs to write /opt/hydrus/supervisord.log which requires root or matching uid.
+# The hydrus image uses supervisord which expects to write to the install dir.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hydrus-client
+  namespace: media
+spec:
+  template:
+    spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: false
+        runAsUser: 0
