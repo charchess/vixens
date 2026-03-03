@@ -20,7 +20,7 @@ spec:
                 - Pod
       preconditions:
         all:
-        - key: "{{ request.object.metadata.annotations."prometheus.io/scrape" || 'false' }}"
+        - key: "{{ request.object.metadata.annotations.\"prometheus.io/scrape\" || 'false' }}"
           operator: Equals
           value: "true"
       context:
