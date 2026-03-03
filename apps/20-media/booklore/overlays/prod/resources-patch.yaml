@@ -3,15 +3,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: booklore
+  labels:
+    vixens.io/sizing: medium
 spec:
   template:
-    spec:
-      containers:
-        - name: booklore
-          resources:
-            requests:
-              cpu: 100m
-              memory: 1Gi
-            limits:
-              cpu: 1000m
-              memory: 2Gi
+    metadata:
+      labels:
+        vixens.io/sizing: medium
