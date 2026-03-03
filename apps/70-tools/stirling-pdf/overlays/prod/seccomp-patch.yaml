@@ -1,0 +1,19 @@
+---
+# Patch to set seccompProfile: Unconfined on stirling-pdf pod
+# Required because LibreOffice (unoserver) needs syscalls blocked by RuntimeDefault
+# The Helm chart (2.2.0) doesn't support seccompProfile in its securityContext values
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stirling-pdf-stirling-pdf-chart
+  namespace: tools
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.stirling-pdf-chart: G-medium
+    spec:
+      securityContext:
+        fsGroup: 1000
+        seccompProfile:
+          type: Unconfined
