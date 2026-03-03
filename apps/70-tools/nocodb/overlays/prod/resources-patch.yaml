@@ -4,10 +4,9 @@ kind: Deployment
 metadata:
   name: nocodb
   labels:
-    vixens.io/sizing: medium
+    vixens.io/sizing.nocodb: medium
 spec:
   template:
     metadata:
       labels:
-        app: nocodb
-        vixens.io/sizing: medium
+        vixens.io/sizing.nocodb: medium
