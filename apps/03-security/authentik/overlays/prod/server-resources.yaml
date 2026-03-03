@@ -5,6 +5,10 @@ metadata:
   name: authentik-server
 spec:
   template:
+    metadata:
+      labels:
+        vixens.io/sizing.authentik-server: G-xl
+        vixens.io/sizing.config-syncer: G-small
     spec:
       priorityClassName: vixens-critical
       containers:
