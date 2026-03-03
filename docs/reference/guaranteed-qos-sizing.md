@@ -1,6 +1,6 @@
 # Guaranteed QoS Sizing
 
-Kyverno sizing profiles for Orichalcum tier applications requiring Guaranteed QoS class.
+✅ **IMPLEMENTED** - Kyverno sizing profiles for Orichalcum tier applications requiring Guaranteed QoS class.
 ## Overview
 
 This policy provides **Guaranteed Quality of Service (QoS)** resource sizing through Kyverno mutation. Unlike Burstable sizing (the default), Guaranteed QoS requires:
@@ -34,6 +34,35 @@ requests.memory == limits.memory
 | `G-medium` | 200m | 512Mi | Small production apps |
 | `G-large` | 1000m | 2Gi | Medium production apps |
 | `G-xl` | 2000m | 4Gi | Large critical apps |
+
+## Implementation Status
+
+✅ **FULLY IMPLEMENTED** (as of 2026-03-03)
+
+All G-sizing profiles are now active in production via the `sizing-mutate` Kyverno policy.
+
+**Policy Location**: `apps/00-infra/kyverno/base/policies/sizing-mutate.yaml`
+
+**Test Command**:
+```bash
+# Create test pod with G-large
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-g-large
+  labels:
+    vixens.io/sizing.test: G-large
+spec:
+  containers:
+  - name: test
+    image: nginx:alpine
+EOF
+
+# Verify Guaranteed QoS
+kubectl get pod test-g-large -o jsonpath='{.status.qosClass}'
+# Expected output: Guaranteed
+```
 
 ## Usage
 
@@ -122,6 +151,12 @@ If requests != limits, verify:
 
 ## See Also
 
-- [ADR-022: 7-Tier Goldification System](../../adr/022-7-tier-goldification-system.md)
-- [Sizing Migration Guide](../../guides/sizing-migration.md)
-- [Kyverno sizing-mutate policy](./sizing-mutate.yaml) - Burstable sizing
+- [ADR-022: 7-Tier Goldification System](../adr/022-7-tier-goldification-system.md)
+- [Sizing Migration Guide](../guides/sizing-migration.md)
+- [Sizing Standards](./RESOURCE_STANDARDS.md) - Standard Burstable profiles
+- [Kyverno Policy Source](../../apps/00-infra/kyverno/base/policies/sizing-mutate.yaml) - Implementation
+
+## Changelog
+
+- **2026-03-03**: G-sizing fully implemented in Kyverno policy
+- **2024-02-24**: Initial documentation created
