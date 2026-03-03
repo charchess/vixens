@@ -37,3 +37,4 @@ spec:
       labels:
         app: argocd-application-controller
         vixens.io/sizing: G-large
+        vixens.io/sizing.argocd-application-controller: G-large
