@@ -7,16 +7,7 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.authentik-server: G-large
+        vixens.io/sizing.authentik-server: G-medium
         vixens.io/sizing.config-syncer: G-small
     spec:
       priorityClassName: vixens-critical
-      containers:
-        - name: authentik-server
-          resources:
-            requests:
-              cpu: 200m
-              memory: 512Mi
-            limits:
-              cpu: 1000m
-              memory: 2Gi
