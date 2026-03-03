@@ -3,20 +3,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sonarr
-  labels:
-    vixens.io/sizing: medium
 spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing: medium
-    spec:
-      containers:
-        - name: sonarr
-          resources:
-            limits:
-              cpu: 1000m
-              memory: 1Gi
-            requests:
-              cpu: 100m
-              memory: 256Mi
+        vixens.io/sizing.sonarr: small
+        vixens.io/sizing.litestream: micro
+        vixens.io/sizing.config-syncer: micro

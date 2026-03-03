@@ -24,6 +24,8 @@ spec:
         vixens.io/sizing.install-gemini-cli: "medium"
         vixens.io/sizing.restore-data: "small"
         vixens.io/sizing.restore-config: "small"
+        vixens.io/sizing.openclaw: G-controller
+        vixens.io/sizing.data-syncer: small
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "18789"
