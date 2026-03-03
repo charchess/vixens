@@ -16,12 +16,12 @@ spec:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: prod-stable
   ignoreDifferences:
-    - group: ""
+    - kind: Secret
       kind: Secret
       name: litestream-shared-secrets
       jsonPointers:
         - /data
-    - group: ""
+    - kind: Secret
       kind: Secret
       name: hydrus-client-secrets
       jsonPointers:
