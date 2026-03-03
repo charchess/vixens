@@ -7,5 +7,5 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.hydrus-client: G-xl
+        vixens.io/sizing.hydrus-client: small
         vixens.io/sizing.litestream: micro
