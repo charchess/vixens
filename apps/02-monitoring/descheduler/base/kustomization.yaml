@@ -17,8 +17,7 @@ patches:
             template:
               metadata:
                 labels:
-                  vixens.io/sizing.descheduler: micro
-                  vixens.io/sizing: micro
+                  vixens.io/sizing.descheduler: G-nano
     target:
       kind: CronJob
       name: descheduler

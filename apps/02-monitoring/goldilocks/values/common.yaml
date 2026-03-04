@@ -4,13 +4,6 @@ controller:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 100m
-      memory: 128Mi
   podSecurityContext:
     runAsNonRoot: true
     runAsUser: 1000
@@ -22,21 +15,13 @@ controller:
         - ALL
     readOnlyRootFilesystem: true
   podLabels:
-    vixens.io/sizing.goldilocks-controller: micro
-    vixens.io/sizing: micro
+    vixens.io/sizing.goldilocks-controller: G-nano
 
 dashboard:
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 100m
-      memory: 128Mi
   podSecurityContext:
     runAsNonRoot: true
     runAsUser: 1000
@@ -48,5 +33,4 @@ dashboard:
         - ALL
     readOnlyRootFilesystem: true
   podLabels:
-    vixens.io/sizing.goldilocks-dashboard: small
-    vixens.io/sizing: small
+    vixens.io/sizing.goldilocks-dashboard: V-small

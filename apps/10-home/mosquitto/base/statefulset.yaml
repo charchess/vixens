@@ -9,6 +9,8 @@ metadata:
     app: mosquitto
     app.kubernetes.io/name: mosquitto
     app.kubernetes.io/component: mqtt-broker
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   serviceName: mosquitto
   replicas: 1
@@ -19,8 +21,10 @@ spec:
     metadata:
       labels:
         app: mosquitto
-        vixens.io/sizing.mosquitto: micro
-        vixens.io/sizing: micro
+        vixens.io/sizing.restore-data: B-nano
+        vixens.io/sizing.create-mosquitto-users: G-nano
+        vixens.io/sizing.mosquitto: V-small
+        vixens.io/sizing.config-syncer: V-nano
     spec:
       initContainers:
         - name: restore-data
@@ -43,13 +47,6 @@ spec:
           envFrom:
             - secretRef:
                 name: mosquitto-password-file
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /mosquitto/data
@@ -112,13 +109,6 @@ spec:
               mountPath: /mosquitto/config/auth/mosquitto.passwd
               subPath: mosquitto.passwd
               readOnly: true
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 200m
-              memory: 256Mi
           livenessProbe:
             tcpSocket:
               port: 1883
@@ -157,13 +147,6 @@ spec:
           envFrom:
             - secretRef:
                 name: mosquitto-password-file
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /mosquitto/data
