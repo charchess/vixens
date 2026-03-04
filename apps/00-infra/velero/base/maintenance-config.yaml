@@ -5,15 +5,13 @@ metadata:
   name: velero-repo-maintenance
   namespace: velero
 data:
-  config.json: |
+  global: |
     {
-      "global": {
-        "keepLatestMaintenanceJobs": 3,
-        "podResources": {
-          "cpuRequest": "100m",
-          "memoryRequest": "256Mi",
-          "cpuLimit": "500m",
-          "memoryLimit": "1Gi"
-        }
-      }
+      "podResources": {
+        "cpuRequest": "100m",
+        "memoryRequest": "256Mi",
+        "cpuLimit": "500m",
+        "memoryLimit": "1Gi"
+      },
+      "keepLatestMaintenanceJobs": 3
     }
