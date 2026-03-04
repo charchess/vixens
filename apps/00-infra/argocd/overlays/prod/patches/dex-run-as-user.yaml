@@ -1,0 +1,7 @@
+---
+# Fix: dex v2.45.1 uses non-numeric username "dex" which breaks runAsNonRoot validation.
+# Kubernetes requires a numeric UID when runAsNonRoot: true is set.
+# dex user has UID 1001 in ghcr.io/dexidp/dex images.
+- op: add
+  path: /spec/template/spec/containers/0/securityContext/runAsUser
+  value: 1001
