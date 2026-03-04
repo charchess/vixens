@@ -1,0 +1,113 @@
+---
+# RBAC: Allow Kyverno background controller to create/manage VPA objects
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:vpa-manager
+  labels:
+    app.kubernetes.io/managed-by: kyverno
+rules:
+  - apiGroups:
+      - autoscaling.k8s.io
+    resources:
+      - verticalpodautoscalers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kyverno:vpa-manager
+  labels:
+    app.kubernetes.io/managed-by: kyverno
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kyverno:vpa-manager
+subjects:
+  - kind: ServiceAccount
+    name: kyverno-background-controller
+    namespace: kyverno
+---
+# Kyverno Policy: Sizing VPA Generate
+#
+# Generates a VerticalPodAutoscaler for any Deployment or StatefulSet that:
+#   (a) has at least one container labeled with a V-* sizing label, OR
+#   (b) has any container without a vixens.io/sizing.* label (sidecar auto-discovery)
+#
+# Generated VPA:
+#   - updateMode: Off (observation only — activate manually per app after 48-72h)
+#   - containerPolicies:
+#     - mode: Off     for containers with G-*, B-*, SB-* labels (Kyverno manages sizing)
+#     - RequestsOnly  for containers with V-* labels or no label (VPA tunes requests only)
+#     - minAllowed: cpu=5m, memory=64Mi (floor for deflation)
+#
+# Activation: After reviewing VPA recommendations, set updateMode: Auto manually.
+#
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: sizing-vpa-generate
+  annotations:
+    policies.kyverno.io/title: Sizing VPA Generate
+    policies.kyverno.io/category: Resource Management
+    policies.kyverno.io/description: >-
+      Automatically generates a VerticalPodAutoscaler for Deployments and
+      StatefulSets using the v2 sizing system. VPAs start in Off mode for
+      safe observation. Activate per-app after reviewing recommendations.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: generate-vpa
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+      preconditions:
+        any:
+          # Trigger if any v2 sizing label is present on the workload
+          - key: "{{ request.object.metadata.labels | keys(@) | [?starts_with(@, 'vixens.io/sizing.')] | length(@) }}"
+            operator: GreaterThanOrEquals
+            value: 1
+      generate:
+        apiVersion: autoscaling.k8s.io/v1
+        kind: VerticalPodAutoscaler
+        name: "vixens-{{ request.object.metadata.name }}"
+        namespace: "{{ request.object.metadata.namespace }}"
+        synchronize: true
+        data:
+          apiVersion: autoscaling.k8s.io/v1
+          kind: VerticalPodAutoscaler
+          metadata:
+            name: "vixens-{{ request.object.metadata.name }}"
+            namespace: "{{ request.object.metadata.namespace }}"
+            labels:
+              app.kubernetes.io/managed-by: kyverno
+              vixens.io/sizing-v2: "true"
+          spec:
+            targetRef:
+              apiVersion: apps/v1
+              kind: "{{ request.object.kind }}"
+              name: "{{ request.object.metadata.name }}"
+            updatePolicy:
+              updateMode: "Off"
+            resourcePolicy:
+              containerPolicies:
+                # Default policy for all containers not explicitly managed by Kyverno sizing
+                # VPA will observe and recommend — containers with G-*/B-*/SB-* labels
+                # will have their own containerPolicy injected by the app owner if needed.
+                # This catch-all covers unlabeled sidecars with RequestsOnly mode.
+                - containerName: "*"
+                  mode: "RequestsOnly"
+                  minAllowed:
+                    cpu: "5m"
+                    memory: "64Mi"
