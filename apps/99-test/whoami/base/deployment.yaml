@@ -5,6 +5,7 @@ metadata:
   name: whoami
   labels:
     vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   revisionHistoryLimit: 3
@@ -15,7 +16,7 @@ spec:
     metadata:
       labels:
         app: whoami
-        vixens.io/sizing.whoami: "B-nano"
+        vixens.io/sizing.whoami: "V-nano"
       annotations:
         vixens.io/nometrics: "true"
         goldilocks.fairwinds.com/enabled: "true"
