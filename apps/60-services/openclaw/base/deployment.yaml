@@ -6,6 +6,8 @@ metadata:
   namespace: services
   labels:
     app: openclaw
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   revisionHistoryLimit: 3
@@ -18,14 +20,15 @@ spec:
     metadata:
       labels:
         app: openclaw
-        vixens.io/sizing: "large"
-        vixens.io/sizing.install-tools: "large"
-        vixens.io/sizing.install-gemini-plugin: "medium"
-        vixens.io/sizing.install-gemini-cli: "medium"
-        vixens.io/sizing.restore-data: "small"
-        vixens.io/sizing.restore-config: "small"
-        vixens.io/sizing.openclaw: G-controller
-        vixens.io/sizing.data-syncer: small
+        vixens.io/sizing.fix-perms: G-nano
+        vixens.io/sizing.install-tools: B-xlarge
+        vixens.io/sizing.install-gemini-plugin: B-medium
+        vixens.io/sizing.install-gemini-cli: B-medium
+        vixens.io/sizing.restore-data: B-nano
+        vixens.io/sizing.restore-config: B-nano
+        vixens.io/sizing.setup-gemini-config: G-nano
+        vixens.io/sizing.openclaw: V-large
+        vixens.io/sizing.data-syncer: V-nano
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "18789"

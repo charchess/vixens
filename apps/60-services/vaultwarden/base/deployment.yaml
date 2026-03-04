@@ -5,6 +5,8 @@ metadata:
   name: vaultwarden
   labels:
     app: vaultwarden
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   strategy:
     type: Recreate
@@ -16,8 +18,11 @@ spec:
     metadata:
       labels:
         app: vaultwarden
-        vixens.io/sizing.vaultwarden: micro
-        vixens.io/sizing: micro
+        vixens.io/sizing.fix-permissions: G-nano
+        vixens.io/sizing.restore-config: B-nano
+        vixens.io/sizing.vaultwarden: V-nano
+        vixens.io/sizing.litestream: V-nano
+        vixens.io/sizing.config-syncer: V-nano
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
@@ -55,13 +60,6 @@ spec:
           envFrom:
             - secretRef:
                 name: vaultwarden-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /data
@@ -90,13 +88,6 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 3
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
           volumeMounts:
             - name: data
               mountPath: /data
@@ -122,13 +113,6 @@ spec:
               port: 9090
             initialDelaySeconds: 10
             periodSeconds: 30
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           envFrom:
             - secretRef:
                 name: vaultwarden-secrets
@@ -160,13 +144,6 @@ spec:
                 sync_s3
                 sleep 60
               done
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /data

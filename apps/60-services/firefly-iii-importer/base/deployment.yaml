@@ -2,6 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: firefly-iii-importer
+  labels:
+    app.kubernetes.io/name: firefly-iii-importer
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   selector:
@@ -11,7 +15,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: firefly-iii-importer
-        vixens.io/sizing: small
+        vixens.io/sizing.importer: V-small
     spec:
       priorityClassName: vixens-low
       tolerations:
@@ -58,10 +62,3 @@ spec:
               port: http
             initialDelaySeconds: 10
             periodSeconds: 5
-          resources:
-            requests:
-              cpu: 10m
-              memory: 128Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
