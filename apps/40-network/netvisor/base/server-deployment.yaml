@@ -5,6 +5,8 @@ metadata:
   name: netvisor-server
   labels:
     app: netvisor-server
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   selector:
@@ -14,8 +16,7 @@ spec:
     metadata:
       labels:
         app: netvisor-server
-        vixens.io/sizing.server: small
-        vixens.io/sizing: small
+        vixens.io/sizing.server: V-small
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
