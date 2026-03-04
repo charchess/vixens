@@ -22,7 +22,7 @@ spec:
     metadata:
       labels:
         app: adguard-home
-        vixens.io/sizing: medium
+        vixens.io/sizing.adguard-home: G-small
         vixens.io/sizing.restore-config: micro
         vixens.io/sizing.restore-db: micro
         vixens.io/sizing.litestream: micro
