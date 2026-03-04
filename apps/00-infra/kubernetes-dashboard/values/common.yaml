@@ -50,3 +50,8 @@ kong:
     tls:
       enabled: false
   tolerations: *tol
+
+# Pod sizing labels for each dashboard component
+podLabels:
+  vixens.io/sizing.kubernetes-dashboard-api: small
+  vixens.io/sizing: small

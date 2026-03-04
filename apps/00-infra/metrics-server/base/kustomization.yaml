@@ -45,3 +45,13 @@ patches:
     target:
       kind: Deployment
       name: metrics-server
+  - patch: |
+      - op: add
+        path: /spec/template/metadata/labels/vixens.io~1sizing.metrics-server
+        value: small
+      - op: add
+        path: /spec/template/metadata/labels/vixens.io~1sizing
+        value: small
+    target:
+      kind: Deployment
+      name: metrics-server

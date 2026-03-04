@@ -16,3 +16,6 @@ helmCharts:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      podLabels:
+        vixens.io/sizing.cloudnative-pg: small
+        vixens.io/sizing: small

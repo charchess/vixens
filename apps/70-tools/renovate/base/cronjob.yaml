@@ -14,6 +14,7 @@ spec:
         metadata:
           labels:
             app: renovate
+            vixens.io/sizing.renovate: large
         spec:
           restartPolicy: Never
           priorityClassName: vixens-medium
@@ -29,13 +30,6 @@ spec:
           containers:
             - name: renovate
               image: renovate/renovate:43.46.1 # Renovate latest stable
-              resources:
-                requests:
-                  cpu: 500m
-                  memory: 1Gi
-                limits:
-                  cpu: 1000m
-                  memory: 4Gi
               env:
                 - name: RENOVATE_TOKEN
                   valueFrom:

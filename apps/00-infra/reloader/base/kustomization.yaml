@@ -18,6 +18,9 @@ patches:
             annotations:
               prometheus.io/scrape: "true"
               prometheus.io/port: "9090"
+            labels:
+              vixens.io/sizing.reloader-reloader: small
+              vixens.io/sizing: small
           spec:
             priorityClassName: vixens-critical
             containers:

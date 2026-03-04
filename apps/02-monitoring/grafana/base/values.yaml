@@ -86,3 +86,7 @@ sidecar:
       limits:
         cpu: 50m
         memory: 128Mi
+# Pod sizing labels
+podLabels:
+  vixens.io/sizing.grafana: small
+  vixens.io/sizing: small

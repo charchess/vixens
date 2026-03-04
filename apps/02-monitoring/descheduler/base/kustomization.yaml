@@ -4,3 +4,21 @@ kind: Kustomization
 resources:
   - descheduler-gen.yaml
   - priorityclasses.yaml
+
+patches:
+  - patch: |
+      apiVersion: batch/v1
+      kind: CronJob
+      metadata:
+        name: descheduler
+      spec:
+        jobTemplate:
+          spec:
+            template:
+              metadata:
+                labels:
+                  vixens.io/sizing.descheduler: micro
+                  vixens.io/sizing: micro
+    target:
+      kind: CronJob
+      name: descheduler
