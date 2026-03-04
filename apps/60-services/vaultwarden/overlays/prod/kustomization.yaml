@@ -13,4 +13,3 @@ patches:
     target:
       kind: Deployment
       name: vaultwarden
-  - path: resources-patch.yaml
