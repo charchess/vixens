@@ -3,6 +3,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pyload
+  labels:
+    app: pyload
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
@@ -14,8 +18,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: pyload
-        vixens.io/sizing.pyload: medium
-        vixens.io/sizing: medium
+        vixens.io/sizing.pyload: V-small
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -45,12 +48,6 @@ spec:
               mountPath: /config
             - name: downloads
               mountPath: /downloads
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              memory: 512Mi
       volumes:
         - name: config
           persistentVolumeClaim:

@@ -5,6 +5,8 @@ metadata:
   name: jellyfin
   labels:
     app: jellyfin
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
@@ -16,8 +18,7 @@ spec:
     metadata:
       labels:
         app: jellyfin
-        vixens.io/sizing.jellyfin: large
-        vixens.io/sizing: large
+        vixens.io/sizing.jellyfin: V-large
     spec:
       priorityClassName: homelab-important
       tolerations:
