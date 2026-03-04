@@ -6,6 +6,8 @@ metadata:
   name: homepage
   labels:
     app.kubernetes.io/name: homepage
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
   annotations:
     secret.reloader.stakater.com/reload: homepage-config-secret,homepage-secrets
 spec:
@@ -19,8 +21,8 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: homepage
-        vixens.io/sizing.homepage: small
-        vixens.io/sizing: small
+        vixens.io/sizing.copy-initial-config: G-nano
+        vixens.io/sizing.homepage: V-small
     spec:
       serviceAccountName: homepage
       tolerations:

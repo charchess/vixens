@@ -8,3 +8,15 @@ resources:
 
 components:
   - ../../../../_shared/components/revision-history-limit
+
+patches:
+  - patch: |-
+      - op: add
+        path: /metadata/labels/vixens.io~1sizing-v2
+        value: "true"
+      - op: add
+        path: /metadata/labels/vixens.io~1vpa-mode
+        value: Auto
+    target:
+      kind: Deployment
+      name: stirling-pdf-stirling-pdf-chart
