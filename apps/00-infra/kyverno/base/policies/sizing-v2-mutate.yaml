@@ -50,6 +50,40 @@ spec:
       mutate:
         foreach:
           - list: "request.object.spec.containers || '[]'"
+            preconditions:
+              any:
+                - key: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" || 'NONE' }}"
+                  operator: AnyIn
+                  value:
+                    - G-nano
+                    - G-micro
+                    - G-small
+                    - G-medium
+                    - G-large
+                    - G-xlarge
+                    - G-2xlarge
+                    - B-nano
+                    - B-micro
+                    - B-small
+                    - B-medium
+                    - B-large
+                    - B-xlarge
+                    - B-2xlarge
+                    - SB-nano
+                    - SB-micro
+                    - SB-small
+                    - SB-medium
+                    - SB-large
+                    - SB-xlarge
+                    - SB-2xlarge
+                    - V-nano
+                    - V-micro
+                    - V-small
+                    - V-medium
+                    - V-large
+                    - V-xlarge
+                    - V-2xlarge
+                    - media-xlarge
             patchStrategicMerge:
               spec:
                 containers:
@@ -83,6 +117,40 @@ spec:
       mutate:
         foreach:
           - list: "request.object.spec.initContainers || '[]'"
+            preconditions:
+              any:
+                - key: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" || 'NONE' }}"
+                  operator: AnyIn
+                  value:
+                    - G-nano
+                    - G-micro
+                    - G-small
+                    - G-medium
+                    - G-large
+                    - G-xlarge
+                    - G-2xlarge
+                    - B-nano
+                    - B-micro
+                    - B-small
+                    - B-medium
+                    - B-large
+                    - B-xlarge
+                    - B-2xlarge
+                    - SB-nano
+                    - SB-micro
+                    - SB-small
+                    - SB-medium
+                    - SB-large
+                    - SB-xlarge
+                    - SB-2xlarge
+                    - V-nano
+                    - V-micro
+                    - V-small
+                    - V-medium
+                    - V-large
+                    - V-xlarge
+                    - V-2xlarge
+                    - media-xlarge
             patchStrategicMerge:
               spec:
                 initContainers:
