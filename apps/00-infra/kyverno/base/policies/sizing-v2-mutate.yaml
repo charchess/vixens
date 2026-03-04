@@ -1,0 +1,137 @@
+---
+# Kyverno Policy: Sizing V2 Mutation
+#
+# Manages resource requests/limits for pods using the v2 label format:
+#   vixens.io/sizing.<container-name>: <MODE>-<size>
+#
+# Modes:
+#   G-*  : Guaranteed QoS — req == lim (CPU and memory)
+#   B-*  : Burstable     — mem lim = 2x req, cpu lim = 10x req
+#   SB-* : Super Burstable — mem lim = 4x req, cpu lim = 10x req
+#   V-*  : VPA-managed   — same as SB (initial sizing), VPA takes over
+#
+# Sizes: nano | micro | small | medium | large | xlarge | 2xlarge
+#
+# Containers WITHOUT a v2 label are NOT touched by this policy.
+# They receive sidecar defaults from the unlabeled-sidecar-defaults rule.
+#
+# Coexistence: sizing-mutate.yaml (v1) handles labels micro/small/medium/large/G-*.
+# This policy (v2) ONLY reacts to labels with modes G-/B-/SB-/V-.
+#
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: sizing-v2-mutate
+  annotations:
+    policies.kyverno.io/title: Sizing V2 Mutation
+    policies.kyverno.io/category: Resource Management
+    policies.kyverno.io/description: >-
+      Declarative resource management using per-container v2 labels.
+      Supports 4 modes: G- (Guaranteed), B- (Burstable), SB- (Super Burstable),
+      V- (VPA-managed initial sizing). Unlabeled containers receive sidecar defaults.
+spec:
+  validationFailureAction: Audit
+  background: false
+  rules:
+    # Rule 1: Main containers with explicit v2 sizing labels
+    - name: v2-container-sizing
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              names:
+                - trivy-server
+              namespaces:
+                - security
+      mutate:
+        foreach:
+          - list: "request.object.spec.containers || '[]'"
+            patchStrategicMerge:
+              spec:
+                containers:
+                  - (name): "{{ element.name }}"
+                    resources:
+                      requests:
+                        cpu: >-
+                          {{ (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-2xlarge') && '500m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-xlarge') && '200m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-large') && '100m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-medium') && '50m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-small') && '25m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-micro') && '10m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-nano') && '5m' || null }}
+                        memory: >-
+                          {{ (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-2xlarge') && '4Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-xlarge') && '2Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-large') && '1Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-medium') && '512Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-small') && '256Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-micro') && '128Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-nano') && '64Mi' || null }}
+                      limits:
+                        cpu: >-
+                          {{ request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-2xlarge' && '500m' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-xlarge' && '200m' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-large' && '100m' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-medium' && '50m' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-small' && '25m' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-micro' && '10m' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-nano' && '5m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-2xlarge') && '2000m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-xlarge') && '2000m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-large') && '1000m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-medium') && '500m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-small') && '250m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-micro') && '100m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-nano') && '50m' || null }}
+                        memory: >-
+                          {{ request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-2xlarge' && '4Gi' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-xlarge' && '2Gi' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-large' && '1Gi' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-medium' && '512Mi' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-small' && '256Mi' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-micro' && '128Mi' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-nano' && '64Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-2xlarge') && '8Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-xlarge') && '4Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-large') && '2Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-medium') && '1Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-small') && '512Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-micro') && '256Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-nano') && '128Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-2xlarge') && '16Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-xlarge') && '8Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-large') && '4Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-medium') && '2Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-small') && '1Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-micro') && '512Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-nano') && '256Mi' || null }}
+
+    # Rule 2: Init containers with explicit v2 sizing labels (same logic, lighter set)
+    - name: v2-init-container-sizing
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              names:
+                - trivy-server
+              namespaces:
+                - security
+      mutate:
+        foreach:
+          - list: "request.object.spec.initContainers || '[]'"
+            patchStrategicMerge:
+              spec:
+                initContainers:
+                  - (name): "{{ element.name }}"
+                    resources:
+                      requests:
+                        cpu: >-
+                          {{ (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-2xlarge') && '500m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-xlarge') && '200m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-large') && '100m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-medium') && '50m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-small') && '25m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-micro') && '10m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-nano') && '5m' || null }}
+                        memory: >-
+                          {{ (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-2xlarge') && '4Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-xlarge') && '2Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-large') && '1Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-medium') && '512Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-small') && '256Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-micro') && '128Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-nano') && '64Mi' || null }}
+                      limits:
+                        cpu: >-
+                          {{ request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-2xlarge' && '500m' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-xlarge' && '200m' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-large' && '100m' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-medium' && '50m' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-small' && '25m' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-micro' && '10m' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-nano' && '5m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-2xlarge') && '2000m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-xlarge') && '2000m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-large') && '1000m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-medium') && '500m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-small') && '250m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-micro') && '100m' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-nano') && '50m' || null }}
+                        memory: >-
+                          {{ request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-2xlarge' && '4Gi' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-xlarge' && '2Gi' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-large' && '1Gi' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-medium' && '512Mi' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-small' && '256Mi' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-micro' && '128Mi' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'G-nano' && '64Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-2xlarge') && '8Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-xlarge') && '4Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-large') && '2Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-medium') && '1Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-small') && '512Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-micro') && '256Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'B-nano') && '128Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-2xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-2xlarge') && '16Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-xlarge' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-xlarge') && '8Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-large' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-large') && '4Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-medium' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-medium') && '2Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-small' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-small') && '1Gi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-micro' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-micro') && '512Mi' || (request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'SB-nano' || request.object.metadata.labels."vixens.io/sizing.{{element.name}}" == 'V-nano') && '256Mi' || null }}
+
+    # Rule 3: Unlabeled sidecar defaults
+    # Containers without ANY vixens.io/sizing.* label receive baseline sidecar defaults.
+    # VPA (via sizing-vpa-generate.yaml) will then tune these per-pod-per-container.
+    - name: v2-unlabeled-sidecar-defaults
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              names:
+                - trivy-server
+              namespaces:
+                - security
+      mutate:
+        foreach:
+          - list: "request.object.spec.containers || '[]'"
+            preconditions:
+              all:
+                # Only act on containers that have NO v2 sizing label
+                - key: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" }}"
+                  operator: Equals
+                  value: ""
+            patchStrategicMerge:
+              spec:
+                containers:
+                  - (name): "{{ element.name }}"
+                    resources:
+                      requests:
+                        cpu: "10m"
+                        memory: "128Mi"
+                      limits:
+                        cpu: "100m"
+                        memory: "512Mi"
