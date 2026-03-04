@@ -3,6 +3,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: whoami
+  labels:
+    vixens.io/sizing-v2: "true"
 spec:
   replicas: 1
   revisionHistoryLimit: 3
