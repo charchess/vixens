@@ -10,7 +10,7 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.runner: G-large
+        vixens.io/sizing.runner: G-xlarge
 ---
 apiVersion: apps/v1
 kind: Deployment
