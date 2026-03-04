@@ -77,8 +77,9 @@ spec:
                 - StatefulSet
       preconditions:
         any:
-          # Trigger if any v2 sizing label is present on the workload
-          - key: "{{ request.object.metadata.labels | keys(@) | [?starts_with(@, 'vixens.io/sizing.')] | length(@) }}"
+          # Trigger if any v2 sizing label is present on the pod template
+          # (labels are on spec.template.metadata, not Deployment metadata)
+          - key: "{{ request.object.spec.template.metadata.labels | keys(@) | [?starts_with(@, 'vixens.io/sizing.')] | length(@) }}"
             operator: GreaterThanOrEquals
             value: 1
       generate:
