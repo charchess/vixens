@@ -6,7 +6,6 @@ image:
 
 configuration:
   uploaderType: kopia
-  repoMaintenanceJobConfigMap: velero-repo-maintenance-config
   defaultRepoMaintainFrequency: 24h
 
   # STORAGE LOCATION
@@ -55,7 +54,16 @@ schedules:
       snapshotVolumes: true
 
 # CLEANUP SETTINGS
-maintenanceCronJob:
+repositoryMaintenanceJob:
+  repositoryConfigData:
+    global:
+      podResources:
+        cpuRequest: "100m"
+        memoryRequest: "256Mi"
+        cpuLimit: "500m"
+        memoryLimit: "1Gi"
+      keepLatestMaintenanceJobs: 3
+  maintenanceCronJob:
   enabled: false
 upgradeCRDs: false
 cleanUpCRDs: false
