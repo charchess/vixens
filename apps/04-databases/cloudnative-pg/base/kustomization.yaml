@@ -17,5 +17,4 @@ helmCharts:
           operator: Exists
           effect: NoSchedule
       podLabels:
-        vixens.io/sizing.cloudnative-pg: small
-        vixens.io/sizing: small
+        vixens.io/sizing.cloudnative-pg: G-small

@@ -13,7 +13,7 @@ spec:
       template:
         metadata:
           labels:
-            vixens.io/sizing: micro
+            vixens.io/sizing.firefly-iii-cron: G-nano
         spec:
           restartPolicy: OnFailure
           tolerations:

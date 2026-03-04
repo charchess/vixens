@@ -3,14 +3,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: argocd-server
-  labels:
-    vixens.io/sizing: small
 spec:
   template:
     metadata:
       labels:
-        app: argocd-server
-        vixens.io/sizing: small
+        vixens.io/sizing.argocd-server: G-small
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -21,28 +18,16 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: argocd-repo-server
-  labels:
-    vixens.io/sizing: small
 spec:
   template:
     metadata:
       labels:
-        app: argocd-repo-server
-        vixens.io/sizing: small
+        vixens.io/sizing.argocd-repo-server: G-large
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-      containers:
-        - name: argocd-repo-server
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              cpu: "1"
-              memory: 1Gi
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -52,18 +37,9 @@ spec:
   template:
     metadata:
       labels:
-        app: argocd-application-controller
+        vixens.io/sizing.argocd-application-controller: G-xlarge
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-      containers:
-        - name: argocd-application-controller
-          resources:
-            requests:
-              cpu: 500m
-              memory: 400Mi
-            limits:
-              cpu: "1"
-              memory: 2Gi
