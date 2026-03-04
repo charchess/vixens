@@ -27,6 +27,18 @@ configuration:
       config:
         region: us-east-1
 
+  # MAINTENANCE JOB RESOURCES
+  # Template reads: .Values.configuration.repositoryMaintenanceJob.repositoryConfigData
+  repositoryMaintenanceJob:
+    repositoryConfigData:
+      global:
+        podResources:
+          cpuRequest: "100m"
+          memoryRequest: "256Mi"
+          cpuLimit: "500m"
+          memoryLimit: "1Gi"
+        keepLatestMaintenanceJobs: 3
+
 # BACKUP SCHEDULES
 schedules:
   daily-critical:
@@ -54,16 +66,7 @@ schedules:
       snapshotVolumes: true
 
 # CLEANUP SETTINGS
-repositoryMaintenanceJob:
-  repositoryConfigData:
-    global:
-      podResources:
-        cpuRequest: "100m"
-        memoryRequest: "256Mi"
-        cpuLimit: "500m"
-        memoryLimit: "1Gi"
-      keepLatestMaintenanceJobs: 3
-  maintenanceCronJob:
+maintenanceCronJob:
   enabled: false
 upgradeCRDs: false
 cleanUpCRDs: false
