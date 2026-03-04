@@ -4,9 +4,18 @@ kind: Deployment
 metadata:
   name: amule
   labels:
-    vixens.io/sizing.amule: small
+    vixens.io/sizing: small
 spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.amule: small
+        vixens.io/sizing: small
+    spec:
+      containers:
+        - name: amule
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 512Mi

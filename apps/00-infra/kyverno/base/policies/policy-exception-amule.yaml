@@ -1,0 +1,25 @@
+---
+# PolicyException for amule to bypass Kyverno sizing mutation.
+# Allows explicit resource overrides (256Mi request / 512Mi limit) since:
+# - Kyverno 'small' sizing forces 512Mi request/limit
+# - Actual usage is low; 256Mi request allows scheduling on full cluster
+# - Cluster nodes are at 99% allocation; 512Mi request causes Pending
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: amule-sizing-exception
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: sizing-mutate
+      ruleNames:
+        - granular-container-sizing
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - downloads
+          names:
+            - "amule-*"
