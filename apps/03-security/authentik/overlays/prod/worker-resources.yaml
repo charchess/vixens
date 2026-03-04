@@ -7,6 +7,6 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.authentik-worker: G-controller
+        vixens.io/sizing.authentik-worker: G-xlarge
     spec:
       priorityClassName: vixens-critical
