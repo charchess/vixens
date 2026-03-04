@@ -5,6 +5,8 @@ metadata:
   name: lazylibrarian
   labels:
     app: lazylibrarian
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
@@ -16,8 +18,12 @@ spec:
     metadata:
       labels:
         app: lazylibrarian
-        vixens.io/sizing.lazylibrarian: small
-        vixens.io/sizing: small
+        vixens.io/sizing.lazylibrarian: V-small
+        vixens.io/sizing.litestream: V-nano
+        vixens.io/sizing.config-syncer: V-nano
+        vixens.io/sizing.fix-permissions: G-nano
+        vixens.io/sizing.restore-config: B-nano
+        vixens.io/sizing.restore-db: B-nano
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
@@ -65,13 +71,6 @@ spec:
           envFrom:
             - secretRef:
                 name: lazylibrarian-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -90,13 +89,6 @@ spec:
           envFrom:
             - secretRef:
                 name: lazylibrarian-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -138,13 +130,6 @@ spec:
           envFrom:
             - secretRef:
                 name: lazylibrarian-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -185,13 +170,6 @@ spec:
           envFrom:
             - secretRef:
                 name: lazylibrarian-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config

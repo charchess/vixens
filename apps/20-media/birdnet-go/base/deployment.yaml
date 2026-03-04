@@ -6,6 +6,8 @@ metadata:
   labels:
     app: birdnet-go
     app.kubernetes.io/managed-by: argocd
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
@@ -17,6 +19,10 @@ spec:
     metadata:
       labels:
         app: birdnet-go
+        vixens.io/sizing.birdnet-go: V-medium
+        vixens.io/sizing.litestream: V-nano
+        vixens.io/sizing.data-syncer: V-nano
+        vixens.io/sizing.fix-permissions: G-nano
       annotations:
         goldilocks.fairwinds.com/enabled: "true"
         reloader.stakater.com/auto: "true"
@@ -75,13 +81,6 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 3
             failureThreshold: 3
-          resources:
-            requests:
-              memory: 256Mi
-              cpu: 200m
-            limits:
-              memory: 1Gi
-              cpu: 1000m
         - name: litestream
           image: litestream/litestream:0.5.9
           securityContext:
@@ -94,13 +93,6 @@ spec:
           ports:
             - containerPort: 9090
               name: metrics
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           envFrom:
             - secretRef:
                 name: birdnet-go-secrets
@@ -139,13 +131,6 @@ spec:
           envFrom:
             - secretRef:
                 name: birdnet-go-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /data

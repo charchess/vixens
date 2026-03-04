@@ -3,6 +3,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: amule
+  labels:
+    app: amule
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
@@ -14,6 +18,8 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: amule
+        vixens.io/sizing.amule: V-small
+        vixens.io/sizing.configure-proxy: G-nano
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -62,12 +68,6 @@ spec:
               mountPath: /home/amule/.aMule
             - name: downloads
               mountPath: /downloads
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              memory: 512Mi
       initContainers:
         - name: configure-proxy
           image: busybox

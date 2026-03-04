@@ -5,6 +5,8 @@ metadata:
   name: hydrus-client
   labels:
     app: hydrus-client
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
@@ -16,6 +18,14 @@ spec:
     metadata:
       labels:
         app: hydrus-client
+        vixens.io/sizing.hydrus-client: V-large
+        vixens.io/sizing.litestream: V-nano
+        vixens.io/sizing.fix-permissions: G-nano
+        vixens.io/sizing.check-integrity: G-nano
+        vixens.io/sizing.restore-db: B-nano
+        vixens.io/sizing.restore-mappings: B-nano
+        vixens.io/sizing.restore-master: B-nano
+        vixens.io/sizing.restore-caches: B-nano
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
@@ -80,13 +90,6 @@ spec:
           envFrom:
             - secretRef:
                 name: hydrus-client-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
@@ -112,13 +115,6 @@ spec:
           envFrom:
             - secretRef:
                 name: hydrus-client-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
@@ -144,13 +140,6 @@ spec:
           envFrom:
             - secretRef:
                 name: hydrus-client-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
@@ -173,13 +162,6 @@ spec:
           envFrom:
             - secretRef:
                 name: hydrus-client-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
@@ -213,13 +195,6 @@ spec:
               value: "1000"
             - name: TZ
               value: Europe/Paris
-          resources:
-            requests:
-              cpu: 500m
-              memory: 1Gi
-            limits:
-              cpu: "2"
-              memory: 4Gi
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
@@ -240,13 +215,6 @@ spec:
           envFrom:
             - secretRef:
                 name: hydrus-client-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
