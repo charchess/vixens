@@ -6,6 +6,9 @@ metadata:
   annotations:
     vpa.kubernetes.io/updateMode: "Off"
     goldilocks.fairwinds.com/enabled: "true"
+  labels:
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   revisionHistoryLimit: 3
@@ -16,8 +19,7 @@ spec:
     metadata:
       labels:
         app: netbird-signal
-        vixens.io/sizing.signal: small
-        vixens.io/sizing: small
+        vixens.io/sizing.signal: V-small
     spec:
       priorityClassName: vixens-high
       tolerations:
@@ -28,13 +30,6 @@ spec:
         - name: signal
           image: netbirdio/signal:0.66.1
           args: ["--port=80"]
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 100m
-              memory: 256Mi
           livenessProbe:
             tcpSocket:
               port: 80
@@ -68,6 +63,9 @@ metadata:
   annotations:
     vpa.kubernetes.io/updateMode: "Off"
     goldilocks.fairwinds.com/enabled: "true"
+  labels:
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   revisionHistoryLimit: 3
@@ -78,6 +76,7 @@ spec:
     metadata:
       labels:
         app: netbird-relay
+        vixens.io/sizing.relay: V-small
     spec:
       priorityClassName: vixens-high
       tolerations:
@@ -97,13 +96,6 @@ spec:
               value: "netbird-relay-secret-change-me"
             - name: NETBIRD_RELAY_AUTH_SECRET
               value: "netbird-relay-secret-change-me"
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 100m
-              memory: 256Mi
           livenessProbe:
             tcpSocket:
               port: 33080

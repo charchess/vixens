@@ -6,6 +6,9 @@ metadata:
   annotations:
     vpa.kubernetes.io/updateMode: "Off"
     goldilocks.fairwinds.com/enabled: "true"
+  labels:
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   revisionHistoryLimit: 3
@@ -16,8 +19,7 @@ spec:
     metadata:
       labels:
         app: netbird-dashboard
-        vixens.io/sizing.dashboard: small
-        vixens.io/sizing: small
+        vixens.io/sizing.dashboard: V-small
     spec:
       priorityClassName: vixens-high
       tolerations:
@@ -27,13 +29,6 @@ spec:
       containers:
         - name: dashboard
           image: netbirdio/dashboard:v2.33.0
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 100m
-              memory: 256Mi
           livenessProbe:
             tcpSocket:
               port: 80
