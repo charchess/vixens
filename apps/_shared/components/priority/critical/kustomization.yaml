@@ -1,0 +1,25 @@
+---
+# Kustomize Component: Critical Priority
+#
+# Infra-core priority class — pods that must never be evicted.
+# Use for: Traefik, Cilium, cert-manager, CSI, Authentik, ArgoCD.
+#
+# Usage:
+#   components:
+#     - ../../../../_shared/components/priority/critical
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+      spec:
+        template:
+          spec:
+            priorityClassName: vixens-critical
