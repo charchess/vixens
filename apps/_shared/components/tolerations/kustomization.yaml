@@ -1,0 +1,28 @@
+---
+# Kustomize Component: CP Toleration
+#
+# Injects control-plane toleration into all Deployments, StatefulSets, and DaemonSets.
+# Required for scheduling on CP nodes when workers are under memory pressure.
+#
+# Note: The add-cp-toleration Kyverno MutatePolicy also injects this at admission,
+# but the manifest must declare it explicitly to pass the check-cp-toleration audit policy.
+#
+# Usage in overlay:
+#   components:
+#     - ../../../../_shared/components/tolerations
+#
+# Reference: apps/00-infra/kyverno/base/policies/add-cp-toleration.yaml
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - path: patch.yaml
+    target:
+      kind: Deployment
+  - path: patch.yaml
+    target:
+      kind: StatefulSet
+  - path: patch.yaml
+    target:
+      kind: DaemonSet

@@ -4,6 +4,11 @@ kind: Kustomization
 resources:
   - ../../base
   - ingress.yaml
+# Optional: add _shared components for apps that don't have these in their base
+# components:
+#   - ../../../../_shared/components/tolerations         # CP toleration (if not in base)
+#   - ../../../../_shared/components/priority/medium       # priorityClassName
+#   - ../../../../_shared/components/revision-history-limit # revisionHistoryLimit: 3
 patches:
   - target:
       kind: InfisicalSecret
