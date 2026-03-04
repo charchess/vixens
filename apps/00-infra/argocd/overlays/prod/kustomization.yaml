@@ -34,4 +34,4 @@ patchesJson6902:
       kind: Deployment
       name: argocd-dex-server
       namespace: argocd
-    path: patches/dex-run-as-user.yaml
+    path: patches/dex-run-as-user-json.yaml
