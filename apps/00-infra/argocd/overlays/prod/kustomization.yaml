@@ -28,3 +28,10 @@ patchesJson6902:
       name: argocd-redis
       namespace: argocd
     path: patches/redis-probes-json.yaml
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: argocd-dex-server
+      namespace: argocd
+    path: patches/dex-run-as-user-json.yaml
