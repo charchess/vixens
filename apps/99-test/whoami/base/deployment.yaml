@@ -13,7 +13,7 @@ spec:
     metadata:
       labels:
         app: whoami
-        vixens.io/sizing: "G-small"
+        vixens.io/sizing.whoami: "B-nano"
       annotations:
         vixens.io/nometrics: "true"
         goldilocks.fairwinds.com/enabled: "true"
@@ -42,13 +42,6 @@ spec:
               port: http
             initialDelaySeconds: 2
             periodSeconds: 5
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              cpu: 50m
-              memory: 128Mi
           securityContext:
             allowPrivilegeEscalation: false
       securityContext:
