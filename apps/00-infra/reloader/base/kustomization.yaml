@@ -19,16 +19,16 @@ patches:
               prometheus.io/scrape: "true"
               prometheus.io/port: "9090"
             labels:
-              vixens.io/sizing.reloader-reloader: small
-              vixens.io/sizing: small
+              vixens.io/sizing.reloader-reloader: micro
+              vixens.io/sizing: micro
           spec:
-            priorityClassName: vixens-critical
+            priorityClassName: vixens-low
             containers:
               - name: reloader-reloader
                 resources:
                   requests:
                     cpu: 100m
-                    memory: 256Mi
+                    memory: 128Mi
                   limits:
                     cpu: 100m
-                    memory: 256Mi
+                    memory: 128Mi
