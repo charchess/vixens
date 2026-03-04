@@ -7,7 +7,7 @@ image:
   registry: docker.stirlingpdf.com
   repository: stirlingtools/stirling-pdf
   pullPolicy: IfNotPresent
-  tag: 2.5.3
+  tag: 2.6.0
 replicaCount: 1
 # resources managed by Kyverno sizing (medium tier: 512Mi request/1Gi limit)
 # Tolerations for control-plane nodes if needed
