@@ -1,12 +1,2 @@
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nocodb
-  labels:
-    vixens.io/sizing.nocodb: medium
-spec:
-  template:
-    metadata:
-      labels:
-        vixens.io/sizing.nocodb: medium
+# v2 sizing managed by Kyverno

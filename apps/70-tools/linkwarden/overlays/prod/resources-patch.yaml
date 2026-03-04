@@ -1,12 +1,2 @@
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: linkwarden
-  labels:
-    vixens.io/sizing.linkwarden: medium
-spec:
-  template:
-    metadata:
-      labels:
-        vixens.io/sizing.linkwarden: medium
+# v2 sizing managed by Kyverno

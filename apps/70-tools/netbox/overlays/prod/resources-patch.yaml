@@ -1,12 +1,2 @@
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: netbox
-  labels:
-    vixens.io/sizing.netbox: medium
-spec:
-  template:
-    metadata:
-      labels:
-        vixens.io/sizing.netbox: medium
+# v2 sizing managed by Kyverno
