@@ -5,12 +5,12 @@ metadata:
   name: prowlarr
   labels:
     vixens.io/sizing.prowlarr: medium
-    vixens.io/sizing.litestream: small
-    vixens.io/sizing.config-syncer: small
+    vixens.io/sizing.litestream: micro
+    vixens.io/sizing.config-syncer: micro
 spec:
   template:
     metadata:
       labels:
         vixens.io/sizing.prowlarr: medium
-        vixens.io/sizing.litestream: small
-        vixens.io/sizing.config-syncer: small
+        vixens.io/sizing.litestream: micro
+        vixens.io/sizing.config-syncer: micro
