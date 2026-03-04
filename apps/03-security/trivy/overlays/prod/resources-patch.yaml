@@ -8,19 +8,11 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.trivy-operator: medium
-        vixens.io/sizing: medium
+        vixens.io/sizing.trivy-operator: G-large
     spec:
       priorityClassName: vixens-medium
       containers:
         - name: trivy-operator
-          resources:
-            requests:
-              cpu: 200m
-              memory: 1Gi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
           livenessProbe:
             initialDelaySeconds: 60
             timeoutSeconds: 10

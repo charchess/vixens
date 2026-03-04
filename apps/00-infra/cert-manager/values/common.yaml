@@ -25,8 +25,7 @@ tolerations:
     effect: NoSchedule
 # Pod sizing labels for controller
 podLabels:
-  vixens.io/sizing.cert-manager: small
-  vixens.io/sizing: small
+  vixens.io/sizing.cert-manager: G-nano
 # Webhook component
 webhook:
   tolerations:
@@ -34,8 +33,7 @@ webhook:
       operator: Exists
       effect: NoSchedule
   podLabels:
-    vixens.io/sizing.webhook: micro
-    vixens.io/sizing: micro
+    vixens.io/sizing.webhook: G-nano
 # CA Injector component
 cainjector:
   tolerations:
@@ -43,8 +41,7 @@ cainjector:
       operator: Exists
       effect: NoSchedule
   podLabels:
-    vixens.io/sizing.cainjector: micro
-    vixens.io/sizing: micro
+    vixens.io/sizing.cainjector: G-nano
 # Startup API check tolerations
 startupapicheck:
   tolerations:

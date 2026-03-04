@@ -16,8 +16,7 @@ patches:
         template:
           metadata:
             labels:
-              vixens.io/sizing.admission-controller: small
-              vixens.io/sizing: small
+              vixens.io/sizing.admission-controller: G-small
     target:
       kind: Deployment
       name: vpa-vertical-pod-autoscaler-admission-controller
@@ -30,8 +29,7 @@ patches:
         template:
           metadata:
             labels:
-              vixens.io/sizing.recommender: small
-              vixens.io/sizing: small
+              vixens.io/sizing.recommender: G-small
     target:
       kind: Deployment
       name: vpa-vertical-pod-autoscaler-recommender
@@ -44,8 +42,7 @@ patches:
         template:
           metadata:
             labels:
-              vixens.io/sizing.updater: small
-              vixens.io/sizing: small
+              vixens.io/sizing.updater: G-small
     target:
       kind: Deployment
       name: vpa-vertical-pod-autoscaler-updater
