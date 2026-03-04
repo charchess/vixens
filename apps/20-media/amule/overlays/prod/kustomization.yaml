@@ -11,4 +11,3 @@ labels:
       environment: prod
 patches:
   - path: patch-infisical-env.yaml
-  - path: resources-patch.yaml

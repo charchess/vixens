@@ -53,5 +53,4 @@ kong:
 
 # Pod sizing labels for each dashboard component
 podLabels:
-  vixens.io/sizing.kubernetes-dashboard-api: small
-  vixens.io/sizing: small
+  vixens.io/sizing.kubernetes-dashboard-api: G-nano
