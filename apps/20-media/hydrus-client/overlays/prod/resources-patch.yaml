@@ -1,11 +1,2 @@
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: hydrus-client
-spec:
-  template:
-    metadata:
-      labels:
-        vixens.io/sizing.hydrus-client: small
-        vixens.io/sizing.litestream: micro
+# v2 sizing managed by Kyverno (vixens.io/sizing-v2: "true" in base deployment)
