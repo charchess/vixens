@@ -1,0 +1,55 @@
+---
+# Kyverno Policy: Check Control-Plane Toleration
+#
+# Audits pods to confirm they carry the control-plane NoSchedule toleration.
+# Works in tandem with add-cp-toleration (mutate) — the mutate policy injects
+# the toleration at admission; this policy audits background pods for the
+# policy report and surfaces any stragglers (e.g. Helm charts that set
+# tolerations explicitly and may overwrite the mutation).
+#
+# PHASE: Audit (read-only, never blocks deployments)
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-cp-toleration
+  annotations:
+    policies.kyverno.io/title: Check Control-Plane Toleration
+    policies.kyverno.io/category: Scheduling
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Audits all pods to verify they have the control-plane NoSchedule
+      toleration. In a 5-node cluster (3 CP + 2 workers) running at 99% RAM,
+      pods without this toleration cannot reschedule to CP nodes when workers
+      are full, causing Pending state. Use kubectl get policyreports -A to
+      identify pods that need the toleration added manually.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-cp-toleration
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - kube-public
+                - kube-node-lease
+      validate:
+        message: >-
+          Pod is missing the control-plane NoSchedule toleration.
+          On a cluster where workers run at 99% RAM, this pod cannot
+          reschedule to CP nodes. Add toleration:
+          key: node-role.kubernetes.io/control-plane, operator: Exists, effect: NoSchedule
+        pattern:
+          spec:
+            tolerations:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+                effect: NoSchedule

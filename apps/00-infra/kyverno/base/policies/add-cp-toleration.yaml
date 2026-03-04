@@ -1,0 +1,48 @@
+---
+# Kyverno Policy: Add Control-Plane Toleration
+#
+# Automatically injects the control-plane toleration on all pods outside
+# system namespaces. This ensures pods can schedule on CP nodes when workers
+# are saturated (99% RAM), preventing Pending state during worker pressure.
+#
+# background: false — admission only (existing pods not affected, no restarts)
+#
+# PHASE: Mutate (admission webhook only, never blocks)
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-cp-toleration
+  annotations:
+    policies.kyverno.io/title: Add Control-Plane Toleration
+    policies.kyverno.io/category: Scheduling
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Automatically adds the control-plane NoSchedule toleration to all pods
+      so they can schedule on CP nodes when worker nodes are under memory
+      pressure. This is a safety net for the 5-node cluster (3 CP, 2 workers)
+      running at 99% RAM allocation.
+spec:
+  background: false
+  rules:
+    - name: inject-cp-toleration
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - kube-public
+                - kube-node-lease
+      mutate:
+        patchStrategicMerge:
+          spec:
+            tolerations:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+                effect: NoSchedule
