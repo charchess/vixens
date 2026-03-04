@@ -405,7 +405,7 @@ spec:
                 - sh
                 - -c
                 - "test -f /tmp/healthy"
-            initialDelaySeconds: 10
+            initialDelaySeconds: 180
             periodSeconds: 30
           readinessProbe:
             exec:
@@ -413,7 +413,7 @@ spec:
                 - sh
                 - -c
                 - "test -f /tmp/healthy"
-            initialDelaySeconds: 5
+            initialDelaySeconds: 180
             periodSeconds: 10
           envFrom:
             - secretRef:
