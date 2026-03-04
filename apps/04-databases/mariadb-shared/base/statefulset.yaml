@@ -15,8 +15,8 @@ spec:
     metadata:
       labels:
         app: mariadb-shared
-        vixens.io/sizing.mariadb: large
-        vixens.io/sizing: large
+        vixens.io/sizing.mariadb: small
+        vixens.io/sizing: small
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
