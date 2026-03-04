@@ -5,6 +5,8 @@ metadata:
   name: linkwarden
   labels:
     app: linkwarden
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
@@ -16,6 +18,7 @@ spec:
     metadata:
       labels:
         app: linkwarden
+        vixens.io/sizing.linkwarden: V-large
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -53,13 +56,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data/data
-          resources:
-            requests:
-              cpu: 100m
-              memory: 1Gi
-            limits:
-              cpu: 1000m
-              memory: 2Gi
           livenessProbe:
             httpGet:
               path: /

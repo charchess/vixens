@@ -146,6 +146,8 @@ metadata:
     app.kubernetes.io/instance: radar
     app.kubernetes.io/version: "0.4.2"
     app.kubernetes.io/managed-by: Helm
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   selector:
@@ -157,8 +159,7 @@ spec:
       labels:
         app.kubernetes.io/name: radar
         app.kubernetes.io/instance: radar
-        vixens.io/sizing.radar: small
-        vixens.io/sizing: small
+        vixens.io/sizing.radar: V-small
     spec:
       priorityClassName: vixens-medium
       serviceAccountName: radar

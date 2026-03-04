@@ -7,6 +7,8 @@ metadata:
   labels:
     app: penpot-backend
     component: backend
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   revisionHistoryLimit: 3
@@ -20,7 +22,7 @@ spec:
       labels:
         app: penpot-backend
         component: backend
-        vixens.io/sizing.backend: G-large  # Reduced from G-xl (4Gi) to G-large (2Gi) to reduce memory pressure
+        vixens.io/sizing.backend: V-large
     spec:
       priorityClassName: vixens-medium
       tolerations:
@@ -56,13 +58,6 @@ spec:
           ports:
             - containerPort: 6060
               name: http
-          resources:
-            requests:
-              cpu: "200m"
-              memory: "512Mi"
-            limits:
-              cpu: "1000m"
-              memory: "1536Mi"
           readinessProbe:
             httpGet:
               path: /readyz

@@ -7,6 +7,8 @@ metadata:
   labels:
     app: penpot-frontend
     component: frontend
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   revisionHistoryLimit: 3
@@ -18,6 +20,7 @@ spec:
       labels:
         app: penpot-frontend
         component: frontend
+        vixens.io/sizing.frontend: V-small
     spec:
       priorityClassName: vixens-medium
       tolerations:
@@ -36,13 +39,6 @@ spec:
           ports:
             - containerPort: 8080
               name: http
-          resources:
-            requests:
-              cpu: "50m"
-              memory: "128Mi"
-            limits:
-              cpu: "200m"
-              memory: "256Mi"
           readinessProbe:
             httpGet:
               path: /

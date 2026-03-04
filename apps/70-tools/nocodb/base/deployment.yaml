@@ -5,6 +5,8 @@ metadata:
   name: nocodb
   labels:
     app.kubernetes.io/name: nocodb
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
@@ -16,6 +18,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: nocodb
+        vixens.io/sizing.nocodb: V-small
       annotations:
         reloader.stakater.com/auto: "true"
     spec:
@@ -58,13 +61,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /usr/app/data
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
-              memory: 1Gi
           readinessProbe:
             httpGet:
               path: /api/v1/health
