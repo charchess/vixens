@@ -36,13 +36,6 @@ sidecars:
         value: debug
       - name: UNIFI_SKIP_TLS_VERIFY
         value: "true"
-    resources:
-      requests:
-        cpu: 50m
-        memory: 64Mi
-      limits:
-        cpu: 50m
-        memory: 64Mi
 tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
@@ -56,6 +49,5 @@ policy: sync
 sources:
   - ingress
 podLabels:
-  vixens.io/sizing.external-dns: micro
-  vixens.io/sizing.unifi-webhook: micro
-  vixens.io/sizing: micro
+  vixens.io/sizing.external-dns: G-nano
+  vixens.io/sizing.unifi-webhook: G-nano
