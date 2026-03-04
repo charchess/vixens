@@ -157,6 +157,8 @@ spec:
       labels:
         app.kubernetes.io/name: radar
         app.kubernetes.io/instance: radar
+        vixens.io/sizing.radar: small
+        vixens.io/sizing: small
     spec:
       serviceAccountName: radar
       securityContext:
@@ -164,6 +166,10 @@ spec:
         runAsGroup: 65532
         runAsNonRoot: true
         runAsUser: 65532
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: radar
           securityContext:

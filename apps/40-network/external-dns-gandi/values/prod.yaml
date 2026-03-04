@@ -38,3 +38,6 @@ resources:
   limits:
     cpu: 100m
     memory: 128Mi
+podLabels:
+  vixens.io/sizing.external-dns: small
+  vixens.io/sizing: small

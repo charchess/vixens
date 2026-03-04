@@ -19,6 +19,8 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: homepage
+        vixens.io/sizing.homepage: small
+        vixens.io/sizing: small
     spec:
       serviceAccountName: homepage
       tolerations:

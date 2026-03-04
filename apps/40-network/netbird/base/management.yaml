@@ -18,6 +18,8 @@ spec:
     metadata:
       labels:
         app: netbird-management
+        vixens.io/sizing.netbird-management: small
+        vixens.io/sizing: small
     spec:
       priorityClassName: vixens-high
       tolerations:

@@ -16,6 +16,8 @@ spec:
     metadata:
       labels:
         app: changedetection
+        vixens.io/sizing.changedetection: small
+        vixens.io/sizing: small
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

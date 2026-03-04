@@ -16,6 +16,8 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: vikunja
+        vixens.io/sizing.vikunja: small
+        vixens.io/sizing: small
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

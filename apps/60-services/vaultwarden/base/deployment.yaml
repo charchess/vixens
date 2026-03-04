@@ -16,6 +16,8 @@ spec:
     metadata:
       labels:
         app: vaultwarden
+        vixens.io/sizing.vaultwarden: small
+        vixens.io/sizing: small
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"

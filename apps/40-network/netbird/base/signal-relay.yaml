@@ -16,6 +16,8 @@ spec:
     metadata:
       labels:
         app: netbird-signal
+        vixens.io/sizing.signal: small
+        vixens.io/sizing: small
     spec:
       priorityClassName: vixens-high
       tolerations:
