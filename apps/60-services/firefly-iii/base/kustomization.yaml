@@ -10,4 +10,4 @@ resources:
   - pvc.yaml
   - infisical-secret.yaml
   - cronjob.yaml
-  - vpa.yaml
+  # vpa.yaml removed - Kyverno generates vixens-firefly-iii VPA via sizing-v2 label
