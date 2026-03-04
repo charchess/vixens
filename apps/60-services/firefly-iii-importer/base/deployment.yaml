@@ -11,9 +11,13 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: firefly-iii-importer
-        vixens.io/sizing.importer: "small"
+        vixens.io/sizing: small
     spec:
       priorityClassName: vixens-low
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: importer
           image: fireflyiii/data-importer:latest
