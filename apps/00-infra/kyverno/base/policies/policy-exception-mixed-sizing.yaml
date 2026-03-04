@@ -1,0 +1,27 @@
+---
+# PolicyException for pods that use mixed v1/v2 sizing labels.
+# When a pod has containers with both v1 labels (micro/small/large) and
+# v2 labels (G-*/B-*/SB-*/media-xlarge), sizing-v2-mutate would inject
+# null for the v1-labeled containers, causing quantity validation errors.
+# This exception exempts the mutation rules while v1 (sizing-mutate) handles
+# those containers directly via explicit resource patches.
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: mixed-sizing-v2-exception
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: sizing-v2-mutate
+      ruleNames:
+        - v2-container-sizing
+        - v2-init-container-sizing
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - networking
+          names:
+            - "adguard-home-*"

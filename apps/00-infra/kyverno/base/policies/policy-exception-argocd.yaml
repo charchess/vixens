@@ -12,6 +12,11 @@ spec:
     - policyName: sizing-mutate
       ruleNames:
         - granular-container-sizing
+    - policyName: sizing-v2-mutate
+      ruleNames:
+        - v2-container-sizing
+        - v2-init-container-sizing
+        - v2-unlabeled-sidecar-defaults
   match:
     any:
       - resources:
