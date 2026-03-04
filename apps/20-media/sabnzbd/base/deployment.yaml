@@ -5,6 +5,8 @@ metadata:
   name: sabnzbd
   labels:
     app: sabnzbd
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   strategy:
     type: Recreate
@@ -16,8 +18,10 @@ spec:
     metadata:
       labels:
         app: sabnzbd
-        vixens.io/sizing.sabnzbd: small
-        vixens.io/sizing: small
+        vixens.io/sizing.sabnzbd: V-medium
+        vixens.io/sizing.litestream: V-nano
+        vixens.io/sizing.config-syncer: V-nano
+        vixens.io/sizing.restore-config: B-nano
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
@@ -55,13 +59,6 @@ spec:
           envFrom:
             - secretRef:
                 name: sabnzbd-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -83,13 +80,6 @@ spec:
               port: http
             initialDelaySeconds: 15
             periodSeconds: 10
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
           env:
             - name: PUID
               value: "1000"
@@ -149,13 +139,6 @@ spec:
           envFrom:
             - secretRef:
                 name: sabnzbd-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config

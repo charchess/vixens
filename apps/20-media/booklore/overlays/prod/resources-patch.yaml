@@ -1,14 +1,2 @@
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: booklore
-  labels:
-    vixens.io/sizing.booklore: medium
-    vixens.io/sizing.config-syncer: small
-spec:
-  template:
-    metadata:
-      labels:
-        vixens.io/sizing.booklore: medium
-        vixens.io/sizing.config-syncer: small
+# v2 sizing managed by Kyverno (vixens.io/sizing-v2: "true" in base deployment)
