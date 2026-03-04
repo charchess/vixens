@@ -102,7 +102,7 @@ spec:
               name: "{{ request.object.metadata.name }}"
             updatePolicy:
               updateMode: >-
-                {{ request.object.metadata.labels | keys(@) | [?@ == 'vixens.io/vpa-mode'] | length(@) > `0` && request.object.metadata.labels."vixens.io/vpa-mode" || 'Off' }}
+                {{ contains(keys(request.object.metadata.labels), 'vixens.io/vpa-mode') && request.object.metadata.labels."vixens.io/vpa-mode" || 'Off' }}
             resourcePolicy:
               containerPolicies:
                 # Observe all containers — unlabeled sidecars get VPA recommendations.
