@@ -6,6 +6,9 @@ metadata:
   annotations:
     vpa.kubernetes.io/updateMode: "Off"
     goldilocks.fairwinds.com/enabled: "true"
+  labels:
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   revisionHistoryLimit: 3
@@ -18,8 +21,8 @@ spec:
     metadata:
       labels:
         app: netbird-management
-        vixens.io/sizing.netbird-management: small
-        vixens.io/sizing: small
+        vixens.io/sizing.init-config: G-nano
+        vixens.io/sizing.management: V-medium
     spec:
       priorityClassName: vixens-high
       tolerations:
@@ -29,13 +32,6 @@ spec:
       initContainers:
         - name: init-config
           image: busybox:1.37
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 50m
-              memory: 64Mi
           env:
             - name: AUTH_ISSUER
               value: "https://authentik.dev.truxonline.com/application/o/netbird/"
@@ -103,13 +99,6 @@ spec:
         - name: management
           image: netbirdio/management:0.66.1
           args: ["--port=80", "--log-file=console", "--log-level=info", "--config=/etc/netbird/management.json"]
-          resources:
-            requests:
-              cpu: 200m
-              memory: 512Mi
-            limits:
-              cpu: 200m
-              memory: 512Mi
           livenessProbe:
             tcpSocket:
               port: 80
