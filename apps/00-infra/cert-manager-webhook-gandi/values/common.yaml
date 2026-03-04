@@ -18,5 +18,4 @@ tolerations:
     effect: NoSchedule
 # Pod sizing labels
 podLabels:
-  vixens.io/sizing.cert-manager-webhook-gandi: small
-  vixens.io/sizing: small
+  vixens.io/sizing.cert-manager-webhook-gandi: G-nano

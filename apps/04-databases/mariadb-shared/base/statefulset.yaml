@@ -5,6 +5,9 @@ metadata:
   name: mariadb-shared
   annotations:
     argocd.argoproj.io/sync-wave: "2"
+  labels:
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   serviceName: mariadb-shared
   replicas: 1
@@ -15,8 +18,7 @@ spec:
     metadata:
       labels:
         app: mariadb-shared
-        vixens.io/sizing.mariadb: small
-        vixens.io/sizing: small
+        vixens.io/sizing.mariadb: V-medium
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
