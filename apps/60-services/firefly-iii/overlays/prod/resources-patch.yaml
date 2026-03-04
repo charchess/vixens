@@ -1,12 +1,2 @@
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: firefly-iii
-  labels:
-    vixens.io/sizing.firefly-iii: medium
-spec:
-  template:
-    metadata:
-      labels:
-        vixens.io/sizing.firefly-iii: medium
+# v2 sizing managed by Kyverno
