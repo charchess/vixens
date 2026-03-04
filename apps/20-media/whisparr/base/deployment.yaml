@@ -5,6 +5,8 @@ metadata:
   name: whisparr
   labels:
     app: whisparr
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   strategy:
     type: Recreate
@@ -16,6 +18,11 @@ spec:
     metadata:
       labels:
         app: whisparr
+        vixens.io/sizing.whisparr: V-medium
+        vixens.io/sizing.litestream: V-nano
+        vixens.io/sizing.config-syncer: V-nano
+        vixens.io/sizing.fix-permissions: G-nano
+        vixens.io/sizing.restore-config: B-nano
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
@@ -59,13 +66,6 @@ spec:
           envFrom:
             - secretRef:
                 name: whisparr-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -86,13 +86,6 @@ spec:
               port: 6969
             initialDelaySeconds: 15
             periodSeconds: 10
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
           env:
             - name: WHISPARR__API_KEY
               valueFrom:
@@ -163,13 +156,6 @@ spec:
           envFrom:
             - secretRef:
                 name: whisparr-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
