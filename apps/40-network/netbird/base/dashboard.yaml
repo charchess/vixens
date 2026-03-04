@@ -16,6 +16,8 @@ spec:
     metadata:
       labels:
         app: netbird-dashboard
+        vixens.io/sizing.dashboard: small
+        vixens.io/sizing: small
     spec:
       priorityClassName: vixens-high
       tolerations:

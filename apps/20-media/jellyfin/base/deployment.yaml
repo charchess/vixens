@@ -16,6 +16,8 @@ spec:
     metadata:
       labels:
         app: jellyfin
+        vixens.io/sizing.jellyfin: large
+        vixens.io/sizing: large
     spec:
       priorityClassName: homelab-important
       tolerations:

@@ -21,6 +21,9 @@ controller:
       drop:
         - ALL
     readOnlyRootFilesystem: true
+  podLabels:
+    vixens.io/sizing.goldilocks-controller: micro
+    vixens.io/sizing: micro
 
 dashboard:
   tolerations:
@@ -44,3 +47,6 @@ dashboard:
       drop:
         - ALL
     readOnlyRootFilesystem: true
+  podLabels:
+    vixens.io/sizing.goldilocks-dashboard: small
+    vixens.io/sizing: small

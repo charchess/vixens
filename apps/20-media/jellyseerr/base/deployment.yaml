@@ -16,6 +16,8 @@ spec:
     metadata:
       labels:
         app: jellyseerr
+        vixens.io/sizing.jellyseerr: small
+        vixens.io/sizing: small
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

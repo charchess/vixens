@@ -16,6 +16,8 @@ spec:
         prometheus.io/port: "9080"
       labels:
         app: promtail
+        vixens.io/sizing.promtail: micro
+        vixens.io/sizing: micro
     spec:
       priorityClassName: vixens-critical
       serviceAccountName: promtail

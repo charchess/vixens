@@ -36,6 +36,9 @@ spec:
             prometheus.io/port: "2112"
             prometheus.io/path: "/metrics"
 
+          podLabels:
+            vixens.io/sizing.policy-reporter: small
+            vixens.io/sizing: small
           kyvernoPlugin:
             enabled: true
             tolerations:
