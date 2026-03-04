@@ -15,6 +15,18 @@ spec:
       hostNetwork: true
       hostPID: true
       serviceAccountName: synology-csi-node
+      initContainers:
+        - name: iscsi-lock-cleanup
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - rm -f /host/run/lock/iscsi/lock.write && echo "iSCSI stale lock cleared"
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: host-root
+              mountPath: /host
       containers:
         - name: csi-node-driver-registrar
           image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
