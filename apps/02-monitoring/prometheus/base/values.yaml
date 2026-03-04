@@ -5,7 +5,7 @@
 server:
   priorityClassName: vixens-critical
   podLabels:
-    vixens.io/sizing.prometheus-server: "G-large"
+    vixens.io/sizing.prometheus-server: "G-xlarge"
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
