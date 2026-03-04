@@ -1,5 +1,5 @@
 ---
-# RBAC: Allow Kyverno background controller to create/manage VPA objects
+# RBAC: Allow Kyverno controllers to manage/inspect VPA objects
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -33,6 +33,9 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: kyverno-background-controller
+    namespace: kyverno
+  - kind: ServiceAccount
+    name: kyverno-admission-controller
     namespace: kyverno
 ---
 # Kyverno Policy: Sizing VPA Generate
