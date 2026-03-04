@@ -14,7 +14,7 @@ spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:17.6-system-trixie
   inheritedMetadata:
     labels:
-      vixens.io/sizing.postgres: G-large  # 2Gi memory - prevents Kyverno 128Mi fallback OOMKill
+      vixens.io/sizing.postgres: G-xlarge  # 2Gi memory - prevents Kyverno 128Mi fallback OOMKill
   superuserSecret:
     name: postgresql-admin-credentials
   managed:
