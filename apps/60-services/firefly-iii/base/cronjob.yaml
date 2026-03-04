@@ -11,8 +11,15 @@ spec:
   jobTemplate:
     spec:
       template:
+        metadata:
+          labels:
+            vixens.io/sizing: micro
         spec:
           restartPolicy: OnFailure
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
           containers:
             - name: firefly-iii-cron
               image: fireflyiii/core:version-6.4.16
