@@ -5,6 +5,10 @@ metadata:
   name: synology-csi-secrets
 spec:
   template:
+    metadata:
+      labels:
+        vixens.io/sizing.synology-csi-secrets: micro
+        vixens.io/sizing: micro
     spec:
       containers:
         - name: synology-csi-secrets

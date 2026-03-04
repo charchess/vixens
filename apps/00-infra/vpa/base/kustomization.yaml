@@ -5,3 +5,47 @@ namespace: vpa
 resources:
   - namespace.yaml
   - manifests.yaml
+
+patches:
+  - patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: vpa-vertical-pod-autoscaler-admission-controller
+      spec:
+        template:
+          metadata:
+            labels:
+              vixens.io/sizing.admission-controller: small
+              vixens.io/sizing: small
+    target:
+      kind: Deployment
+      name: vpa-vertical-pod-autoscaler-admission-controller
+  - patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: vpa-vertical-pod-autoscaler-recommender
+      spec:
+        template:
+          metadata:
+            labels:
+              vixens.io/sizing.recommender: small
+              vixens.io/sizing: small
+    target:
+      kind: Deployment
+      name: vpa-vertical-pod-autoscaler-recommender
+  - patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: vpa-vertical-pod-autoscaler-updater
+      spec:
+        template:
+          metadata:
+            labels:
+              vixens.io/sizing.updater: small
+              vixens.io/sizing: small
+    target:
+      kind: Deployment
+      name: vpa-vertical-pod-autoscaler-updater

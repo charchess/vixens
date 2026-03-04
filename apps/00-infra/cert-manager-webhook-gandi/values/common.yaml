@@ -16,3 +16,7 @@ tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
     effect: NoSchedule
+# Pod sizing labels
+podLabels:
+  vixens.io/sizing.cert-manager-webhook-gandi: small
+  vixens.io/sizing: small

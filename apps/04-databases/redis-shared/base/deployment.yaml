@@ -12,6 +12,8 @@ spec:
     metadata:
       labels:
         app: redis-shared
+        vixens.io/sizing.redis: small
+        vixens.io/sizing: small
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

@@ -3,6 +3,9 @@
 # Chart: jeffresc/it-tools
 
 replicaCount: 1
+podLabels:
+  vixens.io/sizing.it-tools: micro
+  vixens.io/sizing: micro
 image:
   repository: ghcr.io/corentinth/it-tools
   pullPolicy: IfNotPresent

@@ -23,18 +23,28 @@ tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
     effect: NoSchedule
-# Webhook component tolerations
+# Pod sizing labels for controller
+podLabels:
+  vixens.io/sizing.cert-manager: small
+  vixens.io/sizing: small
+# Webhook component
 webhook:
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
-# CA Injector component tolerations
+  podLabels:
+    vixens.io/sizing.webhook: micro
+    vixens.io/sizing: micro
+# CA Injector component
 cainjector:
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
+  podLabels:
+    vixens.io/sizing.cainjector: micro
+    vixens.io/sizing: micro
 # Startup API check tolerations
 startupapicheck:
   tolerations:

@@ -19,6 +19,8 @@ spec:
     metadata:
       labels:
         app: mosquitto
+        vixens.io/sizing.mosquitto: micro
+        vixens.io/sizing: micro
     spec:
       initContainers:
         - name: restore-data

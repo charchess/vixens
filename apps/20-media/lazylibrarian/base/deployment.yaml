@@ -16,6 +16,8 @@ spec:
     metadata:
       labels:
         app: lazylibrarian
+        vixens.io/sizing.lazylibrarian: small
+        vixens.io/sizing: small
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"

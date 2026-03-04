@@ -13,6 +13,8 @@ spec:
     metadata:
       labels:
         app: netvisor-daemon
+        vixens.io/sizing.daemon: micro
+        vixens.io/sizing: micro
     spec:
       hostNetwork: false
       tolerations:

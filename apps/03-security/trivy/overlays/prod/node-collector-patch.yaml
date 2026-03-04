@@ -1,0 +1,19 @@
+---
+# Disable node-collector infra assessment on Talos Linux.
+#
+# Talos is an immutable OS — the hostPath volumes that node-collector mounts
+# (/var/lib/etcd, /var/lib/kubelet, /etc/systemd, etc.) are either absent or
+# read-only and cause the node-collector DaemonSet pods to crash-loop.
+#
+# Disabling infra assessment stops these failing pods without affecting
+# vulnerability scanning, config audit, RBAC assessment, or secret scanning.
+#
+# Task: vixens-ac8
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trivy-operator-config
+  namespace: security
+data:
+  OPERATOR_INFRA_ASSESSMENT_SCANNER_ENABLED: "false"
+  OPERATOR_CLUSTER_COMPLIANCE_ENABLED: "false"
