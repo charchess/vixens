@@ -5,8 +5,15 @@ metadata:
   name: template-app
   labels:
     app: template-app
+    vixens.io/sizing: small
+    vixens.io/sizing.template-app: small
+    vixens.io/sizing.litestream: micro
+    vixens.io/sizing.config-syncer: micro
+    vixens.io/sizing.restore-config: micro
+    vixens.io/sizing.restore-db: micro
 spec:
   replicas: 1
+  revisionHistoryLimit: 3
   strategy:
     type: Recreate # Mandatory for RWO volumes
   selector:
@@ -16,6 +23,12 @@ spec:
     metadata:
       labels:
         app: template-app
+        vixens.io/sizing: small
+        vixens.io/sizing.template-app: small
+        vixens.io/sizing.litestream: micro
+        vixens.io/sizing.config-syncer: micro
+        vixens.io/sizing.restore-config: micro
+        vixens.io/sizing.restore-db: micro
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
@@ -54,13 +67,6 @@ spec:
           envFrom:
             - secretRef:
                 name: template-app-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -80,13 +86,6 @@ spec:
           envFrom:
             - secretRef:
                 name: template-app-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -104,13 +103,6 @@ spec:
               path: /
               port: 80
             initialDelaySeconds: 15
-          resources: # Profile: Small
-            requests:
-              cpu: 50m
-              memory: 256Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
           envFrom:
             - secretRef:
                 name: template-app-secrets
@@ -133,13 +125,6 @@ spec:
           envFrom:
             - secretRef:
                 name: template-app-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -176,13 +161,6 @@ spec:
           envFrom:
             - secretRef:
                 name: template-app-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
