@@ -104,12 +104,9 @@ spec:
               updateMode: "Off"
             resourcePolicy:
               containerPolicies:
-                # Default policy for all containers not explicitly managed by Kyverno sizing
-                # VPA will observe and recommend — containers with G-*/B-*/SB-* labels
-                # will have their own containerPolicy injected by the app owner if needed.
-                # This catch-all covers unlabeled sidecars with RequestsOnly mode.
+                # Observe all containers — unlabeled sidecars get VPA recommendations.
+                # minAllowed is the floor; VPA won't shrink below this.
                 - containerName: "*"
-                  mode: "RequestsOnly"
                   minAllowed:
                     cpu: "5m"
                     memory: "64Mi"
