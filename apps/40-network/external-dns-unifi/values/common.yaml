@@ -56,6 +56,6 @@ policy: sync
 sources:
   - ingress
 podLabels:
-  vixens.io/sizing.external-dns: small
+  vixens.io/sizing.external-dns: micro
   vixens.io/sizing.unifi-webhook: micro
-  vixens.io/sizing: small
+  vixens.io/sizing: micro
