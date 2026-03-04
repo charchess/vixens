@@ -33,13 +33,6 @@ datasources:
         editable: true
 # Resources (Elite: Guaranteed QoS)
 priorityClassName: vixens-critical
-resources:
-  requests:
-    cpu: 200m
-    memory: 512Mi
-  limits:
-    cpu: 200m
-    memory: 512Mi
 # Probes (Elite Status)
 livenessProbe:
   httpGet:
@@ -79,14 +72,6 @@ sidecar:
     label: grafana_dashboard
     searchNamespace: ALL
     # Sidecar resources
-    resources:
-      requests:
-        cpu: 50m
-        memory: 128Mi
-      limits:
-        cpu: 50m
-        memory: 128Mi
 # Pod sizing labels
 podLabels:
-  vixens.io/sizing.grafana: small
-  vixens.io/sizing: small
+  vixens.io/sizing.grafana: V-medium

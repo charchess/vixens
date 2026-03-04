@@ -5,6 +5,8 @@ metadata:
   name: mealie
   labels:
     app: mealie
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
@@ -16,6 +18,11 @@ spec:
     metadata:
       labels:
         app: mealie
+        vixens.io/sizing.restore-config: B-nano
+        vixens.io/sizing.restore-db: B-nano
+        vixens.io/sizing.mealie: V-medium
+        vixens.io/sizing.litestream: V-nano
+        vixens.io/sizing.config-syncer: V-nano
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
@@ -54,13 +61,6 @@ spec:
           envFrom:
             - secretRef:
                 name: mealie-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /app/data
@@ -79,13 +79,6 @@ spec:
           envFrom:
             - secretRef:
                 name: mealie-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /app/data
@@ -98,13 +91,6 @@ spec:
           ports:
             - containerPort: 9000
               name: http
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
           envFrom:
             - secretRef:
                 name: mealie-secrets
@@ -126,13 +112,6 @@ spec:
           envFrom:
             - secretRef:
                 name: mealie-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /app/data
@@ -170,13 +149,6 @@ spec:
           envFrom:
             - secretRef:
                 name: mealie-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /app/data
