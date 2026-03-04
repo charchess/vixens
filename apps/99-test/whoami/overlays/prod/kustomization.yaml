@@ -4,10 +4,6 @@ kind: Kustomization
 
 namespace: whoami
 
-metadata:
-  labels:
-    vixens.io/sizing.whoami: small
-
 resources:
   - ../../base
   - ingress.yaml
