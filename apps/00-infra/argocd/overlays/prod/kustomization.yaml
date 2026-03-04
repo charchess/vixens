@@ -9,29 +9,24 @@ resources:
 patches:
   - path: resources-patch.yaml
   - path: patches/argocd-params.yaml
-
-components:
-  - ../../../../_shared/components/revision-history-limit
-
-patchesJson6902:
   - target:
       group: apps
       version: v1
       kind: Deployment
       name: argocd-redis
-      namespace: argocd
     path: patches/redis-resources-json.yaml
   - target:
       group: apps
       version: v1
       kind: Deployment
       name: argocd-redis
-      namespace: argocd
     path: patches/redis-probes-json.yaml
   - target:
       group: apps
       version: v1
       kind: Deployment
       name: argocd-dex-server
-      namespace: argocd
     path: patches/dex-run-as-user-json.yaml
+
+components:
+  - ../../../../_shared/components/revision-history-limit
