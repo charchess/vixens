@@ -5,6 +5,8 @@ metadata:
   name: gluetun
   labels:
     app: gluetun
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   selector:
@@ -14,8 +16,7 @@ spec:
     metadata:
       labels:
         app: gluetun
-        vixens.io/sizing.gluetun: small
-        vixens.io/sizing: small
+        vixens.io/sizing.gluetun: B-nano
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

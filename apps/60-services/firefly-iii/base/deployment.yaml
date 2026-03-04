@@ -6,6 +6,8 @@ metadata:
   labels:
     app.kubernetes.io/name: firefly-iii
     vixens.lab/managed-by: argocd
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
@@ -17,6 +19,9 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: firefly-iii
+        vixens.io/sizing.restore-config: B-nano
+        vixens.io/sizing.firefly-iii: V-medium
+        vixens.io/sizing.config-syncer: V-nano
       annotations:
         reloader.stakater.com/auto: "true"
         vixens.io/health-bump: "5"
@@ -51,13 +56,6 @@ spec:
           envFrom:
             - secretRef:
                 name: firefly-iii-secrets
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: static
               mountPath: /upload
@@ -107,13 +105,6 @@ spec:
           volumeMounts:
             - name: static
               mountPath: /var/www/html/storage/upload
-          resources:
-            requests:
-              cpu: 200m
-              memory: 1Gi
-            limits:
-              cpu: 200m
-              memory: 1Gi
           livenessProbe:
             httpGet:
               path: /
@@ -154,13 +145,6 @@ spec:
           envFrom:
             - secretRef:
                 name: firefly-iii-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 10m
-              memory: 64Mi
           readinessProbe:
             exec:
               command:

@@ -6,6 +6,8 @@ metadata:
   labels:
     app: docspell
     component: joex
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   serviceName: docspell-joex
   replicas: 1
@@ -18,6 +20,7 @@ spec:
       labels:
         app: docspell
         component: joex
+        vixens.io/sizing.joex: V-large
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -51,13 +54,6 @@ spec:
                 secretKeyRef:
                   name: docspell-db-credentials
                   key: password
-          resources:
-            requests:
-              cpu: 500m
-              memory: 2048Mi
-            limits:
-              cpu: 2000m
-              memory: 4096Mi
           volumeMounts:
             - name: config
               mountPath: /opt/docspell.conf
