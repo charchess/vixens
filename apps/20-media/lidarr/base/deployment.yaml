@@ -5,6 +5,8 @@ metadata:
   name: lidarr
   labels:
     app: lidarr
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   strategy:
     type: Recreate
@@ -16,6 +18,12 @@ spec:
     metadata:
       labels:
         app: lidarr
+        vixens.io/sizing.lidarr: V-medium
+        vixens.io/sizing.litestream: V-nano
+        vixens.io/sizing.config-syncer: V-nano
+        vixens.io/sizing.fix-permissions: G-nano
+        vixens.io/sizing.restore-config: B-nano
+        vixens.io/sizing.restore-db: B-nano
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
@@ -53,13 +61,6 @@ spec:
           envFrom:
             - secretRef:
                 name: lidarr-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -78,13 +79,6 @@ spec:
           envFrom:
             - secretRef:
                 name: lidarr-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -109,13 +103,6 @@ spec:
               port: http
             initialDelaySeconds: 15
             periodSeconds: 10
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
           env:
             - name: LIDARR__API_KEY
               valueFrom:
@@ -151,13 +138,6 @@ spec:
           ports:
             - containerPort: 9090
               name: metrics
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           envFrom:
             - secretRef:
                 name: lidarr-secrets
@@ -192,13 +172,6 @@ spec:
           envFrom:
             - secretRef:
                 name: lidarr-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
