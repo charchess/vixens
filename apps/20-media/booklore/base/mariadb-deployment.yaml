@@ -18,7 +18,7 @@ spec:
     metadata:
       labels:
         app: booklore-mariadb
-        vixens.io/sizing.mariadb: V-medium
+        vixens.io/sizing.mariadb: V-small
         vixens.io/sizing.db-backup: V-nano
     spec:
       tolerations:
