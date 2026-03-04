@@ -120,10 +120,11 @@ spec:
           - list: "request.object.spec.containers || '[]'"
             preconditions:
               all:
-                # Only act on containers that have NO v2 sizing label
-                - key: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" }}"
+                # Only act on containers that have NO v2 sizing label.
+                # Use keys() to avoid 'Unknown key' JMESPath error on absent labels.
+                - key: "{{ request.object.metadata.labels | keys(@) | [?@ == 'vixens.io/sizing.{{element.name}}'] | length(@) }}"
                   operator: Equals
-                  value: ""
+                  value: "0"
             patchStrategicMerge:
               spec:
                 containers:
