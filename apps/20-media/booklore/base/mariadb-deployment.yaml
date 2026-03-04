@@ -5,6 +5,8 @@ metadata:
   name: booklore-mariadb
   labels:
     app: booklore-mariadb
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
@@ -16,7 +18,8 @@ spec:
     metadata:
       labels:
         app: booklore-mariadb
-        vixens.io/sizing.mariadb: G-medium
+        vixens.io/sizing.mariadb: V-medium
+        vixens.io/sizing.db-backup: V-nano
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -101,13 +104,6 @@ spec:
           envFrom:
             - secretRef:
                 name: booklore-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 200m
-              memory: 256Mi
       volumes:
         - name: config
           persistentVolumeClaim:

@@ -5,6 +5,8 @@ metadata:
   name: booklore
   labels:
     app: booklore
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
@@ -16,6 +18,9 @@ spec:
     metadata:
       labels:
         app: booklore
+        vixens.io/sizing.booklore: V-medium
+        vixens.io/sizing.config-syncer: V-nano
+        vixens.io/sizing.restore-config: B-nano
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -78,13 +83,6 @@ spec:
           envFrom:
             - secretRef:
                 name: booklore-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /app/data
@@ -147,13 +145,6 @@ spec:
           envFrom:
             - secretRef:
                 name: booklore-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /app/data

@@ -1,17 +1,2 @@
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: booklore-mariadb
-spec:
-  template:
-    spec:
-      containers:
-        - name: mariadb
-          resources:
-            requests:
-              cpu: 15m
-              memory: 334Mi
-            limits:
-              cpu: 49m
-              memory: 362Mi
+# v2 sizing managed by Kyverno (vixens.io/sizing-v2: "true" in base deployment)
