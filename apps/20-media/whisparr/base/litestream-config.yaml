@@ -6,8 +6,8 @@ metadata:
 data:
   litestream.yml: |
     dbs:
-      - path: /config/whisparr.db
+      - path: /config/whisparr2.db
         replicas:
-          - url: s3://$LITESTREAM_BUCKET/whisparr.db
+          - url: s3://$LITESTREAM_BUCKET/whisparr2.db
             endpoint: $LITESTREAM_ENDPOINT
     addr: ":9090"
