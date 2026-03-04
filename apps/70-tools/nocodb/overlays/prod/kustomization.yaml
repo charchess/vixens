@@ -5,7 +5,6 @@ namespace: tools
 resources:
   - ../../base
 patches:
-  - path: resources-patch.yaml
   - target:
       kind: InfisicalSecret
       name: nocodb-secrets-sync

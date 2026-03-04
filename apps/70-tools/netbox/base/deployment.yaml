@@ -3,6 +3,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: netbox
+  labels:
+    app: netbox
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
@@ -14,6 +18,7 @@ spec:
     metadata:
       labels:
         app: netbox
+        vixens.io/sizing.netbox: V-medium
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

@@ -14,7 +14,7 @@ spec:
         metadata:
           labels:
             app: renovate
-            vixens.io/sizing.renovate: large
+            vixens.io/sizing.renovate: B-large
         spec:
           restartPolicy: Never
           priorityClassName: vixens-medium

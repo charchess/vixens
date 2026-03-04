@@ -5,6 +5,8 @@ metadata:
   name: vikunja
   labels:
     app.kubernetes.io/name: vikunja
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
@@ -16,8 +18,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: vikunja
-        vixens.io/sizing.vikunja: small
-        vixens.io/sizing: small
+        vixens.io/sizing.vikunja: V-small
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -71,12 +72,6 @@ spec:
           volumeMounts:
             - name: vikunja-files
               mountPath: /app/vikunja/files
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              memory: 512Mi
           livenessProbe:
             httpGet:
               path: /api/v1/info

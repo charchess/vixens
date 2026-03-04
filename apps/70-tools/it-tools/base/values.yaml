@@ -4,8 +4,7 @@
 
 replicaCount: 1
 podLabels:
-  vixens.io/sizing.it-tools: micro
-  vixens.io/sizing: micro
+  vixens.io/sizing.it-tools: B-nano
 image:
   repository: ghcr.io/corentinth/it-tools
   pullPolicy: IfNotPresent
@@ -14,13 +13,6 @@ tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
     effect: NoSchedule
-resources:
-  requests:
-    cpu: 10m
-    memory: 32Mi
-  limits:
-    cpu: 100m
-    memory: 128Mi
 # Security context alignment
 securityContext:
   runAsUser: 1000

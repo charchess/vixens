@@ -40,4 +40,4 @@ securityContext:
   enabled: true
   fsGroup: 1000
 podLabels:
-  vixens.io/sizing.stirling-pdf-chart: medium
+  vixens.io/sizing.stirling-pdf-chart: V-medium
