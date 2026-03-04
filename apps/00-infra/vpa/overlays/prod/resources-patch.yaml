@@ -8,7 +8,7 @@ spec:
   revisionHistoryLimit: 3
   template:
     spec:
-      priorityClassName: vixens-critical
+      priorityClassName: vixens-medium
       containers:
         - name: admission-controller
           resources:
@@ -28,7 +28,7 @@ spec:
   revisionHistoryLimit: 3
   template:
     spec:
-      priorityClassName: vixens-critical
+      priorityClassName: vixens-medium
       containers:
         - name: recommender
           resources:
@@ -48,7 +48,7 @@ spec:
   revisionHistoryLimit: 3
   template:
     spec:
-      priorityClassName: vixens-critical
+      priorityClassName: vixens-medium
       containers:
         - name: updater
           resources:
