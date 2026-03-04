@@ -16,8 +16,7 @@ spec:
         prometheus.io/port: "9080"
       labels:
         app: promtail
-        vixens.io/sizing.promtail: micro
-        vixens.io/sizing: micro
+        vixens.io/sizing.promtail: G-small
     spec:
       priorityClassName: vixens-critical
       serviceAccountName: promtail
@@ -54,13 +53,6 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 1
             failureThreshold: 3
-          resources:
-            requests:
-              memory: 256Mi
-              cpu: 200m
-            limits:
-              memory: 256Mi
-              cpu: 200m
       volumes:
         - name: config
           configMap:

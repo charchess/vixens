@@ -237,13 +237,6 @@ spec:
               ports:
                 - containerPort: 10258
                   protocol: TCP
-              resources:
-                limits:
-                  cpu: 200m
-                  memory: 128Mi
-                requests:
-                  cpu: 50m
-                  memory: 64Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
