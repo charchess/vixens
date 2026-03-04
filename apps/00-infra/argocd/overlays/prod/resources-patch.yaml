@@ -37,7 +37,7 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.argocd-application-controller: G-medium
+        vixens.io/sizing.argocd-application-controller: G-xlarge
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
