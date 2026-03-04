@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: velero-repo-maintenance-config
+  name: velero-repo-maintenance
   namespace: velero
 data:
   config.json: |
