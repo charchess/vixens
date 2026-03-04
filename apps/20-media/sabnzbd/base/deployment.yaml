@@ -16,8 +16,8 @@ spec:
     metadata:
       labels:
         app: sabnzbd
-        vixens.io/sizing.sabnzbd: medium
-        vixens.io/sizing: medium
+        vixens.io/sizing.sabnzbd: small
+        vixens.io/sizing: small
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"

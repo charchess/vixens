@@ -16,8 +16,8 @@ spec:
     metadata:
       labels:
         app: mylar
-        vixens.io/sizing.mylar: small
-        vixens.io/sizing: small
+        vixens.io/sizing.mylar: micro
+        vixens.io/sizing: micro
       annotations:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
