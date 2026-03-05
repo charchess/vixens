@@ -89,7 +89,7 @@ resources:
   - apps/mariadb-shared.yaml
   - apps/penpot.yaml
   - apps/vikunja.yaml
-  - apps/robusta.yaml
+  # - apps/robusta.yaml  # disabled 2026-03-05 — reporting-only, OOMKilling, no local value
   - apps/trivy.yaml
   - apps/radar.yaml
   - apps/maturity-controller.yaml
