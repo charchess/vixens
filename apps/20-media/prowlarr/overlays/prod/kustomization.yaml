@@ -30,3 +30,4 @@ patches:
         path: /spec/authentication/universalAuth/secretsScope/envSlug
         value: prod
   - path: resources-patch.yaml
+  - path: securitycontext-patch.yaml
