@@ -34,7 +34,7 @@ spec:
           effect: NoSchedule
       initContainers:
         - name: fix-permissions
-          image: busybox:latest
+          image: busybox:1.37.0
           command:
             - sh
             - -c

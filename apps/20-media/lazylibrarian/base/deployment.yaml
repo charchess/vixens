@@ -36,7 +36,7 @@ spec:
           effect: NoSchedule
       initContainers:
         - name: fix-permissions
-          image: busybox:latest
+          image: busybox:1.37.0
           command: ["sh", "-c", "chown -R 1000:1000 /config && rm -rf /config/*.db-litestream /config/.*-litestream"]
           volumeMounts:
             - name: config
@@ -95,9 +95,10 @@ spec:
             - name: lazylibrarian-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
+      priorityClassName: vixens-low
       containers:
         - name: lazylibrarian
-          image: lscr.io/linuxserver/lazylibrarian:latest
+          image: lscr.io/linuxserver/lazylibrarian:version-e7c7ce2d
           ports:
             - containerPort: 5299
               name: http

@@ -27,6 +27,29 @@ patches:
       kind: Deployment
       name: argocd-dex-server
     path: patches/dex-run-as-user-json.yaml
+  # QW3: priorityClassName vixens-critical for all ArgoCD workloads
+  - patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+      spec:
+        template:
+          spec:
+            priorityClassName: vixens-critical
+    target:
+      kind: Deployment
+  - patch: |
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: placeholder
+      spec:
+        template:
+          spec:
+            priorityClassName: vixens-critical
+    target:
+      kind: StatefulSet
 
 components:
   - ../../../../_shared/components/revision-history-limit

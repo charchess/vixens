@@ -24,7 +24,7 @@ spec:
         vixens.io/sizing.init-config: G-nano
         vixens.io/sizing.management: V-medium
     spec:
-      priorityClassName: vixens-high
+      priorityClassName: vixens-low
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"

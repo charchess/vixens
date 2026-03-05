@@ -21,7 +21,7 @@ spec:
         app: netbird-signal
         vixens.io/sizing.signal: V-small
     spec:
-      priorityClassName: vixens-high
+      priorityClassName: vixens-low
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
@@ -78,7 +78,7 @@ spec:
         app: netbird-relay
         vixens.io/sizing.relay: V-small
     spec:
-      priorityClassName: vixens-high
+      priorityClassName: vixens-low
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"

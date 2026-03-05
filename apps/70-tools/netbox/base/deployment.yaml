@@ -24,6 +24,7 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      priorityClassName: vixens-medium
       containers:
         - name: netbox
           image: netboxcommunity/netbox:v4.5.4 # Pinned image version
