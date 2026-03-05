@@ -71,6 +71,10 @@ spec:
                   key: VIKUNJA_SERVICE_JWTSECRET
             - name: VIKUNJA_SERVICE_PUBLICURL
               value: https://vikunja.truxonline.com
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           volumeMounts:
             - name: vikunja-files
               mountPath: /app/vikunja/files
@@ -91,5 +95,8 @@ spec:
           persistentVolumeClaim:
             claimName: vikunja-files-pvc
       securityContext:
+        runAsNonRoot: true
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
