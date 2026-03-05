@@ -106,6 +106,22 @@ spec:
               value: "https://netbird.dev.truxonline.com,https://netbird.truxonline.com"
             - name: AUTHENTIK_BLUEPRINTS__BOOTSTRAP_AND_OVERWRITE
               value: "true"
+          livenessProbe:
+            httpGet:
+              path: /api/v3/-/health/live/
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/v3/-/health/live/
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           volumeMounts:
             - name: authentik-data
               mountPath: /var/lib/authentik
