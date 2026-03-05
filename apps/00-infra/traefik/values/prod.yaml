@@ -29,6 +29,16 @@ resources:
 # High availability with multiple replicas
 deployment:
   replicas: 2
+  podLabels:
+    app.kubernetes.io/name: traefik
+# Ensure traefik pods spread across nodes
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: traefik
 # ============================================================================
 # Production Metrics & Monitoring
 # ============================================================================
