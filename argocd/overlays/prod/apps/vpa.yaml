@@ -4,6 +4,8 @@ kind: Application
 metadata:
   name: vpa
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4" # Database/storage tier
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
