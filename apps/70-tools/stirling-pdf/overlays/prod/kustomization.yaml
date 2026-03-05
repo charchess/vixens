@@ -16,7 +16,10 @@ patches:
         value: "true"
       - op: add
         path: /metadata/labels/vixens.io~1vpa-mode
-        value: Auto
+        value: "Off"
+      - op: add
+        path: /spec/template/metadata/labels/vixens.io~1sizing-v2
+        value: "true"
     target:
       kind: Deployment
       name: stirling-pdf-stirling-pdf-chart

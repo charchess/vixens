@@ -6,7 +6,7 @@ metadata:
   labels:
     app: netbox
     vixens.io/sizing-v2: "true"
-    vixens.io/vpa-mode: Auto
+    vixens.io/vpa-mode: Off
 spec:
   replicas: 1
   strategy:
@@ -18,7 +18,7 @@ spec:
     metadata:
       labels:
         app: netbox
-        vixens.io/sizing.netbox: V-medium
+        vixens.io/sizing.netbox: B-medium
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -60,11 +60,18 @@ spec:
               value: netbox.dev.truxonline.com # Should be patched in overlays
             - name: DB_WAIT_DEBUG
               value: "1"
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
           livenessProbe:
             httpGet:
               path: /
               port: http
-            initialDelaySeconds: 120 # Increased for migrations
+            initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 6
