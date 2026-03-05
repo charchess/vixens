@@ -32,3 +32,4 @@ curl -L -k https://authentik.dev.truxonline.com/flows/-/default/authentication/ 
     - `PostgreSQL` (Cluster partagé `postgresql-shared`)
     - `Infisical` (Secrets)
 - **Particularités :** Identity Provider (IdP) pour le SSO. Gère les utilisateurs et les flows d'authentification. Configuration automatisée via **Blueprints** (`apps/03-security/authentik/base/configmap.yaml`) montés dans `/blueprints/vixens/`. Setup OIDC initial incluant Netbird. Standard **🏆 Elite** (Priorité `vixens-critical`, Profil Medium, stratégie `Recreate` pour RWO).
+- **Service binding (worker) :** Le pod `authentik-worker` est un worker de queue asynchrone. Il ne reçoit aucun trafic réseau entrant et n'a pas de Service associé. Annoté avec `vixens.io/service-binding: "false"`.

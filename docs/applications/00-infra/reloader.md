@@ -74,3 +74,4 @@ kubectl get pods -n tools -l app=reloader-reloader
 - **Namespace :** `tools`
 - **Dépendances :** Aucune
 - **Particularités :** Surveille les ConfigMaps et Secrets pour redémarrer automatiquement les Deployments associés.
+- **Service binding :** Aucun Service requis — Reloader est un controller Kubernetes qui surveille les ressources. Il ne reçoit pas de trafic réseau. Annoté avec `vixens.io/service-binding: "false"`.
