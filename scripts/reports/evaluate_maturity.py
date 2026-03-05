@@ -175,12 +175,12 @@ def check_silver(ns: str, app: str, workload, pods: list) -> dict:
         cnt.get("readinessProbe") is not None for cnt in containers
     )
 
-    if wl_ann.get("vixens.io/slow-start") == "true":
-        c["Startup probe (vixens.io/slow-start set)"] = bool(containers) and all(
+    if wl_ann.get("vixens.io/fast-start") == "true":
+        c["Startup probe on all containers (bypass: vixens.io/fast-start)"] = None
+    else:
+        c["Startup probe on all containers (bypass: vixens.io/fast-start)"] = bool(containers) and all(
             cnt.get("startupProbe") is not None for cnt in containers
         )
-    else:
-        c["Startup probe (vixens.io/slow-start set)"] = None
 
     uses_secrets = _workload_uses_secrets(workload)
     if not uses_secrets:
@@ -192,7 +192,9 @@ def check_silver(ns: str, app: str, workload, pods: list) -> dict:
     if not pvcs:
         c["Storage strategy (StorageClass suffix -retain/-delete)"] = None
     else:
-        suffix = "-retain" if "prod" in ns else "-delete"
+        ns_data = _kubectl_json(f"get ns {ns}")
+        ns_env = (ns_data.get("metadata", {}).get("labels", {}) if ns_data else {}).get("environment", "")
+        suffix = "-retain" if ns_env == "prod" else "-delete"
         c["Storage strategy (StorageClass suffix -retain/-delete)"] = all(
             pvc.get("spec", {}).get("storageClassName", "").endswith(suffix)
             for pvc in pvcs
@@ -263,13 +265,13 @@ def check_platinum(ns: str, app: str, workload, pods: list) -> dict:
             or bool(pspec.get("affinity", {}).get("podAntiAffinity"))
         )
 
-    if wl_ann.get("vixens.io/has-long-connections") == "true":
-        containers = _containers(workload)
-        c["preStop lifecycle hook (vixens.io/has-long-connections set)"] = bool(containers) and all(
-            cnt.get("lifecycle", {}).get("preStop") is not None for cnt in containers
-        )
+    if wl_ann.get("vixens.io/no-long-connections") == "true":
+        c["preStop lifecycle hook (bypass: vixens.io/no-long-connections)"] = None
     else:
-        c["preStop lifecycle hook (vixens.io/has-long-connections set)"] = None
+        _ctrs = _containers(workload)
+        c["preStop lifecycle hook (bypass: vixens.io/no-long-connections)"] = bool(_ctrs) and all(
+            cnt.get("lifecycle", {}).get("preStop") is not None for cnt in _ctrs
+        )
 
     if wl_ann.get("vixens.io/needs-autoscaling") == "true":
         hpas = list_resources("hpa", ns, f"app={app}")
@@ -322,7 +324,9 @@ def check_diamond(ns: str, app: str, workload, pods: list) -> dict:
         for p in netpols
     )
 
-    if containers:
+    if wl_ann.get("vixens.io/explicitly-allow-root") == "true":
+        c["Security context hardened (runAsNonRoot + drop:ALL)"] = None
+    elif containers:
         psc = _pod_spec(workload).get("securityContext", {})
         c["Security context hardened (runAsNonRoot + drop:ALL)"] = (
             psc.get("runAsNonRoot", False)
@@ -373,11 +377,6 @@ def check_orichalcum(ns: str, app: str, workload, pods: list) -> dict:
     containers = _containers(workload)
     pt_labels = _pt_labels(workload)
 
-    c["Runbook certified (vixens.io/runbook-certified: <date>)"] = (
-        "vixens.io/runbook-certified" in wl_ann
-    )
-    c["DR tested (vixens.io/dr-tested: <date>)"] = "vixens.io/dr-tested" in wl_ann
-    c["SLO defined (vixens.io/slo-defined: <date>)"] = "vixens.io/slo-defined" in wl_ann
 
     if pods:
         zero_restarts = all(
