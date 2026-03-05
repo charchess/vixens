@@ -107,6 +107,8 @@ spec:
             - name: TZ
               value: "Europe/Paris"
           securityContext:
+            runAsNonRoot: true
+            runAsUser: 33
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
