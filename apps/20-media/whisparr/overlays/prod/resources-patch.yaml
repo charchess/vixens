@@ -4,13 +4,13 @@ kind: Deployment
 metadata:
   name: whisparr
   labels:
-    vixens.io/sizing.whisparr: G-small
+    vixens.io/sizing.whisparr: B-medium
     vixens.io/sizing.litestream: V-nano
     vixens.io/sizing.config-syncer: V-nano
 spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.whisparr: G-small
+        vixens.io/sizing.whisparr: B-medium
         vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.config-syncer: V-nano

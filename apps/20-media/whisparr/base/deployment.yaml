@@ -6,7 +6,7 @@ metadata:
   labels:
     app: whisparr
     vixens.io/sizing-v2: "true"
-    vixens.io/vpa-mode: Auto
+    vixens.io/vpa-mode: Off
 spec:
   strategy:
     type: Recreate
@@ -18,7 +18,7 @@ spec:
     metadata:
       labels:
         app: whisparr
-        vixens.io/sizing.whisparr: V-medium
+        vixens.io/sizing.whisparr: B-medium
         vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.config-syncer: V-nano
         vixens.io/sizing.fix-permissions: G-nano
@@ -78,13 +78,13 @@ spec:
             httpGet:
               path: /ping
               port: 6969
-            initialDelaySeconds: 30
+            initialDelaySeconds: 120
             periodSeconds: 20
           readinessProbe:
             httpGet:
               path: /ping
               port: 6969
-            initialDelaySeconds: 15
+            initialDelaySeconds: 60
             periodSeconds: 10
           env:
             - name: WHISPARR__API_KEY
