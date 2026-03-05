@@ -8,8 +8,9 @@ metadata:
     policies.kyverno.io/category: Maturity (Platinum)
     policies.kyverno.io/severity: medium
     policies.kyverno.io/description: >-
-      Apps with long-lived connections must define a preStop lifecycle hook for maturity Level 4 (Platinum).
-      Set annotation vixens.io/has-long-connections: "true" to require it.
+      All containers must define a preStop lifecycle hook for maturity Level 4 (Platinum).
+      Set vixens.io/no-long-connections: "true" to bypass (explicit acknowledgement that
+      the app has no long-lived connections and does not need graceful draining).
 spec:
   validationFailureAction: Audit
   background: true
@@ -20,13 +21,17 @@ spec:
           - resources:
               kinds:
                 - Pod
-      preconditions:
-        all:
-          - key: "{{ request.object.metadata.annotations.\"vixens.io/has-long-connections\" || '' }}"
-            operator: Equals
-            value: "true"
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+          - resources:
+              annotations:
+                vixens.io/no-long-connections: "true"
       validate:
-        message: "A preStop lifecycle hook is required on all containers when vixens.io/has-long-connections: 'true' is set (Level 4 Platinum)."
+        message: "A preStop lifecycle hook is required on all containers (Level 4 Platinum). Set vixens.io/no-long-connections: 'true' to bypass."
         pattern:
           spec:
             containers:
