@@ -25,6 +25,23 @@ ADR-022 définissait le système 7-tiers initial. Suite à une revue critique, p
 
 ---
 
+### Philosophie des bypasses
+
+> Chaque check **bloque par défaut**. Passer un check = implémenter la fonctionnalité OU poser une annotation de bypass explicite. Un bypass est une **déclaration intentionnelle**, pas une fuite.
+
+| Annotation | Check court-circuité | Signification |
+|---|---|---|
+| `vixens.io/fast-start: "true"` | Startup probe (Silver) | Container démarre en < 5s — probe inutile |
+| `vixens.io/no-long-connections: "true"` | preStop hook (Platinum) | Pas de connexions longues ni d'état — shutdown immédiat OK |
+| `vixens.io/explicitly-allow-root: "true"` | SecurityContext durci (Diamond) | App requiert root — risque accepté explicitement |
+| `vixens.io/nometrics: "true"` | Métriques + ServiceMonitor (Gold) | App sans métriques exposables |
+| `vixens.io/nossoneeded: "true"` | Authentik SSO (Diamond) | App sans authentification utilisateur |
+| `vixens.io/nohomepage: "true"` | Homepage widget (Diamond) | Non pertinent pour le dashboard |
+| `vixens.io/noingressneeded: "true"` | Ingress (Bronze) | App interne, non exposée |
+| `vixens.io/cve-accepted: "true"` | Trivy CVE critique (Diamond) | CVE accepté, risque documenté |
+| `vixens.io/digest-pinned: "true"` | Image digest (Diamond) | Opt-in : active le check (Renovate gère tag+digest) |
+| `vixens.io/needs-autoscaling: "true"` | HPA/KEDA (Platinum) | Opt-in : active le check (charge variable identifiée) |
+
 ## Décision
 
 Adopter la **version 2** du système 7-tiers avec les corrections ci-dessous.
@@ -61,7 +78,7 @@ Adopter la **version 2** du système 7-tiers avec les corrections ci-dessous.
 | TLS/HTTPS activé | Universel | cert-manager configuré |
 | Secrets via Infisical | Universel | Aucun secret hardcodé en clair |
 | PVC + update strategy cohérente | Contextuel | `strategy.type: Recreate` si iSCSI/Retain |
-| Startup probe | Contextuel | Si le démarrage dépasse 30s (évite les faux kills liveness) |
+|| Startup probe | Universel | Requis sur tous les containers. Bypass : `vixens.io/fast-start: "true"` si démarrage < 5s |
 
 **Critère de passage** : L'application est prête pour la promotion en production.
 
@@ -95,7 +112,7 @@ Adopter la **version 2** du système 7-tiers avec les corrections ci-dessous.
 | Sizing revu post-Goldilocks | Universel | Recommandations Goldilocks consultées, sizing ajusté ou refus documenté |
 | PodDisruptionBudget | Contextuel | Si multi-replica / haute-disponibilité |
 | topologySpreadConstraints / podAntiAffinity | Contextuel | Si multi-replica : éviter la concentration sur un seul nœud |
-| Graceful shutdown | Contextuel | `preStop` hook + `terminationGracePeriodSeconds` ajusté si l'app a des connexions longues ou un état |
+|| Graceful shutdown | Universel | `preStop` hook + `terminationGracePeriodSeconds` requis sur tous les containers. Bypass : `vixens.io/no-long-connections: "true"` si pas de connexions longues |
 | HPA / KEDA | Contextuel | Si la charge est variable et le scaling automatique est pertinent |
 
 **Critère de passage** : L'application a une gestion explicite et réfléchie des ressources et des priorités.
@@ -125,7 +142,7 @@ Adopter la **version 2** du système 7-tiers avec les corrections ci-dessous.
 | Prérequis | Type | Description |
 |-----------|------|-------------|
 | PSA labels namespace (`baseline`) | Universel | `pod-security.kubernetes.io/enforce: baseline` sur le namespace |
-| SecurityContext durci | Universel | `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]`, `seccompProfile: RuntimeDefault` |
+|| SecurityContext durci | Universel | `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]`, `seccompProfile: RuntimeDefault`. Bypass : `vixens.io/explicitly-allow-root: "true"` |
 | NetworkPolicies Cilium L3/L4 | Universel | Isolation réseau explicite — deny-all + allow sélectif |
 | Authentik SSO | Contextuel | Si authentification utilisateur requise |
 | Cilium L7 policies | Contextuel | Si filtrage HTTP/gRPC requis |
@@ -145,10 +162,7 @@ Adopter la **version 2** du système 7-tiers avec les corrections ci-dessous.
 |-----------|------|-------------|
 | 7 jours de stabilité | Universel | Zéro restart, zéro OOMKill sur 7 jours consécutifs |
 | Sizing validé | Universel | VPA recommendations appliquées + stabilité 7j, **OU** mode G-* stable 7j sans OOMKill |
-| Runbook opérationnel | Universel | Voir définition ci-dessous |
-| SLO/SLI définis | Universel | Voir définition ci-dessous |
-| DR testing validé | Contextuel | Test de restauration réalisé en conditions réelles si données critiques |
-| Chaos engineering | Contextuel | Si la criticité justifie des tests de résilience |
+| Zéro CVE HIGH/CRITICAL | Universel | Scan Trivy propre ou bypass `vixens.io/cve-accepted: "true"` documenté |
 
 **Critère de passage** : L'application est éprouvée, documentée et autonome.
 
@@ -156,9 +170,9 @@ Adopter la **version 2** du système 7-tiers avec les corrections ci-dessous.
 
 ## Définitions
 
-### Runbook opérationnel
+### Runbook opérationnel *(documentaire — non scoring)*
 
-Un runbook est un document opérationnel vivant. Pour atteindre Orichalcum, le fichier `docs/applications/<category>/<app>.md` doit contenir **au minimum** les sections suivantes :
+Un runbook est un document opérationnel vivant. Le fichier `docs/applications/<category>/<app>.md` peut contenir les sections suivantes (recommandé, non obligatoire pour le scoring) :
 
 ```markdown
 ## Runbook opérationnel
@@ -195,12 +209,12 @@ Procédure d'upgrade de version (image bump, migration DB si applicable).
 | ...      | ...            | ...        |
 ```
 
-### SLO/SLI
+### SLO/SLI *(documentaire — non scoring)*
 
 Un **SLI** (*Service Level Indicator*) est la métrique qui mesure la santé du service.
 Un **SLO** (*Service Level Objective*) est la cible sur ce SLI.
 
-Pour atteindre Orichalcum, définir **au minimum** dans le runbook :
+Définir dans le runbook si souhaité (non obligatoire pour le scoring) :
 
 | Dimension | SLI | SLO homelab |
 |-----------|-----|-------------|
@@ -208,7 +222,7 @@ Pour atteindre Orichalcum, définir **au minimum** dans le runbook :
 | RTO (Recovery Time Objective) | Temps entre incident et service restauré | Ex : < 4h |
 | RPO (Recovery Point Objective) | Perte de données maximale acceptable | Ex : < 24h (dernier backup) |
 
-**Note homelab** : les SLO n'ont pas besoin d'être mesurés automatiquement — les définir et les documenter suffit pour Orichalcum. La mesure automatique est un bonus.
+**Note homelab** : les SLO n'ont pas besoin d'être mesurés automatiquement — les définir et les documenter suffit. La mesure automatique est un bonus.
 
 ---
 
@@ -236,7 +250,7 @@ Une application ne peut pas sauter un niveau.
 
 Les prérequis "Contextuel" sont évalués uniquement si applicables :
 
-- **Startup probe** : applicable si le démarrage de l'app dépasse 30s
+- **Startup probe** : universel par défaut — bypass `vixens.io/fast-start: "true"` si démarrage < 5s
 - **PVC + update strategy** : applicable si l'app utilise du stockage persistant
 - **Litestream** : applicable si SQLite détecté (ConfigMap litestream.yml ou sidecar litestream)
 - **Velero** : applicable si PVC présent
@@ -256,6 +270,15 @@ Les prérequis "Contextuel" sont évalués uniquement si applicables :
   - Suppression de "Kyverno compliant" en Orichalcum (tautologique)
   - Définitions formelles Runbook et SLO/SLI ajoutées
   - Homepage widget → Diamond contextuel
+- **2026-03-05** : Version 2.1 — Philosophie bypass + inversions defaults
+  - Ajout section "Philosophie des bypasses" avec table complète des annotations
+  - Startup probe : Contextuel → **Universel** (bypass `fast-start`)
+  - Graceful shutdown (preStop hook) : Contextuel → **Universel** (bypass `no-long-connections`)
+  - SecurityContext : mention du bypass `explicitly-allow-root`
+  - Orichalcum : suppression du scoring Runbook, SLO, DR testing, Chaos engineering
+    (conservés en documentation non-scoring)
+  - Ajout check Orichalcum : Zéro CVE HIGH/CRITICAL
+  - Définition contextuelle mise à jour pour refléter la philosophie bypass
 
 ---
 
