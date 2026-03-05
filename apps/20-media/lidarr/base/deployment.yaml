@@ -91,6 +91,10 @@ spec:
           ports:
             - containerPort: 8686 # Default Lidarr UI port
               name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           livenessProbe:
             httpGet:
               path: /ping
@@ -193,3 +197,5 @@ spec:
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
