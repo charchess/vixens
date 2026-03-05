@@ -29,6 +29,13 @@ spec:
       mutate:
         foreach:
           - list: "request.object.spec.containers || '[]'" # Safety for empty containers list
+            preconditions:
+              all:
+                # Skip containers whose sizing label is a v2-style label (contains '-')
+                # e.g. B-xlarge, G-small, SB-nano, V-medium, media-xlarge — v2 handles those
+                - key: "{{ contains(request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" || 'none', '-') }}"
+                  operator: Equals
+                  value: "false"
             patchStrategicMerge:
               spec:
                 containers:
@@ -58,6 +65,12 @@ spec:
       mutate:
         foreach:
           - list: "request.object.spec.initContainers || '[]'" # Safety for missing initContainers
+            preconditions:
+              all:
+                # Skip init containers with v2-style labels (contains '-')
+                - key: "{{ contains(request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" || 'none', '-') }}"
+                  operator: Equals
+                  value: "false"
             patchStrategicMerge:
               spec:
                 initContainers:
