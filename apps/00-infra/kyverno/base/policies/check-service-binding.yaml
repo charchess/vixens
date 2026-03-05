@@ -8,6 +8,8 @@ metadata:
     policies.kyverno.io/category: Maturity (Bronze)
     policies.kyverno.io/description: >-
       Ensures that each pod is targeted by at least one Service.
+      Set vixens.io/service-binding: "false" to bypass (explicit acknowledgement that
+      this workload is a controller/worker/daemon that does not need to receive traffic).
 spec:
   validationFailureAction: Audit
   background: true
@@ -26,6 +28,14 @@ spec:
                 - kyverno
                 - monitoring
                 - velero
+          - resources:
+              annotations:
+                vixens.io/service-binding: "false"
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.labels.app || '' }}"
+            operator: NotEquals
+            value: ""
       context:
         - name: service_count
           apiCall:

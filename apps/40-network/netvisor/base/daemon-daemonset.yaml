@@ -14,6 +14,7 @@ spec:
       labels:
         app: netvisor-daemon
         vixens.io/sizing.daemon: G-nano
+        vixens.io/service-binding: "false"
     spec:
       hostNetwork: false
       tolerations:

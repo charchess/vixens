@@ -17,6 +17,7 @@ spec:
     metadata:
       labels:
         app: authentik-worker
+        vixens.io/service-binding: "false"
       annotations:
         reloader.stakater.com/auto: "true"
     spec:
