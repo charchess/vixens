@@ -17,6 +17,8 @@ spec:
       app: penpot-frontend
   template:
     metadata:
+      annotations:
+        vixens.io/fast-start: "true"
       labels:
         app: penpot-frontend
         component: frontend

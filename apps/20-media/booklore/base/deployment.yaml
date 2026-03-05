@@ -86,6 +86,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /app/data
+      priorityClassName: vixens-low
       containers:
         - name: booklore
           image: ghcr.io/booklore-app/booklore:v2.0.5

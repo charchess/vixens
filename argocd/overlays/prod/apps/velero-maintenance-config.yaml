@@ -4,6 +4,8 @@ kind: Application
 metadata:
   name: velero-maintenance-config
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2" # After velero (wave 1)
 spec:
   project: default
   destination:

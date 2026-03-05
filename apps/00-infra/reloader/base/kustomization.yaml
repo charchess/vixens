@@ -18,6 +18,9 @@ patches:
             annotations:
               prometheus.io/scrape: "true"
               prometheus.io/port: "9090"
+              vixens.io/fast-start: "true"
             labels:
               vixens.io/sizing.reloader-reloader: G-nano
               vixens.io/service-binding: "false"
+          spec:
+            priorityClassName: vixens-high

@@ -11,6 +11,8 @@ spec:
       app: netvisor-daemon
   template:
     metadata:
+      annotations:
+        vixens.io/fast-start: "true"
       labels:
         app: netvisor-daemon
         vixens.io/sizing.daemon: G-nano
@@ -21,6 +23,7 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      priorityClassName: vixens-low
       containers:
         - name: daemon
           image: ghcr.io/scanopy/scanopy/daemon:v0.14.13

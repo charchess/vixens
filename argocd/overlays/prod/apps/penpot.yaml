@@ -5,6 +5,7 @@ metadata:
   name: penpot
   namespace: argocd
   annotations:
+    argocd.argoproj.io/sync-wave: "10" # Standard application tier
     argocd.argoproj.io/manifest-generate-paths: .
   finalizers:
     - resources-finalizer.argocd.argoproj.io

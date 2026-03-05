@@ -21,6 +21,7 @@ spec:
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "4466"
+        vixens.io/fast-start: "true"
     spec:
       serviceAccountName: headlamp
       priorityClassName: vixens-medium
