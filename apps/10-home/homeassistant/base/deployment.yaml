@@ -34,6 +34,7 @@ spec:
         vixens.io/backup-profile: "standard"
       annotations:
         reloader.stakater.com/auto: "true"
+        vixens.io/fast-start: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
