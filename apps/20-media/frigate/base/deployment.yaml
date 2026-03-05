@@ -70,6 +70,7 @@ spec:
             - -c
           args:
             - |
+              pip install pyyaml -q >/dev/null 2>&1
               echo "Validating Frigate config..."
               if [ -f /config/config.yml ]; then
                 if python3 -c "import yaml; yaml.safe_load(open('/config/config.yml'))" 2>/dev/null; then
@@ -191,6 +192,7 @@ spec:
             - |
               # Install rclone
               apk add --no-cache rclone
+              pip install pyyaml -q >/dev/null 2>&1
               
               export RCLONE_CONFIG_S3_TYPE=s3
               export RCLONE_CONFIG_S3_PROVIDER=Other
