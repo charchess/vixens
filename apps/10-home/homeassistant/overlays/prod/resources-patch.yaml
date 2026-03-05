@@ -4,12 +4,12 @@ kind: Deployment
 metadata:
   name: homeassistant
   labels:
-    vixens.io/sizing: G-xlarge
+    vixens.io/sizing: B-xlarge
 spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing: G-xlarge
-        vixens.io/sizing.homeassistant: G-xlarge
-        vixens.io/sizing.litestream: G-small
-        vixens.io/sizing.config-syncer: G-small
+        vixens.io/sizing: B-xlarge
+        vixens.io/sizing.homeassistant: B-xlarge
+        vixens.io/sizing.litestream: B-nano
+        vixens.io/sizing.config-syncer: B-nano
