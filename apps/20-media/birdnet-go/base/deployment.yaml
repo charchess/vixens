@@ -25,6 +25,7 @@ spec:
         vixens.io/sizing.fix-permissions: G-nano
       annotations:
         goldilocks.fairwinds.com/enabled: "true"
+        vixens.io/fast-start: "true"
         reloader.stakater.com/auto: "true"
     spec:
       priorityClassName: vixens-medium
