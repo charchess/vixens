@@ -36,6 +36,6 @@ spec:
         deny:
           conditions:
             all:
-            - key: "{{ service_count || '0' }}"
-              operator: Equals
-              value: 0
+              - key: "{{ service_count || '0' }}"
+                operator: Equals
+                value: 0

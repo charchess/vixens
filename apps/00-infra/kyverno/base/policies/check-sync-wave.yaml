@@ -5,9 +5,9 @@ metadata:
   name: check-sync-wave
   annotations:
     policies.kyverno.io/title: Require Sync Wave
-    policies.kyverno.io/category: Maturity (Platinum)
+    policies.kyverno.io/category: Maturity (Gold)
     policies.kyverno.io/description: >-
-      To ensure reliable infrastructure rollout, applications must define an ArgoCD sync-wave.
+      To ensure reliable infrastructure rollout, applications must define an ArgoCD sync-wave for maturity Level 3 (Gold).
 spec:
   validationFailureAction: Audit
   background: true
@@ -26,7 +26,7 @@ spec:
                 - kube-system
                 - kyverno
       validate:
-        message: "ArgoCD sync-wave annotation is required for maturity Level 4 (Platinum)."
+        message: "ArgoCD sync-wave annotation is required for maturity Level 3 (Gold)."
         pattern:
           metadata:
             annotations:

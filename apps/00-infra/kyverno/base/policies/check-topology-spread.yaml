@@ -1,0 +1,40 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-topology-spread
+  annotations:
+    policies.kyverno.io/title: Require Topology Spread for Multi-Replica Apps
+    policies.kyverno.io/category: Maturity (Platinum)
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Deployments with more than 1 replica must define topologySpreadConstraints or
+      podAntiAffinity for maturity Level 4 (Platinum).
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-topology-spread-or-anti-affinity
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.replicas || 1 }}"
+            operator: GreaterThan
+            value: 1
+      validate:
+        message: "Deployments with replicas > 1 must define topologySpreadConstraints or podAntiAffinity for maturity Level 4 (Platinum)."
+        anyPattern:
+          - spec:
+              template:
+                spec:
+                  topologySpreadConstraints:
+                    - topologyKey: "?*"
+          - spec:
+              template:
+                spec:
+                  affinity:
+                    podAntiAffinity: {}

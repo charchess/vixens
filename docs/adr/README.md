@@ -98,7 +98,9 @@ An **Architecture Decision Record** documents an important architectural decisio
 | 013 | Renovate Discord Approval Workflow | Accepted | 2026-01 |
 | 014 | Litestream Backup Profiles and Recovery Patterns | Accepted | 2026-01 |
 | 018 | Netbird VPN Deployment Architecture | Accepted | 2026-01 |
+| 022 | 7-Tier Goldification System v1 | Superseded by ADR-023 | 2026-02 |
+| 023 | 7-Tier Goldification System v2 | Active | 2026-03 |
 
 ---
 
-**Last Updated:** 2026-01-12
+**Last Updated:** 2026-03-05
