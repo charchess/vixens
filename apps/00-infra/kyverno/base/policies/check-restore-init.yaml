@@ -26,6 +26,6 @@ spec:
         deny:
           conditions:
             all:
-            - key: "{{ request.object.spec.initContainers[?contains(name, 'restore') || contains(name, 'init')] | length(@) }}"
-              operator: Equals
-              value: 0
+              - key: "{{ request.object.spec.initContainers[?contains(name, 'restore') || contains(name, 'init')] | length(@) }}"
+                operator: Equals
+                value: 0

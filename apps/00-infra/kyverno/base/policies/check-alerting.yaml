@@ -1,0 +1,35 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-alerting
+  annotations:
+    policies.kyverno.io/title: Require Alerting Rules
+    policies.kyverno.io/category: Maturity (Gold)
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Applications must have a PrometheusRule in their namespace for maturity Level 3 (Gold).
+      PrometheusRule spec.groups must be non-empty.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-prometheusrule-groups
+      match:
+        any:
+          - resources:
+              kinds:
+                - PrometheusRule
+      exclude:
+        any:
+          - resources:
+              annotations:
+                vixens.io/noalerting: "true"
+      validate:
+        message: "PrometheusRule must define at least one group in spec.groups for maturity Level 3 (Gold)."
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.spec.groups | length(@) }}"
+                operator: Equals
+                value: 0

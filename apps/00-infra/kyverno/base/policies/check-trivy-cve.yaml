@@ -1,0 +1,35 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-trivy-cve
+  annotations:
+    policies.kyverno.io/title: Require No Critical CVEs
+    policies.kyverno.io/category: Maturity (Diamond)
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      VulnerabilityReports for pods must show zero CRITICAL CVEs without explicit acquittement
+      annotation for maturity Level 6 (Diamond).
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-no-critical-cves
+      match:
+        any:
+          - resources:
+              kinds:
+                - VulnerabilityReport
+              group: aquasecurity.github.io
+              version: v1alpha1
+      exclude:
+        any:
+          - resources:
+              annotations:
+                vixens.io/cve-accepted: "true"
+      validate:
+        message: "VulnerabilityReport must show zero CRITICAL CVEs for maturity Level 6 (Diamond)."
+        pattern:
+          report:
+            summary:
+              criticalCount: 0

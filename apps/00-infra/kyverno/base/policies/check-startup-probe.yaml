@@ -1,0 +1,33 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-startup-probe
+  annotations:
+    policies.kyverno.io/title: Require Startup Probe for Slow-Starting Apps
+    policies.kyverno.io/category: Maturity (Silver)
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      If annotation vixens.io/slow-start: "true" is set, a startupProbe is required
+      on all containers for maturity Level 2 (Silver).
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-startup-probe
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.annotations.\"vixens.io/slow-start\" || '' }}"
+            operator: Equals
+            value: "true"
+      validate:
+        message: "A startupProbe is required on all containers when vixens.io/slow-start: 'true' is set (Level 2 Silver)."
+        pattern:
+          spec:
+            containers:
+              - startupProbe: {}
