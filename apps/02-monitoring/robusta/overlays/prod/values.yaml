@@ -23,7 +23,7 @@ sinksConfig:
 runner:
   # PolicyException bypasses Kyverno sizing-mutate. Explicit resources set here.
   labels:
-    vixens.io/sizing.runner: small
+    vixens.io/sizing.runner: B-small
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists

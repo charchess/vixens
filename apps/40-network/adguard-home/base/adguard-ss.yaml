@@ -5,11 +5,11 @@ metadata:
   name: adguard-home
   labels:
     app: adguard-home
-    vixens.io/sizing: medium
-    vixens.io/sizing.restore-config: micro
-    vixens.io/sizing.restore-db: micro
-    vixens.io/sizing.litestream: micro
-    vixens.io/sizing.config-syncer: micro
+    vixens.io/sizing: G-small
+    vixens.io/sizing.restore-config: B-nano
+    vixens.io/sizing.restore-db: B-nano
+    vixens.io/sizing.litestream: V-nano
+    vixens.io/sizing.config-syncer: V-nano
     vixens.io/backup-profile: "relaxed"
 spec:
   serviceName: adguard-home-headless
@@ -23,10 +23,10 @@ spec:
       labels:
         app: adguard-home
         vixens.io/sizing.adguard-home: G-small
-        vixens.io/sizing.restore-config: micro
-        vixens.io/sizing.restore-db: micro
-        vixens.io/sizing.litestream: micro
-        vixens.io/sizing.config-syncer: micro
+        vixens.io/sizing.restore-config: B-nano
+        vixens.io/sizing.restore-db: B-nano
+        vixens.io/sizing.litestream: V-nano
+        vixens.io/sizing.config-syncer: V-nano
         vixens.io/backup-profile: "relaxed"
       annotations:
         reloader.stakater.com/auto: "true"
