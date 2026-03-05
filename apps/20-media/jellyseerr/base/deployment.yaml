@@ -6,7 +6,7 @@ metadata:
   labels:
     app: jellyseerr
     vixens.io/sizing-v2: "true"
-    vixens.io/vpa-mode: Auto
+    vixens.io/vpa-mode: Off
 spec:
   replicas: 1
   strategy:
@@ -18,7 +18,7 @@ spec:
     metadata:
       labels:
         app: jellyseerr
-        vixens.io/sizing.jellyseerr: V-small
+        vixens.io/sizing.jellyseerr: B-medium
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
