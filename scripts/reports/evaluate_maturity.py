@@ -600,6 +600,39 @@ def display_json(ns: str, app: str, current_tier, missing: list):
     }, indent=2))
 
 
+def display_all(ns: str, app: str, current_tier, workload, pods: list):
+    """Show all remaining checks from next tier up to Orichalcum."""
+    emoji = TIER_EMOJI.get(current_tier, "❌") if current_tier else "❌"
+    level = TIER_LEVEL.get(current_tier, 0) if current_tier else 0
+    label = current_tier.capitalize() if current_tier else "None (below Bronze)"
+    next_t = _next_tier(current_tier)
+
+    print(f"App:        {app}")
+    print(f"Namespace:  {ns}")
+    if current_tier:
+        print(f"Tier:       {emoji} {label} (Level {level})")
+    else:
+        print("Tier:       ❌ Below Bronze")
+    print()
+
+    if not next_t:
+        print("🌟 Application has reached maximum tier Orichalcum. Nothing more to do!")
+        return
+
+    start_idx = TIER_NAMES.index(next_t)
+    for tier_name, check_fn in TIER_CHECKS[start_idx:]:
+        checks = check_fn(ns, app, workload, pods)
+        passes = _tier_passes(checks)
+        t_emoji = TIER_EMOJI[tier_name]
+        t_label = tier_name.capitalize()
+        t_level = TIER_LEVEL[tier_name]
+        status_hdr = "✅" if passes else "❌"
+        print(f"{status_hdr} {t_emoji} {t_label} (Level {t_level}):")
+        for name, result in checks.items():
+            sym = "✅" if result is True else ("❌" if result is False else "N/A")
+            print(f"  {sym} {name}")
+        print()
+
 def main():
     parser = argparse.ArgumentParser(
         prog="evaluate_maturity.py",
@@ -611,6 +644,8 @@ def main():
     parser.add_argument("--app-path", metavar="PATH",
                         help="Local path to app dir (optional, informational)")
     parser.add_argument("--json", action="store_true", help="Output as JSON")
+    parser.add_argument("--all", "-a", action="store_true",
+                        help="Show all remaining checks up to Orichalcum")
     args = parser.parse_args()
 
     app_name = args.app
@@ -641,6 +676,8 @@ def main():
 
     if args.json:
         display_json(ns, app_name, current_tier, missing)
+    elif args.all:
+        display_all(ns, app_name, current_tier, workload, pods)
     else:
         display(ns, app_name, current_tier, missing, next_checks)
 
