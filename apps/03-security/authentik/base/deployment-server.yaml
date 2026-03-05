@@ -20,6 +20,7 @@ spec:
         vixens.io/backup-profile: critical
       annotations:
         reloader.stakater.com/auto: "true"
+        vixens.io/fast-start: "true"
     spec:
       priorityClassName: vixens-critical
       tolerations:
