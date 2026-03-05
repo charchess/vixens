@@ -55,6 +55,10 @@ spec:
             # Optional: Disable registration if desired
             - name: NEXT_PUBLIC_DISABLE_REGISTRATION
               value: "false"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           volumeMounts:
             - name: data
               mountPath: /data/data
@@ -81,3 +85,5 @@ spec:
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault

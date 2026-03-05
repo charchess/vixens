@@ -32,8 +32,11 @@ spec:
     spec:
       priorityClassName: vixens-medium
       securityContext:
+        runAsNonRoot: true
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       initContainers:
         - name: restore-config
           image: rclone/rclone:1.73
@@ -103,6 +106,10 @@ spec:
               value: "admin@truxonline.com"
             - name: TZ
               value: "Europe/Paris"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           volumeMounts:
             - name: static
               mountPath: /var/www/html/storage/upload
