@@ -84,6 +84,13 @@ spec:
               port: http
             initialDelaySeconds: 15
             periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
           env:
             - name: PUID
               value: "1000"

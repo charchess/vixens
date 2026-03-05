@@ -103,6 +103,13 @@ spec:
               port: http
             initialDelaySeconds: 15
             periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /ping
+              port: http
+            failureThreshold: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
           env:
             - name: SONARR__API_KEY
               valueFrom:

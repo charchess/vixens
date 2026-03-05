@@ -29,6 +29,7 @@ spec:
         vixens.io/sizing.config-syncer: V-nano
         vixens.io/backup-profile: "relaxed"
       annotations:
+        vixens.io/fast-start: "true"
         reloader.stakater.com/auto: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
