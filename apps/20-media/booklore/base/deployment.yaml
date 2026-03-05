@@ -18,7 +18,7 @@ spec:
     metadata:
       labels:
         app: booklore
-        vixens.io/sizing.booklore: B-small
+        vixens.io/sizing.booklore: B-medium
         vixens.io/sizing.config-syncer: V-nano
         vixens.io/sizing.restore-config: B-nano
     spec:
