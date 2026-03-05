@@ -83,6 +83,12 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 10
             failureThreshold: 3
+          startupProbe:
+            exec:
+              command: ["ak", "healthcheck"]
+            failureThreshold: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
           volumeMounts:
             - name: authentik-data
               mountPath: /var/lib/authentik

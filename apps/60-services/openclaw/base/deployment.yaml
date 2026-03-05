@@ -368,6 +368,17 @@ spec:
               port: 18789
             initialDelaySeconds: 120
             periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: 18789
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          startupProbe:
+            tcpSocket:
+              port: 18789
+            failureThreshold: 30
+            periodSeconds: 10
           volumeMounts:
             - name: data
               mountPath: /data

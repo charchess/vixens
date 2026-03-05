@@ -135,6 +135,11 @@ spec:
               port: http
             initialDelaySeconds: 60
             periodSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
           resources:
             requests:
               cpu: 500m

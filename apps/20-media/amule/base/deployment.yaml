@@ -78,6 +78,11 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
+          startupProbe:
+            tcpSocket:
+              port: http
+            failureThreshold: 15
+            periodSeconds: 10
           volumeMounts:
             - name: config
               mountPath: /home/amule/.aMule
