@@ -4,12 +4,13 @@ kind: ClusterPolicy
 metadata:
   name: check-startup-probe
   annotations:
-    policies.kyverno.io/title: Require Startup Probe for Slow-Starting Apps
+    policies.kyverno.io/title: Require Startup Probe
     policies.kyverno.io/category: Maturity (Silver)
     policies.kyverno.io/severity: medium
     policies.kyverno.io/description: >-
-      If annotation vixens.io/slow-start: "true" is set, a startupProbe is required
-      on all containers for maturity Level 2 (Silver).
+      All containers must define a startupProbe for maturity Level 2 (Silver).
+      Set vixens.io/fast-start: "true" to bypass (explicit acknowledgement that the
+      container starts quickly and does not need a startup probe).
 spec:
   validationFailureAction: Audit
   background: true
@@ -20,13 +21,17 @@ spec:
           - resources:
               kinds:
                 - Pod
-      preconditions:
-        all:
-          - key: "{{ request.object.metadata.annotations.\"vixens.io/slow-start\" || '' }}"
-            operator: Equals
-            value: "true"
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+          - resources:
+              annotations:
+                vixens.io/fast-start: "true"
       validate:
-        message: "A startupProbe is required on all containers when vixens.io/slow-start: 'true' is set (Level 2 Silver)."
+        message: "A startupProbe is required on all containers (Level 2 Silver). Set vixens.io/fast-start: 'true' to bypass."
         pattern:
           spec:
             containers:
