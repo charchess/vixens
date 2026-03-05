@@ -24,6 +24,7 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      priorityClassName: vixens-low
       containers:
         - name: linkwarden
           image: ghcr.io/linkwarden/linkwarden:v2.13.5

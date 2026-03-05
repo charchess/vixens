@@ -14,6 +14,8 @@ spec:
       app: netvisor-server
   template:
     metadata:
+      annotations:
+        vixens.io/fast-start: "true"
       labels:
         app: netvisor-server
         vixens.io/sizing.server: V-small
@@ -22,6 +24,7 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      priorityClassName: vixens-low
       containers:
         - name: server
           image: ghcr.io/scanopy/scanopy/server:v0.14.13

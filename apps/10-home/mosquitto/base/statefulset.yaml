@@ -90,6 +90,7 @@ spec:
               readOnly: true
             - name: mosquitto-auth-writable
               mountPath: /auth
+      priorityClassName: vixens-high
       containers:
         - name: mosquitto
           image: eclipse-mosquitto:2.0.22

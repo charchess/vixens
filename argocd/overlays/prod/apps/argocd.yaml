@@ -4,6 +4,8 @@ kind: Application
 metadata:
   name: argocd
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0" # ArgoCD self-management, core infra tier
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:

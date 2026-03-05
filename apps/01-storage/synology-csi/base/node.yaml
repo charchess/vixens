@@ -27,6 +27,7 @@ spec:
           volumeMounts:
             - name: host-root
               mountPath: /host
+      priorityClassName: vixens-critical
       containers:
         - name: csi-node-driver-registrar
           image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0

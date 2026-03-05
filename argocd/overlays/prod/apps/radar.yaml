@@ -4,6 +4,8 @@ kind: Application
 metadata:
   name: radar
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "7" # Low-priority monitoring
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:

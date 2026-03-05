@@ -14,6 +14,7 @@ spec:
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9080"
+        vixens.io/fast-start: "true"
       labels:
         app: promtail
         vixens.io/sizing.promtail: G-small

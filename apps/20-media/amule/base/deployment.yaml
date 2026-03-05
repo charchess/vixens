@@ -25,6 +25,7 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      priorityClassName: vixens-low
       containers:
         - name: amule
           image: tchabaud/amule:latest
@@ -70,7 +71,7 @@ spec:
               mountPath: /downloads
       initContainers:
         - name: configure-proxy
-          image: busybox
+          image: busybox:1.37.0
           command:
             - sh
             - -c

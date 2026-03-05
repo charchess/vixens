@@ -24,9 +24,10 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      priorityClassName: vixens-low
       containers:
         - name: pyload
-          image: lscr.io/linuxserver/pyload-ng:latest
+          image: lscr.io/linuxserver/pyload-ng:0.5.0
           ports:
             - containerPort: 8000
               name: http
