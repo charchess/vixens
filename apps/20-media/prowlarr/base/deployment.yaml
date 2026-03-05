@@ -129,6 +129,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
+              add: ["SETGID", "SETUID"]
           volumeMounts:
             - name: config
               mountPath: /config
