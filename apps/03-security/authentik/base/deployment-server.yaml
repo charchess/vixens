@@ -17,6 +17,7 @@ spec:
     metadata:
       labels:
         app: authentik-server
+        vixens.io/backup-profile: critical
       annotations:
         reloader.stakater.com/auto: "true"
     spec:

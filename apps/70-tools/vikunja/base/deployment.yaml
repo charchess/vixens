@@ -19,6 +19,7 @@ spec:
       labels:
         app.kubernetes.io/name: vikunja
         vixens.io/sizing.vikunja: V-small
+        vixens.io/backup-profile: relaxed
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
