@@ -85,6 +85,7 @@ spec:
             - name: mealie-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
+      priorityClassName: vixens-low
       containers:
         - name: mealie
           image: ghcr.io/mealie-recipes/mealie:v3.11.0

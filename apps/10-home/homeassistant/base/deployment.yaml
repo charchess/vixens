@@ -45,14 +45,14 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
-      priorityClassName: vixens-critical
+      priorityClassName: vixens-high
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
       initContainers:
         - name: fix-perms
-          image: busybox:latest
+          image: busybox:1.37.0
           securityContext:
             runAsUser: 0
           command:
@@ -124,7 +124,7 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-init
-          image: busybox:latest
+          image: busybox:1.37.0
           command:
             - sh
             - -c

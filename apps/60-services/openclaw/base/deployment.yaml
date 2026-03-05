@@ -45,7 +45,7 @@ spec:
           effect: NoSchedule
       initContainers:
         - name: fix-perms
-          image: busybox:latest
+          image: busybox:1.37.0
           securityContext:
             runAsUser: 0
           command:
@@ -280,7 +280,7 @@ spec:
               mountPath: /data
         # Setup Gemini config from Infisical secrets
         - name: setup-gemini-config
-          image: busybox:latest
+          image: busybox:1.37.0
           command:
             - sh
             - -c
@@ -318,7 +318,7 @@ spec:
               mountPath: /data
       containers:
         - name: openclaw
-          image: ghcr.io/openclaw/openclaw:latest
+          image: ghcr.io/openclaw/openclaw:2026.3.2
           imagePullPolicy: Always
           command:
             - node
