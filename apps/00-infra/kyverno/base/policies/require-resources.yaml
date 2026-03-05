@@ -11,7 +11,7 @@ metadata:
     policies.kyverno.io/severity: medium
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
-      Resources requests and limits are required for all containers.
+      Resources requests and limits are required for all containers for maturity Level 2 (Silver).
       This policy audits containers that do not have resource limits defined.
 spec:
   validationFailureAction: Audit

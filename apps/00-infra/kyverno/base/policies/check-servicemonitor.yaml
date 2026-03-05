@@ -20,9 +20,9 @@ spec:
                 - Pod
       preconditions:
         all:
-        - key: "{{ request.object.metadata.annotations.\"prometheus.io/scrape\" || 'false' }}"
-          operator: Equals
-          value: "true"
+          - key: "{{ request.object.metadata.annotations.\"prometheus.io/scrape\" || 'false' }}"
+            operator: Equals
+            value: "true"
       context:
         - name: sm_count
           apiCall:
@@ -33,6 +33,6 @@ spec:
         deny:
           conditions:
             all:
-            - key: "{{ sm_count }}"
-              operator: Equals
-              value: 0
+              - key: "{{ sm_count }}"
+                operator: Equals
+                value: 0
