@@ -19,6 +19,7 @@ spec:
       labels:
         app: linkwarden
         vixens.io/sizing.linkwarden: V-medium
+        vixens.io/backup-profile: relaxed
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
