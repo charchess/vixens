@@ -7,12 +7,12 @@ metadata:
   name: require-goldilocks
   annotations:
     policies.kyverno.io/title: Require Goldilocks Annotations
-    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/category: Maturity (Gold)
     policies.kyverno.io/severity: low
     policies.kyverno.io/subject: Deployment, StatefulSet
     policies.kyverno.io/description: >-
       Deployments and StatefulSets must have Goldilocks and VPA annotations
-      to enable resource usage analysis and optimization recommendations.
+      to enable resource usage analysis and optimization recommendations for maturity Level 3 (Gold).
 spec:
   validationFailureAction: Audit
   background: true

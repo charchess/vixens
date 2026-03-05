@@ -7,12 +7,12 @@ metadata:
   name: require-revision-history-limit
   annotations:
     policies.kyverno.io/title: Require Revision History Limit
-    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/category: Maturity (Gold)
     policies.kyverno.io/severity: low
     policies.kyverno.io/subject: Deployment, StatefulSet
     policies.kyverno.io/description: >-
       Deployments and StatefulSets should have revisionHistoryLimit set to 3 or less
-      to prevent accumulation of old ReplicaSets.
+      to prevent accumulation of old ReplicaSets for maturity Level 3 (Gold).
 spec:
   validationFailureAction: Audit
   background: true

@@ -11,13 +11,22 @@ metadata:
   name: maturity-controller-role
 rules:
   - apiGroups: [""]
-    resources: ["namespaces", "pods", "services", "secrets"]
+    resources: ["namespaces", "pods", "services", "secrets", "events"]
     verbs: ["get", "list"]
   - apiGroups: ["apps"]
-    resources: ["deployments", "statefulsets"]
+    resources: ["deployments", "statefulsets", "daemonsets"]
     verbs: ["get", "list", "patch", "update"]
   - apiGroups: ["wgpolicyk8s.io"]
     resources: ["policyreports"]
+    verbs: ["get", "list"]
+  - apiGroups: ["aquasecurity.github.io"]
+    resources: ["vulnerabilityreports"]
+    verbs: ["get", "list"]
+  - apiGroups: ["autoscaling.k8s.io"]
+    resources: ["verticalpodautoscalers"]
+    verbs: ["get", "list"]
+  - apiGroups: ["monitoring.coreos.com"]
+    resources: ["prometheusrules"]
     verbs: ["get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
