@@ -20,3 +20,4 @@ patches:
               prometheus.io/port: "9090"
             labels:
               vixens.io/sizing.reloader-reloader: G-nano
+              vixens.io/service-binding: "false"

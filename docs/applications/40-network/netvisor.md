@@ -47,3 +47,5 @@ curl -L -k https://netvisor.dev.truxonline.com | grep "Netvisor"
 > ⚠️ **HIBERNATION DEV**
 > Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
 > Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
+>
+> **Service binding :** Le Daemon DaemonSet n'a pas de Service associé — il fonctionne en mode Pull et contacte le server lui-même. Il ne reçoit aucun trafic entrant. Annoté avec `vixens.io/service-binding: "false"`.
