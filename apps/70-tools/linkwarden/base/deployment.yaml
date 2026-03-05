@@ -18,7 +18,7 @@ spec:
     metadata:
       labels:
         app: linkwarden
-        vixens.io/sizing.linkwarden: V-large
+        vixens.io/sizing.linkwarden: V-medium
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
