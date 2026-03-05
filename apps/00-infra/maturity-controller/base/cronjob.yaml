@@ -24,7 +24,7 @@ spec:
                   mountPath: /tools
           containers:
             - name: controller
-              image: python:3.12-slim
+              image: python:3.14-slim
               command:
                 - python3
                 - /scripts/sync_maturity.py
