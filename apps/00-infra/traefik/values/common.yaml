@@ -98,3 +98,19 @@ ports:
     port: 9000
     expose: false
     exposedPort: 9000
+
+# ============================================================================
+# Security Context
+# ============================================================================
+# Pod-level: seccomp profile
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
+# Container-level: drop all caps, add NET_BIND_SERVICE for ports < 1024 (80, 443, 53)
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    add:
+      - NET_BIND_SERVICE
+    drop:
+      - ALL
