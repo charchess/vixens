@@ -8,7 +8,7 @@ metadata:
     app: penpot-backend
     component: backend
     vixens.io/sizing-v2: "true"
-    vixens.io/vpa-mode: Auto
+    vixens.io/vpa-mode: Off
 spec:
   replicas: 1
   revisionHistoryLimit: 3
@@ -22,7 +22,7 @@ spec:
       labels:
         app: penpot-backend
         component: backend
-        vixens.io/sizing.backend: V-large
+        vixens.io/sizing.backend: B-large
     spec:
       priorityClassName: vixens-medium
       tolerations:
