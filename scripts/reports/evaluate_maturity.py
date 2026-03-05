@@ -16,6 +16,12 @@ import json
 import subprocess
 import sys
 
+# Auto-detect kubeconfig: use project prod kubeconfig if KUBECONFIG not set
+import os as _os
+_project_root = _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+_prod_kubeconfig = _os.path.join(_project_root, ".secrets", "prod", "kubeconfig-prod")
+if not _os.environ.get("KUBECONFIG") and _os.path.isfile(_prod_kubeconfig):
+    _os.environ["KUBECONFIG"] = _prod_kubeconfig
 TIER_NAMES = [
     "bronze", "silver", "gold", "platinum", "emerald", "diamond", "orichalcum"
 ]
