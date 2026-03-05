@@ -1,0 +1,35 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-image-digest
+  annotations:
+    policies.kyverno.io/title: Require Image Digest Pinning
+    policies.kyverno.io/category: Maturity (Diamond)
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Apps with vixens.io/digest-pinned: "true" must reference all images by @sha256: digest
+      for maturity Level 6 (Diamond).
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-image-digest
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.annotations.\"vixens.io/digest-pinned\" || '' }}"
+            operator: Equals
+            value: "true"
+      validate:
+        message: "All container images must be pinned by @sha256: digest when vixens.io/digest-pinned: 'true' is set (Level 6 Diamond)."
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.spec.containers[?!contains(image, '@sha256:')] | length(@) }}"
+                operator: GreaterThan
+                value: 0

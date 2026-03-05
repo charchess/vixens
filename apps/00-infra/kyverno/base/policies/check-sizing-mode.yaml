@@ -1,0 +1,36 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-sizing-mode
+  annotations:
+    policies.kyverno.io/title: Require Sizing Mode Label
+    policies.kyverno.io/category: Maturity (Platinum)
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      All pods must have at least one vixens.io/sizing.<container-name> label in format
+      [G|B|SB|V]-* for maturity Level 4 (Platinum).
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-sizing-label
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      validate:
+        message: "At least one vixens.io/sizing.<container-name> label matching [G|B|SB|V]-* is required for maturity Level 4 (Platinum)."
+        deny:
+          conditions:
+            all:
+              - key: "{{ keys(request.object.metadata.labels)[?starts_with(@, 'vixens.io/sizing.')] | length(@) }}"
+                operator: Equals
+                value: 0

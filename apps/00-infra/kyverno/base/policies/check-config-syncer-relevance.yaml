@@ -20,14 +20,14 @@ spec:
                 - Pod
       preconditions:
         all:
-        - key: "{{ request.object.spec.volumes[?contains(nfs.server, '192.168.111.69')] | length(@) }}"
-          operator: GreaterThan
-          value: 0
+          - key: "{{ request.object.spec.volumes[?contains(nfs.server, '192.168.111.69')] | length(@) }}"
+            operator: GreaterThan
+            value: 0
       validate:
         message: "NFS configuration volume detected but config-syncer sidecar is missing (Level 5 Emerald)."
         deny:
           conditions:
             all:
-            - key: "{{ request.object.spec.containers[?contains(image, 'rclone')] | length(@) }}"
-              operator: Equals
-              value: 0
+              - key: "{{ request.object.spec.containers[?contains(image, 'rclone')] | length(@) }}"
+                operator: Equals
+                value: 0

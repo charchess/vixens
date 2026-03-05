@@ -35,9 +35,9 @@ spec:
         deny:
           conditions:
             all:
-            - key: "{{ netpol_count }}"
-              operator: Equals
-              value: 0
+              - key: "{{ netpol_count }}"
+                operator: Equals
+                value: 0
     
     # Bonus: Mutation du sceau de confiance
     - name: mutate-network-policy-label

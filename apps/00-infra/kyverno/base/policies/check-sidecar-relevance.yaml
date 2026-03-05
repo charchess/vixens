@@ -20,9 +20,9 @@ spec:
                 - Pod
       preconditions:
         all:
-        - key: "{{ request.object.spec.volumes[?contains(name, 'config')].persistentVolumeClaim.claimName || '' | length(@) }}"
-          operator: GreaterThan
-          value: 0
+          - key: "{{ request.object.spec.volumes[?contains(name, 'config')].persistentVolumeClaim.claimName || '' | length(@) }}"
+            operator: GreaterThan
+            value: 0
       validate:
         message: "SQLite detected in config volume but litestream sidecar is missing (Level 5 Emerald requirement)."
         foreach:
@@ -30,12 +30,12 @@ spec:
             deny:
               conditions:
                 all:
-                - key: "{{ request.object.spec.volumes[?contains(name, 'config')] }}" # Has config volume
-                  operator: NotEquals
-                  value: ""
-                - key: "{{ request.object.spec.containers[?contains(image, 'litestream')] | length(@) }}" # No litestream
-                  operator: Equals
-                  value: 0
-                - key: "{{ request.object.metadata.labels.app }}" # Filter out known non-sqlite apps
-                  operator: NotIn
-                  value: ["traefik", "cilium"]
+                  - key: "{{ request.object.spec.volumes[?contains(name, 'config')] }}" # Has config volume
+                    operator: NotEquals
+                    value: ""
+                  - key: "{{ request.object.spec.containers[?contains(image, 'litestream')] | length(@) }}" # No litestream
+                    operator: Equals
+                    value: 0
+                  - key: "{{ request.object.metadata.labels.app }}" # Filter out known non-sqlite apps
+                    operator: NotIn
+                    value: ["traefik", "cilium"]
