@@ -59,6 +59,10 @@ spec:
                 secretKeyRef:
                   name: nocodb-secrets
                   key: NC_AUTH_JWT_SECRET
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           volumeMounts:
             - name: data
               mountPath: /usr/app/data
@@ -81,3 +85,5 @@ spec:
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
