@@ -110,6 +110,10 @@ spec:
               mountPath: /mosquitto/config/auth/mosquitto.passwd
               subPath: mosquitto.passwd
               readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           livenessProbe:
             tcpSocket:
               port: 1883
@@ -155,6 +159,9 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       volumes:
         - name: config
           persistentVolumeClaim:
