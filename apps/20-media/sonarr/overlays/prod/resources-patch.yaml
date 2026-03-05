@@ -7,6 +7,6 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.sonarr: micro
-        vixens.io/sizing.litestream: micro
-        vixens.io/sizing.config-syncer: micro
+        vixens.io/sizing.sonarr: V-small
+        vixens.io/sizing.litestream: V-nano
+        vixens.io/sizing.config-syncer: V-nano
