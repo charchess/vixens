@@ -26,3 +26,4 @@ patches:
       kind: Deployment
       name: sonarr
     path: resources-patch.yaml
+  - path: securitycontext-patch.yaml
