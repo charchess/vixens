@@ -1109,12 +1109,7 @@ maturity:
     @export KUBECONFIG=.secrets/prod/kubeconfig-prod; \
     (printf "NAMESPACE\tAPPLICATION\tTIER\tMANQUE POUR SUIVANT\n" && \
     kubectl get deployment,statefulset,daemonset -A -o json | \
-    jq -r '.items[] | [
-      .metadata.namespace,
-      .metadata.name,
-      (.metadata.labels["vixens.io/maturity"] // "none"),
-      (.metadata.labels["vixens.io/maturity-missing"] // "-")
-    ] | @tsv') | \
+    jq -r '.items[] | [.metadata.namespace, .metadata.name, (.metadata.labels["vixens.io/maturity"] // "none"), (.metadata.labels["vixens.io/maturity-missing"] // "-")] | @tsv') | \
     column -t -s $'\t'
     @echo ""
     @echo "Tiers: bronze→silver→gold→platinum→emerald→diamond→orichalcum"
