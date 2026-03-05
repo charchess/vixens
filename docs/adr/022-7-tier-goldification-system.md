@@ -1,7 +1,7 @@
 # ADR-022: 7-Tier Goldification System (Maturité)
 
 **Date:** 2026-02-24
-**Status:** Active
+**Status:** Superseded by [ADR-023](023-7-tier-goldification-system-v2.md)
 **Deciders:** User, Coding Agent
 **Tags:** quality, goldification, maturity
 
