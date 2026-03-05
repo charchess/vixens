@@ -1,5 +1,5 @@
 ---
-# PolicyException for ArgoCD components to bypass Kyverno sizing mutation.
+# PolicyException for ArgoCD components to bypass Kyverno sizing-v2-mutate.
 # Allows explicit resource overrides to prevent Kyverno from overriding
 # container resources on memory-constrained cluster.
 apiVersion: kyverno.io/v2
@@ -9,9 +9,6 @@ metadata:
   namespace: kyverno
 spec:
   exceptions:
-    - policyName: sizing-mutate
-      ruleNames:
-        - granular-container-sizing
     - policyName: sizing-v2-mutate
       ruleNames:
         - v2-container-sizing
