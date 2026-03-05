@@ -48,10 +48,10 @@ patches:
   - patch: |
       - op: add
         path: /spec/template/metadata/labels/vixens.io~1sizing.metrics-server
-        value: small
+        value: G-small
       - op: add
         path: /spec/template/metadata/labels/vixens.io~1sizing
-        value: small
+        value: G-small
     target:
       kind: Deployment
       name: metrics-server
