@@ -72,6 +72,10 @@ spec:
             initialDelaySeconds: 120
             periodSeconds: 30
             failureThreshold: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           volumeMounts:
             - name: data
               mountPath: /opt/data
@@ -79,4 +83,7 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: penpot-data
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       restartPolicy: Always
