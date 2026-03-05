@@ -5,12 +5,12 @@ metadata:
   name: lidarr
   labels:
     vixens.io/sizing.lidarr: SB-medium
-    vixens.io/sizing.litestream: micro
-    vixens.io/sizing.config-syncer: micro
+    vixens.io/sizing.litestream: V-nano
+    vixens.io/sizing.config-syncer: V-nano
 spec:
   template:
     metadata:
       labels:
         vixens.io/sizing.lidarr: SB-medium
-        vixens.io/sizing.litestream: micro
-        vixens.io/sizing.config-syncer: micro
+        vixens.io/sizing.litestream: V-nano
+        vixens.io/sizing.config-syncer: V-nano

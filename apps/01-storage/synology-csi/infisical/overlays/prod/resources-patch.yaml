@@ -7,8 +7,8 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.synology-csi-secrets: micro
-        vixens.io/sizing: micro
+        vixens.io/sizing.synology-csi-secrets: B-nano
+        vixens.io/sizing: B-nano
     spec:
       containers:
         - name: synology-csi-secrets
