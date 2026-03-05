@@ -19,6 +19,7 @@ spec:
       labels:
         app.kubernetes.io/name: nocodb
         vixens.io/sizing.nocodb: V-small
+        vixens.io/backup-profile: relaxed
       annotations:
         reloader.stakater.com/auto: "true"
     spec:
