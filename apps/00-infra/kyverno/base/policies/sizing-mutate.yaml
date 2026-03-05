@@ -1,18 +1,27 @@
 ---
+# sizing-mutate.yaml (v1) — DEPRECATED, replaced by sizing-v2-mutate.yaml
+#
+# All containers have been migrated to v2-style labels (MODE-size, e.g. B-nano, V-small).
+# This policy is now a no-op: preconditions ensure it never fires.
+# Kept as an empty shell to avoid ArgoCD drift until it can be cleanly removed.
+#
+# See: feat/sizing-full-v2 — migration of all v1 labels to v2 format
+# TODO: delete this file once the no-op behavior is confirmed stable in prod
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: sizing-mutate
   annotations:
-    policies.kyverno.io/title: Granular Sizing Mutation
+    policies.kyverno.io/title: Granular Sizing Mutation (DEPRECATED)
     policies.kyverno.io/category: Resource Management
     policies.kyverno.io/description: >-
-      Declarative resource management using per-container labels.
+      DEPRECATED. All labels migrated to v2 format (sizing-v2-mutate).
+      This policy fires on no containers (preconditions block all v2 labels).
 spec:
   validationFailureAction: Audit
   background: false
   rules:
-    # Rule 1: Per-container Sizing (Explicit container labels)
+    # Rule 1: Per-container Sizing — DEPRECATED, never fires (all labels are v2-style)
     - name: granular-container-sizing
       match:
         any:
@@ -23,16 +32,16 @@ spec:
         any:
           - resources:
               names:
-                - trivy-server # Exclude trivy-server from sizing mutation
+                - trivy-server
               namespaces:
                 - security
       mutate:
         foreach:
-          - list: "request.object.spec.containers || '[]'" # Safety for empty containers list
+          - list: "request.object.spec.containers || '[]'"
             preconditions:
               all:
-                # Skip containers whose sizing label is a v2-style label (contains '-')
-                # e.g. B-xlarge, G-small, SB-nano, V-medium, media-xlarge — v2 handles those
+                # All containers now use v2-style labels (containing '-').
+                # This precondition ensures v1 never fires on any container.
                 - key: "{{ contains(request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" || 'none', '-') }}"
                   operator: Equals
                   value: "false"
@@ -42,13 +51,13 @@ spec:
                   - (name): "{{ element.name }}"
                     resources:
                       requests:
-                        cpu: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '1000m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '200m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '50m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'micro' && '10m' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '1000m' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '200m' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '50m' || '10m' }}"
-                        memory: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '4Gi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '512Mi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '512Mi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'micro' && '128Mi' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '4Gi' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '512Mi' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '512Mi' || '128Mi' }}"
+                        cpu: "10m"
+                        memory: "64Mi"
                       limits:
-                        cpu: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '2000m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '1000m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '500m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'micro' && '100m' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '2000m' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '1000m' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '500m' || '100m' }}"
-                        memory: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '4Gi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '1Gi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '512Mi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'micro' && '128Mi' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'large') && '4Gi' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'medium') && '1Gi' || (element.name == request.object.metadata.labels.app && request.object.metadata.labels.\"vixens.io/sizing\" == 'small') && '512Mi' || '128Mi' }}"
+                        cpu: "100m"
+                        memory: "128Mi"
 
-    # Rule 2: Init Containers Sizing (Granular)
+    # Rule 2: Init Containers Sizing — DEPRECATED, never fires
     - name: granular-init-container-sizing
       match:
         any:
@@ -59,15 +68,15 @@ spec:
         any:
           - resources:
               names:
-                - trivy-server # Exclude trivy-server from sizing mutation
+                - trivy-server
               namespaces:
                 - security
       mutate:
         foreach:
-          - list: "request.object.spec.initContainers || '[]'" # Safety for missing initContainers
+          - list: "request.object.spec.initContainers || '[]'"
             preconditions:
               all:
-                # Skip init containers with v2-style labels (contains '-')
+                # All init containers now use v2-style labels (containing '-').
                 - key: "{{ contains(request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" || 'none', '-') }}"
                   operator: Equals
                   value: "false"
@@ -77,8 +86,8 @@ spec:
                   - (name): "{{ element.name }}"
                     resources:
                       requests:
-                        cpu: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '1000m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '200m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '50m' || '10m' }}"
-                        memory: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '2Gi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '512Mi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '256Mi' || '64Mi' }}"
+                        cpu: "10m"
+                        memory: "64Mi"
                       limits:
-                        cpu: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '2000m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '1000m' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '500m' || '100m' }}"
-                        memory: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'large' && '4Gi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'medium' && '1Gi' || request.object.metadata.labels.\"vixens.io/sizing.{{element.name}}\" == 'small' && '512Mi' || '128Mi' }}"
+                        cpu: "100m"
+                        memory: "128Mi"
