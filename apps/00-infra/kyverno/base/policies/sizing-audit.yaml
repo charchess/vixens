@@ -1,13 +1,10 @@
 ---
 # Kyverno Policy: Sizing Audit
 #
-# This policy audits pods that are missing proper sizing labels.
-# Rule 1: check-sizing-label — legacy check for the generic vixens.io/sizing label.
-# Rule 2: check-per-container-sizing — new check; at least one per-container label
-#          (vixens.io/sizing.<container-name>) should be present on non-trivial pods.
+# Audits pods that are missing per-container sizing labels (vixens.io/sizing.<name>).
+# Migration to v2 is complete — generic label check removed.
 #
-# Usage: kubectl get policyreports -n kyverno
-#
+# Usage: kubectl get policyreports -A
 # PHASE: Audit (read-only, never blocks deployments)
 
 apiVersion: kyverno.io/v1
@@ -20,36 +17,14 @@ metadata:
     policies.kyverno.io/severity: low
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
-      Audits all pods to identify which ones are missing sizing labels.
-      Rule 1 checks for the legacy generic label (vixens.io/sizing).
-      Rule 2 checks for the modern per-container label format
-      (vixens.io/sizing.<container-name>). Both are reported for migration
-      tracking. Run: kubectl get policyreports -A to see audit results.
+      Audits all pods to ensure they have at least one per-container sizing label
+      (vixens.io/sizing.<container-name>: MODE-size). Pods without any such label
+      will not be sized by sizing-v2-mutate and may receive no resource limits.
+      Run: kubectl get policyreports -A to see audit results.
 spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: check-sizing-label
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kyverno
-                - kube-public
-                - kube-node-lease
-      validate:
-        message: "Pod is missing label 'vixens.io/sizing'. Will default to 'micro' sizing when mutation is enabled."
-        pattern:
-          metadata:
-            labels:
-              vixens.io/sizing: "?*"
-
     - name: check-per-container-sizing
       match:
         any:
@@ -67,9 +42,8 @@ spec:
       validate:
         message: >-
           Pod is missing per-container sizing labels (vixens.io/sizing.<container-name>).
-          Using only the generic label means Kyverno sizing silently defaults to 'micro'
-          for containers whose name does not match the 'app' label.
-          Add per-container labels, e.g. vixens.io/sizing.my-container: small.
+          All containers must have a v2-style label, e.g. vixens.io/sizing.my-app: B-small.
+          See sizing-v2-mutate policy for supported MODE-size values.
         deny:
           conditions:
             all:
