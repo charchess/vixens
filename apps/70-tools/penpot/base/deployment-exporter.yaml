@@ -45,6 +45,10 @@ spec:
           ports:
             - containerPort: 6061
               name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           readinessProbe:
             tcpSocket:
               port: http
@@ -56,4 +60,7 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 30
             failureThreshold: 3
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       restartPolicy: Always

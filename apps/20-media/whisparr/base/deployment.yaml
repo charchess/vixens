@@ -74,6 +74,10 @@ spec:
           image: ghcr.io/hotio/whisparr:nightly
           ports:
             - containerPort: 6969 # Default Whisparr UI port
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           livenessProbe:
             httpGet:
               path: /ping
@@ -177,3 +181,5 @@ spec:
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
