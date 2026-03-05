@@ -53,6 +53,22 @@ spec:
                 secretKeyRef:
                   name: docspell-db-credentials
                   key: password
+          livenessProbe:
+            httpGet:
+              path: /api/info/version
+              port: api
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/info/version
+              port: api
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           volumeMounts:
             - name: config
               mountPath: /opt/docspell.conf

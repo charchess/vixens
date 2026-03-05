@@ -69,6 +69,20 @@ spec:
               value: "https://netbird.dev.truxonline.com,https://netbird.truxonline.com"
             - name: AUTHENTIK_BLUEPRINTS__BOOTSTRAP_AND_OVERWRITE
               value: "true"
+          livenessProbe:
+            exec:
+              command: ["ak", "healthcheck"]
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: ["ak", "healthcheck"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 3
           volumeMounts:
             - name: authentik-data
               mountPath: /var/lib/authentik
