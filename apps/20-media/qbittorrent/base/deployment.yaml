@@ -25,9 +25,10 @@ spec:
           operator: Exists
           effect: NoSchedule
       initContainers: []
+      priorityClassName: vixens-medium
       containers:
         - name: qbittorrent
-          image: lscr.io/linuxserver/qbittorrent:latest
+          image: lscr.io/linuxserver/qbittorrent:5.1.4
           ports:
             - containerPort: 8080
               name: http

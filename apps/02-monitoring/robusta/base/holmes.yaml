@@ -79,7 +79,7 @@ spec:
           emptyDir: {}
       initContainers:
         - name: config-interpolator
-          image: busybox
+          image: busybox:1.37.0
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -104,6 +104,7 @@ spec:
               mountPath: /etc/robusta/config-src
             - name: playbooks-config-processed
               mountPath: /etc/robusta/config
+      priorityClassName: vixens-low
       containers:
         - name: holmes
           image: "us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:0.20.0"

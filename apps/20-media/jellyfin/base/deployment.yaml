@@ -20,7 +20,7 @@ spec:
         app: jellyfin
         vixens.io/sizing.jellyfin: V-large
     spec:
-      priorityClassName: homelab-important
+      priorityClassName: vixens-medium
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists

@@ -4,6 +4,8 @@ kind: Application
 metadata:
   name: firefly-iii
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10" # Standard application tier
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
