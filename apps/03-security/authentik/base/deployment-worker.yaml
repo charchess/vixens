@@ -18,6 +18,7 @@ spec:
       labels:
         app: authentik-worker
         vixens.io/service-binding: "false"
+        vixens.io/backup-profile: critical
       annotations:
         reloader.stakater.com/auto: "true"
     spec:
