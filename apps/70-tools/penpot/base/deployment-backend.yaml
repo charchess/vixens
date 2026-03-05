@@ -72,6 +72,13 @@ spec:
             initialDelaySeconds: 120
             periodSeconds: 30
             failureThreshold: 5
+          startupProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            failureThreshold: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

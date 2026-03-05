@@ -60,6 +60,11 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 30
             failureThreshold: 3
+          startupProbe:
+            tcpSocket:
+              port: http
+            failureThreshold: 20
+            periodSeconds: 10
       securityContext:
         seccompProfile:
           type: RuntimeDefault

@@ -90,6 +90,13 @@ spec:
               port: 6969
             initialDelaySeconds: 60
             periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /ping
+              port: 6969
+            failureThreshold: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
           env:
             - name: WHISPARR__API_KEY
               valueFrom:
