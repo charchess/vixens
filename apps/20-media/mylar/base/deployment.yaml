@@ -75,7 +75,7 @@ spec:
             - /etc/litestream.yml
             - -if-db-not-exists
             - -if-replica-exists
-            - /config/mylar.db
+            - /config/mylar/mylar.db
           envFrom:
             - secretRef:
                 name: mylar-secrets
