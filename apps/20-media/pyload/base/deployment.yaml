@@ -44,6 +44,22 @@ spec:
               value: http://gluetun.services.svc.cluster.local:8888
             - name: NO_PROXY
               value: localhost,127.0.0.1,10.0.0.0/8,192.168.0.0/16
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           volumeMounts:
             - name: config
               mountPath: /config

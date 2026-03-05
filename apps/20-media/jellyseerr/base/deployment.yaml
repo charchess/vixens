@@ -36,6 +36,22 @@ spec:
               value: debug
             - name: TZ
               value: Europe/Paris
+          livenessProbe:
+            httpGet:
+              path: /api/v1/status
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/v1/status
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           volumeMounts:
             - name: config
               mountPath: /app/config
