@@ -26,6 +26,8 @@ tolerations:
 # Pod sizing labels for controller
 podLabels:
   vixens.io/sizing.cert-manager: G-nano
+podAnnotations:
+  vixens.io/fast-start: "true"
 # Webhook component
 webhook:
   tolerations:
@@ -34,6 +36,8 @@ webhook:
       effect: NoSchedule
   podLabels:
     vixens.io/sizing.webhook: G-nano
+  podAnnotations:
+    vixens.io/fast-start: "true"
 # CA Injector component
 cainjector:
   tolerations:
@@ -42,9 +46,13 @@ cainjector:
       effect: NoSchedule
   podLabels:
     vixens.io/sizing.cainjector: G-nano
+  podAnnotations:
+    vixens.io/fast-start: "true"
 # Startup API check tolerations
 startupapicheck:
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
+  podAnnotations:
+    vixens.io/fast-start: "true"

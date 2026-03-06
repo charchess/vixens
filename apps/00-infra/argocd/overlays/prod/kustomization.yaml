@@ -50,6 +50,31 @@ patches:
             priorityClassName: vixens-critical
     target:
       kind: StatefulSet
+  # fast-start: ArgoCD components start quickly, no startup probe needed
+  - patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+      spec:
+        template:
+          metadata:
+            annotations:
+              vixens.io/fast-start: "true"
+    target:
+      kind: Deployment
+  - patch: |
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: placeholder
+      spec:
+        template:
+          metadata:
+            annotations:
+              vixens.io/fast-start: "true"
+    target:
+      kind: StatefulSet
 
 components:
   - ../../../../_shared/components/revision-history-limit
