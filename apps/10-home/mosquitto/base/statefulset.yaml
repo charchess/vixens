@@ -25,6 +25,8 @@ spec:
         vixens.io/sizing.create-mosquitto-users: G-nano
         vixens.io/sizing.mosquitto: V-small
         vixens.io/sizing.config-syncer: V-nano
+      annotations:
+        vixens.io/fast-start: "true"
     spec:
       initContainers:
         - name: restore-data
