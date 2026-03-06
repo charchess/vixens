@@ -46,6 +46,12 @@ spec:
               - key: node-role.kubernetes.io/control-plane
                 operator: Exists
                 effect: NoSchedule
+            # infisical-operator exposes /metrics on 8443 (HTTPS via kube-rbac-proxy)
+            # check-metrics policy requires prometheus.io/scrape or vixens.io/nometrics
+            # The chart may not support podAnnotations natively — apply nometrics as fallback
+            # (operator metrics require service account auth, scraping externally is not trivial)
+          podAnnotations:
+            vixens.io/nometrics: "true"
     # Kustomize overlay for pod annotations (chart has no podAnnotations support)
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
