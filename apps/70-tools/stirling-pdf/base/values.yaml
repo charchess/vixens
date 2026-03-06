@@ -53,3 +53,4 @@ podLabels:
 podAnnotations:
   # fast-start: liveness probe confirms HTTP is ready within 30s; LibreOffice loads lazily
   vixens.io/fast-start: "true"
+  vixens.io/service-binding: "false"
