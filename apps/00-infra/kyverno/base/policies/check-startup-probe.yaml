@@ -16,6 +16,7 @@ spec:
   background: true
   rules:
     - name: require-startup-probe
+      skipBackgroundRequests: false
       match:
         any:
           - resources:
