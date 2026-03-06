@@ -34,6 +34,12 @@ spec:
               limits:
                 cpu: "1"
                 memory: 1Gi
+            rbac:
+              clusterRole:
+                extraResources:
+                  - apiGroups: [""]
+                    resources: ["secrets"]
+                    verbs: ["get"]
 
           backgroundController:
             replicas: 1
