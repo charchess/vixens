@@ -83,6 +83,9 @@ kubectl:
       cpu: 100m
       memory: 256Mi
 
+podAnnotations:
+  vixens.io/fast-start: "true"
+
 resources:
   requests:
     cpu: 100m
@@ -96,6 +99,8 @@ deployNodeAgent: true
 nodeAgent:
   uploaderType: kopia
   priorityClassName: vixens-critical
+  podAnnotations:
+    vixens.io/fast-start: "true"
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists

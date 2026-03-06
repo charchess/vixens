@@ -46,6 +46,7 @@ spec:
               operator: Exists
               effect: NoSchedule
           podAnnotations:
+            vixens.io/fast-start: "true"
             vixens.io/service-binding: "false"
   destination:
     server: https://kubernetes.default.svc
