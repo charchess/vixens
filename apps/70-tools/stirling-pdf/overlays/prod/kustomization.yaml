@@ -37,11 +37,3 @@ patches:
     target:
       kind: Deployment
       name: stirling-pdf-stirling-pdf-chart
-  # nometrics: stirling-pdf is a document processing UI with no Prometheus /metrics endpoint
-  - patch: |-
-      - op: add
-        path: /spec/template/metadata/annotations/vixens.io~1nometrics
-        value: "true"
-    target:
-      kind: Deployment
-      name: stirling-pdf-stirling-pdf-chart
