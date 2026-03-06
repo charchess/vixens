@@ -1,0 +1,42 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vpa-recommender
+  namespace: vpa
+  labels:
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/component: recommender
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vertical-pod-autoscaler
+      app.kubernetes.io/component: recommender
+  namespaceSelector:
+    matchNames:
+      - vpa
+  endpoints:
+    - port: http-metrics
+      path: /metrics
+      interval: 60s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vpa-updater
+  namespace: vpa
+  labels:
+    app.kubernetes.io/name: vertical-pod-autoscaler
+    app.kubernetes.io/component: updater
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vertical-pod-autoscaler
+      app.kubernetes.io/component: updater
+  namespaceSelector:
+    matchNames:
+      - vpa
+  endpoints:
+    - port: http-metrics
+      path: /metrics
+      interval: 60s

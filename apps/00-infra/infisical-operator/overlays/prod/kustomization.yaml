@@ -1,9 +1,9 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources: []
-# gold-maturity annotations are applied via JSON patches below
-  # (component cannot patch Helm resources, only Git-defined resources)
+resources:
+  - servicemonitor.yaml
+
 
 patches:
   - patch: |-
@@ -13,6 +13,18 @@ patches:
       - op: add
         path: /spec/template/metadata/annotations/vixens.io~1service-binding
         value: "false"
+      - op: add
+        path: /spec/template/metadata/annotations/prometheus.io~1scrape
+        value: "true"
+      - op: add
+        path: /spec/template/metadata/annotations/prometheus.io~1port
+        value: "8443"
+      - op: add
+        path: /spec/template/metadata/annotations/prometheus.io~1path
+        value: "/metrics"
+      - op: add
+        path: /spec/template/metadata/annotations/prometheus.io~1scheme
+        value: "https"
     target:
       kind: Deployment
       name: infisical-opera-controller-manager

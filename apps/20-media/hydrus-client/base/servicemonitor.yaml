@@ -1,0 +1,20 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: hydrus-client
+  namespace: media
+  labels:
+    app: hydrus-client
+spec:
+  selector:
+    matchLabels:
+      app: hydrus-client
+  namespaceSelector:
+    matchNames:
+      - media
+  endpoints:
+    - port: metrics
+      targetPort: 9090
+      path: /metrics
+      interval: 60s

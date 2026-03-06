@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: policy-reporter
 resources:
   - ingress.yaml
+  - servicemonitor.yaml
 labels:
   - includeSelectors: false
     pairs:

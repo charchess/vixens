@@ -8,6 +8,9 @@ server:
     vixens.io/sizing.prometheus-server: "G-xlarge"
   podAnnotations:
     vixens.io/fast-start: "true"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
   deploymentAnnotations:  # Deployment metadata (Gold maturity)
     argocd.argoproj.io/sync-wave: "10"
     goldilocks.fairwinds.com/enabled: "true"
@@ -125,6 +128,9 @@ kube-state-metrics:
   priorityClassName: vixens-critical
   podAnnotations:
     vixens.io/fast-start: "true"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists

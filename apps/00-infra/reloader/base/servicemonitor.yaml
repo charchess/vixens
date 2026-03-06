@@ -1,0 +1,20 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: reloader-reloader
+  namespace: tools
+  labels:
+    app: reloader-reloader
+spec:
+  selector:
+    matchLabels:
+      app: reloader-reloader
+  namespaceSelector:
+    matchNames:
+      - tools
+  endpoints:
+    - port: metrics
+      targetPort: 9090
+      path: /metrics
+      interval: 60s

@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: tools
 components:
   - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/nometrics
 
 patches:
   - path: infisical-config-patch.yaml
