@@ -45,6 +45,8 @@ spec:
             - key: node-role.kubernetes.io/control-plane
               operator: Exists
               effect: NoSchedule
+          podAnnotations:
+            vixens.io/service-binding: "false"
   destination:
     server: https://kubernetes.default.svc
     namespace: infisical-operator-system

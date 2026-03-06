@@ -36,6 +36,7 @@ spec:
             prometheus.io/port: "2112"
             prometheus.io/path: "/metrics"
             vixens.io/fast-start: "true"
+            vixens.io/service-binding: "false"
 
           podLabels:
             vixens.io/sizing.policy-reporter: small
@@ -55,6 +56,7 @@ spec:
                 memory: 128Mi
             podAnnotations:
               vixens.io/fast-start: "true"
+              vixens.io/service-binding: "false"
 
           ui:
             enabled: true
@@ -71,6 +73,7 @@ spec:
                 memory: 128Mi
             podAnnotations:
               vixens.io/fast-start: "true"
+              vixens.io/service-binding: "false"
 
           rest:
             enabled: true
