@@ -13,6 +13,8 @@ spec:
   priorityClassName: vixens-critical
   imageName: ghcr.io/cloudnative-pg/postgresql:17.6-system-trixie
   inheritedMetadata:
+    annotations:
+      vixens.io/service-binding: "false"  # CNPG cluster pods have cnpg.io/cluster label, not app label
     labels:
       vixens.io/sizing.postgres: G-xlarge  # 2Gi memory - prevents Kyverno 128Mi fallback OOMKill
   superuserSecret:
