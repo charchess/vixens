@@ -6,6 +6,9 @@ labels:
     pairs:
       vixens.lab/environment: prod
 namespace: synology-csi
+components:
+  - ../../../../_shared/components/gold-maturity
+
 patches:
   - patch: |-
       - op: replace

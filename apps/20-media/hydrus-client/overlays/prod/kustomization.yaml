@@ -13,6 +13,7 @@ resources:
   - ingress.yaml
 
 components:
+  - ../../../../_shared/components/gold-maturity
   - ../../../../_shared/components/revision-history-limit
   - ../../../../_shared/components/base
   - ../../../../_shared/components/resources

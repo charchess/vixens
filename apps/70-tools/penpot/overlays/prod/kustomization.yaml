@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - ../../base
 components:
+  - ../../../../_shared/components/gold-maturity
   - ../../../../_shared/components/revision-history-limit
 labels:
   - pairs:

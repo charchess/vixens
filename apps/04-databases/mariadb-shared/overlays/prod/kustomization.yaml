@@ -4,6 +4,9 @@ kind: Kustomization
 namespace: databases
 resources:
   - ../../base
+components:
+  - ../../../../_shared/components/gold-maturity
+
 patches:
   - path: patch-infisical-env.yaml
   - path: resources-patch.yaml

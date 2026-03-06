@@ -9,5 +9,8 @@ labels:
   - includeSelectors: false
     pairs:
       environment: prod
+components:
+  - ../../../../_shared/components/gold-maturity
+
 patches:
   - path: patch-infisical-env.yaml
