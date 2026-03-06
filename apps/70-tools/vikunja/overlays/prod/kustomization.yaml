@@ -5,6 +5,7 @@ resources:
   - ../../base
 components:
   - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/nometrics
 
 patches:
   - target:

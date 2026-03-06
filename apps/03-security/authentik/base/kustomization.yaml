@@ -11,3 +11,4 @@ resources:
   - configmap.yaml
   - pvc.yaml
   - middleware-forward-auth.yaml
+  - servicemonitor.yaml

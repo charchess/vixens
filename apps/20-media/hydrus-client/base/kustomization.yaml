@@ -12,3 +12,4 @@ resources:
   - networkpolicy.yaml
   - infisical-secret.yaml
   - litestream-config.yaml
+  - servicemonitor.yaml

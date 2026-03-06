@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: cnpg-system
 resources:
   - ../../base
+  - servicemonitor.yaml
 labels:
   - pairs:
       environment: prod
@@ -20,6 +21,20 @@ patches:
       - op: add
         path: /metadata/annotations/vpa.kubernetes.io~1updateMode
         value: "Off"
+    target:
+      kind: Deployment
+      name: cloudnative-pg
+  # prometheus metrics: cloudnative-pg exposes /metrics on port 8080
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations/prometheus.io~1scrape
+        value: "true"
+      - op: add
+        path: /spec/template/metadata/annotations/prometheus.io~1port
+        value: "8080"
+      - op: add
+        path: /spec/template/metadata/annotations/prometheus.io~1path
+        value: "/metrics"
     target:
       kind: Deployment
       name: cloudnative-pg

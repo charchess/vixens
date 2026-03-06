@@ -19,9 +19,8 @@ spec:
         vixens.io/sizing.headlamp: V-small
       annotations:
         reloader.stakater.com/auto: "true"
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "4466"
         vixens.io/fast-start: "true"
+        vixens.io/nometrics: "true"
     spec:
       serviceAccountName: headlamp
       priorityClassName: vixens-medium

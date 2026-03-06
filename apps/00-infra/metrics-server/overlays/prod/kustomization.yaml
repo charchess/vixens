@@ -15,5 +15,19 @@ patches:
     target:
       kind: Deployment
       name: metrics-server
+  # nometrics: metrics-server uses port 10250 (HTTPS API), not a Prometheus scrape endpoint
+  - patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: metrics-server
+      spec:
+        template:
+          metadata:
+            annotations:
+              vixens.io/nometrics: "true"
+    target:
+      kind: Deployment
+      name: metrics-server
 resources:
   - ../../base

@@ -1,0 +1,20 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: authentik-server
+  namespace: auth
+  labels:
+    app: authentik-server
+spec:
+  selector:
+    matchLabels:
+      app: authentik-server
+  namespaceSelector:
+    matchNames:
+      - auth
+  endpoints:
+    - port: metrics
+      targetPort: 9300
+      path: /metrics
+      interval: 60s
