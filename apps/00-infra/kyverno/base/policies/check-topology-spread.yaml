@@ -22,7 +22,7 @@ spec:
                 - Deployment
       preconditions:
         all:
-          - key: "{{ request.object.spec.replicas || 1 }}"
+          - key: "{{ request.object.spec.replicas || `1` }}"
             operator: GreaterThan
             value: 1
       validate:
