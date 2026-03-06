@@ -1,0 +1,20 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: whisparr
+  namespace: media
+  labels:
+    app: whisparr
+spec:
+  selector:
+    matchLabels:
+      app: whisparr
+  namespaceSelector:
+    matchNames:
+      - media
+  endpoints:
+    - port: metrics
+      targetPort: 9090
+      path: /metrics
+      interval: 60s

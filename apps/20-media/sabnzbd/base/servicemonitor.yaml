@@ -1,0 +1,20 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sabnzbd
+  namespace: media
+  labels:
+    app: sabnzbd
+spec:
+  selector:
+    matchLabels:
+      app: sabnzbd
+  namespaceSelector:
+    matchNames:
+      - media
+  endpoints:
+    - port: metrics
+      targetPort: 9090
+      path: /metrics
+      interval: 60s

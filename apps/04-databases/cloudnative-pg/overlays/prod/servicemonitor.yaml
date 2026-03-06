@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudnative-pg-metrics
+  namespace: cnpg-system
+  labels:
+    app.kubernetes.io/name: cloudnative-pg
+    app.kubernetes.io/instance: cloudnative-pg
+spec:
+  selector:
+    app.kubernetes.io/instance: cloudnative-pg
+    app.kubernetes.io/name: cloudnative-pg
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: 8080
+      targetPort: metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cloudnative-pg
+  namespace: cnpg-system
+  labels:
+    app.kubernetes.io/name: cloudnative-pg
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudnative-pg
+      app.kubernetes.io/instance: cloudnative-pg
+  namespaceSelector:
+    matchNames:
+      - cnpg-system
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 60s

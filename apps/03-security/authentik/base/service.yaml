@@ -5,7 +5,7 @@ metadata:
   name: authentik
   namespace: auth
   labels:
-    app: authentik
+    app: authentik-server
 spec:
   selector:
     app: authentik-server
@@ -13,4 +13,8 @@ spec:
     - name: http
       port: 9000
       targetPort: 9000
+      protocol: TCP
+    - name: metrics
+      port: 9300
+      targetPort: 9300
       protocol: TCP

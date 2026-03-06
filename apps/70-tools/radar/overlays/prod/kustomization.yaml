@@ -8,3 +8,4 @@ resources:
 
 components:
   - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/nometrics

@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: cert-manager
 resources:
   - cluster-issuer-prod.yaml
+  - servicemonitor.yaml
 
 components:
   - ../../../../_shared/components/revision-history-limit
