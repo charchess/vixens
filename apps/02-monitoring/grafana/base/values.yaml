@@ -55,6 +55,10 @@ podAnnotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "3000"
   prometheus.io/path: "/metrics"
+annotations:  # Deployment metadata annotations (Gold maturity: sync-wave + goldilocks)
+  argocd.argoproj.io/sync-wave: "10"
+  goldilocks.fairwinds.com/enabled: "true"
+  vpa.kubernetes.io/updateMode: "Off"
 # Tolerations for control-plane nodes
 tolerations:
   - key: node-role.kubernetes.io/control-plane

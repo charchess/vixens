@@ -122,3 +122,7 @@ deployment:
   podAnnotations:
     vixens.io/fast-start: "true"
     vixens.io/service-binding: "false"
+  annotations:  # Deployment metadata (Gold maturity: sync-wave + goldilocks)
+    argocd.argoproj.io/sync-wave: "5"
+    goldilocks.fairwinds.com/enabled: "true"
+    vpa.kubernetes.io/updateMode: "Off"

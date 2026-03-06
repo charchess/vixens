@@ -4,6 +4,9 @@ kind: Kustomization
 resources:
   - ../../base
   - ingress.yaml
+components:
+  - ../../../../_shared/components/gold-maturity
+
 patches:
   - target:
       kind: InfisicalSecret
