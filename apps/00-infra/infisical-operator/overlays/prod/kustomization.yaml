@@ -6,6 +6,8 @@ resources:
 
 
 patches:
+  # Patch 1: pod-level annotations + priorityClassName
+  # Chart does not support podAnnotations or priorityClassName natively — JSON6902 is the only option.
   - patch: |-
       - op: add
         path: /spec/template/metadata/annotations/vixens.io~1fast-start
@@ -25,9 +27,13 @@ patches:
       - op: add
         path: /spec/template/metadata/annotations/prometheus.io~1scheme
         value: "https"
+      - op: add
+        path: /spec/template/spec/priorityClassName
+        value: vixens-critical
     target:
       kind: Deployment
       name: infisical-opera-controller-manager
+  # Patch 2: Deployment-level annotations (ArgoCD wave, Goldilocks VPA)
   - patch: |-
       - op: add
         path: /metadata/annotations/argocd.argoproj.io~1sync-wave
