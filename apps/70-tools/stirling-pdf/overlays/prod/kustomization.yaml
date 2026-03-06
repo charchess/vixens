@@ -7,7 +7,6 @@ resources:
   - ingress.yaml
 
 components:
-  - ../../../../_shared/components/gold-maturity
   - ../../../../_shared/components/revision-history-limit
 
 patches:
@@ -21,6 +20,20 @@ patches:
       - op: add
         path: /spec/template/metadata/labels/vixens.io~1sizing-v2
         value: "true"
+    target:
+      kind: Deployment
+      name: stirling-pdf-stirling-pdf-chart
+  # gold-maturity annotations via direct JSON patches (Helm chart lacks deploymentAnnotations support)
+  - patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "10"
+      - op: add
+        path: /metadata/annotations/goldilocks.fairwinds.com~1enabled
+        value: "true"
+      - op: add
+        path: /metadata/annotations/vpa.kubernetes.io~1updateMode
+        value: "Off"
     target:
       kind: Deployment
       name: stirling-pdf-stirling-pdf-chart
