@@ -32,6 +32,7 @@ patches:
         path: /spec/template/metadata/annotations
         value:
           vixens.io/fast-start: "true"
+          vixens.io/service-binding: "false"
     target:
       kind: StatefulSet
       name: synology-csi-controller
@@ -40,6 +41,7 @@ patches:
         path: /spec/template/metadata/annotations
         value:
           vixens.io/fast-start: "true"
+          vixens.io/service-binding: "false"
     target:
       kind: DaemonSet
       name: synology-csi-node

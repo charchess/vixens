@@ -22,6 +22,7 @@ spec:
         vixens.io/backup-profile: relaxed
       annotations:
         reloader.stakater.com/auto: "true"
+        vixens.io/service-binding: "false"
     spec:
       priorityClassName: vixens-low
       tolerations:

@@ -19,6 +19,8 @@ spec:
       labels:
         app.kubernetes.io/name: qbittorrent
         vixens.io/sizing.qbittorrent: V-medium
+      annotations:
+        vixens.io/service-binding: "false"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

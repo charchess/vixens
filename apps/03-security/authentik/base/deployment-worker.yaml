@@ -21,6 +21,7 @@ spec:
         vixens.io/backup-profile: critical
       annotations:
         reloader.stakater.com/auto: "true"
+        vixens.io/service-binding: "false"
     spec:
       priorityClassName: vixens-critical
       containers:

@@ -38,6 +38,9 @@ spec:
           limits:
             cpu: 500m
             memory: 512Mi
+
+        podAnnotations:
+          vixens.io/service-binding: "false"
   destination:
     server: https://kubernetes.default.svc
     namespace: cnpg-system
