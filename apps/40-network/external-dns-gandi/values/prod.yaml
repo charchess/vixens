@@ -33,3 +33,5 @@ sources:
 priorityClassName: vixens-high
 podLabels:
   vixens.io/sizing.external-dns: G-nano
+podAnnotations:
+  vixens.io/fast-start: "true"

@@ -16,6 +16,8 @@ spec:
       app: changedetection
   template:
     metadata:
+      annotations:
+        vixens.io/fast-start: "true"
       labels:
         app: changedetection
         vixens.io/sizing.restore-config: B-nano
