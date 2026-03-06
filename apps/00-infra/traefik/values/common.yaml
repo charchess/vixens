@@ -118,5 +118,6 @@ securityContext:
 # ============================================================================
 # Fast-start bypass (traefik starts in < 10s)
 # ============================================================================
-podAnnotations:
-  vixens.io/fast-start: "true"
+deployment:
+  podAnnotations:
+    vixens.io/fast-start: "true"
