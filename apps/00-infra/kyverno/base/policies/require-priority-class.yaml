@@ -29,6 +29,9 @@ spec:
               namespaces:
                 - kube-system
                 - kyverno
+                # Helm charts without priorityClassName support — infrastructure operators
+                - cert-manager
+                - infisical-operator-system
       validate:
         message: "A priorityClassName (starting with 'vixens-') is required for all pods."
         pattern:
