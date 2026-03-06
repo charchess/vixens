@@ -9,6 +9,9 @@ image:
   pullPolicy: IfNotPresent
   tag: 2.7.0
 replicaCount: 1
+# revisionHistoryLimit: chart template hardcodes 10; kustomize patch on Helm multi-source
+# does not apply to /spec/revisionHistoryLimit. Accepted as known limitation.
+# revisionHistoryLimit: 3  # would require chart support or ArgoCD server-side apply
 # SB-medium sizing: 512Mi req / 2Gi lim (Kyverno mutates resources via this label)
 # Note: resources below are for reference; Kyverno sizing-v2-mutate policy overrides them
 # SB-medium = 50m/500m cpu, 512Mi/2Gi mem — fits on saturated nodes, adequate for Java+LibreOffice
@@ -55,6 +58,10 @@ envs:
     value: /
   - name: SECURITY_ENABLELOGIN
     value: "false"
+  # JVM heap cap: 40% of 2Gi limit = ~820Mi heap + ~200Mi metaspace
+  # Leaves ~1Gi headroom for LibreOffice process within 2Gi container limit
+  - name: JAVA_TOOL_OPTIONS
+    value: "-XX:MaxRAMPercentage=40 -XX:MaxMetaspaceSize=200m -XX:+UseG1GC"
 securityContext:
   enabled: true
   fsGroup: 1000
