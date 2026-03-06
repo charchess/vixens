@@ -24,11 +24,3 @@ patches:
     target:
       kind: Deployment
       name: it-tools
-  # nometrics: it-tools is a UI with no Prometheus /metrics endpoint
-  - patch: |-
-      - op: add
-        path: /spec/template/metadata/annotations/vixens.io~1nometrics
-        value: "true"
-    target:
-      kind: Deployment
-      name: it-tools

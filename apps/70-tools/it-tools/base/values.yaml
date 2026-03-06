@@ -8,6 +8,7 @@ podLabels:
 podAnnotations:
   vixens.io/fast-start: "true"
   vixens.io/service-binding: "false"
+  vixens.io/nometrics: "true"
 image:
   repository: ghcr.io/corentinth/it-tools
   pullPolicy: IfNotPresent
