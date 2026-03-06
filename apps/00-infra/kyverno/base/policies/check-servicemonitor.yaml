@@ -7,8 +7,9 @@ metadata:
     policies.kyverno.io/title: Verify ServiceMonitor Presence
     policies.kyverno.io/category: Maturity (Diamond)
     policies.kyverno.io/description: >-
-      Ensures that applications exposing metrics have an associated ServiceMonitor.
-      Only applies when the ServiceMonitor CRD (Prometheus Operator) is installed.
+      Ensures that applications exposing metrics via Prometheus Operator have an
+      associated ServiceMonitor. Only evaluated for apps that opt-in via the
+      vixens.io/servicemonitor annotation (must be set to 'true').
 spec:
   validationFailureAction: Audit
   background: true
@@ -19,25 +20,20 @@ spec:
           - resources:
               kinds:
                 - Pod
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.annotations.\"vixens.io/servicemonitor\" || 'false' }}"
+            operator: Equals
+            value: "true"
       context:
-        - name: sm_crd_exists
-          apiCall:
-            urlPath: "/apis/apiextensions.k8s.io/v1/customresourcedefinitions/servicemonitors.monitoring.coreos.com"
-            jmesPath: "metadata.name || ''"
         - name: sm_count
           apiCall:
             urlPath: "/apis/monitoring.coreos.com/v1/namespaces/{{request.namespace}}/servicemonitors"
             jmesPath: "items[?spec.selector.matchLabels.app == '{{request.object.metadata.labels.app}}'] | length(@)"
-      preconditions:
-        all:
-          - key: "{{ request.object.metadata.annotations.\"prometheus.io/scrape\" || 'false' }}"
-            operator: Equals
-            value: "true"
-          - key: "{{ sm_crd_exists }}"
-            operator: NotEquals
-            value: ""
       validate:
-        message: "Metrics annotations found but no ServiceMonitor targets app={{request.object.metadata.labels.app}} (Level Diamond)."
+        message: >-
+          vixens.io/servicemonitor=true but no ServiceMonitor targets
+          app={{request.object.metadata.labels.app}} (Diamond tier).
         deny:
           conditions:
             all:

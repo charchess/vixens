@@ -25,6 +25,11 @@ spec:
               namespaces:
                 - kube-system
                 - kyverno
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.labels.app || '' }}"
+            operator: NotEquals
+            value: ""
       context:
         - name: netpol_count
           apiCall:
