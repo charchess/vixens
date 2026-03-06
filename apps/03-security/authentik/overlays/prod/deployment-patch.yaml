@@ -5,6 +5,7 @@ metadata:
   name: authentik-server
   namespace: auth
 spec:
+  revisionHistoryLimit: 3
   strategy:
     type: Recreate
   template:
