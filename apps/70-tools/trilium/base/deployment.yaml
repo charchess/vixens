@@ -68,5 +68,4 @@ spec:
       securityContext:
         runAsUser: 0
         fsGroup: 1000
-        seccompProfile:
-          type: RuntimeDefault
+        # no seccompProfile: image uses busybox su (needs setuid syscall).
