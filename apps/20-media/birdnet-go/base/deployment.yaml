@@ -47,7 +47,7 @@ spec:
               mountPath: /data
       containers:
         - name: birdnet-go
-          image: ghcr.io/tphakala/birdnet-go:v0.6.4
+          image: ghcr.io/tphakala/birdnet-go:v0.6.3
           imagePullPolicy: Always
           ports:
             - name: http
