@@ -35,10 +35,6 @@ spec:
           ports:
             - containerPort: 8080
               name: http
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
           volumeMounts:
             - name: trilium-data
               mountPath: /home/node/trilium-data
@@ -70,10 +66,7 @@ spec:
           persistentVolumeClaim:
             claimName: trilium-data-pvc
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
+        runAsUser: 0
         fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
