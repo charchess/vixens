@@ -32,9 +32,25 @@ spec:
         - name: trilium
           image: triliumnext/notes:v0.95.0
           imagePullPolicy: IfNotPresent
+          # init container handles chown; run node directly
+          command: ["node", "./main.cjs"]
+          workingDir: /usr/src/app
           ports:
             - containerPort: 8080
               name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            # override K8s service env injection (TRILIUM_PORT conflicts)
+            - name: TRILIUM_PORT
+              value: "8080"
           volumeMounts:
             - name: trilium-data
               mountPath: /home/node/trilium-data
@@ -66,6 +82,10 @@ spec:
           persistentVolumeClaim:
             claimName: trilium-data-pvc
       securityContext:
-        runAsUser: 0
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
         fsGroup: 1000
-        # no seccompProfile: image uses busybox su (needs setuid syscall).
+        fsGroupChangePolicy: Always
+        seccompProfile:
+          type: RuntimeDefault
