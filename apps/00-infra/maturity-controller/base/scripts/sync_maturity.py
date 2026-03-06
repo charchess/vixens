@@ -17,6 +17,9 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 TIERS = ["Bronze", "Silver", "Gold", "Platinum", "Emerald", "Diamond", "Orichalcum"]
 WORKLOAD_KINDS = ["deployment", "statefulset", "daemonset"]
+# Only consider scope kinds that represent workload resources
+# Ingress, Service, ConfigMap, etc. should not affect workload maturity scores
+ALLOWED_SCOPE_KINDS = {"Pod", "ReplicaSet", "Deployment", "StatefulSet", "DaemonSet", "Job", "CronJob"}
 
 
 def run_cmd(cmd):
@@ -64,6 +67,11 @@ def sync_maturity():
         ns = scope.get("namespace")
         kind = scope.get("kind")
         name = scope.get("name")
+
+        # Skip non-workload scopes (Ingress, Service, ConfigMap, etc.)
+        # They pollute the maturity score of the associated workload
+        if kind not in ALLOWED_SCOPE_KINDS:
+            continue
         ts_str = report["metadata"].get("creationTimestamp", "1970-01-01T00:00:00Z")
         ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
 
