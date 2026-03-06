@@ -80,6 +80,9 @@ spec:
             - containerPort: 9000
               name: http
               protocol: TCP
+            - containerPort: 9300
+              name: metrics
+              protocol: TCP
           envFrom:
             - secretRef:
                 name: authentik-secrets

@@ -12,3 +12,4 @@ resources:
   - infisical-secret.yaml
   - litestream-config.yaml
   - vpa.yaml
+  - servicemonitor.yaml

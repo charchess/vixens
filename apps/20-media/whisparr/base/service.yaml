@@ -9,6 +9,11 @@ spec:
   selector:
     app: whisparr
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 6969
       targetPort: 6969
+    - name: metrics
+      protocol: TCP
+      port: 9090
+      targetPort: 9090

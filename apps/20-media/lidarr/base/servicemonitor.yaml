@@ -1,0 +1,20 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: lidarr
+  namespace: media
+  labels:
+    app: lidarr
+spec:
+  selector:
+    matchLabels:
+      app: lidarr
+  namespaceSelector:
+    matchNames:
+      - media
+  endpoints:
+    - port: metrics
+      targetPort: 9090
+      path: /metrics
+      interval: 60s

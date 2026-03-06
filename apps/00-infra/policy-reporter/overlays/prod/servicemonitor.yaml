@@ -1,0 +1,19 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: policy-reporter-kyverno-plugin
+  namespace: policy-reporter
+  labels:
+    app.kubernetes.io/name: kyverno-plugin
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kyverno-plugin
+  namespaceSelector:
+    matchNames:
+      - policy-reporter
+  endpoints:
+    - port: rest
+      path: /metrics
+      interval: 60s

@@ -1,0 +1,19 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: mealie
+  namespace: mealie
+  labels:
+    app: mealie
+spec:
+  selector:
+    matchLabels:
+      app: mealie
+  namespaceSelector:
+    matchNames:
+      - mealie
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 60s

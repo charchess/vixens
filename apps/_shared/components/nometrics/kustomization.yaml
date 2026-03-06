@@ -1,0 +1,51 @@
+#
+# Kustomize Component: No Metrics (nometrics)
+#
+# Marks an application as explicitly NOT exposing Prometheus metrics.
+# This satisfies the check-metrics Gold policy via the vixens.io/nometrics: "true"
+# exclusion annotation on the pod template.
+#
+# Use for applications that:
+#   - Are web UIs or dashboards (no /metrics endpoint)
+#   - Are pure webhooks or gRPC services
+#   - Are databases/brokers without a Prometheus exporter sidecar
+#   - Are infrastructure components managed externally (e.g. Talos-managed)
+#
+# DO NOT use for apps that genuinely expose a /metrics endpoint.
+# For those, use vixens.io/nometrics: "false" OR the _shared/components/metrics component.
+#
+# Usage in overlay:
+#   components:
+#     - ../../../../_shared/components/nometrics
+#
+# Reference: Kyverno policy check-metrics (Maturity Gold)
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+      spec:
+        template:
+          metadata:
+            annotations:
+              vixens.io/nometrics: "true"
+
+  - target:
+      kind: StatefulSet
+    patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: all-statefulsets
+      spec:
+        template:
+          metadata:
+            annotations:
+              vixens.io/nometrics: "true"

@@ -1,0 +1,40 @@
+---
+# ServiceMonitor for argocd-repo-server (metrics port 8084)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-repo-server
+  namespace: argocd
+  labels:
+    app: argocd-repo-server
+spec:
+  selector:
+    matchLabels:
+      app: argocd-repo-server
+  namespaceSelector:
+    matchNames:
+      - argocd
+  endpoints:
+    - targetPort: 8084
+      path: /metrics
+      interval: 60s
+---
+# ServiceMonitor for argocd-server (metrics port 8083)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-server
+  namespace: argocd
+  labels:
+    app: argocd-server
+spec:
+  selector:
+    matchLabels:
+      app: argocd-server
+  namespaceSelector:
+    matchNames:
+      - argocd
+  endpoints:
+    - targetPort: 8083
+      path: /metrics
+      interval: 60s
