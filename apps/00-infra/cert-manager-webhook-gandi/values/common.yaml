@@ -19,4 +19,9 @@ tolerations:
 # Pod sizing labels
 podLabels:
   vixens.io/sizing.cert-manager-webhook-gandi: G-nano
-# podAnnotations not supported by this chart - handled via Kustomize overlay
+# Try podAnnotations — chart may not support, but harmless if ignored
+# Actual annotation applied via kustomize overlay patch (cert-manager-webhook-gandi is a known case)
+podAnnotations:
+  vixens.io/fast-start: "true"
+  vixens.io/service-binding: "false"
+  vixens.io/nometrics: "true"
