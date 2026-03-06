@@ -2,27 +2,36 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: cert-manager
-# gold-maturity annotations are applied via JSON patches below
-  # (component cannot patch Helm resources, only Git-defined resources)
+# gold-maturity annotations are applied via strategic merge patches below.
+# The SINTEF chart (v0.5.2) does not render any annotations in spec.template.metadata,
+# so JSON6902 op:add on individual annotation keys fails silently when the parent
+# /spec/template/metadata/annotations path does not exist.
+# Strategic merge patches handle the absent-parent case correctly.
 
 patches:
   - path: gandi-infisical-secret-patch.yaml
     target:
       kind: InfisicalSecret
       name: gandi-credentials-sync
+  # Patch 1: pod-level annotations (strategic merge — works even when annotations map is absent)
+  # JSON6902 op:add fails silently here because the chart renders no spec.template.metadata.annotations
   - patch: |-
-      - op: add
-        path: /spec/template/metadata/annotations/vixens.io~1fast-start
-        value: "true"
-      - op: add
-        path: /spec/template/metadata/annotations/vixens.io~1service-binding
-        value: "false"
-      - op: add
-        path: /spec/template/metadata/annotations/vixens.io~1nometrics
-        value: "true"
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: cert-manager-webhook-gandi
+        namespace: cert-manager
+      spec:
+        template:
+          metadata:
+            annotations:
+              vixens.io/fast-start: "true"
+              vixens.io/service-binding: "false"
+              vixens.io/nometrics: "true"
     target:
       kind: Deployment
       name: cert-manager-webhook-gandi
+  # Patch 2: Deployment-level annotations (ArgoCD wave, Goldilocks VPA)
   - patch: |-
       - op: add
         path: /metadata/annotations/argocd.argoproj.io~1sync-wave
