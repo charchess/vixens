@@ -1,0 +1,13 @@
+---
+# Add fast-start bypass for check-startup-probe policy.
+# trivy-operator is a Go binary that starts in < 1s — no startupProbe needed.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trivy-trivy-operator
+  namespace: security
+spec:
+  template:
+    metadata:
+      annotations:
+        vixens.io/fast-start: "true"

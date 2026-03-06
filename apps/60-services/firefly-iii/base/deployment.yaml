@@ -128,6 +128,13 @@ spec:
               port: http
             initialDelaySeconds: 30
             periodSeconds: 15
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
         - name: config-syncer
           image: rclone/rclone:1.73
           securityContext:
