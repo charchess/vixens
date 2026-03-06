@@ -33,11 +33,7 @@ spec:
                 vixens.io/service-binding: "false"
       preconditions:
         all:
-          # Skip if bypass annotation is present
-          - key: "{{ request.object.metadata.annotations.\"vixens.io/service-binding\" || 'unset' }}"
-            operator: NotEquals
-            value: "false"
-          # Skip if pod has no 'app' label (JMESPath cannot evaluate missing key)
+          # Skip if pod has no 'app' label (prevents JMESPath Unknown key error in background scan)
           - key: "{{ request.object.metadata.labels.app || '' }}"
             operator: NotEquals
             value: ""
