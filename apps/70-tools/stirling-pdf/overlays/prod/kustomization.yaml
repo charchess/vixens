@@ -6,8 +6,8 @@ resources:
   - ../../base
   - ingress.yaml
 
-components:
-  - ../../../../_shared/components/revision-history-limit
+# Note: components: not used here as ArgoCD multi-source kustomize may not support it for Helm-rendered resources
+  # revisionHistoryLimit is hardcoded=10 in chart template — patched below
 
 patches:
   - patch: |-
@@ -34,6 +34,14 @@ patches:
       - op: add
         path: /metadata/annotations/vpa.kubernetes.io~1updateMode
         value: "Off"
+    target:
+      kind: Deployment
+      name: stirling-pdf-stirling-pdf-chart
+  # revisionHistoryLimit: chart hardcodes 10, patch to 3 (gold requirement)
+  - patch: |-
+      - op: replace
+        path: /spec/revisionHistoryLimit
+        value: 3
     target:
       kind: Deployment
       name: stirling-pdf-stirling-pdf-chart
