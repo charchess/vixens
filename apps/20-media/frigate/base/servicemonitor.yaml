@@ -1,0 +1,20 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: frigate
+  namespace: media
+  labels:
+    app: frigate
+spec:
+  selector:
+    matchLabels:
+      app: frigate
+  namespaceSelector:
+    matchNames:
+      - media
+  endpoints:
+    - port: metrics
+      targetPort: 9090
+      path: /metrics
+      interval: 60s

@@ -11,6 +11,7 @@ labels:
       environment: prod
 components:
   - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/nometrics
 
 patches:
   - path: patch-infisical-env.yaml

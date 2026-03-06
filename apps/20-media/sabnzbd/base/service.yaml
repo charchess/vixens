@@ -11,6 +11,10 @@ spec:
       targetPort: 8080
       protocol: TCP
       name: http
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
   selector:
     app: sabnzbd
   type: ClusterIP

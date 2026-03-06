@@ -1,0 +1,20 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vaultwarden
+  namespace: services
+  labels:
+    app: vaultwarden
+spec:
+  selector:
+    matchLabels:
+      app: vaultwarden
+  namespaceSelector:
+    matchNames:
+      - services
+  endpoints:
+    - port: metrics
+      targetPort: 9090
+      path: /metrics
+      interval: 60s

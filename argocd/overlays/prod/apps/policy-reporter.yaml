@@ -62,6 +62,9 @@ spec:
             podAnnotations:
               vixens.io/fast-start: "true"
               vixens.io/service-binding: "false"
+              prometheus.io/scrape: "true"
+              prometheus.io/port: "8080"
+              prometheus.io/path: "/metrics"
             annotations:  # Deployment metadata (Gold maturity)
               argocd.argoproj.io/sync-wave: "10"
               goldilocks.fairwinds.com/enabled: "true"
@@ -85,6 +88,7 @@ spec:
             podAnnotations:
               vixens.io/fast-start: "true"
               vixens.io/service-binding: "false"
+              vixens.io/nometrics: "true"  # policy-reporter-ui is a web UI with no /metrics endpoint
             annotations:  # Deployment metadata (Gold maturity)
               argocd.argoproj.io/sync-wave: "10"
               goldilocks.fairwinds.com/enabled: "true"

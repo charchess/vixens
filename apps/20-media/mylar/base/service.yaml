@@ -9,6 +9,11 @@ spec:
   selector:
     app: mylar
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 8090
       targetPort: 8090
+    - name: metrics
+      protocol: TCP
+      port: 9090
+      targetPort: 9090

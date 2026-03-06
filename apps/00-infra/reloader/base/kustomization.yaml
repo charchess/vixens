@@ -4,6 +4,8 @@ kind: Kustomization
 namespace: tools
 resources:
   - manifests.yaml
+  - service.yaml
+  - servicemonitor.yaml
 
 patches:
   - patch: |
