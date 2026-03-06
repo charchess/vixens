@@ -6,6 +6,8 @@ server:
   priorityClassName: vixens-critical
   podLabels:
     vixens.io/sizing.prometheus-server: "G-xlarge"
+  podAnnotations:
+    vixens.io/fast-start: "true"
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
@@ -30,6 +32,8 @@ extraScrapeConfigs: ""
 alertmanager:
   enabled: true
   priorityClassName: vixens-critical
+  podAnnotations:
+    vixens.io/fast-start: "true"
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
@@ -86,6 +90,8 @@ alertmanager:
 nodeExporter:
   enabled: true
   priorityClassName: vixens-critical
+  podAnnotations:
+    vixens.io/fast-start: "true"
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
@@ -106,6 +112,8 @@ prometheus-pushgateway:
 kube-state-metrics:
   enabled: true
   priorityClassName: vixens-critical
+  podAnnotations:
+    vixens.io/fast-start: "true"
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
