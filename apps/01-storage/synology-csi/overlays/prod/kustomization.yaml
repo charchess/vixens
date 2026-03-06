@@ -27,5 +27,21 @@ patches:
     target:
       kind: StorageClass
       name: synelia-iscsi-delete
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations
+        value:
+          vixens.io/fast-start: "true"
+    target:
+      kind: StatefulSet
+      name: synology-csi-controller
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations
+        value:
+          vixens.io/fast-start: "true"
+    target:
+      kind: DaemonSet
+      name: synology-csi-node
 resources:
   - ../../base
