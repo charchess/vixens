@@ -4,6 +4,9 @@ kind: Kustomization
 namespace: tools
 resources:
   - ../../base
+components:
+  - ../../../../_shared/components/gold-maturity
+
 patches:
   - target:
       kind: InfisicalSecret

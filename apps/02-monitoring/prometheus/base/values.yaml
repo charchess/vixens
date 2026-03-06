@@ -8,6 +8,10 @@ server:
     vixens.io/sizing.prometheus-server: "G-xlarge"
   podAnnotations:
     vixens.io/fast-start: "true"
+  deploymentAnnotations:  # Deployment metadata (Gold maturity)
+    argocd.argoproj.io/sync-wave: "10"
+    goldilocks.fairwinds.com/enabled: "true"
+    vpa.kubernetes.io/updateMode: "Off"
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
@@ -110,6 +114,10 @@ prometheus-pushgateway:
   enabled: false
 # Kube-state-metrics subchart (metrics on Kubernetes objects)
 kube-state-metrics:
+  annotations:  # Deployment metadata (Gold maturity: kube-state-metrics)
+    argocd.argoproj.io/sync-wave: "10"
+    goldilocks.fairwinds.com/enabled: "true"
+    vpa.kubernetes.io/updateMode: "Off"
   enabled: true
   priorityClassName: vixens-critical
   podAnnotations:
