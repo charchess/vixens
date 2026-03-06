@@ -36,3 +36,6 @@ podLabels:
 podAnnotations:
   vixens.io/fast-start: "true"
   vixens.io/service-binding: "false"
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "7979"
+  prometheus.io/path: "/metrics"
