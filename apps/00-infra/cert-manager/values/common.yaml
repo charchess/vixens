@@ -29,6 +29,9 @@ podLabels:
 podAnnotations:
   vixens.io/fast-start: "true"
   vixens.io/service-binding: "false"
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9402"
+  prometheus.io/path: "/metrics"
 # Webhook component
 webhook:
   tolerations:
@@ -40,6 +43,7 @@ webhook:
   podAnnotations:
     vixens.io/fast-start: "true"
     vixens.io/service-binding: "false"
+    vixens.io/nometrics: "true"  # cert-manager webhook has no Prometheus metrics endpoint
 # CA Injector component
 cainjector:
   tolerations:
@@ -51,6 +55,7 @@ cainjector:
   podAnnotations:
     vixens.io/fast-start: "true"
     vixens.io/service-binding: "false"
+    vixens.io/nometrics: "true"  # cainjector has no Prometheus metrics endpoint
 # Startup API check tolerations
 startupapicheck:
   tolerations:
