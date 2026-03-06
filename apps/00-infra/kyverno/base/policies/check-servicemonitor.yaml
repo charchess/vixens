@@ -25,6 +25,9 @@ spec:
           - key: "{{ request.object.metadata.annotations.\"prometheus.io/scrape\" || 'false' }}"
             operator: Equals
             value: "true"
+          - key: "{{ request.object.metadata.labels.app || '' }}"
+            operator: NotEquals
+            value: ""
       context:
         - name: sm_count
           apiCall:
