@@ -29,6 +29,11 @@ spec:
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
       ref: values
+    # Kustomize overlay for pod annotations (chart has no podAnnotations support)
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: prod-stable
+      path: apps/00-infra/cert-manager-webhook-gandi/overlays/prod
+      kustomize: {}
   syncPolicy:
     automated:
       prune: true
