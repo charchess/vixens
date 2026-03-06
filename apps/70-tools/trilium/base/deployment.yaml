@@ -1,0 +1,79 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trilium
+  labels:
+    app.kubernetes.io/name: trilium
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: trilium
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: trilium
+        vixens.io/sizing.trilium: G-small
+        vixens.io/backup-profile: relaxed
+      annotations:
+        vixens.io/service-binding: "false"
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      priorityClassName: vixens-low
+      containers:
+        - name: trilium
+          image: triliumnext/notes:v0.95.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: trilium-data
+              mountPath: /home/node/trilium-data
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+      volumes:
+        - name: trilium-data
+          persistentVolumeClaim:
+            claimName: trilium-data-pvc
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
