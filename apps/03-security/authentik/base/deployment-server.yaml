@@ -6,6 +6,10 @@ metadata:
   namespace: auth
   labels:
     app: authentik-server
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+    goldilocks.fairwinds.com/enabled: "true"
+    vpa.kubernetes.io/updateMode: "Off"
 spec:
   replicas: 1
   strategy:
