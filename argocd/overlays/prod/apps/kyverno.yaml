@@ -34,6 +34,10 @@ spec:
               limits:
                 cpu: "1"
                 memory: 1Gi
+            podAnnotations:
+              prometheus.io/scrape: "true"
+              prometheus.io/port: "8000"
+              prometheus.io/path: "/metrics"
             rbac:
               clusterRole:
                 extraResources:
@@ -54,6 +58,10 @@ spec:
               limits:
                 cpu: 200m
                 memory: 256Mi
+            podAnnotations:
+              prometheus.io/scrape: "true"
+              prometheus.io/port: "8000"
+              prometheus.io/path: "/metrics"
 
           cleanupController:
             replicas: 1
@@ -77,6 +85,10 @@ spec:
               limits:
                 cpu: 200m
                 memory: 256Mi
+            podAnnotations:
+              prometheus.io/scrape: "true"
+              prometheus.io/port: "8000"
+              prometheus.io/path: "/metrics"
 
           reportsController:
             replicas: 1
@@ -91,6 +103,10 @@ spec:
               limits:
                 cpu: 200m
                 memory: 256Mi
+            podAnnotations:
+              prometheus.io/scrape: "true"
+              prometheus.io/port: "8000"
+              prometheus.io/path: "/metrics"
 
           webhooksCleanup:
             enabled: true

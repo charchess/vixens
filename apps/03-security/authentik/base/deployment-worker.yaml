@@ -22,6 +22,7 @@ spec:
       annotations:
         reloader.stakater.com/auto: "true"
         vixens.io/service-binding: "false"
+        vixens.io/nometrics: "true"  # authentik-worker has no Prometheus metrics endpoint
     spec:
       priorityClassName: vixens-critical
       containers:
