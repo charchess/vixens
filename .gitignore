@@ -126,6 +126,7 @@ docs/_build/
 # ============= PROJET SPÉCIFIQUE =============
 # Claude AI artefacts
 .claude/
+.kube/
 .aider*
 
 # Secrets management (Infisical credentials)
