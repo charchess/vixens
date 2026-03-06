@@ -15,15 +15,15 @@ spec:
     # Helm chart
     - repoURL: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/
       chart: secrets-operator
-      targetRevision: 0.10.5
+      targetRevision: 0.10.26
       helm:
         values: |
           controllerManager:
             manager:
               image:
                 repository: infisical/kubernetes-operator
-                tag: v0.10.1
-              priorityClassName: vixens-critical
+                tag: v0.10.26
+              # NOTE: chart does not support priorityClassName — applied via kustomize JSON6902 patch
               resources:
                 limits:
                   cpu: 500m
@@ -31,17 +31,6 @@ spec:
                 requests:
                   cpu: 10m
                   memory: 64Mi
-            kubeRbacProxy:
-              image:
-                repository: gcr.io/kubebuilder/kube-rbac-proxy
-                tag: v0.13.1
-              resources:
-                limits:
-                  cpu: 100m
-                  memory: 64Mi
-                requests:
-                  cpu: 5m
-                  memory: 16Mi
             tolerations:
               - key: node-role.kubernetes.io/control-plane
                 operator: Exists
