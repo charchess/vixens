@@ -13,6 +13,8 @@ spec:
       app: loki
   template:
     metadata:
+      annotations:
+        vixens.io/fast-start: "true"
       labels:
         app: loki
         vixens.io/sizing.loki: G-large
