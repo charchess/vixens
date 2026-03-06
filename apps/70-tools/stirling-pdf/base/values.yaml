@@ -9,7 +9,15 @@ image:
   pullPolicy: IfNotPresent
   tag: 2.7.0
 replicaCount: 1
-# resources managed by Kyverno sizing (B-large: req=1Gi, lim=2Gi — Java+LibreOffice combo)
+# Java+LibreOffice combo needs real memory — 512Mi req for scheduling, 3Gi limit for safety
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: "2"
+    memory: 3Gi
+priorityClassName: vixens-low
 # Tolerations for control-plane nodes if needed
 tolerations:
   - key: node-role.kubernetes.io/control-plane
