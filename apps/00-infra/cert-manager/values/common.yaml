@@ -28,6 +28,7 @@ podLabels:
   vixens.io/sizing.cert-manager: G-nano
 podAnnotations:
   vixens.io/fast-start: "true"
+  vixens.io/service-binding: "false"
 # Webhook component
 webhook:
   tolerations:
@@ -38,6 +39,7 @@ webhook:
     vixens.io/sizing.webhook: G-nano
   podAnnotations:
     vixens.io/fast-start: "true"
+    vixens.io/service-binding: "false"
 # CA Injector component
 cainjector:
   tolerations:
@@ -48,6 +50,7 @@ cainjector:
     vixens.io/sizing.cainjector: G-nano
   podAnnotations:
     vixens.io/fast-start: "true"
+    vixens.io/service-binding: "false"
 # Startup API check tolerations
 startupapicheck:
   tolerations:
@@ -56,3 +59,4 @@ startupapicheck:
       effect: NoSchedule
   podAnnotations:
     vixens.io/fast-start: "true"
+    vixens.io/service-binding: "false"

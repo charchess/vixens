@@ -35,3 +35,4 @@ podLabels:
   vixens.io/sizing.external-dns: G-nano
 podAnnotations:
   vixens.io/fast-start: "true"
+  vixens.io/service-binding: "false"

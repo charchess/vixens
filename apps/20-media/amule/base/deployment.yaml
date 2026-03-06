@@ -20,6 +20,8 @@ spec:
         app.kubernetes.io/name: amule
         vixens.io/sizing.amule: V-small
         vixens.io/sizing.configure-proxy: G-nano
+      annotations:
+        vixens.io/service-binding: "false"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

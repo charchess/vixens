@@ -19,6 +19,8 @@ spec:
       labels:
         app.kubernetes.io/name: pyload
         vixens.io/sizing.pyload: V-small
+      annotations:
+        vixens.io/service-binding: "false"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

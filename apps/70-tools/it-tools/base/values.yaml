@@ -7,6 +7,7 @@ podLabels:
   vixens.io/sizing.it-tools: B-nano
 podAnnotations:
   vixens.io/fast-start: "true"
+  vixens.io/service-binding: "false"
 image:
   repository: ghcr.io/corentinth/it-tools
   pullPolicy: IfNotPresent

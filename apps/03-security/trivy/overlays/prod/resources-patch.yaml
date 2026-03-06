@@ -9,6 +9,8 @@ spec:
     metadata:
       labels:
         vixens.io/sizing.trivy-operator: G-large
+      annotations:
+        vixens.io/service-binding: "false"
     spec:
       priorityClassName: vixens-medium
       containers:
