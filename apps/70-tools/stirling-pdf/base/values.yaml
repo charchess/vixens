@@ -9,14 +9,16 @@ image:
   pullPolicy: IfNotPresent
   tag: 2.7.0
 replicaCount: 1
-# Java+LibreOffice combo — low request for scheduling on tight nodes, 3Gi limit for safety
+# SB-medium sizing: 512Mi req / 2Gi lim (Kyverno mutates resources via this label)
+# Note: resources below are for reference; Kyverno sizing-v2-mutate policy overrides them
+# SB-medium = 50m/500m cpu, 512Mi/2Gi mem — fits on saturated nodes, adequate for Java+LibreOffice
 resources:
   requests:
-    cpu: 100m
-    memory: 256Mi
+    cpu: 50m
+    memory: 512Mi
   limits:
-    cpu: "2"
-    memory: 3Gi
+    cpu: 500m
+    memory: 2Gi
 priorityClassName: vixens-low
 # Tolerations for control-plane nodes if needed
 tolerations:
@@ -57,7 +59,7 @@ securityContext:
   enabled: true
   fsGroup: 1000
 podLabels:
-  vixens.io/sizing.stirling-pdf-chart: B-large
+  vixens.io/sizing.stirling-pdf-chart: SB-medium
 podAnnotations:
   # fast-start: liveness probe confirms HTTP is ready within 30s; LibreOffice loads lazily
   vixens.io/fast-start: "true"
