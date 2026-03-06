@@ -9,11 +9,11 @@ image:
   pullPolicy: IfNotPresent
   tag: 2.7.0
 replicaCount: 1
-# Java+LibreOffice combo needs real memory — 512Mi req for scheduling, 3Gi limit for safety
+# Java+LibreOffice combo — low request for scheduling on tight nodes, 3Gi limit for safety
 resources:
   requests:
     cpu: 100m
-    memory: 512Mi
+    memory: 256Mi
   limits:
     cpu: "2"
     memory: 3Gi
