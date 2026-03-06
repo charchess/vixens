@@ -5,6 +5,7 @@ metadata:
   name: authentik-worker
   namespace: auth
 spec:
+  revisionHistoryLimit: 3
   template:
     spec:
       containers:
