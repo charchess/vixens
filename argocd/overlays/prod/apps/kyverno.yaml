@@ -154,6 +154,11 @@ spec:
         - .spec.rules[].validate.allowExistingViolations
         - .spec.rules[].context[].apiCall.method
         - .spec.rules[].validate.foreach[].context[].apiCall.method
+        - .spec.rules[].match.any[].resources.group
+        - .spec.rules[].match.any[].resources.namespaces
+        - .spec.rules[].match.any[].resources.namespaceSelector
+        - .spec.rules[].match.all[].resources.group
+        - .spec.rules[].match.all[].resources.namespaces
       jsonPointers:
         - /status
   syncPolicy:
