@@ -1,0 +1,16 @@
+---
+# Global ignoreDifferences for ArgoCD — applied to ALL Applications managed by this ArgoCD instance.
+# Ignores spec.revisionHistoryLimit drift on Deployments and StatefulSets managed by Helm charts
+# that do not natively support the revisionHistoryLimit value.
+# The actual value is enforced by the Kyverno mutating policy (mutate-revision-history-limit).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+data:
+  resource.customizations.ignoreDifferences.apps_Deployment: |
+    jqPathExpressions:
+      - '.spec.revisionHistoryLimit'
+  resource.customizations.ignoreDifferences.apps_StatefulSet: |
+    jqPathExpressions:
+      - '.spec.revisionHistoryLimit'

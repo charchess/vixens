@@ -5,11 +5,11 @@ metadata:
   name: check-servicemonitor
   annotations:
     policies.kyverno.io/title: Verify ServiceMonitor Presence
-    policies.kyverno.io/category: Maturity (Diamond)
+    policies.kyverno.io/category: Maturity (Gold)
     policies.kyverno.io/description: >-
-      Ensures that applications exposing metrics via Prometheus Operator have an
-      associated ServiceMonitor. Only evaluated for apps that opt-in via the
-      vixens.io/servicemonitor annotation (must be set to 'true').
+      Ensures that applications exposing Prometheus metrics (prometheus.io/scrape: "true")
+      have an associated ServiceMonitor resource. Requires the ServiceMonitor CRD
+      (prometheus-operator-crds) to be installed. Evaluated for all scraped apps (Gold tier).
 spec:
   validationFailureAction: Audit
   background: true
@@ -22,7 +22,7 @@ spec:
                 - Pod
       preconditions:
         all:
-          - key: "{{ request.object.metadata.annotations.\"vixens.io/servicemonitor\" || 'false' }}"
+          - key: "{{ request.object.metadata.annotations.\"prometheus.io/scrape\" || 'false' }}"
             operator: Equals
             value: "true"
       context:
@@ -32,8 +32,8 @@ spec:
             jmesPath: "items[?spec.selector.matchLabels.app == '{{request.object.metadata.labels.app}}'] | length(@)"
       validate:
         message: >-
-          vixens.io/servicemonitor=true but no ServiceMonitor targets
-          app={{request.object.metadata.labels.app}} (Diamond tier).
+          Gold tier: prometheus.io/scrape=true but no ServiceMonitor targets
+          app={{request.object.metadata.labels.app}} — add a ServiceMonitor or remove the scrape annotation.
         deny:
           conditions:
             all:

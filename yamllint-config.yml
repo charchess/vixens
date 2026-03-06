@@ -7,6 +7,7 @@ ignore: |
   **/templates/
   **/manifests.yaml
   **/manifests.raw.yaml
+  apps/00-infra/prometheus-operator-crds/
 
 rules:
   # ============ ERREURS CRITIQUES ============

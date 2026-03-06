@@ -1,0 +1,50 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: mutate-revision-history-limit
+  annotations:
+    policies.kyverno.io/title: Mutate Revision History Limit
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Deployment, StatefulSet
+    policies.kyverno.io/description: >-
+      Automatically sets revisionHistoryLimit=3 on all Deployments and StatefulSets
+      that do not already have it set. Limits the number of old ReplicaSets retained
+      to reduce etcd storage usage. Works in conjunction with ArgoCD global
+      ignoreDifferences to prevent drift detection on Helm-managed charts that do not
+      support this value natively.
+spec:
+  mutateExistingOnPolicyUpdate: true
+  rules:
+    - name: set-revision-history-limit-deployment
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.revisionHistoryLimit || '-1' }}"
+            operator: Equals
+            value: "-1"
+      mutate:
+        patchStrategicMerge:
+          spec:
+            revisionHistoryLimit: 3
+
+    - name: set-revision-history-limit-statefulset
+      match:
+        any:
+          - resources:
+              kinds:
+                - StatefulSet
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.revisionHistoryLimit || '-1' }}"
+            operator: Equals
+            value: "-1"
+      mutate:
+        patchStrategicMerge:
+          spec:
+            revisionHistoryLimit: 3
