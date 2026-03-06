@@ -17,6 +17,8 @@ spec:
       app: netbird-signal
   template:
     metadata:
+      annotations:
+        vixens.io/fast-start: "true"
       labels:
         app: netbird-signal
         vixens.io/sizing.signal: V-small
@@ -82,6 +84,8 @@ spec:
       app: netbird-relay
   template:
     metadata:
+      annotations:
+        vixens.io/fast-start: "true"
       labels:
         app: netbird-relay
         vixens.io/sizing.relay: V-small

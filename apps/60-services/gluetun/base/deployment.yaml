@@ -14,6 +14,8 @@ spec:
       app: gluetun
   template:
     metadata:
+      annotations:
+        vixens.io/fast-start: "true"
       labels:
         app: gluetun
         vixens.io/sizing.gluetun: B-nano
