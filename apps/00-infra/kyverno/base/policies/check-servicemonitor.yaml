@@ -5,6 +5,9 @@ metadata:
   name: check-servicemonitor
   annotations:
     policies.kyverno.io/title: Verify ServiceMonitor Presence
+    # Disable autogen: the API context uses request.object which fails in background scans
+    # for Deployment/ReplicaSet/DaemonSet. Pods are the correct scope for this annotation check.
+    pod-policies.kyverno.io/autogen-controllers: none
     policies.kyverno.io/category: Maturity (Gold)
     policies.kyverno.io/description: >-
       Ensures that applications exposing Prometheus metrics (prometheus.io/scrape: "true")
