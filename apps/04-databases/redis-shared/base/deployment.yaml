@@ -16,6 +16,8 @@ spec:
       labels:
         app: redis-shared
         vixens.io/sizing.redis: V-small
+      annotations:
+        vixens.io/fast-start: "true"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

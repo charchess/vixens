@@ -50,3 +50,6 @@ securityContext:
   fsGroup: 1000
 podLabels:
   vixens.io/sizing.stirling-pdf-chart: B-large
+podAnnotations:
+  # fast-start: liveness probe confirms HTTP is ready within 30s; LibreOffice loads lazily
+  vixens.io/fast-start: "true"

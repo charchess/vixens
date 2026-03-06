@@ -7,6 +7,9 @@ metadata:
 spec:
   revisionHistoryLimit: 3
   template:
+    metadata:
+      annotations:
+        vixens.io/fast-start: "true"
     spec:
       priorityClassName: vixens-medium
       containers:
@@ -27,6 +30,9 @@ metadata:
 spec:
   revisionHistoryLimit: 3
   template:
+    metadata:
+      annotations:
+        vixens.io/fast-start: "true"
     spec:
       priorityClassName: vixens-medium
       containers:
@@ -47,6 +53,9 @@ metadata:
 spec:
   revisionHistoryLimit: 3
   template:
+    metadata:
+      annotations:
+        vixens.io/fast-start: "true"
     spec:
       priorityClassName: vixens-medium
       containers:
