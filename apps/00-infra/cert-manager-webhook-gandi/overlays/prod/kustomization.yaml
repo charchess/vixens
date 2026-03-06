@@ -17,6 +17,9 @@ patches:
       - op: add
         path: /spec/template/metadata/annotations/vixens.io~1service-binding
         value: "false"
+      - op: add
+        path: /spec/template/metadata/annotations/vixens.io~1nometrics
+        value: "true"
     target:
       kind: Deployment
       name: cert-manager-webhook-gandi

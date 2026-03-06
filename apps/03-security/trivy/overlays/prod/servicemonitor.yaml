@@ -1,0 +1,19 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: trivy-operator
+  namespace: security
+  labels:
+    app.kubernetes.io/name: trivy-operator
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: trivy-operator
+  namespaceSelector:
+    matchNames:
+      - security
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 60s

@@ -9,6 +9,11 @@ spec:
   selector:
     app: lidarr
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 8686
       targetPort: 8686
+    - name: metrics
+      protocol: TCP
+      port: 9090
+      targetPort: 9090

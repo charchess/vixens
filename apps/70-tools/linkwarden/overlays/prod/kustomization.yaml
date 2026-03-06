@@ -6,6 +6,7 @@ labels:
       environment: prod
 components:
   - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/nometrics
 
 patches:
   - path: patch-nextauth-url.yaml

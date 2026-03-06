@@ -1,0 +1,22 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: infisical-operator
+  namespace: infisical-operator-system
+  labels:
+    app.kubernetes.io/name: secrets-operator
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: secrets-operator
+  namespaceSelector:
+    matchNames:
+      - infisical-operator-system
+  endpoints:
+    - port: https
+      scheme: https
+      path: /metrics
+      interval: 60s
+      tlsConfig:
+        insecureSkipVerify: true

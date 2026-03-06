@@ -5,3 +5,4 @@ resources:
   - namespace.yaml
   - argocd-crds.yaml
   - argocd-install.yaml
+  - servicemonitor.yaml
