@@ -19,6 +19,8 @@ spec:
     type: Recreate
   template:
     metadata:
+      annotations:
+        vixens.io/fast-start: "true"
       labels:
         app: penpot-backend
         component: backend

@@ -16,6 +16,8 @@ spec:
       app: booklore-mariadb
   template:
     metadata:
+      annotations:
+        vixens.io/fast-start: "true"
       labels:
         app: booklore-mariadb
         vixens.io/sizing.mariadb: V-small

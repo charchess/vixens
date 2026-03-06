@@ -30,6 +30,7 @@ spec:
         vixens.io/sizing.openclaw: V-large
         vixens.io/sizing.data-syncer: V-nano
       annotations:
+        vixens.io/fast-start: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "18789"
         prometheus.io/path: "/metrics"

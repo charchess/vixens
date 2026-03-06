@@ -17,6 +17,8 @@ spec:
       app: penpot-exporter
   template:
     metadata:
+      annotations:
+        vixens.io/fast-start: "true"
       labels:
         app: penpot-exporter
         component: exporter
