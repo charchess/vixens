@@ -41,6 +41,7 @@ spec:
             argocd.argoproj.io/sync-wave: "10"
             goldilocks.fairwinds.com/enabled: "true"
             vpa.kubernetes.io/updateMode: "Off"
+          revisionHistoryLimit: 3
 
           podLabels:
             vixens.io/sizing.policy-reporter: small
@@ -65,6 +66,7 @@ spec:
               argocd.argoproj.io/sync-wave: "10"
               goldilocks.fairwinds.com/enabled: "true"
               vpa.kubernetes.io/updateMode: "Off"
+            revisionHistoryLimit: 3
 
           ui:
             enabled: true
@@ -86,6 +88,7 @@ spec:
               argocd.argoproj.io/sync-wave: "10"
               goldilocks.fairwinds.com/enabled: "true"
               vpa.kubernetes.io/updateMode: "Off"
+              revisionHistoryLimit: 3
 
           rest:
             enabled: true
