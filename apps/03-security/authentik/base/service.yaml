@@ -5,7 +5,7 @@ metadata:
   name: authentik
   namespace: auth
   labels:
-    app: authentik
+    app: authentik-server
 spec:
   selector:
     app: authentik-server
