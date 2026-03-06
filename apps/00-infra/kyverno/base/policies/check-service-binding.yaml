@@ -31,19 +31,20 @@ spec:
           - resources:
               annotations:
                 vixens.io/service-binding: "false"
-      preconditions:
-        all:
-          # Skip if pod has no 'app' label (prevents JMESPath Unknown key error in background scan)
-          - key: "{{ request.object.metadata.labels.app || '' }}"
-            operator: NotEquals
-            value: ""
       context:
+        # Safely read app label — returns '' if absent, avoiding JMESPath errors
+        - name: app_label
+          variable:
+            jmesPath: "request.object.metadata.labels.app || ''"
         - name: service_count
           apiCall:
             urlPath: "/api/v1/namespaces/{{request.namespace}}/services"
-            jmesPath: "items[?spec.selector.app == '{{request.object.metadata.labels.app}}'] | length(@)"
+            jmesPath: "items[?spec.selector.app == '{{app_label}}'] | length(@)"
       validate:
-        message: "No Service found targeting app={{request.object.metadata.labels.app}} in namespace {{request.namespace}}."
+        message: >-
+          No Service found targeting app={{app_label}} in namespace
+          {{request.namespace}}. Add vixens.io/service-binding: 'false'
+          to bypass (controllers/workers/daemons that don't receive traffic).
         deny:
           conditions:
             all:
