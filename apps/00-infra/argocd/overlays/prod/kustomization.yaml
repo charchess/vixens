@@ -61,6 +61,7 @@ patches:
           metadata:
             annotations:
               vixens.io/fast-start: "true"
+              vixens.io/service-binding: "false"
     target:
       kind: Deployment
   - patch: |
@@ -73,6 +74,7 @@ patches:
           metadata:
             annotations:
               vixens.io/fast-start: "true"
+              vixens.io/service-binding: "false"
     target:
       kind: StatefulSet
 

@@ -29,6 +29,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
         prometheus.io/path: "/metrics"
+        vixens.io/service-binding: "false"
     spec:
       priorityClassName: vixens-medium
       securityContext:

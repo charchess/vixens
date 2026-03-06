@@ -208,6 +208,8 @@ spec:
         group: com.stakater.platform
         provider: stakater
         version: v1.4.12
+      annotations:
+        vixens.io/service-binding: "false"
     spec:
       tolerations:
         - effect: NoSchedule

@@ -10,6 +10,7 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/service-binding: "false"
     spec:
       priorityClassName: vixens-medium
       containers:
@@ -33,6 +34,7 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/service-binding: "false"
     spec:
       priorityClassName: vixens-medium
       containers:
@@ -56,6 +58,7 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/service-binding: "false"
     spec:
       priorityClassName: vixens-medium
       containers:

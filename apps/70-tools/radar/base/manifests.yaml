@@ -158,6 +158,7 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/service-binding: "false"
       labels:
         app.kubernetes.io/name: radar
         app.kubernetes.io/instance: radar

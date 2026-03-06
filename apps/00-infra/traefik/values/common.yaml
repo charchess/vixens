@@ -121,3 +121,4 @@ securityContext:
 deployment:
   podAnnotations:
     vixens.io/fast-start: "true"
+    vixens.io/service-binding: "false"

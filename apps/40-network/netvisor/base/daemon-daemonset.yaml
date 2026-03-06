@@ -13,6 +13,7 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/service-binding: "false"
       labels:
         app: netvisor-daemon
         vixens.io/sizing.daemon: G-nano

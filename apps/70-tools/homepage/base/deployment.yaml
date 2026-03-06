@@ -23,6 +23,8 @@ spec:
         app.kubernetes.io/name: homepage
         vixens.io/sizing.copy-initial-config: G-nano
         vixens.io/sizing.homepage: V-small
+      annotations:
+        vixens.io/service-binding: "false"
     spec:
       serviceAccountName: homepage
       tolerations:
