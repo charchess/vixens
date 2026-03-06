@@ -1,7 +1,7 @@
 # Velero - Final SOTA 2026 Configuration
 image:
   repository: velero/velero
-  tag: v1.17.2
+  tag: v1.18.0
   pullPolicy: IfNotPresent
 
 configuration:
