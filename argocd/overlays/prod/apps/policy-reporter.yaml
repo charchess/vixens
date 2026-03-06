@@ -37,6 +37,10 @@ spec:
             prometheus.io/path: "/metrics"
             vixens.io/fast-start: "true"
             vixens.io/service-binding: "false"
+          annotations:  # Deployment metadata (Gold maturity)
+            argocd.argoproj.io/sync-wave: "10"
+            goldilocks.fairwinds.com/enabled: "true"
+            vpa.kubernetes.io/updateMode: "Off"
 
           podLabels:
             vixens.io/sizing.policy-reporter: small
@@ -57,6 +61,10 @@ spec:
             podAnnotations:
               vixens.io/fast-start: "true"
               vixens.io/service-binding: "false"
+            annotations:  # Deployment metadata (Gold maturity)
+              argocd.argoproj.io/sync-wave: "10"
+              goldilocks.fairwinds.com/enabled: "true"
+              vpa.kubernetes.io/updateMode: "Off"
 
           ui:
             enabled: true
@@ -74,6 +82,10 @@ spec:
             podAnnotations:
               vixens.io/fast-start: "true"
               vixens.io/service-binding: "false"
+            annotations:  # Deployment metadata (Gold maturity)
+              argocd.argoproj.io/sync-wave: "10"
+              goldilocks.fairwinds.com/enabled: "true"
+              vpa.kubernetes.io/updateMode: "Off"
 
           rest:
             enabled: true

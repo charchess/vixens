@@ -4,6 +4,9 @@ commonLabels:
   environment: prod
 kind: Kustomization
 namespace: monitoring
+components:
+  - ../../../../_shared/components/gold-maturity
+
 patches:
   - path: patch-alertmanager-command.yaml
     target:
