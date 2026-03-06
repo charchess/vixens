@@ -10,3 +10,4 @@ components:
 patches:
   - path: resources-patch.yaml
   - path: node-collector-patch.yaml
+  - path: fast-start-patch.yaml
