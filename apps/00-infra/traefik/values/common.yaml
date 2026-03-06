@@ -114,3 +114,9 @@ securityContext:
       - NET_BIND_SERVICE
     drop:
       - ALL
+
+# ============================================================================
+# Fast-start bypass (traefik starts in < 10s)
+# ============================================================================
+podAnnotations:
+  vixens.io/fast-start: "true"

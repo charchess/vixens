@@ -19,6 +19,8 @@ spec:
       labels:
         app: mariadb-shared
         vixens.io/sizing.mariadb: V-medium
+      annotations:
+        vixens.io/fast-start: "true"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
