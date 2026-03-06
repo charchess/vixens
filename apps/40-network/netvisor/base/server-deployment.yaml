@@ -16,6 +16,7 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/service-binding: "false"
       labels:
         app: netvisor-server
         vixens.io/sizing.server: V-small
