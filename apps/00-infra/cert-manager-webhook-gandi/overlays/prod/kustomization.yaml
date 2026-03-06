@@ -7,5 +7,15 @@ patches:
     target:
       kind: InfisicalSecret
       name: gandi-credentials-sync
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations/vixens.io~1fast-start
+        value: "true"
+      - op: add
+        path: /spec/template/metadata/annotations/vixens.io~1service-binding
+        value: "false"
+    target:
+      kind: Deployment
+      name: cert-manager-webhook-gandi
 resources:
   - ../../base
