@@ -15,7 +15,7 @@ metadata:
       (prometheus-operator-crds) to be installed. Evaluated for all scraped apps (Gold tier).
 spec:
   validationFailureAction: Audit
-  background: true
+  background: false  # API context uses request.object — unavailable in background scans
   rules:
     - name: check-servicemonitor-exists
       match:
