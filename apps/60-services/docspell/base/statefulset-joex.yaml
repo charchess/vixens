@@ -17,6 +17,8 @@ spec:
       component: joex
   template:
     metadata:
+      annotations:
+        vixens.io/fast-start: "true"
       labels:
         app: docspell
         component: joex

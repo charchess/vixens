@@ -16,6 +16,8 @@ controller:
     readOnlyRootFilesystem: true
   podLabels:
     vixens.io/sizing.goldilocks-controller: G-nano
+  podAnnotations:
+    vixens.io/fast-start: "true"
 
 dashboard:
   tolerations:
@@ -34,3 +36,5 @@ dashboard:
     readOnlyRootFilesystem: true
   podLabels:
     vixens.io/sizing.goldilocks-dashboard: V-small
+  podAnnotations:
+    vixens.io/fast-start: "true"
