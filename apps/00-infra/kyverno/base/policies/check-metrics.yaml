@@ -24,6 +24,12 @@ spec:
           - resources:
               annotations:
                 vixens.io/nometrics: "true"
+          # Exclude system namespaces managed by Talos/operators (no annotation control)
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - synology-csi
       validate:
         message: "Metrics annotations (prometheus.io/scrape) are required for maturity Level 3 (Gold)."
         anyPattern:
