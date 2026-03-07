@@ -5,3 +5,4 @@ resources:
   - infisical-secret.yaml
   - statefulset.yaml
   - service.yaml
+  - networkpolicy.yaml
