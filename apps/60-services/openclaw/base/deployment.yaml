@@ -32,6 +32,7 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/nometrics: "true"
+        vixens.io/no-long-connections: "true"
     spec:
       securityContext:
         runAsUser: 1000

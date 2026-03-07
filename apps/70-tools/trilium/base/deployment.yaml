@@ -22,6 +22,7 @@ spec:
         vixens.io/backup-profile: relaxed
       annotations:
         vixens.io/service-binding: "false"
+        vixens.io/no-long-connections: "true"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

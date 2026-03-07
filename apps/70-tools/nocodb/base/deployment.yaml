@@ -23,6 +23,7 @@ spec:
       annotations:
         reloader.stakater.com/auto: "true"
         vixens.io/service-binding: "false"
+        vixens.io/no-long-connections: "true"
     spec:
       priorityClassName: vixens-low
       tolerations:
