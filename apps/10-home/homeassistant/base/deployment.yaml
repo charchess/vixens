@@ -64,7 +64,7 @@ spec:
             - sh
             - -c
           args:
-            - mkdir -p /config/python_packages && chown -R 1000:1000 /config
+            - mkdir -p /config/python_packages && chown 1000:1000 /config && find /config -mindepth 1 -maxdepth 1 -not -name 'lost+found' -exec chown -R 1000:1000 {} +
           volumeMounts:
             - name: config
               mountPath: /config
