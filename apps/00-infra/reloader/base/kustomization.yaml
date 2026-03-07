@@ -24,5 +24,6 @@ patches:
             labels:
               vixens.io/sizing.reloader-reloader: G-nano
               vixens.io/service-binding: "false"
+              vixens.io/backup-profile: "relaxed"
           spec:
             priorityClassName: vixens-high

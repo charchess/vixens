@@ -22,6 +22,7 @@ spec:
       labels:
         app: netvisor-server
         vixens.io/sizing.server: V-small
+        vixens.io/backup-profile: "relaxed"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

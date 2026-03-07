@@ -23,6 +23,7 @@ spec:
       labels:
         app: jellyfin
         vixens.io/sizing.jellyfin: V-medium
+        vixens.io/backup-profile: "relaxed"
     spec:
       priorityClassName: vixens-medium
       tolerations:
