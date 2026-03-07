@@ -18,6 +18,7 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/explicitly-allow-root: "true"
       labels:
         app: booklore-mariadb
         vixens.io/sizing.mariadb: V-small
