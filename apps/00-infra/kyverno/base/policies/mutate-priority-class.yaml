@@ -9,7 +9,13 @@
 #
 # Specific rules for charts without podLabels support:
 #   - infisical-operator (v0.10.x): match control-plane=controller-manager
-# NOTE: goldilocks chart ignores controller.podLabels — priorityClass applied via kubectl patch.
+#   - goldilocks (v10.2.x): chart ignores controller/dashboard.podLabels — match on component label
+#   - cert-manager-webhook-gandi (SINTEF v0.5.x): no podLabels/podAnnotations in chart
+#
+# Why patchesJson6902 (not patchStrategicMerge):
+#   patchStrategicMerge on spec.priorityClassName causes Go to include priority: 0 implicitly,
+#   which the PriorityAdmission controller rejects. patchesJson6902 with op: add sets only the
+#   requested field, no side effects.
 #
 # Why this approach:
 #   In ArgoCD multi-source, kustomize source 2 cannot patch resources rendered by
@@ -45,9 +51,10 @@ spec:
             operator: NotEquals
             value: ""
       mutate:
-        patchStrategicMerge:
-          spec:
-            priorityClassName: "{{ request.object.metadata.labels.\"vixens.io/priority-class\" }}"
+        patchesJson6902: |-
+          - op: add
+            path: /spec/priorityClassName
+            value: "{{ request.object.metadata.labels.\"vixens.io/priority-class\" }}"
 
     # Rule 2: infisical-operator — chart has no podLabels support
     # Match on existing chart label: control-plane=controller-manager in infisical-operator-system
@@ -69,6 +76,80 @@ spec:
             operator: Equals
             value: ""
       mutate:
-        patchStrategicMerge:
-          spec:
-            priorityClassName: vixens-critical
+        patchesJson6902: |-
+          - op: add
+            path: /spec/priorityClassName
+            value: "vixens-critical"
+
+    # Rule 3: goldilocks controller — chart (v10.2.x) ignores controller.podLabels
+    # Match on chart-native labels: app.kubernetes.io/name + app.kubernetes.io/component
+    - name: inject-priority-class-goldilocks-controller
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - monitoring
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: goldilocks
+                  app.kubernetes.io/component: controller
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.priorityClassName || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /spec/priorityClassName
+            value: "vixens-critical"
+
+    # Rule 4: goldilocks dashboard — chart (v10.2.x) ignores dashboard.podLabels
+    - name: inject-priority-class-goldilocks-dashboard
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - monitoring
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: goldilocks
+                  app.kubernetes.io/component: dashboard
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.priorityClassName || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /spec/priorityClassName
+            value: "vixens-low"
+
+    # Rule 5: cert-manager-webhook-gandi (SINTEF v0.5.x) — no podLabels/podAnnotations in chart
+    # Match on chart-native label: app.kubernetes.io/name in cert-manager namespace
+    - name: inject-priority-class-cert-manager-webhook-gandi
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - cert-manager
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: cert-manager-webhook-gandi
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.priorityClassName || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /spec/priorityClassName
+            value: "vixens-critical"
