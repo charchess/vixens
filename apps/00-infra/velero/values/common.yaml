@@ -85,6 +85,7 @@ kubectl:
 
 podAnnotations:
   vixens.io/fast-start: "true"
+  vixens.io/noingressneeded: "true"
 annotations:  # Deployment metadata (Gold maturity: sync-wave + goldilocks)
   argocd.argoproj.io/sync-wave: "10"
   goldilocks.fairwinds.com/enabled: "true"
@@ -106,6 +107,7 @@ nodeAgent:
   priorityClassName: vixens-critical
   podAnnotations:
     vixens.io/fast-start: "true"
+    vixens.io/noingressneeded: "true"
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
