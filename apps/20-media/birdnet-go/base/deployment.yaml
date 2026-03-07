@@ -41,7 +41,7 @@ spec:
             - -c
             - |
               chown -R 1000:1000 /data
-              rm -rf /data/*.db-litestream /data/.*-litestream
+              rm -rf /data/*.db-litestream /data/.*-litestream /data/birdnet.db /data/birdnet.db-wal /data/birdnet.db-shm
           volumeMounts:
             - name: data
               mountPath: /data
