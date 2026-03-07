@@ -19,9 +19,7 @@ spec:
         any:
           - resources:
               kinds:
-                - VulnerabilityReport
-              group: aquasecurity.github.io
-              version: v1alpha1
+                - aquasecurity.github.io/v1alpha1/VulnerabilityReport
       exclude:
         any:
           - resources:
