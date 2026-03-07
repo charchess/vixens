@@ -82,7 +82,7 @@ spec:
                 vixens.io/explicitly-allow-root: "true"
       preconditions:
         all:
-          - key: "{{ request.object.spec.initContainers[] | length(@) }}"
+          - key: '{{ length(request.object.spec.initContainers || `[]`) }}'
             operator: GreaterThanOrEquals
             value: 1
       mutate:
