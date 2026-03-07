@@ -5,9 +5,15 @@
 #   allowPrivilegeEscalation: false
 #   capabilities.drop: [ALL]
 #
-# This mutation ensures ALL containers (including sidecars and initContainers)
-# get the minimum required security posture, even for Helm-managed workloads
-# where Kustomize patches cannot be applied.
+# This mutation ensures ALL main containers AND non-root init containers
+# get the minimum required security posture.
+#
+# ROOT INIT CONTAINERS (fix-permissions, chown, etc.) are intentionally
+# excluded from the initContainer mutation rule: containers without an
+# explicit runAsUser (or with runAsUser=0) are skipped, so that chown
+# operations are not broken by the capability drop.
+# Per-app deployments that need CAP_CHOWN on init containers should set
+# capabilities.add: [CHOWN] explicitly (see HomeAssistant as reference).
 #
 # Bypass: set vixens.io/explicitly-allow-root: "true" on pod template
 # annotations for apps that genuinely require capabilities (e.g. gluetun NET_ADMIN,
@@ -82,6 +88,11 @@ spec:
       mutate:
         foreach:
           - list: "request.object.spec.initContainers"
+            preconditions:
+              all:
+                - key: "{{ element.securityContext.runAsUser || `0` }}"
+                  operator: NotEquals
+                  value: 0
             patchStrategicMerge:
               spec:
                 initContainers:
