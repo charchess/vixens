@@ -4,14 +4,11 @@ commonLabels:
   environment: prod
 kind: Kustomization
 namespace: monitoring
-# gold-maturity annotations via direct JSON patches (SSA for Helm chart resources)
-  # The component targets only kustomize-defined resources, not Helm-rendered ones
-
+# NOTE: ArgoCD multi-source limitation — kustomize patches cannot target Helm-rendered resources.
+# patch-alertmanager-command.yaml targeted StatefulSet spec.template (dead code, removed).
+# gold-maturity annotations on StatefulSet also dead code (removed).
+# alertmanager command override is not needed: ExtraEnv + config.global handles Discord webhook.
 patches:
-  - path: patch-alertmanager-command.yaml
-    target:
-      kind: StatefulSet
-      name: prometheus-alertmanager
   - path: patch-infisical-env.yaml
     target:
       kind: InfisicalSecret
@@ -20,19 +17,6 @@ patches:
     target:
       kind: InfisicalSecret
       name: alertmanager-secrets-sync
-  - patch: |-
-      - op: add
-        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
-        value: "10"
-      - op: add
-        path: /metadata/annotations/goldilocks.fairwinds.com~1enabled
-        value: "true"
-      - op: add
-        path: /metadata/annotations/vpa.kubernetes.io~1updateMode
-        value: "Off"
-    target:
-      kind: StatefulSet
-      name: prometheus-alertmanager
 resources:
   - ../../base
   - servicemonitors.yaml

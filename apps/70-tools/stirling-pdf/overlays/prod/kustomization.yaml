@@ -6,24 +6,16 @@ resources:
   - ../../base
   - ingress.yaml
 
-# Note: components: not used here as ArgoCD multi-source kustomize may not support it for Helm-rendered resources
-  # revisionHistoryLimit is hardcoded=10 in chart template — patched below
+# NOTE: ArgoCD multi-source limitation — kustomize patches cannot target Helm-rendered resources.
+# The following are active (target Deployment metadata, not pod template):
+#   - gold-maturity annotations: argocd sync-wave, goldilocks, vpa
+# The following are dead code (target spec.template or spec.revisionHistoryLimit):
+#   - pod template labels (vixens.io/sizing-v2, vpa-mode) → handled via Helm values
+#   - revisionHistoryLimit → hardcoded=10 in chart, cannot be patched from kustomize in multi-source
 
 patches:
-  - patch: |-
-      - op: add
-        path: /metadata/labels/vixens.io~1sizing-v2
-        value: "true"
-      - op: add
-        path: /metadata/labels/vixens.io~1vpa-mode
-        value: "Off"
-      - op: add
-        path: /spec/template/metadata/labels/vixens.io~1sizing-v2
-        value: "true"
-    target:
-      kind: Deployment
-      name: stirling-pdf-stirling-pdf-chart
   # gold-maturity annotations via direct JSON patches (Helm chart lacks deploymentAnnotations support)
+  # These target Deployment metadata and work correctly in ArgoCD multi-source.
   - patch: |-
       - op: add
         path: /metadata/annotations/argocd.argoproj.io~1sync-wave
@@ -34,14 +26,6 @@ patches:
       - op: add
         path: /metadata/annotations/vpa.kubernetes.io~1updateMode
         value: "Off"
-    target:
-      kind: Deployment
-      name: stirling-pdf-stirling-pdf-chart
-  # revisionHistoryLimit: chart hardcodes 10, patch to 3 (gold requirement)
-  - patch: |-
-      - op: replace
-        path: /spec/revisionHistoryLimit
-        value: 3
     target:
       kind: Deployment
       name: stirling-pdf-stirling-pdf-chart

@@ -11,6 +11,7 @@ components:
 
 patches:
   # gold-maturity annotations via direct JSON patches (Helm chart doesn't support deploymentAnnotations)
+  # These target Deployment metadata (not pod template) and work correctly in ArgoCD multi-source.
   - patch: |-
       - op: add
         path: /metadata/annotations/argocd.argoproj.io~1sync-wave

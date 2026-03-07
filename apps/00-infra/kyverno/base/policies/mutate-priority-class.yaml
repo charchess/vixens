@@ -1,0 +1,74 @@
+---
+# Kyverno Policy: Mutate Priority Class
+#
+# Injects spec.priorityClassName into pods based on a pod label.
+#
+# Generic rule (works for charts that support podLabels):
+#   Add label to pod template:  vixens.io/priority-class: vixens-critical
+#   Kyverno intercepts admission and injects spec.priorityClassName from the label value.
+#
+# Specific rule for infisical-operator:
+#   The infisical-operator chart (v0.10.x) does not support podLabels in the template.
+#   This rule matches on existing chart labels to inject priorityClassName.
+#
+# Why this approach:
+#   In ArgoCD multi-source, kustomize source 2 cannot patch resources rendered by
+#   Helm source 1. This policy makes the injection reproducible from Git.
+#
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: mutate-priority-class
+  annotations:
+    policies.kyverno.io/title: Mutate Priority Class
+    policies.kyverno.io/category: Resource Management
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Injects spec.priorityClassName from pod label vixens.io/priority-class.
+      Also handles charts without podLabels support via specific match rules.
+spec:
+  validationFailureAction: Audit
+  background: false
+  rules:
+    # Rule 1: Generic — inject priorityClassName from pod label
+    - name: inject-priority-class-from-label
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      preconditions:
+        all:
+          # Only act when the label is present
+          - key: "{{ request.object.metadata.labels.\"vixens.io/priority-class\" || '' }}"
+            operator: NotEquals
+            value: ""
+      mutate:
+        patchStrategicMerge:
+          spec:
+            priorityClassName: "{{ request.object.metadata.labels.\"vixens.io/priority-class\" }}"
+
+    # Rule 2: infisical-operator — chart has no podLabels support
+    # Match on existing chart label: control-plane=controller-manager in infisical-operator-system
+    - name: inject-priority-class-infisical-operator
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - infisical-operator-system
+              selector:
+                matchLabels:
+                  control-plane: controller-manager
+      preconditions:
+        all:
+          # Only inject if not already set (idempotent)
+          - key: "{{ request.object.spec.priorityClassName || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchStrategicMerge:
+          spec:
+            priorityClassName: vixens-critical
