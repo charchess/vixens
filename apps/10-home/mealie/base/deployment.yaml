@@ -32,6 +32,7 @@ spec:
         prometheus.io/port: "9000"
         prometheus.io/path: "/metrics"
         vixens.io/no-long-connections: "true"
+        vixens.io/explicitly-allow-root: "true"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
