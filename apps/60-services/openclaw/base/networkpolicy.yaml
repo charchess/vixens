@@ -1,0 +1,24 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: openclaw
+spec:
+  podSelector:
+    matchLabels:
+      app: openclaw
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow ingress from Traefik (HTTP)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 18789
+  egress:
+    # Allow all egress (homelab: DNS, inter-app, external APIs)
+    - {}

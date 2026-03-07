@@ -1,0 +1,24 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: netbird-relay
+spec:
+  podSelector:
+    matchLabels:
+      app: netbird-relay
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow ingress from Traefik (HTTP)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 33080
+  egress:
+    # Allow all egress (homelab: DNS, inter-app, external APIs)
+    - {}

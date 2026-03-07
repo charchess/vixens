@@ -9,3 +9,4 @@ resources:
   - mariadb-service.yaml
   - pvc.yaml
   - infisical-secret.yaml
+  - networkpolicy.yaml
