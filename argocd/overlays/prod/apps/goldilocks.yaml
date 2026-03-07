@@ -36,3 +36,19 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+  ignoreDifferences:
+    # goldilocks chart (v10.2.0) does not support controller/dashboard.podLabels.
+    # priorityClassName injected via kubectl patch on Deployment (not in Helm output).
+    # ignoreDifferences prevents ArgoCD from removing the field on re-sync.
+    - group: apps
+      kind: Deployment
+      name: goldilocks-controller
+      namespace: monitoring
+      jsonPointers:
+        - /spec/template/spec/priorityClassName
+    - group: apps
+      kind: Deployment
+      name: goldilocks-dashboard
+      namespace: monitoring
+      jsonPointers:
+        - /spec/template/spec/priorityClassName
