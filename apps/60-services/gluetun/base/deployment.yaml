@@ -16,6 +16,8 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/no-long-connections: "true"
+        vixens.io/explicitly-allow-root: "true"
       labels:
         app: gluetun
         vixens.io/sizing.gluetun: B-nano
