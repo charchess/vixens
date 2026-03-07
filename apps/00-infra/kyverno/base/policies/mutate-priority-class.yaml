@@ -24,7 +24,7 @@
 # Why apiCall for priority value (DRY):
 #   The numeric priority value is read from the PriorityClass object (source of truth).
 #   This keeps rules consistent with _shared/priority-classes/ definitions.
-#   Fallback value (100000) is used if the apiCall fails (e.g. during cluster bootstrap).
+#   Fallback value (100000) is used if the PriorityClass object exists but has no value field.
 #
 # Why this approach:
 #   In ArgoCD multi-source, kustomize source 2 cannot patch resources rendered by
@@ -76,7 +76,7 @@ spec:
     # Rule 2: infisical-operator — chart has no podLabels support
     # Match on existing chart label: control-plane=controller-manager in infisical-operator-system
     # Reads priority value from PriorityClass API (DRY — source of truth: _shared/priority-classes/).
-    # Fallback: 100000 if apiCall fails (e.g. bootstrap ordering).
+    # If the apiCall HTTP request fails, failurePolicy:Ignore on the Kyverno webhook admits the pod
     - name: inject-priority-class-infisical-operator
       match:
         any:
@@ -106,12 +106,12 @@ spec:
             value: "vixens-critical"
           - op: add
             path: /spec/priority
-            value: "{{ priorityValue }}"
+            value: {{ priorityValue }}
 
     # Rule 3: goldilocks controller — chart (v10.2.x) ignores controller.podLabels
     # Match on chart-native labels: app.kubernetes.io/name + app.kubernetes.io/component
     # Reads priority value from PriorityClass API (DRY — source of truth: _shared/priority-classes/).
-    # Fallback: 100000 if apiCall fails (e.g. bootstrap ordering).
+    # If the apiCall HTTP request fails, failurePolicy:Ignore on the Kyverno webhook admits the pod
     - name: inject-priority-class-goldilocks-controller
       match:
         any:
@@ -141,7 +141,7 @@ spec:
             value: "vixens-critical"
           - op: add
             path: /spec/priority
-            value: "{{ priorityValue }}"
+            value: {{ priorityValue }}
 
     # Rule 4: goldilocks dashboard — chart (v10.2.x) ignores dashboard.podLabels
     # vixens-low = value 0 = K8s default → no PriorityAdmission conflict, no need to patch priority.
@@ -171,7 +171,7 @@ spec:
     # Rule 5: cert-manager-webhook-gandi (SINTEF v0.5.x) — no podLabels/podAnnotations in chart
     # Match on chart-native label: app.kubernetes.io/name in cert-manager namespace
     # Reads priority value from PriorityClass API (DRY — source of truth: _shared/priority-classes/).
-    # Fallback: 100000 if apiCall fails (e.g. bootstrap ordering).
+    # If the apiCall HTTP request fails, failurePolicy:Ignore on the Kyverno webhook admits the pod
     - name: inject-priority-class-cert-manager-webhook-gandi
       match:
         any:
@@ -200,4 +200,4 @@ spec:
             value: "vixens-critical"
           - op: add
             path: /spec/priority
-            value: "{{ priorityValue }}"
+            value: {{ priorityValue }}
