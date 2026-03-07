@@ -19,6 +19,8 @@ spec:
       labels:
         app: music-assistant
         vixens.io/sizing.music-assistant: V-medium
+      annotations:
+        vixens.io/no-long-connections: "true"
     spec:
       securityContext:
         fsGroup: 1000
