@@ -16,6 +16,7 @@ controller:
     readOnlyRootFilesystem: true
   podLabels:
     vixens.io/sizing.goldilocks-controller: G-nano
+    vixens.io/priority-class: vixens-critical
   deployment:
     podAnnotations:
       vixens.io/fast-start: "true"
@@ -43,6 +44,7 @@ dashboard:
     readOnlyRootFilesystem: true
   podLabels:
     vixens.io/sizing.goldilocks-dashboard: V-small
+    vixens.io/priority-class: vixens-low
   deployment:
     podAnnotations:
       vixens.io/fast-start: "true"

@@ -30,9 +30,6 @@ spec:
                 - kube-system
                 - kyverno
                 - synology-csi
-                # Helm charts without podAnnotations support — infrastructure operators
-                - cert-manager
-                - infisical-operator-system
       validate:
         message: "Metrics annotations (prometheus.io/scrape) are required for maturity Level 3 (Gold)."
         anyPattern:
