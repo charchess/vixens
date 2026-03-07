@@ -7,3 +7,4 @@ resources:
   - service.yaml
   - pvc.yaml
   - ingressroute-slimproto.yaml
+  - networkpolicy.yaml
