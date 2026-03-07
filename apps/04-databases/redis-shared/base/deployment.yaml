@@ -16,6 +16,7 @@ spec:
       labels:
         app: redis-shared
         vixens.io/sizing.redis: V-small
+        vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
     spec:

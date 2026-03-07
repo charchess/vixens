@@ -22,6 +22,7 @@ spec:
       labels:
         app: netbird-signal
         vixens.io/sizing.signal: V-small
+        vixens.io/backup-profile: "relaxed"
     spec:
       priorityClassName: vixens-low
       tolerations:

@@ -22,6 +22,7 @@ spec:
         vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.config-syncer: V-nano
         vixens.io/sizing.restore-config: B-nano
+        vixens.io/backup-profile: "relaxed"
       annotations:
         reloader.stakater.com/auto: "true"
         vixens.io/fast-start: "true"

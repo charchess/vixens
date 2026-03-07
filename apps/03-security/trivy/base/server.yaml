@@ -30,6 +30,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: trivy-server
+        vixens.io/backup-profile: "relaxed"
     spec:
       containers:
         - name: trivy-server

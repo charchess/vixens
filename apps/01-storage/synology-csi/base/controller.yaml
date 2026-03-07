@@ -13,6 +13,7 @@ spec:
     metadata:
       labels:
         app: synology-csi-controller
+        vixens.io/backup-profile: "relaxed"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
