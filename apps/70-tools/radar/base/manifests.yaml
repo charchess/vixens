@@ -164,6 +164,7 @@ spec:
         app.kubernetes.io/name: radar
         app.kubernetes.io/instance: radar
         vixens.io/sizing.radar: B-medium
+        vixens.io/backup-profile: "relaxed"
     spec:
       priorityClassName: vixens-medium
       serviceAccountName: radar

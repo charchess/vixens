@@ -26,6 +26,7 @@ spec:
         vixens.io/sizing.create-mosquitto-users: G-nano
         vixens.io/sizing.mosquitto: V-small
         vixens.io/sizing.config-syncer: V-nano
+        vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"

@@ -24,6 +24,7 @@ spec:
         vixens.io/sizing.mealie: V-medium
         vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.config-syncer: V-nano
+        vixens.io/backup-profile: "standard"
       annotations:
         reloader.stakater.com/auto: "true"
         vixens.io/fast-start: "true"
