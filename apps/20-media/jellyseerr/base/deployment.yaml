@@ -20,6 +20,8 @@ spec:
       labels:
         app: jellyseerr
         vixens.io/sizing.jellyseerr: B-medium
+      annotations:
+        vixens.io/no-long-connections: "true"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
