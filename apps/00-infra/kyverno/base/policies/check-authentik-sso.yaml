@@ -8,6 +8,8 @@ metadata:
     policies.kyverno.io/category: Maturity (Diamond)
     policies.kyverno.io/description: >-
       Diamond tier apps must be protected by Authentik ForwardAuth middleware.
+      Bypass: annotate the Ingress with vixens.io/nossoneeded: "true" for apps
+      that have their own authentication system (e.g. Jellyfin, HomeAssistant).
 spec:
   validationFailureAction: Audit
   background: true
@@ -21,8 +23,17 @@ spec:
               selector:
                 matchLabels:
                   vixens.io/tier: "diamond"
+      exclude:
+        any:
+          - resources:
+              kinds:
+                - Ingress
+              annotations:
+                vixens.io/nossoneeded: "true"
       validate:
-        message: "Diamond tier Ingress must use Authentik SSO middleware (traefik-forward-auth)."
+        message: >-
+          Diamond tier Ingress must use Authentik SSO middleware
+          (traefik-forward-auth) or annotate vixens.io/nossoneeded: 'true'.
         pattern:
           metadata:
             annotations:

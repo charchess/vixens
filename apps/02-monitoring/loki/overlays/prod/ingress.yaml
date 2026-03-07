@@ -4,10 +4,13 @@ kind: Ingress
 metadata:
   name: loki
   namespace: monitoring
+  labels:
+    vixens.io/tier: "diamond"
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+    vixens.io/nossoneeded: "true"
 spec:
   ingressClassName: traefik
   rules:
