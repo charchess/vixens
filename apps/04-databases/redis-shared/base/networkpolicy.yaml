@@ -10,7 +10,31 @@ spec:
   policyTypes:
     - Ingress
     - Egress
-  ingress: []
+  ingress:
+    # Allow connections from namespaces that use redis-shared:
+    # - auth (authentik)
+    # - tools (vikunja, netbox)
+    # - networking (netvisor)
+    - from:
+        - namespaceSelector:
+            matchExpressions:
+              - key: kubernetes.io/metadata.name
+                operator: In
+                values:
+                  - auth
+                  - tools
+                  - networking
+      ports:
+        - port: 6379
+          protocol: TCP
+    # Allow Prometheus scraping from monitoring namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - port: 6379
+          protocol: TCP
   egress:
     # Allow all egress (homelab: DNS, inter-app, external APIs)
     - {}
