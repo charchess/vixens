@@ -20,6 +20,7 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
+        vixens.io/explicitly-allow-root: "true"
       labels:
         app: booklore
         vixens.io/sizing.booklore: B-large
