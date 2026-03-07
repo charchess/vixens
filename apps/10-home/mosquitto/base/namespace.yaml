@@ -7,3 +7,4 @@ metadata:
     app.kubernetes.io/name: mosquitto
     vixens.lab/managed-by: argocd
     goldilocks.fairwinds.com/enabled: "true"
+    pod-security.kubernetes.io/enforce: baseline
