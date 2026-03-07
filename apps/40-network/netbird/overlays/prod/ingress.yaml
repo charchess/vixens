@@ -4,9 +4,12 @@ kind: Ingress
 metadata:
   name: netbird-dashboard
   namespace: networking
+  labels:
+    vixens.io/tier: "diamond"
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    vixens.io/nossoneeded: "true"
 spec:
   ingressClassName: traefik
   rules:
@@ -30,10 +33,13 @@ kind: Ingress
 metadata:
   name: netbird-api
   namespace: networking
+  labels:
+    vixens.io/tier: "diamond"
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/service.serversscheme: h2c
+    vixens.io/nossoneeded: "true"
 spec:
   ingressClassName: traefik
   rules:
@@ -57,10 +63,13 @@ kind: Ingress
 metadata:
   name: netbird-signal
   namespace: networking
+  labels:
+    vixens.io/tier: "diamond"
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/service.serversscheme: h2c
+    vixens.io/nossoneeded: "true"
 spec:
   ingressClassName: traefik
   rules:
@@ -84,9 +93,12 @@ kind: Ingress
 metadata:
   name: netbird-relay
   namespace: networking
+  labels:
+    vixens.io/tier: "diamond"
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    vixens.io/nossoneeded: "true"
 spec:
   ingressClassName: traefik
   rules:
