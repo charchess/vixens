@@ -4,10 +4,13 @@ kind: Ingress
 metadata:
   name: authentik
   namespace: auth
+  labels:
+    vixens.io/tier: "diamond"
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd, auth-authentik-cors@kubernetescrd
+    vixens.io/nossoneeded: "true"
 spec:
   ingressClassName: traefik
   rules:
