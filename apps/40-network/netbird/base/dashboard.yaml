@@ -29,17 +29,23 @@ spec:
           operator: "Exists"
           effect: "NoSchedule"
       securityContext:
-        fsGroup: 101
-        runAsUser: 101
-        runAsGroup: 101
         seccompProfile:
           type: RuntimeDefault
+      initContainers:
+        - name: fix-nginx-dirs
+          image: busybox:1.37.0
+          command:
+            - sh
+            - -c
+            - mkdir -p /var/lib/nginx/logs /var/lib/nginx/tmp && chmod -R 777 /var/lib/nginx
+          volumeMounts:
+            - name: nginx-tmp
+              mountPath: /var/lib/nginx
       containers:
         - name: dashboard
           image: netbirdio/dashboard:v2.33.0
           securityContext:
             allowPrivilegeEscalation: false
-            runAsNonRoot: true
             capabilities:
               add: ["NET_BIND_SERVICE"]
               drop: ["ALL"]
@@ -56,6 +62,12 @@ spec:
           ports:
             - containerPort: 80
               name: http
+          volumeMounts:
+            - name: nginx-tmp
+              mountPath: /var/lib/nginx
+      volumes:
+        - name: nginx-tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
