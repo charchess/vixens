@@ -8,7 +8,7 @@ image:
   repository: stirlingtools/stirling-pdf
   pullPolicy: IfNotPresent
   tag: 2.7.0
-replicaCount: 1
+replicaCount: 0
 # revisionHistoryLimit: chart template hardcodes 10; kustomize patch on Helm multi-source
 # does not apply to /spec/revisionHistoryLimit. Accepted as known limitation.
 # revisionHistoryLimit: 3  # would require chart support or ArgoCD server-side apply
