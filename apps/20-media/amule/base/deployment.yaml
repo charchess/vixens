@@ -24,6 +24,7 @@ spec:
       annotations:
         vixens.io/service-binding: "false"
         vixens.io/no-long-connections: "true"
+        vixens.io/explicitly-allow-root: "true"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
