@@ -37,6 +37,7 @@ spec:
         goldilocks.fairwinds.com/enabled: "true"
         autoscaling.k8s.io/vpa: auto
         vixens.io/explicitly-allow-root: "true"
+        vixens.io/no-long-connections: "true"
     spec:
       priorityClassName: vixens-critical
       securityContext:

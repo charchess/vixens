@@ -21,6 +21,7 @@ spec:
         vixens.io/sizing.mariadb: V-medium
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/no-long-connections: "true"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
