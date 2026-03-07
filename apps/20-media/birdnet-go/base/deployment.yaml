@@ -84,6 +84,8 @@ spec:
               value: Europe/Paris
             - name: WEB_PORT
               value: "8080"
+            - name: HOME
+              value: /home/birdnet
           volumeMounts:
             - name: config
               mountPath: /home/birdnet/.config/birdnet-go
