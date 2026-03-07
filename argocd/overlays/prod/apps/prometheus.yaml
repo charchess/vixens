@@ -42,3 +42,9 @@ spec:
       name: prometheus-prometheus-node-exporter
       jsonPointers:
         - /spec/updateStrategy/rollingUpdate/maxSurge
+    - group: apps
+      kind: StatefulSet
+      name: prometheus-alertmanager
+      jsonPointers:
+        - /spec/updateStrategy/rollingUpdate/partition
+        - /spec/persistentVolumeClaimRetentionPolicy
