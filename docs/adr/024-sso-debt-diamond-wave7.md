@@ -2,6 +2,7 @@
 
 **Status:** Active  
 **Date:** 2026-03-07  
+**Updated:** 2026-03-07 (post-W7 fix: changedetection + lazylibrarian → nossoneeded)  
 **Context:** Diamond tier requires Authentik ForwardAuth or explicit bypass
 
 ---
@@ -13,16 +14,31 @@ via Ingress soit protégée par Authentik SSO (ForwardAuth middleware Traefik), 
 porte l'annotation `vixens.io/nossoneeded: "true"` documentant pourquoi le bypass
 est justifié.
 
-Ce document trace l'état de chaque application Wave 6 après le labeling Diamond.
+Ce document trace l'état de chaque application après le labeling Diamond (W7 + fix post-W7).
 
 ---
 
-## Décision Wave 7
+## Décision finale: toutes les apps passent en `nossoneeded`
 
-### Apps avec bypass `nossoneeded` (auth propre ou sans utilisateur externe)
+La décision utilisateur (post-W7) est la suivante :
 
-| App | Justification |
-|-----|---------------|
+> Toutes les apps Diamond portent `nossoneeded: "true"` maintenant.
+> La vraie dette SSO est trackée via des Beads issues individuelles,
+> une par app, assignées @user. Le workflow : l'utilisateur configure
+> l'Application Authentik dans l'UI, puis demande à l'agent de configurer
+> l'Ingress côté cluster.
+
+Cela permet :
+1. D'atteindre Diamond sans bloquer sur la configuration SSO
+2. De tracer la dette de façon granulaire (une Beads issue = une app)
+3. De traiter les apps une par une, à la demande, en collaboration user ↔ agent
+
+---
+
+## État Wave 7 + fix: toutes les apps avec `nossoneeded`
+
+| App | Justification bypass |
+|-----|----------------------|
 | authentik | Fournisseur SSO lui-même — ne peut pas être derrière lui-même |
 | jellyfin | Auth native Jellyfin (comptes utilisateurs propres) |
 | jellyseerr | Auth native + liaison optionnelle Jellyfin |
@@ -31,7 +47,7 @@ Ce document trace l'état de chaque application Wave 6 après le labeling Diamon
 | music-assistant | Auth native Music Assistant |
 | booklore | Auth native BookLore |
 | sabnzbd | Auth native SABnzbd (API key + password) |
-| vaultwarden | Auth native Vaultwarden — password manager, ne PAS mettre ForwardAuth |
+| vaultwarden | Auth native Vaultwarden — password manager, ForwardAuth casserait les clients Bitwarden |
 | linkwarden | Auth native Linkwarden |
 | netbox | Auth native NetBox (Django RBAC) |
 | headlamp | Auth via tokens Kubernetes (OIDC configuré) |
@@ -39,23 +55,57 @@ Ce document trace l'état de chaque application Wave 6 après le labeling Diamon
 | openclaw | API privée — pas d'utilisateurs finaux externes |
 | loki | API monitoring interne — pas d'utilisateurs finaux |
 | netvisor | Interface admin réseau interne |
-| netbird | OIDC natif via Authentik (SSO configuré dans management config) |
+| netbird | OIDC natif via Authentik (SSO déjà configuré dans management config) |
+| changedetection | Décision: nossoneeded acceptable — SSO configurable via Beads issue dédiée |
+| lazylibrarian | Décision: nossoneeded acceptable — SSO configurable via Beads issue dédiée |
 
-### Apps SSO-dette (tier label présent, ForwardAuth manquant)
+---
 
-Ces apps portent `vixens.io/tier: "diamond"` sur leur Ingress mais **n'ont pas**
-`nossoneeded` ni `authentik` dans leurs middlewares. La policy `check-authentik-sso`
-va générer des violations Audit. Elles doivent être traitées.
+## Roadmap SSO: dette trackée par Beads issues
 
-| App | URL | Priorité | Action requise |
-|-----|-----|----------|----------------|
-| changedetection | changedetection.truxonline.com | Medium | Créer Authentik Application + ajouter middleware ForwardAuth |
-| lazylibrarian | lazylibrarian.truxonline.com | Low | Idem — ou décider si `nossoneeded` acceptable |
+La configuration ForwardAuth Authentik pour chaque app est tracée individuellement
+via des Beads issues assignées à `@user`. Le workflow pour chaque app :
 
-**Note:** Ces apps sont accessibles depuis Internet sans authentification. Risque réel.
-Traiter avant de considérer le Diamond complet pour ces apps.
+1. **@user** : ouvrir la Beads issue correspondante
+2. **@user** : créer l'Application Authentik dans l'UI (slug + provider OIDC/proxy)
+3. **@user** : indiquer à l'agent le slug de l'application
+4. **Agent** : mettre à jour l'Ingress prod pour ajouter `auth-authentik-forward-auth@kubernetescrd`
+   et retirer `vixens.io/nossoneeded: "true"`
 
-### Apps hors scope Wave 7 (namespaces privileged / pas d'Ingress HTTP)
+### Pattern cible Ingress (après configuration SSO)
+
+```yaml
+annotations:
+  traefik.ingress.kubernetes.io/router.middlewares: >-
+    traefik-redirect-https@kubernetescrd,
+    auth-authentik-forward-auth@kubernetescrd
+  # nossoneeded retiré
+```
+
+### Apps prioritaires pour SSO (recommandation)
+
+| App | Raison | Risque sans SSO |
+|-----|--------|-----------------|
+| changedetection | Pas d'auth par défaut | Accès libre depuis Internet |
+| lazylibrarian | Auth basique configurable | Accès libre depuis Internet |
+| headlamp | Tokens k8s, ForwardAuth ajoute couche SSO | Accès k8s depuis Internet |
+| netvisor | Interface admin réseau | Accès réseau depuis Internet |
+
+### Apps où ForwardAuth peut casser des intégrations (traiter avec précaution)
+
+| App | Risque |
+|-----|--------|
+| jellyfin | Clients mobiles/API pourraient ne plus fonctionner |
+| jellyseerr | Idem — clients *arr |
+| music-assistant | Clients audio |
+| sabnzbd | Clients download managers |
+| homeassistant | Intégrations domotique pourraient casser |
+| netbird | Déjà OIDC natif, ForwardAuth redondant + risque conflit |
+| vaultwarden | NE PAS FAIRE — casserait tous les clients Bitwarden |
+
+---
+
+## Apps hors scope (pas d'Ingress HTTP)
 
 | App | Raison |
 |-----|--------|
@@ -63,13 +113,13 @@ Traiter avant de considérer le Diamond complet pour ces apps.
 | redis-shared | Pas d'Ingress |
 | mosquitto | Pas d'Ingress HTTP |
 | gluetun | Proxy interne, pas d'Ingress utilisateur |
-| penpot | Pas d'Ingress prod (à créer séparément) |
+| penpot | Pas d'Ingress prod (à créer séparément — voir ci-dessous) |
 
 ---
 
-## Penpot — Ingress manquant
+## Penpot — Ingress prod manquant
 
-Penpot (tools/penpot) n'a pas d'Ingress prod. L'app est déployée mais non accessible
+Penpot (`apps/70-tools/penpot`) n'a pas d'Ingress prod. L'app est déployée mais non accessible
 via HTTPS. Il faut créer `apps/70-tools/penpot/overlays/prod/ingress.yaml`.
 Penpot a son propre système d'auth (comptes Penpot) → `nossoneeded` applicable.
 
@@ -77,15 +127,15 @@ Penpot a son propre système d'auth (comptes Penpot) → `nossoneeded` applicabl
 
 ## Étapes suivantes
 
-1. **Traiter changedetection et lazylibrarian** :
-   - Option A : Créer Application Authentik + ajouter `auth-authentik-forward-auth@kubernetescrd`
-     au middleware Traefik dans l'Ingress prod
-   - Option B : Décider que `nossoneeded` est acceptable (accès interne réseau uniquement)
-     et documenter la décision dans ce fichier
+1. ~~**Traiter changedetection et lazylibrarian**~~ → **FAIT** (nossoneeded ajouté, fix post-W7)
 
 2. **Créer Ingress prod pour Penpot** avec `nossoneeded`
 
-3. **Vérifier les violations** `check-authentik-sso` en Audit mode :
+3. **Beads issues SSO debt** — une par app, assignée @user :
+   - Consulter `.beads/issues.jsonl` pour les issues créées dans cette session
+   - Pattern: `sso(authentik): configure ForwardAuth for <app>`
+
+4. **Vérifier les violations** `check-authentik-sso` (doit être 0 désormais) :
    ```bash
    kubectl get policyreport -A | grep sso
    ```
@@ -97,3 +147,4 @@ Penpot a son propre système d'auth (comptes Penpot) → `nossoneeded` applicabl
 - [ADR-023 v2 — 7-Tier Goldification System](023-7-tier-goldification-system-v2.md)
 - [check-authentik-sso policy](../../apps/00-infra/kyverno/base/policies/check-authentik-sso.yaml)
 - [PR #1907 — Wave 6 NetworkPolicies](https://github.com/charchess/vixens/pull/1907)
+- [PR #1908 — Wave 7 tier labels + SSO bypasses](https://github.com/charchess/vixens/pull/1908)
