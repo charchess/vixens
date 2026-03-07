@@ -9,6 +9,8 @@ spec:
       app: synology-csi-node
   template:
     metadata:
+      annotations:
+        vixens.io/explicitly-allow-root: "true"
       labels:
         app: synology-csi-node
     spec:
