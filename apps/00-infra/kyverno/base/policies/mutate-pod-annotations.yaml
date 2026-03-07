@@ -1,0 +1,140 @@
+---
+# Kyverno Policy: Mutate Pod Annotations
+#
+# Injects pod annotations from pod labels (label-driven annotation injection).
+#
+# Supported labels → annotations:
+#
+#   vixens.io/nometrics: "true"
+#     → prometheus.io/scrape: "false"  (exclude from metrics collection)
+#
+#   vixens.io/fast-start: "true"
+#     → vixens.io/fast-start: "true"  (annotation mirrors the label for tools)
+#
+#   vixens.io/service-binding: "false"
+#     → vixens.io/service-binding: "false"  (annotation mirrors the label)
+#
+# Specific rules for charts without podLabels/podAnnotations support:
+#   - cert-manager-webhook-gandi (SINTEF v0.5.2): match app.kubernetes.io/name
+#   - infisical-operator (v0.10.x): match control-plane=controller-manager
+#
+# Why this approach:
+#   In ArgoCD multi-source, kustomize patches cannot target Helm-rendered Deployments.
+#   This policy makes annotation injection reproducible from Git via Helm podLabels.
+#
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: mutate-pod-annotations
+  annotations:
+    policies.kyverno.io/title: Mutate Pod Annotations
+    policies.kyverno.io/category: Observability
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Injects pod annotations from pod labels (vixens.io/nometrics, vixens.io/fast-start,
+      vixens.io/service-binding). Handles charts without podLabels support via specific rules.
+spec:
+  validationFailureAction: Audit
+  background: false
+  rules:
+    # Rule 1: vixens.io/nometrics label → annotation (generic)
+    - name: inject-nometrics-annotation
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.labels.\"vixens.io/nometrics\" || '' }}"
+            operator: Equals
+            value: "true"
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              vixens.io/nometrics: "true"
+
+    # Rule 2: vixens.io/fast-start label → annotation (generic)
+    - name: inject-fast-start-annotation
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.labels.\"vixens.io/fast-start\" || '' }}"
+            operator: Equals
+            value: "true"
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              vixens.io/fast-start: "true"
+
+    # Rule 3: vixens.io/service-binding label → annotation (generic)
+    - name: inject-service-binding-annotation
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.labels.\"vixens.io/service-binding\" || '' }}"
+            operator: NotEquals
+            value: ""
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              vixens.io/service-binding: "{{ request.object.metadata.labels.\"vixens.io/service-binding\" }}"
+
+    # Rule 4: cert-manager-webhook-gandi — chart has no podAnnotations support
+    # SINTEF chart v0.5.2 does not render spec.template.metadata.annotations at all.
+    # Match on app.kubernetes.io/name in cert-manager namespace.
+    - name: inject-annotations-cert-manager-webhook-gandi
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - cert-manager
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: cert-manager-webhook-gandi
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              vixens.io/fast-start: "true"
+              vixens.io/service-binding: "false"
+              vixens.io/nometrics: "true"
+
+    # Rule 5: infisical-operator — chart has no podAnnotations support
+    # Match on control-plane=controller-manager in infisical-operator-system namespace.
+    # Injects prometheus scrape annotations (metrics on port 8443 via HTTPS).
+    - name: inject-annotations-infisical-operator
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - infisical-operator-system
+              selector:
+                matchLabels:
+                  control-plane: controller-manager
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              vixens.io/fast-start: "true"
+              vixens.io/service-binding: "false"
+              prometheus.io/scrape: "true"
+              prometheus.io/port: "8443"
+              prometheus.io/path: "/metrics"
+              prometheus.io/scheme: "https"
