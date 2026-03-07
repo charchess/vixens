@@ -16,6 +16,10 @@
 #   patchStrategicMerge on spec.priorityClassName causes Go to include priority: 0 implicitly,
 #   which the PriorityAdmission controller rejects. patchesJson6902 with op: add sets only the
 #   requested field, no side effects.
+#   Exception: for rules that inject priorityClassName via Kyverno mutation (not baked-in chart),
+#   K8s defaults priority: 0 BEFORE the webhook runs. The PriorityAdmission controller then sees
+#   both priority: 0 and priorityClassName → conflict → 403 Forbidden.
+#   Fix: also patch priority: <value> explicitly so it matches the PriorityClass value.
 #
 # Why this approach:
 #   In ArgoCD multi-source, kustomize source 2 cannot patch resources rendered by
@@ -110,6 +114,12 @@ spec:
           - op: add
             path: /spec/priorityClassName
             value: "vixens-critical"
+          # K8s defaults priority: 0 before webhook runs; must set explicit value to avoid
+          # PriorityAdmission conflict: "integer value of priority (0) must not be provided
+          # when priorityClassName is set" → 403 Forbidden.
+          - op: add
+            path: /spec/priority
+            value: 100000
 
     # Rule 4: goldilocks dashboard — chart (v10.2.x) ignores dashboard.podLabels
     - name: inject-priority-class-goldilocks-dashboard
