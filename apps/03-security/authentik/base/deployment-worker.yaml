@@ -6,6 +6,7 @@ metadata:
   namespace: auth
   labels:
     app: authentik-worker
+    vixens.io/tier: "diamond"
   annotations:
     argocd.argoproj.io/sync-wave: "10"
     goldilocks.fairwinds.com/enabled: "true"

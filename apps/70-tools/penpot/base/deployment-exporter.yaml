@@ -9,6 +9,7 @@ metadata:
     component: exporter
     vixens.io/sizing-v2: "true"
     vixens.io/vpa-mode: Auto
+    vixens.io/tier: "diamond"
 spec:
   replicas: 1
   revisionHistoryLimit: 3

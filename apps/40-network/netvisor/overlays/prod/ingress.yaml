@@ -3,6 +3,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: netvisor-ingress
+  labels:
+    vixens.io/tier: "diamond"
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
@@ -11,6 +13,7 @@ metadata:
     gethomepage.dev/name: NetVisor
     gethomepage.dev/icon: netvisor.png
     gethomepage.dev/group: Network
+    vixens.io/nossoneeded: "true"
 spec:
   ingressClassName: traefik
   rules:
