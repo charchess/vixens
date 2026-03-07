@@ -8,3 +8,6 @@ resources:
   - deployment-exporter.yaml
   - service-ingress.yaml
   - infisical-secret.yaml
+  - networkpolicy.yaml
+  - networkpolicy-penpot-exporter.yaml
+  - networkpolicy-penpot-frontend.yaml

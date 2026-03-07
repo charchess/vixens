@@ -7,3 +7,4 @@ resources:
   - netbox-pvc.yaml
   - netbox-db-secrets.yaml
   - infisical-secret.yaml
+  - networkpolicy.yaml

@@ -13,6 +13,7 @@ resources:
   - infisical-secrets.yaml
   - middleware-redirect.yaml
   - middleware.yaml
+  - networkpolicy.yaml
 labels:
   - pairs:
       app: docspell
