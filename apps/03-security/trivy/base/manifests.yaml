@@ -3766,6 +3766,7 @@ spec:
       labels:
         app.kubernetes.io/name: trivy-operator
         app.kubernetes.io/instance: trivy
+        vixens.io/backup-profile: "relaxed"
     spec:
       serviceAccountName: trivy-trivy-operator
       automountServiceAccountToken: true

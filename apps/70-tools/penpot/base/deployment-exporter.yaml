@@ -24,6 +24,7 @@ spec:
         app: penpot-exporter
         component: exporter
         vixens.io/sizing.exporter: V-small
+        vixens.io/backup-profile: "standard"
     spec:
       priorityClassName: vixens-medium
       tolerations:
