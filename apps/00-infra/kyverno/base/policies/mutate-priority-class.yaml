@@ -37,24 +37,29 @@ spec:
   validationFailureAction: Audit
   background: false
   rules:
-    # Rule 1: Generic — inject priorityClassName from pod label
+    # Rule 1: Generic — inject priorityClassName from pod label vixens.io/priority-class
+    # Context variable extracts the label value (avoids JMESPath escaped quotes in patchesJson6902).
     - name: inject-priority-class-from-label
       match:
         any:
           - resources:
               kinds:
                 - Pod
+      context:
+        - name: priorityClassLabel
+          variable:
+            value: "{{ request.object.metadata.labels.\"vixens.io/priority-class\" || '' }}"
       preconditions:
         all:
           # Only act when the label is present
-          - key: "{{ request.object.metadata.labels.\"vixens.io/priority-class\" || '' }}"
+          - key: "{{ priorityClassLabel }}"
             operator: NotEquals
             value: ""
       mutate:
         patchesJson6902: |-
           - op: add
             path: /spec/priorityClassName
-            value: "{{ request.object.metadata.labels.\"vixens.io/priority-class\" }}"
+            value: "{{ priorityClassLabel }}"
 
     # Rule 2: infisical-operator — chart has no podLabels support
     # Match on existing chart label: control-plane=controller-manager in infisical-operator-system
