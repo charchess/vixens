@@ -19,6 +19,7 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/no-long-connections: "true"
       labels:
         app: jellyfin
         vixens.io/sizing.jellyfin: V-medium
