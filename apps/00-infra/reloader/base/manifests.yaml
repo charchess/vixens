@@ -210,6 +210,7 @@ spec:
         version: v1.4.12
       annotations:
         vixens.io/service-binding: "false"
+        vixens.io/no-long-connections: "true"
     spec:
       tolerations:
         - effect: NoSchedule

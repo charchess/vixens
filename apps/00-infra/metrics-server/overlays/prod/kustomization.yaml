@@ -26,8 +26,13 @@ patches:
           metadata:
             annotations:
               vixens.io/nometrics: "true"
+              vixens.io/noingressneeded: "true"
+              vixens.io/fast-start: "true"
     target:
       kind: Deployment
       name: metrics-server
 resources:
   - ../../base
+
+components:
+  - ../../../../_shared/components/gold-maturity

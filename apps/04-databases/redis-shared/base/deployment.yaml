@@ -18,6 +18,7 @@ spec:
         vixens.io/sizing.redis: V-small
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/no-long-connections: "true"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
