@@ -208,6 +208,7 @@ spec:
         group: com.stakater.platform
         provider: stakater
         version: v1.4.12
+        vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/service-binding: "false"
         vixens.io/no-long-connections: "true"

@@ -30,6 +30,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: trivy-server
+        vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/no-long-connections: "true"
     spec:
