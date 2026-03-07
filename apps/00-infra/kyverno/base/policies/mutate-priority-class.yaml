@@ -1,7 +1,7 @@
 ---
 # Kyverno Policy: Mutate Priority Class
 #
-# Injects spec.priorityClassName into pods based on a pod label.
+# Injects spec.priorityClassName (and spec.priority) into pods based on a pod label.
 #
 # Generic rule (works for charts that support podLabels):
 #   Add label to pod template:  vixens.io/priority-class: vixens-critical
@@ -20,6 +20,11 @@
 #   K8s defaults priority: 0 BEFORE the webhook runs. The PriorityAdmission controller then sees
 #   both priority: 0 and priorityClassName → conflict → 403 Forbidden.
 #   Fix: also patch priority: <value> explicitly so it matches the PriorityClass value.
+#
+# Why apiCall for priority value (DRY):
+#   The numeric priority value is read from the PriorityClass object (source of truth).
+#   This keeps rules consistent with _shared/priority-classes/ definitions.
+#   Fallback value (100000) is used if the apiCall fails (e.g. during cluster bootstrap).
 #
 # Why this approach:
 #   In ArgoCD multi-source, kustomize source 2 cannot patch resources rendered by
@@ -43,6 +48,9 @@ spec:
   rules:
     # Rule 1: Generic — inject priorityClassName from pod label vixens.io/priority-class
     # Context variable extracts the label value (avoids JMESPath escaped quotes in patchesJson6902).
+    # WARNING: This generic rule does NOT patch spec.priority. It is only safe for PriorityClasses
+    # with value=0 (e.g. vixens-low), which match the K8s default priority and cause no conflict.
+    # For non-zero PriorityClasses, create a dedicated rule with apiCall (see rules 2, 3, 5).
     - name: inject-priority-class-from-label
       match:
         any:
@@ -67,6 +75,8 @@ spec:
 
     # Rule 2: infisical-operator — chart has no podLabels support
     # Match on existing chart label: control-plane=controller-manager in infisical-operator-system
+    # Reads priority value from PriorityClass API (DRY — source of truth: _shared/priority-classes/).
+    # Fallback: 100000 if apiCall fails (e.g. bootstrap ordering).
     - name: inject-priority-class-infisical-operator
       match:
         any:
@@ -78,6 +88,11 @@ spec:
               selector:
                 matchLabels:
                   control-plane: controller-manager
+      context:
+        - name: priorityValue
+          apiCall:
+            urlPath: "/apis/scheduling.k8s.io/v1/priorityclasses/vixens-critical"
+            jmesPath: "value || `100000`"
       preconditions:
         all:
           # Only inject if not already set (idempotent)
@@ -89,9 +104,14 @@ spec:
           - op: add
             path: /spec/priorityClassName
             value: "vixens-critical"
+          - op: add
+            path: /spec/priority
+            value: "{{ priorityValue }}"
 
     # Rule 3: goldilocks controller — chart (v10.2.x) ignores controller.podLabels
     # Match on chart-native labels: app.kubernetes.io/name + app.kubernetes.io/component
+    # Reads priority value from PriorityClass API (DRY — source of truth: _shared/priority-classes/).
+    # Fallback: 100000 if apiCall fails (e.g. bootstrap ordering).
     - name: inject-priority-class-goldilocks-controller
       match:
         any:
@@ -104,6 +124,11 @@ spec:
                 matchLabels:
                   app.kubernetes.io/name: goldilocks
                   app.kubernetes.io/component: controller
+      context:
+        - name: priorityValue
+          apiCall:
+            urlPath: "/apis/scheduling.k8s.io/v1/priorityclasses/vixens-critical"
+            jmesPath: "value || `100000`"
       preconditions:
         all:
           - key: "{{ request.object.spec.priorityClassName || '' }}"
@@ -114,14 +139,12 @@ spec:
           - op: add
             path: /spec/priorityClassName
             value: "vixens-critical"
-          # K8s defaults priority: 0 before webhook runs; must set explicit value to avoid
-          # PriorityAdmission conflict: "integer value of priority (0) must not be provided
-          # when priorityClassName is set" → 403 Forbidden.
           - op: add
             path: /spec/priority
-            value: 100000
+            value: "{{ priorityValue }}"
 
     # Rule 4: goldilocks dashboard — chart (v10.2.x) ignores dashboard.podLabels
+    # vixens-low = value 0 = K8s default → no PriorityAdmission conflict, no need to patch priority.
     - name: inject-priority-class-goldilocks-dashboard
       match:
         any:
@@ -147,6 +170,8 @@ spec:
 
     # Rule 5: cert-manager-webhook-gandi (SINTEF v0.5.x) — no podLabels/podAnnotations in chart
     # Match on chart-native label: app.kubernetes.io/name in cert-manager namespace
+    # Reads priority value from PriorityClass API (DRY — source of truth: _shared/priority-classes/).
+    # Fallback: 100000 if apiCall fails (e.g. bootstrap ordering).
     - name: inject-priority-class-cert-manager-webhook-gandi
       match:
         any:
@@ -158,6 +183,11 @@ spec:
               selector:
                 matchLabels:
                   app.kubernetes.io/name: cert-manager-webhook-gandi
+      context:
+        - name: priorityValue
+          apiCall:
+            urlPath: "/apis/scheduling.k8s.io/v1/priorityclasses/vixens-critical"
+            jmesPath: "value || `100000`"
       preconditions:
         all:
           - key: "{{ request.object.spec.priorityClassName || '' }}"
@@ -168,3 +198,6 @@ spec:
           - op: add
             path: /spec/priorityClassName
             value: "vixens-critical"
+          - op: add
+            path: /spec/priority
+            value: "{{ priorityValue }}"

@@ -262,6 +262,7 @@ Before closing a task, EVERY agent MUST complete this checklist:
 [ ] 1. Code changes made
 [ ] 2. yamllint passed (just lint)
 [ ] 3. Kustomize build OK (kustomize build apps/<app>/overlays/dev)
+[ ] 3b. Kustomize kinds diff OK: after any kustomization.yaml change, compare `kustomize build` output kinds before/after — a missing kind means a resource was silently dropped (regression like it-tools ingress removal)
 [ ] 4. Git committed to dev branch
 [ ] 5. Pushed to remote (git push origin main)
 [ ] 6. ArgoCD synced (verify in cluster)
@@ -272,6 +273,12 @@ Before closing a task, EVERY agent MUST complete this checklist:
 ```
 
 **⭐ CRITICAL:** Steps 8-9 (documentation) are NOT optional. If you deployed it, document it.
+
+**⭐ KUSTOMIZE DIFF RULE:** After any `kustomization.yaml` change (add/remove resources, patches, components), run:
+```bash
+kustomize build apps/<app>/overlays/<env> | grep '^kind:' | sort
+```
+Compare kinds before/after. A missing `kind` means a resource was silently dropped. This catches regressions like accidental ingress/secret removal that yamllint cannot detect.
 
 ---
 
