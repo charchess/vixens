@@ -15,6 +15,7 @@ metadata:
       ignoreDifferences to prevent drift detection on Helm-managed charts that do not
       support this value natively.
 spec:
+  validationFailureAction: Audit
   background: true
   rules:
     - name: set-revision-history-limit-deployment
