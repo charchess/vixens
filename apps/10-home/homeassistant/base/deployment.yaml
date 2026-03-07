@@ -58,6 +58,8 @@ spec:
           image: busybox:1.37.0
           securityContext:
             runAsUser: 0
+            capabilities:
+              add: [CHOWN]
           command:
             - sh
             - -c
@@ -69,6 +71,8 @@ spec:
         - name: install-python-deps
           image: python:3.14.3-alpine
           securityContext:
+            capabilities:
+              add: [CHOWN]
             runAsUser: 0
           command:
             - sh
@@ -128,6 +132,9 @@ spec:
               subPath: litestream.yml
         - name: config-init
           image: busybox:1.37.0
+          securityContext:
+            capabilities:
+              add: [CHOWN]
           command:
             - sh
             - -c
