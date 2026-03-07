@@ -29,6 +29,7 @@ spec:
         vixens.io/fast-start: "true"
         reloader.stakater.com/auto: "true"
         vixens.io/no-long-connections: "true"
+        vixens.io/explicitly-allow-root: "true"
     spec:
       priorityClassName: vixens-medium
       tolerations:
