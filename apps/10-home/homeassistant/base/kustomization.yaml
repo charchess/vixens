@@ -13,3 +13,4 @@ resources:
   - litestream-config.yaml
   - vpa.yaml
   - servicemonitor.yaml
+  - networkpolicy.yaml

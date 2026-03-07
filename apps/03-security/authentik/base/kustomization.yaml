@@ -12,3 +12,5 @@ resources:
   - pvc.yaml
   - middleware-forward-auth.yaml
   - servicemonitor.yaml
+  - networkpolicy.yaml
+  - networkpolicy-authentik-worker.yaml

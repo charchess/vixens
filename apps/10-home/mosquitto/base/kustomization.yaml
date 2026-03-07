@@ -8,6 +8,7 @@ resources:
   - pvc.yaml
   - statefulset.yaml
   - service.yaml
+  - networkpolicy.yaml
 labels:
   - pairs:
       app.kubernetes.io/name: mosquitto

@@ -6,3 +6,4 @@ resources:
   - deployment.yaml
   - service.yaml
   - redis-credentials.yaml
+  - networkpolicy.yaml

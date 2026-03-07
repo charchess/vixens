@@ -9,3 +9,4 @@ resources:
   - infisical-secret.yaml
   - litestream-config.yaml
   - servicemonitor.yaml
+  - networkpolicy.yaml

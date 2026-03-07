@@ -7,4 +7,5 @@ resources:
   - service.yaml
   - infisical-secret.yaml
   - serviceaccount.yaml
+  - networkpolicy.yaml
   # vpa.yaml removed - Kyverno generates vixens-headlamp VPA via sizing-v2 label
