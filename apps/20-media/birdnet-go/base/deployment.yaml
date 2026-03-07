@@ -28,6 +28,7 @@ spec:
         goldilocks.fairwinds.com/enabled: "true"
         vixens.io/fast-start: "true"
         reloader.stakater.com/auto: "true"
+        vixens.io/no-long-connections: "true"
     spec:
       priorityClassName: vixens-medium
       tolerations:

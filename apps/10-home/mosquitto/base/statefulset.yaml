@@ -28,6 +28,7 @@ spec:
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/no-long-connections: "true"
     spec:
       initContainers:
         - name: restore-data

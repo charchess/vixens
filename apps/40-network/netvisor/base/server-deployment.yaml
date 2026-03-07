@@ -17,6 +17,7 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/service-binding: "false"
+        vixens.io/no-long-connections: "true"
       labels:
         app: netvisor-server
         vixens.io/sizing.server: V-small
