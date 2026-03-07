@@ -45,6 +45,26 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+        - name: litestream-restore
+          image: litestream/litestream:0.5.9
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args:
+            - restore
+            - -config
+            - /etc/litestream.yml
+            - -if-replica-exists
+            - /data/birdnet.db
+          envFrom:
+            - secretRef:
+                name: birdnet-go-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
       containers:
         - name: birdnet-go
           image: ghcr.io/tphakala/birdnet-go:v0.6.3

@@ -46,6 +46,8 @@ spec:
                 --exclude "*.log" \
                 --exclude "lost+found/**" \
                 || true
+              # Fix ownership so mosquitto (uid 1883) can write its data files
+              chown -R 1883:1883 /mosquitto/data 2>/dev/null || true
           envFrom:
             - secretRef:
                 name: mosquitto-password-file
@@ -116,6 +118,8 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
+            runAsUser: 1883
+            runAsGroup: 1883
           livenessProbe:
             tcpSocket:
               port: 1883
@@ -162,6 +166,7 @@ spec:
           operator: Exists
           effect: NoSchedule
       securityContext:
+        fsGroup: 1883
         seccompProfile:
           type: RuntimeDefault
       volumes:
