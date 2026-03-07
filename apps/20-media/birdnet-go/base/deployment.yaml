@@ -23,6 +23,7 @@ spec:
         vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.data-syncer: V-nano
         vixens.io/sizing.fix-permissions: G-nano
+        vixens.io/backup-profile: "relaxed"
       annotations:
         goldilocks.fairwinds.com/enabled: "true"
         vixens.io/fast-start: "true"
