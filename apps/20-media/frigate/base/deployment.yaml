@@ -16,6 +16,7 @@ spec:
     metadata:
       labels:
         app: frigate
+        vixens.io/backup-profile: "relaxed"
       annotations:
         reloader.stakater.com/auto: "true"
         vixens.io/fast-start: "true"

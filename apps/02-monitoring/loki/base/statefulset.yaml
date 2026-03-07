@@ -19,6 +19,7 @@ spec:
       labels:
         app: loki
         vixens.io/sizing.loki: G-large
+        vixens.io/backup-profile: "relaxed"
     spec:
       priorityClassName: vixens-critical
       securityContext:
