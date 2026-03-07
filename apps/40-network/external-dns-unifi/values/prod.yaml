@@ -14,6 +14,7 @@ resources:
 podAnnotations:
   vixens.io/fast-start: "true"
   vixens.io/service-binding: "false"
+  vixens.io/noingressneeded: "true"
   prometheus.io/scrape: "true"
   prometheus.io/port: "7979"
   prometheus.io/path: "/metrics"
