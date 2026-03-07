@@ -34,6 +34,7 @@ spec:
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
         vixens.io/no-long-connections: "true"
+        vixens.io/explicitly-allow-root: "true"
     spec:
       priorityClassName: vixens-medium
       tolerations:
