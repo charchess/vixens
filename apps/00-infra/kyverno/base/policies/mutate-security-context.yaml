@@ -1,0 +1,93 @@
+---
+# Kyverno Policy: Auto-inject container-level SecurityContext
+#
+# Diamond tier requires hardened container security:
+#   allowPrivilegeEscalation: false
+#   capabilities.drop: [ALL]
+#
+# This mutation ensures ALL containers (including sidecars and initContainers)
+# get the minimum required security posture, even for Helm-managed workloads
+# where Kustomize patches cannot be applied.
+#
+# Bypass: set vixens.io/explicitly-allow-root: "true" on pod template
+# annotations for apps that genuinely require capabilities (e.g. gluetun NET_ADMIN,
+# frigate GPU access).
+#
+# Reference: ADR-023 Level 6 Diamond — check-security-context.yaml validates result.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: mutate-security-context
+  annotations:
+    policies.kyverno.io/title: Auto-inject Container SecurityContext
+    policies.kyverno.io/category: Maturity (Diamond)
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Mutates all containers (main + init) to set allowPrivilegeEscalation=false
+      and drop ALL capabilities. Satisfies Diamond tier security hardening without
+      requiring per-app Kustomize patches. Bypass: vixens.io/explicitly-allow-root.
+spec:
+  background: false
+  rules:
+    # --- Main containers ---
+    - name: inject-containers-securitycontext
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+          - resources:
+              annotations:
+                vixens.io/explicitly-allow-root: "true"
+      mutate:
+        foreach:
+          - list: "request.object.spec.containers"
+            patchStrategicMerge:
+              spec:
+                containers:
+                  - name: "{{ element.name }}"
+                    securityContext:
+                      allowPrivilegeEscalation: false
+                      capabilities:
+                        drop:
+                          - ALL
+
+    # --- Init containers ---
+    - name: inject-initcontainers-securitycontext
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+          - resources:
+              annotations:
+                vixens.io/explicitly-allow-root: "true"
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.initContainers[] | length(@) }}"
+            operator: GreaterThanOrEquals
+            value: 1
+      mutate:
+        foreach:
+          - list: "request.object.spec.initContainers"
+            patchStrategicMerge:
+              spec:
+                initContainers:
+                  - name: "{{ element.name }}"
+                    securityContext:
+                      allowPrivilegeEscalation: false
+                      capabilities:
+                        drop:
+                          - ALL
