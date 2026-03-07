@@ -11,6 +11,7 @@ metadata:
     app.kubernetes.io/component: mqtt-broker
     vixens.io/sizing-v2: "true"
     vixens.io/vpa-mode: Auto
+    vixens.io/tier: "diamond"
 spec:
   serviceName: mosquitto
   replicas: 1
