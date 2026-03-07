@@ -23,6 +23,7 @@ spec:
         app: netbird-management
         vixens.io/sizing.init-config: G-nano
         vixens.io/sizing.management: V-medium
+        vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
