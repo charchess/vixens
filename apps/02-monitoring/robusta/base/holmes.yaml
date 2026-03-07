@@ -107,7 +107,7 @@ spec:
       priorityClassName: vixens-low
       containers:
         - name: holmes
-          image: "us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:0.20.0"
+          image: "us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:0.21.0"
           imagePullPolicy: Always
           command: ["python3", "-u", "server.py"]
           env:
