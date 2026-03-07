@@ -10,3 +10,4 @@ resources:
   - litestream-config.yaml
   - pvc.yaml
   - servicemonitor.yaml
+  - networkpolicy.yaml

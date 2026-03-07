@@ -7,3 +7,4 @@ resources:
   - daemon-daemonset.yaml
   - server-service.yaml
   - infisical-secret.yaml
+  - networkpolicy.yaml
