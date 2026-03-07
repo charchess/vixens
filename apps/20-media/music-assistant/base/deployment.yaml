@@ -19,6 +19,7 @@ spec:
       labels:
         app: music-assistant
         vixens.io/sizing.music-assistant: V-medium
+        vixens.io/backup-profile: "relaxed"
     spec:
       securityContext:
         fsGroup: 1000

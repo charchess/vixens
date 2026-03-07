@@ -19,6 +19,7 @@ spec:
       labels:
         app: netbox
         vixens.io/sizing.netbox: B-medium
+        vixens.io/backup-profile: "standard"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

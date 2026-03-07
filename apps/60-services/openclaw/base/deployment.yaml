@@ -29,6 +29,7 @@ spec:
         vixens.io/sizing.setup-gemini-config: G-nano
         vixens.io/sizing.openclaw: V-large
         vixens.io/sizing.data-syncer: V-nano
+        vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/nometrics: "true"

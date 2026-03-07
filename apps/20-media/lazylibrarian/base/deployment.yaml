@@ -24,6 +24,7 @@ spec:
         vixens.io/sizing.fix-permissions: G-nano
         vixens.io/sizing.restore-config: B-nano
         vixens.io/sizing.restore-db: B-nano
+        vixens.io/backup-profile: "standard"
       annotations:
         reloader.stakater.com/auto: "true"
         vixens.io/fast-start: "true"

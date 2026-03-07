@@ -19,6 +19,7 @@ spec:
       labels:
         app: jellyseerr
         vixens.io/sizing.jellyseerr: B-medium
+        vixens.io/backup-profile: "relaxed"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
