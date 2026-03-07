@@ -21,6 +21,7 @@ spec:
       labels:
         app: netbird-dashboard
         vixens.io/sizing.dashboard: V-small
+        vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"

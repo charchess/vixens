@@ -18,6 +18,7 @@ spec:
       labels:
         app: headlamp
         vixens.io/sizing.headlamp: V-small
+        vixens.io/backup-profile: "relaxed"
       annotations:
         reloader.stakater.com/auto: "true"
         vixens.io/fast-start: "true"
