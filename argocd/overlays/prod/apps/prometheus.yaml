@@ -36,3 +36,9 @@ spec:
     syncOptions:
       - CreateNamespace=false
       - ServerSideApply=true
+  ignoreDifferences:
+    - group: apps
+      kind: DaemonSet
+      name: prometheus-prometheus-node-exporter
+      jsonPointers:
+        - /spec/updateStrategy/rollingUpdate/maxSurge
