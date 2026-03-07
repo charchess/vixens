@@ -95,12 +95,15 @@ alertmanager:
           - api_url_file: /etc/alertmanager-secrets/DISCORD_WEBHOOK_URL
             channel: '#alerts'
             send_resolved: true
-# Node exporter
-nodeExporter:
+# Node exporter (prometheus-node-exporter subchart, chart 25.x)
+prometheus-node-exporter:
   enabled: true
   priorityClassName: vixens-critical
   podAnnotations:
     vixens.io/fast-start: "true"
+  # Silence ArgoCD drift on K8s-defaulted DaemonSet fields (maxSurge:0)
+  daemonsetAnnotations:
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
