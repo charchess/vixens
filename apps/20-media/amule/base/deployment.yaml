@@ -20,6 +20,7 @@ spec:
         app.kubernetes.io/name: amule
         vixens.io/sizing.amule: V-small
         vixens.io/sizing.configure-proxy: G-nano
+        vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/service-binding: "false"
     spec:

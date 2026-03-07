@@ -19,6 +19,7 @@ spec:
       labels:
         app: mariadb-shared
         vixens.io/sizing.mariadb: V-medium
+        vixens.io/backup-profile: "standard"
       annotations:
         vixens.io/fast-start: "true"
     spec:

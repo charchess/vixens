@@ -26,6 +26,7 @@ spec:
         vixens.io/sizing.restore-mappings: B-nano
         vixens.io/sizing.restore-master: B-nano
         vixens.io/sizing.restore-caches: B-nano
+        vixens.io/backup-profile: "relaxed"
       annotations:
         reloader.stakater.com/auto: "true"
         vixens.io/fast-start: "true"
