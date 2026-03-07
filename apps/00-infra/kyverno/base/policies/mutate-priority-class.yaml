@@ -7,9 +7,9 @@
 #   Add label to pod template:  vixens.io/priority-class: vixens-critical
 #   Kyverno intercepts admission and injects spec.priorityClassName from the label value.
 #
-# Specific rule for infisical-operator:
-#   The infisical-operator chart (v0.10.x) does not support podLabels in the template.
-#   This rule matches on existing chart labels to inject priorityClassName.
+# Specific rules for charts without podLabels support:
+#   - infisical-operator (v0.10.x): match control-plane=controller-manager
+# NOTE: goldilocks chart ignores controller.podLabels — priorityClass applied via kubectl patch.
 #
 # Why this approach:
 #   In ArgoCD multi-source, kustomize source 2 cannot patch resources rendered by
