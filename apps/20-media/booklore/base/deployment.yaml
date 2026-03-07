@@ -18,6 +18,7 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/no-long-connections: "true"
       labels:
         app: booklore
         vixens.io/sizing.booklore: B-large
