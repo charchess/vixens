@@ -20,6 +20,8 @@ spec:
         app: music-assistant
         vixens.io/sizing.music-assistant: V-medium
         vixens.io/backup-profile: "relaxed"
+      annotations:
+        vixens.io/no-long-connections: "true"
     spec:
       securityContext:
         fsGroup: 1000

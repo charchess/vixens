@@ -18,6 +18,7 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/no-long-connections: "true"
       labels:
         app: changedetection
         vixens.io/sizing.restore-config: B-nano
