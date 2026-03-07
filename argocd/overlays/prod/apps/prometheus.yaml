@@ -37,11 +37,6 @@ spec:
       - CreateNamespace=false
   ignoreDifferences:
     - group: apps
-      kind: DaemonSet
-      name: prometheus-prometheus-node-exporter
-      jqPathExpressions:
-        - .spec.updateStrategy.rollingUpdate.maxSurge
-    - group: apps
       kind: StatefulSet
       name: prometheus-alertmanager
       jsonPointers:
