@@ -39,8 +39,8 @@ spec:
     - group: apps
       kind: DaemonSet
       name: prometheus-prometheus-node-exporter
-      jsonPointers:
-        - /spec/updateStrategy/rollingUpdate/maxSurge
+      jqPathExpressions:
+        - .spec.updateStrategy.rollingUpdate.maxSurge
     - group: apps
       kind: StatefulSet
       name: prometheus-alertmanager
