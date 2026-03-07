@@ -21,6 +21,7 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/no-long-connections: "true"
       labels:
         app: penpot-backend
         component: backend

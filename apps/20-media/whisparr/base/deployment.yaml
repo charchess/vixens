@@ -29,6 +29,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
+        vixens.io/no-long-connections: "true"
     spec:
       priorityClassName: vixens-medium
       tolerations:

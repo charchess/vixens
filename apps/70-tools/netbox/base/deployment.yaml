@@ -19,6 +19,8 @@ spec:
       labels:
         app: netbox
         vixens.io/sizing.netbox: B-medium
+      annotations:
+        vixens.io/no-long-connections: "true"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
