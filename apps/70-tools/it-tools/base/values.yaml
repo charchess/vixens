@@ -5,6 +5,7 @@
 replicaCount: 1
 podLabels:
   vixens.io/sizing.it-tools: B-nano
+  vixens.io/priority-class: vixens-low
 podAnnotations:
   vixens.io/fast-start: "true"
   vixens.io/service-binding: "false"

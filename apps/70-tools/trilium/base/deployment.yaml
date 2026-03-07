@@ -74,7 +74,8 @@ spec:
             httpGet:
               path: /api/setup/status
               port: http
-            failureThreshold: 15
+            initialDelaySeconds: 20
+            failureThreshold: 30
             periodSeconds: 10
             timeoutSeconds: 5
       volumes:
