@@ -37,10 +37,12 @@ spec:
           command:
             - sh
             - -c
-            - mkdir -p /var/lib/nginx/logs /var/lib/nginx/tmp && chmod -R 777 /var/lib/nginx
+            - mkdir -p /var/lib/nginx/logs /var/lib/nginx/tmp /run/nginx && chmod -R 777 /var/lib/nginx /run/nginx
           volumeMounts:
             - name: nginx-tmp
               mountPath: /var/lib/nginx
+            - name: nginx-run
+              mountPath: /run/nginx
       containers:
         - name: dashboard
           image: netbirdio/dashboard:v2.33.0
@@ -65,8 +67,12 @@ spec:
           volumeMounts:
             - name: nginx-tmp
               mountPath: /var/lib/nginx
+            - name: nginx-run
+              mountPath: /run/nginx
       volumes:
         - name: nginx-tmp
+          emptyDir: {}
+        - name: nginx-run
           emptyDir: {}
 ---
 apiVersion: v1
