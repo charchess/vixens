@@ -35,7 +35,6 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=false
-      - ServerSideApply=true
   ignoreDifferences:
     - group: apps
       kind: DaemonSet
