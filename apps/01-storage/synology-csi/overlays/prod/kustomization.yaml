@@ -32,19 +32,21 @@ patches:
       name: synelia-iscsi-delete
   - patch: |-
       - op: add
-        path: /spec/template/metadata/annotations
-        value:
-          vixens.io/fast-start: "true"
-          vixens.io/service-binding: "false"
+        path: /spec/template/metadata/annotations/vixens.io~1fast-start
+        value: "true"
+      - op: add
+        path: /spec/template/metadata/annotations/vixens.io~1service-binding
+        value: "false"
     target:
       kind: StatefulSet
       name: synology-csi-controller
   - patch: |-
       - op: add
-        path: /spec/template/metadata/annotations
-        value:
-          vixens.io/fast-start: "true"
-          vixens.io/service-binding: "false"
+        path: /spec/template/metadata/annotations/vixens.io~1fast-start
+        value: "true"
+      - op: add
+        path: /spec/template/metadata/annotations/vixens.io~1service-binding
+        value: "false"
     target:
       kind: DaemonSet
       name: synology-csi-node
