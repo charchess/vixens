@@ -183,9 +183,10 @@ spec:
             - |
               echo "DEBUG: RCLONE_BUCKET=$RCLONE_BUCKET"
               
-              rclone lsd s3:$RCLONE_BUCKET --s3-access-key-id=admin --s3-secret-access-key='S0d0m!e69' --s3-endpoint=$RCLONE_ENDPOINT || echo "Rclone list failed"
-              rclone copy s3:$RCLONE_BUCKET/.openclaw /data/.openclaw --s3-access-key-id=admin --s3-secret-access-key='S0d0m!e69' --s3-endpoint=$RCLONE_ENDPOINT --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
-              rclone copy s3:$RCLONE_BUCKET/extensions /data/extensions --s3-access-key-id=admin --s3-secret-access-key='S0d0m!e69' --s3-endpoint=$RCLONE_ENDPOINT --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
+              # Rclone reads RCLONE_CONFIG_S3_* env vars automatically from envFrom secretRef
+              rclone lsd s3:$RCLONE_BUCKET || echo "Rclone list failed"
+              rclone copy s3:$RCLONE_BUCKET/.openclaw /data/.openclaw --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
+              rclone copy s3:$RCLONE_BUCKET/extensions /data/extensions --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
           envFrom:
             - secretRef:
                 name: openclaw-secrets
@@ -217,7 +218,7 @@ spec:
               # If PVC has no config, try to restore from MinIO
               if [ ! -s /data/openclaw.json ]; then
                 echo "No config found in PVC, checking MinIO backup..."
-                rclone copy s3:$RCLONE_BUCKET/openclaw.json /data/ --s3-access-key-id=admin --s3-secret-access-key='S0d0m!e69' --s3-endpoint=$RCLONE_ENDPOINT --transfers 4 2>/dev/null || echo "MinIO restore failed"
+                rclone copy s3:$RCLONE_BUCKET/openclaw.json /data/ --transfers 4 2>/dev/null || echo "MinIO restore failed"
               fi
               
               # If still no config, use default from ConfigMap
@@ -424,16 +425,19 @@ spec:
             - |
               echo "DEBUG: RCLONE_BUCKET=$RCLONE_BUCKET"
               
+              # Rclone reads RCLONE_CONFIG_S3_* env vars automatically from envFrom secretRef
+              EXCLUDES="--exclude lost+found/** --exclude node_modules/** --exclude tools/** --exclude gemini-cli/** --exclude browser/** --exclude canvas/** --exclude extensions/** --exclude .openclaw/** --exclude media/** --exclude netbox-mcp-server/**"
+              
               # Handle pending backup lock from external tool
               if [ -f /data/backup.lock ]; then
                 echo "backup.lock found - performing immediate backup before sync loop"
-                rclone sync /data s3:$RCLONE_BUCKET --s3-access-key-id=admin --s3-secret-access-key='S0d0m!e69' --s3-endpoint=$RCLONE_ENDPOINT --exclude "lost+found/**" --exclude "node_modules/**" --exclude "tools/**" --exclude "gemini-cli/**" --exclude "browser/**" --exclude "canvas/**" --exclude "extensions/**" --exclude ".openclaw/**" --exclude "media/**" --exclude "netbox-mcp-server/**" || echo "Backup failed"
+                rclone sync /data s3:$RCLONE_BUCKET $EXCLUDES || echo "Backup failed"
                 rm -f /data/backup.lock
                 echo "Backup complete, lock removed"
               fi
               
               sync_s3() {
-                rclone sync /data s3:$RCLONE_BUCKET --s3-access-key-id=admin --s3-secret-access-key='S0d0m!e69' --s3-endpoint=$RCLONE_ENDPOINT --exclude "lost+found/**" --exclude "node_modules/**" --exclude "tools/**" --exclude "gemini-cli/**" --exclude "browser/**" --exclude "canvas/**" --exclude "extensions/**" --exclude ".openclaw/**" --exclude "media/**" --exclude "netbox-mcp-server/**" || echo "Sync failed"
+                rclone sync /data s3:$RCLONE_BUCKET $EXCLUDES || echo "Sync failed"
               }
               while true; do
                 sync_s3;
