@@ -1,3 +1,4 @@
+---
 # Velero - Production Environment Values
 # All core configuration centralized in common.yaml to avoid Helm merge conflicts.
 

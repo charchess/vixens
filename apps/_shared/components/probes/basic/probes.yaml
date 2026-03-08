@@ -1,4 +1,4 @@
-
+---
 # Basic health check configuration
 apiVersion: apps/v1
 kind: Deployment
@@ -25,4 +25,3 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 3
             failureThreshold: 1
-

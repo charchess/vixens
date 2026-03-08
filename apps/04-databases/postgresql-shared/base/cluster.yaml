@@ -36,11 +36,11 @@ spec:
         login: true
         passwordSecret:
           name: netbox-postgresql-credentials
-#      - name: authentik
-#        ensure: present
-#        login: true
-#        passwordSecret:
-#          name: authentik-postgresql-credentials
+      #      - name: authentik
+      #        ensure: present
+      #        login: true
+      #        passwordSecret:
+      #          name: authentik-postgresql-credentials
       - name: scanopy
         ensure: present
         login: true
@@ -57,10 +57,10 @@ spec:
         passwordSecret:
           name: nocodb-postgresql-credentials
       #      - name: penpot  # TODO: re-enable once Infisical vault has 'username: penpot' at
-        #        ensure: present  #       /apps/04-databases/postgresql-shared/penpot (prod env)
-        #        login: true  #       Without this key, CNPG loops on 'username key doesn't exist'
-        #        passwordSecret:  #       blocking the entire cluster from becoming Ready.
-          #          name: penpot-postgresql-credentials  # penpot role still exists in DB, app still connects.
+      #        ensure: present  #       /apps/04-databases/postgresql-shared/penpot (prod env)
+      #        login: true  #       Without this key, CNPG loops on 'username key doesn't exist'
+      #        passwordSecret:  #       blocking the entire cluster from becoming Ready.
+      #          name: penpot-postgresql-credentials  # penpot role still exists in DB, app still connects.
       - name: firefly
         ensure: present
         login: true

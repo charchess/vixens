@@ -1,4 +1,4 @@
-
+---
 # Kustomize Component: Basic Probes
 #
 # Basic health check configuration for applications
@@ -39,4 +39,3 @@ patches:
                   periodSeconds: 5
                   timeoutSeconds: 3
                   failureThreshold: 1
-

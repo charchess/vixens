@@ -1,3 +1,4 @@
+---
 # Component: PodDisruptionBudget - 0 (Zero Disruption Budget)
 #
 # This component sets minAvailable: 0 on PodDisruptionBudget resources.
