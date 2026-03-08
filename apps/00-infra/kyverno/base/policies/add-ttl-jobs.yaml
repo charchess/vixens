@@ -22,7 +22,7 @@ spec:
         patchStrategicMerge:
           spec:
             ttlSecondsAfterFinished: 3600
-    
+
     - name: add-ttl-to-cronjobs
       match:
         resources:

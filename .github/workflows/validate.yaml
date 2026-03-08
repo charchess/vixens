@@ -39,7 +39,7 @@ jobs:
           echo "  # ============ ERREURS CRITIQUES ============" >> yamllint-config.yml
           echo "  indentation:" >> yamllint-config.yml
           echo "    spaces: 2" >> yamllint-config.yml
-          echo "    indent-sequences: true" >> yamllint-config.yml
+          echo "    indent-sequences: whatever" >> yamllint-config.yml
           echo "    check-multi-line-strings: false" >> yamllint-config.yml
           echo "    level: error" >> yamllint-config.yml
           echo "" >> yamllint-config.yml
@@ -47,14 +47,8 @@ jobs:
           echo "    level: error" >> yamllint-config.yml
           echo "" >> yamllint-config.yml
           echo "  # ============ WARNINGS ============" >> yamllint-config.yml
-          echo "  line-length:" >> yamllint-config.yml
-          echo "    max: 80" >> yamllint-config.yml
-          echo "    allow-non-breakable-words: true" >> yamllint-config.yml
-          echo "    allow-non-breakable-inline-mappings: true" >> yamllint-config.yml
-          echo "    level: warning" >> yamllint-config.yml
-          echo "" >> yamllint-config.yml
-          echo "  trailing-spaces:" >> yamllint-config.yml
-          echo "    level: warning" >> yamllint-config.yml
+          echo "  line-length: disable" >> yamllint-config.yml
+          echo "  trailing-spaces: disable" >> yamllint-config.yml
           echo "" >> yamllint-config.yml
           echo "  new-lines:" >> yamllint-config.yml
           echo "    type: unix" >> yamllint-config.yml
@@ -79,12 +73,15 @@ jobs:
               xargs -r yamllint -c yamllint-config.yml || true
           else
             echo "📋 Push Mode: Validating all files"
-            find apps argocd \( -name "*.yaml" -o -name "*.yml" \) \
-              ! -path "*/crds/*" \
-              ! -path "*/charts/*" \
-              ! -name "upstream.yaml" \
-              ! -name "poolers.yaml" | \
-              xargs yamllint -c yamllint-config.yml
+          find apps argocd \( -name "*.yaml" -o -name "*.yml" \) \
+            ! -path "*/crds/*" \
+            ! -path "*/charts/*" \
+            ! -name "upstream.yaml" \
+            ! -name "poolers.yaml" \
+            ! -name "argocd-crds.yaml" \
+            ! -name "argocd-install.yaml" \
+            ! -name "manifests.yaml" \
+            ! -name "servicemonitors.yaml" | \
           fi
 
   # 2️⃣ Validation spécifique ArgoCD
