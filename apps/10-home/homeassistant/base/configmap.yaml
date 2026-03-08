@@ -20,7 +20,7 @@ data:
     # Minimal fallback configuration
     # Full config is restored from S3 backup at pod startup
     # Secrets are injected from Infisical via secrets.yaml
-    
+
     # Load default integrations
     default_config:
 
