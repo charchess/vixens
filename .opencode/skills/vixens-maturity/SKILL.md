@@ -32,11 +32,83 @@ You are an expert in the Vixens 7-tier maturity system defined in ADR-023.
 
 > **Important**: The old "Elite" tier no longer exists. Use the 7-tier system above.
 
+---
+
+## ⚙️ Configuration Modalities (GitOps + DRY)
+
+### How Each Configuration is Managed
+
+| Configuration | Managed By | Location | DRY Pattern |
+|--------------|------------|----------|-------------|
+| **PriorityClass** | Shared Component | `_shared/components/priority/{critical,high,medium,low}` | Include component in kustomization.yaml |
+| **PDB** | Shared Component | `_shared/components/poddisruptionbudget/{1,2}` | Include component in kustomization.yaml |
+| **Probes** | Shared Component or Manual | `_shared/components/probes/basic` | Component for standard apps, manual for custom endpoints |
+| **Resources** | Manual + Goldilocks | App's deployment.yaml | Start with estimates, tune via Goldilocks VPA |
+| **Sizing Labels** | Mutable Kyverno | Auto-injected by policy | Kyverno mutates based on resource values |
+| **Maturity Label** | Maturity Controller | Auto-updated every 15 min | CronJob evaluates PolicyReports |
+| **Sync Waves** | Shared Component | `_shared/components/gold-maturity` | Includes sync-wave + revisionHistoryLimit |
+| **Goldilocks** | Shared Component | `_shared/components/gold-maturity` | Enables VPA recommendations |
+| **Secrets** | InfisicalSecret | App's infisicalsecret.yaml | Never hardcode, always external |
+| **TLS** | Ingress + cert-manager | App's ingress.yaml | `spec.tls` block + Certificate resource |
+| **NetworkPolicy** | Manual | App's networkpolicy.yaml | Per-app custom rules |
+| **Backup Profile** | Label + Velero | App's deployment labels | `vixens.io/backup-profile: standard` |
+
+### Shared Components (DRY Principle)
+
+**Never copy-paste. Use components:**
+
+```yaml
+# apps/<app>/overlays/prod/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+components:
+  # Gold requirements (sync-wave, goldilocks, revisionHistoryLimit)
+  - ../../../../_shared/components/gold-maturity
+  
+  # Platinum requirements
+  - ../../../../_shared/components/priority/high           # PriorityClass
+  - ../../../../_shared/components/poddisruptionbudget/1   # PDB minAvailable=1
+  
+  # Optional: Standard probes if app doesn't define custom ones
+  - ../../../../_shared/components/probes/basic
+```
+
+### Mutable Kyverno Policies
+
+**Some configurations are auto-injected:**
+
+| Policy | What it Does | You Provide | Kyverno Adds |
+|--------|-------------|-------------|--------------|
+| `mutate-sizing-labels` | Adds sizing classification | `resources.requests` | `vixens.io/sizing.<container>: B-small` |
+| `mutate-managed-by` | Adds ArgoCD label | Nothing | `app.kubernetes.io/managed-by: argocd` |
+
+**These are automatic — you don't need to add these labels manually.**
+
+### Maturity Controller (Auto-Evaluation)
+
+```
+Every 15 minutes:
+  1. CronJob runs in kyverno namespace
+  2. Reads PolicyReports for each deployment
+  3. Counts violations by tier
+  4. Updates vixens.io/maturity label
+  
+Result: Labels are always accurate to current state
+```
+
+**You don't manually set maturity labels.** Fix violations → Controller promotes automatically.
+
+---
+
 ## Quick Checks
 
 ### Check Current Maturity
 ```bash
-export KUBECONFIG=/home/charchess/vixens/.secrets/prod/kubeconfig-prod
+export KUBECONFIG=.secrets/prod/kubeconfig-prod
 kubectl get deployments -A -o json | jq -r '.items[] | "\(.metadata.namespace)/\(.metadata.name): \(.metadata.labels["vixens.io/maturity"] // "unlabeled")"'
 ```
 
@@ -60,18 +132,21 @@ kubectl get policyreport -n $NAMESPACE -o json | jq -r '[.items[].results[] | se
 kubectl get policyreport -n $NAMESPACE -o json | jq '[.items[].results[] | select(.result == "fail") | {policy: .policy, message: .message}] | unique_by(.policy) | .[] | select(.message | test("Silver|Level 2"; "i"))'
 ```
 
+---
+
 ## Silver Requirements (Level 2)
 
-| Requirement | Policy | How to Fix |
-|-------------|--------|------------|
-| Resources | `require-resources` | Add `resources.limits` + `requests` on ALL containers |
-| Probes | `require-probes` | Add liveness + readiness on ALL containers |
-| Secrets | `check-infisical-secrets` | Use InfisicalSecret, not hardcoded Secret |
-| TLS | `check-ingress-tls` | Ensure ingress has `spec.tls` block |
-| Startup probe | `check-startup-probe` | Add or bypass with `vixens.io/fast-start: "true"` |
+| Requirement | Policy | How to Fix (GitOps) |
+|-------------|--------|---------------------|
+| Resources | `require-resources` | Add `resources.limits` + `requests` in deployment.yaml |
+| Probes | `require-probes` | Add probes in deployment.yaml OR use `probes/basic` component |
+| Secrets | `check-infisical-secrets` | Replace `Secret` with `InfisicalSecret` |
+| TLS | `check-ingress-tls` | Add `spec.tls` block in ingress.yaml |
+| Startup probe | `check-startup-probe` | Add startupProbe OR bypass annotation |
 
-### Fix Resources
+### Fix Resources (in Git)
 ```yaml
+# apps/<app>/base/deployment.yaml
 resources:
   requests:
     cpu: 100m
@@ -81,8 +156,16 @@ resources:
     memory: 512Mi
 ```
 
-### Fix Probes (on sidecars too!)
+### Fix Probes (Option 1: Component)
 ```yaml
+# apps/<app>/overlays/prod/kustomization.yaml
+components:
+  - ../../../../_shared/components/probes/basic
+```
+
+### Fix Probes (Option 2: Custom in Git)
+```yaml
+# apps/<app>/base/deployment.yaml
 livenessProbe:
   httpGet:
     path: /healthz
@@ -98,7 +181,7 @@ readinessProbe:
   periodSeconds: 10
 ```
 
-### For sidecars without HTTP endpoints
+### For Sidecars Without HTTP Endpoints
 ```yaml
 livenessProbe:
   exec:
@@ -112,6 +195,8 @@ readinessProbe:
   periodSeconds: 10
 ```
 
+---
+
 ## Bypass Annotations
 
 | Annotation | Bypasses | Use When |
@@ -121,16 +206,7 @@ readinessProbe:
 | `vixens.io/nometrics: "true"` | Metrics/ServiceMonitor | No metrics endpoint |
 | `vixens.io/explicitly-allow-root: "true"` | SecurityContext | Must run as root |
 
-## Shared Components
-
-```yaml
-# In kustomization.yaml
-components:
-  - ../../../../_shared/components/gold-maturity      # sync-wave, goldilocks, revisionHistoryLimit
-  - ../../../../_shared/components/priority/high      # PriorityClass
-  - ../../../../_shared/components/poddisruptionbudget/1  # PDB minAvailable=1
-  - ../../../../_shared/components/probes/basic       # Standard probes
-```
+---
 
 ## Maturity Controller
 
@@ -139,40 +215,124 @@ components:
 - Check last run: `kubectl -n kyverno get jobs -l app=maturity-controller --sort-by='.metadata.creationTimestamp' | tail -5`
 - Manual trigger: `kubectl -n kyverno create job maturity-manual --from=cronjob/maturity-controller`
 
-## Common Upgrade Path
+---
+
+## Common Upgrade Path (GitOps)
 
 ### Bronze → Silver
-1. Add resources on ALL containers (including sidecars like litestream, config-syncer)
-2. Add probes on ALL containers (including sidecars)
-3. Ensure secrets via InfisicalSecret (not hardcoded Secret)
-4. Add `app.kubernetes.io/managed-by: argocd` label
-5. Ensure Ingress has TLS block
+
+**All changes in Git, not kubectl:**
+
+1. **Resources** — Edit `deployment.yaml`, add `resources` block
+2. **Probes** — Add probes OR include `probes/basic` component
+3. **Secrets** — Replace `Secret` with `InfisicalSecret`
+4. **TLS** — Add `spec.tls` block to ingress
+5. **Commit, push** — ArgoCD syncs, controller re-evaluates
 
 ### Silver → Gold
-1. Add `goldilocks.fairwinds.com/enabled: "true"` annotation
-2. Add `revisionHistoryLimit: 3`
-3. Add sync-wave annotation
-4. Add ServiceMonitor if metrics exposed
-5. Add prometheus annotations: `prometheus.io/scrape: "true"`, `prometheus.io/port: "8080"`
+
+**Use shared component for DRY:**
+
+```yaml
+# apps/<app>/overlays/prod/kustomization.yaml
+components:
+  - ../../../../_shared/components/gold-maturity  # Adds all Gold requirements
+```
+
+This adds:
+- `goldilocks.fairwinds.com/enabled: "true"` annotation
+- `revisionHistoryLimit: 3`
+- Sync-wave annotation
+
+**If app exposes metrics:**
+- Add ServiceMonitor in Git
+- Add prometheus annotations
 
 ### Gold → Platinum
-1. Add PriorityClass (use shared component)
-2. Add PDB for multi-replica deployments
-3. Add `vixens.io/sizing-rationale` annotation
-4. Review Goldilocks recommendations
-5. Add sizing labels: `vixens.io/sizing.<container>: B-small`
+
+**Use shared components:**
+
+```yaml
+components:
+  - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/priority/high           # ← PriorityClass
+  - ../../../../_shared/components/poddisruptionbudget/1   # ← PDB
+```
+
+**Sizing is auto-managed:**
+- Kyverno `mutate-sizing-labels` adds `vixens.io/sizing.<container>` based on your resources
+- You just need to add `vixens.io/sizing-rationale` annotation explaining why
+
+```yaml
+# apps/<app>/base/deployment.yaml
+metadata:
+  annotations:
+    vixens.io/sizing-rationale: "Memory based on Goldilocks P95 recommendation"
+```
 
 ### Platinum → Emerald
-1. Configure backups (Litestream for SQLite, Velero for PVCs)
-2. Add `vixens.io/backup-profile: standard` label
-3. Add Config-Syncer for configuration data
+
+1. **Litestream** — Add sidecar for SQLite backup (if applicable)
+2. **Config-Syncer** — Add sidecar for config backup
+3. **Velero label** — Add `vixens.io/backup-profile: standard`
 
 ### Emerald → Diamond
-1. Add NetworkPolicy
-2. Harden SecurityContext (runAsNonRoot, drop capabilities)
-3. Integrate with Authentik SSO if applicable
+
+1. **NetworkPolicy** — Add `networkpolicy.yaml` in base/
+2. **SecurityContext** — Harden (runAsNonRoot, drop capabilities)
+3. **SSO** — Integrate with Authentik if applicable
 
 ### Diamond → Orichalcum
-1. 7 days stability without restarts
-2. 0 CVE in container images
-3. Validated sizing from Goldilocks
+
+1. **7 days stability** — No restarts (automatic monitoring)
+2. **0 CVE** — Trivy scan clean
+3. **Validated sizing** — Goldilocks recommendations applied
+
+---
+
+## Anti-Patterns to Avoid
+
+| ❌ Wrong | ✅ Right |
+|----------|----------|
+| Copy-paste PriorityClass YAML | Use `priority/high` component |
+| Copy-paste PDB YAML | Use `poddisruptionbudget/1` component |
+| Manually add sizing labels | Let Kyverno mutate them |
+| Manually set maturity label | Let controller evaluate |
+| `kubectl apply` to add resources | Edit Git, commit, push |
+| Hardcode secrets in deployment | Use InfisicalSecret |
+
+---
+
+## Troubleshooting Maturity
+
+### App Stuck at Bronze
+
+```bash
+# Check what's blocking
+kubectl get policyreport -n $NS -o json | jq '[.items[].results[] | select(.result == "fail") | .policy] | unique'
+```
+
+Common blockers:
+- Missing resources on sidecar (config-syncer, litestream)
+- Missing probes on sidecar
+- Hardcoded Secret instead of InfisicalSecret
+- Ingress missing TLS block
+
+### Controller Not Running
+
+```bash
+# Check CronJob
+kubectl -n kyverno get cronjob maturity-controller
+
+# Check recent jobs
+kubectl -n kyverno get jobs -l app=maturity-controller --sort-by='.metadata.creationTimestamp' | tail -3
+
+# Manual trigger
+kubectl -n kyverno create job maturity-manual --from=cronjob/maturity-controller
+```
+
+### Sizing Labels Wrong
+
+Sizing labels are computed by Kyverno based on `resources.requests`:
+- If resources change, labels update on next pod creation
+- Trigger update: `kubectl rollout restart deployment/$DEPLOY`
