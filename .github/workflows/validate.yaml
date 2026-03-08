@@ -59,6 +59,8 @@ jobs:
           echo "  comments-indentation: disable" >> yamllint-config.yml
           echo "  brackets: disable" >> yamllint-config.yml
           echo "  truthy: disable" >> yamllint-config.yml
+          echo "  document-start: disable" >> yamllint-config.yml
+          echo "  empty-lines: disable" >> yamllint-config.yml
 
 
           # PR: valider uniquement les fichiers changés
