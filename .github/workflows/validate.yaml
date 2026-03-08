@@ -82,6 +82,7 @@ jobs:
             ! -name "argocd-install.yaml" \
             ! -name "manifests.yaml" \
             ! -name "servicemonitors.yaml" | \
+            xargs yamllint -c yamllint-config.yml
           fi
 
   # 2️⃣ Validation spécifique ArgoCD
