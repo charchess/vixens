@@ -1,0 +1,114 @@
+# Gitleaks configuration for Vixens GitOps repository
+# Documentation: https://github.com/gitleaks/gitleaks#configuration
+
+title = "Vixens Secret Detection"
+
+[extend]
+# Use default gitleaks rules as base
+useDefault = true
+
+[allowlist]
+description = "Global allowlist for known safe patterns"
+
+# Paths to ignore (charts, crds, test fixtures)
+paths = [
+    '''.*/charts/.*''',
+    '''.*/crds/.*''',
+    '''\.git/.*''',
+    '''.*\.lock$''',
+    '''.*-lock\.json$''',
+]
+
+# Known safe patterns (not actual secrets)
+regexes = [
+    '''REDACTED''',
+    '''placeholder''',
+    '''example\.com''',
+    '''truxonline\.com''',  # Our domain, not a secret
+    '''192\.168\.\d+\.\d+''',  # Internal IPs
+    '''10\.\d+\.\d+\.\d+''',  # Cluster IPs
+]
+
+# Specific files to allowlist
+files = [
+    '''\.trivyignore''',
+    '''\.gitleaks\.toml''',
+]
+
+# ══════════════════════════════════════════════════════════════
+# CUSTOM RULES for Kubernetes/GitOps
+# ══════════════════════════════════════════════════════════════
+
+[[rules]]
+id = "kubernetes-secret-data"
+description = "Kubernetes Secret with base64 encoded data"
+regex = '''data:\s*\n\s+\w+:\s+[A-Za-z0-9+/=]{40,}'''
+tags = ["kubernetes", "secret", "base64"]
+keywords = ["data:"]
+
+[rules.allowlist]
+paths = [
+    '''.*sealed.*\.yaml$''',  # SealedSecrets are ok
+    '''.*-crds\.yaml$''',     # CRD definitions
+]
+
+[[rules]]
+id = "infisical-token"
+description = "Infisical Service Token or Machine Identity"
+regex = '''(?i)(infisical[_-]?(token|secret|key)|st\.[a-zA-Z0-9_-]{20,})'''
+tags = ["infisical", "token"]
+
+[[rules]]
+id = "minio-credentials"
+description = "MinIO/S3 Access Keys"
+regex = '''(?i)(minio|s3|litestream)[_-]?(access[_-]?key|secret[_-]?key)\s*[:=]\s*["\']?[A-Za-z0-9+/=]{16,}'''
+tags = ["minio", "s3", "credentials"]
+
+[[rules]]
+id = "synology-credentials"
+description = "Synology NAS credentials"
+regex = '''(?i)synology[_-]?(password|secret|key)\s*[:=]\s*["\']?[^\s"\']{8,}'''
+tags = ["synology", "nas", "credentials"]
+
+[[rules]]
+id = "free-mobile-token"
+description = "Free Mobile API Token"
+regex = '''(?i)(free[_-]?mobile|access[_-]?token)\s*[:=]\s*["\']?[a-zA-Z0-9]{10,}'''
+tags = ["free-mobile", "sms", "token"]
+
+[[rules]]
+id = "google-service-account"
+description = "Google Service Account JSON"
+regex = '''(?i)"type"\s*:\s*"service_account"'''
+tags = ["google", "service-account"]
+keywords = ["service_account"]
+
+[[rules]]
+id = "hardcoded-password-yaml"
+description = "Hardcoded password in YAML"
+regex = '''(?i)password\s*:\s*["\']?(?!REDACTED|placeholder|\$\{|\{\{)[^\s"\']{8,}'''
+tags = ["password", "yaml"]
+
+[rules.allowlist]
+regexes = [
+    '''password:\s*["\']\s*["\']\s*$''',  # Empty password
+    '''password:\s*\$\{''',  # Variable reference
+    '''password:\s*\{\{''',  # Template reference
+]
+
+# ══════════════════════════════════════════════════════════════
+# STOPWORDS - Reduce false positives
+# ══════════════════════════════════════════════════════════════
+
+[rules.allowlist]
+stopwords = [
+    "example",
+    "sample",
+    "test",
+    "dummy",
+    "fake",
+    "mock",
+    "CHANGE_ME",
+    "YOUR_",
+    "xxx",
+]
