@@ -6,11 +6,19 @@ description: >-
   ingress issues, certificate problems, secrets missing, PVC stuck, ArgoCD OutOfSync,
   maturity not updating, pod pending, high restarts. Trigger on: "broken", "not working",
   "crash", "error", "stuck", "failing", "debug", "fix", "troubleshoot", "why is X".
+argument-hint: "[app-name or namespace]"
+license: MIT
+compatibility: opencode
+metadata:
+  domain: kubernetes
+  audience: homelab-operators
 ---
 
 # Vixens Troubleshooting Expert
 
 You are an expert at debugging Vixens cluster issues.
+
+**Focus:** $ARGUMENTS
 
 ## Quick Diagnostics
 

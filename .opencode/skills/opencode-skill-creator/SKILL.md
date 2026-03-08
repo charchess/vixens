@@ -6,6 +6,11 @@ description: >-
   templates, skill best practices. Trigger on: "create skill", "new skill", "skill
   template", "edit skill", "fix skill", "improve skill", "skill error", "skill not
   triggering", "repetitive task" (suggest skill creation), "automate this".
+license: MIT
+compatibility: opencode
+metadata:
+  domain: developer-tools
+  audience: ai-engineers
 ---
 
 # OpenCode Skill Creator
