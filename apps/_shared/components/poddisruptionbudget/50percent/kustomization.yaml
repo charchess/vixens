@@ -1,3 +1,4 @@
+---
 # Component: PodDisruptionBudget - 50percent (High Availability Budget)
 #
 # This component sets minAvailable: 50% on PodDisruptionBudget resources.

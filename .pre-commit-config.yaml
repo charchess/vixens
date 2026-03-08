@@ -1,0 +1,66 @@
+# Pre-commit hooks for Vixens GitOps repository
+# Install: pipx install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+#
+# Philosophy: Block bad code BEFORE commit
+# Secrets, style violations, and syntax errors caught here (not in CI)
+---
+repos:
+  # ══════════════════════════════════════════════════════════════
+  # SECRET DETECTION (CRITICAL - blocks commit)
+  # ══════════════════════════════════════════════════════════════
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+        name: 🔐 Detect secrets
+
+  # ══════════════════════════════════════════════════════════════
+  # FILE HYGIENE (quick checks)
+  # ══════════════════════════════════════════════════════════════
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-merge-conflict
+        name: 🔀 Check merge conflicts
+      - id: detect-private-key
+        name: 🔑 Detect private keys
+      - id: check-added-large-files
+        name: 📦 Check large files
+        args: ['--maxkb=1000']
+      - id: check-yaml
+        name: 📄 Check YAML syntax
+        args: [--allow-multiple-documents, --unsafe]
+        exclude: |
+          (?x)^(
+            .*/charts/.*|
+            .*/crds/.*|
+            .*/templates/.*|
+            apps/00-infra/argocd/base/argocd-crds\.yaml
+          )$
+
+  # ════════════════════════════════════════════════════════════════
+  # YAML STYLE (enforces editorial consistency)
+  # ════════════════════════════════════════════════════════════════
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        name: 📝 YAML style check
+        args: [-c, yamllint-config.yml]
+        exclude: |
+          (?x)^(
+            \.beads/.*|
+            \.bmad-core/.*|
+            \.bmad-infrastructure-devops/.*|
+            \.serena/.*|
+            .*/charts/.*|
+            .*/crds/.*|
+            .*/templates/.*|
+            apps/00-infra/argocd/base/argocd-crds\.yaml|
+            apps/00-infra/argocd/base/argocd-install\.yaml|
+            apps/.*/manifests\.yaml|
+            apps/.*/servicemonitors\.yaml|
+            apps/.*/upstream\.yaml|
+            apps/.*/poolers\.yaml
+          )$

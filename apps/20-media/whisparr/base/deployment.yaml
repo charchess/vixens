@@ -6,7 +6,7 @@ metadata:
   labels:
     app: whisparr
     vixens.io/sizing-v2: "true"
-    vixens.io/vpa-mode: Off
+    vixens.io/vpa-mode: "Off"
 spec:
   strategy:
     type: Recreate

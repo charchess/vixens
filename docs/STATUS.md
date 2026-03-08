@@ -2,16 +2,42 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-02-28 (Post-Incident Stabilization)
+Last Updated: 2026-03-08
 
 ---
 
-## 🔥 Global Build Status
+## Global Cluster Status
+
+| Cluster | Nodes | Version | Status |
+|---------|-------|---------|--------|
+| **Prod** | 5 (peach, pearl, phoebe, poison, powder) | Talos v1.12.4 / K8s v1.34.0 | ✅ Active |
+| **Dev** | 3 (daphne, diva, dulce) | - | ❌ Cert invalide |
 
 | Component | Status | Description |
 |-----------|--------|-------------|
-| **Kustomize Build** | ✅ **PASSING** | Infrastructure build fixed (Kyverno foreach loops + Burstable QoS) |
-| **CI/CD Pipelines** | ✅ **ACTIVE** | Promotion pipeline active (v3.1.381) |
+| **ArgoCD Apps** | ✅ 88/89 Healthy | 1 Progressing (netvisor) |
+| **Kustomize Build** | ✅ PASSING | |
+| **CI/CD Pipelines** | ✅ ACTIVE | |
+
+| **Quality Gates** | ✅ ENFORCED | Pre-commit + CI (secrets, YAML style, K8s validation) |
+---
+
+## Système de Maturité (ADR-023)
+
+> **Référence:** [ADR-023: 7-Tier Goldification System v2](adr/023-7-tier-goldification-system-v2.md)
+
+| Niveau | Nom | Description | Count |
+|--------|-----|-------------|-------|
+| 🥉 1 | **Bronze** | Déployée | 3 |
+| 🥈 2 | **Silver** | Production Ready | 17 |
+| 🥇 3 | **Gold** | Observable | 48 |
+| 💎 4 | **Platinum** | Reliable | 17 |
+| 🟢 5 | **Emerald** | Data Durability | 0 |
+| 💠 6 | **Diamond** | Secure & Integrated | 0 |
+| 🌟 7 | **Orichalcum** | Parfaite | 0 |
+| ⚫ | **none** | Non labellisé | 1 |
+
+**Total déploiements labellisés:** 86
 
 ---
 
@@ -19,236 +45,198 @@ Last Updated: 2026-02-28 (Post-Incident Stabilization)
 
 | Symbol | Status | Description |
 |--------|--------|-------------|
-| ✅ | **Working** | Deployed, configured, tested, no known issues |
-| ⚠️ | **Degraded** | Working but needs attention (resources, config, rate limits) |
-| ❌ | **Broken** | Not working, needs immediate fix |
-| 🚧 | **WIP** | Work in progress, deployment ongoing |
-| 💤 | **Paused** | Intentionally not deployed (planned for future) |
-| ⏳ | **Planned** | Not yet deployed, planned for future sprint |
+| ✅ | **Healthy** | Synced, Healthy, pas d'issues |
+| ⚠️ | **Degraded** | Fonctionne mais restarts élevés ou policy violations |
+| ❌ | **Broken** | Unhealthy ou OutOfSync |
+| 🚧 | **Progressing** | Sync ou rollout en cours |
+| 💤 | **Paused** | Intentionnellement non déployé |
 
 ---
 
-## Shared Resources (_shared/)
-
-| Resource | Dev | Prod | Notes |
-|----------|-----|------|-------|
-| shared-namespaces | ✅ | ✅ | tools, databases, media centralized |
-| priority-classes | ✅ | ✅ | Pod priority classes |
-
 ## Infrastructure (00-infra/)
 
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| argocd | ✅ | ✅ | Upgraded to v3.3.0 (Self-Managed GitOps) |
-| kyverno | ✅ | ✅ | Boosted (3 replicas, 1 CPU, Timeout 30s) |
-| velero | ⏳ | ✅ | Prod: v1.17.2 + Infisical + Node Agent |
-| traefik | ✅ | ✅ | Ingress controller - v3.x |
-| cert-manager | ✅ | ✅ | TLS certificates - Let's Encrypt production |
-| cert-manager-webhook-gandi | ✅ | ✅ | Fixed missing secretNamespace |
-| cilium | ✅ | ✅ | CNI v1.18.3 - DNS proxy transparent mode disabled |
-| cilium-lb | ✅ | ✅ | L2 Announcements + LB IPAM |
-| synology-csi | ✅ | ✅ | Persistent storage via iSCSI |
-| infisical-operator | ✅ | ✅ | Secrets management operator |
-| kubernetes-dashboard | ✅ | 🚧 | Dashboard v7.x (Prod en cours de sync) |
-| reloader | ✅ | ✅ | Elite Status + Prometheus Scraping |
-| vpa | ✅ | ✅ | Elite Status + QoS Guaranteed + Critical Priority |
-| trivy | ✅ | ✅ | Elite Status + Gentleman Mode (Concurrent Limit = 2) |
+| Application | Health | Maturity | Notes |
+|-------------|--------|----------|-------|
+| argocd | ✅ | 🥇 Gold | v3.x - Self-Managed |
+| kyverno | ✅ | 💎 Platinum | 4 controllers |
+| velero | ✅ | 🥇 Gold | v1.17.x + Infisical |
+| traefik | ✅ | 🥇 Gold | v3.x Ingress controller |
+| cert-manager | ✅ | 🥈 Silver | TLS via Let's Encrypt |
+| cert-manager-webhook-gandi | ✅ | 🥇 Gold | DNS-01 challenge |
+| cilium-operator | ✅ | 💎 Platinum | CNI |
+| synology-csi | ✅ | - | iSCSI storage |
+| infisical-operator | ✅ | 🥇 Gold | Secrets management |
+| reloader | ✅ | 🥈 Silver | ConfigMap/Secret reload |
+| vpa | ✅ | 💎 Platinum | Vertical Pod Autoscaler |
+| metrics-server | ✅ | 💎 Platinum | Resource metrics |
 
 ---
 
 ## Monitoring (02-monitoring/)
 
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| prometheus | ✅ | ✅ | Elite Status (Restore QoS + config fixed) |
-| alertmanager | ✅ | ✅ | Cleanup: Standalone app removed (Subchart) |
-| grafana | 💤 | ✅ | Elite Status + Probes + Guaranteed QoS |
-| loki | ✅ | ✅ | Elite Status (Restore QoS + config fixed) |
-| promtail | ✅ | ✅ | Elite Status + Probes + Guaranteed QoS |
-| robusta | ✅ | ✅ | Upgraded to v0.32.0, Discord & HolmesGPT UI enabled |
-| goldilocks | ✅ | ✅ | Elite Status + VPA + Security Hardened |
-| descheduler | ✅ | ✅ | Eviction active (--dry-run=false) |
+| Application | Health | Maturity | Notes |
+|-------------|--------|----------|-------|
+| prometheus | ✅ | 🥇 Gold | |
+| grafana | ✅ | 🥉 Bronze | Needs upgrade |
+| loki | ✅ | - | Log aggregation |
+| promtail | ⚠️ | - | **8-87 restarts** - DaemonSet unstable |
+| goldilocks | ✅ | 🥇 Gold | VPA recommendations |
+| descheduler | ✅ | - | Pod rebalancing |
+| policy-reporter | ✅ | 🥇 Gold | Kyverno reporting |
 
 ---
 
 ## Security (03-security/)
 
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| authentik | ✅ | ✅ | Elite Status + Blueprints (Netbird, Hydrus) |
+| Application | Health | Maturity | Notes |
+|-------------|--------|----------|-------|
+| authentik | ✅ | 🥈 Silver (server) / 🥇 Gold (worker) | SSO Provider |
+| trivy | ✅ | 🥇 Gold | Vulnerability scanning |
 
 ---
 
 ## Databases (04-databases/)
 
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| postgresql-shared | ✅ | ✅ | CloudNativePG Shared Cluster (Elite Status) |
-| redis-shared | ✅ | ✅ | Shared Redis Instance |
-| mariadb-shared | ✅ | ✅ | Shared MariaDB Instance |
-| cloudnative-pg | ✅ | ✅ | CloudNativePG Operator |
+| Application | Health | Maturity | Notes |
+|-------------|--------|----------|-------|
+| postgresql-shared | ✅ | - | CloudNativePG |
+| redis-shared | ✅ | 🥇 Gold | |
+| mariadb-shared | ✅ | - | |
+| cloudnative-pg | ✅ | 🥇 Gold | Operator |
 
 ---
 
 ## Home Automation (10-home/)
 
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| homeassistant | ✅ | ✅ | Fixed: Critical Priority + 4Gi RAM |
-| mealie | ✅ | ✅ | Fixed DNS resolution (removed target annotation) |
-| mosquitto | ✅ | ✅ | MQTT broker |
+| Application | Health | Maturity | Notes |
+|-------------|--------|----------|-------|
+| homeassistant | ⚠️ | 🥈 Silver | **16 restarts**, PDB manquant |
+| mealie | ✅ | 🥈 Silver | |
+| mosquitto | ✅ | - | MQTT broker |
 
 ---
 
 ## Media (20-media/)
 
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| jellyfin | ⏳ | 💤 | Media server (planned) |
-| sabnzbd | ⏳ | ✅ | Prod fixed and synced |
-| radarr | ⏳ | ✅ | Silver tier (2026-02-24) |
-| sonarr | ⏳ | ✅ | Prod fixed |
-| prowlarr | ⏳ | ✅ | Prod fixed |
-| music-assistant | 💤 | ✅ | Ports 3483 (SlimProto) + 8097 (Stream) |
-| frigate | ✅ | ✅ | Elite Status + 50Gi PVC fixed |
-| jellyseerr | ⏳ | 💤 | Media request management (planned) |
-| hydrus-client | ✅ | ✅ | Elite Status + Authentik SSO |
+| Application | Health | Maturity | Notes |
+|-------------|--------|----------|-------|
+| jellyfin | ✅ | 🥇 Gold | Media server |
+| jellyseerr | ✅ | 🥇 Gold | Request management |
+| sabnzbd | ✅ | 🥈 Silver | Usenet downloader |
+| radarr | ✅ | 🥈 Silver | Movies |
+| sonarr | ✅ | 🥈 Silver | TV Shows |
+| prowlarr | ✅ | 🥈 Silver | Indexer manager |
+| lidarr | ✅ | 🥈 Silver | Music |
+| mylar | ✅ | 🥈 Silver | Comics |
+| whisparr | ✅ | 🥈 Silver | Adult content |
+| lazylibrarian | ✅ | 🥈 Silver | Books/Audiobooks |
+| music-assistant | ✅ | 🥇 Gold | |
+| frigate | ✅ | 🥈 Silver | NVR |
+| hydrus-client | ✅ | 🥈 Silver | |
+| booklore | ✅ | 🥇 Gold | |
+| birdnet-go | ✅ | 🥉 Bronze | Bird detection |
+| qbittorrent | ✅ | 💎 Platinum | Torrent client |
+| pyload | ✅ | 💎 Platinum | Download manager |
+| amule | ✅ | ⚫ none | ED2K client |
 
 ---
 
 ## Network (40-network/)
 
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| external-dns-unifi | ✅ | ✅ | Internal DNS management |
-| external-dns-gandi | ✅ | ✅ | Public DNS management |
-| contacts | ✅ | 💤 | Contacts redirection service |
-| netvisor | ✅ | ✅ | Network monitoring (fixed syntax error) |
-| netbird | ✅ | ✅ | Rate limit resolved, certificates active |
-| adguard | ✅ | ✅ | DNS Restored + Critical Priority |
+| Application | Health | Maturity | Notes |
+|-------------|--------|----------|-------|
+| external-dns-unifi | ✅ | 🥇 Gold | Internal DNS |
+| external-dns-gandi | ✅ | 🥇 Gold | Public DNS |
+| netbird | ⚠️ | 🥇 Gold | **42 restarts**, SecurityContext manquant |
+| netvisor | 🚧 | 🥇 Gold | Progressing |
+| adguard-home | ✅ | - | DNS filtering |
+| contacts | ✅ | - | Redirection |
 
 ---
 
 ## Services (60-services/)
 
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| mail-gateway | ✅ | ✅ | Email gateway (External) |
-| vaultwarden | ✅ | ✅ | Migrated to standardized middleware |
-| docspell-native | ✅ | ✅ | Fixed missing secretNamespace |
-| gluetun | ✅ | ✅ | Fixed missing secretNamespace |
-| firefly-iii | ✅ | ✅ | Elite Status + VPA + Security Hardened |
-| openclaw | ✅ | ✅ | AI Agent - open access (TODO: Authentik) |
+| Application | Health | Maturity | Notes |
+|-------------|--------|----------|-------|
+| mail-gateway | ✅ | - | Email gateway |
+| vaultwarden | ✅ | 🥈 Silver | Password manager |
+| docspell | ✅ | - | Document management |
+| gluetun | ✅ | 🥇 Gold | VPN container |
+| firefly-iii | ✅ | 🥉 Bronze | Finance - needs upgrade |
+| firefly-iii-importer | ✅ | 💎 Platinum | |
+| openclaw | ⚠️ | 🥇 Gold | **34 restarts**, probes timeout |
 
 ---
 
 ## Tools (70-tools/)
 
-| Application | Dev | Prod | Notes |
-|-------------|-----|------|-------|
-| whoami | ✅ | ✅ | Elite Status + PSA baseline |
-| homepage | ✅ | 💤 | Prod fixed and synced |
-| netbox | ✅ | ✅ | Migrated to centralized middleware |
-| changedetection | ✅ | ✅ | Migrated to centralized middleware |
-| stirling-pdf | ✅ | ✅ | Migrated to centralized middleware |
-| it-tools | ✅ | ✅ | Migrated to centralized middleware |
-| headlamp | ✅ | ✅ | Elite Status + VPA + Security Hardened |
-| linkwarden | ✅ | ✅ | Migrated to standardized middleware |
-| vikunja | ✅ | ✅ | Upgraded to v1.0.0 (Postgres/Redis) |
-| penpot | 🚧 | 🚧 | Implementation in progress |
-| renovate | ✅ | ✅ | Auto-dependency updates (ADR-017) |
-| penpot | ⏳ | ⏳ | Design platform (Deployed, awaiting cluster sync) |
-| gitops-revision-controller | 💤 | 💤 | Déprécié et supprimé (remplacé par Renovate/PR) |
+| Application | Health | Maturity | Notes |
+|-------------|--------|----------|-------|
+| whoami | ✅ | 🥇 Gold | Test app |
+| homepage | ✅ | 💎 Platinum | Dashboard |
+| netbox | ✅ | 🥇 Gold | IPAM |
+| changedetection | ✅ | 🥇 Gold | Website monitoring |
+| stirling-pdf | ✅ | 🥈 Silver | PDF tools |
+| it-tools | ✅ | 🥇 Gold | Dev tools |
+| headlamp | ✅ | 🥇 Gold | K8s dashboard |
+| linkwarden | ✅ | 🥇 Gold | Bookmark manager |
+| vikunja | ⚠️ | 💎 Platinum | **37 restarts** |
+| penpot | ✅ | 🥇 Gold | Design platform |
+| renovate | ✅ | - | Dependency updates |
+| trilium | ✅ | 💎 Platinum | Notes |
+| nocodb | ✅ | 💎 Platinum | Airtable alternative |
+| radar | ✅ | 💎 Platinum | |
 
 ---
 
-## Update Protocol
+## Applications avec Issues
 
-**MANDATORY:** When deploying or discovering issues, update this dashboard.
-
-### When to Update
-
-| Event | Action |
-|-------|--------|
-| Deploy to dev | Update dev column |
-| Deploy to prod | Update prod column |
-| Discover issue | Change status to ⚠️ or ❌ |
-| Fix issue | Change status to ✅ |
-| Remove service | Mark as 💤 (if temporary) or delete row |
-
-### How to Update
-
-```bash
-# Edit this file
-vim docs/STATUS.md
-
-# Update status symbols and notes
-# Example: | jellyfin | ✅ | ⚠️ | Dev OK, Prod needs resource tuning |
-| sabnzbd | ⏳ | ✅ | Prod fixed and synced |
-
-# Commit changes
-git add docs/STATUS.md
-git commit -m "docs: update STATUS.md - <application> <status>"
-git push origin main
-```
+| Application | Restarts | Issue principale |
+|-------------|----------|------------------|
+| promtail | 8-87 | DaemonSet instable, possible OOM |
+| netbird-management | 42 | SecurityContext non durci |
+| vikunja | 37 | À investiguer |
+| openclaw | 34 | Probes en timeout |
+| homeassistant | 16 | PDB manquant |
 
 ---
 
-## Quick Stats
+## Top Policy Failures (Kyverno)
 
-**Dev Environment:**
-- ✅ Working: 38 applications
-- ⚠️ Degraded: 0 applications
-- ❌ Broken: 0 applications
-- 🚧 WIP: 0 application
-- ⏳ Planned: 6 applications
-- 💤 Paused: 2 applications
-
-**Prod Environment:**
-- ✅ Working: 42 applications (Phase 3 active)
-- ⚠️ Degraded: 1 application (Netbird Certs)
+| Policy | Failures | Impact |
+|--------|----------|--------|
+| check-backup | 317 | Emerald bloqué |
+| check-pdb | 237 | Platinum bloqué |
+| require-resources | 237 | Silver bloqué |
+| require-probes | 198 | Silver bloqué |
+| sizing-audit | 126 | Gold bloqué |
+| check-security-context | 121 | Diamond bloqué |
 
 ---
 
 ## Environment Information
 
+### Prod Cluster
+
+- **Nodes:** peach, pearl, phoebe, poison, powder (3 CP + 2 workers)
+- **VIP:** 192.168.111.190
+- **IP Range:** 192.168.111.191 - 192.168.111.195
+- **Status:** ✅ Active
+
 ### Dev Cluster
 
 - **Nodes:** daphne, diva, dulce (3 CP HA)
 - **VIP:** 192.168.111.160
-- **VLAN Internal:** 111
-- **VLAN Services:** 208
-- **Status:** ✅ Active
-
-### Prod Cluster
-
-- **Nodes:** pearl, phoebe, poison, powder
-- **VIP:** 192.168.111.190
-- **IP Range:** 192.168.111.191 - 192.168.111.195
-- **VLAN Internal:** 111
-- **VLAN Services:** 201
-- **Status:** ✅ Active
+- **Status:** ❌ Certificat invalide (kubeconfig à regénérer)
 
 ---
 
 ## Related Documentation
 
-- **[Application Documentation](applications/)** - Detailed per-app documentation
-- **[reports/validation/RECETTE-FONCTIONNELLE.md](reports/validation/RECETTE-FONCTIONNELLE.md)** - Functional validation checklist
-- **[reports/validation/RECETTE-TECHNIQUE.md](reports/validation/RECETTE-TECHNIQUE.md)** - Technical validation checklist
-- **[reports/audits/APP_AUDIT.md](reports/audits/APP_AUDIT.md)** - Detailed application audit
-- **[reports/audits/ULTIMATE-AUDIT.md](reports/audits/ULTIMATE-AUDIT.md)** - Resource optimization analysis
+- **[ADR-023: 7-Tier Goldification System v2](adr/023-7-tier-goldification-system-v2.md)** - Source de vérité pour les niveaux de maturité
+- **[Application Documentation](applications/)** - Documentation par app
+- **[Maturity Standards Matrix](reference/maturity-standards-matrix.md)** - Matrice des exigences par niveau
 
 ---
 
-## Notes
-
-- This dashboard is a **quick reference** for deployment status
-- For detailed information, see per-application documentation in [docs/applications/](applications/)
-- Update this file **immediately** when deploying or discovering issues
-- Keep notes column concise (max 80 characters)
-- Use emoji symbols consistently
-
----
-
-**Last Updated:** 2026-02-28
+**Last Updated:** 2026-03-08

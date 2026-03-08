@@ -27,6 +27,7 @@ spec:
         vixens.io/sizing.install-gemini-cli: B-medium
         vixens.io/sizing.restore-data: B-nano
         vixens.io/sizing.restore-config: B-nano
+        vixens.io/sizing.fix-config: G-nano
         vixens.io/sizing.setup-gemini-config: G-nano
         vixens.io/sizing.openclaw: V-large
         vixens.io/sizing.data-syncer: V-nano
@@ -69,10 +70,10 @@ spec:
           args:
             - |
               export DEBIAN_FRONTEND=noninteractive
-              
+
               # Create tools directory in shared volume
               mkdir -p /data/tools/bin /data/tools/lib
-              
+
               # Update and install base tools directly to shared volume
               # First install to temp, then copy
               apt-get update
@@ -100,70 +101,70 @@ spec:
                 unzip \
                 zip \
                 gzip
-              
+
               # Copy installed binaries to shared volume with their dependencies
               for bin in jq rsync tree nano htop git nmap dnsutils netcat ffmpeg convert sqlite3; do
                 cp /usr/bin/$bin /data/tools/bin/ 2>/dev/null || true
                 # Copy required libraries
                 ldd /usr/bin/$bin 2>/dev/null | grep "=>" | awk '{print $3}' | xargs -I {} cp {} /data/tools/lib/ 2>/dev/null || true
               done
-              
+
               # Copy all libraries from /usr/lib
               cp -r /usr/lib/x86_64-linux-gnu/* /data/tools/lib/ 2>/dev/null || true
-              
+
               # kubectl - download directly to shared volume
               curl -sLo /data/tools/bin/kubectl "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
               chmod +x /data/tools/bin/kubectl
-              
+
               # rclone - download directly to shared volume
               curl -sOs /tmp/rclone.zip https://downloads.rclone.org/rclone-current-linux-amd64.zip
               unzip -j /tmp/rclone.zip rclone -d /data/tools/bin/
               chmod +x /data/tools/bin/rclone
               rm -f /tmp/rclone.zip
-              
+
               # argocd - download directly to shared volume
               curl -sSL -o /data/tools/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
               chmod +x /data/tools/bin/argocd
-              
+
               # talosctl - download directly to shared volume
               curl -sLo /data/tools/bin/talosctl "https://github.com/siderolabs/talos/releases/download/$(curl -sL https://api.github.com/repos/siderolabs/talos/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+')/talosctl-linux-amd64"
               chmod +x /data/tools/bin/talosctl
-              
+
               # GitHub CLI
               curl -sSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
               echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
               apt-get update
               apt-get install -y gh
               cp /usr/bin/gh /data/tools/bin/
-              
+
               # minio client (mc)
               curl -sSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /data/tools/bin/mc
               chmod +x /data/tools/bin/mc
-              
+
               # infisical CLI - download tar.gz and extract
               curl -sSL "https://github.com/Infisical/cli/releases/download/v0.43.57/cli_0.43.57_linux_amd64.tar.gz" -o /tmp/infisical.tar.gz
               tar -xzf /tmp/infisical.tar.gz -C /data/tools/bin/ infisical
               chmod +x /data/tools/bin/infisical
               rm /tmp/infisical.tar.gz
-              
+
               # himalaya email CLI - download tar.gz and extract
               curl -sSL "https://github.com/pimalaya/himalaya/releases/download/v1.2.0/himalaya.x86_64-linux.tgz" -o /tmp/himalaya.tar.gz
               tar -xzf /tmp/himalaya.tar.gz -C /data/tools/bin/ himalaya
               chmod +x /data/tools/bin/himalaya
               rm /tmp/himalaya.tar.gz
-              
+
               # pip - install using get-pip.py to /data/tools
               curl -sSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
               python3 /tmp/get-pip.py --root=/data/tools --ignore-installed
               rm /tmp/get-pip.py
-              
+
               # Add node user to sudoers with NOPASSWD
               echo "node ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/node
-              
+
               # Clean up
               apt-get clean
               rm -rf /var/lib/apt/lists/*
-              
+
               ls -la /data/tools/bin/
               echo "Tools installed successfully"
           volumeMounts:
@@ -181,10 +182,11 @@ spec:
           args:
             - |
               echo "DEBUG: RCLONE_BUCKET=$RCLONE_BUCKET"
-              
-              rclone lsd s3:$RCLONE_BUCKET --s3-access-key-id=admin --s3-secret-access-key='REDACTED_PASSWORD' --s3-endpoint=$RCLONE_ENDPOINT || echo "Rclone list failed"
-              rclone copy s3:$RCLONE_BUCKET/.openclaw /data/.openclaw --s3-access-key-id=admin --s3-secret-access-key='REDACTED_PASSWORD' --s3-endpoint=$RCLONE_ENDPOINT --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
-              rclone copy s3:$RCLONE_BUCKET/extensions /data/extensions --s3-access-key-id=admin --s3-secret-access-key='REDACTED_PASSWORD' --s3-endpoint=$RCLONE_ENDPOINT --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
+
+              # Rclone reads RCLONE_CONFIG_S3_* env vars automatically from envFrom secretRef
+              rclone lsd s3:$RCLONE_BUCKET || echo "Rclone list failed"
+              rclone copy s3:$RCLONE_BUCKET/.openclaw /data/.openclaw --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
+              rclone copy s3:$RCLONE_BUCKET/extensions /data/extensions --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
           envFrom:
             - secretRef:
                 name: openclaw-secrets
@@ -203,7 +205,7 @@ spec:
           args:
             - |
               echo "DEBUG: RCLONE_BUCKET=$RCLONE_BUCKET"
-              
+
               # Check if external tool has a pending backup (lock file)
               if [ -f /data/backup.lock ]; then
                 echo "backup.lock found - preserving local config changes"
@@ -212,19 +214,19 @@ spec:
                 echo "Local config preserved, lock removed - ready to start"
                 exit 0
               fi
-              
+
               # If PVC has no config, try to restore from MinIO
               if [ ! -s /data/openclaw.json ]; then
                 echo "No config found in PVC, checking MinIO backup..."
-                rclone copy s3:$RCLONE_BUCKET/openclaw.json /data/ --s3-access-key-id=admin --s3-secret-access-key='REDACTED_PASSWORD' --s3-endpoint=$RCLONE_ENDPOINT --transfers 4 2>/dev/null || echo "MinIO restore failed"
+                rclone copy s3:$RCLONE_BUCKET/openclaw.json /data/ --transfers 4 2>/dev/null || echo "MinIO restore failed"
               fi
-              
+
               # If still no config, use default from ConfigMap
               if [ ! -s /data/openclaw.json ]; then
                 echo "No backup found, using default config..."
                 cp /default-config/openclaw.json /data/openclaw.json 2>/dev/null || true
               fi
-              
+
               # Create backup
               cp /data/openclaw.json /data/openclaw.json.bak 2>/dev/null || true
               chown -R 1000:1000 /data/*.json 2>/dev/null || true
@@ -238,6 +240,33 @@ spec:
             - name: default-config
               mountPath: /default-config
               readOnly: true
+        # Fix invalid config keys that may have been self-injected
+        - name: fix-config
+          image: ghcr.io/jqlang/jq:1.8.1
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              echo "Checking for invalid config keys..."
+              if [ -f /data/openclaw.json ]; then
+                # Remove known invalid keys that openclaw may have auto-added
+                jq 'del(.skills.load.paths) | del(.skills.load) | if .skills == {} then del(.skills) else . end' /data/openclaw.json > /tmp/openclaw.json.tmp
+                if [ -s /tmp/openclaw.json.tmp ]; then
+                  mv /tmp/openclaw.json.tmp /data/openclaw.json
+                  echo "Config cleaned successfully"
+                else
+                  echo "WARNING: jq output empty, keeping original"
+                fi
+              else
+                echo "No config file to fix"
+              fi
+          volumeMounts:
+            - name: data
+              mountPath: /data
         # Install npm and gemini-cli-auth plugin
         - name: install-gemini-plugin
           image: node:24-bookworm
@@ -320,7 +349,7 @@ spec:
               mountPath: /data
       containers:
         - name: openclaw
-          image: ghcr.io/openclaw/openclaw:2026.3.2
+          image: ghcr.io/openclaw/openclaw:2026.3.7
           imagePullPolicy: Always
           command:
             - node
@@ -395,17 +424,20 @@ spec:
           args:
             - |
               echo "DEBUG: RCLONE_BUCKET=$RCLONE_BUCKET"
-              
+
+              # Rclone reads RCLONE_CONFIG_S3_* env vars automatically from envFrom secretRef
+              EXCLUDES="--exclude lost+found/** --exclude node_modules/** --exclude tools/** --exclude gemini-cli/** --exclude browser/** --exclude canvas/** --exclude extensions/** --exclude .openclaw/** --exclude media/** --exclude netbox-mcp-server/**"
+
               # Handle pending backup lock from external tool
               if [ -f /data/backup.lock ]; then
                 echo "backup.lock found - performing immediate backup before sync loop"
-                rclone sync /data s3:$RCLONE_BUCKET --s3-access-key-id=admin --s3-secret-access-key='REDACTED_PASSWORD' --s3-endpoint=$RCLONE_ENDPOINT --exclude "lost+found/**" --exclude "node_modules/**" --exclude "tools/**" --exclude "gemini-cli/**" --exclude "browser/**" --exclude "canvas/**" --exclude "extensions/**" --exclude ".openclaw/**" --exclude "media/**" --exclude "netbox-mcp-server/**" || echo "Backup failed"
+                rclone sync /data s3:$RCLONE_BUCKET $EXCLUDES || echo "Backup failed"
                 rm -f /data/backup.lock
                 echo "Backup complete, lock removed"
               fi
-              
+
               sync_s3() {
-                rclone sync /data s3:$RCLONE_BUCKET --s3-access-key-id=admin --s3-secret-access-key='REDACTED_PASSWORD' --s3-endpoint=$RCLONE_ENDPOINT --exclude "lost+found/**" --exclude "node_modules/**" --exclude "tools/**" --exclude "gemini-cli/**" --exclude "browser/**" --exclude "canvas/**" --exclude "extensions/**" --exclude ".openclaw/**" --exclude "media/**" --exclude "netbox-mcp-server/**" || echo "Sync failed"
+                rclone sync /data s3:$RCLONE_BUCKET $EXCLUDES || echo "Sync failed"
               }
               while true; do
                 sync_s3;

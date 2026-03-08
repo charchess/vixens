@@ -21,7 +21,7 @@ spec:
         vixens.io/sizing.hydrus-client: V-large
         vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.fix-permissions: G-nano
-        vixens.io/sizing.check-integrity: G-nano
+        vixens.io/sizing.check-integrity: B-medium
         vixens.io/sizing.restore-db: B-nano
         vixens.io/sizing.restore-mappings: B-nano
         vixens.io/sizing.restore-master: B-nano
@@ -34,6 +34,7 @@ spec:
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
         vixens.io/no-long-connections: "true"
+        vixens.io/explicitly-allow-root: "true"
     spec:
       priorityClassName: vixens-medium
       tolerations:
@@ -64,7 +65,7 @@ spec:
               for db in /opt/hydrus/db/*.db; do
                 [ -e "$db" ] || continue
                 echo "🔍 Checking $db..."
-                if ! sqlite3 "$db" "PRAGMA integrity_check;" | grep -q "ok"; then
+                if ! sqlite3 "$db" "PRAGMA quick_check;" | grep -q "ok"; then
                   echo "❌ Corruption detected in $db! Deleting for fresh restore."
                   rm -f "$db" "$db-wal" "$db-shm"
                 else

@@ -25,47 +25,7 @@ jobs:
       - name: Validate YAML syntax
         run: |
           echo "🔍 Validation YAML syntax"
-
-          # Création du fichier ligne par ligne
-          echo "---" > yamllint-config.yml
-          echo "extends: default" >> yamllint-config.yml
-          echo "" >> yamllint-config.yml
-          echo "yaml-files:" >> yamllint-config.yml
-          echo "  - '*.yaml'" >> yamllint-config.yml
-          echo "  - '*.yml'" >> yamllint-config.yml
-          echo "  - '.yamllint'" >> yamllint-config.yml
-          echo "" >> yamllint-config.yml
-          echo "rules:" >> yamllint-config.yml
-          echo "  # ============ ERREURS CRITIQUES ============" >> yamllint-config.yml
-          echo "  indentation:" >> yamllint-config.yml
-          echo "    spaces: 2" >> yamllint-config.yml
-          echo "    indent-sequences: true" >> yamllint-config.yml
-          echo "    check-multi-line-strings: false" >> yamllint-config.yml
-          echo "    level: error" >> yamllint-config.yml
-          echo "" >> yamllint-config.yml
-          echo "  key-duplicates:" >> yamllint-config.yml
-          echo "    level: error" >> yamllint-config.yml
-          echo "" >> yamllint-config.yml
-          echo "  # ============ WARNINGS ============" >> yamllint-config.yml
-          echo "  line-length:" >> yamllint-config.yml
-          echo "    max: 80" >> yamllint-config.yml
-          echo "    allow-non-breakable-words: true" >> yamllint-config.yml
-          echo "    allow-non-breakable-inline-mappings: true" >> yamllint-config.yml
-          echo "    level: warning" >> yamllint-config.yml
-          echo "" >> yamllint-config.yml
-          echo "  trailing-spaces:" >> yamllint-config.yml
-          echo "    level: warning" >> yamllint-config.yml
-          echo "" >> yamllint-config.yml
-          echo "  new-lines:" >> yamllint-config.yml
-          echo "    type: unix" >> yamllint-config.yml
-          echo "    level: warning" >> yamllint-config.yml
-          echo "" >> yamllint-config.yml
-          echo "  # ============ DÉSACTIVÉES ============" >> yamllint-config.yml
-          echo "  comments: disable" >> yamllint-config.yml
-          echo "  comments-indentation: disable" >> yamllint-config.yml
-          echo "  brackets: disable" >> yamllint-config.yml
-          echo "  truthy: disable" >> yamllint-config.yml
-
+          echo "📋 Using repo yamllint-config.yml (strict style enforcement)"
 
           # PR: valider uniquement les fichiers changés
           # Push: valider tous les fichiers
@@ -83,43 +43,15 @@ jobs:
               ! -path "*/crds/*" \
               ! -path "*/charts/*" \
               ! -name "upstream.yaml" \
-              ! -name "poolers.yaml" | \
+              ! -name "poolers.yaml" \
+              ! -name "argocd-crds.yaml" \
+              ! -name "argocd-install.yaml" \
+              ! -name "manifests.yaml" \
+              ! -name "servicemonitors.yaml" | \
               xargs yamllint -c yamllint-config.yml
           fi
 
-  # 2️⃣ Validation structurelle Kubernetes
-  kube-structure:
-    name: Kubernetes Structure
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup kubeval (sans kubectl)
-        run: |
-          # Installation de kubeval avec schémas complets
-          wget https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
-          tar xf kubeval-linux-amd64.tar.gz
-          sudo cp kubeval /usr/local/bin/
-
-      - name: Validate with kubeval (CRDs ignorées)
-        run: |
-          echo "🔍 Validation structure Kubernetes"
-
-          # Valider uniquement les ressources standards (exclure values/ et charts/)
-          find apps argocd -type f \( -name '*.yaml' -o -name '*.yml' \) \
-            ! -path '*/values/*' \
-            ! -path '*/charts/*' \
-            ! -name 'values.yaml' \
-            ! -name '*-json.yaml' \
-            -print0 |
-            xargs -0 kubeval \
-            --ignore-missing-schemas \
-            --kubernetes-version 1.30.0 \
-            --strict \
-            --skip-kinds Application,AppProject,CustomResourceDefinition,InfisicalSecret,Middleware,HelmRelease,HelmRepository,Kustomization,Cluster,PostgresCluster,Pooler,ScheduledBackup
-
-  # 3️⃣ Validation spécifique ArgoCD
+  # 2️⃣ Validation spécifique ArgoCD
   argocd-validate:
     name: ArgoCD Structure
     runs-on: ubuntu-latest
@@ -163,7 +95,126 @@ jobs:
             fi
           done
 
-  # 4️⃣½  Vérification du flux de branches (pure trunk-based: feature → main)
+  # 3️⃣ Kustomize Build + Kubeconform (valide la sortie buildée, pas les fichiers individuels)
+  kustomize-validate:
+    name: Kustomize Build & K8s Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup tools
+        run: |
+          # Kustomize
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo mv kustomize /usr/local/bin/
+
+          # Helm (requis pour --enable-helm)
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+          # Kubeconform (remplace kubeval déprécié)
+          KUBECONFORM_VERSION=0.6.7
+          curl -sSL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Build and validate all overlays
+        run: |
+          echo "🔍 Kustomize Build + Kubeconform Validation"
+          echo "   (valide les ressources APRÈS merge des patches)"
+          echo ""
+
+          FAILED=0
+          WARNED=0
+          SKIP_KINDS="Application,AppProject,CustomResourceDefinition,InfisicalSecret,Middleware,HelmRelease,HelmRepository,Kustomization,Cluster,PostgresCluster,Pooler,ScheduledBackup,VolumeSnapshotClass,VolumeSnapshot,CiliumL2AnnouncementPolicy,CiliumLoadBalancerIPPool"
+
+          # Fonction de validation
+          validate_overlay() {
+            local overlay="$1"
+            echo "📋 Building: $overlay"
+
+            # Détecter si l'overlay a une base vide (Helm-only apps)
+            local base_dir
+            base_dir=$(grep -oP '\.\./.*/base' "$overlay/kustomization.yaml" 2>/dev/null | head -1)
+            if [ -n "$base_dir" ]; then
+              local full_base="$overlay/$base_dir"
+              if [ -f "$full_base/kustomization.yaml" ]; then
+                local base_resources
+                base_resources=$(grep -cE '^(resources:|helmCharts:)' "$full_base/kustomization.yaml" 2>/dev/null || echo 0)
+                if [ "$base_resources" -eq 0 ]; then
+                  echo "⏭️ SKIP: $overlay (base vide - app Helm-only via ArgoCD)"
+                  return 0
+                fi
+              fi
+            fi
+
+            # Build kustomize avec support Helm
+            if ! kustomize build --enable-helm "$overlay" > /tmp/built.yaml 2>&1; then
+              echo "❌ KUSTOMIZE FAILED: $overlay"
+              cat /tmp/built.yaml | head -20
+              return 1
+            fi
+
+            # Compter les ressources
+            COUNT=$(grep -c '^kind:' /tmp/built.yaml 2>/dev/null || echo 0)
+            if [ "$COUNT" -eq 0 ]; then
+              echo "⚠️ WARNING: $overlay produces 0 resources"
+              WARNED=$((WARNED+1))
+              return 0
+            fi
+
+            # Valider avec kubeconform (sur le YAML buildé)
+            if ! kubeconform -ignore-missing-schemas -kubernetes-version 1.30.0 -strict -skip "$SKIP_KINDS" /tmp/built.yaml 2>&1; then
+              echo "❌ KUBECONFORM FAILED: $overlay"
+              return 1
+            fi
+
+            echo "✅ OK: $overlay ($COUNT resources)"
+            return 0
+          }
+
+          # Valider tous les overlays apps/
+          for overlay in $(find apps -type d \( -name "dev" -o -name "prod" \) | grep overlays); do
+            if [ -f "$overlay/kustomization.yaml" ]; then
+              if ! validate_overlay "$overlay"; then
+                FAILED=1
+              fi
+            fi
+          done
+
+          # Valider les overlays ArgoCD
+          for overlay in argocd/overlays/dev argocd/overlays/prod; do
+            if [ -d "$overlay" ] && [ -f "$overlay/kustomization.yaml" ]; then
+              if ! validate_overlay "$overlay"; then
+                FAILED=1
+              fi
+            fi
+          done
+
+          echo ""
+          if [ "$FAILED" -eq 1 ]; then
+            echo "❌ Some validations failed"
+            exit 1
+          fi
+
+          echo "✅ All kustomize builds and K8s validations passed"
+
+  # 4️⃣ Secret Scanning (gitleaks)
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git log scanning
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+  # 5️⃣ Vérification du flux de branches (pure trunk-based: feature → main)
   branch-flow:
     name: Branch Flow Check
     runs-on: ubuntu-latest
@@ -171,16 +222,13 @@ jobs:
     steps:
       - name: Enforce pure trunk-based flow (feature → main directly)
         run: |
-          # Branche source de la PR
           SOURCE="${{ github.head_ref }}"
-          # Branche cible de la PR
           TARGET="${{ github.base_ref }}"
 
           echo "🔀 PR from '$SOURCE' into '$TARGET'"
 
           case "$TARGET" in
             main)
-              # Feature branches allowed, protected branches blocked
               if [[ "$SOURCE" =~ ^(dev|test|staging)$ ]]; then
                 echo "❌ Protected branch '$SOURCE' cannot merge to 'main'"
                 echo "   Only feature branches can merge to main"
@@ -192,14 +240,13 @@ jobs:
             dev|test|staging)
               echo "❌ Branch '$TARGET' is archived (ADR-017)"
               echo "   Use pure trunk-based workflow: feature → main"
-              echo "   Dev watches main (HEAD), Prod watches prod-stable tag"
               exit 1 ;;
             *)
               echo "❌ Unknown target branch '$TARGET'"
               exit 1 ;;
           esac
 
-  # 4️⃣ Validation de sécurité
+  # 6️⃣ Validation de sécurité
   security-scan:
     name: Security Best Practices
     runs-on: ubuntu-latest
@@ -210,11 +257,7 @@ jobs:
       - name: Security checks
         run: |
           echo "🔍 Vérification sécurité"
-
-          # Installation de checkov
           pip3 install checkov
-
-          # Scan des bonnes pratiques
           checkov --directory . \
             --framework kubernetes \
             --compact --quiet || true
@@ -222,92 +265,74 @@ jobs:
       - name: Check security patterns
         run: |
           echo "🔍 Recherche de patterns de sécurité"
+          WARNINGS=0
 
-          # Vérification des patterns dangereux
           find apps argocd -name "*.yaml" -type f | while read file; do
-            echo "  📄 $(basename "$file")"
-
-            # Recherche de patterns problématiques
             if grep -q "privileged: true" "$file"; then
-              echo "    ⚠️ Privilèges élevés détectés"
+              echo "⚠️ Privilèges élevés: $file"
+              WARNINGS=$((WARNINGS+1))
             fi
-
-            if grep -q "runAsUser: 0\|runAsRoot: true" "$file"; then
-              echo "    ⚠️ Exécution en root détectée"
+            if grep -q "runAsUser: 0" "$file"; then
+              echo "⚠️ Exécution en root: $file"
+              WARNINGS=$((WARNINGS+1))
             fi
-
             if grep -q "allowPrivilegeEscalation: true" "$file"; then
-              echo "    ⚠️ Élévation de privilèges autorisée"
+              echo "⚠️ Élévation de privilèges: $file"
+              WARNINGS=$((WARNINGS+1))
             fi
           done
 
-  # 4️⃣½  Vérification de la configuration production (trunk-based)
+  # 7️⃣ Vérification de la configuration production (trunk-based)
   prod-config-check:
-    name: "Production Configuration Checks"
+    name: Production Configuration
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: "Verify trunk-based workflow compliance"
+      - name: Verify trunk-based workflow compliance
         run: |
-          echo "🔍 Vérification configuration production (trunk-based workflow)"
+          echo "🔍 Vérification configuration production"
 
-          # Trunk-based: prod doit utiliser targetRevision: prod-stable (tag mobile)
-          # Vérifier qu'on n'utilise pas 'main' ou 'prod' comme targetRevision
-          if grep -rE "targetRevision:\s+main\s*$" argocd/overlays/prod; then
-            echo "::error::Found 'targetRevision: main' in argocd/overlays/prod."
-            echo "::error::Trunk-based workflow requires 'targetRevision: prod-stable' for production."
+          if grep -rE "targetRevision:\s+main\s*$" argocd/overlays/prod 2>/dev/null; then
+            echo "::error::Found 'targetRevision: main' in prod. Use 'prod-stable' tag."
             exit 1
           fi
 
-          # Rejeter 'prod' seul (pas 'prod-stable' ou 'prod-v1.2.3')
-          # Gemini suggère souvent targetRevision: prod à tort
-          if grep -rE "targetRevision:\s+[\"']?prod[\"']?\s*$" argocd/overlays/prod; then
-            echo "::error::Found 'targetRevision: prod' in argocd/overlays/prod."
-            echo "::error::Trunk-based workflow requires 'targetRevision: prod-stable' for production."
-            echo "::error::Note: 'prod' branch does not exist. Use 'prod-stable' tag instead."
+          if grep -rE "targetRevision:\s+[\"']?prod[\"']?\s*$" argocd/overlays/prod 2>/dev/null; then
+            echo "::error::Found 'targetRevision: prod' in prod. Use 'prod-stable' tag."
             exit 1
           fi
 
-          # Vérifier que prod utilise bien envSlug: prod (pas dev)
-          if grep -r "envSlug: dev" apps/*/*/overlays/prod; then
-            echo "::error::Found 'envSlug: dev' in apps/*/*/overlays/prod. Please use 'prod' for production."
+          if grep -r "envSlug: dev" apps/*/*/overlays/prod 2>/dev/null; then
+            echo "::error::Found 'envSlug: dev' in prod overlay."
             exit 1
           fi
 
-          # Vérifier absence de références au repo deprecated
-          if grep -r "vixens-new.git" argocd; then
-            echo "::error::Found 'vixens-new.git references' in argocd. Please use 'vixens.git', vixens-new is deprecated."
+          if grep -r "vixens-new.git" argocd 2>/dev/null; then
+            echo "::error::Found deprecated 'vixens-new.git' reference."
             exit 1
           fi
 
-          echo "✅ Production configuration compliant with trunk-based workflow"
+          echo "✅ Production configuration OK"
 
-  # 5️⃣ Résumé final
+  # 8️⃣ Résumé final
   validation-summary:
     name: Validation Summary
     runs-on: ubuntu-latest
-    needs: [yaml-lint, kube-structure, argocd-validate, security-scan, branch-flow, prod-config-check]
+    needs: [yaml-lint, argocd-validate, kustomize-validate, secret-scan, security-scan, branch-flow, prod-config-check]
     if: always()
     steps:
       - name: Create summary
         run: |
           echo "## ✅ Validation Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📊 Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| YAML Lint | ${{ needs.yaml-lint.result }} |" \
-            >> $GITHUB_STEP_SUMMARY
-          echo "| K8s Structure | ${{ needs.kube-structure.result }} |" \
-            >> $GITHUB_STEP_SUMMARY
-          echo "| ArgoCD Apps | ${{ needs.argocd-validate.result }} |" \
-            >> $GITHUB_STEP_SUMMARY
-          echo "| Security Check | ${{ needs.security-scan.result }} |" \
-            >> $GITHUB_STEP_SUMMARY
-          echo "| Branch Flow | ${{ needs.branch-flow.result }} |" \
-            >> $GITHUB_STEP_SUMMARY
-          echo "| Prod Config Check | ${{ needs.prod-config-check.result }} |" \
-            >> $GITHUB_STEP_SUMMARY
+          echo "| YAML Lint | ${{ needs.yaml-lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ArgoCD Apps | ${{ needs.argocd-validate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Kustomize + Kubeconform | ${{ needs.kustomize-validate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secret Scan | ${{ needs.secret-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Check | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch Flow | ${{ needs.branch-flow.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Prod Config | ${{ needs.prod-config-check.result }} |" >> $GITHUB_STEP_SUMMARY
