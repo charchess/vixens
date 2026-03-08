@@ -89,12 +89,17 @@ keywords = ["service_account"]
 [[rules]]
 id = "hardcoded-password-yaml"
 description = "Hardcoded password in YAML"
-regex = '''(?i)password\s*:\s*["\']?(?!REDACTED|placeholder|\$\{|\{\{)[^\s"\']{8,}'''
+# Note: Using simple regex + allowlist (Go regexp doesn't support lookahead)
+regex = '''(?i)password\s*:\s*["']?[^\s"']{8,}'''
 tags = ["password", "yaml"]
 
   [rules.allowlist]
   regexes = [
-      '''password:\s*["\']\s*["\']\s*$''',
+      '''password:\s*["']\s*["']\s*$''',
       '''password:\s*\$\{''',
       '''password:\s*\{\{''',
+      '''password:\s*["']?REDACTED''',
+      '''password:\s*["']?placeholder''',
+      '''password:\s*secretKeyRef''',
+      '''password:\s*valueFrom''',
   ]
