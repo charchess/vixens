@@ -8,34 +8,64 @@ ignore: |
   **/manifests.yaml
   **/manifests.raw.yaml
   apps/00-infra/prometheus-operator-crds/
+  apps/00-infra/argocd/base/argocd-crds.yaml
+  apps/00-infra/argocd/base/argocd-install.yaml
+
+yaml-files:
+  - '*.yaml'
+  - '*.yml'
+  - '.yamllint'
 
 rules:
   # ============ ERREURS CRITIQUES ============
   indentation:
     spaces: 2
-    indent-sequences: true
+    indent-sequences: whatever
     check-multi-line-strings: false
     level: error
 
   key-duplicates:
     level: error
 
-  # ============ WARNINGS ============
-  line-length:
-    max: 80
-    allow-non-breakable-words: true
-    allow-non-breakable-inline-mappings: true
-    level: warning
+  # ============ DÉSACTIVÉES (K8s-friendly) ============
+  line-length: disable
 
+  # ============ STYLE (homogénéité rédactionnelle) ============
   trailing-spaces:
+    level: error
+
+  document-start:
+    level: warning
+    present: true
+
+  empty-lines:
+    max: 1
+    max-start: 0
+    max-end: 0
     level: warning
 
+  comments:
+    require-starting-space: true
+    ignore-shebangs: true
+    min-spaces-from-content: 1
+    level: warning
+
+  comments-indentation:
+    level: warning
+
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 0
+    min-spaces-inside-empty: 0
+    max-spaces-inside-empty: 0
+    level: warning
+
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+    check-keys: false
+    level: warning
+
+  # ============ WARNINGS ============
   new-lines:
     type: unix
     level: warning
-
-  # ============ DÉSACTIVÉES ============
-  comments: disable
-  comments-indentation: disable
-  brackets: disable
-  truthy: disable

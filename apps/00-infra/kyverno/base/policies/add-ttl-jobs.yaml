@@ -1,3 +1,4 @@
+---
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -22,7 +23,7 @@ spec:
         patchStrategicMerge:
           spec:
             ttlSecondsAfterFinished: 3600
-    
+
     - name: add-ttl-to-cronjobs
       match:
         resources:

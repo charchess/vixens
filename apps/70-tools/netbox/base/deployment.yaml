@@ -6,7 +6,7 @@ metadata:
   labels:
     app: netbox
     vixens.io/sizing-v2: "true"
-    vixens.io/vpa-mode: Off
+    vixens.io/vpa-mode: "Off"
     vixens.io/tier: "diamond"
 spec:
   replicas: 1

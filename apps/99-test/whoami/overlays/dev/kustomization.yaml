@@ -8,7 +8,7 @@ resources:
   - ingress.yaml
 
 components:
-  - ../../../../_shared/components/default
+  - ../../../../_shared/components/base
   - ../../../../_shared/components/probes/basic
 
 patches:

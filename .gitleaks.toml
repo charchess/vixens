@@ -1,0 +1,123 @@
+# Gitleaks configuration for Vixens GitOps repository
+# Documentation: https://github.com/gitleaks/gitleaks#configuration
+
+title = "Vixens Secret Detection"
+
+[extend]
+useDefault = true
+
+# ══════════════════════════════════════════════════════════════
+# GLOBAL ALLOWLIST
+# ══════════════════════════════════════════════════════════════
+
+[allowlist]
+description = "Global allowlist for known safe patterns"
+
+paths = [
+    '''.*/charts/.*''',
+    '''.*/crds/.*''',
+    '''apps/00-infra/vpa/base/manifests\.yaml''',
+    '''apps/00-infra/prometheus-operator-crds/.*''',
+    '''talos/.*''',
+    '''terraform/.*''',
+    '''docs/.*''',
+    '''openspec/.*''',
+    '''clusters/.*''',
+    '''\.git/.*''',
+    '''.*\.lock$''',
+    '''.*-lock\.json$''',
+    '''\.trivyignore''',
+    '''\.gitleaks\.toml''',
+]
+
+regexes = [
+    '''REDACTED''',
+    '''placeholder''',
+    '''example\.com''',
+    '''truxonline\.com''',
+    '''192\.168\.\d+\.\d+''',
+    '''10\.\d+\.\d+\.\d+''',
+    '''changeme''',
+    '''password.*password''',
+    '''[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}''',
+]
+
+stopwords = [
+    "example",
+    "sample",
+    "test",
+    "dummy",
+    "fake",
+    "mock",
+    "CHANGE_ME",
+    "YOUR_",
+    "xxx",
+    "changeme",
+    "dev-password",
+]
+
+# ══════════════════════════════════════════════════════════════
+# CUSTOM RULES for Kubernetes/GitOps
+# ══════════════════════════════════════════════════════════════
+
+[[rules]]
+id = "kubernetes-secret-data"
+description = "Kubernetes Secret with base64 encoded data"
+regex = '''data:\s*\n\s+\w+:\s+[A-Za-z0-9+/=]{40,}'''
+tags = ["kubernetes", "secret", "base64"]
+keywords = ["data:"]
+
+# Disabled - too many false positives (InfisicalSecret CRD name)
+# [[rules]]
+# id = "infisical-token"
+# description = "Infisical Service Token or Machine Identity"
+# regex = '''(?i)(infisical[_-]?(token|secret|key)|st\.[a-zA-Z0-9_-]{20,})'''
+
+[[rules]]
+id = "minio-credentials"
+description = "MinIO/S3 Access Keys"
+regex = '''(?i)(minio|s3|litestream)[_-]?(access[_-]?key|secret[_-]?key)\s*[:=]\s*["\']?[A-Za-z0-9+/=]{16,}'''
+tags = ["minio", "s3", "credentials"]
+
+# Disabled - triggers on shell variables like $(PASSWORD)
+# [[rules]]
+# id = "synology-credentials"
+# description = "Synology NAS credentials"
+# regex = '''(?i)synology[_-]?(password|secret|key)\s*[:=]\s*["\']?[^\s"\']{{8,}}'''
+
+[[rules]]
+id = "free-mobile-token"
+description = "Free Mobile API Token"
+regex = '''(?i)(free[_-]?mobile|access[_-]?token)\s*[:=]\s*["\']?[a-zA-Z0-9]{10,}'''
+tags = ["free-mobile", "sms", "token"]
+
+[[rules]]
+id = "google-service-account"
+description = "Google Service Account JSON"
+regex = '''(?i)"type"\s*:\s*"service_account"'''
+tags = ["google", "service-account"]
+keywords = ["service_account"]
+
+[[rules]]
+id = "hardcoded-password-yaml"
+description = "Hardcoded password in YAML"
+# Note: Using simple regex + allowlist (Go regexp doesn't support lookahead)
+regex = '''(?i)password\s*:\s*["']?[^\s"']{8,}'''
+tags = ["password", "yaml"]
+
+  [rules.allowlist]
+  regexes = [
+      '''password:\s*["']\s*["']\s*$''',
+      '''password:\s*\$\{''',
+      '''password:\s*\$[A-Z]''',
+      '''password:\s*\{\{''',
+      '''password:\s*\{[A-Z]''',
+      '''password:\s*["']?REDACTED''',
+      '''password:\s*["']?placeholder''',
+      '''password:\s*["']?changeme''',
+      '''password:\s*["']?password''',
+      '''password:\s*["']?dev-password''',
+      '''password:\s*secretKeyRef''',
+      '''password:\s*valueFrom''',
+      '''password:\s*\$\(''',
+  ]
