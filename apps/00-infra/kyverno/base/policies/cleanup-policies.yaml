@@ -1,3 +1,4 @@
+---
 apiVersion: kyverno.io/v2beta1
 kind: ClusterCleanupPolicy
 metadata:

@@ -1,4 +1,4 @@
-
+---
 # Priority class for low priority applications
 apiVersion: apps/v1
 kind: Deployment
@@ -8,4 +8,3 @@ spec:
   template:
     spec:
       priorityClassName: low-priority
-

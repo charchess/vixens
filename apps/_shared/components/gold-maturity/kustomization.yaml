@@ -1,3 +1,4 @@
+---
 # Kustomize Component: gold-maturity
 #
 # Adds Gold-tier maturity to all Deployments and StatefulSets:
