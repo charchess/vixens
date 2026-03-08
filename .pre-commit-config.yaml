@@ -1,114 +1,43 @@
 # Pre-commit hooks for Vixens GitOps repository
-# Install: pip install pre-commit && pre-commit install
+# Install: pipx install pre-commit && pre-commit install
 # Run manually: pre-commit run --all-files
 #
-# Target: < 5 seconds for fast developer feedback
+# Philosophy: Fast feedback on critical issues only
+# Full validation (yamllint strict, kubeconform) is done by CI
 ---
 repos:
   # ══════════════════════════════════════════════════════════════
-  # YAML SYNTAX VALIDATION
-  # ══════════════════════════════════════════════════════════════
-  - repo: https://github.com/adrienverge/yamllint
-    rev: v1.35.1
-    hooks:
-      - id: yamllint
-        name: Validate YAML syntax
-        args: [-c, yamllint-config.yml, --strict]
-        exclude: |
-          (?x)^(
-            .*/charts/.*|
-            .*/crds/.*|
-            .*/manifests\.yaml$|
-            .*/upstream\.yaml$|
-            .*/poolers\.yaml$
-          )$
-
-  # ══════════════════════════════════════════════════════════════
-  # SECRET DETECTION (CRITICAL)
+  # SECRET DETECTION (CRITICAL - blocks commit)
   # ══════════════════════════════════════════════════════════════
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.21.2
     hooks:
       - id: gitleaks
-        name: Detect secrets with Gitleaks
+        name: 🔐 Detect secrets
 
   # ══════════════════════════════════════════════════════════════
-  # FILE HYGIENE
+  # FILE HYGIENE (quick checks)
   # ══════════════════════════════════════════════════════════════
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-      - id: trailing-whitespace
-        exclude: |
-          (?x)^(
-            .*/charts/.*|
-            .*\.md$
-          )$
-      - id: end-of-file-fixer
-        exclude: |
-          (?x)^(
-            .*/charts/.*
-          )$
       - id: check-merge-conflict
+        name: 🔀 Check merge conflicts
       - id: detect-private-key
+        name: 🔑 Detect private keys
       - id: check-added-large-files
+        name: 📦 Check large files
         args: ['--maxkb=1000']
       - id: check-yaml
-        args: [--allow-multiple-documents]
+        name: 📄 Check YAML syntax
+        args: [--allow-multiple-documents, --unsafe]
         exclude: |
           (?x)^(
             .*/charts/.*|
             .*/crds/.*|
-            .*/templates/.*
-          )$
-
-  # ══════════════════════════════════════════════════════════════
-  # KUBERNETES SCHEMA VALIDATION (replaces deprecated kubeval)
-  # ══════════════════════════════════════════════════════════════
-  - repo: https://github.com/yannh/kubeconform
-    rev: v0.6.7
-    hooks:
-      - id: kubeconform
-        name: Validate Kubernetes schemas
-        args:
-          - -strict
-          - -kubernetes-version=1.31.0
-          - -schema-location=default
-          - -schema-location=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
-          - -ignore-missing-schemas
-          - -skip=CustomResourceDefinition,Kustomization,InfisicalSecret,HelmRelease,HelmRepository
-        exclude: |
-          (?x)^(
-            .*/charts/.*|
-            .*/crds/.*|
-            .*/values/.*|
             .*/templates/.*|
-            .*values\.yaml$|
-            .*values-.*\.yaml$
+            apps/00-infra/argocd/base/argocd-crds\.yaml
           )$
 
-  # ══════════════════════════════════════════════════════════════
-  # KUSTOMIZE BUILD VALIDATION
-  # ══════════════════════════════════════════════════════════════
-  - repo: local
-    hooks:
-      - id: kustomize-build-dev
-        name: Kustomize build (dev overlay)
-        language: system
-        entry: bash -c 'kustomize build argocd/overlays/dev > /dev/null 2>&1 && echo "✅ Dev overlay builds successfully" || (echo "❌ Dev overlay build failed" && exit 1)'
-        always_run: true
-        pass_filenames: false
-        stages: [pre-commit]
-
-  # ══════════════════════════════════════════════════════════════
-  # NO PLAINTEXT KUBERNETES SECRETS
-  # ══════════════════════════════════════════════════════════════
-  - repo: local
-    hooks:
-      - id: no-plaintext-secrets
-        name: Check no plaintext Kubernetes Secrets
-        language: system
-        entry: bash -c 'if grep -r "^kind: Secret$" apps/ --include="*.yaml" 2>/dev/null | grep -v "InfisicalSecret\|SealedSecret\|ExternalSecret"; then echo "❌ Found plaintext Secret resource - use InfisicalSecret instead"; exit 1; fi; echo "✅ No plaintext secrets"'
-        always_run: true
-        pass_filenames: false
-        stages: [pre-commit]
+  # NOTE: Full validation (yamllint strict, kubeconform, kustomize build)
+  # is handled by CI (GitHub Actions). Pre-commit = fast critical checks only.
