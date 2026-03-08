@@ -1,3 +1,4 @@
+---
 # Velero - Final SOTA 2026 Configuration
 image:
   repository: velero/velero

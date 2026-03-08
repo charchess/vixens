@@ -8,7 +8,7 @@ metadata:
     app: penpot-backend
     component: backend
     vixens.io/sizing-v2: "true"
-    vixens.io/vpa-mode: Off
+    vixens.io/vpa-mode: "Off"
     vixens.io/tier: "diamond"
 spec:
   replicas: 1

@@ -199,7 +199,7 @@ spec:
     - metadata:
         name: config
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes: ["ReadWriteOnce"]
         storageClassName: synelia-iscsi
         resources:
           requests:
@@ -207,7 +207,7 @@ spec:
     - metadata:
         name: data
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes: ["ReadWriteOnce"]
         storageClassName: synelia-iscsi
         resources:
           requests:

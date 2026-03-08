@@ -1,3 +1,4 @@
+---
 # NOTE: Velero est déployé via Helm pur (ArgoCD multi-source)
 # Cette kustomization n'est PAS utilisée - elle existe uniquement
 # pour d'éventuels patches futurs si nécessaire

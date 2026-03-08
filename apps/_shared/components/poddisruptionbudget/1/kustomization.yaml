@@ -1,3 +1,4 @@
+---
 # Component: PodDisruptionBudget - 1 (Single Pod Budget)
 #
 # This component sets minAvailable: 1 on PodDisruptionBudget resources.

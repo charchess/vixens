@@ -1,4 +1,4 @@
-
+---
 # Kustomize Component: Advanced Probes
 #
 # Advanced health check configuration for critical applications
@@ -50,4 +50,3 @@ patches:
                   timeoutSeconds: 3
                   failureThreshold: 30
                   successThreshold: 1
-

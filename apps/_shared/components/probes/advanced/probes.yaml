@@ -1,4 +1,4 @@
-
+---
 # Advanced health check configuration
 apiVersion: apps/v1
 kind: Deployment
@@ -36,4 +36,3 @@ spec:
             timeoutSeconds: 3
             failureThreshold: 30
             successThreshold: 1
-
