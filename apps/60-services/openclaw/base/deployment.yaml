@@ -242,7 +242,7 @@ spec:
               readOnly: true
         # Fix invalid config keys that may have been self-injected
         - name: fix-config
-          image: ghcr.io/jqlang/jq:1.7.1
+          image: ghcr.io/jqlang/jq:1.8.1
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
