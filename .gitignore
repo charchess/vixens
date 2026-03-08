@@ -147,6 +147,7 @@ docs/_build/
 _old/
 obsolete/
 archive/
+docs/archive/
 
 # ============= ENVIRONMENT FILES =============
 .env
@@ -177,3 +178,5 @@ current_state.json
 !.secrets/README.md
 **/charts/
 .gemini_env/
+_bmad*/
+_bmad-output/
