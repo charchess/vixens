@@ -1,9 +1,23 @@
+# NOTE: Velero est déployé via Helm pur (ArgoCD multi-source)
+# Cette kustomization n'est PAS utilisée - elle existe uniquement
+# pour d'éventuels patches futurs si nécessaire
+#
+# Pour déployer velero, voir:
+# - argocd/overlays/prod/apps/velero.yaml (ArgoCD Application)
+# - apps/00-infra/velero/values/ (Helm values)
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources:
-  - ../../base
-patches:
-  - path: node-agent-probes.yaml
-    target:
-      kind: DaemonSet
-      name: node-agent
+
+# Pas de resources - velero utilise Helm directement via ArgoCD
+resources: []
+
+# Base vide - velero utilise Helm directement
+# resources:
+#   - ../../base
+
+# Patches disponibles si besoin (non utilisés actuellement)
+# patches:
+#   - path: node-agent-probes.yaml
+#     target:
+#       kind: DaemonSet
+#       name: node-agent
