@@ -87,7 +87,7 @@ jobs:
               xargs yamllint -c yamllint-config.yml
           fi
 
-  # 2️⃣ Validation structurelle Kubernetes
+  # 2️⃣ Validation structurelle Kubernetes (kubeconform)
   kube-structure:
     name: Kubernetes Structure
     runs-on: ubuntu-latest
@@ -95,16 +95,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup kubeval (sans kubectl)
+      - name: Setup kubeconform
         run: |
-          # Installation de kubeval avec schémas complets
-          wget https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
-          tar xf kubeval-linux-amd64.tar.gz
-          sudo cp kubeval /usr/local/bin/
+          # kubeconform remplace kubeval (déprécié depuis 2022)
+          KUBECONFORM_VERSION=0.6.7
+          curl -sSL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz
+          sudo mv kubeconform /usr/local/bin/
 
-      - name: Validate with kubeval (CRDs ignorées)
+      - name: Validate with kubeconform (CRDs ignorées)
         run: |
-          echo "🔍 Validation structure Kubernetes"
+          echo "🔍 Validation structure Kubernetes (kubeconform)"
 
           # Valider uniquement les ressources standards (exclure values/ et charts/)
           find apps argocd -type f \( -name '*.yaml' -o -name '*.yml' \) \
@@ -113,11 +113,11 @@ jobs:
             ! -name 'values.yaml' \
             ! -name '*-json.yaml' \
             -print0 |
-            xargs -0 kubeval \
-            --ignore-missing-schemas \
-            --kubernetes-version 1.30.0 \
-            --strict \
-            --skip-kinds Application,AppProject,CustomResourceDefinition,InfisicalSecret,Middleware,HelmRelease,HelmRepository,Kustomization,Cluster,PostgresCluster,Pooler,ScheduledBackup
+            xargs -0 kubeconform \
+            -ignore-missing-schemas \
+            -kubernetes-version 1.30.0 \
+            -strict \
+            -skip Application,AppProject,CustomResourceDefinition,InfisicalSecret,Middleware,HelmRelease,HelmRepository,Kustomization,Cluster,PostgresCluster,Pooler,ScheduledBackup
 
   # 3️⃣ Validation spécifique ArgoCD
   argocd-validate:
@@ -163,7 +163,81 @@ jobs:
             fi
           done
 
-  # 4️⃣½  Vérification du flux de branches (pure trunk-based: feature → main)
+  # 4️⃣ Kustomize Build Validation
+  kustomize-build:
+    name: Kustomize Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Validate kustomize builds
+        run: |
+          echo "🔍 Validation Kustomize builds"
+
+          # Trouver tous les overlays (dev/prod)
+          FAILED=0
+          for overlay in $(find apps -type d -name "dev" -o -type d -name "prod" | grep overlays); do
+            if [ -f "$overlay/kustomization.yaml" ]; then
+              echo "📋 Building: $overlay"
+              if ! kustomize build "$overlay" > /dev/null 2>&1; then
+                echo "❌ FAILED: $overlay"
+                kustomize build "$overlay" 2>&1 | head -20
+                FAILED=1
+              else
+                # Vérifier le nombre de ressources générées
+                COUNT=$(kustomize build "$overlay" 2>/dev/null | grep -c '^kind:' || echo 0)
+                if [ "$COUNT" -eq 0 ]; then
+                  echo "⚠️ WARNING: $overlay produces 0 resources"
+                else
+                  echo "✅ OK: $overlay ($COUNT resources)"
+                fi
+              fi
+            fi
+          done
+
+          # Build ArgoCD overlays
+          for overlay in argocd/overlays/dev argocd/overlays/prod; do
+            if [ -d "$overlay" ]; then
+              echo "📋 Building: $overlay"
+              if ! kustomize build "$overlay" > /dev/null 2>&1; then
+                echo "❌ FAILED: $overlay"
+                kustomize build "$overlay" 2>&1 | head -20
+                FAILED=1
+              else
+                COUNT=$(kustomize build "$overlay" 2>/dev/null | grep -c '^kind:' || echo 0)
+                echo "✅ OK: $overlay ($COUNT resources)"
+              fi
+            fi
+          done
+
+          if [ "$FAILED" -eq 1 ]; then
+            echo "❌ Some kustomize builds failed"
+            exit 1
+          fi
+
+          echo "✅ All kustomize builds passed"
+
+  # 5️⃣ Secret Scanning (gitleaks)
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git log scanning
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+  # 6️⃣ Vérification du flux de branches (pure trunk-based: feature → main)
   branch-flow:
     name: Branch Flow Check
     runs-on: ubuntu-latest
@@ -199,7 +273,7 @@ jobs:
               exit 1 ;;
           esac
 
-  # 4️⃣ Validation de sécurité
+  # 7️⃣ Validation de sécurité
   security-scan:
     name: Security Best Practices
     runs-on: ubuntu-latest
@@ -241,7 +315,7 @@ jobs:
             fi
           done
 
-  # 4️⃣½  Vérification de la configuration production (trunk-based)
+  # 8️⃣ Vérification de la configuration production (trunk-based)
   prod-config-check:
     name: "Production Configuration Checks"
     runs-on: ubuntu-latest
@@ -284,11 +358,11 @@ jobs:
 
           echo "✅ Production configuration compliant with trunk-based workflow"
 
-  # 5️⃣ Résumé final
+  # 9️⃣ Résumé final
   validation-summary:
     name: Validation Summary
     runs-on: ubuntu-latest
-    needs: [yaml-lint, kube-structure, argocd-validate, security-scan, branch-flow, prod-config-check]
+    needs: [yaml-lint, kube-structure, argocd-validate, kustomize-build, secret-scan, security-scan, branch-flow, prod-config-check]
     if: always()
     steps:
       - name: Create summary
@@ -301,9 +375,13 @@ jobs:
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| YAML Lint | ${{ needs.yaml-lint.result }} |" \
             >> $GITHUB_STEP_SUMMARY
-          echo "| K8s Structure | ${{ needs.kube-structure.result }} |" \
+          echo "| K8s Structure (kubeconform) | ${{ needs.kube-structure.result }} |" \
             >> $GITHUB_STEP_SUMMARY
           echo "| ArgoCD Apps | ${{ needs.argocd-validate.result }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Kustomize Build | ${{ needs.kustomize-build.result }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Secret Scan (gitleaks) | ${{ needs.secret-scan.result }} |" \
             >> $GITHUB_STEP_SUMMARY
           echo "| Security Check | ${{ needs.security-scan.result }} |" \
             >> $GITHUB_STEP_SUMMARY
