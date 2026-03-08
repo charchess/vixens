@@ -2,183 +2,117 @@
 
 ## Overview
 
-This document defines the quality tiers for applications deployed in the Vixens infrastructure. Each tier represents a level of operational maturity and reliability.
+Ce document est un **résumé** des standards de qualité pour les applications Vixens.
 
-## Quality Tiers
-
-### Bronze (Basic Deployment)
-**Status:** Initial deployment, minimal configuration
-
-**Requirements:**
-- ✅ Application deployed and accessible
-- ✅ Basic resource requests defined
-- ✅ Basic ingress/service configuration
-
-**Not Required:**
-- Resource limits
-- Health checks
-- Monitoring
-- High availability
-
-**Use Cases:**
-- Testing new applications
-- Non-critical services
-- Development experiments
+> **⚠️ Source de vérité:** [ADR-023: 7-Tier Goldification System v2](../adr/023-7-tier-goldification-system-v2.md)
+>
+> En cas de divergence, ADR-023 fait autorité.
 
 ---
 
-### Silver (Production-Ready)
-**Status:** Suitable for non-critical production workloads
+## Système 7-Tiers (ADR-023 v2)
 
-**Requirements (Bronze +):**
-- ✅ Resource limits defined
-- ✅ Basic readiness probe
-- ✅ Persistent storage configured (if needed)
-- ✅ TLS/HTTPS enabled
-
-**Not Required:**
-- Liveness probes
-- Advanced monitoring
-- High availability
-- Backup strategy
-
-**Use Cases:**
-- Non-critical production services
-- Internal tools
-- Development/test environments
+| Niveau | Nom | Philosophie |
+|--------|-----|-------------|
+| 🥉 1 | **Bronze** | "Déployée" — L'app tourne et est accessible |
+| 🥈 2 | **Silver** | "Production Ready" — Limits, probes, TLS, secrets |
+| 🥇 3 | **Gold** | "Observable" — Métriques, ServiceMonitor, Goldilocks |
+| 💎 4 | **Platinum** | "Reliable" — PriorityClass, sizing justifié, PDB |
+| 🟢 5 | **Emerald** | "Data Durability" — Litestream, Config-Syncer, Velero |
+| 💠 6 | **Diamond** | "Secure & Integrated" — PSA, NetworkPolicies, SSO |
+| 🌟 7 | **Orichalcum** | "Parfaite" — 7j stabilité, 0 CVE, sizing validé |
 
 ---
 
-### Gold (Monitored Production)
-**Status:** Production-grade with monitoring
+## Résumé des Prérequis par Niveau
 
-**Requirements (Silver +):**
-- ✅ Liveness probe configured
-- ✅ Readiness probe configured
-- ✅ Basic Prometheus metrics exposed
-- ✅ ServiceMonitor configured
-- ✅ Basic alerts defined
-- ✅ Proper logging configuration
+### 🥉 Bronze — "Déployée"
 
-**Not Required:**
-- Comprehensive dashboards
-- Advanced alerts
-- Backup validation
-- SLO/SLI definitions
+- Image valide (pas de `:latest`)
+- CPU/Memory requests définis
+- Service configuré
+- Structure Kustomize correcte (base/ + overlays/)
+- Ingress configuré (si exposée)
 
-**Use Cases:**
-- Standard production services
-- Services requiring basic monitoring
-- Most homelab applications
+### 🥈 Silver — "Production Ready"
+
+Bronze +
+- CPU/Memory limits définis
+- Readiness probe
+- Liveness probe
+- Startup probe (ou bypass `vixens.io/fast-start: "true"`)
+- TLS/HTTPS activé
+- Secrets via Infisical
+
+### 🥇 Gold — "Observable"
+
+Silver +
+- Métriques exposées (prometheus.io/scrape ou ServiceMonitor)
+- Goldilocks activé
+- `revisionHistoryLimit: 3`
+- Sync-wave ArgoCD configuré
+- PrometheusRule (alerting) si applicable
+
+### 💎 Platinum — "Reliable"
+
+Gold +
+- PriorityClass assigné
+- Sizing mode justifié (annotation `vixens.io/sizing-rationale`)
+- Sizing revu post-Goldilocks
+- PodDisruptionBudget (si multi-replica)
+- Graceful shutdown (preStop hook) ou bypass `vixens.io/no-long-connections: "true"`
+- HPA/KEDA si charge variable
+
+### 🟢 Emerald — "Data Durability"
+
+Platinum +
+- Backup profile défini (`vixens.io/backup-profile: critical|standard|relaxed|ephemeral`)
+- Litestream sidecar + restore initContainer (si SQLite)
+- Config-Syncer sidecar + restore initContainer (si config persistante)
+- Velero backup confirmé (si PVC)
+- Ressources sidecars définies
+
+### 💠 Diamond — "Secure & Integrated"
+
+Emerald +
+- PSA labels namespace (`pod-security.kubernetes.io/enforce: baseline`)
+- SecurityContext durci (runAsNonRoot, drop ALL capabilities)
+- NetworkPolicies Cilium L3/L4
+- Authentik SSO (si auth utilisateur)
+- Image digest pinning (si Renovate)
+- Velero restore testé
+- Homepage widget
+
+### 🌟 Orichalcum — "Parfaite"
+
+Diamond +
+- 7 jours de stabilité (0 restart, 0 OOMKill)
+- Sizing validé (VPA recommendations appliquées + stable 7j)
+- Zéro CVE HIGH/CRITICAL (Trivy clean ou bypass documenté)
 
 ---
 
-### Platinum (Highly Reliable)
-**Status:** High reliability with comprehensive monitoring
+## Bypasses (Annotations)
 
-**Requirements (Gold +):**
-- ✅ Comprehensive Grafana dashboard
-- ✅ Advanced alerting rules
-- ✅ QoS class defined (Guaranteed/Burstable)
-- ✅ Pod Disruption Budget (if HA)
-- ✅ Backup strategy documented
-- ✅ Resource recommendations from VPA/Goldilocks
-
-**Not Required:**
-- Automated backup validation
-- Chaos engineering tests
-- SLO compliance monitoring
-
-**Use Cases:**
-- Critical production services
-- Services with uptime requirements
-- Services with data persistence
-
----
-
-### Elite (Mission-Critical) - V4.0 Goldification
-**Status:** Maximum reliability and observability. The target for all Vixens applications.
-
-**Requirements (Platinum +):**
-- ✅ **Durability (SQLite):** Mandatory **Litestream** sidecar for all SQLite databases.
-- ✅ **Durability (Files):** Mandatory **Config-Syncer** (rclone) sidecar for persistent configuration.
-- ✅ **Recovery-First:** InitContainers for automated restoration before app startup.
-- ✅ **Resource Hygiene:** Memory **Limit MUST equal Request** (Guaranteed QoS) to prevent OOMKills.
-- ✅ **Startup Probes:** Mandatory (min 180s) to protect the app during initial data restoration.
-- ✅ **Liveness/Readiness probes:** Mandatory with standardized thresholds.
-- ✅ **Pod Security Admission (PSA):** Enforce baseline/restricted label on namespace.
-- ✅ **Storage Strategy:** Environment-specific StorageClass (Dev: Delete, Prod: Retain).
-- ✅ Automated backup validation via conformity scripts.
-- ✅ SLO/SLI definitions and comprehensive runbooks.
-
-**Not Required:**
-- Nothing - this is the highest tier.
-
----
-
-### Diamond (Future/Reserved)
-**Status:** Reserved for future enhancements
-
-**Potential Requirements:**
-- Multi-cluster deployment
-- Advanced DR strategy
-- Automated canary deployments
-- Full observability stack
+| Annotation | Check court-circuité | Signification |
+|------------|---------------------|---------------|
+| `vixens.io/fast-start: "true"` | Startup probe (Silver) | Container démarre < 5s |
+| `vixens.io/no-long-connections: "true"` | preStop hook (Platinum) | Pas de connexions longues |
+| `vixens.io/explicitly-allow-root: "true"` | SecurityContext (Diamond) | Root requis, risque accepté |
+| `vixens.io/nometrics: "true"` | Métriques + ServiceMonitor (Gold) | App sans métriques |
+| `vixens.io/nossoneeded: "true"` | Authentik SSO (Diamond) | Pas d'auth utilisateur |
+| `vixens.io/nohomepage: "true"` | Homepage widget (Diamond) | Non pertinent |
+| `vixens.io/noingressneeded: "true"` | Ingress (Bronze) | App interne |
+| `vixens.io/cve-accepted: "true"` | Trivy CVE (Diamond) | CVE accepté |
 
 ---
 
 ## Health Check Requirements
 
-### Liveness Probe
-**Purpose:** Determines if the container needs to be restarted
+### Startup Probe (Silver - Universel)
 
-**When Required:**
-- **Elite tier:** Mandatory
-- Platinum tier: Highly recommended
-- Gold tier and below: Optional
+Protège les containers à démarrage lent.
 
-**Best Practices:**
-```yaml
-livenessProbe:
-  httpGet:
-    path: /healthz
-    port: http
-  initialDelaySeconds: 30
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 3
-```
-
-### Readiness Probe
-**Purpose:** Determines if the container is ready to serve traffic
-
-**When Required:**
-- **Elite tier:** Mandatory
-- Platinum tier: Mandatory
-- Gold tier: Mandatory
-- Silver tier: Recommended
-- Bronze tier: Optional
-
-**Best Practices:**
-```yaml
-readinessProbe:
-  httpGet:
-    path: /ready
-    port: http
-  initialDelaySeconds: 10
-  periodSeconds: 5
-  timeoutSeconds: 3
-  failureThreshold: 3
-```
-
-### Startup Probe
-**Purpose:** Protects slow-starting containers from being killed
-
-**When Required:**
-- Elite tier: For slow-starting apps (>30s)
-- All tiers: When initialDelaySeconds would be >60s
-
-**Best Practices:**
 ```yaml
 startupProbe:
   httpGet:
@@ -190,45 +124,73 @@ startupProbe:
   failureThreshold: 30  # 300s total
 ```
 
----
+### Liveness Probe (Silver)
 
-## Goldification Process
+Détermine si le container doit être redémarré.
 
-1. **Audit Current State:** Review application configuration
-2. **Identify Target Tier:** Based on criticality and requirements
-3. **Implement Missing Requirements:** Work through tier requirements
-4. **Validate:** Test health checks, monitoring, backups
-5. **Document:** Update application documentation with tier status
-6. **Track:** Create Beads task for goldification work
-
----
-
-## Documentation Standards (ADR)
-
-Toutes les décisions architecturales (ADR) doivent suivre le format standard Vixens pour garantir la traçabilité et l'interopérabilité entre les agents.
-
-### ADR Header Template
-```markdown
-# ADR-XXX: [TITRE]
-
-**Date:** YYYY-MM-DD
-**Status:** [Accepted | Deprecated | Superseded by [ADR-YYY](Lien.md)]
-**Deciders:** [Deciders List]
-**Tags:** [tags]
-
----
+```yaml
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
 ```
+
+### Readiness Probe (Silver)
+
+Détermine si le container est prêt à recevoir du trafic.
+
+```yaml
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+```
+
+---
+
+## Progression
+
+```
+Bronze → Silver → Gold → Platinum → Emerald → Diamond → Orichalcum
+```
+
+**Règle:** Une application ne peut pas sauter un niveau. Tous les prérequis d'un niveau doivent être validés avant de passer au suivant.
+
+---
+
+## État Actuel du Cluster (2026-03-08)
+
+| Niveau | Count |
+|--------|-------|
+| 🥉 Bronze | 3 |
+| 🥈 Silver | 17 |
+| 🥇 Gold | 48 |
+| 💎 Platinum | 17 |
+| 🟢 Emerald | 0 |
+| 💠 Diamond | 0 |
+| 🌟 Orichalcum | 0 |
+
+**Blocages principaux vers Emerald/Diamond:**
+- 317 violations check-backup
+- 237 violations check-pdb
+- 121 violations check-security-context
 
 ---
 
 ## Related Documentation
 
-- [ADR Template](../templates/adr-template.md)
-- [Application Template](../templates/application-template.md)
-- [Adding New Applications](../guides/adding-new-application.md)
-- [Monitoring Setup](../guides/monitoring-setup.md)
-- [Backup Strategy](../guides/backup-strategy.md)
+- **[ADR-023: 7-Tier Goldification System v2](../adr/023-7-tier-goldification-system-v2.md)** — Source de vérité
+- **[Maturity Standards Matrix](maturity-standards-matrix.md)** — Matrice détaillée
+- **[STATUS.md](../STATUS.md)** — État actuel des applications
 
 ---
 
-**Last Updated:** 2026-01-17
+**Last Updated:** 2026-03-08
