@@ -27,6 +27,7 @@ spec:
         vixens.io/sizing.install-gemini-cli: B-medium
         vixens.io/sizing.restore-data: B-nano
         vixens.io/sizing.restore-config: B-nano
+        vixens.io/sizing.fix-config: G-nano
         vixens.io/sizing.setup-gemini-config: G-nano
         vixens.io/sizing.openclaw: V-large
         vixens.io/sizing.data-syncer: V-nano
@@ -238,6 +239,33 @@ spec:
             - name: default-config
               mountPath: /default-config
               readOnly: true
+        # Fix invalid config keys that may have been self-injected
+        - name: fix-config
+          image: ghcr.io/jqlang/jq:1.7.1
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              echo "Checking for invalid config keys..."
+              if [ -f /data/openclaw.json ]; then
+                # Remove known invalid keys that openclaw may have auto-added
+                jq 'del(.skills.load.paths) | del(.skills.load) | if .skills == {} then del(.skills) else . end' /data/openclaw.json > /tmp/openclaw.json.tmp
+                if [ -s /tmp/openclaw.json.tmp ]; then
+                  mv /tmp/openclaw.json.tmp /data/openclaw.json
+                  echo "Config cleaned successfully"
+                else
+                  echo "WARNING: jq output empty, keeping original"
+                fi
+              else
+                echo "No config file to fix"
+              fi
+          volumeMounts:
+            - name: data
+              mountPath: /data
         # Install npm and gemini-cli-auth plugin
         - name: install-gemini-plugin
           image: node:24-bookworm
