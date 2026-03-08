@@ -18,5 +18,7 @@ spec:
       ports:
         - protocol: TCP
           port: 5800
+        - protocol: TCP
+          port: 45869
   egress:
     - {}
