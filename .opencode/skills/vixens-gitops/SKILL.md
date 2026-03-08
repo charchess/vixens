@@ -1,4 +1,5 @@
 ---
+name: vixens-gitops
 description: >-
   Vixens GitOps workflow expert. ALWAYS USE for: creating PRs, merging, pushing changes,
   promoting to production, updating prod-stable tag, branch protection, GitHub Actions,

@@ -1,4 +1,5 @@
 ---
+name: vixens-maturity
 description: >-
   Vixens 7-Tier Maturity System expert (ADR-023). ALWAYS USE for: maturity labels,
   Bronze/Silver/Gold/Platinum/Emerald/Diamond/Orichalcum upgrades, policy violations,

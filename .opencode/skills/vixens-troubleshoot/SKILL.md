@@ -1,4 +1,5 @@
 ---
+name: vixens-troubleshoot
 description: >-
   Vixens cluster troubleshooting expert. ALWAYS USE when: apps broken, pods crashing,
   CrashLoopBackOff, ImagePullBackOff, OOMKilled, deployments failing, service not accessible,
