@@ -17,3 +17,7 @@ spec:
       protocol: TCP
       port: 9090
       targetPort: 9090
+    - name: api
+      protocol: TCP
+      port: 45869
+      targetPort: 45869
