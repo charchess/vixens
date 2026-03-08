@@ -2,8 +2,8 @@
 # Install: pipx install pre-commit && pre-commit install
 # Run manually: pre-commit run --all-files
 #
-# Philosophy: Fast feedback on critical issues only
-# Full validation (yamllint strict, kubeconform) is done by CI
+# Philosophy: Block bad code BEFORE commit
+# Secrets, style violations, and syntax errors caught here (not in CI)
 ---
 repos:
   # ══════════════════════════════════════════════════════════════
@@ -39,5 +39,28 @@ repos:
             apps/00-infra/argocd/base/argocd-crds\.yaml
           )$
 
-  # NOTE: Full validation (yamllint strict, kubeconform, kustomize build)
-  # is handled by CI (GitHub Actions). Pre-commit = fast critical checks only.
+  # ════════════════════════════════════════════════════════════════
+  # YAML STYLE (enforces editorial consistency)
+  # ════════════════════════════════════════════════════════════════
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        name: 📝 YAML style check
+        args: [-c, yamllint-config.yml]
+        exclude: |
+          (?x)^(
+            \.beads/.*|
+            \.bmad-core/.*|
+            \.bmad-infrastructure-devops/.*|
+            \.serena/.*|
+            .*/charts/.*|
+            .*/crds/.*|
+            .*/templates/.*|
+            apps/00-infra/argocd/base/argocd-crds\.yaml|
+            apps/00-infra/argocd/base/argocd-install\.yaml|
+            apps/.*/manifests\.yaml|
+            apps/.*/servicemonitors\.yaml|
+            apps/.*/upstream\.yaml|
+            apps/.*/poolers\.yaml
+          )$
