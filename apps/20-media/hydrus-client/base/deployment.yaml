@@ -65,7 +65,7 @@ spec:
               for db in /opt/hydrus/db/*.db; do
                 [ -e "$db" ] || continue
                 echo "🔍 Checking $db..."
-                if ! sqlite3 "$db" "PRAGMA integrity_check;" | grep -q "ok"; then
+                if ! sqlite3 "$db" "PRAGMA quick_check;" | grep -q "ok"; then
                   echo "❌ Corruption detected in $db! Deleting for fresh restore."
                   rm -f "$db" "$db-wal" "$db-shm"
                 else
