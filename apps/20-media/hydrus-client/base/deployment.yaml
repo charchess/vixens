@@ -21,7 +21,7 @@ spec:
         vixens.io/sizing.hydrus-client: V-large
         vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.fix-permissions: G-nano
-        vixens.io/sizing.check-integrity: G-nano
+        vixens.io/sizing.check-integrity: B-medium
         vixens.io/sizing.restore-db: B-nano
         vixens.io/sizing.restore-mappings: B-nano
         vixens.io/sizing.restore-master: B-nano
