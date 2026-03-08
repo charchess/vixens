@@ -8,34 +8,36 @@ ignore: |
   **/manifests.yaml
   **/manifests.raw.yaml
   apps/00-infra/prometheus-operator-crds/
+  apps/00-infra/argocd/base/argocd-crds.yaml
+  apps/00-infra/argocd/base/argocd-install.yaml
+
+yaml-files:
+  - '*.yaml'
+  - '*.yml'
+  - '.yamllint'
 
 rules:
   # ============ ERREURS CRITIQUES ============
   indentation:
     spaces: 2
-    indent-sequences: true
+    indent-sequences: whatever
     check-multi-line-strings: false
     level: error
 
   key-duplicates:
     level: error
 
-  # ============ WARNINGS ============
-  line-length:
-    max: 80
-    allow-non-breakable-words: true
-    allow-non-breakable-inline-mappings: true
-    level: warning
-
-  trailing-spaces:
-    level: warning
-
-  new-lines:
-    type: unix
-    level: warning
-
-  # ============ DÉSACTIVÉES ============
+  # ============ DÉSACTIVÉES (K8s-friendly) ============
+  line-length: disable
+  trailing-spaces: disable
+  document-start: disable
+  empty-lines: disable
   comments: disable
   comments-indentation: disable
   brackets: disable
   truthy: disable
+
+  # ============ WARNINGS ============
+  new-lines:
+    type: unix
+    level: warning
