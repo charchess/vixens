@@ -1,4 +1,5 @@
 ---
+name: vixens-cluster
 description: >-
   Vixens Kubernetes cluster operations expert. ALWAYS USE for: kubectl commands,
   ArgoCD sync/refresh, Talos operations, pod debugging, deployment issues, GitOps workflow,
