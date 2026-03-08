@@ -7,6 +7,11 @@ description: >-
   require-probes, InfisicalSecret conversion, sizing labels, PDB, PriorityClass,
   or ANY maturity-related question. Trigger on partial mentions like "upgrade app",
   "fix violations", "maturity", "tier", "level", "goldify".
+license: MIT
+compatibility: opencode
+metadata:
+  domain: kubernetes
+  audience: homelab-operators
 ---
 
 # Vixens Maturity Expert

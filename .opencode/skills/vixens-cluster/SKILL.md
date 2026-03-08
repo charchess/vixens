@@ -6,6 +6,11 @@ description: >-
   prod-stable tag, namespace operations, resource usage, events, logs, storage, PVC,
   Synology CSI, cluster health, node management. Trigger on: "check cluster", "kubectl",
   "argocd", "talos", "sync app", "deploy", "pod logs", "why isn't X working".
+license: MIT
+compatibility: opencode
+metadata:
+  domain: kubernetes
+  audience: homelab-operators
 ---
 
 # Vixens Cluster Operations Expert
