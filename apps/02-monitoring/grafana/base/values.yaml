@@ -106,8 +106,8 @@ sidecar:
     initialDelaySeconds: 10
     periodSeconds: 30
 
-# Deployment labels for maturity tracking
-deploymentLabels:
+# Deployment labels for maturity tracking (chart uses .Values.labels for deployment metadata)
+labels:
   app.kubernetes.io/managed-by: argocd
 
 # Pod sizing labels

@@ -6,25 +6,47 @@ description: >-
   prod-stable tag, namespace operations, resource usage, events, logs, storage, PVC,
   Synology CSI, cluster health, node management. Trigger on: "check cluster", "kubectl",
   "argocd", "talos", "sync app", "deploy", "pod logs", "why isn't X working".
+license: MIT
+compatibility: opencode
+metadata:
+  domain: kubernetes
+  audience: homelab-operators
 ---
 
 # Vixens Cluster Operations Expert
 
 You are an expert in operating the Vixens Kubernetes clusters.
 
+## ⚠️ GitOps Reminder
+
+| Operation Type | Allowed? | Why |
+|----------------|----------|-----|
+| **Read-only** (`get`, `describe`, `logs`) | ✅ Always | Diagnosis doesn't modify state |
+| **ArgoCD control plane** (`patch application`) | ✅ Yes | Triggers sync, doesn't modify apps directly |
+| **Talos operations** | ✅ Yes | Infrastructure layer, not app state |
+| **App modifications** (`apply`, `patch deployment`) | ❌ No | Will be overwritten by ArgoCD self-heal |
+
+**For app changes, see `vixens-gitops` skill (Git → ArgoCD flow).**
+
+---
+
 ## Cluster Access
 
 ### Production (Default)
 ```bash
-export KUBECONFIG=/home/charchess/vixens/.secrets/prod/kubeconfig-prod
-export TALOSCONFIG=/home/charchess/vixens/.secrets/prod/talosconfig-prod
+export KUBECONFIG=.secrets/prod/kubeconfig-prod
+export TALOSCONFIG=.secrets/prod/talosconfig-prod
 ```
 
-### Development
+### Development (Throwaway Sandbox)
 ```bash
-export KUBECONFIG=/home/charchess/vixens/.secrets/dev/kubeconfig-dev
-export TALOSCONFIG=/home/charchess/vixens/.secrets/dev/talosconfig-dev
+export KUBECONFIG=.secrets/dev/kubeconfig-dev
+export TALOSCONFIG=.secrets/dev/talosconfig-dev
 ```
+
+> **Use dev for experiments.** Both clusters have ArgoCD self-heal enabled.
+
+---
 
 ## Cluster Info
 
@@ -33,7 +55,11 @@ export TALOSCONFIG=/home/charchess/vixens/.secrets/dev/talosconfig-dev
 | **Prod** | peach, pearl, phoebe, poison, powder | 192.168.111.190 | v1.12.4 | v1.34.0 |
 | **Dev** | daphne, diva, dulce | 192.168.111.160 | - | - |
 
-## ArgoCD Operations
+---
+
+## ArgoCD Operations (Control Plane)
+
+> These commands modify ArgoCD Application resources, not app deployments directly. This is GitOps-safe.
 
 ### Check All Apps
 ```bash
@@ -55,13 +81,15 @@ kubectl -n argocd get application $APP -o yaml
 kubectl -n argocd get application $APP -o jsonpath='{.status.sync.revision}'
 ```
 
-### Force Refresh (fetch latest from Git)
+### Force Refresh (Fetch Latest from Git)
 ```bash
-kubectl -n argocd patch application $APP --type merge -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}'
+# Safe: just triggers Git fetch, no app changes
+kubectl -n argocd annotate application $APP argocd.argoproj.io/refresh=hard --overwrite
 ```
 
-### Force Sync (apply changes)
+### Force Sync (Apply Git State to Cluster)
 ```bash
+# Safe: applies what's in Git, not manual changes
 kubectl -n argocd patch application $APP --type merge -p '{"operation":{"initiatedBy":{"automated":true},"sync":{"revision":"HEAD"}}}'
 ```
 
@@ -70,22 +98,14 @@ kubectl -n argocd patch application $APP --type merge -p '{"operation":{"initiat
 kubectl -n argocd patch application $APP --type merge -p '{"operation":{"initiatedBy":{"automated":true},"sync":{"revision":"HEAD","prune":true}}}'
 ```
 
+---
+
 ## GitOps Workflow
 
 ### Branch Strategy
 - `main` = Dev HEAD (deployed to dev cluster)
 - `prod-stable` tag = Production (deployed to prod cluster)
 - Apps target `prod-stable` for prod, `main` for dev
-
-### Promote to Prod
-```bash
-# Update prod-stable tag to main
-git tag -f prod-stable main
-git push origin refs/tags/prod-stable --force
-
-# Or use workflow (if you have permissions)
-gh workflow run promote-prod.yaml -f version=vX.Y.Z
-```
 
 ### Check prod-stable vs main
 ```bash
@@ -94,7 +114,11 @@ git log --oneline -1 main
 git rev-list --left-right --count prod-stable...main
 ```
 
-## Debugging
+> **For promotion workflow, see `vixens-gitops` skill.**
+
+---
+
+## Debugging (Read-Only)
 
 ### Pod Issues
 ```bash
@@ -122,15 +146,19 @@ kubectl top pods -A --sort-by=memory | head -20
 kubectl top nodes
 ```
 
-### Events (cluster-wide)
+### Events (Cluster-Wide)
 ```bash
 kubectl get events -A --sort-by='.lastTimestamp' | tail -30
 ```
 
-### Events for specific namespace
+### Events for Specific Namespace
 ```bash
 kubectl get events -n $NS --sort-by='.lastTimestamp' | tail -20
 ```
+
+> **For troubleshooting workflows, see `vixens-troubleshoot` skill.**
+
+---
 
 ## Kyverno & Policies
 
@@ -143,6 +171,10 @@ kubectl get policyreport -A -o json | jq -r '[.items[].results[]? | select(.resu
 ```bash
 kubectl get policyreport -n $NS -o json | jq -r '.items[] | select(.scope.name == "'$APP'") | .results[]? | select(.result == "fail") | .policy'
 ```
+
+> **For maturity violations and fixes, see `vixens-maturity` skill.**
+
+---
 
 ## Storage
 
@@ -161,7 +193,11 @@ kubectl -n synology-csi get pods
 kubectl -n synology-csi logs -l app=synology-csi-controller --tail=50
 ```
 
-## Talos Operations
+---
+
+## Talos Operations (Infrastructure Layer)
+
+> Talos operations are GitOps-safe: they manage the infrastructure, not app state.
 
 ```bash
 # Cluster health
@@ -176,7 +212,7 @@ talosctl services
 # Node logs
 talosctl logs kubelet -n $NODE
 
-# Reboot node
+# Reboot node (safe: pods reschedule)
 talosctl reboot -n $NODE
 
 # Upgrade Talos
@@ -185,6 +221,8 @@ talosctl upgrade -n $NODE --image ghcr.io/siderolabs/installer:vX.Y.Z
 # Get cluster config
 talosctl get machineconfig -n $NODE
 ```
+
+---
 
 ## Common Namespaces
 
@@ -202,6 +240,8 @@ talosctl get machineconfig -n $NODE
 | `birdnet-go` | BirdNET-Go |
 | `traefik` | Ingress controller |
 | `cert-manager` | TLS certificates |
+
+---
 
 ## Quick Health Check
 ```bash

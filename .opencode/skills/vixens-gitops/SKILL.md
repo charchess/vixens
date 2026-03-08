@@ -5,6 +5,12 @@ description: >-
   promoting to production, updating prod-stable tag, branch protection, GitHub Actions,
   CI checks, squash merge, git workflow. Trigger on: "push", "merge", "PR", "pull request",
   "promote", "deploy to prod", "prod-stable", "release", "tag", "commit", "git".
+disable-model-invocation: true  # Side-effect operations - require explicit /vixens-gitops
+license: MIT
+compatibility: opencode
+metadata:
+  domain: gitops
+  audience: homelab-operators
 ---
 
 # Vixens GitOps Workflow Expert
