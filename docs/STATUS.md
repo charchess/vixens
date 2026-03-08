@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-03-08 (Auto-generated from cluster state)
+Last Updated: 2026-03-08
 
 ---
 
@@ -19,6 +19,7 @@ Last Updated: 2026-03-08 (Auto-generated from cluster state)
 | **Kustomize Build** | ✅ PASSING | |
 | **CI/CD Pipelines** | ✅ ACTIVE | |
 
+| **Quality Gates** | ✅ ENFORCED | Pre-commit + CI (secrets, YAML style, K8s validation) |
 ---
 
 ## Système de Maturité (ADR-023)
