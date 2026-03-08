@@ -31,6 +31,7 @@ spec:
         prometheus.io/path: "/metrics"
         vixens.io/service-binding: "false"
         vixens.io/no-long-connections: "true"
+        vixens.io/fast-start: "true"
     spec:
       priorityClassName: vixens-medium
       securityContext:

@@ -33,7 +33,7 @@ spec:
       priorityClassName: vixens-low
       containers:
         - name: amule
-          image: tchabaud/amule:latest
+          image: tchabaud/amule@sha256:66351396337f50b40613222c5c47adfbc8685eb631b38e73f217358f54182d64
           ports:
             - containerPort: 4711
               name: http

@@ -4,7 +4,7 @@ kind: Ingress
 metadata:
   name: firefly-iii
   labels:
-    vixens.lab/managed-by: argocd
+    app.kubernetes.io/managed-by: argocd
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
