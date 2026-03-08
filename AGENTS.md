@@ -582,6 +582,33 @@ bd create "docs: improve AGENTS.md - [description]" --label documentation
 - Use automated tests when possible
 - Manual validation as fallback
 
+## 🛠️ Skill Management (Proactive)
+
+**During work, AI agents should proactively:**
+
+### Suggest Creating Skills
+When you notice repeated operations (3+ times in a session):
+> "I notice we've done [X operation] multiple times. Would you like me to create a skill for this?"
+
+**Good candidates:**
+- Operations repeated 3+ times
+- Complex multi-step procedures (5+ steps)
+- Domain-specific knowledge requiring expertise
+- Debugging patterns with consistent steps
+
+### Suggest Fixing Skills
+While executing a skill, watch for:
+- Commands that fail or need adjustment
+- Missing information requiring additional lookup
+- Edge cases not covered
+
+**Proactively offer:**
+> "The skill [X] had an issue: [description]. Should I update it to [proposed fix]?"
+
+### Reference
+Use skill: `opencode-skill-creator` for detailed guidance on creating/maintaining skills.
+
+
 ---
 
 **Last Updated:** 2026-01-08
