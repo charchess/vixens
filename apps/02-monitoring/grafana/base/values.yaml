@@ -31,7 +31,15 @@ datasources:
         access: proxy
         isDefault: false
         editable: true
-# Resources (Elite: Guaranteed QoS)
+# Resources (Silver: limits defined)
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
 priorityClassName: vixens-critical
 # Probes (Elite Status)
 livenessProbe:
@@ -76,7 +84,33 @@ sidecar:
     enabled: true
     label: grafana_dashboard
     searchNamespace: ALL
-    # Sidecar resources
+  resources:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+  livenessProbe:
+    exec:
+      command:
+        - ls
+        - /tmp
+    initialDelaySeconds: 30
+    periodSeconds: 60
+  readinessProbe:
+    exec:
+      command:
+        - ls
+        - /tmp
+    initialDelaySeconds: 10
+    periodSeconds: 30
+
+# Deployment labels for maturity tracking
+deploymentLabels:
+  app.kubernetes.io/managed-by: argocd
+
 # Pod sizing labels
 podLabels:
-  vixens.io/sizing.grafana: V-medium
+  vixens.io/sizing.grafana: G-medium
+  vixens.io/sizing.grafana-sc-dashboard: G-small

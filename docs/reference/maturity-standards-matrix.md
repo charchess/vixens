@@ -1,4 +1,4 @@
-# 📊 Matrice des Standards de Maturité (ADR-022)
+# 📊 Matrice des Standards de Maturité (ADR-023)
 
 Ce document récapitule les exigences techniques pour chaque grade de maturité, leur source de configuration et les mécanismes de vérification associés.
 
