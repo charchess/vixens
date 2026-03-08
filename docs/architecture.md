@@ -1,41 +1,57 @@
 # <!-- Powered by BMAD™ Core -->
 # Vixens Infrastructure Brownfield Enhancement Architecture
 
-**Version:** 4.0  
+**Version:** 5.0  
 **Status:** Approved / Real-world Reference  
 **Project:** Vixens Cluster Stabilization & Goldification  
+
+> **⚠️ Système de maturité:** Voir [ADR-023: 7-Tier Goldification System v2](adr/023-7-tier-goldification-system-v2.md)
 
 ---
 
 ## 1. Introduction & Existing Project Analysis
 
 ### 1.1 Introduction
-This document defines the architectural approach for standardizing the Vixens cluster to the **"Elite" conformity level**. Its primary goal is to resolve existing "OutOfSync" and "Unknown" states in ArgoCD by industrializing application durability (via Litestream and Config-Syncer) and resource management.
+This document defines the architectural approach for standardizing the Vixens cluster through the **7-tier Goldification system** (ADR-023). Its primary goal is to resolve existing issues (restarts, policy violations) by industrializing application durability (via Litestream and Config-Syncer) and resource management.
 
 ### 1.2 Existing Project Analysis
 - **Primary Purpose:** Multi-cluster Kubernetes homelab infrastructure (GitOps "State Repo").
 - **Current Tech Stack:** 
-    - **Platform:** Talos Linux v1.12.2 / K8s v1.34.0.
+    - **Platform:** Talos Linux v1.12.4 / K8s v1.34.0.
     - **Network:** Cilium (CNI) + AdGuard Home (Internal DNS HA).
     - **Storage:** Synology CSI (iSCSI/NFS).
     - **Secrets:** Infisical Operator (Injector for storage & app secrets).
-    - **GitOps:** ArgoCD v7.7.7 using a Trunk-based workflow (main branch).
+    - **GitOps:** ArgoCD v7.x using a Trunk-based workflow (main branch).
 
-**Key Findings:**
-- **Durability Gaps:** Many SQLite-based applications lack continuous replication, leading to data loss risks during node failures.
-- **Resource Drift:** Inconsistent probes and missing resource limits are causing intermittent restarts in core services like `external-dns` and `adguard-home`.
+**Key Findings (2026-03-08):**
+- **Durability Gaps:** Many SQLite-based applications lack continuous replication → Blocage niveau Emerald (317 violations check-backup).
+- **Resource Drift:** Probes manquants, PDB absents → Blocage niveau Platinum (237 violations check-pdb).
+- **Security Gaps:** SecurityContext non durci → Blocage niveau Diamond (121 violations).
 
 ---
 
 ## 2. Enhancement Scope and Integration Strategy
 
 ### 2.1 Enhancement Overview
-The "Goldification" campaign targets 100% compliance with the Elite standard across all application categories (`media`, `network`, `infra`).
+The "Goldification" campaign targets progressive compliance with the 7-tier system:
 
-### 2.2 Integration Strategy: The "Elite" Pattern
+| Tier Cible | Prérequis Clé | Apps Actuelles |
+|------------|---------------|----------------|
+| 🥉 Bronze | Déployée, requests définis | 3 |
+| 🥈 Silver | Limits, probes, TLS, secrets | 17 |
+| 🥇 Gold | Métriques, Goldilocks, sync-wave | 48 |
+| 💎 Platinum | PriorityClass, PDB, graceful shutdown | 17 |
+| 🟢 Emerald | Litestream, Config-Syncer, Velero | 0 |
+| 💠 Diamond | PSA, NetworkPolicies, SSO | 0 |
+| 🌟 Orichalcum | 7j stabilité, 0 CVE | 0 |
+
+### 2.2 Integration Strategy: The Emerald Pattern (Data Durability)
+
+Pour atteindre le niveau **Emerald** (niveau 5), les applications doivent implémenter:
+
 - **Recovery-First Pattern:** Applications must verify and restore their state via initContainers (`rclone` for static files, `litestream` for DBs) before the main process starts.
-- **Sidecar Durability:** Every Elite pod includes a `litestream` sidecar for real-time DB replication and a `config-syncer` sidecar for inotify-driven file sync to MinIO.
-- **Kyverno Enforcement:** Use Kyverno policies to monitor compliance and automatically flag non-Elite deployments.
+- **Sidecar Durability:** Every Emerald pod includes a `litestream` sidecar for real-time DB replication and a `config-syncer` sidecar for inotify-driven file sync to MinIO.
+- **Kyverno Enforcement:** Use Kyverno policies to monitor compliance and automatically flag non-compliant deployments.
 
 ---
 
@@ -47,14 +63,15 @@ The "Goldification" campaign targets 100% compliance with the Elite standard acr
 | **Backup (Files)** | rclone + inotify | Sidecar (Config-Syncer) for static file sync. |
 | **Storage Backend** | MinIO | S3-compatible internal endpoint hosted on Synology. |
 | **Secrets Management**| Infisical | Automatic injection of S3 credentials. |
-| **Validation** | Python / Beads | `conformity_checker.py` and Beads status tracking. |
+| **Validation** | Python / Beads | `evaluate_maturity.py` and Beads status tracking. |
+| **Policy Enforcement** | Kyverno | Maturity checks automatisés. |
 
 ---
 
 ## 4. Component Architecture
 
-### 4.1 Pod Topology (Elite Standard)
-Every Elite Deployment is composed of:
+### 4.1 Pod Topology (Emerald Standard)
+Every Emerald Deployment is composed of:
 1.  **Main Application:** The core service.
 2.  **Litestream Sidecar:** Listens on port `9090` for metrics.
 3.  **Config-Syncer Sidecar:** Watches `/config` for changes (excluding DB files).
@@ -98,52 +115,45 @@ The architecture uses a modular **Kustomize Component** approach:
 
 ```plaintext
 apps/_shared/components/
-├── elite-standard/      # Probes (Liveness/Readiness), Resource Limits
-├── elite-litestream/    # Litestream config, sidecar, and restore init
-└── elite-syncer/        # rclone-based config-syncer
+├── gold-maturity/       # Probes, Goldilocks, revisionHistoryLimit
+├── priority/            # PriorityClass (critical, high, medium, low)
+├── poddisruptionbudget/ # PDB configurations (0, 1, 50percent)
+├── probes/              # Probe templates (basic, advanced)
+└── resources/           # Resource sizing templates
 ```
 
-**Implementation Rule:** Applications in `apps/` include these components in their `base/kustomization.yaml` to inherit the Elite features without duplicating manifests.
+**Implementation Rule:** Applications in `apps/` include these components in their `base/kustomization.yaml` to inherit standardized features without duplicating manifests.
 
 ---
 
-## 6. Coding Standards (Elite Baseline)
+## 6. Coding Standards
 
-### 6.1 Resource Limits
-- **Memory:** `Request == Limit` to prevent silent OOMKills.
+### 6.1 Resource Limits (Silver+)
+- **Memory:** `Request == Limit` recommandé pour éviter OOMKills (Guaranteed QoS).
 - **CPU:** `Request` set to 10-25% of `Limit` to allow bursts during startup/indexing.
 
-### 6.2 Probes
-- **Startup Probes:** Mandatory for heavy apps (Java/Python) to allow long boot times (up to 180s) without triggering restart loops.
+### 6.2 Probes (Silver)
+- **Startup Probes:** Universel (bypass `vixens.io/fast-start: "true"` si démarrage < 5s).
 - **Liveness Probes:** Standardized to 3 failures before restart.
+- **Readiness Probes:** Mandatory for traffic routing.
 
-### 6.3 Elite Operational Baselines (Alerting & Sizing)
-To ensure the "Elite" status is not just a configuration but a functional reality, the following thresholds and standards from `docs/reference/RESOURCE_STANDARDS.md` are enforced:
+### 6.3 Sizing Standards
 
-**A. Monitoring & Alerting (Prometheus):**
-- **Litestream Sync Lag:** Critical alert if `litestream_sync_count` has not increased for > 5 minutes.
-- **Config-Syncer Failures:** Warning if `rclone` container restarts > 3 times in 1 hour.
-- **Persistence Latency:** Critical alert if I/O wait on Synology PVCs exceeds 500ms for more than 2 minutes.
-
-**B. Elite T-Shirt Sizing & QoS Policy:**
-Elite applications MUST use standardized sizing but with a **Guaranteed QoS** strategy for memory to ensure stability:
-
-| Elite Size | CPU (Req / Lim) | RAM (Req / Lim) | Usage Typique |
+| Size | CPU (Req / Lim) | RAM (Req / Lim) | Usage Typique |
 | :--- | :--- | :--- | :--- |
 | **Micro** | `10m` / `100m` | `128Mi` / `128Mi` | Sidecars (Litestream, Syncer) |
 | **Small** | `50m` / `500m` | `512Mi` / `512Mi` | Apps Go/Rust, Outils statiques |
 | **Medium** | `200m` / `1000m` | `1Gi` / `1Gi` | Web Apps (Python/Node) |
 | **Large** | `1000m` / `2000m` | `4Gi` / `4Gi` | Databases, Heavy Apps (Jellyfin) |
 
-**C. Sizing & Priority Rules:**
-- **Guaranteed Memory:** For Elite status, **Memory Limit MUST equal Memory Request**. This eliminates OOMKill risks due to node overcommitment.
-- **Burstable CPU:** We maintain `Request < Limit` for CPU (typically 10-25% ratio) to allow burst performance while ensuring base scheduling.
-- **Elite Priority Classes:**
-    - **`vixens-critical` (100k):** Reserved for Core Infrastructure (Ingress, CSI, Infisical, ArgoCD). Elite apps in this category are non-evictable.
-    - **`vixens-high` (50k):** Required for Mission-Critical User Apps (Home Assistant, AdGuard, Vaultwarden).
-- **Enforcement:** Any application claiming "Elite" status that uses `vixens-medium` or `vixens-low` will be flagged as non-compliant in conformity reports.
-- **Sidecar Overhead:** Budget an additional `20m CPU` and `128Mi RAM` per pod for the combined Litestream and Config-Syncer sidecars.
-- **Namespace Quotas:** The `00-infra` (MinIO) namespace must have a high priority class to prevent eviction during cluster-wide backup bursts.
+### 6.4 Priority Classes (Platinum)
+
+| Priority Class | Value | Usage |
+|----------------|-------|-------|
+| `vixens-critical` | 100000 | Core Infrastructure (Ingress, CSI, ArgoCD) |
+| `vixens-high` | 50000 | Mission-Critical User Apps (Home Assistant, Vaultwarden) |
+| `vixens-medium` | 10000 | Standard applications |
+| `vixens-low` | 1000 | Non-critical, batch jobs |
 
 ---
 
@@ -155,13 +165,47 @@ Every deployment must be followed by:
 2.  `python3 scripts/validation/validate.py <app> dev`: Real-world connectivity check.
 3.  `just reports`: Update the conformity dashboard in `docs/reports/`.
 
+### 7.2 Maturity Evaluation
+```bash
+# Évaluer la maturité d'une app
+python3 scripts/evaluate_maturity.py <app> prod
+
+# Générer le rapport de conformité
+just reports
+```
+
 ---
 
-## 8. Next Steps
+## 8. Current State & Next Steps
 
-1.  **Story 1.1:** Resolve `Unknown` states for `frigate` and `sonarr` using the new Elite Probes.
-2.  **Story 1.2:** Standardize `litestream-config.yaml` for all media apps using the shared component.
-3.  **Story 1.3:** Implement AdGuard HA monitoring via Kyverno.
+### État Actuel (2026-03-08)
+- **Platinum atteint:** 17 apps
+- **Gold atteint:** 48 apps
+- **Blocage principal:** Backup (Emerald) - 0 apps
+
+### Next Steps
+
+1. **Implémenter Emerald pour apps critiques:**
+   - homeassistant (16 restarts, besoin backup SQLite)
+   - vaultwarden (données sensibles)
+   - firefly-iii (finance)
+
+2. **Résoudre instabilités:**
+   - promtail (87 restarts) - investiguer OOM
+   - netbird (42 restarts) - SecurityContext
+   - vikunja (37 restarts) - root cause analysis
+
+3. **Progresser vers Diamond:**
+   - Implémenter NetworkPolicies Cilium
+   - Durcir SecurityContext (121 violations actuelles)
 
 ---
-🏗️ *Drafted by Winston (BMad Architect) based on Vixens Cluster Analysis.*
+
+## References
+
+- [ADR-023: 7-Tier Goldification System v2](adr/023-7-tier-goldification-system-v2.md) — Source de vérité
+- [STATUS.md](STATUS.md) — État actuel des applications
+- [Quality Standards](reference/quality-standards.md) — Résumé des standards
+
+---
+🏗️ *Updated 2026-03-08 based on ADR-023 v2 and cluster state.*

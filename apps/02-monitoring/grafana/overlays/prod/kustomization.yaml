@@ -8,5 +8,6 @@ labels:
 namespace: monitoring
 patches:
   - path: patch-infisical-env.yaml
+  # Note: resources-patch.yaml not used - Helm manages deployment via values.yaml
 resources:
   - ../../base
