@@ -40,6 +40,6 @@ jobs:
           scan-type: 'config'
           scan-ref: '.'
           format: 'table'
-          exit-code: '0'
+          exit-code: '1'  # Bloquant - fail on CRITICAL/HIGH
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
