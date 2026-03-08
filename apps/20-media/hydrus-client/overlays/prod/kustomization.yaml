@@ -11,6 +11,7 @@ patchesStrategicMerge:
 resources:
   - ../../base
   - ingress.yaml
+  - ingress-api.yaml
 
 components:
   - ../../../../_shared/components/gold-maturity
