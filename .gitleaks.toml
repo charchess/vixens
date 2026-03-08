@@ -4,35 +4,44 @@
 title = "Vixens Secret Detection"
 
 [extend]
-# Use default gitleaks rules as base
 useDefault = true
+
+# ══════════════════════════════════════════════════════════════
+# GLOBAL ALLOWLIST
+# ══════════════════════════════════════════════════════════════
 
 [allowlist]
 description = "Global allowlist for known safe patterns"
 
-# Paths to ignore (charts, crds, test fixtures)
 paths = [
     '''.*/charts/.*''',
     '''.*/crds/.*''',
     '''\.git/.*''',
     '''.*\.lock$''',
     '''.*-lock\.json$''',
+    '''\.trivyignore''',
+    '''\.gitleaks\.toml''',
 ]
 
-# Known safe patterns (not actual secrets)
 regexes = [
     '''REDACTED''',
     '''placeholder''',
     '''example\.com''',
-    '''truxonline\.com''',  # Our domain, not a secret
-    '''192\.168\.\d+\.\d+''',  # Internal IPs
-    '''10\.\d+\.\d+\.\d+''',  # Cluster IPs
+    '''truxonline\.com''',
+    '''192\.168\.\d+\.\d+''',
+    '''10\.\d+\.\d+\.\d+''',
 ]
 
-# Specific files to allowlist
-files = [
-    '''\.trivyignore''',
-    '''\.gitleaks\.toml''',
+stopwords = [
+    "example",
+    "sample",
+    "test",
+    "dummy",
+    "fake",
+    "mock",
+    "CHANGE_ME",
+    "YOUR_",
+    "xxx",
 ]
 
 # ══════════════════════════════════════════════════════════════
@@ -45,12 +54,6 @@ description = "Kubernetes Secret with base64 encoded data"
 regex = '''data:\s*\n\s+\w+:\s+[A-Za-z0-9+/=]{40,}'''
 tags = ["kubernetes", "secret", "base64"]
 keywords = ["data:"]
-
-[rules.allowlist]
-paths = [
-    '''.*sealed.*\.yaml$''',  # SealedSecrets are ok
-    '''.*-crds\.yaml$''',     # CRD definitions
-]
 
 [[rules]]
 id = "infisical-token"
@@ -89,26 +92,9 @@ description = "Hardcoded password in YAML"
 regex = '''(?i)password\s*:\s*["\']?(?!REDACTED|placeholder|\$\{|\{\{)[^\s"\']{8,}'''
 tags = ["password", "yaml"]
 
-[rules.allowlist]
-regexes = [
-    '''password:\s*["\']\s*["\']\s*$''',  # Empty password
-    '''password:\s*\$\{''',  # Variable reference
-    '''password:\s*\{\{''',  # Template reference
-]
-
-# ══════════════════════════════════════════════════════════════
-# STOPWORDS - Reduce false positives
-# ══════════════════════════════════════════════════════════════
-
-[rules.allowlist]
-stopwords = [
-    "example",
-    "sample",
-    "test",
-    "dummy",
-    "fake",
-    "mock",
-    "CHANGE_ME",
-    "YOUR_",
-    "xxx",
-]
+  [rules.allowlist]
+  regexes = [
+      '''password:\s*["\']\s*["\']\s*$''',
+      '''password:\s*\$\{''',
+      '''password:\s*\{\{''',
+  ]
