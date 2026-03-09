@@ -243,7 +243,7 @@ spec:
         # Fix invalid config keys that may have been self-injected
         # NOTE: Using alpine+jq because ghcr.io/jqlang/jq image has no shell
         - name: fix-config
-          image: alpine:3.21
+          image: alpine:3.23
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
