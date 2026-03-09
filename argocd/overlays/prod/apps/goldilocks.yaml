@@ -5,7 +5,7 @@ metadata:
   name: goldilocks
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "6" # Monitoring/observability tier
+    argocd.argoproj.io/sync-wave: "8" # Monitoring/observability tier
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
