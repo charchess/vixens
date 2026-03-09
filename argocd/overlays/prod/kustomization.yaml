@@ -64,7 +64,8 @@ resources:
   - apps/hydrus-client.yaml
   - apps/music-assistant.yaml
   - apps/vaultwarden.yaml
-  - apps/openclaw.yaml
+  # DISABLED 2026-03-09: openclaw down - needs investigation (init containers or secrets issue)
+  # - apps/openclaw.yaml
   - apps/cloudnative-pg.yaml
   - apps/redis-shared.yaml
   - apps/postgresql-shared.yaml
