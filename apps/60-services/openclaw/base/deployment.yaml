@@ -117,7 +117,7 @@ spec:
               chmod +x /data/tools/bin/kubectl
 
               # rclone - download directly to shared volume
-              curl -sOs /tmp/rclone.zip https://downloads.rclone.org/rclone-current-linux-amd64.zip
+              curl -sLo /tmp/rclone.zip https://downloads.rclone.org/rclone-current-linux-amd64.zip
               unzip -j /tmp/rclone.zip rclone -d /data/tools/bin/
               chmod +x /data/tools/bin/rclone
               rm -f /tmp/rclone.zip
