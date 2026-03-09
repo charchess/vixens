@@ -396,6 +396,11 @@ spec:
                 secretKeyRef:
                   name: openclaw-secrets
                   key: OPENCLAW_GATEWAY_TOKEN
+            - name: DISCORD_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: OPENCLAW_DISCORD_TOKEN
           livenessProbe:
             tcpSocket:
               port: 18789
