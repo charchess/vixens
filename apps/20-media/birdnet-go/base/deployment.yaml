@@ -65,12 +65,12 @@ spec:
           args:
             - |
               cat > /litestream-config/litestream.yml <<EOF
+              addr: ":9090"
               dbs:
                 - path: /data/birdnet.db
                   replicas:
                     - url: s3://${LITESTREAM_BUCKET}/birdnet.db
                       endpoint: ${LITESTREAM_ENDPOINT}
-              addr: ":9090"
               EOF
           envFrom:
             - secretRef:
