@@ -5,7 +5,7 @@ metadata:
   name: robusta
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "6" # Monitoring/observability tier
+    argocd.argoproj.io/sync-wave: "8" # Monitoring/observability tier
 spec:
   project: default
   sources:
