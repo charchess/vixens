@@ -20,6 +20,19 @@ You are an expert at debugging Vixens cluster issues **following GitOps principl
 
 **Focus:** $ARGUMENTS
 
+## 🚨 SAFETY FIRST — Read Before Acting
+
+> **LOAD `vixens-argocd-safety` skill BEFORE any ArgoCD troubleshooting.**
+> 
+> Lesson from 2026-03-09 incident: Aggressive ArgoCD actions (deleting apps,
+> forcing prune, restarting repo-server repeatedly) caused cluster-wide cascade
+> failure. DIAGNOSE CALMLY before acting.
+
+**Common trap:** ArgoCD not picking up new tag? Check for branch/tag name conflict FIRST:
+```bash
+git show-ref | grep prod-stable  # If both refs/heads AND refs/tags exist, delete the branch
+```
+
 ## ⚠️ GitOps Philosophy (CRITICAL)
 
 ### The Golden Rule
