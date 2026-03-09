@@ -182,7 +182,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-            - name: litestream-config
+            - name: generated-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
           resources:
@@ -270,9 +270,6 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Internal
-        - name: litestream-config
-          configMap:
-            name: birdnet-go-litestream-config
         - name: generated-litestream-config
           emptyDir: {}
       securityContext:
