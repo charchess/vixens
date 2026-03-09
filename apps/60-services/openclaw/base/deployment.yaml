@@ -241,8 +241,9 @@ spec:
               mountPath: /default-config
               readOnly: true
         # Fix invalid config keys that may have been self-injected
+        # NOTE: Using alpine+jq because ghcr.io/jqlang/jq image has no shell
         - name: fix-config
-          image: ghcr.io/jqlang/jq:1.8.1
+          image: alpine:3.21
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -251,6 +252,7 @@ spec:
             - -c
           args:
             - |
+              apk add --no-cache jq
               echo "Checking for invalid config keys..."
               if [ -f /data/openclaw.json ]; then
                 # Remove known invalid keys that openclaw may have auto-added
