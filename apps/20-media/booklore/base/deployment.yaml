@@ -95,7 +95,7 @@ spec:
       priorityClassName: vixens-low
       containers:
         - name: booklore
-          image: ghcr.io/booklore-app/booklore:v2.0.6
+          image: ghcr.io/booklore-app/booklore:v2.1.0
           ports:
             - containerPort: 6060
               name: http
