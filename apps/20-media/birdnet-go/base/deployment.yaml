@@ -93,7 +93,7 @@ spec:
           args:
             - restore
             - -config
-            - /etc/litestream.yml
+            - /etc/litestream-config/litestream.yml
             - -if-replica-exists
             - /data/birdnet.db
           envFrom:
@@ -103,8 +103,7 @@ spec:
             - name: data
               mountPath: /data
             - name: generated-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
+              mountPath: /etc/litestream-config
           resources:
             requests:
               cpu: 10m
@@ -172,7 +171,7 @@ spec:
           args:
             - replicate
             - -config
-            - /etc/litestream.yml
+            - /etc/litestream-config/litestream.yml
           ports:
             - containerPort: 9090
               name: metrics
@@ -183,8 +182,7 @@ spec:
             - name: data
               mountPath: /data
             - name: generated-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
+              mountPath: /etc/litestream-config
           resources:
             requests:
               cpu: 10m
