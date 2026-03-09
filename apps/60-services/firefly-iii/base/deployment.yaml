@@ -204,7 +204,8 @@ spec:
             exec:
               command:
                 - pgrep
-                - rclone
+                - -f
+                - "sh -c"
             initialDelaySeconds: 30
             periodSeconds: 60
             failureThreshold: 3

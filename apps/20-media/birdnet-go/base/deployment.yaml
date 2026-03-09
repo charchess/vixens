@@ -57,6 +57,34 @@ spec:
             limits:
               cpu: 100m
               memory: 64Mi
+        - name: generate-litestream-config
+          image: busybox:1.37.0
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              cat > /litestream-config/litestream.yml <<EOF
+              dbs:
+                - path: /data/birdnet.db
+                  replicas:
+                    - url: s3://${LITESTREAM_BUCKET}/birdnet.db
+                      endpoint: ${LITESTREAM_ENDPOINT}
+              addr: ":9090"
+              EOF
+          envFrom:
+            - secretRef:
+                name: birdnet-go-secrets
+          volumeMounts:
+            - name: generated-litestream-config
+              mountPath: /litestream-config
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              cpu: 10m
+              memory: 32Mi
         - name: litestream-restore
           image: litestream/litestream:0.5.9
           securityContext:
@@ -74,7 +102,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-            - name: litestream-config
+            - name: generated-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
           resources:
@@ -245,6 +273,8 @@ spec:
         - name: litestream-config
           configMap:
             name: birdnet-go-litestream-config
+        - name: generated-litestream-config
+          emptyDir: {}
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
