@@ -5,7 +5,7 @@ metadata:
   name: trivy
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "5" # Security scanning tier
+    argocd.argoproj.io/sync-wave: "3" # Security scanning tier
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:

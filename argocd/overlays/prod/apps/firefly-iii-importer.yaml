@@ -5,7 +5,7 @@ metadata:
   name: firefly-iii-importer
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "10" # Standard application tier
+    argocd.argoproj.io/sync-wave: "9" # Standard application tier
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
