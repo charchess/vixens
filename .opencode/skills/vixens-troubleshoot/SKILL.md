@@ -362,6 +362,173 @@ kubectl -n $NS delete pod $POD
 
 ---
 
+## 📚 Lessons Learned (Production Incidents)
+
+### Incident: CSI Failure + Sizing Race Condition (2026-03-09)
+
+**Timeline:** 01:45-03:12 - Mass pod restarts after iSCSI mount failures
+
+#### Root Cause
+**Timing issue:** 14 pods created BEFORE `sizing-v2-mutate` policy was ready (4h30 gap).
+
+- Kyverno deployed at **wave 3** (~06:29)
+- Apps deployed at **wave 7-10** (starting 01:45)
+- Policy takes ~30s to become ready AFTER Kyverno pod starts
+- Apps deploying in that window get **no resources** (default 128Mi)
+
+**Result:** 11+ apps stuck in CrashLoopBackOff/OOMKilled with 100+ restarts each
+
+#### Symptoms Observed
+```bash
+# Pods with high restart counts
+docspell-restserver: 223 restarts (128Mi/128Mi - should be 512Mi/2Gi)
+authentik-worker: 178 restarts (128Mi/128Mi - should be 1Gi/2Gi)
+prometheus-server: 150 restarts (128Mi/512Mi - should be 2Gi/2Gi)
+
+# All had sizing label BUT no hardcoded resources
+kubectl get pod X -o yaml | grep 'vixens.io/sizing'  # ✅ Label present
+kubectl get pod X -o yaml | grep 'resources:'        # ❌ No resources block
+```
+
+#### Diagnosis Steps
+1. Check pod restart counts: `kubectl get pods -A --sort-by=.status.containerStatuses[0].restartCount`
+2. Check actual resources: `kubectl get pod X -o jsonpath='{.spec.containers[0].resources}'`
+3. Check expected sizing: `kubectl get pod X -o jsonpath='{.metadata.labels}' | grep sizing`
+4. Check kyverno policy: `kubectl get clusterpolicy sizing-v2-mutate -o yaml`
+5. Check policy ready time vs pod creation time
+
+#### The Fix (Defense-in-Depth)
+**Always add hardcoded resources as fallback:**
+
+```yaml
+# BEFORE (vulnerable to race condition)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    vixens.io/sizing.promtail: G-small  # ✅ Label
+spec:
+  template:
+    spec:
+      containers:
+      - name: promtail
+        # ❌ No resources block = default 128Mi if policy not ready
+
+# AFTER (defense-in-depth)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    vixens.io/sizing.promtail: G-small  # ✅ Label for VPA
+spec:
+  template:
+    spec:
+      containers:
+      - name: promtail
+        resources:  # ✅ Hardcoded fallback
+          requests:
+            cpu: 25m
+            memory: 256Mi
+          limits:
+            cpu: 50m
+            memory: 256Mi
+```
+
+**Why both?**
+- **Sizing label** → VPA can adjust dynamically in running cluster
+- **Hardcoded resources** → Guarantees minimum resources during bootstrap/recovery
+
+#### Related Issues Discovered
+
+**1. Liveness Probe Failure (firefly-iii)**
+```yaml
+# PROBLEM: Probe checks for 'rclone' process
+livenessProbe:
+  exec:
+    command: ["pgrep", "rclone"]
+# But rclone only runs 1-2s every 60s (rest is 'sleep 60')
+
+# FIX: Check for shell process (always running)
+livenessProbe:
+  exec:
+    command: ["pgrep", "-f", "sh -c"]
+```
+
+**2. Shell Variable Interpolation (birdnet-go)**
+```yaml
+# PROBLEM: Litestream doesn't interpolate shell variables in YAML
+configMap:
+  litestream.yml: |
+    dbs:
+      - url: s3://$LITESTREAM_BUCKET/db  # ❌ Reads literal '$LITESTREAM_BUCKET'
+
+# FIX: Generate config dynamically via init container
+initContainers:
+  - name: generate-litestream-config
+    image: busybox
+    command: ["sh", "-c"]
+    args:
+      - |
+        cat > /litestream-config/litestream.yml <<EOF
+        dbs:
+          - url: s3://${LITESTREAM_BUCKET}/db  # ✅ Shell interpolates
+        EOF
+    envFrom:
+      - secretRef:
+          name: app-secrets
+    volumeMounts:
+      - name: generated-config
+        mountPath: /litestream-config
+```
+
+**3. emptyDir + subPath Incompatibility**
+```yaml
+# PROBLEM: subPath mount fails if file doesn't exist at pod creation
+initContainers:
+  - name: generate-config
+    volumeMounts:
+      - name: config
+        mountPath: /config  # Writes /config/app.yml
+
+containers:
+  - name: app
+    volumeMounts:
+      - name: config
+        mountPath: /etc/app.yml
+        subPath: app.yml  # ❌ FAILS - file doesn't exist at mount time
+
+# FIX: Mount directory, not file
+containers:
+  - name: app
+    args: ["-config", "/etc/config/app.yml"]  # Update path in args
+    volumeMounts:
+      - name: config
+        mountPath: /etc/config  # ✅ Mount whole directory
+```
+
+**4. InfisicalSecret Troubleshooting**
+```bash
+# Check if secrets are being synced
+kubectl get infisicalsecret X -o jsonpath='{.status.conditions[?(@.type=="secrets.infisical.com/ReadyToSyncSecrets")].message}'
+# Expected: "Last reconcile synced N secrets" (N > 0)
+
+# If "synced 0 secrets" → Check Infisical path
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://infisical:8085/api/v3/secrets/raw?workspaceId=X&environment=prod&secretPath=/path"
+
+# Create missing secrets via API or UI
+```
+
+#### Preventive Measures
+
+1. **All apps with sizing labels MUST have hardcoded resources** (defense-in-depth)
+2. **Liveness probes must check persistent process** (not intermittent commands)
+3. **Config generation: Use init containers** for dynamic env var interpolation
+4. **emptyDir: Mount directories, not subPaths** when content generated at runtime
+5. **Infisical: Verify secret count in status** before marking app as ready
+
+---
+
 ## ⚠️ What NOT To Do
 
 ### Never on Prod
