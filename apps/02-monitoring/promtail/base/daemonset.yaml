@@ -44,7 +44,7 @@ spec:
               port: 9080
             initialDelaySeconds: 10
             periodSeconds: 10
-            timeoutSeconds: 1
+            timeoutSeconds: 5
             failureThreshold: 3
           resources:
             requests:
@@ -59,7 +59,7 @@ spec:
               port: 9080
             initialDelaySeconds: 10
             periodSeconds: 10
-            timeoutSeconds: 1
+            timeoutSeconds: 5
             failureThreshold: 3
       volumes:
         - name: config
