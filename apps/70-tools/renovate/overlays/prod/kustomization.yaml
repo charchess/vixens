@@ -9,6 +9,7 @@ resources:
   - ../../base
   - pvc.yaml
 patches:
+  - path: resources-patch.yaml
   - path: patch-infisical-env.yaml
   - target:
       group: batch
