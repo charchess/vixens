@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: adguard-litestream-endpoint-override
+  namespace: networking
+type: Opaque
+stringData:
+  # Override DNS endpoint with IP to break dependency cycle
+  # AdGuard provides DNS → can't use DNS to restore AdGuard from S3
+  LITESTREAM_ENDPOINT: "http://192.168.111.69:9000"
