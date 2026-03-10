@@ -1,2 +1,40 @@
 ---
-# v2 sizing managed by Kyverno (CronJob - VPA not applicable)
+# Resources for renovate CronJob
+# Sizing mode: B-large (Burst-optimized Large)
+# Rationale documented via annotation below
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: renovate
+  annotations:
+    # PLATINUM REQUIREMENT: Sizing rationale
+    vixens.io/sizing-rationale: |
+      B-large (Burst-optimized Large) - CronJob with periodic workload.
+
+      VPA recommends 156Mi target but pod experienced OOMKilled.
+      Renovate clones entire Git repos into memory during processing.
+      Large monorepos (vixens) can spike to 1.5-2Gi during clone+analysis.
+
+      Strategy: Allocate generous limits (2Gi) to prevent OOM, moderate
+      requests (512Mi) to avoid starving cluster during idle periods.
+
+      Post-Goldilocks review: VPA data insufficient (CronJob pattern),
+      sizing based on observed OOMKill + upstream docs (1-4Gi recommended).
+
+      CPU: 1000m limit allows burst during Git operations, 200m request
+      aligns with observed baseline (126m VPA target).
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: renovate
+              resources:
+                requests:
+                  memory: "512Mi"
+                  cpu: "200m"
+                limits:
+                  memory: "2Gi"
+                  cpu: "1000m"
