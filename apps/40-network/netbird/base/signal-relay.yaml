@@ -35,7 +35,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: signal
-          image: netbirdio/signal:0.66.2
+          image: netbirdio/signal:0.66.3
           args: ["--port=80"]
           securityContext:
             allowPrivilegeEscalation: false
@@ -102,7 +102,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: relay
-          image: netbirdio/relay:0.66.2
+          image: netbirdio/relay:0.66.3
           args: ["run", "--auth-secret", "netbird-relay-secret-change-me"]
           env:
             - name: NB_LISTEN_ADDRESS
