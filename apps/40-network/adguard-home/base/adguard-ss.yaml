@@ -94,7 +94,7 @@ spec:
               subPath: litestream.yml
       containers:
         - name: adguard-home
-          image: adguard/adguardhome:v0.107.72
+          image: adguard/adguardhome:v0.107.73
           ports:
             - containerPort: 3000
               name: http
