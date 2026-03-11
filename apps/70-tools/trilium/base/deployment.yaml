@@ -23,6 +23,7 @@ spec:
       annotations:
         vixens.io/service-binding: "false"
         vixens.io/no-long-connections: "true"
+        kubectl.kubernetes.io/restartedAt: "2026-03-11T22:25:00Z"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
