@@ -99,6 +99,70 @@ Last updated: 2026-03-11
 
 **REFERENCE:** AdGuard Home (2026-03-10) - Litestream needed MinIO via DNS, but AdGuard provides cluster DNS.
 
+### Production Deployment Workflow
+
+**CRITICAL:** Production uses Git tag `prod-stable`, NOT main branch.
+
+**WORKFLOW:**
+1. Merge PR to `main`
+2. Update tag: `git tag -f prod-stable main && git push -f origin prod-stable`
+3. ArgoCD detects tag change → syncs production apps
+
+**COMMON MISTAKE:** Forgetting to update `prod-stable` tag after merge → prod not updated.
+
+**REFERENCE:** All production ArgoCD apps have `targetRevision: prod-stable` in `argocd/overlays/prod/apps/`
+
+### InfisicalSecret Ownership Pattern
+
+**PATTERN:** Switching from static Secret to InfisicalSecret management.
+
+**CRITICAL STEP:** DELETE the static Secret FIRST, then InfisicalSecret recreates it with ownerReferences.
+
+```bash
+# 1. Deploy InfisicalSecret (via ArgoCD)
+kubectl apply -f infisical-secret.yaml
+
+# 2. Delete static secret
+kubectl delete secret <name> -n <namespace>
+
+# 3. Wait 60s for InfisicalSecret to recreate it
+sleep 60
+
+# 4. Verify ownerReferences
+kubectl get secret <name> -o jsonpath='{.metadata.ownerReferences[0].kind}'
+# Should show: InfisicalSecret
+```
+
+**WHY:** If static Secret exists without ownerReferences, InfisicalSecret won't manage it.
+
+**REFERENCE:** AdGuard Home switch (2026-03-11) - Had to delete static secret for InfisicalSecret takeover.
+
+### Kustomize Regression Check (CRITICAL)
+
+**RULE:** After ANY `kustomization.yaml` change, verify resource kinds before/after.
+
+```bash
+# Before change
+kustomize build apps/<app>/overlays/<env> | grep '^kind:' | sort > /tmp/before.txt
+
+# Make change to kustomization.yaml
+
+# After change
+kustomize build apps/<app>/overlays/<env> | grep '^kind:' | sort > /tmp/after.txt
+
+# Compare
+diff /tmp/before.txt /tmp/after.txt
+```
+
+**WHY:** Kustomize silently drops resources when:
+- Resource removed from `resources:` list
+- Component removed from `components:`
+- Patch target doesn't match anymore
+
+**EXAMPLE:** IT-Tools ingress accidentally removed → service inaccessible (silent failure).
+
+**REFERENCE:** AGENTS.md Step 3b - Mandatory kustomize kinds diff check.
+
 ---
 
 ## 🚫 Anti-Patterns (Priority 6)
