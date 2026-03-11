@@ -164,7 +164,7 @@ spec:
               readOnly: true
         # 3/4 — Fix config keys + write Gemini credentials (merged fix-config + setup-gemini-config)
         - name: setup-config
-          image: python:3.12-alpine
+          image: python:3.14-alpine
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
