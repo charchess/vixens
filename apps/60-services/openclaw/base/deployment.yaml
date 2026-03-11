@@ -52,6 +52,7 @@ spec:
             - -c
           args:
             - |
+              set -e
               TOOLS_VERSION="1"
               if [ -f /data/tools/.installed-version ] && [ "$(cat /data/tools/.installed-version)" = "$TOOLS_VERSION" ]; then
                 echo "Tools v$TOOLS_VERSION already present, skipping reinstall"
@@ -198,6 +199,7 @@ spec:
             - -c
           args:
             - |
+              set -e
               PLUGIN_VERSION="2026.1.22"
               if [ -f /data/node_modules/.gemini-plugin-version ] && \
                  [ "$(cat /data/node_modules/.gemini-plugin-version)" = "$PLUGIN_VERSION" ] && \
