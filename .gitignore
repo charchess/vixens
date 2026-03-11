@@ -180,3 +180,4 @@ current_state.json
 .gemini_env/
 _bmad*/
 _bmad-output/
+.beads/issues.jsonl
