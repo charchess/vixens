@@ -245,17 +245,22 @@ spec:
           readinessProbe:
             exec:
               command:
-                - pgrep
-                - rclone
+                - sh
+                - -c
+                - "pgrep -f 'sync_s3' || pgrep -f 'rclone sync'"
             initialDelaySeconds: 10
-            periodSeconds: 30
+            periodSeconds: 90  # Longer than sync cycle (sync 5s + sleep 60s)
+            timeoutSeconds: 5  # Industry standard for sidecars (promtail lesson)
+            failureThreshold: 3
           livenessProbe:
             exec:
               command:
-                - pgrep
-                - rclone
+                - sh
+                - -c
+                - "pgrep -f 'sync_s3' || pgrep -f 'rclone sync'"
             initialDelaySeconds: 30
-            periodSeconds: 60
+            periodSeconds: 90  # Longer than sync cycle (sync 5s + sleep 60s)
+            timeoutSeconds: 5  # Industry standard for sidecars (promtail lesson)
             failureThreshold: 3
       volumes:
         - name: config
