@@ -115,6 +115,26 @@ spec:
               rclone lsd s3:$RCLONE_BUCKET || echo "Rclone list failed"
               rclone copy s3:$RCLONE_BUCKET/.openclaw /data/.openclaw --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
               rclone copy s3:$RCLONE_BUCKET/extensions /data/extensions --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
+              # Step 1b: Migrate workspace from .openclaw/workspace/ to workspace/ if needed
+              # (openclaw changed workspace path between versions; legacy data lives in .openclaw/workspace/)
+              LEGACY_WS=/data/.openclaw/workspace
+              ACTIVE_WS=/data/workspace
+              if [ -d "$LEGACY_WS" ] && [ -f "$LEGACY_WS/MEMORY.md" ]; then
+                # Check if active workspace is still a blank template (IDENTITY.md has no name)
+                if ! grep -q '^- \*\*Name:\*\* ' "$ACTIVE_WS/IDENTITY.md" 2>/dev/null; then
+                  echo "Migrating workspace from $LEGACY_WS to $ACTIVE_WS..."
+                  cp -rn "$LEGACY_WS/." "$ACTIVE_WS/" 2>/dev/null || true
+                  # Force-overwrite key identity files
+                  for f in IDENTITY.md USER.md SOUL.md AGENTS.md MEMORY.md; do
+                    [ -f "$LEGACY_WS/$f" ] && cp -f "$LEGACY_WS/$f" "$ACTIVE_WS/$f" && echo "  migrated $f"
+                  done
+                  # Remove BOOTSTRAP.md if identity is now populated
+                  grep -q '^- \*\*Name:\*\* ' "$ACTIVE_WS/IDENTITY.md" 2>/dev/null && rm -f "$ACTIVE_WS/BOOTSTRAP.md" && echo "  removed BOOTSTRAP.md"
+                  echo "Workspace migration complete"
+                else
+                  echo "Active workspace already populated, skipping migration"
+                fi
+              fi
               # Step 2: Restore openclaw.json (was restore-config)
               if [ -f /data/backup.lock ]; then
                 echo "backup.lock found - preserving local config changes"
