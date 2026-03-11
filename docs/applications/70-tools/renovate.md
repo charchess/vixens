@@ -3,8 +3,8 @@
 ## Informations de Déploiement
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | v43.2.8 |
-| Prod          | [x]     | [x]       | [x]   | v43.2.8 |
+| Dev           | [x]     | [x]       | [x]   | v43.61.6 |
+| Prod          | [x]     | [x]       | [x]   | v43.61.6 |
 
 ## Validation
 
@@ -52,7 +52,7 @@ Renovate is configured for fully automated version updates (Elite Status):
 - **Platform Auto-merge:** Utilizes GitHub API for reliable merging once CI passes.
 - **Single Trunk Strategy:** Direct updates to `main` via automated Pull Requests.
 - **Notifications:** Discord notifications enabled for all PR lifecycle events (Open, Approved, Merged).
-- **QoS:** Guaranteed resources (500m/512Mi -> 1000m/1Gi) for reliable execution.
+- **QoS:** Guaranteed resources (200m/512Mi -> 1000m/2Gi) for burst workloads (dependency scans).
 
 ### Gestionnaires Activés
 - **Terraform** - Mise à jour des modules et providers
@@ -77,6 +77,32 @@ Renovate est configuré avec des `packageRules` pour gérer les tags non-standar
   - Configuration via ConfigMap (config.json)
   - PRs concurrentes limitées à 10.
   - Planification : "at any time" (pour favoriser les mises à jour rapides sur dev).
+
+## Known Issues
+
+### OOMKilled During Large Dependency Scans (Resolved)
+
+**Issue:** CronJob OOMKilled multiple times when scanning large dependency trees.
+
+**Root Cause:**
+- CronJob has burst workload during dependency analysis
+- VPA (Vertical Pod Autoscaler) not applicable to CronJobs (schedule-based)
+- Original memory limit (512Mi) insufficient for large repositories
+
+**Resolution (PR #1980):**
+- Added explicit resources in `overlays/prod/resources-patch.yaml`
+- Request: 512Mi (normal operation)
+- Limit: 2Gi (burst protection during large scans)
+- CPU: 200m request, 1000m limit (Platinum tier)
+
+**Rationale:** CronJobs need generous limits (not autoscaling) because:
+1. Workload is predictable but bursty
+2. VPA cannot predict schedule-based resource needs
+3. Cost of OOM (failed job) >> cost of over-provisioning limits
+
+**Status:** ✅ Fixed in production (PR #1980)
+
+**Related:** Part of production cluster health check (2026-03-10)
 
 ## Références
 - [Renovate Documentation](https://docs.renovatebot.com/)

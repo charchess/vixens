@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-03-08
+Last Updated: 2026-03-11
 
 ---
 
@@ -15,7 +15,7 @@ Last Updated: 2026-03-08
 
 | Component | Status | Description |
 |-----------|--------|-------------|
-| **ArgoCD Apps** | ✅ 88/89 Healthy | 1 Progressing (netvisor) |
+| **ArgoCD Apps** | ✅ 88/89 Healthy | 1 OutOfSync accepted (openclaw PVC volumeName) |
 | **Kustomize Build** | ✅ PASSING | |
 | **CI/CD Pipelines** | ✅ ACTIVE | |
 
@@ -79,7 +79,7 @@ Last Updated: 2026-03-08
 | prometheus | ✅ | 🥇 Gold | |
 | grafana | ✅ | 🥉 Bronze | Needs upgrade |
 | loki | ✅ | - | Log aggregation |
-| promtail | ⚠️ | - | **8-87 restarts** - DaemonSet unstable |
+| promtail | ✅ | - | Fixed: Probe timeout 1s→5s (PR #1980) |
 | goldilocks | ✅ | 🥇 Gold | VPA recommendations |
 | descheduler | ✅ | - | Pod rebalancing |
 | policy-reporter | ✅ | 🥇 Gold | Kyverno reporting |
@@ -149,7 +149,7 @@ Last Updated: 2026-03-08
 | external-dns-gandi | ✅ | 🥇 Gold | Public DNS |
 | netbird | ⚠️ | 🥇 Gold | **42 restarts**, SecurityContext manquant |
 | netvisor | 🚧 | 🥇 Gold | Progressing |
-| adguard-home | ✅ | - | DNS filtering |
+| adguard-home | ✅ | - | Known: DNS dependency cycle (Litestream→MinIO) |
 | contacts | ✅ | - | Redirection |
 
 ---
@@ -182,7 +182,7 @@ Last Updated: 2026-03-08
 | linkwarden | ✅ | 🥇 Gold | Bookmark manager |
 | vikunja | ⚠️ | 💎 Platinum | **37 restarts** |
 | penpot | ✅ | 🥇 Gold | Design platform |
-| renovate | ✅ | - | Dependency updates |
+| renovate | ✅ | - | Fixed: OOMKilled - resources 512Mi→2Gi (PR #1980) |
 | trilium | ✅ | 💎 Platinum | Notes |
 | nocodb | ✅ | 💎 Platinum | Airtable alternative |
 | radar | ✅ | 💎 Platinum | |
@@ -193,7 +193,7 @@ Last Updated: 2026-03-08
 
 | Application | Restarts | Issue principale |
 |-------------|----------|------------------|
-| promtail | 8-87 | DaemonSet instable, possible OOM |
+| netbird-management | 42 | SecurityContext non durci |
 | netbird-management | 42 | SecurityContext non durci |
 | vikunja | 37 | À investiguer |
 | openclaw | 34 | Probes en timeout |
@@ -239,4 +239,4 @@ Last Updated: 2026-03-08
 
 ---
 
-**Last Updated:** 2026-03-08
+**Last Updated:** 2026-03-11
