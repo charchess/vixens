@@ -1,2 +1,23 @@
 ---
-# v2 sizing managed by Kyverno (CronJob - VPA not applicable)
+# Resource sizing for renovate CronJob
+# CONTEXT: Platinum-tier app, OOMKilled multiple times (512Mi exceeded)
+# RATIONALE: Burst workload (large dep scan), VPA not applicable to CronJobs
+# SIZING: 512Mi request (normal), 2Gi limit (burst protection)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: renovate
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: renovate
+            resources:
+              requests:
+                cpu: "200m"
+                memory: "512Mi"
+              limits:
+                cpu: "1000m"
+                memory: "2Gi"
