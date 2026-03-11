@@ -16,10 +16,3 @@ patches:
       - op: replace
         path: /spec/authentication/universalAuth/secretsScope/envSlug
         value: prod
-  - target:
-      kind: PersistentVolumeClaim
-      name: openclaw-data
-    patch: |-
-      - op: replace
-        path: /spec/resources/requests/storage
-        value: 20Gi
