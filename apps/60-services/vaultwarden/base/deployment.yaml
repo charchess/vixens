@@ -32,6 +32,7 @@ spec:
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
         vixens.io/no-long-connections: "true"
+        kubectl.kubernetes.io/restartedAt: "2026-03-11T22:20:00Z"
         vixens.io/explicitly-allow-root: "true"
     spec:
       priorityClassName: vixens-medium
