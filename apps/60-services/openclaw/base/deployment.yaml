@@ -54,7 +54,7 @@ spec:
           args:
             - |
               set -e
-              TOOLS_VERSION="1"
+              TOOLS_VERSION="2"
               if [ -f /data/tools/.installed-version ] && [ "$(cat /data/tools/.installed-version)" = "$TOOLS_VERSION" ]; then
                 echo "Tools v$TOOLS_VERSION already present, skipping reinstall"
               else
@@ -89,6 +89,12 @@ spec:
                 tar -xzf /tmp/himalaya.tar.gz -C /data/tools/bin/ himalaya && chmod +x /data/tools/bin/himalaya && rm /tmp/himalaya.tar.gz
                 curl -sSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
                 python3 /tmp/get-pip.py --root=/data/tools --ignore-installed && rm /tmp/get-pip.py
+                # Install gcloud CLI (standalone archive → /data/tools/google-cloud-sdk/)
+                curl -sSL "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz" -o /tmp/gcloud.tar.gz
+                tar -xzf /tmp/gcloud.tar.gz -C /data/tools/ && rm /tmp/gcloud.tar.gz
+                ln -sf /data/tools/google-cloud-sdk/bin/gcloud /data/tools/bin/gcloud
+                ln -sf /data/tools/google-cloud-sdk/bin/gsutil /data/tools/bin/gsutil
+                ln -sf /data/tools/google-cloud-sdk/bin/bq /data/tools/bin/bq
                 echo "node ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/node
                 echo "$TOOLS_VERSION" > /data/tools/.installed-version
                 apt-get clean && rm -rf /var/lib/apt/lists/*
