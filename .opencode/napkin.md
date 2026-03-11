@@ -32,6 +32,46 @@ Last updated: 2026-03-11
 
 ---
 
+## 🔄 GitOps Principles (Priority 2)
+
+### NEVER Modify Cluster State Directly
+
+**RULE:** In GitOps, Git is the single source of truth. NEVER use `kubectl patch/apply/edit` to fix ArgoCD drift.
+
+**WRONG (bypasses GitOps):**
+```bash
+# Detected drift: Application targetRevision incorrect
+kubectl -n argocd patch application <app> -p '{"spec":{"source":{"targetRevision":"prod-stable"}}}'
+```
+
+**CORRECT (GitOps workflow):**
+```bash
+# 1. Identify drift root cause
+kubectl -n argocd get application <app> -o yaml > /tmp/app-cluster.yaml
+cat argocd/overlays/prod/apps/<app>.yaml  # Compare with Git
+
+# 2. Fix in Git (if needed)
+vim argocd/overlays/prod/apps/<app>.yaml
+git add argocd/overlays/prod/apps/<app>.yaml
+git commit -m "fix(argocd): correct <app> targetRevision to prod-stable"
+git push
+
+# 3. Let ArgoCD sync (or force refresh)
+kubectl -n argocd patch application argocd --type merge -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}'
+```
+
+**WHY:**
+- Manual patches create MORE drift (cluster ≠ Git)
+- Next ArgoCD sync may revert manual changes
+- Breaks audit trail (change not in Git history)
+- Violates GitOps principles
+
+**EXCEPTIONS:** None for production. Emergency hotfixes must be committed immediately after.
+
+**INCIDENT REFERENCE:** 2026-03-11 - AdGuard Home had `targetRevision: fix/renovate-oom-memory-limits` in cluster while Git showed `prod-stable`. Agent used `kubectl patch` to fix (wrong). Root cause: previous manual change bypassed Git. Correct approach: investigate why drift exists, ensure Git is correct, let ArgoCD self-heal.
+
+---
+
 ## 📋 Workflow Standards (Priority 2)
 
 ### Probe Timeout Standards
