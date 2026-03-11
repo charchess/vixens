@@ -135,6 +135,8 @@ docs/_build/
 # Beads issue tracking database
 # .beads/ is git-tracked, but some items inside might be ignored
 
+# Security: issues.jsonl can contain credentials in task descriptions
+.beads/issues.jsonl
 # Fichiers temporaires de test
 *.test
 *.test.*
