@@ -11,5 +11,6 @@ resources:
   - pdb.yaml
   - networkpolicy.yaml
   - ingressroute-dns.yaml
-  - infisical-secret.yaml
+  # TEMPORARILY DISABLED - using static Secret with valid MinIO credentials
+  # - infisical-secret.yaml
   - litestream-config.yaml
