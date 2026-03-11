@@ -32,6 +32,46 @@ Last updated: 2026-03-11
 
 ---
 
+## 🔄 GitOps Principles (Priority 2)
+
+### NEVER Modify Cluster State Directly
+
+**RULE:** In GitOps, Git is the single source of truth. NEVER use `kubectl patch/apply/edit` to fix ArgoCD drift.
+
+**WRONG (bypasses GitOps):**
+```bash
+# Detected drift: Application targetRevision incorrect
+kubectl -n argocd patch application <app> -p '{"spec":{"source":{"targetRevision":"prod-stable"}}}'
+```
+
+**CORRECT (GitOps workflow):**
+```bash
+# 1. Identify drift root cause
+kubectl -n argocd get application <app> -o yaml > /tmp/app-cluster.yaml
+cat argocd/overlays/prod/apps/<app>.yaml  # Compare with Git
+
+# 2. Fix in Git (if needed)
+vim argocd/overlays/prod/apps/<app>.yaml
+git add argocd/overlays/prod/apps/<app>.yaml
+git commit -m "fix(argocd): correct <app> targetRevision to prod-stable"
+git push
+
+# 3. Let ArgoCD sync (or force refresh)
+kubectl -n argocd patch application argocd --type merge -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}'
+```
+
+**WHY:**
+- Manual patches create MORE drift (cluster ≠ Git)
+- Next ArgoCD sync may revert manual changes
+- Breaks audit trail (change not in Git history)
+- Violates GitOps principles
+
+**EXCEPTIONS:** None for production. Emergency hotfixes must be committed immediately after.
+
+**INCIDENT REFERENCE:** 2026-03-11 - AdGuard Home had `targetRevision: fix/renovate-oom-memory-limits` in cluster while Git showed `prod-stable`. Agent used `kubectl patch` to fix (wrong). Root cause: previous manual change bypassed Git. Correct approach: investigate why drift exists, ensure Git is correct, let ArgoCD self-heal.
+
+---
+
 ## 📋 Workflow Standards (Priority 2)
 
 ### Probe Timeout Standards
@@ -98,6 +138,70 @@ Last updated: 2026-03-11
 - Example: `LITESTREAM_ENDPOINT=http://192.168.111.69:9000` (not DNS)
 
 **REFERENCE:** AdGuard Home (2026-03-10) - Litestream needed MinIO via DNS, but AdGuard provides cluster DNS.
+
+### Production Deployment Workflow
+
+**CRITICAL:** Production uses Git tag `prod-stable`, NOT main branch.
+
+**WORKFLOW:**
+1. Merge PR to `main`
+2. Update tag: `git tag -f prod-stable main && git push -f origin prod-stable`
+3. ArgoCD detects tag change → syncs production apps
+
+**COMMON MISTAKE:** Forgetting to update `prod-stable` tag after merge → prod not updated.
+
+**REFERENCE:** All production ArgoCD apps have `targetRevision: prod-stable` in `argocd/overlays/prod/apps/`
+
+### InfisicalSecret Ownership Pattern
+
+**PATTERN:** Switching from static Secret to InfisicalSecret management.
+
+**CRITICAL STEP:** DELETE the static Secret FIRST, then InfisicalSecret recreates it with ownerReferences.
+
+```bash
+# 1. Deploy InfisicalSecret (via ArgoCD)
+kubectl apply -f infisical-secret.yaml
+
+# 2. Delete static secret
+kubectl delete secret <name> -n <namespace>
+
+# 3. Wait 60s for InfisicalSecret to recreate it
+sleep 60
+
+# 4. Verify ownerReferences
+kubectl get secret <name> -o jsonpath='{.metadata.ownerReferences[0].kind}'
+# Should show: InfisicalSecret
+```
+
+**WHY:** If static Secret exists without ownerReferences, InfisicalSecret won't manage it.
+
+**REFERENCE:** AdGuard Home switch (2026-03-11) - Had to delete static secret for InfisicalSecret takeover.
+
+### Kustomize Regression Check (CRITICAL)
+
+**RULE:** After ANY `kustomization.yaml` change, verify resource kinds before/after.
+
+```bash
+# Before change
+kustomize build apps/<app>/overlays/<env> | grep '^kind:' | sort > /tmp/before.txt
+
+# Make change to kustomization.yaml
+
+# After change
+kustomize build apps/<app>/overlays/<env> | grep '^kind:' | sort > /tmp/after.txt
+
+# Compare
+diff /tmp/before.txt /tmp/after.txt
+```
+
+**WHY:** Kustomize silently drops resources when:
+- Resource removed from `resources:` list
+- Component removed from `components:`
+- Patch target doesn't match anymore
+
+**EXAMPLE:** IT-Tools ingress accidentally removed → service inaccessible (silent failure).
+
+**REFERENCE:** AGENTS.md Step 3b - Mandatory kustomize kinds diff check.
 
 ---
 

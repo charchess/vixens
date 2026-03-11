@@ -4,7 +4,6 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - service.yaml
-  - pvc.yaml
   - configmap.yaml
   - infisical-secret.yaml
   - infisical-config.yaml
