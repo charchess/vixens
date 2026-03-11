@@ -254,7 +254,7 @@ spec:
             - |
               echo "Checking for invalid config keys..."
               if [ -f /data/openclaw.json ]; then
-                python3 -c "import json; p='/data/openclaw.json'; d=json.load(open(p)); s=d.get('skills',{}); l=s.get('load',{}) if isinstance(s,dict) else {}; l.pop('paths',None); (s.pop('load') if isinstance(s,dict) and not l else None); (d.pop('skills') if isinstance(s,dict) and not s else None); json.dump(d, open(p,'w')); print('Config fixed')" && echo 'Done'
+                python3 -c "import json; p='/data/openclaw.json'; d=json.load(open(p)); s=d.get('skills',{}); l=s.get('load',{}) if isinstance(s,dict) else {}; l.pop('paths',None); (s.pop('load',None) if isinstance(s,dict) and not l else None); (d.pop('skills',None) if isinstance(s,dict) and not s else None); json.dump(d, open(p,'w')); print('Config fixed')" && echo 'Done'
               else
                 echo "No config file to fix"
               fi
