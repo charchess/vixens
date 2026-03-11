@@ -243,7 +243,7 @@ spec:
         # Fix invalid config keys that may have been self-injected
         # NOTE: Using alpine+jq because ghcr.io/jqlang/jq image has no shell
         - name: fix-config
-          image: alpine:3.23
+          image: python:3.12-alpine
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -252,17 +252,9 @@ spec:
             - -c
           args:
             - |
-              apk add --no-cache jq
               echo "Checking for invalid config keys..."
               if [ -f /data/openclaw.json ]; then
-                # Remove known invalid keys that openclaw may have auto-added
-                jq 'del(.skills.load.paths) | del(.skills.load) | if .skills == {} then del(.skills) else . end' /data/openclaw.json > /tmp/openclaw.json.tmp
-                if [ -s /tmp/openclaw.json.tmp ]; then
-                  mv /tmp/openclaw.json.tmp /data/openclaw.json
-                  echo "Config cleaned successfully"
-                else
-                  echo "WARNING: jq output empty, keeping original"
-                fi
+                python3 -c "import json; p='/data/openclaw.json'; d=json.load(open(p)); s=d.get('skills',{}); l=s.get('load',{}) if isinstance(s,dict) else {}; l.pop('paths',None); (s.pop('load') if isinstance(s,dict) and not l else None); (d.pop('skills') if isinstance(s,dict) and not s else None); json.dump(d, open(p,'w')); print('Config fixed')" && echo 'Done'
               else
                 echo "No config file to fix"
               fi

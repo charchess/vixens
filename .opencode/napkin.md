@@ -203,6 +203,48 @@ diff /tmp/before.txt /tmp/after.txt
 
 **REFERENCE:** AGENTS.md Step 3b - Mandatory kustomize kinds diff check.
 
+### OpenClaw PVC Recovery Pattern
+
+**PATTERN:** When openclaw.json is lost/corrupted, old Released PVs on Synology NAS contain the backup.
+
+**PROCEDURE:**
+```bash
+# 1. Find Released PVs
+kubectl get pv | grep Released | grep openclaw
+
+# 2. Remove claimRef to make Available
+kubectl patch pv <pv-name> --type json -p '[{"op":"remove","path":"/spec/claimRef"}]'
+
+# 3. Create recovery PVC (must include volumeName + securityContext uid=1000)
+# 4. Create recovery pod (uid=1000, labels: vixens.io/sizing: recovery)
+# 5. kubectl exec and read /data/openclaw.json
+# 6. IMPORTANT: Remove skills.load.paths if present (old key, causes crash)
+# 7. Scale down openclaw, disable ArgoCD auto-sync, copy fixed config, re-enable
+# 8. Cleanup: delete recovery pod, pvc
+```
+
+**KEY LESSON:** openclaw.json may have `skills.load.paths` from old versions. Remove before restoring.
+Do instead: `python3 -c "import json,sys; d=json.load(sys.stdin); d.get('skills',{}).pop('load',None); print(json.dumps(d))" < original.json > fixed.json`
+
+**REFERENCE:** 2026-03-11 recovery from pvc-7c8f2a5a (Feb 15 backup) - recovered 31 agents incl. Lisa/Meli/Aurelia
+
+### ArgoCD Auto-Sync Temporary Disable (Emergency Only)
+
+**WHEN:** Need to make manual changes without ArgoCD selfHeal reverting (e.g., config recovery).
+
+```bash
+# Disable auto-sync
+kubectl patch application <app> -n argocd --type merge -p '{"spec":{"syncPolicy":{"automated":null}}}'
+
+# ... do manual work ...
+
+# Re-enable (MANDATORY - never leave disabled)
+kubectl patch application <app> -n argocd --type merge -p '{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}'
+```
+
+Do instead: ALWAYS re-enable auto-sync immediately after emergency work.
+**REFERENCE:** 2026-03-11 - Used to copy fixed openclaw.json without ArgoCD self-healing back
+
 ---
 
 ## 🚫 Anti-Patterns (Priority 6)
