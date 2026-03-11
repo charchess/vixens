@@ -54,7 +54,7 @@ spec:
           args:
             - |
               set -e
-              TOOLS_VERSION="2"
+              TOOLS_VERSION="3"
               if [ -f /data/tools/.installed-version ] && [ "$(cat /data/tools/.installed-version)" = "$TOOLS_VERSION" ]; then
                 echo "Tools v$TOOLS_VERSION already present, skipping reinstall"
               else
@@ -95,6 +95,8 @@ spec:
                 ln -sf /data/tools/google-cloud-sdk/bin/gcloud /data/tools/bin/gcloud
                 ln -sf /data/tools/google-cloud-sdk/bin/gsutil /data/tools/bin/gsutil
                 ln -sf /data/tools/google-cloud-sdk/bin/bq /data/tools/bin/bq
+                # Install Google Python libraries
+                pip3 install --root=/data/tools google-auth-oauthlib google-api-python-client
                 echo "node ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/node
                 echo "$TOOLS_VERSION" > /data/tools/.installed-version
                 apt-get clean && rm -rf /var/lib/apt/lists/*
