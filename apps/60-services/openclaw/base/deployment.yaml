@@ -433,18 +433,33 @@ spec:
               echo "DEBUG: RCLONE_BUCKET=$RCLONE_BUCKET"
 
               # Rclone reads RCLONE_CONFIG_S3_* env vars automatically from envFrom secretRef
-              EXCLUDES="--exclude lost+found/** --exclude node_modules/** --exclude tools/** --exclude gemini-cli/** --exclude browser/** --exclude canvas/** --exclude extensions/** --exclude .openclaw/** --exclude media/** --exclude netbox-mcp-server/**"
+              # NOTE: excludes must be single-quoted directly in the command - never via a variable.
+              # The rclone image uses WORKDIR /data, so unquoted globs (tools/**) expand to
+              # real files and break the rclone arg parser.
+              do_rclone_sync() {
+                rclone sync /data "s3:${RCLONE_BUCKET}" \
+                  --exclude 'lost+found/**' \
+                  --exclude 'node_modules/**' \
+                  --exclude 'tools/**' \
+                  --exclude 'gemini-cli/**' \
+                  --exclude 'browser/**' \
+                  --exclude 'canvas/**' \
+                  --exclude 'extensions/**' \
+                  --exclude '.openclaw/**' \
+                  --exclude 'media/**' \
+                  --exclude 'netbox-mcp-server/**'
+              }
 
               # Handle pending backup lock from external tool
               if [ -f /data/backup.lock ]; then
                 echo "backup.lock found - performing immediate backup before sync loop"
-                rclone sync /data s3:$RCLONE_BUCKET $EXCLUDES || echo "Backup failed"
+                do_rclone_sync || echo "Backup failed"
                 rm -f /data/backup.lock
                 echo "Backup complete, lock removed"
               fi
 
               sync_s3() {
-                rclone sync /data s3:$RCLONE_BUCKET $EXCLUDES || echo "Sync failed"
+                do_rclone_sync || echo "Sync failed"
               }
               while true; do
                 sync_s3;
