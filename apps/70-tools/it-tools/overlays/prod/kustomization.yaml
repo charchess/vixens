@@ -25,3 +25,6 @@ patches:
     target:
       kind: Deployment
       name: it-tools
+
+patchesStrategicMerge:
+  - priority-class-patch.yaml

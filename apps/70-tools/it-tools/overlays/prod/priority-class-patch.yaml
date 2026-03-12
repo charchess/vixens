@@ -1,0 +1,9 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: it-tools
+spec:
+  template:
+    spec:
+      priorityClassName: vixens-low
