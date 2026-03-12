@@ -25,6 +25,10 @@ patches:
     target:
       kind: Deployment
       name: it-tools
-
-patchesStrategicMerge:
-  - priority-class-patch.yaml
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/priorityClassName
+        value: vixens-low
+    target:
+      kind: Deployment
+      name: it-tools
