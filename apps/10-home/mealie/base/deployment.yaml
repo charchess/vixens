@@ -69,6 +69,13 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /app/data
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
         - name: restore-db
           image: litestream/litestream:0.5.9
           securityContext:
@@ -90,6 +97,13 @@ spec:
             - name: mealie-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
       priorityClassName: vixens-low
       containers:
         - name: mealie
@@ -126,6 +140,13 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /app/data
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
         - name: litestream
           image: litestream/litestream:0.5.9
           securityContext:
@@ -147,6 +168,13 @@ spec:
             - name: mealie-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 25m
+              memory: 32Mi
         - name: config-syncer
           image: rclone/rclone:1.73
           securityContext:
@@ -181,6 +209,13 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /app/data
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 25m
+              memory: 32Mi
       volumes:
         - name: data
           persistentVolumeClaim:
