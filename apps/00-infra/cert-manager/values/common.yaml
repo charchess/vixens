@@ -38,6 +38,17 @@ deploymentAnnotations:  # Deployment metadata annotations (Gold maturity: sync-w
   goldilocks.fairwinds.com/enabled: "true"
   vpa.kubernetes.io/updateMode: "Off"
 revisionHistoryLimit: 3
+# Probes configuration
+# Liveness probe is enabled by default in chart, adding readiness probe
+# https://github.com/cert-manager/cert-manager/blob/master/deploy/charts/cert-manager/values.yaml
+http:
+  enabled: true
+livenessProbe:
+  enabled: true
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 5
+  periodSeconds: 5
 # Webhook component
 webhook:
   tolerations:
@@ -56,6 +67,10 @@ webhook:
     goldilocks.fairwinds.com/enabled: "true"
     vpa.kubernetes.io/updateMode: "Off"
   revisionHistoryLimit: 3
+  livenessProbe:
+    enabled: true
+  readinessProbe:
+    enabled: true
 # CA Injector component
 cainjector:
   tolerations:
@@ -74,6 +89,10 @@ cainjector:
     goldilocks.fairwinds.com/enabled: "true"
     vpa.kubernetes.io/updateMode: "Off"
   revisionHistoryLimit: 3
+  livenessProbe:
+    enabled: true
+  readinessProbe:
+    enabled: true
 # Startup API check tolerations
 startupapicheck:
   tolerations:
