@@ -20,7 +20,7 @@ spec:
                 - Pod
       preconditions:
         all:
-          - key: "{{ request.object.spec.volumes[?contains(nfs.server, '192.168.111.69')] | length(@) }}"
+          - key: "{{ request.object.spec.volumes || `[]` | [?contains(nfs.server, '192.168.111.69')] | length(@) }}"
             operator: GreaterThan
             value: 0
       validate:
