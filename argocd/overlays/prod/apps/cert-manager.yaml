@@ -29,6 +29,10 @@ spec:
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
       ref: values
+    # Kustomize patches for probes
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: prod-stable
+      path: apps/00-infra/cert-manager/overlays/prod
   syncPolicy:
     automated:
       prune: true
