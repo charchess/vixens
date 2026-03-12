@@ -142,6 +142,22 @@ spec:
             - name: whisparr-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f litestream || exit 1
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f litestream || exit 1
+            initialDelaySeconds: 5
+            periodSeconds: 10
         - name: config-syncer
           image: rclone/rclone:1.73
           securityContext:
