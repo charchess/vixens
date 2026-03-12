@@ -18,6 +18,7 @@ tolerations:
     effect: NoSchedule
 # Pod sizing labels
 podLabels:
+  app: webhook-gandi  # For legacy Kyverno policy compatibility
   vixens.io/sizing.cert-manager-webhook-gandi: G-nano
 # Try podAnnotations — chart may not support, but harmless if ignored
 # Actual annotation applied via kustomize overlay patch (cert-manager-webhook-gandi is a known case)
