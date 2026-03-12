@@ -36,14 +36,21 @@ sidecars:
         value: debug
       - name: UNIFI_SKIP_TLS_VERIFY
         value: "true"
+    resources:
+      requests:
+        cpu: "10m"
+        memory: "32Mi"
+      limits:
+        cpu: "50m"
+        memory: "64Mi"
 tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
     effect: NoSchedule
 livenessProbe:
-  enabled: false
+  enabled: true
 readinessProbe:
-  enabled: false
+  enabled: true
 # Scope
 policy: sync
 sources:
