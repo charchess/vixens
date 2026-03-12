@@ -23,6 +23,7 @@ spec:
       annotations:
         vixens.io/service-binding: "false"
         vixens.io/no-long-connections: "true"
+        kubectl.kubernetes.io/restartedAt: "2026-03-11T22:25:00Z"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -79,6 +80,13 @@ spec:
             failureThreshold: 30
             periodSeconds: 10
             timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 20m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
       volumes:
         - name: trilium-data
           persistentVolumeClaim:
