@@ -12,7 +12,7 @@ metadata:
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
       Resources requests and limits are required for all containers for maturity Level 2 (Silver).
-      This policy audits containers that do not have resource limits defined.
+      Exception: Pods with vixens.io/sizing.* labels are exempt (resources mutated by Kyverno sizing-v2-mutate policy).
 spec:
   validationFailureAction: Audit
   background: true
@@ -29,6 +29,14 @@ spec:
               namespaces:
                 - kube-system
                 - kyverno
+          # Exclude: Pods with vixens.io/sizing.* labels (Kyverno mutation)
+          - resources:
+              kinds:
+                - Pod
+              selector:
+                matchExpressions:
+                  - key: "vixens.io/sizing.*"
+                    operator: Exists
       validate:
         message: "CPU and memory resource requests and limits are required."
         pattern:
