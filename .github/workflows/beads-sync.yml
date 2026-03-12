@@ -1,0 +1,65 @@
+name: Beads Sync
+
+on:
+  schedule:
+    # Run every 4 hours
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+    # Allow manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Dolt
+        run: |
+          sudo bash -c 'curl -L https://github.com/dolthub/dolt/releases/latest/download/install.sh | bash'
+          dolt version
+
+      - name: Install Beads
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+          echo "$HOME/.beads/bin" >> $GITHUB_PATH
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch beads-sync branch
+        run: |
+          git fetch origin beads-sync:beads-sync || git checkout -b beads-sync
+
+      - name: Import latest from beads-sync
+        run: |
+          bd import || echo "No changes to import"
+
+      - name: Export current state
+        run: |
+          bd export
+
+      - name: Push to beads-sync
+        run: |
+          git checkout beads-sync
+          git add -f .beads/issues.jsonl || true
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "sync: beads $(date -Iseconds)"
+            git push origin beads-sync
+          fi
+          git checkout -
+
+      - name: Return to original branch
+        if: always()
+        run: |
+          git checkout main || git checkout -
