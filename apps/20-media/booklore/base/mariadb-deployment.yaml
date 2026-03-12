@@ -74,6 +74,11 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 3
+          startupProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+            failureThreshold: 15
+            periodSeconds: 10
         - name: db-backup
           image: alpine:3.23
           command:
@@ -109,6 +114,30 @@ spec:
           envFrom:
             - secretRef:
                 name: booklore-secrets
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f mariadb-dump || exit 1
+            initialDelaySeconds: 30
+            periodSeconds: 60
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f mariadb-dump || exit 1
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f mariadb-dump || exit 1
+            failureThreshold: 15
+            periodSeconds: 10
       volumes:
         - name: config
           persistentVolumeClaim:
