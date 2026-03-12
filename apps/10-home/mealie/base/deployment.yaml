@@ -33,6 +33,7 @@ spec:
         prometheus.io/path: "/metrics"
         vixens.io/no-long-connections: "true"
         vixens.io/explicitly-allow-root: "true"
+        kubectl.kubernetes.io/restartedAt: "2026-03-12T10:40:00Z"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -147,6 +148,16 @@ spec:
             - name: mealie-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
+          livenessProbe:
+            tcpSocket:
+              port: metrics
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 10
         - name: config-syncer
           image: rclone/rclone:1.73
           securityContext:
@@ -178,6 +189,22 @@ spec:
           envFrom:
             - secretRef:
                 name: mealie-secrets
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f rclone || exit 1
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f rclone || exit 1
+            initialDelaySeconds: 5
+            periodSeconds: 10
           volumeMounts:
             - name: data
               mountPath: /app/data
