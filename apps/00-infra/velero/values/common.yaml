@@ -93,13 +93,12 @@ annotations:  # Deployment metadata (Gold maturity: sync-wave + goldilocks)
   vpa.kubernetes.io/updateMode: "Off"
 revisionHistoryLimit: 3
 
-resources:
-  requests:
-    cpu: 100m
-    memory: 256Mi
-  limits:
-    cpu: 500m
-    memory: 512Mi
+# Priority class for Bronze maturity
+priorityClassName: vixens-critical
+
+# Resources managed by Kyverno sizing-v2-mutate policy
+# Labels: vixens.io/sizing.velero: V-medium (applied via Kustomize patch)
+# resources: {}  # Commented - let Kyverno mutate
 
 deployNodeAgent: true
 

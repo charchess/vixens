@@ -24,6 +24,10 @@ spec:
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
       ref: values
+    # Kustomize overlay for maturity patches (priorityClassName, sizing labels)
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: prod-stable
+      path: apps/00-infra/velero/overlays/prod
   syncPolicy:
     automated:
       prune: true
