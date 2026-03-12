@@ -32,6 +32,8 @@ deployment:
   podLabels:
     app: traefik  # For legacy Kyverno policy compatibility
     app.kubernetes.io/name: traefik
+  podAnnotations:
+    kubectl.kubernetes.io/restartedAt: "2026-03-12T04:35:00Z"
 # Ensure traefik pods spread across nodes
 topologySpreadConstraints:
   - maxSkew: 1
