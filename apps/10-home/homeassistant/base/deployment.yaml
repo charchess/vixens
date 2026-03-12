@@ -222,6 +222,12 @@ spec:
               port: metrics
             initialDelaySeconds: 5
             periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            failureThreshold: 15
+            periodSeconds: 10
         - name: config-syncer
           image: rclone/rclone:1.73
           securityContext:
@@ -250,6 +256,30 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f rclone || exit 1
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f rclone || exit 1
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f rclone || exit 1
+            failureThreshold: 15
+            periodSeconds: 10
       volumes:
         - name: config
           persistentVolumeClaim:
