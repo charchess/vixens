@@ -30,6 +30,7 @@ resources:
 deployment:
   replicas: 2
   podLabels:
+    app: traefik  # For legacy Kyverno policy compatibility
     app.kubernetes.io/name: traefik
 # Ensure traefik pods spread across nodes
 topologySpreadConstraints:
