@@ -21,6 +21,7 @@ spec:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
       labels:
+        kubectl.kubernetes.io/restartedAt: "2026-03-12T11:00:00Z"
         app: changedetection
         vixens.io/sizing.restore-config: B-nano
         vixens.io/sizing.changedetection: V-small
@@ -116,6 +117,16 @@ spec:
               value: "10"
             - name: CHROME_REFRESH_TIME
               value: "600000"
+          livenessProbe:
+            tcpSocket:
+              port: playwright
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: playwright
+            initialDelaySeconds: 5
+            periodSeconds: 10
         - name: config-syncer
           image: rclone/rclone:1.73
           command:
