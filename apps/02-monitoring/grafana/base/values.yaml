@@ -58,6 +58,12 @@ readinessProbe:
   timeoutSeconds: 30
   failureThreshold: 10
   periodSeconds: 10
+startupProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  failureThreshold: 15
+  periodSeconds: 10
 # Pod Annotations for scraping
 podAnnotations:
   prometheus.io/scrape: "true"
@@ -105,6 +111,13 @@ sidecar:
         - /tmp
     initialDelaySeconds: 10
     periodSeconds: 30
+  startupProbe:
+    exec:
+      command:
+        - ls
+        - /tmp
+    failureThreshold: 15
+    periodSeconds: 10
 
 # Deployment labels for maturity tracking (chart uses .Values.labels for deployment metadata)
 labels:
