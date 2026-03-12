@@ -188,6 +188,24 @@ spec:
             - name: frigate-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            failureThreshold: 15
+            periodSeconds: 10
         - name: config-syncer
           image: python:3.14-alpine
           securityContext:
@@ -253,6 +271,30 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f rclone || exit 1
+            initialDelaySeconds: 30
+            periodSeconds: 60
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f rclone || exit 1
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f rclone || exit 1
+            failureThreshold: 15
+            periodSeconds: 10
       volumes:
         - name: config
           persistentVolumeClaim:
