@@ -168,16 +168,6 @@ spec:
             - name: mealie-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
-          livenessProbe:
-            tcpSocket:
-              port: metrics
-            initialDelaySeconds: 10
-            periodSeconds: 30
-          readinessProbe:
-            tcpSocket:
-              port: metrics
-            initialDelaySeconds: 5
-            periodSeconds: 10
           resources:
             requests:
               cpu: 25m
@@ -216,22 +206,6 @@ spec:
           envFrom:
             - secretRef:
                 name: mealie-secrets
-          livenessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - pgrep -f rclone || exit 1
-            initialDelaySeconds: 10
-            periodSeconds: 30
-          readinessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - pgrep -f rclone || exit 1
-            initialDelaySeconds: 5
-            periodSeconds: 10
           volumeMounts:
             - name: data
               mountPath: /app/data
