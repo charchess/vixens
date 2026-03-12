@@ -43,6 +43,16 @@ sidecars:
       limits:
         cpu: "50m"
         memory: "64Mi"
+    livenessProbe:
+      tcpSocket:
+        port: webhook
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    readinessProbe:
+      tcpSocket:
+        port: webhook
+      initialDelaySeconds: 5
+      periodSeconds: 10
 tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
