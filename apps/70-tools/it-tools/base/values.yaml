@@ -12,6 +12,7 @@ podAnnotations:
   vixens.io/service-binding: "false"
   vixens.io/nometrics: "true"
   vixens.io/no-long-connections: "true"
+  kubectl.kubernetes.io/restartedAt: "2026-03-11T23:00:00Z"
 image:
   repository: ghcr.io/corentinth/it-tools
   pullPolicy: IfNotPresent
@@ -33,3 +34,10 @@ securityContext:
 service:
   type: ClusterIP
   port: 8080
+resources:
+  requests:
+    cpu: "10m"
+    memory: "64Mi"
+  limits:
+    cpu: "100m"
+    memory: "128Mi"
