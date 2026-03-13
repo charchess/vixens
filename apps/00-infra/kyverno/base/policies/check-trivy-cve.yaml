@@ -5,11 +5,11 @@ metadata:
   name: check-trivy-cve
   annotations:
     policies.kyverno.io/title: Require No Critical CVEs
-    policies.kyverno.io/category: Maturity (Diamond)
+    policies.kyverno.io/category: Maturity (Orichalcum)
     policies.kyverno.io/severity: high
     policies.kyverno.io/description: >-
       VulnerabilityReports for pods must show zero CRITICAL CVEs without explicit acquittement
-      annotation for maturity Level 6 (Diamond).
+      annotation for maturity Level 7 (Orichalcum).
 spec:
   validationFailureAction: Audit
   background: true
@@ -26,7 +26,7 @@ spec:
               annotations:
                 vixens.io/cve-accepted: "true"
       validate:
-        message: "VulnerabilityReport must show zero CRITICAL CVEs for maturity Level 6 (Diamond)."
+        message: "VulnerabilityReport must show zero CRITICAL CVEs for maturity Level 7 (Orichalcum)."
         pattern:
           report:
             summary:

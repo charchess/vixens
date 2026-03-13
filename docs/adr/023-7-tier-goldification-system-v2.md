@@ -38,7 +38,7 @@ ADR-022 définissait le système 7-tiers initial. Suite à une revue critique, p
 | `vixens.io/nossoneeded: "true"` | Authentik SSO (Diamond) | App sans authentification utilisateur |
 | `vixens.io/nohomepage: "true"` | Homepage widget (Diamond) | Non pertinent pour le dashboard |
 | `vixens.io/noingressneeded: "true"` | Ingress (Bronze) | App interne, non exposée |
-| `vixens.io/cve-accepted: "true"` | Trivy CVE critique (Diamond) | CVE accepté, risque documenté |
+| `vixens.io/cve-accepted: "true"` | Trivy CVE critique (Orichalcum) | CVE accepté, risque documenté |
 | `vixens.io/digest-pinned: "true"` | Image digest (Diamond) | Opt-in : active le check (Renovate gère tag+digest) |
 | `vixens.io/needs-autoscaling: "true"` | HPA/KEDA (Platinum) | Opt-in : active le check (charge variable identifiée) |
 
