@@ -316,16 +316,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cache pip packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-checkov-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install checkov
-        run: pip3 install checkov
+      - name: Setup Python security tools
+        uses: ./.github/actions/setup-python-security
 
       - name: Security checks
         run: |

@@ -1,0 +1,236 @@
+---
+name: Kubernetes Version Matrix
+
+on:
+  schedule:
+    # Run every Monday at 08:00 UTC
+    - cron: '0 8 * * 1'
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  matrix-validation:
+    name: K8s ${{ matrix.k8s-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false  # Continue testing all versions even if one fails
+      matrix:
+        k8s-version:
+          - '1.28.0'  # Oldest supported
+          - '1.29.0'
+          - '1.30.0'  # Current production
+          - '1.31.0'  # Latest stable
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K8s tools
+        uses: ./.github/actions/setup-k8s-tools
+
+      - name: Validate manifests against K8s ${{ matrix.k8s-version }}
+        id: validate
+        run: |
+          echo "🔍 Validating against Kubernetes ${{ matrix.k8s-version }}"
+
+          FAILED=0
+          PASSED=0
+          SKIP_KINDS="Application,AppProject,CustomResourceDefinition,InfisicalSecret,Middleware,HelmRelease,HelmRepository,Kustomization,Cluster,PostgresCluster,Pooler,ScheduledBackup,VolumeSnapshotClass,VolumeSnapshot,CiliumL2AnnouncementPolicy,CiliumLoadBalancerIPPool"
+
+          # Validate all overlays
+          for overlay in $(find apps -type d \( -name "dev" -o -name "prod" \) | grep overlays); do
+            if [ -f "$overlay/kustomization.yaml" ]; then
+              echo "📋 Building: $overlay"
+
+              # Build kustomize
+              if ! kustomize build --enable-helm "$overlay" > /tmp/built.yaml 2>&1; then
+                echo "❌ KUSTOMIZE FAILED: $overlay"
+                FAILED=$((FAILED+1))
+                continue
+              fi
+
+              # Count resources
+              COUNT=$(grep -c '^kind:' /tmp/built.yaml 2>/dev/null || echo 0)
+              if [ "$COUNT" -eq 0 ]; then
+                echo "⏭️ SKIP: $overlay (0 resources)"
+                continue
+              fi
+
+              # Validate with kubeconform
+              if kubeconform \
+                -ignore-missing-schemas \
+                -kubernetes-version ${{ matrix.k8s-version }} \
+                -strict \
+                -skip "$SKIP_KINDS" \
+                /tmp/built.yaml 2>&1; then
+                echo "✅ OK: $overlay ($COUNT resources)"
+                PASSED=$((PASSED+1))
+              else
+                echo "❌ FAILED: $overlay"
+                FAILED=$((FAILED+1))
+              fi
+            fi
+          done
+
+          echo "passed=$PASSED" >> $GITHUB_OUTPUT
+          echo "failed=$FAILED" >> $GITHUB_OUTPUT
+
+          if [ $FAILED -gt 0 ]; then
+            echo "❌ Validation failed for Kubernetes ${{ matrix.k8s-version }}"
+            exit 1
+          fi
+
+          echo "✅ All manifests valid for Kubernetes ${{ matrix.k8s-version }}"
+
+  create-summary-issue:
+    name: Create Summary Issue
+    runs-on: ubuntu-latest
+    needs: [matrix-validation]
+    if: always()
+    steps:
+      - name: Generate summary
+        id: summary
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Get all job results
+          JOBS_DATA=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs")
+
+          # Parse results
+          RESULTS=$(echo "$JOBS_DATA" | jq -r '.jobs[] | select(.name | startswith("K8s")) | "\(.name): \(.conclusion)"')
+
+          # Count successes and failures
+          SUCCESS_COUNT=$(echo "$RESULTS" | grep -c "success" || echo 0)
+          FAILURE_COUNT=$(echo "$RESULTS" | grep -c "failure" || echo 0)
+
+          # Determine overall status
+          if [ $FAILURE_COUNT -eq 0 ]; then
+            STATUS="✅ PASSED"
+            COLOR="success"
+          else
+            STATUS="❌ FAILED"
+            COLOR="failure"
+          fi
+
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "color=$COLOR" >> $GITHUB_OUTPUT
+          echo "success_count=$SUCCESS_COUNT" >> $GITHUB_OUTPUT
+          echo "failure_count=$FAILURE_COUNT" >> $GITHUB_OUTPUT
+
+          # Create detailed results
+          echo "results<<EOF" >> $GITHUB_OUTPUT
+          echo "$RESULTS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create or update issue
+        if: steps.summary.outputs.failure_count != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.summary.outputs.status }}';
+            const successCount = '${{ steps.summary.outputs.success_count }}';
+            const failureCount = '${{ steps.summary.outputs.failure_count }}';
+            const results = `${{ steps.summary.outputs.results }}`;
+            const runUrl = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}';
+
+            const issueTitle = '🔍 Kubernetes Version Matrix: Compatibility Issues Detected';
+            const issueBody = `## ${status}
+
+            **Matrix Validation Results:**
+            - ✅ **Passed**: ${successCount} versions
+            - ❌ **Failed**: ${failureCount} versions
+
+            ### Detailed Results
+
+            \`\`\`
+            ${results}
+            \`\`\`
+
+            ### Action Required
+
+            Some Kubernetes versions have validation failures. This may indicate:
+            1. Deprecated API versions in manifests
+            2. New validation rules in newer K8s versions
+            3. Breaking changes in Kubernetes APIs
+
+            **Next steps:**
+            1. Review the [workflow run](${runUrl}) for detailed errors
+            2. Update manifests to use compatible API versions
+            3. Test fixes against all supported K8s versions
+
+            ### Affected Versions
+
+            Check the workflow run for specific errors per Kubernetes version.
+
+            ---
+
+            **Workflow**: Kubernetes Version Matrix
+            **Run**: ${runUrl}
+            **Date**: ${new Date().toISOString()}
+            `;
+
+            // Search for existing issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'k8s-compatibility'
+            });
+
+            const existingIssue = issues.find(issue => issue.title === issueTitle);
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## New Test Run: ${status}\n\n${issueBody}`
+              });
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['k8s-compatibility', 'bug']
+              });
+            }
+
+      - name: Post success comment
+        if: steps.summary.outputs.failure_count == '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runUrl = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}';
+
+            // Close any open compatibility issues
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'k8s-compatibility'
+            });
+
+            for (const issue of issues) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ **All Kubernetes versions now passing!**\n\nLatest matrix validation: [${runUrl}](${runUrl})\n\nClosing this issue.`
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }
+
+            console.log(`✅ All ${process.env.SUCCESS_COUNT} Kubernetes versions validated successfully`);

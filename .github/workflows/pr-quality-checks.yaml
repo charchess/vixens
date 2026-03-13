@@ -1,0 +1,190 @@
+---
+name: PR Quality Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  pr-size-check:
+    name: PR Size & Complexity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR size
+        id: size
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+
+          # Get PR stats
+          PR_DATA=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/pulls/$PR_NUMBER")
+
+          ADDITIONS=$(echo "$PR_DATA" | jq -r '.additions')
+          DELETIONS=$(echo "$PR_DATA" | jq -r '.deletions')
+          CHANGED_FILES=$(echo "$PR_DATA" | jq -r '.changed_files')
+          TOTAL_CHANGES=$((ADDITIONS + DELETIONS))
+
+          echo "additions=$ADDITIONS" >> $GITHUB_OUTPUT
+          echo "deletions=$DELETIONS" >> $GITHUB_OUTPUT
+          echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "total_changes=$TOTAL_CHANGES" >> $GITHUB_OUTPUT
+
+          # Determine size category
+          if [ $TOTAL_CHANGES -lt 50 ]; then
+            SIZE="XS"
+            COLOR="🟢"
+            LABEL="size/XS"
+          elif [ $TOTAL_CHANGES -lt 200 ]; then
+            SIZE="S"
+            COLOR="🟢"
+            LABEL="size/S"
+          elif [ $TOTAL_CHANGES -lt 500 ]; then
+            SIZE="M"
+            COLOR="🟡"
+            LABEL="size/M"
+          elif [ $TOTAL_CHANGES -lt 1000 ]; then
+            SIZE="L"
+            COLOR="🟠"
+            LABEL="size/L"
+          else
+            SIZE="XL"
+            COLOR="🔴"
+            LABEL="size/XL"
+          fi
+
+          echo "size=$SIZE" >> $GITHUB_OUTPUT
+          echo "color=$COLOR" >> $GITHUB_OUTPUT
+          echo "label=$LABEL" >> $GITHUB_OUTPUT
+
+          # Calculate complexity score (files * changes)
+          COMPLEXITY=$((CHANGED_FILES * TOTAL_CHANGES))
+          echo "complexity=$COMPLEXITY" >> $GITHUB_OUTPUT
+
+          # Warnings
+          WARNINGS=""
+          if [ $TOTAL_CHANGES -gt 1000 ]; then
+            WARNINGS="${WARNINGS}\n⚠️ **Large PR**: Consider splitting into smaller PRs for easier review"
+          fi
+          if [ $CHANGED_FILES -gt 20 ]; then
+            WARNINGS="${WARNINGS}\n⚠️ **Many files changed**: Consider grouping related changes into separate PRs"
+          fi
+          if [ $COMPLEXITY -gt 10000 ]; then
+            WARNINGS="${WARNINGS}\n⚠️ **High complexity**: This PR may be difficult to review thoroughly"
+          fi
+
+          echo "warnings<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$WARNINGS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Add size label
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Remove existing size labels
+          gh pr edit ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --remove-label "size/XS" \
+            --remove-label "size/S" \
+            --remove-label "size/M" \
+            --remove-label "size/L" \
+            --remove-label "size/XL" 2>/dev/null || true
+
+          # Add new size label
+          gh pr edit ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --add-label "${{ steps.size.outputs.label }}"
+
+      - name: Comment PR metrics
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const size = '${{ steps.size.outputs.size }}';
+            const color = '${{ steps.size.outputs.color }}';
+            const additions = '${{ steps.size.outputs.additions }}';
+            const deletions = '${{ steps.size.outputs.deletions }}';
+            const changedFiles = '${{ steps.size.outputs.changed_files }}';
+            const totalChanges = '${{ steps.size.outputs.total_changes }}';
+            const complexity = '${{ steps.size.outputs.complexity }}';
+            const warnings = `${{ steps.size.outputs.warnings }}`;
+
+            // Calculate review time estimate
+            let reviewTime;
+            if (size === 'XS') reviewTime = '< 5 minutes';
+            else if (size === 'S') reviewTime = '5-15 minutes';
+            else if (size === 'M') reviewTime = '15-30 minutes';
+            else if (size === 'L') reviewTime = '30-60 minutes';
+            else reviewTime = '> 1 hour';
+
+            const comment = `## ${color} PR Size: **${size}**
+
+            | Metric | Value |
+            |--------|-------|
+            | **Lines added** | +${additions} |
+            | **Lines deleted** | -${deletions} |
+            | **Total changes** | ${totalChanges} |
+            | **Files changed** | ${changedFiles} |
+            | **Complexity score** | ${complexity} |
+            | **Estimated review time** | ${reviewTime} |
+
+            ${warnings ? `### Recommendations\n${warnings}` : ''}
+
+            ---
+
+            <details>
+            <summary>📊 Size Guidelines</summary>
+
+            | Size | Changes | Files | Review Time | Description |
+            |------|---------|-------|-------------|-------------|
+            | 🟢 **XS** | < 50 | < 5 | < 5 min | Trivial fixes, typos |
+            | 🟢 **S** | < 200 | < 10 | 5-15 min | Small features, bug fixes |
+            | 🟡 **M** | < 500 | < 15 | 15-30 min | Medium features |
+            | 🟠 **L** | < 1000 | < 20 | 30-60 min | Large features |
+            | 🔴 **XL** | > 1000 | > 20 | > 1 hour | Consider splitting |
+
+            **Complexity score** = Files changed × Total changes
+            High complexity (> 10,000) indicates difficult review.
+
+            </details>
+            `;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('PR Size:')
+            );
+
+            // Update or create comment
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+      - name: Check if PR is too large
+        if: steps.size.outputs.size == 'XL'
+        run: |
+          echo "::warning::This PR is very large (size: XL). Consider splitting it into smaller PRs for easier review."
+          # Don't fail - just warning
