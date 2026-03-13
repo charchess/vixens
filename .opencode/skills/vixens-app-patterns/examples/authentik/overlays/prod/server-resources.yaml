@@ -1,0 +1,13 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentik-server
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.authentik-server: G-large
+        vixens.io/sizing.config-syncer: G-small
+    spec:
+      priorityClassName: vixens-critical

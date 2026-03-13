@@ -1,0 +1,177 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: APP_NAME
+  labels:
+    app: APP_NAME
+    vixens.io/sizing-v2: "true"
+    vixens.io/vpa-mode: Auto
+    vixens.io/tier: "diamond"
+spec:
+  strategy:
+    type: Recreate  # Mandatory for stateful apps with RWO volumes
+  replicas: 1
+  selector:
+    matchLabels:
+      app: APP_NAME
+  template:
+    metadata:
+      labels:
+        app: APP_NAME
+        vixens.io/sizing.fix-permissions: G-nano
+        vixens.io/sizing.restore-config: B-nano
+        vixens.io/sizing.APP_NAME: V-nano
+        vixens.io/sizing.litestream: V-nano
+        vixens.io/sizing.config-syncer: V-nano
+        vixens.io/backup-profile: critical
+      annotations:
+        reloader.stakater.com/auto: "true"
+        vixens.io/fast-start: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+        vixens.io/no-long-connections: "true"
+        vixens.io/explicitly-allow-root: "true"
+    spec:
+      priorityClassName: vixens-medium
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      initContainers:
+        - name: fix-permissions
+          image: busybox:1.37.0
+          command: ["sh", "-c", "chown -R 1000:1000 /data && rm -rf /data/*.db-litestream /data/.*-litestream"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+        - name: restore-config
+          image: rclone/rclone:1.73
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              rclone copy s3:$LITESTREAM_BUCKET/config /data --transfers 4 --exclude "*.sqlite3*" --exclude "*.log" --exclude ".*-litestream" --exclude ".*-litestream/**" || true
+          envFrom:
+            - secretRef:
+                name: APP_NAME-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      containers:
+        - name: APP_NAME
+          image: IMAGE_REGISTRY/IMAGE_NAME:IMAGE_TAG
+          ports:
+            - containerPort: 80
+              name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: DATA_FOLDER
+              value: /data
+            - name: DATABASE_URL
+              value: /data/db.sqlite3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /data
+        - name: litestream
+          image: litestream/litestream:0.5.9
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args:
+            - replicate
+            - -config
+            - /etc/litestream.yml
+          ports:
+            - containerPort: 9090
+              name: metrics
+          livenessProbe:
+            tcpSocket:
+              port: 9090
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: 9090
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          envFrom:
+            - secretRef:
+                name: APP_NAME-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: APP_NAME-litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
+        - name: config-syncer
+          image: rclone/rclone:1.73
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              sync_s3() {
+                rclone sync /data s3:$LITESTREAM_BUCKET/config --exclude "*.sqlite3*" --exclude "*.log" --exclude ".*-litestream" --exclude ".*-litestream/**"
+              }
+              while true; do
+                sync_s3
+                sleep 60
+              done
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: APP_NAME-data-pvc
+        - name: APP_NAME-litestream-config
+          configMap:
+            name: APP_NAME-litestream-config
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault

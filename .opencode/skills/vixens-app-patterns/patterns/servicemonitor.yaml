@@ -1,0 +1,22 @@
+---
+# ServiceMonitor Pattern - Prometheus scraping
+# Use for apps exposing Prometheus metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: APP_NAME
+  namespace: NAMESPACE_NAME
+  labels:
+    app: APP_NAME
+spec:
+  selector:
+    matchLabels:
+      app: APP_NAME
+  namespaceSelector:
+    matchNames:
+      - NAMESPACE_NAME
+  endpoints:
+    - port: metrics
+      targetPort: 9090  # Adjust to your metrics port
+      path: /metrics     # Adjust to your metrics path
+      interval: 60s      # Scrape interval

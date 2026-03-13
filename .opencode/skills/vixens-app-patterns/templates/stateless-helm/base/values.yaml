@@ -1,0 +1,41 @@
+---
+# Helm Values for APP_NAME
+# Chart: CHART_REPO/CHART_NAME
+
+replicaCount: 1
+
+podLabels:
+  vixens.io/sizing.APP_NAME: B-nano
+  vixens.io/priority-class: vixens-low
+  vixens.io/backup-profile: "relaxed"
+
+podAnnotations:
+  vixens.io/fast-start: "true"
+  vixens.io/service-binding: "false"
+  vixens.io/nometrics: "true"
+  vixens.io/no-long-connections: "true"
+
+image:
+  repository: IMAGE_REGISTRY/IMAGE_NAME
+  pullPolicy: IfNotPresent
+  tag: IMAGE_TAG
+
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+# Security context alignment
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  runAsNonRoot: true
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80

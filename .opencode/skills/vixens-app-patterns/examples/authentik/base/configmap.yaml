@@ -1,0 +1,76 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-config
+  namespace: auth
+data:
+  vixens-netbird.yaml: |
+    version: 1
+    metadata:
+      name: netbird-v2-oidc
+    entries:
+      - model: authentik_providers_oauth2.oauth2provider
+        id: netbird-provider-v2
+        identifiers:
+          name: netbird-v2
+        attrs:
+          client_id: netbird
+          client_type: confidential
+          authentication_flow: !Find [authentik_core.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_core.flow, [slug, default-provider-authorization-explicit-consent]]
+          redirect_uris:
+            - https://netbird.dev.truxonline.com
+            - https://netbird.dev.truxonline.com/
+            - https://netbird.dev.truxonline.com/#callback
+            - https://netbird.dev.truxonline.com/silent-auth
+            - https://netbird.truxonline.com
+            - https://netbird.truxonline.com/
+            - https://netbird.truxonline.com/#callback
+            - https://netbird.truxonline.com/#callback/
+            - https://netbird.truxonline.com/silent-auth
+      - model: authentik_core.application
+        id: netbird-app
+        identifiers:
+          slug: netbird
+        attrs:
+          name: Netbird
+          provider: !KeyOf netbird-provider-v2
+  vixens-hydrus.yaml: |
+    version: 1
+    metadata:
+      name: hydrus-auth
+    entries:
+      - model: authentik_providers_proxy.proxyprovider
+        id: hydrus-provider-dev
+        identifiers:
+          name: hydrus-dev
+        attrs:
+          mode: forward_auth
+          external_host: https://hydrus.dev.truxonline.com
+          authentication_flow: !Find [authentik_core.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_core.flow, [slug, default-authorization-flow]]
+      - model: authentik_core.application
+        id: hydrus-app-dev
+        identifiers:
+          slug: hydrus-dev
+        attrs:
+          name: Hydrus (Dev)
+          provider: !KeyOf hydrus-provider-dev
+
+      - model: authentik_providers_proxy.proxyprovider
+        id: hydrus-provider-prod
+        identifiers:
+          name: hydrus-prod
+        attrs:
+          mode: forward_auth
+          external_host: https://hydrus.truxonline.com
+          authentication_flow: !Find [authentik_core.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_core.flow, [slug, default-authorization-flow]]
+      - model: authentik_core.application
+        id: hydrus-app-prod
+        identifiers:
+          slug: hydrus-prod
+        attrs:
+          name: Hydrus (Prod)
+          provider: !KeyOf hydrus-provider-prod

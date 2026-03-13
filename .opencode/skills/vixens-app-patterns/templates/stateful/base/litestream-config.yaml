@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: APP_NAME-litestream-config
+data:
+  litestream.yml: |
+    dbs:
+      - path: /data/db.sqlite3
+        replicas:
+          - url: s3://$LITESTREAM_BUCKET/db.sqlite3
+            endpoint: $LITESTREAM_ENDPOINT
+    addr: ":9090"

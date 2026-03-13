@@ -1,0 +1,12 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentik-worker
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.authentik-worker: B-large
+    spec:
+      priorityClassName: vixens-critical
