@@ -1,0 +1,58 @@
+---
+name: 'Setup Python Security Tools'
+description: 'Install and cache Python security scanning tools (checkov, trivy)'
+author: 'charchess'
+
+inputs:
+  install-checkov:
+    description: 'Install checkov (infrastructure as code scanner)'
+    required: false
+    default: 'true'
+  checkov-version:
+    description: 'Checkov version to install (e.g., 3.2.0)'
+    required: false
+    default: '3.2.0'
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: '3.11'
+
+outputs:
+  cache-hit:
+    description: 'Whether the pip cache was hit'
+    value: ${{ steps.cache.outputs.cache-hit }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Cache pip packages
+      uses: actions/cache@v4
+      id: cache
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-security-checkov-${{ inputs.checkov-version }}-py${{ inputs.python-version }}
+        restore-keys: |
+          ${{ runner.os }}-pip-security-
+          ${{ runner.os }}-pip-
+
+    - name: Install checkov
+      if: inputs.install-checkov == 'true'
+      shell: bash
+      run: |
+        echo "📦 Installing checkov ${{ inputs.checkov-version }}..."
+        pip3 install --quiet checkov==${{ inputs.checkov-version }}
+        checkov --version
+
+    - name: Verify installations
+      shell: bash
+      run: |
+        echo "✅ Installed security tools:"
+        if [ "${{ inputs.install-checkov }}" = "true" ]; then
+          echo "  - checkov: $(checkov --version)"
+        fi
+        echo "  - Python: $(python3 --version)"
