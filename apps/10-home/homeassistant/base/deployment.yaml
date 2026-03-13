@@ -6,7 +6,7 @@ metadata:
   labels:
     app: homeassistant
     vixens.io/sizing: B-large
-    vixens.io/sizing.litestream: V-small
+    vixens.io/sizing.litestream: B-small
     vixens.io/sizing.config-syncer: V-nano
     vixens.io/sizing.restore-config: B-nano
     vixens.io/sizing.restore-db: B-nano
@@ -27,7 +27,7 @@ spec:
       labels:
         app: homeassistant
         vixens.io/sizing: B-large
-        vixens.io/sizing.litestream: V-small
+        vixens.io/sizing.litestream: B-small
         vixens.io/sizing.config-syncer: V-nano
         vixens.io/sizing.restore-config: B-nano
         vixens.io/sizing.restore-db: B-nano
