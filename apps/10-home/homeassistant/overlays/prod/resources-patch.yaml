@@ -11,5 +11,5 @@ spec:
       labels:
         vixens.io/sizing: B-xlarge
         vixens.io/sizing.homeassistant: B-xlarge
-        vixens.io/sizing.litestream: B-nano
+        vixens.io/sizing.litestream: B-small
         vixens.io/sizing.config-syncer: B-nano
