@@ -5,9 +5,9 @@ metadata:
   name: check-velero-schedule
   annotations:
     policies.kyverno.io/title: Verify Velero Schedule
-    policies.kyverno.io/category: Maturity (Diamond)
+    policies.kyverno.io/category: Maturity (Emerald)
     policies.kyverno.io/description: >-
-      Diamond tier apps must be included in a Velero backup schedule.
+      Emerald tier apps must be included in a Velero backup schedule.
 spec:
   validationFailureAction: Audit
   background: true
