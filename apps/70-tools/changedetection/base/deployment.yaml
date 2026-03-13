@@ -20,7 +20,7 @@ spec:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
       labels:
-        kubectl.kubernetes.io/restartedAt: "2026-03-12T11:00:00Z"
+        kubectl.kubernetes.io/restartedAt: "2026-03-12T110000Z"
         app: changedetection
         vixens.io/sizing.restore-config: B-nano
         vixens.io/sizing.changedetection: V-small
