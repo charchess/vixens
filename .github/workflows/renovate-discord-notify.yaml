@@ -217,8 +217,20 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'renovate')
 
     steps:
-      - name: Wait for CI checks
-        run: sleep 30
+      - name: Wait for CI checks to complete
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "⏳ Waiting for all required checks to complete..."
+
+          # Wait for checks with timeout
+          gh pr checks ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --watch \
+            --interval 10 \
+            --fail-fast
+
+          echo "✅ All checks passed!"
 
       - name: Auto-merge PR
         env:
