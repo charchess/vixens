@@ -2,22 +2,20 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  labels:
-    argocd.argoproj.io/instance: kyverno
-  name: add-default-labels
+  name: check-managed-by-label
   annotations:
-    policies.kyverno.io/title: Add Default Labels
+    policies.kyverno.io/title: Check Managed-By Label
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: low
-    policies.kyverno.io/subject: Pod, Deployment, StatefulSet
+    policies.kyverno.io/subject: Deployment, StatefulSet, DaemonSet
     policies.kyverno.io/description: >-
-      Mutates resources to add default labels for consistency.
-      Adds 'managed-by: kyverno' label if not present.
+      Validates that resources have the app.kubernetes.io/managed-by label set.
+      This label indicates the tool managing the resource (e.g., kustomize, helm).
 spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: add-managed-by-label
+    - name: validate-managed-by-label
       match:
         any:
           - resources:

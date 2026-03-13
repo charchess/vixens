@@ -263,7 +263,7 @@ Before closing a task, EVERY agent MUST complete this checklist:
 [ ] 2. yamllint passed (just lint)
 [ ] 3. Kustomize build OK (kustomize build apps/<app>/overlays/dev)
 [ ] 3b. Kustomize kinds diff OK: after any kustomization.yaml change, compare `kustomize build` output kinds before/after — a missing kind means a resource was silently dropped (regression like it-tools ingress removal)
-[ ] 4. Git committed to dev branch
+[ ] 4. Git committed to main branch
 [ ] 5. Pushed to remote (git push origin main)
 [ ] 6. ArgoCD synced (verify in cluster)
 [ ] 7. Application validated (curl or Playwright or manual)

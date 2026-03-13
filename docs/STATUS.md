@@ -194,7 +194,6 @@ Last Updated: 2026-03-11
 | Application | Restarts | Issue principale |
 |-------------|----------|------------------|
 | netbird-management | 42 | SecurityContext non durci |
-| netbird-management | 42 | SecurityContext non durci |
 | vikunja | 37 | À investiguer |
 | openclaw | 34 | Probes en timeout |
 | homeassistant | 16 | PDB manquant |
