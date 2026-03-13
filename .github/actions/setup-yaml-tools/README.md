@@ -49,17 +49,6 @@ steps:
       install-yamllint: 'false'
 ```
 
-### Custom yq Version
-
-```yaml
-steps:
-  - uses: actions/checkout@v4
-
-  - name: Setup YAML tools
-    uses: ./.github/actions/setup-yaml-tools
-    with:
-      yq-version: 'v4.44.1'
-```
 
 ## Inputs
 
@@ -67,7 +56,6 @@ steps:
 |-------|-------------|----------|---------|
 | `install-yamllint` | Install yamllint | No | `true` |
 | `install-yq` | Install yq | No | `true` |
-| `yq-version` | yq version (e.g., v4.44.1) | No | `v4.44.1` |
 
 ## Outputs
 
