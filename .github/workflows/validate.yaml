@@ -391,7 +391,7 @@ jobs:
           find apps argocd -name "*.yaml" -type f \
             -exec grep -h "image:" {} \; | \
             sed 's/.*image:\s*//' | \
-            sed 's/["'"']//g' | \
+            tr -d '"'"'"' | \
             grep -v '^#' | \
             grep -v '^$' | \
             sort -u > /tmp/images.txt
