@@ -9,6 +9,7 @@ metadata:
     policies.kyverno.io/severity: medium
     policies.kyverno.io/description: >-
       To ensure availability during maintenance, critical applications must have a PDB.
+      Single-replica apps (vixens.io/single-replica: "true") are exempt as PDB is meaningless.
 spec:
   validationFailureAction: Audit
   background: true
@@ -37,6 +38,9 @@ spec:
               - key: "{{ request.object.metadata.labels.app }}"
                 operator: AnyNotIn
                 value: ["traefik", "argocd-server"]
+              - key: "{{ request.object.metadata.labels.['vixens.io/single-replica'] || '' }}"
+                operator: NotEquals
+                value: "true"
               - key: "{{ pdb_count }}"
                 operator: Equals
                 value: 0

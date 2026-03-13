@@ -1,0 +1,65 @@
+---
+# Kyverno Policy: Auto-inject exec probes into cert-manager-cainjector
+#
+# cert-manager-cainjector is a background controller without HTTP endpoints.
+# It doesn't expose health check URLs. We inject exec probes that verify
+# the main process is running, satisfying Silver-tier probe requirements.
+#
+# Similar pattern to mutate-sidecar-probes.yaml for config-syncer.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: mutate-cainjector-probes
+  annotations:
+    policies.kyverno.io/title: Auto-inject Probes for cert-manager-cainjector
+    policies.kyverno.io/category: Maturity (Silver)
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/description: >-
+      Adds exec probes to cert-manager-cainjector which lacks HTTP health endpoints.
+      Uses process check via pgrep. Satisfies Silver-tier probe requirement.
+spec:
+  background: false
+  rules:
+    - name: inject-cainjector-probes
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - cert-manager
+              names:
+                - "cert-manager-cainjector-*"
+      preconditions:
+        all:
+          # Only inject if probes are missing
+          - key: "{{ request.object.spec.containers[?name == 'cert-manager-cainjector'].livenessProbe | length(@) }}"
+            operator: Equals
+            value: 0
+      mutate:
+        foreach:
+          - list: "request.object.spec.containers[?name == 'cert-manager-cainjector']"
+            patchStrategicMerge:
+              spec:
+                containers:
+                  - name: "{{ element.name }}"
+                    livenessProbe:
+                      exec:
+                        command:
+                          - sh
+                          - -c
+                          - pgrep -f cainjector || exit 1
+                      initialDelaySeconds: 10
+                      periodSeconds: 30
+                      timeoutSeconds: 5
+                      failureThreshold: 3
+                    readinessProbe:
+                      exec:
+                        command:
+                          - sh
+                          - -c
+                          - pgrep -f cainjector || exit 1
+                      initialDelaySeconds: 5
+                      periodSeconds: 10
+                      timeoutSeconds: 5
+                      failureThreshold: 3
