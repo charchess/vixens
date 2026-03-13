@@ -18,6 +18,9 @@ controller:
     requests: {}  # Explicitly empty - Kyverno mutates via sizing labels
     limits: {}
   deployment:
+    additionalLabels:
+      vixens.io/sizing-v2: "true"
+      vixens.io/sizing.goldilocks: G-nano  # container name: goldilocks
     podAnnotations:
       vixens.io/fast-start: "true"
       vixens.io/nometrics: "true"  # goldilocks-controller has no Prometheus metrics port defined
@@ -46,6 +49,9 @@ dashboard:
     requests: {}  # Explicitly empty - Kyverno mutates via sizing labels
     limits: {}
   deployment:
+    additionalLabels:
+      vixens.io/sizing-v2: "true"
+      vixens.io/sizing.goldilocks: G-nano  # container name: goldilocks
     podAnnotations:
       vixens.io/fast-start: "true"
       vixens.io/nometrics: "true"  # goldilocks-dashboard is a web UI with no /metrics endpoint
