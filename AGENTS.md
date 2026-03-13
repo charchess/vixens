@@ -87,7 +87,7 @@ yamllint --version
 just resume
 
 # 2. Work on task (full orchestration)
-just work <task_id>
+# See WORKFLOW.md for task workflow (bd update, work, bd close)
 
 # 3. Validate YAML before push
 just lint
@@ -290,7 +290,7 @@ Compare kinds before/after. A missing `kind` means a resource was silently dropp
 # Manual equivalent of "just resume"
 bd list --status in_progress --assignee coding-agent
 
-# Manual equivalent of "just work"
+# Manual workflow (see WORKFLOW.md for details)
 bd update <task_id> --status in_progress
 # ... do the work ...
 yamllint -c yamllint-config.yml apps/**/*.yaml
@@ -409,7 +409,7 @@ cd vixens
 bd list --status open --label documentation
 
 # Work on it
-just work <task_id>
+# Follow WORKFLOW.md for task execution
 
 # Follow the workflow
 # Update docs
@@ -423,7 +423,7 @@ just work <task_id>
 bd list --status open --label feat
 
 # Apply full workflow
-just work <task_id>
+# Follow WORKFLOW.md for task execution
 
 # Don't forget documentation updates!
 ```
