@@ -1,7 +1,12 @@
 ---
 # Kustomize Component: Basic Probes
 #
-# Basic health check configuration for applications
+# Basic health check configuration for applications (Silver maturity)
+#
+# Includes:
+#   - Liveness probe: /health endpoint
+#   - Readiness probe: /ready endpoint
+#   - Startup probe: /health endpoint (prevents kill during slow startup)
 #
 # Usage:
 #   components:
@@ -39,3 +44,11 @@ patches:
                   periodSeconds: 5
                   timeoutSeconds: 3
                   failureThreshold: 1
+                startupProbe:
+                  httpGet:
+                    path: /health
+                    port: 8080
+                  initialDelaySeconds: 0
+                  periodSeconds: 10
+                  timeoutSeconds: 3
+                  failureThreshold: 30  # 30 * 10s = 5min max startup time
