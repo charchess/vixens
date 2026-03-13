@@ -210,7 +210,7 @@ patches:
       name: argocd-dex-server
   - patch: |-
       - op: add
-        path: /spec/template/metadata/labels/vixens.io~1sizing.argocd-dex-server
+        path: /spec/template/metadata/labels/vixens.io~1sizing.dex
         value: G-nano
     target:
       kind: Deployment
