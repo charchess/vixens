@@ -7,6 +7,54 @@ components:
 
 patches:
   - path: patch-infisical-env.yaml
+  # Goldilocks Controller - Add sizing labels to deployment metadata
+  - patch: |-
+      - op: add
+        path: /metadata/labels/vixens.io~1sizing-v2
+        value: "true"
+    target:
+      kind: Deployment
+      name: goldilocks-controller
+  # Goldilocks Controller - Add sizing label to pod template
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/vixens.io~1sizing.goldilocks-controller
+        value: G-nano
+    target:
+      kind: Deployment
+      name: goldilocks-controller
+  # Goldilocks Controller - Remove manual resources (anti-pattern fix)
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value: {}
+    target:
+      kind: Deployment
+      name: goldilocks-controller
+  # Goldilocks Dashboard - Add sizing labels to deployment metadata
+  - patch: |-
+      - op: add
+        path: /metadata/labels/vixens.io~1sizing-v2
+        value: "true"
+    target:
+      kind: Deployment
+      name: goldilocks-dashboard
+  # Goldilocks Dashboard - Add sizing label to pod template
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/vixens.io~1sizing.goldilocks-dashboard
+        value: V-small
+    target:
+      kind: Deployment
+      name: goldilocks-dashboard
+  # Goldilocks Dashboard - Remove manual resources (anti-pattern fix)
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value: {}
+    target:
+      kind: Deployment
+      name: goldilocks-dashboard
   - patch: |-
       - op: add
         path: /spec/template/metadata/labels/environment
