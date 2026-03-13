@@ -90,6 +90,27 @@ jobs:
 
           echo "✅ Updated prod-stable to ${{ steps.validate.outputs.version }}"
 
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: ./apps
+          format: spdx-json
+          output-file: sbom-prod-${{ steps.validate.outputs.version }}.spdx.json
+
+      - name: Upload SBOM to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.validate.outputs.prod_tag }}
+          files: |
+            sbom-prod-${{ steps.validate.outputs.version }}.spdx.json
+          body: |
+            ## 📦 Production Release ${{ steps.validate.outputs.version }}
+
+            **SBOM included** for compliance tracking.
+
+            Promoted from: `${{ steps.validate.outputs.dev_tag }}`
+            Commit: `${{ steps.get_commit.outputs.commit_sha }}`
+
       - name: Summary
         run: |
           echo "## 🚀 Production Promotion Summary" >> $GITHUB_STEP_SUMMARY
