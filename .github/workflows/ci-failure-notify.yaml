@@ -1,0 +1,150 @@
+---
+name: CI Failure Notifications
+
+on:
+  workflow_run:
+    workflows:
+      - "Validate & Security"
+      - "CI"
+      - "Promote to Production"
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  notify-discord:
+    name: Notify Discord on CI Failure
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+
+    steps:
+      - name: Extract workflow metadata
+        id: metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "workflow_name=${{ github.event.workflow_run.name }}" >> $GITHUB_OUTPUT
+          echo "run_url=${{ github.event.workflow_run.html_url }}" >> $GITHUB_OUTPUT
+          echo "run_id=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
+          echo "branch=${{ github.event.workflow_run.head_branch }}" >> $GITHUB_OUTPUT
+          echo "commit_sha=$(echo ${{ github.event.workflow_run.head_sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+          echo "commit_author=${{ github.event.workflow_run.head_commit.author.name }}" >> $GITHUB_OUTPUT
+
+          # Get commit message (first line only)
+          commit_msg=$(echo '${{ github.event.workflow_run.head_commit.message }}' | head -n1 | sed 's/"/\\"/g')
+          echo "commit_message=$commit_msg" >> $GITHUB_OUTPUT
+
+          # Get PR number if this is a PR
+          pr_number=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/commits/${{ github.event.workflow_run.head_sha }}/pulls" \
+            --jq '.[0].number // empty')
+
+          if [ -n "$pr_number" ]; then
+            echo "pr_number=$pr_number" >> $GITHUB_OUTPUT
+            echo "pr_url=https://github.com/${{ github.repository }}/pull/$pr_number" >> $GITHUB_OUTPUT
+            echo "is_pr=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_pr=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Fetch failed jobs
+        id: failed_jobs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Get failed jobs from the workflow run
+          failed_jobs=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/jobs" \
+            --jq '[.jobs[] | select(.conclusion == "failure") | .name] | join(", ")')
+
+          # Truncate if too long
+          if [ ${#failed_jobs} -gt 200 ]; then
+            failed_jobs="${failed_jobs:0:197}..."
+          fi
+
+          echo "failed_jobs=$failed_jobs" >> $GITHUB_OUTPUT
+
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_CI_FAILURES }}
+        run: |
+          # Determine color based on workflow type
+          if [[ "${{ steps.metadata.outputs.workflow_name }}" == *"Security"* ]]; then
+            color=15158332  # Red for security failures
+          elif [[ "${{ steps.metadata.outputs.workflow_name }}" == *"Production"* ]]; then
+            color=15105570  # Dark red for prod failures
+          else
+            color=16744272  # Orange for other failures
+          fi
+
+          # Build fields array
+          fields='[
+            {
+              "name": "Workflow",
+              "value": "${{ steps.metadata.outputs.workflow_name }}",
+              "inline": true
+            },
+            {
+              "name": "Branch",
+              "value": "`${{ steps.metadata.outputs.branch }}`",
+              "inline": true
+            },
+            {
+              "name": "Commit",
+              "value": "`${{ steps.metadata.outputs.commit_sha }}`",
+              "inline": true
+            },
+            {
+              "name": "Author",
+              "value": "${{ steps.metadata.outputs.commit_author }}",
+              "inline": true
+            },
+            {
+              "name": "Failed Jobs",
+              "value": "${{ steps.failed_jobs.outputs.failed_jobs }}",
+              "inline": false
+            },
+            {
+              "name": "Commit Message",
+              "value": "${{ steps.metadata.outputs.commit_message }}",
+              "inline": false
+            }
+          ]'
+
+          # Add PR field if applicable
+          if [ "${{ steps.metadata.outputs.is_pr }}" = "true" ]; then
+            fields=$(echo "$fields" | jq '. + [{"name": "Pull Request", "value": "[#${{ steps.metadata.outputs.pr_number }}](${{ steps.metadata.outputs.pr_url }})", "inline": true}]')
+          fi
+
+          # Send notification
+          curl -X POST "$DISCORD_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "❌ CI Workflow Failed",
+                "description": "A workflow run has failed in **${{ github.repository }}**",
+                "url": "${{ steps.metadata.outputs.run_url }}",
+                "color": '"$color"',
+                "fields": '"$fields"',
+                "footer": {
+                  "text": "Vixens GitOps - CI Monitor"
+                },
+                "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.000Z)'"
+              }],
+              "components": [{
+                "type": 1,
+                "components": [
+                  {
+                    "type": 2,
+                    "style": 5,
+                    "label": "View Failed Run",
+                    "url": "${{ steps.metadata.outputs.run_url }}"
+                  }
+                ]
+              }]
+            }'
