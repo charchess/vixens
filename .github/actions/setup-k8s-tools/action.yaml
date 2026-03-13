@@ -1,0 +1,72 @@
+---
+name: 'Setup Kubernetes Tools'
+description: 'Install and cache Kustomize, Helm, and Kubeconform for K8s manifest validation'
+author: 'charchess'
+
+inputs:
+  kustomize-version:
+    description: 'Kustomize version to install'
+    required: false
+    default: '5.5.0'
+  helm-version:
+    description: 'Helm version to install'
+    required: false
+    default: '3.16.0'
+  kubeconform-version:
+    description: 'Kubeconform version to install'
+    required: false
+    default: '0.6.7'
+
+outputs:
+  cache-hit:
+    description: 'Whether the cache was hit'
+    value: ${{ steps.cache.outputs.cache-hit }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Cache K8s tools
+      uses: actions/cache@v4
+      id: cache
+      with:
+        path: |
+          /usr/local/bin/kustomize
+          /usr/local/bin/kubeconform
+          /usr/local/bin/helm
+        key: ${{ runner.os }}-k8s-tools-kustomize-${{ inputs.kustomize-version }}-helm-${{ inputs.helm-version }}-kubeconform-${{ inputs.kubeconform-version }}
+        restore-keys: |
+          ${{ runner.os }}-k8s-tools-
+
+    - name: Install Kustomize
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        echo "📦 Installing Kustomize ${{ inputs.kustomize-version }}..."
+        curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+        sudo mv kustomize /usr/local/bin/
+        kustomize version
+
+    - name: Install Helm
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        echo "📦 Installing Helm ${{ inputs.helm-version }}..."
+        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        helm version
+
+    - name: Install Kubeconform
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        echo "📦 Installing Kubeconform ${{ inputs.kubeconform-version }}..."
+        curl -sSL "https://github.com/yannh/kubeconform/releases/download/v${{ inputs.kubeconform-version }}/kubeconform-linux-amd64.tar.gz" | tar xz
+        sudo mv kubeconform /usr/local/bin/
+        kubeconform -v
+
+    - name: Verify installations
+      shell: bash
+      run: |
+        echo "✅ Installed tools:"
+        echo "  - Kustomize: $(kustomize version | head -1)"
+        echo "  - Helm: $(helm version --short)"
+        echo "  - Kubeconform: $(kubeconform -v)"
