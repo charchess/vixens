@@ -1,0 +1,26 @@
+---
+# NetworkPolicy Pattern - Traefik Ingress + Full Egress
+# Use for apps exposed via Traefik ingress with unrestricted outbound access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: APP_NAME
+spec:
+  podSelector:
+    matchLabels:
+      app: APP_NAME
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow ingress from Traefik (HTTP/HTTPS)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 80  # Adjust to your app port
+  egress:
+    # Allow all egress (homelab: DNS, inter-app, external APIs)
+    - {}

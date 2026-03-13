@@ -1,0 +1,18 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentik-worker
+  namespace: auth
+spec:
+  revisionHistoryLimit: 3
+  template:
+    spec:
+      containers:
+        - name: authentik-worker
+          env:
+            - name: AUTHENTIK_REDIS__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-redis-credentials
+                  key: password

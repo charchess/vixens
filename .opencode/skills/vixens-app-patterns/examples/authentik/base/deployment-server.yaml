@@ -1,0 +1,193 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentik-server
+  namespace: auth
+  labels:
+    app: authentik-server
+    vixens.io/tier: "diamond"
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+    goldilocks.fairwinds.com/enabled: "true"
+    vpa.kubernetes.io/updateMode: "Off"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: authentik-server
+  template:
+    metadata:
+      labels:
+        app: authentik-server
+        vixens.io/backup-profile: critical
+      annotations:
+        reloader.stakater.com/auto: "true"
+        vixens.io/fast-start: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9300"
+        prometheus.io/path: "/metrics"
+        vixens.io/no-long-connections: "true"
+    spec:
+      priorityClassName: vixens-critical
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      volumes:
+        - name: authentik-data
+          persistentVolumeClaim:
+            claimName: authentik-data
+        - name: blueprints
+          configMap:
+            name: authentik-config
+      initContainers:
+        - name: restore-config
+          image: rclone/rclone:1.73
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              rclone copy s3:$LITESTREAM_BUCKET/config /var/lib/authentik --transfers 4 --exclude "*.db*" --exclude "*.log" --exclude "lost+found/**" --exclude ".*-litestream" --exclude ".*-litestream/**" 2>/dev/null || true
+          envFrom:
+            - secretRef:
+                name: authentik-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: authentik-data
+              mountPath: /var/lib/authentik
+      containers:
+        - name: authentik-server
+          image: ghcr.io/goauthentik/server:2026.2
+          args:
+            - server
+          ports:
+            - containerPort: 9000
+              name: http
+              protocol: TCP
+            - containerPort: 9300
+              name: metrics
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: authentik-secrets
+          env:
+            - name: AUTHENTIK_REDIS__HOST
+              value: redis-shared.databases.svc.cluster.local
+            - name: AUTHENTIK_REDIS__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-redis-credentials
+                  key: password
+            - name: AUTHENTIK_POSTGRESQL__HOST
+              value: postgresql-shared-rw.databases.svc.cluster.local
+            - name: AUTHENTIK_POSTGRESQL__NAME
+              value: authentik
+            - name: AUTHENTIK_POSTGRESQL__USER
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-secrets
+                  key: POSTGRES_USER
+            - name: AUTHENTIK_POSTGRESQL__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-secrets
+                  key: POSTGRES_PASSWORD
+            - name: AUTHENTIK_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-secrets
+                  key: SECRET_KEY
+            - name: AUTHENTIK_HTTP__CORS_ORIGINS
+              value: "https://netbird.dev.truxonline.com,https://netbird.truxonline.com"
+            - name: AUTHENTIK_BLUEPRINTS__BOOTSTRAP_AND_OVERWRITE
+              value: "true"
+          startupProbe:
+            httpGet:
+              path: /-/health/live/
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /-/health/live/
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /-/health/live/
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: authentik-data
+              mountPath: /var/lib/authentik
+            - name: blueprints
+              mountPath: /blueprints/vixens-netbird.yaml
+              subPath: vixens-netbird.yaml
+            - name: blueprints
+              mountPath: /blueprints/vixens-hydrus.yaml
+              subPath: vixens-hydrus.yaml
+          resources:
+            requests:
+              memory: 512Mi
+              cpu: 200m
+            limits:
+              memory: 1024Mi
+              cpu: 500m
+        - name: config-syncer
+          image: rclone/rclone:1.73
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              sync_s3() {
+                rclone sync /var/lib/authentik s3:$LITESTREAM_BUCKET/config --exclude "*.db*" --exclude "*.log" --exclude "lost+found/**" --exclude ".*-litestream" --exclude ".*-litestream/**"
+              }
+              while true; do
+                sync_s3;
+                sleep 60;
+              done
+          envFrom:
+            - secretRef:
+                name: authentik-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: authentik-data
+              mountPath: /var/lib/authentik

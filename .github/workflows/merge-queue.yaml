@@ -1,0 +1,79 @@
+---
+name: Merge Queue Validation
+
+on:
+  merge_group:
+    types: [checks_requested]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.merge_group.head_sha }}
+  cancel-in-progress: true
+
+jobs:
+  validate-merge:
+    name: Validate Merge Queue Entry
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout merge queue branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.merge_group.head_sha }}
+
+      - name: Setup K8s tools
+        uses: ./.github/actions/setup-k8s-tools
+
+      - name: Setup YAML tools
+        uses: ./.github/actions/setup-yaml-tools
+
+      - name: Fast validation
+        run: |
+          echo "🔍 Merge Queue: Fast validation for SHA ${{ github.event.merge_group.head_sha }}"
+
+          # YAML lint (fast)
+          echo "📋 YAML lint..."
+          yamllint -c yamllint-config.yml apps/ argocd/ || exit 1
+
+          # Kustomize build test (sample)
+          echo "📦 Kustomize build test (sample)..."
+          for overlay in apps/*/overlays/dev apps/*/overlays/prod; do
+            if [ -f "$overlay/kustomization.yaml" ]; then
+              echo "  Testing: $overlay"
+              kustomize build --enable-helm "$overlay" > /dev/null || exit 1
+            fi
+          done | head -5
+
+          echo "✅ Merge queue validation passed"
+
+  security-check:
+    name: Security Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout merge queue branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.merge_group.head_sha }}
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+  summary:
+    name: Merge Queue Summary
+    runs-on: ubuntu-latest
+    needs: [validate-merge, security-check]
+    if: always()
+    steps:
+      - name: Check results
+        run: |
+          if [ "${{ needs.validate-merge.result }}" != "success" ] || [ "${{ needs.security-check.result }}" != "success" ]; then
+            echo "❌ Merge queue validation failed"
+            echo "  - Validate: ${{ needs.validate-merge.result }}"
+            echo "  - Security: ${{ needs.security-check.result }}"
+            exit 1
+          fi
+
+          echo "✅ All merge queue checks passed"
+          echo "SHA: ${{ github.event.merge_group.head_sha }}"

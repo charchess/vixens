@@ -1,0 +1,15 @@
+---
+# VerticalPodAutoscaler Pattern - Resource recommendations
+# Use to get VPA recommendations without automatic updates
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: APP_NAME
+  namespace: NAMESPACE_NAME
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment  # Or StatefulSet
+    name: APP_NAME
+  updatePolicy:
+    updateMode: "Off"  # Recommendations only, no automatic updates
