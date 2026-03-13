@@ -18,9 +18,6 @@ spec:
           - resources:
               kinds:
                 - Pod
-              selector:
-                matchLabels:
-                  vixens.io/maturity: "diamond"
       context:
         - name: velero_schedules
           apiCall:

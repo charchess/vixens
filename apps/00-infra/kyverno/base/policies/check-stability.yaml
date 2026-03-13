@@ -18,9 +18,6 @@ spec:
           - resources:
               kinds:
                 - Pod
-              selector:
-                matchLabels:
-                  vixens.io/maturity: "orichalcum"
       validate:
         message: "Orichalcum pods must have 0 restarts. Current pod has experienced failures."
         foreach:

@@ -20,9 +20,6 @@ spec:
           - resources:
               kinds:
                 - Ingress
-              selector:
-                matchLabels:
-                  vixens.io/maturity: "diamond"
       exclude:
         any:
           - resources:
