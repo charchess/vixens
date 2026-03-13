@@ -1,16 +1,10 @@
 ---
-# Velero Kustomize Overlay - Patches pour maturity Silver
-# Appliqué par-dessus le Helm chart via ArgoCD multi-source
+# Velero uses Helm-only deployment (no Kustomize base resources)
+# Sizing labels are applied via Helm podLabels in values/common.yaml
+# Kustomize patches don't work with ArgoCD multi-source Helm apps
 
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Pas de base - velero utilise Helm directement via ArgoCD
-# Ces patches s'appliquent par-dessus le déploiement Helm
+# Empty - all configuration via Helm values
 resources: []
-
-patches:
-  - path: deployment-patches.yaml
-    target:
-      kind: Deployment
-      name: velero

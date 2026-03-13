@@ -84,6 +84,13 @@ kubectl:
       cpu: 100m
       memory: 256Mi
 
+# Deployment labels for sizing-v2 policy enablement
+labels:
+  vixens.io/sizing-v2: "true"
+
+# Pod labels for sizing-v2 policy (Bronze maturity requirement)
+podLabels:
+  vixens.io/sizing.velero: V-medium
 podAnnotations:
   vixens.io/fast-start: "true"
   vixens.io/noingressneeded: "true"
@@ -97,7 +104,7 @@ revisionHistoryLimit: 3
 priorityClassName: vixens-critical
 
 # Resources managed by Kyverno sizing-v2-mutate policy
-# Labels: vixens.io/sizing.velero: V-medium (applied via Kustomize patch)
+# Labels: vixens.io/sizing.velero: V-medium (applied via Helm podLabels)
 # resources: {}  # Commented - let Kyverno mutate
 
 deployNodeAgent: true
@@ -105,9 +112,13 @@ deployNodeAgent: true
 nodeAgent:
   uploaderType: kopia
   priorityClassName: vixens-critical
+  labels:
+    vixens.io/sizing-v2: "true"
   podAnnotations:
     vixens.io/fast-start: "true"
     vixens.io/noingressneeded: "true"
+  podLabels:
+    vixens.io/sizing.node-agent: V-medium
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
