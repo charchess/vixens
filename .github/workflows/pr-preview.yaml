@@ -1,0 +1,164 @@
+---
+name: PR Preview
+
+on:
+  pull_request:
+    paths:
+      - 'apps/**'
+      - 'argocd/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  kustomize-diff:
+    name: Kustomize Diff Preview
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: '5.5.0'
+
+      - name: Detect changed overlays
+        id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "🔍 Detecting changed overlays..."
+
+          # Get list of changed YAML files
+          gh pr view ${{ github.event.pull_request.number }} \
+            --json files --jq '.files.[].path' | \
+            grep -E '^apps/.*/(dev|prod)/.*\.yaml$' || true > /tmp/changed_files.txt
+
+          # Extract unique overlay paths
+          cat /tmp/changed_files.txt | \
+            sed -E 's|(apps/[^/]+/[^/]+/overlays/(dev|prod)).*|\1|' | \
+            sort -u > /tmp/overlays.txt
+
+          # Store overlays for next step
+          if [ -s /tmp/overlays.txt ]; then
+            echo "Found $(wc -l < /tmp/overlays.txt) changed overlays:"
+            cat /tmp/overlays.txt
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "No overlay changes detected"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Kustomize diff
+        if: steps.detect.outputs.has_changes == 'true'
+        run: |
+          echo "📋 Generating Kustomize diff..."
+
+          # Create diff output file
+          cat > /tmp/diff_output.md <<'HEADER'
+          ## 🔍 Kustomize Preview
+
+          This PR will change the following Kubernetes manifests:
+
+          HEADER
+
+          # Process each changed overlay
+          while IFS= read -r overlay; do
+            if [ ! -d "$overlay" ]; then
+              continue
+            fi
+
+            app_name=$(echo "$overlay" | sed -E 's|apps/[^/]+/([^/]+)/.*|\1|')
+            env=$(echo "$overlay" | sed -E 's|.*/overlays/([^/]+).*|\1|')
+
+            echo "" >> /tmp/diff_output.md
+            echo "### 📦 \`$app_name\` ($env)" >> /tmp/diff_output.md
+            echo "" >> /tmp/diff_output.md
+
+            # Build with PR branch (current)
+            if kustomize build "$overlay" > /tmp/new.yaml 2>/tmp/error.txt; then
+              # Checkout base branch
+              git fetch origin ${{ github.base_ref }}
+              git checkout origin/${{ github.base_ref }} -- "$overlay" 2>/dev/null || {
+                echo "⚠️ New overlay (not in base branch)" >> /tmp/diff_output.md
+                echo "\`\`\`yaml" >> /tmp/diff_output.md
+                cat /tmp/new.yaml >> /tmp/diff_output.md
+                echo "\`\`\`" >> /tmp/diff_output.md
+                continue
+              }
+
+              # Build with base branch
+              if kustomize build "$overlay" > /tmp/old.yaml 2>/dev/null; then
+                # Generate diff
+                if diff -u /tmp/old.yaml /tmp/new.yaml > /tmp/changes.diff; then
+                  echo "✅ No changes" >> /tmp/diff_output.md
+                else
+                  echo "<details><summary>📄 View diff (click to expand)</summary>" >> /tmp/diff_output.md
+                  echo "" >> /tmp/diff_output.md
+                  echo "\`\`\`diff" >> /tmp/diff_output.md
+                  cat /tmp/changes.diff >> /tmp/diff_output.md
+                  echo "\`\`\`" >> /tmp/diff_output.md
+                  echo "</details>" >> /tmp/diff_output.md
+                fi
+              else
+                echo "⚠️ Failed to build base version" >> /tmp/diff_output.md
+              fi
+
+              # Restore PR version
+              git checkout HEAD -- "$overlay"
+            else
+              echo "❌ Build failed:" >> /tmp/diff_output.md
+              echo "\`\`\`" >> /tmp/diff_output.md
+              cat /tmp/error.txt >> /tmp/diff_output.md
+              echo "\`\`\`" >> /tmp/diff_output.md
+            fi
+          done < /tmp/overlays.txt
+
+          # Add footer
+          cat >> /tmp/diff_output.md <<'FOOTER'
+
+          ---
+
+          💡 **Tip:** Review the diffs to ensure the changes are intentional.
+          FOOTER
+
+      - name: Post PR comment
+        if: steps.detect.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const diffOutput = fs.readFileSync('/tmp/diff_output.md', 'utf8');
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('🔍 Kustomize Preview')
+            );
+
+            // Update or create comment
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: diffOutput
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: diffOutput
+              });
+            }
