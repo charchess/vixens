@@ -100,22 +100,6 @@ spec:
             - name: hydrus-client-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
-          livenessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - pgrep -f litestream || exit 1
-            initialDelaySeconds: 10
-            periodSeconds: 30
-          readinessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - pgrep -f litestream || exit 1
-            initialDelaySeconds: 5
-            periodSeconds: 10
         - name: restore-mappings
           image: litestream/litestream:0.5.9
           securityContext:
@@ -241,6 +225,24 @@ spec:
             - name: hydrus-client-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            failureThreshold: 15
+            periodSeconds: 10
       volumes:
         - name: config
           persistentVolumeClaim:
