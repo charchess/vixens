@@ -1,0 +1,83 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: mutate-app-name-label
+  annotations:
+    policies.kyverno.io/title: Add app.kubernetes.io/name Label
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Deployment, StatefulSet, DaemonSet
+    policies.kyverno.io/description: >-
+      Mutates Deployments, StatefulSets, and DaemonSets to add the standard
+      app.kubernetes.io/name label derived from metadata.name if not already present.
+      This enables consistent kubectl filtering and ServiceMonitor selectors.
+spec:
+  schemaValidation: false
+  rules:
+    - name: add-app-name-to-deployment
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              +(app.kubernetes.io/name): "{{ request.object.metadata.name }}"
+          spec:
+            template:
+              metadata:
+                labels:
+                  +(app.kubernetes.io/name): "{{ request.object.metadata.name }}"
+    - name: add-app-name-to-statefulset
+      match:
+        any:
+          - resources:
+              kinds:
+                - StatefulSet
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              +(app.kubernetes.io/name): "{{ request.object.metadata.name }}"
+          spec:
+            template:
+              metadata:
+                labels:
+                  +(app.kubernetes.io/name): "{{ request.object.metadata.name }}"
+    - name: add-app-name-to-daemonset
+      match:
+        any:
+          - resources:
+              kinds:
+                - DaemonSet
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              +(app.kubernetes.io/name): "{{ request.object.metadata.name }}"
+          spec:
+            template:
+              metadata:
+                labels:
+                  +(app.kubernetes.io/name): "{{ request.object.metadata.name }}"

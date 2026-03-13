@@ -2,22 +2,21 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  labels:
-    argocd.argoproj.io/instance: kyverno
-  name: require-resources
+  name: require-resource-limits
   annotations:
-    policies.kyverno.io/title: Require Resources
+    policies.kyverno.io/title: Require Resource Limits
     policies.kyverno.io/category: Maturity (Silver)
     policies.kyverno.io/severity: medium
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
-      Resources requests and limits are required for all containers for maturity Level 2 (Silver).
-      This policy audits containers that do not have resource limits defined.
+      Resource limits (CPU and memory) are required for all containers for
+      maturity Level 2 (Silver). Limits prevent resource exhaustion and enable
+      proper QoS class assignment (Burstable or Guaranteed).
 spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: validate-resources
+    - name: validate-resource-limits
       match:
         any:
           - resources:
@@ -30,14 +29,11 @@ spec:
                 - kube-system
                 - kyverno
       validate:
-        message: "CPU and memory resource requests and limits are required."
+        message: "CPU and memory resource limits are required for maturity Level 2 (Silver)."
         pattern:
           spec:
             containers:
               - resources:
-                  requests:
-                    memory: "?*"
-                    cpu: "?*"
                   limits:
                     memory: "?*"
                     cpu: "?*"
