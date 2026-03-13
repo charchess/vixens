@@ -2,9 +2,22 @@
 #
 # Kustomize Component: Base Requirements
 #
-# Minimal requirements for ALL applications:
-# - revisionHistoryLimit: 3
-# - SecurityContext hardened (pod level)
+# Minimal requirements for ALL applications (Bronze through Orichalcum).
+#
+# DEFENSE-IN-DEPTH: This component intentionally applies Diamond-level
+# security context (runAsNonRoot, seccompProfile: RuntimeDefault) to ALL
+# apps regardless of their target maturity tier. This is a security baseline,
+# not a tier requirement - all workloads should run with least privilege.
+#
+# Actual maturity tier is determined by Kyverno PolicyReports, not by which
+# components an app uses. Bronze apps using 'base' don't become Diamond;
+# they simply inherit good security defaults.
+#
+# Includes:
+#   - revisionHistoryLimit: 3 (prevent unbounded ReplicaSet growth)
+#   - runAsNonRoot: true (never run as root)
+#   - runAsUser/fsGroup: 1000 (predictable non-root UID)
+#   - seccompProfile: RuntimeDefault (container syscall filtering)
 #
 # Usage:
 #   components:
