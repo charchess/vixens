@@ -350,6 +350,60 @@ jobs:
             fi
           done
 
+  # ══════════════════════════════════════════════════════════════
+  # CONTAINER IMAGE SCANNING (warning only)
+  # ══════════════════════════════════════════════════════════════
+  image-scan:
+    name: Container Image Security
+    needs: [detect-changes, secret-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract container images
+        id: extract
+        run: |
+          echo "📦 Extracting container images from manifests"
+
+          # Extract images from all YAML files
+          find apps argocd -name "*.yaml" -type f \
+            -exec grep -h "image:" {} \; | \
+            sed 's/.*image:\s*//' | \
+            sed "s/[\"']//g" | \
+            grep -v '^#' | \
+            grep -v '^$' | \
+            sort -u > /tmp/images.txt
+
+          echo "📊 Found $(wc -l < /tmp/images.txt) unique images"
+          head -20 /tmp/images.txt
+
+          echo "count=$(wc -l < /tmp/images.txt)" >> $GITHUB_OUTPUT
+
+      - name: Scan sample images with Trivy
+        if: steps.extract.outputs.count > 0
+        run: |
+          echo "🔍 Scanning first 5 images as samples (warning only)"
+
+          head -5 /tmp/images.txt | while read image; do
+            echo ""
+            echo "════════════════════════════════════════"
+            echo "🐳 Scanning: $image"
+            echo "════════════════════════════════════════"
+
+            # Scan with trivy (exit 0 = warning only)
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              aquasec/trivy:latest image \
+              --severity CRITICAL,HIGH,MEDIUM \
+              --no-progress \
+              --timeout 5m \
+              "$image" || echo "⚠️ Scan failed for $image (might not be pullable)"
+          done
+
+          echo ""
+          echo "ℹ️ This is informational only - workflow continues regardless of findings"
+
   # 7️⃣ Vérification de la configuration production (trunk-based)
   prod-config-check:
     name: Production Configuration
