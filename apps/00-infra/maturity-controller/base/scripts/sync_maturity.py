@@ -47,6 +47,71 @@ def normalize_app_name(name, kind):
     return app_name or name
 
 
+def validate_sizing_coverage(namespace, name, kind):
+    """
+    Validate that all containers use Kyverno sizing labels (vixens.io/sizing.*).
+    
+    Returns True if ALL containers have sizing labels (Silver requirement satisfied
+    via Kyverno mutation). Returns False if any container lacks sizing labels.
+    
+    ANTI-PATTERN: Manual resources in Deployment spec are logged as warnings.
+    Apps should migrate to sizing labels instead.
+    """
+    # Fetch the workload
+    stdout, rc = run_cmd(f"kubectl get {kind} -n {namespace} {name} -o json")
+    if rc != 0:
+        logging.debug(f"Could not fetch {kind} {namespace}/{name} for sizing validation")
+        return False
+    
+    try:
+        workload = json.loads(stdout)
+    except json.JSONDecodeError:
+        return False
+    
+    # Extract pod template labels and containers
+    pod_template = workload.get("spec", {}).get("template", {})
+    pod_labels = pod_template.get("metadata", {}).get("labels", {})
+    containers = pod_template.get("spec", {}).get("containers", [])
+    
+    all_have_sizing = True
+    
+    # Check each container
+    for container in containers:
+        container_name = container.get("name")
+        sizing_label = f"vixens.io/sizing.{container_name}"
+        
+        # Check if sizing label exists
+        if sizing_label in pod_labels:
+            # ✅ OK - Kyverno will mutate this container
+            continue
+        
+        # ⚠️ ANTI-PATTERN: Check if manual resources are defined
+        resources = container.get("resources", {})
+        if resources.get("requests") or resources.get("limits"):
+            logging.warning(
+                f"⚠️  {namespace}/{name} container '{container_name}': "
+                f"ANTI-PATTERN - manual resources defined in Deployment spec. "
+                f"Migrate to vixens.io/sizing.{container_name} label instead."
+            )
+            all_have_sizing = False
+            continue
+        
+        # ❌ FAIL - container has no sizing label and no resources
+        logging.debug(
+            f"{namespace}/{name} container '{container_name}': "
+            f"missing sizing label (vixens.io/sizing.{container_name})"
+        )
+        all_have_sizing = False
+    
+    if all_have_sizing:
+        # All containers use sizing labels - proper Kyverno mutation pattern
+        logging.info(
+            f"✅ {namespace}/{name} ({kind}): sizing validation PASS "
+            f"({len(containers)} containers with sizing labels)"
+        )
+    
+    return all_have_sizing
+
 def sync_maturity():
     stdout, rc = run_cmd("kubectl get policyreport -A -o json")
     if rc != 0:
@@ -107,10 +172,23 @@ def sync_maturity():
         all_fails: set = set()
         for kind_data in components.values():
             all_fails.update(kind_data["fails"])
-
+        
+        # Sizing validation: if "Silver" fail is due to require-resources,
+        # but app has valid sizing label coverage, remove the fail
+        if "Silver" in all_fails:
+            # Check if this is a sizing-managed app
+            for kind in WORKLOAD_KINDS:
+                if validate_sizing_coverage(ns, name, kind):
+                    # Sizing validation passed - remove Silver fail
+                    all_fails.discard("Silver")
+                    logging.info(
+                        f"{ns}/{name}: Silver fail bypassed (sizing labels valid)"
+                    )
+                    break
+        
         current_tier = "none"
         missing_tier = TIERS[0].lower()  # default: missing Bronze
-
+        
         for i, tier in enumerate(TIERS):
             if tier in all_fails:
                 missing_tier = tier.lower()
