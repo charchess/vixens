@@ -214,7 +214,7 @@ jobs:
             fi
 
             # Valider avec kubeconform (sur le YAML buildé)
-            if ! kubeconform -ignore-missing-schemas -kubernetes-version 1.30.0 -strict -skip "$SKIP_KINDS" /tmp/built.yaml 2>&1; then
+            if ! kubeconform -ignore-missing-schemas -kubernetes-version 1.34.0 -strict -skip "$SKIP_KINDS" /tmp/built.yaml 2>&1; then
               echo "❌ KUBECONFORM FAILED: $overlay"
               return 1
             fi
