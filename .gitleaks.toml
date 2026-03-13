@@ -28,6 +28,7 @@ paths = [
     '''.*-lock\.json$''',
     '''\.trivyignore''',
     '''\.gitleaks\.toml''',
+    '''\.opencode/.*''',  # AI agent documentation with example credentials
 ]
 
 regexes = [
