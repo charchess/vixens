@@ -20,4 +20,11 @@ spec:
       containers:
         - name: velero
           # Resources will be mutated by Kyverno based on vixens.io/sizing.velero label
+          startupProbe:
+            httpGet:
+              path: /metrics
+              port: 8085
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            failureThreshold: 30  # 5 min max startup time
           resources: {}
