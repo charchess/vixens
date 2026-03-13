@@ -9,6 +9,7 @@ metadata:
     policies.kyverno.io/severity: medium
     policies.kyverno.io/description: >-
       Production applications must use HTTPS. This policy audits Ingress resources for TLS configuration.
+      HTTP-to-HTTPS redirect ingresses (entrypoint: web) are automatically bypassed.
 spec:
   validationFailureAction: Audit
   background: true
@@ -20,6 +21,12 @@ spec:
           - resources:
               kinds:
                 - Ingress
+      preconditions:
+        all:
+          # Skip HTTP redirect ingresses (they use 'web' entrypoint and redirect to HTTPS)
+          - key: "{{ request.object.metadata.annotations.['traefik.ingress.kubernetes.io/router.entrypoints'] || 'websecure' }}"
+            operator: NotEquals
+            value: "web"
       validate:
         message: "Ingress must have TLS configured for maturity Level 2 (Silver)."
         pattern:
