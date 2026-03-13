@@ -251,7 +251,7 @@ spec:
               chown -R 1000:1000 /data/node_modules /data/gemini-cli 2>/dev/null || true
       containers:
         - name: openclaw
-          image: ghcr.io/openclaw/openclaw:2026.3.11
+          image: ghcr.io/openclaw/openclaw:2026.3.12
           imagePullPolicy: Always
           command:
             - node
