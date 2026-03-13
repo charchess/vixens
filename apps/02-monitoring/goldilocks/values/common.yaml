@@ -14,7 +14,9 @@ controller:
       drop:
         - ALL
     readOnlyRootFilesystem: true
-  resources: {}  # No manual resources - Kyverno mutates via sizing labels
+  resources:
+    requests: {}  # Explicitly empty - Kyverno mutates via sizing labels
+    limits: {}
   deployment:
     podAnnotations:
       vixens.io/fast-start: "true"
@@ -40,7 +42,9 @@ dashboard:
       drop:
         - ALL
     readOnlyRootFilesystem: true
-  resources: {}  # No manual resources - Kyverno mutates via sizing labels
+  resources:
+    requests: {}  # Explicitly empty - Kyverno mutates via sizing labels
+    limits: {}
   deployment:
     podAnnotations:
       vixens.io/fast-start: "true"
