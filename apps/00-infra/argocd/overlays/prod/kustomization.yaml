@@ -183,6 +183,53 @@ patches:
     target:
       kind: Deployment
       name: argocd-redis
+
+  # Sizing labels for Bronze apps (applicationset, dex, notifications)
+  # ArgoCD applicationset-controller - manages ApplicationSets
+  - patch: |-
+      - op: add
+        path: /metadata/labels/vixens.io~1sizing-v2
+        value: "true"
+    target:
+      kind: Deployment
+      name: argocd-applicationset-controller
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/vixens.io~1sizing.argocd-applicationset-controller
+        value: G-small
+    target:
+      kind: Deployment
+      name: argocd-applicationset-controller
+  # ArgoCD dex-server - OIDC provider (auth disabled in prod)
+  - patch: |-
+      - op: add
+        path: /metadata/labels/vixens.io~1sizing-v2
+        value: "true"
+    target:
+      kind: Deployment
+      name: argocd-dex-server
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/vixens.io~1sizing.argocd-dex-server
+        value: G-nano
+    target:
+      kind: Deployment
+      name: argocd-dex-server
+  # ArgoCD notifications-controller - Slack/Discord notifications
+  - patch: |-
+      - op: add
+        path: /metadata/labels/vixens.io~1sizing-v2
+        value: "true"
+    target:
+      kind: Deployment
+      name: argocd-notifications-controller
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/vixens.io~1sizing.argocd-notifications-controller
+        value: G-nano
+    target:
+      kind: Deployment
+      name: argocd-notifications-controller
   # Gold maturity: sync-wave + goldilocks on all ArgoCD workloads (Deployment metadata, not pod template)
   - patch: |
       apiVersion: apps/v1
