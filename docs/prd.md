@@ -62,7 +62,7 @@ Le cluster Vixens nécessite une phase de consolidation après une période de c
 
 ### 4.3. Technical Constraints (Real-world Analysis)
 *   **Kubernetes Version :** v1.34.0
-*   **OS :** Talos Linux v1.12.2 (Kernel 6.18.5)
+*   **OS :** Talos Linux v1.12.4 (Kernel 6.18.5)
 *   **Nodes :** 3 Control-planes (phoebe, poison, powder), 2 Workers (peach, pearl)
 *   **IP Range :** 192.168.111.191 - 192.168.111.195
 *   **CNI :** Cilium

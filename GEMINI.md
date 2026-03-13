@@ -543,10 +543,10 @@ cat docs/adr/008-trunk-based-gitops-workflow.md
 **Vixens** is a multi-cluster Kubernetes homelab infrastructure following GitOps best practices.
 
 **Core Stack:**
-- OS: Talos Linux v1.11.0 (immutable, API-driven)
+- OS: Talos Linux v1.12.4 (immutable, API-driven)
 - Kubernetes: v1.34.0
 - Infrastructure: Terraform + Talos provider
-- GitOps: ArgoCD v7.7.7 (App-of-Apps pattern)
+- GitOps: ArgoCD v3.3.3 (App-of-Apps pattern)
 - CNI: Cilium v1.18.3 (eBPF, kube-proxy replacement)
 - LoadBalancer: Cilium L2 Announcements + LB IPAM
 - Ingress: Traefik v3.x

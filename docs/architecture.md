@@ -21,7 +21,7 @@ This document defines the architectural approach for standardizing the Vixens cl
     - **Network:** Cilium (CNI) + AdGuard Home (Internal DNS HA).
     - **Storage:** Synology CSI (iSCSI/NFS).
     - **Secrets:** Infisical Operator (Injector for storage & app secrets).
-    - **GitOps:** ArgoCD v7.x using a Trunk-based workflow (main branch).
+    - **GitOps:** ArgoCD v3.3.3 using a Trunk-based workflow (main branch).
 
 **Key Findings (2026-03-08):**
 - **Durability Gaps:** Many SQLite-based applications lack continuous replication → Blocage niveau Emerald (317 violations check-backup).
