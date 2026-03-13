@@ -14,8 +14,7 @@ controller:
       drop:
         - ALL
     readOnlyRootFilesystem: true
-  podLabels:
-    vixens.io/sizing.goldilocks-controller: G-nano
+  resources: {}  # No manual resources - Kyverno mutates via sizing labels
   deployment:
     podAnnotations:
       vixens.io/fast-start: "true"
@@ -41,8 +40,7 @@ dashboard:
       drop:
         - ALL
     readOnlyRootFilesystem: true
-  podLabels:
-    vixens.io/sizing.goldilocks-dashboard: V-small
+  resources: {}  # No manual resources - Kyverno mutates via sizing labels
   deployment:
     podAnnotations:
       vixens.io/fast-start: "true"
