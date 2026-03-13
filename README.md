@@ -4,8 +4,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.34.0-blue.svg)](https://kubernetes.io/)
-[![Talos](https://img.shields.io/badge/Talos-v1.11.0-orange.svg)](https://www.talos.dev/)
-[![ArgoCD](https://img.shields.io/badge/ArgoCD-v7.7.7-green.svg)](https://argo-cd.readthedocs.io/)
+[![Talos](https://img.shields.io/badge/Talos-v1.12.4-orange.svg)](https://www.talos.dev/)
+[![ArgoCD](https://img.shields.io/badge/ArgoCD-v3.3.3-green.svg)](https://argo-cd.readthedocs.io/)
 
 ---
 
@@ -49,9 +49,9 @@ just resume
 
 | Component | Version | Purpose |
 |-----------|---------|---------|
-| **Talos Linux** | v1.11.0 | Immutable, API-driven OS |
+| **Talos Linux** | v1.12.4 | Immutable, API-driven OS |
 | **Kubernetes** | v1.34.0 | Container orchestration |
-| **ArgoCD** | v7.7.7 | GitOps continuous delivery |
+| **ArgoCD** | v3.3.3 | GitOps continuous delivery |
 | **Cilium** | v1.18.3 | CNI with eBPF (kube-proxy replacement) |
 | **Traefik** | v3.x | Ingress controller |
 | **Synology CSI** | Latest | Persistent storage (iSCSI) |
