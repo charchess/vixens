@@ -5,6 +5,7 @@ metadata:
   name: sonarr
   labels:
     app: sonarr
+    app.kubernetes.io/managed-by: kustomize
     vixens.io/sizing-v2: "true"
     vixens.io/vpa-mode: Auto
 spec:

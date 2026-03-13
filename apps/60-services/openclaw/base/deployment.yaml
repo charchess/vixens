@@ -26,6 +26,7 @@ spec:
         vixens.io/sizing.setup-config: G-nano
         vixens.io/sizing.install-gemini: B-medium
         vixens.io/sizing.openclaw: SB-xlarge
+        vixens.io/sizing.data-syncer: V-nano
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
