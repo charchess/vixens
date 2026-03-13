@@ -20,7 +20,7 @@ spec:
                 - Pod
               selector:
                 matchLabels:
-                  vixens.io/tier: "diamond"
+                  vixens.io/maturity: "diamond"
       context:
         - name: velero_schedules
           apiCall:

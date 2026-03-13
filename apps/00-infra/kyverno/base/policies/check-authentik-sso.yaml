@@ -22,7 +22,7 @@ spec:
                 - Ingress
               selector:
                 matchLabels:
-                  vixens.io/tier: "diamond"
+                  vixens.io/maturity: "diamond"
       exclude:
         any:
           - resources:

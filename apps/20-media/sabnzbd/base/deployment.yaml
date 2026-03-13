@@ -7,7 +7,6 @@ metadata:
     app: sabnzbd
     vixens.io/sizing-v2: "true"
     vixens.io/vpa-mode: Auto
-    vixens.io/tier: "diamond"
 spec:
   strategy:
     type: Recreate

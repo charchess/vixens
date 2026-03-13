@@ -5,7 +5,6 @@ metadata:
   name: netbird-dashboard
   namespace: networking
   labels:
-    vixens.io/tier: "diamond"
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
@@ -34,7 +33,6 @@ metadata:
   name: netbird-api
   namespace: networking
   labels:
-    vixens.io/tier: "diamond"
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
@@ -64,7 +62,6 @@ metadata:
   name: netbird-signal
   namespace: networking
   labels:
-    vixens.io/tier: "diamond"
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
@@ -94,7 +91,6 @@ metadata:
   name: netbird-relay
   namespace: networking
   labels:
-    vixens.io/tier: "diamond"
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
