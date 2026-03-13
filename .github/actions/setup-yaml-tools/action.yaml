@@ -1,0 +1,40 @@
+---
+name: 'Setup YAML Tools'
+description: 'Install yamllint and yq for YAML validation and processing'
+author: 'charchess'
+
+inputs:
+  install-yamllint:
+    description: 'Install yamllint'
+    required: false
+    default: 'true'
+  install-yq:
+    description: 'Install yq'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install yamllint
+      if: inputs.install-yamllint == 'true'
+      shell: bash
+      run: |
+        echo "📦 Installing yamllint..."
+        sudo apt-get update && sudo apt-get install -y yamllint
+        yamllint --version
+
+    - name: Install yq
+      if: inputs.install-yq == 'true'
+      uses: mikefarah/yq@v4.44.1
+
+    - name: Verify installations
+      shell: bash
+      run: |
+        echo "✅ Installed tools:"
+        if [ "${{ inputs.install-yamllint }}" = "true" ]; then
+          echo "  - yamllint: $(yamllint --version)"
+        fi
+        if [ "${{ inputs.install-yq }}" = "true" ]; then
+          echo "  - yq: $(yq --version)"
+        fi
