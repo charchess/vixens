@@ -100,6 +100,7 @@ An **Architecture Decision Record** documents an important architectural decisio
 | 018 | Netbird VPN Deployment Architecture | Accepted | 2026-01 |
 | 022 | 7-Tier Goldification System v1 | Superseded by ADR-023 | 2026-02 |
 | 023 | 7-Tier Goldification System v2 | Active | 2026-03 |
+| 024 | SSO Debt Diamond Wave 7 | Accepted | 2026-03 |
 
 ---
 

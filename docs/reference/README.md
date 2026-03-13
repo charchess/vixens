@@ -12,7 +12,7 @@ Technical references and specifications for the Vixens project.
   The technical blueprint for the V4.0 Goldification campaign.
 
 - **[Quality Standards](quality-standards.md)**
-  Definition of Bronze, Silver, Gold, Platinum, and Elite tiers.
+  Definition of Bronze, Silver, Gold, Platinum, Emerald, Diamond, and Orichalcum tiers.
 
 - **[Resource Standards](RESOURCE_STANDARDS.md)**
   Technical standards for CPU and Memory allocation.

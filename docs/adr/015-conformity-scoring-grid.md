@@ -1,4 +1,4 @@
-# ADR-008: Conformity Scoring Grid Rationale
+# ADR-015: Conformity Scoring Grid Rationale
 
 **Date:** 2025-11-26
 **Status:** Deprecated
