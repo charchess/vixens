@@ -18,9 +18,6 @@ spec:
           - resources:
               kinds:
                 - Pod
-              selector:
-                matchLabels:
-                  vixens.io/tier: "emerald"
       validate:
         message: "Emerald tier pod must have at least one initContainer with 'restore' or 'init' in the name."
         deny:

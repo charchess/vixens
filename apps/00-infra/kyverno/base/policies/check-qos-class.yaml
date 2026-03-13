@@ -19,9 +19,6 @@ spec:
           - resources:
               kinds:
                 - Pod
-              selector:
-                matchLabels:
-                  vixens.io/tier: "platinum"
       validate:
         message: "Platinum apps should be Burstable or Guaranteed QoS."
         deny:

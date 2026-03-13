@@ -6,7 +6,6 @@ metadata:
   namespace: tools
   labels:
     app: linkwarden
-    vixens.io/tier: "diamond"
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure

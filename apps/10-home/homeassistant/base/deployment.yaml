@@ -11,7 +11,6 @@ metadata:
     vixens.io/sizing.restore-config: B-nano
     vixens.io/sizing.restore-db: B-nano
     vixens.io/backup-profile: "standard"
-    vixens.io/tier: "diamond"
   annotations:
     secret.reloader.stakater.com/reload: homeassistant-config
     argocd.argoproj.io/sync-wave: "10"

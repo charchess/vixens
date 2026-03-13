@@ -8,7 +8,6 @@ metadata:
     component: joex
     vixens.io/sizing-v2: "true"
     vixens.io/vpa-mode: Auto
-    vixens.io/tier: "diamond"
 spec:
   serviceName: docspell-joex
   replicas: 1
