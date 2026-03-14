@@ -67,4 +67,4 @@ sources:
   - ingress
 podLabels:
   vixens.io/sizing.external-dns: G-nano
-  vixens.io/sizing.unifi-webhook: G-nano
+  vixens.io/sizing.unifi-webhook: SB-micro

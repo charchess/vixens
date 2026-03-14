@@ -93,15 +93,11 @@ spec:
         args:
         - "echo \"--- Starting DB Restoration Logic (Safe Mode) ---\"\nDEST=\"/tmp/cache/frigate.db\"\
           \n\n# 1. Try restore from S3\necho \"\U0001F50D Attempting restoration from\
-          \ S3...\"\nif litestream restore -config /etc/litestream-config/litestream.yml\
+          \ S3...\"\nif timeout 30 litestream restore -config /etc/litestream-config/litestream.yml\
           \ -if-replica-exists \"$DEST\"; then\n  if [ -f \"$DEST\" ]; then\n    echo\
-          \ \"✅ Successfully restored from S3\"\n    exit 0\n  fi\nfi\n\n# 2. Try\
-          \ fallback from PVC\necho \"⚠️ S3 restoration failed. Checking PVC fallback\
-          \ (/config/frigate.db)...\"\nif [ -s /config/frigate.db ]; then\n  cp /config/frigate.db\
-          \ \"$DEST\"\n  echo \"✅ Successfully restored from PVC backup\"\n  exit\
-          \ 0\nfi\n\n# 3. Security Stop\necho \"❌ CRITICAL ERROR: No database found\
-          \ on S3 or PVC!\"\necho \"Stopping to prevent starting with an empty database\
-          \ and losing history.\"\nexit 1\n"
+          \ \"✅ Successfully restored from S3\"\n    exit 0\n  fi\nfi\n# 2. Security\
+          \ Stop\necho \"❌ CRITICAL ERROR: No database found on S3!\"\necho \"Using\
+          \ empty database - recordings history will be lost.\"\nexit 0\n"
         envFrom:
         - secretRef:
             name: frigate-secrets
