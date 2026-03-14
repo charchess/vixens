@@ -54,7 +54,7 @@ spec:
           args:
             - |
               set -e
-              TOOLS_VERSION="3"
+              TOOLS_VERSION="4"
               if [ -f /data/tools/.installed-version ] && [ "$(cat /data/tools/.installed-version)" = "$TOOLS_VERSION" ]; then
                 echo "Tools v$TOOLS_VERSION already present, skipping reinstall"
               else
@@ -65,7 +65,7 @@ spec:
                 apt-get install -y --no-install-recommends \
                   jq rsync python3-pip tree nano htop git sudo nmap dnsutils \
                   netcat-traditional sqlite3 ffmpeg imagemagick curl wget \
-                  ca-certificates gnupg lsb-release build-essential unzip zip gzip
+                  ca-certificates gnupg lsb-release build-essential unzip zip gzip openssl nodejs npm
                 for bin in jq rsync tree nano htop git nmap netcat ffmpeg convert sqlite3; do
                   cp /usr/bin/$bin /data/tools/bin/ 2>/dev/null || true
                   ldd /usr/bin/$bin 2>/dev/null | grep "=>" | awk '{print $3}' | xargs -I {} cp {} /data/tools/lib/ 2>/dev/null || true
@@ -95,8 +95,15 @@ spec:
                 ln -sf /data/tools/google-cloud-sdk/bin/gcloud /data/tools/bin/gcloud
                 ln -sf /data/tools/google-cloud-sdk/bin/gsutil /data/tools/bin/gsutil
                 ln -sf /data/tools/google-cloud-sdk/bin/bq /data/tools/bin/bq
-                # Install Google Python libraries
-                pip3 install --root=/data/tools google-auth-oauthlib google-api-python-client
+                # Install Python libraries
+                pip3 install --root=/data/tools \
+                  google-api-python-client google-auth-oauthlib google-auth-httplib2 \
+                  requests urllib3 pandas beautifulsoup4 lxml PyMuPDF pynetbox surrealdb
+                # Install Node packages
+                npm install -g @sinclair/typebox tslib
+                mkdir -p /data/tools/node_modules
+                cp -r /usr/local/lib/node_modules/@sinclair /data/tools/node_modules/ 2>/dev/null || true
+                cp -r /usr/local/lib/node_modules/tslib /data/tools/node_modules/ 2>/dev/null || true
                 echo "node ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/node
                 echo "$TOOLS_VERSION" > /data/tools/.installed-version
                 apt-get clean && rm -rf /var/lib/apt/lists/*
