@@ -37,6 +37,12 @@ spec:
           operator: Exists
           effect: NoSchedule
       initContainers:
+        - name: fix-permissions
+          image: busybox:1.37.0
+          command: ["sh", "-c", "chown -R 1000:1000 /config && find /config -type d -name '*-litestream' -exec rm -rf {} + 2>/dev/null || true"]
+          volumeMounts:
+            - name: config
+              mountPath: /config
         - name: restore-config
           image: rclone/rclone:1.73
           securityContext:
@@ -54,11 +60,11 @@ spec:
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               rclone copy s3:$LITESTREAM_BUCKET/config /config \
                 --transfers 4 \
-                --exclude "*.db*" \
-                --exclude "*.log" \
-                --exclude ".*-litestream" \
-                --exclude ".*-litestream/**" \
-                || true
+              --exclude "*.db*" \
+              --exclude "*.log" \
+              --exclude "**/*-litestream" \
+              --exclude "**/*-litestream/**" \
+              || true
           envFrom:
             - secretRef:
                 name: sabnzbd-secrets
@@ -126,19 +132,15 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
           livenessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - pgrep -f litestream || exit 1
+            httpGet:
+              path: /metrics
+              port: 9090
             initialDelaySeconds: 10
-            periodSeconds: 30
+            periodSeconds: 20
           readinessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - pgrep -f litestream || exit 1
+            httpGet:
+              path: /metrics
+              port: 9090
             initialDelaySeconds: 5
             periodSeconds: 10
         - name: config-syncer
@@ -158,10 +160,10 @@ spec:
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() {
                 rclone sync /config s3:$LITESTREAM_BUCKET/config \
-                  --exclude "*.db*" \
-                  --exclude "*.log" \
-                  --exclude ".*-litestream" \
-                  --exclude ".*-litestream/**";
+                --exclude "*.db*" \
+                --exclude "*.log" \
+                --exclude "**/*-litestream" \
+                --exclude "**/*-litestream/**";
               }
               while true; do
                 sync_s3;
