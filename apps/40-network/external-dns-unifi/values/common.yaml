@@ -39,10 +39,10 @@ sidecars:
     resources:
       requests:
         cpu: "10m"
-        memory: "64Mi"
+        memory: "32Mi"
       limits:
         cpu: "50m"
-        memory: "128Mi"
+        memory: "64Mi"
     livenessProbe:
       tcpSocket:
         port: webhook
