@@ -45,28 +45,16 @@ sidecars:
         cpu: "50m"
         memory: "64Mi"
     livenessProbe:
-      tcpSocket:
-        port: webhook
+      exec:
+        command: ["/bin/sh", "-c", "nc -z 127.0.0.1 8888"]
       initialDelaySeconds: 10
       periodSeconds: 10
     readinessProbe:
-      tcpSocket:
-        port: webhook
+      exec:
+        command: ["/bin/sh", "-c", "nc -z 127.0.0.1 8888"]
       initialDelaySeconds: 5
       periodSeconds: 10
 tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
     effect: NoSchedule
-livenessProbe:
-  enabled: true
-readinessProbe:
-  enabled: true
-# Scope
-policy: sync
-sources:
-  - ingress
-podLabels:
-  vixens.io/sizing-v2: "true"
-  vixens.io/sizing.external-dns: G-nano
-  vixens.io/sizing.unifi-webhook: SB-micro
