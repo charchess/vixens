@@ -66,6 +66,49 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+        - name: restore-db
+          image: litestream/litestream:0.5.9
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args:
+            - restore
+            - -config
+            - /etc/litestream.yml
+            - /tmp/cache/frigate.db
+          envFrom:
+            - secretRef:
+                name: frigate-secrets
+          volumeMounts:
+            - name: frigate-litestream-config
+              mountPath: /etc/litestream.yml
+              subPath: litestream.yml
+            - name: cache
+              mountPath: /tmp/cache
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 512Mi
+        - name: patch-config
+          image: busybox:1.37.0
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              if [ -f /config/config.yml ]; then
+                echo "Patching config.yml to use /tmp/cache/frigate.db..."
+                sed -i 's|/config/frigate.db|/tmp/cache/frigate.db|g' /config/config.yml
+              fi
+          volumeMounts:
+            - name: config
+              mountPath: /config
         - name: validate-config
           image: python:3.14-alpine
           command:
@@ -158,6 +201,8 @@ spec:
               subPath: Frigate
             - name: shm
               mountPath: /dev/shm
+            - name: cache
+              mountPath: /tmp/cache
             - name: dri
               mountPath: /dev/dri
         - name: litestream
@@ -188,6 +233,8 @@ spec:
             - name: frigate-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
+            - name: cache
+              mountPath: /tmp/cache
           livenessProbe:
             httpGet:
               path: /metrics
@@ -307,6 +354,10 @@ spec:
           emptyDir:
             medium: Memory
             sizeLimit: 1024Mi
+        - name: cache
+          emptyDir:
+            medium: Memory
+            sizeLimit: 512Mi
         - name: frigate-litestream-config
           configMap:
             name: frigate-litestream-config
