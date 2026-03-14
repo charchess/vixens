@@ -66,5 +66,6 @@ policy: sync
 sources:
   - ingress
 podLabels:
+  vixens.io/sizing-v2: "true"
   vixens.io/sizing.external-dns: G-nano
   vixens.io/sizing.unifi-webhook: SB-micro
