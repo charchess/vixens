@@ -26,6 +26,8 @@ sidecars:
       - containerPort: 8888
         name: webhook
     env:
+      - name: SERVER_HOST
+        value: "0.0.0.0"
       - name: UNIFI_HOST
         valueFrom:
           secretKeyRef:
