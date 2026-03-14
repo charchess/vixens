@@ -93,7 +93,7 @@ spec:
         args:
         - "echo \"--- Starting DB Restoration Logic (Safe Mode) ---\"\nDEST=\"/tmp/cache/frigate.db\"\
           \n\n# 1. Try restore from S3\necho \"\U0001F50D Attempting restoration from\
-          \ S3...\"\nif litestream restore -config /etc/litestream-config/litestream.yml\
+          \ S3...\"\nif timeout 30 litestream restore -config /etc/litestream-config/litestream.yml\
           \ -if-replica-exists \"$DEST\"; then\n  if [ -f \"$DEST\" ]; then\n    echo\
           \ \"✅ Successfully restored from S3\"\n    exit 0\n  fi\nfi\n\n# 2. Try\
           \ fallback from PVC\necho \"⚠️ S3 restoration failed. Checking PVC fallback\
