@@ -6,7 +6,7 @@ metadata:
 data:
   litestream.yml: |
     dbs:
-      - path: /config/frigate.db
+      - path: /tmp/cache/frigate.db
         replicas:
           - url: s3://$LITESTREAM_BUCKET/frigate.db
             endpoint: $LITESTREAM_ENDPOINT

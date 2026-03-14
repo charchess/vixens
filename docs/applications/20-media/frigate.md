@@ -74,6 +74,12 @@ kubectl -n media get ingressroutetcp
 - **SHM :** Taille augmentée à **4Gi** (production) pour supporter la haute résolution et éviter les crashs de `go2rtc`.
 - **Cache :** Volume emptyDir (Memory) à `/tmp/cache` pour performances.
 
+### Base de données (RAM Migration) 🚀
+- **Status :** **MIGRÉE EN RAM** (`/tmp/cache/frigate.db`)
+- **Raison :** Éviter les erreurs `database is locked` critiques sur le stockage iSCSI (Synology).
+- **Persistance :** Assurée par **Litestream** (réplication temps réel vers S3) et un InitContainer de restauration au démarrage.
+- **Bénéfice :** Performance d'écriture instantanée et stabilité totale des flux vidéo.
+
 ### Accélération Matérielle GPU ✅
 - **Status :** **ACTIVÉE** (Intel iGPU)
 - **Configuration :**

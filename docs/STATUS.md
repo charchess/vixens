@@ -101,7 +101,7 @@ Last Updated: 2026-03-11
 |-------------|--------|----------|-------|
 | postgresql-shared | ✅ | - | CloudNativePG |
 | redis-shared | ✅ | 🥇 Gold | |
-| mariadb-shared | ✅ | - | |
+| mariadb-shared | ✅ | - | Fixed: Storage permissions (fsGroup) |
 | cloudnative-pg | ✅ | 🥇 Gold | Operator |
 
 ---
@@ -110,7 +110,7 @@ Last Updated: 2026-03-11
 
 | Application | Health | Maturity | Notes |
 |-------------|--------|----------|-------|
-| homeassistant | ⚠️ | 🥈 Silver | **16 restarts**, PDB manquant |
+| homeassistant | ✅ | 🥈 Silver | Fixed: OOM & Probes. Resources adjusted. |
 | mealie | ✅ | 🥈 Silver | |
 | mosquitto | ✅ | - | MQTT broker |
 
@@ -123,7 +123,7 @@ Last Updated: 2026-03-11
 | jellyfin | ✅ | 🥇 Gold | Media server |
 | jellyseerr | ✅ | 🥇 Gold | Request management |
 | sabnzbd | ✅ | 🥈 Silver | Usenet downloader |
-| radarr | ✅ | 🥈 Silver | Movies |
+| radarr | ⚠️ | 🥈 Silver | **Restarts**, DB verrous iSCSI |
 | sonarr | ✅ | 🥈 Silver | TV Shows |
 | prowlarr | ✅ | 🥈 Silver | Indexer manager |
 | lidarr | ✅ | 🥈 Silver | Music |
@@ -131,7 +131,7 @@ Last Updated: 2026-03-11
 | whisparr | ✅ | 🥈 Silver | Adult content |
 | lazylibrarian | ✅ | 🥈 Silver | Books/Audiobooks |
 | music-assistant | ✅ | 🥇 Gold | |
-| frigate | ✅ | 🥈 Silver | NVR |
+| frigate | ✅ | 🥈 Silver | NVR - **DB Migrée en RAM** |
 | hydrus-client | ✅ | 🥈 Silver | |
 | booklore | ✅ | 🥇 Gold | |
 | birdnet-go | ✅ | 🥉 Bronze | Bird detection |
