@@ -9,6 +9,14 @@ image:
   tag: v0.20.0
 extraArgs:
   webhook-provider-url: http://127.0.0.1:8888
+# RBAC permissions for EndpointSlices (required for some sources)
+rbac:
+  create: true
+  extraRules:
+    - apiGroups: ["discovery.k8s.io"]
+      resources: ["endpointslices"]
+      verbs: ["get", "watch", "list"]
+
 # Sidecar Webhook
 sidecars:
   - name: unifi-webhook
@@ -43,15 +51,15 @@ sidecars:
         memory: "32Mi"
       limits:
         cpu: "50m"
-        memory: "64Mi"
+        memory: "512Mi"
     livenessProbe:
-      exec:
-        command: ["/bin/sh", "-c", "nc -z 127.0.0.1 8888"]
+      tcpSocket:
+        port: webhook
       initialDelaySeconds: 10
       periodSeconds: 10
     readinessProbe:
-      exec:
-        command: ["/bin/sh", "-c", "nc -z 127.0.0.1 8888"]
+      tcpSocket:
+        port: webhook
       initialDelaySeconds: 5
       periodSeconds: 10
 tolerations:
