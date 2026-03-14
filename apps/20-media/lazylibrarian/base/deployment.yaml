@@ -18,7 +18,7 @@ spec:
     metadata:
       labels:
         app: lazylibrarian
-        vixens.io/sizing.lazylibrarian: V-small
+        vixens.io/sizing.lazylibrarian: SB-small
         vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.config-syncer: V-nano
         vixens.io/sizing.fix-permissions: G-nano
