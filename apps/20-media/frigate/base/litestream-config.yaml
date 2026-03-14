@@ -5,10 +5,9 @@ metadata:
   name: frigate-litestream-config
 data:
   litestream.yml: |
+    addr: ":9090"
     dbs:
       - path: /tmp/cache/frigate.db
         replicas:
           - url: s3://$LITESTREAM_BUCKET/frigate.db
             endpoint: $LITESTREAM_ENDPOINT
-          - path: /config/frigate.db
-    addr: ":9090"
