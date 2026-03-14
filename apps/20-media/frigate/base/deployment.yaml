@@ -16,380 +16,338 @@ spec:
     metadata:
       labels:
         app: frigate
-        vixens.io/backup-profile: "relaxed"
+        vixens.io/backup-profile: relaxed
       annotations:
-        reloader.stakater.com/auto: "true"
-        vixens.io/fast-start: "true"
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9090"
-        prometheus.io/path: "/metrics"
-        vixens.io/no-long-connections: "true"
+        reloader.stakater.com/auto: 'true'
+        vixens.io/fast-start: 'true'
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9090'
+        prometheus.io/path: /metrics
+        vixens.io/no-long-connections: 'true'
     spec:
       priorityClassName: vixens-medium
       tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
       initContainers:
-        - name: restore-config
-          image: rclone/rclone:1.73
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/config /config \
-                --transfers 4 \
-                --exclude "*.db*" \
-                --exclude "*.log" \
-                --exclude ".*-litestream" \
-                --exclude ".*-litestream/**" \
-                || true
-          envFrom:
-            - secretRef:
-                name: frigate-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
-          volumeMounts:
-            - name: config
-              mountPath: /config
-        - name: restore-db
-          image: litestream/litestream:0.5.9
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              echo "--- Starting DB Restoration Logic (Safe Mode) ---"
-              DEST="/tmp/cache/frigate.db"
-              
-              # 1. Try restore from S3
-              echo "🔍 Attempting restoration from S3..."
-              if litestream restore -config /etc/litestream.yml -if-replica-exists "$DEST"; then
-                if [ -f "$DEST" ]; then
-                  echo "✅ Successfully restored from S3"
-                  exit 0
-                fi
-              fi
-              
-              # 2. Try fallback from PVC
-              echo "⚠️ S3 restoration failed. Checking PVC fallback (/config/frigate.db)..."
-              if [ -s /config/frigate.db ]; then
-                cp /config/frigate.db "$DEST"
-                echo "✅ Successfully restored from PVC backup"
-                exit 0
-              fi
-              
-              # 3. Security Stop
-              echo "❌ CRITICAL ERROR: No database found on S3 or PVC!"
-              echo "Stopping to prevent starting with an empty database and losing history."
-              exit 1
-          envFrom:
-            - secretRef:
-                name: frigate-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: frigate-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
-            - name: cache
-              mountPath: /tmp/cache
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 512Mi
-        - name: patch-config
-          image: busybox:1.37.0
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              if [ -f /config/config.yml ]; then
-                echo "Patching config.yml to use /tmp/cache/frigate.db..."
-                sed -i 's|/config/frigate.db|/tmp/cache/frigate.db|g' /config/config.yml
-              fi
-          volumeMounts:
-            - name: config
-              mountPath: /config
-        - name: validate-config
-          image: python:3.14-alpine
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              pip install pyyaml -q >/dev/null 2>&1
-              echo "Validating Frigate config..."
-              if [ -f /config/config.yml ]; then
-                if python3 -c "import yaml; yaml.safe_load(open('/config/config.yml'))" 2>/dev/null; then
-                  echo "✅ Config is valid YAML"
-                  exit 0
-                else
-                  echo "❌ Config is corrupted, restoring from backup..."
-                  # Find most recent valid backup
-                  for backup in $(ls -t /config/config.yml.backup.* 2>/dev/null); do
-                    if python3 -c "import yaml; yaml.safe_load(open('$backup'))" 2>/dev/null; then
-                      cp "$backup" /config/config.yml
-                      echo "✅ Restored from $backup"
-                      exit 0
-                    fi
-                  done
-                  # If no valid backup, try backup_config.yaml
-                  if [ -f /config/backup_config.yaml ] && python3 -c "import yaml; yaml.safe_load(open('/config/backup_config.yaml'))" 2>/dev/null; then
-                    cp /config/backup_config.yaml /config/config.yml
-                    echo "✅ Restored from backup_config.yaml"
-                    exit 0
-                  fi
-                  # Fallback: copy backup_config.yaml even if not explicitly a backup
-                  if [ -f /config/backup_config.yaml ]; then
-                    cp /config/backup_config.yaml /config/config.yml
-                    echo "✅ Restored from backup_config.yaml (fallback)"
-                    exit 0
-                  fi
-                  echo "❌ No valid backup found! Using default config."
-                  exit 0
-                fi
-              else
-                echo "⚠️ No config.yml found"
-                exit 0
-              fi
-          volumeMounts:
-            - name: config
-              mountPath: /config
-          resources:
-            requests:
-              cpu: 10m
-              memory: 32Mi
-            limits:
-              cpu: 100m
-              memory: 64Mi
-      containers:
-        - name: frigate
-          image: ghcr.io/blakeblackshear/frigate:0.17.0-beta2
-          securityContext:
-            privileged: true
-          ports:
-            - containerPort: 5000
-              name: http
-            - containerPort: 8554
-              name: rtsp
-          livenessProbe:
-            tcpSocket:
-              port: http
-            initialDelaySeconds: 120
-            periodSeconds: 20
-          readinessProbe:
-            tcpSocket:
-              port: http
-            initialDelaySeconds: 60
-            periodSeconds: 10
-          startupProbe:
-            tcpSocket:
-              port: http
-            failureThreshold: 30
-            periodSeconds: 10
-          resources:
-            requests:
-              cpu: 500m
-              memory: 1Gi
-            limits:
-              cpu: 4000m
-              memory: 4Gi
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: storage
-              mountPath: /media/frigate
-              subPath: Frigate
-            - name: shm
-              mountPath: /dev/shm
-            - name: cache
-              mountPath: /tmp/cache
-            - name: dri
-              mountPath: /dev/dri
-        - name: litestream
-          image: litestream/litestream:0.5.9
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - replicate
-            - -config
-            - /etc/litestream.yml
-          ports:
-            - containerPort: 9090
-              name: metrics
-          envFrom:
-            - secretRef:
-                name: frigate-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: frigate-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
-            - name: cache
-              mountPath: /tmp/cache
-          livenessProbe:
-            httpGet:
-              path: /metrics
-              port: metrics
-            initialDelaySeconds: 10
-            periodSeconds: 20
-          readinessProbe:
-            httpGet:
-              path: /metrics
-              port: metrics
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          startupProbe:
-            httpGet:
-              path: /metrics
-              port: metrics
-            failureThreshold: 15
-            periodSeconds: 10
-        - name: config-syncer
-          image: python:3.14-alpine
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              # Install rclone
-              apk add --no-cache rclone
-              pip install pyyaml -q >/dev/null 2>&1
-
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-
-              # Backup config.yml with validation
-              backup_config() {
-                if [ -f /config/config.yml ]; then
-                  # Validate YAML syntax
-                  if python3 -c "import yaml; yaml.safe_load(open('/config/config.yml'))" 2>/dev/null; then
-                    # Create timestamped backup
-                    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-                    cp /config/config.yml "/config/config.yml.backup.${TIMESTAMP}"
-                    # Keep only last 10 backups
-                    ls -t /config/config.yml.backup.* 2>/dev/null | tail -n +11 | xargs -r rm -f
-                    echo "✅ Config backed up at ${TIMESTAMP}"
-                  else
-                    echo "⚠️ WARNING: config.yml is invalid YAML, skipping backup"
-                  fi
-                fi
-              }
-
-              sync_s3() {
-                # Backup before sync
-                backup_config
-                # Sync to S3
-                rclone sync /config s3:$LITESTREAM_BUCKET/config \
-                  --exclude "*.db*" \
-                  --exclude "*.log" \
-                  --exclude ".*-litestream" \
-                  --exclude ".*-litestream/**" \
-                  --exclude "*.backup.*";
-              }
-              while true; do
-                sync_s3;
-                sleep 60;
-              done
-          envFrom:
-            - secretRef:
-                name: frigate-secrets
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
-          volumeMounts:
-            - name: config
-              mountPath: /config
-          livenessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - pgrep -f rclone || exit 1
-            initialDelaySeconds: 30
-            periodSeconds: 60
-          readinessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - pgrep -f rclone || exit 1
-            initialDelaySeconds: 10
-            periodSeconds: 30
-          startupProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - pgrep -f rclone || exit 1
-            failureThreshold: 15
-            periodSeconds: 10
-      volumes:
+      - name: restore-config
+        image: rclone/rclone:1.73
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+        command:
+        - sh
+        - -c
+        args:
+        - "export RCLONE_CONFIG_S3_TYPE=s3\nexport RCLONE_CONFIG_S3_PROVIDER=Other\n\
+          export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID\nexport\
+          \ RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY\nexport\
+          \ RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT\nrclone copy s3:$LITESTREAM_BUCKET/config\
+          \ /config \\\n  --transfers 4 \\\n  --exclude \"*.db*\" \\\n  --exclude\
+          \ \"*.log\" \\\n  --exclude \".*-litestream\" \\\n  --exclude \".*-litestream/**\"\
+          \ \\\n  || true\n"
+        envFrom:
+        - secretRef:
+            name: frigate-secrets
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        volumeMounts:
         - name: config
-          persistentVolumeClaim:
-            claimName: frigate-config-pvc
-        - name: storage
-          nfs:
-            server: 192.168.111.69
-            path: /volume3/Internal
-        - name: shm
-          emptyDir:
-            medium: Memory
-            sizeLimit: 1024Mi
+          mountPath: /config
+      - name: generate-litestream-config
+        image: busybox:1.37.0
+        command:
+        - sh
+        - -c
+        args:
+        - "cat > /litestream-config/litestream.yml <<EOF\naddr: \":9090\"\ndbs:\n\
+          \  - path: /tmp/cache/frigate.db\n    replicas:\n      - url: s3://${LITESTREAM_BUCKET}/frigate.db\n\
+          \        endpoint: ${LITESTREAM_ENDPOINT}\nEOF"
+        envFrom:
+        - secretRef:
+            name: frigate-secrets
+        volumeMounts:
+        - name: generated-litestream-config
+          mountPath: /litestream-config
+        resources:
+          requests:
+            cpu: 5m
+            memory: 16Mi
+          limits:
+            cpu: 10m
+            memory: 32Mi
+      - name: restore-db
+        image: litestream/litestream:0.5.9
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+        command:
+        - sh
+        - -c
+        args:
+        - "echo \"--- Starting DB Restoration Logic (Safe Mode) ---\"\nDEST=\"/tmp/cache/frigate.db\"\
+          \n\n# 1. Try restore from S3\necho \"\U0001F50D Attempting restoration from\
+          \ S3...\"\nif litestream restore -config /etc/litestream-config/litestream.yml\
+          \ -if-replica-exists \"$DEST\"; then\n  if [ -f \"$DEST\" ]; then\n    echo\
+          \ \"✅ Successfully restored from S3\"\n    exit 0\n  fi\nfi\n\n# 2. Try\
+          \ fallback from PVC\necho \"⚠️ S3 restoration failed. Checking PVC fallback\
+          \ (/config/frigate.db)...\"\nif [ -s /config/frigate.db ]; then\n  cp /config/frigate.db\
+          \ \"$DEST\"\n  echo \"✅ Successfully restored from PVC backup\"\n  exit\
+          \ 0\nfi\n\n# 3. Security Stop\necho \"❌ CRITICAL ERROR: No database found\
+          \ on S3 or PVC!\"\necho \"Stopping to prevent starting with an empty database\
+          \ and losing history.\"\nexit 1\n"
+        envFrom:
+        - secretRef:
+            name: frigate-secrets
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: generated-litestream-config
+          mountPath: /etc/litestream-config
         - name: cache
-          emptyDir:
-            medium: Memory
-            sizeLimit: 512Mi
-        - name: frigate-litestream-config
-          configMap:
-            name: frigate-litestream-config
+          mountPath: /tmp/cache
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 512Mi
+      - name: patch-config
+        image: busybox:1.37.0
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+        command:
+        - sh
+        - -c
+        args:
+        - "if [ -f /config/config.yml ]; then\n  echo \"Patching config.yml to use\
+          \ /tmp/cache/frigate.db...\"\n  sed -i 's|/config/frigate.db|/tmp/cache/frigate.db|g'\
+          \ /config/config.yml\nfi\n"
+        volumeMounts:
+        - name: config
+          mountPath: /config
+      - name: validate-config
+        image: python:3.14-alpine
+        command:
+        - sh
+        - -c
+        args:
+        - "pip install pyyaml -q >/dev/null 2>&1\necho \"Validating Frigate config...\"\
+          \nif [ -f /config/config.yml ]; then\n  if python3 -c \"import yaml; yaml.safe_load(open('/config/config.yml'))\"\
+          \ 2>/dev/null; then\n    echo \"✅ Config is valid YAML\"\n    exit 0\n \
+          \ else\n    echo \"❌ Config is corrupted, restoring from backup...\"\n \
+          \   # Find most recent valid backup\n    for backup in $(ls -t /config/config.yml.backup.*\
+          \ 2>/dev/null); do\n      if python3 -c \"import yaml; yaml.safe_load(open('$backup'))\"\
+          \ 2>/dev/null; then\n        cp \"$backup\" /config/config.yml\n       \
+          \ echo \"✅ Restored from $backup\"\n        exit 0\n      fi\n    done\n\
+          \    # If no valid backup, try backup_config.yaml\n    if [ -f /config/backup_config.yaml\
+          \ ] && python3 -c \"import yaml; yaml.safe_load(open('/config/backup_config.yaml'))\"\
+          \ 2>/dev/null; then\n      cp /config/backup_config.yaml /config/config.yml\n\
+          \      echo \"✅ Restored from backup_config.yaml\"\n      exit 0\n    fi\n\
+          \    # Fallback: copy backup_config.yaml even if not explicitly a backup\n\
+          \    if [ -f /config/backup_config.yaml ]; then\n      cp /config/backup_config.yaml\
+          \ /config/config.yml\n      echo \"✅ Restored from backup_config.yaml (fallback)\"\
+          \n      exit 0\n    fi\n    echo \"❌ No valid backup found! Using default\
+          \ config.\"\n    exit 0\n  fi\nelse\n  echo \"⚠️ No config.yml found\"\n\
+          \  exit 0\nfi\n"
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+      containers:
+      - name: frigate
+        image: ghcr.io/blakeblackshear/frigate:0.17.0-beta2
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 5000
+          name: http
+        - containerPort: 8554
+          name: rtsp
+        livenessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 120
+          periodSeconds: 20
+        readinessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        startupProbe:
+          tcpSocket:
+            port: http
+          failureThreshold: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 4000m
+            memory: 4Gi
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: storage
+          mountPath: /media/frigate
+          subPath: Frigate
+        - name: shm
+          mountPath: /dev/shm
+        - name: cache
+          mountPath: /tmp/cache
         - name: dri
-          hostPath:
-            path: /dev/dri
+          mountPath: /dev/dri
+      - name: litestream
+        image: litestream/litestream:0.5.9
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+        args:
+        - replicate
+        - -config
+        - /etc/litestream-config/litestream.yml
+        ports:
+        - containerPort: 9090
+          name: metrics
+        envFrom:
+        - secretRef:
+            name: frigate-secrets
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: generated-litestream-config
+          mountPath: /etc/litestream-config
+        - name: cache
+          mountPath: /tmp/cache
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          initialDelaySeconds: 10
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        startupProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          failureThreshold: 15
+          periodSeconds: 10
+      - name: config-syncer
+        image: python:3.14-alpine
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+        command:
+        - sh
+        - -c
+        args:
+        - "# Install rclone\napk add --no-cache rclone\npip install pyyaml -q >/dev/null\
+          \ 2>&1\n\nexport RCLONE_CONFIG_S3_TYPE=s3\nexport RCLONE_CONFIG_S3_PROVIDER=Other\n\
+          export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID\nexport\
+          \ RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY\nexport\
+          \ RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT\n\n# Backup config.yml\
+          \ with validation\nbackup_config() {\n  if [ -f /config/config.yml ]; then\n\
+          \    # Validate YAML syntax\n    if python3 -c \"import yaml; yaml.safe_load(open('/config/config.yml'))\"\
+          \ 2>/dev/null; then\n      # Create timestamped backup\n      TIMESTAMP=$(date\
+          \ +%Y%m%d_%H%M%S)\n      cp /config/config.yml \"/config/config.yml.backup.${TIMESTAMP}\"\
+          \n      # Keep only last 10 backups\n      ls -t /config/config.yml.backup.*\
+          \ 2>/dev/null | tail -n +11 | xargs -r rm -f\n      echo \"✅ Config backed\
+          \ up at ${TIMESTAMP}\"\n    else\n      echo \"⚠️ WARNING: config.yml is\
+          \ invalid YAML, skipping backup\"\n    fi\n  fi\n}\n\nsync_s3() {\n  # Backup\
+          \ before sync\n  backup_config\n  # Sync to S3\n  rclone sync /config s3:$LITESTREAM_BUCKET/config\
+          \ \\\n    --exclude \"*.db*\" \\\n    --exclude \"*.log\" \\\n    --exclude\
+          \ \".*-litestream\" \\\n    --exclude \".*-litestream/**\" \\\n    --exclude\
+          \ \"*.backup.*\";\n}\nwhile true; do\n  sync_s3;\n  sleep 60;\ndone\n"
+        envFrom:
+        - secretRef:
+            name: frigate-secrets
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - pgrep -f rclone || exit 1
+          initialDelaySeconds: 30
+          periodSeconds: 60
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - pgrep -f rclone || exit 1
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        startupProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - pgrep -f rclone || exit 1
+          failureThreshold: 15
+          periodSeconds: 10
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: frigate-config-pvc
+      - name: storage
+        nfs:
+          server: 192.168.111.69
+          path: /volume3/Internal
+      - name: shm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 1024Mi
+      - name: cache
+        emptyDir:
+          medium: Memory
+          sizeLimit: 512Mi
+      - name: frigate-litestream-config
+        configMap:
+          name: frigate-litestream-config
+      - name: dri
+        hostPath:
+          path: /dev/dri
+      - name: generated-litestream-config
+        emptyDir:
+          medium: Memory
+          sizeLimit: 16Mi
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
