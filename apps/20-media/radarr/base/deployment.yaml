@@ -182,6 +182,7 @@ spec:
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() {
                 rclone sync /config s3:$LITESTREAM_BUCKET/config \
+                  --exclude "*.db*" \
                   --exclude "*.log" \
                   --exclude "tts/**" \
                   --exclude "backups/**" \
