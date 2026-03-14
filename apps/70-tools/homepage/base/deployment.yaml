@@ -54,7 +54,7 @@ spec:
       priorityClassName: vixens-low
       containers:
         - name: homepage
-          image: ghcr.io/gethomepage/homepage:v1.10
+          image: ghcr.io/gethomepage/homepage:v1.11
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
