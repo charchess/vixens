@@ -71,15 +71,41 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+          command:
+            - sh
+            - -c
           args:
-            - restore
-            - -config
-            - /etc/litestream.yml
-            - /tmp/cache/frigate.db
+            - |
+              echo "--- Starting DB Restoration Logic (Safe Mode) ---"
+              DEST="/tmp/cache/frigate.db"
+              
+              # 1. Try restore from S3
+              echo "🔍 Attempting restoration from S3..."
+              if litestream restore -config /etc/litestream.yml -if-replica-exists "$DEST"; then
+                if [ -f "$DEST" ]; then
+                  echo "✅ Successfully restored from S3"
+                  exit 0
+                fi
+              fi
+              
+              # 2. Try fallback from PVC
+              echo "⚠️ S3 restoration failed. Checking PVC fallback (/config/frigate.db)..."
+              if [ -s /config/frigate.db ]; then
+                cp /config/frigate.db "$DEST"
+                echo "✅ Successfully restored from PVC backup"
+                exit 0
+              fi
+              
+              # 3. Security Stop
+              echo "❌ CRITICAL ERROR: No database found on S3 or PVC!"
+              echo "Stopping to prevent starting with an empty database and losing history."
+              exit 1
           envFrom:
             - secretRef:
                 name: frigate-secrets
           volumeMounts:
+            - name: config
+              mountPath: /config
             - name: frigate-litestream-config
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
