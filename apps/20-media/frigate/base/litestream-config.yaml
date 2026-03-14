@@ -10,4 +10,5 @@ data:
         replicas:
           - url: s3://$LITESTREAM_BUCKET/frigate.db
             endpoint: $LITESTREAM_ENDPOINT
+          - path: /config/frigate.db
     addr: ":9090"
