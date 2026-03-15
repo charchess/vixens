@@ -44,6 +44,10 @@ spec:
           env:
             - name: N8N_PORT
               value: "5678"
+            - name: N8N_URL
+              value: "https://n8n.truxonline.com"
+            - name: WEBHOOK_URL
+              value: "https://n8n.truxonline.com"
             - name: DB_TYPE
               value: "postgresdb"
             - name: DB_POSTGRESDB_HOST
