@@ -24,6 +24,11 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: tools
+    # Allow ingress from n8n (webhook triggers)
+    - from:
+        - podSelector:
+            matchLabels:
+              app: n8n
   egress:
     # Allow all egress (homelab: DNS, inter-app, external APIs)
     - {}
