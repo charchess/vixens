@@ -1,0 +1,26 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - ingress.yaml
+
+components:
+  - ../../../../_shared/components/gold-maturity
+
+patches:
+  - target:
+      kind: InfisicalSecret
+      name: n8n-secrets
+    patch: |-
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod
+  - target:
+      kind: InfisicalSecret
+      name: n8n-db-credentials-sync
+    patch: |-
+      - op: replace
+        path: /spec/authentication/universalAuth/secretsScope/envSlug
+        value: prod

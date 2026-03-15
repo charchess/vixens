@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n
+  labels:
+    app: n8n
+spec:
+  ports:
+    - port: 5678
+      targetPort: 5678
+      protocol: TCP
+      name: http
+  selector:
+    app: n8n
