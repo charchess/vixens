@@ -90,7 +90,7 @@ labels:
 
 # Pod labels for sizing-v2 policy (Bronze maturity requirement)
 podLabels:
-  vixens.io/sizing.velero: V-medium
+  vixens.io/sizing.velero: SB-small
 podAnnotations:
   vixens.io/fast-start: "true"
   vixens.io/noingressneeded: "true"
@@ -118,7 +118,7 @@ nodeAgent:
     vixens.io/fast-start: "true"
     vixens.io/noingressneeded: "true"
   podLabels:
-    vixens.io/sizing.node-agent: V-medium
+    vixens.io/sizing.node-agent: SB-nano
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
