@@ -4,10 +4,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: n8n-config-pvc
 spec:
-  volumeBindingMode: Immediate
   accessModes:
     - ReadWriteOnce
-  storageClassName: synelia-iscsi-retain
+  storageClassName: synelia-iscsi-delete
   resources:
     requests:
       storage: 5Gi
