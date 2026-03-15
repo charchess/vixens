@@ -4,7 +4,6 @@ kind: PersistentVolumeClaim
 metadata:
   name: n8n-config-pvc
   annotations:
-    argocd.argoproj.io/sync-wave: "10"
 spec:
   accessModes:
     - ReadWriteOnce
