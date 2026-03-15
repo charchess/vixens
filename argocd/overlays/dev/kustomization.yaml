@@ -81,3 +81,4 @@ resources:
   # - apps/trivy.yaml
   # - apps/firefly-iii-importer.yaml
   # - apps/radar.yaml
+  # - apps/n8n.yaml
