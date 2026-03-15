@@ -19,6 +19,11 @@ spec:
       ports:
         - protocol: TCP
           port: 5678
+    # Allow ingress from tools (Changedetection)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: tools
   egress:
     # Allow all egress (Workflows need to call external APIs)
     - {}
