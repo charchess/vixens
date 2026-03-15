@@ -4,7 +4,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: n8n-config-pvc
   annotations:
+    volume.beta.kubernetes.io/storage-class: synelia-iscsi-retain
 spec:
+  volumeBindingMode: Immediate
   accessModes:
     - ReadWriteOnce
   storageClassName: synelia-iscsi-retain
