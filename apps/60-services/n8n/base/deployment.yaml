@@ -33,6 +33,11 @@ spec:
       containers:
         - name: n8n
           image: docker.n8n.io/n8nio/n8n:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 5678
               name: http
@@ -89,5 +94,9 @@ spec:
             claimName: n8n-config-pvc
       securityContext:
         runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
