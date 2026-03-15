@@ -3,6 +3,8 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: n8n-config-pvc
+  annotations:
+    argocd.argoproj.io/health-options: ignore
 spec:
   accessModes:
     - ReadWriteOnce
