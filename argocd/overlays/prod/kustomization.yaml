@@ -49,9 +49,10 @@ resources:
   - apps/amule.yaml
   - apps/media-shared-secrets.yaml
   - apps/radarr.yaml
-  - apps/frigate.yaml
+  - apps/docspell.yaml
   - apps/firefly-iii.yaml
   - apps/firefly-iii-importer.yaml
+  - apps/n8n.yaml
   - apps/lidarr.yaml
   - apps/lazylibrarian.yaml
   - apps/booklore.yaml

@@ -66,6 +66,11 @@ spec:
         login: true
         passwordSecret:
           name: firefly-iii-postgresql-credentials
+      - name: n8n
+        ensure: present
+        login: true
+        passwordSecret:
+          name: n8n-db-credentials
   postgresql:
     pg_hba:
       - host all postgres all trust

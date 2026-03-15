@@ -1,0 +1,93 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n
+  labels:
+    app: n8n
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: n8n
+  template:
+    metadata:
+      labels:
+        app: n8n
+        vixens.io/sizing.n8n: SB-medium
+        vixens.io/backup-profile: "standard"
+      annotations:
+        reloader.stakater.com/auto: "true"
+        vixens.io/fast-start: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5678"
+        prometheus.io/path: "/metrics"
+    spec:
+      priorityClassName: vixens-medium
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: n8n
+          image: docker.n8n.io/n8nio/n8n:latest
+          ports:
+            - containerPort: 5678
+              name: http
+          env:
+            - name: N8N_PORT
+              value: "5678"
+            - name: DB_TYPE
+              value: "postgresdb"
+            - name: DB_POSTGRESDB_HOST
+              value: "postgresql-shared-rw.databases.svc.cluster.local"
+            - name: DB_POSTGRESDB_PORT
+              value: "5432"
+            - name: DB_POSTGRESDB_DATABASE
+              value: "n8n"
+            - name: DB_POSTGRESDB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-db-credentials
+                  key: username
+            - name: DB_POSTGRESDB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-db-credentials
+                  key: password
+            - name: N8N_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-secrets
+                  key: N8N_ENCRYPTION_KEY
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /home/node/.n8n
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: n8n-config-pvc
+      securityContext:
+        runAsUser: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
