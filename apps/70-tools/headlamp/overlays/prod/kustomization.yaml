@@ -6,7 +6,8 @@ resources:
   - ingress.yaml
 
 components:
-  - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/sync-wave/wave-11
+  - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/revision-history-limit
 
 patches:

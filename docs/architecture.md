@@ -115,10 +115,20 @@ The architecture uses a modular **Kustomize Component** approach:
 
 ```plaintext
 apps/_shared/components/
-├── gold-maturity/       # Probes, Goldilocks, revisionHistoryLimit
+├── sync-wave/           # ArgoCD deployment ordering
+│   ├── wave-1/          # Infrastructure secrets (before databases)
+│   ├── wave-2/          # Databases (after secrets, before apps)
+│   ├── wave-5/          # Network services (after databases, before apps)
+│   └── wave-10/         # Standard applications (default layer)
+├── goldilocks/          # VPA resource recommendations
+│   └── enabled/         # Observation mode (no auto-apply)
+├── revision-history-limit/ # ReplicaSet history limit (etcd optimization)
 ├── priority/            # PriorityClass (critical, high, medium, low)
 ├── poddisruptionbudget/ # PDB configurations (0, 1, 50percent)
-├── probes/              # Probe templates (basic, advanced)
+├── probes/              # Health check templates (basic, advanced)
+├── metrics/             # Prometheus scraping annotations
+├── nometrics/           # Metrics exemption annotation
+├── tolerations/         # Node affinity and tolerations
 └── resources/           # Resource sizing templates
 ```
 

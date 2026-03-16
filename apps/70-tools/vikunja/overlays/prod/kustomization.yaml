@@ -4,7 +4,8 @@ kind: Kustomization
 resources:
   - ../../base
 components:
-  - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/sync-wave/wave-9
+  - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
 
 patches:

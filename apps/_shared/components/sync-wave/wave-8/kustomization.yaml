@@ -1,0 +1,37 @@
+---
+# Kustomize Component: Sync Wave 8
+#
+# ArgoCD sync-wave annotation for application deployment ordering.
+# Wave 8 applications deploy at this specific point in the sequence.
+#
+# Usage in overlay:
+#   components:
+#     - ../../../../_shared/components/sync-wave/wave-8
+#
+# Reference: https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  # Apply sync-wave=8 to all Deployments
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+        annotations:
+          argocd.argoproj.io/sync-wave: "8"
+    target:
+      kind: Deployment
+
+  # Apply sync-wave=8 to all StatefulSets
+  - patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: all-statefulsets
+        annotations:
+          argocd.argoproj.io/sync-wave: "8"
+    target:
+      kind: StatefulSet
