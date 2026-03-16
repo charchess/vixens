@@ -4,14 +4,7 @@ commonLabels:
   environment: dev
 kind: Kustomization
 namespace: test
-patches:
-  - patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: any\nspec:\n \
-      \ replicas: 0"
-    target:
-      kind: Deployment
-  - patch: "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: any\nspec:\n\
-      \  replicas: 0"
-    target:
-      kind: StatefulSet
 resources:
-  - ../../base
+- ../../base
+components:
+- ../../../../_shared/components/dev-hibernate

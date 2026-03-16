@@ -1,0 +1,39 @@
+---
+# Kustomize Component: Dev Hibernate
+#
+# Sets replicas to 0 for dev environment to conserve resources.
+# Pods are "hibernated" (not running) until explicitly scaled up for testing.
+#
+# Typical usage: All dev overlays to reduce resource consumption
+#
+# Usage in overlay:
+#   components:
+#     - ../../../_shared/components/dev-hibernate
+#
+# Background: Replaces 36+ duplicate patches across dev overlays (DRY principle)
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  # Hibernate all Deployments (replicas: 0)
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+      spec:
+        replicas: 0
+    target:
+      kind: Deployment
+
+  # Hibernate all StatefulSets (replicas: 0)
+  - patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: all-statefulsets
+      spec:
+        replicas: 0
+    target:
+      kind: StatefulSet

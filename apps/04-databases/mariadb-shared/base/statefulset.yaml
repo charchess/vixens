@@ -39,6 +39,13 @@ spec:
           ports:
             - containerPort: 3306
               name: mysql
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "128Mi"
+            limits:
+              cpu: "100m"
+              memory: "512Mi"
           env:
             - name: MARIADB_ROOT_PASSWORD
               valueFrom:
