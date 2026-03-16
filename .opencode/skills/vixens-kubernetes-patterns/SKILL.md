@@ -391,6 +391,239 @@ kubectl -n $NS get pods -l app=$APP -o jsonpath='{.items[*].status.containerStat
 
 ---
 
+## 🧩 Kustomize Component Patterns
+
+### Pattern: Granular Components (WHAT not WHY)
+
+**Problem:** Monolithic components that bundle multiple unrelated concerns violate single-responsibility principle and create maintenance burden.
+
+**Anti-pattern - Monolithic Component:**
+```yaml
+# ❌ apps/_shared/components/gold-maturity/kustomization.yaml
+# WRONG - Bundles 4 unrelated concerns
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+  - patch: |-
+      metadata:
+        annotations:
+          argocd.argoproj.io/sync-wave: "10"        # Concern 1: Deployment order
+          goldilocks.fairwinds.com/enabled: "true"  # Concern 2: VPA recommendations
+          vpa.kubernetes.io/updateMode: "Off"       # Concern 3: VPA mode
+      spec:
+        revisionHistoryLimit: 3                     # Concern 4: etcd optimization
+```
+
+**Why this is bad:**
+- **Cannot opt-out individually** - If you want sync-wave 10 but NOT goldilocks, impossible
+- **Named after outcome** - "gold-maturity" describes WHY (Gold tier status), not WHAT (concrete config)
+- **Tight coupling** - Changes to one concern affect all consumers
+- **Hidden dependencies** - Not clear what each app is using
+
+**Solution - Granular Components:**
+```yaml
+# ✅ apps/_shared/components/sync-wave/wave-10/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+  - patch: |-
+      metadata:
+        annotations:
+          argocd.argoproj.io/sync-wave: "10"
+    target:
+      kind: Deployment
+
+# ✅ apps/_shared/components/goldilocks/enabled/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+  - patch: |-
+      metadata:
+        annotations:
+          goldilocks.fairwinds.com/enabled: "true"
+          vpa.kubernetes.io/updateMode: "Off"
+    target:
+      kind: Deployment
+
+# ✅ apps/_shared/components/revision-history-limit/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+  - patch: |-
+      spec:
+        revisionHistoryLimit: 3
+    target:
+      kind: Deployment
+```
+
+**App consumption:**
+```yaml
+# apps/my-app/overlays/prod/kustomization.yaml
+components:
+  - ../../../../_shared/components/sync-wave/wave-10
+  - ../../../../_shared/components/goldilocks/enabled
+  - ../../../../_shared/components/revision-history-limit
+  # ✅ Explicit, opt-in per concern
+```
+
+---
+
+### Component Design Principles
+
+#### 1. Single Responsibility
+**Each component configures ONE concern.**
+
+✅ Good:
+- `sync-wave/wave-10` - Only sync-wave annotation
+- `goldilocks/enabled` - Only Goldilocks + VPA mode
+- `priority/high` - Only priorityClassName
+
+❌ Bad:
+- `gold-maturity` - Sync-wave + Goldilocks + VPA + revisionHistoryLimit
+- `base` - Security context + fsGroup + seccomp + revisionHistoryLimit
+- `resources` - Goldilocks + VPA autoscaling mode
+
+#### 2. Name What It Does (WHAT), Not Why (WHY)
+
+| ❌ Outcome-focused (WHY) | ✅ Configuration-focused (WHAT) |
+|-------------------------|--------------------------------|
+| `gold-maturity` | `sync-wave/wave-10`, `goldilocks/enabled` |
+| `security-baseline` | `security-context`, `seccomp-profile` |
+| `high-availability` | `poddisruptionbudget/1`, `topology-spread` |
+| `resource-optimization` | `goldilocks/enabled`, `vpa/auto` |
+
+**Why this matters:**
+- **WHAT** = Implementation detail (concrete config)
+- **WHY** = Business goal (abstract outcome)
+- Components are reusable building blocks → describe the block, not the building
+
+#### 3. Opt-In Composition
+
+Apps should compose granular components, not inherit monoliths:
+
+```yaml
+# ❌ WRONG - Monolithic inheritance
+components:
+  - ../../../../_shared/components/base  # What's in here? Who knows.
+
+# ✅ CORRECT - Explicit composition
+components:
+  - ../../../../_shared/components/security-context
+  - ../../../../_shared/components/seccomp-profile
+  - ../../../../_shared/components/revision-history-limit
+  # Clear what each app uses
+```
+
+#### 4. Minimal Duplication
+
+If 3+ apps use the same patch, extract to component:
+
+```yaml
+# ❌ WRONG - Duplicated in 36 dev overlays
+patches:
+  - patch: |-
+      spec:
+        replicas: 0
+    target:
+      kind: Deployment
+
+# ✅ CORRECT - Shared component
+# apps/_shared/components/dev-disable-replicas/kustomization.yaml
+# Then reference in each dev overlay
+```
+
+---
+
+### Component Migration Checklist
+
+When refactoring a monolithic component:
+
+- [ ] **Identify concerns** - List all patches/configs bundled
+- [ ] **Create granular components** - One component per concern
+- [ ] **Update consumers** - Replace monolith with explicit list
+- [ ] **Validate builds** - `kustomize build` before/after match
+- [ ] **Check kind diff** - No missing resources after refactor
+- [ ] **Delete monolith** - Remove old component after migration
+- [ ] **Document** - Add comment explaining the split
+
+**Example validation:**
+```bash
+# Before refactoring
+kustomize build apps/my-app/overlays/prod | grep '^kind:' | sort > /tmp/before.txt
+
+# After replacing component
+kustomize build apps/my-app/overlays/prod | grep '^kind:' | sort > /tmp/after.txt
+
+# Ensure no resources dropped
+diff /tmp/before.txt /tmp/after.txt  # Should be identical
+```
+
+---
+
+### Red Flags (When to Refactor)
+
+🚩 **Component bundles 2+ unrelated concerns**
+- Example: sync-wave + goldilocks + security context
+
+🚩 **Component name describes outcome, not config**
+- Example: `gold-maturity`, `production-ready`, `secure-baseline`
+
+🚩 **Apps can't opt-out of individual features**
+- Example: Want sync-wave but not VPA → impossible with monolith
+
+🚩 **Component exists as both component AND patches**
+- Example: `resources/` component + `goldilocks/enabled/` component (duplication)
+
+🚩 **Same patch in 5+ app overlays**
+- Example: `replicas: 0` duplicated in 36 dev overlays
+
+---
+
+### Real-World Example: gold-maturity Refactoring
+
+**Before (Monolithic):**
+```yaml
+# apps/_shared/components/gold-maturity/kustomization.yaml
+# 54 apps using this
+patches:
+  - patch: sync-wave + goldilocks + vpa + revisionHistoryLimit
+```
+
+**Problem discovered:**
+- Apps stuck at wave-10 (couldn't change deployment order)
+- Couldn't disable VPA without losing other features
+- Name implies outcome (Gold tier) not configuration
+
+**After (Granular):**
+```yaml
+# Created:
+apps/_shared/components/
+├── sync-wave/
+│   ├── wave-0/
+│   ├── wave-1/
+│   ├── wave-2/
+│   ├── wave-10/
+│   └── ...
+├── goldilocks/enabled/
+└── revision-history-limit/
+
+# Migration:
+- 54 apps migrated from gold-maturity to explicit components
+- Apps now choose sync-wave independently (0-20)
+- Can opt-out of individual features
+- Clear dependencies
+```
+
+**Result:**
+- ✅ 48/50 apps now have coherent sync-waves
+- ✅ Apps can evolve independently
+- ✅ Components reusable across contexts
+- ✅ No hidden coupling
+
+**Lesson learned:** Components are configuration primitives, not maturity tier shortcuts.
+
+---
+
 ## 📚 References
 
 - [Vixens Troubleshoot Skill](../vixens-troubleshoot/SKILL.md) - Production incident lessons
