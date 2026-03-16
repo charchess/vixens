@@ -35,4 +35,5 @@ resources:
   - ../../base
 
 components:
-  - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/sync-wave/wave-7
+  - ../../../../_shared/components/goldilocks/enabled

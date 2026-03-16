@@ -6,7 +6,8 @@ labels:
       environment: prod
 namespace: services
 components:
-  - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/sync-wave/wave-11
+  - ../../../../_shared/components/goldilocks/enabled
 
 patches:
   - path: patch-infisical-secrets.yaml

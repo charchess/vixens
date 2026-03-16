@@ -1,0 +1,37 @@
+---
+# Kustomize Component: Sync Wave 15
+#
+# ArgoCD sync-wave annotation for application deployment ordering.
+# Wave 15 applications deploy at this specific point in the sequence.
+#
+# Usage in overlay:
+#   components:
+#     - ../../../../_shared/components/sync-wave/wave-15
+#
+# Reference: https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  # Apply sync-wave=15 to all Deployments
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+        annotations:
+          argocd.argoproj.io/sync-wave: "15"
+    target:
+      kind: Deployment
+
+  # Apply sync-wave=15 to all StatefulSets
+  - patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: all-statefulsets
+        annotations:
+          argocd.argoproj.io/sync-wave: "15"
+    target:
+      kind: StatefulSet

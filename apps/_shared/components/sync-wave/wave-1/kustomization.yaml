@@ -1,0 +1,61 @@
+---
+# Kustomize Component: Sync Wave 1
+#
+# ArgoCD sync-wave annotation for infrastructure secrets and prerequisites.
+# Wave 1 resources deploy BEFORE databases and applications.
+#
+# Typical usage: InfisicalSecrets, Secrets, ConfigMaps needed by databases
+#
+# Usage in overlay:
+#   components:
+#     - ../../../../_shared/components/sync-wave/wave-1
+#
+# Reference: https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  # Apply sync-wave=1 to all Deployments
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+        annotations:
+          argocd.argoproj.io/sync-wave: "1"
+    target:
+      kind: Deployment
+
+  # Apply sync-wave=1 to all StatefulSets
+  - patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: all-statefulsets
+        annotations:
+          argocd.argoproj.io/sync-wave: "1"
+    target:
+      kind: StatefulSet
+
+  # Apply sync-wave=1 to all Secrets
+  - patch: |-
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: all-secrets
+        annotations:
+          argocd.argoproj.io/sync-wave: "1"
+    target:
+      kind: Secret
+
+  # Apply sync-wave=1 to all ConfigMaps
+  - patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: all-configmaps
+        annotations:
+          argocd.argoproj.io/sync-wave: "1"
+    target:
+      kind: ConfigMap

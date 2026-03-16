@@ -1,0 +1,39 @@
+---
+# Kustomize Component: Sync Wave 0
+#
+# ArgoCD sync-wave annotation for infrastructure base layer.
+# Wave 0 is for CRITICAL infrastructure that must deploy immediately after negative waves.
+#
+# Typical usage: cert-manager, traefik, synology-csi, argocd self-management
+#
+# Usage in overlay:
+#   components:
+#     - ../../../../_shared/components/sync-wave/wave-0
+#
+# Reference: https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  # Apply sync-wave=0 to all Deployments
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+        annotations:
+          argocd.argoproj.io/sync-wave: "0"
+    target:
+      kind: Deployment
+
+  # Apply sync-wave=0 to all StatefulSets
+  - patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: all-statefulsets
+        annotations:
+          argocd.argoproj.io/sync-wave: "0"
+    target:
+      kind: StatefulSet

@@ -7,7 +7,8 @@ labels:
       vixens.lab/environment: prod
 namespace: synology-csi
 components:
-  - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/sync-wave/wave-0
+  - ../../../../_shared/components/goldilocks/enabled
 
 patches:
   - patch: |-

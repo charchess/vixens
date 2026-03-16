@@ -1,0 +1,39 @@
+---
+# Kustomize Component: Sync Wave 2
+#
+# ArgoCD sync-wave annotation for databases and stateful infrastructure.
+# Wave 2 resources deploy AFTER secrets (wave 1) but BEFORE applications (wave 10).
+#
+# Typical usage: PostgreSQL clusters, MariaDB StatefulSets, Redis
+#
+# Usage in overlay:
+#   components:
+#     - ../../../../_shared/components/sync-wave/wave-2
+#
+# Reference: https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  # Apply sync-wave=2 to all Deployments
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+        annotations:
+          argocd.argoproj.io/sync-wave: "2"
+    target:
+      kind: Deployment
+
+  # Apply sync-wave=2 to all StatefulSets
+  - patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: all-statefulsets
+        annotations:
+          argocd.argoproj.io/sync-wave: "2"
+    target:
+      kind: StatefulSet

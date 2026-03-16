@@ -10,7 +10,8 @@ labels:
     pairs:
       environment: prod
 components:
-  - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/sync-wave/wave-15
+  - ../../../../_shared/components/goldilocks/enabled
 
 patches:
   - path: patch-infisical-env.yaml
