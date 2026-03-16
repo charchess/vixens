@@ -5,7 +5,8 @@ namespace: databases
 resources:
   - ../../base
 components:
-  - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/sync-wave/wave-2
+  - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
 
 patches:

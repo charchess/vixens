@@ -3,7 +3,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: monitoring
 components:
-  - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/sync-wave/wave-10
+  - ../../../../_shared/components/goldilocks/enabled
 
 patches:
   - path: patch-infisical-env.yaml

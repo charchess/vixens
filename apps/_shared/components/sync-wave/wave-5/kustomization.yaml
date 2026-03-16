@@ -1,0 +1,39 @@
+---
+# Kustomize Component: Sync Wave 5
+#
+# ArgoCD sync-wave annotation for network services and middleware.
+# Wave 5 resources deploy AFTER databases (wave 2) but BEFORE applications (wave 10).
+#
+# Typical usage: external-dns, ingress controllers, network policies
+#
+# Usage in overlay:
+#   components:
+#     - ../../../../_shared/components/sync-wave/wave-5
+#
+# Reference: https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  # Apply sync-wave=5 to all Deployments
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+        annotations:
+          argocd.argoproj.io/sync-wave: "5"
+    target:
+      kind: Deployment
+
+  # Apply sync-wave=5 to all StatefulSets
+  - patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: all-statefulsets
+        annotations:
+          argocd.argoproj.io/sync-wave: "5"
+    target:
+      kind: StatefulSet

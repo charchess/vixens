@@ -5,7 +5,8 @@ resources:
   - ../../base
   - ingress.yaml
 components:
-  - ../../../../_shared/components/gold-maturity
+  - ../../../../_shared/components/sync-wave/wave-7
+  - ../../../../_shared/components/goldilocks/enabled
 
 patches:
   - path: infisical-patch.yaml
