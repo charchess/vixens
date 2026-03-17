@@ -18,7 +18,6 @@ components:
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/revision-history-limit
   - ../../../../_shared/components/base
-  - ../../../../_shared/components/resources
   - ../../../../_shared/components/metrics
   - ../../../../_shared/components/poddisruptionbudget/0
 

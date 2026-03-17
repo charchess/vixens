@@ -1,8 +1,0 @@
----
-apiVersion: traefik.containo.us/v1alpha1
-kind: ServersTransport
-metadata:
-  name: dashboard-skip-verify
-  namespace: kubernetes-dashboard
-spec:
-  insecureSkipVerify: true

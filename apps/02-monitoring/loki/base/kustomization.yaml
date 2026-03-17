@@ -8,3 +8,4 @@ resources:
   - configmap.yaml
   - infisical-secret.yaml
   - networkpolicy.yaml
+  - pdb.yaml

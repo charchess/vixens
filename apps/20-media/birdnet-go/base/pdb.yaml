@@ -1,0 +1,9 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: birdnet-go
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: birdnet-go
