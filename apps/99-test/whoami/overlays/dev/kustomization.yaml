@@ -8,4 +8,5 @@ resources:
 components:
 - ../../../../_shared/components/dev-hibernate
 - ../../../../_shared/components/base
+- ../../../../_shared/components/revision-history-limit
 - ../../../../_shared/components/probes/basic
