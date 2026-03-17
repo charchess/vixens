@@ -7,7 +7,6 @@ metadata:
   labels:
     app: cert-manager
 spec:
-  # Matches the cert-manager Service (which uses app.kubernetes.io labels)
   selector:
     matchLabels:
       app: cert-manager
