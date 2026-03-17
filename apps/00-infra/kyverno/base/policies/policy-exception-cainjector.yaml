@@ -1,0 +1,21 @@
+---
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: cert-manager-cainjector-probe-exception
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: require-probes
+      ruleNames:
+        - check-probes
+        - autogen-check-probes
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - cert-manager
+          names:
+            - "cert-manager-cainjector-*"
