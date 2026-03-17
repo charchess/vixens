@@ -6,28 +6,9 @@ labels:
   - pairs:
       environment: prod
     includeSelectors: false
+components:
+  - ../../../../_shared/components/infisical/env-prod
 patches:
-  - patch: |
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-    target:
-      kind: InfisicalSecret
-      name: authentik-secrets-sync
-  - patch: |
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-    target:
-      kind: InfisicalSecret
-      name: authentik-litestream-sync
-  - patch: |
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-    target:
-      kind: InfisicalSecret
-      name: authentik-redis-secret-sync
   - path: deployment-patch.yaml
     target:
       kind: Deployment

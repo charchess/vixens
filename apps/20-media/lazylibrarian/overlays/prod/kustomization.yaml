@@ -6,15 +6,9 @@ resources:
   - ingress.yaml
 
 components:
+  - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/sync-wave/wave-10
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/revision-history-limit
 
 patches:
-  - target:
-      kind: InfisicalSecret
-      name: lazylibrarian-secrets-sync
-    patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod

@@ -9,25 +9,12 @@ resources:
   - ingress.yaml
 
 components:
+  - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/sync-wave/wave-10
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/base
   - ../../../../_shared/components/metrics
   - ../../../../_shared/components/poddisruptionbudget/0
+  - ../../../../_shared/components/securitycontext/s6-overlay
 
 patches:
-  - target:
-      kind: InfisicalSecret
-      name: radarr-secrets-sync
-    patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-  - target:
-      kind: InfisicalSecret
-      name: radarr-litestream-secret
-    patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-  - path: securitycontext-patch.yaml
