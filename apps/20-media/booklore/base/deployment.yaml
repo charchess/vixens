@@ -149,7 +149,7 @@ spec:
             httpGet:
               path: /
               port: http
-            failureThreshold: 20
+            failureThreshold: 40
             periodSeconds: 10
             timeoutSeconds: 5
         - name: config-syncer
