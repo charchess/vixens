@@ -73,6 +73,13 @@ spec:
               mountPath: /config
       containers:
         - name: whisparr
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
           image: ghcr.io/hotio/whisparr:nightly
           ports:
             - containerPort: 6969 # Default Whisparr UI port
@@ -124,6 +131,13 @@ spec:
               mountPath: /media
               subPath: xxx
         - name: litestream
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: litestream/litestream:0.5.9
           securityContext:
             runAsUser: 1000
@@ -154,6 +168,13 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
         - name: config-syncer
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000

@@ -29,6 +29,13 @@ spec:
       priorityClassName: vixens-medium
       containers:
         - name: jellyseerr
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
           image: fallenbagel/jellyseerr:2.7
           ports:
             - containerPort: 5055

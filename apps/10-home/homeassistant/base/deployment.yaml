@@ -153,6 +153,13 @@ spec:
               readOnly: true
       containers:
         - name: homeassistant
+          resources:
+            requests:
+              cpu: 100m
+              memory: 1Gi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
           image: ghcr.io/home-assistant/home-assistant:2026.3.2
           imagePullPolicy: Always
           ports:
@@ -189,6 +196,13 @@ spec:
             - name: config
               mountPath: /config
         - name: litestream
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 2Gi
           image: litestream/litestream:0.5.9
           securityContext:
             runAsUser: 1000
@@ -228,6 +242,13 @@ spec:
             failureThreshold: 15
             periodSeconds: 10
         - name: config-syncer
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              cpu: 250m
+              memory: 512Mi
           image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000

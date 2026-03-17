@@ -69,6 +69,13 @@ spec:
               mountPath: /data
       containers:
         - name: vaultwarden
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: vaultwarden/server:1.35.4
           ports:
             - containerPort: 80
@@ -107,6 +114,13 @@ spec:
             - name: data
               mountPath: /data
         - name: litestream
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: litestream/litestream:0.5.9
           securityContext:
             runAsUser: 1000
@@ -138,6 +152,13 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-syncer
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000

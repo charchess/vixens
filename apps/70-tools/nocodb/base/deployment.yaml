@@ -31,6 +31,13 @@ spec:
           effect: NoSchedule
       containers:
         - name: nocodb
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              cpu: 100m
+              memory: 1Gi
           image: nocodb/nocodb:0.301.3
           imagePullPolicy: IfNotPresent
           ports:

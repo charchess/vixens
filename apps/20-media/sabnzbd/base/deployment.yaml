@@ -72,6 +72,13 @@ spec:
               mountPath: /config
       containers:
         - name: sabnzbd
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              cpu: 200m
+              memory: 2Gi
           image: ghcr.io/linuxserver/sabnzbd:version-4.4.1
           ports:
             - containerPort: 8080 # Default Sabnzbd UI port
@@ -113,6 +120,13 @@ spec:
             - name: downloads
               mountPath: /downloads
         - name: litestream
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: litestream/litestream:0.5.9
           securityContext:
             runAsUser: 1000
@@ -143,6 +157,13 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
         - name: config-syncer
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000

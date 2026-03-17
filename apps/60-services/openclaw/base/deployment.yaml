@@ -257,6 +257,13 @@ spec:
               chown -R 1000:1000 /data/node_modules /data/gemini-cli 2>/dev/null || true
       containers:
         - name: openclaw
+          resources:
+            requests:
+              cpu: 200m
+              memory: 2Gi
+            limits:
+              cpu: 2000m
+              memory: 8Gi
           image: ghcr.io/openclaw/openclaw:2026.3.12
           imagePullPolicy: Always
           command:
@@ -327,6 +334,13 @@ spec:
             - name: data
               mountPath: /data
         - name: data-syncer
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000

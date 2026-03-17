@@ -30,6 +30,13 @@ spec:
           effect: NoSchedule
       containers:
         - name: importer
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              cpu: 100m
+              memory: 1Gi
           image: fireflyiii/data-importer:version-2.1.1
           ports:
             - containerPort: 8080

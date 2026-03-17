@@ -58,6 +58,13 @@ spec:
       priorityClassName: vixens-low
       containers:
         - name: changedetection
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              cpu: 100m
+              memory: 1Gi
           image: ghcr.io/dgtlmoon/changedetection.io:0.54.5
           ports:
             - containerPort: 5000
@@ -94,6 +101,13 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
         - name: browserless
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              cpu: 200m
+              memory: 2Gi
           image: browserless/chrome:1.61.1-puppeteer-16.2.0
           ports:
             - containerPort: 3000
@@ -126,6 +140,13 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
         - name: config-syncer
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: rclone/rclone:1.73
           command:
             - sh

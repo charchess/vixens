@@ -32,6 +32,13 @@ spec:
           effect: NoSchedule
       containers:
         - name: n8n
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
           image: docker.n8n.io/n8nio/n8n:latest
           securityContext:
             allowPrivilegeEscalation: false

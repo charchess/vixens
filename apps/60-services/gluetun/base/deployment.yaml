@@ -29,6 +29,13 @@ spec:
       priorityClassName: vixens-medium
       containers:
         - name: gluetun
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 50m
+              memory: 128Mi
           image: ghcr.io/qdm12/gluetun:v3.41.1
           securityContext:
             capabilities:

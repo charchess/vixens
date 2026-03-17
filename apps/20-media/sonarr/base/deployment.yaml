@@ -90,6 +90,13 @@ spec:
               subPath: litestream.yml
       containers:
         - name: sonarr
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              cpu: 200m
+              memory: 2Gi
           image: ghcr.io/hotio/sonarr:release
           ports:
             - containerPort: 8989 # Default Sonarr UI port
@@ -142,6 +149,13 @@ spec:
               mountPath: /tv
               subPath: TV Show
         - name: litestream
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: litestream/litestream:0.5.9
           securityContext:
             runAsUser: 1000
@@ -173,6 +187,13 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-syncer
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000

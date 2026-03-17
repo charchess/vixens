@@ -30,6 +30,13 @@ spec:
           effect: NoSchedule
       containers:
         - name: jellyfin
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              cpu: 200m
+              memory: 2Gi
           image: jellyfin/jellyfin:10.11.6
           ports:
             - containerPort: 8096
