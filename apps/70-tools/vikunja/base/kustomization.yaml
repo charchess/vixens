@@ -9,3 +9,4 @@ resources:
   - vikunja-pvc.yaml
   - infisical-secret.yaml
   - vikunja-db-secrets.yaml
+  - pdb.yaml

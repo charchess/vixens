@@ -1,0 +1,9 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: firefly-iii
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: firefly-iii

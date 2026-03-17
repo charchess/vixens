@@ -12,7 +12,6 @@ components:
   - ../../../../_shared/components/sync-wave/wave-10
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/base
-  - ../../../../_shared/components/resources
   - ../../../../_shared/components/metrics
   - ../../../../_shared/components/poddisruptionbudget/0
 

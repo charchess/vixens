@@ -8,7 +8,7 @@ components:
   - ../../../../_shared/components/sync-wave/wave-9
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
-
+  - ../../../../_shared/components/poddisruptionbudget/1
 patches:
   - target:
       kind: InfisicalSecret
@@ -17,4 +17,3 @@ patches:
       - op: replace
         path: /spec/authentication/universalAuth/secretsScope/envSlug
         value: prod
-
