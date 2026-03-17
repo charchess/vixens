@@ -37,17 +37,12 @@ spec:
         message: "Container defines explicit resources.requests without a vixens.io/sizing.<container> label. Consider migrating to the sizing label system."
         foreach:
           - list: "request.object.spec.containers"
-            preconditions:
-              all:
-                - key: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{ element.name }}\" || '' }}"
-                  operator: Equals
-                  value: ""
-                - key: "{{ element.resources.requests.memory || '' }}"
-                  operator: NotEquals
-                  value: ""
             deny:
               conditions:
                 all:
-                  - key: "true"
+                  - key: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{ element.name }}\" || '' }}"
                     operator: Equals
-                    value: "true"
+                    value: ""
+                  - key: "{{ element.resources.requests.memory || '' }}"
+                    operator: NotEquals
+                    value: ""

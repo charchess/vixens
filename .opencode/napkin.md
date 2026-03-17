@@ -2,7 +2,7 @@
 
 **Continuously curated runbook for AI agents working on Vixens.**
 
-Last updated: 2026-03-11
+Last updated: 2026-03-17
 
 ---
 
@@ -127,6 +127,63 @@ kubectl -n argocd patch application argocd --type merge -p '{"metadata":{"annota
 
 ---
 
+## 🎛️ Kyverno Gotchas (Priority 3)
+
+### Variables `element.*` scoped au foreach uniquement
+
+**RULE:** `element.name`, `element.resources` etc. ne sont valides QUE dans le bloc `foreach`. Jamais dans `validate.message` au niveau règle.
+
+**WRONG:**
+```yaml
+validate:
+  message: "Container {{ element.name }} has no sizing"  # ❌ hors foreach
+  foreach: [...]
+```
+
+**CORRECT:**
+```yaml
+validate:
+  message: "Container has no sizing declaration."  # ✅ message générique
+  foreach:
+    - list: "request.object.spec.containers"
+      deny: [...]
+```
+
+Do instead: utiliser message générique au niveau `validate:`, ou placer le message à l'intérieur du `foreach` si Kyverno le supporte.
+
+### Changement de structure ClusterPolicy = Immutable → delete+recreate requis
+
+**RULE:** En Kyverno, certains champs sont immutables :
+- Changer `validate.pattern` → `validate.foreach+deny` → **IMMUTABLE**
+- Changer `validate.foreach` → `validate.pattern` → **IMMUTABLE**
+- Changer structure `generate` rule → **IMMUTABLE**
+
+**CONSEQUENCE:** ArgoCD sync échoue avec `changes of immutable fields of a rule spec is disallowed`.
+
+**SOLUTION OBLIGATOIRE avant merge quand la structure de règle change :**
+```bash
+# Ajouter dans le PR description ou pre-sync hook
+kubectl delete clusterpolicy <policy-name>
+# ArgoCD recreate automatiquement après sync
+```
+
+Do instead: identifier les changements de structure dans le PR review, noter explicitement "nécessite delete+recreate" dans la PR description. Jamais de surprise en prod.
+
+### ArgoCD kyverno app Failed depuis plusieurs jours → invisible
+
+**RULE:** Le sync kyverno peut échouer silencieusement (Helm hooks résiduels) pendant des jours. Les policies continuent de fonctionner (cache), l'impact est invisible.
+
+**SYMPTÔME:** `kyverno:migrate-resources` ClusterRole/ClusterRoleBinding restés après post-upgrade hook.
+
+**DETECTION:** Toujours vérifier au début de session :
+```bash
+kubectl -n argocd get applications | grep -v "Synced.*Healthy"
+```
+
+Do instead: inclure ce check dans la checklist d'entrée de session (`just resume`).
+
+---
+
 ## 🔧 Known Patterns (Priority 5)
 
 ### DNS Dependency Cycles
@@ -176,6 +233,25 @@ kubectl get secret <name> -o jsonpath='{.metadata.ownerReferences[0].kind}'
 **WHY:** If static Secret exists without ownerReferences, InfisicalSecret won't manage it.
 
 **REFERENCE:** AdGuard Home switch (2026-03-11) - Had to delete static secret for InfisicalSecret takeover.
+
+### Migrations YAML en masse — tester sur 2-3 fichiers d'abord
+
+**RULE:** Toute migration automatisée de YAML sur 10+ fichiers = tester d'abord sur un subset.
+
+```bash
+# 1. Appliquer sur 2-3 fichiers
+migrate_one_file.py apps/70-tools/headlamp/overlays/dev/kustomization.yaml
+
+# 2. Vérifier avec kustomize build
+kustomize build apps/70-tools/headlamp/overlays/dev
+
+# 3. Seulement si OK → batch
+find apps -path "*/overlays/dev/kustomization.yaml" | xargs migrate.py
+```
+
+Do instead: JAMAIS lancer un script de migration en batch sans validation préalable sur 2-3 fichiers + kustomize build.
+
+**INCIDENT:** Session 2026-03-17 — script Python trop agressif a cassé 75 fichiers dev. Nécessité `git checkout --` + reprise propre.
 
 ### Kustomize Regression Check (CRITICAL)
 
