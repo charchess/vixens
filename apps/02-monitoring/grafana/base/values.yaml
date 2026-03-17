@@ -126,5 +126,5 @@ labels:
 
 # Pod sizing labels
 podLabels:
-  vixens.io/sizing.grafana: G-medium
+  vixens.io/sizing.grafana: B-large
   vixens.io/sizing.grafana-sc-dashboard: G-small
