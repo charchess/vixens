@@ -7,24 +7,11 @@ resources:
   - ingress.yaml
   - ingressroute-udp.yaml
 components:
+  - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/sync-wave/wave-6
   - ../../../../_shared/components/goldilocks/enabled
 
 patches:
-  - target:
-      kind: InfisicalSecret
-      name: homeassistant-config-sync
-    patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-  - target:
-      kind: InfisicalSecret
-      name: homeassistant-secrets-sync
-    patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
   - target:
       kind: PersistentVolumeClaim
       name: homeassistant-config

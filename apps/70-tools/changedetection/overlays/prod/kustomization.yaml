@@ -5,15 +5,9 @@ components:
   - ../../../../_shared/components/sync-wave/wave-9
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
+  - ../../../../_shared/components/infisical/env-prod
 
 patches:
-  - patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-    target:
-      kind: InfisicalSecret
-      name: changedetection-secrets-sync
   - patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/env/0/value

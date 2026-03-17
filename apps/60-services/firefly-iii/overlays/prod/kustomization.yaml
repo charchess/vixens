@@ -4,15 +4,9 @@ kind: Kustomization
 resources:
   - ../../base
 components:
+  - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/sync-wave/wave-9
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/poddisruptionbudget/0
 
 patches:
-  - target:
-      kind: InfisicalSecret
-      name: firefly-iii-secrets-sync
-    patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod

@@ -1,21 +1,13 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+resources:
+  - ../../base
+  - ingress.yaml
 components:
   - ../../../../_shared/components/sync-wave/wave-15
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
-
-patches:
-  - patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-    target:
-      kind: InfisicalSecret
-      name: netvisor-secrets-sync
+  - ../../../../_shared/components/infisical/env-prod
 patchesStrategicMerge:
   - server-url-patch.yaml
-resources:
-  - ../../base
-  - ingress.yaml

@@ -7,6 +7,7 @@ resources:
   - ingress.yaml
 
 components:
+  - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/sync-wave/wave-7
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/base
@@ -14,13 +15,6 @@ components:
   - ../../../../_shared/components/poddisruptionbudget/0
 
 patches:
-  - target:
-      kind: InfisicalSecret
-      name: frigate-secrets-sync
-    patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
   - target:
       kind: InfisicalSecret
       name: frigate-config-sync

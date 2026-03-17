@@ -6,21 +6,8 @@ resources:
   - ../../base
   - ingress.yaml
 components:
+  - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/sync-wave/wave-10
   - ../../../../_shared/components/goldilocks/enabled
 
 patches:
-  - target:
-      kind: InfisicalSecret
-      name: sabnzbd-secrets-sync
-    patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-  - target:
-      kind: InfisicalSecret
-      name: sabnzbd-litestream-secret
-    patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod

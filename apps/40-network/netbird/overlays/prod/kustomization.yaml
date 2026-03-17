@@ -12,13 +12,7 @@ components:
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
   - ../../../../_shared/components/revision-history-limit
+  - ../../../../_shared/components/infisical/env-prod
 
 patches:
-  - patch: |
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
-    target:
-      kind: InfisicalSecret
-      name: netbird-secrets-sync
   - path: patches.yaml
