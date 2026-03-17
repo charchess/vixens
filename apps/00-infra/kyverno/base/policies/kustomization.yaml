@@ -42,6 +42,7 @@ resources:
   - mutate-security-context.yaml
   - mutate-sidecar-probes.yaml
   - policy-exception-argocd.yaml
+  - policy-exception-cainjector.yaml
   - policy-exception-mixed-sizing.yaml
   - rbac-secrets.yaml
   - require-goldilocks.yaml

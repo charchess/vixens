@@ -78,10 +78,6 @@ cainjector:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
-  extraArgs:
-    # Enable healthz HTTP server so Kyverno-injected httpGet probes work.
-    # cert-manager-cainjector uses a distroless image (no sh/pgrep available).
-    - --healthz-addr=:9402
   podLabels:
     vixens.io/sizing.cainjector: G-nano
   podAnnotations:

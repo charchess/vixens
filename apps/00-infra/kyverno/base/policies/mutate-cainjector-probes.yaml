@@ -1,63 +1,21 @@
 ---
-# Kyverno Policy: Auto-inject exec probes into cert-manager-cainjector
+# cert-manager-cainjector v1.14+ uses a distroless image with no HTTP server.
+# No probe injection is possible (no shell, no HTTP endpoints, no TCP ports).
+# Process liveness is monitored by Kubernetes via container exit code.
 #
-# cert-manager-cainjector is a background controller without HTTP endpoints.
-# It doesn't expose health check URLs. We inject exec probes that verify
-# the main process is running, satisfying Silver-tier probe requirements.
-#
-# Similar pattern to mutate-sidecar-probes.yaml for config-syncer.
+# PolicyException for require-probes is defined in policy-exception-argocd.yaml
+# or can be added separately if needed.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: mutate-cainjector-probes
   annotations:
-    policies.kyverno.io/title: Auto-inject Probes for cert-manager-cainjector
+    policies.kyverno.io/title: Bypass probe injection for cert-manager-cainjector
     policies.kyverno.io/category: Maturity (Silver)
     policies.kyverno.io/severity: low
     policies.kyverno.io/description: >-
-      Adds exec probes to cert-manager-cainjector which lacks HTTP health endpoints.
-      Uses process check via pgrep. Satisfies Silver-tier probe requirement.
+      cert-manager-cainjector (distroless, no HTTP endpoints) cannot have
+      standard probes. This policy is intentionally empty.
 spec:
   background: false
-  rules:
-    - name: inject-cainjector-probes
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              namespaces:
-                - cert-manager
-              names:
-                - "cert-manager-cainjector-*"
-      preconditions:
-        all:
-          # Only inject if probes are missing
-          - key: "{{ request.object.spec.containers[?name == 'cert-manager-cainjector'].livenessProbe | length(@) }}"
-            operator: Equals
-            value: 0
-      mutate:
-        foreach:
-          - list: "request.object.spec.containers[?name == 'cert-manager-cainjector']"
-            patchStrategicMerge:
-              spec:
-                containers:
-                  - name: "{{ element.name }}"
-                    livenessProbe:
-                      httpGet:
-                        path: /healthz
-                        port: 9402
-                        scheme: HTTP
-                      initialDelaySeconds: 10
-                      periodSeconds: 30
-                      timeoutSeconds: 5
-                      failureThreshold: 3
-                    readinessProbe:
-                      httpGet:
-                        path: /readyz
-                        port: 9402
-                        scheme: HTTP
-                      initialDelaySeconds: 5
-                      periodSeconds: 10
-                      timeoutSeconds: 5
-                      failureThreshold: 3
+  rules: []
