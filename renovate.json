@@ -95,6 +95,13 @@
       ]
     },
     {
+      "description": "IT-Tools custom tag format (YYYY.MM.DD-SHA7)",
+      "versioning": "regex:^(?<major>\\d{4})\\.(?<minor>\\d{2})\\.(?<patch>\\d{2})-(?<build>[a-f0-9]{7})$",
+      "matchPackageNames": [
+        "/^ghcr\\.io/corentinth/it-tools/"
+      ]
+    },
+    {
       "description": "Home Assistant Auto-Update",
       "matchPackageNames": [
         "ghcr.io/home-assistant/home-assistant"
