@@ -90,7 +90,7 @@ spec:
             httpGet:
               path: /api/v1/health
               port: http
-            failureThreshold: 15
+            failureThreshold: 30
             periodSeconds: 10
             timeoutSeconds: 5
       volumes:

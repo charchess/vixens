@@ -77,4 +77,4 @@ spec:
             claimName: jellyseerr-config-pvc
       securityContext:
         fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
+        fsGroupChangePolicy: Always
