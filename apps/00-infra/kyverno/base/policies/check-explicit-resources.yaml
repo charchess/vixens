@@ -1,0 +1,56 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-explicit-resources
+  annotations:
+    policies.kyverno.io/title: Check Explicit Resources Anti-Pattern
+    policies.kyverno.io/category: Resource Management
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Detects containers that define resources.requests directly in the pod spec
+      without a corresponding vixens.io/sizing.<container> label.
+      This bypasses the centralized sizing system (sizing-v2-mutate) and prevents
+      VPA-based optimization.
+      Preferred approach: use vixens.io/sizing.<container>: [G|B|SB|V]-<size> instead.
+      This policy is informational only — it does not block any maturity tier.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: warn-explicit-resources
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - cert-manager
+                - infisical-operator-system
+      validate:
+        message: >-
+          Container '{{ element.name }}' defines explicit resources.requests without
+          a vixens.io/sizing.{{ element.name }} label. Consider migrating to the
+          sizing label system (e.g. vixens.io/sizing.{{ element.name }}: B-small).
+        foreach:
+          - list: "request.object.spec.containers"
+            preconditions:
+              all:
+                - key: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{ element.name }}\" || '' }}"
+                  operator: Equals
+                  value: ""
+                - key: "{{ element.resources.requests.memory || '' }}"
+                  operator: NotEquals
+                  value: ""
+            deny:
+              conditions:
+                all:
+                  - key: "true"
+                    operator: Equals
+                    value: "true"

@@ -6,7 +6,6 @@ metadata:
   namespace: services
   labels:
     app: openclaw
-    vixens.io/sizing-v2: "true"
     vixens.io/vpa-mode: Auto
 spec:
   replicas: 1

@@ -10,7 +10,7 @@ resources:
 # The following are active (target Deployment metadata, not pod template):
 #   - gold-maturity annotations: argocd sync-wave, goldilocks, vpa
 # The following are dead code (target spec.template or spec.revisionHistoryLimit):
-#   - pod template labels (vixens.io/sizing-v2, vpa-mode) → handled via Helm values
+#   - pod template labels (vixens.io/sizing.*, vpa-mode) → handled via Helm values
 #   - revisionHistoryLimit → hardcoded=10 in chart, cannot be patched from kustomize in multi-source
 
 patches:

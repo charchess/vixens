@@ -4,19 +4,25 @@ kind: ClusterPolicy
 metadata:
   name: require-resource-requests
   annotations:
-    policies.kyverno.io/title: Require Resource Requests
+    policies.kyverno.io/title: Require Resource Requests or Sizing Label
     policies.kyverno.io/category: Maturity (Bronze)
     policies.kyverno.io/severity: medium
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
-      Resource requests (CPU and memory) are required for all containers for
-      maturity Level 1 (Bronze). Requests enable the scheduler to make informed
-      placement decisions and are the minimum resource allocation requirement.
+      Every container must declare its resource sizing through one of two
+      coherent mechanisms for maturity Level 1 (Bronze):
+        1. A vixens.io/sizing.<container> label (any mode: G-/B-/SB-/V-) — Kyverno
+           injects requests and limits at admission via sizing-v2-mutate.
+        2. Explicit resources.requests in the pod spec (anti-pattern — also triggers
+           check-explicit-resources warning — but satisfies Bronze).
+      Containers with neither are genuinely unsized and block Bronze maturity.
+      Note: this policy validates the declaration, not the runtime state,
+      to avoid false positives from Kyverno-managed admission mutation.
 spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: validate-resource-requests
+    - name: validate-sizing-declared
       match:
         any:
           - resources:
@@ -28,12 +34,26 @@ spec:
               namespaces:
                 - kube-system
                 - kyverno
+                - cert-manager
+                - infisical-operator-system
       validate:
-        message: "CPU and memory resource requests are required for maturity Level 1 (Bronze)."
-        pattern:
-          spec:
-            containers:
-              - resources:
-                  requests:
-                    memory: "?*"
-                    cpu: "?*"
+        message: >-
+          Container '{{ element.name }}' has no sizing declaration.
+          Add a vixens.io/sizing.{{ element.name }} label (e.g. V-small, B-medium)
+          or set explicit resources.requests. See sizing-v2-mutate policy.
+        foreach:
+          - list: "request.object.spec.containers"
+            preconditions:
+              all:
+                - key: "{{ request.object.metadata.labels.\"vixens.io/sizing.{{ element.name }}\" || '' }}"
+                  operator: Equals
+                  value: ""
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.resources.requests.cpu || '' }}"
+                    operator: Equals
+                    value: ""
+                  - key: "{{ element.resources.requests.memory || '' }}"
+                    operator: Equals
+                    value: ""

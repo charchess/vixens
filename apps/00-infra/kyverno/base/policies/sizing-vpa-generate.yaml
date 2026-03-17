@@ -1,5 +1,4 @@
 ---
-# RBAC: Allow Kyverno controllers to manage/inspect VPA objects
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -38,21 +37,6 @@ subjects:
     name: kyverno-admission-controller
     namespace: kyverno
 ---
-# Kyverno Policy: Sizing VPA Generate
-#
-# Generates a VerticalPodAutoscaler for any Deployment or StatefulSet that:
-#   (a) has at least one container labeled with a V-* sizing label, OR
-#   (b) has any container without a vixens.io/sizing.* label (sidecar auto-discovery)
-#
-# Generated VPA:
-#   - updateMode: Off (observation only — activate manually per app after 48-72h)
-#   - containerPolicies:
-#     - mode: Off     for containers with G-*, B-*, SB-* labels (Kyverno manages sizing)
-#     - RequestsOnly  for containers with V-* labels or no label (VPA tunes requests only)
-#     - minAllowed: cpu=5m, memory=64Mi (floor for deflation)
-#
-# Activation: After reviewing VPA recommendations, set updateMode: Auto manually.
-#
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -61,9 +45,14 @@ metadata:
     policies.kyverno.io/title: Sizing VPA Generate
     policies.kyverno.io/category: Resource Management
     policies.kyverno.io/description: >-
-      Automatically generates a VerticalPodAutoscaler for Deployments and
-      StatefulSets using the v2 sizing system. VPAs start in Off mode for
-      safe observation. Activate per-app after reviewing recommendations.
+      Automatically generates a VerticalPodAutoscaler for any Deployment or
+      StatefulSet whose pod template has at least one vixens.io/sizing.* label.
+      No explicit trigger label required — presence of sizing labels is sufficient.
+      Generated VPA uses updateMode: Auto (pod evict+recreate on recommendation apply).
+      Note: InPlaceOrRecreate requires VPA >= 1.7.0 (current: 1.6.0). Tracked as
+      follow-up task for VPA upgrade.
+      VPA uses RequestsAndLimits to maintain the 4x cpu/memory ratio as it tunes
+      V-* containers. minAllowed and maxAllowed (safety defaults) are always set.
 spec:
   validationFailureAction: Audit
   background: true
@@ -75,11 +64,11 @@ spec:
               kinds:
                 - Deployment
                 - StatefulSet
-              # Trigger: Deployment/StatefulSet must have this label on its OWN metadata
-              # (not pod template). Add this when migrating an app to v2 sizing.
-              selector:
-                matchLabels:
-                  vixens.io/sizing-v2: "true"
+      preconditions:
+        any:
+          - key: "{{ request.object.spec.template.metadata.labels | keys(@) | [?starts_with(@, 'vixens.io/sizing.')] | length(@) }}"
+            operator: GreaterThan
+            value: 0
       generate:
         apiVersion: autoscaling.k8s.io/v1
         kind: VerticalPodAutoscaler
@@ -94,7 +83,6 @@ spec:
             namespace: "{{ request.object.metadata.namespace }}"
             labels:
               app.kubernetes.io/managed-by: kyverno
-              vixens.io/sizing-v2: "true"
           spec:
             targetRef:
               apiVersion: apps/v1
@@ -102,12 +90,14 @@ spec:
               name: "{{ request.object.metadata.name }}"
             updatePolicy:
               updateMode: >-
-                {{ contains(keys(request.object.metadata.labels), 'vixens.io/vpa-mode') && request.object.metadata.labels."vixens.io/vpa-mode" || 'Off' }}
+                {{ contains(keys(request.object.metadata.labels), 'vixens.io/vpa-mode') && request.object.metadata.labels."vixens.io/vpa-mode" || 'Auto' }}
             resourcePolicy:
               containerPolicies:
-                # Observe all containers — unlabeled sidecars get VPA recommendations.
-                # minAllowed is the floor; VPA won't shrink below this.
                 - containerName: "*"
+                  controlledValues: RequestsAndLimits
                   minAllowed:
                     cpu: "5m"
                     memory: "64Mi"
+                  maxAllowed:
+                    cpu: "8000m"
+                    memory: "16Gi"

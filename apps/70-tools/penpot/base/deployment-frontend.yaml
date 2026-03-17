@@ -7,7 +7,6 @@ metadata:
   labels:
     app: penpot-frontend
     component: frontend
-    vixens.io/sizing-v2: "true"
     vixens.io/vpa-mode: Auto
 spec:
   replicas: 1

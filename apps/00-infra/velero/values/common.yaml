@@ -86,7 +86,6 @@ kubectl:
 
 # Deployment labels for sizing-v2 policy enablement
 labels:
-  vixens.io/sizing-v2: "true"
 
 # Pod labels for sizing-v2 policy (Bronze maturity requirement)
 podLabels:
@@ -113,7 +112,6 @@ nodeAgent:
   uploaderType: kopia
   priorityClassName: vixens-critical
   labels:
-    vixens.io/sizing-v2: "true"
   podAnnotations:
     vixens.io/fast-start: "true"
     vixens.io/noingressneeded: "true"
