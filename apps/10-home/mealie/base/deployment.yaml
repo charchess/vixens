@@ -92,6 +92,13 @@ spec:
       priorityClassName: vixens-low
       containers:
         - name: mealie
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              cpu: 200m
+              memory: 2Gi
           image: ghcr.io/mealie-recipes/mealie:v3.12.0
           ports:
             - containerPort: 9000
@@ -126,6 +133,13 @@ spec:
             - name: data
               mountPath: /app/data
         - name: litestream
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: litestream/litestream:0.5.9
           securityContext:
             runAsUser: 1000
@@ -157,6 +171,13 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
         - name: config-syncer
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000

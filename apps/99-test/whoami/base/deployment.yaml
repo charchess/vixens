@@ -29,6 +29,13 @@ spec:
           effect: NoSchedule
       containers:
         - name: whoami
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: traefik/whoami:v1.11.0
           ports:
             - name: http

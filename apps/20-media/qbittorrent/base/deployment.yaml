@@ -33,6 +33,13 @@ spec:
       priorityClassName: vixens-medium
       containers:
         - name: qbittorrent
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              cpu: 200m
+              memory: 2Gi
           image: lscr.io/linuxserver/qbittorrent:5.1.4
           ports:
             - containerPort: 8080

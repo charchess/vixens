@@ -29,6 +29,13 @@ spec:
       priorityClassName: vixens-low
       containers:
         - name: linkwarden
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              cpu: 200m
+              memory: 2Gi
           image: ghcr.io/linkwarden/linkwarden:v2.13.5
           imagePullPolicy: IfNotPresent
           ports:

@@ -27,6 +27,13 @@ spec:
       priorityClassName: vixens-medium
       containers:
         - name: headlamp
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              cpu: 100m
+              memory: 1Gi
           image: ghcr.io/headlamp-k8s/headlamp:v0.40.1
           imagePullPolicy: IfNotPresent
           ports:

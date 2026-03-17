@@ -53,6 +53,13 @@ spec:
       priorityClassName: vixens-low
       containers:
         - name: homepage
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              cpu: 100m
+              memory: 1Gi
           image: ghcr.io/gethomepage/homepage:v1.11
           imagePullPolicy: IfNotPresent
           ports:

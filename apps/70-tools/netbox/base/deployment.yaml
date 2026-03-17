@@ -29,6 +29,13 @@ spec:
       priorityClassName: vixens-medium
       containers:
         - name: netbox
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
           image: netboxcommunity/netbox:v4.5.4 # Pinned image version
           ports:
             - name: http

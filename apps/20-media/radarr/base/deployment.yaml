@@ -74,6 +74,13 @@ spec:
               mountPath: /config
       containers:
         - name: radarr
+          resources:
+            requests:
+              cpu: 50m
+              memory: 512Mi
+            limits:
+              cpu: 200m
+              memory: 2Gi
           image: ghcr.io/hotio/radarr:release
           ports:
             - containerPort: 7878 # Default Radarr UI port
@@ -126,6 +133,13 @@ spec:
               mountPath: /movies
               subPath: movies
         - name: litestream
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: litestream/litestream:0.5.9
           securityContext:
             runAsUser: 1000
@@ -165,6 +179,13 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: config-syncer
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 20m
+              memory: 256Mi
           image: rclone/rclone:1.73
           securityContext:
             runAsUser: 1000
