@@ -1,8 +1,8 @@
 ---
 #
-# Kustomize Component: Base Requirements
+# Kustomize Component: Base Security Context
 #
-# Minimal requirements for ALL applications (Bronze through Orichalcum).
+# Minimal security requirements for ALL applications (Bronze through Orichalcum).
 #
 # DEFENSE-IN-DEPTH: This component intentionally applies Diamond-level
 # security context (runAsNonRoot, seccompProfile: RuntimeDefault) to ALL
@@ -14,10 +14,12 @@
 # they simply inherit good security defaults.
 #
 # Includes:
-#   - revisionHistoryLimit: 3 (prevent unbounded ReplicaSet growth)
 #   - runAsNonRoot: true (never run as root)
 #   - runAsUser/fsGroup: 1000 (predictable non-root UID)
 #   - seccompProfile: RuntimeDefault (container syscall filtering)
+#
+# Note: revisionHistoryLimit is handled separately by the
+#   revision-history-limit component (which also covers StatefulSets).
 #
 # Usage:
 #   components:
@@ -35,7 +37,6 @@ patches:
       metadata:
         name: all-deployments
       spec:
-        revisionHistoryLimit: 3
         template:
           spec:
             securityContext:
