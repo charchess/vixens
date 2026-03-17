@@ -37,10 +37,7 @@ spec:
                 - cert-manager
                 - infisical-operator-system
       validate:
-        message: >-
-          Container '{{ element.name }}' has no sizing declaration.
-          Add a vixens.io/sizing.{{ element.name }} label (e.g. V-small, B-medium)
-          or set explicit resources.requests. See sizing-v2-mutate policy.
+        message: "Container has no sizing declaration. Add a vixens.io/sizing.<container> label or explicit resources.requests."
         foreach:
           - list: "request.object.spec.containers"
             preconditions:

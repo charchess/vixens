@@ -34,10 +34,7 @@ spec:
                 - cert-manager
                 - infisical-operator-system
       validate:
-        message: >-
-          Container '{{ element.name }}' defines explicit resources.requests without
-          a vixens.io/sizing.{{ element.name }} label. Consider migrating to the
-          sizing label system (e.g. vixens.io/sizing.{{ element.name }}: B-small).
+        message: "Container defines explicit resources.requests without a vixens.io/sizing.<container> label. Consider migrating to the sizing label system."
         foreach:
           - list: "request.object.spec.containers"
             preconditions:
