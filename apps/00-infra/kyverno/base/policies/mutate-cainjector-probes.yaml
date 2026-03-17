@@ -44,21 +44,19 @@ spec:
                 containers:
                   - name: "{{ element.name }}"
                     livenessProbe:
-                      exec:
-                        command:
-                          - sh
-                          - -c
-                          - pgrep -f cainjector || exit 1
+                      httpGet:
+                        path: /healthz
+                        port: 9402
+                        scheme: HTTP
                       initialDelaySeconds: 10
                       periodSeconds: 30
                       timeoutSeconds: 5
                       failureThreshold: 3
                     readinessProbe:
-                      exec:
-                        command:
-                          - sh
-                          - -c
-                          - pgrep -f cainjector || exit 1
+                      httpGet:
+                        path: /readyz
+                        port: 9402
+                        scheme: HTTP
                       initialDelaySeconds: 5
                       periodSeconds: 10
                       timeoutSeconds: 5
