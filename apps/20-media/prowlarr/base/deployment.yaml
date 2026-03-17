@@ -90,7 +90,7 @@ spec:
               subPath: litestream.yml
       containers:
         - name: prowlarr
-          image: ghcr.io/linuxserver/prowlarr:version-1.31.2.4975
+          image: ghcr.io/hotio/prowlarr:release
           ports:
             - containerPort: 9696 # Default Prowlarr UI port
               name: http
