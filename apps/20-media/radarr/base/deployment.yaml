@@ -74,7 +74,7 @@ spec:
               mountPath: /config
       containers:
         - name: radarr
-          image: ghcr.io/linuxserver/radarr:version-6.0.4.10291
+          image: ghcr.io/hotio/radarr:release
           ports:
             - containerPort: 7878 # Default Radarr UI port
               name: http

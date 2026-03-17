@@ -90,7 +90,7 @@ spec:
               subPath: litestream.yml
       containers:
         - name: lidarr
-          image: ghcr.io/linuxserver/lidarr:version-3.1.0.4875
+          image: ghcr.io/hotio/lidarr:release
           ports:
             - containerPort: 8686 # Default Lidarr UI port
               name: http
