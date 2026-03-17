@@ -6,7 +6,6 @@ metadata:
   name: homepage
   labels:
     app.kubernetes.io/name: homepage
-    vixens.io/sizing-v2: "true"
     vixens.io/vpa-mode: Auto
   annotations:
     secret.reloader.stakater.com/reload: homepage-config-secret,homepage-secrets

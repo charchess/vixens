@@ -5,7 +5,6 @@ metadata:
   name: whisparr
   labels:
     app: whisparr
-    vixens.io/sizing-v2: "true"
     vixens.io/vpa-mode: "Off"
 spec:
   strategy:

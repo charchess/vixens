@@ -5,7 +5,6 @@ metadata:
   name: sabnzbd
   labels:
     app: sabnzbd
-    vixens.io/sizing-v2: "true"
     vixens.io/vpa-mode: Auto
 spec:
   strategy:
