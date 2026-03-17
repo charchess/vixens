@@ -36,7 +36,7 @@ spec:
             limits:
               cpu: 500m
               memory: 1Gi
-          image: fallenbagel/jellyseerr:2.7
+          image: ghcr.io/seerr-team/seerr:v3.1.0
           ports:
             - containerPort: 5055
               name: http
