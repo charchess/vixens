@@ -21,6 +21,7 @@ spec:
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/no-long-connections: "true"
+        vixens.io/explicitly-allow-root: "true"
     spec:
       securityContext:
         fsGroup: 1000

@@ -18,6 +18,7 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
+        vixens.io/explicitly-allow-root: "true"
       labels:
         kubectl.kubernetes.io/restartedAt: "2026-03-12T110000Z"
         app: changedetection

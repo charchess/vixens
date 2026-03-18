@@ -19,6 +19,7 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
+        vixens.io/explicitly-allow-root: "true"
       labels:
         app: docspell
         component: joex
