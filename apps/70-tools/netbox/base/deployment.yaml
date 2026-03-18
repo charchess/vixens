@@ -36,7 +36,7 @@ spec:
             limits:
               cpu: 500m
               memory: 1Gi
-          image: netboxcommunity/netbox:v4.5.4 # Pinned image version
+          image: netboxcommunity/netbox:v4.5.5 # Pinned image version
           ports:
             - name: http
               containerPort: 8080
