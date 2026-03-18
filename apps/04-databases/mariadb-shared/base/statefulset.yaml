@@ -51,6 +51,26 @@ spec:
                 secretKeyRef:
                   name: mariadb-shared-credentials
                   key: MARIADB_ROOT_PASSWORD
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h localhost -u root -p$MARIADB_ROOT_PASSWORD
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h localhost -u root -p$MARIADB_ROOT_PASSWORD
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           volumeMounts:
             - name: data
               mountPath: /var/lib/mysql
