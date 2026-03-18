@@ -90,6 +90,25 @@ spec:
             - containerPort: 1080
               name: socks5-proxy
               protocol: TCP
+            - containerPort: 8000
+              name: control
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: control
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: control
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

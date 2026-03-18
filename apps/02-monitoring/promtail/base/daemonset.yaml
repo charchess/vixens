@@ -52,7 +52,7 @@ spec:
               memory: 256Mi
             limits:
               cpu: 50m
-              memory: 256Mi
+              memory: 512Mi
           readinessProbe:
             httpGet:
               path: /ready
