@@ -171,6 +171,7 @@ spec:
           operator: Exists
           effect: NoSchedule
       securityContext:
+        runAsNonRoot: true
         fsGroup: 1883
         seccompProfile:
           type: RuntimeDefault

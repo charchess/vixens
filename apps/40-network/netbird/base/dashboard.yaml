@@ -30,6 +30,7 @@ spec:
           operator: "Exists"
           effect: "NoSchedule"
       securityContext:
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       initContainers:

@@ -93,6 +93,7 @@ spec:
           persistentVolumeClaim:
             claimName: penpot-data
       securityContext:
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       restartPolicy: Always

@@ -99,6 +99,7 @@ spec:
             - name: config-writable
               mountPath: /etc/netbird
       securityContext:
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       containers:

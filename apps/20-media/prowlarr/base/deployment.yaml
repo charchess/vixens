@@ -214,6 +214,7 @@ spec:
           configMap:
             name: prowlarr-litestream-config
       securityContext:
+        runAsNonRoot: true
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
