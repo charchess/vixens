@@ -87,5 +87,7 @@ spec:
             server: 192.168.111.69
             path: /volume3/Content
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

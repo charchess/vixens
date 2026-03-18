@@ -62,5 +62,7 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
