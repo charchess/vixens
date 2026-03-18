@@ -1,8 +1,7 @@
 name: Beads Sync
 
 on:
-  schedule:
-    # Run every 4 hours
+  workflow_dispatch:
     - cron: '0 */4 * * *'
   workflow_dispatch:
     # Allow manual trigger
