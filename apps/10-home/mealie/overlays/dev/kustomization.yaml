@@ -9,3 +9,8 @@ resources:
 - ingress.yaml
 components:
 - ../../../../_shared/components/dev-hibernate
+patches:
+- path: patches/dataangel-test.yaml
+  target:
+    kind: Deployment
+    name: mealie
