@@ -38,7 +38,7 @@ spec:
             limits:
               cpu: 100m
               memory: 1Gi
-          image: nocodb/nocodb:0.301.4
+          image: nocodb/nocodb:0.301.5
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
