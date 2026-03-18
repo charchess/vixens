@@ -108,6 +108,4 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /app/data
-      volumes:
-        - name: data
-          emptyDir: {}
+

@@ -14,3 +14,12 @@ patches:
   target:
     kind: Deployment
     name: mealie
+- patch: |-
+    - op: replace
+      path: /spec/template/spec/volumes/0
+      value:
+        name: data
+        emptyDir: {}
+  target:
+    kind: Deployment
+    name: mealie
