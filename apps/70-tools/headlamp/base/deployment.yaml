@@ -60,5 +60,7 @@ spec:
           operator: Exists
           effect: NoSchedule
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

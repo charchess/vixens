@@ -113,5 +113,7 @@ spec:
           persistentVolumeClaim:
             claimName: homepage-config
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
