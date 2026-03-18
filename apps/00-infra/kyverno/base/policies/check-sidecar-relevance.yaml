@@ -20,7 +20,7 @@ spec:
                 - Pod
       preconditions:
         all:
-          - key: "{{ request.object.spec.volumes[?contains(name, 'config')].persistentVolumeClaim.claimName || '' | length(@) }}"
+          - key: "{{ (request.object.spec.volumes || `[]`)[?contains(name, 'config') && persistentVolumeClaim != null] | length(@) }}"
             operator: GreaterThan
             value: 0
       validate:
