@@ -634,7 +634,42 @@ close task_id:
     ])
 
     print("✅ Tâche fermée avec succès!")
+
+    # Sync beads state to remote branch immediately
+    subprocess.run(["bash", "-c",
+        "bd export > /tmp/issues-sync.jsonl && "
+        "git fetch origin beads-sync --quiet && "
+        "git checkout beads-sync --quiet && "
+        "cp /tmp/issues-sync.jsonl .beads/issues.jsonl && "
+        "git add .beads/issues.jsonl && "
+        "(git diff --staged --quiet || git commit -m 'sync: beads after close {{task_id}}' && git push origin beads-sync --quiet) && "
+        "git checkout main --quiet"
+    ])
+
     print("💡 Prochaine: just resume")
+
+# ============================================
+# BEADS SYNC (Push local state to beads-sync branch)
+# ============================================
+beads-sync:
+    #!/usr/bin/env bash
+    set -e
+    echo "📤 Syncing beads state to remote..."
+    bd export > /tmp/issues-sync.jsonl
+    CLOSED=$(grep -c '"status":"closed"' /tmp/issues-sync.jsonl || echo 0)
+    OPEN=$(grep -c '"status":"open"' /tmp/issues-sync.jsonl || echo 0)
+    git fetch origin beads-sync --quiet
+    git checkout beads-sync --quiet
+    cp /tmp/issues-sync.jsonl .beads/issues.jsonl
+    git add .beads/issues.jsonl
+    if git diff --staged --quiet; then
+        echo "✅ beads-sync already up to date"
+    else
+        git commit -m "sync: beads — closed:${CLOSED} open:${OPEN}"
+        git push origin beads-sync --quiet
+        echo "✅ beads-sync updated (closed:${CLOSED} open:${OPEN})"
+    fi
+    git checkout main --quiet
 
 # ============================================
 # ATTENDRE ARGOCD SYNC (Helper)
