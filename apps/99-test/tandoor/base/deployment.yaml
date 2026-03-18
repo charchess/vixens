@@ -12,6 +12,8 @@ spec:
     metadata:
       labels:
         app: tandoor
+      annotations:
+        vixens.io/explicitly-allow-root: "true"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

@@ -23,6 +23,7 @@ spec:
         vixens.io/backup-profile: standard
       annotations:
         vixens.io/no-long-connections: "true"
+        vixens.io/explicitly-allow-root: "true"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
