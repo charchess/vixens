@@ -24,7 +24,7 @@ JUST := "just"
 # COMMANDE PRINCIPALE : Reprendre où on en est
 # ============================================
 default:
-    @{{JUST}} resume
+    @{{JUST}} gh-resume
 
 resume:
     #!/usr/bin/env python3
@@ -647,6 +647,107 @@ close task_id:
     ])
 
     print("💡 Prochaine: just resume")
+
+# ============================================
+# GITHUB ISSUES — Nouveau système de tâches
+# ============================================
+
+# Reprendre le travail en cours (GitHub Issues + Draft PRs)
+gh-resume:
+    #!/usr/bin/env python3
+    import subprocess, json, sys
+
+    def gh(args):
+        r = subprocess.run(['gh'] + args, capture_output=True, text=True)
+        return r.stdout.strip()
+
+    print("🔍 Travail en cours...\n")
+
+    # 1. Draft PRs = travail actif
+    drafts = json.loads(gh(['pr', 'list', '--state', 'open', '--search', 'is:draft',
+                            '--json', 'number,title,headRefName,url']) or '[]')
+    if drafts:
+        print("📝 DRAFT PRs (travail actif):")
+        for p in drafts:
+            print(f"  🔧 PR #{p['number']} [{p['headRefName']}] {p['title']}")
+            print(f"     → {p['url']}")
+    else:
+        print("📝 Aucun Draft PR en cours.")
+    print()
+
+    # 2. Issues in-progress
+    wip = json.loads(gh(['issue', 'list', '--label', 'status:in-progress',
+                         '--json', 'number,title,url']) or '[]')
+    if wip:
+        print("⚡ Issues en cours:")
+        for i in wip:
+            print(f"  ⚡ #{i['number']} {i['title']}")
+    print()
+
+    # 3. Prochaines prioritaires
+    print("📋 Prochaines tâches:")
+    for label, icon in [('priority:p0','🔴'), ('priority:p1','🟠')]:
+        issues = json.loads(gh(['issue', 'list', '--label', label, '--state', 'open',
+                                '--limit', '5', '--json', 'number,title']) or '[]')
+        for i in issues:
+            print(f"  {icon} #{i['number']} {i['title']}")
+    print()
+    print("💡 Démarrer:     just gh-start <issue-number>")
+    print("💡 Toutes tâches: gh issue list --state open")
+
+# Démarrer une issue — crée branche + Draft PR
+gh-start issue_number:
+    #!/usr/bin/env python3
+    import subprocess, json, sys, re, os
+
+    num = "{{issue_number}}"
+    issue = json.loads(subprocess.run(
+        ['gh', 'issue', 'view', num, '--json', 'title'],
+        capture_output=True, text=True).stdout)
+    title = issue['title']
+    slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')[:40]
+    branch = f"feat/{num}-{slug}"
+
+    print(f"🌿 Branche: {branch}")
+    for cmd in [
+        ['git', 'checkout', 'main'],
+        ['git', 'pull', '--rebase', 'origin', 'main'],
+        ['git', 'checkout', '-b', branch],
+        ['git', 'commit', '--allow-empty', '-m', f"chore: start work on #{num} — {title}"],
+    ]:
+        subprocess.run(cmd, check=True)
+
+    token = subprocess.run(['gh', 'auth', 'token'], capture_output=True, text=True).stdout.strip()
+    remote = f"https://charchess:{token}@github.com/charchess/vixens.git"
+    subprocess.run(['git', 'remote', 'set-url', 'origin', remote])
+    subprocess.run(['git', 'push', '-u', 'origin', branch], check=True)
+    subprocess.run(['git', 'remote', 'set-url', 'origin', 'https://github.com/charchess/vixens.git'])
+
+    subprocess.run(['gh', 'pr', 'create', '--draft',
+                    '--title', title, '--body', f"Work in progress.\n\nCloses #{num}",
+                    '--head', branch], check=True)
+    subprocess.run(['gh', 'issue', 'edit', num, '--add-label', 'status:in-progress'])
+
+    print(f"✅ Branche {branch} créée, Draft PR ouvert")
+    print(f"💡 Quand terminé: just gh-done <pr-number>")
+
+# Finaliser le travail — PR ready + auto-merge
+gh-done pr_number:
+    #!/usr/bin/env bash
+    gh pr ready {{pr_number}} && echo "✅ PR #{{pr_number}} prête"
+    gh pr merge {{pr_number}} --squash --auto && echo "💡 Auto-merge activé"
+
+# Lister les issues ouvertes par priorité
+gh-tasks:
+    #!/usr/bin/env python3
+    import subprocess, json
+    for label, icon in [('priority:p0','🔴 P0'),('priority:p1','🟠 P1'),('priority:p2','🔵 P2')]:
+        issues = json.loads(subprocess.run(
+            ['gh','issue','list','--label',label,'--state','open','--limit','10','--json','number,title'],
+            capture_output=True, text=True).stdout or '[]')
+        if issues:
+            print(f"\n{icon}:")
+            for i in issues: print(f"  #{i['number']} {i['title']}")
 
 # ============================================
 # BEADS SYNC (Push local state to beads-sync branch)
