@@ -11,3 +11,5 @@ resources:
   - networkpolicy.yaml
   - networkpolicy-penpot-exporter.yaml
   - networkpolicy-penpot-frontend.yaml
+components:
+  - ../../../_shared/components/revision-history-limit

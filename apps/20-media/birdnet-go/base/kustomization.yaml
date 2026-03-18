@@ -11,3 +11,5 @@ resources:
   - deployment.yaml
   - service.yaml
   - pdb.yaml
+components:
+  - ../../../_shared/components/revision-history-limit

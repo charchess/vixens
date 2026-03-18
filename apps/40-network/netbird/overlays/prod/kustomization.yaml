@@ -11,7 +11,6 @@ components:
   - ../../../../_shared/components/sync-wave/wave-15
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
-  - ../../../../_shared/components/revision-history-limit
   - ../../../../_shared/components/infisical/env-prod
 
 patches:

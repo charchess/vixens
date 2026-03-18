@@ -4,7 +4,6 @@ bases:
 - ../../base
 components:
 - ../../../../_shared/components/dev-hibernate
-- ../../../../_shared/components/revision-history-limit
 kind: Kustomization
 namespace: mail-gateway
 resources:

@@ -11,3 +11,5 @@ resources:
   - networkpolicy-netbird-management.yaml
   - networkpolicy-netbird-signal.yaml
   - networkpolicy-netbird-relay.yaml
+components:
+  - ../../../_shared/components/revision-history-limit

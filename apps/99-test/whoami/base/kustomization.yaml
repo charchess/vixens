@@ -7,3 +7,6 @@ resources:
   - service.yaml
   - pdb.yaml
   - networkpolicy.yaml
+components:
+  - ../../../_shared/components/revision-history-limit
+  - ../../../_shared/components/base

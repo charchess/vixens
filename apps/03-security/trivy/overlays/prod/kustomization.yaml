@@ -8,7 +8,6 @@ resources:
 components:
   - ../../../../_shared/components/sync-wave/wave-3
   - ../../../../_shared/components/goldilocks/enabled
-  - ../../../../_shared/components/revision-history-limit
 
 patches:
   - path: resources-patch.yaml

@@ -10,3 +10,5 @@ resources:
   - litestream-config.yaml
   - servicemonitor.yaml
   - networkpolicy.yaml
+components:
+  - ../../../_shared/components/revision-history-limit

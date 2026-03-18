@@ -254,4 +254,3 @@ patches:
     target:
       kind: StatefulSet
 components:
-  - ../../../../_shared/components/revision-history-limit

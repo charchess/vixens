@@ -27,3 +27,5 @@ patches:
               vixens.io/backup-profile: "relaxed"
           spec:
             priorityClassName: vixens-high
+components:
+  - ../../../_shared/components/revision-history-limit

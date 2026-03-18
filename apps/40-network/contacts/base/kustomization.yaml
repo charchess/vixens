@@ -6,3 +6,5 @@ resources:
   - namespace.yaml
   - service.yaml
   - endpoints.yaml
+components:
+  - ../../../_shared/components/revision-history-limit

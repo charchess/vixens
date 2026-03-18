@@ -8,3 +8,5 @@ resources:
   - pvc.yaml
   - ingressroute-slimproto.yaml
   - networkpolicy.yaml
+components:
+  - ../../../_shared/components/revision-history-limit
