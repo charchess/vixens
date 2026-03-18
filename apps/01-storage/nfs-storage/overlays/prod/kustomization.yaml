@@ -6,6 +6,5 @@ resources:
   - ../../base
 
 components:
-  - ../../../../_shared/components/revision-history-limit
 
 patches:

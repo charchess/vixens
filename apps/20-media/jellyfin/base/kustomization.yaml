@@ -7,3 +7,5 @@ resources:
   - service.yaml
   - pvc.yaml
   - networkpolicy.yaml
+components:
+  - ../../../_shared/components/revision-history-limit

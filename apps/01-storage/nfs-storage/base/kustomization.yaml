@@ -10,3 +10,5 @@ commonLabels:
 
 resources:
   - namespace.yaml
+components:
+  - ../../../_shared/components/revision-history-limit

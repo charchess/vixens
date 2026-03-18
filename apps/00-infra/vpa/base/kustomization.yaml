@@ -46,3 +46,5 @@ patches:
     target:
       kind: Deployment
       name: vpa-vertical-pod-autoscaler-updater
+components:
+  - ../../../_shared/components/revision-history-limit

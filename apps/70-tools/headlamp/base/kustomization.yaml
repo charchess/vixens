@@ -9,3 +9,5 @@ resources:
   - serviceaccount.yaml
   - networkpolicy.yaml
   # vpa.yaml removed - Kyverno generates vixens-headlamp VPA via sizing-v2 label
+components:
+  - ../../../_shared/components/revision-history-limit
