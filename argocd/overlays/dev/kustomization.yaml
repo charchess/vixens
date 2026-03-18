@@ -72,7 +72,7 @@ resources:
   # - apps/it-tools.yaml
   # - apps/contacts.yaml
   # - apps/firefly-iii.yaml
-  # - apps/mealie.yaml
+  - apps/mealie.yaml
   # - apps/nocodb.yaml
   # - apps/vikunja.yaml
   # - apps/mariadb-shared.yaml
