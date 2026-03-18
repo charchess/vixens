@@ -46,6 +46,8 @@ spec:
                 --transfers 4 \
                 --exclude "*.log" \
                 --exclude "lost+found/**" \
+                --exclude "**/*-litestream" \
+                --exclude "**/*-litestream/**" \
                 || true
               # Fix ownership so mosquitto (uid 1883) can write its data files
               chown -R 1883:1883 /mosquitto/data 2>/dev/null || true
@@ -150,7 +152,9 @@ spec:
               sync_s3() {
                 rclone sync /mosquitto/data s3:$LITESTREAM_BUCKET/data \
                   --exclude "*.log" \
-                  --exclude "lost+found/**";
+                  --exclude "lost+found/**" \
+                  --exclude "**/*-litestream" \
+                  --exclude "**/*-litestream/**";
               }
               while true; do
                 sync_s3;
