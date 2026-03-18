@@ -69,6 +69,7 @@ spec:
             failureThreshold: 20
             periodSeconds: 10
       securityContext:
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       restartPolicy: Always

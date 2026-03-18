@@ -23,6 +23,7 @@ spec:
     spec:
       priorityClassName: vixens-critical
       securityContext:
+        runAsNonRoot: true
         fsGroup: 10001
         runAsGroup: 10001
         runAsUser: 10001

@@ -207,6 +207,7 @@ spec:
           configMap:
             name: sabnzbd-litestream-config
       securityContext:
+        runAsNonRoot: true
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
