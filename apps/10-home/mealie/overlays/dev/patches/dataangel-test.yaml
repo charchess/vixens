@@ -1,6 +1,6 @@
 ---
-# TEST DataAngel v1 — remplace litestream init+sidecar par DataAngel (SQLite only)
-# Filesystem backup (rclone/config-syncer) conservé inchangé
+# TEST DataAngel v1 — remplace TOUS les containers backup par DataAngel
+# SQLite (litestream) + Filesystem (rclone) gérés par DataAngel
 # Ref: https://github.com/truxonline/dataAngel | Issue #2264
 apiVersion: apps/v1
 kind: Deployment
@@ -12,15 +12,14 @@ spec:
   template:
     metadata:
       labels:
-        # Sizing pour les nouveaux containers DataAngel
         vixens.io/sizing.data-guard-init: B-nano
         vixens.io/sizing.data-guard-sidecar: V-nano
     spec:
       initContainers:
-        # Supprime le restore litestream natif
+        - name: restore-config
+          $patch: delete
         - name: restore-db
           $patch: delete
-        # DataAngel init — restore SQLite via litestream
         - name: data-guard-init
           image: charchess/dataangel:latest
           imagePullPolicy: Always
@@ -43,6 +42,8 @@ spec:
                   key: LITESTREAM_BUCKET
             - name: DATA_GUARD_SQLITE_PATHS
               value: "/app/data/mealie.db"
+            - name: DATA_GUARD_FS_PATHS
+              value: "/app/data"
             - name: DATA_GUARD_S3_ENDPOINT
               valueFrom:
                 secretKeyRef:
@@ -62,10 +63,10 @@ spec:
             - name: data
               mountPath: /app/data
       containers:
-        # Supprime le sidecar litestream natif
         - name: litestream
           $patch: delete
-        # DataAngel sidecar — réplication SQLite continue via litestream
+        - name: config-syncer
+          $patch: delete
         - name: data-guard-sidecar
           image: charchess/dataangel:latest
           imagePullPolicy: Always
@@ -88,6 +89,8 @@ spec:
                   key: LITESTREAM_BUCKET
             - name: DATA_GUARD_SQLITE_PATHS
               value: "/app/data/mealie.db"
+            - name: DATA_GUARD_FS_PATHS
+              value: "/app/data"
             - name: DATA_GUARD_S3_ENDPOINT
               valueFrom:
                 secretKeyRef:
@@ -114,4 +117,3 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /app/data
-
