@@ -5,8 +5,6 @@ kind: Component
 metadata:
   name: dataangel
 
-commonLabels:
-  data-guard.io/enabled: "true"
 
 patches:
   - target:
