@@ -1,0 +1,100 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+metadata:
+  name: dataangel
+
+commonLabels:
+  data-guard.io/enabled: "true"
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/initContainers/-
+        value:
+          name: dataangel
+          restartPolicy: Always
+          image: charchess/dataangel:0.3.1
+          imagePullPolicy: IfNotPresent
+          command: ["./dataangel"]
+          env:
+            - name: DATA_GUARD_BUCKET
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['data-guard.io/bucket']
+            - name: DATA_GUARD_SQLITE_PATHS
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['data-guard.io/sqlite-paths']
+            - name: DATA_GUARD_FS_PATHS
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['data-guard.io/fs-paths']
+            - name: DATA_GUARD_S3_ENDPOINT
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['data-guard.io/s3-endpoint']
+            - name: DATA_GUARD_DEPLOYMENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['data-guard.io/deployment-name']
+            - name: DATA_GUARD_LOCK_TTL
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['data-guard.io/lock-ttl']
+            - name: DATA_GUARD_RCLONE_INTERVAL
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['data-guard.io/rclone-interval']
+            - name: DATA_GUARD_METRICS_PORT
+              value: "9090"
+            - name: DATA_GUARD_METRICS_ENABLED
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['data-guard.io/metrics-enabled']
+            - name: DATA_GUARD_FULL_LOGS
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['data-guard.io/full-logs']
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: AWS_REGION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['data-guard.io/aws-region']
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: data-guard-credentials
+                  key: access-key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: data-guard-credentials
+                  key: secret-key
+          ports:
+            - containerPort: 9090
+              name: metrics
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 9090
+            initialDelaySeconds: 0
+            periodSeconds: 2
+          volumeMounts:
+            - name: data
+              mountPath: /data
+
+images:
+  - name: charchess/dataangel
+    newTag: "0.3.1"

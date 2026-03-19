@@ -9,6 +9,14 @@ spec:
     metadata:
       labels:
         vixens.io/sizing.dataangel: B-nano
+      annotations:
+        data-guard.io/bucket: "vixens-dev-mealie"
+        data-guard.io/sqlite-paths: "/app/data/mealie.db"
+        data-guard.io/fs-paths: "/app/data"
+        data-guard.io/s3-endpoint: "http://synelia.internal.truxonline.com:9000"
+        data-guard.io/deployment-name: "mealie"
+        data-guard.io/rclone-interval: "60s"
+        data-guard.io/metrics-enabled: "true"
     spec:
       initContainers:
         - name: restore-config
@@ -16,10 +24,7 @@ spec:
         - name: restore-db
           $patch: delete
         - name: dataangel
-          image: charchess/dataangel:dev
           imagePullPolicy: Always
-          restartPolicy: Always
-          command: ["./dataangel"]
           securityContext:
             runAsUser: 911
             runAsGroup: 911
@@ -31,28 +36,6 @@ spec:
               cpu: 100m
               memory: 256Mi
           env:
-            - name: DATA_GUARD_BUCKET
-              valueFrom:
-                secretKeyRef:
-                  name: mealie-secrets
-                  key: LITESTREAM_BUCKET
-            - name: DATA_GUARD_SQLITE_PATHS
-              value: "/app/data/mealie.db"
-            - name: DATA_GUARD_FS_PATHS
-              value: "/app/data"
-            - name: DATA_GUARD_S3_ENDPOINT
-              valueFrom:
-                secretKeyRef:
-                  name: mealie-secrets
-                  key: LITESTREAM_ENDPOINT
-            - name: DATA_GUARD_DEPLOYMENT_NAME
-              value: "mealie"
-            - name: DATA_GUARD_RCLONE_INTERVAL
-              value: "60s"
-            - name: DATA_GUARD_METRICS_ENABLED
-              value: "true"
-            - name: DATA_GUARD_METRICS_PORT
-              value: "9090"
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -63,16 +46,6 @@ spec:
                 secretKeyRef:
                   name: mealie-secrets
                   key: LITESTREAM_SECRET_ACCESS_KEY
-          ports:
-            - containerPort: 9090
-              name: metrics
-              protocol: TCP
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 9090
-            initialDelaySeconds: 0
-            periodSeconds: 2
           volumeMounts:
             - name: data
               mountPath: /app/data
