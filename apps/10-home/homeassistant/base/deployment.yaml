@@ -110,7 +110,7 @@ spec:
             - name: config
               mountPath: /config
         - name: restore-db
-          image: litestream/litestream:0.5.9
+          image: litestream/litestream:0.5.10
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -203,7 +203,7 @@ spec:
             limits:
               cpu: 500m
               memory: 2Gi
-          image: litestream/litestream:0.5.9
+          image: litestream/litestream:0.5.10
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000

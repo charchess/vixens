@@ -83,7 +83,7 @@ spec:
             cpu: 10m
             memory: 32Mi
       - name: restore-db
-        image: litestream/litestream:0.5.9
+        image: litestream/litestream:0.5.10
         securityContext:
           runAsUser: 1000
           runAsGroup: 1000
@@ -209,7 +209,7 @@ spec:
         - name: dri
           mountPath: /dev/dri
       - name: litestream
-        image: litestream/litestream:0.5.9
+        image: litestream/litestream:0.5.10
         securityContext:
           runAsUser: 1000
           runAsGroup: 1000
