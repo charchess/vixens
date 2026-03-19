@@ -47,8 +47,6 @@ spec:
                   key: LITESTREAM_ENDPOINT
             - name: DATA_GUARD_DEPLOYMENT_NAME
               value: "mealie"
-            - name: AWS_REGION
-              value: "us-east-1"
             - name: DATA_GUARD_RCLONE_INTERVAL
               value: "60s"
             - name: DATA_GUARD_METRICS_ENABLED
