@@ -25,6 +25,9 @@ spec:
           image: charchess/dataangel:latest
           imagePullPolicy: Always
           command: ["./init"]
+          securityContext:
+            runAsUser: 911
+            runAsGroup: 911
           resources:
             requests:
               cpu: 10m
@@ -67,6 +70,9 @@ spec:
           image: charchess/dataangel:latest
           imagePullPolicy: Always
           command: ["./sidecar"]
+          securityContext:
+            runAsUser: 911
+            runAsGroup: 911
           resources:
             requests:
               cpu: 5m
