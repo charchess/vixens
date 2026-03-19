@@ -9,6 +9,11 @@ resources:
 - ingress.yaml
 components:
 - ../../../../_shared/components/dev-hibernate
+- ../../../../_shared/components/dataangel
+
+images:
+- name: charchess/dataangel
+  newTag: dev
 patches:
 - path: patches/dataangel-test.yaml
   target:
