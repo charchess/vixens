@@ -138,7 +138,7 @@ spec:
             limits:
               cpu: 20m
               memory: 256Mi
-          image: litestream/litestream:0.5.9
+          image: litestream/litestream:0.5.10
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
