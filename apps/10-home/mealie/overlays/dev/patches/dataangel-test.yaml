@@ -1,85 +1,34 @@
 ---
-# TEST DataAngel v1 — remplace TOUS les containers backup par DataAngel
-# SQLite (litestream) + Filesystem (rclone) gérés par DataAngel
-# Ref: https://github.com/truxonline/dataAngel | Issue #2264
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mealie
 spec:
-  # Override dev-hibernate pour permettre le test
   replicas: 1
   template:
     metadata:
       labels:
-        vixens.io/sizing.data-guard-init: B-nano
-        vixens.io/sizing.data-guard-sidecar: V-nano
+        vixens.io/sizing.dataangel: B-nano
     spec:
       initContainers:
         - name: restore-config
           $patch: delete
         - name: restore-db
           $patch: delete
-        - name: data-guard-init
-          image: charchess/dataangel:latest
+        - name: dataangel
+          image: charchess/dataangel:dev
           imagePullPolicy: Always
-          command: ["./init"]
+          restartPolicy: Always
+          command: ["./dataangel"]
           securityContext:
             runAsUser: 911
             runAsGroup: 911
           resources:
             requests:
               cpu: 10m
-              memory: 32Mi
-            limits:
-              cpu: 50m
-              memory: 128Mi
-          env:
-            - name: DATA_GUARD_BUCKET
-              valueFrom:
-                secretKeyRef:
-                  name: mealie-secrets
-                  key: LITESTREAM_BUCKET
-            - name: DATA_GUARD_SQLITE_PATHS
-              value: "/app/data/mealie.db"
-            - name: DATA_GUARD_FS_PATHS
-              value: "/app/data"
-            - name: DATA_GUARD_S3_ENDPOINT
-              valueFrom:
-                secretKeyRef:
-                  name: mealie-secrets
-                  key: LITESTREAM_ENDPOINT
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: mealie-secrets
-                  key: LITESTREAM_ACCESS_KEY_ID
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: mealie-secrets
-                  key: LITESTREAM_SECRET_ACCESS_KEY
-          volumeMounts:
-            - name: data
-              mountPath: /app/data
-      containers:
-        - name: litestream
-          $patch: delete
-        - name: config-syncer
-          $patch: delete
-        - name: data-guard-sidecar
-          image: charchess/dataangel:latest
-          imagePullPolicy: Always
-          command: ["./sidecar"]
-          securityContext:
-            runAsUser: 911
-            runAsGroup: 911
-          resources:
-            requests:
-              cpu: 5m
               memory: 64Mi
             limits:
-              cpu: 20m
+              cpu: 100m
               memory: 256Mi
           env:
             - name: DATA_GUARD_BUCKET
@@ -96,8 +45,12 @@ spec:
                 secretKeyRef:
                   name: mealie-secrets
                   key: LITESTREAM_ENDPOINT
+            - name: DATA_GUARD_DEPLOYMENT_NAME
+              value: "mealie"
             - name: DATA_GUARD_RCLONE_INTERVAL
               value: "60s"
+            - name: DATA_GUARD_METRICS_ENABLED
+              value: "true"
             - name: DATA_GUARD_METRICS_PORT
               value: "9090"
             - name: AWS_ACCESS_KEY_ID
@@ -114,6 +67,17 @@ spec:
             - containerPort: 9090
               name: metrics
               protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 9090
+            initialDelaySeconds: 0
+            periodSeconds: 2
           volumeMounts:
             - name: data
               mountPath: /app/data
+      containers:
+        - name: litestream
+          $patch: delete
+        - name: config-syncer
+          $patch: delete
