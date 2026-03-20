@@ -39,7 +39,10 @@ spec:
         - name: copy-initial-config
           image: busybox:1.37
           # Clear the destination first to avoid pollution, then copy and set
-          # ownership.
+          # ownership. Runs as root to handle files owned by previous pods.
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
           command:
             - sh
             - -c
