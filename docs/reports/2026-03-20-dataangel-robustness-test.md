@@ -267,6 +267,7 @@ Logs: "No S3 backup found for /app/data/mealie.db, app will create fresh databas
 | #27 Misleading log | `206f28da7e03` | "restored successfully" | Accurate message | ✅ Round 3 T13 |
 | #28 Tight threshold | `953abebcdcda` | 3 failures (6s) | 150 failures (5m) | ✅ Config verified |
 | #29 First-deploy deadlock | `f952dfb5258b` | CrashLoopBackOff on first deploy | 0 restarts, clean first-deploy | ✅ Round 4 T15 |
+| #30 FS path mismatch | `5bf5b0c4eed9` | Backup→`filesystem/`, restore→`<basename>/` | Both use `filepath.Base` | ✅ Round 6 |
 
 ---
 
@@ -385,6 +386,41 @@ test1.txt  test2.txt
 
 ---
 
+## Round 6 — Fix #30 Validation (FS path mismatch)
+
+**DataAngel version:** `charchess/dataangel:dev` (commit `5bf5b0c4eed9` — fix #30)
+**Image:** `sha256:899768e97fbf731ff0307026d4e466f8a93270782dd35ce23347b6766d1be279`
+
+3 tests executed. **All 3 passed.** Issue #30 resolved.
+
+| # | Test | Result |
+|---|------|--------|
+| R6-T1 | sqlite+FS: FS backup writes to `data/` (basename) | ✅ PASS |
+| R6-T2 | sqlite+FS: FS restore reads from `data/` → files present | ✅ PASS |
+| R6-T3 | FS-only: backup writes to `testdata/`, round-trip verified | ✅ PASS |
+
+**Evidence (sqlite+FS mode):**
+```
+$ mc ls synelia-admin/vixens-dev-mealie/data/
+.secret  .session_secret    ← backup writes here (was filesystem/)
+$ mc ls synelia-admin/vixens-dev-mealie/filesystem/
+<doesn't exist>             ← old hardcoded path no longer used
+```
+
+Restore log confirms correct path:
+```
+Running: rclone copy :s3:vixens-dev-mealie/data /app/data ...
+Filesystem restored successfully: /app/data
+```
+
+Files verified present after restore: `.secret`, `.session_secret`.
+
+**FS-only mode:** Backup wrote `fix30.txt` to `s3://vixens-dev-mealie/testdata/` (`filepath.Base("/testdata")`). Path matches restore. Full round-trip confirmed.
+
+**Fix details:** `syncOnce()` now uses `filepath.Base(fsPath)` as S3 prefix (was hardcoded `filesystem`). New `syncAll()` iterates all FsPaths (was only `FsPaths[0]`).
+
+---
+
 ## Infrastructure Issue
 
 **DNS routing bug (unrelated to DataAngel):**
@@ -397,15 +433,15 @@ test1.txt  test2.txt
 
 ## Conclusions
 
-**DataAngel is production-ready for sqlite and sqlite+FS modes.** FS-only mode has a critical bug (#30).
+**DataAngel is production-ready.** All 11 issues (#20-#30) fixed and validated across all 3 modes.
 
-**31 tests across 5 rounds, 3 modes, 10 fix validations:**
+**34 tests across 6 rounds, 3 modes, 11 fix validations:**
 
 | Mode | Tests | Pass | Fail | Notes |
 |------|-------|------|------|-------|
-| sqlite+FS | 24 | 24 | 0 | All scenarios covered |
+| sqlite+FS | 26 | 26 | 0 | All scenarios + FS round-trip verified |
 | sqlite-only | 4 | 4 | 0 | Clean separation confirmed |
-| FS-only | 3 | 3 | 0* | Functional but restore is silently broken (#30) |
+| FS-only | 4 | 4 | 0 | Full round-trip verified (post #30 fix) |
 
 **All critical paths validated:**
 - Corruption recovery: header, middle, empty file → auto-restore + integrity verification
@@ -418,14 +454,10 @@ test1.txt  test2.txt
 - First-deploy safety: no deadlock with startupProbe, accurate logging
 - Race condition eliminated: mealie starts 5-8s after dataangel (gated by startupProbe)
 - Mode isolation: each mode runs only the relevant components
+- FS backup/restore path consistency: both use `filepath.Base(fsPath)`
 
-**Open issues:**
-1. **#30 (Critical):** FS restore/backup path mismatch — restore reads from `<basename>/`, backup writes to `filesystem/`
-2. **#30 addendum:** Only `FsPaths[0]` is backed up (multi-path bug)
-3. Metric prefix inconsistency (`dataangel_` vs `dataguard_`) — cosmetic
-4. `rclone.conf not found` NOTICE — harmless (uses env-auth)
+**Remaining issues (cosmetic, non-blocking):**
+1. Metric prefix inconsistency (`dataangel_` vs `dataguard_`) — cosmetic
+2. `rclone.conf not found` NOTICE — harmless (uses env-auth)
 
-**Recommendation:**
-- **sqlite-only and sqlite+FS:** Ready for production. Tag stable release.
-- **FS-only:** Blocked on #30 fix. Do not use FS-only mode until path mismatch is resolved.
-- Note: FS restore in sqlite+FS mode is also affected by #30, but the impact is low since apps typically recreate config files.
+**Recommendation:** All 3 modes production-ready. Tag stable release.
