@@ -83,13 +83,12 @@ patches:
             - containerPort: 9090
               name: metrics
               protocol: TCP
-          # startupProbe temporarily disabled pending dataAngel#29 fix
-          # startupProbe:
-          #   httpGet:
-          #     path: /ready
-          #     port: 9090
-          #   periodSeconds: 2
-          #   failureThreshold: 150
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: 9090
+            periodSeconds: 2
+            failureThreshold: 150
           readinessProbe:
             httpGet:
               path: /ready
