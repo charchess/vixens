@@ -32,6 +32,12 @@ server:
     limits:
       cpu: 1000m
       memory: 4Gi
+  # WAL replay on 50Gi data takes 10+ minutes — startup probe prevents liveness kill
+  startupProbe:
+    enabled: true
+    periodSeconds: 10
+    failureThreshold: 90
+    timeoutSeconds: 5
 
 # Extra scrape configurations
 extraScrapeConfigs: ""
