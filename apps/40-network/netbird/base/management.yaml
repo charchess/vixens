@@ -99,7 +99,7 @@ spec:
             - name: config-writable
               mountPath: /etc/netbird
       securityContext:
-        runAsNonRoot: true
+        # runAsNonRoot: true  # DISABLED: netbirdio/management runs as root — verify image before re-enabling
         seccompProfile:
           type: RuntimeDefault
       containers:

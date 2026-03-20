@@ -93,7 +93,7 @@ spec:
           persistentVolumeClaim:
             claimName: penpot-data
       securityContext:
-        runAsNonRoot: true
+        # runAsNonRoot: true  # DISABLED: penpot/backend uses non-numeric user — verify image before re-enabling
         seccompProfile:
           type: RuntimeDefault
       restartPolicy: Always

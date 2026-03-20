@@ -60,7 +60,7 @@ spec:
           operator: Exists
           effect: NoSchedule
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 65532
+        # runAsNonRoot: true  # DISABLED: image writes to /.config — verify image before re-enabling
+        # runAsUser: 65532   # DISABLED: causes mkdir /.config permission denied
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

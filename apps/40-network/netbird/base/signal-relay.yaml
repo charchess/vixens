@@ -30,7 +30,7 @@ spec:
           operator: "Exists"
           effect: "NoSchedule"
       securityContext:
-        runAsNonRoot: true
+        # runAsNonRoot: true  # DISABLED: netbirdio/signal runs as root — verify image before re-enabling
         seccompProfile:
           type: RuntimeDefault
       containers:
