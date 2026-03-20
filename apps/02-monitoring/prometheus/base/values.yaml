@@ -5,7 +5,7 @@
 server:
   priorityClassName: vixens-critical
   podLabels:
-    vixens.io/sizing.prometheus-server: "G-xlarge"
+    vixens.io/sizing.prometheus-server: "SB-2xlarge"
   podAnnotations:
     vixens.io/fast-start: "true"
     prometheus.io/scrape: "true"
@@ -25,13 +25,6 @@ server:
     storageClass: synelia-iscsi-retain
     size: 50Gi
   retention: 30d
-  resources:
-    requests:
-      cpu: 1000m
-      memory: 4Gi
-    limits:
-      cpu: 1000m
-      memory: 4Gi
   # WAL replay on 50Gi data takes 10+ minutes — startup probe prevents liveness kill
   startupProbe:
     enabled: true
