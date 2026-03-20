@@ -39,26 +39,27 @@ spec:
           ports:
             - containerPort: 3306
               name: mysql
-          resources:
-            requests:
-              cpu: "10m"
-              memory: "128Mi"
-            limits:
-              cpu: "100m"
-              memory: "512Mi"
           env:
             - name: MARIADB_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: mariadb-shared-credentials
                   key: MARIADB_ROOT_PASSWORD
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h localhost -u root -p$MARIADB_ROOT_PASSWORD
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
           livenessProbe:
             exec:
               command:
                 - sh
                 - -c
                 - mysqladmin ping -h localhost -u root -p$MARIADB_ROOT_PASSWORD
-            initialDelaySeconds: 30
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 3
