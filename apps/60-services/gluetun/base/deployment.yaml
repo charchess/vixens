@@ -88,6 +88,8 @@ spec:
               value: on
             - name: VPN_IPV6_ENABLED
               value: "off"
+            - name: HEALTH_SERVER_ADDRESS
+              value: :9999
           ports:
             - containerPort: 8888
               name: http-proxy
