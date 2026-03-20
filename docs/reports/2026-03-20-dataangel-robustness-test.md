@@ -431,15 +431,62 @@ Files verified present after restore: `.secret`, `.session_secret`.
 
 ---
 
+## Round 7 — Full Regression Pass (Final Image)
+
+**DataAngel version:** `charchess/dataangel:dev` (commit `5bf5b0c4eed9` — all fixes #20-#30)
+**Image:** `sha256:899768e97fbf731ff0307026d4e466f8a93270782dd35ce23347b6766d1be279`
+**Purpose:** Confirm zero regressions on final image after all fixes.
+
+10 tests executed. **All 10 passed.** Zero regressions.
+
+| # | Test | Expected | Result |
+|---|------|----------|--------|
+| REG-1 | Corrupt DB header + backup → restore | Detect → restore → verify | ✅ PASS |
+| REG-2 | Empty DB (0 bytes) → corruption detection | Corruption detected → restore | ✅ PASS |
+| REG-3 | Mid-file corruption → restore | Detect → restore | ✅ PASS |
+| REG-4 | Corrupt DB + NO backup → CRITICAL exit | Exit code 1, CrashLoopBackOff | ✅ PASS |
+| REG-5 | First-deploy (no S3 backup) | "fresh database", 0 restarts | ✅ PASS |
+| REG-6 | DB deleted while running | 10 checks → CRITICAL exit → restore | ✅ PASS |
+| REG-7 | Litestream subprocess crash | Exit → restart → restore | ✅ PASS |
+| REG-8 | Graceful shutdown (pod delete) | Lock released → 0s acquisition | ✅ PASS |
+| REG-9 | Metrics accuracy | All metrics correct | ✅ PASS |
+| REG-10 | FS backup/restore round-trip | Backup to `data/`, restore from `data/` | ✅ PASS |
+
+### REG-5 detail: Container start timing
+```
+dataangel started: 20:18:16
+mealie started:    20:18:22   ← 6s gap, gated by startupProbe
+0 restarts
+```
+
+### REG-6 detail: 10-check DB deletion detection
+```
+WARNING: database file missing: /app/data/mealie.db (3/10)
+...
+WARNING: database file missing: /app/data/mealie.db (9/10)
+CRITICAL: database file /app/data/mealie.db has been missing for 10 consecutive checks — exiting to trigger restore
+→ Container restart → restore from S3 → backup resumed
+```
+
+### REG-10 detail: FS round-trip (fix #30 regression check)
+```
+1. Created marker: REG10-1774038328
+2. Rclone backed up to s3://vixens-dev-mealie/data/regression-test-marker.txt
+3. Deleted marker locally + deleted pod
+4. New pod restored marker from S3 → content matches exactly
+```
+
+---
+
 ## Conclusions
 
-**DataAngel is production-ready.** All 11 issues (#20-#30) fixed and validated across all 3 modes.
+**DataAngel is production-ready.** All 11 issues (#20-#30) fixed and validated across all 3 modes. Full regression pass confirms zero regressions.
 
-**34 tests across 6 rounds, 3 modes, 11 fix validations:**
+**44 tests across 7 rounds, 3 modes, 11 fix validations:**
 
 | Mode | Tests | Pass | Fail | Notes |
 |------|-------|------|------|-------|
-| sqlite+FS | 26 | 26 | 0 | All scenarios + FS round-trip verified |
+| sqlite+FS | 36 | 36 | 0 | All scenarios + full regression pass |
 | sqlite-only | 4 | 4 | 0 | Clean separation confirmed |
 | FS-only | 4 | 4 | 0 | Full round-trip verified (post #30 fix) |
 
