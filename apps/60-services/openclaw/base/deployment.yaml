@@ -44,7 +44,7 @@ spec:
         # 1/4 — Install system tools (merged fix-perms + install-tools)
         #        Skips reinstall if TOOLS_VERSION matches. Always chowns /data/tools.
         - name: install-tools
-          image: debian:trixie
+          image: debian:trixie-20260316
           securityContext:
             runAsUser: 0
           command:
