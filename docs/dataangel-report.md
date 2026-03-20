@@ -192,7 +192,7 @@ Total bucket : ~30 objets, ~250 KB.
 #### Bug #4 — Restore rclone killed par context timeout hardcodé de 2 minutes
 
 **Sévérité** : 🔴 Haute
-**Statut** : À ouvrir sur truxonline/dataangel
+**Issue** : https://github.com/truxonline/dataAngel/issues/16
 **Reproductible** : Oui (100% sur premier boot avec emptyDir + FS paths)
 
 **Symptôme** :
@@ -238,7 +238,7 @@ cmd := exec.CommandContext(restoreCtx, "rclone", args...)
 #### Bug #5 — Lock renewal échoue avec context deadline exceeded au démarrage
 
 **Sévérité** : 🟡 Moyenne
-**Statut** : À investiguer / ouvrir sur truxonline/dataangel
+**Issue** : https://github.com/truxonline/dataAngel/issues/17
 **Reproductible** : Oui (au démarrage de la phase backup)
 
 **Symptôme** :
