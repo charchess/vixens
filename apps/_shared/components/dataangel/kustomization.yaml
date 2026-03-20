@@ -15,7 +15,7 @@ patches:
         value:
           name: dataangel
           restartPolicy: Always
-          image: charchess/dataangel:0.3.1
+          image: charchess/dataangel:1.0.0
           imagePullPolicy: IfNotPresent
           command: ["./dataangel"]
           env:
