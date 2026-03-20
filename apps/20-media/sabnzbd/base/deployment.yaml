@@ -207,7 +207,7 @@ spec:
           configMap:
             name: sabnzbd-litestream-config
       securityContext:
-        runAsNonRoot: true
+        # runAsNonRoot: true  # DISABLED: init container fix-permissions runs as root — verify image before re-enabling
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:

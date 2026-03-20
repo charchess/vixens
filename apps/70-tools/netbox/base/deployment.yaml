@@ -105,7 +105,7 @@ spec:
           persistentVolumeClaim:
             claimName: netbox-media-pvc
       securityContext:
-        runAsNonRoot: true
+        # runAsNonRoot: true  # DISABLED: netbox image runs as root — verify image before re-enabling
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:

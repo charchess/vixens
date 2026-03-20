@@ -98,7 +98,7 @@ spec:
           persistentVolumeClaim:
             claimName: nocodb-data
       securityContext:
-        runAsNonRoot: true
+        # runAsNonRoot: true  # DISABLED: nocodb image runs as root — verify image before re-enabling
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:

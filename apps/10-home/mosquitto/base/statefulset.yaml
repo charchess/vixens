@@ -171,7 +171,7 @@ spec:
           operator: Exists
           effect: NoSchedule
       securityContext:
-        runAsNonRoot: true
+        # runAsNonRoot: true  # DISABLED: init container rclone runs as root — verify image before re-enabling
         fsGroup: 1883
         seccompProfile:
           type: RuntimeDefault

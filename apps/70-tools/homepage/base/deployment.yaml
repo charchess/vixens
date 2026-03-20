@@ -113,7 +113,7 @@ spec:
           persistentVolumeClaim:
             claimName: homepage-config
       securityContext:
-        runAsNonRoot: true
+        # runAsNonRoot: true  # DISABLED: init container busybox runs as root — verify image before re-enabling
         runAsUser: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
