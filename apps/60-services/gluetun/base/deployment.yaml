@@ -29,13 +29,6 @@ spec:
       priorityClassName: vixens-medium
       containers:
         - name: gluetun
-          resources:
-            requests:
-              cpu: 5m
-              memory: 64Mi
-            limits:
-              cpu: 50m
-              memory: 128Mi
           image: ghcr.io/qdm12/gluetun:v3.41.1
           securityContext:
             capabilities:
@@ -69,7 +62,7 @@ spec:
               value: on
             # Firewall settings to allow access from other pods
             - name: FIREWALL_INPUT_PORTS
-              value: 8888,1080
+              value: 8888,1080,8000
             # Allow outbound to Kubernetes pod and service networks
             - name: FIREWALL_OUTBOUND_SUBNETS
               value: 10.244.0.0/16,10.96.0.0/12
@@ -83,6 +76,9 @@ spec:
               value: on
             - name: SOCKS5PROXY
               value: on
+            # Control server for health probes
+            - name: HTTP_CONTROL_SERVER_ADDRESS
+              value: :8000
           ports:
             - containerPort: 8888
               name: http-proxy
@@ -93,11 +89,17 @@ spec:
             - containerPort: 8000
               name: control
               protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /
+              port: control
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 18
           livenessProbe:
             httpGet:
               path: /
               port: control
-            initialDelaySeconds: 30
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 3
@@ -105,7 +107,6 @@ spec:
             httpGet:
               path: /
               port: control
-            initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
