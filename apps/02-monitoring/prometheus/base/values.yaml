@@ -5,7 +5,7 @@
 server:
   priorityClassName: vixens-critical
   podLabels:
-    vixens.io/sizing.prometheus-server: "SB-2xlarge"
+    vixens.io/sizing.prometheus-server: "SB-xlarge"
   podAnnotations:
     vixens.io/fast-start: "true"
     prometheus.io/scrape: "true"
