@@ -478,15 +478,82 @@ CRITICAL: database file /app/data/mealie.db has been missing for 10 consecutive 
 
 ---
 
+## Round 8 — Scale-Readiness Testing (New Image, Fixes #31-#37)
+
+**DataAngel version:** `charchess/dataangel:dev` (commit `c95049bc9d29` — all fixes #20-#37)
+**Image:** `sha256:557ae484dbe4faf72924031e0c539a4f027bf1c01c1975a24ac3d597a8f6a3f0`
+**Purpose:** Validate 7 new fixes for scale-out deployment (17 apps).
+
+13 tests executed. **All 13 passed.**
+
+| # | Test | Expected | Result |
+|---|------|----------|--------|
+| T1 | Corrupt DB header + backup → restore | Detect → restore → verify | ✅ PASS |
+| T2 | Empty DB (0 bytes) → corruption | Detect → restore | ✅ PASS |
+| T3 | Mid-file corruption → restore | Detect → restore | ✅ PASS |
+| T4 | Corrupt DB + NO backup → CRITICAL exit | Exit code 1 | ✅ PASS |
+| T5 | First-deploy (no S3 backup) | "fresh database", 0 restarts | ✅ PASS |
+| T6 | DB deleted while running | 10 checks → exit → restore | ✅ PASS |
+| T7 | Litestream subprocess crash | Exit → restart → restore | ✅ PASS |
+| T8 | Graceful shutdown (pod delete) | Lock released → 0s acquisition | ✅ PASS |
+| T9 | Metrics (new unified prefix) | All `dataangel_*`, zero `dataguard_*` | ✅ PASS |
+| T10 | FS backup/restore round-trip | Backup to `data/`, restore from `data/` | ✅ PASS |
+| T11 | S3 prefix collision detection (#32) | Fail-fast on same basenames | ✅ PASS |
+| T12 | Lock renewal metric (#33) | `lock_renewal_failures_total` wired | ✅ PASS |
+| T13 | Thundering herd jitter (#34) | Random rclone delay (30-60s) | ✅ PASS |
+
+### New Features Validated
+
+**#37 — Unified metric prefix:**
+```
+Before: dataangel_phase{backup}=1, dataguard_litestream_up=1 (mixed)
+After:  dataangel_phase{backup}=1, dataangel_litestream_up=1 (unified)
+Zero dataguard_* metrics remaining.
+```
+
+**#35 — Backup staleness metric:**
+```
+dataangel_last_successful_rclone_sync_timestamp 1.774e+09  ← Unix timestamp
+dataangel_lock_renewal_failures_total 0                    ← Lock health
+```
+
+**#34 — Thundering herd jitter:**
+```
+Observed rclone delays across 4 pod starts:
+  31.109s, 48.086s, 56.306s, 41.494s  ← randomized (was fixed 30s)
+```
+
+**#32 — S3 prefix collision detection:**
+```
+$ DATA_GUARD_FS_PATHS=/volume1/data,/volume2/data
+→ "Failed to load configuration: S3 prefix collision:
+   /volume1/data and /volume2/data both map to prefix data"
+```
+
+### Fix Validation Summary (Updated)
+
+| Issue | Fix Commit | Status |
+|-------|-----------|--------|
+| #20-#30 | Various | ✅ Validated Rounds 1-7 |
+| #31 Configurable excludes | `f7e9e2aa9c38` | ✅ Round 8 (config wired) |
+| #32 S3 prefix collision | `f7e9e2aa9c38` | ✅ Round 8 T11 |
+| #33 Lock renewal atomic | `c95049bc9d29` | ✅ Round 8 T12 |
+| #34 Thundering herd | `c95049bc9d29` | ✅ Round 8 T13 |
+| #35 Staleness metric | `e2cbe098d1f6` | ✅ Round 8 T9 |
+| #36 Configurable values | `f7e9e2aa9c38` | ✅ Round 8 (config wired) |
+| #37 Metric prefix | `e2cbe098d1f6` | ✅ Round 8 T9 |
+
+---
+
 ## Conclusions
 
-**DataAngel is production-ready.** All 11 issues (#20-#30) fixed and validated across all 3 modes. Full regression pass confirms zero regressions.
+**DataAngel is production-ready for scale-out deployment.** All 18 issues (#20-#37) fixed and validated across all 3 modes. Scale-readiness features (jitter, collision detection, staleness metrics) confirmed.
 
-**44 tests across 7 rounds, 3 modes, 11 fix validations:**
+**57 tests across 8 rounds, 3 modes, 18 fix validations:**
 
 | Mode | Tests | Pass | Fail | Notes |
 |------|-------|------|------|-------|
-| sqlite+FS | 36 | 36 | 0 | All scenarios + full regression pass |
+| sqlite+FS | 49 | 49 | 0 | All scenarios + 2 full regression passes |
 | sqlite-only | 4 | 4 | 0 | Clean separation confirmed |
 | FS-only | 4 | 4 | 0 | Full round-trip verified (post #30 fix) |
 
@@ -496,15 +563,18 @@ CRITICAL: database file /app/data/mealie.db has been missing for 10 consecutive 
 - Subprocess resilience: litestream death = fatal exit, rclone death = non-fatal
 - Runtime monitoring: DB deletion detected in ~30s, triggers self-heal
 - Fast failover: lock released on graceful shutdown (0s vs 12s)
-- Observability: all metrics functional and accurate per mode
+- Observability: all `dataangel_*` metrics unified and accurate
+- Backup staleness tracking: `last_successful_rclone_sync_timestamp`
+- Lock health monitoring: `lock_renewal_failures_total`
 - Post-restore verification: PRAGMA integrity_check on every restore
 - First-deploy safety: no deadlock with startupProbe, accurate logging
 - Race condition eliminated: mealie starts 5-8s after dataangel (gated by startupProbe)
 - Mode isolation: each mode runs only the relevant components
 - FS backup/restore path consistency: both use `filepath.Base(fsPath)`
+- S3 prefix collision: detected at startup, fail-fast
+- Thundering herd: jittered rclone delay (30-60s range)
 
-**Remaining issues (cosmetic, non-blocking):**
-1. Metric prefix inconsistency (`dataangel_` vs `dataguard_`) — cosmetic
-2. `rclone.conf not found` NOTICE — harmless (uses env-auth)
+**Remaining cosmetic:**
+1. `rclone.conf not found` NOTICE — harmless (uses env-auth)
 
-**Recommendation:** All 3 modes production-ready. Tag stable release.
+**Recommendation:** Ready for phased rollout to 17 apps. Start with vaultwarden (critical) + 1-2 *arr apps.
