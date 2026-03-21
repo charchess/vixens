@@ -15,9 +15,7 @@ spec:
       annotations:
         dataangel.io/bucket: "vixens-prod-mealie"
         dataangel.io/sqlite-paths: "/app/data/mealie.db"
-        # fs-paths disabled: MinIO credentials invalid (access key not found)
-        # TODO: re-enable after fixing credentials in Infisical prod /apps/10-home/mealie
-        # dataangel.io/fs-paths: "/app/data"
+        dataangel.io/fs-paths: "/app/data"
         dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
         dataangel.io/deployment-name: "mealie"
         dataangel.io/rclone-interval: "60s"
