@@ -9,10 +9,12 @@ components:
   - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/sync-wave/wave-11
   - ../../../../_shared/components/goldilocks/enabled
-  - ../../../../_shared/components/dataangel
+  # dataangel disabled: MinIO credentials invalid (access key not found in MinIO)
+  # Re-enable after fixing LITESTREAM_ACCESS_KEY_ID in Infisical prod /apps/10-home/mealie
+  # - ../../../../_shared/components/dataangel
 
 patches:
-  - path: dataangel.yaml
+  # - path: dataangel.yaml
 labels:
   - pairs:
       environment: prod
