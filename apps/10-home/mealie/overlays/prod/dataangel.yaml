@@ -16,7 +16,7 @@ spec:
         dataangel.io/bucket: "vixens-prod-mealie"
         dataangel.io/sqlite-paths: "/app/data/mealie.db"
         dataangel.io/fs-paths: "/app/data"
-        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/s3-endpoint: "http://synelia.internal.truxonline.com:9000"
         dataangel.io/deployment-name: "mealie"
         dataangel.io/rclone-interval: "60s"
         dataangel.io/metrics-enabled: "true"
