@@ -28,8 +28,8 @@ spec:
           $patch: delete
         - name: dataangel
           securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
+            runAsUser: 911
+            runAsGroup: 911
           env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
