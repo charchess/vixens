@@ -19,6 +19,7 @@ spec:
         dataangel.io/deployment-name: "adguard-home"
         dataangel.io/rclone-interval: "60s"
         dataangel.io/metrics-enabled: "true"
+        dataangel.io/lock-enabled: "false"
     spec:
       initContainers:
         - name: restore-config

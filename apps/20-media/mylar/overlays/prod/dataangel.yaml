@@ -21,6 +21,7 @@ spec:
         dataangel.io/deployment-name: "mylar"
         dataangel.io/rclone-interval: "60s"
         dataangel.io/metrics-enabled: "true"
+        dataangel.io/lock-enabled: "false"
     spec:
       initContainers:
         - name: fix-permissions

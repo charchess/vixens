@@ -43,6 +43,10 @@ patches:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.annotations['dataangel.io/lock-ttl']
+            - name: DATA_GUARD_LOCK_ENABLED
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/lock-enabled']
             - name: DATA_GUARD_RCLONE_INTERVAL
               valueFrom:
                 fieldRef:
@@ -101,4 +105,4 @@ patches:
 
 images:
   - name: charchess/dataangel
-    newTag: "sha-77460f9"
+    newTag: "sha-308d69b"
