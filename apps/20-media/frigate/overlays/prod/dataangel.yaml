@@ -1,0 +1,55 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frigate
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.dataangel: B-nano
+        vixens.io/sizing.litestream: null
+        vixens.io/sizing.config-syncer: null
+      annotations:
+        dataangel.io/bucket: "vixens-prod-frigate"
+        dataangel.io/sqlite-paths: "/tmp/cache/frigate.db"
+        dataangel.io/fs-paths: "/config"
+        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/deployment-name: "frigate"
+        dataangel.io/rclone-interval: "60s"
+        dataangel.io/metrics-enabled: "true"
+    spec:
+      initContainers:
+        - name: restore-config
+          $patch: delete
+        - name: generate-litestream-config
+          $patch: delete
+        - name: restore-db
+          $patch: delete
+        - name: dataangel
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: frigate-secrets
+                  key: LITESTREAM_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: frigate-secrets
+                  key: LITESTREAM_SECRET_ACCESS_KEY
+          volumeMounts:
+            - mountPath: /data
+              $patch: delete
+            - name: config
+              mountPath: /config
+            - name: cache
+              mountPath: /tmp/cache
+      containers:
+        - name: litestream
+          $patch: delete
+        - name: config-syncer
+          $patch: delete

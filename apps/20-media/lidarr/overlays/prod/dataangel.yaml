@@ -1,0 +1,56 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lidarr
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.dataangel: B-nano
+        vixens.io/sizing.litestream: null
+        vixens.io/sizing.config-syncer: null
+        vixens.io/sizing.fix-permissions: null
+        vixens.io/sizing.restore-config: null
+        vixens.io/sizing.restore-db: null
+      annotations:
+        dataangel.io/bucket: "vixens-prod-lidarr"
+        dataangel.io/sqlite-paths: "/config/lidarr.db"
+        dataangel.io/fs-paths: "/config"
+        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/deployment-name: "lidarr"
+        dataangel.io/rclone-interval: "60s"
+        dataangel.io/metrics-enabled: "true"
+    spec:
+      initContainers:
+        - name: fix-permissions
+          $patch: delete
+        - name: restore-config
+          $patch: delete
+        - name: restore-db
+          $patch: delete
+        - name: dataangel
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: lidarr-secrets
+                  key: LITESTREAM_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lidarr-secrets
+                  key: LITESTREAM_SECRET_ACCESS_KEY
+          volumeMounts:
+            - mountPath: /data
+              $patch: delete
+            - name: config
+              mountPath: /config
+      containers:
+        - name: litestream
+          $patch: delete
+        - name: config-syncer
+          $patch: delete

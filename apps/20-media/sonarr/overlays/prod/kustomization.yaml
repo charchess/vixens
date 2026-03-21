@@ -17,9 +17,11 @@ components:
   - ../../../../_shared/components/metrics
   - ../../../../_shared/components/poddisruptionbudget/0
   - ../../../../_shared/components/securitycontext/s6-overlay
+  - ../../../../_shared/components/dataangel
 
 patches:
   - target:
       kind: Deployment
       name: sonarr
     path: resources-patch.yaml
+  - path: dataangel.yaml

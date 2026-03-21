@@ -9,5 +9,7 @@ components:
   - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/sync-wave/wave-10
   - ../../../../_shared/components/goldilocks/enabled
+  - ../../../../_shared/components/dataangel
 
 patches:
+  - path: dataangel.yaml

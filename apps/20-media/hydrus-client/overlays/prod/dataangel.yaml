@@ -1,0 +1,62 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hydrus-client
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.dataangel: B-nano
+        vixens.io/sizing.litestream: null
+        vixens.io/sizing.fix-permissions: null
+        vixens.io/sizing.check-integrity: null
+        vixens.io/sizing.restore-db: null
+        vixens.io/sizing.restore-mappings: null
+        vixens.io/sizing.restore-master: null
+        vixens.io/sizing.restore-caches: null
+      annotations:
+        dataangel.io/bucket: "vixens-prod-hydrus-client"
+        dataangel.io/sqlite-paths: "/opt/hydrus/db/client.db,/opt/hydrus/db/client.mappings.db,/opt/hydrus/db/client.master.db,/opt/hydrus/db/client.caches.db"
+        dataangel.io/fs-paths: "/opt/hydrus/db"
+        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/deployment-name: "hydrus-client"
+        dataangel.io/rclone-interval: "60s"
+        dataangel.io/metrics-enabled: "true"
+    spec:
+      initContainers:
+        - name: fix-permissions
+          $patch: delete
+        - name: check-integrity
+          $patch: delete
+        - name: restore-db
+          $patch: delete
+        - name: restore-mappings
+          $patch: delete
+        - name: restore-master
+          $patch: delete
+        - name: restore-caches
+          $patch: delete
+        - name: dataangel
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: hydrus-client-secrets
+                  key: LITESTREAM_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hydrus-client-secrets
+                  key: LITESTREAM_SECRET_ACCESS_KEY
+          volumeMounts:
+            - mountPath: /data
+              $patch: delete
+            - name: config
+              mountPath: /opt/hydrus/db
+      containers:
+        - name: litestream
+          $patch: delete
