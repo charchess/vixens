@@ -20,7 +20,7 @@ spec:
         dataangel.io/deployment-name: "homeassistant"
         dataangel.io/rclone-interval: "60s"
         dataangel.io/metrics-enabled: "true"
-        dataangel.io/lock-ttl: "120s"
+        dataangel.io/lock-enabled: "false"
     spec:
       initContainers:
         - name: fix-perms
@@ -33,12 +33,6 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          startupProbe:
-            httpGet:
-              path: /ready
-              port: 9090
-            periodSeconds: 2
-            failureThreshold: 900
           env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:

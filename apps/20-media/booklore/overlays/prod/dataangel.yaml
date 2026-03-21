@@ -17,13 +17,14 @@ spec:
         dataangel.io/deployment-name: "booklore"
         dataangel.io/rclone-interval: "60s"
         dataangel.io/metrics-enabled: "true"
+        dataangel.io/lock-enabled: "false"
     spec:
       initContainers:
         - name: restore-config
           $patch: delete
         - name: dataangel
           restartPolicy: Always
-          image: charchess/dataangel:sha-77460f9
+          image: charchess/dataangel:sha-308d69b
           imagePullPolicy: IfNotPresent
           command: ["./dataangel"]
           securityContext:
@@ -56,6 +57,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.annotations['dataangel.io/metrics-enabled']
+            - name: DATA_GUARD_LOCK_ENABLED
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/lock-enabled']
             - name: POD_NAME
               valueFrom:
                 fieldRef:
