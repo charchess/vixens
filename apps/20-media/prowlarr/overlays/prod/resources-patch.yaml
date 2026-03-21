@@ -5,12 +5,8 @@ metadata:
   name: prowlarr
   labels:
     vixens.io/sizing.prowlarr: V-medium
-    vixens.io/sizing.litestream: V-nano
-    vixens.io/sizing.config-syncer: V-nano
 spec:
   template:
     metadata:
       labels:
         vixens.io/sizing.prowlarr: V-medium
-        vixens.io/sizing.litestream: V-nano
-        vixens.io/sizing.config-syncer: V-nano
