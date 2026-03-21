@@ -101,4 +101,4 @@ patches:
 
 images:
   - name: charchess/dataangel
-    newTag: "0.3.1"
+    newTag: "sha-c95049b"
