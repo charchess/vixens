@@ -16,7 +16,7 @@ spec:
         dataangel.io/bucket: "vixens-prod-radarr"
         dataangel.io/sqlite-paths: "/config/radarr.db"
         dataangel.io/fs-paths: "/config"
-        dataangel.io/s3-endpoint: "http://synelia.internal.truxonline.com:9000"
+        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
         dataangel.io/deployment-name: "radarr"
         dataangel.io/rclone-interval: "60s"
         dataangel.io/metrics-enabled: "true"
