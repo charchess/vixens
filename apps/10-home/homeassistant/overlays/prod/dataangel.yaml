@@ -32,6 +32,12 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: 9090
+            periodSeconds: 2
+            failureThreshold: 300
           env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
