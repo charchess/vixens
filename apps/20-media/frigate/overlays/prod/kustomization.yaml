@@ -14,6 +14,7 @@ components:
   - ../../../../_shared/components/revision-history-limit
   - ../../../../_shared/components/metrics
   - ../../../../_shared/components/poddisruptionbudget/0
+  - ../../../../_shared/components/dataangel
 
 patches:
   - target:
@@ -74,3 +75,4 @@ patches:
                   runAsUser: 0
                   runAsGroup: 0
   - path: pvc-patch.yaml
+  - path: dataangel.yaml

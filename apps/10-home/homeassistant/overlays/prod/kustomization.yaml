@@ -10,6 +10,7 @@ components:
   - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/sync-wave/wave-6
   - ../../../../_shared/components/goldilocks/enabled
+  - ../../../../_shared/components/dataangel
 
 patches:
   - target:
@@ -20,3 +21,4 @@ patches:
         path: /spec/resources/requests/storage
         value: 250Gi
   - path: resources-patch.yaml
+  - path: dataangel.yaml

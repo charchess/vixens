@@ -1,32 +1,39 @@
 ---
-apiVersion: kustomize.config.k8s.io/v1alpha1
-kind: Component
-
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: dataangel
-
-
-patches:
-  - target:
-      kind: Deployment|StatefulSet
-    patch: |-
-      - op: add
-        path: /spec/template/spec/initContainers/-
-        value:
-          name: dataangel
+  name: booklore
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.dataangel: B-nano
+        vixens.io/sizing.config-syncer: null
+        vixens.io/sizing.restore-config: null
+      annotations:
+        dataangel.io/bucket: "vixens-prod-booklore"
+        dataangel.io/fs-paths: "/app/data"
+        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/deployment-name: "booklore"
+        dataangel.io/rclone-interval: "60s"
+        dataangel.io/metrics-enabled: "true"
+    spec:
+      initContainers:
+        - name: restore-config
+          $patch: delete
+        - name: dataangel
           restartPolicy: Always
-          image: charchess/dataangel:1.0.0
+          image: charchess/dataangel:sha-c95049b
           imagePullPolicy: IfNotPresent
           command: ["./dataangel"]
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           env:
             - name: DATA_GUARD_BUCKET
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.annotations['dataangel.io/bucket']
-            - name: DATA_GUARD_SQLITE_PATHS
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.annotations['dataangel.io/sqlite-paths']
             - name: DATA_GUARD_FS_PATHS
               valueFrom:
                 fieldRef:
@@ -39,10 +46,6 @@ patches:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.annotations['dataangel.io/deployment-name']
-            - name: DATA_GUARD_LOCK_TTL
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.annotations['dataangel.io/lock-ttl']
             - name: DATA_GUARD_RCLONE_INTERVAL
               valueFrom:
                 fieldRef:
@@ -53,10 +56,6 @@ patches:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.annotations['dataangel.io/metrics-enabled']
-            - name: DATA_GUARD_FULL_LOGS
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.annotations['dataangel.io/full-logs']
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -65,20 +64,16 @@ patches:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.uid
-            - name: AWS_REGION
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.annotations['dataangel.io/aws-region']
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: data-guard-credentials
-                  key: access-key
+                  name: booklore-secrets
+                  key: LITESTREAM_ACCESS_KEY_ID
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: data-guard-credentials
-                  key: secret-key
+                  name: booklore-secrets
+                  key: LITESTREAM_SECRET_ACCESS_KEY
           ports:
             - containerPort: 9090
               name: metrics
@@ -97,8 +92,7 @@ patches:
             failureThreshold: 3
           volumeMounts:
             - name: data
-              mountPath: /data
-
-images:
-  - name: charchess/dataangel
-    newTag: "sha-c95049b"
+              mountPath: /app/data
+      containers:
+        - name: config-syncer
+          $patch: delete
