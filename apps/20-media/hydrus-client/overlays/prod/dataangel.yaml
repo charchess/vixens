@@ -47,7 +47,7 @@ spec:
               path: /ready
               port: 9090
             periodSeconds: 2
-            failureThreshold: 600
+            failureThreshold: 900
           env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
