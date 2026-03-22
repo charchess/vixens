@@ -8,7 +8,7 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.dataangel: B-nano
+        vixens.io/sizing.dataangel: V-small
       annotations:
         dataangel.io/bucket: "vixens-dev-mealie"
         dataangel.io/sqlite-paths: "/app/data/mealie.db"
