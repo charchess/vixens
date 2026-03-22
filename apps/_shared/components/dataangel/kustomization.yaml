@@ -105,4 +105,4 @@ patches:
 
 images:
   - name: charchess/dataangel
-    newTag: "sha-308d69b"
+    newTag: "sha-72826be"
