@@ -36,7 +36,7 @@ spec:
     spec:
       containers:
         - name: trivy-server
-          image: aquasec/trivy:0.69.3
+          image: aquasec/trivy:0.69.6
           args:
             - server
             - --listen
