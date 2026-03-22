@@ -7,7 +7,7 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.dataangel: B-nano
+        vixens.io/sizing.dataangel: V-small
         vixens.io/sizing.litestream: null
         vixens.io/sizing.config-syncer: null
         vixens.io/sizing.restore-config: null
