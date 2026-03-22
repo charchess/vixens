@@ -23,6 +23,8 @@ spec:
         app.kubernetes.io/name: g4f
         vixens.io/sizing: V-medium
     spec:
+      securityContext:
+        fsGroup: 1201
       priorityClassName: vixens-low
       tolerations:
         - key: node-role.kubernetes.io/control-plane
