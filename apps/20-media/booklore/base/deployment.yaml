@@ -93,7 +93,7 @@ spec:
       priorityClassName: vixens-low
       containers:
         - name: booklore
-          image: ghcr.io/booklore-app/booklore:v2.2.1
+          image: ghcr.io/grimmory-tools/grimmory:v2.3.0
           resources:
             requests:
               cpu: 10m
