@@ -81,6 +81,7 @@ resources:
   - apps/renovate.yaml
   - apps/stirling-pdf.yaml
   - apps/it-tools.yaml
+  - apps/g4f.yaml
   # apps/it-tools-ingress.yaml removed 2026-03-07 — ingress now managed by it-tools app directly (overlays/prod/kustomization.yaml)
   - apps/contacts.yaml
   - apps/external-dns-gandi.yaml

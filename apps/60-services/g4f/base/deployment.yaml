@@ -1,0 +1,83 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: g4f
+  labels:
+    app.kubernetes.io/name: g4f
+    vixens.io/vpa-mode: Auto
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: g4f
+  template:
+    metadata:
+      annotations:
+        vixens.io/fast-start: "true"
+        vixens.io/service-binding: "false"
+        vixens.io/no-long-connections: "true"
+      labels:
+        app.kubernetes.io/name: g4f
+        vixens.io/sizing: V-medium
+    spec:
+      priorityClassName: vixens-low
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: g4f
+          image: hlohaus789/g4f:latest
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 7900
+              name: vnc
+          env:
+            - name: TZ
+              value: "Europe/Paris"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 4Gi
+          volumeMounts:
+            - name: har-and-cookies
+              mountPath: /app/har_and_cookies
+            - name: generated-media
+              mountPath: /app/generated_media
+            - name: shm
+              mountPath: /dev/shm
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+      volumes:
+        - name: har-and-cookies
+          persistentVolumeClaim:
+            claimName: g4f-data
+        - name: generated-media
+          emptyDir: {}
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi
