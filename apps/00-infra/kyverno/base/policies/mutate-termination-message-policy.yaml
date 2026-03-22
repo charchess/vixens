@@ -1,0 +1,61 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: mutate-termination-message-policy
+  annotations:
+    policies.kyverno.io/title: Auto-inject terminationMessagePolicy
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/description: >-
+      Sets terminationMessagePolicy=FallbackToLogsOnError on all containers
+      so crash logs appear in kubectl describe and ArgoCD UI.
+spec:
+  background: false
+  rules:
+    - name: inject-containers-termination-policy
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      mutate:
+        foreach:
+          - list: "request.object.spec.containers"
+            patchStrategicMerge:
+              spec:
+                containers:
+                  - name: "{{ element.name }}"
+                    terminationMessagePolicy: FallbackToLogsOnError
+
+    - name: inject-initcontainers-termination-policy
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+      preconditions:
+        all:
+          - key: '{{ length(request.object.spec.initContainers || `[]`) }}'
+            operator: GreaterThanOrEquals
+            value: 1
+      mutate:
+        foreach:
+          - list: "request.object.spec.initContainers"
+            patchStrategicMerge:
+              spec:
+                initContainers:
+                  - name: "{{ element.name }}"
+                    terminationMessagePolicy: FallbackToLogsOnError

@@ -41,6 +41,7 @@ resources:
   - mutate-revision-history-limit.yaml
   - mutate-security-context.yaml
   - mutate-sidecar-probes.yaml
+  - mutate-termination-message-policy.yaml
   - policy-exception-argocd.yaml
   - policy-exception-cainjector.yaml
   - policy-exception-mixed-sizing.yaml
