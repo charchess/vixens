@@ -30,7 +30,7 @@ spec:
         - name: restore-db
           $patch: delete
         - name: dataangel
-          image: charchess/dataangel:sha-5b802c1
+          image: charchess/dataangel:sha-72826be
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
