@@ -82,3 +82,7 @@ config:
         Auto_Kubernetes_Labels Off
         Line_Format json
         Retry_Limit 5
+        Workers 1
+        Batch_Size 1048576
+        net.connect_timeout 30
+        net.keepalive on
