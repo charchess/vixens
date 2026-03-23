@@ -10,7 +10,7 @@ data:
         replicas:
           - url: s3://$LITESTREAM_BUCKET/home-assistant_v2.db
             endpoint: $LITESTREAM_ENDPOINT
-            retention: 24h
+            retention: 168h
             retention-check-interval: 1h
             snapshot-interval: 6h
     addr: ":9090"
