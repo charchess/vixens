@@ -44,6 +44,7 @@ vmsingle:
 vmagent:
   enabled: true
   spec:
+    scrapeInterval: 30s
     resources:
       requests:
         cpu: 25m
@@ -59,6 +60,31 @@ vmagent:
       annotations:
         vixens.io/fast-start: "true"
     priorityClassName: vixens-critical
+    inlineRelabelConfig:
+      # Go runtime internals (every exporter)
+      - action: drop
+        source_labels: [__name__]
+        regex: "go_(gc|memstats|threads|goroutines|info).*"
+      # Process metrics (every exporter)
+      - action: drop
+        source_labels: [__name__]
+        regex: "process_(cpu_seconds_total|resident_memory_bytes|virtual_memory_bytes|open_fds|max_fds|start_time_seconds)"
+      # Promhttp handler internals
+      - action: drop
+        source_labels: [__name__]
+        regex: "promhttp_metric_handler_.*"
+      # Workqueue internals (controller-manager, scheduler)
+      - action: drop
+        source_labels: [__name__]
+        regex: "workqueue_(depth|adds_total|queue_duration_seconds_bucket|work_duration_seconds_bucket|unfinished_work_seconds|longest_running_processor_seconds).*"
+      # Kyverno policy execution histogram buckets
+      - action: drop
+        source_labels: [__name__]
+        regex: "kyverno_policy_execution_duration_seconds_bucket"
+      # Hubble port distribution (high cardinality)
+      - action: drop
+        source_labels: [__name__]
+        regex: "hubble_port_distribution_total"
 
 # --- VMAlert (alert evaluation) ---
 vmalert:
@@ -140,6 +166,18 @@ prometheus-node-exporter:
 # --- Kube-state-metrics (subchart) ---
 kube-state-metrics:
   enabled: true
+  collectors:
+    - daemonsets
+    - deployments
+    - namespaces
+    - nodes
+    - persistentvolumeclaims
+    - persistentvolumes
+    - pods
+    - replicasets
+    - statefulsets
+    - cronjobs
+    - jobs
   priorityClassName: vixens-critical
   podAnnotations:
     vixens.io/fast-start: "true"
@@ -165,18 +203,84 @@ defaultDashboards:
 
 kubelet:
   enabled: true
+  vmScrape:
+    spec:
+      interval: "30s"
+      metricRelabelConfigs:
+        # Drop noisy cadvisor metrics nobody checks
+        - action: drop
+          source_labels: [__name__]
+          regex: "container_(tasks_state|memory_failures_total|blkio_device_usage_total).*"
+        # Drop kubelet runtime operation detail
+        - action: drop
+          source_labels: [__name__]
+          regex: "kubelet_runtime_operations_duration_seconds_bucket"
 
 kubeApiServer:
   enabled: true
+  vmScrape:
+    spec:
+      endpoints:
+        - port: https
+          scheme: https
+          bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+          tlsConfig:
+            caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            serverName: kubernetes
+          interval: "60s"
+          metricRelabelConfigs:
+            # Drop all apiserver histogram buckets (~130k series)
+            - action: drop
+              source_labels: [__name__]
+              regex: "(apiserver_request_duration_seconds|apiserver_request_sli_duration_seconds|apiserver_request_body_size_bytes|apiserver_response_sizes|apiserver_watch_cache_read_wait_seconds|apiserver_watch_list_duration_seconds)_bucket"
+            # Drop admission controller internals
+            - action: drop
+              source_labels: [__name__]
+              regex: "apiserver_admission_.*"
 
 kubeControllerManager:
   enabled: true
+  vmScrape:
+    spec:
+      endpoints:
+        - port: http-metrics
+          scheme: https
+          bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+          tlsConfig:
+            caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            insecureSkipVerify: true
+          interval: "60s"
 
 kubeScheduler:
   enabled: true
+  vmScrape:
+    spec:
+      endpoints:
+        - port: http-metrics
+          scheme: https
+          bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+          tlsConfig:
+            caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            insecureSkipVerify: true
+          interval: "60s"
 
 kubeEtcd:
   enabled: true
+  vmScrape:
+    spec:
+      endpoints:
+        - port: http-metrics
+          scheme: http
+          interval: "60s"
+          metricRelabelConfigs:
+            # Drop etcd histogram buckets
+            - action: drop
+              source_labels: [__name__]
+              regex: "etcd_request_duration_seconds_bucket"
+            # Drop debug/disk detail metrics
+            - action: drop
+              source_labels: [__name__]
+              regex: "etcd_(debugging|disk_defrag|mvcc_db_total_size_in_use|server_slow).*"
 
 coreDns:
   enabled: true

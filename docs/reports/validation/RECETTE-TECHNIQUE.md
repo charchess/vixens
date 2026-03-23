@@ -27,3 +27,10 @@ Validation des aspects techniques (infra, logs, perfs).
 | **postgresql-shared** | User Mapping | ✅ Fixed | 2026-01-13 | Managed roles mapping logic restored for Authentik |
 | **authentik** | Redis Credentials | ✅ Fixed | 2026-01-13 | Secret path aligned with shared Redis instance |
 | **authentik** | OIDC Blueprints | ✅ Ready | 2026-01-13 | Netbird blueprint mounted in /blueprints/vixens/ |
+| **fluent-bit** | Remplacement Promtail | ✅ Running | 2026-03-23 | 5/5 DaemonSet pods, 0 restarts (Promtail avait 600+). Logs → Loki via loki output plugin |
+| **fluent-bit** | Position DB | ✅ OK | 2026-03-23 | hostPath /var/lib/fluent-bit pour persistance du curseur de lecture |
+| **victoria-metrics** | Remplacement Prometheus | ✅ Running | 2026-03-23 | k8s-stack 0.72.5 : vmsingle (30d retention, 10Gi), vmagent, vmalert, alertmanager |
+| **victoria-metrics** | RAM Monitoring | ✅ Réduit | 2026-03-23 | Stack total ~700 Mi (vs ~2.25 GiB avant). Réduction 69% |
+| **loki** | Sizing V-medium | ✅ Stabilisé | 2026-03-23 | Upgrade G-medium → V-medium après surcharge Fluent Bit. 0 restarts post-upgrade |
+| **loki** | NetworkPolicy | ✅ Corrigé | 2026-03-23 | Ajout namespace monitoring dans ingress (bloquait Fluent Bit) |
+| **grafana** | Datasource VictoriaMetrics | ✅ OK | 2026-03-23 | URL mise à jour vers vmsingle:8428. Dashboards fonctionnels |
