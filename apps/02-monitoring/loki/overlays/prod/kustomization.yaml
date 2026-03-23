@@ -28,5 +28,5 @@ patches:
         template:
           metadata:
             labels:
-              vixens.io/sizing.loki: V-small
-  - path: resources-patch.yaml
+              vixens.io/sizing.loki: V-medium
+  # resources-patch.yaml removed — V-medium sizing handled by Kyverno
