@@ -1,0 +1,109 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: iscsi-lock-cleanup
+  labels:
+    app: iscsi-lock-cleanup
+spec:
+  selector:
+    matchLabels:
+      app: iscsi-lock-cleanup
+  template:
+    metadata:
+      annotations:
+        vixens.io/explicitly-allow-root: "true"
+        vixens.io/fast-start: "true"
+        vixens.io/service-binding: "false"
+      labels:
+        app: iscsi-lock-cleanup
+    spec:
+      hostPID: true
+      priorityClassName: vixens-critical
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: cleanup
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - |
+              LOCK_DIR="/host-lock"
+              LOCK_FILE="${LOCK_DIR}/lock.write"
+              AGE_THRESHOLD=120
+              CHECK_INTERVAL=60
+
+              log() { echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') iscsi-lock-cleanup: $*"; }
+              log "Started (interval=${CHECK_INTERVAL}s, threshold=${AGE_THRESHOLD}s)"
+
+              while true; do
+                if [ ! -f "${LOCK_FILE}" ]; then
+                  sleep "${CHECK_INTERVAL}"
+                  continue
+                fi
+
+                # Gate 1: age threshold
+                FILE_MTIME=$(stat -c %Y "${LOCK_FILE}" 2>/dev/null) || { sleep "${CHECK_INTERVAL}"; continue; }
+                FILE_AGE=$(( $(date +%s) - FILE_MTIME ))
+
+                if [ "${FILE_AGE}" -lt "${AGE_THRESHOLD}" ]; then
+                  log "SKIP age=${FILE_AGE}s < ${AGE_THRESHOLD}s threshold"
+                  sleep "${CHECK_INTERVAL}"
+                  continue
+                fi
+
+                # Gate 2: advisory lock check
+                if ! flock -n "${LOCK_FILE}" true 2>/dev/null; then
+                  log "SKIP age=${FILE_AGE}s advisory lock held"
+                  sleep "${CHECK_INTERVAL}"
+                  continue
+                fi
+
+                # Gate 3: open file descriptor check
+                if fuser "${LOCK_FILE}" >/dev/null 2>&1; then
+                  log "SKIP age=${FILE_AGE}s file open by process"
+                  sleep "${CHECK_INTERVAL}"
+                  continue
+                fi
+
+                # Atomic removal: hold flock, re-check fuser, then rm
+                (
+                  if flock -n 9; then
+                    if fuser "${LOCK_FILE}" >/dev/null 2>&1; then
+                      log "SKIP age=${FILE_AGE}s process opened during lock"
+                    else
+                      rm -f "${LOCK_FILE}"
+                      log "CLEANED age=${FILE_AGE}s stale lock removed"
+                    fi
+                  else
+                    log "SKIP age=${FILE_AGE}s flock contested at removal"
+                  fi
+                ) 9<"${LOCK_FILE}" 2>/dev/null
+
+                sleep "${CHECK_INTERVAL}"
+              done
+          securityContext:
+            runAsUser: 0
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["SYS_PTRACE"]
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              cpu: 10m
+              memory: 32Mi
+          volumeMounts:
+            - name: host-iscsi-lock
+              mountPath: /host-lock
+      volumes:
+        - name: host-iscsi-lock
+          hostPath:
+            path: /run/lock/iscsi
+            type: DirectoryOrCreate
