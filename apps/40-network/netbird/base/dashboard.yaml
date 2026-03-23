@@ -47,7 +47,7 @@ spec:
               mountPath: /run/nginx
       containers:
         - name: dashboard
-          image: netbirdio/dashboard:v2.34.2
+          image: netbirdio/dashboard:v2.35.0
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
