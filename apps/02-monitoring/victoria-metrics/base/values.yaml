@@ -2,6 +2,10 @@
 # VictoriaMetrics K8s Stack — replaces Prometheus
 # Chart: victoria-metrics-k8s-stack 0.72.5
 
+# Shorten resource name prefix to avoid >63 char Service names
+# (victoria-metrics-victoria-metrics-k8s-stack-* was 45 chars before suffix)
+fullnameOverride: vm-stack
+
 # --- VM Operator ---
 victoria-metrics-operator:
   enabled: true
