@@ -64,7 +64,25 @@ spec:
             - sh
             - -c
           args:
-            - mkdir -p /config/python_packages && chown 1000:1000 /config && find /config -mindepth 1 -maxdepth 1 -not -name 'lost+found' -exec chown -R 1000:1000 {} +
+            - |
+              mkdir -p /config/python_packages
+              OWNER=$(stat -c '%u:%g' /config)
+              if [ "$OWNER" != "1000:1000" ]; then
+                echo "Root ownership mismatch ($OWNER), fixing..."
+                chown 1000:1000 /config
+              fi
+              NEEDS_FIX=0
+              for item in /config/configuration.yaml /config/.storage /config/python_packages; do
+                if [ -e "$item" ] && [ "$(stat -c '%u:%g' "$item")" != "1000:1000" ]; then
+                  NEEDS_FIX=1; break
+                fi
+              done
+              if [ "$NEEDS_FIX" = "1" ]; then
+                echo "Ownership mismatch detected, running recursive chown..."
+                find /config -mindepth 1 -maxdepth 1 -not -name 'lost+found' -exec chown -R 1000:1000 {} +
+              else
+                echo "Ownership OK, skipping recursive chown."
+              fi
           volumeMounts:
             - name: config
               mountPath: /config
