@@ -36,8 +36,9 @@ resources:
   - apps/mosquitto.yaml
   - apps/mealie.yaml
   - apps/birdnet-go.yaml
-  - apps/prometheus.yaml
-  - apps/prometheus-ingress.yaml
+  - apps/victoria-metrics.yaml
+  # - apps/prometheus.yaml  # replaced by victoria-metrics (issue #2354)
+  # - apps/prometheus-ingress.yaml  # replaced by victoria-metrics (issue #2354)
   - apps/grafana.yaml
   - apps/grafana-ingress.yaml
   - apps/homepage.yaml
