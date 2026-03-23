@@ -1,0 +1,19 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: snapshot-controller
+resources:
+  - namespace.yaml
+  - crds/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+  - crds/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+  - crds/snapshot.storage.k8s.io_volumesnapshots.yaml
+  - rbac.yaml
+  - deployment.yaml
+  - snapshot-class.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: snapshot-controller
+      app.kubernetes.io/version: v8.5.0
+      vixens.lab/managed-by: argocd
+    includeSelectors: true
