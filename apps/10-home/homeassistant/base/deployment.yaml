@@ -64,7 +64,25 @@ spec:
             - sh
             - -c
           args:
-            - mkdir -p /config/python_packages && chown 1000:1000 /config && find /config -mindepth 1 -maxdepth 1 -not -name 'lost+found' -exec chown -R 1000:1000 {} +
+            - |
+              mkdir -p /config/python_packages
+              OWNER=$(stat -c '%u:%g' /config)
+              if [ "$OWNER" != "1000:1000" ]; then
+                echo "Root ownership mismatch ($OWNER), fixing..."
+                chown 1000:1000 /config
+              fi
+              NEEDS_FIX=0
+              for item in /config/configuration.yaml /config/.storage /config/python_packages; do
+                if [ -e "$item" ] && [ "$(stat -c '%u:%g' "$item")" != "1000:1000" ]; then
+                  NEEDS_FIX=1; break
+                fi
+              done
+              if [ "$NEEDS_FIX" = "1" ]; then
+                echo "Ownership mismatch detected, running recursive chown..."
+                find /config -mindepth 1 -maxdepth 1 -not -name 'lost+found' -exec chown -R 1000:1000 {} +
+              else
+                echo "Ownership OK, skipping recursive chown."
+              fi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -79,11 +97,23 @@ spec:
             - -c
           args:
             - |
-              echo "Installing Python dependencies for custom integrations..."
               PACKAGES="hass-web-proxy-lib==0.0.7"
-              pip install --no-cache-dir --target=/config/python_packages $PACKAGES
-              echo "Installed packages:"
-              ls -la /config/python_packages/ | grep -E "hass-web-proxy|dist-info" || echo "No packages found"
+              TARGET="/config/python_packages"
+              INSTALLED=true
+              for pkg in $PACKAGES; do
+                NAME=$(echo "$pkg" | cut -d= -f1 | tr '-' '_')
+                VER=$(echo "$pkg" | cut -d= -f3)
+                if ls "$TARGET/"*"${NAME}"*".dist-info" 2>/dev/null | grep -q "$VER"; then
+                  echo "$pkg already installed, skipping."
+                else
+                  echo "$pkg not found or wrong version, installing..."
+                  INSTALLED=false
+                fi
+              done
+              if [ "$INSTALLED" = "false" ]; then
+                pip install --no-cache-dir --target="$TARGET" $PACKAGES
+                chown -R 1000:1000 "$TARGET"
+              fi
           volumeMounts:
             - name: config
               mountPath: /config
@@ -161,7 +191,7 @@ spec:
               cpu: 1000m
               memory: 2Gi
           image: ghcr.io/home-assistant/home-assistant:2026.3.3
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8123
               name: http
@@ -264,7 +294,12 @@ spec:
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() {
-                rclone sync /config s3:$LITESTREAM_BUCKET/config --exclude "*.log" --exclude "*.db" --exclude "*.db-*" --exclude "tts/**" --exclude "backups/**" --exclude "tmp_backups/**" --exclude "lost+found/**" --exclude ".*-litestream" --exclude ".*-litestream/**"
+                FILE_COUNT=$(find /config -mindepth 1 -maxdepth 1 -not -name 'lost+found' -not -name 'python_packages' | wc -l)
+                if [ "$FILE_COUNT" -lt 5 ]; then
+                  echo "WARN: /config appears empty ($FILE_COUNT entries). Skipping sync to protect S3 backup."
+                  return 1
+                fi
+                rclone sync /config s3:$LITESTREAM_BUCKET/config --max-delete 10 --exclude "*.log" --exclude "*.db" --exclude "*.db-*" --exclude "tts/**" --exclude "backups/**" --exclude "tmp_backups/**" --exclude "lost+found/**" --exclude ".*-litestream" --exclude ".*-litestream/**"
               }
               while true; do
                 sync_s3;
