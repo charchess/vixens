@@ -204,6 +204,9 @@ grafana:
 # --- Default scrape configs ---
 defaultDashboards:
   enabled: true
+  dashboards:
+    node-exporter-full:
+      enabled: false  # Too large for K8s annotation limit (>262144 bytes)
 
 kubelet:
   enabled: true
