@@ -19,5 +19,5 @@ labels:
       vixens.lab/managed-by: argocd
     includeSelectors: true
   - pairs:
-      app.kubernetes.io/version: v1.2.1
+      app.kubernetes.io/version: v1.2.0
     includeSelectors: false
