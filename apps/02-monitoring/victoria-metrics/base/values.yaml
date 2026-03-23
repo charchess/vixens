@@ -1,0 +1,185 @@
+---
+# VictoriaMetrics K8s Stack — replaces Prometheus
+# Chart: victoria-metrics-k8s-stack 0.72.5
+
+# --- VM Operator ---
+victoria-metrics-operator:
+  enabled: true
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
+# --- VMSingle (replaces prometheus-server) ---
+vmsingle:
+  enabled: true
+  spec:
+    retentionPeriod: "30d"
+    storage:
+      storageClassName: synelia-iscsi-retain
+      resources:
+        requests:
+          storage: 10Gi
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+    podMetadata:
+      annotations:
+        vixens.io/fast-start: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8429"
+      labels:
+        vixens.io/sizing.vmsingle: G-large
+    priorityClassName: vixens-critical
+
+# --- VMAgent (scraper, replaces prometheus scraping) ---
+vmagent:
+  enabled: true
+  spec:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+    podMetadata:
+      annotations:
+        vixens.io/fast-start: "true"
+    priorityClassName: vixens-critical
+
+# --- VMAlert (alert evaluation) ---
+vmalert:
+  enabled: true
+  spec:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+    priorityClassName: vixens-critical
+
+# --- Alertmanager (keep Discord config from Prometheus) ---
+alertmanager:
+  enabled: true
+  spec:
+    configSecret: alertmanager-config
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+    priorityClassName: vixens-critical
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by:
+        - alertname
+        - cluster
+        - service
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: discord-notifications
+      routes:
+        - match:
+            severity: critical
+          receiver: discord-notifications
+    receivers:
+      - name: discord-notifications
+        slack_configs:
+          - api_url_file: /etc/alertmanager-secrets/DISCORD_WEBHOOK_URL
+            channel: '#alerts'
+            send_resolved: true
+
+# --- Node exporter (subchart) ---
+prometheus-node-exporter:
+  enabled: true
+  priorityClassName: vixens-critical
+  podAnnotations:
+    vixens.io/fast-start: "true"
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+  hostNetwork: true
+  hostPID: true
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# --- Kube-state-metrics (subchart) ---
+kube-state-metrics:
+  enabled: true
+  priorityClassName: vixens-critical
+  podAnnotations:
+    vixens.io/fast-start: "true"
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# --- Grafana (disabled — already deployed separately) ---
+grafana:
+  enabled: false
+
+# --- Default scrape configs ---
+defaultDashboards:
+  enabled: true
+
+kubelet:
+  enabled: true
+
+kubeApiServer:
+  enabled: true
+
+kubeControllerManager:
+  enabled: true
+
+kubeScheduler:
+  enabled: true
+
+kubeEtcd:
+  enabled: true
+
+coreDns:
+  enabled: true
+
+kubeProxy:
+  enabled: false  # Cilium replaces kube-proxy

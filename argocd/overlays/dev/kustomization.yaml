@@ -73,6 +73,7 @@ resources:
   # - apps/contacts.yaml
   # - apps/firefly-iii.yaml
   - apps/mealie.yaml
+  - apps/victoria-metrics.yaml
   # - apps/nocodb.yaml
   # - apps/vikunja.yaml
   # - apps/mariadb-shared.yaml
