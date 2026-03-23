@@ -34,7 +34,7 @@ spec:
             limits:
               cpu: 100m
               memory: 1Gi
-          image: ghcr.io/headlamp-k8s/headlamp:v0.40.1
+          image: ghcr.io/headlamp-k8s/headlamp:v0.41.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4466
