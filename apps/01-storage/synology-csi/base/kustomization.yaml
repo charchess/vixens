@@ -16,6 +16,8 @@ patches:
 labels:
   - pairs:
       app.kubernetes.io/name: synology-csi
-      app.kubernetes.io/version: v1.2.1
       vixens.lab/managed-by: argocd
     includeSelectors: true
+  - pairs:
+      app.kubernetes.io/version: v1.2.1
+    includeSelectors: false
