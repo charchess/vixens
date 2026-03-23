@@ -9,6 +9,7 @@ resources:
   - controller.yaml
   - node.yaml
   - storage-class.yaml
+  - iscsi-lock-cleanup-daemonset.yaml
 
 patches:
 
