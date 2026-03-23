@@ -264,7 +264,12 @@ spec:
               export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
               export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
               sync_s3() {
-                rclone sync /config s3:$LITESTREAM_BUCKET/config --exclude "*.log" --exclude "*.db" --exclude "*.db-*" --exclude "tts/**" --exclude "backups/**" --exclude "tmp_backups/**" --exclude "lost+found/**" --exclude ".*-litestream" --exclude ".*-litestream/**"
+                FILE_COUNT=$(find /config -mindepth 1 -maxdepth 1 -not -name 'lost+found' -not -name 'python_packages' | wc -l)
+                if [ "$FILE_COUNT" -lt 5 ]; then
+                  echo "WARN: /config appears empty ($FILE_COUNT entries). Skipping sync to protect S3 backup."
+                  return 1
+                fi
+                rclone sync /config s3:$LITESTREAM_BUCKET/config --max-delete 10 --exclude "*.log" --exclude "*.db" --exclude "*.db-*" --exclude "tts/**" --exclude "backups/**" --exclude "tmp_backups/**" --exclude "lost+found/**" --exclude ".*-litestream" --exclude ".*-litestream/**"
               }
               while true; do
                 sync_s3;
