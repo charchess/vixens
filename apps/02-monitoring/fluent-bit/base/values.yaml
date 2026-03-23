@@ -29,6 +29,16 @@ resources:
     cpu: 100m
     memory: 256Mi
 
+extraVolumes:
+  - name: positions
+    hostPath:
+      path: /var/lib/fluent-bit
+      type: DirectoryOrCreate
+
+extraVolumeMounts:
+  - name: positions
+    mountPath: /var/lib/fluent-bit
+
 ## https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file
 config:
   service: |
@@ -50,7 +60,7 @@ config:
         Tag kube.*
         Mem_Buf_Limit 5MB
         Skip_Long_Lines On
-        DB /fluent-bit/tail/pos.db
+        DB /var/lib/fluent-bit/pos.db
 
   filters: |
     [FILTER]
