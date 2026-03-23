@@ -77,7 +77,8 @@ resources:
   - apps/authentik.yaml
   - apps/netbox.yaml
   - apps/loki.yaml
-  - apps/promtail.yaml
+  - apps/fluent-bit.yaml
+  # - apps/promtail.yaml  # replaced by fluent-bit (issue #2354)
   - apps/renovate.yaml
   - apps/stirling-pdf.yaml
   - apps/it-tools.yaml
