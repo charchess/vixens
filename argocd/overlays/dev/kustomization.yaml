@@ -20,6 +20,7 @@ resources:
   - apps/cert-manager-secrets.yaml
   - apps/cert-manager-webhook-gandi.yaml
   - apps/cert-manager-config.yaml
+  - apps/snapshot-controller.yaml
   - apps/synology-csi-secrets.yaml
   - apps/synology-csi.yaml
   - apps/nfs-storage.yaml

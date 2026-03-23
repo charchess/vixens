@@ -61,6 +61,18 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
+        - name: csi-snapshotter
+          image: registry.k8s.io/sig-storage/csi-snapshotter:v8.5.0
+          args:
+            - --csi-address=$(ADDRESS)
+            - --v=5
+            - --leader-election=false
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: synology-csi-plugin
           image: ghcr.io/zebernst/synology-csi:edge
           args:
