@@ -1,10 +1,8 @@
 ---
 # Explicit resource override for loki prod.
-# Bypasses Kyverno 'G-medium' sizing (512Mi req/limit) via PolicyException.
-# Actual usage: ~162Mi. Using 256Mi request / 512Mi limit to:
-# - Reduce memory pressure on cluster (512Mi -> 256Mi request = 256Mi freed)
-# - Keep 512Mi limit to avoid OOMKill during log ingestion spikes
-# - Free 256Mi on powder node to allow robusta-runner scheduling
+# V-small sizing (25m/256Mi req, 100m/1Gi lim) is close but we keep
+# custom CPU limit (1 core) for log ingestion spikes.
+# Upgraded from 512Mi → 1Gi limit to handle Fluent Bit burst writes.
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -21,4 +19,4 @@ spec:
               memory: 256Mi
             limits:
               cpu: "1"
-              memory: 512Mi
+              memory: 1Gi
