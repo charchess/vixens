@@ -97,11 +97,23 @@ spec:
             - -c
           args:
             - |
-              echo "Installing Python dependencies for custom integrations..."
               PACKAGES="hass-web-proxy-lib==0.0.7"
-              pip install --no-cache-dir --target=/config/python_packages $PACKAGES
-              echo "Installed packages:"
-              ls -la /config/python_packages/ | grep -E "hass-web-proxy|dist-info" || echo "No packages found"
+              TARGET="/config/python_packages"
+              INSTALLED=true
+              for pkg in $PACKAGES; do
+                NAME=$(echo "$pkg" | cut -d= -f1 | tr '-' '_')
+                VER=$(echo "$pkg" | cut -d= -f3)
+                if ls "$TARGET/"*"${NAME}"*".dist-info" 2>/dev/null | grep -q "$VER"; then
+                  echo "$pkg already installed, skipping."
+                else
+                  echo "$pkg not found or wrong version, installing..."
+                  INSTALLED=false
+                fi
+              done
+              if [ "$INSTALLED" = "false" ]; then
+                pip install --no-cache-dir --target="$TARGET" $PACKAGES
+                chown -R 1000:1000 "$TARGET"
+              fi
           volumeMounts:
             - name: config
               mountPath: /config
