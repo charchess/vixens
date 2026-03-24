@@ -24,7 +24,7 @@ spec:
           $patch: delete
         - name: dataangel
           restartPolicy: Always
-          image: charchess/dataangel:sha-72826be
+          image: charchess/dataangel:sha-402e05f
           imagePullPolicy: IfNotPresent
           command: ["./dataangel"]
           securityContext:
