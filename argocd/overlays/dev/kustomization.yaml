@@ -84,3 +84,6 @@ resources:
   # - apps/firefly-iii-importer.yaml
   # - apps/radar.yaml
   # - apps/n8n.yaml
+
+  # Home
+  - apps/homeassistant.yaml
