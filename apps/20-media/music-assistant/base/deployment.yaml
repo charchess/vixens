@@ -40,7 +40,7 @@ spec:
             limits:
               cpu: 200m
               memory: 2Gi
-          image: ghcr.io/music-assistant/server:2.8.0b9
+          image: ghcr.io/music-assistant/server:2.8.0rc1
           ports:
             - containerPort: 8095
               name: web
