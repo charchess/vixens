@@ -6,10 +6,6 @@ metadata:
   labels:
     app: homeassistant
     vixens.io/sizing: B-large
-    vixens.io/sizing.litestream: SB-medium
-    vixens.io/sizing.config-syncer: B-small
-    vixens.io/sizing.restore-config: B-nano
-    vixens.io/sizing.restore-db: B-nano
     vixens.io/backup-profile: "standard"
   annotations:
     secret.reloader.stakater.com/reload: homeassistant-config
@@ -27,10 +23,6 @@ spec:
       labels:
         app: homeassistant
         vixens.io/sizing: B-large
-        vixens.io/sizing.litestream: SB-medium
-        vixens.io/sizing.config-syncer: B-small
-        vixens.io/sizing.restore-config: B-nano
-        vixens.io/sizing.restore-db: B-nano
         vixens.io/backup-profile: "standard"
       annotations:
         reloader.stakater.com/auto: "true"
@@ -54,38 +46,6 @@ spec:
           operator: Exists
           effect: NoSchedule
       initContainers:
-        - name: fix-perms
-          image: busybox:1.37.0
-          securityContext:
-            runAsUser: 0
-            capabilities:
-              add: [CHOWN]
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              mkdir -p /config/python_packages
-              OWNER=$(stat -c '%u:%g' /config)
-              if [ "$OWNER" != "1000:1000" ]; then
-                echo "Root ownership mismatch ($OWNER), fixing..."
-                chown 1000:1000 /config
-              fi
-              NEEDS_FIX=0
-              for item in /config/configuration.yaml /config/.storage /config/python_packages; do
-                if [ -e "$item" ] && [ "$(stat -c '%u:%g' "$item")" != "1000:1000" ]; then
-                  NEEDS_FIX=1; break
-                fi
-              done
-              if [ "$NEEDS_FIX" = "1" ]; then
-                echo "Ownership mismatch detected, running recursive chown..."
-                find /config -mindepth 1 -maxdepth 1 -not -name 'lost+found' -exec chown -R 1000:1000 {} +
-              else
-                echo "Ownership OK, skipping recursive chown."
-              fi
-          volumeMounts:
-            - name: config
-              mountPath: /config
         - name: install-python-deps
           image: python:3.14.3-alpine
           securityContext:
@@ -99,6 +59,7 @@ spec:
             - |
               PACKAGES="hass-web-proxy-lib==0.0.7"
               TARGET="/config/python_packages"
+              mkdir -p "$TARGET"
               INSTALLED=true
               for pkg in $PACKAGES; do
                 NAME=$(echo "$pkg" | cut -d= -f1 | tr '-' '_')
@@ -117,49 +78,6 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-        - name: restore-config
-          image: rclone/rclone:1.73
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/config /config --transfers 4 --exclude "*.log" --exclude "*.db" --exclude "*.db-*" --exclude "tts/**" --exclude "backups/**" --exclude "tmp_backups/**" --exclude "lost+found/**" --exclude ".*-litestream" --exclude ".*-litestream/**" 2>/dev/null || true
-          envFrom:
-            - secretRef:
-                name: homeassistant-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /config
-        - name: restore-db
-          image: litestream/litestream:0.5.10
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - restore
-            - -config
-            - /etc/litestream.yml
-            - -if-db-not-exists
-            - -if-replica-exists
-            - /config/home-assistant_v2.db
-          envFrom:
-            - secretRef:
-                name: homeassistant-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: homeassistant-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
         - name: config-init
           image: busybox:1.37.0
           securityContext:
@@ -225,116 +143,6 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-        - name: litestream
-          resources:
-            requests:
-              cpu: 50m
-              memory: 512Mi
-            limits:
-              cpu: 500m
-              memory: 2Gi
-          image: litestream/litestream:0.5.10
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - replicate
-            - -config
-            - /etc/litestream.yml
-          ports:
-            - containerPort: 9090
-              name: metrics
-          envFrom:
-            - secretRef:
-                name: homeassistant-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: homeassistant-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
-          livenessProbe:
-            httpGet:
-              path: /metrics
-              port: metrics
-            initialDelaySeconds: 10
-            periodSeconds: 20
-          readinessProbe:
-            httpGet:
-              path: /metrics
-              port: metrics
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          startupProbe:
-            httpGet:
-              path: /metrics
-              port: metrics
-            failureThreshold: 15
-            periodSeconds: 10
-        - name: config-syncer
-          resources:
-            requests:
-              cpu: 25m
-              memory: 256Mi
-            limits:
-              cpu: 250m
-              memory: 512Mi
-          image: rclone/rclone:1.73
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              sync_s3() {
-                FILE_COUNT=$(find /config -mindepth 1 -maxdepth 1 -not -name 'lost+found' -not -name 'python_packages' | wc -l)
-                if [ "$FILE_COUNT" -lt 5 ]; then
-                  echo "WARN: /config appears empty ($FILE_COUNT entries). Skipping sync to protect S3 backup."
-                  return 1
-                fi
-                rclone sync /config s3:$LITESTREAM_BUCKET/config --max-delete 10 --exclude "*.log" --exclude "*.db" --exclude "*.db-*" --exclude "tts/**" --exclude "backups/**" --exclude "tmp_backups/**" --exclude "lost+found/**" --exclude ".*-litestream" --exclude ".*-litestream/**"
-              }
-              while true; do
-                sync_s3;
-                sleep 60;
-              done
-          envFrom:
-            - secretRef:
-                name: homeassistant-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /config
-          livenessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - pgrep -f "sh -c" || exit 1
-            initialDelaySeconds: 10
-            periodSeconds: 30
-          readinessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - pgrep -f "sh -c" || exit 1
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          startupProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - pgrep -f "sh -c" || exit 1
-            failureThreshold: 15
-            periodSeconds: 10
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -342,6 +150,3 @@ spec:
         - name: ha-config
           secret:
             secretName: homeassistant-config
-        - name: homeassistant-litestream-config
-          configMap:
-            name: homeassistant-litestream-config

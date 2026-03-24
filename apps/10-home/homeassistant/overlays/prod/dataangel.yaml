@@ -8,10 +8,6 @@ spec:
     metadata:
       labels:
         vixens.io/sizing.dataangel: V-small
-        vixens.io/sizing.litestream: null
-        vixens.io/sizing.config-syncer: null
-        vixens.io/sizing.restore-config: null
-        vixens.io/sizing.restore-db: null
       annotations:
         dataangel.io/bucket: "vixens-prod-homeassistant"
         dataangel.io/sqlite-paths: "/config/home-assistant_v2.db"
@@ -23,12 +19,6 @@ spec:
         dataangel.io/lock-enabled: "false"
     spec:
       initContainers:
-        - name: fix-perms
-          $patch: delete
-        - name: restore-config
-          $patch: delete
-        - name: restore-db
-          $patch: delete
         - name: dataangel
           securityContext:
             runAsUser: 1000
@@ -55,8 +45,3 @@ spec:
               $patch: delete
             - name: config
               mountPath: /config
-      containers:
-        - name: litestream
-          $patch: delete
-        - name: config-syncer
-          $patch: delete
