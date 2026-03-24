@@ -12,3 +12,16 @@ components:
   - ../../../../_shared/components/dataangel
 patches:
   - path: dataangel.yaml
+  - target:
+      kind: Deployment
+      name: homeassistant
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
