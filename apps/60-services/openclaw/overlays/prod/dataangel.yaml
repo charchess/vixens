@@ -1,0 +1,50 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openclaw
+  namespace: services
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.dataangel: V-small
+      annotations:
+        dataangel.io/bucket: "vixens-prod-openclaw"
+        dataangel.io/sqlite-paths: ""
+        dataangel.io/fs-paths: "/data"
+        dataangel.io/s3-endpoint: "http://synelia.internal.truxonline.com:9000"
+        dataangel.io/deployment-name: "openclaw"
+        dataangel.io/rclone-interval: "15s"
+        dataangel.io/metrics-enabled: "true"
+        dataangel.io/lock-enabled: "false"
+    spec:
+      initContainers:
+        - name: dataangel
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: 9090
+            periodSeconds: 2
+            failureThreshold: 3600
+          env:
+            - name: DATA_GUARD_EXCLUDE_PATTERNS
+              value: "tools/**,gemini-cli/**,node_modules/**,browser/**,canvas/**,media/**,netbox-mcp-server/**,lost+found/**"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: RCLONE_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: RCLONE_SECRET_ACCESS_KEY
+          volumeMounts:
+            - mountPath: /data
+              $patch: delete
+            - name: data
+              mountPath: /data

@@ -20,11 +20,9 @@ spec:
       labels:
         app: openclaw
         vixens.io/sizing.install-tools: B-xlarge
-        vixens.io/sizing.restore-config: B-nano
         vixens.io/sizing.setup-config: G-nano
         vixens.io/sizing.install-gemini: B-medium
         vixens.io/sizing.openclaw: SB-xlarge
-        vixens.io/sizing.data-syncer: V-nano
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
@@ -41,7 +39,7 @@ spec:
           operator: Exists
           effect: NoSchedule
       initContainers:
-        # 1/4 — Install system tools (merged fix-perms + install-tools)
+        # 1/3 — Install system tools (merged fix-perms + install-tools)
         #        Skips reinstall if TOOLS_VERSION matches. Always chowns /data/tools.
         - name: install-tools
           image: debian:trixie-20260316
@@ -113,70 +111,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-        # 2/4 — Restore config from MinIO (merged restore-data + restore-config)
-        - name: restore-config
-          image: rclone/rclone:1.73
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              echo "DEBUG: RCLONE_BUCKET=$RCLONE_BUCKET"
-              # Step 1: Restore .openclaw dir and extensions from MinIO (was restore-data)
-              rclone lsd s3:$RCLONE_BUCKET || echo "Rclone list failed"
-              rclone copy s3:$RCLONE_BUCKET/.openclaw /data/.openclaw --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
-              rclone copy s3:$RCLONE_BUCKET/extensions /data/extensions --transfers 4 --exclude "lost+found/**" 2>/dev/null || true
-              # Step 1b: Migrate workspace from .openclaw/workspace/ to workspace/ if needed
-              # (openclaw changed workspace path between versions; legacy data lives in .openclaw/workspace/)
-              LEGACY_WS=/data/.openclaw/workspace
-              ACTIVE_WS=/data/workspace
-              if [ -d "$LEGACY_WS" ] && [ -f "$LEGACY_WS/MEMORY.md" ]; then
-                # Check if active workspace is still a blank template (IDENTITY.md has no name)
-                if ! grep -q '^- \*\*Name:\*\* ' "$ACTIVE_WS/IDENTITY.md" 2>/dev/null; then
-                  echo "Migrating workspace from $LEGACY_WS to $ACTIVE_WS..."
-                  cp -rn "$LEGACY_WS/." "$ACTIVE_WS/" 2>/dev/null || true
-                  # Force-overwrite key identity files
-                  for f in IDENTITY.md USER.md SOUL.md AGENTS.md MEMORY.md; do
-                    [ -f "$LEGACY_WS/$f" ] && cp -f "$LEGACY_WS/$f" "$ACTIVE_WS/$f" && echo "  migrated $f"
-                  done
-                  # Remove BOOTSTRAP.md if identity is now populated
-                  grep -q '^- \*\*Name:\*\* ' "$ACTIVE_WS/IDENTITY.md" 2>/dev/null && rm -f "$ACTIVE_WS/BOOTSTRAP.md" && echo "  removed BOOTSTRAP.md"
-                  echo "Workspace migration complete"
-                else
-                  echo "Active workspace already populated, skipping migration"
-                fi
-              fi
-              # Step 2: Restore openclaw.json (was restore-config)
-              if [ -f /data/backup.lock ]; then
-                echo "backup.lock found - preserving local config changes"
-                cp /data/openclaw.json /data/openclaw.json.bak 2>/dev/null || true
-                rm -f /data/backup.lock
-                exit 0
-              fi
-              if [ ! -s /data/openclaw.json ]; then
-                echo "No config in PVC, checking MinIO..."
-                rclone copy s3:$RCLONE_BUCKET/openclaw.json /data/ --transfers 4 2>/dev/null || echo "MinIO restore failed"
-              fi
-              if [ ! -s /data/openclaw.json ]; then
-                echo "No backup found, using default config"
-                cp /default-config/openclaw.json /data/openclaw.json 2>/dev/null || true
-              fi
-              cp /data/openclaw.json /data/openclaw.json.bak 2>/dev/null || true
-              chown -R 1000:1000 /data/*.json 2>/dev/null || true
-              echo "Config ready"
-          envFrom:
-            - secretRef:
-                name: openclaw-secrets
-          volumeMounts:
-            - name: data
-              mountPath: /data
-            - name: default-config
-              mountPath: /default-config
-              readOnly: true
-        # 3/4 — Fix config keys + write Gemini credentials (merged fix-config + setup-gemini-config)
+        # 2/3 — Fix config keys + write Gemini credentials
         - name: setup-config
           image: python:3.14-alpine
           securityContext:
@@ -187,6 +122,11 @@ spec:
             - -c
           args:
             - |
+              # Ensure default config exists
+              if [ ! -s /data/openclaw.json ]; then
+                echo "No config found, copying default..."
+                cp /default-config/openclaw.json /data/openclaw.json 2>/dev/null || true
+              fi
               python3 << 'PYEOF'
               import json, base64, os, pathlib
 
@@ -222,8 +162,11 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-        # 4/4 — Install Gemini plugin + CLI (merged install-gemini-plugin + install-gemini-cli)
-        #        Skips reinstall if PLUGIN_VERSION file matches. Always chowns /data/gemini-cli.
+            - name: default-config
+              mountPath: /default-config
+              readOnly: true
+        # 3/3 — Install Gemini plugin + CLI
+        #        Skips reinstall if PLUGIN_VERSION file matches.
         - name: install-gemini
           image: node:24-bookworm
           securityContext:
@@ -330,81 +273,6 @@ spec:
               port: 18789
             failureThreshold: 90
             periodSeconds: 10
-          volumeMounts:
-            - name: data
-              mountPath: /data
-        - name: data-syncer
-          resources:
-            requests:
-              cpu: 5m
-              memory: 64Mi
-            limits:
-              cpu: 20m
-              memory: 256Mi
-          image: rclone/rclone:1.73
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              echo "DEBUG: RCLONE_BUCKET=$RCLONE_BUCKET"
-
-              # Rclone reads RCLONE_CONFIG_S3_* env vars automatically from envFrom secretRef
-              # NOTE: excludes must be single-quoted directly in the command - never via a variable.
-              # The rclone image uses WORKDIR /data, so unquoted globs (tools/**) expand to
-              # real files and break the rclone arg parser.
-              do_rclone_sync() {
-                rclone sync /data "s3:${RCLONE_BUCKET}" \
-                  --exclude 'lost+found/**' \
-                  --exclude 'node_modules/**' \
-                  --exclude 'tools/**' \
-                  --exclude 'gemini-cli/**' \
-                  --exclude 'browser/**' \
-                  --exclude 'canvas/**' \
-                  --exclude 'extensions/**' \
-                  --exclude '.openclaw/**' \
-                  --exclude 'media/**' \
-                  --exclude 'netbox-mcp-server/**'
-              }
-
-              # Handle pending backup lock from external tool
-              if [ -f /data/backup.lock ]; then
-                echo "backup.lock found - performing immediate backup before sync loop"
-                do_rclone_sync || echo "Backup failed"
-                rm -f /data/backup.lock
-                echo "Backup complete, lock removed"
-              fi
-
-              sync_s3() {
-                do_rclone_sync || echo "Sync failed"
-              }
-              while true; do
-                sync_s3;
-                touch /tmp/healthy;
-                sleep 60;
-              done
-          livenessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - "test -f /tmp/healthy"
-            initialDelaySeconds: 180
-            periodSeconds: 30
-          readinessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - "test -f /tmp/healthy"
-            initialDelaySeconds: 180
-            periodSeconds: 10
-          envFrom:
-            - secretRef:
-                name: openclaw-secrets
           volumeMounts:
             - name: data
               mountPath: /data
