@@ -10,7 +10,6 @@ resources:
   - configmap.yaml
   - infisical-config.yaml
   - infisical-secret.yaml
-  - litestream-config.yaml
   - vpa.yaml
   - servicemonitor.yaml
   - networkpolicy.yaml
