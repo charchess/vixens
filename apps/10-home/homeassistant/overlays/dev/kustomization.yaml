@@ -31,3 +31,6 @@ patches:
           - containerPort: 9091
             name: metrics
             protocol: TCP
+      - op: replace
+        path: /spec/template/spec/initContainers/1/image
+        value: "python:3.13-alpine"
