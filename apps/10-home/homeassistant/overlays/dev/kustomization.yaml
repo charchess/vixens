@@ -25,3 +25,9 @@ patches:
           limits:
             cpu: 500m
             memory: 512Mi
+      - op: replace
+        path: /spec/template/spec/initContainers/0/ports
+        value:
+          - containerPort: 9091
+            name: metrics
+            protocol: TCP

@@ -33,13 +33,25 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+          ports:
+            - containerPort: 9091
+              name: metrics
+              protocol: TCP
           startupProbe:
             httpGet:
               path: /ready
-              port: 9090
+              port: 9091
             periodSeconds: 2
             failureThreshold: 3600
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 9091
+            periodSeconds: 5
+            failureThreshold: 3
           env:
+            - name: DATA_GUARD_METRICS_PORT
+              value: "9091"
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
