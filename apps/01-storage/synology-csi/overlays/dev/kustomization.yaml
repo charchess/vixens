@@ -30,19 +30,5 @@ patches:
     target:
       kind: StorageClass
       name: synelia-iscsi-delete
-  - patch: |-
-      apiVersion: apps/v1
-      kind: DaemonSet
-      metadata:
-        name: synology-csi-node
-      spec:
-        template:
-          spec:
-            containers:
-              - name: synology-csi-plugin
-                image: ghcr.io/zebernst/synology-csi:edge
-    target:
-      kind: DaemonSet
-      name: synology-csi-node
 resources:
   - ../../base
