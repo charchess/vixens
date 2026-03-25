@@ -124,6 +124,10 @@ spec:
                 - pgrep -f mariadb-dump || exit 1
             initialDelaySeconds: 30
             periodSeconds: 60
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "3"]
           readinessProbe:
             exec:
               command:

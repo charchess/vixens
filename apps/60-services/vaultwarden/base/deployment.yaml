@@ -144,6 +144,10 @@ spec:
               port: 9090
             initialDelaySeconds: 10
             periodSeconds: 30
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "3"]
           envFrom:
             - secretRef:
                 name: vaultwarden-secrets
@@ -182,6 +186,10 @@ spec:
                 sync_s3
                 sleep 60
               done
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "3"]
           volumeMounts:
             - name: data
               mountPath: /data
