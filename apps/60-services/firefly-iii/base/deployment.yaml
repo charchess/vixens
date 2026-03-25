@@ -184,6 +184,10 @@ spec:
           envFrom:
             - secretRef:
                 name: firefly-iii-secrets
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "3"]
           readinessProbe:
             exec:
               command:

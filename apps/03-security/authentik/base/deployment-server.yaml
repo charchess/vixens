@@ -183,6 +183,10 @@ spec:
           envFrom:
             - secretRef:
                 name: authentik-secrets
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "3"]
           resources:
             requests:
               cpu: 10m
