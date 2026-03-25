@@ -6,5 +6,6 @@ resources:
   - argocd-crds.yaml
   - argocd-install.yaml
   - servicemonitor.yaml
+  - pdb.yaml
 components:
   - ../../../_shared/components/revision-history-limit

@@ -29,3 +29,7 @@ resources:
 # Single replica for dev
 deployment:
   replicas: 0
+# PDB (match prod pattern)
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 0
