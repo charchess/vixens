@@ -25,6 +25,7 @@ spec:
       securityContext:
         runAsNonRoot: true
         fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
         runAsGroup: 10001
         runAsUser: 10001
       volumes:

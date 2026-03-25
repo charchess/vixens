@@ -25,6 +25,7 @@ spec:
     spec:
       securityContext:
         fsGroup: 1201
+        fsGroupChangePolicy: OnRootMismatch
       priorityClassName: vixens-low
       tolerations:
         - key: node-role.kubernetes.io/control-plane

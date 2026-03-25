@@ -94,6 +94,8 @@ spec:
             claimName: penpot-data
       securityContext:
         # runAsNonRoot: true  # DISABLED: penpot/backend uses non-numeric user — verify image before re-enabling
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
       restartPolicy: Always
