@@ -5,5 +5,6 @@ metadata:
   name: grafana-dashboard-traefik
   labels:
     grafana_dashboard: "1"
+immutable: true
 data:
   traefik.json: '{} # Placeholder - user to populate with JSON from https://grafana.com/grafana/dashboards/13391'
