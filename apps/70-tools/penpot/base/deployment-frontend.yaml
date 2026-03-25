@@ -59,7 +59,8 @@ spec:
             periodSeconds: 30
             failureThreshold: 3
       securityContext:
-        # runAsNonRoot: true  # DISABLED: penpot/frontend runs as root — verify image before re-enabling
+        runAsNonRoot: true
+        runAsUser: 1001
         seccompProfile:
           type: RuntimeDefault
       restartPolicy: Always

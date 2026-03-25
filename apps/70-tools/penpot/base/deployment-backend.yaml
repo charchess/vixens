@@ -92,7 +92,8 @@ spec:
           persistentVolumeClaim:
             claimName: penpot-data
       securityContext:
-        # runAsNonRoot: true  # DISABLED: penpot/backend uses non-numeric user — verify image before re-enabling
+        runAsNonRoot: true
+        runAsUser: 1001
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:

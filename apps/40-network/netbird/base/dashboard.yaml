@@ -21,6 +21,7 @@ spec:
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/explicitly-allow-root: "true"
         vixens.io/no-long-connections: "true"
     spec:
       priorityClassName: vixens-low

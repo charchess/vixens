@@ -31,6 +31,9 @@ spec:
       initContainers:
         - name: restore-data
           image: rclone/rclone:1.73
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
           command:
             - sh
             - -c
@@ -58,6 +61,9 @@ spec:
               mountPath: /mosquitto/data
         - name: create-mosquitto-users
           image: eclipse-mosquitto:2.0.22
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
           command:
             - sh
             - -c
@@ -170,7 +176,7 @@ spec:
           operator: Exists
           effect: NoSchedule
       securityContext:
-        # runAsNonRoot: true  # DISABLED: init container rclone runs as root — verify image before re-enabling
+        runAsNonRoot: true
         fsGroup: 1883
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:

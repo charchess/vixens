@@ -24,6 +24,7 @@ spec:
       annotations:
         reloader.stakater.com/auto: "true"
         vixens.io/fast-start: "true"
+        vixens.io/explicitly-allow-root: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"

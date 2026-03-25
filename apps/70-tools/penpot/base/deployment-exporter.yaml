@@ -68,7 +68,8 @@ spec:
             failureThreshold: 20
             periodSeconds: 10
       securityContext:
-        # runAsNonRoot: true  # DISABLED: penpot/exporter runs as root — verify image before re-enabling
+        runAsNonRoot: true
+        runAsUser: 1001
         seccompProfile:
           type: RuntimeDefault
       restartPolicy: Always

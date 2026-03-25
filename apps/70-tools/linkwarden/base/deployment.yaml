@@ -97,7 +97,8 @@ spec:
           persistentVolumeClaim:
             claimName: linkwarden-data
       securityContext:
-        # runAsNonRoot: true  # DISABLED: linkwarden image runs as root — verify image before re-enabling
+        runAsNonRoot: true
+        runAsUser: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
