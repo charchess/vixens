@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ../../base
   - ingress.yaml
+  - cache-pvc.yaml
 
 components:
   - ../../../../_shared/components/infisical/env-prod
@@ -76,3 +77,13 @@ patches:
                   runAsGroup: 0
   - path: pvc-patch.yaml
   - path: dataangel.yaml
+  - target:
+      kind: Deployment
+      name: frigate
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/volumes/3
+        value:
+          name: cache
+          persistentVolumeClaim:
+            claimName: frigate-cache-pvc
