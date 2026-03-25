@@ -16,7 +16,6 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
-        vixens.io/no-long-connections: "true"
       labels:
         app: jellyfin
         vixens.io/sizing.jellyfin: V-medium
@@ -68,6 +67,10 @@ spec:
             failureThreshold: 30
             periodSeconds: 10
             timeoutSeconds: 5
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "3"]
           volumeMounts:
             - name: config
               mountPath: /config

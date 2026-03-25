@@ -19,7 +19,6 @@ spec:
         vixens.io/sizing.music-assistant: V-medium
         vixens.io/backup-profile: "relaxed"
       annotations:
-        vixens.io/no-long-connections: "true"
         vixens.io/explicitly-allow-root: "true"
     spec:
       securityContext:
@@ -56,6 +55,10 @@ spec:
               value: "1000"
             - name: TZ
               value: Europe/Paris
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "3"]
           volumeMounts:
             - name: config
               mountPath: /data

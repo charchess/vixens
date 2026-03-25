@@ -28,7 +28,6 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
-        vixens.io/no-long-connections: "true"
         kubectl.kubernetes.io/restartedAt: "2026-03-11T22:20:00Z"
         vixens.io/explicitly-allow-root: "true"
     spec:
@@ -109,6 +108,10 @@ spec:
             failureThreshold: 15
             periodSeconds: 10
             timeoutSeconds: 5
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "3"]
           volumeMounts:
             - name: data
               mountPath: /data

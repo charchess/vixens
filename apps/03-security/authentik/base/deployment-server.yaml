@@ -28,7 +28,6 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9300"
         prometheus.io/path: "/metrics"
-        vixens.io/no-long-connections: "true"
     spec:
       priorityClassName: vixens-critical
       tolerations:
@@ -148,6 +147,10 @@ spec:
             - name: blueprints
               mountPath: /blueprints/vixens-hydrus.yaml
               subPath: vixens-hydrus.yaml
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "3"]
           resources:
             requests:
               memory: 512Mi

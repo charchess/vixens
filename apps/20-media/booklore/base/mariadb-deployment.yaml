@@ -72,6 +72,10 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "3"]
           startupProbe:
             exec:
               command: ["mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
