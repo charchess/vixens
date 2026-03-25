@@ -17,7 +17,7 @@ spec:
     metadata:
       labels:
         app: prowlarr
-        vixens.io/sizing.prowlarr: V-medium
+        vixens.io/sizing.prowlarr: V-small
         vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.config-syncer: V-nano
         vixens.io/sizing.fix-permissions: G-nano

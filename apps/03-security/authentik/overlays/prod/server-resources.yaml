@@ -8,6 +8,6 @@ spec:
     metadata:
       labels:
         vixens.io/sizing.authentik-server: G-large
-        vixens.io/sizing.config-syncer: G-small
+        vixens.io/sizing.config-syncer: V-nano
     spec:
       priorityClassName: vixens-critical

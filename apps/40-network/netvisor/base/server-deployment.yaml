@@ -19,7 +19,7 @@ spec:
         vixens.io/no-long-connections: "true"
       labels:
         app: netvisor-server
-        vixens.io/sizing.server: V-small
+        vixens.io/sizing.server: V-micro
         vixens.io/backup-profile: "relaxed"
     spec:
       tolerations:

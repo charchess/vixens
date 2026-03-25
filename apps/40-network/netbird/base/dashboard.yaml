@@ -18,7 +18,7 @@ spec:
     metadata:
       labels:
         app: netbird-dashboard
-        vixens.io/sizing.dashboard: V-small
+        vixens.io/sizing.dashboard: V-micro
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"

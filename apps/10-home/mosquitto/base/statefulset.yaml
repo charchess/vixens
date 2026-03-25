@@ -22,7 +22,7 @@ spec:
         app: mosquitto
         vixens.io/sizing.restore-data: B-nano
         vixens.io/sizing.create-mosquitto-users: G-nano
-        vixens.io/sizing.mosquitto: V-small
+        vixens.io/sizing.mosquitto: V-nano
         vixens.io/sizing.config-syncer: V-nano
         vixens.io/backup-profile: "relaxed"
       annotations:

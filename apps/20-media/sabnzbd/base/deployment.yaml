@@ -17,7 +17,7 @@ spec:
     metadata:
       labels:
         app: sabnzbd
-        vixens.io/sizing.sabnzbd: V-medium
+        vixens.io/sizing.sabnzbd: V-micro
         vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.config-syncer: V-nano
         vixens.io/sizing.restore-config: B-nano
