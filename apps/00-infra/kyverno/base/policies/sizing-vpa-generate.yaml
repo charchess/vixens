@@ -89,8 +89,10 @@ spec:
               kind: "{{ request.object.kind }}"
               name: "{{ request.object.metadata.name }}"
             updatePolicy:
+              # V-* sizing label present → Auto (VPA manages resources)
+              # B-*/SB-*/G-* only → Off (Goldilocks recommend-only)
               updateMode: >-
-                {{ contains(keys(request.object.metadata.labels), 'vixens.io/vpa-mode') && request.object.metadata.labels."vixens.io/vpa-mode" || 'Auto' }}
+                {{ request.object.spec.template.metadata.labels | values(@) | [?starts_with(@, 'V-')] | length(@) > `0` && 'Auto' || 'Off' }}
             resourcePolicy:
               containerPolicies:
                 - containerName: "*"

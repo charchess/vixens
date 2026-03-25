@@ -5,7 +5,6 @@ metadata:
   name: prowlarr
   labels:
     app: prowlarr
-    vixens.io/vpa-mode: Auto
 spec:
   strategy:
     type: Recreate

@@ -5,7 +5,6 @@ metadata:
   name: radarr
   labels:
     app: radarr
-    vixens.io/vpa-mode: Auto
     vixens.io/backup-profile: "standard"
 spec:
   strategy:

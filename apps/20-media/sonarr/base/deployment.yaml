@@ -6,7 +6,6 @@ metadata:
   labels:
     app: sonarr
     app.kubernetes.io/managed-by: kustomize
-    vixens.io/vpa-mode: Auto
 spec:
   strategy:
     type: Recreate

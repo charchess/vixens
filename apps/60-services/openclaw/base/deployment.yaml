@@ -6,7 +6,6 @@ metadata:
   namespace: services
   labels:
     app: openclaw
-    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   revisionHistoryLimit: 3

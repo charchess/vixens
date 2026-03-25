@@ -5,7 +5,6 @@ metadata:
   name: nocodb
   labels:
     app.kubernetes.io/name: nocodb
-    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:

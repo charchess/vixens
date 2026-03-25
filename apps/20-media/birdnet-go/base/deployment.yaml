@@ -6,7 +6,6 @@ metadata:
   labels:
     app: birdnet-go
     app.kubernetes.io/managed-by: argocd
-    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:

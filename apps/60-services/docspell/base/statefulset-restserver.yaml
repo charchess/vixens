@@ -6,7 +6,6 @@ metadata:
   labels:
     app: docspell
     component: restserver
-    vixens.io/vpa-mode: Auto
 spec:
   serviceName: docspell-restserver
   replicas: 1

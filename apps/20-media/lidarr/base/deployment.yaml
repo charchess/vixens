@@ -5,7 +5,6 @@ metadata:
   name: lidarr
   labels:
     app: lidarr
-    vixens.io/vpa-mode: Auto
 spec:
   strategy:
     type: Recreate

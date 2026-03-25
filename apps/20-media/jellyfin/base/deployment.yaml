@@ -5,7 +5,6 @@ metadata:
   name: jellyfin
   labels:
     app: jellyfin
-    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   strategy:
