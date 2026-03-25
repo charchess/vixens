@@ -22,7 +22,7 @@ spec:
       labels:
         app: penpot-frontend
         component: frontend
-        vixens.io/sizing.frontend: V-small
+        vixens.io/sizing.frontend: V-micro
         vixens.io/backup-profile: "standard"
     spec:
       priorityClassName: vixens-medium

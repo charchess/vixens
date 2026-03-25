@@ -17,7 +17,7 @@ spec:
     metadata:
       labels:
         app: mylar
-        vixens.io/sizing.mylar: V-medium
+        vixens.io/sizing.mylar: V-micro
         vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.config-syncer: V-nano
         vixens.io/sizing.fix-permissions: G-nano

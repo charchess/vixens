@@ -21,7 +21,7 @@ spec:
         vixens.io/no-long-connections: "true"
       labels:
         app: netbird-signal
-        vixens.io/sizing.signal: V-small
+        vixens.io/sizing.signal: V-micro
         vixens.io/backup-profile: "relaxed"
     spec:
       priorityClassName: vixens-low
@@ -89,7 +89,7 @@ spec:
         vixens.io/fast-start: "true"
       labels:
         app: netbird-relay
-        vixens.io/sizing.relay: V-small
+        vixens.io/sizing.relay: V-micro
     spec:
       priorityClassName: vixens-low
       tolerations:

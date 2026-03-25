@@ -17,7 +17,7 @@ spec:
     metadata:
       labels:
         app: whisparr
-        vixens.io/sizing.whisparr: B-medium
+        vixens.io/sizing.whisparr: V-small
         vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.config-syncer: V-nano
         vixens.io/sizing.fix-permissions: G-nano

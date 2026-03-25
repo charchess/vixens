@@ -19,8 +19,8 @@ spec:
       labels:
         app: birdnet-go
         vixens.io/sizing.birdnet-go: V-medium
-        vixens.io/sizing.litestream: V-nano
-        vixens.io/sizing.data-syncer: V-nano
+        vixens.io/sizing.litestream: V-micro
+        vixens.io/sizing.data-syncer: V-micro
         vixens.io/sizing.fix-permissions: G-nano
         vixens.io/backup-profile: "relaxed"
       annotations:

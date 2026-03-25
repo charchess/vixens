@@ -8,5 +8,5 @@ spec:
     metadata:
       labels:
         vixens.io/sizing.birdnet-go: G-medium
-        vixens.io/sizing.litestream: G-small
-        vixens.io/sizing.data-syncer: G-small
+        vixens.io/sizing.litestream: V-micro
+        vixens.io/sizing.data-syncer: V-micro

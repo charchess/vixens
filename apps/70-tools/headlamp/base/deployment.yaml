@@ -15,7 +15,7 @@ spec:
     metadata:
       labels:
         app: headlamp
-        vixens.io/sizing.headlamp: V-small
+        vixens.io/sizing.headlamp: V-micro
         vixens.io/backup-profile: "relaxed"
       annotations:
         reloader.stakater.com/auto: "true"
