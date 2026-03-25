@@ -6,6 +6,7 @@ metadata:
   labels:
     app: docspell
     component: joex
+immutable: true
 data:
   config: |
     docspell.joex {

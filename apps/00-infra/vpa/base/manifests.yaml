@@ -927,6 +927,7 @@ metadata:
   annotations:
     helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+immutable: true
 data:
   verticalpodautoscalercheckpoints.yaml: |
     apiVersion: apiextensions.k8s.io/v1
@@ -1791,6 +1792,7 @@ metadata:
     app.kubernetes.io/component: tests
   annotations:
     helm.sh/hook: test
+immutable: true
 data:
   test_all.py: |
     import requests

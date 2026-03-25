@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: promtail-config
+immutable: true
 data:
   promtail-config.yaml: |
     server:

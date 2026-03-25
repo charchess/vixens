@@ -4,6 +4,7 @@ kind: ConfigMap
 metadata:
   name: netbird-ca-bundle
   namespace: networking
+immutable: true
 data:
   ca-certificates.crt: |
     -----BEGIN CERTIFICATE-----
