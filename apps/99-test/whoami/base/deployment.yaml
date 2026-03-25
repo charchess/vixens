@@ -4,7 +4,6 @@ kind: Deployment
 metadata:
   name: whoami
   labels:
-    vixens.io/vpa-mode: Auto
 spec:
   replicas: 1
   revisionHistoryLimit: 3

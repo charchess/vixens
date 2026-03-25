@@ -5,7 +5,6 @@ metadata:
   name: booklore
   labels:
     app: booklore
-    vixens.io/vpa-mode: "Off"
 spec:
   replicas: 1
   strategy:

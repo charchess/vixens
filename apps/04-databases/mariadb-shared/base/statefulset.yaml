@@ -6,7 +6,6 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
   labels:
-    vixens.io/vpa-mode: Auto
 spec:
   serviceName: mariadb-shared
   replicas: 1

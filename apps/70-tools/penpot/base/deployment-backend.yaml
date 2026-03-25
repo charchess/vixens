@@ -7,7 +7,6 @@ metadata:
   labels:
     app: penpot-backend
     component: backend
-    vixens.io/vpa-mode: "Off"
 spec:
   replicas: 1
   revisionHistoryLimit: 3

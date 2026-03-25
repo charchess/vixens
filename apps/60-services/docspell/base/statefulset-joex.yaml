@@ -6,7 +6,6 @@ metadata:
   labels:
     app: docspell
     component: joex
-    vixens.io/vpa-mode: Auto
 spec:
   serviceName: docspell-joex
   replicas: 1
