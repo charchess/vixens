@@ -24,7 +24,6 @@ spec:
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
-        vixens.io/no-long-connections: "true"
     spec:
       priorityClassName: vixens-low
       tolerations:
@@ -135,6 +134,10 @@ spec:
               name: http
             - containerPort: 33073
               name: grpc
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "3"]
           volumeMounts:
             - name: config-writable
               mountPath: /etc/netbird

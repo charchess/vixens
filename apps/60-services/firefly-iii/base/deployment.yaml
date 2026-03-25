@@ -28,7 +28,6 @@ spec:
         prometheus.io/port: "8080"
         prometheus.io/path: "/metrics"
         vixens.io/service-binding: "false"
-        vixens.io/no-long-connections: "true"
         vixens.io/fast-start: "true"
     spec:
       priorityClassName: vixens-medium
@@ -127,6 +126,10 @@ spec:
             limits:
               cpu: 1000m
               memory: 512Mi
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "3"]
           volumeMounts:
             - name: static
               mountPath: /var/www/html/storage/upload

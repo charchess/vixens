@@ -96,6 +96,10 @@ spec:
               port: http
             failureThreshold: 30
             periodSeconds: 10
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "3"]
           volumeMounts:
             - name: data
               mountPath: /home/node/.n8n
