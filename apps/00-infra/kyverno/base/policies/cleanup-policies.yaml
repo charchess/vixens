@@ -14,8 +14,8 @@ spec:
       - key: "{{ target.status.phase }}"
         operator: Equals
         value: Failed
-      - key: "{{ target.status.startTime }}"
-        operator: DurationGreaterThan
+      - key: "{{ time_since('', '{{ target.status.startTime }}', '') }}"
+        operator: GreaterThan
         value: 24h
   schedule: "*/30 * * * *"
 ---
@@ -34,8 +34,8 @@ spec:
       - key: "{{ target.status.phase }}"
         operator: Equals
         value: Succeeded
-      - key: "{{ target.status.startTime }}"
-        operator: DurationGreaterThan
+      - key: "{{ time_since('', '{{ target.status.startTime }}', '') }}"
+        operator: GreaterThan
         value: 24h
   schedule: "*/30 * * * *"
 ---
@@ -54,7 +54,7 @@ spec:
       - key: "{{ target.spec.replicas }}"
         operator: Equals
         value: 0
-      - key: "{{ target.metadata.creationTimestamp }}"
-        operator: DurationGreaterThan
-        value: 7d
+      - key: "{{ time_since('', '{{ target.metadata.creationTimestamp }}', '') }}"
+        operator: GreaterThan
+        value: 168h
   schedule: "@daily"
