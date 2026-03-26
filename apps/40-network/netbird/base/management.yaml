@@ -33,6 +33,9 @@ spec:
       initContainers:
         - name: init-config
           image: busybox:1.37
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
           env:
             - name: AUTH_ISSUER
               value: "https://authentik.dev.truxonline.com/application/o/netbird/"
@@ -97,7 +100,8 @@ spec:
             - name: config-writable
               mountPath: /etc/netbird
       securityContext:
-        # runAsNonRoot: true  # DISABLED: netbirdio/management runs as root — verify image before re-enabling
+        runAsNonRoot: true
+        runAsUser: 1000
         seccompProfile:
           type: RuntimeDefault
       containers:
