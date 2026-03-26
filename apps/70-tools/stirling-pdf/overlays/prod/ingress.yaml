@@ -22,7 +22,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: stirling-pdf-stirling-pdf-chart
+                name: keda-interceptor-proxy
                 port:
                   number: 8080
   tls:
