@@ -47,16 +47,23 @@ schedules:
     schedule: "0 2 * * *"
     template:
       ttl: "720h"
-      includedNamespaces: ["databases", "tools", "security"]
+      includedNamespaces: ["databases", "tools", "security", "services", "finance", "auth", "networking"]
       snapshotVolumes: true
   daily-home:
     disabled: false
     schedule: "0 4 * * *"
     template:
       ttl: "168h"
-      includedNamespaces: ["home", "homeassistant"]
+      includedNamespaces: ["homeassistant", "mealie", "mosquitto"]
       snapshotVolumes: true
       defaultVolumesToFsBackup: true
+  daily-media:
+    disabled: false
+    schedule: "0 5 * * *"
+    template:
+      ttl: "168h"
+      includedNamespaces: ["media", "birdnet-go", "downloads"]
+      snapshotVolumes: true
   weekly-full:
     disabled: false
     schedule: "0 3 * * 0"
