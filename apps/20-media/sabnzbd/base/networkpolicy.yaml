@@ -19,6 +19,12 @@ spec:
       ports:
         - protocol: TCP
           port: 8080
+    # Allow ingress from media namespace (arr apps: whisparr, radarr, sonarr, etc.)
+    - from:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 8080
   egress:
     # Allow all egress (homelab: DNS, inter-app, external APIs)
     - {}
