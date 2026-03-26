@@ -7,6 +7,7 @@
 # ============================================================================
 # Group name for the ACME DNS solver
 # Must match the group used in ClusterIssuer
+replicaCount: 1
 groupName: acme.truxonline.com
 # ============================================================================
 # Control Plane Tolerations
