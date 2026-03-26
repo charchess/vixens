@@ -35,7 +35,7 @@ resources:
   - check-vulnerability-scan.yaml
   - cleanup-policies.yaml
   - mutate-app-name-label.yaml
-  - mutate-cainjector-probes.yaml
+  # mutate-cainjector-probes.yaml removed — empty rules, already handled by policy-exception-cainjector.yaml
   - mutate-pod-annotations.yaml
   - mutate-priority-class.yaml
   - mutate-revision-history-limit.yaml
