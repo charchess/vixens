@@ -33,7 +33,7 @@ spec:
                   - key: "{{ request.object.spec.volumes[?contains(name, 'config')] }}" # Has config volume
                     operator: NotEquals
                     value: ""
-                  - key: "{{ request.object.spec.containers[?contains(image, 'litestream')] | length(@) }}" # No litestream
+                  - key: "{{ (request.object.spec.containers[?contains(image, 'litestream')] | length(@)) + ((request.object.spec.initContainers || `[]`)[?contains(image, 'dataangel')] | length(@)) }}"
                     operator: Equals
                     value: 0
                   - key: "{{ request.object.metadata.labels.app }}" # Filter out known non-sqlite apps

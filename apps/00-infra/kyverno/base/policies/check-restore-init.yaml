@@ -23,6 +23,6 @@ spec:
         deny:
           conditions:
             all:
-              - key: "{{ (request.object.spec.initContainers || `[]`)[?contains(name, 'restore') || contains(name, 'init')] | length(@) }}"
+              - key: "{{ (request.object.spec.initContainers || `[]`)[?contains(name, 'restore') || contains(name, 'init') || contains(name, 'dataangel')] | length(@) }}"
                 operator: Equals
                 value: 0
