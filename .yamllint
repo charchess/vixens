@@ -1,12 +1,17 @@
 ---
-# Ne pas utiliser "extends" si vous personnalisez tout
 extends: default
 
-# Ignore patterns
+# Ignore auto-generated CRDs/manifests (reformatted on each upgrade)
 ignore: |
   backups/
   .git/
   .terraform/
+  apps/00-infra/argocd/base/argocd-crds.yaml
+  apps/00-infra/prometheus-operator-crds/
+  apps/00-infra/vpa/base/manifests.yaml
+  apps/00-infra/snapshot-controller/base/crds/
+  apps/03-security/trivy/base/manifests.yaml
+  apps/02-monitoring/descheduler/base/descheduler-gen.yaml
 
 yaml-files:
   - '*.yaml'
@@ -26,8 +31,9 @@ rules:
 
   # ============ WARNINGS ============
   line-length:
-    max: 80
+    max: 120
     allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
     level: warning
 
   trailing-spaces:
@@ -38,7 +44,6 @@ rules:
     level: warning
 
   # ============ DÉSACTIVÉES ============
-  # Syntaxe CORRECTE pour désactiver :
   comments: disable
   comments-indentation: disable
   brackets: disable
