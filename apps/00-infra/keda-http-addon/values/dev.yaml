@@ -1,0 +1,19 @@
+---
+# KEDA HTTP Add-on - dev overrides (single-node, memory-constrained)
+interceptor:
+  resources:
+    requests:
+      cpu: 5m
+      memory: 8Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+
+scaler:
+  resources:
+    requests:
+      cpu: 5m
+      memory: 8Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi

@@ -1,0 +1,24 @@
+---
+# KEDA Operator - dev overrides (single-node, memory-constrained)
+resources:
+  operator:
+    requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  metricsServer:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  webhooks:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
