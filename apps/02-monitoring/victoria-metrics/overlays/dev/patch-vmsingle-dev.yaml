@@ -1,0 +1,11 @@
+---
+# Dev override: reduce VMSingle sizing from G-large (1Gi req) to B-micro (128Mi req)
+# so the single-node dev cluster has enough headroom for KEDA and other components.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMSingle
+metadata:
+  name: vm-stack
+spec:
+  podMetadata:
+    labels:
+      vixens.io/sizing.vmsingle: B-micro

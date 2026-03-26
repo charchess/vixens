@@ -8,5 +8,6 @@ labels:
       environment: dev
 resources:
   - ../../base
+  - patch-vmsingle-dev.yaml
 components:
   - ../../../../_shared/components/dev-hibernate
