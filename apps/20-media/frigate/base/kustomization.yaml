@@ -13,6 +13,5 @@ resources:
   - pdb.yaml
   - networkpolicy.yaml
   - infisical-secret.yaml
-  - infisical-config.yaml
   - litestream-config.yaml
   - servicemonitor.yaml
