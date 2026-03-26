@@ -1,24 +1,34 @@
 ---
 # KEDA Operator - dev overrides (single-node, memory-constrained)
+# Sizing labels bypass the Kyverno sizing-v2-mutate default (128Mi).
+# B-nano = 64Mi request / 128Mi limit per container.
+podLabels:
+  keda:
+    vixens.io/sizing.keda-operator: B-nano
+  metricsAdapter:
+    vixens.io/sizing.keda-operator-metrics-apiserver: B-nano
+  webhooks:
+    vixens.io/sizing.keda-admission-webhooks: B-nano
+
 resources:
   operator:
     requests:
       cpu: 20m
-      memory: 32Mi
+      memory: 64Mi
     limits:
       cpu: 500m
       memory: 256Mi
-  metricsServer:
+  metricServer:
     requests:
       cpu: 10m
-      memory: 16Mi
+      memory: 64Mi
     limits:
       cpu: 200m
-      memory: 128Mi
+      memory: 256Mi
   webhooks:
     requests:
       cpu: 10m
-      memory: 16Mi
+      memory: 64Mi
     limits:
       cpu: 100m
-      memory: 64Mi
+      memory: 128Mi

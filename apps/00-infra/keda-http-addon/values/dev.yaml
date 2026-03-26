@@ -1,19 +1,27 @@
 ---
 # KEDA HTTP Add-on - dev overrides (single-node, memory-constrained)
+# additionalLabels applies to pod templates via keda-http-add-on.labels helper.
+# Setting all three container sizing labels on all pods so Kyverno finds the
+# right label for each container (instead of falling back to 128Mi default).
+additionalLabels:
+  vixens.io/sizing.keda-add-ons-http-operator: B-nano
+  vixens.io/sizing.keda-add-ons-http-external-scaler: B-nano
+  vixens.io/sizing.keda-add-ons-http-interceptor: B-nano
+
 interceptor:
   resources:
     requests:
-      cpu: 5m
-      memory: 8Mi
+      cpu: 10m
+      memory: 64Mi
     limits:
       cpu: 100m
-      memory: 64Mi
+      memory: 128Mi
 
 scaler:
   resources:
     requests:
-      cpu: 5m
-      memory: 8Mi
+      cpu: 10m
+      memory: 64Mi
     limits:
       cpu: 100m
-      memory: 64Mi
+      memory: 128Mi
