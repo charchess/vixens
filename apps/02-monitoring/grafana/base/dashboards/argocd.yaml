@@ -1,0 +1,46 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-argocd
+  labels:
+    grafana_dashboard: "1"
+immutable: true
+data:
+  argocd.json: |
+    {
+      "annotations": {"list": []},
+      "editable": true,
+      "panels": [
+        {
+          "title": "App Sync Status",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0},
+          "targets": [{"expr": "count(argocd_app_info{sync_status=~\".+\"}) by (sync_status)", "legendFormat": "{{sync_status}}"}]
+        },
+        {
+          "title": "App Health Status",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0},
+          "targets": [{"expr": "count(argocd_app_info{health_status=~\".+\"}) by (health_status)", "legendFormat": "{{health_status}}"}]
+        },
+        {
+          "title": "Sync Operations Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 8, "x": 16, "y": 0},
+          "targets": [{"expr": "sum(rate(argocd_app_sync_total[5m])) by (phase)", "legendFormat": "{{phase}}"}]
+        },
+        {
+          "title": "Apps Not Synced/Healthy",
+          "type": "table",
+          "gridPos": {"h": 10, "w": 24, "x": 0, "y": 8},
+          "targets": [{"expr": "argocd_app_info{sync_status!=\"Synced\"} or argocd_app_info{health_status!=\"Healthy\"}", "format": "table", "instant": true}],
+          "transformations": [{"id": "organize", "options": {"excludeByName": {"Time": true, "__name__": true, "instance": true, "job": true}, "renameByName": {"name": "App", "sync_status": "Sync", "health_status": "Health", "namespace": "Namespace"}}}]
+        }
+      ],
+      "schemaVersion": 39,
+      "tags": ["argocd", "gitops"],
+      "time": {"from": "now-6h", "to": "now"},
+      "title": "ArgoCD Overview",
+      "uid": "argocd-overview"
+    }

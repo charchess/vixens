@@ -8,4 +8,8 @@ resources:
   - dashboards/postgresql.yaml
   - dashboards/homeassistant.yaml
   - dashboards/trivy.yaml
+  - dashboards/dataangel.yaml
+  - dashboards/argocd.yaml
+  - dashboards/velero.yaml
+  - dashboards/cert-manager.yaml
 # Helm chart managed by ArgoCD
