@@ -1,0 +1,20 @@
+---
+apiVersion: http.keda.sh/v1alpha1
+kind: HTTPScaledObject
+metadata:
+  name: stirling-pdf
+  namespace: tools
+spec:
+  hosts:
+    - pdf.truxonline.com
+  pathPrefixes:
+    - /
+  scaleTargetRef:
+    name: stirling-pdf-stirling-pdf-chart
+    kind: Deployment
+    service: stirling-pdf-stirling-pdf-chart
+    port: 8080
+  replicas:
+    min: 0
+    max: 1
+  scaledownPeriod: 300
