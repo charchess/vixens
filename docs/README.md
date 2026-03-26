@@ -50,21 +50,6 @@ Detailed technical documentation:
 - **[ArgoCD Sync Waves](reference/argocd-sync-waves.md)** - Sync wave patterns.
 - **[Resource Standards](reference/RESOURCE_STANDARDS.md)** - CPU/Memory allocation rules.
 - **[Naming Conventions](reference/naming-conventions.md)** - Files, resources, namespaces.
-Detailed technical documentation:
-- **[Workflow State Machine](reference/workflow-state-machine.md)** - Guide to Justfile Phases 0-6.
-- **[Quality Standards](reference/quality-standards.md)** - Application quality tiers (Elite V4.0).
-- **[Metrics Exemption](reference/metrics-exemption.md)** - How to exempt apps from metrics requirement (Gold tier).
-- **[Multi-Agent Orchestration](reference/multi-agent-orchestration.md)** - Agent task assignment logic.
-- **[ArgoCD Sync Waves](reference/argocd-sync-waves.md)** - Sync wave patterns.
-- **[Resource Standards](reference/RESOURCE_STANDARDS.md)** - CPU/Memory allocation rules.
-- **[Naming Conventions](reference/naming-conventions.md)** - Files, resources, namespaces.
-Detailed technical documentation:
-- **[Workflow State Machine](reference/workflow-state-machine.md)** - Guide to Justfile Phases 0-6.
-- **[Quality Standards](reference/quality-standards.md)** - Application quality tiers (Elite V4.0).
-- **[Multi-Agent Orchestration](reference/multi-agent-orchestration.md)** - Agent task assignment logic.
-- **[ArgoCD Sync Waves](reference/argocd-sync-waves.md)** - Sync wave patterns.
-- **[Resource Standards](reference/RESOURCE_STANDARDS.md)** - CPU/Memory allocation rules.
-- **[Naming Conventions](reference/naming-conventions.md)** - Files, resources, namespaces.
 
 ---
 
@@ -121,4 +106,4 @@ Detailed technical documentation:
 
 ---
 
-**Last Updated:** 2026-01-11
+**Last Updated:** 2026-03-26
