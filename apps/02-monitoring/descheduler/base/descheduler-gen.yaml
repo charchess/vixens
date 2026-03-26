@@ -197,6 +197,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 spec:
   schedule: 0 */4 * * *
+  timeZone: Europe/Paris
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
