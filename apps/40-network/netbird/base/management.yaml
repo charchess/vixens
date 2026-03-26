@@ -107,7 +107,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: management
-          image: netbirdio/management:0.67.0
+          image: netbirdio/management:0.67.1
           args: ["--port=80", "--log-file=console", "--log-level=info", "--config=/etc/netbird/management.json"]
           securityContext:
             allowPrivilegeEscalation: false
