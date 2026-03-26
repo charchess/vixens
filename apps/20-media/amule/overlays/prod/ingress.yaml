@@ -8,6 +8,11 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Downloads
+    gethomepage.dev/name: aMule
+    gethomepage.dev/icon: amule.svg
+    gethomepage.dev/description: eDonkey/Kad file sharing client
 spec:
   rules:
     - host: amule.truxonline.com

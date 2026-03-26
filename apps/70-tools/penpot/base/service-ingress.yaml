@@ -58,6 +58,11 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Tools
+    gethomepage.dev/name: Penpot
+    gethomepage.dev/icon: penpot.svg
+    gethomepage.dev/description: Open source design platform
 spec:
   ingressClassName: traefik
   tls:

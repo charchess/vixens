@@ -8,6 +8,11 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Home
+    gethomepage.dev/name: Mealie
+    gethomepage.dev/icon: mealie.svg
+    gethomepage.dev/description: Recipe manager
 spec:
   ingressClassName: traefik
   rules:

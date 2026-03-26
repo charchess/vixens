@@ -11,6 +11,11 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
     vixens.io/nossoneeded: "true"
     # external-dns.alpha.kubernetes.io/target: truxonline.com
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Home
+    gethomepage.dev/name: Mealie
+    gethomepage.dev/icon: mealie.svg
+    gethomepage.dev/description: Recipe manager
 spec:
   ingressClassName: traefik
   rules:

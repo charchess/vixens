@@ -6,6 +6,11 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Tools
+    gethomepage.dev/name: Vikunja
+    gethomepage.dev/icon: vikunja.svg
+    gethomepage.dev/description: Task management
 spec:
   ingressClassName: traefik
   tls:

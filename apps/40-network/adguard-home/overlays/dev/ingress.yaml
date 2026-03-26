@@ -8,6 +8,11 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Network
+    gethomepage.dev/name: AdGuard Home
+    gethomepage.dev/icon: adguard-home.svg
+    gethomepage.dev/description: DNS ad blocker
 spec:
   ingressClassName: traefik
   rules:

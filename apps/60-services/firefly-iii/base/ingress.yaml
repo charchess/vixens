@@ -9,6 +9,11 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Finance
+    gethomepage.dev/name: Firefly III
+    gethomepage.dev/icon: firefly-iii.svg
+    gethomepage.dev/description: Personal finance manager
 spec:
   ingressClassName: traefik
   rules:

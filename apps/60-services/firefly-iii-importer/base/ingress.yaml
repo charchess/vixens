@@ -7,6 +7,11 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Finance
+    gethomepage.dev/name: Firefly III Importer
+    gethomepage.dev/icon: firefly-iii.svg
+    gethomepage.dev/description: Transaction importer for Firefly III
 spec:
   rules:
     - host: importer.truxonline.com

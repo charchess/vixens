@@ -11,6 +11,11 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
     vixens.io/nossoneeded: "true"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Services
+    gethomepage.dev/name: Docspell
+    gethomepage.dev/icon: docspell.svg
+    gethomepage.dev/description: Document management system
 spec:
   ingressClassName: traefik
   tls:

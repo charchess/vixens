@@ -8,6 +8,11 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd, auth-authentik-cors@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Security
+    gethomepage.dev/name: Authentik
+    gethomepage.dev/icon: authentik.svg
+    gethomepage.dev/description: Identity provider & SSO
 spec:
   ingressClassName: traefik
   rules:

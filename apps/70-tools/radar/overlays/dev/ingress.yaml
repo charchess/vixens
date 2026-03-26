@@ -9,6 +9,11 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Tools
+    gethomepage.dev/name: Radar
+    gethomepage.dev/icon: radar.svg
+    gethomepage.dev/description: Technology radar
 spec:
   ingressClassName: traefik
   rules:
