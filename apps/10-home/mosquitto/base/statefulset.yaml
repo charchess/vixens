@@ -106,6 +106,9 @@ spec:
       containers:
         - name: mosquitto
           image: eclipse-mosquitto:2.0.22
+          securityContext:
+            runAsUser: 1883
+            runAsGroup: 1883
           ports:
             - name: mqtt
               containerPort: 1883
@@ -144,6 +147,9 @@ spec:
             failureThreshold: 3
         - name: config-syncer
           image: rclone/rclone:1.73
+          securityContext:
+            runAsUser: 1883
+            runAsGroup: 1883
           command:
             - sh
             - -c
