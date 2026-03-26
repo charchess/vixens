@@ -49,6 +49,8 @@ spec:
                   name: frigate-secrets
                   key: LITESTREAM_SECRET_ACCESS_KEY
           volumeMounts:
+            - mountPath: /data
+              $patch: delete
             - name: config
               mountPath: /config
             - name: cache
