@@ -1,0 +1,41 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-cert-manager
+  labels:
+    grafana_dashboard: "1"
+immutable: true
+data:
+  cert-manager.json: |
+    {
+      "annotations": {"list": []},
+      "editable": true,
+      "panels": [
+        {
+          "title": "Certificate Expiry (days)",
+          "type": "bargauge",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+          "targets": [{"expr": "(certmanager_certificate_expiration_timestamp_seconds - time()) / 86400", "legendFormat": "{{namespace}}/{{name}}"}],
+          "fieldConfig": {"defaults": {"unit": "d", "thresholds": {"steps": [{"color": "red", "value": 0}, {"color": "yellow", "value": 14}, {"color": "green", "value": 30}]}}}
+        },
+        {
+          "title": "Certificate Ready Status",
+          "type": "stat",
+          "gridPos": {"h": 4, "w": 12, "x": 0, "y": 8},
+          "targets": [{"expr": "certmanager_certificate_ready_status{condition=\"True\"}", "legendFormat": "{{namespace}}/{{name}}"}],
+          "fieldConfig": {"defaults": {"thresholds": {"steps": [{"color": "red", "value": 0}, {"color": "green", "value": 1}]}, "mappings": [{"type": "value", "options": {"0": {"text": "NOT READY"}, "1": {"text": "READY"}}}]}}
+        },
+        {
+          "title": "ACME Challenges",
+          "type": "timeseries",
+          "gridPos": {"h": 4, "w": 12, "x": 12, "y": 8},
+          "targets": [{"expr": "rate(certmanager_http_acme_client_request_count[5m])", "legendFormat": "{{method}} {{status}}"}]
+        }
+      ],
+      "schemaVersion": 39,
+      "tags": ["cert-manager", "tls"],
+      "time": {"from": "now-7d", "to": "now"},
+      "title": "Cert-Manager Overview",
+      "uid": "cert-manager-overview"
+    }

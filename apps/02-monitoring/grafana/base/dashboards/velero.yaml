@@ -1,0 +1,42 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-velero
+  labels:
+    grafana_dashboard: "1"
+immutable: true
+data:
+  velero.json: |
+    {
+      "annotations": {"list": []},
+      "editable": true,
+      "panels": [
+        {
+          "title": "Backup Success/Failure",
+          "type": "stat",
+          "gridPos": {"h": 4, "w": 8, "x": 0, "y": 0},
+          "targets": [{"expr": "count(velero_backup_last_status{schedule=~\".+\"} == 1)", "legendFormat": "Success"}],
+          "fieldConfig": {"defaults": {"thresholds": {"steps": [{"color": "green", "value": 0}]}}}
+        },
+        {
+          "title": "Last Backup Age",
+          "type": "stat",
+          "gridPos": {"h": 4, "w": 8, "x": 8, "y": 0},
+          "targets": [{"expr": "time() - velero_backup_last_successful_timestamp{schedule=~\".+\"}", "legendFormat": "{{schedule}}"}],
+          "fieldConfig": {"defaults": {"unit": "s", "thresholds": {"steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 86400}, {"color": "red", "value": 172800}]}}}
+        },
+        {
+          "title": "Backup Duration",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 4},
+          "targets": [{"expr": "velero_backup_duration_seconds{schedule=~\".+\"}", "legendFormat": "{{schedule}}"}],
+          "fieldConfig": {"defaults": {"unit": "s"}}
+        }
+      ],
+      "schemaVersion": 39,
+      "tags": ["velero", "backup"],
+      "time": {"from": "now-7d", "to": "now"},
+      "title": "Velero Backup Overview",
+      "uid": "velero-overview"
+    }
