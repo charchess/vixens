@@ -10,6 +10,9 @@ metadata:
     gethomepage.dev/name: Whisparr
     gethomepage.dev/icon: whisparr.png
     gethomepage.dev/group: Media
+    gethomepage.dev/widget.type: "sonarr"
+    gethomepage.dev/widget.url: "http://whisparr.media.svc.cluster.local:6969"
+    gethomepage.dev/widget.key: "{{HOMEPAGE_VAR_WHISPARR_API_KEY}}"
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik

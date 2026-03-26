@@ -10,6 +10,9 @@ metadata:
     gethomepage.dev/name: Radarr
     gethomepage.dev/icon: radarr.png
     gethomepage.dev/group: Media
+    gethomepage.dev/widget.type: "radarr"
+    gethomepage.dev/widget.url: "http://radarr.media.svc.cluster.local:7878"
+    gethomepage.dev/widget.key: "{{HOMEPAGE_VAR_RADARR_API_KEY}}"
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
 spec:
   ingressClassName: traefik
