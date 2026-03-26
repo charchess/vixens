@@ -17,6 +17,7 @@ spec:
       helm:
         valueFiles:
           - $values/apps/00-infra/keda-http-addon/values/common.yaml
+          - $values/apps/00-infra/keda-http-addon/values/dev.yaml
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: main
       ref: values
