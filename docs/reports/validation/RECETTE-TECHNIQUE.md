@@ -7,9 +7,9 @@ Validation des aspects techniques (infra, logs, perfs).
 | **hydrus-client** | Pod Status | ✅ Running | 2026-01-08 | 2/2 containers ready. Priority: vixens-medium |
 | **hydrus-client** | Gold Standard | ✅ Compliant | 2026-01-08 | Integrity check (sqlite3) + Conditional restore active |
 | **hydrus-client** | Storage (ISCSI) | ✅ Resized | 2026-01-08 | PVC increased to 40Gi to accommodate large WAL sets |
-| **litestream** | Restoration | ✅ Robust | 2026-01-08 | Automated cleanup of .tmp files + Cache bypass valid |
-| **litestream** | Secrets | ✅ Synced | 2026-01-04 | Path /shared/litestream utilisé |
-| **litestream** | Config | ✅ OK | 2026-01-04 | ConfigMap unifié pour multi-DB |
+| **DataAngel** | Backup (16 apps) | ✅ Running | 2026-03-26 | Unified SQLite+FS backup to S3/MinIO. Replaces litestream + config-syncer + rclone |
+| **DataAngel** | Sidecar Injection | ✅ OK | 2026-03-26 | Shared component `_shared/components/dataangel/` + per-app patches |
+| **DataAngel** | Secrets | ✅ Synced | 2026-03-26 | MinIO credentials via Infisical |
 | **traefik** | Routing | ✅ OK | 2026-01-04 | Middleware qualifié par namespace |
 | **postgresql-shared** | HA Scale-down | ✅ OK | 2026-01-07 | Retour à 1 instance stable après test HA |
 | **redis-shared** | Sécurité Auth | ✅ OK | 2026-01-07 | requirepass activé via Infisical |
@@ -34,3 +34,9 @@ Validation des aspects techniques (infra, logs, perfs).
 | **loki** | Sizing V-medium | ✅ Stabilisé | 2026-03-23 | Upgrade G-medium → V-medium après surcharge Fluent Bit. 0 restarts post-upgrade |
 | **loki** | NetworkPolicy | ✅ Corrigé | 2026-03-23 | Ajout namespace monitoring dans ingress (bloquait Fluent Bit) |
 | **grafana** | Datasource VictoriaMetrics | ✅ OK | 2026-03-23 | URL mise à jour vers vmsingle:8428. Dashboards fonctionnels |
+| **grafana** | Dashboards (8) | ✅ OK | 2026-03-26 | HA, PostgreSQL, Traefik, Trivy, DataAngel, ArgoCD, Velero, Cert-Manager |
+| **local-path-provisioner** | StorageClasses | ✅ Running | 2026-03-26 | v0.0.35 : local-path-delete + local-path-retain StorageClasses alongside Synology iSCSI |
+| **VPA** | Auto Mode | ✅ OK | 2026-03-26 | 52 containers on V-* profiles (VPA Auto mode). Kyverno auto-detects V-* prefix |
+| **Velero** | Schedules (4) | ✅ OK | 2026-03-26 | daily-critical, daily-home, daily-media, weekly-full. 100% namespace coverage |
+| **Security** | runAsNonRoot | ✅ OK | 2026-03-26 | Enforced on 11 apps |
+| **Security** | preStop hooks | ✅ OK | 2026-03-26 | Configured on 8 critical apps for graceful shutdown |
