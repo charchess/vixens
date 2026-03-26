@@ -6,6 +6,7 @@ resources:
   - ../../base
   - ingress.yaml
   - httpscaledobject.yaml
+  - keda-interceptor-svc.yaml
 
 # NOTE: ArgoCD multi-source limitation — kustomize patches cannot target Helm-rendered resources.
 # The following are active (target Deployment metadata, not pod template):
