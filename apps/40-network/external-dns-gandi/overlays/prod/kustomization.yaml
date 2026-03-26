@@ -4,6 +4,8 @@ kind: Kustomization
 namespace: networking
 resources:
   - ../../base
+components:
+  - ../../../../_shared/components/infisical/env-prod
 labels:
   - pairs:
       environment: prod
