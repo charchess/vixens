@@ -24,6 +24,7 @@ spec:
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/explicitly-allow-root: "true"
     spec:
       priorityClassName: vixens-low
       tolerations:
@@ -100,8 +101,8 @@ spec:
             - name: config-writable
               mountPath: /etc/netbird
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
+        # runAsNonRoot: true  # disabled — management writes to /etc/netbird/management.json (permission denied as non-root)
+        # runAsUser: 1000
         seccompProfile:
           type: RuntimeDefault
       containers:

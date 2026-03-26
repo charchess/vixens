@@ -22,6 +22,7 @@ spec:
         reloader.stakater.com/auto: "true"
         vixens.io/service-binding: "false"
         vixens.io/no-long-connections: "true"
+        vixens.io/explicitly-allow-root: "true"
     spec:
       priorityClassName: vixens-low
       tolerations:
@@ -97,8 +98,8 @@ spec:
           persistentVolumeClaim:
             claimName: nocodb-data
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
+        # runAsNonRoot: true  # disabled — SQLITE_READONLY (PVC owned by root, nocodb needs root to write)
+        # runAsUser: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
