@@ -1,0 +1,47 @@
+---
+# KEDA Operator
+crds:
+  install: true
+
+operator:
+  replicaCount: 1
+
+metricsServer:
+  replicaCount: 1
+
+webhooks:
+  replicaCount: 1
+
+# Control plane tolerations
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+# Resources
+resources:
+  operator:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  metricsServer:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  webhooks:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+
+podAnnotations:
+  vixens.io/fast-start: "true"
+  vixens.io/nometrics: "true"
