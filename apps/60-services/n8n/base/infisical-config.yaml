@@ -14,7 +14,7 @@ spec:
         secretNamespace: argocd
       secretsScope:
         projectSlug: vixens
-        envSlug: prod
+        envSlug: dev
         secretsPath: /apps/60-services/n8n
   managedSecretReference:
     secretName: n8n-db-credentials

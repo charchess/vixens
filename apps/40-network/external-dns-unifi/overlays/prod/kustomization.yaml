@@ -5,6 +5,7 @@ resources:
   - ../../base
 
 components:
+  - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/revision-history-limit
 
 patches:
