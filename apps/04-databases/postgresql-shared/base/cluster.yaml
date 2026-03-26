@@ -41,11 +41,11 @@ spec:
       #        login: true
       #        passwordSecret:
       #          name: authentik-postgresql-credentials
-      - name: scanopy
+      - name: netvisor
         ensure: present
         login: true
         passwordSecret:
-          name: scanopy-postgresql-credentials
+          name: netvisor-postgresql-credentials
       - name: vaultwarden
         ensure: present
         login: true
