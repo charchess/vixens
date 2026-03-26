@@ -30,6 +30,7 @@ controller:
   revisionHistoryLimit: 3
 
 dashboard:
+  replicaCount: 1
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
