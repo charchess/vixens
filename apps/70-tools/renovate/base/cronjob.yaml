@@ -5,6 +5,7 @@ metadata:
   name: renovate
 spec:
   schedule: 0 */6 * * * # Every 6 hours
+  timeZone: Europe/Paris
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
