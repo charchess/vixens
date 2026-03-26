@@ -11,6 +11,8 @@ components:
   - ../../../../_shared/components/sync-wave/wave-8
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/poddisruptionbudget/1
+  - ../../../../_shared/components/dataangel
 
 patches:
   - path: resources-patch.yaml
+  - path: dataangel.yaml

@@ -1,0 +1,63 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: birdnet-go
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.dataangel: V-small
+        vixens.io/sizing.litestream: null
+        vixens.io/sizing.data-syncer: null
+        vixens.io/sizing.fix-permissions: null
+      annotations:
+        dataangel.io/bucket: "vixens-prod-birdnet-go"
+        dataangel.io/sqlite-paths: "/data/birdnet.db"
+        dataangel.io/fs-paths: "/data"
+        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/deployment-name: "birdnet-go"
+        dataangel.io/rclone-interval: "60s"
+        dataangel.io/metrics-enabled: "true"
+        dataangel.io/lock-enabled: "false"
+    spec:
+      initContainers:
+        - name: fix-permissions
+          $patch: delete
+        - name: generate-litestream-config
+          $patch: delete
+        - name: litestream-restore
+          $patch: delete
+        - name: dataangel
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: 9090
+            periodSeconds: 2
+            failureThreshold: 3600
+          env:
+            - name: DATA_GUARD_EXCLUDE_PATTERNS
+              value: "clips/**,lost+found/**"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: birdnet-go-secrets
+                  key: LITESTREAM_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: birdnet-go-secrets
+                  key: LITESTREAM_SECRET_ACCESS_KEY
+          volumeMounts:
+            - mountPath: /data
+              $patch: delete
+            - name: data
+              mountPath: /data
+      containers:
+        - name: litestream
+          $patch: delete
+        - name: data-syncer
+          $patch: delete
