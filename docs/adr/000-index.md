@@ -26,6 +26,7 @@ Ces documents représentent l'état actuel et obligatoire de l'architecture Vixe
 | [020](020-automated-housekeeping-sanitization.md) | Automated Housekeeping | 2026-01-17 | infra, sanitization |
 | [021](021-netbird-native-manifests.md) | Netbird Native Manifests | 2026-01-17 | networking, netbird |
 | [022](022-7-tier-goldification-system.md) | 7-Tier Goldification System | 2026-02-24 | quality, goldification |
+| [025](025-local-path-provisioner.md) | Local Path Provisioner for Node-Local Storage | 2026-03-25 | storage, local, performance |
 
 ---
 

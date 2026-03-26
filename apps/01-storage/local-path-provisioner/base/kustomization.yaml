@@ -1,0 +1,15 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: local-path-storage
+resources:
+  - namespace.yaml
+  - rbac.yaml
+  - deployment.yaml
+  - configmap.yaml
+  - storage-class.yaml
+labels:
+  - pairs:
+      app.kubernetes.io/name: local-path-provisioner
+      vixens.lab/managed-by: argocd
+    includeSelectors: false

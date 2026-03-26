@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: local-path-provisioner
+  namespace: local-path-storage
+  labels:
+    app: local-path-provisioner
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: local-path-provisioner
+  template:
+    metadata:
+      labels:
+        app: local-path-provisioner
+    spec:
+      serviceAccountName: local-path-provisioner-service-account
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: local-path-provisioner
+          image: rancher/local-path-provisioner:v0.0.35
+          imagePullPolicy: IfNotPresent
+          command:
+            - local-path-provisioner
+            - --debug
+            - start
+            - --config
+            - /etc/config/config.json
+            - --configmap-name
+            - local-path-config
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config/
+      volumes:
+        - name: config-volume
+          configMap:
+            name: local-path-config

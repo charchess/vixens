@@ -31,6 +31,7 @@ resources:
   - apps/snapshot-controller.yaml
   - apps/synology-csi-secrets.yaml
   - apps/synology-csi.yaml
+  - apps/local-path-provisioner.yaml
   - apps/nfs-storage.yaml
   - apps/mail-gateway.yaml
   - apps/homeassistant.yaml
