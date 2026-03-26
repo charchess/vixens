@@ -8,6 +8,11 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Tools
+    gethomepage.dev/name: NocoDB
+    gethomepage.dev/icon: nocodb.svg
+    gethomepage.dev/description: Open source Airtable alternative
 spec:
   ingressClassName: traefik
   tls:

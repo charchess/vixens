@@ -6,6 +6,11 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Tools
+    gethomepage.dev/name: Trilium
+    gethomepage.dev/icon: trilium.svg
+    gethomepage.dev/description: Personal knowledge base
 spec:
   ingressClassName: traefik
   tls:

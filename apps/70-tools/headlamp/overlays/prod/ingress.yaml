@@ -9,6 +9,11 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
     vixens.io/nossoneeded: "true"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Tools
+    gethomepage.dev/name: Headlamp
+    gethomepage.dev/icon: headlamp.svg
+    gethomepage.dev/description: Kubernetes dashboard
 spec:
   ingressClassName: traefik
   rules:

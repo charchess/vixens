@@ -8,6 +8,11 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Monitoring
+    gethomepage.dev/name: Goldilocks
+    gethomepage.dev/icon: goldilocks.svg
+    gethomepage.dev/description: Resource recommendations
 spec:
   ingressClassName: traefik
   rules:

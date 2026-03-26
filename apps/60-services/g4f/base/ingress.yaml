@@ -8,6 +8,11 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: AI
+    gethomepage.dev/name: G4F
+    gethomepage.dev/icon: gpt-4.svg
+    gethomepage.dev/description: GPT4Free API provider
 spec:
   rules:
     - host: g4f.truxonline.com

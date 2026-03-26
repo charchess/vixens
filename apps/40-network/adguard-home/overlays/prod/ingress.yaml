@@ -5,7 +5,11 @@ metadata:
   name: adguard-home
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Network
+    gethomepage.dev/name: AdGuard Home
+    gethomepage.dev/icon: adguard-home.svg
+    gethomepage.dev/description: DNS ad blocker
 spec:
   rules:
     - host: adguard.truxonline.com

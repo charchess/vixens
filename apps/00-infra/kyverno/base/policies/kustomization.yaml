@@ -11,6 +11,7 @@ resources:
   - check-cp-toleration.yaml
   - check-explicit-resources.yaml
   - check-graceful-shutdown.yaml
+  - check-homepage-annotations.yaml
   - check-image-digest.yaml
   - check-image-tag.yaml
   - check-infisical-secrets.yaml

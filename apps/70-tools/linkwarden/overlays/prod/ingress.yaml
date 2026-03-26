@@ -11,6 +11,11 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
     vixens.io/nossoneeded: "true"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Tools
+    gethomepage.dev/name: Linkwarden
+    gethomepage.dev/icon: linkwarden.svg
+    gethomepage.dev/description: Bookmark manager
 spec:
   ingressClassName: traefik
   rules:

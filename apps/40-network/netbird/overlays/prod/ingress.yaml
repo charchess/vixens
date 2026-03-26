@@ -9,6 +9,11 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     vixens.io/nossoneeded: "true"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Network
+    gethomepage.dev/name: NetBird
+    gethomepage.dev/icon: netbird.svg
+    gethomepage.dev/description: VPN management dashboard
 spec:
   ingressClassName: traefik
   rules:

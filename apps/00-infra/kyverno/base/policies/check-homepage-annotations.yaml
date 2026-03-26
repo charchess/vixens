@@ -1,0 +1,46 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-homepage-annotations
+  annotations:
+    policies.kyverno.io/title: Check Homepage Dashboard Annotations
+    policies.kyverno.io/category: Maturity (Silver)
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/description: >-
+      All user-facing Ingresses must have gethomepage.dev annotations
+      for automatic dashboard discovery (Silver maturity requirement).
+      HTTP redirect ingresses and infrastructure ingresses are excluded.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-homepage-annotations
+      match:
+        any:
+          - resources:
+              kinds:
+                - Ingress
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - argocd
+                - cert-manager
+                - kyverno
+                - velero
+                - vpa
+                - synology-csi
+                - local-path-storage
+                - policy-reporter
+          - resources:
+              names:
+                - "*-http-redirect"
+                - "*-redirect"
+      validate:
+        message: "Ingress must have gethomepage.dev/name annotation for dashboard integration (Silver maturity)."
+        pattern:
+          metadata:
+            annotations:
+              gethomepage.dev/name: "?*"
