@@ -23,6 +23,7 @@ resources:
   - apps/snapshot-controller.yaml
   - apps/synology-csi-secrets.yaml
   - apps/synology-csi.yaml
+  - apps/local-path-provisioner.yaml
   - apps/nfs-storage.yaml
   - apps/external-dns-unifi.yaml
   - apps/external-dns-unifi-secrets.yaml
