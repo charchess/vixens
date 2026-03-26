@@ -19,10 +19,6 @@ components:
 
 patches:
   - target:
-      kind: InfisicalSecret
-      name: frigate-config-sync
-    path: infisical-config-patch.yaml
-  - target:
       kind: Deployment
       name: frigate
     path: shm-patch-named.yaml

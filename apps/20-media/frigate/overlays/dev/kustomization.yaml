@@ -1,14 +1,48 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-patches:
-- patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n\
-    \  value: dev"
-  target:
-    kind: InfisicalSecret
-    name: frigate-secrets-sync
 resources:
-- ../../base
-- ingress.yaml
+  - ../../base
+  - ingress.yaml
 components:
-- ../../../../_shared/components/dev-hibernate
+  - ../../../../_shared/components/dev-hibernate
+  - ../../../../_shared/components/dataangel
+  - ../../../../_shared/components/revision-history-limit
+patches:
+  - path: dataangel.yaml
+  - target:
+      kind: Deployment
+      name: frigate
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: frigate
+      spec:
+        template:
+          metadata:
+            annotations:
+              vixens.io/explicitly-allow-root: "true"
+          spec:
+            securityContext:
+              runAsNonRoot: false
+              runAsUser: 0
+              fsGroup: 0
+            initContainers:
+              - name: validate-config
+                securityContext:
+                  runAsUser: 0
+                  runAsGroup: 0
+            containers:
+              - name: frigate
+                securityContext:
+                  privileged: true
+                  runAsUser: 0
+                  runAsGroup: 0
+                resources:
+                  requests:
+                    cpu: 100m
+                    memory: 512Mi
+                  limits:
+                    cpu: 1000m
+                    memory: 2Gi
