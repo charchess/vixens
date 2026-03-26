@@ -1,0 +1,35 @@
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: pvc-pending-alert
+  namespace: monitoring
+spec:
+  groups:
+    - name: pvc-health
+      rules:
+        - alert: PVCPendingTooLong
+          expr: |
+            kube_persistentvolumeclaim_status_phase{phase="Pending"} == 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} stuck in Pending"
+            description: >-
+              PVC {{ $labels.persistentvolumeclaim }} in namespace
+              {{ $labels.namespace }} has been Pending for more than 10 minutes.
+              This may indicate a CSI provisioning failure or WaitForFirstConsumer
+              deadlock.
+        - alert: PVCPendingCritical
+          expr: |
+            kube_persistentvolumeclaim_status_phase{phase="Pending"} == 1
+          for: 30m
+          labels:
+            severity: critical
+          annotations:
+            summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} stuck in Pending for 30min+"
+            description: >-
+              PVC {{ $labels.persistentvolumeclaim }} in namespace
+              {{ $labels.namespace }} has been Pending for more than 30 minutes.
+              Immediate investigation required — storage provisioning is broken.
