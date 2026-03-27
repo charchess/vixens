@@ -16,3 +16,4 @@ resources:
   - ../../base
   - ingress.yaml
   - infisical-redis-secret.yaml
+  - httpscaledobject.yaml

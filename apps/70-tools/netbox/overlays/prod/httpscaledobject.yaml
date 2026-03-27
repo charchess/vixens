@@ -1,0 +1,20 @@
+---
+apiVersion: http.keda.sh/v1alpha1
+kind: HTTPScaledObject
+metadata:
+  name: netbox
+  namespace: tools
+spec:
+  hosts:
+    - netbox.truxonline.com
+  pathPrefixes:
+    - /
+  scaleTargetRef:
+    name: netbox
+    kind: Deployment
+    service: netbox
+    port: 8080
+  replicas:
+    min: 0
+    max: 1
+  scaledownPeriod: 300
