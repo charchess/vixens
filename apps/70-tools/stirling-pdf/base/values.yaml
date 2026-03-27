@@ -37,7 +37,8 @@ probes:
       port: 8080
     initialDelaySeconds: 0
     periodSeconds: 10
-    failureThreshold: 3
+    # 18 * 10s = 180s tolerance for cold-start from 0 replicas (Java startup ~60-90s)
+    failureThreshold: 18
   readiness:
     enabled: true
     httpGet:
