@@ -1,0 +1,17 @@
+---
+# Patch to increase KEDA interceptor cold-start timeout for Java apps (e.g. Stirling-PDF).
+# The chart default of 20s is too short; bumped to 120s.
+# chart v0.13.0 does not expose interceptor.waitTimeout in values, hence this patch.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keda-add-ons-http-interceptor
+  namespace: keda
+spec:
+  template:
+    spec:
+      containers:
+        - name: keda-add-ons-http-interceptor
+          env:
+            - name: KEDA_CONDITION_WAIT_TIMEOUT
+              value: "120s"
