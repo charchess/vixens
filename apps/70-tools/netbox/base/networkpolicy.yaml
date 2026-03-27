@@ -11,11 +11,14 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # Allow ingress from Traefik (HTTP)
+    # Allow ingress from Traefik (HTTP) and KEDA HTTP interceptor
     - from:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: traefik
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: keda
       ports:
         - protocol: TCP
           port: 8080
