@@ -6,7 +6,7 @@ metadata:
   namespace: services
 spec:
   secretTargetRef:
-    - parameter: username
+    - parameter: userName
       name: docspell-db-credentials
       key: username
     - parameter: password
