@@ -8,5 +8,5 @@ spec:
   type: ExternalName
   externalName: keda-add-ons-http-interceptor-proxy.keda.svc.cluster.local
   ports:
-    - port: 60072
+    - port: 8080
       protocol: TCP

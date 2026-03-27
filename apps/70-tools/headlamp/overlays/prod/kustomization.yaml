@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - ../../base
   - ingress.yaml
+  - httpscaledobject.yaml
 
 components:
   - ../../../../_shared/components/sync-wave/wave-11

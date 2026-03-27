@@ -1,0 +1,20 @@
+---
+apiVersion: http.keda.sh/v1alpha1
+kind: HTTPScaledObject
+metadata:
+  name: headlamp
+  namespace: tools
+spec:
+  hosts:
+    - headlamp.truxonline.com
+  pathPrefixes:
+    - /
+  scaleTargetRef:
+    name: headlamp
+    kind: Deployment
+    service: headlamp
+    port: 80
+  replicas:
+    min: 0
+    max: 1
+  scaledownPeriod: 300
