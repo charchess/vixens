@@ -28,6 +28,7 @@ spec:
           operator: Exists
           effect: NoSchedule
       priorityClassName: vixens-low
+      initContainers: []
       containers:
         - name: trilium
           image: triliumnext/notes:v0.95.0
