@@ -4,8 +4,8 @@ interceptor:
   replicas:
     min: 1
     max: 1
-  # Java apps (Stirling-PDF) need ~60s cold-start; 20s default causes 502 on scale-up
-  waitTimeout: 120s
+    # Java apps (Stirling-PDF) need ~60s cold-start; 20s default causes 502 on scale-up
+    waitTimeout: 120s
   resources:
     requests:
       cpu: 10m
