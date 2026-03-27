@@ -227,8 +227,8 @@ spec:
             preconditions:
               all:
                 # Only act on containers that have NO v2 sizing label.
-                # Use keys() to avoid 'Unknown key' JMESPath error on absent labels.
-                - key: "{{ request.object.metadata.labels | keys(@) | [?@ == 'vixens.io/sizing.{{element.name}}'] | length(@) }}"
+                # Use (labels || `{}`) to handle pods with no labels at all (e.g. local-path helper-pod).
+                - key: "{{ (request.object.metadata.labels || `{}`) | keys(@) | [?@ == 'vixens.io/sizing.{{element.name}}'] | length(@) }}"
                   operator: Equals
                   value: "0"
             patchStrategicMerge:
