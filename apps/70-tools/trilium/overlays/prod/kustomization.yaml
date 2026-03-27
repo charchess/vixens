@@ -13,13 +13,8 @@ components:
 
 patches:
   - path: dataangel.yaml
-  - patch: |-
-      - op: replace
-        path: /spec/storageClassName
-        value: local-path-retain
-    target:
-      kind: PersistentVolumeClaim
-      name: trilium-data-pvc
+  # storageClass migration patch removed temporarily — will be re-added
+  # once DataAngel has completed its first S3 backup
   - target:
       kind: Ingress
       name: trilium
