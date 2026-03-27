@@ -23,9 +23,11 @@ spec:
       name: trilium-data-pvc
       jsonPointers:
         - /spec/storageClassName
+        - /spec/volumeName
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - RespectIgnoreDifferences=true
