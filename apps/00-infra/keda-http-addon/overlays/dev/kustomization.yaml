@@ -4,8 +4,3 @@ kind: Kustomization
 namespace: keda
 resources:
   - rbac-endpoints-fix.yaml
-patches:
-  - path: patch-interceptor-wait-timeout.yaml
-    target:
-      kind: Deployment
-      name: keda-add-ons-http-interceptor
