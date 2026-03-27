@@ -1,0 +1,30 @@
+---
+# Workaround for keda-add-ons-http 0.13.0 bug:
+# The chart ClusterRole was updated to use endpointslices (discovery.k8s.io)
+# but the scaler binary still calls the legacy endpoints API (core "").
+# Without this, the external-scaler crashloops with:
+#   endpoints "keda-add-ons-http-interceptor-admin" is forbidden
+# Ref: https://github.com/kedacore/http-add-on/issues/...
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: keda-add-ons-http-external-scaler-endpoints
+  namespace: keda
+rules:
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: keda-add-ons-http-external-scaler-endpoints
+  namespace: keda
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: keda-add-ons-http-external-scaler-endpoints
+subjects:
+  - kind: ServiceAccount
+    name: keda-add-ons-http-external-scaler
+    namespace: keda
