@@ -25,7 +25,7 @@ spec:
               service:
                 name: keda-interceptor-proxy
                 port:
-                  number: 60072
+                  number: 8080
   tls:
     - hosts:
         - netvisor.truxonline.com

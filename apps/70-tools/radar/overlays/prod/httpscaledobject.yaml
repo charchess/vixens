@@ -1,0 +1,20 @@
+---
+apiVersion: http.keda.sh/v1alpha1
+kind: HTTPScaledObject
+metadata:
+  name: radar
+  namespace: tools
+spec:
+  hosts:
+    - radar.truxonline.com
+  pathPrefixes:
+    - /
+  scaleTargetRef:
+    name: radar
+    kind: Deployment
+    service: radar
+    port: 9280
+  replicas:
+    min: 0
+    max: 1
+  scaledownPeriod: 300

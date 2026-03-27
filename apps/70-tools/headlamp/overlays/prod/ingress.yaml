@@ -24,9 +24,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: headlamp
+                name: keda-interceptor-proxy
                 port:
-                  number: 80
+                  number: 8080
   tls:
     - hosts:
         - headlamp.truxonline.com
