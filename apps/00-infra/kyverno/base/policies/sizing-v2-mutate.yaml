@@ -52,7 +52,9 @@ spec:
                 - trivy-server
               namespaces:
                 - security
-                - local-path-storage
+          - resources:
+              names:
+                - helper-pod  # local-path provisioner ephemeral helper pods (any namespace)
       mutate:
         foreach:
           - list: "request.object.spec.containers || '[]'"
@@ -132,7 +134,9 @@ spec:
                 - trivy-server
               namespaces:
                 - security
-                - local-path-storage
+          - resources:
+              names:
+                - helper-pod  # local-path provisioner ephemeral helper pods (any namespace)
       mutate:
         foreach:
           - list: "request.object.spec.initContainers || '[]'"
@@ -214,7 +218,9 @@ spec:
                 - trivy-server
               namespaces:
                 - security
-                - local-path-storage
+          - resources:
+              names:
+                - helper-pod  # local-path provisioner ephemeral helper pods (any namespace)
       mutate:
         foreach:
           - list: "request.object.spec.containers || '[]'"
