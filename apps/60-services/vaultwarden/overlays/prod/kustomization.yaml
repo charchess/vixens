@@ -19,3 +19,10 @@ patches:
       kind: Deployment
       name: vaultwarden
   - path: dataangel.yaml
+  - patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: local-path-retain
+    target:
+      kind: PersistentVolumeClaim
+      name: vaultwarden-data-pvc

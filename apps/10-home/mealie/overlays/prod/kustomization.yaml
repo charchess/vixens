@@ -13,6 +13,13 @@ components:
 
 patches:
   - path: dataangel.yaml
+  - patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: local-path-retain
+    target:
+      kind: PersistentVolumeClaim
+      name: mealie-data
 labels:
   - pairs:
       environment: prod
