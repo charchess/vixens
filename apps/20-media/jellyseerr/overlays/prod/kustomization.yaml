@@ -4,6 +4,8 @@ kind: Kustomization
 resources:
   - ../../base
   - ingress.yaml
+  - keda-interceptor-svc.yaml
+  - httpscaledobject.yaml
 
 components:
   - ../../../../_shared/components/sync-wave/wave-15

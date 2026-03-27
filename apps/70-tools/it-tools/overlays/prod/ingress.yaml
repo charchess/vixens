@@ -22,7 +22,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: it-tools
+                name: keda-interceptor-proxy
                 port:
                   number: 8080
   tls:

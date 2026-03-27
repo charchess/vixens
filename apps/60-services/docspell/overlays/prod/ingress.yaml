@@ -30,6 +30,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: docspell-restserver
+                name: keda-interceptor-proxy
                 port:
-                  number: 7880
+                  number: 8080

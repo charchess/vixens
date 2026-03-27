@@ -1,0 +1,20 @@
+---
+apiVersion: http.keda.sh/v1alpha1
+kind: HTTPScaledObject
+metadata:
+  name: linkwarden
+  namespace: tools
+spec:
+  hosts:
+    - linkwarden.truxonline.com
+  pathPrefixes:
+    - /
+  scaleTargetRef:
+    name: linkwarden
+    kind: Deployment
+    service: linkwarden
+    port: 3000
+  replicas:
+    min: 0
+    max: 1
+  scaledownPeriod: 300

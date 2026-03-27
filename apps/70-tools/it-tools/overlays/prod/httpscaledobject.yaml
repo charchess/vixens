@@ -1,0 +1,20 @@
+---
+apiVersion: http.keda.sh/v1alpha1
+kind: HTTPScaledObject
+metadata:
+  name: it-tools
+  namespace: tools
+spec:
+  hosts:
+    - it-tools.truxonline.com
+  pathPrefixes:
+    - /
+  scaleTargetRef:
+    name: it-tools
+    kind: Deployment
+    service: it-tools
+    port: 8080
+  replicas:
+    min: 0
+    max: 1
+  scaledownPeriod: 300
