@@ -37,8 +37,8 @@ probes:
       port: 8080
     initialDelaySeconds: 0
     periodSeconds: 10
-    # 18 * 10s = 180s tolerance for cold-start from 0 replicas (Java startup ~60-90s)
-    failureThreshold: 18
+    # 30 * 10s = 300s tolerance for cold-start (JWT key gen alone takes ~40s)
+    failureThreshold: 30
   readiness:
     enabled: true
     httpGet:
@@ -46,7 +46,8 @@ probes:
       port: 8080
     initialDelaySeconds: 0
     periodSeconds: 10
-    failureThreshold: 3
+    # Must survive 300s cold-start; KEDA interceptor waitTimeout matches this
+    failureThreshold: 30
   startup:
     enabled: true
     httpGet:

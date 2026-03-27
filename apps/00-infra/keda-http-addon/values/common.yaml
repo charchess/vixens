@@ -4,8 +4,8 @@ interceptor:
   replicas:
     min: 1
     max: 1
-    # Java apps (Stirling-PDF) need ~60s cold-start; 20s default causes 502 on scale-up
-    waitTimeout: 120s
+    # Stirling-PDF cold-start: ~40s JWT key gen + ~2min Spring Boot = ~3min total
+    waitTimeout: 300s
   resources:
     requests:
       cpu: 10m
