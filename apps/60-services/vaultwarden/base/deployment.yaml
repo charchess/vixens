@@ -39,7 +39,7 @@ spec:
       initContainers:
         - name: fix-permissions
           image: busybox:1.37.0
-          command: ["sh", "-c", "chown -R 1000:1000 /data && rm -rf /data/*.db-litestream /data/.*-litestream"]
+          command: ["sh", "-c", "chown -R 1000:1000 /data && find /data -name '*.sqlite3*' -exec chmod 660 {} \\; && rm -rf /data/*.db-litestream /data/.*-litestream"]
           volumeMounts:
             - name: data
               mountPath: /data
