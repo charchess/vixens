@@ -28,6 +28,9 @@ spec:
         deny:
           conditions:
             all:
-              - key: "{{ (request.object.spec.containers[?contains(image, 'rclone')] | length(@)) + ((request.object.spec.initContainers || `[]`)[?contains(image, 'dataangel')] | length(@)) }}"
+              - key: "{{ request.object.spec.containers[?contains(image, 'rclone')] | length(@) }}"
+                operator: Equals
+                value: 0
+              - key: "{{ (request.object.spec.initContainers || `[]`)[?contains(image, 'dataangel')] | length(@) }}"
                 operator: Equals
                 value: 0
