@@ -23,7 +23,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: netvisor-server
+                name: keda-interceptor-proxy
                 port:
                   number: 60072
   tls:
