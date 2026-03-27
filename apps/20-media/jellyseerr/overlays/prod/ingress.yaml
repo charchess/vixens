@@ -23,9 +23,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: jellyseerr
+                name: keda-interceptor-proxy
                 port:
-                  number: 5055
+                  number: 8080
   tls:
     - hosts:
         - jellyseerr.truxonline.com

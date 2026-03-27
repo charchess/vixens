@@ -15,3 +15,4 @@ resources:
   - ../../base
   - infisical-secret.yaml
   - ingress.yaml
+  - httpscaledobject.yaml

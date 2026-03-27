@@ -1,0 +1,20 @@
+---
+apiVersion: http.keda.sh/v1alpha1
+kind: HTTPScaledObject
+metadata:
+  name: jellyseerr
+  namespace: media
+spec:
+  hosts:
+    - jellyseerr.truxonline.com
+  pathPrefixes:
+    - /
+  scaleTargetRef:
+    name: jellyseerr
+    kind: Deployment
+    service: jellyseerr
+    port: 5055
+  replicas:
+    min: 0
+    max: 1
+  scaledownPeriod: 300

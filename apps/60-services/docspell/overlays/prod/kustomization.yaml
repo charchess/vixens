@@ -16,3 +16,7 @@ patchesStrategicMerge:
 resources:
   - ../../base
   - ingress.yaml
+  - keda-interceptor-svc.yaml
+  - httpscaledobject-restserver.yaml
+  - triggerauthentication-joex.yaml
+  - scaledobject-joex.yaml

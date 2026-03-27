@@ -1,0 +1,14 @@
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: docspell-pg-auth
+  namespace: services
+spec:
+  secretTargetRef:
+    - parameter: username
+      name: docspell-db-credentials
+      key: username
+    - parameter: password
+      name: docspell-db-credentials
+      key: password

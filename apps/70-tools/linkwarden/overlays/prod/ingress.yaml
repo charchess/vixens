@@ -26,9 +26,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: linkwarden
+                name: keda-interceptor-proxy
                 port:
-                  number: 3000
+                  number: 8080
   tls:
     - hosts:
         - linkwarden.truxonline.com
