@@ -13,6 +13,13 @@ components:
 patches:
   - path: patch-nextauth-url.yaml
   - path: dataangel.yaml
+  - patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: local-path-retain
+    target:
+      kind: PersistentVolumeClaim
+      name: linkwarden-data
 resources:
   - ../../base
   - infisical-secret.yaml
