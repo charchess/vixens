@@ -74,3 +74,6 @@ podAnnotations:
   vixens.io/service-binding: "false"
   vixens.io/nometrics: "true"
   vixens.io/no-long-connections: "true"
+  # Stirling-PDF startup script chowns /tmp dirs and su-switches to stirlingpdfuser;
+  # mutate-security-context drops CAP_SETUID which breaks this — bypass required
+  vixens.io/explicitly-allow-root: "true"
