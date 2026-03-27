@@ -13,8 +13,15 @@ components:
 
 patches:
   - path: dataangel.yaml
-  # storageClass migration patch removed temporarily — will be re-added
-  # once DataAngel has completed its first S3 backup
+  # Temporary: bind to existing iSCSI PV so ArgoCD desired state matches live.
+  # Remove once DataAngel has backed up to S3 and local-path migration is done.
+  - patch: |-
+      - op: add
+        path: /spec/volumeName
+        value: pvc-2089fa07-ad0d-4a0a-a9cf-b3b28dc08b4b
+    target:
+      kind: PersistentVolumeClaim
+      name: trilium-data-pvc
   - target:
       kind: Ingress
       name: trilium
