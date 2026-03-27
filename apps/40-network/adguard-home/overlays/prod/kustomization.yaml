@@ -25,6 +25,12 @@ patches:
       - op: add
         path: /spec/template/metadata/annotations/autoscaling.k8s.io~1vpa
         value: "auto"
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/storageClassName
+        value: local-path-retain
+      - op: replace
+        path: /spec/volumeClaimTemplates/1/spec/storageClassName
+        value: local-path-retain
     target:
       kind: StatefulSet
       name: adguard-home
