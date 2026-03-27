@@ -12,6 +12,7 @@ providers:
     allowCrossNamespace: true
   kubernetesIngress:
     enabled: true
+    allowExternalNameServices: true
     publishedService:
       enabled: true
 # ============================================================================
