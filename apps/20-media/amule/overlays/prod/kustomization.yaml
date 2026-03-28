@@ -12,6 +12,15 @@ labels:
 components:
   - ../../../../_shared/components/sync-wave/wave-15
   - ../../../../_shared/components/goldilocks/enabled
+  - ../../../../_shared/components/dataangel
 
 patches:
   - path: patch-infisical-env.yaml
+  - path: dataangel.yaml
+  - patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: local-path-retain
+    target:
+      kind: PersistentVolumeClaim
+      name: amule-config-pvc

@@ -6,10 +6,20 @@ resources:
   - ingress.yaml
   - keda-interceptor-svc.yaml
   - httpscaledobject.yaml
+  - infisical-secret.yaml
 
 components:
   - ../../../../_shared/components/sync-wave/wave-15
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
+  - ../../../../_shared/components/dataangel
 
 patches:
+  - path: dataangel.yaml
+  - patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: local-path-retain
+    target:
+      kind: PersistentVolumeClaim
+      name: jellyseerr-config-pvc

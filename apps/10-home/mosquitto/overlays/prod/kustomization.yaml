@@ -10,5 +10,21 @@ resources:
 components:
   - ../../../../_shared/components/sync-wave/wave-6
   - ../../../../_shared/components/goldilocks/enabled
+  - ../../../../_shared/components/dataangel
 
 patches:
+  - path: dataangel.yaml
+  - patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: local-path-retain
+    target:
+      kind: PersistentVolumeClaim
+      name: mosquitto-data
+  - patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: local-path-retain
+    target:
+      kind: PersistentVolumeClaim
+      name: mosquitto-config
