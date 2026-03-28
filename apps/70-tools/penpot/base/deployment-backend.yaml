@@ -20,11 +20,10 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
-        vixens.io/vpa.min-cpu: "1000m"
       labels:
         app: penpot-backend
         component: backend
-        vixens.io/sizing.backend: V-large
+        vixens.io/sizing.backend: B-large
         vixens.io/backup-profile: standard
     spec:
       priorityClassName: vixens-medium
