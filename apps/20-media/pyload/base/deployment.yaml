@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: pyload
-        vixens.io/sizing.pyload: V-nano
+        vixens.io/sizing.pyload: V-small
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/service-binding: "false"
