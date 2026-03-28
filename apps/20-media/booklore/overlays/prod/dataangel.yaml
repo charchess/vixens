@@ -88,7 +88,7 @@ spec:
               path: /ready
               port: 9090
             periodSeconds: 2
-            failureThreshold: 150
+            failureThreshold: 600
           readinessProbe:
             httpGet:
               path: /ready
