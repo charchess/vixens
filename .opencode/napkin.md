@@ -2,7 +2,7 @@
 
 **Continuously curated runbook for AI agents working on Vixens.**
 
-Last updated: 2026-03-17
+Last updated: 2026-03-28
 
 ---
 
@@ -124,6 +124,34 @@ kubectl -n argocd patch application argocd --type merge -p '{"metadata":{"annota
 2. `docs/STATUS.md` - Application status + restart counts
 
 **NO EXCEPTIONS.** Documentation is code.
+
+---
+
+## 🏗️ Infrastructure Patterns (Priority 2)
+
+1. **[2026-03-28] Cilium eBPF egress cassé après incident nœud**
+   Symptôme: pod sur le nœud ne peut plus joindre internet (context deadline exceeded), les autres nœuds OK.
+   Do instead: `kubectl -n kube-system delete pod $(kubectl -n kube-system get pod -l k8s-app=cilium --field-selector spec.nodeName=<NODE> -o jsonpath='{.items[0].metadata.name}')` — le nouveau pod réinitialise l'eBPF state.
+
+2. **[2026-03-28] iSCSI lock zombie — fuser bloque le cleanup indéfiniment**
+   Symptôme: `iscsiadm: Timeout on acquiring lock on DB: /run/lock/iscsi/lock.write` sur un nœud spécifique, PVCs bloqués en ContainerCreating des heures.
+   Do instead: vérifier `kubectl -n synology-csi exec iscsi-lock-cleanup-<NODE> -- fuser /host-lock/lock.write` — si vide mais fichier présent, le cleanup tournera au prochain cycle (FORCE_THRESHOLD=3600s depuis PR #2538). Si besoin immédiat: `kubectl -n synology-csi delete pod synology-csi-node-<NODE>`.
+
+3. **[2026-03-28] VPA Auto + large sizing tier → saturate nœud au rolling update**
+   Symptôme: après update prod-stable, plusieurs pods Pending sur un nœud, VPA a appliqué une large recommendation (ex: 8Gi pour frigate).
+   Do instead: attendre 30-60 min, VPA in-place resize les pods running et libère du headroom automatiquement. Ne pas paniquer ni changer les requests manuellement.
+
+4. **[2026-03-28] local-path PVC = node-lock permanent**
+   Symptôme: pod Pending "didn't match PersistentVolume node affinity" même après fix sizing.
+   Do instead: la seule vraie solution est de migrer la PVC vers iSCSI. Court terme: réduire les requests des autres pods sur ce nœud pour faire de la place.
+
+5. **[2026-03-28] Kyverno mutation priorityClassName + spec.priority obligatoires ensemble**
+   Si on injecte uniquement `priorityClassName` via Kyverno, `spec.priority` reste à 0 (PodPriority plugin tourne AVANT le webhook). Le PriorityAdmission validator voit une incohérence → pod rejeté pour classes non-zero.
+   Do instead: toujours patcher les deux champs dans la même mutation. Pattern: apiCall vers `/apis/scheduling.k8s.io/v1/priorityclasses/<name>`, jmesPath `value || 0`, puis patch `/spec/priority` + `/spec/priorityClassName`.
+
+6. **[2026-03-28] Chaîne de dépendance priority : redis-shared → authentik**
+   redis-shared (databases) est le backing store d'authentik-server/worker (vixens-critical). Si redis est vixens-low, il peut être préempté et casser le SSO.
+   Do instead: toujours aligner la priority d'un backing store sur la priority minimale de ses consommateurs les plus critiques. redis-shared = vixens-high.
 
 ---
 

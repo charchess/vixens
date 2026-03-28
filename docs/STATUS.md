@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-03-11
+Last Updated: 2026-03-28
 
 ---
 
@@ -11,15 +11,43 @@ Last Updated: 2026-03-11
 | Cluster | Nodes | Version | Status |
 |---------|-------|---------|--------|
 | **Prod** | 5 (peach, pearl, phoebe, poison, powder) | Talos v1.12.4 / K8s v1.34.0 | ✅ Active |
-| **Dev** | 3 (daphne, diva, dulce) | - | ❌ Cert invalide |
+| **Dev** | 1 (daphne — diva/dulce offline intentionnellement) | - | ⚠️ ArgoCD OK, 1 nœud |
 
 | Component | Status | Description |
 |-----------|--------|-------------|
-| **ArgoCD Apps** | ✅ 88/89 Healthy | 1 OutOfSync accepted (openclaw PVC volumeName) |
+| **ArgoCD Apps** | ✅ ~90 Healthy | Quelques apps Progressing (rolling updates post-session) |
 | **Kustomize Build** | ✅ PASSING | |
 | **CI/CD Pipelines** | ✅ ACTIVE | |
-
 | **Quality Gates** | ✅ ENFORCED | Pre-commit + CI (secrets, YAML style, K8s validation) |
+
+---
+
+## Incidents & Changements notables — 2026-03-28
+
+### Incidents résolus
+| Problème | Root cause | Fix |
+|----------|-----------|-----|
+| loki-0 + g4f ContainerCreating 3h+ | iSCSI lock zombie (phoebe) — processus iscsiadm dead holdait le fd | FORCE_THRESHOLD=3600s dans iscsi-lock-cleanup (#2538) |
+| external-dns-gandi CrashLoop | Cilium eBPF egress cassé (poison puis powder) après incident nœud | Restart cilium pod sur chaque nœud affecté |
+| ArgoCD dev dex CreateContainerConfigError | Image dex v2.45.1 username non-numérique + runAsNonRoot | Patch runAsUser:1001 dans dev overlay (#2538) |
+| booklore dataangel Pending forever | startupProbe 5min trop court pour restore S3 | failureThreshold 150→600 (#2538) |
+| victoria-metrics OutOfSync permanent | Webhook cert auto-géré par VM operator driftait vs git | ignoreDifferences sur cert Secret + WebhookConfig (#2540) |
+
+### Changements de sizing/infra
+| Changement | PR | Raison |
+|-----------|-----|--------|
+| Nouveau tier V-3xlarge (1000m/8Gi → 4000m/32Gi) | #2542 | Frigate VPA target >2000m lim du SB-xlarge |
+| Suppression media-xlarge | #2542 | Hors nomenclature B/G/SB/V-* |
+| frigate: SB-xlarge → V-3xlarge | #2542 | CPU throttlé, VPA target 2406m > lim 2000m |
+| pyload: V-micro → V-nano + dataangel V-small → V-nano | #2538/#2542 | Pearl 99% requests |
+| grafana: B-large → V-medium + 2Gi lim | #2542 | OOMKilled 12x à 512Mi lim |
+
+### Maturity — PriorityClass fixes
+| PR | Changement |
+|----|-----------|
+| #2543 | `vixens.io/priority-class: vixens-low` ajouté sur 19 déploiements sans priorityClass (keda, kyverno, policy-reporter, victoria-metrics-operator, redis-shared, local-path-provisioner) |
+| #2545 | Niveaux corrigés : redis-shared→high, local-path-provisioner→critical, kyverno-admission→high, keda→medium. Rule 1 mutate-priority-class rendue générique (apiCall + spec.priority) |
+
 ---
 
 ## Système de Maturité (ADR-023)
@@ -28,16 +56,33 @@ Last Updated: 2026-03-11
 
 | Niveau | Nom | Description | Count |
 |--------|-----|-------------|-------|
-| 🥉 1 | **Bronze** | Déployée | 3 |
-| 🥈 2 | **Silver** | Production Ready | 17 |
-| 🥇 3 | **Gold** | Observable | 48 |
-| 💎 4 | **Platinum** | Reliable | 17 |
+| 🥉 1 | **Bronze** | Déployée | 7 |
+| 🥈 2 | **Silver** | Production Ready | 41 |
+| 🥇 3 | **Gold** | Observable | 34 |
+| 💎 4 | **Platinum** | Reliable | 10 |
 | 🟢 5 | **Emerald** | Data Durability | 0 |
 | 💠 6 | **Diamond** | Secure & Integrated | 0 |
 | 🌟 7 | **Orichalcum** | Parfaite | 0 |
-| ⚫ | **none** | Non labellisé | 1 |
+| ⚫ | **none** | Non labellisé | 0 |
 
-**Total déploiements labellisés:** 86
+**Total déploiements labellisés:** ~100 (tous labellisés après session 2026-03-28)
+
+### Violations Kyverno top-5 (à traiter)
+| Policy | Violations | Action recommandée |
+|--------|-----------|-------------------|
+| check-restore-init | 357 | Apps Emerald sans init container restore |
+| check-vulnerability-scan | 274 | Scans Trivy manquants |
+| check-pdb | 218 | PDB manquants sur apps Platinum+ |
+| check-backup | 215 | Label backup-profile manquant |
+| sizing-audit | 110 | Labels sizing non conformes v2 |
+
+### Dettes techniques identifiées
+| Dette | Impact | Effort |
+|-------|--------|--------|
+| local-path PVCs node-locked (amule, mealie, vikunja, pyload…) | Apps bloquées si nœud saturé | Migration iSCSI (moyen) |
+| Nœuds 16GB (poison/powder) saturés en requests quand frigate VPA se déclenche | 4-6 apps Pending lors rolling updates | Soit plus de RAM, soit partitionnement workloads |
+| grok-proxy hors repo | Pas traitable via GitOps | Intégrer dans le repo |
+| hubble-relay hors repo (Talos bootstrap) | PriorityClass non gérée | Intégrer config Cilium dans le repo |
 
 ---
 
