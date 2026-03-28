@@ -92,8 +92,7 @@ spec:
           persistentVolumeClaim:
             claimName: penpot-data
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1001
+        # runAsNonRoot: true  # DISABLED: penpot/backend init sequence requires root — do not enable
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:

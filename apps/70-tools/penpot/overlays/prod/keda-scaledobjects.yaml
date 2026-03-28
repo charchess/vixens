@@ -1,0 +1,61 @@
+---
+# Frontend: HTTPScaledObject intercepts traffic on design.truxonline.com
+apiVersion: http.keda.sh/v1alpha1
+kind: HTTPScaledObject
+metadata:
+  name: penpot-frontend
+  namespace: tools
+spec:
+  hosts:
+    - design.truxonline.com
+  pathPrefixes:
+    - /
+  scaleTargetRef:
+    name: penpot-frontend
+    kind: Deployment
+    service: penpot-frontend
+    port: 80
+  replicas:
+    min: 0
+    max: 1
+  scaledownPeriod: 300
+---
+# Backend: scales in sync with frontend (external-push from same HTTPScaledObject)
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: penpot-backend
+  namespace: tools
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: penpot-backend
+  minReplicaCount: 0
+  maxReplicaCount: 1
+  cooldownPeriod: 300
+  triggers:
+    - type: external-push
+      metadata:
+        httpScaledObject: penpot-frontend
+        scalerAddress: keda-add-ons-http-external-scaler.keda:9090
+---
+# Exporter: scales in sync with frontend (external-push from same HTTPScaledObject)
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: penpot-exporter
+  namespace: tools
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: penpot-exporter
+  minReplicaCount: 0
+  maxReplicaCount: 1
+  cooldownPeriod: 300
+  triggers:
+    - type: external-push
+      metadata:
+        httpScaledObject: penpot-frontend
+        scalerAddress: keda-add-ons-http-external-scaler.keda:9090
