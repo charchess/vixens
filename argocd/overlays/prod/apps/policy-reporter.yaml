@@ -46,6 +46,7 @@ spec:
           podLabels:
             vixens.io/sizing.policy-reporter: small
             vixens.io/sizing: small
+            vixens.io/priority-class: vixens-low
           kyvernoPlugin:
             enabled: true
             tolerations:
@@ -65,6 +66,8 @@ spec:
               prometheus.io/scrape: "true"
               prometheus.io/port: "8080"
               prometheus.io/path: "/metrics"
+             podLabels:
+              vixens.io/priority-class: vixens-low
             annotations:  # Deployment metadata (Gold maturity)
               argocd.argoproj.io/sync-wave: "10"
               goldilocks.fairwinds.com/enabled: "true"
@@ -85,10 +88,12 @@ spec:
               limits:
                 cpu: 100m
                 memory: 128Mi
+            podLabels:
+              vixens.io/priority-class: vixens-low
             podAnnotations:
               vixens.io/fast-start: "true"
               vixens.io/service-binding: "false"
-              vixens.io/nometrics: "true"  # policy-reporter-ui is a web UI with no /metrics endpoint
+              vixens.io/nometrics: "true"
             annotations:  # Deployment metadata (Gold maturity)
               argocd.argoproj.io/sync-wave: "10"
               goldilocks.fairwinds.com/enabled: "true"

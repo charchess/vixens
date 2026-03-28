@@ -1,5 +1,8 @@
 ---
 # KEDA HTTP Add-on
+podLabels:
+  vixens.io/priority-class: vixens-low
+
 interceptor:
   replicas:
     min: 1

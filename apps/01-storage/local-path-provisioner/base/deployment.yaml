@@ -18,6 +18,7 @@ spec:
     metadata:
       labels:
         app: local-path-provisioner
+        vixens.io/priority-class: vixens-low
     spec:
       serviceAccountName: local-path-provisioner-service-account
       tolerations:

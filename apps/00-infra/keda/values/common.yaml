@@ -42,6 +42,9 @@ resources:
       cpu: 100m
       memory: 64Mi
 
+podLabels:
+  vixens.io/priority-class: vixens-low
+
 podAnnotations:
   vixens.io/fast-start: "true"
   vixens.io/nometrics: "true"
