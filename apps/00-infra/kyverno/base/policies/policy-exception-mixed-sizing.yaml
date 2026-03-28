@@ -1,7 +1,7 @@
 ---
 # PolicyException for pods that use mixed v1/v2 sizing labels.
 # When a pod has containers with both v1 labels (micro/small/large) and
-# v2 labels (G-*/B-*/SB-*/media-xlarge), sizing-v2-mutate would inject
+# v2 labels (G-*/B-*/SB-*/V-3xlarge), sizing-v2-mutate would inject
 # null for the v1-labeled containers, causing quantity validation errors.
 # This exception exempts the mutation rules while v1 (sizing-mutate) handles
 # those containers directly via explicit resource patches.

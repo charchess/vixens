@@ -7,7 +7,7 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.dataangel: V-small
+        vixens.io/sizing.dataangel: V-nano
       annotations:
         dataangel.io/bucket: "vixens-prod-pyload"
         dataangel.io/fs-paths: "/config"

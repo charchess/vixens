@@ -38,7 +38,7 @@ patches:
         template:
           metadata:
             labels:
-              vixens.io/sizing.frigate: SB-xlarge
+              vixens.io/sizing.frigate: V-3xlarge
               vixens.io/sizing.litestream: V-nano
               vixens.io/sizing.config-syncer: V-nano
             annotations:
