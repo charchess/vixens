@@ -29,6 +29,18 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
+  ignoreDifferences:
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      name: victoria-metrics-victoria-metrics-operator-admission
+      jqPathExpressions:
+        - .webhooks[].clientConfig.caBundle
+    - group: ""
+      kind: Secret
+      name: victoria-metrics-victoria-metrics-operator-validation
+      namespace: monitoring
+      jqPathExpressions:
+        - .data
   syncPolicy:
     automated:
       prune: true
