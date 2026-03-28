@@ -70,6 +70,8 @@ spec:
               value: :8888
             - name: SOCKS5_PROXY_LISTENING_ADDRESS
               value: :1080
+            - name: HEALTH_SERVER_ADDRESS
+              value: ":9999"
             # Enable proxies
             - name: HTTPPROXY
               value: on
