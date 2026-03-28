@@ -6,6 +6,7 @@ components:
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
   - ../../../../_shared/components/infisical/env-prod
+  - ../../../../_shared/components/dataangel
 
 patches:
   - patch: |-
@@ -15,6 +16,14 @@ patches:
     target:
       kind: Deployment
       name: changedetection
+  - path: dataangel.yaml
+  - patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: local-path-retain
+    target:
+      kind: PersistentVolumeClaim
+      name: changedetection-datastore-pvc
 resources:
   - ../../base
   - ingress.yaml

@@ -1,0 +1,47 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mosquitto
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.dataangel: V-small
+        vixens.io/sizing.restore-data: null
+        vixens.io/sizing.config-syncer: null
+      annotations:
+        dataangel.io/bucket: "vixens-prod-mosquitto"
+        dataangel.io/fs-paths: "/mosquitto/data"
+        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/deployment-name: "mosquitto"
+        dataangel.io/rclone-interval: "60s"
+        dataangel.io/metrics-enabled: "true"
+        dataangel.io/lock-enabled: "false"
+    spec:
+      initContainers:
+        - name: restore-data
+          $patch: delete
+        - name: dataangel
+          securityContext:
+            runAsUser: 1883
+            runAsGroup: 1883
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: mosquitto-password-file
+                  key: LITESTREAM_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mosquitto-password-file
+                  key: LITESTREAM_SECRET_ACCESS_KEY
+          volumeMounts:
+            - mountPath: /data
+              $patch: delete
+            - name: data
+              mountPath: /mosquitto/data
+      containers:
+        - name: config-syncer
+          $patch: delete
