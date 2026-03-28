@@ -127,6 +127,20 @@ kubectl -n argocd patch application argocd --type merge -p '{"metadata":{"annota
 
 ---
 
+## 🎛️ Sizing System (Priority 2)
+
+1. **[2026-03-28] sizing-v2-mutate écrase TOUTES les resources à l'admission**
+   La Kyverno policy `sizing-v2-mutate` injecte cpu/memory req+lim selon le sizing label (`vixens.io/sizing.<container>: V-nano`) et tourne EN DERNIER — après VPA. Les valeurs du manifest et les recommendations VPA sont ignorées. Seul le sizing label détermine les ressources finales.
+   Do instead: pour changer les ressources d'un pod, changer son sizing label. V-nano=64Mi/256Mi, V-micro=128Mi/512Mi, V-small=256Mi/1Gi, V-medium=512Mi/2Gi, V-large=1Gi/4Gi.
+
+2. **[2026-03-28] VPA globalMinReplicas=2 bloque toute éviction single-replica**
+   L'updater VPA refuse d'évincer les pods avec `livePods=1` (log: "Too few replicas"). Les single-replica deployments ne seront JAMAIS resizés automatiquement par VPA. Le pod garde ses resources initiales jusqu'au prochain restart manuel.
+   Do instead: pour libérer de la mémoire sur un nœud saturé par un pod single-replica, supprimer le pod manuellement (il sera recréé avec le sizing label correct). Vérifier d'abord que le sizing label donne assez de mémoire (sinon OOMKill immédiat).
+
+3. **[2026-03-28] VPA uncappedTarget << minAllowed → cache stale injecte mauvaises valeurs**
+   Si le minAllowed VPA est augmenté (via annotation vixens.io/vpa.min-memory), l'admission controller continue d'injecter l'ancienne recommandation jusqu'au flush complet. Fix: `kubectl -n vpa rollout restart deployment vpa-vertical-pod-autoscaler-{recommender,updater,admission-controller}` + `kubectl delete vpa <name>` (Kyverno recrée).
+   Do instead: mais avec sizing-v2-mutate, tout ça est superflu — changer le sizing label est la seule vraie solution.
+
 ## 🏗️ Infrastructure Patterns (Priority 2)
 
 1. **[2026-03-28] Cilium eBPF egress cassé après incident nœud**
