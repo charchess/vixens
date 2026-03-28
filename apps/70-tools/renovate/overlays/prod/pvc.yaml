@@ -10,4 +10,4 @@ spec:
   resources:
     requests:
       storage: 2Gi
-  storageClassName: synelia-iscsi-retain
+  storageClassName: local-path-retain

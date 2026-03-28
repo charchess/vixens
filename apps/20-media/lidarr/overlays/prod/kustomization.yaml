@@ -22,3 +22,10 @@ components:
 patches:
   - path: resources-patch.yaml
   - path: dataangel.yaml
+  - patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: local-path-retain
+    target:
+      kind: PersistentVolumeClaim
+      name: lidarr-config-pvc
