@@ -23,6 +23,7 @@ spec:
         vixens.io/no-long-connections: "true"
         kubectl.kubernetes.io/restartedAt: "2026-03-11T22:15:00Z"
         vixens.io/explicitly-allow-root: "true"
+        vixens.io/vpa.min-memory: "512Mi"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -35,10 +36,10 @@ spec:
           resources:
             requests:
               cpu: 5m
-              memory: 64Mi
+              memory: 256Mi
             limits:
               cpu: 20m
-              memory: 256Mi
+              memory: 512Mi
           image: lscr.io/linuxserver/pyload-ng:0.5.0
           ports:
             - containerPort: 8000
