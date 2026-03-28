@@ -1,7 +1,7 @@
 ---
 # KEDA HTTP Add-on
 podLabels:
-  vixens.io/priority-class: vixens-low
+  vixens.io/priority-class: vixens-medium
 
 interceptor:
   replicas:
