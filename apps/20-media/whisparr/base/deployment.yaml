@@ -86,7 +86,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-              add: ["SETGID", "SETUID"]
+              add: ["SETGID", "SETUID", "CHOWN", "DAC_OVERRIDE"]
           livenessProbe:
             httpGet:
               path: /ping
