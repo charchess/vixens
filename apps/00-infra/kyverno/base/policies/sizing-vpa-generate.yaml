@@ -53,6 +53,11 @@ metadata:
       follow-up task for VPA upgrade.
       VPA uses RequestsAndLimits to maintain the 4x cpu/memory ratio as it tunes
       V-* containers. minAllowed and maxAllowed (safety defaults) are always set.
+      Per-app overrides via pod template annotations:
+        vixens.io/vpa.min-cpu    (default: 5m)
+        vixens.io/vpa.min-memory (default: 64Mi)
+        vixens.io/vpa.max-cpu    (default: 8000m)
+        vixens.io/vpa.max-memory (default: 16Gi)
 spec:
   validationFailureAction: Audit
   background: true
@@ -98,8 +103,8 @@ spec:
                 - containerName: "*"
                   controlledValues: RequestsAndLimits
                   minAllowed:
-                    cpu: "5m"
-                    memory: "64Mi"
+                    cpu: "{{ request.object.spec.template.metadata.annotations.\"vixens.io/vpa.min-cpu\" || '5m' }}"
+                    memory: "{{ request.object.spec.template.metadata.annotations.\"vixens.io/vpa.min-memory\" || '64Mi' }}"
                   maxAllowed:
-                    cpu: "8000m"
-                    memory: "16Gi"
+                    cpu: "{{ request.object.spec.template.metadata.annotations.\"vixens.io/vpa.max-cpu\" || '8000m' }}"
+                    memory: "{{ request.object.spec.template.metadata.annotations.\"vixens.io/vpa.max-memory\" || '16Gi' }}"
