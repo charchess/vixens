@@ -9,6 +9,8 @@ fullnameOverride: vm-stack
 # --- VM Operator ---
 victoria-metrics-operator:
   enabled: true
+  podLabels:
+    vixens.io/priority-class: vixens-low
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists

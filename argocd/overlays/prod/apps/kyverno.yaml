@@ -34,6 +34,8 @@ spec:
               limits:
                 cpu: "1"
                 memory: 1Gi
+            podLabels:
+              vixens.io/priority-class: vixens-low
             podAnnotations:
               prometheus.io/scrape: "true"
               prometheus.io/port: "8000"
@@ -61,6 +63,8 @@ spec:
               limits:
                 cpu: 200m
                 memory: 256Mi
+            podLabels:
+              vixens.io/priority-class: vixens-low
             podAnnotations:
               prometheus.io/scrape: "true"
               prometheus.io/port: "8000"
@@ -88,6 +92,8 @@ spec:
               limits:
                 cpu: 200m
                 memory: 256Mi
+            podLabels:
+              vixens.io/priority-class: vixens-low
             podAnnotations:
               prometheus.io/scrape: "true"
               prometheus.io/port: "8000"
@@ -106,6 +112,8 @@ spec:
               limits:
                 cpu: 200m
                 memory: 256Mi
+            podLabels:
+              vixens.io/priority-class: vixens-low
             podAnnotations:
               prometheus.io/scrape: "true"
               prometheus.io/port: "8000"

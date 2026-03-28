@@ -15,6 +15,7 @@ spec:
         app: redis-shared
         vixens.io/sizing.redis: V-micro
         vixens.io/backup-profile: "relaxed"
+        vixens.io/priority-class: vixens-low
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
