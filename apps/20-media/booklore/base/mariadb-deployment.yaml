@@ -124,6 +124,7 @@ spec:
                 - pgrep -f mariadb-dump || exit 1
             initialDelaySeconds: 30
             periodSeconds: 60
+            timeoutSeconds: 5
           lifecycle:
             preStop:
               exec:
@@ -136,6 +137,7 @@ spec:
                 - pgrep -f mariadb-dump || exit 1
             initialDelaySeconds: 10
             periodSeconds: 30
+            timeoutSeconds: 5
           startupProbe:
             exec:
               command:
@@ -144,6 +146,7 @@ spec:
                 - pgrep -f mariadb-dump || exit 1
             failureThreshold: 15
             periodSeconds: 10
+            timeoutSeconds: 5
       volumes:
         - name: config
           persistentVolumeClaim:

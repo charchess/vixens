@@ -105,6 +105,7 @@ sidecar:
         - /tmp
     initialDelaySeconds: 30
     periodSeconds: 60
+    timeoutSeconds: 5
   readinessProbe:
     exec:
       command:
@@ -112,6 +113,7 @@ sidecar:
         - /tmp
     initialDelaySeconds: 10
     periodSeconds: 30
+    timeoutSeconds: 5
   startupProbe:
     exec:
       command:
@@ -119,6 +121,7 @@ sidecar:
         - /tmp
     failureThreshold: 15
     periodSeconds: 10
+    timeoutSeconds: 5
 
 # Deployment labels for maturity tracking (chart uses .Values.labels for deployment metadata)
 labels:
