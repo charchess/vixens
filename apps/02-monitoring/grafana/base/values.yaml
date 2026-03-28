@@ -97,7 +97,7 @@ sidecar:
       memory: 64Mi
     limits:
       cpu: 100m
-      memory: 128Mi
+      memory: 512Mi
   livenessProbe:
     exec:
       command:
