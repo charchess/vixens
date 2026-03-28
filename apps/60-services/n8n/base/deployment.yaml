@@ -30,6 +30,7 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      initContainers: []
       containers:
         - name: n8n
           resources:

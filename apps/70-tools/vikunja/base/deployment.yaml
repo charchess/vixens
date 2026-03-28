@@ -28,6 +28,7 @@ spec:
           operator: Exists
           effect: NoSchedule
       priorityClassName: vixens-low
+      initContainers: []
       containers:
         - name: vikunja
           image: vikunja/vikunja:2.2.2

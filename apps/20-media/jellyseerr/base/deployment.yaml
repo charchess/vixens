@@ -26,6 +26,7 @@ spec:
           operator: Exists
           effect: NoSchedule
       priorityClassName: vixens-medium
+      initContainers: []
       containers:
         - name: jellyseerr
           resources:
