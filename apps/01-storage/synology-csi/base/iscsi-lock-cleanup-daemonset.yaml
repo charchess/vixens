@@ -34,10 +34,15 @@ spec:
               LOCK_DIR="/host-lock"
               LOCK_FILE="${LOCK_DIR}/lock.write"
               AGE_THRESHOLD=120
+              # FORCE_THRESHOLD: bypass open-fd check for zombie processes.
+              # A live iscsiadm holds the advisory flock (Gate 2 blocks).
+              # A zombie holds only the fd without the flock → Gate 2 passes, Gate 3 blocks.
+              # After FORCE_THRESHOLD seconds we know the flock owner is a zombie.
+              FORCE_THRESHOLD=3600
               CHECK_INTERVAL=60
 
               log() { echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') iscsi-lock-cleanup: $*"; }
-              log "Started (interval=${CHECK_INTERVAL}s, threshold=${AGE_THRESHOLD}s)"
+              log "Started (interval=${CHECK_INTERVAL}s, threshold=${AGE_THRESHOLD}s, force=${FORCE_THRESHOLD}s)"
 
               while true; do
                 if [ ! -f "${LOCK_FILE}" ]; then
@@ -55,7 +60,7 @@ spec:
                   continue
                 fi
 
-                # Gate 2: advisory lock check
+                # Gate 2: advisory lock check (a live iscsiadm holds this)
                 if ! flock -n "${LOCK_FILE}" true 2>/dev/null; then
                   log "SKIP age=${FILE_AGE}s advisory lock held"
                   sleep "${CHECK_INTERVAL}"
@@ -63,16 +68,20 @@ spec:
                 fi
 
                 # Gate 3: open file descriptor check
+                # Skip normally, but override for very old locks (zombie process holding fd only).
                 if fuser "${LOCK_FILE}" >/dev/null 2>&1; then
-                  log "SKIP age=${FILE_AGE}s file open by process"
-                  sleep "${CHECK_INTERVAL}"
-                  continue
+                  if [ "${FILE_AGE}" -lt "${FORCE_THRESHOLD}" ]; then
+                    log "SKIP age=${FILE_AGE}s file open by process"
+                    sleep "${CHECK_INTERVAL}"
+                    continue
+                  fi
+                  log "FORCE age=${FILE_AGE}s > ${FORCE_THRESHOLD}s zombie fd detected, forcing cleanup"
                 fi
 
-                # Atomic removal: hold flock, re-check fuser, then rm
+                # Atomic removal: hold flock, then rm (force path skips inner fuser check)
                 (
                   if flock -n 9; then
-                    if fuser "${LOCK_FILE}" >/dev/null 2>&1; then
+                    if fuser "${LOCK_FILE}" >/dev/null 2>&1 && [ "${FILE_AGE}" -lt "${FORCE_THRESHOLD}" ]; then
                       log "SKIP age=${FILE_AGE}s process opened during lock"
                     else
                       rm -f "${LOCK_FILE}"
