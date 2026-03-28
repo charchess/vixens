@@ -4,6 +4,8 @@ kind: Kustomization
 resources:
   - ../../base
   - keda-scaledobjects.yaml
+patches:
+  - path: ingress-keda-patch.yaml
 components:
   - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/sync-wave/wave-11
