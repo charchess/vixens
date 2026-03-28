@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: pyload
-        vixens.io/sizing.pyload: V-micro
+        vixens.io/sizing.pyload: V-nano
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/service-binding: "false"
@@ -34,11 +34,11 @@ spec:
         - name: pyload
           resources:
             requests:
-              cpu: 10m
-              memory: 128Mi
+              cpu: 5m
+              memory: 64Mi
             limits:
-              cpu: 40m
-              memory: 512Mi
+              cpu: 20m
+              memory: 256Mi
           image: lscr.io/linuxserver/pyload-ng:0.5.0
           ports:
             - containerPort: 8000

@@ -34,11 +34,11 @@ datasources:
 # Resources (Silver: limits defined)
 resources:
   requests:
-    cpu: 100m
-    memory: 256Mi
-  limits:
-    cpu: 500m
+    cpu: 50m
     memory: 512Mi
+  limits:
+    cpu: 200m
+    memory: 2Gi
 
 priorityClassName: vixens-critical
 # Probes (Elite Status)
@@ -126,5 +126,5 @@ labels:
 
 # Pod sizing labels
 podLabels:
-  vixens.io/sizing.grafana: B-large
+  vixens.io/sizing.grafana: V-medium
   vixens.io/sizing.grafana-sc-dashboard: G-small
