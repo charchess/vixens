@@ -16,7 +16,6 @@ spec:
     metadata:
       labels:
         app: vaultwarden
-        vixens.io/sizing.fix-permissions: G-nano
         vixens.io/sizing.restore-config: B-nano
         vixens.io/sizing.vaultwarden: V-nano
         vixens.io/sizing.litestream: V-nano
@@ -29,7 +28,6 @@ spec:
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
         kubectl.kubernetes.io/restartedAt: "2026-03-11T22:20:00Z"
-        vixens.io/explicitly-allow-root: "true"
     spec:
       priorityClassName: vixens-medium
       tolerations:
@@ -37,12 +35,6 @@ spec:
           operator: Exists
           effect: NoSchedule
       initContainers:
-        - name: fix-permissions
-          image: busybox:1.37.0
-          command: ["sh", "-c", "chown -R 1000:1000 /data && find /data -name '*.sqlite3*' -exec chmod 660 {} \\; && rm -rf /data/*.db-litestream /data/.*-litestream"]
-          volumeMounts:
-            - name: data
-              mountPath: /data
         - name: restore-config
           image: rclone/rclone:1.73
           securityContext:

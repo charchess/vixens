@@ -10,7 +10,6 @@ spec:
         vixens.io/sizing.dataangel: V-small
         vixens.io/sizing.litestream: null
         vixens.io/sizing.data-syncer: null
-        vixens.io/sizing.fix-permissions: null
       annotations:
         dataangel.io/bucket: "vixens-prod-birdnet-go"
         dataangel.io/sqlite-paths: "/data/birdnet.db"
@@ -22,8 +21,6 @@ spec:
         dataangel.io/lock-enabled: "false"
     spec:
       initContainers:
-        - name: fix-permissions
-          $patch: delete
         - name: generate-litestream-config
           $patch: delete
         - name: litestream-restore

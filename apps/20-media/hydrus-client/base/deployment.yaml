@@ -18,7 +18,6 @@ spec:
         app: hydrus-client
         vixens.io/sizing.hydrus-client: V-large
         vixens.io/sizing.litestream: V-nano
-        vixens.io/sizing.fix-permissions: G-nano
         vixens.io/sizing.check-integrity: B-medium
         vixens.io/sizing.restore-db: B-nano
         vixens.io/sizing.restore-mappings: B-nano
@@ -32,7 +31,6 @@ spec:
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
         vixens.io/no-long-connections: "true"
-        vixens.io/explicitly-allow-root: "true"
     spec:
       priorityClassName: vixens-medium
       tolerations:
@@ -40,18 +38,6 @@ spec:
           operator: Exists
           effect: NoSchedule
       initContainers:
-        - name: fix-permissions
-          image: busybox:1.37.0
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              touch /opt/hydrus/db/hydrus_crash.log
-              chown -R 1000:1000 /opt/hydrus/db 2>&1 || echo "chown FAILED (continuing anyway)"
-          volumeMounts:
-            - name: config
-              mountPath: /opt/hydrus/db
         - name: check-integrity
           image: keinos/sqlite3:3.52.0
           securityContext:
@@ -60,6 +46,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
+              touch /opt/hydrus/db/hydrus_crash.log
               for db in /opt/hydrus/db/*.db; do
                 [ -e "$db" ] || continue
                 echo "🔍 Checking $db..."

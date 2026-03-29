@@ -20,14 +20,12 @@ spec:
         vixens.io/sizing.birdnet-go: V-medium
         vixens.io/sizing.litestream: V-micro
         vixens.io/sizing.data-syncer: V-micro
-        vixens.io/sizing.fix-permissions: G-nano
         vixens.io/backup-profile: "relaxed"
       annotations:
         goldilocks.fairwinds.com/enabled: "true"
         vixens.io/fast-start: "true"
         reloader.stakater.com/auto: "true"
         vixens.io/no-long-connections: "true"
-        vixens.io/explicitly-allow-root: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
     spec:
@@ -37,24 +35,6 @@ spec:
           operator: Exists
           effect: NoSchedule
       initContainers:
-        - name: fix-permissions
-          image: busybox:1.37.0
-          command:
-            - sh
-            - -c
-            - |
-              chown -R 1000:1000 /data
-              rm -rf /data/*.db-litestream /data/.*-litestream /data/birdnet.db /data/birdnet.db-wal /data/birdnet.db-shm
-          volumeMounts:
-            - name: data
-              mountPath: /data
-          resources:
-            requests:
-              cpu: 10m
-              memory: 32Mi
-            limits:
-              cpu: 100m
-              memory: 64Mi
         - name: generate-litestream-config
           image: busybox:1.37.0
           command:

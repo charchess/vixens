@@ -10,7 +10,6 @@ spec:
         vixens.io/sizing.dataangel: V-small
         vixens.io/sizing.litestream: null
         vixens.io/sizing.config-syncer: null
-        vixens.io/sizing.fix-permissions: null
         vixens.io/sizing.restore-config: null
       annotations:
         dataangel.io/bucket: "vixens-prod-radarr"
@@ -23,8 +22,6 @@ spec:
         dataangel.io/lock-enabled: "false"
     spec:
       initContainers:
-        - name: fix-permissions
-          $patch: delete
         - name: restore-config
           $patch: delete
         - name: dataangel

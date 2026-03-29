@@ -20,7 +20,6 @@ spec:
         vixens.io/sizing.sonarr: V-medium
         vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.config-syncer: V-nano
-        vixens.io/sizing.fix-permissions: G-nano
         vixens.io/sizing.restore-config: B-nano
         vixens.io/sizing.restore-db: B-nano
         vixens.io/backup-profile: "relaxed"
@@ -38,12 +37,6 @@ spec:
           operator: Exists
           effect: NoSchedule
       initContainers:
-        - name: fix-permissions
-          image: busybox:1.37.0
-          command: ["sh", "-c", "chown -R 1000:1000 /config && rm -rf /config/*.db-litestream /config/.*-litestream"]
-          volumeMounts:
-            - name: config
-              mountPath: /config
         - name: restore-config
           image: rclone/rclone:1.73
           securityContext:
