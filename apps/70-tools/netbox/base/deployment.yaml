@@ -35,7 +35,7 @@ spec:
             limits:
               cpu: 500m
               memory: 1Gi
-          image: ghcr.io/charchess/netbox-plugins:v4.5.5-3469b42
+          image: ghcr.io/charchess/netbox-plugins:v4.5.5-9d0b4e1
           ports:
             - name: http
               containerPort: 8080
