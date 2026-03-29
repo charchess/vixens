@@ -18,6 +18,7 @@ spec:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
         vixens.io/explicitly-allow-root: "true"
+        vixens.io/vpa.min-cpu: "300m"
       labels:
         app: booklore
         vixens.io/sizing.booklore: V-micro
