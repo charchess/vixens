@@ -48,11 +48,11 @@ metadata:
       Automatically generates a VerticalPodAutoscaler for any Deployment or
       StatefulSet whose pod template has at least one vixens.io/sizing.* label.
       No explicit trigger label required — presence of sizing labels is sufficient.
-      Generated VPA uses updateMode: Auto (pod evict+recreate on recommendation apply).
-      Note: InPlaceOrRecreate requires VPA >= 1.7.0 (current: 1.6.0). Tracked as
-      follow-up task for VPA upgrade.
-      VPA uses RequestsAndLimits to maintain the 4x cpu/memory ratio as it tunes
-      V-* containers. minAllowed and maxAllowed (safety defaults) are always set.
+      V-* sizing labels → VPA updateMode: InPlaceOrRecreate (in-place resize first,
+      eviction fallback if in-place fails). minReplicas: 1 allows eviction fallback
+      even for single-replica deployments. B-*/SB-*/G-* only → Off (Goldilocks only).
+      InPlaceOrRecreate is GA in VPA 1.6.0 + K8s 1.33+ (InPlacePodVerticalScaling GA).
+      VPA uses RequestsAndLimits. minAllowed/maxAllowed always set.
       Per-app overrides via pod template annotations:
         vixens.io/vpa.min-cpu    (default: 5m)
         vixens.io/vpa.min-memory (default: 64Mi)
@@ -94,10 +94,13 @@ spec:
               kind: "{{ request.object.kind }}"
               name: "{{ request.object.metadata.name }}"
             updatePolicy:
-              # V-* sizing label present → Auto (VPA manages resources)
+              # V-* sizing label present → InPlaceOrRecreate (in-place first, eviction fallback)
               # B-*/SB-*/G-* only → Off (Goldilocks recommend-only)
               updateMode: >-
-                {{ request.object.spec.template.metadata.labels | values(@) | [?starts_with(@, 'V-')] | length(@) > `0` && 'Auto' || 'Off' }}
+                {{ request.object.spec.template.metadata.labels | values(@) | [?starts_with(@, 'V-')] | length(@) > `0` && 'InPlaceOrRecreate' || 'Off' }}
+              # Allow eviction fallback even for single-replica deployments
+              # (overrides global --min-replicas=2 flag on the VPA updater)
+              minReplicas: 1
             resourcePolicy:
               containerPolicies:
                 - containerName: "*"
