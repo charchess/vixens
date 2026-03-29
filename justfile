@@ -1290,6 +1290,16 @@ burst title:
     bd create "{{title}}" --status open --assignee coding-agent --label burst
     @echo "✅ Idée enregistrée dans Beads"
 
+install-hooks:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "$(git rev-parse --show-toplevel)"
+    git config --unset-all core.hooksPath 2>/dev/null || true
+    pre-commit install --overwrite
+    printf '#!/usr/bin/env bash\nset -euo pipefail\ncd "$(git rev-parse --show-toplevel)"\necho "🔍 Pre-push validation..."\njust lint\necho "✅ Pre-push OK"\n' > .git/hooks/pre-push
+    chmod +x .git/hooks/pre-push
+    echo "✅ Hooks installés: pre-commit (pre-commit framework) + pre-push (just lint)"
+
 lint:
     #!/usr/bin/env bash
     set -euo pipefail
