@@ -133,13 +133,12 @@ kubectl -n argocd patch application argocd --type merge -p '{"metadata":{"annota
    La Kyverno policy `sizing-v2-mutate` injecte cpu/memory req+lim selon le sizing label (`vixens.io/sizing.<container>: V-nano`) et tourne EN DERNIER — après VPA. Les valeurs du manifest et les recommendations VPA sont ignorées. Seul le sizing label détermine les ressources finales.
    Do instead: pour changer les ressources d'un pod, changer son sizing label. V-nano=64Mi/256Mi, V-micro=128Mi/512Mi, V-small=256Mi/1Gi, V-medium=512Mi/2Gi, V-large=1Gi/4Gi.
 
-2. **[2026-03-28] VPA globalMinReplicas=2 bloque toute éviction single-replica**
-   L'updater VPA refuse d'évincer les pods avec `livePods=1` (log: "Too few replicas"). Les single-replica deployments ne seront JAMAIS resizés automatiquement par VPA. Le pod garde ses resources initiales jusqu'au prochain restart manuel.
-   Do instead: pour libérer de la mémoire sur un nœud saturé par un pod single-replica, supprimer le pod manuellement (il sera recréé avec le sizing label correct). Vérifier d'abord que le sizing label donne assez de mémoire (sinon OOMKill immédiat).
+2. **[2026-03-28] VPA mode: InPlaceOrRecreate sans minReplicas (PR #2554/#2555)**
+   Tous les VPAs V-* sont en `InPlaceOrRecreate` (resize in-place sans éviction, fallback éviction si in-place impossible). Pas de `minReplicas:1` — le global `--min-replicas=2` du déploiement VPA bloque volontairement l'éviction des single-replica pods (safe pour RWO PVCs node-locked). In-place ne nécessite pas d'éviction → ça marche quand même pour les single-replica.
+   Do instead: ne JAMAIS ajouter `minReplicas:1` sur les VPAs générés — l'éviction fallback sur un pod single-replica avec PVC RWO peut strander le service si le nœud est plein.
 
 3. **[2026-03-28] VPA uncappedTarget << minAllowed → cache stale injecte mauvaises valeurs**
-   Si le minAllowed VPA est augmenté (via annotation vixens.io/vpa.min-memory), l'admission controller continue d'injecter l'ancienne recommandation jusqu'au flush complet. Fix: `kubectl -n vpa rollout restart deployment vpa-vertical-pod-autoscaler-{recommender,updater,admission-controller}` + `kubectl delete vpa <name>` (Kyverno recrée).
-   Do instead: mais avec sizing-v2-mutate, tout ça est superflu — changer le sizing label est la seule vraie solution.
+   Si le minAllowed VPA est augmenté (via annotation vixens.io/vpa.min-memory), l'admission controller continue d'injecter l'ancienne recommandation. `sizing-v2-mutate` écrase tout de toute façon → changer le sizing label est la seule vraie solution, pas kubectl restart.
 
 ## 🏗️ Infrastructure Patterns (Priority 2)
 
@@ -151,9 +150,9 @@ kubectl -n argocd patch application argocd --type merge -p '{"metadata":{"annota
    Symptôme: `iscsiadm: Timeout on acquiring lock on DB: /run/lock/iscsi/lock.write` sur un nœud spécifique, PVCs bloqués en ContainerCreating des heures.
    Do instead: vérifier `kubectl -n synology-csi exec iscsi-lock-cleanup-<NODE> -- fuser /host-lock/lock.write` — si vide mais fichier présent, le cleanup tournera au prochain cycle (FORCE_THRESHOLD=3600s depuis PR #2538). Si besoin immédiat: `kubectl -n synology-csi delete pod synology-csi-node-<NODE>`.
 
-3. **[2026-03-28] VPA Auto + large sizing tier → saturate nœud au rolling update**
-   Symptôme: après update prod-stable, plusieurs pods Pending sur un nœud, VPA a appliqué une large recommendation (ex: 8Gi pour frigate).
-   Do instead: attendre 30-60 min, VPA in-place resize les pods running et libère du headroom automatiquement. Ne pas paniquer ni changer les requests manuellement.
+3. **[2026-03-28] Nœud saturé après rolling update → single-replica pod avec gros sizing**
+   Symptôme: pods Pending sur un nœud après rolling update — un pod single-replica monopolise la majorité des requests (ex: frigate V-3xlarge=8Gi sur 15Gi). VPA InPlaceOrRecreate va réduire in-place progressivement, mais seulement si le pod tourne déjà. Attendre 15-30 min.
+   Do instead: si le pod n'a pas encore démarré (Pending au restart), c'est le sizing label initial qui bloque. Baisser le sizing label via Git (ex: V-3xlarge→V-2xlarge). Ne jamais supprimer le pod manuellement si PVC RWO sur nœud plein.
 
 4. **[2026-03-28] local-path PVC = node-lock permanent**
    Symptôme: pod Pending "didn't match PersistentVolume node affinity" même après fix sizing.
