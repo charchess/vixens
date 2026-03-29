@@ -66,7 +66,7 @@ spec:
               prometheus.io/scrape: "true"
               prometheus.io/port: "8080"
               prometheus.io/path: "/metrics"
-             podLabels:
+            podLabels:
               vixens.io/priority-class: vixens-low
             annotations:  # Deployment metadata (Gold maturity)
               argocd.argoproj.io/sync-wave: "10"
