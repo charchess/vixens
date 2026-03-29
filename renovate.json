@@ -45,6 +45,11 @@
   },
   "packageRules": [
     {
+      "description": "netbox-plugins image managed by build workflow, not Renovate",
+      "matchPackageNames": ["ghcr.io/charchess/netbox-plugins"],
+      "enabled": false
+    },
+    {
       "description": "Group all minor and patch updates for non-critical dependencies",
       "matchUpdateTypes": [
         "minor",
