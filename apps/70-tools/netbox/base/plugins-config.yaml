@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: netbox-plugins-config
+  namespace: tools
+data:
+  plugins.py: |
+    PLUGINS = [
+        "netbox_topology_views",
+        "netbox_dns",
+        "netbox_inventory",
+    ]
+
+    PLUGINS_CONFIG = {
+        "netbox_topology_views": {
+            "draw_default_layout": True,
+        },
+        "netbox_dns": {
+            "zone_visibility": "public",
+        },
+        "netbox_inventory": {},
+    }

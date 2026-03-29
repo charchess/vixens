@@ -8,3 +8,4 @@ resources:
   - netbox-db-secrets.yaml
   - infisical-secret.yaml
   - networkpolicy.yaml
+  - plugins-config.yaml

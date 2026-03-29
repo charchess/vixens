@@ -35,7 +35,7 @@ spec:
             limits:
               cpu: 500m
               memory: 1Gi
-          image: netboxcommunity/netbox:v4.5.5 # Pinned image version
+          image: ghcr.io/charchess/netbox-plugins:v4.5.5
           ports:
             - name: http
               containerPort: 8080
@@ -99,10 +99,17 @@ spec:
           volumeMounts:
             - name: netbox-media-storage
               mountPath: /opt/netbox/media
+            - name: plugins-config
+              mountPath: /etc/netbox/config/plugins.py
+              subPath: plugins.py
+              readOnly: true
       volumes:
         - name: netbox-media-storage
           persistentVolumeClaim:
             claimName: netbox-media-pvc
+        - name: plugins-config
+          configMap:
+            name: netbox-plugins-config
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
