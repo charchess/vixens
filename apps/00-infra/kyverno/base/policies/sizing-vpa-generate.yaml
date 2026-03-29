@@ -49,8 +49,8 @@ metadata:
       StatefulSet whose pod template has at least one vixens.io/sizing.* label.
       No explicit trigger label required — presence of sizing labels is sufficient.
       V-* sizing labels → VPA updateMode: InPlaceOrRecreate (in-place resize first,
-      eviction fallback if in-place fails). minReplicas: 1 allows eviction fallback
-      even for single-replica deployments. B-*/SB-*/G-* only → Off (Goldilocks only).
+      eviction fallback only if in-place fails). Global minReplicas=2 intentionally
+      blocks eviction fallback for single-replica pods (safe for RWO PVCs).
       InPlaceOrRecreate is GA in VPA 1.6.0 + K8s 1.33+ (InPlacePodVerticalScaling GA).
       VPA uses RequestsAndLimits. minAllowed/maxAllowed always set.
       Per-app overrides via pod template annotations:
@@ -98,9 +98,6 @@ spec:
               # B-*/SB-*/G-* only → Off (Goldilocks recommend-only)
               updateMode: >-
                 {{ request.object.spec.template.metadata.labels | values(@) | [?starts_with(@, 'V-')] | length(@) > `0` && 'InPlaceOrRecreate' || 'Off' }}
-              # Allow eviction fallback even for single-replica deployments
-              # (overrides global --min-replicas=2 flag on the VPA updater)
-              minReplicas: 1
             resourcePolicy:
               containerPolicies:
                 - containerName: "*"
