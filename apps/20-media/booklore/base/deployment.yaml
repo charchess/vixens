@@ -151,7 +151,7 @@ spec:
               port: http
             failureThreshold: 180
             periodSeconds: 10
-            timeoutSeconds: 5
+            timeoutSeconds: 30
         - name: config-syncer
           image: rclone/rclone:1.73
           securityContext:
