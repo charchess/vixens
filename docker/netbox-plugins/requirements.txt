@@ -4,5 +4,4 @@ netbox-inventory==2.5.0
 netbox-security==1.4.4
 netbox-interface-synchronization==4.5.1
 slurpit_netbox==1.3.3
-netbox-data-flows==1.5.0
 netbox-floorplan-plugin==0.9.1
