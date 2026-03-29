@@ -130,4 +130,4 @@ labels:
 # Pod sizing labels
 podLabels:
   vixens.io/sizing.grafana: V-medium
-  vixens.io/sizing.grafana-sc-dashboard: G-small
+  vixens.io/sizing.grafana-sc-dashboard: V-small
