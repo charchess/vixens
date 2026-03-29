@@ -13,7 +13,6 @@ data:
         "netbox_security",
         "netbox_interface_synchronization",
         "slurpit_netbox",
-        "netbox_data_flows",
         "netbox_floorplan",
     ]
 
@@ -32,6 +31,5 @@ data:
             "exclude_virtual_interfaces": True,
         },
         "slurpit_netbox": {},
-        "netbox_data_flows": {},
         "netbox_floorplan": {},
     }
