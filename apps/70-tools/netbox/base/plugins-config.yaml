@@ -11,7 +11,6 @@ data:
         "netbox_dns",
         "netbox_inventory",
         "netbox_security",
-        "netbox_routing",
         "netbox_interface_synchronization",
         "slurpit_netbox",
         "netbox_data_flows",
@@ -29,7 +28,6 @@ data:
         "netbox_security": {
             "top_level_menu": True,
         },
-        "netbox_routing": {},
         "netbox_interface_synchronization": {
             "exclude_virtual_interfaces": True,
         },
