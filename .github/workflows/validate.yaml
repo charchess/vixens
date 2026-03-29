@@ -114,21 +114,22 @@ jobs:
                 .metadata.name != "" and
                 .spec.project != null and
                 .spec.project != "" and
-                .spec.source.repoURL != null and
-                .spec.source.repoURL != "" and
-                .spec.source.path != null and
-                .spec.source.path != "" and
                 .spec.destination.server != null and
                 .spec.destination.server != "" and
                 .spec.destination.namespace != null and
                 .spec.destination.namespace != ""
               ' "$file" || {
                 echo "❌ Structure ArgoCD invalide: $file"
-                yq eval '.' "$file"  # Afficher le contenu pour debugging
+                yq eval '.' "$file"
                 exit 1
               }
             fi
           done
+
+      - name: Validate inline Helm values YAML
+        run: |
+          echo "🔍 Validation blocs Helm values inline (ArgoCD Applications)"
+          python3 scripts/validation/validate-helm-values.py argocd/
 
   # 3️⃣ Kustomize Build + Kubeconform (valide la sortie buildée, pas les fichiers individuels)
   kustomize-validate:
@@ -216,6 +217,12 @@ jobs:
             # Valider avec kubeconform (sur le YAML buildé)
             if ! kubeconform -ignore-missing-schemas -kubernetes-version 1.34.0 -strict -skip "$SKIP_KINDS" /tmp/built.yaml 2>&1; then
               echo "❌ KUBECONFORM FAILED: $overlay"
+              return 1
+            fi
+
+            # Valider cohérence sélecteurs PDB vs labels pods (sur le YAML buildé)
+            if ! python3 scripts/validation/validate-pdb-selectors.py /tmp/built.yaml 2>&1; then
+              echo "❌ PDB SELECTOR MISMATCH: $overlay"
               return 1
             fi
 

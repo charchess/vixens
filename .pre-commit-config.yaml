@@ -40,6 +40,19 @@ repos:
           )$
 
   # ════════════════════════════════════════════════════════════════
+  # SEMANTIC CHECKS (catches logic errors yamllint cannot see)
+  # ════════════════════════════════════════════════════════════════
+  - repo: local
+    hooks:
+      - id: validate-helm-values
+        name: 🔍 ArgoCD inline Helm values YAML
+        language: python
+        entry: python3 scripts/validation/validate-helm-values.py
+        types: [yaml]
+        files: ^argocd/
+        pass_filenames: true
+
+  # ════════════════════════════════════════════════════════════════
   # YAML STYLE (enforces editorial consistency)
   # ════════════════════════════════════════════════════════════════
   - repo: https://github.com/adrienverge/yamllint

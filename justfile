@@ -1293,12 +1293,26 @@ burst title:
 lint:
     #!/usr/bin/env bash
     set -euo pipefail
+    FAILED=0
+
     echo "🔍 Validation YAML avec yamllint..."
     if find apps/ argocd/ -name "*.yaml" | xargs yamllint -c yamllint-config.yml; then
         echo "✅ Validation YAML réussie"
-        exit 0
     else
         echo "❌ Validation YAML échouée"
+        FAILED=1
+    fi
+
+    echo ""
+    echo "🔍 Validation blocs Helm values inline (ArgoCD Applications)..."
+    if python3 scripts/validation/validate-helm-values.py argocd/; then
+        true
+    else
+        echo "❌ Helm values invalides"
+        FAILED=1
+    fi
+
+    if [ "$FAILED" -eq 1 ]; then
         echo ""
         echo "⚠️  Ces erreurs bloqueront le push dans GitHub Actions"
         echo "💡 Corrigez les erreurs avant de faire git push"
