@@ -9,7 +9,6 @@ spec:
       labels:
         vixens.io/sizing.dataangel: V-small
         vixens.io/sizing.litestream: null
-        vixens.io/sizing.fix-permissions: null
         vixens.io/sizing.check-integrity: null
         vixens.io/sizing.restore-db: null
         vixens.io/sizing.restore-mappings: null
@@ -26,8 +25,6 @@ spec:
         dataangel.io/lock-enabled: "false"
     spec:
       initContainers:
-        - name: fix-permissions
-          $patch: delete
         - name: check-integrity
           $patch: delete
         - name: restore-db

@@ -24,7 +24,6 @@ spec:
       annotations:
         reloader.stakater.com/auto: "true"
         vixens.io/fast-start: "true"
-        vixens.io/explicitly-allow-root: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
@@ -36,12 +35,6 @@ spec:
           operator: Exists
           effect: NoSchedule
       initContainers:
-        - name: fix-permissions
-          image: busybox:1.37.0
-          command: ["sh", "-c", "chown -R 1000:1000 /config && find /config -type d -name '*-litestream' -exec rm -rf {} + 2>/dev/null || true"]
-          volumeMounts:
-            - name: config
-              mountPath: /config
         - name: restore-config
           image: rclone/rclone:1.73
           securityContext:
@@ -207,7 +200,7 @@ spec:
           configMap:
             name: sabnzbd-litestream-config
       securityContext:
-        # runAsNonRoot: true  # DISABLED: init container fix-permissions runs as root — verify image before re-enabling
+        runAsNonRoot: true
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
