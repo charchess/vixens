@@ -1,11 +1,9 @@
-# NetBox community plugins
-# Versions tracked by Renovate (pip_requirements manager).
-#
-# Homelab plugin set:
-#   - topology-views : diagrammes L2/L3 interactifs depuis les câbles NetBox
-#   - plugin-dns     : zones DNS + records A/AAAA/CNAME + auto-PTR depuis IPAM
-#   - inventory      : lifecycle assets (serial, warranty, date achat, fournisseur)
-
 netbox-topology-views==4.5.0
 netbox-plugin-dns==1.5.5
 netbox-inventory==2.5.0
+netbox-security==1.4.4
+netbox-routing==0.4.1
+netbox-interface-synchronization==4.5.1
+slurpit_netbox==1.3.3
+netbox-data-flows==1.5.0
+netbox-floorplan-plugin==0.9.1
