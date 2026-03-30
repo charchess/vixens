@@ -17,7 +17,7 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
-        vixens.io/explicitly-allow-root: "true"
+
         vixens.io/vpa.min-cpu: "300m"
       labels:
         app: booklore
@@ -196,5 +196,10 @@ spec:
             server: 192.168.111.69
             path: /volume3/Internal/incoming/ebooks
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault

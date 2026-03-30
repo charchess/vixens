@@ -29,7 +29,7 @@ spec:
         prometheus.io/port: "9000"
         prometheus.io/path: "/metrics"
         vixens.io/no-long-connections: "true"
-        vixens.io/explicitly-allow-root: "true"
+
         kubectl.kubernetes.io/restartedAt: "2026-03-12T10:40:00Z"
     spec:
       tolerations:
@@ -234,5 +234,10 @@ spec:
           configMap:
             name: mealie-litestream-config
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 911
+        runAsGroup: 911
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
