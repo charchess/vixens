@@ -1,0 +1,74 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookshelf
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: bookshelf
+  template:
+    metadata:
+      labels:
+        app: bookshelf
+        vixens.io/sizing.bookshelf: V-small
+      annotations:
+        vixens.io/fast-start: "true"
+        vixens.io/explicitly-allow-root: "true"
+    spec:
+      priorityClassName: vixens-low
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      securityContext:
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: bookshelf
+          # hardcover = Hardcover.app metadata (higher quality than Goodreads)
+          # softcover = Goodreads backward compat (for migrating existing Readarr DB)
+          image: ghcr.io/pennydreadful/bookshelf:hardcover
+          ports:
+            - containerPort: 8787
+              name: http
+          env:
+            - name: TZ
+              value: Europe/Paris
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: books
+              mountPath: /books
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: bookshelf-config-pvc
+        - name: books
+          persistentVolumeClaim:
+            claimName: bookshelf-books-pvc

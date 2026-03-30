@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shelfarr
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: shelfarr
+  template:
+    metadata:
+      labels:
+        app: shelfarr
+        vixens.io/sizing.shelfarr: V-small
+      annotations:
+        vixens.io/fast-start: "true"
+        vixens.io/explicitly-allow-root: "true"
+    spec:
+      priorityClassName: vixens-low
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      securityContext:
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: shelfarr
+          image: ghcr.io/pedro-revez-silva/shelfarr:v0.8.5
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+            - name: RAILS_ENV
+              value: production
+            - name: HTTP_PORT
+              value: "80"
+            - name: TZ
+              value: Europe/Paris
+          # RAILS_MASTER_KEY auto-generated on first run and persisted in /rails/storage
+          livenessProbe:
+            httpGet:
+              path: /up
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /up
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          startupProbe:
+            httpGet:
+              path: /up
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: storage
+              mountPath: /rails/storage
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: shelfarr-storage-pvc
