@@ -10,7 +10,10 @@ spec:
   policyTypes:
     - Ingress
     - Egress
-  ingress: []
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 3306
   egress:
     # Allow all egress (homelab: DNS, inter-app, external APIs)
     - {}
