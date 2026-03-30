@@ -6,7 +6,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: synology-iscsi-delete
+  storageClassName: synelia-iscsi-delete
   resources:
     requests:
       storage: 2Gi
@@ -18,7 +18,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: synology-iscsi-delete
+  storageClassName: synelia-iscsi-delete
   resources:
     requests:
       storage: 10Gi
