@@ -17,7 +17,7 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
-        vixens.io/explicitly-allow-root: "true"
+
       labels:
         kubectl.kubernetes.io/restartedAt: "2026-03-12T110000Z"
         app: changedetection
@@ -178,5 +178,10 @@ spec:
           persistentVolumeClaim:
             claimName: changedetection-datastore-pvc
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault

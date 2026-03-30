@@ -24,7 +24,7 @@ spec:
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
-        vixens.io/explicitly-allow-root: "true"
+
     spec:
       priorityClassName: vixens-low
       tolerations:
@@ -35,8 +35,8 @@ spec:
         - name: init-config
           image: busybox:1.37
           securityContext:
-            runAsUser: 0
-            runAsNonRoot: false
+            runAsUser: 1000
+            runAsNonRoot: true
           env:
             - name: AUTH_ISSUER
               value: "https://authentik.dev.truxonline.com/application/o/netbird/"
@@ -61,7 +61,7 @@ spec:
               cat <<EOF > /etc/netbird/management.json
               {
                 "HttpConfig": {
-                  "Address": ":80",
+                  "Address": ":8080",
                   "AuthIssuer": "$AUTH_ISSUER",
                   "AuthAudience": "$AUTH_AUDIENCE",
                   "AuthKeysLocation": "$AUTH_KEYS_LOCATION",
@@ -101,27 +101,28 @@ spec:
             - name: config-writable
               mountPath: /etc/netbird
       securityContext:
-        # runAsNonRoot: true  # disabled — management writes to /etc/netbird/management.json (permission denied as non-root)
-        # runAsUser: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: management
           image: netbirdio/management:0.67.1
-          args: ["--port=80", "--log-file=console", "--log-level=info", "--config=/etc/netbird/management.json"]
+          args: ["--port=8080", "--log-file=console", "--log-level=info", "--config=/etc/netbird/management.json"]
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
-              add: ["NET_BIND_SERVICE"]
               drop: ["ALL"]
           livenessProbe:
             tcpSocket:
-              port: 80
+              port: 8080
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             tcpSocket:
-              port: 80
+              port: 8080
             initialDelaySeconds: 10
             periodSeconds: 5
           env:
@@ -135,7 +136,7 @@ spec:
             - name: NETBIRD_STORE_ENGINE_POSTGRES_DSN
               value: "host=postgresql-shared-rw.databases.svc.cluster.local user=netbird password=$(NB_POSTGRES_PASSWORD) dbname=netbird port=5432 sslmode=disable"
           ports:
-            - containerPort: 80
+            - containerPort: 8080
               name: http
             - containerPort: 33073
               name: grpc
@@ -168,7 +169,7 @@ metadata:
 spec:
   ports:
     - port: 80
-      targetPort: 80
+      targetPort: 8080
       name: http
     - port: 33073
       targetPort: 33073

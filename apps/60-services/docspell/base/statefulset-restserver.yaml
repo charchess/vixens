@@ -22,13 +22,21 @@ spec:
         vixens.io/backup-profile: standard
       annotations:
         vixens.io/no-long-connections: "true"
-        vixens.io/explicitly-allow-root: "true"
+
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
       priorityClassName: vixens-medium
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: restserver
           image: ghcr.io/docspell/restserver:v0.43.0

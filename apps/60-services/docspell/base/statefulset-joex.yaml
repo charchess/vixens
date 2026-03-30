@@ -18,7 +18,7 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
-        vixens.io/explicitly-allow-root: "true"
+
       labels:
         app: docspell
         component: joex
@@ -30,6 +30,14 @@ spec:
           operator: Exists
           effect: NoSchedule
       priorityClassName: vixens-medium
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: joex
           image: ghcr.io/docspell/joex:v0.43.0

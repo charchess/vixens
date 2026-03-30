@@ -28,7 +28,7 @@ spec:
         prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
         vixens.io/no-long-connections: "true"
-        vixens.io/explicitly-allow-root: "true"
+
     spec:
       priorityClassName: vixens-medium
       tolerations:
@@ -109,6 +109,8 @@ spec:
             - name: TZ
               value: Europe/Paris
           volumeMounts:
+            - name: run
+              mountPath: /run
             - name: config
               mountPath: /config
             - name: downloads
@@ -190,6 +192,8 @@ spec:
             - name: config
               mountPath: /config
       volumes:
+        - name: run
+          emptyDir: {}
         - name: config
           persistentVolumeClaim:
             claimName: sabnzbd-config-pvc
@@ -201,7 +205,8 @@ spec:
           configMap:
             name: sabnzbd-litestream-config
       securityContext:
-        # runAsNonRoot: true — DISABLED: linuxserver.io image (s6-overlay) démarre en root
+        runAsUser: 1000
+        runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
