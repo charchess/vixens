@@ -74,8 +74,6 @@ resources:
   # - apps/loki.yaml
   # - apps/stirling-pdf.yaml
   # - apps/it-tools.yaml
-  - apps/shelfarr.yaml
-  - apps/bookshelf.yaml
   # - apps/contacts.yaml
   # - apps/firefly-iii.yaml
   - apps/mealie.yaml
