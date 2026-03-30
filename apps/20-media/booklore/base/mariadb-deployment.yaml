@@ -16,7 +16,7 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
-
+        vixens.io/explicitly-allow-root: "true"
       labels:
         app: booklore-mariadb
         vixens.io/sizing.mariadb: V-small
@@ -33,6 +33,17 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: fix-run-dir
+          image: busybox:1.37.0
+          command: ["sh", "-c", "chown 1000:1000 /run"]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: run
+              mountPath: /run
       containers:
         - name: mariadb
           image: lscr.io/linuxserver/mariadb:11.4.8

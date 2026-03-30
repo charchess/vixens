@@ -18,18 +18,20 @@ spec:
         app: music-assistant
         vixens.io/sizing.music-assistant: V-medium
         vixens.io/backup-profile: "relaxed"
-      annotations:
-        vixens.io/explicitly-allow-root: "true"
+      annotations: {}
     spec:
       securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
       priorityClassName: vixens-medium
-      initContainers: []
       containers:
         - name: music-assistant
           resources:
@@ -50,10 +52,6 @@ spec:
               name: slimproto-udp
               protocol: UDP
           env:
-            - name: PUID
-              value: "1000"
-            - name: PGID
-              value: "1000"
             - name: TZ
               value: Europe/Paris
           lifecycle:
