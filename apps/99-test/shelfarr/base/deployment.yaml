@@ -30,7 +30,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: shelfarr
-          image: ghcr.io/pedro-revez-silva/shelfarr:v0.8.5
+          image: ghcr.io/pedro-revez-silva/shelfarr:latest
           ports:
             - containerPort: 80
               name: http
