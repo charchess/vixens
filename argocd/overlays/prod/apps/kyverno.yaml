@@ -172,6 +172,18 @@ spec:
         - .spec.rules[].match.all[].resources.namespaces
       jsonPointers:
         - /status
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      name: clusterpolicies.kyverno.io
+      jsonPointers:
+        - /spec
+        - /metadata/annotations
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      name: policies.kyverno.io
+      jsonPointers:
+        - /spec
+        - /metadata/annotations
   syncPolicy:
     automated:
       prune: true
@@ -180,6 +192,7 @@ spec:
       - CreateNamespace=true
       - ServerSideApply=true
       - Replace=true
+      - RespectIgnoreDifferences=true
     retry:
       limit: 3
       backoff:
