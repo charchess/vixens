@@ -51,6 +51,7 @@ repos:
         types: [yaml]
         files: ^argocd/
         pass_filenames: true
+        additional_dependencies: [pyyaml]
 
   # ════════════════════════════════════════════════════════════════
   # YAML STYLE (enforces editorial consistency)
