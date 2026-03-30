@@ -1,0 +1,30 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bookstack-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: BookStack
+    gethomepage.dev/icon: bookstack.png
+    gethomepage.dev/group: Tools
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: bookstack.dev.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bookstack
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - bookstack.dev.truxonline.com
+      secretName: bookstack-tls-dev
