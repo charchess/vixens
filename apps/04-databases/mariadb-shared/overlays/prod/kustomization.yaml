@@ -10,6 +10,7 @@ components:
 
 patches:
   - path: patch-infisical-env.yaml
+  - path: patch-infisical-backup-env.yaml
   - path: resources-patch.yaml
 labels:
   - pairs:

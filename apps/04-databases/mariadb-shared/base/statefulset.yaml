@@ -110,6 +110,8 @@ spec:
           envFrom:
             - secretRef:
                 name: mariadb-shared-credentials
+            - secretRef:
+                name: mariadb-shared-backup-credentials
           livenessProbe:
             exec:
               command:
