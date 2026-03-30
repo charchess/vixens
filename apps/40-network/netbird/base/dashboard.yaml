@@ -1,4 +1,38 @@
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: netbird-dashboard-nginx-config
+data:
+  default.conf: |
+    server {
+        listen 8080 default_server;
+        listen [::]:8080 default_server;
+
+        root /usr/share/nginx/html;
+        location = /netbird.wasm {
+            root /usr/share/nginx/html;
+            default_type application/wasm;
+        }
+        location = /ironrdp-pkg/ironrdp_web_bg.wasm {
+            root /usr/share/nginx/html;
+            default_type application/wasm;
+        }
+
+        location / {
+          try_files $uri $uri.html $uri/ =404;
+          add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";
+          expires off;
+        }
+
+        error_page 404 /404.html;
+        location = /404.html {
+          internal;
+          add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";
+          expires off;
+        }
+    }
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -30,7 +64,6 @@ spec:
           operator: "Exists"
           effect: "NoSchedule"
       securityContext:
-        # runAsNonRoot: true  # DISABLED: netbirdio/dashboard runs as root — verify image before re-enabling
         seccompProfile:
           type: RuntimeDefault
       initContainers:
@@ -51,31 +84,37 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
-              add: ["NET_BIND_SERVICE", "CHOWN", "SETUID", "SETGID"]
+              add: ["CHOWN", "SETUID", "SETGID"]
               drop: ["ALL"]
           livenessProbe:
             tcpSocket:
-              port: 80
+              port: 8080
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             tcpSocket:
-              port: 80
+              port: 8080
             initialDelaySeconds: 10
             periodSeconds: 5
           ports:
-            - containerPort: 80
+            - containerPort: 8080
               name: http
           volumeMounts:
             - name: nginx-tmp
               mountPath: /var/lib/nginx
             - name: nginx-run
               mountPath: /run/nginx
+            - name: nginx-config
+              mountPath: /etc/nginx/http.d/default.conf
+              subPath: default.conf
       volumes:
         - name: nginx-tmp
           emptyDir: {}
         - name: nginx-run
           emptyDir: {}
+        - name: nginx-config
+          configMap:
+            name: netbird-dashboard-nginx-config
 ---
 apiVersion: v1
 kind: Service
@@ -84,7 +123,7 @@ metadata:
 spec:
   ports:
     - port: 80
-      targetPort: 80
+      targetPort: 8080
       name: http
   selector:
     app: netbird-dashboard
