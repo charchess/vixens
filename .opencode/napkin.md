@@ -140,6 +140,56 @@ kubectl -n argocd patch application argocd --type merge -p '{"metadata":{"annota
 3. **[2026-03-28] VPA uncappedTarget << minAllowed → cache stale injecte mauvaises valeurs**
    Si le minAllowed VPA est augmenté (via annotation vixens.io/vpa.min-memory), l'admission controller continue d'injecter l'ancienne recommandation. `sizing-v2-mutate` écrase tout de toute façon → changer le sizing label est la seule vraie solution, pas kubectl restart.
 
+## 🔐 Security Hardening Patterns (Priority 2)
+
+### LSIO s6-overlay non-root pattern
+
+**RULE:** LSIO images avec s6-overlay v3 nécessitent un pattern spécifique pour tourner en non-root.
+
+**PROBLÈME:** `runAsUser: 1000` seul ne suffit pas. Le preinit s6-overlay vérifie que `/run` appartient à PUID — mais l'emptyDir est créé `uid=0` par kubelet.
+
+**PATTERN OBLIGATOIRE:**
+```yaml
+annotations:
+  vixens.io/explicitly-allow-root: "true"  # pour fix-run-dir init
+spec:
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+  initContainers:
+    - name: fix-run-dir
+      image: busybox:1.37.0
+      command: ["sh", "-c", "chown 1000:1000 /run"]
+      securityContext:
+        runAsUser: 0  # override pod level
+      volumeMounts:
+        - name: run
+          mountPath: /run
+  containers:
+    - name: app
+      securityContext:
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: run
+          mountPath: /run
+  volumes:
+    - name: run
+      emptyDir: {}
+```
+
+Do instead: TOUJOURS utiliser le pattern fix-run-dir pour les images LSIO/s6-overlay. NE PAS juste ajouter `runAsUser: 1000` seul — le pod crashera avec "preinit: /run belongs to uid 0".
+
+**IMAGES NON-LSIO (pas de gosu/su-exec):** `runAsUser: 1000` direct fonctionne (music-assistant, stirling-pdf avec containerSecurityContext).
+
+**IMAGES AVEC addgroup AU DÉMARRAGE (grimmory/booklore):** NE PAS forcer runAsUser — l'image doit démarrer en root. Garder `explicitly-allow-root: "true"`.
+
+**INCIDENTS:** PR #2587 a appliqué `runAsUser: 1000 + /run emptyDir` sans fix-run-dir → CrashLoopBackOff sabnzbd, qbittorrent, lazylibrarian, booklore-mariadb. Corrigé PR #2591.
+
+---
+
 ## 🏗️ Infrastructure Patterns (Priority 2)
 
 1. **[2026-03-28] Cilium eBPF egress cassé après incident nœud**
