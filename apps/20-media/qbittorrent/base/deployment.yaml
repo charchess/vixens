@@ -22,12 +22,21 @@ spec:
         vixens.io/service-binding: "false"
         vixens.io/no-long-connections: "true"
         kubectl.kubernetes.io/restartedAt: "2026-03-11T22:00:00Z"
+        vixens.io/explicitly-allow-root: "true"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-      initContainers: []
+      initContainers:
+        - name: fix-run-dir
+          image: busybox:1.37.0
+          command: ["sh", "-c", "chown 1000:1000 /run"]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: run
+              mountPath: /run
       priorityClassName: vixens-medium
       containers:
         - name: qbittorrent
@@ -90,6 +99,11 @@ spec:
             failureThreshold: 15
             periodSeconds: 10
             timeoutSeconds: 5
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           volumeMounts:
             - name: run
               mountPath: /run
@@ -116,3 +130,5 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault

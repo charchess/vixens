@@ -12,8 +12,7 @@ spec:
     metadata:
       labels:
         app: tandoor
-      annotations:
-        vixens.io/explicitly-allow-root: "true"
+      annotations: {}
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -22,6 +21,9 @@ spec:
       containers:
         - name: tandoor
           image: vabene1111/recipes:latest
+          securityContext:
+            runAsUser: 1000
+            runAsNonRoot: true
           ports:
             - containerPort: 8080
               name: http
@@ -71,3 +73,5 @@ spec:
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault

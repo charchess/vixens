@@ -67,6 +67,13 @@ envs:
 securityContext:
   enabled: true
   fsGroup: 1000
+containerSecurityContext:
+  runAsUser: 1000
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
 podLabels:
   vixens.io/sizing.stirling-pdf-chart: SB-medium
   vixens.io/backup-profile: "relaxed"
@@ -76,6 +83,3 @@ podAnnotations:
   vixens.io/service-binding: "false"
   vixens.io/nometrics: "true"
   vixens.io/no-long-connections: "true"
-  # Stirling-PDF startup script chowns /tmp dirs and su-switches to stirlingpdfuser;
-  # mutate-security-context drops CAP_SETUID which breaks this — bypass required
-  vixens.io/explicitly-allow-root: "true"
