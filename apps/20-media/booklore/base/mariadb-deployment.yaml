@@ -16,7 +16,7 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
-        vixens.io/explicitly-allow-root: "true"
+
       labels:
         app: booklore-mariadb
         vixens.io/sizing.mariadb: V-small
@@ -28,6 +28,11 @@ spec:
           operator: Exists
           effect: NoSchedule
       priorityClassName: vixens-low
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: mariadb
           image: lscr.io/linuxserver/mariadb:11.4.8
@@ -56,6 +61,8 @@ spec:
                   name: booklore-secrets
                   key: DB_PASSWORD
           volumeMounts:
+            - name: run
+              mountPath: /run
             - name: config
               mountPath: /config
           readinessProbe:
@@ -83,6 +90,8 @@ spec:
             periodSeconds: 10
         - name: db-backup
           image: alpine:3.23
+          securityContext:
+            runAsUser: 0
           command:
             - sh
             - -c
@@ -148,6 +157,8 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
       volumes:
+        - name: run
+          emptyDir: {}
         - name: config
           persistentVolumeClaim:
             claimName: booklore-mariadb-pvc

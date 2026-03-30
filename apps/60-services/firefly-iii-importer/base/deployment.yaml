@@ -17,7 +17,6 @@ spec:
         vixens.io/fast-start: "true"
         vixens.io/service-binding: "false"
         vixens.io/no-long-connections: "true"
-        vixens.io/explicitly-allow-root: "true"
         kubectl.kubernetes.io/restartedAt: "2026-03-11T22:20:00Z"
       labels:
         app.kubernetes.io/name: firefly-iii-importer
@@ -29,6 +28,12 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: importer
           resources:
