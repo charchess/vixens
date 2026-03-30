@@ -17,6 +17,7 @@ spec:
       labels:
         app: mariadb-shared
         vixens.io/sizing.mariadb: SB-micro
+        vixens.io/sizing.db-backup: V-nano
         vixens.io/backup-profile: "standard"
       annotations:
         vixens.io/fast-start: "true"
@@ -74,6 +75,50 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/mysql
+        - name: db-backup
+          image: alpine:3.23
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              apk add --no-cache mariadb-client rclone > /dev/null 2>&1
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              while true; do
+                TIMESTAMP=$(date +%Y%m%d-%H%M)
+                for DB in $(mariadb -u root -p$MARIADB_ROOT_PASSWORD -h 127.0.0.1 \
+                    -e "SHOW DATABASES;" --skip-column-names 2>/dev/null \
+                    | grep -vE "^(information_schema|performance_schema|mysql|sys)$" \
+                    | grep -v "lost\+found"); do
+                  mariadb-dump -u root -p$MARIADB_ROOT_PASSWORD -h 127.0.0.1 \
+                    --single-transaction --quick "$DB" > /tmp/$DB.sql 2>/dev/null
+                  if [ $? -eq 0 ] && [ -s /tmp/$DB.sql ]; then
+                    rclone copyto /tmp/$DB.sql "s3:$LITESTREAM_BUCKET/mariadb/$DB-${TIMESTAMP}.sql"
+                    rclone copyto /tmp/$DB.sql "s3:$LITESTREAM_BUCKET/mariadb/$DB-latest.sql"
+                    echo "[$(date)] Backup OK: $DB (${TIMESTAMP})"
+                  fi
+                done
+                sleep 900
+              done
+          envFrom:
+            - secretRef:
+                name: mariadb-shared-credentials
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f "mariadb-dump" || pgrep -f "sleep 900" || exit 1
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 5
   volumeClaimTemplates:
     - metadata:
         name: data

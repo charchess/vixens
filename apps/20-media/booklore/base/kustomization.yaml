@@ -4,9 +4,7 @@ kind: Kustomization
 namespace: media
 resources:
   - deployment.yaml
-  - mariadb-deployment.yaml
   - service.yaml
-  - mariadb-service.yaml
   - pvc.yaml
   - infisical-secret.yaml
   - networkpolicy.yaml

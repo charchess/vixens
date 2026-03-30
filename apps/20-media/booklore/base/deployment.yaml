@@ -114,7 +114,7 @@ spec:
             - name: BOOKLORE_PORT
               value: "6060"
             - name: DATABASE_URL
-              value: jdbc:mariadb://booklore-mariadb:3306/booklore
+              value: jdbc:mariadb://mariadb-shared.databases.svc.cluster.local:3306/booklore
             - name: DATABASE_USERNAME
               value: booklore
             - name: DATABASE_PASSWORD

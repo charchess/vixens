@@ -10,15 +10,3 @@ spec:
   resources:
     requests:
       storage: 10Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: booklore-mariadb-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: synelia-iscsi-retain
-  resources:
-    requests:
-      storage: 10Gi
