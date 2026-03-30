@@ -1,0 +1,32 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bookshelf-ingress
+  labels:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Bookshelf
+    gethomepage.dev/icon: readarr.png
+    gethomepage.dev/group: Media
+    vixens.io/nossoneeded: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: bookshelf.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bookshelf
+                port:
+                  number: 8787
+  tls:
+    - hosts:
+        - bookshelf.truxonline.com
+      secretName: bookshelf-tls
