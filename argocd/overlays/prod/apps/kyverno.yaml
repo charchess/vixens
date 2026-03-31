@@ -17,6 +17,7 @@ spec:
       targetRevision: 3.4.0
       helm:
         releaseName: kyverno
+        skipCrds: true
         values: |
           admissionController:
             replicas: 3
@@ -172,18 +173,7 @@ spec:
         - .spec.rules[].match.all[].resources.namespaces
       jsonPointers:
         - /status
-    - group: apiextensions.k8s.io
-      kind: CustomResourceDefinition
-      name: clusterpolicies.kyverno.io
-      jqPathExpressions:
-        - .spec
-        - .metadata
-    - group: apiextensions.k8s.io
-      kind: CustomResourceDefinition
-      name: policies.kyverno.io
-      jqPathExpressions:
-        - .spec
-        - .metadata
+
   syncPolicy:
     automated:
       prune: true
@@ -192,7 +182,6 @@ spec:
       - CreateNamespace=true
       - ServerSideApply=true
       - Replace=true
-      - RespectIgnoreDifferences=true
     retry:
       limit: 3
       backoff:
