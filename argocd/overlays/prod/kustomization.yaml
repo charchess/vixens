@@ -101,4 +101,3 @@ resources:
   - apps/radar.yaml
   - apps/maturity-controller.yaml
   - apps/bookshelf.yaml
-  - apps/stalwart.yaml
