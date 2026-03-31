@@ -130,13 +130,8 @@ experimental:
 
 volumes:
   - name: crowdsec-bouncer-key
-    secret:
-      secretName: crowdsec-bouncer-key
-
-additionalVolumeMounts:
-  - name: crowdsec-bouncer-key
     mountPath: /var/run/secrets/crowdsec
-    readOnly: true
+    type: secret
 
 deployment:
   podAnnotations:
