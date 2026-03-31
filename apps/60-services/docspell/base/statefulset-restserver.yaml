@@ -66,17 +66,17 @@ spec:
             - name: MINIO_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: docspell-secrets
+                  name: docspell-minio-secrets
                   key: MINIO_ACCESS_KEY
             - name: MINIO_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: docspell-secrets
+                  name: docspell-minio-secrets
                   key: MINIO_SECRET_KEY
             - name: INTEGRATION_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: docspell-secrets
+                  name: docspell-minio-secrets
                   key: INTEGRATION_SECRET
           livenessProbe:
             httpGet:
@@ -124,7 +124,7 @@ spec:
             - name: INTEGRATION_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: docspell-secrets
+                  name: docspell-minio-secrets
                   key: INTEGRATION_SECRET
           securityContext:
             runAsNonRoot: true
