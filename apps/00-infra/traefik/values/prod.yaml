@@ -10,7 +10,7 @@ service:
   annotations:
     io.cilium/lb-ipam-ips: 192.168.201.70
   spec:
-    externalTrafficPolicy: Local
+    externalTrafficPolicy: Cluster
 # ============================================================================
 # Production-Specific Settings
 # ============================================================================
