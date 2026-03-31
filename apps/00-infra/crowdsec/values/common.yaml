@@ -36,7 +36,7 @@ lapi:
       storageClassName: synelia-iscsi-retain
     config:
       enabled: true
-      size: 100Mi
+      size: 1Gi
       storageClassName: synelia-iscsi-retain
 
   strategy:
