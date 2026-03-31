@@ -29,7 +29,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: nexterm
-          image: nexterm/aio:latest
+          image: nexterm/aio:development
           imagePullPolicy: Always
           ports:
             - containerPort: 6989
