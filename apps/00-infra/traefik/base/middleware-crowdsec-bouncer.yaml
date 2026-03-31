@@ -12,7 +12,8 @@ spec:
       crowdsecLapiScheme: http
       crowdsecLapiHost: crowdsec-service.crowdsec.svc.cluster.local:8080
       crowdsecLapiKeyFile: /var/run/secrets/crowdsec/CROWDSEC_BOUNCER_KEY
-      forwardedHeadersTrustedIPs: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+      forwardedHeadersTrustedIps: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+      clientTrustedIps: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
       updateIntervalSeconds: "60"
       defaultDecisionSeconds: "60"
-      allowLocalRequests: "true"
+      updateMaxFailure: "-1"
