@@ -139,6 +139,7 @@ spec:
                 effect: NoSchedule
 
           crds:
+            install: false
             migration:
               tolerations:
                 - key: node-role.kubernetes.io/control-plane
