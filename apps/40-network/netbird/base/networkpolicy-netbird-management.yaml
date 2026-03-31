@@ -18,7 +18,9 @@ spec:
               kubernetes.io/metadata.name: traefik
       ports:
         - protocol: TCP
-          port: 80
+          port: 8080
+        - protocol: TCP
+          port: 33073
   egress:
     # Allow all egress (homelab: DNS, inter-app, external APIs)
     - {}
