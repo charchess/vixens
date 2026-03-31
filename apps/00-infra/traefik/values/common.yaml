@@ -126,6 +126,7 @@ volumes:
   - name: plugins-storage
     mountPath: /plugins-storage
     type: emptyDir
+    readOnly: false
 
 deployment:
   podAnnotations:
