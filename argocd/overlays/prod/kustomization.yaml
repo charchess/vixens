@@ -9,6 +9,7 @@ resources:
   - apps/velero.yaml
   # - apps/velero-maintenance-config.yaml  # removed 2026-03-05 — CM now owned by Helm chart (velero values repositoryMaintenanceJob)
   - apps/cilium-lb.yaml
+  - apps/crowdsec.yaml
   - apps/traefik.yaml
   - apps/traefik-middlewares.yaml
   - apps/metrics-server.yaml

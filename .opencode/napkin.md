@@ -140,6 +140,14 @@ kubectl -n argocd patch application argocd --type merge -p '{"metadata":{"annota
 3. **[2026-03-28] VPA uncappedTarget << minAllowed → cache stale injecte mauvaises valeurs**
    Si le minAllowed VPA est augmenté (via annotation vixens.io/vpa.min-memory), l'admission controller continue d'injecter l'ancienne recommandation. `sizing-v2-mutate` écrase tout de toute façon → changer le sizing label est la seule vraie solution, pas kubectl restart.
 
+## 🔑 Agent Credentials (Priority 1)
+
+1. **[2026-03-31] Infisical write access via machine identity in ~/.agents/credentials/**
+   Les credentials agents (Infisical write, GitHub PATs, MinIO admin) sont dans `~/.agents/credentials/infisical-write.env`.
+   Do instead: `source ~/.agents/credentials/infisical-write.env` puis `INFISICAL_TOKEN=$(curl ... login)` avant tout `infisical secrets set`. Ne JAMAIS utiliser la machine identity read-only du cluster (`infisical-universal-auth`) pour écrire.
+
+---
+
 ## 🔐 Security Hardening Patterns (Priority 2)
 
 ### LSIO s6-overlay non-root pattern

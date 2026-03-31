@@ -1,0 +1,12 @@
+---
+lapi:
+  env:
+    - name: BOUNCER_KEY_traefik
+      valueFrom:
+        secretKeyRef:
+          name: crowdsec-secrets
+          key: CROWDSEC_BOUNCER_KEY
+    - name: ENROLL_INSTANCE_NAME
+      value: "vixens-k8s-prod"
+    - name: ENROLL_TAGS
+      value: "k8s linux homelab prod"
