@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nexterm-data
+  labels:
+    app: nexterm
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: synelia-iscsi-retain
+  resources:
+    requests:
+      storage: 2Gi

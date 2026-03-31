@@ -1,0 +1,68 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexterm
+  labels:
+    app: nexterm
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nexterm
+  template:
+    metadata:
+      labels:
+        app: nexterm
+        vixens.io/sizing.nexterm: V-small
+        vixens.io/backup-profile: standard
+      annotations:
+        reloader.stakater.com/auto: "true"
+        vixens.io/fast-start: "true"
+        vixens.io/nometrics: "true"
+    spec:
+      priorityClassName: vixens-medium
+      securityContext:
+        fsGroup: 0
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: nexterm
+          image: nexterm/aio:v1.2.0-BETA
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 6989
+              name: http
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nexterm-secrets
+                  key: ENCRYPTION_KEY
+          readinessProbe:
+            tcpSocket:
+              port: 6989
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 6989
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop: []
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: nexterm-data

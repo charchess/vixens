@@ -22,6 +22,7 @@ resources:
   - apps/policy-reporter.yaml
   - apps/descheduler.yaml
   - apps/headlamp.yaml
+  - apps/nexterm.yaml
   - apps/traefik-dashboard.yaml
   - apps/argocd.yaml
   - apps/whoami.yaml
