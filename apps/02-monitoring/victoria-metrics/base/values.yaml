@@ -43,7 +43,7 @@ vmsingle:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8429"
       labels:
-        vixens.io/sizing.vmsingle: G-large
+        vixens.io/sizing.vmsingle: V-large
     priorityClassName: vixens-critical
 
 # --- VMAgent (scraper, replaces prometheus scraping) ---
