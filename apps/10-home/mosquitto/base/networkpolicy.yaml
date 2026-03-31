@@ -10,7 +10,14 @@ spec:
   policyTypes:
     - Ingress
     - Egress
-  ingress: []
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: homeassistant
+      ports:
+        - protocol: TCP
+          port: 1883
   egress:
     # Allow all egress (homelab: DNS, inter-app, external APIs)
     - {}
