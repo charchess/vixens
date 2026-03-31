@@ -123,6 +123,9 @@ volumes:
   - name: crowdsec-bouncer-key
     mountPath: /var/run/secrets/crowdsec
     type: secret
+  - name: plugins-storage
+    mountPath: /plugins-storage
+    type: emptyDir
 
 deployment:
   podAnnotations:
