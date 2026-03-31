@@ -29,8 +29,8 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: nexterm
-          image: nexterm/aio:v1.2.0-BETA
-          imagePullPolicy: IfNotPresent
+          image: nexterm/aio:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 6989
               name: http
