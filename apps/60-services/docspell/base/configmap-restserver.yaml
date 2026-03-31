@@ -56,6 +56,23 @@ data:
         }
 
         files {
+          chunk-size = 524288
+          valid-mime-types = []
+          default-store = "minio"
+
+          stores = {
+            database { enabled = false, type = "default-database" }
+            filesystem { enabled = false, type = "file-system", directory = "/tmp" }
+            minio {
+              enabled = true
+              type = "s3"
+              endpoint = "http://192.168.111.69:9000"
+              access-key = ${MINIO_ACCESS_KEY}
+              secret-key = ${MINIO_SECRET_KEY}
+              bucket = "docspell"
+              region = ""
+            }
+          }
         }
       }
     }

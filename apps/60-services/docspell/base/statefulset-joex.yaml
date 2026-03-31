@@ -66,6 +66,16 @@ spec:
                 secretKeyRef:
                   name: docspell-db-credentials
                   key: password
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: docspell-minio-secrets
+                  key: MINIO_ACCESS_KEY
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: docspell-minio-secrets
+                  key: MINIO_SECRET_KEY
           livenessProbe:
             httpGet:
               path: /api/info/version
