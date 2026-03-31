@@ -119,15 +119,6 @@ securityContext:
 # ============================================================================
 # Fast-start bypass (traefik starts in < 10s)
 # ============================================================================
-# ============================================================================
-# CrowdSec Bouncer plugin
-# ============================================================================
-experimental:
-  plugins:
-    bouncer:
-      moduleName: "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
-      version: "v1.5.1"
-
 volumes:
   - name: crowdsec-bouncer-key
     mountPath: /var/run/secrets/crowdsec

@@ -30,6 +30,8 @@ resources:
     memory: 2Gi
 # High availability with multiple replicas
 additionalArguments:
+  - "--experimental.plugins.bouncer.moduleName=github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
+  - "--experimental.plugins.bouncer.version=v1.5.1"
   - "--entrypoints.websecure.http.middlewares=traefik-bouncer@kubernetescrd"
 
 deployment:
