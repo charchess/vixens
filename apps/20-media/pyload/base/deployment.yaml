@@ -89,10 +89,7 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
           securityContext:
-            runAsNonRoot: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
+            runAsUser: 0
           volumeMounts:
             - name: run
               mountPath: /run
@@ -111,8 +108,6 @@ spec:
             server: 192.168.111.69
             path: /volume3/Downloads/pyload
       securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:

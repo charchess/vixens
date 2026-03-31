@@ -30,6 +30,7 @@ spec:
           effect: NoSchedule
       securityContext:
         runAsNonRoot: true
+        runAsUser: 33
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
