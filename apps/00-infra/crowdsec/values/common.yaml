@@ -24,15 +24,7 @@ lapi:
         secretKeyRef:
           name: crowdsec-secrets
           key: CROWDSEC_BOUNCER_KEY
-    - name: ENROLL_KEY
-      valueFrom:
-        secretKeyRef:
-          name: crowdsec-secrets
-          key: ENROLL_KEY
-    - name: ENROLL_INSTANCE_NAME
-      value: "vixens-k8s"
-    - name: ENROLL_TAGS
-      value: "k8s linux homelab"
+    # ENROLL_KEY removed: PAPI/community blocklist disabled (DB too large → stream timeout)
 
   persistentVolume:
     data:
