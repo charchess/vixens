@@ -1,0 +1,95 @@
+---
+# CrowdSec Helm values - common (all environments)
+# Chart: crowdsecurity/crowdsec
+# Docs: https://docs.crowdsec.net/docs/getting_started/install_crowdsec_service
+
+container_runtime: containerd
+
+image:
+  repository: crowdsecurity/crowdsec
+  tag: ""  # uses chart AppVersion
+  pullPolicy: IfNotPresent
+
+# ============================================================================
+# LAPI (Local API) - decision engine
+# ============================================================================
+lapi:
+  enabled: true
+  replicas: 1
+
+  env:
+    # Bouncer key for Traefik - generated via Infisical, injected by chart
+    - name: BOUNCER_KEY_traefik
+      valueFrom:
+        secretKeyRef:
+          name: crowdsec-secrets
+          key: CROWDSEC_BOUNCER_KEY
+    - name: ENROLL_INSTANCE_NAME
+      value: "vixens-k8s"
+    - name: ENROLL_TAGS
+      value: "k8s linux homelab"
+
+  persistentVolume:
+    data:
+      enabled: true
+      size: 1Gi
+      storageClassName: synology-iscsi-retain
+    config:
+      enabled: true
+      size: 100Mi
+      storageClassName: synology-iscsi-retain
+
+  strategy:
+    type: Recreate  # required with RWO PVC
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# ============================================================================
+# Agent (DaemonSet) - log acquisition from Traefik
+# ============================================================================
+agent:
+  enabled: true
+
+  acquisition:
+    - namespace: traefik
+      podName: traefik-*
+      program: traefik
+
+  env:
+    - name: COLLECTIONS
+      value: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/base-http-scenarios"
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# ============================================================================
+# CrowdSec config
+# ============================================================================
+config:
+  profiles.yaml: |
+    name: default_ip_remediation
+    filters:
+      - Alert.Remediation == true && Alert.GetScope() == "Ip"
+    decisions:
+      - type: ban
+        duration: 4h
+    on_success: break
+    ---
+    name: default_range_remediation
+    filters:
+      - Alert.Remediation == true && Alert.GetScope() == "Range"
+    decisions:
+      - type: ban
+        duration: 4h
+    on_success: break

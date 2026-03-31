@@ -1,0 +1,6 @@
+---
+lapi:
+  replicas: 0
+
+agent:
+  enabled: false

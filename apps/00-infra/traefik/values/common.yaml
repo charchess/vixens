@@ -119,6 +119,25 @@ securityContext:
 # ============================================================================
 # Fast-start bypass (traefik starts in < 10s)
 # ============================================================================
+# ============================================================================
+# CrowdSec Bouncer plugin
+# ============================================================================
+experimental:
+  plugins:
+    bouncer:
+      moduleName: "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
+      version: "v1.5.1"
+
+volumes:
+  - name: crowdsec-bouncer-key
+    secret:
+      secretName: crowdsec-bouncer-key
+
+additionalVolumeMounts:
+  - name: crowdsec-bouncer-key
+    mountPath: /var/run/secrets/crowdsec
+    readOnly: true
+
 deployment:
   podAnnotations:
     vixens.io/fast-start: "true"
