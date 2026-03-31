@@ -26,7 +26,7 @@ spec:
               service:
                 name: netbird-dashboard
                 port:
-                  number: 33073
+                  number: 80
   tls:
     - hosts:
         - netbird.truxonline.com
@@ -84,7 +84,7 @@ spec:
               service:
                 name: netbird-signal
                 port:
-                  number: 33073
+                  number: 80
   tls:
     - hosts:
         - netbird-signal.truxonline.com
