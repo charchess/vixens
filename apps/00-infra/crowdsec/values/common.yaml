@@ -33,11 +33,11 @@ lapi:
     data:
       enabled: true
       size: 1Gi
-      storageClassName: synology-iscsi-retain
+      storageClassName: synelia-iscsi-retain
     config:
       enabled: true
       size: 100Mi
-      storageClassName: synology-iscsi-retain
+      storageClassName: synelia-iscsi-retain
 
   strategy:
     type: Recreate  # required with RWO PVC
@@ -50,31 +50,11 @@ lapi:
       cpu: 500m
       memory: 512Mi
 
-# ============================================================================
-# Agent (DaemonSet) - log acquisition from Traefik
-# ============================================================================
 agent:
-  enabled: true
-
-  acquisition:
-    - namespace: traefik
-      podName: traefik-*
-      program: traefik
-
-  env:
-    - name: COLLECTIONS
-      value: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/base-http-scenarios"
-
-  resources:
-    requests:
-      cpu: 50m
-      memory: 64Mi
-    limits:
-      cpu: 200m
-      memory: 256Mi
+  enabled: false
 
 # ============================================================================
-# CrowdSec config
+# LAPI config
 # ============================================================================
 config:
   profiles.yaml: |
