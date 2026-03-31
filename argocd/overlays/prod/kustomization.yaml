@@ -100,5 +100,4 @@ resources:
   - apps/trivy.yaml
   - apps/radar.yaml
   - apps/maturity-controller.yaml
-  - apps/shelfarr.yaml
   - apps/bookshelf.yaml
