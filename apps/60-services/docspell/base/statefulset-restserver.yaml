@@ -19,6 +19,7 @@ spec:
         app: docspell
         component: restserver
         vixens.io/sizing.restserver: V-medium
+        vixens.io/sizing.consumedir: V-nano
         vixens.io/backup-profile: standard
       annotations:
         vixens.io/no-long-connections: "true"
@@ -62,6 +63,21 @@ spec:
                 secretKeyRef:
                   name: docspell-db-credentials
                   key: password
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: docspell-secrets
+                  key: MINIO_ACCESS_KEY
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: docspell-secrets
+                  key: MINIO_SECRET_KEY
+            - name: INTEGRATION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: docspell-secrets
+                  key: INTEGRATION_SECRET
           livenessProbe:
             httpGet:
               path: /api/info/version
@@ -89,7 +105,48 @@ spec:
             - name: config
               mountPath: /opt/docspell.conf
               subPath: config
+        - name: consumedir
+          image: ghcr.io/docspell/dsc:v0.43.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - -d
+            - http://localhost:7880
+            - upload
+            - --poll
+            - 30s
+            - -r
+            - --delete
+            - -i
+            - --header
+            - "Docspell-Integration:$(INTEGRATION_SECRET)"
+            - /var/inbox
+          env:
+            - name: INTEGRATION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: docspell-secrets
+                  key: INTEGRATION_SECRET
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 5m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: nfs-inbox
+              mountPath: /var/inbox
       volumes:
         - name: config
           configMap:
             name: docspell-restserver-config
+        - name: nfs-inbox
+          nfs:
+            server: 192.168.111.69
+            path: /volume3/Internal/incoming/docspell
