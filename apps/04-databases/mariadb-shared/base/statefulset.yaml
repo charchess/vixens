@@ -18,10 +18,14 @@ spec:
         app: mariadb-shared
         vixens.io/sizing.mariadb: SB-micro
         vixens.io/sizing.db-backup: V-nano
+        vixens.io/sizing.mysqld-exporter: V-nano
         vixens.io/backup-profile: "standard"
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9104"
+        prometheus.io/path: "/metrics"
     spec:
       securityContext:
         runAsNonRoot: true
@@ -119,6 +123,47 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 60
             timeoutSeconds: 5
+        - name: mysqld-exporter
+          image: prom/mysqld-exporter:v0.17.0
+          args:
+            - --mysqld.address=127.0.0.1:3306
+            - --mysqld.username=root
+          env:
+            - name: MYSQLD_EXPORTER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-shared-credentials
+                  key: MARIADB_ROOT_PASSWORD
+          ports:
+            - containerPort: 9104
+              name: metrics
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9104
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9104
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            timeoutSeconds: 3
   volumeClaimTemplates:
     - metadata:
         name: data

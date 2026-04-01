@@ -10,6 +10,7 @@ components:
   - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/sync-wave/wave-11
   - ../../../../_shared/components/goldilocks/enabled
+  - ../../../../_shared/components/revision-history-limit
   - ../../../../_shared/components/dataangel
 
 patches:

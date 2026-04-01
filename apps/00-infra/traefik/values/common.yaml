@@ -136,6 +136,9 @@ deployment:
     vixens.io/fast-start: "true"
     vixens.io/service-binding: "false"
     vixens.io/noingressneeded: "true"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9100"
+    prometheus.io/path: "/metrics"
   annotations:  # Deployment metadata (Gold maturity: sync-wave + goldilocks)
     argocd.argoproj.io/sync-wave: "5"
     goldilocks.fairwinds.com/enabled: "true"
