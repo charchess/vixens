@@ -36,7 +36,7 @@ spec:
             limits:
               cpu: 200m
               memory: 2Gi
-          image: jellyfin/jellyfin:10.11.6
+          image: jellyfin/jellyfin:10.11.7
           ports:
             - containerPort: 8096
               name: http
