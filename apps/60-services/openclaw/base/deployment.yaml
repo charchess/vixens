@@ -68,7 +68,7 @@ spec:
                 mkdir -p /data/tools/bin /data/tools/lib
                 apt-get update
                 apt-get install -y --no-install-recommends \
-                  jq rsync python3-pip python3.11-venv tree nano htop git sudo nmap dnsutils \
+                  jq rsync python3-pip python3-venv tree nano htop git sudo nmap dnsutils \
                   netcat-traditional sqlite3 ffmpeg imagemagick curl wget \
                   ca-certificates gnupg lsb-release build-essential unzip zip gzip openssl nodejs npm
                 for bin in jq rsync tree nano htop git nmap netcat ffmpeg convert sqlite3; do
