@@ -59,7 +59,7 @@ spec:
           args:
             - |
               set -e
-              TOOLS_VERSION="4"
+              TOOLS_VERSION="5"
               if [ -f /data/tools/.installed-version ] && [ "$(cat /data/tools/.installed-version)" = "$TOOLS_VERSION" ]; then
                 echo "Tools v$TOOLS_VERSION already present, skipping reinstall"
               else
@@ -68,7 +68,7 @@ spec:
                 mkdir -p /data/tools/bin /data/tools/lib
                 apt-get update
                 apt-get install -y --no-install-recommends \
-                  jq rsync python3-pip tree nano htop git sudo nmap dnsutils \
+                  jq rsync python3-pip python3.11-venv tree nano htop git sudo nmap dnsutils \
                   netcat-traditional sqlite3 ffmpeg imagemagick curl wget \
                   ca-certificates gnupg lsb-release build-essential unzip zip gzip openssl nodejs npm
                 for bin in jq rsync tree nano htop git nmap netcat ffmpeg convert sqlite3; do
@@ -113,6 +113,17 @@ spec:
                 echo "$TOOLS_VERSION" > /data/tools/.installed-version
                 apt-get clean && rm -rf /var/lib/apt/lists/*
                 echo "Tools installed successfully"
+              fi
+              # Always install/update truxonline CA cert (fast, idempotent)
+              if [ -f /data/workspace/truxonline-ca.pem ]; then
+                mkdir -p /usr/local/share/ca-certificates
+                cp /data/workspace/truxonline-ca.pem /usr/local/share/ca-certificates/truxonline-ca.crt
+                update-ca-certificates 2>/dev/null || true
+                mkdir -p /data/tools/certs
+                cp /etc/ssl/certs/ca-certificates.crt /data/tools/certs/ca-bundle.crt
+                echo "Truxonline CA installed"
+              else
+                echo "WARNING: /data/workspace/truxonline-ca.pem not found, skipping CA install"
               fi
               # Always fix permissions on tool dirs (targeted — fast)
               chown -R 1000:1000 /data/tools 2>/dev/null || true
@@ -247,6 +258,12 @@ spec:
               value: discord,github,telegram,@clawdbot/google-gemini-cli-auth
             - name: NODE_PATH
               value: /data/node_modules
+            - name: NODE_EXTRA_CA_CERTS
+              value: /data/workspace/truxonline-ca.pem
+            - name: REQUESTS_CA_BUNDLE
+              value: /data/tools/certs/ca-bundle.crt
+            - name: SSL_CERT_FILE
+              value: /data/tools/certs/ca-bundle.crt
             - name: OPENCLAW_LOG_LEVEL
               value: info
             - name: OPENCLAW_GATEWAY_MODE
