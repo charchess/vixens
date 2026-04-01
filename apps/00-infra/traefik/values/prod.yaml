@@ -58,6 +58,10 @@ metrics:
     addEntryPointsLabels: true
     addServicesLabels: true
     addRoutersLabels: true
+    serviceMonitor:
+      enabled: true
+      namespace: traefik
+      interval: 60s
 # ============================================================================
 # Production Pod Disruption Budget
 # ============================================================================

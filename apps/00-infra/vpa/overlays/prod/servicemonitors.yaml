@@ -10,8 +10,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: vertical-pod-autoscaler
-      app.kubernetes.io/component: recommender
+      app: vpa-recommender
   namespaceSelector:
     matchNames:
       - vpa
@@ -31,8 +30,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: vertical-pod-autoscaler
-      app.kubernetes.io/component: updater
+      app: vpa-updater
   namespaceSelector:
     matchNames:
       - vpa

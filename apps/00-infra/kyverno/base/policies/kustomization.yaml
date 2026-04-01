@@ -46,6 +46,7 @@ resources:
   - policy-exception-argocd.yaml
   - policy-exception-cainjector.yaml
   - policy-exception-mixed-sizing.yaml
+  - policy-exception-nometrics.yaml
   - rbac-secrets.yaml
   - rbac-servicemonitors.yaml
   - require-goldilocks.yaml
