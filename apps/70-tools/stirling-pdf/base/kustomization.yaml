@@ -4,3 +4,6 @@ kind: Kustomization
 namespace: tools
 resources:
 # Empty base - resources are managed by Helm
+
+components:
+  - ../../../_shared/components/revision-history-limit

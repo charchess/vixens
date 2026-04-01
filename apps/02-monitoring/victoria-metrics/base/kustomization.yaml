@@ -5,3 +5,8 @@ namespace: monitoring
 resources:
   - alertmanager-infisical-secret.yaml
   - vmrule-pvc-pending.yaml
+
+components:
+  - ../../../_shared/components/revision-history-limit
+  - ../../../_shared/components/sync-wave/wave-15
+  - ../../../_shared/components/goldilocks/enabled
