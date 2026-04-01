@@ -8,3 +8,6 @@ resources:
   - redis-credentials.yaml
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml
+
+components:
+  - ../../../_shared/components/revision-history-limit

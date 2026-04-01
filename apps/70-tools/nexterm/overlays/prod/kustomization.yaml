@@ -7,5 +7,6 @@ resources:
 patches:
   - path: patch-infisical-secret.yaml
 components:
+  - ../../../../_shared/components/sync-wave/wave-15
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/infisical/env-prod
