@@ -11,3 +11,6 @@ resources:
   - servicemonitor.yaml
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml
+
+components:
+  - ../../../_shared/components/revision-history-limit

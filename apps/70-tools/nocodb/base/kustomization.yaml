@@ -8,3 +8,6 @@ resources:
   - ingress.yaml
   - pvc.yaml
   - infisical-secret.yaml
+
+components:
+  - ../../../_shared/components/revision-history-limit

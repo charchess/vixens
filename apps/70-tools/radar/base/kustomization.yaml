@@ -56,3 +56,6 @@ patches:
               - "secrets.infisical.com"
             resources: ["*"]
             verbs: ["get", "list", "watch"]
+
+components:
+  - ../../../_shared/components/revision-history-limit

@@ -8,3 +8,6 @@ resources:
   - deployment.yaml
   - service.yaml
   - infisical-config.yaml
+
+components:
+  - ../../../_shared/components/revision-history-limit

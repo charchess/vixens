@@ -10,3 +10,6 @@ resources:
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml
   - plugins-config.yaml
+
+components:
+  - ../../../_shared/components/revision-history-limit

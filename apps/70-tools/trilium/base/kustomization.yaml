@@ -8,3 +8,6 @@ resources:
   - ingress.yaml
   - trilium-pvc.yaml
   - pdb.yaml
+
+components:
+  - ../../../_shared/components/revision-history-limit

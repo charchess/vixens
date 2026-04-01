@@ -8,6 +8,9 @@ resources:
   - service.yaml
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml
+components:
+  - ../../../_shared/components/revision-history-limit
+
 labels:
   - pairs:
       app: linkwarden
