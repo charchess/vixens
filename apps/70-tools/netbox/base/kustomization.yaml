@@ -8,4 +8,5 @@ resources:
   - netbox-db-secrets.yaml
   - infisical-secret.yaml
   - networkpolicy.yaml
+  - cilium-networkpolicy.yaml
   - plugins-config.yaml

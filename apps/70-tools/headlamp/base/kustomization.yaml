@@ -8,6 +8,7 @@ resources:
   - infisical-secret.yaml
   - serviceaccount.yaml
   - networkpolicy.yaml
+  - cilium-networkpolicy.yaml
   # vpa.yaml removed - Kyverno generates vixens-headlamp VPA via sizing-v2 label
 components:
   - ../../../_shared/components/revision-history-limit

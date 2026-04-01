@@ -10,3 +10,4 @@ resources:
   - litestream-config.yaml
   - servicemonitor.yaml
   - networkpolicy.yaml
+  - cilium-networkpolicy.yaml

@@ -13,3 +13,4 @@ resources:
   - vpa.yaml
   - servicemonitor.yaml
   - networkpolicy.yaml
+  - cilium-networkpolicy.yaml

@@ -198,9 +198,27 @@ Do instead: TOUJOURS utiliser le pattern fix-run-dir pour les images LSIO/s6-ove
 
 ---
 
+## 🛡️ CrowdSec Bouncer Gotchas (Priority 2)
+
+1. **[2026-04-01] PAPI community blocklist → SQLite timeout → all 403 (fail-closed)**
+   CrowdSec LAPI pulls millions of community IPs via PAPI → `QueryAllDecisionsWithFilters` >10s → stream 500 → `isCrowdsecStreamHealthy=false` → bouncer blocks ALL traffic.
+   Do instead: Remove `ENROLL_KEY` from LAPI env to disable CAPI. Also set `updateMaxFailure: "-1"` (fail-open) and `clientTrustedIps: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"` in middleware.
+
+2. **[2026-04-01] `allowLocalRequests` does NOT exist in crowdsec-bouncer-traefik-plugin v1.5.x**
+   The field was never in the Config struct. Use `clientTrustedIps` (JSON tag: `clientTrustedIps`) instead. Trusted IPs bypass ALL bouncer checks including `isCrowdsecStreamHealthy=false`.
+   Do instead: `clientTrustedIps: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"` in Middleware CRD.
+
+3. **[2026-04-01] CrowdSec SQLite DB corrupt/slow → delete and restart LAPI**
+   If `QueryAllDecisionsWithFilters: context canceled` persists after restart, the DB is too large or corrupt.
+   Do instead: `kubectl exec -n crowdsec <pod> -- rm /var/lib/crowdsec/data/crowdsec.db` then `kubectl rollout restart deployment crowdsec-lapi -n crowdsec`. Also delete `online_api_credentials.yaml` to prevent PAPI re-pull.
+
 ## 🏗️ Infrastructure Patterns (Priority 2)
 
-1. **[2026-03-28] Cilium eBPF egress cassé après incident nœud**
+1. **[2026-04-01] Cilium L2 Announcement incompatible avec externalTrafficPolicy:Local**
+   Lease holder ARP peut être un nœud SANS pod local → trafic droppé → connexion timeout. Vérifier: `kubectl get lease -n kube-system cilium-l2announce-<svc>-<ns>` — si holder n'a pas de pod, supprimer le lease OU passer à Cluster.
+   Do instead: toujours `externalTrafficPolicy: Cluster` avec Cilium L2 Announcement. SNAT Cilium forward vers pods correctement depuis n'importe quel nœud.
+
+2. **[2026-03-28] Cilium eBPF egress cassé après incident nœud**
    Symptôme: pod sur le nœud ne peut plus joindre internet (context deadline exceeded), les autres nœuds OK.
    Do instead: `kubectl -n kube-system delete pod $(kubectl -n kube-system get pod -l k8s-app=cilium --field-selector spec.nodeName=<NODE> -o jsonpath='{.items[0].metadata.name}')` — le nouveau pod réinitialise l'eBPF state.
 

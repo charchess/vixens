@@ -1,0 +1,19 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: mylar
+spec:
+  endpointSelector:
+    matchLabels:
+      app: mylar
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+      toPorts:
+        - ports:
+            - port: "8090"
+              protocol: TCP
+  egress:
+    - {}

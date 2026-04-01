@@ -1,0 +1,19 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: whisparr
+spec:
+  endpointSelector:
+    matchLabels:
+      app: whisparr
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+      toPorts:
+        - ports:
+            - port: "6969"
+              protocol: TCP
+  egress:
+    - {}

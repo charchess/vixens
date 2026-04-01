@@ -1,0 +1,19 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: bookshelf
+spec:
+  endpointSelector:
+    matchLabels:
+      app: bookshelf
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+      toPorts:
+        - ports:
+            - port: "8787"
+              protocol: TCP
+  egress:
+    - {}

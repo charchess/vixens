@@ -13,4 +13,5 @@ resources:
   - middleware-forward-auth.yaml
   - servicemonitor.yaml
   - networkpolicy.yaml
+  - cilium-networkpolicy.yaml
   - networkpolicy-authentik-worker.yaml

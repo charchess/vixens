@@ -10,6 +10,7 @@ resources:
   - pvc.yaml
   - pdb.yaml
   - networkpolicy.yaml
+  - cilium-networkpolicy.yaml
   - infisical-secret.yaml
   - litestream-config.yaml
   - servicemonitor.yaml

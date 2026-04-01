@@ -14,6 +14,7 @@ resources:
   - middleware-redirect.yaml
   - middleware.yaml
   - networkpolicy.yaml
+  - cilium-networkpolicy.yaml
 labels:
   - pairs:
       app: docspell
