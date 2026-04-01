@@ -26,8 +26,7 @@ spec:
         vixens.io/fast-start: "true"
         reloader.stakater.com/auto: "true"
         vixens.io/no-long-connections: "true"
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9090"
+        dataangel.io/metrics-port: "9090"
     spec:
       priorityClassName: vixens-medium
       tolerations:

@@ -47,6 +47,7 @@ resources:
   - policy-exception-cainjector.yaml
   - policy-exception-mixed-sizing.yaml
   - rbac-secrets.yaml
+  - rbac-servicemonitors.yaml
   - require-goldilocks.yaml
   - require-litestream-monitoring.yaml
   - require-namespace-pod-security.yaml
