@@ -15,5 +15,8 @@ spec:
         - ports:
             - port: "5000"
               protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
   egress:
     - {}

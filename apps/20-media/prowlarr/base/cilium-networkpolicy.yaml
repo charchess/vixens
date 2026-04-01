@@ -15,5 +15,8 @@ spec:
         - ports:
             - port: "9696"
               protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
   egress:
     - {}
