@@ -15,6 +15,7 @@ spec:
         vixens.io/fast-start: "true"
         vixens.io/service-binding: "false"
         vixens.io/explicitly-allow-root: "true"
+        vixens.io/nometrics: "true"
       labels:
         app: netvisor-daemon
         vixens.io/sizing.daemon: G-nano
