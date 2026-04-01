@@ -62,16 +62,6 @@ agent:
 # LAPI config
 # ============================================================================
 config:
-  config.yaml.local: |
-    db_config:
-      type: postgresql
-      user: crowdsec
-      password: ${CROWDSEC_DB_PASSWORD}
-      db_name: crowdsec
-      host: postgresql-shared-rw.databases.svc.cluster.local
-      port: 5432
-      sslmode: disable
-
   profiles.yaml: |
     name: default_ip_remediation
     filters:

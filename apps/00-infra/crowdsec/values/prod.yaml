@@ -10,3 +10,22 @@ lapi:
       value: "vixens-k8s-prod"
     - name: ENROLL_TAGS
       value: "k8s linux homelab prod"
+
+  extraInitContainers:
+    - name: write-db-config
+      image: busybox:1.37.0
+      command:
+        - sh
+        - -c
+        - |
+          printf 'db_config:\n  type: postgresql\n  user: crowdsec\n  password: %s\n  db_name: crowdsec\n  host: postgresql-shared-rw.databases.svc.cluster.local\n  port: 5432\n  sslmode: disable\n' "$CROWDSEC_DB_PASSWORD" > /etc/crowdsec/config.yaml.local
+          echo "db config written to /etc/crowdsec/config.yaml.local"
+      env:
+        - name: CROWDSEC_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crowdsec-secrets
+              key: CROWDSEC_DB_PASSWORD
+      volumeMounts:
+        - name: crowdsec-config
+          mountPath: /etc/crowdsec
