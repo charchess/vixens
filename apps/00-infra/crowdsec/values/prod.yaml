@@ -6,11 +6,6 @@ lapi:
         secretKeyRef:
           name: crowdsec-secrets
           key: CROWDSEC_BOUNCER_KEY
-    - name: ENROLL_KEY
-      valueFrom:
-        secretKeyRef:
-          name: crowdsec-secrets
-          key: ENROLL_KEY
     - name: ENROLL_INSTANCE_NAME
       value: "vixens-k8s-prod"
     - name: ENROLL_TAGS
