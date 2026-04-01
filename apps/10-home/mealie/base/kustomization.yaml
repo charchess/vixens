@@ -11,3 +11,4 @@ resources:
   - pvc.yaml
 
   - networkpolicy.yaml
+  - cilium-networkpolicy.yaml

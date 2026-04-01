@@ -10,5 +10,6 @@ commonLabels:
 resources:
   - ippool.yaml
   - l2policy.yaml
+  - ccnp-default-deny.yaml
 components:
   - ../../../_shared/components/revision-history-limit

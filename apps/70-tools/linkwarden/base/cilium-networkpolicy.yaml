@@ -1,0 +1,21 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: linkwarden
+spec:
+  endpointSelector:
+    matchLabels:
+      app: linkwarden
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+        - matchLabels:
+            io.kubernetes.pod.namespace: keda
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+  egress:
+    - {}

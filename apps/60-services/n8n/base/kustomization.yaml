@@ -7,5 +7,6 @@ resources:
   - service.yaml
   - pvc.yaml
   - networkpolicy.yaml
+  - cilium-networkpolicy.yaml
   - infisical-secret.yaml
   - infisical-config.yaml

@@ -7,3 +7,4 @@ resources:
   - service.yaml
   - redis-credentials.yaml
   - networkpolicy.yaml
+  - cilium-networkpolicy.yaml

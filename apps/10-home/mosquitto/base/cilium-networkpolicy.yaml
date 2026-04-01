@@ -1,0 +1,19 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: mosquitto
+spec:
+  endpointSelector:
+    matchLabels:
+      app: mosquitto
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: homeassistant
+      toPorts:
+        - ports:
+            - port: "1883"
+              protocol: TCP
+  egress:
+    - {}

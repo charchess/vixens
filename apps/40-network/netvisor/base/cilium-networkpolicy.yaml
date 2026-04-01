@@ -1,0 +1,21 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: netvisor-server
+spec:
+  endpointSelector:
+    matchLabels:
+      app: netvisor-server
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+        - matchLabels:
+            io.kubernetes.pod.namespace: keda
+      toPorts:
+        - ports:
+            - port: "60072"
+              protocol: TCP
+  egress:
+    - {}

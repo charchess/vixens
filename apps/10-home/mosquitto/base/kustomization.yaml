@@ -9,6 +9,7 @@ resources:
   - statefulset.yaml
   - service.yaml
   - networkpolicy.yaml
+  - cilium-networkpolicy.yaml
 labels:
   - pairs:
       app.kubernetes.io/name: mosquitto

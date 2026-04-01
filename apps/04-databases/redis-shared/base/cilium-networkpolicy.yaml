@@ -1,0 +1,25 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: redis-shared
+spec:
+  endpointSelector:
+    matchLabels:
+      app: redis-shared
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: auth
+        - matchLabels:
+            io.kubernetes.pod.namespace: tools
+        - matchLabels:
+            io.kubernetes.pod.namespace: networking
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
+  egress:
+    - {}

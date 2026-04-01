@@ -10,6 +10,7 @@ resources:
   - service.yaml
   - pdb.yaml
   - networkpolicy.yaml
+  - cilium-networkpolicy.yaml
   - ingressroute-dns.yaml
   - infisical-secret.yaml
   - litestream-config.yaml

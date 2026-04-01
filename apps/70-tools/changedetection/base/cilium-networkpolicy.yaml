@@ -1,0 +1,19 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: changedetection
+spec:
+  endpointSelector:
+    matchLabels:
+      app: changedetection
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+      toPorts:
+        - ports:
+            - port: "5000"
+              protocol: TCP
+  egress:
+    - {}

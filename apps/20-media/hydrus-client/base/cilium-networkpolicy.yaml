@@ -1,0 +1,21 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: hydrus-client
+spec:
+  endpointSelector:
+    matchLabels:
+      app: hydrus-client
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+      toPorts:
+        - ports:
+            - port: "5800"
+              protocol: TCP
+            - port: "45869"
+              protocol: TCP
+  egress:
+    - {}

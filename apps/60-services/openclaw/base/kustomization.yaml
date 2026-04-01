@@ -8,3 +8,4 @@ resources:
   - infisical-secret.yaml
   - infisical-config.yaml
   - networkpolicy.yaml
+  - cilium-networkpolicy.yaml

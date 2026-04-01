@@ -8,6 +8,7 @@ resources:
   - signal-relay.yaml
   - ca-bundle.yaml
   - networkpolicy.yaml
+  - cilium-networkpolicy.yaml
   - networkpolicy-netbird-management.yaml
   - networkpolicy-netbird-signal.yaml
   - networkpolicy-netbird-relay.yaml

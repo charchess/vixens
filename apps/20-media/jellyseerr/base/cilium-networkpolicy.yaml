@@ -1,0 +1,21 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: jellyseerr
+spec:
+  endpointSelector:
+    matchLabels:
+      app: jellyseerr
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+        - matchLabels:
+            io.kubernetes.pod.namespace: keda
+      toPorts:
+        - ports:
+            - port: "5055"
+              protocol: TCP
+  egress:
+    - {}
