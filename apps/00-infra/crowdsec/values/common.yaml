@@ -18,19 +18,27 @@ lapi:
   replicas: 1
 
   env:
-    # Bouncer key for Traefik - generated via Infisical, injected by chart
     - name: BOUNCER_KEY_traefik
       valueFrom:
         secretKeyRef:
           name: crowdsec-secrets
           key: CROWDSEC_BOUNCER_KEY
-    # ENROLL_KEY removed: PAPI/community blocklist disabled (DB too large → stream timeout)
+    - name: ENROLL_KEY
+      valueFrom:
+        secretKeyRef:
+          name: crowdsec-secrets
+          key: ENROLL_KEY
+    - name: ENROLL_INSTANCE_NAME
+      value: "vixens-k8s"
+    - name: CROWDSEC_DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: crowdsec-secrets
+          key: CROWDSEC_DB_PASSWORD
 
   persistentVolume:
     data:
-      enabled: true
-      size: 1Gi
-      storageClassName: synelia-iscsi-retain
+      enabled: false
     config:
       enabled: true
       size: 1Gi
@@ -54,6 +62,16 @@ agent:
 # LAPI config
 # ============================================================================
 config:
+  config.yaml.local: |
+    db_config:
+      type: postgresql
+      user: crowdsec
+      password: ${CROWDSEC_DB_PASSWORD}
+      db_name: crowdsec
+      host: postgresql-shared-rw.databases.svc.cluster.local
+      port: 5432
+      sslmode: disable
+
   profiles.yaml: |
     name: default_ip_remediation
     filters:
