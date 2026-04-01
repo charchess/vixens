@@ -12,6 +12,7 @@ labels:
 components:
   - ../../../../_shared/components/sync-wave/wave-15
   - ../../../../_shared/components/goldilocks/enabled
+  - ../../../../_shared/components/nometrics
   - ../../../../_shared/components/dataangel
 
 patches:

@@ -10,3 +10,6 @@ resources:
   - infisical-secret.yaml
   - vikunja-db-secrets.yaml
   - pdb.yaml
+
+components:
+  - ../../../_shared/components/revision-history-limit

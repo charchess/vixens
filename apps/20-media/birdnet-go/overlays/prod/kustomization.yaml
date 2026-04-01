@@ -10,6 +10,7 @@ components:
   - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/sync-wave/wave-8
   - ../../../../_shared/components/goldilocks/enabled
+  - ../../../../_shared/components/nometrics
   - ../../../../_shared/components/poddisruptionbudget/1
   - ../../../../_shared/components/dataangel
 
