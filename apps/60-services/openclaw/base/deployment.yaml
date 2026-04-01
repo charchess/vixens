@@ -50,7 +50,7 @@ spec:
         # 1/3 — Install system tools (merged fix-perms + install-tools)
         #        Skips reinstall if TOOLS_VERSION matches. Always chowns /data/tools.
         - name: install-tools
-          image: debian:trixie-20260316
+          image: debian:bookworm-20260407
           securityContext:
             runAsUser: 0
           command:
@@ -59,7 +59,7 @@ spec:
           args:
             - |
               set -e
-              TOOLS_VERSION="5"
+              TOOLS_VERSION="6"
               if [ -f /data/tools/.installed-version ] && [ "$(cat /data/tools/.installed-version)" = "$TOOLS_VERSION" ]; then
                 echo "Tools v$TOOLS_VERSION already present, skipping reinstall"
               else
@@ -68,7 +68,7 @@ spec:
                 mkdir -p /data/tools/bin /data/tools/lib
                 apt-get update
                 apt-get install -y --no-install-recommends \
-                  jq rsync python3-pip python3-venv tree nano htop git sudo nmap dnsutils \
+                  jq rsync python3-pip python3.11-venv tree nano htop git sudo nmap dnsutils \
                   netcat-traditional sqlite3 ffmpeg imagemagick curl wget \
                   ca-certificates gnupg lsb-release build-essential unzip zip gzip openssl nodejs npm
                 for bin in jq rsync tree nano htop git nmap netcat ffmpeg convert sqlite3; do
