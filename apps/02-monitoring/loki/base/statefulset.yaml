@@ -15,7 +15,6 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
-        vixens.io/no-long-connections: "true"
       labels:
         app: loki
         vixens.io/sizing.loki: G-large
@@ -38,6 +37,10 @@ spec:
       containers:
         - name: loki
           image: grafana/loki:3.7.1
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
           args:
             - -config.file=/etc/loki/loki.yaml
           ports:

@@ -26,7 +26,6 @@ spec:
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
-        vixens.io/no-long-connections: "true"
     spec:
       initContainers:
         - name: restore-data
@@ -106,6 +105,10 @@ spec:
       containers:
         - name: mosquitto
           image: eclipse-mosquitto:2.0.22
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
           ports:
             - name: mqtt
               containerPort: 1883
