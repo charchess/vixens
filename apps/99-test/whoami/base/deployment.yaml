@@ -18,6 +18,7 @@ spec:
       annotations:
         vixens.io/nometrics: "true"
         vixens.io/fast-start: "true"
+        vixens.io/no-long-connections: "true"
         goldilocks.fairwinds.com/enabled: "true"
         autoscaling.k8s.io/vpa: "true"
     spec:

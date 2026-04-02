@@ -8,6 +8,8 @@ components:
   - ../../../../_shared/components/sync-wave/wave-2
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
+  - ../../../../_shared/components/poddisruptionbudget/1
+  - ../../../../_shared/components/priority/high
 
 patches:
   - path: patch-infisical-env.yaml

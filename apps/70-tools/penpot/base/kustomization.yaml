@@ -12,5 +12,8 @@ resources:
   - cilium-networkpolicy.yaml
   - networkpolicy-penpot-exporter.yaml
   - networkpolicy-penpot-frontend.yaml
+  - pdb-backend.yaml
+  - pdb-exporter.yaml
+  - pdb-frontend.yaml
 components:
   - ../../../_shared/components/revision-history-limit

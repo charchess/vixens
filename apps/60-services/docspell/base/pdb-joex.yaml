@@ -1,0 +1,10 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: docspell-joex
+spec:
+  selector:
+    matchLabels:
+      app: docspell
+      component: joex

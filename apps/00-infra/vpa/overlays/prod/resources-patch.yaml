@@ -36,6 +36,7 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/service-binding: "false"
+        vixens.io/no-long-connections: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "8942"
         prometheus.io/path: "/metrics"
@@ -63,6 +64,7 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/service-binding: "false"
+        vixens.io/no-long-connections: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "8943"
         prometheus.io/path: "/metrics"

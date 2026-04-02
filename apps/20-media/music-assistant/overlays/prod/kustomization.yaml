@@ -11,6 +11,7 @@ components:
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
   - ../../../../_shared/components/dataangel
+  - ../../../../_shared/components/poddisruptionbudget/1
 
 patches:
   - target:

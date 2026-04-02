@@ -10,3 +10,4 @@ resources:
   - cilium-networkpolicy.yaml
   - infisical-secret.yaml
   - infisical-config.yaml
+  - pdb.yaml

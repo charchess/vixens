@@ -1,0 +1,9 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-shared
+spec:
+  selector:
+    matchLabels:
+      app: redis-shared

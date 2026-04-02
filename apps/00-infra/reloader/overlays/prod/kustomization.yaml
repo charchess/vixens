@@ -7,5 +7,6 @@ resources:
 components:
   - ../../../../_shared/components/sync-wave/wave-3
   - ../../../../_shared/components/goldilocks/enabled
+  - ../../../../_shared/components/poddisruptionbudget/1
 
 patches:

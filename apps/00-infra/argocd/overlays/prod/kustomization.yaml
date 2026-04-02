@@ -254,4 +254,50 @@ patches:
           vpa.kubernetes.io/updateMode: "Off"
     target:
       kind: StatefulSet
+  # Graceful shutdown bypass — pure controllers, no user connections
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations/vixens.io~1no-long-connections
+        value: "true"
+    target:
+      kind: Deployment
+      name: argocd-applicationset-controller
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations/vixens.io~1no-long-connections
+        value: "true"
+    target:
+      kind: Deployment
+      name: argocd-notifications-controller
+  # Graceful shutdown preStop — network-facing components with active connections
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/lifecycle
+        value:
+          preStop:
+            exec:
+              command: ["sleep", "5"]
+    target:
+      kind: Deployment
+      name: argocd-server
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/lifecycle
+        value:
+          preStop:
+            exec:
+              command: ["sleep", "5"]
+    target:
+      kind: Deployment
+      name: argocd-repo-server
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/lifecycle
+        value:
+          preStop:
+            exec:
+              command: ["sleep", "5"]
+    target:
+      kind: Deployment
+      name: argocd-dex-server
 components:

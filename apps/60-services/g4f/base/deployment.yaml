@@ -6,6 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: g4f
 spec:
+  revisionHistoryLimit: 3
   replicas: 1
   strategy:
     type: Recreate

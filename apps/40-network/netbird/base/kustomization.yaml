@@ -12,5 +12,9 @@ resources:
   - networkpolicy-netbird-management.yaml
   - networkpolicy-netbird-signal.yaml
   - networkpolicy-netbird-relay.yaml
+  - pdb-dashboard.yaml
+  - pdb-management.yaml
+  - pdb-signal.yaml
+  - pdb-relay.yaml
 components:
   - ../../../_shared/components/revision-history-limit

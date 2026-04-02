@@ -9,3 +9,5 @@ resources:
   - infisical-secret.yaml
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml
+  - pdb-server.yaml
+  - pdb-daemon.yaml
