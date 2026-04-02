@@ -18,29 +18,28 @@ spec:
       targetRevision: 0.10.26
       helm:
         values: |
-          controllerManager:
-            manager:
-              image:
-                repository: infisical/kubernetes-operator
-                tag: v0.10.26
-              # NOTE: chart does not support priorityClassName — applied via kustomize JSON6902 patch
-              resources:
-                limits:
-                  cpu: 500m
-                  memory: 256Mi
-                requests:
-                  cpu: 10m
-                  memory: 64Mi
-            tolerations:
-              - key: node-role.kubernetes.io/control-plane
-                operator: Exists
-                effect: NoSchedule
-            # infisical-operator exposes /metrics on 8443 (HTTPS via kube-rbac-proxy)
-            # check-metrics policy requires prometheus.io/scrape or vixens.io/nometrics
-            # The chart may not support podAnnotations natively — apply nometrics as fallback
-            # (operator metrics require service account auth, scraping externally is not trivial)
-          podAnnotations:
-            vixens.io/nometrics: "true"
+            controllerManager:
+              manager:
+                image:
+                  repository: infisical/kubernetes-operator
+                  tag: v0.10.26
+                # NOTE: chart does not support priorityClassName — applied via kustomize JSON6902 patch
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 256Mi
+                  requests:
+                    cpu: 10m
+                    memory: 64Mi
+              tolerations:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: Exists
+                  effect: NoSchedule
+              podAnnotations:
+                vixens.io/no-long-connections: "true"
+                vixens.io/nometrics: "true"
+              podLabels:
+                vixens.io/sizing.manager: G-small
     # Kustomize overlay for pod annotations (chart has no podAnnotations support)
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable

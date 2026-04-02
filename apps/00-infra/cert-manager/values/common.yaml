@@ -30,6 +30,7 @@ podAnnotations:
   vixens.io/fast-start: "true"
   vixens.io/noingressneeded: "true"
   vixens.io/service-binding: "false"
+  vixens.io/no-long-connections: "true"
   prometheus.io/scrape: "true"
   prometheus.io/port: "9402"
   prometheus.io/path: "/metrics"
@@ -62,6 +63,7 @@ webhook:
     vixens.io/fast-start: "true"
     vixens.io/service-binding: "false"
     vixens.io/noingressneeded: "true"
+    vixens.io/no-long-connections: "true"
     vixens.io/nometrics: "true"  # cert-manager webhook has no Prometheus metrics endpoint
   deploymentAnnotations:
     argocd.argoproj.io/sync-wave: "0"
