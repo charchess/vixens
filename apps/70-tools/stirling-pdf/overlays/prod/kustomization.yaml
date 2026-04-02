@@ -8,16 +8,7 @@ resources:
   - httpscaledobject.yaml
   - keda-interceptor-svc.yaml
 
-# NOTE: ArgoCD multi-source limitation — kustomize patches cannot target Helm-rendered resources.
-# The following are active (target Deployment metadata, not pod template):
-#   - gold-maturity annotations: argocd sync-wave, goldilocks, vpa
-# The following are dead code (target spec.template or spec.revisionHistoryLimit):
-#   - pod template labels (vixens.io/sizing.*, vpa-mode) → handled via Helm values
-#   - revisionHistoryLimit → hardcoded=10 in chart, cannot be patched from kustomize in multi-source
-
 patches:
-  # gold-maturity annotations via direct JSON patches (Helm chart lacks deploymentAnnotations support)
-  # These target Deployment metadata and work correctly in ArgoCD multi-source.
   - patch: |-
       - op: add
         path: /metadata/annotations/argocd.argoproj.io~1sync-wave
@@ -28,6 +19,9 @@ patches:
       - op: add
         path: /metadata/annotations/vpa.kubernetes.io~1updateMode
         value: "Off"
+      - op: replace
+        path: /spec/revisionHistoryLimit
+        value: 3
     target:
       kind: Deployment
       name: stirling-pdf-stirling-pdf-chart

@@ -46,5 +46,15 @@ podLabels:
   vixens.io/priority-class: vixens-medium
 
 podAnnotations:
-  vixens.io/fast-start: "true"
-  vixens.io/nometrics: "true"
+  keda:
+    vixens.io/fast-start: "true"
+    vixens.io/nometrics: "true"
+    vixens.io/service-binding: "false"
+  metricsAdapter:
+    vixens.io/fast-start: "true"
+    vixens.io/nometrics: "true"
+    vixens.io/service-binding: "false"
+  webhooks:
+    vixens.io/fast-start: "true"
+    vixens.io/nometrics: "true"
+    vixens.io/service-binding: "false"

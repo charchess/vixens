@@ -1,0 +1,19 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: n8n
+  namespace: services
+  labels:
+    app: n8n
+spec:
+  selector:
+    matchLabels:
+      app: n8n
+  namespaceSelector:
+    matchNames:
+      - services
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 60s

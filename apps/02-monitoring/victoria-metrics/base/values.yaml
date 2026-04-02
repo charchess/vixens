@@ -11,7 +11,10 @@ victoria-metrics-operator:
   enabled: true
   podLabels:
     vixens.io/priority-class: vixens-low
+    vixens.io/sizing.operator: V-nano
   podAnnotations:
+    vixens.io/service-binding: "false"
+    vixens.io/fast-start: "true"
     prometheus.io/scrape: "true"
     prometheus.io/port: "8080"
     prometheus.io/path: "/metrics"
@@ -72,6 +75,9 @@ vmagent:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8429"
         prometheus.io/path: "/metrics"
+      labels:
+        vixens.io/sizing.vmagent: V-nano
+        vixens.io/sizing.config-reloader: G-nano
     priorityClassName: vixens-critical
     inlineRelabelConfig:
       # Go runtime internals (every exporter)
@@ -121,6 +127,9 @@ vmalert:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8880"
         prometheus.io/path: "/metrics"
+      labels:
+        vixens.io/sizing.vmalert: V-nano
+        vixens.io/sizing.config-reloader: G-nano
 
 # --- Alertmanager (keep Discord config from Prometheus) ---
 alertmanager:
@@ -145,6 +154,9 @@ alertmanager:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9093"
         prometheus.io/path: "/metrics"
+      labels:
+        vixens.io/sizing.alertmanager: V-nano
+        vixens.io/sizing.config-reloader: G-nano
   config:
     global:
       resolve_timeout: 5m

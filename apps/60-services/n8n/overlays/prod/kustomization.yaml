@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ../../base
   - ingress.yaml
+  - servicemonitor.yaml
 
 components:
   - ../../../../_shared/components/infisical/env-prod
