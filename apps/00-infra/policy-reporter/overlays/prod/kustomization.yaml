@@ -13,3 +13,17 @@ components:
   - ../../../../_shared/components/priority/low
 
 patches:
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/vixens.io~1sizing.kyverno-plugin
+        value: "V-nano"
+    target:
+      kind: Deployment
+      name: policy-reporter-kyverno-plugin
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/vixens.io~1sizing.ui
+        value: "V-nano"
+    target:
+      kind: Deployment
+      name: policy-reporter-ui

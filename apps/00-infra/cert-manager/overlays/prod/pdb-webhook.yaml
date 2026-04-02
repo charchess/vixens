@@ -1,0 +1,9 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cert-manager-webhook-app
+spec:
+  selector:
+    matchLabels:
+      app: webhook

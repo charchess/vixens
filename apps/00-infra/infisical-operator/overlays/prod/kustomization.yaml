@@ -4,15 +4,10 @@ kind: Kustomization
 resources:
   - ../../base
 
-# infisical-operator (v0.10.x) does not support podAnnotations/podLabels in chart.
-# Pod annotations and priorityClassName are injected via Kyverno:
-#   → mutate-pod-annotations: inject fast-start, service-binding, prometheus scrape annotations
-#   → mutate-priority-class: inject priorityClassName=vixens-critical
-# Match: control-plane=controller-manager in infisical-operator-system namespace.
-# NOTE: JSON6902 patches on spec.template.* are dead code in ArgoCD multi-source.
-#
+components:
+  - ../../../../_shared/components/poddisruptionbudget/1
+
 patches:
-  # Patch: Deployment-level annotations (ArgoCD wave, Goldilocks VPA)
   - patch: |-
       - op: add
         path: /metadata/annotations/argocd.argoproj.io~1sync-wave
@@ -23,6 +18,13 @@ patches:
       - op: add
         path: /metadata/annotations/vpa.kubernetes.io~1updateMode
         value: "Off"
+    target:
+      kind: Deployment
+      name: infisical-opera-controller-manager
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations/vixens.io~1no-long-connections
+        value: "true"
     target:
       kind: Deployment
       name: infisical-opera-controller-manager
