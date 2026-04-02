@@ -4,6 +4,11 @@ kind: Kustomization
 namespace: cnpg-system
 resources:
   - servicemonitor.yaml
+  - pdb.yaml
+
+components:
+  - ../../../../_shared/components/poddisruptionbudget/1
+  - ../../../../_shared/components/priority/medium
 
 patches:
   - patch: |-
@@ -19,7 +24,6 @@ patches:
     target:
       kind: Deployment
       name: cloudnative-pg
-  # prometheus metrics: cloudnative-pg exposes /metrics on port 8080
   - patch: |-
       - op: add
         path: /spec/template/metadata/annotations/prometheus.io~1scrape
@@ -30,6 +34,13 @@ patches:
       - op: add
         path: /spec/template/metadata/annotations/prometheus.io~1path
         value: "/metrics"
+    target:
+      kind: Deployment
+      name: cloudnative-pg
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations/vixens.io~1no-long-connections
+        value: "true"
     target:
       kind: Deployment
       name: cloudnative-pg

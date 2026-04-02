@@ -300,4 +300,13 @@ patches:
     target:
       kind: Deployment
       name: argocd-dex-server
+  # argocd-redis sizing label
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/vixens.io~1sizing.redis
+        value: "V-micro"
+    target:
+      kind: Deployment
+      name: argocd-redis
+
 components:

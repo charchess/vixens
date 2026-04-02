@@ -200,6 +200,8 @@ prometheus-node-exporter:
   priorityClassName: vixens-critical
   podAnnotations:
     vixens.io/fast-start: "true"
+  podLabels:
+    vixens.io/sizing.node-exporter: V-nano
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
@@ -236,6 +238,8 @@ kube-state-metrics:
     prometheus.io/scrape: "true"
     prometheus.io/port: "8080"
     prometheus.io/path: /metrics
+  podLabels:
+    vixens.io/sizing.kube-state-metrics: V-micro
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists

@@ -2,7 +2,31 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: cert-manager
+
 resources:
   - ../../base
+  - pdb-controller.yaml
+  - pdb-webhook.yaml
+
 components:
   - ../../../../_shared/components/revision-history-limit
+  - ../../../../_shared/components/poddisruptionbudget/1
+
+patches:
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations/vixens.io~1no-long-connections
+        value: "true"
+    target:
+      kind: Deployment
+      name: cert-manager
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/lifecycle
+        value:
+          preStop:
+            exec:
+              command: ["sleep", "5"]
+    target:
+      kind: Deployment
+      name: cert-manager-webhook

@@ -1,0 +1,9 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cert-manager-controller
+spec:
+  selector:
+    matchLabels:
+      app: cert-manager
