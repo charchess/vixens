@@ -6,4 +6,4 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: birdnet-go
+      app: birdnet-go
