@@ -12,6 +12,14 @@ victoria-metrics-operator:
   podLabels:
     vixens.io/priority-class: vixens-low
     vixens.io/sizing.operator: V-nano
+    app.kubernetes.io/managed-by: argocd
+  resources:
+    requests:
+      cpu: 5m
+      memory: 64Mi
+    limits:
+      cpu: 20m
+      memory: 256Mi
   annotations:
     vixens.io/service-binding: "false"
     vixens.io/fast-start: "true"
@@ -29,6 +37,7 @@ victoria-metrics-operator:
 vmsingle:
   enabled: true
   spec:
+    revisionHistoryLimitCount: 3
     retentionPeriod: "30d"
     storage:
       storageClassName: synelia-iscsi-retain
@@ -59,6 +68,7 @@ vmsingle:
 vmagent:
   enabled: true
   spec:
+    revisionHistoryLimitCount: 3
     scrapeInterval: 30s
     resources:
       requests:
@@ -111,6 +121,7 @@ vmagent:
 vmalert:
   enabled: true
   spec:
+    revisionHistoryLimitCount: 3
     resources:
       requests:
         cpu: 10m
@@ -137,6 +148,7 @@ vmalert:
 alertmanager:
   enabled: true
   spec:
+    revisionHistoryLimitCount: 3
     configSecret: alertmanager-config
     resources:
       requests:
