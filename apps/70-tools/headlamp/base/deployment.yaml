@@ -20,12 +20,16 @@ spec:
         reloader.stakater.com/auto: "true"
         vixens.io/fast-start: "true"
         vixens.io/nometrics: "true"
-        vixens.io/no-long-connections: "true"
+
     spec:
       serviceAccountName: headlamp
       priorityClassName: vixens-medium
       containers:
         - name: headlamp
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
           resources:
             requests:
               cpu: 25m

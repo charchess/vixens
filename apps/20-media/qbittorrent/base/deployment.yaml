@@ -20,7 +20,6 @@ spec:
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/service-binding: "false"
-        vixens.io/no-long-connections: "true"
         kubectl.kubernetes.io/restartedAt: "2026-03-11T22:00:00Z"
         vixens.io/explicitly-allow-root: "true"
     spec:
@@ -40,6 +39,10 @@ spec:
       priorityClassName: vixens-medium
       containers:
         - name: qbittorrent
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
           resources:
             requests:
               cpu: 50m
