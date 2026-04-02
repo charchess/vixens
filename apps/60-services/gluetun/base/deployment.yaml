@@ -14,7 +14,6 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
-        vixens.io/no-long-connections: "true"
         vixens.io/explicitly-allow-root: "true"
       labels:
         app: gluetun
@@ -28,6 +27,10 @@ spec:
       priorityClassName: vixens-medium
       containers:
         - name: gluetun
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
           image: ghcr.io/qdm12/gluetun:v3.41.1
           securityContext:
             capabilities:

@@ -28,7 +28,6 @@ spec:
         reloader.stakater.com/auto: "true"
         vixens.io/fast-start: "true"
         dataangel.io/metrics-port: "9090"
-        vixens.io/no-long-connections: "true"
         vixens.io/explicitly-allow-root: "true"
     spec:
       securityContext:
@@ -99,6 +98,10 @@ spec:
               readOnly: true
       containers:
         - name: homeassistant
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
           resources:
             requests:
               cpu: 100m

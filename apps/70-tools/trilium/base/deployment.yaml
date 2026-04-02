@@ -20,7 +20,7 @@ spec:
         vixens.io/backup-profile: relaxed
       annotations:
         vixens.io/service-binding: "false"
-        vixens.io/no-long-connections: "true"
+
         kubectl.kubernetes.io/restartedAt: "2026-03-11T22:25:00Z"
     spec:
       tolerations:
@@ -31,6 +31,10 @@ spec:
       initContainers: []
       containers:
         - name: trilium
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
           image: triliumnext/notes:v0.95.0
           imagePullPolicy: IfNotPresent
           # init container handles chown; run node directly
