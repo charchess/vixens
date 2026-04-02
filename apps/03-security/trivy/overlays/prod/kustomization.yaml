@@ -13,3 +13,10 @@ patches:
   - path: resources-patch.yaml
   - path: node-collector-patch.yaml
   - path: fast-start-patch.yaml
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations/vixens.io~1no-long-connections
+        value: "true"
+    target:
+      kind: Deployment
+      name: trivy-trivy-operator

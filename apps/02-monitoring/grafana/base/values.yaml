@@ -70,6 +70,10 @@ podAnnotations:
   prometheus.io/port: "3000"
   prometheus.io/path: "/metrics"
   vixens.io/fast-start: "true"
+lifecycle:
+  preStop:
+    exec:
+      command: ["sleep", "5"]
 annotations:  # Deployment metadata annotations (Gold maturity: sync-wave + goldilocks)
   argocd.argoproj.io/sync-wave: "10"
   goldilocks.fairwinds.com/enabled: "true"

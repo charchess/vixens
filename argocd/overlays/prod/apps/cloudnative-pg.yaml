@@ -18,7 +18,7 @@ spec:
         releaseName: cloudnative-pg
         values: |
           replicaCount: 1
-          priorityClassName: homelab-critical
+          priorityClassName: vixens-critical
 
           crds:
             create: false
@@ -39,9 +39,13 @@ spec:
               cpu: 500m
               memory: 512Mi
 
+          podLabels:
+            vixens.io/sizing.manager: G-small
+
           podAnnotations:
             vixens.io/service-binding: "false"
             vixens.io/fast-start: "true"
+            vixens.io/no-long-connections: "true"
             prometheus.io/scrape: "true"
             prometheus.io/port: "8080"
             prometheus.io/path: "/metrics"

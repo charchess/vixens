@@ -113,6 +113,9 @@ spec:
               vixens.io/fast-start: "true"
               vixens.io/service-binding: "false"
               vixens.io/nometrics: "true"
+              vixens.io/no-long-connections: "true"
+            labels:
+              vixens.io/sizing.cert-manager-webhook-gandi: G-nano
 
     # Rule 5: infisical-operator — chart has no podAnnotations support
     # Match on control-plane=controller-manager in infisical-operator-system namespace.
@@ -134,7 +137,10 @@ spec:
             annotations:
               vixens.io/fast-start: "true"
               vixens.io/service-binding: "false"
+              vixens.io/no-long-connections: "true"
               prometheus.io/scrape: "true"
               prometheus.io/port: "8443"
               prometheus.io/path: "/metrics"
               prometheus.io/scheme: "https"
+            labels:
+              vixens.io/sizing.manager: G-small

@@ -300,6 +300,14 @@ patches:
     target:
       kind: Deployment
       name: argocd-dex-server
+  # argocd-redis graceful shutdown bypass — internal Redis backing store, no user connections
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations/vixens.io~1no-long-connections
+        value: "true"
+    target:
+      kind: Deployment
+      name: argocd-redis
   # argocd-redis sizing label
   - patch: |-
       - op: add

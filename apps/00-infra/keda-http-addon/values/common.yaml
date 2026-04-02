@@ -8,12 +8,20 @@ operator:
     vixens.io/service-binding: "false"
     vixens.io/fast-start: "true"
     vixens.io/nometrics: "true"
+    vixens.io/no-long-connections: "true"
+  podLabels:
+    vixens.io/priority-class: vixens-medium
+    vixens.io/sizing.keda-add-ons-http-operator: G-nano
 
 interceptor:
   podAnnotations:
     vixens.io/service-binding: "false"
     vixens.io/fast-start: "true"
     vixens.io/nometrics: "true"
+    vixens.io/no-long-connections: "true"
+  podLabels:
+    vixens.io/priority-class: vixens-medium
+    vixens.io/sizing.keda-add-ons-http-interceptor: G-nano
   replicas:
     min: 1
     max: 1
@@ -36,6 +44,10 @@ scaler:
     vixens.io/service-binding: "false"
     vixens.io/fast-start: "true"
     vixens.io/nometrics: "true"
+    vixens.io/no-long-connections: "true"
+  podLabels:
+    vixens.io/priority-class: vixens-medium
+    vixens.io/sizing.keda-add-ons-http-external-scaler: G-nano
   replicas: 1
   resources:
     requests:

@@ -64,6 +64,13 @@ sidecars:
         port: webhook
       initialDelaySeconds: 5
       periodSeconds: 10
+podAnnotations:
+  vixens.io/no-long-connections: "true"
+
+podLabels:
+  vixens.io/sizing.external-dns: G-nano
+  vixens.io/sizing.unifi-webhook: G-nano
+
 tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists

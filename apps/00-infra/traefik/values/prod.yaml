@@ -20,14 +20,7 @@ logs:
     level: WARN
   access:
     enabled: true
-# Production-grade resource limits (Burstable)
-resources:
-  requests:
-    cpu: 250m
-    memory: 256Mi
-  limits:
-    cpu: 2000m
-    memory: 2Gi
+resources: {}
 # High availability with multiple replicas
 additionalArguments:
   - "--experimental.plugins.bouncer.moduleName=github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
@@ -37,8 +30,9 @@ additionalArguments:
 deployment:
   replicas: 2
   podLabels:
-    app: traefik  # For legacy Kyverno policy compatibility
+    app: traefik
     app.kubernetes.io/name: traefik
+    vixens.io/sizing.traefik: V-medium
   podAnnotations:
     kubectl.kubernetes.io/restartedAt: "2026-03-12T04:35:00Z"
 # Ensure traefik pods spread across nodes

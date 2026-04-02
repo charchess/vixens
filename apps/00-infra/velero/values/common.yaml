@@ -100,6 +100,7 @@ podLabels:
 podAnnotations:
   vixens.io/fast-start: "true"
   vixens.io/noingressneeded: "true"
+  vixens.io/no-long-connections: "true"
 annotations:  # Deployment metadata (Gold maturity: sync-wave + goldilocks)
   argocd.argoproj.io/sync-wave: "10"
   goldilocks.fairwinds.com/enabled: "true"

@@ -6,8 +6,6 @@
 # ============================================================================
 # Sizing Labels
 # ============================================================================
-podLabels:
-  vixens.io/sizing.traefik: V-small
 
 # ============================================================================
 # Providers Configuration
@@ -142,6 +140,7 @@ deployment:
     vixens.io/fast-start: "true"
     vixens.io/service-binding: "false"
     vixens.io/noingressneeded: "true"
+    vixens.io/no-long-connections: "true"
     prometheus.io/scrape: "true"
     prometheus.io/port: "9100"
     prometheus.io/path: "/metrics"

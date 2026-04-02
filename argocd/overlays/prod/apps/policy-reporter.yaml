@@ -37,6 +37,7 @@ spec:
             prometheus.io/path: "/metrics"
             vixens.io/fast-start: "true"
             vixens.io/service-binding: "false"
+            vixens.io/no-long-connections: "true"
           annotations:  # Deployment metadata (Gold maturity)
             argocd.argoproj.io/sync-wave: "10"
             goldilocks.fairwinds.com/enabled: "true"
@@ -44,8 +45,7 @@ spec:
           revisionHistoryLimit: 3
 
           podLabels:
-            vixens.io/sizing.policy-reporter: small
-            vixens.io/sizing: small
+            vixens.io/sizing.policy-reporter: V-nano
             vixens.io/priority-class: vixens-low
           kyvernoPlugin:
             enabled: true
@@ -63,11 +63,13 @@ spec:
             podAnnotations:
               vixens.io/fast-start: "true"
               vixens.io/service-binding: "false"
+              vixens.io/no-long-connections: "true"
               prometheus.io/scrape: "true"
               prometheus.io/port: "8080"
               prometheus.io/path: "/metrics"
             podLabels:
               vixens.io/priority-class: vixens-low
+              vixens.io/sizing.kyverno-plugin: V-nano
             annotations:  # Deployment metadata (Gold maturity)
               argocd.argoproj.io/sync-wave: "10"
               goldilocks.fairwinds.com/enabled: "true"
@@ -90,9 +92,11 @@ spec:
                 memory: 128Mi
             podLabels:
               vixens.io/priority-class: vixens-low
+              vixens.io/sizing.ui: V-nano
             podAnnotations:
               vixens.io/fast-start: "true"
               vixens.io/service-binding: "false"
+              vixens.io/no-long-connections: "true"
               vixens.io/nometrics: "true"
             annotations:  # Deployment metadata (Gold maturity)
               argocd.argoproj.io/sync-wave: "10"

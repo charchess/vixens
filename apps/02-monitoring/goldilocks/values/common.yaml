@@ -4,6 +4,7 @@ controller:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
+  priorityClassName: vixens-low
   podSecurityContext:
     runAsNonRoot: true
     runAsUser: 1000
@@ -22,6 +23,7 @@ controller:
       vixens.io/sizing.goldilocks: G-nano  # container name: goldilocks
     podAnnotations:
       vixens.io/fast-start: "true"
+      vixens.io/no-long-connections: "true"
       vixens.io/nometrics: "true"  # goldilocks-controller has no Prometheus metrics port defined
     annotations:  # Deployment metadata (Gold maturity)
       argocd.argoproj.io/sync-wave: "10"
@@ -35,6 +37,7 @@ dashboard:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
       effect: NoSchedule
+  priorityClassName: vixens-low
   podSecurityContext:
     runAsNonRoot: true
     runAsUser: 1000
@@ -53,6 +56,7 @@ dashboard:
       vixens.io/sizing.goldilocks: G-nano  # container name: goldilocks
     podAnnotations:
       vixens.io/fast-start: "true"
+      vixens.io/no-long-connections: "true"
       vixens.io/nometrics: "true"  # goldilocks-dashboard is a web UI with no /metrics endpoint
     annotations:  # Deployment metadata (Gold maturity)
       argocd.argoproj.io/sync-wave: "10"
