@@ -4,6 +4,3 @@ kind: Kustomization
 namespace: keda
 resources:
   - rbac-endpoints-fix.yaml
-  - ssa-controller-manager.yaml
-  - ssa-external-scaler.yaml
-  - ssa-interceptor.yaml
