@@ -5,12 +5,15 @@ crds:
 
 operator:
   replicaCount: 1
+  revisionHistoryLimit: 3
 
 metricsServer:
   replicaCount: 1
+  revisionHistoryLimit: 3
 
 webhooks:
   replicaCount: 1
+  revisionHistoryLimit: 3
 
 # Control plane tolerations
 tolerations:

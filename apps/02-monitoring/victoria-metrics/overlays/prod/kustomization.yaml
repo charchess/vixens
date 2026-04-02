@@ -8,6 +8,10 @@ labels:
       environment: prod
 resources:
   - ../../base
+  - ssa-vmagent.yaml
+  - ssa-vmalert.yaml
+  - ssa-vmsingle.yaml
+  - ssa-vmalertmanager.yaml
 patches:
   - path: patch-infisical-env.yaml
     target:
