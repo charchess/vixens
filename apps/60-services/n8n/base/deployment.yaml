@@ -40,7 +40,7 @@ spec:
             limits:
               cpu: 500m
               memory: 1Gi
-          image: docker.n8n.io/n8nio/n8n:2.14.2
+          image: docker.n8n.io/n8nio/n8n:2.15.0
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

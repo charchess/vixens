@@ -124,7 +124,7 @@ spec:
             periodSeconds: 60
             timeoutSeconds: 5
         - name: mysqld-exporter
-          image: prom/mysqld-exporter:v0.17.0
+          image: prom/mysqld-exporter:v0.19.0
           args:
             - --mysqld.address=127.0.0.1:3306
             - --mysqld.username=root
