@@ -33,6 +33,24 @@ cainjector:
     limits:
       cpu: 100m
       memory: 128Mi
+  extraArgs:
+    - --health-probe-bind-address=:6080
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 6080
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /readyz
+      port: 6080
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 3
 # Production-grade replica count
 replicaCount: 2
 # ============================================================================
