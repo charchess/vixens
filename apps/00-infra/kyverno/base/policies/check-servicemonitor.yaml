@@ -36,10 +36,10 @@ spec:
           apiCall:
             urlPath: "/apis/monitoring.coreos.com/v1/namespaces/{{request.namespace}}/servicemonitors"
             jmesPath: "items[?spec.selector.matchLabels.app == '{{request.object.metadata.labels.app}}'] | length(@)"
-        - name: sm_count_by_k8s_name
+        - name: sm_count_by_name
           apiCall:
             urlPath: "/apis/monitoring.coreos.com/v1/namespaces/{{request.namespace}}/servicemonitors"
-            jmesPath: "items[?spec.selector.matchLabels.\"app.kubernetes.io/name\" == '{{request.object.metadata.labels.app}}'] | length(@)"
+            jmesPath: "items[?metadata.name == '{{request.object.metadata.labels.app}}'] | length(@)"
       validate:
         message: >-
           Gold tier: prometheus.io/scrape=true but no ServiceMonitor targets
@@ -50,6 +50,6 @@ spec:
               - key: "{{ sm_count_by_app }}"
                 operator: Equals
                 value: 0
-              - key: "{{ sm_count_by_k8s_name }}"
+              - key: "{{ sm_count_by_name }}"
                 operator: Equals
                 value: 0
