@@ -120,7 +120,7 @@ spec:
                 cp /data/workspace/truxonline-ca.pem /usr/local/share/ca-certificates/truxonline-ca.crt
                 update-ca-certificates 2>/dev/null || true
                 mkdir -p /data/tools/certs
-                cp /etc/ssl/certs/ca-certificates.crt /data/tools/certs/ca-bundle.crt
+                cp /etc/ssl/certs/ca-certificates.crt /data/tools/certs/ca-bundle.crt 2>/dev/null || true
                 echo "Truxonline CA installed"
               else
                 echo "WARNING: /data/workspace/truxonline-ca.pem not found, skipping CA install"
