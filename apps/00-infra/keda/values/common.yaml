@@ -1,7 +1,7 @@
 ---
 # KEDA Operator
 crds:
-  install: true
+  install: false
 
 operator:
   replicaCount: 1
