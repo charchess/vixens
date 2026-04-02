@@ -1,0 +1,9 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: gluetun
+spec:
+  selector:
+    matchLabels:
+      app: gluetun

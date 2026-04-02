@@ -5,6 +5,8 @@ namespace: vpa
 resources:
   - namespace.yaml
   - manifests.yaml
+  - pdb-recommender.yaml
+  - pdb-updater.yaml
 
 patches:
   - patch: |

@@ -7,5 +7,6 @@ resources:
   - service.yaml
   - pvc.yaml
   - infisical-secret.yaml
+  - pdb.yaml
 components:
   - ../../../_shared/components/revision-history-limit

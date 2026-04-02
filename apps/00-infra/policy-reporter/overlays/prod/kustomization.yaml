@@ -9,5 +9,7 @@ labels:
   - includeSelectors: false
     pairs:
       environment: prod
+components:
+  - ../../../../_shared/components/priority/low
 
 patches:

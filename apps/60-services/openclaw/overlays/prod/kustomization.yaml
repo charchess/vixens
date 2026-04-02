@@ -10,6 +10,7 @@ components:
   - ../../../../_shared/components/sync-wave/wave-10
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/dataangel
+  - ../../../../_shared/components/poddisruptionbudget/1
 
 patches:
   - path: dataangel.yaml

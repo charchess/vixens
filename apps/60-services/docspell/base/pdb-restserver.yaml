@@ -1,0 +1,10 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: docspell-restserver
+spec:
+  selector:
+    matchLabels:
+      app: docspell
+      component: restserver

@@ -104,6 +104,10 @@ spec:
         - name: relay
           image: netbirdio/relay:0.67.2
           args: ["run", "--auth-secret", "netbird-relay-secret-change-me"]
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
           env:
             - name: NB_LISTEN_ADDRESS
               value: ":33080"

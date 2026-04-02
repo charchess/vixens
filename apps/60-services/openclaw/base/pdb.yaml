@@ -1,0 +1,9 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: openclaw
+spec:
+  selector:
+    matchLabels:
+      app: openclaw

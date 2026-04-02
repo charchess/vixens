@@ -1,0 +1,9 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vpa-updater
+spec:
+  selector:
+    matchLabels:
+      app: vpa-updater

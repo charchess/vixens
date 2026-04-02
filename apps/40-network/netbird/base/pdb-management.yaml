@@ -1,0 +1,9 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: netbird-management
+spec:
+  selector:
+    matchLabels:
+      app: netbird-management

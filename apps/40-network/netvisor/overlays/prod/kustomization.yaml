@@ -12,5 +12,6 @@ components:
   - ../../../../_shared/components/nometrics
   - ../../../../_shared/components/revision-history-limit
   - ../../../../_shared/components/infisical/env-prod
+  - ../../../../_shared/components/poddisruptionbudget/1
 patchesStrategicMerge:
   - server-url-patch.yaml

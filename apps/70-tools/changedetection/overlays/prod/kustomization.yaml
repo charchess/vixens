@@ -7,6 +7,7 @@ components:
   - ../../../../_shared/components/nometrics
   - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/dataangel
+  - ../../../../_shared/components/poddisruptionbudget/1
 
 patches:
   - patch: |-

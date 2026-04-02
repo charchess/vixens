@@ -6,6 +6,7 @@ resources:
   - manifests.yaml
   - service.yaml
   - servicemonitor.yaml
+  - pdb.yaml
 
 patches:
   - patch: |

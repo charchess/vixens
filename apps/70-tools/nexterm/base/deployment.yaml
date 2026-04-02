@@ -31,6 +31,10 @@ spec:
         - name: nexterm
           image: nexterm/aio:development
           imagePullPolicy: Always
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
           ports:
             - containerPort: 6989
               name: http

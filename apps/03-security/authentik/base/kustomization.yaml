@@ -15,3 +15,5 @@ resources:
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml
   - networkpolicy-authentik-worker.yaml
+  - pdb-server.yaml
+  - pdb-worker.yaml

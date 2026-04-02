@@ -8,5 +8,15 @@ labels:
 namespace: monitoring
 patches:
   - path: patch-infisical-env.yaml
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/lifecycle
+        value:
+          preStop:
+            exec:
+              command: ["sleep", "5"]
+    target:
+      kind: Deployment
+      name: grafana
 resources:
   - ../../base

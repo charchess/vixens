@@ -1,0 +1,9 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: reloader-reloader
+spec:
+  selector:
+    matchLabels:
+      app: reloader-reloader

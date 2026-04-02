@@ -12,3 +12,11 @@ labels:
     includeSelectors: false
 
 patches:
+  # Graceful shutdown bypass — DNS sync controller, no user connections
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations/vixens.io~1no-long-connections
+        value: "true"
+    target:
+      kind: Deployment
+      name: external-dns-gandi

@@ -1,0 +1,9 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: penpot-exporter
+spec:
+  selector:
+    matchLabels:
+      app: penpot-exporter
