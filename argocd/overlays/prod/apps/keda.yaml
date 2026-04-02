@@ -26,6 +26,11 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: keda
+  ignoreDifferences:
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      jsonPointers:
+        - /metadata/annotations
   syncPolicy:
     automated:
       prune: true

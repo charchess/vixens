@@ -30,6 +30,7 @@ metadata:
       Adds nominal exec probes to known background sidecar containers (config-syncer)
       that lack HTTP health endpoints. Uses exec:["true"] — K8s exit-code detection
       handles actual restarts. Satisfies Silver-tier probe requirement formally.
+    pod-policies.kyverno.io/autogen-controllers: none
 spec:
   background: false
   rules:
