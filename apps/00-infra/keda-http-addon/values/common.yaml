@@ -3,7 +3,17 @@
 podLabels:
   vixens.io/priority-class: vixens-medium
 
+operator:
+  podAnnotations:
+    vixens.io/service-binding: "false"
+    vixens.io/fast-start: "true"
+    vixens.io/nometrics: "true"
+
 interceptor:
+  podAnnotations:
+    vixens.io/service-binding: "false"
+    vixens.io/fast-start: "true"
+    vixens.io/nometrics: "true"
   replicas:
     min: 1
     max: 1
@@ -22,6 +32,10 @@ interceptor:
       effect: NoSchedule
 
 scaler:
+  podAnnotations:
+    vixens.io/service-binding: "false"
+    vixens.io/fast-start: "true"
+    vixens.io/nometrics: "true"
   replicas: 1
   resources:
     requests:

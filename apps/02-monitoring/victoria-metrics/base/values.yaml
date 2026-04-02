@@ -12,12 +12,14 @@ victoria-metrics-operator:
   podLabels:
     vixens.io/priority-class: vixens-low
     vixens.io/sizing.operator: V-nano
-  podAnnotations:
+  annotations:
     vixens.io/service-binding: "false"
     vixens.io/fast-start: "true"
     prometheus.io/scrape: "true"
     prometheus.io/port: "8080"
-    prometheus.io/path: "/metrics"
+    prometheus.io/path: /metrics
+    goldilocks.fairwinds.com/enabled: "true"
+    vpa.kubernetes.io/updateMode: "Off"
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
@@ -217,10 +219,11 @@ kube-state-metrics:
     - jobs
   priorityClassName: vixens-critical
   podAnnotations:
+    vixens.io/service-binding: "false"
     vixens.io/fast-start: "true"
     prometheus.io/scrape: "true"
     prometheus.io/port: "8080"
-    prometheus.io/path: "/metrics"
+    prometheus.io/path: /metrics
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
