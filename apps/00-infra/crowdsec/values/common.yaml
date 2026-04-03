@@ -56,7 +56,24 @@ lapi:
       memory: 512Mi
 
 agent:
-  enabled: false
+  enabled: true
+
+  acquisition:
+    - namespace: traefik
+      podName: traefik-*
+      program: traefik
+
+  env:
+    - name: COLLECTIONS
+      value: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/base-http-scenarios"
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
 
 # ============================================================================
 # LAPI config
