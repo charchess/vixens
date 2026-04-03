@@ -19,7 +19,15 @@ TIERS = ["Bronze", "Silver", "Gold", "Platinum", "Emerald", "Diamond", "Orichalc
 WORKLOAD_KINDS = ["deployment", "statefulset", "daemonset"]
 # Only consider scope kinds that represent workload resources
 # Ingress, Service, ConfigMap, etc. should not affect workload maturity scores
-ALLOWED_SCOPE_KINDS = {"Pod", "ReplicaSet", "Deployment", "StatefulSet", "DaemonSet", "Job", "CronJob"}
+ALLOWED_SCOPE_KINDS = {
+    "Pod",
+    "ReplicaSet",
+    "Deployment",
+    "StatefulSet",
+    "DaemonSet",
+    "Job",
+    "CronJob",
+}
 
 
 def run_cmd(cmd):
@@ -50,41 +58,43 @@ def normalize_app_name(name, kind):
 def validate_sizing_coverage(namespace, name, kind):
     """
     Validate that all containers use Kyverno sizing labels (vixens.io/sizing.*).
-    
+
     Returns True if ALL containers have sizing labels (Silver requirement satisfied
     via Kyverno mutation). Returns False if any container lacks sizing labels.
-    
+
     ANTI-PATTERN: Manual resources in Deployment spec are logged as warnings.
     Apps should migrate to sizing labels instead.
     """
     # Fetch the workload
     stdout, rc = run_cmd(f"kubectl get {kind} -n {namespace} {name} -o json")
     if rc != 0:
-        logging.debug(f"Could not fetch {kind} {namespace}/{name} for sizing validation")
+        logging.debug(
+            f"Could not fetch {kind} {namespace}/{name} for sizing validation"
+        )
         return False
-    
+
     try:
         workload = json.loads(stdout)
     except json.JSONDecodeError:
         return False
-    
+
     # Extract pod template labels and containers
     pod_template = workload.get("spec", {}).get("template", {})
     pod_labels = pod_template.get("metadata", {}).get("labels", {})
     containers = pod_template.get("spec", {}).get("containers", [])
-    
+
     all_have_sizing = True
-    
+
     # Check each container
     for container in containers:
         container_name = container.get("name")
         sizing_label = f"vixens.io/sizing.{container_name}"
-        
+
         # Check if sizing label exists
         if sizing_label in pod_labels:
             # ✅ OK - Kyverno will mutate this container
             continue
-        
+
         # ⚠️ ANTI-PATTERN: Check if manual resources are defined
         resources = container.get("resources", {})
         if resources.get("requests") or resources.get("limits"):
@@ -95,28 +105,46 @@ def validate_sizing_coverage(namespace, name, kind):
             )
             all_have_sizing = False
             continue
-        
+
         # ❌ FAIL - container has no sizing label and no resources
         logging.debug(
             f"{namespace}/{name} container '{container_name}': "
             f"missing sizing label (vixens.io/sizing.{container_name})"
         )
         all_have_sizing = False
-    
+
     if all_have_sizing:
         # All containers use sizing labels - proper Kyverno mutation pattern
         logging.info(
             f"✅ {namespace}/{name} ({kind}): sizing validation PASS "
             f"({len(containers)} containers with sizing labels)"
         )
-    
+
     return all_have_sizing
+
 
 def sync_maturity():
     stdout, rc = run_cmd("kubectl get policyreport -A -o json")
     if rc != 0:
         logging.error("Failed to fetch PolicyReports")
         return
+
+    # Build UID → creationTimestamp map for live ReplicaSets.
+    # Used to rank RS policyreports by RS age (not policyreport age), so that
+    # the newest RS always wins over older RSs whose policyreports may be more
+    # recently re-evaluated by the Kyverno background scanner.
+    rs_stdout, _ = run_cmd("kubectl get rs -A -o json")
+    rs_creation_ts: dict = {}
+    if rs_stdout:
+        for rs in json.loads(rs_stdout).get("items", []):
+            uid = rs.get("metadata", {}).get("uid")
+            ts_str = rs.get("metadata", {}).get(
+                "creationTimestamp", "1970-01-01T00:00:00Z"
+            )
+            if uid:
+                rs_creation_ts[uid] = datetime.fromisoformat(
+                    ts_str.replace("Z", "+00:00")
+                )
 
     reports = json.loads(stdout).get("items", [])
 
@@ -132,13 +160,26 @@ def sync_maturity():
         ns = scope.get("namespace")
         kind = scope.get("kind")
         name = scope.get("name")
+        scope_uid = scope.get("uid", "")
 
         # Skip non-workload scopes (Ingress, Service, ConfigMap, etc.)
         # They pollute the maturity score of the associated workload
         if kind not in ALLOWED_SCOPE_KINDS:
             continue
-        ts_str = report["metadata"].get("creationTimestamp", "1970-01-01T00:00:00Z")
-        ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+
+        if kind == "ReplicaSet":
+            if scope_uid not in rs_creation_ts:
+                # RS no longer exists — its policyreport is orphaned; skip it.
+                logging.debug(
+                    f"Skipping policyreport for deleted RS {name} (uid={scope_uid})"
+                )
+                continue
+            # Use RS creation time so the newest RS beats older RSs whose
+            # policyreports may have been updated more recently by background scans.
+            ts = rs_creation_ts[scope_uid]
+        else:
+            ts_str = report["metadata"].get("creationTimestamp", "1970-01-01T00:00:00Z")
+            ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
 
         app_name = normalize_app_name(name, kind)
         if not app_name:
@@ -172,7 +213,7 @@ def sync_maturity():
         all_fails: set = set()
         for kind_data in components.values():
             all_fails.update(kind_data["fails"])
-        
+
         # Sizing validation: if "Silver" fail is due to require-resources,
         # but app has valid sizing label coverage, remove the fail
         if "Silver" in all_fails:
@@ -185,10 +226,10 @@ def sync_maturity():
                         f"{ns}/{name}: Silver fail bypassed (sizing labels valid)"
                     )
                     break
-        
+
         current_tier = "none"
         missing_tier = TIERS[0].lower()  # default: missing Bronze
-        
+
         for i, tier in enumerate(TIERS):
             if tier in all_fails:
                 missing_tier = tier.lower()
