@@ -164,3 +164,77 @@ spec:
               prometheus.io/scheme: "https"
             labels:
               vixens.io/sizing.manager: G-small
+
+    # Rules 7-9: keda-add-ons-http Deployments — chart v0.13.x ignores per-component podLabels,
+    # so sizing labels never reach the pod template spec. Injected at Deployment admission.
+    # check-sizing-mode (Platinum) validates vixens.io/sizing.<container> on the pod template.
+    # ArgoCD ignoreDifferences on the label paths prevents drift detection.
+
+    - name: inject-sizing-label-keda-operator-deployment
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+              namespaces:
+                - keda
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: http-add-on
+                  app.kubernetes.io/component: operator
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.template.metadata.labels.\"vixens.io/sizing.keda-add-ons-http-operator\" || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /spec/template/metadata/labels/vixens.io~1sizing.keda-add-ons-http-operator
+            value: "G-nano"
+
+    - name: inject-sizing-label-keda-scaler-deployment
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+              namespaces:
+                - keda
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: http-add-on
+                  app.kubernetes.io/component: scaler
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.template.metadata.labels.\"vixens.io/sizing.keda-add-ons-http-external-scaler\" || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /spec/template/metadata/labels/vixens.io~1sizing.keda-add-ons-http-external-scaler
+            value: "G-nano"
+
+    - name: inject-sizing-label-keda-interceptor-deployment
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+              namespaces:
+                - keda
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: http-add-on
+                  app.kubernetes.io/component: interceptor
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.template.metadata.labels.\"vixens.io/sizing.keda-add-ons-http-interceptor\" || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /spec/template/metadata/labels/vixens.io~1sizing.keda-add-ons-http-interceptor
+            value: "G-nano"

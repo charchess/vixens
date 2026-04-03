@@ -30,6 +30,13 @@ spec:
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
       path: apps/02-monitoring/goldilocks/overlays/prod
+  # goldilocks chart v10.2.x ignores controller/dashboard.priorityClassName values.
+  # priorityClassName is injected at Deployment admission by mutate-priority-class Rules 11/12.
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/template/spec/priorityClassName
   syncPolicy:
     automated:
       prune: true

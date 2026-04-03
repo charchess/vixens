@@ -26,6 +26,17 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: keda
+  # keda-add-ons-http chart v0.13.x ignores per-component podLabels (priority + sizing).
+  # priorityClassName and sizing labels are injected at Deployment admission by
+  # mutate-priority-class Rule 13 and mutate-pod-annotations Rules 7-9.
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/template/spec/priorityClassName
+        - /spec/template/metadata/labels/vixens.io~1sizing.keda-add-ons-http-operator
+        - /spec/template/metadata/labels/vixens.io~1sizing.keda-add-ons-http-external-scaler
+        - /spec/template/metadata/labels/vixens.io~1sizing.keda-add-ons-http-interceptor
   syncPolicy:
     automated:
       prune: true
