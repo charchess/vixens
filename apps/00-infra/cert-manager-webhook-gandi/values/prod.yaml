@@ -10,9 +10,17 @@ priorityClassName: vixens-high
 resources:
   requests:
     cpu: 50m
-    memory: 64Mi
+    memory: 128Mi
   limits:
     cpu: 50m
-    memory: 64Mi
+    memory: 128Mi
 # Production-grade replica count
 replicaCount: 2
+# Spread replicas across nodes (Platinum: check-topology-spread)
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: cert-manager-webhook-gandi

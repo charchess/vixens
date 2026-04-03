@@ -21,7 +21,7 @@ spec:
         vixens.io/no-long-connections: "true"
       labels:
         app.kubernetes.io/name: g4f
-        vixens.io/sizing: V-medium
+        vixens.io/sizing.g4f: V-medium
     spec:
       securityContext:
         fsGroup: 1201
