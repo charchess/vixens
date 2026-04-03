@@ -7,7 +7,7 @@ image:
   registry: docker.stirlingpdf.com
   repository: stirlingtools/stirling-pdf
   pullPolicy: IfNotPresent
-  tag: 2.8.0
+  tag: 2.9.0
 replicaCount: 0
 # revisionHistoryLimit: chart template hardcodes 10; kustomize patch on Helm multi-source
 # does not apply to /spec/revisionHistoryLimit. Accepted as known limitation.
