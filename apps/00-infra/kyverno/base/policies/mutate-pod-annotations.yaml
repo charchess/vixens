@@ -115,7 +115,7 @@ spec:
               vixens.io/nometrics: "true"
               vixens.io/no-long-connections: "true"
             labels:
-              vixens.io/sizing.cert-manager-webhook-gandi: G-nano
+              vixens.io/sizing.cert-manager-webhook-gandi: G-small
 
     # Rule 5: grafana — chart lifecycle key is silently ignored (chart bug in monitored versions)
     # The lifecycle.preStop hook set in values.yaml is not rendered by the grafana Helm chart,
@@ -238,3 +238,34 @@ spec:
           - op: add
             path: /spec/template/metadata/labels/vixens.io~1sizing.keda-add-ons-http-interceptor
             value: "G-nano"
+
+    # Rule 10: cert-manager-webhook-gandi Deployment — SINTEF chart v0.5.2 ignores topologySpreadConstraints.
+    # Injected at Deployment admission. ArgoCD ignoreDifferences prevents drift detection.
+    - name: inject-topology-spread-cert-manager-webhook-gandi
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+              namespaces:
+                - cert-manager
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: cert-manager-webhook-gandi
+      preconditions:
+        all:
+          - key: "{{ length(request.object.spec.template.spec.topologySpreadConstraints || `[]`) }}"
+            operator: Equals
+            value: "0"
+      mutate:
+        patchStrategicMerge:
+          spec:
+            template:
+              spec:
+                topologySpreadConstraints:
+                  - maxSkew: 1
+                    topologyKey: kubernetes.io/hostname
+                    whenUnsatisfiable: ScheduleAnyway
+                    labelSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: cert-manager-webhook-gandi

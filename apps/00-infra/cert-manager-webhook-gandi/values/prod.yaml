@@ -10,10 +10,10 @@ priorityClassName: vixens-high
 resources:
   requests:
     cpu: 50m
-    memory: 128Mi
+    memory: 256Mi
   limits:
     cpu: 50m
-    memory: 128Mi
+    memory: 256Mi
 # Production-grade replica count
 replicaCount: 2
 # Spread replicas across nodes (Platinum: check-topology-spread)
