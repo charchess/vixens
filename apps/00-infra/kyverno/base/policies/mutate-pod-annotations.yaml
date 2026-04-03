@@ -95,6 +95,9 @@ spec:
     # Rule 4: cert-manager-webhook-gandi — chart has no podAnnotations support
     # SINTEF chart v0.5.2 does not render spec.template.metadata.annotations at all.
     # Match on app.kubernetes.io/name in cert-manager namespace.
+    # Also injects probe initialDelaySeconds: SINTEF chart defaults to 0, but the webhook
+    # TLS certificate takes ~13s to load, causing 3x liveness probe failures (exit 0) before
+    # the server is ready. initialDelaySeconds: 15 gives the server time to load TLS.
     - name: inject-annotations-cert-manager-webhook-gandi
       match:
         any:
@@ -116,6 +119,15 @@ spec:
               vixens.io/no-long-connections: "true"
             labels:
               vixens.io/sizing.cert-manager-webhook-gandi: G-small
+          spec:
+            containers:
+              - (name): cert-manager-webhook-gandi
+                livenessProbe:
+                  initialDelaySeconds: 15
+                  timeoutSeconds: 5
+                readinessProbe:
+                  initialDelaySeconds: 10
+                  timeoutSeconds: 5
 
     # Rule 5: grafana — chart lifecycle key is silently ignored (chart bug in monitored versions)
     # The lifecycle.preStop hook set in values.yaml is not rendered by the grafana Helm chart,
