@@ -25,10 +25,13 @@ spec:
               kinds:
                 - Deployment
       preconditions:
-        all:
+        any:
           - key: "{{ request.object.spec.revisionHistoryLimit || '-1' }}"
             operator: Equals
             value: "-1"
+          - key: "{{ request.object.spec.revisionHistoryLimit }}"
+            operator: GreaterThan
+            value: 3
       mutate:
         patchStrategicMerge:
           spec:
@@ -41,10 +44,13 @@ spec:
               kinds:
                 - StatefulSet
       preconditions:
-        all:
+        any:
           - key: "{{ request.object.spec.revisionHistoryLimit || '-1' }}"
             operator: Equals
             value: "-1"
+          - key: "{{ request.object.spec.revisionHistoryLimit }}"
+            operator: GreaterThan
+            value: 3
       mutate:
         patchStrategicMerge:
           spec:

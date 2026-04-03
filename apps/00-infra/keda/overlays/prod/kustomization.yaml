@@ -6,3 +6,6 @@ resources:
   - ssa-keda-operator.yaml
   - ssa-keda-metrics-apiserver.yaml
   - ssa-keda-webhooks.yaml
+  - pdb-keda-operator.yaml
+  - pdb-keda-metrics-apiserver.yaml
+  - pdb-keda-webhooks.yaml
