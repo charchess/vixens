@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: crowdsec
+  labels:
+    goldilocks.fairwinds.com/enabled: "true"
+    app.kubernetes.io/name: crowdsec
+    app.kubernetes.io/part-of: vixens-security
+    # privileged: agent DaemonSet requires hostPath /var/log to read node logs
+    pod-security.kubernetes.io/enforce: privileged
