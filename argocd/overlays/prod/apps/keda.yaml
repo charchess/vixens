@@ -34,10 +34,6 @@ spec:
     - group: apps
       kind: Deployment
       jqPathExpressions:
-        - .spec.template.metadata.labels["vixens.io/sizing.keda-operator"]
-        - .spec.template.metadata.labels["vixens.io/sizing.keda-operator-metrics-apiserver"]
-        - .spec.template.metadata.labels["vixens.io/sizing.keda-admission-webhooks"]
-        - .spec.template.spec.priorityClassName
         - .spec.template.spec.priority
   syncPolicy:
     automated:
