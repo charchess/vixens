@@ -8,6 +8,7 @@ resources:
   - httpscaledobject.yaml
   - keda-interceptor-svc.yaml
   - ssa-deployment.yaml
+  - pdb.yaml
 
 patches:
   - patch: |-
@@ -20,9 +21,6 @@ patches:
       - op: add
         path: /metadata/annotations/vpa.kubernetes.io~1updateMode
         value: "Off"
-      - op: replace
-        path: /spec/revisionHistoryLimit
-        value: 3
     target:
       kind: Deployment
       name: stirling-pdf-stirling-pdf-chart

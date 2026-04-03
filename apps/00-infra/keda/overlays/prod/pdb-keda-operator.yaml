@@ -1,0 +1,11 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: keda-operator
+  namespace: keda
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: keda-operator

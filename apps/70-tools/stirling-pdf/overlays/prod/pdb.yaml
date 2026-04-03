@@ -1,0 +1,12 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: stirling-pdf
+  namespace: tools
+spec:
+  minAvailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: stirling-pdf-chart
+      app.kubernetes.io/instance: stirling-pdf
