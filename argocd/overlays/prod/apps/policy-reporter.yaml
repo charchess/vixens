@@ -18,6 +18,8 @@ spec:
       helm:
         releaseName: policy-reporter
         values: |
+          priorityClassName: vixens-low
+
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               operator: Exists
@@ -49,6 +51,7 @@ spec:
             vixens.io/priority-class: vixens-low
           kyvernoPlugin:
             enabled: true
+            priorityClassName: vixens-low
             tolerations:
               - key: node-role.kubernetes.io/control-plane
                 operator: Exists
@@ -78,6 +81,7 @@ spec:
 
           ui:
             enabled: true
+            priorityClassName: vixens-low
             revisionHistoryLimit: 3
             tolerations:
               - key: node-role.kubernetes.io/control-plane
