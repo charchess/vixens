@@ -282,3 +282,100 @@ spec:
                     labelSelector:
                       matchLabels:
                         app.kubernetes.io/name: cert-manager-webhook-gandi
+
+    # Rules 11-13: keda core Deployments — chart v2.17.x has no deployment-level annotation support.
+    # Goldilocks/VPA/sync-wave/sizing-rationale injected at Deployment admission via Kyverno.
+    # ArgoCD ignoreDifferences on annotation paths prevents drift detection.
+
+    - name: inject-goldilocks-keda-operator
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+              namespaces:
+                - keda
+              selector:
+                matchLabels:
+                  app: keda-operator
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.annotations.\"goldilocks.fairwinds.com/enabled\" || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /metadata/annotations/goldilocks.fairwinds.com~1enabled
+            value: "true"
+          - op: add
+            path: /metadata/annotations/vpa.kubernetes.io~1updateMode
+            value: "Off"
+          - op: add
+            path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+            value: "1"
+          - op: add
+            path: /metadata/annotations/vixens.io~1sizing-rationale
+            value: "G-nano: KEDA operator lightweight Go process, ~20Mi steady-state"
+
+    - name: inject-goldilocks-keda-metrics-apiserver
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+              namespaces:
+                - keda
+              selector:
+                matchLabels:
+                  app: keda-operator-metrics-apiserver
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.annotations.\"goldilocks.fairwinds.com/enabled\" || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /metadata/annotations/goldilocks.fairwinds.com~1enabled
+            value: "true"
+          - op: add
+            path: /metadata/annotations/vpa.kubernetes.io~1updateMode
+            value: "Off"
+          - op: add
+            path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+            value: "1"
+          - op: add
+            path: /metadata/annotations/vixens.io~1sizing-rationale
+            value: "G-nano: KEDA metrics adapter lightweight Go process, ~30Mi steady-state"
+
+    - name: inject-goldilocks-keda-admission-webhooks
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+              namespaces:
+                - keda
+              selector:
+                matchLabels:
+                  app: keda-admission-webhooks
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.annotations.\"goldilocks.fairwinds.com/enabled\" || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /metadata/annotations/goldilocks.fairwinds.com~1enabled
+            value: "true"
+          - op: add
+            path: /metadata/annotations/vpa.kubernetes.io~1updateMode
+            value: "Off"
+          - op: add
+            path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+            value: "1"
+          - op: add
+            path: /metadata/annotations/vixens.io~1sizing-rationale
+            value: "G-nano: KEDA admission webhook lightweight Go process, ~25Mi steady-state"
