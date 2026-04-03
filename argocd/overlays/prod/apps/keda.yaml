@@ -35,6 +35,10 @@ spec:
       kind: Deployment
       jqPathExpressions:
         - .spec.template.spec.priority
+        - .metadata.annotations["goldilocks.fairwinds.com/enabled"]
+        - .metadata.annotations["vpa.kubernetes.io/updateMode"]
+        - .metadata.annotations["argocd.argoproj.io/sync-wave"]
+        - .metadata.annotations["vixens.io/sizing-rationale"]
   syncPolicy:
     automated:
       prune: true

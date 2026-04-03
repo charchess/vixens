@@ -22,7 +22,7 @@ tolerations:
     effect: NoSchedule
 
 # Resources — G-nano sizing (5m CPU req, 64Mi mem): Kyverno sizing-v2-mutate will enforce
-# correct limits based on vixens.io/sizing.* pod labels injected via kustomize overlay patches.
+# correct limits based on vixens.io/sizing.* pod labels defined in podLabels below.
 resources:
   operator:
     requests:
@@ -46,19 +46,32 @@ resources:
       cpu: 100m
       memory: 256Mi
 
-podLabels:
-  vixens.io/priority-class: vixens-medium
+# Global priority class for all keda components (Platinum requirement)
+priorityClassName: vixens-medium
 
+# Per-component pod labels — sizing labels for Kyverno sizing-v2-mutate (Platinum)
+podLabels:
+  keda:
+    vixens.io/sizing.keda-operator: G-nano
+  metricsAdapter:
+    vixens.io/sizing.keda-operator-metrics-apiserver: G-nano
+  webhooks:
+    vixens.io/sizing.keda-admission-webhooks: G-nano
+
+# Per-component pod annotations
 podAnnotations:
   keda:
     vixens.io/fast-start: "true"
     vixens.io/nometrics: "true"
     vixens.io/service-binding: "false"
+    vixens.io/no-long-connections: "true"
   metricsAdapter:
     vixens.io/fast-start: "true"
     vixens.io/nometrics: "true"
     vixens.io/service-binding: "false"
+    vixens.io/no-long-connections: "true"
   webhooks:
     vixens.io/fast-start: "true"
     vixens.io/nometrics: "true"
     vixens.io/service-binding: "false"
+    vixens.io/no-long-connections: "true"
