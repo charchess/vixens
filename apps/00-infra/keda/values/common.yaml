@@ -6,38 +6,14 @@ crds:
 operator:
   replicaCount: 1
   revisionHistoryLimit: 3
-  priorityClassName: vixens-medium
-  annotations:
-    goldilocks.fairwinds.com/enabled: "true"
-    vpa.kubernetes.io/updateMode: "Off"
-    argocd.argoproj.io/sync-wave: "1"
-    vixens.io/sizing-rationale: "G-nano: KEDA operator lightweight Go process, ~20Mi steady-state"
-  podLabels:
-    vixens.io/sizing.keda-operator: G-nano
 
 metricsServer:
   replicaCount: 1
   revisionHistoryLimit: 3
-  priorityClassName: vixens-medium
-  annotations:
-    goldilocks.fairwinds.com/enabled: "true"
-    vpa.kubernetes.io/updateMode: "Off"
-    argocd.argoproj.io/sync-wave: "1"
-    vixens.io/sizing-rationale: "G-nano: KEDA metrics adapter lightweight Go process, ~30Mi steady-state"
-  podLabels:
-    vixens.io/sizing.keda-operator-metrics-apiserver: G-nano
 
 webhooks:
   replicaCount: 1
   revisionHistoryLimit: 3
-  priorityClassName: vixens-medium
-  annotations:
-    goldilocks.fairwinds.com/enabled: "true"
-    vpa.kubernetes.io/updateMode: "Off"
-    argocd.argoproj.io/sync-wave: "1"
-    vixens.io/sizing-rationale: "G-nano: KEDA admission webhook lightweight Go process, ~25Mi steady-state"
-  podLabels:
-    vixens.io/sizing.keda-admission-webhooks: G-nano
 
 # Control plane tolerations
 tolerations:
@@ -45,7 +21,8 @@ tolerations:
     operator: Exists
     effect: NoSchedule
 
-# Resources (will be overridden by Kyverno sizing-v2-mutate based on sizing labels above)
+# Resources — G-nano sizing (5m CPU req, 64Mi mem): Kyverno sizing-v2-mutate will enforce
+# correct limits based on vixens.io/sizing.* pod labels injected via kustomize overlay patches.
 resources:
   operator:
     requests:
