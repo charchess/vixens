@@ -6,3 +6,73 @@ resources:
   - pdb-keda-operator.yaml
   - pdb-keda-metrics-apiserver.yaml
   - pdb-keda-webhooks.yaml
+
+patches:
+  - patch: |-
+      - op: add
+        path: /metadata/annotations/goldilocks.fairwinds.com~1enabled
+        value: "true"
+      - op: add
+        path: /metadata/annotations/vpa.kubernetes.io~1updateMode
+        value: "Off"
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "1"
+      - op: add
+        path: /metadata/annotations/vixens.io~1sizing-rationale
+        value: "G-nano: KEDA operator lightweight Go process, ~20Mi steady-state"
+      - op: add
+        path: /spec/template/spec/priorityClassName
+        value: vixens-medium
+      - op: add
+        path: /spec/template/metadata/labels/vixens.io~1sizing.keda-operator
+        value: G-nano
+    target:
+      kind: Deployment
+      name: keda-operator
+
+  - patch: |-
+      - op: add
+        path: /metadata/annotations/goldilocks.fairwinds.com~1enabled
+        value: "true"
+      - op: add
+        path: /metadata/annotations/vpa.kubernetes.io~1updateMode
+        value: "Off"
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "1"
+      - op: add
+        path: /metadata/annotations/vixens.io~1sizing-rationale
+        value: "G-nano: KEDA metrics adapter lightweight Go process, ~30Mi steady-state"
+      - op: add
+        path: /spec/template/spec/priorityClassName
+        value: vixens-medium
+      - op: add
+        path: /spec/template/metadata/labels/vixens.io~1sizing.keda-operator-metrics-apiserver
+        value: G-nano
+    target:
+      kind: Deployment
+      name: keda-operator-metrics-apiserver
+
+  - patch: |-
+      - op: add
+        path: /metadata/annotations/goldilocks.fairwinds.com~1enabled
+        value: "true"
+      - op: add
+        path: /metadata/annotations/vpa.kubernetes.io~1updateMode
+        value: "Off"
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "1"
+      - op: add
+        path: /metadata/annotations/vixens.io~1sizing-rationale
+        value: "G-nano: KEDA admission webhook lightweight Go process, ~25Mi steady-state"
+      - op: add
+        path: /spec/template/spec/priorityClassName
+        value: vixens-medium
+      - op: add
+        path: /spec/template/metadata/labels/vixens.io~1sizing.keda-admission-webhooks
+        value: G-nano
+    target:
+      kind: Deployment
+      name: keda-admission-webhooks
