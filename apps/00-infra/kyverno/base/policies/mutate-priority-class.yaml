@@ -174,7 +174,114 @@ spec:
             path: /spec/priorityClassName
             value: "vixens-low"
 
-    # Rule 5: cert-manager-webhook-gandi (SINTEF v0.5.x) — no podLabels/podAnnotations in chart
+    # Rule 5: goldilocks controller — ReplicaSet pod template (complements Pod rule above)
+    # When Kyverno evaluates the RS pod template against require-priority-class, the RS template
+    # has empty priorityClassName (chart doesn't set it). This mutation pre-populates it so the
+    # RS policyreport shows PASS instead of FAIL, unblocking Platinum promotion.
+    - name: inject-priority-class-goldilocks-controller-rs
+      match:
+        any:
+          - resources:
+              kinds:
+                - ReplicaSet
+              namespaces:
+                - monitoring
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: goldilocks
+                  app.kubernetes.io/component: controller
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.template.spec.priorityClassName || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /spec/template/spec/priorityClassName
+            value: "vixens-critical"
+
+    # Rule 6: goldilocks dashboard — ReplicaSet pod template (complements Pod rule above)
+    - name: inject-priority-class-goldilocks-dashboard-rs
+      match:
+        any:
+          - resources:
+              kinds:
+                - ReplicaSet
+              namespaces:
+                - monitoring
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: goldilocks
+                  app.kubernetes.io/component: dashboard
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.template.spec.priorityClassName || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /spec/template/spec/priorityClassName
+            value: "vixens-low"
+
+    # Rule 7: keda-add-ons-http — Pod injection (chart doesn't support per-component podLabels)
+    # Match on app.kubernetes.io/name=http-add-on in keda namespace
+    - name: inject-priority-class-keda-http-addon
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - keda
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: http-add-on
+      context:
+        - name: priorityValue
+          apiCall:
+            urlPath: "/apis/scheduling.k8s.io/v1/priorityclasses/vixens-medium"
+            jmesPath: "value || `10000`"
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.priorityClassName || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /spec/priorityClassName
+            value: "vixens-medium"
+          - op: add
+            path: /spec/priority
+            value: {{ priorityValue }}
+
+    # Rule 8: keda-add-ons-http — ReplicaSet pod template injection
+    # Pre-populates RS pod template priorityClassName so require-priority-class policyreport passes
+    - name: inject-priority-class-keda-http-addon-rs
+      match:
+        any:
+          - resources:
+              kinds:
+                - ReplicaSet
+              namespaces:
+                - keda
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: http-add-on
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.template.spec.priorityClassName || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: add
+            path: /spec/template/spec/priorityClassName
+            value: "vixens-medium"
+
+    # Rule 9: cert-manager-webhook-gandi (SINTEF v0.5.x) — no podLabels/podAnnotations in chart
     # Match on chart-native label: app.kubernetes.io/name in cert-manager namespace
     # Reads priority value from PriorityClass API (DRY — source of truth: _shared/priority-classes/).
     # If the apiCall HTTP request fails, failurePolicy:Ignore on the Kyverno webhook admits the pod

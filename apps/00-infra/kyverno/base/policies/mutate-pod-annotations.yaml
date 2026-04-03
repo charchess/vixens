@@ -117,7 +117,27 @@ spec:
             labels:
               vixens.io/sizing.cert-manager-webhook-gandi: G-nano
 
-    # Rule 5: infisical-operator — chart has no podAnnotations support
+    # Rule 5: grafana — chart lifecycle key is silently ignored (chart bug in monitored versions)
+    # The lifecycle.preStop hook set in values.yaml is not rendered by the grafana Helm chart,
+    # causing check-graceful-shutdown to fail. Injecting no-long-connections bypass at Pod admission.
+    - name: inject-annotations-grafana
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - monitoring
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: grafana
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              vixens.io/no-long-connections: "true"
+
+    # Rule 6: infisical-operator — chart has no podAnnotations support
     # Match on control-plane=controller-manager in infisical-operator-system namespace.
     # Injects prometheus scrape annotations (metrics on port 8443 via HTTPS).
     - name: inject-annotations-infisical-operator
