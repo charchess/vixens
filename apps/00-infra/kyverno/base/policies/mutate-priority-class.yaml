@@ -339,9 +339,13 @@ spec:
               namespaces:
                 - kube-system
                 - kyverno
+      context:
+        - name: priorityClassLabel
+          variable:
+            value: "{{ request.object.spec.template.metadata.labels.\"vixens.io/priority-class\" || '' }}"
       preconditions:
         all:
-          - key: "{{ request.object.spec.template.metadata.labels.\"vixens.io/priority-class\" || '' }}"
+          - key: "{{ priorityClassLabel }}"
             operator: NotEquals
             value: ""
           - key: "{{ request.object.spec.template.spec.priorityClassName || '' }}"
@@ -351,7 +355,7 @@ spec:
         patchesJson6902: |-
           - op: add
             path: /spec/template/spec/priorityClassName
-            value: "{{ request.object.spec.template.metadata.labels.\"vixens.io/priority-class\" }}"
+            value: "{{ priorityClassLabel }}"
 
     # Rule 11: goldilocks-controller Deployment — chart v10.2.x ignores controller.priorityClassName
     # Complements Pod Rule 3 and RS Rule 5.
