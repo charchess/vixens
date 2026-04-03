@@ -27,11 +27,15 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: tools
+  # jeffresc/it-tools chart v0.1.4 does not propagate priorityClassName to pod template spec.
+  # priorityClassName is injected at Deployment admission by mutate-priority-class Rule 10
+  # (generic Deployment rule for apps using vixens.io/priority-class podLabel).
   ignoreDifferences:
     - group: apps
       kind: Deployment
       jsonPointers:
         - /spec/replicas
+        - /spec/template/spec/priorityClassName
   syncPolicy:
     automated:
       prune: true
