@@ -83,8 +83,6 @@ agent:
   env:
     - name: COLLECTIONS
       value: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/base-http-scenarios"
-    - name: CROWDSEC_FEATURE_RE2_DISABLE_GROK_SUPPORT
-      value: "true"
 
   resources:
     requests:
@@ -93,6 +91,16 @@ agent:
     limits:
       cpu: 200m
       memory: 256Mi
+
+  startupProbe:
+    httpGet:
+      path: /metrics
+      port: metrics
+      scheme: HTTP
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 5
+    failureThreshold: 90
 
   priorityClassName: vixens-medium
 
