@@ -26,6 +26,7 @@ spec:
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
+        backup.velero.io/backup-volumes-excludes: "mosquitto-auth-writable"
     spec:
       initContainers:
         - name: restore-data

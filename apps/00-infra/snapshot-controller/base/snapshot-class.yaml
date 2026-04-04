@@ -5,6 +5,8 @@ metadata:
   name: synelia-snapshot-retain
   annotations:
     snapshot.storage.kubernetes.io/is-default-class: "true"
+  labels:
+    velero.io/csi-volumesnapshot-class: "true"
 driver: csi.san.synology.com
 deletionPolicy: Retain
 ---

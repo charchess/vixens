@@ -47,7 +47,7 @@ schedules:
     schedule: "0 2 * * *"
     template:
       ttl: "720h"
-      includedNamespaces: ["databases", "tools", "security", "services", "finance", "auth", "networking"]
+      includedNamespaces: ["databases", "tools", "security", "services", "finance", "auth", "networking", "monitoring"]
       snapshotVolumes: true
   daily-home:
     disabled: false
