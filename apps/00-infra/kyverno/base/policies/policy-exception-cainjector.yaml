@@ -4,6 +4,8 @@ kind: PolicyException
 metadata:
   name: cert-manager-cainjector-probe-exception
   namespace: kyverno
+  annotations:
+    vixens.io/exception-reason: "cert-manager-cainjector v1.14.4 is a distroless binary with no health endpoint and no exec tools (pgrep absent). No meaningful probe can be implemented. Upgrade to v1.15+ for healthz support."
 spec:
   exceptions:
     - policyName: require-probes
@@ -15,7 +17,9 @@ spec:
       - resources:
           kinds:
             - Pod
+            - ReplicaSet
+            - Deployment
           namespaces:
             - cert-manager
           names:
-            - "cert-manager-cainjector-*"
+            - "cert-manager-cainjector*"

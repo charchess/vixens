@@ -30,14 +30,6 @@ spec:
       targetRevision: prod-stable
       ref: values
 
-  ignoreDifferences:
-    - group: apps
-      kind: Deployment
-      name: cert-manager-cainjector
-      namespace: cert-manager
-      jsonPointers:
-        - /spec/template/spec/containers/0/livenessProbe
-        - /spec/template/spec/containers/0/readinessProbe
   syncPolicy:
     automated:
       prune: true
