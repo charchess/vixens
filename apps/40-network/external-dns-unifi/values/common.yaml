@@ -68,8 +68,8 @@ podAnnotations:
   vixens.io/no-long-connections: "true"
 
 podLabels:
-  vixens.io/sizing.external-dns: G-nano
-  vixens.io/sizing.unifi-webhook: G-nano
+  vixens.io/sizing.external-dns: G-small
+  vixens.io/sizing.unifi-webhook: G-medium
 
 tolerations:
   - key: node-role.kubernetes.io/control-plane
