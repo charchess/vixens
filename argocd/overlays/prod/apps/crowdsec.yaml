@@ -36,6 +36,7 @@ spec:
         - /metadata/annotations/goldilocks.fairwinds.com~1enabled
         - /metadata/annotations/vpa.kubernetes.io~1updateMode
         - /metadata/annotations/argocd.argoproj.io~1sync-wave
+        - /spec/template/metadata/annotations/kubectl.kubernetes.io~1restartedAt
     - group: apps
       kind: DaemonSet
       name: crowdsec-agent
