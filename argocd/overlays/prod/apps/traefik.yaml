@@ -29,10 +29,6 @@ spec:
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
       ref: values
-    # Traefik extras: CrowdSec Middleware + InfisicalSecret for bouncer key
-    - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: prod-stable
-      path: apps/00-infra/traefik/base
   syncPolicy:
     automated:
       prune: true
