@@ -56,8 +56,6 @@ probes:
     failureThreshold: 36
     periodSeconds: 10
 envs:
-  - name: SYSTEM_ROOTURIPATH
-    value: /
   - name: SECURITY_ENABLELOGIN
     value: "false"
   # JVM heap cap: 40% of 2Gi limit = ~820Mi heap + ~200Mi metaspace
