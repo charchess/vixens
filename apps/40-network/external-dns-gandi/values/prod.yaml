@@ -32,7 +32,7 @@ sources:
   - ingress
 priorityClassName: vixens-high
 podLabels:
-  vixens.io/sizing.external-dns: G-nano
+  vixens.io/sizing.external-dns: G-small
 podAnnotations:
   vixens.io/fast-start: "true"
   vixens.io/service-binding: "false"
