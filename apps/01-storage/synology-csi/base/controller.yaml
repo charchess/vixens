@@ -3,9 +3,14 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: synology-csi-controller
+  annotations:
+    goldilocks.fairwinds.com/enabled: "true"
+    vpa.kubernetes.io/updateMode: "Off"
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   serviceName: synology-csi-controller
   replicas: 1
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: synology-csi-controller
@@ -14,9 +19,18 @@ spec:
       annotations:
         vixens.io/explicitly-allow-root: "true"
         vixens.io/no-long-connections: "true"
+        vixens.io/nometrics: "true"
+        vixens.io/service-binding: "false"
+        vixens.io/sizing-rationale: "G-nano: CSI sidecars are lightweight Go controllers communicating via Unix socket"
       labels:
         app: synology-csi-controller
         vixens.io/backup-profile: "relaxed"
+        vixens.io/single-replica: "true"
+        vixens.io/sizing.csi-provisioner: G-nano
+        vixens.io/sizing.csi-attacher: G-nano
+        vixens.io/sizing.csi-resizer: G-nano
+        vixens.io/sizing.csi-snapshotter: G-nano
+        vixens.io/sizing.synology-csi-plugin: G-nano
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -36,6 +50,13 @@ spec:
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
@@ -47,6 +68,13 @@ spec:
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
@@ -58,6 +86,13 @@ spec:
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
@@ -70,6 +105,13 @@ spec:
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
@@ -86,6 +128,13 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+          resources:
+            requests:
+              cpu: 5m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
