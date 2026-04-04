@@ -13,9 +13,11 @@ spec:
         vixens.io/explicitly-allow-root: "true"
         vixens.io/nometrics: "true"
         vixens.io/service-binding: "false"
+        vixens.io/no-long-connections: "true"
         vixens.io/sizing-rationale: "G-nano: CSI node sidecar and plugin, low steady-state overhead"
       labels:
         app: synology-csi-node
+        vixens.io/single-replica: "true"
         vixens.io/sizing.csi-node-driver-registrar: G-nano
         vixens.io/sizing.synology-csi-plugin: G-nano
     spec:

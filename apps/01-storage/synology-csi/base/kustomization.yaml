@@ -10,8 +10,6 @@ resources:
   - node.yaml
   - storage-class.yaml
   - iscsi-lock-cleanup-daemonset.yaml
-  - pdb-node.yaml
-  - pdb-lock-cleanup.yaml
 
 patches:
 

@@ -18,6 +18,7 @@ spec:
         vixens.io/no-long-connections: "true"
       labels:
         app: iscsi-lock-cleanup
+        vixens.io/single-replica: "true"
         vixens.io/sizing.cleanup: G-nano
     spec:
       hostPID: true
