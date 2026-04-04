@@ -91,11 +91,13 @@ cainjector:
       effect: NoSchedule
   podLabels:
     vixens.io/sizing.cainjector: G-nano
+    vixens.io/single-replica: "true"
   podAnnotations:
     vixens.io/fast-start: "true"
     vixens.io/service-binding: "false"
     vixens.io/noingressneeded: "true"
-    vixens.io/nometrics: "true"  # cainjector has no Prometheus metrics endpoint
+    vixens.io/no-long-connections: "true"
+    vixens.io/nometrics: "true"
   deploymentAnnotations:
     argocd.argoproj.io/sync-wave: "0"
     goldilocks.fairwinds.com/enabled: "true"
