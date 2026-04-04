@@ -33,7 +33,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: g4f
-          image: hlohaus789/g4f:v7.3.6
+          image: hlohaus789/g4f:v7.3.8
           ports:
             - containerPort: 8080
               name: http
