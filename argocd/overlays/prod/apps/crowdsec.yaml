@@ -43,6 +43,12 @@ spec:
       jsonPointers:
         - /spec/template/spec/priorityClassName
         - /spec/template/spec/priority
+    - group: ""
+      kind: Secret
+      name: crowdsec-lapi-secrets
+      namespace: crowdsec
+      jsonPointers:
+        - /data
   syncPolicy:
     automated:
       prune: true

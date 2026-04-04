@@ -75,11 +75,12 @@ spec:
               value: :1080
             - name: HEALTH_SERVER_ADDRESS
               value: ":9999"
-            # Enable proxies
             - name: HTTPPROXY
               value: on
             - name: SOCKS5PROXY
               value: on
+            - name: VPN_IPV6_ENABLED
+              value: "off"
           ports:
             - containerPort: 8888
               name: http-proxy

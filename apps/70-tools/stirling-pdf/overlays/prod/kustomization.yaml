@@ -7,7 +7,6 @@ resources:
   - ingress.yaml
   - httpscaledobject.yaml
   - keda-interceptor-svc.yaml
-  - ssa-deployment.yaml
   - pdb.yaml
 
 patches:
