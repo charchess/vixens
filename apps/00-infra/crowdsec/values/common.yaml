@@ -83,6 +83,8 @@ agent:
   env:
     - name: COLLECTIONS
       value: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/base-http-scenarios"
+    - name: CROWDSEC_FEATURE_RE2_DISABLE_GROK_SUPPORT
+      value: "true"
 
   resources:
     requests:
