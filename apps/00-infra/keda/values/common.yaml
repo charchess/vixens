@@ -21,42 +21,43 @@ tolerations:
     operator: Exists
     effect: NoSchedule
 
-# Resources — G-nano sizing (5m CPU req, 64Mi mem): Kyverno sizing-v2-mutate will enforce
-# correct limits based on vixens.io/sizing.* pod labels defined in podLabels below.
+# Resources — Kyverno sizing-v2-mutate enforces correct limits based on vixens.io/sizing.*
+# pod labels defined in podLabels below. Values here are informational only (overridden).
+# operator/metricsAdapter: G-medium (50m CPU, 512Mi mem) — keda needs 100m+/512Mi historically
+# webhooks: G-small (25m CPU, 256Mi mem) — lightweight webhook validator
 resources:
   operator:
     requests:
-      cpu: 5m
-      memory: 64Mi
+      cpu: 50m
+      memory: 512Mi
     limits:
-      cpu: 500m
-      memory: 256Mi
+      cpu: 50m
+      memory: 512Mi
   metricsServer:
     requests:
-      cpu: 5m
-      memory: 64Mi
+      cpu: 50m
+      memory: 512Mi
     limits:
-      cpu: 200m
-      memory: 256Mi
+      cpu: 50m
+      memory: 512Mi
   webhooks:
     requests:
-      cpu: 5m
-      memory: 64Mi
+      cpu: 25m
+      memory: 256Mi
     limits:
-      cpu: 100m
+      cpu: 25m
       memory: 256Mi
 
 # Global priority class for all keda components (Platinum requirement)
 priorityClassName: vixens-medium
 
-# Per-component pod labels — sizing labels for Kyverno sizing-v2-mutate (Platinum)
 podLabels:
   keda:
-    vixens.io/sizing.keda-operator: G-nano
+    vixens.io/sizing.keda-operator: G-medium
   metricsAdapter:
-    vixens.io/sizing.keda-operator-metrics-apiserver: G-nano
+    vixens.io/sizing.keda-operator-metrics-apiserver: G-medium
   webhooks:
-    vixens.io/sizing.keda-admission-webhooks: G-nano
+    vixens.io/sizing.keda-admission-webhooks: G-small
 
 # Per-component pod annotations
 podAnnotations:
