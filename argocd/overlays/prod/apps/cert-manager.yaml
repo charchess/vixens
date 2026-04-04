@@ -29,6 +29,9 @@ spec:
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
       ref: values
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: prod-stable
+      path: apps/00-infra/cert-manager/extra
 
   syncPolicy:
     automated:
