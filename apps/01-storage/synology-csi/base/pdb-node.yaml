@@ -1,0 +1,11 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: synology-csi-node-pdb
+  namespace: synology-csi
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: synology-csi-node
