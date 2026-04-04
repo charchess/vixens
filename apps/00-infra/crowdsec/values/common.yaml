@@ -55,6 +55,23 @@ lapi:
       cpu: 500m
       memory: 512Mi
 
+  priorityClassName: vixens-medium
+
+  podLabels:
+    vixens.io/sizing.crowdsec-lapi: V-micro
+    vixens.io/priority-class: vixens-medium
+
+  podAnnotations:
+    vixens.io/service-binding: "false"
+    vixens.io/no-long-connections: "true"
+    vixens.io/sizing-rationale: "V-micro: ~100-150Mi LAPI + PostgreSQL backend"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "6060"
+    prometheus.io/path: "/metrics"
+
+# ============================================================================
+# Agent (log acquisition + detection)
+# ============================================================================
 agent:
   enabled: true
 
@@ -74,6 +91,17 @@ agent:
     limits:
       cpu: 200m
       memory: 256Mi
+
+  priorityClassName: vixens-medium
+
+  podLabels:
+    vixens.io/sizing.crowdsec-agent: V-nano
+    vixens.io/priority-class: vixens-medium
+
+  podAnnotations:
+    vixens.io/service-binding: "false"
+    vixens.io/no-long-connections: "true"
+    vixens.io/sizing-rationale: "V-nano: ~50-80Mi log-tailing DaemonSet per node"
 
 # ============================================================================
 # LAPI config

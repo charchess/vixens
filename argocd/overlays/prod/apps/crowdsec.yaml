@@ -27,6 +27,22 @@ spec:
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
       path: apps/00-infra/crowdsec/overlays/prod
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: crowdsec-lapi
+      namespace: crowdsec
+      jsonPointers:
+        - /metadata/annotations/goldilocks.fairwinds.com~1enabled
+        - /metadata/annotations/vpa.kubernetes.io~1updateMode
+        - /metadata/annotations/argocd.argoproj.io~1sync-wave
+    - group: apps
+      kind: DaemonSet
+      name: crowdsec-agent
+      namespace: crowdsec
+      jsonPointers:
+        - /spec/template/spec/priorityClassName
+        - /spec/template/spec/priority
   syncPolicy:
     automated:
       prune: true
