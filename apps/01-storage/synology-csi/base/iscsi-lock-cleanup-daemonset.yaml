@@ -15,6 +15,7 @@ spec:
         vixens.io/explicitly-allow-root: "true"
         vixens.io/fast-start: "true"
         vixens.io/service-binding: "false"
+        vixens.io/no-long-connections: "true"
       labels:
         app: iscsi-lock-cleanup
         vixens.io/sizing.cleanup: G-nano
