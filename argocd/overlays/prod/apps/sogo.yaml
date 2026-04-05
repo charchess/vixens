@@ -10,20 +10,10 @@ metadata:
     argocd.argoproj.io/sync-wave: "11"
 spec:
   project: default
-  sources:
-    - repoURL: https://helm.snry.xyz/docker-sogo/
-      chart: sogo
-      targetRevision: 0.3.5
-      helm:
-        releaseName: sogo
-        valueFiles:
-          - $values/apps/60-services/sogo/values/prod.yaml
-    - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: prod-stable
-      ref: values
-    - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: prod-stable
-      path: apps/60-services/sogo/overlays/prod
+  source:
+    repoURL: https://github.com/charchess/vixens.git
+    targetRevision: prod-stable
+    path: apps/60-services/sogo/overlays/prod
   destination:
     server: https://kubernetes.default.svc
     namespace: sogo

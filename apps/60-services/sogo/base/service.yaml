@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sogo
+  namespace: sogo
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: sogo
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
