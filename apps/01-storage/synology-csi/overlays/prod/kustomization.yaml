@@ -17,7 +17,7 @@ patches:
         value: "vixens-prod-iscsi-group"
       - op: add
         path: /parameters/targetIps
-        value: "192.168.111.70,192.168.111.71"
+        value: "192.168.111.69"
     target:
       kind: StorageClass
       name: synelia-iscsi-retain
@@ -27,7 +27,7 @@ patches:
         value: "vixens-prod-iscsi-group"
       - op: add
         path: /parameters/targetIps
-        value: "192.168.111.70,192.168.111.71"
+        value: "192.168.111.69"
     target:
       kind: StorageClass
       name: synelia-iscsi-delete
