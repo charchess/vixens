@@ -77,6 +77,8 @@ spec:
                 secretKeyRef:
                   name: sogo-secrets
                   key: SOGO_DB_PASSWORD
+            - name: PGSSLMODE
+              value: disable
           volumeMounts:
             - name: sogo-config
               mountPath: /etc/sogo/sogo.conf.d
