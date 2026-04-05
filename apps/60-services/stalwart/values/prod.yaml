@@ -90,6 +90,18 @@ tolerations:
     effect: NoSchedule
 
 # ============================================================================
+# Affinity — préférer les worker nodes (iSCSI .70/.71 non accessible depuis CP)
+# ============================================================================
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: DoesNotExist
+
+# ============================================================================
 # Certificate TLS (chart génère une Certificate cert-manager pour stalwart-cert)
 # ============================================================================
 certificate:
