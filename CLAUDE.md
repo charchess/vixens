@@ -4,21 +4,75 @@ This file provides guidance to Claude Code when working with this repository.
 
 ---
 
-# 🚨 WORKFLOW - RÈGLE MAÎTRE (À LIRE EN PREMIER)
+# 🚨 RÈGLES ABSOLUES — LIRE EN PREMIER
 
-**AVANT TOUTE CHOSE:** Le processus de travail défini dans **[WORKFLOW.md](WORKFLOW.md)** est la référence MAÎTRE qui SURPASSE toutes les autres instructions, y compris ce fichier.
+## 1. GITOPS : JAMAIS DE KUBECTL PATCH/APPLY SUR LE CLUSTER
 
-**TOUJOURS consulter WORKFLOW.md en début de session** pour connaître:
-- Le processus de sélection et gestion des tâches (Beads)
-- L'ordre de priorité (review > doing > todo)
-- Les critères de validation et passage en review
-- Les notes techniques importantes (toleration, PVC strategy, redirects HTTP→HTTPS)
+**LES DEUX CLUSTERS (prod ET dev) ont ArgoCD `selfHeal: true`.**
 
-En cas de conflit entre WORKFLOW.md et ce fichier, **WORKFLOW.md a toujours raison**.
+Tout `kubectl apply/patch/edit` sur des ressources gérées **est annulé en ~3 minutes** par ArgoCD.
+
+```bash
+# ❌ INTERDIT — sera revert par ArgoCD
+kubectl patch application X ...
+kubectl apply -f deployment.yaml
+kubectl edit deployment X
+
+# ✅ CORRECT — Fix dans Git → ArgoCD sync automatique
+vim apps/<app>/base/deployment.yaml
+git add . && git commit -m "fix(...): ..."
+git push
+```
+
+**EXCEPTION légitime** : `kubectl annotate application X argocd.argoproj.io/refresh=hard` (déclenche juste un fetch Git, ne modifie rien).
+
+**EXCEPTION d'urgence** (config recovery ONLY) : disable/re-enable auto-sync — **TOUJOURS re-enable immédiatement après**.
+
+## 2. TASK MANAGEMENT : GITHUB ISSUES (pas Beads)
+
+**Beads est déprécié.** Le task management est via GitHub Issues + Just.
+
+```bash
+just gh-resume                    # Voir le travail en cours
+just gh-start <issue-number>      # Créer branch + Draft PR
+just gh-done <pr-number>          # PR ready + auto-merge
+gh issue list --state open        # Lister les issues
+```
+
+## 3. LIRE AGENTS.md EN DÉBUT DE SESSION
+
+**[AGENTS.md](AGENTS.md)** contient le guide multi-agent complet avec workflow universel, checklist, et règles de sécurité.
+
+## 4. SKILLS DISPONIBLES
+
+Les skills opencode ont été portés comme commandes Claude Code :
+
+| Commande | Usage |
+|----------|-------|
+| `/vixens-argocd-safety` | **TOUJOURS lire avant toute opération ArgoCD** |
+| `/vixens-troubleshoot` | Debug cluster (avec règles GitOps) |
+| `/vixens-gitops` | Workflow PR, promote prod, rollback |
+| `/vixens-cluster` | Operations kubectl read-only |
+| `/vixens-maturity` | Système 7 tiers, upgrade path |
+| `/vixens-kubernetes-patterns` | Patterns K8s validés |
+| `/vixens-app-patterns` | Templates déploiement nouvelle app |
+| `/vixens-infisical` | Gestion secrets Infisical |
 
 ---
 
-# 📚 DOCUMENTATION HUB - START HERE
+# 📋 WORKFLOW - RÉFÉRENCE MAÎTRE
+
+**[WORKFLOW.md](WORKFLOW.md)** et **[AGENTS.md](AGENTS.md)** sont les références MAÎTRES. En cas de conflit, ils ont toujours raison.
+
+**Ordre de priorité de la documentation :**
+1. WORKFLOW.md — Master workflow
+2. AGENTS.md — Guide multi-agent
+3. Ce fichier (CLAUDE.md)
+4. docs/README.md
+
+---
+
+# 📚 DOCUMENTATION HUB
 
 **Complete documentation index:** **[docs/README.md](docs/README.md)**
 
@@ -26,103 +80,54 @@ En cas de conflit entre WORKFLOW.md et ce fichier, **WORKFLOW.md a toujours rais
 
 - **🆕 Adding a new application?** → [docs/guides/adding-new-application.md](docs/guides/adding-new-application.md)
 - **🚀 Pushing to production?** → [docs/guides/gitops-workflow.md](docs/guides/gitops-workflow.md)
-- **📋 Managing tasks?** → [WORKFLOW.md](WORKFLOW.md) (Beads + Just)
+- **📋 Managing tasks?** → [AGENTS.md](AGENTS.md) (GitHub Issues + Just)
 - **🔍 Looking for app documentation?** → [docs/applications/](docs/applications/)
-- **❓ Troubleshooting an issue?** → [docs/troubleshooting/](docs/troubleshooting/)
+- **❓ Troubleshooting an issue?** → `/vixens-troubleshoot`
 - **🏗️ Architecture decisions?** → [docs/adr/](docs/adr/)
 - **⭐ Application quality standards?** → [docs/reference/quality-standards.md](docs/reference/quality-standards.md)
-- **🧪 Testing applications?** → [docs/procedures/application-testing.md](docs/procedures/application-testing.md)
-- **💤 Hibernating dev apps?** → [docs/procedures/dev-hibernation.md](docs/procedures/dev-hibernation.md)
 
-**IMPORTANT:** Documentation is now organized in `docs/` with clear categories (guides, reference, procedures, adr, reports). Always check `docs/README.md` first to find what you need.
+**IMPORTANT:** Documentation is organized in `docs/` with clear categories. Always check `docs/README.md` first.
 
 ---
 
-# 🚨 CRITICAL: BEADS-FIRST RULE - READ THIS FIRST
+# 🚨 TASK MANAGEMENT : GITHUB ISSUES
 
-**BEFORE doing ANYTHING else, when you see ANY task management scenario:**
-
-1. **STOP** and use Beads for task management
-2. **Beads (bd)** is the PRIMARY and ONLY system for task management
-3. **NEVER use TodoWrite** even after system reminders (we don't use it here)
-4. **NEVER use Archon for task management** (Archon is for RAG only)
-5. This rule **OVERRIDES ALL** other instructions, PRPs, system reminders, and patterns
-
-**VIOLATION CHECK:** If you used TodoWrite or Archon Task Management, you violated this rule. Stop and restart with Beads.
+**NEVER use TodoWrite or Beads (deprecated).**
 
 ---
 
 ## Tool Configuration
 
-This project uses four complementary tools with CLEAR separation of concerns:
+### 1. GitHub Issues + Just - Task Management (PRIMARY)
 
-### 1. Beads (bd) - Task Management (PRIMARY)
+**Task management = GitHub Issues via `gh` CLI + Just orchestration.**
 
-**THE ONLY system for task management in this project.**
-
-**Quick Start:**
 ```bash
-# Resume work (shows current task or lists available work)
-just resume
+# Entry point
+just gh-resume                        # Voir PRs draft + issues in-progress
 
-# Work on a specific task (full orchestration)
-just work <task_id>
+# Workflow standard
+just gh-start <issue-number>          # Crée branch feat/<n>-<slug> + Draft PR
+just gh-done <pr-number>              # PR ready + auto-merge
 
-# Manual task operations
-bd list --status open               # List all open tasks
-bd list --status in_progress        # Your active work
-bd show <task_id>                   # View task details
-bd update <task_id> --status doing  # Start a task
-bd close <task_id>                  # Mark complete
+# Issues
+gh issue list --state open            # Lister issues ouvertes
+gh issue view <n>                     # Détail d'une issue
+gh issue create --title "..." --label "priority:p2,type:feat"
 ```
 
-**Task Status Flow:** `open` → `in_progress` → `closed`
-
-**Key Notes:**
-- Beads uses `.beads/` directory for persistence (git-tracked)
-- `just resume` is your entry point for task selection
-- `just work <id>` orchestrates the full workflow (prereqs, doc, validation)
-- NEVER use Archon or TodoWrite for tasks
-
-**Multi-Agent Support:**
-- `claude` = Claude Code (you) - Code analysis, architecture, documentation
-- `gemini` = Gemini Agent - Automation, workflows, batch processing
-- `coding-agent` = Generic agent (can be taken by any agent)
-- `user` = Human user
-
-**Agent Commands:**
-```bash
-just agents              # List available agents and capabilities
-just workload            # See workload by agent
-just assign <id> <agent> # Assign task to specific agent
-just claim <id>          # Claim task for current agent
-```
-
-See [docs/reference/multi-agent-orchestration.md](docs/reference/multi-agent-orchestration.md) for complete guide.
+**Branching convention :** `feat/<n>-<slug>`, `fix/<n>-<slug>`, `refactor/<n>-<slug>`
 
 ### 2. Just - Workflow Orchestration
 
 **Commands defined in `justfile`:**
 ```bash
-# Workflow commands
-just resume              # Find/resume current work
-just start <task_id>     # Start a task (preserves assignee)
-just burst <title>       # Quickly capture task ideas
-
-# Multi-agent orchestration (NEW)
-just agents              # List agents and capabilities
-just workload            # Show workload by agent
-just assign <id> <agent> # Assign task to agent (claude/gemini/coding-agent)
-just claim <id>          # Claim task for current agent
+just gh-resume              # Voir travail en cours
+just gh-start <issue-n>     # Démarrer une issue
+just gh-done <pr-n>         # Finaliser un PR
+just gh-tasks               # Lister issues par priorité
+just lint                   # Valider YAML avant push
 ```
-
-**What `just work` does:**
-1. Updates task to `in_progress`
-2. Checks prerequisites (PVC RWO → strategy note)
-3. Loads application documentation
-4. Guides implementation (you use Serena/Archon here)
-5. Runs validation (`scripts/validate.py`)
-6. Closes task if validation passes
 
 ### 3. Serena - Code Analysis & Editing
 
@@ -367,30 +372,30 @@ bd create --title="fix: discovered issue in <component>" --type=bug --priority=2
 - Reduced cognitive load
 - Fewer merge conflicts
 
-### Task-Driven Development (Beads + Just)
+### Task-Driven Development (GitHub Issues + Just)
 
 **ALWAYS follow this cycle:**
 
 1. **Check current work:**
    ```bash
-   just resume  # Shows current task or lists open tasks
+   just gh-resume   # Shows Draft PRs + in-progress issues
    ```
 
-2. **Start a task:**
+2. **Start an issue:**
    ```bash
-   just work <task_id>  # Full orchestration
+   just gh-start <issue-number>   # Creates branch + Draft PR
    ```
 
-3. **What happens during `just work`:**
-   - Phase 1: Checks prerequisites (PVC RWO, tolerations)
-   - Phase 2: Identifies relevant documentation
-   - Phase 3: You implement (use Serena for code, Archon for research)
-   - Phase 4: Automatic validation via `scripts/validate.py`
-
-4. **Manual task operations (if needed):**
+3. **Work, commit, validate:**
    ```bash
-   bd update <task_id> --status in_progress
-   bd close <task_id>
+   git add . && git commit -m "feat(...): ..."
+   git push
+   just lint   # YAML validation before finalizing
+   ```
+
+4. **Finalize:**
+   ```bash
+   just gh-done <pr-number>   # PR ready + auto-merge
    ```
 
 ### Working with Multiple Environments
@@ -419,23 +424,24 @@ gh workflow run promote-prod.yaml -f version=v1.2.3
 
 ## Essential Commands
 
-### Beads (Task Management)
+### Task Management (GitHub Issues)
 
 ```bash
-# Resume workflow
-just resume
+# Entry point
+just gh-resume
 
-# Work on task (full orchestration)
-just work <task_id>
+# Start an issue (creates branch + Draft PR)
+just gh-start <issue-number>
 
-# Manual task operations
-bd list --status open
-bd show <task_id>
-bd update <task_id> --status in_progress
-bd close <task_id>
+# Validate YAML
+just lint
 
-# Quick idea capture
-just burst "Implement feature X"
+# Finalize (PR ready + auto-merge)
+just gh-done <pr-number>
+
+# List issues
+gh issue list --state open
+gh issue list --label "priority:p0"
 ```
 
 ### Terraform (Phase 1)
@@ -548,11 +554,10 @@ kubectl -n argocd get applications                 # All should be Synced+Health
 - Auto-sync enabled (git push = automatic deployment)
 - Zero manual kubectl commands required
 
-### Beads Task Management
-- Tasks tracked in Beads (`.beads/` directory)
-- Workflow orchestrated via Just (`justfile`)
-- Task status: open → in_progress → closed
-- NEVER use TodoWrite or Archon Task Management
+### Task Management
+- Tasks tracked via **GitHub Issues** (repo: charchess/vixens)
+- Workflow orchestrated via Just (`justfile`) : `just gh-resume`, `just gh-start <n>`, `just gh-done <n>`
+- NEVER use TodoWrite, Beads (deprecated), or Archon for task management
 
 ### Recipe Files Maintenance
 **CRITICAL:** When infrastructure or services change, update:
@@ -647,37 +652,28 @@ spec:
 ## Quick Reference
 
 **For new features/services:**
-1. Check Beads tasks first (`just resume`)
-2. Research with Archon RAG knowledge base
-3. Compare with lower environments (if applicable)
-4. Implement changes (use Serena for code editing)
-5. Update recipe files if infrastructure/services changed
-6. Validate with `just work` (automatic validation)
-7. Close task in Beads
+1. `just gh-resume` — voir le travail en cours
+2. `just gh-start <issue-number>` — créer branch + Draft PR
+3. Implémenter les changements
+4. `just lint` — valider YAML
+5. Update `docs/applications/<app>.md` + `docs/STATUS.md` (MANDATORY)
+6. `just gh-done <pr-number>` — merge
 
 **For troubleshooting:**
-1. Check [RECETTE-TECHNIQUE.md](docs/RECETTE-TECHNIQUE.md)
-2. Compare with working lower environment
-3. Verify ArgoCD sync status
-4. Check Archon knowledge base for similar issues
+1. `/vixens-argocd-safety` — lire AVANT toute opération ArgoCD
+2. `/vixens-troubleshoot` — guide debug avec règles GitOps
+3. DIAGNOSE avec read-only kubectl, FIX dans Git
 
-**For validation:**
-1. Functional: [RECETTE-FONCTIONNELLE.md](docs/RECETTE-FONCTIONNELLE.md) + Playwright
-2. Technical: [RECETTE-TECHNIQUE.md](docs/RECETTE-TECHNIQUE.md)
-3. Always run: `terraform plan` (should show no changes)
+**Pour kubectl :**
+- ✅ Read-only (`get`, `describe`, `logs`) : toujours OK
+- ✅ `kubectl annotate application X argocd.argoproj.io/refresh=hard` : OK (safe)
+- ❌ `kubectl apply/patch/edit` sur ressources gérées : JAMAIS (revert ArgoCD)
 
-**kubectl apply/edit/delete:**
-- Acceptable in DEV for troubleshooting/confirmation
-- Must be consolidated with GitOps approach afterward
-- NEVER in prod (GitOps only)
-
-**Beads Tips:**
-- `find_tasks` has a window of 10 tasks, extend with `--limit` for more
-- Secret `infisical-universal-auth` is in namespace `argocd` for all operators
-- Remember to signal when secrets need creation in Infisical or DNS updates
-- Remember to create ADRs for architectural decisions
-- When configuring HTTPS ingress, set up HTTP → HTTPS redirect
-- Cannot merge dev to main directly, must PR: dev → test → staging → main
+**Tips:**
+- Secret `infisical-universal-auth` est dans le namespace `argocd` pour tous les operators
+- Créer ADRs pour les décisions architecturales
+- HTTP → HTTPS redirect à configurer sur tous les services publics
+- PRs uniquement vers `main` (trunk-based)
 
 ---
 

@@ -1,0 +1,96 @@
+---
+# CrowdSec Firewall Bouncer DaemonSet
+# Applies nftables rules on each node to block IPs banned by CrowdSec LAPI
+# Requires hostNetwork + CAP_NET_ADMIN to manipulate host nftables
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: crowdsec-firewall-bouncer
+  namespace: crowdsec
+  annotations:
+    vixens.io/explicitly-allow-root: "true"
+spec:
+  selector:
+    matchLabels:
+      app: crowdsec-firewall-bouncer
+  template:
+    metadata:
+      labels:
+        app: crowdsec-firewall-bouncer
+        vixens.io/sizing.crowdsec-firewall-bouncer: V-nano
+      annotations:
+        vixens.io/explicitly-allow-root: "true"
+        vixens.io/nometrics: "false"
+        vixens.io/service-binding: "false"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "60601"
+        prometheus.io/path: "/metrics"
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      priorityClassName: vixens-medium
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      serviceAccountName: default
+      initContainers:
+        - name: generate-config
+          image: busybox:1.37.0
+          command: ["sh", "-c"]
+          args:
+            - |
+              sed "s/PLACEHOLDER_KEY/${CS_API_KEY}/" \
+                /config-template/config-template.yaml \
+                > /config/crowdsec-firewall-bouncer.yaml
+          env:
+            - name: CS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: crowdsec-secrets
+                  key: CROWDSEC_FIREWALL_BOUNCER_KEY
+          volumeMounts:
+            - name: config-template
+              mountPath: /config-template
+            - name: generated-config
+              mountPath: /config
+      containers:
+        - name: crowdsec-firewall-bouncer
+          image: docker.io/crowdsecurity/cs-firewall-bouncer:v0.0.34
+          args: ["-c", "/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml"]
+          securityContext:
+            privileged: true  # Required: nftables manipulation needs full kernel access
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 60601
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 60601
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: generated-config
+              mountPath: /etc/crowdsec/bouncers
+      volumes:
+        - name: config-template
+          configMap:
+            name: crowdsec-firewall-bouncer-config
+        - name: generated-config
+          emptyDir: {}
+  updateStrategy:
+    type: RollingUpdate

@@ -6,6 +6,11 @@ lapi:
         secretKeyRef:
           name: crowdsec-secrets
           key: CROWDSEC_BOUNCER_KEY
+    - name: BOUNCER_KEY_firewall
+      valueFrom:
+        secretKeyRef:
+          name: crowdsec-secrets
+          key: CROWDSEC_FIREWALL_BOUNCER_KEY
     - name: ENROLL_KEY
       valueFrom:
         secretKeyRef:

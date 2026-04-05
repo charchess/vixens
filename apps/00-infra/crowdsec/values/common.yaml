@@ -23,6 +23,11 @@ lapi:
         secretKeyRef:
           name: crowdsec-secrets
           key: CROWDSEC_BOUNCER_KEY
+    - name: BOUNCER_KEY_firewall
+      valueFrom:
+        secretKeyRef:
+          name: crowdsec-secrets
+          key: CROWDSEC_FIREWALL_BOUNCER_KEY
     - name: ENROLL_KEY
       valueFrom:
         secretKeyRef:
@@ -75,6 +80,7 @@ lapi:
 agent:
   enabled: true
 
+  # Log acquisitions: add mail-gateway namespace when mail pod is deployed in-cluster
   acquisition:
     - namespace: traefik
       podName: traefik-*
@@ -82,7 +88,7 @@ agent:
 
   env:
     - name: COLLECTIONS
-      value: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/base-http-scenarios"
+      value: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/base-http-scenarios crowdsecurity/postfix crowdsecurity/dovecot"
 
   resources:
     requests:

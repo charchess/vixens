@@ -1,0 +1,41 @@
+---
+# crowdsec-firewall-bouncer config template
+# ${CS_API_KEY} is substituted by init container from Secret
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crowdsec-firewall-bouncer-config
+  namespace: crowdsec
+data:
+  config-template.yaml: |
+    mode: nftables
+    pid_dir: /var/run/
+    update_frequency: 10s
+    daemonize: false
+    log_mode: stdout
+    log_level: info
+    api_url: http://crowdsec-service.crowdsec.svc.cluster.local:8080
+    api_key: PLACEHOLDER_KEY
+    insecure_skip_verify: false
+    disable_ipv6: false
+    deny_action: DROP
+    deny_log: false
+    supported_decisions_types:
+      - ban
+    nftables:
+      ipv4:
+        enabled: true
+        set-only: false
+        table: crowdsec
+        chain: crowdsec-chain
+        priority: -10
+      ipv6:
+        enabled: true
+        set-only: false
+        table: crowdsec6
+        chain: crowdsec6-chain
+        priority: -10
+    prometheus:
+      enabled: true
+      listen_addr: 0.0.0.0
+      listen_port: 60601

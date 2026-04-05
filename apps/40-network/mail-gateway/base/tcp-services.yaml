@@ -1,0 +1,72 @@
+---
+# TCP Services for mail protocols (SMTP/Submission/IMAPS) → Synology NAS
+# Traffic flows: Router NAT → Traefik LB → these Services → NAS (192.168.111.69)
+# Protected by crowdsec-firewall-bouncer nftables rules on each node
+apiVersion: v1
+kind: Service
+metadata:
+  name: mail-smtp-svc
+  namespace: mail-gateway
+spec:
+  ports:
+    - protocol: TCP
+      port: 25
+      targetPort: 25
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: mail-smtp-svc
+  namespace: mail-gateway
+subsets:
+  - addresses:
+      - ip: 192.168.111.69
+    ports:
+      - port: 25
+        protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mail-submission-svc
+  namespace: mail-gateway
+spec:
+  ports:
+    - protocol: TCP
+      port: 587
+      targetPort: 587
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: mail-submission-svc
+  namespace: mail-gateway
+subsets:
+  - addresses:
+      - ip: 192.168.111.69
+    ports:
+      - port: 587
+        protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mail-imaps-svc
+  namespace: mail-gateway
+spec:
+  ports:
+    - protocol: TCP
+      port: 993
+      targetPort: 993
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: mail-imaps-svc
+  namespace: mail-gateway
+subsets:
+  - addresses:
+      - ip: 192.168.111.69
+    ports:
+      - port: 993
+        protocol: TCP

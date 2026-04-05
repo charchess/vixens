@@ -15,5 +15,7 @@ resources:
   - service.yaml
   - endpoints.yaml
   - middleware.yaml
+  - tcp-services.yaml
+  - ingressroute-tcp.yaml
 components:
   - ../../../_shared/components/revision-history-limit

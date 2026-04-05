@@ -84,6 +84,21 @@ ports:
     exposedPort: 3483
     expose: true
     protocol: UDP
+  smtp: # Mail SMTP (protected by crowdsec-firewall-bouncer → NAS)
+    port: 25
+    exposedPort: 25
+    expose: true
+    protocol: TCP
+  submission: # Mail Submission (protected by crowdsec-firewall-bouncer → NAS)
+    port: 587
+    exposedPort: 587
+    expose: true
+    protocol: TCP
+  imaps: # Mail IMAP over TLS (protected by crowdsec-firewall-bouncer → NAS)
+    port: 993
+    exposedPort: 993
+    expose: true
+    protocol: TCP
   frigate-api: # Frigate HTTP API (Home Assistant integration)
     port: 5000
     exposedPort: 5000

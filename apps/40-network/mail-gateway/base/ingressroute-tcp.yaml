@@ -1,0 +1,49 @@
+---
+# IngressRouteTCP: SMTP (port 25) → NAS Postfix
+# Requires Traefik entrypoint 'smtp' (port 25) — see traefik values
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: mail-smtp
+  namespace: mail-gateway
+spec:
+  entryPoints:
+    - smtp
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: mail-smtp-svc
+          port: 25
+---
+# IngressRouteTCP: Submission (port 587) → NAS Postfix
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: mail-submission
+  namespace: mail-gateway
+spec:
+  entryPoints:
+    - submission
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: mail-submission-svc
+          port: 587
+---
+# IngressRouteTCP: IMAPS (port 993) → NAS Dovecot
+# TLS passthrough — the NAS handles TLS termination
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: mail-imaps
+  namespace: mail-gateway
+spec:
+  entryPoints:
+    - imaps
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: mail-imaps-svc
+          port: 993
+      tls:
+        passthrough: true
