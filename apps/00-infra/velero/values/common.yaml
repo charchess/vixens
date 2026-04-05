@@ -22,12 +22,6 @@ configuration:
         s3ForcePathStyle: "true"
         s3Url: http://192.168.111.69:9000
 
-  volumeSnapshotLocation:
-    - name: default
-      provider: aws
-      config:
-        region: us-east-1
-
   # MAINTENANCE JOB RESOURCES
   # Template reads: .Values.configuration.repositoryMaintenanceJob.repositoryConfigData
   repositoryMaintenanceJob:
