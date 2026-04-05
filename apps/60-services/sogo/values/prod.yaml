@@ -1,0 +1,142 @@
+---
+# SOGo — Helm values (prod)
+# Chart: https://helm.snry.xyz/docker-sogo/ sogo v0.3.5
+# Image: sonroyaalmerol/docker-sogo
+# Docs: https://www.sogo.nu/files/docs/SOGoInstallationGuide.html
+
+replicaCount: 1
+
+image:
+  repository: sonroyaalmerol/docker-sogo
+  tag: "5.12.4-3"
+  pullPolicy: IfNotPresent
+
+# ============================================================================
+# Service — ClusterIP uniquement, Traefik gère l'exposition externe
+# ============================================================================
+service:
+  type: ClusterIP
+  port: 80
+
+# ============================================================================
+# Ingress — désactivé, géré via overlay Kustomize
+# ============================================================================
+ingress:
+  enabled: false
+
+# ============================================================================
+# Resources
+# ============================================================================
+podLabels:
+  vixens.io/sizing.sogo: V-medium
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+# ============================================================================
+# Sous-charts — désactivés (on utilise CNPG postgresql-shared)
+# ============================================================================
+postgresql:
+  enabled: false
+
+mariadb:
+  enabled: false
+
+memcached:
+  enabled: false
+
+# ============================================================================
+# Stratégie — Recreate (pas de PVC RWO ici mais safe par défaut)
+# ============================================================================
+strategy:
+  type: Recreate
+
+# ============================================================================
+# Tolerations — autoriser scheduling sur control-plane si besoin
+# ============================================================================
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+# ============================================================================
+# Configuration SOGo — valeurs non-sensibles
+# Le mot de passe DB est injecté via env var SOGO_DB_PASSWORD (Infisical)
+# ============================================================================
+sogo:
+  configs:
+    WOWorkersCount: 3
+    WOWatchDogRequestTimeout: 10
+    SOGoTimeZone: "Europe/Paris"
+    SOGoLanguage: "French"
+    SOGoMailDomain: "truxonline.com"
+
+    # IMAP / SMTP → Stalwart
+    SOGoIMAPServer: "stalwart.stalwart.svc.cluster.local"
+    SOGoSMTPServer: "stalwart.stalwart.svc.cluster.local"
+    SOGoSMTPAuthenticationType: "PLAIN"
+    SOGoSieveServer: "stalwart.stalwart.svc.cluster.local"
+    SOGoSievePort: 4190
+
+    # Dossiers mail standard
+    SOGoDraftsFolderName: "Drafts"
+    SOGoSentFolderName: "Sent"
+    SOGoTrashFolderName: "Trash"
+    SOGoJunkFolderName: "Junk"
+
+    # Features
+    SOGoEnablePublicAccess: "NO"
+    SOGoEnableChangePassword: "YES"
+    SOGoForceExternalLoginWithEmail: "NO"
+    SOGoCalendarDefaultRoles:
+      - PublicViewer
+      - ConfidentialDAndTViewer
+    SOGoEnableDomainBasedUID: "NO"
+
+    # Database — URLs avec substitution env var ${SOGO_DB_PASSWORD}
+    SOGoProfileURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_user_profile"
+    OCSFolderInfoURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_folder_info"
+    OCSSessionsFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_sessions_folder"
+    OCSEMailAlarmsFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_alarms_folder"
+    OCSStoreURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_store"
+    OCSAclURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_acl"
+    OCSCacheFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_cache_folder"
+
+    # User source — SQL (table sogo_users dans PostgreSQL)
+    SOGoUserSources:
+      - type: sql
+        id: users
+        viewURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_users"
+        canAuthenticate: "YES"
+        isAddressBook: "YES"
+        authenticationFilter: "c_uid = '%{username}'"
+        userPasswordAlgorithm: "md5"
+        LoginFields:
+          - c_uid
+        MailFields:
+          - mail
+        bindFields:
+          - c_uid
+          - mail
+
+# ============================================================================
+# Injection du mot de passe DB depuis le secret Infisical
+# ============================================================================
+extraEnv:
+  - name: SOGO_DB_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: sogo-secrets
+        key: SOGO_DB_PASSWORD
+
+# ============================================================================
+# Annotations pod
+# ============================================================================
+podAnnotations:
+  vixens.io/sizing-rationale: "V-medium: groupware SOGo, 3 workers"
+  prometheus.io/scrape: "false"

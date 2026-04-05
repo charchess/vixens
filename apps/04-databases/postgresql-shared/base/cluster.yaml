@@ -61,6 +61,11 @@ spec:
       #        login: true  #       Without this key, CNPG loops on 'username key doesn't exist'
       #        passwordSecret:  #       blocking the entire cluster from becoming Ready.
       #          name: penpot-postgresql-credentials  # penpot role still exists in DB, app still connects.
+      - name: sogo
+        ensure: present
+        login: true
+        passwordSecret:
+          name: sogo-postgresql-credentials
       - name: firefly
         ensure: present
         login: true
