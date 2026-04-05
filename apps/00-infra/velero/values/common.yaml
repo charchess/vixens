@@ -8,8 +8,7 @@ image:
 configuration:
   uploaderType: kopia
   defaultRepoMaintainFrequency: 24h
-  defaultExcludedNamespaceScopedResources: []
-  defaultExcludedClusterScopedResources: []
+
 
   # STORAGE LOCATION
   backupStorageLocation:
@@ -45,6 +44,8 @@ schedules:
       ttl: "720h"
       includedNamespaces: ["databases"]
       snapshotVolumes: true
+      excludedNamespaceScopedResources: []
+      excludedClusterScopedResources: []
   daily-home:
     disabled: false
     schedule: "0 4 * * *"
@@ -52,6 +53,8 @@ schedules:
       ttl: "168h"
       includedNamespaces: ["homeassistant"]
       snapshotVolumes: true
+      excludedNamespaceScopedResources: []
+      excludedClusterScopedResources: []
   weekly-full:
     disabled: false
     schedule: "0 3 * * 0"
