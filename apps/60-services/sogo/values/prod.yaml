@@ -39,31 +39,39 @@ resources:
     memory: 1Gi
 
 # ============================================================================
-# Sous-charts — désactivés (on utilise CNPG postgresql-shared)
+# PostgreSQL bundled (bitnami) — dédié SOGo
+# Le secret sogo-secrets (Infisical) fournit SOGO_DB_PASSWORD
+# Service interne : sogo-postgresql:5432 / DB: sogo / User: sogo
 # ============================================================================
 postgresql:
-  enabled: false
-  image:
-    registry: docker.io
-    repository: bitnami/postgresql
-    tag: "16"
+  enabled: true
+  auth:
+    database: sogo
+    username: sogo
+    existingSecret: sogo-secrets
+    secretKeys:
+      userPasswordKey: SOGO_DB_PASSWORD
+  primary:
+    persistence:
+      enabled: true
+      storageClass: synelia-iscsi-retain
+      size: 10Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 
 mariadb:
   enabled: false
-  image:
-    registry: docker.io
-    repository: bitnami/mariadb
-    tag: "11"
 
 memcached:
   enabled: false
-  image:
-    registry: docker.io
-    repository: bitnami/memcached
-    tag: "1"
 
 # ============================================================================
-# Stratégie — Recreate (pas de PVC RWO ici mais safe par défaut)
+# Stratégie — Recreate (PVC RWO)
 # ============================================================================
 strategy:
   type: Recreate
@@ -79,6 +87,7 @@ tolerations:
 # ============================================================================
 # Configuration SOGo — valeurs non-sensibles
 # Le mot de passe DB est injecté via env var SOGO_DB_PASSWORD (Infisical)
+# DB interne bitnami : sogo-postgresql.sogo.svc.cluster.local:5432
 # ============================================================================
 sogo:
   configs:
@@ -105,28 +114,24 @@ sogo:
     SOGoEnablePublicAccess: "NO"
     SOGoEnableChangePassword: "YES"
     SOGoForceExternalLoginWithEmail: "NO"
-    SOGoCalendarDefaultRoles:
-      - PublicViewer
-      - ConfidentialDAndTViewer
     SOGoEnableDomainBasedUID: "NO"
 
-    # Database — URLs avec substitution env var ${SOGO_DB_PASSWORD}
-    SOGoProfileURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_user_profile"
-    OCSFolderInfoURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_folder_info"
-    OCSSessionsFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_sessions_folder"
-    OCSEMailAlarmsFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_alarms_folder"
-    OCSStoreURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_store"
-    OCSAclURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_acl"
-    OCSCacheFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_cache_folder"
+    # Database — postgresql bundled (sogo-postgresql service)
+    SOGoProfileURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@sogo-postgresql:5432/sogo/sogo_user_profile"
+    OCSFolderInfoURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@sogo-postgresql:5432/sogo/sogo_folder_info"
+    OCSSessionsFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@sogo-postgresql:5432/sogo/sogo_sessions_folder"
+    OCSEMailAlarmsFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@sogo-postgresql:5432/sogo/sogo_alarms_folder"
+    OCSStoreURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@sogo-postgresql:5432/sogo/sogo_store"
+    OCSAclURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@sogo-postgresql:5432/sogo/sogo_acl"
+    OCSCacheFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@sogo-postgresql:5432/sogo/sogo_cache_folder"
 
     # User source — SQL (table sogo_users dans PostgreSQL)
     SOGoUserSources:
       - type: sql
         id: users
-        viewURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared.databases.svc.cluster.local:5432/sogo/sogo_users"
+        viewURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@sogo-postgresql:5432/sogo/sogo_users"
         canAuthenticate: "YES"
         isAddressBook: "YES"
-        authenticationFilter: "c_uid = '%{username}'"
         userPasswordAlgorithm: "md5"
         LoginFields:
           - c_uid
