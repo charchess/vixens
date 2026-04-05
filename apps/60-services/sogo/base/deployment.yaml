@@ -58,6 +58,13 @@ spec:
       containers:
         - name: sogo
           image: sonroyaalmerol/docker-sogo:5.12.4-3
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: true
+            capabilities:
+              add:
+                - SETGID
+                - SETUID
           ports:
             - containerPort: 80
               name: http
