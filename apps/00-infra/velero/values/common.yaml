@@ -5,10 +5,11 @@ image:
   tag: v1.18.0
   pullPolicy: IfNotPresent
 
+features: EnableCSI
+
 configuration:
   uploaderType: kopia
   defaultRepoMaintainFrequency: 24h
-  features: EnableCSI
 
   # STORAGE LOCATION
   backupStorageLocation:
