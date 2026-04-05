@@ -1,0 +1,54 @@
+---
+# SOGo configuration template — env vars substituted at container startup
+# DB password is injected via SOGO_DB_PASSWORD env var from sogo-secrets
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sogo-config-template
+  namespace: sogo
+data:
+  00-main.yaml: |
+    WOWorkersCount: 3
+    WOWatchDogRequestTimeout: 10
+    SOGoTimeZone: "Europe/Paris"
+    SOGoLanguage: "French"
+    SOGoMailDomain: "truxonline.com"
+
+    SOGoIMAPServer: "stalwart.stalwart.svc.cluster.local"
+    SOGoSMTPServer: "stalwart.stalwart.svc.cluster.local"
+    SOGoSMTPAuthenticationType: "PLAIN"
+    SOGoSieveServer: "stalwart.stalwart.svc.cluster.local"
+    SOGoSievePort: 4190
+
+    SOGoDraftsFolderName: "Drafts"
+    SOGoSentFolderName: "Sent"
+    SOGoTrashFolderName: "Trash"
+    SOGoJunkFolderName: "Junk"
+
+    SOGoEnablePublicAccess: "NO"
+    SOGoEnableChangePassword: "YES"
+    SOGoForceExternalLoginWithEmail: "NO"
+    SOGoEnableDomainBasedUID: "NO"
+
+    SOGoProfileURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_user_profile"
+    OCSFolderInfoURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_folder_info"
+    OCSSessionsFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_sessions_folder"
+    OCSEMailAlarmsFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_alarms_folder"
+    OCSStoreURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_store"
+    OCSAclURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_acl"
+    OCSCacheFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_cache_folder"
+
+    SOGoUserSources:
+      - type: sql
+        id: users
+        viewURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_users"
+        canAuthenticate: "YES"
+        isAddressBook: "YES"
+        userPasswordAlgorithm: "md5"
+        LoginFields:
+          - c_uid
+        MailFields:
+          - mail
+        bindFields:
+          - c_uid
+          - mail

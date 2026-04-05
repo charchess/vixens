@@ -30,3 +30,4 @@ resources:
   - databases/penpot.yaml
   - databases/vikunja.yaml
   - databases/n8n.yaml
+  - databases/sogo.yaml
