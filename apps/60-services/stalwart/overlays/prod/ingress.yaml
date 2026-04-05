@@ -26,7 +26,7 @@ spec:
               service:
                 name: stalwart
                 port:
-                  number: 8080
+                  number: 80
   tls:
     - hosts:
         - stalwart-admin.truxonline.com
@@ -54,7 +54,7 @@ spec:
               service:
                 name: stalwart
                 port:
-                  number: 8080
+                  number: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -79,7 +79,7 @@ spec:
               service:
                 name: stalwart
                 port:
-                  number: 8080
+                  number: 80
   tls:
     - hosts:
         - stalwart.truxonline.com
