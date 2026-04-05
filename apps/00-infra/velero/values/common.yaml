@@ -10,6 +10,7 @@ features: EnableCSI
 configuration:
   uploaderType: kopia
   defaultRepoMaintainFrequency: 24h
+  volumeSnapshotLocation: []
 
   # STORAGE LOCATION
   backupStorageLocation:
