@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stalwart
+  labels:
+    app.kubernetes.io/name: stalwart
+    app.kubernetes.io/part-of: mail-stack
+    goldilocks.fairwinds.com/enabled: "true"
