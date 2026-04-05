@@ -13,10 +13,4 @@ patches:
     target:
       kind: Deployment
       name: velero
-  - patch: |-
-      - op: add
-        path: /spec/template/spec/containers/0/args/-
-        value: "--features=EnableCSI"
-    target:
-      kind: Deployment
-      name: velero
+
