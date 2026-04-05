@@ -10,7 +10,6 @@ configuration:
   defaultRepoMaintainFrequency: 24h
   features: EnableCSI
 
-
   # STORAGE LOCATION
   backupStorageLocation:
     - name: default
