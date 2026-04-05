@@ -93,9 +93,10 @@ tolerations:
 # Certificate TLS (chart génère une Certificate cert-manager pour stalwart-cert)
 # ============================================================================
 certificate:
-  dnsNames:
-    - stalwart.truxonline.com
-    - stalwart-admin.truxonline.com
+  certmanager:
+    dnsNames:
+      - stalwart.truxonline.com
+      - stalwart-admin.truxonline.com
 
 # ============================================================================
 # Annotations pod
