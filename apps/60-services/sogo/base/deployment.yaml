@@ -63,8 +63,11 @@ spec:
             allowPrivilegeEscalation: true
             capabilities:
               add:
+                - CHOWN
+                - DAC_OVERRIDE
                 - SETGID
                 - SETUID
+                - FOWNER
           ports:
             - containerPort: 80
               name: http
