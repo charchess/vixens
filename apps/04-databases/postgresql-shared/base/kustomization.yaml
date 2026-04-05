@@ -18,6 +18,7 @@ resources:
   - credentials/penpot-secret.yaml
   - credentials/vikunja-secret.yaml
   - credentials/n8n-secret.yaml
+  - credentials/sogo-secret.yaml
   - databases/docspell.yaml
   - databases/netvisor.yaml
   - databases/linkwarden.yaml
