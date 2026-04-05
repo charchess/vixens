@@ -6,11 +6,17 @@ kind: Kustomization
 resources: []
 
 patches:
-  # Graceful shutdown bypass — velero is a backup controller, no user connections to drain
   - patch: |-
       - op: add
         path: /spec/template/metadata/annotations/vixens.io~1no-long-connections
         value: "true"
+    target:
+      kind: Deployment
+      name: velero
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: "--features=EnableCSI"
     target:
       kind: Deployment
       name: velero
