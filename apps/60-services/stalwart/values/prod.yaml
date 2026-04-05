@@ -18,7 +18,7 @@ image:
 # Admin credentials — injectées via Secret (Infisical)
 # ============================================================================
 env:
-  - name: STALWART_ADMIN_SECRET
+  - name: FALLBACK_ADMIN_SECRET
     valueFrom:
       secretKeyRef:
         name: stalwart-secrets
