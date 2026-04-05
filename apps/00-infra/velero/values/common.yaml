@@ -8,6 +8,8 @@ image:
 configuration:
   uploaderType: kopia
   defaultRepoMaintainFrequency: 24h
+  defaultExcludedNamespaceScopedResources: []
+  defaultExcludedClusterScopedResources: []
 
   # STORAGE LOCATION
   backupStorageLocation:
@@ -36,27 +38,19 @@ configuration:
 
 # BACKUP SCHEDULES
 schedules:
-  daily-critical:
+  daily-databases:
     disabled: false
     schedule: "0 2 * * *"
     template:
       ttl: "720h"
-      includedNamespaces: ["databases", "tools", "security", "services", "finance", "auth", "networking", "monitoring"]
+      includedNamespaces: ["databases"]
       snapshotVolumes: true
   daily-home:
     disabled: false
     schedule: "0 4 * * *"
     template:
       ttl: "168h"
-      includedNamespaces: ["homeassistant", "mealie", "mosquitto"]
-      snapshotVolumes: true
-      defaultVolumesToFsBackup: true
-  daily-media:
-    disabled: false
-    schedule: "0 5 * * *"
-    template:
-      ttl: "168h"
-      includedNamespaces: ["media", "birdnet-go", "downloads"]
+      includedNamespaces: ["homeassistant"]
       snapshotVolumes: true
   weekly-full:
     disabled: false
@@ -64,8 +58,9 @@ schedules:
     template:
       ttl: "2160h"
       includedNamespaces: ["*"]
-      excludedNamespaces: ["kube-system", "kube-public", "kube-node-lease"]
-      snapshotVolumes: true
+      excludedNamespaces: ["kube-system", "kube-public", "kube-node-lease", "velero"]
+      snapshotVolumes: false
+      defaultVolumesToFsBackup: false
 
 # CLEANUP SETTINGS
 maintenanceCronJob:
