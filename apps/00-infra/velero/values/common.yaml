@@ -8,6 +8,7 @@ image:
 configuration:
   uploaderType: kopia
   defaultRepoMaintainFrequency: 24h
+  features: EnableCSI
 
 
   # STORAGE LOCATION
