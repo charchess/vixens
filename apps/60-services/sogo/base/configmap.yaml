@@ -30,18 +30,18 @@ data:
     SOGoForceExternalLoginWithEmail: "NO"
     SOGoEnableDomainBasedUID: "NO"
 
-    SOGoProfileURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_user_profile"
-    OCSFolderInfoURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_folder_info"
-    OCSSessionsFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_sessions_folder"
-    OCSEMailAlarmsFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_alarms_folder"
-    OCSStoreURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_store"
-    OCSAclURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_acl"
-    OCSCacheFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_cache_folder"
+    SOGoProfileURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_user_profile?sslmode=disable"
+    OCSFolderInfoURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_folder_info?sslmode=disable"
+    OCSSessionsFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_sessions_folder?sslmode=disable"
+    OCSEMailAlarmsFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_alarms_folder?sslmode=disable"
+    OCSStoreURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_store?sslmode=disable"
+    OCSAclURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_acl?sslmode=disable"
+    OCSCacheFolderURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_cache_folder?sslmode=disable"
 
     SOGoUserSources:
       - type: sql
         id: users
-        viewURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_users"
+        viewURL: "postgresql://sogo:${SOGO_DB_PASSWORD}@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo/sogo_users?sslmode=disable"
         canAuthenticate: "YES"
         isAddressBook: "YES"
         userPasswordAlgorithm: "md5"
