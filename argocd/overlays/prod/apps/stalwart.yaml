@@ -11,7 +11,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: oci://codeberg.org/wrenix/helm-charts
+    - repoURL: oci://codeberg.org/wrenix/helm-charts/stalwart-mail
       chart: stalwart-mail
       targetRevision: 1.0.5
       helm:
