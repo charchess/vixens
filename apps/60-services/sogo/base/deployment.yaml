@@ -6,17 +6,21 @@ metadata:
   namespace: sogo
   annotations:
     argocd.argoproj.io/sync-wave: "2"
-    argocd.argoproj.io/sync-options: Replace=true
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
+      app.kubernetes.io/component: app
+      app.kubernetes.io/instance: sogo
       app.kubernetes.io/name: sogo
   template:
     metadata:
       labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/instance: sogo
         app.kubernetes.io/name: sogo
         vixens.io/sizing.sogo: V-medium
       annotations:
