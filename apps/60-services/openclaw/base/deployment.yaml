@@ -149,7 +149,7 @@ spec:
               python3 << 'PYEOF'
               import json, base64, os, pathlib
 
-              # Part 1: Remove legacy invalid keys from openclaw.json
+              # Part 1: Remove legacy invalid keys + apply mandatory plugin overrides
               p = '/data/openclaw.json'
               if os.path.exists(p):
                   d = json.load(open(p))
@@ -158,6 +158,8 @@ spec:
                   l.pop('paths', None)
                   s.pop('load', None) if isinstance(s, dict) and not l else None
                   d.pop('skills', None) if isinstance(s, dict) and not s else None
+                  # Always force-disable claw-hass (crashes without HASS config)
+                  d.setdefault('plugins', {}).setdefault('entries', {})['claw-hass'] = {'enabled': False}
                   json.dump(d, open(p, 'w'))
                   print('Config keys checked')
 

@@ -35,7 +35,8 @@ data:
       },
       "plugins": {
         "entries": {
-          "google-gemini-cli-auth": {"enabled": true}
+          "google-gemini-cli-auth": {"enabled": true},
+          "claw-hass": {"enabled": false}
         }
       }
     }
