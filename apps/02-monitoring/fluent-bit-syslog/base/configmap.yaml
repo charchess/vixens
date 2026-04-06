@@ -48,6 +48,3 @@ data:
         Name         syslog-rfc3164-local
         Format       regex
         Regex        ^\<(?<pri>[0-9]+)\>(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<host>[^ ]*) (?<ident>[a-zA-Z0-9_\/\.\-]*)(?:\[(?<pid>[0-9]+)\])?(?:[^\:]*\:)? *(?<message>.*)$
-        Time_Key     time
-        Time_Format  %b %d %H:%M:%S
-        Time_Keep    off
