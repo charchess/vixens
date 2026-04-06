@@ -74,6 +74,16 @@ ports:
     exposedPort: 53
     expose: true
     protocol: UDP
+  syslog-tcp: # Syslog TCP (NAS, UDM → Loki)
+    port: 514
+    exposedPort: 514
+    expose: true
+    protocol: TCP
+  syslog-udp: # Syslog UDP (NAS, UDM → Loki)
+    port: 514
+    exposedPort: 514
+    expose: true
+    protocol: UDP
   slimproto-tcp: # MusicAssistant SlimProto TCP
     port: 3483
     exposedPort: 3483

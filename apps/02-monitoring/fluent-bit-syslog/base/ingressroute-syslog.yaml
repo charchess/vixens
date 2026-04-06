@@ -1,0 +1,27 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: fluent-bit-syslog-tcp
+  namespace: monitoring
+spec:
+  entryPoints:
+    - syslog-tcp
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: fluent-bit-syslog
+          port: 514
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: fluent-bit-syslog-udp
+  namespace: monitoring
+spec:
+  entryPoints:
+    - syslog-udp
+  routes:
+    - services:
+        - name: fluent-bit-syslog
+          port: 514
