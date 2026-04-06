@@ -21,6 +21,7 @@ spec:
         vixens.io/sizing.install-tools: B-xlarge
         vixens.io/sizing.setup-config: G-nano
         vixens.io/sizing.install-gemini: B-medium
+        vixens.io/sizing.install-claude: B-medium
         vixens.io/sizing.openclaw: SB-xlarge
         vixens.io/backup-profile: "relaxed"
       annotations:
@@ -217,6 +218,33 @@ spec:
               fi
               # Always fix permissions (targeted)
               chown -R 1000:1000 /data/node_modules /data/gemini-cli 2>/dev/null || true
+        # 4/4 — Install Claude Code CLI
+        #        Skips reinstall if CLAUDE_VERSION file matches.
+        - name: install-claude
+          image: node:24-bookworm
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              set -e
+              CLAUDE_VERSION="2.1.92"
+              if [ -f /data/claude-cli/.claude-version ] && \
+                 [ "$(cat /data/claude-cli/.claude-version)" = "$CLAUDE_VERSION" ]; then
+                echo "Claude Code v$CLAUDE_VERSION already installed, skipping"
+              else
+                echo "Installing Claude Code v$CLAUDE_VERSION..."
+                npm install -g @anthropic-ai/claude-code@$CLAUDE_VERSION
+                mkdir -p /data/claude-cli
+                cp -r /usr/local/lib/node_modules/@anthropic-ai /data/claude-cli/
+                echo "$CLAUDE_VERSION" > /data/claude-cli/.claude-version
+                echo "Claude Code installed successfully"
+              fi
+              # Always fix permissions
+              chown -R 1000:1000 /data/claude-cli 2>/dev/null || true
       containers:
         - name: openclaw
           lifecycle:
@@ -247,7 +275,7 @@ spec:
             - name: TZ
               value: Europe/Paris
             - name: PATH
-              value: /data/tools/usr/local/bin:/data/tools/local/bin:/data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
+              value: /data/tools/usr/local/bin:/data/tools/local/bin:/data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/data/claude-cli/@anthropic-ai/claude-code/bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
             - name: LD_LIBRARY_PATH
               value: /usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/lib:/usr/lib:/data/tools/lib/blas
             - name: PYTHONPATH
