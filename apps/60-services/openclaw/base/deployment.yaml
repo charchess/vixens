@@ -21,7 +21,6 @@ spec:
         vixens.io/sizing.install-tools: B-xlarge
         vixens.io/sizing.setup-config: G-nano
         vixens.io/sizing.install-gemini: B-medium
-        vixens.io/sizing.install-claude: B-medium
         vixens.io/sizing.openclaw: SB-xlarge
         vixens.io/backup-profile: "relaxed"
       annotations:
@@ -185,8 +184,8 @@ spec:
             - name: default-config
               mountPath: /default-config
               readOnly: true
-        # 3/3 — Install Gemini plugin + CLI
-        #        Skips reinstall if PLUGIN_VERSION file matches.
+        # 3/3 — Install Gemini plugin + CLI + Claude Code CLI
+        #        Skips reinstall if version files match.
         - name: install-gemini
           image: node:24-bookworm
           securityContext:
@@ -216,21 +215,6 @@ spec:
                 echo "$PLUGIN_VERSION" > /data/node_modules/.gemini-plugin-version
                 echo "Gemini installed successfully"
               fi
-              # Always fix permissions (targeted)
-              chown -R 1000:1000 /data/node_modules /data/gemini-cli 2>/dev/null || true
-        # 4/4 — Install Claude Code CLI
-        #        Skips reinstall if CLAUDE_VERSION file matches.
-        - name: install-claude
-          image: node:24-bookworm
-          securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              set -e
               CLAUDE_VERSION="2.1.92"
               if [ -f /data/claude-cli/.claude-version ] && \
                  [ "$(cat /data/claude-cli/.claude-version)" = "$CLAUDE_VERSION" ]; then
@@ -244,7 +228,7 @@ spec:
                 echo "Claude Code installed successfully"
               fi
               # Always fix permissions
-              chown -R 1000:1000 /data/claude-cli 2>/dev/null || true
+              chown -R 1000:1000 /data/node_modules /data/gemini-cli /data/claude-cli 2>/dev/null || true
       containers:
         - name: openclaw
           lifecycle:
