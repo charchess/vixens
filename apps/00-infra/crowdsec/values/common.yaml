@@ -42,7 +42,7 @@ lapi:
     config:
       enabled: true
       size: 1Gi
-      storageClassName: synelia-iscsi-retain
+      storageClassName: local-path
 
   strategy:
     type: Recreate  # required with RWO PVC
