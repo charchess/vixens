@@ -42,7 +42,7 @@ lapi:
     config:
       enabled: true
       size: 1Gi
-      storageClassName: local-path
+      storageClassName: local-path-delete
 
   strategy:
     type: Recreate  # required with RWO PVC
