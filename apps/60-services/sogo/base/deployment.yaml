@@ -26,6 +26,7 @@ spec:
       annotations:
         vixens.io/sizing-rationale: "V-medium: groupware SOGo, 3 workers"
         prometheus.io/scrape: "false"
+        secret.reloader.stakater.com/reload: "sogo-secrets"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -54,6 +55,49 @@ spec:
               mountPath: /tmpl
             - name: sogo-config
               mountPath: /conf
+        - name: user-init
+          image: alpine:3.23
+          command:
+            - sh
+            - -c
+            - |
+              apk add --no-cache postgresql-client > /dev/null 2>&1
+              PGPASSWORD="${SOGO_DB_PASSWORD}" psql \
+                "postgresql://sogo@postgresql-shared-rw.databases.svc.cluster.local:5432/sogo?sslmode=disable" \
+                -c "INSERT INTO sogo_users (c_uid, c_name, c_password, c_cn, mail, c_imap_login)
+                    VALUES ('${SOGO_ADMIN_USERNAME}', '${SOGO_ADMIN_USERNAME}', MD5('${SOGO_ADMIN_PASSWORD}'), '${SOGO_ADMIN_CN}', '${SOGO_ADMIN_EMAIL}', '${SOGO_ADMIN_EMAIL}')
+                    ON CONFLICT (c_uid) DO UPDATE SET
+                      c_password = MD5('${SOGO_ADMIN_PASSWORD}'),
+                      c_cn = '${SOGO_ADMIN_CN}',
+                      mail = '${SOGO_ADMIN_EMAIL}',
+                      c_imap_login = '${SOGO_ADMIN_EMAIL}';"
+              echo "User ${SOGO_ADMIN_USERNAME} upserted."
+          env:
+            - name: SOGO_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sogo-secrets
+                  key: SOGO_DB_PASSWORD
+            - name: SOGO_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: sogo-secrets
+                  key: SOGO_ADMIN_USERNAME
+            - name: SOGO_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sogo-secrets
+                  key: SOGO_ADMIN_PASSWORD
+            - name: SOGO_ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: sogo-secrets
+                  key: SOGO_ADMIN_EMAIL
+            - name: SOGO_ADMIN_CN
+              valueFrom:
+                secretKeyRef:
+                  name: sogo-secrets
+                  key: SOGO_ADMIN_CN
 
       containers:
         - name: sogo
