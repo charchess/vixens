@@ -60,8 +60,6 @@ resources:
   - apps/firefly-iii.yaml
   - apps/firefly-iii-importer.yaml
   - apps/n8n.yaml
-  - apps/stalwart.yaml
-  - apps/sogo.yaml
   - apps/lidarr.yaml
   - apps/booklore.yaml
   - apps/sonarr.yaml
