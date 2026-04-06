@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fluent-bit-syslog
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fluent-bit-syslog
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fluent-bit-syslog
+        vixens.io/sizing.fluent-bit-syslog: B-small
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "2020"
+        prometheus.io/path: "/api/v1/metrics/prometheus"
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: fluent-bit-syslog
+          image: fluent/fluent-bit:3.2
+          args:
+            - -c
+            - /fluent-bit/etc/fluent-bit.conf
+            - --parser
+            - /fluent-bit/etc/parsers.conf
+          ports:
+            - containerPort: 514
+              protocol: UDP
+              name: syslog-udp
+            - containerPort: 514
+              protocol: TCP
+              name: syslog-tcp
+            - containerPort: 2020
+              protocol: TCP
+              name: metrics
+          volumeMounts:
+            - name: config
+              mountPath: /fluent-bit/etc
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 2020
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 2020
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: config
+          configMap:
+            name: fluent-bit-syslog-config
