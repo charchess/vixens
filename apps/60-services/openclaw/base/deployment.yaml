@@ -230,7 +230,7 @@ spec:
             limits:
               cpu: 2000m
               memory: 8Gi
-          image: ghcr.io/openclaw/openclaw:2026.4.2
+          image: ghcr.io/openclaw/openclaw:2026.4.5
           imagePullPolicy: Always
           command:
             - node
