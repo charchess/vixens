@@ -6,7 +6,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: synelia-iscsi-retain
+  storageClassName: local-path-delete
   resources:
     requests:
       storage: 5Gi
