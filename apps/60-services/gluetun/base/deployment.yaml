@@ -25,6 +25,13 @@ spec:
           operator: Exists
           effect: NoSchedule
       priorityClassName: vixens-medium
+      initContainers:
+        - name: clean-ipv6-rule
+          image: busybox:1.37
+          securityContext:
+            capabilities:
+              add: [NET_ADMIN]
+          command: ["sh", "-c", "ip -6 rule del table 51820 2>/dev/null || true"]
       containers:
         - name: gluetun
           lifecycle:
