@@ -10,4 +10,4 @@ spec:
     kind: Deployment
     name: homeassistant
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "InPlaceOrRecreate"

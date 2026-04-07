@@ -8,7 +8,7 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.trivy-operator: G-large
+        vixens.io/sizing.trivy-operator: V-medium
       annotations:
         vixens.io/service-binding: "false"
     spec:
