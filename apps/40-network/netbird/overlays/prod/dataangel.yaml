@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-management
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.dataangel: V-small
+      annotations:
+        dataangel.io/bucket: "vixens-prod-netbird"
+        dataangel.io/sqlite-paths: ""
+        dataangel.io/fs-paths: "/var/lib/netbird"
+        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/deployment-name: "netbird"
+        dataangel.io/rclone-interval: "60s"
+        dataangel.io/metrics-enabled: "true"
+        dataangel.io/lock-enabled: "false"
+    spec:
+      initContainers:
+        - name: dataangel
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: netbird-secrets
+                  key: RCLONE_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: netbird-secrets
+                  key: RCLONE_SECRET_ACCESS_KEY
+          volumeMounts:
+            - mountPath: /data
+              $patch: delete
+            - name: netbird-data
+              mountPath: /var/lib/netbird
