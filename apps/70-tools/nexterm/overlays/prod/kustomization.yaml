@@ -4,10 +4,13 @@ kind: Kustomization
 resources:
   - ../../base
   - ingress.yaml
-patches:
-  - path: patch-infisical-secret.yaml
 components:
   - ../../../../_shared/components/sync-wave/wave-15
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/poddisruptionbudget/1
+  - ../../../../_shared/components/dataangel
+
+patches:
+  - path: patch-infisical-secret.yaml
+  - path: dataangel.yaml

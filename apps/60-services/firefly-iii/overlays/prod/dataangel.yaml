@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firefly-iii
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.dataangel: V-small
+      annotations:
+        dataangel.io/bucket: "vixens-prod-firefly-iii"
+        dataangel.io/sqlite-paths: ""
+        dataangel.io/fs-paths: "/var/www/html/storage/upload"
+        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/deployment-name: "firefly-iii"
+        dataangel.io/rclone-interval: "60s"
+        dataangel.io/metrics-enabled: "true"
+        dataangel.io/lock-enabled: "false"
+    spec:
+      initContainers:
+        - name: dataangel
+          securityContext:
+            runAsUser: 33
+            runAsGroup: 33
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: firefly-iii-secrets
+                  key: RCLONE_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: firefly-iii-secrets
+                  key: RCLONE_SECRET_ACCESS_KEY
+          volumeMounts:
+            - mountPath: /data
+              $patch: delete
+            - name: static
+              mountPath: /var/www/html/storage/upload
