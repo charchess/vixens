@@ -59,7 +59,7 @@ spec:
           args:
             - |
               set -e
-              TOOLS_VERSION="6"
+              TOOLS_VERSION="7"
               if [ -f /data/tools/.installed-version ] && [ "$(cat /data/tools/.installed-version)" = "$TOOLS_VERSION" ]; then
                 echo "Tools v$TOOLS_VERSION already present, skipping reinstall"
               else
@@ -68,7 +68,7 @@ spec:
                 mkdir -p /data/tools/bin /data/tools/lib
                 apt-get update
                 apt-get install -y --no-install-recommends \
-                  jq rsync python3-pip python3.11-venv tree nano htop git sudo nmap dnsutils \
+                  jq rsync python3-pip python3-venv tree nano htop git sudo nmap dnsutils \
                   netcat-traditional sqlite3 ffmpeg imagemagick curl wget \
                   ca-certificates gnupg lsb-release build-essential unzip zip gzip openssl nodejs npm
                 for bin in jq rsync tree nano htop git nmap netcat ffmpeg convert sqlite3; do
@@ -104,6 +104,11 @@ spec:
                 pip3 install --root=/data/tools \
                   google-api-python-client google-auth-oauthlib google-auth-httplib2 \
                   requests urllib3 pandas beautifulsoup4 lxml PyMuPDF pynetbox surrealdb
+                # Create version-agnostic symlinks for PYTHONPATH
+                PYVER=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+                for base in /data/tools/usr/local/lib /data/tools/local/lib; do
+                  [ -d "${base}/python${PYVER}" ] && ln -sfn "${base}/python${PYVER}" "${base}/python3"
+                done
                 # Install Node packages
                 npm install -g @sinclair/typebox tslib
                 mkdir -p /data/tools/node_modules
@@ -265,7 +270,7 @@ spec:
             - name: LD_LIBRARY_PATH
               value: /usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/lib:/usr/lib:/data/tools/lib/blas
             - name: PYTHONPATH
-              value: /data/tools/usr/local/lib/python3.11/dist-packages:/data/tools/local/lib/python3.11/dist-packages
+              value: /data/tools/usr/local/lib/python3/dist-packages:/data/tools/local/lib/python3/dist-packages
             - name: GEMINI_CLI_AUTH_DIR
               value: /data/.gemini
             - name: OPENCLAW_HOME
