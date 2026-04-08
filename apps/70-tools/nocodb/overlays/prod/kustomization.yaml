@@ -9,8 +9,10 @@ components:
   - ../../../../_shared/components/sync-wave/wave-9
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
+  - ../../../../_shared/components/dataangel
 
 patches:
+  - path: dataangel.yaml
   - target:
       kind: Ingress
       name: nocodb

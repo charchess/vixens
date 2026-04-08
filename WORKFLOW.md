@@ -2,7 +2,9 @@
 
 **Adhérence stricte et totale requise. Pas de raccourcis.**
 
-Ce workflow remplace l'ancien usage d'Archon pour la gestion des tâches. Tout passe par **Beads (bd)** et **Just**.
+Ce workflow utilise **GitHub Issues** pour la gestion des tâches, orchestré par **Just**.
+
+> **Note:** Le système Beads (legacy) a été remplacé par GitHub Issues. Les commandes `just gh-*` sont le nouveau standard.
 
 ---
 
@@ -10,49 +12,48 @@ Ce workflow remplace l'ancien usage d'Archon pour la gestion des tâches. Tout p
 
 Le workflow est un **state machine à 7 phases** (0-6) orchestré par Just. Chaque phase a des objectifs précis et des interdictions claires.
 
-### Commandes Principales
+### Commandes Principales (GitHub Issues)
 
 ```bash
-just resume              # Afficher phase actuelle et instructions
-just start <task_id>     # Démarrer une nouvelle tâche (phase 0)
-just next <task_id>      # Avancer à la phase suivante (avec validation)
-just close <task_id>     # Fermer la tâche (phase 6 uniquement)
+just gh-resume                    # Afficher travail en cours et instructions
+just gh-start <issue-number>      # Démarrer une issue (crée branche + Draft PR)
+just gh-done <pr-number>          # Finaliser (PR ready + auto-merge)
 ```
 
 ### Helpers
 
 ```bash
-just wait-argocd <app>   # Attendre ArgoCD sync (Synced+Healthy)
-just promote-prod        # Instructions promotion production
-just create-task         # Créer tâche (template guidé)
-just lint                # Valider YAML
+just wait-argocd <app>            # Attendre ArgoCD sync (Synced+Healthy)
+just promote-prod                 # Instructions promotion production
+just gh-tasks                     # Lister issues par priorité
+just lint                         # Valider YAML
 ```
 
 ### Assignations Agents
 
-**Qui peut prendre quelles tâches:**
+**Qui peut prendre quelles issues:**
 
-- **`coding-agent`** - Tâches génériques (assignation par défaut)
+- **`coding-agent`** - Issues génériques (assignation par défaut)
   - Peut être prise par: Claude, Gemini, autres agents
 
-- **`claude`** - Tâches spécifiques Claude
-  - Peut prendre: tâches `claude` ET tâches `coding-agent`
+- **`claude`** - Issues spécifiques Claude
+  - Peut prendre: issues `claude` ET `coding-agent`
 
-- **`gemini`** - Tâches spécifiques Gemini
-  - Peut prendre: tâches `gemini` ET tâches `coding-agent`
+- **`gemini`** - Issues spécifiques Gemini
+  - Peut prendre: issues `gemini` ET `coding-agent`
 
 **En pratique:**
 ```bash
-# Créer tâche pour tous agents
-bd create --title="..." --assignee=coding-agent
+# Créer issue pour tous agents
+gh issue create --title="..." --label="priority:p2,type:feat"
 
-# Créer tâche spécifique Claude
-bd create --title="..." --assignee=claude
+# Créer issue spécifique Claude
+gh issue create --title="..." --label="priority:p2,type:feat,assignee:claude"
 
-# Créer tâche spécifique Gemini
-bd create --title="..." --assignee=gemini
+# Créer issue spécifique Gemini
+gh issue create --title="..." --label="priority:p2,type:feat,assignee:gemini"
 
-# just resume fonctionne pour tous (claude, gemini, coding-agent)
+# just gh-resume fonctionne pour tous (claude, gemini, coding-agent)
 ```
 
 ---
@@ -60,18 +61,18 @@ bd create --title="..." --assignee=gemini
 ## 📋 Les 7 Phases du Workflow
 
 ### Phase 0: SELECTION
-**Objectif:** Comprendre la tâche
+**Objectif:** Comprendre l'issue
 
 ✅ À faire:
-- Lire le titre et la description de la tâche
+- Lire le titre et la description de l'issue (`gh issue view <number>`)
 - Identifier l'application ciblée (entre parenthèses dans le titre)
-- Comprendre l'objectif de la tâche
+- Comprendre l'objectif de l'issue
 
 ❌ Interdit:
 - NE PAS commencer à coder
 - NE PAS toucher aux fichiers
 
-**Commande:** `just next <task_id>` pour avancer
+**Commande:** Continuer à la Phase 1
 
 ---
 
@@ -87,7 +88,7 @@ bd create --title="..." --assignee=gemini
 - NE PAS modifier de fichiers
 - NE PAS coder
 
-**Commande:** `just next <task_id>`
+**Commande:** Continuer à la Phase 2
 
 ---
 
@@ -103,7 +104,7 @@ bd create --title="..." --assignee=gemini
 - NE PAS modifier de code
 - NE PAS créer de fichiers
 
-**Commande:** `just next <task_id>`
+**Commande:** Continuer à la Phase 3
 
 ---
 
@@ -130,7 +131,7 @@ bd create --title="..." --assignee=gemini
 - Scope: UNIQUEMENT l'app dans le titre de la tâche
 - NO COMMIT: Attendre phase DEPLOYMENT
 
-**Commande:** `just next <task_id>` (vérifie qu'il y a des changements)
+**Commande:** `just gh-start <issue-number>` crée branche + Draft PR automatiquement
 
 ---
 
@@ -138,14 +139,13 @@ bd create --title="..." --assignee=gemini
 **Objectif:** Commit + Push via PR + Wait ArgoCD sync ⭐ CRITIQUE
 
 ✅ À faire:
-1. Créer feature branch: `git checkout -b fix/<app-name>` ou `feat/<app-name>`
+1. **Déjà fait par `just gh-start`**: création branche `feat/<issue>-<slug>` + Draft PR
 2. Commit changements: `git add . && git commit -m "fix(app): description"`
-3. Push feature branch: `git push origin fix/<app-name>`
-4. Créer PR: `gh pr create --base main --head fix/<app-name> --title "..." --body "..."`
-5. Merger PR: `gh pr merge --auto --squash --delete-branch` (L'agent GÈRE le cycle de vie complet)
-6. ArgoCD auto-sync dev depuis main (après merge)
-7. Attendre sync: `just wait-argocd <app_name>`
-8. Vérifier: Sync=Synced, Health=Healthy
+3. Push: `git push origin feat/<issue>-<slug>`
+4. **Finaliser**: `just gh-done <pr-number>` (marque PR ready + auto-merge)
+5. ArgoCD auto-sync dev depuis main (après merge)
+6. Attendre sync: `just wait-argocd <app_name>`
+7. Vérifier: Sync=Synced, Health=Healthy
 
 ❌ INTERDICTIONS:
 - ❌ Push directement vers `main` (branch protégée, repository rules)
@@ -155,13 +155,13 @@ bd create --title="..." --assignee=gemini
 
 📜 Règles:
 - **Feature branch OBLIGATOIRE** (main protégée par repository rules)
-- Naming: `fix/<app>`, `feat/<app>`, `chore/<app>`, `docs/<app>`
+- Naming: `feat/<issue>-<slug>`, `fix/<issue>-<slug>`
 - PR required checks: YAML lint, ArgoCD structure, Security
 - GitOps: PR merge → ArgoCD auto-sync dev
 - Attente: ArgoCD peut prendre 1-3 minutes après merge
 - Vérification: Synced + Healthy obligatoires
 
-**Commande:** `just next <task_id>` (vérifie ArgoCD status)
+**Commande:** Continuer à la Phase 5 après sync
 
 ---
 
@@ -183,12 +183,12 @@ bd create --title="..." --assignee=gemini
 - Échec: Retour phase 3 (`just reset-phase <task_id> 3`)
 - Succès: Marqué dans notes Beads
 
-**Commande:** `just next <task_id>` (bloque si validation échoue)
+**Commande:** Continuer à la Phase 6 après validation
 
 ---
 
 ### Phase 6: FINALIZATION
-**Objectif:** Documentation + Close
+**Objectif:** Documentation + Fermer issue
 
 ✅ À faire:
 1. Mettre à jour `docs/applications/<category>/<app>.md`
@@ -198,6 +198,7 @@ bd create --title="..." --assignee=gemini
    - Symboles: ✅ (OK) ⚠️ (Degraded) ❌ (Broken) 🚧 (WIP) 💤 (Paused)
 3. Committer les changements de documentation
 4. Vérifier `git push` réussi
+5. **Fermer l'issue**: `gh issue close <issue-number> --reason completed`
 
 🎯 PROMOTION PRODUCTION:
 1. Validé sur dev ✅
@@ -215,7 +216,7 @@ bd create --title="..." --assignee=gemini
    python3 scripts/validate.py <app_name> prod
    just wait-argocd <app_name>  # If needed
    ```
-5. Si validation prod OK → **Fermer tâche**
+5. Si validation prod OK → **Fermer issue**
 6. Si validation prod échoue → **Rollback et corriger**
 
 **Important:**
@@ -223,7 +224,7 @@ bd create --title="..." --assignee=gemini
 - Promotion via GitHub Actions workflow uniquement
 - **Toujours valider prod avant de fermer**
 
-**Commande:** `just close <task_id>` (vérifie validation dev + déploiement OK)
+**Commande:** `gh issue close <issue-number>` (vérifie validation dev + déploiement OK)
 
 ---
 
@@ -324,25 +325,24 @@ gh workflow run promote-prod.yaml -f version=v1.2.3
 
 ## 🛠️ Outils & Commandes
 
-### Beads (bd) - Task Management
+### GitHub Issues (gh) - Task Management
 ```bash
-bd list --status open              # Lister tâches ouvertes
-bd show <task_id>                  # Voir détails
-bd update <task_id> --notes "..."  # Ajouter notes
-bd close <task_id>                 # Fermer (via just close)
-bd sync                            # Sync avec remote
+gh issue list --state open              # Lister issues ouvertes
+gh issue view <number>                  # Voir détails
+gh issue comment <number> --body "..."  # Ajouter commentaire
+gh issue close <number>                 # Fermer issue
+gh issue edit <number> --add-label "status:in-progress"
 ```
 
 ### Just - Workflow Orchestrator
 ```bash
-just resume              # Point d'entrée (affiche phase actuelle)
-just start <task_id>     # Démarrer tâche
-just next <task_id>      # Avancer phase (avec validation)
-just close <task_id>     # Fermer tâche (phase 6 requis)
-just wait-argocd <app>   # Attendre ArgoCD sync
-just reset-phase <id> N  # Réinitialiser à phase N (debug)
-just lint                # Valider YAML
-just create-task         # Créer tâche (template guidé)
+just gh-resume                    # Point d'entrée (affiche travail en cours)
+just gh-start <issue-number>      # Démarrer issue (crée branche + Draft PR)
+just gh-done <pr-number>          # Finaliser (PR ready + auto-merge)
+just gh-tasks                     # Lister issues par priorité
+just wait-argocd <app>            # Attendre ArgoCD sync
+just lint                         # Valider YAML
+just promote-prod                 # Instructions promotion prod
 ```
 
 ### Serena - Code Editing (Phase 3)
@@ -361,7 +361,7 @@ just create-task         # Créer tâche (template guidé)
 - `rag_search_knowledge_base` - Recherche doc (Talos, K8s, ArgoCD)
 - `rag_search_code_examples` - Patterns de code
 
-**Note:** NE PAS utiliser Archon Task Management (`manage_task`) → Utiliser `bd` CLI
+**Note:** NE PAS utiliser Archon Task Management → Utiliser `gh issue` CLI
 
 ### Playwright - Validation WebUI (Phase 5, optionnel)
 - `browser_navigate` - Navigation WebUI
@@ -520,6 +520,6 @@ kubectl -n argocd describe application <app_name>
 
 ---
 
-**Last Updated:** 2026-01-11
+**Last Updated:** 2026-04-08
 
-**Version:** 3.0 (Non-Interactive GitOps - Feature Branch Required)
+**Version:** 4.0 (GitHub Issues - GitOps - Feature Branch Required)
