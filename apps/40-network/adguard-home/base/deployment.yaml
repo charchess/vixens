@@ -75,7 +75,7 @@ spec:
             - name: config
               mountPath: /opt/adguardhome/conf
         - name: restore-db
-          image: litestream/litestream:0.5.10
+          image: litestream/litestream:0.5.11
           securityContext:
             runAsUser: 65534
             runAsGroup: 65534
@@ -134,7 +134,7 @@ spec:
             - name: data
               mountPath: /opt/adguardhome/work
         - name: litestream
-          image: litestream/litestream:0.5.10
+          image: litestream/litestream:0.5.11
           securityContext:
             runAsUser: 65534
             runAsGroup: 65534
