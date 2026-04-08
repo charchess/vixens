@@ -7,7 +7,7 @@
 # - Keep 512Mi limit to avoid OOMKill during DNS traffic spikes
 # - Allow mealie pod to schedule (needs 384Mi free on powder node)
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: adguard-home
   namespace: networking

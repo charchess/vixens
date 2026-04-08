@@ -6,7 +6,8 @@ namespace: networking
 
 resources:
   - middleware.yaml
-  - adguard-ss.yaml
+  - deployment.yaml
+  - pvc.yaml
   - service.yaml
   - pdb.yaml
   - networkpolicy.yaml
