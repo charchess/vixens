@@ -61,7 +61,7 @@ spec:
             - name: config
               mountPath: /opt/hydrus/db
         - name: restore-db
-          image: litestream/litestream:0.5.10
+          image: litestream/litestream:0.5.11
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -86,7 +86,7 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: restore-mappings
-          image: litestream/litestream:0.5.10
+          image: litestream/litestream:0.5.11
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -111,7 +111,7 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: restore-master
-          image: litestream/litestream:0.5.10
+          image: litestream/litestream:0.5.11
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -136,7 +136,7 @@ spec:
               mountPath: /etc/litestream.yml
               subPath: litestream.yml
         - name: restore-caches
-          image: litestream/litestream:0.5.10
+          image: litestream/litestream:0.5.11
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -204,7 +204,7 @@ spec:
             limits:
               cpu: 20m
               memory: 256Mi
-          image: litestream/litestream:0.5.10
+          image: litestream/litestream:0.5.11
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
