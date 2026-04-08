@@ -37,5 +37,5 @@ spec:
           volumeMounts:
             - mountPath: /data
               $patch: delete
-            - name: data
+            - name: static
               mountPath: /var/www/html/storage/upload

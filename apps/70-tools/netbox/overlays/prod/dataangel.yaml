@@ -37,5 +37,5 @@ spec:
           volumeMounts:
             - mountPath: /data
               $patch: delete
-            - name: netbox-media
+            - name: netbox-media-storage
               mountPath: /opt/netbox/media
