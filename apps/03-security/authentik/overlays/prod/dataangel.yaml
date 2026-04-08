@@ -1,0 +1,116 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentik-server
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.dataangel: V-small
+      annotations:
+        dataangel.io/bucket: "vixens-prod-authentik"
+        dataangel.io/sqlite-paths: ""
+        dataangel.io/fs-paths: "/var/lib/authentik"
+        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/deployment-name: "authentik"
+        dataangel.io/rclone-interval: "60s"
+        dataangel.io/metrics-enabled: "true"
+        dataangel.io/lock-enabled: "false"
+        dataangel.io/lock-ttl: ""
+        dataangel.io/full-logs: "false"
+        dataangel.io/aws-region: ""
+    spec:
+      initContainers:
+        - name: dataangel
+          restartPolicy: Always
+          image: charchess/dataangel:sha-c6cb960
+          imagePullPolicy: IfNotPresent
+          command: ["./dataangel"]
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          env:
+            - name: DATA_GUARD_BUCKET
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/bucket']
+            - name: DATA_GUARD_SQLITE_PATHS
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/sqlite-paths']
+            - name: DATA_GUARD_FS_PATHS
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/fs-paths']
+            - name: DATA_GUARD_S3_ENDPOINT
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/s3-endpoint']
+            - name: DATA_GUARD_DEPLOYMENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/deployment-name']
+            - name: DATA_GUARD_LOCK_TTL
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/lock-ttl']
+            - name: DATA_GUARD_LOCK_ENABLED
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/lock-enabled']
+            - name: DATA_GUARD_RCLONE_INTERVAL
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/rclone-interval']
+            - name: DATA_GUARD_METRICS_PORT
+              value: "9090"
+            - name: DATA_GUARD_METRICS_ENABLED
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/metrics-enabled']
+            - name: DATA_GUARD_FULL_LOGS
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/full-logs']
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: AWS_REGION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/aws-region']
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-secrets
+                  key: RCLONE_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-secrets
+                  key: RCLONE_SECRET_ACCESS_KEY
+          ports:
+            - containerPort: 9090
+              name: metrics
+              protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: 9090
+            periodSeconds: 2
+            failureThreshold: 150
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 9090
+            periodSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: authentik-data
+              mountPath: /var/lib/authentik

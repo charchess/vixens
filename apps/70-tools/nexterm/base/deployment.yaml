@@ -27,6 +27,7 @@ spec:
       securityContext:
         fsGroup: 0
         fsGroupChangePolicy: OnRootMismatch
+      initContainers: []
       containers:
         - name: nexterm
           image: nexterm/aio:development

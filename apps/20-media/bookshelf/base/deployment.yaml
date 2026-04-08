@@ -33,6 +33,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
+      initContainers: []
       containers:
         - name: bookshelf
           # hardcover = Hardcover.app metadata (higher quality than Goodreads)

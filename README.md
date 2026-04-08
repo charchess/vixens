@@ -17,13 +17,13 @@ git clone https://github.com/charchess/vixens.git
 cd vixens
 
 # 2. Install tools (see Installation section below)
-brew install steveyegge/tap/bd just kubectl yamllint
+brew install just kubectl yamllint gh
 
 # 3. Read the workflow
 cat WORKFLOW.md
 
 # 4. Start working
-just resume
+just gh-resume
 ```
 
 ---
@@ -79,7 +79,6 @@ vixens/
 # ├── terraform/          # Infrastructure as Code (Talos clusters)
 ├── docs/               # Documentation
 ├── scripts/            # Automation scripts
-├── .beads/             # Task management (git-tracked)
 └── WORKFLOW.md         # Master workflow (START HERE)
 ```
 
@@ -99,21 +98,26 @@ vixens/
 
 ### 1. Core Workflow Tools
 
-#### Beads (bd) - Task Management
+#### GitHub CLI (gh) - Task Management
 
 ```bash
 # macOS (Homebrew)
-brew install steveyegge/tap/bd
+brew install gh
 
-# Linux (manual install)
-curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+# Linux (GitHub official)
+curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+sudo apt update && sudo apt install gh
+
+# Login
+git auth login
 
 # Verify
-bd --version
+gh --version
 ```
 
-**What is Beads?**
-Task management system with git-native storage (`.beads/` directory). Replaces traditional issue trackers for this project.
+**Task Management via GitHub Issues**
+Tasks are tracked as GitHub Issues with labels for priority (p0-p3) and status.
 
 #### Just - Workflow Orchestrator
 
@@ -412,11 +416,11 @@ bd update <task_id> --status in_progress
 ### Deploy a New Application
 
 ```bash
-# 1. Create task
-bd create "feat: deploy <app-name>" --assignee coding-agent
+# 1. Create issue
+gh issue create --title "feat: deploy <app-name>" --label "priority:p2,type:feat"
 
-# 2. Work on task
-just work <task_id>
+# 2. Start work (creates branch + Draft PR)
+just gh-start <issue-number>
 
 # 3. Create application structure
 mkdir -p apps/<category>/<app-name>/{base,overlays/{dev,prod}}
@@ -428,19 +432,21 @@ mkdir -p apps/<category>/<app-name>/{base,overlays/{dev,prod}}
 ### Update Existing Application
 
 ```bash
-# 1. Find task or create one
-bd list --status open | grep <app-name>
+# 1. Find issue or create one
+gh issue list --state open | grep <app-name>
 
-# 2. Edit application
+# 2. Start work
+just gh-start <issue-number>
+
+# 3. Edit application
 vim apps/<category>/<app-name>/overlays/dev/kustomization.yaml
 
-# 3. Validate
+# 4. Validate
 just lint
 kustomize build apps/<category>/<app-name>/overlays/dev
 
-# 4. Push
-git add . && git commit -m "feat(<app>): description"
-git push origin main
+# 5. Commit and push (included in gh-done workflow)
+just gh-done <pr-number>
 ```
 
 ### Promote to Production
@@ -461,12 +467,11 @@ kubectl -n argocd get applications -w
 ### Task Management
 
 ```bash
-just resume                       # Entry point (shows current work)
-just work <task_id>              # Full workflow orchestration
-bd list --status open            # List open tasks
-bd list --status in_progress     # Your active work
-bd show <task_id>                # View task details
-bd close <task_id>               # Mark complete
+just gh-resume                   # Entry point (shows current work)
+just gh-start <issue-number>     # Start work on issue (creates branch + Draft PR)
+just gh-done <pr-number>         # Mark PR ready + auto-merge
+gh issue list --state open       # List open issues
+gh issue view <number>           # View issue details
 ```
 
 ### Kubernetes Operations
@@ -576,10 +581,11 @@ yamllint -c yamllint-config.yml apps/<app>/**/*.yaml
 ### Workflow
 
 1. Read [WORKFLOW.md](WORKFLOW.md) (MASTER workflow)
-2. Create task in Beads: `bd create "feat: description"`
-3. Work on feature branch
-4. Create PR to `dev` branch
-5. After merge, promote to `main` via GitHub workflow
+2. Create issue: `gh issue create --title "feat: description" --label "priority:p2,type:feat"`
+3. Start work: `just gh-start <issue-number>` (creates branch + Draft PR)
+4. Work on feature branch
+5. Finish: `just gh-done <pr-number>` (marks ready + auto-merge)
+6. After merge, promote to prod via GitHub workflow
 
 ### Branch Strategy (Pure Trunk-Based)
 
@@ -611,7 +617,7 @@ feature-branch → main (HEAD = Dev) → prod-stable tag (Production)
 
 **Key Files:**
 - [WORKFLOW.md](WORKFLOW.md) - Master workflow (READ FIRST)
-- [AGENTS.md](AGENTS.md) - Multi-agent guide
+- [AGENTS.md](AGENTS.md) - Multi-agent guide (GitHub Issues workflow)
 - [CLAUDE.md](CLAUDE.md) - Claude Code specific
 - [GEMINI.md](GEMINI.md) - Gemini specific
 - [docs/STATUS.md](docs/STATUS.md) - Quick status dashboard
@@ -640,7 +646,7 @@ This project is licensed under the MIT License - see LICENSE file for details.
 - **Talos Linux** - Immutable Kubernetes OS
 - **ArgoCD** - GitOps continuous delivery
 - **Cilium** - eBPF-based networking
-- **Beads** - Git-native task management
+- **GitHub Issues** - Task tracking with labels
 - **Just** - Command runner
 
 ---
@@ -654,7 +660,7 @@ This project is licensed under the MIT License - see LICENSE file for details.
 
 ---
 
-**Last Updated:** 2026-01-08
+**Last Updated:** 2026-04-08
 **Maintained by:** charchess
 
 ---

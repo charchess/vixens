@@ -9,11 +9,8 @@ components:
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
   - ../../../../_shared/components/poddisruptionbudget/1
+  - ../../../../_shared/components/dataangel
+  - ../../../../_shared/components/infisical/env-prod
+
 patches:
-  - patch: |-
-      - op: replace
-        path: /spec/storageClassName
-        value: synelia-iscsi-retain
-    target:
-      kind: PersistentVolumeClaim
-      name: bookshelf-config-pvc
+  - path: dataangel.yaml
