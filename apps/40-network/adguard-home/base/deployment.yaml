@@ -1,6 +1,6 @@
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: adguard-home
   labels:
@@ -12,9 +12,10 @@ metadata:
     vixens.io/sizing.config-syncer: V-nano
     vixens.io/backup-profile: "relaxed"
 spec:
-  serviceName: adguard-home-headless
   replicas: 1
   revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: adguard-home
@@ -197,20 +198,9 @@ spec:
         - name: adguard-home-litestream-config
           configMap:
             name: adguard-home-litestream-config
-  volumeClaimTemplates:
-    - metadata:
-        name: config
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: synelia-iscsi
-        resources:
-          requests:
-            storage: 1Gi
-    - metadata:
-        name: data
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: synelia-iscsi
-        resources:
-          requests:
-            storage: 5Gi
+        - name: config
+          persistentVolumeClaim:
+            claimName: adguard-home-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: adguard-home-data
