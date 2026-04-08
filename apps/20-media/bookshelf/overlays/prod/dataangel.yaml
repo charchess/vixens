@@ -34,5 +34,5 @@ spec:
           volumeMounts:
             - mountPath: /data
               $patch: delete
-            - name: data
+            - name: config
               mountPath: /config
