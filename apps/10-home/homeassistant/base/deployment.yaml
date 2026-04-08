@@ -44,7 +44,7 @@ spec:
           effect: NoSchedule
       initContainers:
         - name: install-python-deps
-          image: python:3.14.3-alpine
+          image: python:3.14.4-alpine
           securityContext:
             capabilities:
               add: [CHOWN]
