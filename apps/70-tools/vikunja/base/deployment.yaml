@@ -31,7 +31,7 @@ spec:
       initContainers: []
       containers:
         - name: vikunja
-          image: vikunja/vikunja:2.2.2
+          image: vikunja/vikunja:2.3.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3456
