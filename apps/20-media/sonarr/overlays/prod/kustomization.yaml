@@ -25,3 +25,7 @@ patches:
       name: sonarr
     path: resources-patch.yaml
   - path: dataangel.yaml
+  - target:
+      kind: Deployment
+      name: sonarr
+    path: startup-probe-patch.yaml
