@@ -1,0 +1,12 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarr
+spec:
+  template:
+    spec:
+      containers:
+        - name: sonarr
+          startupProbe:
+            failureThreshold: 30
