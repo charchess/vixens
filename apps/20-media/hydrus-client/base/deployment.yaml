@@ -169,7 +169,7 @@ spec:
             limits:
               cpu: 400m
               memory: 4Gi
-          image: ghcr.io/hydrusnetwork/hydrus:v666
+          image: ghcr.io/hydrusnetwork/hydrus:v667
           ports:
             - containerPort: 5800
           livenessProbe:
