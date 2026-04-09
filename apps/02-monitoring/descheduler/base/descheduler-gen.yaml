@@ -162,6 +162,14 @@ rules:
       - get
       - watch
       - list
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumeclaims
+    verbs:
+      - get
+      - watch
+      - list
 ---
 # Source: descheduler/templates/clusterrolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
