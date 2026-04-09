@@ -87,7 +87,8 @@ spec:
               subPath: music
       volumes:
         - name: config
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: jellyfin-config-pvc
         - name: cache
           emptyDir: {}
         - name: content
