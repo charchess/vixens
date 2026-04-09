@@ -34,7 +34,5 @@ spec:
                   name: music-assistant-secrets
                   key: LITESTREAM_SECRET_ACCESS_KEY
           volumeMounts:
-            - mountPath: /data
-              $patch: delete
             - name: config
               mountPath: /data

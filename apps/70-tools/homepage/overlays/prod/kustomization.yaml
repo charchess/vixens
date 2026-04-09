@@ -19,7 +19,7 @@ patches:
   - patch: |-
       - op: replace
         path: /spec/storageClassName
-        value: local-path-retain
+        value: local-path-delete
     target:
       kind: PersistentVolumeClaim
       name: homepage-config
