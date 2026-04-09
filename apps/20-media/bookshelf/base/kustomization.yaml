@@ -5,7 +5,6 @@ namespace: media
 resources:
   - deployment.yaml
   - service.yaml
-  - pvc.yaml
   - infisical-secret.yaml
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml

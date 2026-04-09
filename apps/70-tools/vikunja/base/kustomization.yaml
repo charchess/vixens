@@ -6,7 +6,6 @@ resources:
   - deployment.yaml
   - service.yaml
   - ingress.yaml
-  - vikunja-pvc.yaml
   - infisical-secret.yaml
   - vikunja-db-secrets.yaml
   - pdb.yaml

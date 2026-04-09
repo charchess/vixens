@@ -195,8 +195,7 @@ spec:
               mountPath: /data
       volumes:
         - name: data
-          persistentVolumeClaim:
-            claimName: vaultwarden-data-pvc
+          emptyDir: {}
         - name: vaultwarden-litestream-config
           configMap:
             name: vaultwarden-litestream-config

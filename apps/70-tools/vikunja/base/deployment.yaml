@@ -109,8 +109,7 @@ spec:
               memory: "256Mi"
       volumes:
         - name: vikunja-files
-          persistentVolumeClaim:
-            claimName: vikunja-files-pvc
+          emptyDir: {}
       securityContext:
         runAsNonRoot: true
         fsGroup: 1000

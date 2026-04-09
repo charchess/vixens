@@ -215,8 +215,7 @@ spec:
               mountPath: /config
       volumes:
         - name: config
-          persistentVolumeClaim:
-            claimName: sonarr-config-pvc
+          emptyDir: {}
         - name: downloads
           nfs:
             server: 192.168.111.69

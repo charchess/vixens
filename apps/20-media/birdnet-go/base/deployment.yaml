@@ -241,11 +241,9 @@ spec:
             failureThreshold: 3
       volumes:
         - name: config
-          persistentVolumeClaim:
-            claimName: birdnet-go-config
+          emptyDir: {}
         - name: data
-          persistentVolumeClaim:
-            claimName: birdnet-go-data
+          emptyDir: {}
         - name: internals
           nfs:
             server: 192.168.111.69

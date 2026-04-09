@@ -73,8 +73,7 @@ spec:
               mountPath: /app/config
       volumes:
         - name: config
-          persistentVolumeClaim:
-            claimName: jellyseerr-config-pvc
+          emptyDir: {}
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

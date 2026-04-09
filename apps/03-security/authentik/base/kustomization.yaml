@@ -9,7 +9,6 @@ resources:
   - infisical-secret.yaml
   - infisical-redis-secret.yaml
   - configmap.yaml
-  - pvc.yaml
   - middleware-forward-auth.yaml
   - servicemonitor.yaml
   - networkpolicy.yaml

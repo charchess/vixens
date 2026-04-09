@@ -206,8 +206,7 @@ spec:
         - name: run
           emptyDir: {}
         - name: config
-          persistentVolumeClaim:
-            claimName: sabnzbd-config-pvc
+          emptyDir: {}
         - name: downloads
           nfs:
             server: 192.168.111.69

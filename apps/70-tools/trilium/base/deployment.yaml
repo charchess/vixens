@@ -92,8 +92,7 @@ spec:
               memory: 256Mi
       volumes:
         - name: trilium-data
-          persistentVolumeClaim:
-            claimName: trilium-data-pvc
+          emptyDir: {}
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

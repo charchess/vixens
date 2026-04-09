@@ -190,11 +190,9 @@ spec:
           type: RuntimeDefault
       volumes:
         - name: config
-          persistentVolumeClaim:
-            claimName: mosquitto-config
+          emptyDir: {}
         - name: data
-          persistentVolumeClaim:
-            claimName: mosquitto-data
+          emptyDir: {}
         - name: mosquitto-conf
           configMap:
             name: mosquitto-config

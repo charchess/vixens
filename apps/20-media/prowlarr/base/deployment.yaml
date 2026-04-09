@@ -200,8 +200,7 @@ spec:
               mountPath: /config
       volumes:
         - name: config
-          persistentVolumeClaim:
-            claimName: prowlarr-config-pvc
+          emptyDir: {}
         - name: prowlarr-litestream-config
           configMap:
             name: prowlarr-litestream-config

@@ -185,8 +185,7 @@ spec:
               mountPath: /app/data
       volumes:
         - name: data
-          persistentVolumeClaim:
-            claimName: booklore-config-pvc
+          emptyDir: {}
         - name: books
           nfs:
             server: 192.168.111.69

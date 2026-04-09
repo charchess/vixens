@@ -7,7 +7,6 @@ resources:
   - deployment.yaml
   - service.yaml
   - ingress.yaml
-  - pvc.yaml
   - infisical-secret.yaml
   - cronjob.yaml
   - pdb.yaml

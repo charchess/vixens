@@ -21,10 +21,3 @@ components:
 
 patches:
   - path: dataangel.yaml
-  - patch: |-
-      - op: replace
-        path: /spec/storageClassName
-        value: local-path-delete
-    target:
-      kind: PersistentVolumeClaim
-      name: radarr-config-pvc
