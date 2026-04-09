@@ -135,10 +135,8 @@ spec:
         - name: initial-config-vol
           secret:
             secretName: homepage-config-secret
-        # The writable PersistentVolumeClaim for the config
         - name: config-vol
-          persistentVolumeClaim:
-            claimName: homepage-config
+          emptyDir: {}
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

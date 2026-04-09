@@ -40,12 +40,10 @@ lapi:
     data:
       enabled: false
     config:
-      enabled: true
-      size: 1Gi
-      storageClassName: local-path-delete
+      enabled: false
 
   strategy:
-    type: Recreate  # required with RWO PVC
+    type: RollingUpdate
 
   resources:
     requests:
