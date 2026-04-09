@@ -7,7 +7,6 @@ namespace: media
 resources:
   - deployment.yaml
   - service.yaml
-  - pvc.yaml
   - pdb.yaml
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml

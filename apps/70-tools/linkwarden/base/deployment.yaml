@@ -96,8 +96,7 @@ spec:
             timeoutSeconds: 30
       volumes:
         - name: data
-          persistentVolumeClaim:
-            claimName: linkwarden-data
+          emptyDir: {}
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

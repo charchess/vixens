@@ -69,5 +69,4 @@ spec:
               mountPath: /app/data
       volumes:
         - name: data
-          persistentVolumeClaim:
-            claimName: nexterm-data
+          emptyDir: {}

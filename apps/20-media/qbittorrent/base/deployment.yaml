@@ -118,8 +118,7 @@ spec:
         - name: run
           emptyDir: {}
         - name: config
-          persistentVolumeClaim:
-            claimName: qbittorrent-config-pvc
+          emptyDir: {}
         - name: downloads
           nfs:
             server: 192.168.111.69

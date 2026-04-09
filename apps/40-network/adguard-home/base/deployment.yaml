@@ -199,8 +199,6 @@ spec:
           configMap:
             name: adguard-home-litestream-config
         - name: config
-          persistentVolumeClaim:
-            claimName: adguard-home-config
+          emptyDir: {}
         - name: data
-          persistentVolumeClaim:
-            claimName: adguard-home-data
+          emptyDir: {}

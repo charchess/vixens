@@ -8,7 +8,6 @@ resources:
   - service.yaml
   - infisical-secret.yaml
   - litestream-config.yaml
-  - pvc.yaml
 
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml

@@ -228,8 +228,7 @@ spec:
               mountPath: /app/data
       volumes:
         - name: data
-          persistentVolumeClaim:
-            claimName: mealie-data
+          emptyDir: {}
         - name: mealie-litestream-config
           configMap:
             name: mealie-litestream-config

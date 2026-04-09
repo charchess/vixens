@@ -104,8 +104,7 @@ spec:
               subPath: vixens-netbird.yaml
       volumes:
         - name: authentik-data
-          persistentVolumeClaim:
-            claimName: authentik-data
+          emptyDir: {}
         - name: blueprints
           configMap:
             name: authentik-config

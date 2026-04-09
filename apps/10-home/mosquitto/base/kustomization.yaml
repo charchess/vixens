@@ -5,7 +5,6 @@ namespace: mosquitto
 resources:
   - namespace.yaml
   - configmap.yaml
-  - pvc.yaml
   - statefulset.yaml
   - service.yaml
   - networkpolicy.yaml

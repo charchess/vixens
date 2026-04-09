@@ -77,8 +77,7 @@ spec:
               mountPath: /books
       volumes:
         - name: config
-          persistentVolumeClaim:
-            claimName: bookshelf-config-pvc
+          emptyDir: {}
         - name: downloads
           nfs:
             server: 192.168.111.69

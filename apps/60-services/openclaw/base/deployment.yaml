@@ -326,8 +326,7 @@ spec:
               mountPath: /data
       volumes:
         - name: data
-          persistentVolumeClaim:
-            claimName: openclaw-data
+          emptyDir: {}
         - name: openclaw-config
           secret:
             secretName: openclaw-config

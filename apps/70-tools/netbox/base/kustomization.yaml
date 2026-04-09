@@ -4,7 +4,6 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - service.yaml
-  - netbox-pvc.yaml
   - netbox-db-secrets.yaml
   - infisical-secret.yaml
   - networkpolicy.yaml

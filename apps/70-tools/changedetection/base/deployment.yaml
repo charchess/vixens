@@ -175,8 +175,7 @@ spec:
               mountPath: /datastore
       volumes:
         - name: datastore
-          persistentVolumeClaim:
-            claimName: changedetection-datastore-pvc
+          emptyDir: {}
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

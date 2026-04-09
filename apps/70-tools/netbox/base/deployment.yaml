@@ -106,8 +106,7 @@ spec:
               readOnly: true
       volumes:
         - name: netbox-media-storage
-          persistentVolumeClaim:
-            claimName: netbox-media-pvc
+          emptyDir: {}
         - name: plugins-config
           configMap:
             name: netbox-plugins-config

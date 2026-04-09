@@ -106,8 +106,7 @@ spec:
               mountPath: /home/node/.n8n
       volumes:
         - name: data
-          persistentVolumeClaim:
-            claimName: n8n-config-pvc
+          emptyDir: {}
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000

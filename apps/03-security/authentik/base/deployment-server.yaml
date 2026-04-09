@@ -36,8 +36,7 @@ spec:
           effect: NoSchedule
       volumes:
         - name: authentik-data
-          persistentVolumeClaim:
-            claimName: authentik-data
+          emptyDir: {}
         - name: blueprints
           configMap:
             name: authentik-config
