@@ -16,13 +16,6 @@ patches:
     target:
       kind: Deployment
       name: homepage
-  - patch: |-
-      - op: replace
-        path: /spec/storageClassName
-        value: local-path-delete
-    target:
-      kind: PersistentVolumeClaim
-      name: homepage-config
 resources:
   - ../../base
   - ingress.yaml
