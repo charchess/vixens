@@ -64,7 +64,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.annotations['dataangel.io/rclone-interval']
             - name: DATA_GUARD_METRICS_PORT
-              value: "9090"
+              value: "9091"
             - name: DATA_GUARD_METRICS_ENABLED
               valueFrom:
                 fieldRef:
@@ -96,19 +96,19 @@ spec:
                   name: netbird-secrets
                   key: RCLONE_SECRET_ACCESS_KEY
           ports:
-            - containerPort: 9090
+            - containerPort: 9091
               name: metrics
               protocol: TCP
           startupProbe:
             httpGet:
               path: /ready
-              port: 9090
+              port: 9091
             periodSeconds: 2
             failureThreshold: 150
           readinessProbe:
             httpGet:
               path: /ready
-              port: 9090
+              port: 9091
             periodSeconds: 5
             failureThreshold: 3
           volumeMounts:
