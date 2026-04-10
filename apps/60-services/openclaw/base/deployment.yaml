@@ -238,6 +238,9 @@ spec:
               fi
               # Always fix permissions
               chown -R 1000:1000 /data/node_modules /data/gemini-cli /data/claude-cli 2>/dev/null || true
+          volumeMounts:
+            - name: data
+              mountPath: /data
       containers:
         - name: openclaw
           lifecycle:
