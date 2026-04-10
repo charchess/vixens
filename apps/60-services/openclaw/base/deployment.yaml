@@ -229,8 +229,10 @@ spec:
               else
                 echo "Installing Claude Code v$CLAUDE_VERSION..."
                 npm install -g @anthropic-ai/claude-code@$CLAUDE_VERSION
-                mkdir -p /data/claude-cli
-                cp -r /usr/local/lib/node_modules/@anthropic-ai /data/claude-cli/
+                mkdir -p /data/claude-cli/bin
+                # Copy the claude binary (npm installs it to /usr/local/bin/claude)
+                cp -L /usr/local/bin/claude /data/claude-cli/bin/claude
+                chmod +x /data/claude-cli/bin/claude
                 echo "$CLAUDE_VERSION" > /data/claude-cli/.claude-version
                 echo "Claude Code installed successfully"
               fi
@@ -266,7 +268,7 @@ spec:
             - name: TZ
               value: Europe/Paris
             - name: PATH
-              value: /data/tools/usr/local/bin:/data/tools/local/bin:/data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/data/claude-cli/@anthropic-ai/claude-code/bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
+              value: /data/tools/usr/local/bin:/data/tools/local/bin:/data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/data/claude-cli/bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
             - name: LD_LIBRARY_PATH
               value: /usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/lib:/usr/lib:/data/tools/lib/blas
             - name: PYTHONPATH
