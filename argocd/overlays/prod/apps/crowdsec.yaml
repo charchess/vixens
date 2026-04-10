@@ -42,6 +42,7 @@ spec:
         - /metadata/labels/vixens.io~1maturity-missing
         - /metadata/labels/app.kubernetes.io~1name
         - /spec/template/metadata/labels/app.kubernetes.io~1name
+        - /metadata/annotations/deployment.kubernetes.io~1revision
     - group: apps
       kind: DaemonSet
       name: crowdsec-agent
