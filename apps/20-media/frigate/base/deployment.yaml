@@ -141,9 +141,8 @@ spec:
           medium: Memory
           sizeLimit: 1024Mi
       - name: cache
-        emptyDir:
-          medium: Memory
-          sizeLimit: 512Mi
+        persistentVolumeClaim:
+          claimName: frigate-cache-pvc
       - name: dri
         hostPath:
           path: /dev/dri
