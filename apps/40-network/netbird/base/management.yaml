@@ -156,7 +156,8 @@ spec:
         - name: config-writable
           emptyDir: {}
         - name: netbird-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: netbird-data
         - name: ca-bundle
           configMap:
             name: netbird-ca-bundle
