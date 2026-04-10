@@ -7,3 +7,13 @@ spec:
   resources:
     requests:
       storage: 50Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: frigate-cache-pvc
+spec:
+  storageClassName: synelia-iscsi-retain
+  resources:
+    requests:
+      storage: 10Gi
