@@ -165,9 +165,6 @@ spec:
                   d.pop('skills', None) if isinstance(s, dict) and not s else None
                   # Always force-disable claw-hass (crashes without HASS config)
                   d.setdefault('plugins', {}).setdefault('entries', {})['claw-hass'] = {'enabled': False}
-                  # Remove 'runtime' from agent definitions (field removed in 2026.4.9)
-                  for agent in d.get('agents', {}).get('list', []):
-                      agent.pop('runtime', None)
                   json.dump(d, open(p, 'w'))
                   print('Config keys checked')
 
