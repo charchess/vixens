@@ -38,8 +38,6 @@ patches:
           metadata:
             labels:
               vixens.io/sizing.frigate: V-2xlarge
-              vixens.io/sizing.litestream: V-nano
-              vixens.io/sizing.config-syncer: V-nano
             annotations:
               vixens.io/explicitly-allow-root: "true"
           spec:
@@ -48,10 +46,6 @@ patches:
               runAsUser: 0
               fsGroup: 0
             initContainers:
-              - name: restore-config
-                securityContext:
-                  runAsUser: 0
-                  runAsGroup: 0
               - name: validate-config
                 securityContext:
                   runAsUser: 0
@@ -60,14 +54,6 @@ patches:
               - name: frigate
                 securityContext:
                   privileged: true
-                  runAsUser: 0
-                  runAsGroup: 0
-              - name: litestream
-                securityContext:
-                  runAsUser: 0
-                  runAsGroup: 0
-              - name: config-syncer
-                securityContext:
                   runAsUser: 0
                   runAsGroup: 0
   - path: pvc-patch.yaml
