@@ -10,7 +10,7 @@ spec:
         vixens.io/sizing.dataangel: V-small
       annotations:
         dataangel.io/bucket: "vixens-prod-nexterm"
-        dataangel.io/sqlite-paths: ""
+        dataangel.io/sqlite-paths: "/app/data/nexterm.db"
         dataangel.io/fs-paths: "/app/data"
         dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
         dataangel.io/deployment-name: "nexterm"
