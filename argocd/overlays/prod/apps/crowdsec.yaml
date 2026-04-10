@@ -38,6 +38,8 @@ spec:
         - /metadata/annotations/argocd.argoproj.io~1sync-wave
         - /spec/template/metadata/annotations/kubectl.kubernetes.io~1restartedAt
         - /spec/template/spec/tolerations
+        - /metadata/labels/vixens.io~1maturity
+        - /metadata/labels/vixens.io~1maturity-missing
     - group: apps
       kind: DaemonSet
       name: crowdsec-agent
