@@ -22,6 +22,7 @@ spec:
         reloader.stakater.com/auto: "true"
         vixens.io/fast-start: "true"
         vixens.io/nometrics: "true"
+        vixens.io/vpa.min-cpu: "100m"
     spec:
       priorityClassName: vixens-medium
       securityContext:
