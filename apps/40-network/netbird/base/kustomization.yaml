@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - infra.yaml
   - management.yaml
+  - pvc-data.yaml
   - dashboard.yaml
   - signal-relay.yaml
   - ca-bundle.yaml
