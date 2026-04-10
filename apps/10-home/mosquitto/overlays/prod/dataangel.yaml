@@ -8,8 +8,6 @@ spec:
     metadata:
       labels:
         vixens.io/sizing.dataangel: V-small
-        vixens.io/sizing.restore-data: null
-        vixens.io/sizing.config-syncer: null
       annotations:
         dataangel.io/bucket: "vixens-prod-mosquitto"
         dataangel.io/fs-paths: "/mosquitto/data"
@@ -20,8 +18,6 @@ spec:
         dataangel.io/lock-enabled: "false"
     spec:
       initContainers:
-        - name: restore-data
-          $patch: delete
         - name: dataangel
           securityContext:
             runAsUser: 1883
@@ -42,6 +38,3 @@ spec:
               $patch: delete
             - name: data
               mountPath: /mosquitto/data
-      containers:
-        - name: config-syncer
-          $patch: delete

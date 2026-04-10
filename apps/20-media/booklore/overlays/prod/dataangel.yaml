@@ -8,8 +8,6 @@ spec:
     metadata:
       labels:
         vixens.io/sizing.dataangel: B-small
-        vixens.io/sizing.config-syncer: null
-        vixens.io/sizing.restore-config: null
       annotations:
         dataangel.io/bucket: "vixens-prod-booklore"
         dataangel.io/fs-paths: "/app/data"
@@ -20,8 +18,6 @@ spec:
         dataangel.io/lock-enabled: "false"
     spec:
       initContainers:
-        - name: restore-config
-          $patch: delete
         - name: dataangel
           restartPolicy: Always
           image: charchess/dataangel:sha-402e05f
@@ -98,6 +94,3 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /app/data
-      containers:
-        - name: config-syncer
-          $patch: delete

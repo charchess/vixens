@@ -8,8 +8,6 @@ spec:
     metadata:
       labels:
         vixens.io/sizing.dataangel: V-small
-        vixens.io/sizing.restore-config: null
-        vixens.io/sizing.config-syncer: null
       annotations:
         dataangel.io/bucket: "vixens-prod-changedetection"
         dataangel.io/fs-paths: "/datastore"
@@ -20,8 +18,6 @@ spec:
         dataangel.io/lock-enabled: "false"
     spec:
       initContainers:
-        - name: restore-config
-          $patch: delete
         - name: dataangel
           securityContext:
             runAsUser: 1000
@@ -42,6 +38,3 @@ spec:
               $patch: delete
             - name: datastore
               mountPath: /datastore
-      containers:
-        - name: config-syncer
-          $patch: delete

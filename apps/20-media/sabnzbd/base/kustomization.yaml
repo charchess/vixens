@@ -6,7 +6,6 @@ resources:
   - deployment.yaml
   - service.yaml
   - infisical-secret.yaml
-  - litestream-config.yaml
   - servicemonitor.yaml
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml

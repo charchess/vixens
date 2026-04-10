@@ -9,5 +9,4 @@ resources:
   - cilium-networkpolicy.yaml
   - pdb.yaml
   - infisical-secret.yaml
-  - litestream-config.yaml
   - servicemonitor.yaml

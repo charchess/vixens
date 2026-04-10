@@ -17,12 +17,7 @@ spec:
       labels:
         app: hydrus-client
         vixens.io/sizing.hydrus-client: V-large
-        vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.check-integrity: B-medium
-        vixens.io/sizing.restore-db: B-nano
-        vixens.io/sizing.restore-mappings: B-nano
-        vixens.io/sizing.restore-master: B-nano
-        vixens.io/sizing.restore-caches: B-nano
         vixens.io/backup-profile: "relaxed"
       annotations:
         reloader.stakater.com/auto: "true"
@@ -60,103 +55,6 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /opt/hydrus/db
-        - name: restore-db
-          image: litestream/litestream:0.5.11
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              rm -f /opt/hydrus/db/*.tmp* /opt/hydrus/db/*-wal;
-              DB_PATH=/opt/hydrus/db/client.db
-              if [ -f "$DB_PATH" ]; then
-                echo "✅ Local healthy DB found. Skipping restore."
-                exit 0
-              fi
-              echo "⚠️ DB missing or corrupted. Restoring from S3..."
-              litestream restore -config /etc/litestream.yml -if-db-not-exists -if-replica-exists "$DB_PATH"
-          envFrom:
-            - secretRef:
-                name: hydrus-client-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /opt/hydrus/db
-            - name: hydrus-client-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
-        - name: restore-mappings
-          image: litestream/litestream:0.5.11
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              rm -f /opt/hydrus/db/*.tmp* /opt/hydrus/db/*-wal;
-              DB_PATH=/opt/hydrus/db/client.mappings.db
-              if [ -f "$DB_PATH" ]; then
-                echo "✅ Local healthy DB found. Skipping restore."
-                exit 0
-              fi
-              echo "⚠️ DB missing or corrupted. Restoring from S3..."
-              litestream restore -config /etc/litestream.yml -if-db-not-exists -if-replica-exists "$DB_PATH"
-          envFrom:
-            - secretRef:
-                name: hydrus-client-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /opt/hydrus/db
-            - name: hydrus-client-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
-        - name: restore-master
-          image: litestream/litestream:0.5.11
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              rm -f /opt/hydrus/db/*.tmp* /opt/hydrus/db/*-wal;
-              DB_PATH=/opt/hydrus/db/client.master.db
-              if [ -f "$DB_PATH" ]; then
-                echo "✅ Local healthy DB found. Skipping restore."
-                exit 0
-              fi
-              echo "⚠️ DB missing or corrupted. Restoring from S3..."
-              litestream restore -config /etc/litestream.yml -if-db-not-exists -if-replica-exists "$DB_PATH"
-          envFrom:
-            - secretRef:
-                name: hydrus-client-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /opt/hydrus/db
-            - name: hydrus-client-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
-        - name: restore-caches
-          image: litestream/litestream:0.5.11
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              # Stop deleting client.caches.db to avoid GUI popups at startup.
-              # Only clean technical remnants and other db WALs.
-              rm -f /opt/hydrus/db/*.tmp* /opt/hydrus/db/client.db-wal /opt/hydrus/db/client.mappings.db-wal /opt/hydrus/db/client.master.db-wal;
-              echo "✅ Technical artifacts cleaned. Healthy cache preserved if present."
-              exit 0
-          envFrom:
-            - secretRef:
-                name: hydrus-client-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /opt/hydrus/db
-            - name: hydrus-client-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
@@ -196,52 +94,6 @@ spec:
               mountPath: /opt/hydrus/db
             - name: client-files
               mountPath: /opt/hydrus/db/client_files
-        - name: litestream
-          resources:
-            requests:
-              cpu: 5m
-              memory: 64Mi
-            limits:
-              cpu: 20m
-              memory: 256Mi
-          image: litestream/litestream:0.5.11
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - replicate
-            - -config
-            - /etc/litestream.yml
-          ports:
-            - containerPort: 9090
-              name: metrics
-          envFrom:
-            - secretRef:
-                name: hydrus-client-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /opt/hydrus/db
-            - name: hydrus-client-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
-          livenessProbe:
-            httpGet:
-              path: /metrics
-              port: metrics
-            initialDelaySeconds: 10
-            periodSeconds: 20
-          readinessProbe:
-            httpGet:
-              path: /metrics
-              port: metrics
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          startupProbe:
-            httpGet:
-              path: /metrics
-              port: metrics
-            failureThreshold: 15
-            periodSeconds: 10
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -250,6 +102,3 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Content/pictures/hentai/client_files
-        - name: hydrus-client-litestream-config
-          configMap:
-            name: hydrus-client-litestream-config

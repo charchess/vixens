@@ -21,41 +21,16 @@ spec:
       labels:
         kubectl.kubernetes.io/restartedAt: "2026-03-12T110000Z"
         app: changedetection
-        vixens.io/sizing.restore-config: B-nano
         vixens.io/sizing.changedetection: V-small
         vixens.io/sizing.browserless: V-medium
-        vixens.io/sizing.config-syncer: V-nano
         vixens.io/backup-profile: "standard"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-      initContainers:
-        - name: restore-config
-          image: rclone/rclone:1.73
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/config /datastore \
-                --transfers 4 \
-                --exclude "*.log" \
-                --exclude "lost+found/**" \
-                || true
-          envFrom:
-            - secretRef:
-                name: changedetection-secrets
-          volumeMounts:
-            - name: datastore
-              mountPath: /datastore
       priorityClassName: vixens-low
+      initContainers: []
       containers:
         - name: changedetection
           resources:
@@ -139,40 +114,6 @@ spec:
               port: playwright
             initialDelaySeconds: 5
             periodSeconds: 10
-        - name: config-syncer
-          resources:
-            requests:
-              cpu: 5m
-              memory: 64Mi
-            limits:
-              cpu: 20m
-              memory: 256Mi
-          image: rclone/rclone:1.73
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              sync_s3() {
-                rclone sync /datastore s3:$LITESTREAM_BUCKET/config \
-                  --exclude "*.log" \
-                  --exclude "lost+found/**";
-              }
-              while true; do
-                sync_s3;
-                sleep 60;
-              done
-          envFrom:
-            - secretRef:
-                name: changedetection-secrets
-          volumeMounts:
-            - name: datastore
-              mountPath: /datastore
       volumes:
         - name: datastore
           emptyDir: {}

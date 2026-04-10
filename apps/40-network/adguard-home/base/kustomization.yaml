@@ -13,7 +13,6 @@ resources:
   - cilium-networkpolicy.yaml
   - ingressroute-dns.yaml
   - infisical-secret.yaml
-  - litestream-config.yaml
 
 components:
   - ../../../_shared/components/revision-history-limit

@@ -8,10 +8,6 @@ spec:
     metadata:
       labels:
         vixens.io/sizing.dataangel: B-nano
-        vixens.io/sizing.litestream: null
-        vixens.io/sizing.config-syncer: null
-        vixens.io/sizing.restore-config: null
-        vixens.io/sizing.restore-db: null
       annotations:
         dataangel.io/bucket: "vixens-prod-adguard-home"
         dataangel.io/fs-paths: "/opt/adguardhome/work,/opt/adguardhome/conf"
@@ -22,10 +18,6 @@ spec:
         dataangel.io/lock-enabled: "false"
     spec:
       initContainers:
-        - name: restore-config
-          $patch: delete
-        - name: restore-db
-          $patch: delete
         - name: dataangel
           securityContext:
             runAsUser: 65534
@@ -48,8 +40,3 @@ spec:
               mountPath: /opt/adguardhome/work
             - name: config
               mountPath: /opt/adguardhome/conf
-      containers:
-        - name: litestream
-          $patch: delete
-        - name: config-syncer
-          $patch: delete
