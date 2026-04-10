@@ -12,6 +12,7 @@ components:
   - ../../../../_shared/components/nometrics
   - ../../../../_shared/components/dataangel
   - ../../../../_shared/components/poddisruptionbudget/1
+  - ../../../../_shared/components/scheduling/avoid-i915
 
 patches:
   - path: dataangel.yaml

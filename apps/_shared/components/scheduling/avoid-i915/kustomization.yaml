@@ -1,0 +1,56 @@
+---
+# Kustomize Component: avoid-i915
+#
+# Adds a SOFT preference (weight 80) to schedule on nodes WITHOUT i915 GPU.
+# Leaves GPU nodes (powder, poison, phoebe) available for frigate/HA.
+#
+# This is preferredDuringSchedulingIgnoredDuringExecution — pod CAN still land
+# on an i915 node if no capacity elsewhere. Not a hard constraint.
+#
+# Node label: vixens.io/has-i915=true on powder, poison, phoebe
+#
+# Usage:
+#   components:
+#     - ../../../../_shared/components/scheduling/avoid-i915
+
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+      spec:
+        template:
+          spec:
+            affinity:
+              nodeAffinity:
+                preferredDuringSchedulingIgnoredDuringExecution:
+                  - weight: 80
+                    preference:
+                      matchExpressions:
+                        - key: vixens.io/has-i915
+                          operator: DoesNotExist
+    target:
+      kind: Deployment
+
+  - patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: placeholder
+      spec:
+        template:
+          spec:
+            affinity:
+              nodeAffinity:
+                preferredDuringSchedulingIgnoredDuringExecution:
+                  - weight: 80
+                    preference:
+                      matchExpressions:
+                        - key: vixens.io/has-i915
+                          operator: DoesNotExist
+    target:
+      kind: StatefulSet

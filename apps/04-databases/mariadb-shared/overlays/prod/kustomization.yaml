@@ -9,6 +9,7 @@ components:
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/revision-history-limit
   - ../../../../_shared/components/poddisruptionbudget/1
+  - ../../../../_shared/components/scheduling/avoid-i915
 
 patches:
   - path: patch-infisical-env.yaml
