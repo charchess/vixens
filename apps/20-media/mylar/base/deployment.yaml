@@ -17,10 +17,6 @@ spec:
       labels:
         app: mylar
         vixens.io/sizing.mylar: V-micro
-        vixens.io/sizing.litestream: V-nano
-        vixens.io/sizing.config-syncer: V-nano
-        vixens.io/sizing.restore-config: B-nano
-        vixens.io/sizing.restore-db: B-nano
         vixens.io/backup-profile: "relaxed"
       annotations:
         reloader.stakater.com/auto: "true"
@@ -36,50 +32,7 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-      initContainers:
-        - name: restore-config
-          image: rclone/rclone:1.73
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/config /config --transfers 4 --exclude "*.db*" --exclude "*.log" --exclude ".*-litestream" --exclude ".*-litestream/**" || true
-          envFrom:
-            - secretRef:
-                name: mylar-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /config
-        - name: restore-db
-          image: litestream/litestream:0.5.11
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - restore
-            - -config
-            - /etc/litestream.yml
-            - -if-db-not-exists
-            - -if-replica-exists
-            - /config/mylar/mylar.db
-          envFrom:
-            - secretRef:
-                name: mylar-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: mylar-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
+      initContainers: []
       containers:
         - name: mylar
           resources:
@@ -135,69 +88,6 @@ spec:
             - name: comics
               mountPath: /comics
               subPath: Comics
-        - name: litestream
-          resources:
-            requests:
-              cpu: 5m
-              memory: 64Mi
-            limits:
-              cpu: 20m
-              memory: 256Mi
-          image: litestream/litestream:0.5.11
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - replicate
-            - -config
-            - /etc/litestream.yml
-          ports:
-            - containerPort: 9090
-              name: metrics
-          envFrom:
-            - secretRef:
-                name: mylar-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: mylar-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
-        - name: config-syncer
-          resources:
-            requests:
-              cpu: 5m
-              memory: 64Mi
-            limits:
-              cpu: 20m
-              memory: 256Mi
-          image: rclone/rclone:1.73
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              sync_s3() {
-                rclone sync /config s3:$LITESTREAM_BUCKET/config --exclude "*.db*" --exclude "*.log" --exclude ".*-litestream" --exclude ".*-litestream/**"
-              }
-              while true; do
-                sync_s3;
-                sleep 60;
-              done
-          envFrom:
-            - secretRef:
-                name: mylar-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /config
       volumes:
         - name: config
           emptyDir: {}
@@ -209,9 +99,6 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Content
-        - name: mylar-litestream-config
-          configMap:
-            name: mylar-litestream-config
       securityContext:
         runAsNonRoot: true
         fsGroup: 1000

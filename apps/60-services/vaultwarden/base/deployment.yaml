@@ -16,10 +16,7 @@ spec:
     metadata:
       labels:
         app: vaultwarden
-        vixens.io/sizing.restore-config: B-nano
         vixens.io/sizing.vaultwarden: V-nano
-        vixens.io/sizing.litestream: V-nano
-        vixens.io/sizing.config-syncer: V-nano
         vixens.io/backup-profile: critical
       annotations:
         reloader.stakater.com/auto: "true"
@@ -34,29 +31,7 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-      initContainers:
-        - name: restore-config
-          image: rclone/rclone:1.73
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              rclone copy s3:$LITESTREAM_BUCKET/config /data --transfers 4 --exclude "*.sqlite3*" --exclude "*.log" --exclude ".*-litestream" --exclude ".*-litestream/**" || true
-          envFrom:
-            - secretRef:
-                name: vaultwarden-secrets
-          volumeMounts:
-            - name: data
-              mountPath: /data
+      initContainers: []
       containers:
         - name: vaultwarden
           resources:
@@ -115,90 +90,9 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-        - name: litestream
-          resources:
-            requests:
-              cpu: 5m
-              memory: 64Mi
-            limits:
-              cpu: 20m
-              memory: 256Mi
-          image: litestream/litestream:0.5.11
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - replicate
-            - -config
-            - /etc/litestream.yml
-          ports:
-            - containerPort: 9090
-              name: metrics
-          livenessProbe:
-            tcpSocket:
-              port: 9090
-            initialDelaySeconds: 10
-            periodSeconds: 30
-          readinessProbe:
-            tcpSocket:
-              port: 9090
-            initialDelaySeconds: 10
-            periodSeconds: 30
-          lifecycle:
-            preStop:
-              exec:
-                command: ["sleep", "3"]
-          envFrom:
-            - secretRef:
-                name: vaultwarden-secrets
-          volumeMounts:
-            - name: data
-              mountPath: /data
-            - name: vaultwarden-litestream-config
-              mountPath: /etc/litestream.yml
-              subPath: litestream.yml
-        - name: config-syncer
-          resources:
-            requests:
-              cpu: 5m
-              memory: 64Mi
-            limits:
-              cpu: 20m
-              memory: 256Mi
-          image: rclone/rclone:1.73
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              sync_s3() {
-                rclone sync /data s3:$LITESTREAM_BUCKET/config --exclude "*.sqlite3*" --exclude "*.log" --exclude ".*-litestream" --exclude ".*-litestream/**"
-              }
-              while true; do
-                sync_s3
-                sleep 60
-              done
-          lifecycle:
-            preStop:
-              exec:
-                command: ["sleep", "3"]
-          volumeMounts:
-            - name: data
-              mountPath: /data
       volumes:
         - name: data
           emptyDir: {}
-        - name: vaultwarden-litestream-config
-          configMap:
-            name: vaultwarden-litestream-config
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

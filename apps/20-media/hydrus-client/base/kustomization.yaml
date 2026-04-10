@@ -12,7 +12,6 @@ resources:
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml
   - infisical-secret.yaml
-  - litestream-config.yaml
   - servicemonitor.yaml
 components:
   - ../../../_shared/components/revision-history-limit

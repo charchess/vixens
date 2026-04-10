@@ -18,8 +18,6 @@ spec:
       labels:
         app: birdnet-go
         vixens.io/sizing.birdnet-go: V-medium
-        vixens.io/sizing.litestream: V-micro
-        vixens.io/sizing.data-syncer: V-micro
         vixens.io/backup-profile: "relaxed"
       annotations:
         goldilocks.fairwinds.com/enabled: "true"
@@ -33,61 +31,7 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-      initContainers:
-        - name: generate-litestream-config
-          image: busybox:1.37.0
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              cat > /litestream-config/litestream.yml <<EOF
-              addr: ":9090"
-              dbs:
-                - path: /data/birdnet.db
-                  replicas:
-                    - url: s3://${LITESTREAM_BUCKET}/birdnet.db
-                      endpoint: ${LITESTREAM_ENDPOINT}
-              EOF
-          envFrom:
-            - secretRef:
-                name: birdnet-go-secrets
-          volumeMounts:
-            - name: generated-litestream-config
-              mountPath: /litestream-config
-          resources:
-            requests:
-              cpu: 5m
-              memory: 16Mi
-            limits:
-              cpu: 10m
-              memory: 32Mi
-        - name: litestream-restore
-          image: litestream/litestream:0.5.11
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - restore
-            - -config
-            - /etc/litestream-config/litestream.yml
-            - -if-replica-exists
-            - /data/birdnet.db
-          envFrom:
-            - secretRef:
-                name: birdnet-go-secrets
-          volumeMounts:
-            - name: data
-              mountPath: /data
-            - name: generated-litestream-config
-              mountPath: /etc/litestream-config
-          resources:
-            requests:
-              cpu: 10m
-              memory: 32Mi
-            limits:
-              cpu: 100m
-              memory: 64Mi
+      initContainers: []
       containers:
         - name: birdnet-go
           image: ghcr.io/tphakala/birdnet-go:v0.6.3
@@ -140,105 +84,6 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 3
             failureThreshold: 3
-        - name: litestream
-          image: litestream/litestream:0.5.11
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - replicate
-            - -config
-            - /etc/litestream-config/litestream.yml
-          ports:
-            - containerPort: 9090
-              name: metrics
-          envFrom:
-            - secretRef:
-                name: birdnet-go-secrets
-          volumeMounts:
-            - name: data
-              mountPath: /data
-            - name: generated-litestream-config
-              mountPath: /etc/litestream-config
-          resources:
-            requests:
-              cpu: 10m
-              memory: 32Mi
-            limits:
-              cpu: 100m
-              memory: 64Mi
-          readinessProbe:
-            httpGet:
-              path: /metrics
-              port: 9090
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /metrics
-              port: 9090
-            initialDelaySeconds: 10
-            periodSeconds: 30
-            failureThreshold: 3
-        - name: data-syncer
-          image: rclone/rclone:1.73
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              sync_s3() {
-                rclone sync /data s3:$LITESTREAM_BUCKET/birdnet-go \
-                  --exclude "*.db*" \
-                  --exclude "lost+found/**" \
-                  --exclude "clips/**" \
-                  --exclude "*.tmp"
-              }
-              while true; do
-                sync_s3;
-                sleep 60;
-              done
-          envFrom:
-            - secretRef:
-                name: birdnet-go-secrets
-          volumeMounts:
-            - name: data
-              mountPath: /data
-          resources:
-            requests:
-              cpu: 10m
-              memory: 32Mi
-            limits:
-              cpu: 100m
-              memory: 64Mi
-          readinessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - "pgrep -f 'sync_s3' || pgrep -f 'rclone sync'"
-            initialDelaySeconds: 10
-            periodSeconds: 90  # Longer than sync cycle (sync 5s + sleep 60s)
-            timeoutSeconds: 5  # Industry standard for sidecars (promtail lesson)
-            failureThreshold: 3
-          livenessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - "pgrep -f 'sync_s3' || pgrep -f 'rclone sync'"
-            initialDelaySeconds: 30
-            periodSeconds: 90  # Longer than sync cycle (sync 5s + sleep 60s)
-            timeoutSeconds: 5  # Industry standard for sidecars (promtail lesson)
-            failureThreshold: 3
       volumes:
         - name: config
           emptyDir: {}
@@ -248,8 +93,6 @@ spec:
           nfs:
             server: 192.168.111.69
             path: /volume3/Internal
-        - name: generated-litestream-config
-          emptyDir: {}
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

@@ -8,8 +8,6 @@ spec:
     metadata:
       labels:
         vixens.io/sizing.dataangel: B-small
-        vixens.io/sizing.litestream: null
-        vixens.io/sizing.config-syncer: null
       annotations:
         dataangel.io/bucket: "vixens-prod-frigate"
         dataangel.io/sqlite-paths: "/tmp/cache/frigate.db"
@@ -21,12 +19,6 @@ spec:
         dataangel.io/lock-enabled: "false"
     spec:
       initContainers:
-        - name: restore-config
-          $patch: delete
-        - name: generate-litestream-config
-          $patch: delete
-        - name: restore-db
-          $patch: delete
         - name: dataangel
           securityContext:
             runAsUser: 0
@@ -55,8 +47,3 @@ spec:
               mountPath: /config
             - name: cache
               mountPath: /tmp/cache
-      containers:
-        - name: litestream
-          $patch: delete
-        - name: config-syncer
-          $patch: delete

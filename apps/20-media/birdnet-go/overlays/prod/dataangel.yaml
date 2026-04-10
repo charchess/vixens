@@ -8,8 +8,6 @@ spec:
     metadata:
       labels:
         vixens.io/sizing.dataangel: V-small
-        vixens.io/sizing.litestream: null
-        vixens.io/sizing.data-syncer: null
       annotations:
         dataangel.io/bucket: "vixens-prod-birdnet-go"
         dataangel.io/sqlite-paths: "/data/birdnet.db"
@@ -21,10 +19,6 @@ spec:
         dataangel.io/lock-enabled: "false"
     spec:
       initContainers:
-        - name: generate-litestream-config
-          $patch: delete
-        - name: litestream-restore
-          $patch: delete
         - name: dataangel
           securityContext:
             runAsUser: 1000
@@ -53,8 +47,3 @@ spec:
               $patch: delete
             - name: data
               mountPath: /data
-      containers:
-        - name: litestream
-          $patch: delete
-        - name: data-syncer
-          $patch: delete

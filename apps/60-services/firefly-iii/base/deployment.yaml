@@ -17,9 +17,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: firefly-iii
-        vixens.io/sizing.restore-config: B-nano
         vixens.io/sizing.firefly-iii: V-medium
-        vixens.io/sizing.config-syncer: V-micro
         vixens.io/backup-profile: standard
       annotations:
         reloader.stakater.com/auto: "true"
@@ -37,39 +35,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
-      initContainers:
-        - name: restore-config
-          image: rclone/rclone:1.73
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              export RCLONE_CONFIG_S3_FORCE_PATH_STYLE=true
-              export RCLONE_CONFIG_S3_REGION=us-east-1
-              export RCLONE_CONFIG_S3_DISABLE_SSL=true
-              rclone copy s3:$LITESTREAM_BUCKET/upload /upload --transfers 4 --ignore-existing || true
-          envFrom:
-            - secretRef:
-                name: firefly-iii-secrets
-          volumeMounts:
-            - name: static
-              mountPath: /upload
-          resources:
-            requests:
-              cpu: 10m
-              memory: 32Mi
-            limits:
-              cpu: 100m
-              memory: 64Mi
+      initContainers: []
       containers:
         - name: firefly-iii
           image: fireflyiii/core:version-6.4.16
@@ -156,66 +122,6 @@ spec:
             failureThreshold: 30
             periodSeconds: 10
             timeoutSeconds: 5
-        - name: config-syncer
-          image: rclone/rclone:1.73
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              export RCLONE_CONFIG_S3_TYPE=s3
-              export RCLONE_CONFIG_S3_PROVIDER=Other
-              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
-              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
-              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
-              export RCLONE_CONFIG_S3_FORCE_PATH_STYLE=true
-              export RCLONE_CONFIG_S3_REGION=us-east-1
-              export RCLONE_CONFIG_S3_DISABLE_SSL=true
-              sync_s3() {
-                rclone sync /upload s3:$LITESTREAM_BUCKET/upload
-              }
-              while true; do
-                sync_s3;
-                sleep 60;
-              done
-          envFrom:
-            - secretRef:
-                name: firefly-iii-secrets
-          lifecycle:
-            preStop:
-              exec:
-                command: ["sleep", "3"]
-          readinessProbe:
-            exec:
-              command:
-                - ls
-                - /upload
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: 5
-          volumeMounts:
-            - name: static
-              mountPath: /upload
-          resources:
-            requests:
-              cpu: 10m
-              memory: 32Mi
-            limits:
-              cpu: 100m
-              memory: 64Mi
-          livenessProbe:
-            exec:
-              command:
-                - pgrep
-                - -f
-                - "sh -c"
-            initialDelaySeconds: 30
-            periodSeconds: 60
-            timeoutSeconds: 5
-            failureThreshold: 3
       volumes:
         - name: static
           emptyDir: {}

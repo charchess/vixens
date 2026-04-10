@@ -4,7 +4,6 @@ kind: Kustomization
 namespace: birdnet-go
 resources:
   - namespace.yaml
-  - litestream-config.yaml
   - infisical-secret.yaml
   - deployment.yaml
   - service.yaml

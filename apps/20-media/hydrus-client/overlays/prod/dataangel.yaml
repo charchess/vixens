@@ -8,12 +8,6 @@ spec:
     metadata:
       labels:
         vixens.io/sizing.dataangel: V-small
-        vixens.io/sizing.litestream: null
-        vixens.io/sizing.check-integrity: null
-        vixens.io/sizing.restore-db: null
-        vixens.io/sizing.restore-mappings: null
-        vixens.io/sizing.restore-master: null
-        vixens.io/sizing.restore-caches: null
       annotations:
         dataangel.io/bucket: "vixens-prod-hydrus-client"
         dataangel.io/sqlite-paths: "/opt/hydrus/db/client.db,/opt/hydrus/db/client.mappings.db,/opt/hydrus/db/client.master.db,/opt/hydrus/db/client.caches.db"
@@ -26,14 +20,6 @@ spec:
     spec:
       initContainers:
         - name: check-integrity
-          $patch: delete
-        - name: restore-db
-          $patch: delete
-        - name: restore-mappings
-          $patch: delete
-        - name: restore-master
-          $patch: delete
-        - name: restore-caches
           $patch: delete
         - name: dataangel
           securityContext:
@@ -61,6 +47,3 @@ spec:
               $patch: delete
             - name: config
               mountPath: /opt/hydrus/db
-      containers:
-        - name: litestream
-          $patch: delete
