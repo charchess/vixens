@@ -7,3 +7,4 @@ components:
   - ../../../../_shared/components/sync-wave/wave-9
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
+  - ../../../../_shared/components/scheduling/avoid-i915

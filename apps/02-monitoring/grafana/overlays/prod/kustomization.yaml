@@ -6,6 +6,9 @@ labels:
     pairs:
       environment: prod
 namespace: monitoring
+components:
+  - ../../../../_shared/components/scheduling/avoid-i915
+
 patches:
   - path: patch-infisical-env.yaml
   - patch: |-

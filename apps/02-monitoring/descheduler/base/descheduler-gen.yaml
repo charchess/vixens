@@ -43,19 +43,20 @@ data:
       - args:
           nodeAffinityType:
           - requiredDuringSchedulingIgnoredDuringExecution
+          - preferredDuringSchedulingIgnoredDuringExecution
         name: RemovePodsViolatingNodeAffinity
       - name: RemovePodsViolatingNodeTaints
       - name: RemovePodsViolatingInterPodAntiAffinity
       - name: RemovePodsViolatingTopologySpreadConstraint
       - args:
           targetThresholds:
-            cpu: 50
-            memory: 50
-            pods: 50
+            cpu: 70
+            memory: 90
+            pods: 80
           thresholds:
-            cpu: 20
-            memory: 20
-            pods: 20
+            cpu: 30
+            memory: 78
+            pods: 50
         name: LowNodeUtilization
       plugins:
         balance:
@@ -79,12 +80,12 @@ data:
             - homeassistant
           nodeResourceUtilizationThresholds:
             targetThresholds:
-              cpu: 60
-              memory: 60
+              cpu: 70
+              memory: 90
             thresholds:
               cpu: 30
-              memory: 30
-          numberOfNodes: 3
+              memory: 78
+          numberOfNodes: 1
           priorityThreshold:
             value: 10000
       PodLifeTime:
