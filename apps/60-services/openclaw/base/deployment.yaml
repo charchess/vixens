@@ -146,16 +146,16 @@ spec:
             - -c
           args:
             - |
-              # Ensure default config exists
-              if [ ! -s /data/openclaw.json ]; then
+              # Ensure default config exists on persistent volume (only on first boot)
+              if [ ! -s /data-config/openclaw.json ]; then
                 echo "No config found, copying default..."
-                cp /default-config/openclaw.json /data/openclaw.json 2>/dev/null || true
+                cp /default-config/openclaw.json /data-config/openclaw.json 2>/dev/null || true
               fi
               python3 << 'PYEOF'
               import json, base64, os, pathlib
 
               # Part 1: Remove legacy invalid keys + apply mandatory plugin overrides
-              p = '/data/openclaw.json'
+              p = '/data-config/openclaw.json'
               if os.path.exists(p):
                   d = json.load(open(p))
                   s = d.get('skills', {})
@@ -188,6 +188,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: data-config
+              mountPath: /data-config
             - name: default-config
               mountPath: /default-config
               readOnly: true
@@ -295,7 +297,7 @@ spec:
             - name: OPENCLAW_HOME
               value: /data
             - name: OPENCLAW_CONFIG_PATH
-              value: /data/openclaw.json
+              value: /data-config/openclaw.json
             - name: OPENCLAW_PLUGINS
               value: discord,github,telegram,@clawdbot/google-gemini-cli-auth
             - name: NODE_PATH
@@ -343,12 +345,14 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: data-config
+              mountPath: /data-config
       volumes:
         - name: data
           emptyDir: {}
-        - name: openclaw-config
-          secret:
-            secretName: openclaw-config
+        - name: data-config
+          persistentVolumeClaim:
+            claimName: openclaw-config-data
         - name: default-config
           configMap:
             name: openclaw-config
