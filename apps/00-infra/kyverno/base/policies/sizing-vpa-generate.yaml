@@ -96,8 +96,9 @@ spec:
             updatePolicy:
               # V-* sizing label present → InPlaceOrRecreate (in-place first, eviction fallback)
               # B-*/SB-*/G-* only → Off (Goldilocks recommend-only)
+              # Per-app override: vixens.io/vpa.update-mode annotation on pod template
               updateMode: >-
-                {{ request.object.spec.template.metadata.labels | values(@) | [?starts_with(@, 'V-')] | length(@) > `0` && 'InPlaceOrRecreate' || 'Off' }}
+                {{ request.object.spec.template.metadata.annotations."vixens.io/vpa.update-mode" || (request.object.spec.template.metadata.labels | values(@) | [?starts_with(@, 'V-')] | length(@) > `0` && 'InPlaceOrRecreate' || 'Off') }}
             resourcePolicy:
               containerPolicies:
                 - containerName: "*"
