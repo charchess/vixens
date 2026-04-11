@@ -15,13 +15,32 @@ data:
         "auth": {"mode": "password", "password": "REDACTED_PASSWORD"},
         "controlUi": {"dangerouslyAllowHostHeaderOriginFallback": true}
       },
+      "models": {
+        "providers": {
+          "ollama-local": {
+            "baseUrl": "http://192.168.199.119:11434/v1",
+            "api": "openai-completions",
+            "models": [
+              {
+                "id": "hf.co/bartowski/RekaAI_reka-flash-3.1-GGUF:Q3_K_M",
+                "name": "Reka Flash 3.1 (local)",
+                "reasoning": false,
+                "input": ["text"],
+                "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+                "contextWindow": 32768,
+                "maxTokens": 4096
+              }
+            ]
+          }
+        }
+      },
       "agents": {
         "defaults": {
           "model": {
             "primary": "cerebras/qwen-3-235b-a22b-instruct-2507",
             "fallbacks": [
+              "ollama-local/hf.co/bartowski/RekaAI_reka-flash-3.1-GGUF:Q3_K_M",
               "google-gemini-cli/gemini-2.5-flash",
-              "google-gemini-cli/gemini-3-flash-preview",
               "moonshot/kimi-k2.5"
             ]
           }
