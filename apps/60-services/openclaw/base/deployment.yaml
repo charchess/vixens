@@ -224,6 +224,21 @@ spec:
                                   print(f'Warning: could not update {p}: {e}')
                   except Exception as e:
                       print(f'Warning: OAuth refresh failed: {e}')
+              # Part 4: Inject provider API keys into all agent auth-profiles.json
+              cerebras_key = os.environ.get('CEREBRAS_API_KEY', '')
+              if cerebras_key:
+                  for ap_path in glob.glob('/data/.openclaw/agents/*/agent/auth-profiles.json'):
+                      try:
+                          ap = json.loads(open(ap_path).read())
+                          ap.setdefault('profiles', {})['cerebras:default'] = {
+                              'type': 'api_key',
+                              'provider': 'cerebras',
+                              'key': cerebras_key,
+                          }
+                          open(ap_path, 'w').write(json.dumps(ap, indent=2))
+                      except Exception as e:
+                          print(f'Warning: could not update {ap_path}: {e}')
+                  print('Cerebras API key injected into auth profiles')
               print('Setup complete')
               PYEOF
           envFrom:
@@ -368,6 +383,11 @@ spec:
                 secretKeyRef:
                   name: openclaw-secrets
                   key: OPENCLAW_DISCORD_TOKEN
+            - name: CEREBRAS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: CEREBRAS_API_KEY
           livenessProbe:
             tcpSocket:
               port: 18789
