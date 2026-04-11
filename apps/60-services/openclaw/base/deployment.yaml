@@ -346,9 +346,6 @@ spec:
       volumes:
         - name: data
           emptyDir: {}
-        - name: openclaw-config
-          secret:
-            secretName: openclaw-config
         - name: default-config
           configMap:
             name: openclaw-config
