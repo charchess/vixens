@@ -236,8 +236,22 @@ spec:
                 echo "$CLAUDE_VERSION" > /data/claude-cli/.claude-version
                 echo "Claude Code installed successfully"
               fi
+              CLAUDE_AGENT_ACP_VERSION="0.26.0"
+              if [ -f /data/node_modules/.claude-agent-acp-version ] && \
+                 [ "$(cat /data/node_modules/.claude-agent-acp-version)" = "$CLAUDE_AGENT_ACP_VERSION" ]; then
+                echo "claude-agent-acp v$CLAUDE_AGENT_ACP_VERSION already installed, skipping"
+              else
+                echo "Installing claude-agent-acp v$CLAUDE_AGENT_ACP_VERSION..."
+                npm install --prefix /data @agentclientprotocol/claude-agent-acp@$CLAUDE_AGENT_ACP_VERSION
+                echo "$CLAUDE_AGENT_ACP_VERSION" > /data/node_modules/.claude-agent-acp-version
+                echo "claude-agent-acp installed successfully"
+              fi
+              # Always create claude-acp wrapper (idempotent)
+              mkdir -p /data/bin
+              printf '#!/bin/sh\nexport HOME=/data\nexport CLAUDE_CONFIG_DIR=/data/.claude\nexec /data/node_modules/.bin/claude-agent-acp "$@"\n' > /data/bin/claude-acp
+              chmod +x /data/bin/claude-acp
               # Always fix permissions
-              chown -R 1000:1000 /data/node_modules /data/gemini-cli /data/claude-cli 2>/dev/null || true
+              chown -R 1000:1000 /data/node_modules /data/gemini-cli /data/claude-cli /data/bin 2>/dev/null || true
           volumeMounts:
             - name: data
               mountPath: /data
