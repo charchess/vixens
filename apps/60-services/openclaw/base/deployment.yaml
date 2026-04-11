@@ -218,7 +218,7 @@ spec:
                 mkdir -p /data/gemini-cli
                 cp -r /usr/local/lib/node_modules/@google /data/gemini-cli/
                 rm -f /data/gemini-cli/gemini
-                ln -s /data/gemini-cli/@google/gemini-cli/dist/index.js /data/gemini-cli/gemini
+                ln -s /data/gemini-cli/@google/gemini-cli/bundle/gemini.js /data/gemini-cli/gemini
                 echo "$PLUGIN_VERSION" > /data/node_modules/.gemini-plugin-version
                 echo "Gemini installed successfully"
               fi
