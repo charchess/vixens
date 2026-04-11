@@ -18,10 +18,11 @@ data:
       "agents": {
         "defaults": {
           "model": {
-            "primary": "google-gemini-cli/gemini-3-pro-preview",
+            "primary": "google-gemini-cli/gemini-2.5-flash",
             "fallbacks": [
               "google-gemini-cli/gemini-3-flash-preview",
-              "google-gemini-cli/gemini-2.5-flash"
+              "google-gemini-cli/gemini-3-pro-preview",
+              "xai/grok-4-1-fast"
             ]
           }
         }
