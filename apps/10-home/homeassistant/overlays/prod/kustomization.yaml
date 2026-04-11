@@ -13,6 +13,7 @@ components:
   - ../../../../_shared/components/nometrics
   - ../../../../_shared/components/dataangel
   - ../../../../_shared/components/poddisruptionbudget/1
+  - ../../../../_shared/components/scheduling/prefer-i915
 
 patches:
   - target:
@@ -24,3 +25,4 @@ patches:
         value: 250Gi
   - path: resources-patch.yaml
   - path: dataangel.yaml
+  - path: anti-affinity-frigate.yaml
