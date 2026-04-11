@@ -40,6 +40,7 @@ patches:
               vixens.io/sizing.frigate: V-2xlarge
             annotations:
               vixens.io/explicitly-allow-root: "true"
+              vixens.io/vpa.update-mode: "Off"
           spec:
             securityContext:
               runAsNonRoot: false
