@@ -168,7 +168,9 @@ spec:
                   json.dump(d, open(p, 'w'))
                   print('Config keys checked')
 
-              # Part 2: Write Gemini credentials from secrets
+              # Part 2: Write Gemini credentials from secrets + refresh OAuth token
+              import urllib.request, urllib.parse, time, glob
+
               gemini_dir = pathlib.Path('/data/.gemini')
               gemini_dir.mkdir(parents=True, exist_ok=True)
               for filename, env_key in [
@@ -180,6 +182,48 @@ spec:
                   val = os.environ.get(env_key, '')
                   if val:
                       (gemini_dir / filename).write_bytes(base64.b64decode(val))
+
+              # Part 3: Refresh OAuth access token (expires every 1h)
+              client_id = os.environ.get('GEMINI_CLI_OAUTH_CLIENT_ID', '')
+              client_secret = os.environ.get('GEMINI_CLI_OAUTH_CLIENT_SECRET', '')
+              creds_path = gemini_dir / 'oauth_creds.json'
+              if client_id and client_secret and creds_path.exists():
+                  try:
+                      creds = json.loads(creds_path.read_text())
+                      refresh_token = creds.get('refresh_token', '')
+                      if refresh_token:
+                          data = urllib.parse.urlencode({
+                              'client_id': client_id,
+                              'client_secret': client_secret,
+                              'refresh_token': refresh_token,
+                              'grant_type': 'refresh_token',
+                          }).encode()
+                          req = urllib.request.Request(
+                              'https://oauth2.googleapis.com/token', data=data, method='POST')
+                          resp = json.loads(urllib.request.urlopen(req, timeout=30).read())
+                          new_access = resp['access_token']
+                          new_expires = int((time.time() + resp.get('expires_in', 3600)) * 1000)
+                          creds['access_token'] = new_access
+                          creds['expiry_date'] = new_expires
+                          if 'id_token' in resp:
+                              creds['id_token'] = resp['id_token']
+                          creds_path.write_text(json.dumps(creds))
+                          print(f'OAuth token refreshed, expires {time.strftime("%H:%M:%S", time.localtime(new_expires/1000))}')
+                          # Also update all DataAngel-restored auth-profiles.json
+                          for p in glob.glob('/data/.openclaw/agents/*/agent/auth-profiles.json'):
+                              try:
+                                  ap = json.loads(open(p).read())
+                                  key = f'google-gemini-cli:{creds.get("login_hint", "")}'
+                                  # Find the profile by provider
+                                  for pk, pv in ap.get('profiles', {}).items():
+                                      if pv.get('provider') == 'google-gemini-cli':
+                                          pv['access'] = new_access
+                                          pv['expires'] = new_expires
+                                  open(p, 'w').write(json.dumps(ap, indent=2))
+                              except Exception as e:
+                                  print(f'Warning: could not update {p}: {e}')
+                  except Exception as e:
+                      print(f'Warning: OAuth refresh failed: {e}')
               print('Setup complete')
               PYEOF
           envFrom:
