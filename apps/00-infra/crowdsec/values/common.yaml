@@ -35,15 +35,25 @@ lapi:
         secretKeyRef:
           name: crowdsec-secrets
           key: CROWDSEC_DB_PASSWORD
+    # Fixed machine name: prevents creating a new CAPI identity on every pod restart
+    - name: CUSTOM_HOSTNAME
+      value: "crowdsec-lapi"
 
   persistentVolume:
     data:
       enabled: false
+    # Persist /etc/crowdsec config (online_api_credentials.yaml, local_api_credentials.yaml)
+    # Without this, the LAPI re-registers with CAPI on every restart → duplicate machine entries
     config:
-      enabled: false
+      enabled: true
+      storageClassName: synelia-iscsi-retain
+      accessModes:
+        - ReadWriteOnce
+      size: 100Mi
 
+  # Recreate: avoid overlap between old/new pods both registering simultaneously
   strategy:
-    type: RollingUpdate
+    type: Recreate
 
   resources:
     requests:
@@ -81,6 +91,13 @@ agent:
   env:
     - name: COLLECTIONS
       value: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/base-http-scenarios"
+    # Stable machine name based on node name: prevents new entry on every DaemonSet pod restart
+    - name: NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+    - name: CUSTOM_HOSTNAME
+      value: "crowdsec-agent-$(NODE_NAME)"
 
   resources:
     requests:
