@@ -13,8 +13,6 @@ lapi:
           key: ENROLL_KEY
     - name: ENROLL_INSTANCE_NAME
       value: "vixens-k8s-prod"
-    - name: CUSTOM_HOSTNAME
-      value: "crowdsec-lapi-prod"
     - name: ENROLL_TAGS
       value: "k8s linux homelab prod"
     - name: CROWDSEC_DB_PASSWORD
