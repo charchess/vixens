@@ -35,9 +35,8 @@ lapi:
         secretKeyRef:
           name: crowdsec-secrets
           key: CROWDSEC_DB_PASSWORD
-    # Fixed machine name: prevents creating a new CAPI identity on every pod restart
-    - name: CUSTOM_HOSTNAME
-      value: "crowdsec-lapi"
+    # Note: CUSTOM_HOSTNAME is already set by the chart template (metadata.name).
+    # Do NOT override via lapi.env — chart merges by name, causing value+valueFrom conflict.
 
   persistentVolume:
     data:
