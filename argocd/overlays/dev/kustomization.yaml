@@ -60,7 +60,7 @@ resources:
 
   # Services (commented)
   # - apps/vaultwarden.yaml
-  # - apps/openclaw.yaml
+  - apps/openclaw.yaml
   # - apps/cloudnative-pg-crds.yaml
   # - apps/cloudnative-pg.yaml
   # - apps/redis-shared.yaml
