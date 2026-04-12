@@ -18,17 +18,22 @@ data:
       "models": {
         "providers": {
           "ollama-local": {
-            "baseUrl": "http://192.168.199.119:11434/v1",
-            "api": "openai-completions",
+            "baseUrl": "http://192.168.199.119:11434",
+            "api": "ollama",
             "models": [
               {
                 "id": "qwen3:14b-q4_K_M",
-                "name": "Qwen3 14B (local)",
+                "name": "Qwen3 14B Local",
                 "reasoning": false,
+                "streaming": false,
+                "contextWindow": 40960,
+                "maxTokens": 4096,
                 "input": ["text"],
                 "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
-                "contextWindow": 32768,
-                "maxTokens": 4096
+                "compat": {
+                  "supportsDeveloperRole": false,
+                  "supportsReasoningEffort": false
+                }
               }
             ]
           }

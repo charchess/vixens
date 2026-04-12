@@ -26,6 +26,8 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/nometrics: "true"
+        # Bump this when openclaw-config ConfigMap changes to force pod restart
+        vixens.io/config-version: "5"
 
     spec:
       securityContext:
