@@ -25,7 +25,6 @@ data:
                 "id": "qwen3:14b-q4_K_M",
                 "name": "Qwen3 14B Local",
                 "reasoning": false,
-                "streaming": false,
                 "contextWindow": 40960,
                 "maxTokens": 4096,
                 "input": ["text"],
