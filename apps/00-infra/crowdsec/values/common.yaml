@@ -48,7 +48,7 @@ lapi:
       storageClassName: synelia-iscsi-retain
       accessModes:
         - ReadWriteOnce
-      size: 100Mi
+      size: 1Gi
 
   # Recreate: avoid overlap between old/new pods both registering simultaneously
   strategy:

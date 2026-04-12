@@ -22,8 +22,8 @@ data:
             "api": "openai-completions",
             "models": [
               {
-                "id": "hf.co/bartowski/RekaAI_reka-flash-3.1-GGUF:Q3_K_M",
-                "name": "Reka Flash 3.1 (local)",
+                "id": "huihui_ai/qwen3-abliterated:14b-q4_K_M",
+                "name": "Qwen3 14B (local)",
                 "reasoning": false,
                 "input": ["text"],
                 "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
@@ -39,7 +39,7 @@ data:
           "model": {
             "primary": "cerebras/qwen-3-235b-a22b-instruct-2507",
             "fallbacks": [
-              "ollama-local/hf.co/bartowski/RekaAI_reka-flash-3.1-GGUF:Q3_K_M",
+              "ollama-local/huihui_ai/qwen3-abliterated:14b-q4_K_M",
               "google-gemini-cli/gemini-2.5-flash",
               "moonshot/kimi-k2.5"
             ]
