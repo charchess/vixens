@@ -146,11 +146,10 @@ spec:
             - -c
           args:
             - |
-              # Ensure default config exists
-              if [ ! -s /data/openclaw.json ]; then
-                echo "No config found, copying default..."
-                cp /default-config/openclaw.json /data/openclaw.json 2>/dev/null || true
-              fi
+              # Always overwrite config from ConfigMap (source of truth)
+              # DataAngel restores /data from S3 (including old openclaw.json) — must overwrite
+              echo "Copying config from ConfigMap..."
+              cp /default-config/openclaw.json /data/openclaw.json
               python3 << 'PYEOF'
               import json, base64, os, pathlib
 
