@@ -4,7 +4,6 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - service.yaml
-  - configmap.yaml
   - infisical-secret.yaml
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml

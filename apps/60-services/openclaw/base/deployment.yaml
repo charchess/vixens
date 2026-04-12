@@ -19,15 +19,12 @@ spec:
       labels:
         app: openclaw
         vixens.io/sizing.install-tools: B-xlarge
-        vixens.io/sizing.setup-config: G-nano
         vixens.io/sizing.install-gemini: B-medium
         vixens.io/sizing.openclaw: V-xlarge
         vixens.io/backup-profile: "relaxed"
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/nometrics: "true"
-        # Bump this when openclaw-config ConfigMap changes to force pod restart
-        vixens.io/config-version: "7"
 
     spec:
       securityContext:
@@ -148,10 +145,6 @@ spec:
             - -c
           args:
             - |
-              # Always overwrite config from ConfigMap (source of truth)
-              # DataAngel restores /data from S3 (including old openclaw.json) — must overwrite
-              echo "Copying config from ConfigMap..."
-              cp /default-config/openclaw.json /data/openclaw.json
               python3 << 'PYEOF'
               import json, base64, os, pathlib
 
@@ -258,9 +251,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-            - name: default-config
-              mountPath: /default-config
-              readOnly: true
         # 3/3 — Install Gemini plugin + CLI + Claude Code CLI
         #        Skips reinstall if version files match.
         - name: install-gemini
@@ -421,6 +411,3 @@ spec:
       volumes:
         - name: data
           emptyDir: {}
-        - name: default-config
-          configMap:
-            name: openclaw-config
