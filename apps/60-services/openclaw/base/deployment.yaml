@@ -226,19 +226,29 @@ spec:
                       print(f'Warning: OAuth refresh failed: {e}')
               # Part 4: Inject provider API keys into all agent auth-profiles.json
               cerebras_key = os.environ.get('CEREBRAS_API_KEY', '')
-              if cerebras_key:
-                  for ap_path in glob.glob('/data/.openclaw/agents/*/agent/auth-profiles.json'):
-                      try:
-                          ap = json.loads(open(ap_path).read())
-                          ap.setdefault('profiles', {})['cerebras:default'] = {
+              for ap_path in glob.glob('/data/.openclaw/agents/*/agent/auth-profiles.json'):
+                  try:
+                      ap = json.loads(open(ap_path).read())
+                      profiles = ap.setdefault('profiles', {})
+                      # Cerebras: real API key
+                      if cerebras_key:
+                          profiles['cerebras:default'] = {
                               'type': 'api_key',
                               'provider': 'cerebras',
                               'key': cerebras_key,
                           }
-                          open(ap_path, 'w').write(json.dumps(ap, indent=2))
-                      except Exception as e:
-                          print(f'Warning: could not update {ap_path}: {e}')
+                      # Ollama: no auth needed, dummy key to satisfy openclaw
+                      profiles['ollama-local:default'] = {
+                          'type': 'api_key',
+                          'provider': 'ollama-local',
+                          'key': 'none',
+                      }
+                      open(ap_path, 'w').write(json.dumps(ap, indent=2))
+                  except Exception as e:
+                      print(f'Warning: could not update {ap_path}: {e}')
+              if cerebras_key:
                   print('Cerebras API key injected into auth profiles')
+              print('Ollama-local auth entry injected into auth profiles')
               print('Setup complete')
               PYEOF
           envFrom:
