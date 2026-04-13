@@ -19,8 +19,7 @@ spec:
       labels:
         app: openclaw
         vixens.io/sizing.install-tools: B-xlarge
-        vixens.io/sizing.install-gemini: B-medium
-        vixens.io/sizing.install-mempalace: B-large
+        vixens.io/sizing.install-gemini: B-xlarge
         vixens.io/sizing.openclaw: V-xlarge
         vixens.io/backup-profile: "relaxed"
       annotations:
@@ -269,7 +268,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-        # 3/3 — Install Gemini plugin + CLI + Claude Code CLI
+        # 3/3 — Install Gemini plugin + CLI + Claude Code CLI + MemPalace MCP
+        #        node:24-bookworm has Python 3.11 = openclaw container (critical for ABI compat)
         #        Skips reinstall if version files match.
         - name: install-gemini
           image: node:24-bookworm
@@ -328,40 +328,22 @@ spec:
               mkdir -p /data/bin
               printf '#!/bin/sh\nexport HOME=/data\nexport CLAUDE_CONFIG_DIR=/data/.claude\nexec /data/node_modules/.bin/claude-agent-acp "$@"\n' > /data/bin/claude-acp
               chmod +x /data/bin/claude-acp
-              # Always fix permissions
-              chown -R 1000:1000 /data/node_modules /data/gemini-cli /data/claude-cli /data/bin 2>/dev/null || true
-          volumeMounts:
-            - name: data
-              mountPath: /data
-        # 4/4 — Install MemPalace MCP server (Python 3.11 venv — matches openclaw container)
-        #        Skips reinstall if MEMPALACE_VERSION matches.
-        - name: install-mempalace
-          image: python:3.14-slim
-          securityContext:
-            runAsUser: 0
-          command:
-            - sh
-            - -c
-          args:
-            - |
-              set -e
+              # Install MemPalace MCP server — node:24-bookworm has Python 3.11 = openclaw container
+              # Skips reinstall if version matches. No separate init container needed (same image).
               MEMPALACE_VERSION="3.2.0"
               VENV_PATH="/data/tools/mempalace-venv"
               VERSION_FILE="/data/tools/.mempalace-version"
               if [ -f "$VERSION_FILE" ] && [ "$(cat $VERSION_FILE)" = "$MEMPALACE_VERSION" ] && [ -d "$VENV_PATH" ]; then
                 echo "mempalace v$MEMPALACE_VERSION already installed, skipping"
               else
-                echo "Installing mempalace v$MEMPALACE_VERSION (chromadb + onnxruntime — may take a few minutes)..."
+                echo "Installing mempalace v$MEMPALACE_VERSION..."
                 python3 -m venv "$VENV_PATH"
                 "$VENV_PATH/bin/pip" install --no-cache-dir "mempalace==$MEMPALACE_VERSION"
                 echo "$MEMPALACE_VERSION" > "$VERSION_FILE"
                 echo "mempalace installed successfully"
               fi
-              # Fix venv symlinks: init container uses /usr/local/bin/python3 but openclaw has /usr/bin/python3
-              ln -sf /usr/bin/python3 "$VENV_PATH/bin/python3"
-              ln -sf /usr/bin/python3 "$VENV_PATH/bin/python"
-              ln -sf /usr/bin/python3 "$VENV_PATH/bin/python3.11"
-              chown -R 1000:1000 "$VENV_PATH" 2>/dev/null || true
+              # Always fix permissions
+              chown -R 1000:1000 /data/node_modules /data/gemini-cli /data/claude-cli /data/bin "$VENV_PATH" 2>/dev/null || true
           volumeMounts:
             - name: data
               mountPath: /data
