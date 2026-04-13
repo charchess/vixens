@@ -337,7 +337,7 @@ spec:
                 echo "mempalace v$MEMPALACE_VERSION already installed, skipping"
               else
                 echo "Installing mempalace v$MEMPALACE_VERSION..."
-                apt-get install -y --no-install-recommends python3-venv -qq
+                apt-get update -qq && apt-get install -y --no-install-recommends python3-venv -qq
                 python3 -m venv "$VENV_PATH"
                 "$VENV_PATH/bin/pip" install --no-cache-dir "mempalace==$MEMPALACE_VERSION"
                 echo "$MEMPALACE_VERSION" > "$VERSION_FILE"
