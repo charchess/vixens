@@ -329,7 +329,7 @@ spec:
         # 4/4 — Install MemPalace MCP server (Python 3.11 venv — matches openclaw container)
         #        Skips reinstall if MEMPALACE_VERSION matches.
         - name: install-mempalace
-          image: python:3.11-slim
+          image: python:3.14-slim
           securityContext:
             runAsUser: 0
           command:
