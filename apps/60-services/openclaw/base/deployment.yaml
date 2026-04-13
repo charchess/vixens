@@ -170,6 +170,13 @@ spec:
                           'args': ['-m', 'mempalace.mcp_server'],
                       }
                       print('mempalace MCP server injected')
+                  # Fix Gemma compat: mark as not supporting tools so openclaw skips tool injection
+                  # (mempalace MCP adds tools to every request; Gemma rejects tool-bearing requests)
+                  providers = d.get('models', {}).get('providers', {})
+                  ollama = providers.get('ollama-local', {})
+                  for model in ollama.get('models', []):
+                      if 'gemma' in model.get('id', '').lower():
+                          model.setdefault('compat', {})['supportsTools'] = False
                   json.dump(d, open(p, 'w'))
                   print('Config keys checked')
 
