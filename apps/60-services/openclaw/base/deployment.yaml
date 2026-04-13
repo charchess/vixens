@@ -350,6 +350,10 @@ spec:
                 echo "$MEMPALACE_VERSION" > "$VERSION_FILE"
                 echo "mempalace installed successfully"
               fi
+              # Fix venv symlinks: init container uses /usr/local/bin/python3 but openclaw has /usr/bin/python3
+              ln -sf /usr/bin/python3 "$VENV_PATH/bin/python3"
+              ln -sf /usr/bin/python3 "$VENV_PATH/bin/python"
+              ln -sf /usr/bin/python3 "$VENV_PATH/bin/python3.11"
               chown -R 1000:1000 "$VENV_PATH" 2>/dev/null || true
           volumeMounts:
             - name: data
