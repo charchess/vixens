@@ -20,6 +20,7 @@ spec:
         app: openclaw
         vixens.io/sizing.install-tools: B-xlarge
         vixens.io/sizing.install-gemini: B-medium
+        vixens.io/sizing.install-mempalace: B-large
         vixens.io/sizing.openclaw: V-xlarge
         vixens.io/backup-profile: "relaxed"
       annotations:
@@ -159,6 +160,16 @@ spec:
                   d.pop('skills', None) if isinstance(s, dict) and not s else None
                   # Always force-disable claw-hass (crashes without HASS config)
                   d.setdefault('plugins', {}).setdefault('entries', {})['claw-hass'] = {'enabled': False}
+                  # Inject mempalace MCP server if not already configured
+                  mcp = d.setdefault('mcp', {})
+                  servers = mcp.setdefault('servers', {})
+                  if 'mempalace' not in servers:
+                      servers['mempalace'] = {
+                          'type': 'stdio',
+                          'command': '/data/tools/mempalace-venv/bin/python3',
+                          'args': ['-m', 'mempalace.mcp_server'],
+                      }
+                      print('mempalace MCP server injected')
                   json.dump(d, open(p, 'w'))
                   print('Config keys checked')
 
@@ -315,6 +326,34 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+        # 4/4 — Install MemPalace MCP server (Python 3.11 venv — matches openclaw container)
+        #        Skips reinstall if MEMPALACE_VERSION matches.
+        - name: install-mempalace
+          image: python:3.11-slim
+          securityContext:
+            runAsUser: 0
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              set -e
+              MEMPALACE_VERSION="3.2.0"
+              VENV_PATH="/data/tools/mempalace-venv"
+              VERSION_FILE="/data/tools/.mempalace-version"
+              if [ -f "$VERSION_FILE" ] && [ "$(cat $VERSION_FILE)" = "$MEMPALACE_VERSION" ] && [ -d "$VENV_PATH" ]; then
+                echo "mempalace v$MEMPALACE_VERSION already installed, skipping"
+              else
+                echo "Installing mempalace v$MEMPALACE_VERSION (chromadb + onnxruntime — may take a few minutes)..."
+                python3 -m venv "$VENV_PATH"
+                "$VENV_PATH/bin/pip" install --no-cache-dir "mempalace==$MEMPALACE_VERSION"
+                echo "$MEMPALACE_VERSION" > "$VERSION_FILE"
+                echo "mempalace installed successfully"
+              fi
+              chown -R 1000:1000 "$VENV_PATH" 2>/dev/null || true
+          volumeMounts:
+            - name: data
+              mountPath: /data
       containers:
         - name: openclaw
           lifecycle:
@@ -354,6 +393,8 @@ spec:
               value: /data/.gemini
             - name: OPENCLAW_HOME
               value: /data
+            - name: MEMPALACE_PALACE_PATH
+              value: /data/.mempalace
             - name: OPENCLAW_CONFIG_PATH
               value: /data/openclaw.json
             - name: OPENCLAW_PLUGINS
