@@ -331,20 +331,19 @@ spec:
               # Install MemPalace MCP server — node:24-bookworm has Python 3.11 = openclaw container
               # Skips reinstall if version matches. No separate init container needed (same image).
               MEMPALACE_VERSION="3.2.0"
-              VENV_PATH="/data/tools/mempalace-venv"
+              MEMPALACE_PACKAGES="/data/tools/mempalace-packages"
               VERSION_FILE="/data/tools/.mempalace-version"
-              if [ -f "$VERSION_FILE" ] && [ "$(cat $VERSION_FILE)" = "$MEMPALACE_VERSION" ] && [ -d "$VENV_PATH" ]; then
+              if [ -f "$VERSION_FILE" ] && [ "$(cat $VERSION_FILE)" = "$MEMPALACE_VERSION" ] && [ -d "$MEMPALACE_PACKAGES" ]; then
                 echo "mempalace v$MEMPALACE_VERSION already installed, skipping"
               else
-                echo "Installing mempalace v$MEMPALACE_VERSION..."
-                apt-get install -y --no-install-recommends python3-venv -qq
-                python3 -m venv "$VENV_PATH"
-                "$VENV_PATH/bin/pip" install --no-cache-dir "mempalace==$MEMPALACE_VERSION"
+                echo "Installing mempalace v$MEMPALACE_VERSION (no venv — pip --target)..."
+                curl -sSL https://bootstrap.pypa.io/get-pip.py | python3 - --quiet
+                python3 -m pip install --target="$MEMPALACE_PACKAGES" --no-cache-dir "mempalace==$MEMPALACE_VERSION" -q
                 echo "$MEMPALACE_VERSION" > "$VERSION_FILE"
                 echo "mempalace installed successfully"
               fi
               # Always fix permissions
-              chown -R 1000:1000 /data/node_modules /data/gemini-cli /data/claude-cli /data/bin "$VENV_PATH" 2>/dev/null || true
+              chown -R 1000:1000 /data/node_modules /data/gemini-cli /data/claude-cli /data/bin "$MEMPALACE_PACKAGES" 2>/dev/null || true
           volumeMounts:
             - name: data
               mountPath: /data
