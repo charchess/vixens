@@ -18,8 +18,8 @@ spec:
     metadata:
       labels:
         app: openclaw
-        vixens.io/sizing.install-tools: B-xlarge
-        vixens.io/sizing.install-gemini: B-xlarge
+        vixens.io/sizing.install-tools: B-medium
+        vixens.io/sizing.install-gemini: B-medium
         vixens.io/sizing.openclaw: V-xlarge
         vixens.io/backup-profile: "relaxed"
       annotations:
