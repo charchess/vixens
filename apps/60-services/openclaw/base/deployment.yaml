@@ -186,8 +186,20 @@ spec:
                   if not control_ui.get('allowedOrigins') and not control_ui.get('dangerouslyAllowHostHeaderOriginFallback'):
                       control_ui['dangerouslyAllowHostHeaderOriginFallback'] = True
                       print('gateway.controlUi fallback enabled')
-                  # Remove any invalid agentModel key (not recognized by OpenClaw)
                   gateway_cfg.pop('agentModel', None)
+                  # Configure default model (cerebras) + fallbacks if not set
+                  agent_defaults = d.setdefault('agents', {}).setdefault('defaults', {})
+                  if not agent_defaults.get('model', {}).get('primary'):
+                      agent_defaults['model'] = {
+                          'primary': 'cerebras/qwen-3-235b-a22b-instruct-2507',
+                          'fallbacks': ['cerebras/gpt-oss-120b', 'cerebras/llama3.1-8b'],
+                      }
+                      agent_defaults.setdefault('models', {}).update({
+                          'cerebras/qwen-3-235b-a22b-instruct-2507': {},
+                          'cerebras/gpt-oss-120b': {},
+                          'cerebras/llama3.1-8b': {},
+                      })
+                      print('Default model set: cerebras/qwen-3-235b-a22b-instruct-2507')
                   json.dump(d, open(p, 'w'))
                   print('Config keys checked')
 
