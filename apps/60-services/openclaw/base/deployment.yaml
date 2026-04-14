@@ -410,10 +410,10 @@ spec:
           resources:
             requests:
               cpu: 200m
-              memory: 2Gi
+              memory: 512Mi
             limits:
               cpu: 2000m
-              memory: 8Gi
+              memory: 4Gi
           image: ghcr.io/openclaw/openclaw:2026.4.14
           imagePullPolicy: Always
           command:
