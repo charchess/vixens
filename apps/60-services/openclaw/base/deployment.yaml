@@ -354,6 +354,10 @@ spec:
       containers:
         - name: openclaw
           lifecycle:
+            postStart:
+              exec:
+                # Symlink /home/node/.gemini → /data/.gemini so gemini-cli finds OAuth creds
+                command: ["/bin/sh", "-c", "rm -rf /home/node/.gemini && ln -sfn /data/.gemini /home/node/.gemini"]
             preStop:
               exec:
                 command: ["sleep", "5"]
