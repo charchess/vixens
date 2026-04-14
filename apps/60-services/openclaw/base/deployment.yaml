@@ -346,6 +346,19 @@ spec:
                 echo "$MEMPALACE_VERSION" > "$VERSION_FILE"
                 echo "mempalace installed successfully"
               fi
+              # Install clawhub — OpenClaw skills registry CLI
+              CLAWHUB_VERSION="latest"
+              if [ -f /data/bin/.clawhub-version ] && [ "$(cat /data/bin/.clawhub-version)" = "$CLAWHUB_VERSION" ]; then
+                echo "clawhub already installed, skipping"
+              else
+                echo "Installing clawhub..."
+                npm install -g clawhub
+                mkdir -p /data/bin
+                cp -L /usr/local/bin/clawhub /data/bin/clawhub
+                chmod +x /data/bin/clawhub
+                echo "$CLAWHUB_VERSION" > /data/bin/.clawhub-version
+                echo "clawhub installed successfully"
+              fi
               # Always fix permissions
               chown -R 1000:1000 /data/node_modules /data/gemini-cli /data/claude-cli /data/bin "$MEMPALACE_PACKAGES" 2>/dev/null || true
           volumeMounts:
@@ -385,7 +398,7 @@ spec:
             - name: TZ
               value: Europe/Paris
             - name: PATH
-              value: /data/tools/usr/local/bin:/data/tools/local/bin:/data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/data/claude-cli/bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
+              value: /data/bin:/data/tools/usr/local/bin:/data/tools/local/bin:/data/tools/bin:/data/tools/lib:/data/gemini-cli:/data/gemini-cli/@google/gemini-cli/node_modules/.bin:/data/claude-cli/bin:/usr/local/bin:/usr/local/lib/node_modules/.bin:/usr/bin:/bin
             - name: LD_LIBRARY_PATH
               value: /usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/lib:/usr/lib:/data/tools/lib/blas
             - name: PYTHONPATH
