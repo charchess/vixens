@@ -165,8 +165,12 @@ spec:
                   if 'mempalace' not in servers:
                       servers['mempalace'] = {
                           'type': 'stdio',
-                          'command': '/data/tools/mempalace-venv/bin/python3',
+                          'command': 'python3',
                           'args': ['-m', 'mempalace.mcp_server'],
+                          'env': {
+                              'PYTHONPATH': '/data/tools/mempalace-packages',
+                              'MEMPALACE_PALACE_PATH': '/data/.mempalace',
+                          },
                       }
                       print('mempalace MCP server injected')
                   # Fix Gemma compat: mark as not supporting tools so openclaw skips tool injection
@@ -337,7 +341,7 @@ spec:
                 echo "mempalace v$MEMPALACE_VERSION already installed, skipping"
               else
                 echo "Installing mempalace v$MEMPALACE_VERSION (no venv — pip --target)..."
-                curl -sSL https://bootstrap.pypa.io/get-pip.py | python3 - --quiet
+                (curl -sSL https://bootstrap.pypa.io/get-pip.py | python3 - --quiet) || true
                 python3 -m pip install --target="$MEMPALACE_PACKAGES" --no-cache-dir --break-system-packages "mempalace==$MEMPALACE_VERSION" -q
                 echo "$MEMPALACE_VERSION" > "$VERSION_FILE"
                 echo "mempalace installed successfully"
