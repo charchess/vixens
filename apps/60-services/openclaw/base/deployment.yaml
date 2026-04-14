@@ -186,6 +186,10 @@ spec:
                   if not control_ui.get('allowedOrigins') and not control_ui.get('dangerouslyAllowHostHeaderOriginFallback'):
                       control_ui['dangerouslyAllowHostHeaderOriginFallback'] = True
                       print('gateway.controlUi fallback enabled')
+                  # Set default agent model to cerebras (avoid openai default with no key)
+                  if not gateway_cfg.get('agentModel'):
+                      gateway_cfg['agentModel'] = 'cerebras/llama-3.3-70b'
+                      print('Default agent model set to cerebras/llama-3.3-70b')
                   json.dump(d, open(p, 'w'))
                   print('Config keys checked')
 
@@ -246,8 +250,17 @@ spec:
                   except Exception as e:
                       print(f'Warning: OAuth refresh failed: {e}')
               # Part 4: Inject provider API keys into all agent auth-profiles.json
+              # Also proactively create main agent dir so auth is available on first boot
               cerebras_key = os.environ.get('CEREBRAS_API_KEY', '')
-              for ap_path in glob.glob('/data/.openclaw/agents/*/agent/auth-profiles.json'):
+              main_agent_dir = pathlib.Path('/data/.openclaw/agents/main/agent')
+              main_agent_dir.mkdir(parents=True, exist_ok=True)
+              main_ap = str(main_agent_dir / 'auth-profiles.json')
+              existing = glob.glob('/data/.openclaw/agents/*/agent/auth-profiles.json')
+              if main_ap not in existing:
+                  open(main_ap, 'w').write(json.dumps({'profiles': {}}, indent=2))
+                  existing.append(main_ap)
+                  print('Created main agent auth-profiles.json')
+              for ap_path in existing:
                   try:
                       ap = json.loads(open(ap_path).read())
                       profiles = ap.setdefault('profiles', {})
