@@ -118,6 +118,12 @@ spec:
                 apt-get clean && rm -rf /var/lib/apt/lists/*
                 echo "Tools installed successfully"
               fi
+              # Always ensure clawhub CLI is installed (idempotent)
+              if [ ! -f /data/tools/bin/clawhub ]; then
+                echo "Installing clawhub CLI..."
+                npm install -g --prefix /data/tools clawhub
+                echo "clawhub installed"
+              fi
               # Always install/update truxonline CA cert (fast, idempotent)
               if [ -f /data/workspace/truxonline-ca.pem ]; then
                 mkdir -p /usr/local/share/ca-certificates
@@ -448,6 +454,8 @@ spec:
               value: discord,github,telegram,@clawdbot/google-gemini-cli-auth
             - name: NODE_PATH
               value: /data/node_modules
+            - name: NPM_CONFIG_PREFIX
+              value: /data/tools
             - name: NODE_EXTRA_CA_CERTS
               value: /data/workspace/truxonline-ca.pem
             - name: REQUESTS_CA_BUNDLE
