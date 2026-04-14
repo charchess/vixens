@@ -150,8 +150,8 @@ spec:
 
               # Part 1: Remove legacy invalid keys + apply mandatory plugin overrides
               p = '/data/openclaw.json'
-              if os.path.exists(p):
-                  d = json.load(open(p))
+              d = json.load(open(p)) if os.path.exists(p) else {}
+              if True:
                   s = d.get('skills', {})
                   l = s.get('load', {}) if isinstance(s, dict) else {}
                   l.pop('paths', None)
@@ -434,6 +434,8 @@ spec:
             - name: OPENCLAW_GATEWAY_BIND
               value: lan
             - name: OPENCLAW_GATEWAY_INSECURE_AUTH
+              value: "true"
+            - name: OPENCLAW_GATEWAY_CONTROL_UI_DANGEROUSLY_ALLOW_HOST_HEADER_ORIGIN_FALLBACK
               value: "true"
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
