@@ -61,7 +61,7 @@ resources:
   # Services (commented)
   # - apps/vaultwarden.yaml
   - apps/openclaw.yaml
-  - apps/sakapuss.yaml
+  # - apps/sakapuss.yaml  # removed from dev — deployed directly to prod
   # - apps/cloudnative-pg-crds.yaml
   # - apps/cloudnative-pg.yaml
   # - apps/redis-shared.yaml

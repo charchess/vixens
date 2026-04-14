@@ -1,0 +1,44 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sakapuss-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Sakapuss
+    gethomepage.dev/icon: mdi-paw
+    gethomepage.dev/group: Services
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: sakapuss.truxonline.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: sakapuss-backend
+                port:
+                  number: 8000
+          - path: /media
+            pathType: Prefix
+            backend:
+              service:
+                name: sakapuss-backend
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sakapuss-frontend
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - sakapuss.truxonline.com
+      secretName: sakapuss-tls

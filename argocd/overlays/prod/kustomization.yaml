@@ -71,6 +71,7 @@ resources:
   - apps/hydrus-client.yaml
   - apps/music-assistant.yaml
   - apps/vaultwarden.yaml
+  - apps/sakapuss.yaml
   - apps/openclaw.yaml
   - apps/cloudnative-pg.yaml
   - apps/redis-shared.yaml
