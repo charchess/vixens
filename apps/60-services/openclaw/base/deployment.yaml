@@ -354,16 +354,20 @@ spec:
               fi
               # Install clawhub — OpenClaw skills registry CLI
               CLAWHUB_VERSION="latest"
-              if [ -f /data/bin/.clawhub-version ] && [ "$(cat /data/bin/.clawhub-version)" = "$CLAWHUB_VERSION" ]; then
+              if [ -f /data/bin/.clawhub-version ] && [ "$(cat /data/bin/.clawhub-version)" = "$CLAWHUB_VERSION" ] && [ -d /data/node_modules/clawhub ]; then
                 echo "clawhub already installed, skipping"
               else
                 echo "Installing clawhub..."
                 npm install -g clawhub
-                mkdir -p /data/bin
-                cp -L /usr/local/bin/clawhub /data/bin/clawhub
+                mkdir -p /data/bin /data/node_modules
+                # Copy the module (not just the wrapper script — it uses relative imports)
+                cp -r /usr/local/lib/node_modules/clawhub /data/node_modules/clawhub
+                # Determine entry point from package.json bin field
+                CLAWHUB_ENTRY=$(node -e "const p=require('/usr/local/lib/node_modules/clawhub/package.json'); const b=p.bin; const v=typeof b==='string'?b:Object.values(b)[0]; console.log(v.replace(/^\.\//,''))" 2>/dev/null || echo "dist/cli.js")
+                printf '#!/usr/bin/env node\nimport("/data/node_modules/clawhub/%s");\n' "$CLAWHUB_ENTRY" > /data/bin/clawhub
                 chmod +x /data/bin/clawhub
                 echo "$CLAWHUB_VERSION" > /data/bin/.clawhub-version
-                echo "clawhub installed successfully"
+                echo "clawhub installed successfully (entry: $CLAWHUB_ENTRY)"
               fi
               # Always fix permissions
               chown -R 1000:1000 /data/node_modules /data/gemini-cli /data/claude-cli /data/bin "$MEMPALACE_PACKAGES" 2>/dev/null || true
