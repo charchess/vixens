@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sakapuss-data
+  labels:
+    app: sakapuss
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: synelia-iscsi-delete
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sakapuss-media
+  labels:
+    app: sakapuss
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: synelia-iscsi-delete
+  resources:
+    requests:
+      storage: 5Gi

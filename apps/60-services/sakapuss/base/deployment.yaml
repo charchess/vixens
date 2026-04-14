@@ -1,0 +1,128 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sakapuss-backend
+  labels:
+    app: sakapuss
+    component: backend
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: sakapuss
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: sakapuss
+        component: backend
+        vixens.io/sizing.sakapuss-backend: V-nano
+        vixens.io/backup-profile: important
+      annotations:
+        reloader.stakater.com/auto: "true"
+    spec:
+      priorityClassName: vixens-medium
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: backend
+          image: ghcr.io/charchess/sakapuss-backend:latest
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: SAKAPUSS_DB_PATH
+              value: /data/sakapuss.db
+            - name: SAKAPUSS_MEDIA_PATH
+              value: /media
+          envFrom:
+            - secretRef:
+                name: sakapuss-secrets
+                optional: true
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: media
+              mountPath: /media
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: sakapuss-data
+        - name: media
+          persistentVolumeClaim:
+            claimName: sakapuss-media
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sakapuss-frontend
+  labels:
+    app: sakapuss
+    component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sakapuss
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: sakapuss
+        component: frontend
+        vixens.io/sizing.sakapuss-frontend: V-nano
+    spec:
+      priorityClassName: vixens-medium
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: frontend
+          image: ghcr.io/charchess/sakapuss-frontend:latest
+          ports:
+            - containerPort: 80
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
