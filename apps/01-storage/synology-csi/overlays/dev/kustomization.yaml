@@ -10,6 +10,17 @@ namespace: synology-csi
 components:
   - ../../../../_shared/components/dev-hibernate
 patches:
+  # CSI controller must run to provision PVCs — override dev-hibernate for infrastructure
+  - patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: synology-csi-controller
+      spec:
+        replicas: 1
+    target:
+      kind: StatefulSet
+      name: synology-csi-controller
   - patch: |-
       - op: replace
         path: /parameters/igroup
