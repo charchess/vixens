@@ -180,6 +180,12 @@ spec:
                   for model in ollama.get('models', []):
                       if 'gemma' in model.get('id', '').lower():
                           model.setdefault('compat', {})['supportsTools'] = False
+                  # Fix gateway.controlUi for 2026.4.14+ (requires allowedOrigins or fallback)
+                  gateway_cfg = d.setdefault('gateway', {})
+                  control_ui = gateway_cfg.setdefault('controlUi', {})
+                  if not control_ui.get('allowedOrigins') and not control_ui.get('dangerouslyAllowHostHeaderOriginFallback'):
+                      control_ui['dangerouslyAllowHostHeaderOriginFallback'] = True
+                      print('gateway.controlUi fallback enabled')
                   json.dump(d, open(p, 'w'))
                   print('Config keys checked')
 
