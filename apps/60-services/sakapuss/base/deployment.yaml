@@ -23,6 +23,7 @@ spec:
         vixens.io/backup-profile: important
       annotations:
         reloader.stakater.com/auto: "true"
+        vixens.io/fast-start: "true"
     spec:
       priorityClassName: vixens-medium
       tolerations:
