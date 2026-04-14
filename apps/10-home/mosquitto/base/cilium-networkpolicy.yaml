@@ -11,6 +11,8 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: homeassistant
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
       toPorts:
         - ports:
             - port: "1883"
