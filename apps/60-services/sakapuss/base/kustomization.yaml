@@ -6,3 +6,9 @@ resources:
   - deployment.yaml
   - service.yaml
   - pvc.yaml
+  - nginx-config.yaml
+patches:
+  - path: patch-frontend-nginx.yaml
+    target:
+      kind: Deployment
+      name: sakapuss-frontend
