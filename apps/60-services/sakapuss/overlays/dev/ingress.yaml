@@ -19,20 +19,6 @@ spec:
     - host: sakapuss.dev.truxonline.com
       http:
         paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: sakapuss-backend
-                port:
-                  number: 8000
-          - path: /media
-            pathType: Prefix
-            backend:
-              service:
-                name: sakapuss-backend
-                port:
-                  number: 8000
           - path: /
             pathType: Prefix
             backend:
