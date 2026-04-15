@@ -96,6 +96,8 @@ spec:
         app: sakapuss
         component: frontend
         vixens.io/sizing.sakapuss-frontend: V-nano
+      annotations:
+        vixens.io/explicitly-allow-root: "true"
     spec:
       priorityClassName: vixens-medium
       tolerations:
