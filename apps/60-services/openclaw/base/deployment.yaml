@@ -140,7 +140,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-        # 2/3 — Fix config keys + write Gemini credentials
+        # 2/3 — Write Gemini credentials + inject API keys into auth-profiles
+        #        SCOPE: secrets only — never touches openclaw.json structure (user-managed via UI)
         - name: setup-config
           image: python:3.14-alpine
           securityContext:
@@ -154,95 +155,7 @@ spec:
               python3 << 'PYEOF'
               import json, base64, os, pathlib
 
-              # Part 1: Remove legacy invalid keys + apply mandatory plugin overrides
-              p = '/data/openclaw.json'
-              d = json.load(open(p)) if os.path.exists(p) else {}
-              if True:
-                  s = d.get('skills', {})
-                  l = s.get('load', {}) if isinstance(s, dict) else {}
-                  l.pop('paths', None)
-                  s.pop('load', None) if isinstance(s, dict) and not l else None
-                  d.pop('skills', None) if isinstance(s, dict) and not s else None
-                  # Always force-disable claw-hass (crashes without HASS config)
-                  d.setdefault('plugins', {}).setdefault('entries', {})['claw-hass'] = {'enabled': False}
-                  # Enable kilocode plugin (kilo.ai gateway — MiniMax, etc.)
-                  d['plugins']['entries']['kilocode'] = {'enabled': True}
-                  # Ensure google-gemini-cli provider has gemini-3-flash-preview
-                  # NOTE: only inject if the provider already exists (openclaw manages baseUrl internally)
-                  # Creating it from scratch leaves baseUrl=undefined which fails validation
-                  models_cfg = d.setdefault('models', {})
-                  models_cfg.setdefault('mode', 'merge')
-                  providers_cfg = models_cfg.setdefault('providers', {})
-                  gcli = providers_cfg.get('google-gemini-cli')
-                  if gcli is not None:
-                      gcli_models = gcli.setdefault('models', [])
-                      if not any(m.get('id') == 'gemini-3-flash-preview' for m in gcli_models):
-                          gcli_models.append({
-                              'id': 'gemini-3-flash-preview',
-                              'name': 'Gemini 3 Flash',
-                              'reasoning': False,
-                              'input': ['text', 'image'],
-                              'contextWindow': 1048576,
-                              'maxTokens': 65536,
-                          })
-                          print('Gemini 3 Flash added to google-gemini-cli provider')
-                  else:
-                      print('google-gemini-cli provider not yet configured by user, skipping Gemini 3 Flash injection')
-                  # Inject mempalace MCP server if not already configured
-                  mcp = d.setdefault('mcp', {})
-                  servers = mcp.setdefault('servers', {})
-                  if 'mempalace' not in servers:
-                      servers['mempalace'] = {
-                          'type': 'stdio',
-                          'command': 'python3',
-                          'args': ['-m', 'mempalace.mcp_server'],
-                          'env': {
-                              'PYTHONPATH': '/data/tools/mempalace-packages',
-                              'MEMPALACE_PALACE_PATH': '/data/.mempalace',
-                          },
-                      }
-                      print('mempalace MCP server injected')
-                  # Fix Gemma compat: mark as not supporting tools so openclaw skips tool injection
-                  # (mempalace MCP adds tools to every request; Gemma rejects tool-bearing requests)
-                  # IMPORTANT: only touch ollama/gemma — never touch moonshot/kimi or other providers
-                  providers_ref = d.get('models', {}).get('providers', {})
-                  ollama = providers_ref.get('ollama-local', {})
-                  for model in ollama.get('models', []):
-                      if 'gemma' in model.get('id', '').lower():
-                          model.setdefault('compat', {})['supportsTools'] = False
-                  # Safety: ensure kimi-k2.5 supportsTools is NOT disabled (we broke this before)
-                  moonshot = providers_ref.get('moonshot', {})
-                  for model in moonshot.get('models', []):
-                      compat = model.get('compat', {})
-                      if 'supportsTools' in compat and not compat['supportsTools']:
-                          del compat['supportsTools']
-                          if not compat:
-                              model.pop('compat', None)
-                          print(f'Restored supportsTools on {model["id"]}')
-                  # Fix gateway.controlUi for 2026.4.14+ (requires allowedOrigins or fallback)
-                  gateway_cfg = d.setdefault('gateway', {})
-                  control_ui = gateway_cfg.setdefault('controlUi', {})
-                  if not control_ui.get('allowedOrigins') and not control_ui.get('dangerouslyAllowHostHeaderOriginFallback'):
-                      control_ui['dangerouslyAllowHostHeaderOriginFallback'] = True
-                      print('gateway.controlUi fallback enabled')
-                  gateway_cfg.pop('agentModel', None)
-                  # Configure default model (cerebras) + fallbacks if not set
-                  agent_defaults = d.setdefault('agents', {}).setdefault('defaults', {})
-                  if not agent_defaults.get('model', {}).get('primary'):
-                      agent_defaults['model'] = {
-                          'primary': 'cerebras/qwen-3-235b-a22b-instruct-2507',
-                          'fallbacks': ['cerebras/gpt-oss-120b', 'cerebras/llama3.1-8b'],
-                      }
-                      agent_defaults.setdefault('models', {}).update({
-                          'cerebras/qwen-3-235b-a22b-instruct-2507': {},
-                          'cerebras/gpt-oss-120b': {},
-                          'cerebras/llama3.1-8b': {},
-                      })
-                      print('Default model set: cerebras/qwen-3-235b-a22b-instruct-2507')
-                  json.dump(d, open(p, 'w'))
-                  print('Config keys checked')
-
-              # Part 2: Write Gemini credentials from secrets + refresh OAuth token
+              # Part 1: Write Gemini credentials from secrets + refresh OAuth token
               import urllib.request, urllib.parse, time, glob
 
               gemini_dir = pathlib.Path('/data/.gemini')
@@ -257,7 +170,7 @@ spec:
                   if val:
                       (gemini_dir / filename).write_bytes(base64.b64decode(val))
 
-              # Part 3: Refresh OAuth access token (expires every 1h)
+              # Part 2: Refresh OAuth access token (expires every 1h)
               client_id = os.environ.get('GEMINI_CLI_OAUTH_CLIENT_ID', '')
               client_secret = os.environ.get('GEMINI_CLI_OAUTH_CLIENT_SECRET', '')
               creds_path = gemini_dir / 'oauth_creds.json'
@@ -298,7 +211,7 @@ spec:
                                   print(f'Warning: could not update {p}: {e}')
                   except Exception as e:
                       print(f'Warning: OAuth refresh failed: {e}')
-              # Part 4: Inject provider API keys into all agent auth-profiles.json
+              # Part 3: Inject provider API keys into all agent auth-profiles.json
               # Also proactively create main agent dir so auth is available on first boot
               cerebras_key = os.environ.get('CEREBRAS_API_KEY', '')
               kilo_key = os.environ.get('KILOCODE_API_KEY', '')
