@@ -168,20 +168,26 @@ spec:
                   # Enable kilocode plugin (kilo.ai gateway — MiniMax, etc.)
                   d['plugins']['entries']['kilocode'] = {'enabled': True}
                   # Ensure google-gemini-cli provider has gemini-3-flash-preview
+                  # NOTE: only inject if the provider already exists (openclaw manages baseUrl internally)
+                  # Creating it from scratch leaves baseUrl=undefined which fails validation
                   models_cfg = d.setdefault('models', {})
                   models_cfg.setdefault('mode', 'merge')
-                  gcli = models_cfg.setdefault('providers', {}).setdefault('google-gemini-cli', {})
-                  gcli_models = gcli.setdefault('models', [])
-                  if not any(m.get('id') == 'gemini-3-flash-preview' for m in gcli_models):
-                      gcli_models.append({
-                          'id': 'gemini-3-flash-preview',
-                          'name': 'Gemini 3 Flash',
-                          'reasoning': False,
-                          'input': ['text', 'image'],
-                          'contextWindow': 1048576,
-                          'maxTokens': 65536,
-                      })
-                      print('Gemini 3 Flash added to google-gemini-cli provider')
+                  providers_cfg = models_cfg.setdefault('providers', {})
+                  gcli = providers_cfg.get('google-gemini-cli')
+                  if gcli is not None:
+                      gcli_models = gcli.setdefault('models', [])
+                      if not any(m.get('id') == 'gemini-3-flash-preview' for m in gcli_models):
+                          gcli_models.append({
+                              'id': 'gemini-3-flash-preview',
+                              'name': 'Gemini 3 Flash',
+                              'reasoning': False,
+                              'input': ['text', 'image'],
+                              'contextWindow': 1048576,
+                              'maxTokens': 65536,
+                          })
+                          print('Gemini 3 Flash added to google-gemini-cli provider')
+                  else:
+                      print('google-gemini-cli provider not yet configured by user, skipping Gemini 3 Flash injection')
                   # Inject mempalace MCP server if not already configured
                   mcp = d.setdefault('mcp', {})
                   servers = mcp.setdefault('servers', {})
@@ -198,11 +204,21 @@ spec:
                       print('mempalace MCP server injected')
                   # Fix Gemma compat: mark as not supporting tools so openclaw skips tool injection
                   # (mempalace MCP adds tools to every request; Gemma rejects tool-bearing requests)
-                  providers = d.get('models', {}).get('providers', {})
-                  ollama = providers.get('ollama-local', {})
+                  # IMPORTANT: only touch ollama/gemma — never touch moonshot/kimi or other providers
+                  providers_ref = d.get('models', {}).get('providers', {})
+                  ollama = providers_ref.get('ollama-local', {})
                   for model in ollama.get('models', []):
                       if 'gemma' in model.get('id', '').lower():
                           model.setdefault('compat', {})['supportsTools'] = False
+                  # Safety: ensure kimi-k2.5 supportsTools is NOT disabled (we broke this before)
+                  moonshot = providers_ref.get('moonshot', {})
+                  for model in moonshot.get('models', []):
+                      compat = model.get('compat', {})
+                      if 'supportsTools' in compat and not compat['supportsTools']:
+                          del compat['supportsTools']
+                          if not compat:
+                              model.pop('compat', None)
+                          print(f'Restored supportsTools on {model["id"]}')
                   # Fix gateway.controlUi for 2026.4.14+ (requires allowedOrigins or fallback)
                   gateway_cfg = d.setdefault('gateway', {})
                   control_ui = gateway_cfg.setdefault('controlUi', {})
