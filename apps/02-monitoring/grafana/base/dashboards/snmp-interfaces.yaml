@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-snmp-interfaces
+  labels:
+    grafana_dashboard: "1"
+immutable: true
+data:
+  snmp-interfaces.json: '{} # Placeholder — importer le dashboard depuis https://grafana.com/grafana/dashboards/11169'

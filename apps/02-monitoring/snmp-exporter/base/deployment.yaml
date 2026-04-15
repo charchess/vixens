@@ -1,0 +1,85 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: snmp-exporter
+  namespace: monitoring
+  labels:
+    app: snmp-exporter
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: snmp-exporter
+  template:
+    metadata:
+      labels:
+        app: snmp-exporter
+        vixens.io/sizing.snmp-exporter: V-nano
+      annotations:
+        vixens.io/fast-start: "true"
+        vixens.io/nometrics: "true"
+    spec:
+      priorityClassName: vixens-low
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      initContainers:
+        - name: render-config
+          image: alpine:3.21
+          command: [sh, -c]
+          args:
+            - |
+              apk add --no-cache gettext -q
+              envsubst < /tmpl/snmp.yml.tmpl > /config/snmp.yml
+              echo "snmp.yml rendered (community length: ${#SNMP_COMMUNITY})"
+          env:
+            - name: SNMP_COMMUNITY
+              valueFrom:
+                secretKeyRef:
+                  name: snmp-exporter-secrets
+                  key: SNMP_COMMUNITY
+          volumeMounts:
+            - name: config-template
+              mountPath: /tmpl
+            - name: config
+              mountPath: /config
+      containers:
+        - name: snmp-exporter
+          image: prom/snmp-exporter:v0.27.0
+          args:
+            - --config.file=/etc/snmp_exporter/snmp.yml
+          ports:
+            - containerPort: 9116
+              name: http
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: config
+              mountPath: /etc/snmp_exporter
+              readOnly: true
+      volumes:
+        - name: config-template
+          configMap:
+            name: snmp-exporter-config-template
+        - name: config
+          emptyDir: {}

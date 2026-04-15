@@ -1,0 +1,20 @@
+---
+# Patch VMScrapeConfig with actual network device IPs
+# Add one entry per device (switch, router, NAS, AP, etc.)
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMScrapeConfig
+metadata:
+  name: snmp-network-interfaces
+  namespace: monitoring
+spec:
+  staticConfigs:
+    - targets:
+        # Exemples — remplacer par vos IPs réelles :
+        # - 192.168.111.1    # router/firewall
+        # - 192.168.111.2    # core switch
+        # - 192.168.111.69   # Synology NAS (si SNMP activé)
+        # - 192.168.111.64   # grenat
+        - 127.0.0.1  # placeholder — retirer et ajouter vos IPs
+      labels:
+        job: snmp-network
+        site: prod

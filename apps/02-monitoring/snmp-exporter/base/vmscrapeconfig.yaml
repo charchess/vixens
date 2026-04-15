@@ -1,0 +1,37 @@
+---
+# VMScrapeConfig — SNMP multi-target pattern
+# Each target is a network device IP; the exporter acts as a proxy.
+# Targets are overridden in overlays/prod/targets-patch.yaml.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMScrapeConfig
+metadata:
+  name: snmp-network-interfaces
+  namespace: monitoring
+spec:
+  scrapeInterval: 60s
+  metricsPath: /snmp
+  params:
+    module: [if_mib]
+    auth: [default]
+  staticConfigs:
+    - targets:
+        # → Add your network device IPs in overlays/prod/targets-patch.yaml
+        - 127.0.0.1  # placeholder — never scraped (loopback)
+      labels:
+        job: snmp-network
+  relabelConfigs:
+    # Route all requests through the snmp-exporter pod
+    - sourceLabels: [__address__]
+      targetLabel: __param_target
+    - sourceLabels: [__param_target]
+      targetLabel: instance
+    - targetLabel: __address__
+      replacement: snmp-exporter.monitoring.svc.cluster.local:9116
+  # Drop ifIndex label (numeric, not human-readable — ifName/ifAlias are enough)
+  metricRelabelConfigs:
+    - action: labeldrop
+      regex: ifIndex
+    # Drop metrics for administratively-down interfaces (reduce cardinality)
+    - sourceLabels: [ifAdminStatus]
+      regex: "2"
+      action: drop
