@@ -165,6 +165,23 @@ spec:
                   d.pop('skills', None) if isinstance(s, dict) and not s else None
                   # Always force-disable claw-hass (crashes without HASS config)
                   d.setdefault('plugins', {}).setdefault('entries', {})['claw-hass'] = {'enabled': False}
+                  # Enable kilocode plugin (kilo.ai gateway — MiniMax, etc.)
+                  d['plugins']['entries']['kilocode'] = {'enabled': True}
+                  # Ensure google-gemini-cli provider has gemini-3-flash-preview
+                  models_cfg = d.setdefault('models', {})
+                  models_cfg.setdefault('mode', 'merge')
+                  gcli = models_cfg.setdefault('providers', {}).setdefault('google-gemini-cli', {})
+                  gcli_models = gcli.setdefault('models', [])
+                  if not any(m.get('id') == 'gemini-3-flash-preview' for m in gcli_models):
+                      gcli_models.append({
+                          'id': 'gemini-3-flash-preview',
+                          'name': 'Gemini 3 Flash',
+                          'reasoning': False,
+                          'input': ['text', 'image'],
+                          'contextWindow': 1048576,
+                          'maxTokens': 65536,
+                      })
+                      print('Gemini 3 Flash added to google-gemini-cli provider')
                   # Inject mempalace MCP server if not already configured
                   mcp = d.setdefault('mcp', {})
                   servers = mcp.setdefault('servers', {})
@@ -268,6 +285,7 @@ spec:
               # Part 4: Inject provider API keys into all agent auth-profiles.json
               # Also proactively create main agent dir so auth is available on first boot
               cerebras_key = os.environ.get('CEREBRAS_API_KEY', '')
+              kilo_key = os.environ.get('KILOCODE_API_KEY', '')
               main_agent_dir = pathlib.Path('/data/.openclaw/agents/main/agent')
               main_agent_dir.mkdir(parents=True, exist_ok=True)
               main_ap = str(main_agent_dir / 'auth-profiles.json')
@@ -293,11 +311,20 @@ spec:
                           'provider': 'ollama-local',
                           'key': 'none',
                       }
+                      # Kilo.ai gateway
+                      if kilo_key:
+                          profiles['kilocode:default'] = {
+                              'type': 'api_key',
+                              'provider': 'kilocode',
+                              'key': kilo_key,
+                          }
                       open(ap_path, 'w').write(json.dumps(ap, indent=2))
                   except Exception as e:
                       print(f'Warning: could not update {ap_path}: {e}')
               if cerebras_key:
                   print('Cerebras API key injected into auth profiles')
+              if kilo_key:
+                  print('Kilo.ai API key injected into auth profiles')
               print('Ollama-local auth entry injected into auth profiles')
               print('Setup complete')
               PYEOF
