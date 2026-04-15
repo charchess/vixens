@@ -5,6 +5,8 @@ metadata:
   name: sakapuss-data
   labels:
     app: sakapuss
+  annotations:
+    argocd.argoproj.io/sync-options: SkipHealthCheck=true
 spec:
   accessModes:
     - ReadWriteOnce
@@ -19,6 +21,8 @@ metadata:
   name: sakapuss-media
   labels:
     app: sakapuss
+  annotations:
+    argocd.argoproj.io/sync-options: SkipHealthCheck=true
 spec:
   accessModes:
     - ReadWriteOnce
