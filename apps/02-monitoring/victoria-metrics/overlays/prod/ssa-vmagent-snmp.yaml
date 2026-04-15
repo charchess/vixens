@@ -1,0 +1,12 @@
+---
+# Server-side apply patch — wire SNMP additional scrape config to VMAgent
+# Targets are stored in Infisical (/snmp-exporter/SNMP_SCRAPE_CONFIG), never in Git
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMAgent
+metadata:
+  name: vm-stack
+  namespace: monitoring
+spec:
+  additionalScrapeConfigs:
+    key: SNMP_SCRAPE_CONFIG
+    name: snmp-exporter-secrets

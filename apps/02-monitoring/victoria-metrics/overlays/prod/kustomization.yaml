@@ -9,6 +9,7 @@ labels:
 resources:
   - ../../base
   - ssa-vmagent.yaml
+  - ssa-vmagent-snmp.yaml
   - ssa-vmalert.yaml
   - ssa-vmsingle.yaml
   - ssa-vmalertmanager.yaml

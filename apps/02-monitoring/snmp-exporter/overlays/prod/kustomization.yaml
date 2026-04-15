@@ -6,5 +6,3 @@ resources:
   - ../../base
 components:
   - ../../../../_shared/components/sync-wave/wave-8
-patches:
-  - path: targets-patch.yaml
