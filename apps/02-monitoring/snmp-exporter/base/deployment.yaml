@@ -1,0 +1,94 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: snmp-exporter
+  annotations:
+    argocd.argoproj.io/sync-wave: "8"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9116"
+    prometheus.io/path: "/metrics"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: snmp-exporter
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: snmp-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9116"
+        prometheus.io/path: "/metrics"
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      initContainers:
+        - name: init-config
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - 'sed "s|\${SNMP_COMMUNITY}|${SNMP_COMMUNITY}|g" /config-tpl/snmp.yml > /config-out/snmp.yml && echo "Config generated successfully"'
+          env:
+            - name: SNMP_COMMUNITY
+              valueFrom:
+                secretKeyRef:
+                  name: snmp-exporter-secrets
+                  key: SNMP_COMMUNITY
+          volumeMounts:
+            - name: config-tpl
+              mountPath: /config-tpl
+            - name: config-out
+              mountPath: /config-out
+          resources:
+            requests:
+              cpu: 5m
+              memory: 8Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
+      containers:
+        - name: snmp-exporter
+          image: prom/snmp-exporter:v0.26.0
+          args:
+            - --config.file=/config/snmp.yml
+            - --log.level=info
+          ports:
+            - name: http
+              containerPort: 9116
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: config-out
+              mountPath: /config
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+      volumes:
+        - name: config-tpl
+          configMap:
+            name: snmp-exporter-config
+        - name: config-out
+          emptyDir: {}

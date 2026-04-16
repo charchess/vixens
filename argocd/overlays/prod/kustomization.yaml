@@ -86,6 +86,7 @@ resources:
   - apps/loki.yaml
   - apps/fluent-bit.yaml
   - apps/fluent-bit-syslog.yaml
+  - apps/snmp-exporter.yaml
   # - apps/promtail.yaml  # replaced by fluent-bit (issue #2354)
   - apps/renovate.yaml
   - apps/stirling-pdf.yaml

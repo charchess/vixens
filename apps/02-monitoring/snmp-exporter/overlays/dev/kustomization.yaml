@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: monitoring
+resources:
+  - ../../base
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 0
+    target:
+      kind: Deployment
+      name: snmp-exporter
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/environment
+        value: dev
+    target:
+      kind: Deployment
+      name: snmp-exporter

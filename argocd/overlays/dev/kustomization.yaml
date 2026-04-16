@@ -79,6 +79,7 @@ resources:
   # - apps/firefly-iii.yaml
   - apps/mealie.yaml
   - apps/victoria-metrics.yaml
+  - apps/snmp-exporter.yaml
   # - apps/nocodb.yaml
   # - apps/vikunja.yaml
   # - apps/mariadb-shared.yaml
