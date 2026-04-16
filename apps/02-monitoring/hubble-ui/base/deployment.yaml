@@ -20,8 +20,8 @@ spec:
       labels:
         k8s-app: hubble-ui
         vixens.io/sizing-v2: "true"
-        vixens.io/sizing.hubble-ui-frontend: V-nano
-        vixens.io/sizing.hubble-ui-backend: V-nano
+        vixens.io/sizing.frontend: V-nano
+        vixens.io/sizing.backend: V-nano
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
