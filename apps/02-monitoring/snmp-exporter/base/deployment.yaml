@@ -56,7 +56,7 @@ spec:
             - name: config-out
               mountPath: /config-out
         - name: init-vmscrape
-          image: alpine/k8s:1.32.3
+          image: bitnami/kubectl:1.32
           command:
             - sh
             - -c
@@ -69,7 +69,7 @@ spec:
                 -e "s|\${SNMP_TARGET_AP_CUISINE}|${SNMP_TARGET_AP_CUISINE}|g" \
                 -e "s|\${SNMP_TARGET_AP_SALON}|${SNMP_TARGET_AP_SALON}|g" \
                 -e "s|\${SNMP_TARGET_AP_ATELIER}|${SNMP_TARGET_AP_ATELIER}|g" \
-                /tpl/vmscrape.yaml | kubectl apply -f - && echo "VMStaticScrape applied"
+                /tpl/vmscrape.yaml | kubectl apply --timeout=30s -f - && echo "VMStaticScrape applied"
           env:
             - name: SNMP_TARGET_UDM
               valueFrom:
