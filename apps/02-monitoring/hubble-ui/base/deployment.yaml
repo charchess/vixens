@@ -10,6 +10,8 @@ metadata:
 spec:
   replicas: 1
   revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       k8s-app: hubble-ui
@@ -21,6 +23,7 @@ spec:
         vixens.io/sizing.hubble-ui-frontend: V-nano
         vixens.io/sizing.hubble-ui-backend: V-nano
       annotations:
+        vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
         vixens.io/backup-profile: ephemeral
     spec:
