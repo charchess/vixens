@@ -14,4 +14,4 @@ spec:
                   - key: kubernetes.io/hostname
                     operator: In
                     values:
-                      - pearl
+                      - peach
