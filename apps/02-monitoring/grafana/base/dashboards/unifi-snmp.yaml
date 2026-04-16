@@ -214,7 +214,7 @@ data:
             },
             "overrides": [
               {
-                "matcher": { "id": "byNamePattern", "options": ".*out.*" },
+                "matcher": { "id": "byRegexp", "options": ".*out.*" },
                 "properties": [
                   { "id": "custom.transform", "value": "negative-Y" }
                 ]
@@ -257,7 +257,7 @@ data:
             },
             "overrides": [
               {
-                "matcher": { "id": "byNamePattern", "options": ".*out.*" },
+                "matcher": { "id": "byRegexp", "options": ".*out.*" },
                 "properties": [
                   { "id": "custom.transform", "value": "negative-Y" }
                 ]
