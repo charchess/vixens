@@ -25,3 +25,10 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=false
+  ignoreDifferences:
+    - group: operator.victoriametrics.com
+      kind: VMStaticScrape
+      name: snmp-unifi
+      namespace: monitoring
+      jsonPointers:
+        - /spec/targetEndpoints

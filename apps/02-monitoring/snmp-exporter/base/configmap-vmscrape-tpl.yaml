@@ -1,0 +1,98 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: snmp-exporter-vmscrape-tpl
+data:
+  vmscrape.yaml: |
+    ---
+    apiVersion: operator.victoriametrics.com/v1beta1
+    kind: VMStaticScrape
+    metadata:
+      name: snmp-unifi
+      namespace: monitoring
+    spec:
+      jobName: snmp-unifi
+      targetEndpoints:
+        - targets:
+            - ${SNMP_TARGET_UDM}
+          labels:
+            device_type: udm
+            device_name: udm-pro-se
+          scrapeTimeout: 30s
+          interval: 60s
+          path: /snmp
+          params:
+            module: [if_mib]
+            auth: [unifi_v2c]
+          relabelConfigs:
+            - sourceLabels: [__address__]
+              targetLabel: __param_target
+            - sourceLabels: [__param_target]
+              targetLabel: instance
+            - targetLabel: __address__
+              replacement: snmp-exporter.monitoring.svc.cluster.local:9116
+
+        - targets:
+            - ${SNMP_TARGET_SW_BAIE}
+            - ${SNMP_TARGET_SW_ATELIER}
+          labels:
+            device_type: switch
+          scrapeTimeout: 30s
+          interval: 60s
+          path: /snmp
+          params:
+            module: [if_mib]
+            auth: [unifi_v2c]
+          relabelConfigs:
+            - sourceLabels: [__address__]
+              targetLabel: __param_target
+            - sourceLabels: [__param_target]
+              targetLabel: instance
+            - targetLabel: __address__
+              replacement: snmp-exporter.monitoring.svc.cluster.local:9116
+            - sourceLabels: [instance]
+              regex: ${SNMP_TARGET_SW_BAIE}
+              targetLabel: device_name
+              replacement: switch-baie
+            - sourceLabels: [instance]
+              regex: ${SNMP_TARGET_SW_ATELIER}
+              targetLabel: device_name
+              replacement: switch-atelier
+
+        - targets:
+            - ${SNMP_TARGET_AP_COULOIR}
+            - ${SNMP_TARGET_AP_CUISINE}
+            - ${SNMP_TARGET_AP_SALON}
+            - ${SNMP_TARGET_AP_ATELIER}
+          labels:
+            device_type: ap
+          scrapeTimeout: 30s
+          interval: 60s
+          path: /snmp
+          params:
+            module: [if_mib]
+            auth: [unifi_v2c]
+          relabelConfigs:
+            - sourceLabels: [__address__]
+              targetLabel: __param_target
+            - sourceLabels: [__param_target]
+              targetLabel: instance
+            - targetLabel: __address__
+              replacement: snmp-exporter.monitoring.svc.cluster.local:9116
+            - sourceLabels: [instance]
+              regex: ${SNMP_TARGET_AP_COULOIR}
+              targetLabel: device_name
+              replacement: ap-couloir
+            - sourceLabels: [instance]
+              regex: ${SNMP_TARGET_AP_CUISINE}
+              targetLabel: device_name
+              replacement: ap-cuisine
+            - sourceLabels: [instance]
+              regex: ${SNMP_TARGET_AP_SALON}
+              targetLabel: device_name
+              replacement: ap-salon
+            - sourceLabels: [instance]
+              regex: ${SNMP_TARGET_AP_ATELIER}
+              targetLabel: device_name
+              replacement: ap-atelier
