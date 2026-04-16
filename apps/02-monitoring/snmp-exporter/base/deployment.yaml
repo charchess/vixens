@@ -56,20 +56,71 @@ spec:
             - name: config-out
               mountPath: /config-out
         - name: init-vmscrape
-          image: bitnami/kubectl:1.32
+          image: curlimages/curl:8.12.1
           command:
             - sh
             - -c
             - |
-              sed \
-                -e "s|\${SNMP_TARGET_UDM}|${SNMP_TARGET_UDM}|g" \
-                -e "s|\${SNMP_TARGET_SW_BAIE}|${SNMP_TARGET_SW_BAIE}|g" \
-                -e "s|\${SNMP_TARGET_SW_ATELIER}|${SNMP_TARGET_SW_ATELIER}|g" \
-                -e "s|\${SNMP_TARGET_AP_COULOIR}|${SNMP_TARGET_AP_COULOIR}|g" \
-                -e "s|\${SNMP_TARGET_AP_CUISINE}|${SNMP_TARGET_AP_CUISINE}|g" \
-                -e "s|\${SNMP_TARGET_AP_SALON}|${SNMP_TARGET_AP_SALON}|g" \
-                -e "s|\${SNMP_TARGET_AP_ATELIER}|${SNMP_TARGET_AP_ATELIER}|g" \
-                /tpl/vmscrape.yaml | kubectl apply --timeout=30s -f - && echo "VMStaticScrape applied"
+              TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+              NS=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+              APISERVER="https://kubernetes.default.svc"
+              PAYLOAD=$(printf '{
+                "spec": {
+                  "jobName": "snmp-unifi",
+                  "targetEndpoints": [
+                    {
+                      "targets": ["%s"],
+                      "labels": {"device_type": "udm", "device_name": "udm-pro-se"},
+                      "scrapeTimeout": "30s", "interval": "60s", "path": "/snmp",
+                      "params": {"module": ["if_mib"], "auth": ["unifi_v2c"]},
+                      "relabelConfigs": [
+                        {"sourceLabels": ["__address__"], "targetLabel": "__param_target"},
+                        {"sourceLabels": ["__param_target"], "targetLabel": "instance"},
+                        {"targetLabel": "__address__", "replacement": "snmp-exporter.monitoring.svc.cluster.local:9116"}
+                      ]
+                    },
+                    {
+                      "targets": ["%s", "%s"],
+                      "labels": {"device_type": "switch"},
+                      "scrapeTimeout": "30s", "interval": "60s", "path": "/snmp",
+                      "params": {"module": ["if_mib"], "auth": ["unifi_v2c"]},
+                      "relabelConfigs": [
+                        {"sourceLabels": ["__address__"], "targetLabel": "__param_target"},
+                        {"sourceLabels": ["__param_target"], "targetLabel": "instance"},
+                        {"targetLabel": "__address__", "replacement": "snmp-exporter.monitoring.svc.cluster.local:9116"},
+                        {"sourceLabels": ["instance"], "regex": "%s", "targetLabel": "device_name", "replacement": "switch-baie"},
+                        {"sourceLabels": ["instance"], "regex": "%s", "targetLabel": "device_name", "replacement": "switch-atelier"}
+                      ]
+                    },
+                    {
+                      "targets": ["%s", "%s", "%s", "%s"],
+                      "labels": {"device_type": "ap"},
+                      "scrapeTimeout": "30s", "interval": "60s", "path": "/snmp",
+                      "params": {"module": ["if_mib"], "auth": ["unifi_v2c"]},
+                      "relabelConfigs": [
+                        {"sourceLabels": ["__address__"], "targetLabel": "__param_target"},
+                        {"sourceLabels": ["__param_target"], "targetLabel": "instance"},
+                        {"targetLabel": "__address__", "replacement": "snmp-exporter.monitoring.svc.cluster.local:9116"},
+                        {"sourceLabels": ["instance"], "regex": "%s", "targetLabel": "device_name", "replacement": "ap-couloir"},
+                        {"sourceLabels": ["instance"], "regex": "%s", "targetLabel": "device_name", "replacement": "ap-cuisine"},
+                        {"sourceLabels": ["instance"], "regex": "%s", "targetLabel": "device_name", "replacement": "ap-salon"},
+                        {"sourceLabels": ["instance"], "regex": "%s", "targetLabel": "device_name", "replacement": "ap-atelier"}
+                      ]
+                    }
+                  ]
+                }
+              }' \
+                "${SNMP_TARGET_UDM}" \
+                "${SNMP_TARGET_SW_BAIE}" "${SNMP_TARGET_SW_ATELIER}" \
+                "${SNMP_TARGET_SW_BAIE}" "${SNMP_TARGET_SW_ATELIER}" \
+                "${SNMP_TARGET_AP_COULOIR}" "${SNMP_TARGET_AP_CUISINE}" "${SNMP_TARGET_AP_SALON}" "${SNMP_TARGET_AP_ATELIER}" \
+                "${SNMP_TARGET_AP_COULOIR}" "${SNMP_TARGET_AP_CUISINE}" "${SNMP_TARGET_AP_SALON}" "${SNMP_TARGET_AP_ATELIER}")
+              curl -sf -X PATCH \
+                -H "Authorization: Bearer ${TOKEN}" \
+                -H "Content-Type: application/merge-patch+json" \
+                --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt \
+                "${APISERVER}/apis/operator.victoriametrics.com/v1beta1/namespaces/${NS}/vmstaticscrapes/snmp-unifi" \
+                -d "${PAYLOAD}" -o /dev/null && echo "VMStaticScrape patched"
           env:
             - name: SNMP_TARGET_UDM
               valueFrom:
@@ -106,9 +157,6 @@ spec:
                 secretKeyRef:
                   name: snmp-exporter-secrets
                   key: SNMP_TARGET_AP_ATELIER
-          volumeMounts:
-            - name: vmscrape-tpl
-              mountPath: /tpl
       containers:
         - name: snmp-exporter
           image: prom/snmp-exporter:v0.26.0
@@ -140,6 +188,3 @@ spec:
             name: snmp-exporter-config
         - name: config-out
           emptyDir: {}
-        - name: vmscrape-tpl
-          configMap:
-            name: snmp-exporter-vmscrape-tpl
