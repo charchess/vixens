@@ -11,8 +11,5 @@ resources:
   - ippool.yaml
   - l2policy.yaml
   - ccnp-default-deny.yaml
-  - ccnp-allow-traefik.yaml
-  - ccnp-allow-prometheus.yaml
-  - ccnp-allow-coredns.yaml
 components:
   - ../../../_shared/components/revision-history-limit

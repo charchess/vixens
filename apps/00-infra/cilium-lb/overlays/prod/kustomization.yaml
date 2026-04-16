@@ -4,6 +4,9 @@ kind: Kustomization
 resources:
   - ippool.yaml
   - l2policy.yaml
+  - ccnp-allow-traefik.yaml
+  - ccnp-allow-prometheus.yaml
+  - ccnp-allow-coredns.yaml
 
 components:
 
