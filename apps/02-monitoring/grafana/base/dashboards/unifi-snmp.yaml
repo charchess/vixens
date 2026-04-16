@@ -284,7 +284,7 @@ data:
           "gridPos": { "x": 0, "y": 22, "w": 24, "h": 10 },
           "datasource": null,
           "options": {
-            "sortBy": [{ "displayName": "device_name" }],
+            "sortBy": [{ "displayName": "device_name", "desc": false }],
             "footer": { "show": false }
           },
           "fieldConfig": {
