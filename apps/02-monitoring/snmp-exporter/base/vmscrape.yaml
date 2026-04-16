@@ -10,7 +10,7 @@ spec:
   targetEndpoints:
     # UDM Pro SE
     - targets:
-        - 192.168.200.1
+        - 192.168.0.1
       labels:
         device_type: udm
         device_name: udm-pro-se
@@ -30,8 +30,8 @@ spec:
 
     # Switches
     - targets:
-        - 192.168.200.246
-        - 192.168.200.240
+        - 192.168.0.246
+        - 192.168.0.240
       labels:
         device_type: switch
       scrapeTimeout: 30s
@@ -48,20 +48,20 @@ spec:
         - targetLabel: __address__
           replacement: snmp-exporter.monitoring.svc.cluster.local:9116
         - sourceLabels: [instance]
-          regex: 192\.168\.200\.246
+          regex: 192\.168\.0\.246
           targetLabel: device_name
           replacement: switch-baie
         - sourceLabels: [instance]
-          regex: 192\.168\.200\.240
+          regex: 192\.168\.0\.240
           targetLabel: device_name
           replacement: switch-atelier
 
     # Access Points
     - targets:
-        - 192.168.200.10
-        - 192.168.200.11
-        - 192.168.200.12
-        - 192.168.200.13
+        - 192.168.0.10
+        - 192.168.0.11
+        - 192.168.0.12
+        - 192.168.0.13
       labels:
         device_type: ap
       scrapeTimeout: 30s
@@ -78,18 +78,18 @@ spec:
         - targetLabel: __address__
           replacement: snmp-exporter.monitoring.svc.cluster.local:9116
         - sourceLabels: [instance]
-          regex: 192\.168\.200\.10
+          regex: 192\.168\.0\.10
           targetLabel: device_name
           replacement: ap-couloir
         - sourceLabels: [instance]
-          regex: 192\.168\.200\.11
+          regex: 192\.168\.0\.11
           targetLabel: device_name
           replacement: ap-cuisine
         - sourceLabels: [instance]
-          regex: 192\.168\.200\.12
+          regex: 192\.168\.0\.12
           targetLabel: device_name
           replacement: ap-salon
         - sourceLabels: [instance]
-          regex: 192\.168\.200\.13
+          regex: 192\.168\.0\.13
           targetLabel: device_name
           replacement: ap-atelier
