@@ -1,0 +1,82 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hubble-ui
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+    goldilocks.fairwinds.com/enabled: "true"
+    vpa.kubernetes.io/updateMode: "Off"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      k8s-app: hubble-ui
+  template:
+    metadata:
+      labels:
+        k8s-app: hubble-ui
+        vixens.io/sizing-v2: "true"
+        vixens.io/sizing.hubble-ui-frontend: V-nano
+        vixens.io/sizing.hubble-ui-backend: V-nano
+      annotations:
+        vixens.io/no-long-connections: "true"
+        vixens.io/backup-profile: ephemeral
+    spec:
+      serviceAccountName: hubble-ui
+      priorityClassName: vixens-low
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: frontend
+          image: quay.io/cilium/hubble-ui:v0.13.1
+          ports:
+            - containerPort: 8081
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+        - name: backend
+          image: quay.io/cilium/hubble-ui-backend:v0.13.1
+          env:
+            - name: EVENTS_SERVER_PORT
+              value: "8090"
+            - name: FLOWS_API_ADDR
+              value: "hubble-relay.kube-system.svc.cluster.local:80"
+          ports:
+            - containerPort: 8090
+              name: grpc
+          livenessProbe:
+            tcpSocket:
+              port: grpc
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: grpc
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
