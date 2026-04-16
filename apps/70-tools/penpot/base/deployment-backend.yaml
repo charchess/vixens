@@ -37,7 +37,7 @@ spec:
             preStop:
               exec:
                 command: ["sleep", "5"]
-          image: penpotapp/backend:2.14.2
+          image: penpotapp/backend:2.14.3
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:
