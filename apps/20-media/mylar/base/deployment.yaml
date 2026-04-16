@@ -58,12 +58,14 @@ spec:
               port: http
             initialDelaySeconds: 120
             periodSeconds: 30
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /
               port: http
             initialDelaySeconds: 60
             periodSeconds: 20
+            timeoutSeconds: 5
           startupProbe:
             httpGet:
               path: /
