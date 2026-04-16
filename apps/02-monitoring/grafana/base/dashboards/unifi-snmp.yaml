@@ -1,0 +1,428 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-unifi-snmp
+  labels:
+    grafana_dashboard: "1"
+immutable: false
+data:
+  unifi-snmp.json: |
+    {
+      "title": "UniFi Network \u2014 SNMP",
+      "uid": "unifi-snmp-vixens",
+      "description": "Trafic, \u00e9tat des interfaces et erreurs sur les \u00e9quipements UniFi (UDM, switches, APs) via SNMP exporter",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "1m",
+      "time": { "from": "now-3h", "to": "now" },
+      "timezone": "browser",
+      "graphTooltip": 1,
+      "tags": ["snmp", "unifi", "network"],
+      "links": [],
+      "annotations": { "list": [] },
+      "templating": {
+        "list": [
+          {
+            "name": "device_name",
+            "label": "Device",
+            "type": "query",
+            "datasource": null,
+            "definition": "label_values(ifOperStatus{job=\"snmp-unifi\"}, device_name)",
+            "query": "label_values(ifOperStatus{job=\"snmp-unifi\"}, device_name)",
+            "includeAll": true,
+            "multi": true,
+            "allValue": ".*",
+            "refresh": 2,
+            "sort": 1,
+            "hide": 0,
+            "current": {}
+          },
+          {
+            "name": "interface",
+            "label": "Interface",
+            "type": "query",
+            "datasource": null,
+            "definition": "label_values(ifOperStatus{job=\"snmp-unifi\", device_name=~\"$device_name\"}, ifName)",
+            "query": "label_values(ifOperStatus{job=\"snmp-unifi\", device_name=~\"$device_name\"}, ifName)",
+            "includeAll": true,
+            "multi": true,
+            "allValue": ".*",
+            "refresh": 2,
+            "sort": 1,
+            "hide": 0,
+            "current": {}
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Devices monitor\u00e9s",
+          "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+          "datasource": null,
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "none",
+            "textMode": "value"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "value": null, "color": "blue" }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "count(sysUpTime{job=\"snmp-unifi\"} > 0)",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Interfaces UP",
+          "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+          "datasource": null,
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "none"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "value": null, "color": "green" }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "count(ifOperStatus{job=\"snmp-unifi\"} == 1)",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "Interfaces DOWN",
+          "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+          "datasource": null,
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "none"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "value": null, "color": "green" },
+                  { "value": 1, "color": "red" }
+                ]
+              },
+              "unit": "short",
+              "noValue": "0"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "count(ifOperStatus{job=\"snmp-unifi\"} == 2) or vector(0)",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "stat",
+          "title": "Uptime minimum",
+          "description": "Device avec le plus petit uptime (red\u00e9marrage r\u00e9cent ?)",
+          "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+          "datasource": null,
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "graphMode": "none"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "value": null, "color": "red" },
+                  { "value": 3600, "color": "orange" },
+                  { "value": 86400, "color": "green" }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "min(sysUpTime{job=\"snmp-unifi\"} / 100)",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "Trafic par device (agr\u00e9g\u00e9)",
+          "description": "Somme du trafic entrant et sortant de toutes les interfaces par device",
+          "gridPos": { "x": 0, "y": 4, "w": 24, "h": 9 },
+          "datasource": null,
+          "options": {
+            "tooltip": { "mode": "multi", "sort": "desc" },
+            "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max", "lastNotNull"] }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bps",
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byNamePattern", "options": ".*out.*" },
+                "properties": [
+                  { "id": "custom.transform", "value": "negative-Y" }
+                ]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "sum by (device_name) (rate(ifHCInOctets{job=\"snmp-unifi\", device_name=~\"$device_name\"}[$__rate_interval])) * 8",
+              "legendFormat": "{{device_name}} in",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (device_name) (rate(ifHCOutOctets{job=\"snmp-unifi\", device_name=~\"$device_name\"}[$__rate_interval])) * 8",
+              "legendFormat": "{{device_name}} out",
+              "refId": "B"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "Trafic par interface — $device_name",
+          "description": "D\u00e9tail du trafic par interface (filtre sur device et interface s\u00e9lectionn\u00e9s)",
+          "gridPos": { "x": 0, "y": 13, "w": 24, "h": 9 },
+          "datasource": null,
+          "options": {
+            "tooltip": { "mode": "multi", "sort": "desc" },
+            "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max", "lastNotNull"] }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bps",
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 8,
+                "showPoints": "never"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byNamePattern", "options": ".*out.*" },
+                "properties": [
+                  { "id": "custom.transform", "value": "negative-Y" }
+                ]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "rate(ifHCInOctets{job=\"snmp-unifi\", device_name=~\"$device_name\", ifName=~\"$interface\"}[$__rate_interval]) * 8",
+              "legendFormat": "{{device_name}} / {{ifName}} in",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(ifHCOutOctets{job=\"snmp-unifi\", device_name=~\"$device_name\", ifName=~\"$interface\"}[$__rate_interval]) * 8",
+              "legendFormat": "{{device_name}} / {{ifName}} out",
+              "refId": "B"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "type": "table",
+          "title": "\u00c9tat des interfaces",
+          "gridPos": { "x": 0, "y": 22, "w": 24, "h": 10 },
+          "datasource": null,
+          "options": {
+            "sortBy": [{ "displayName": "device_name" }],
+            "footer": { "show": false }
+          },
+          "fieldConfig": {
+            "defaults": { "custom": { "filterable": true } },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Value #status" },
+                "properties": [
+                  { "id": "displayName", "value": "Status" },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      { "type": "value", "value": "1", "result": { "text": "UP", "color": "green", "index": 0 } },
+                      { "type": "value", "value": "2", "result": { "text": "DOWN", "color": "red", "index": 1 } },
+                      { "type": "value", "value": "3", "result": { "text": "TESTING", "color": "yellow", "index": 2 } }
+                    ]
+                  },
+                  { "id": "custom.displayMode", "value": "color-background" },
+                  { "id": "custom.width", "value": 100 }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "Value #speed" },
+                "properties": [
+                  { "id": "displayName", "value": "Speed" },
+                  { "id": "unit", "value": "Mbps" },
+                  { "id": "custom.width", "value": 80 }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "Value #errors_in" },
+                "properties": [
+                  { "id": "displayName", "value": "Err IN/s" },
+                  { "id": "unit", "value": "short" },
+                  { "id": "decimals", "value": 2 },
+                  { "id": "custom.width", "value": 90 }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "Value #errors_out" },
+                "properties": [
+                  { "id": "displayName", "value": "Err OUT/s" },
+                  { "id": "unit", "value": "short" },
+                  { "id": "decimals", "value": 2 },
+                  { "id": "custom.width", "value": 90 }
+                ]
+              }
+            ]
+          },
+          "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            },
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": ["device_name", "device_type", "ifName", "ifAlias", "ifDescr", "Value #status", "Value #speed", "Value #errors_in", "Value #errors_out"]
+                }
+              }
+            }
+          ],
+          "targets": [
+            {
+              "expr": "ifOperStatus{job=\"snmp-unifi\", device_name=~\"$device_name\", ifName=~\"$interface\"}",
+              "legendFormat": "",
+              "refId": "status",
+              "instant": true,
+              "format": "table"
+            },
+            {
+              "expr": "ifHighSpeed{job=\"snmp-unifi\", device_name=~\"$device_name\", ifName=~\"$interface\"}",
+              "legendFormat": "",
+              "refId": "speed",
+              "instant": true,
+              "format": "table"
+            },
+            {
+              "expr": "rate(ifInErrors{job=\"snmp-unifi\", device_name=~\"$device_name\", ifName=~\"$interface\"}[$__rate_interval])",
+              "legendFormat": "",
+              "refId": "errors_in",
+              "instant": true,
+              "format": "table"
+            },
+            {
+              "expr": "rate(ifOutErrors{job=\"snmp-unifi\", device_name=~\"$device_name\", ifName=~\"$interface\"}[$__rate_interval])",
+              "legendFormat": "",
+              "refId": "errors_out",
+              "instant": true,
+              "format": "table"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "Erreurs et discards",
+          "gridPos": { "x": 0, "y": 32, "w": 24, "h": 7 },
+          "datasource": null,
+          "options": {
+            "tooltip": { "mode": "multi", "sort": "desc" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "pps",
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 5,
+                "showPoints": "never"
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "sum by (device_name) (rate(ifInErrors{job=\"snmp-unifi\", device_name=~\"$device_name\"}[$__rate_interval]))",
+              "legendFormat": "{{device_name}} err-in",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (device_name) (rate(ifOutErrors{job=\"snmp-unifi\", device_name=~\"$device_name\"}[$__rate_interval]))",
+              "legendFormat": "{{device_name}} err-out",
+              "refId": "B"
+            },
+            {
+              "expr": "sum by (device_name) (rate(ifInDiscards{job=\"snmp-unifi\", device_name=~\"$device_name\"}[$__rate_interval]))",
+              "legendFormat": "{{device_name}} drop-in",
+              "refId": "C"
+            },
+            {
+              "expr": "sum by (device_name) (rate(ifOutDiscards{job=\"snmp-unifi\", device_name=~\"$device_name\"}[$__rate_interval]))",
+              "legendFormat": "{{device_name}} drop-out",
+              "refId": "D"
+            }
+          ]
+        }
+      ]
+    }

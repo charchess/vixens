@@ -1,0 +1,95 @@
+---
+# VMStaticScrape — scrape UniFi devices via SNMP exporter
+# The SNMP exporter acts as a proxy: vmagent calls it with ?target=<device_ip>&module=if_mib&auth=unifi_v2c
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMStaticScrape
+metadata:
+  name: snmp-unifi
+spec:
+  jobName: snmp-unifi
+  targetEndpoints:
+    # UDM Pro SE
+    - targets:
+        - 192.168.200.1
+      labels:
+        device_type: udm
+        device_name: udm-pro-se
+      scrapeTimeout: 30s
+      interval: 60s
+      path: /snmp
+      params:
+        module: [if_mib]
+        auth: [unifi_v2c]
+      relabelConfigs:
+        - sourceLabels: [__address__]
+          targetLabel: __param_target
+        - sourceLabels: [__param_target]
+          targetLabel: instance
+        - targetLabel: __address__
+          replacement: snmp-exporter.monitoring.svc.cluster.local:9116
+
+    # Switches
+    - targets:
+        - 192.168.200.246
+        - 192.168.200.240
+      labels:
+        device_type: switch
+      scrapeTimeout: 30s
+      interval: 60s
+      path: /snmp
+      params:
+        module: [if_mib]
+        auth: [unifi_v2c]
+      relabelConfigs:
+        - sourceLabels: [__address__]
+          targetLabel: __param_target
+        - sourceLabels: [__param_target]
+          targetLabel: instance
+        - targetLabel: __address__
+          replacement: snmp-exporter.monitoring.svc.cluster.local:9116
+        - sourceLabels: [instance]
+          regex: 192\.168\.200\.246
+          targetLabel: device_name
+          replacement: switch-baie
+        - sourceLabels: [instance]
+          regex: 192\.168\.200\.240
+          targetLabel: device_name
+          replacement: switch-atelier
+
+    # Access Points
+    - targets:
+        - 192.168.200.10
+        - 192.168.200.11
+        - 192.168.200.12
+        - 192.168.200.13
+      labels:
+        device_type: ap
+      scrapeTimeout: 30s
+      interval: 60s
+      path: /snmp
+      params:
+        module: [if_mib]
+        auth: [unifi_v2c]
+      relabelConfigs:
+        - sourceLabels: [__address__]
+          targetLabel: __param_target
+        - sourceLabels: [__param_target]
+          targetLabel: instance
+        - targetLabel: __address__
+          replacement: snmp-exporter.monitoring.svc.cluster.local:9116
+        - sourceLabels: [instance]
+          regex: 192\.168\.200\.10
+          targetLabel: device_name
+          replacement: ap-couloir
+        - sourceLabels: [instance]
+          regex: 192\.168\.200\.11
+          targetLabel: device_name
+          replacement: ap-cuisine
+        - sourceLabels: [instance]
+          regex: 192\.168\.200\.12
+          targetLabel: device_name
+          replacement: ap-salon
+        - sourceLabels: [instance]
+          regex: 192\.168\.200\.13
+          targetLabel: device_name
+          replacement: ap-atelier
