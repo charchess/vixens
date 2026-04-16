@@ -1,5 +1,7 @@
 ---
-# snmp.yml template — ${SNMP_COMMUNITY} is substituted by the init container
+# snmp.yml template — ${SNMP_COMMUNITY} et ${SNMP_COMMUNITY_FULL} substitués par l'init container
+# unifi_v2c      : 20 chars → switches (USW-Lite firmware truncate à 20)
+# unifi_v2c_full : 21 chars → UDM + APs (pas de troncature)
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -9,6 +11,9 @@ data:
     auths:
       unifi_v2c:
         community: ${SNMP_COMMUNITY}
+        version: 2
+      unifi_v2c_full:
+        community: ${SNMP_COMMUNITY_FULL}
         version: 2
 
     modules:
