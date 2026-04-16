@@ -22,6 +22,7 @@ spec:
         vixens.io/sizing-v2: "true"
         vixens.io/sizing.snmp-exporter: V-nano
         vixens.io/sizing.init-config: G-nano
+        vixens.io/sizing.init-vmscrape: G-nano
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9116"
@@ -30,6 +31,7 @@ spec:
         vixens.io/no-long-connections: "true"
         vixens.io/backup-profile: ephemeral
     spec:
+      serviceAccountName: snmp-exporter
       priorityClassName: vixens-low
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -53,6 +55,60 @@ spec:
               mountPath: /config-tpl
             - name: config-out
               mountPath: /config-out
+        - name: init-vmscrape
+          image: alpine/k8s:1.32.3
+          command:
+            - sh
+            - -c
+            - |
+              sed \
+                -e "s|\${SNMP_TARGET_UDM}|${SNMP_TARGET_UDM}|g" \
+                -e "s|\${SNMP_TARGET_SW_BAIE}|${SNMP_TARGET_SW_BAIE}|g" \
+                -e "s|\${SNMP_TARGET_SW_ATELIER}|${SNMP_TARGET_SW_ATELIER}|g" \
+                -e "s|\${SNMP_TARGET_AP_COULOIR}|${SNMP_TARGET_AP_COULOIR}|g" \
+                -e "s|\${SNMP_TARGET_AP_CUISINE}|${SNMP_TARGET_AP_CUISINE}|g" \
+                -e "s|\${SNMP_TARGET_AP_SALON}|${SNMP_TARGET_AP_SALON}|g" \
+                -e "s|\${SNMP_TARGET_AP_ATELIER}|${SNMP_TARGET_AP_ATELIER}|g" \
+                /tpl/vmscrape.yaml | kubectl apply -f - && echo "VMStaticScrape applied"
+          env:
+            - name: SNMP_TARGET_UDM
+              valueFrom:
+                secretKeyRef:
+                  name: snmp-exporter-secrets
+                  key: SNMP_TARGET_UDM
+            - name: SNMP_TARGET_SW_BAIE
+              valueFrom:
+                secretKeyRef:
+                  name: snmp-exporter-secrets
+                  key: SNMP_TARGET_SW_BAIE
+            - name: SNMP_TARGET_SW_ATELIER
+              valueFrom:
+                secretKeyRef:
+                  name: snmp-exporter-secrets
+                  key: SNMP_TARGET_SW_ATELIER
+            - name: SNMP_TARGET_AP_COULOIR
+              valueFrom:
+                secretKeyRef:
+                  name: snmp-exporter-secrets
+                  key: SNMP_TARGET_AP_COULOIR
+            - name: SNMP_TARGET_AP_CUISINE
+              valueFrom:
+                secretKeyRef:
+                  name: snmp-exporter-secrets
+                  key: SNMP_TARGET_AP_CUISINE
+            - name: SNMP_TARGET_AP_SALON
+              valueFrom:
+                secretKeyRef:
+                  name: snmp-exporter-secrets
+                  key: SNMP_TARGET_AP_SALON
+            - name: SNMP_TARGET_AP_ATELIER
+              valueFrom:
+                secretKeyRef:
+                  name: snmp-exporter-secrets
+                  key: SNMP_TARGET_AP_ATELIER
+          volumeMounts:
+            - name: vmscrape-tpl
+              mountPath: /tpl
       containers:
         - name: snmp-exporter
           image: prom/snmp-exporter:v0.26.0
@@ -84,3 +140,6 @@ spec:
             name: snmp-exporter-config
         - name: config-out
           emptyDir: {}
+        - name: vmscrape-tpl
+          configMap:
+            name: snmp-exporter-vmscrape-tpl
