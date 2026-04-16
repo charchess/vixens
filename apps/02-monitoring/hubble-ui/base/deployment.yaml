@@ -39,7 +39,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: frontend
-          image: quay.io/cilium/hubble-ui:v0.13.1
+          image: quay.io/cilium/hubble-ui:v0.13.5
           ports:
             - containerPort: 8080
               name: http
@@ -60,7 +60,7 @@ spec:
             capabilities:
               drop: ["ALL"]
         - name: backend
-          image: quay.io/cilium/hubble-ui-backend:v0.13.1
+          image: quay.io/cilium/hubble-ui-backend:v0.13.5
           env:
             - name: EVENTS_SERVER_PORT
               value: "8090"

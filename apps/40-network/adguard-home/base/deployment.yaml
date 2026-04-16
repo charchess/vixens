@@ -46,7 +46,7 @@ spec:
       initContainers: []
       containers:
         - name: adguard-home
-          image: adguard/adguardhome:v0.107.73
+          image: adguard/adguardhome:v0.107.74
           ports:
             - containerPort: 3000
               name: http
