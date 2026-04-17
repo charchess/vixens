@@ -16,5 +16,3 @@ spec:
         - ports:
             - port: "9116"
               protocol: TCP
-  egress:
-    - {}

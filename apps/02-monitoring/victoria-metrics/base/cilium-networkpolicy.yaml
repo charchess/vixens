@@ -16,8 +16,6 @@ spec:
         - ports:
             - port: "8429"
               protocol: TCP
-  egress:
-    - {}
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -36,8 +34,6 @@ spec:
         - ports:
             - port: "8428"
               protocol: TCP
-  egress:
-    - {}
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -56,8 +52,6 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
-  egress:
-    - {}
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -76,8 +70,6 @@ spec:
         - ports:
             - port: "9093"
               protocol: TCP
-  egress:
-    - {}
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -96,8 +88,6 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
-  egress:
-    - {}
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -116,8 +106,6 @@ spec:
         - ports:
             - port: "9100"
               protocol: TCP
-  egress:
-    - {}
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -136,5 +124,3 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
-  egress:
-    - {}

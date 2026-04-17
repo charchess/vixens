@@ -20,5 +20,3 @@ spec:
     - fromEntities:
         - host
         - remote-node
-  egress:
-    - {}

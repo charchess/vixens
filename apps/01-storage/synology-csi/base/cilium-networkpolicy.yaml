@@ -13,8 +13,6 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    - {}
 ---
 # synology-csi-node — node driver (iSCSI mount)
 apiVersion: cilium.io/v2
@@ -30,8 +28,6 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    - {}
 ---
 # iscsi-lock-cleanup — DaemonSet lock management
 apiVersion: cilium.io/v2
@@ -47,5 +43,3 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    - {}
