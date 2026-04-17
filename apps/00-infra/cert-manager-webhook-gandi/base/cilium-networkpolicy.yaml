@@ -11,9 +11,11 @@ spec:
   ingress:
     - fromEntities:
         - kube-apiserver
+        - host
+        - remote-node
       toPorts:
         - ports:
-            - port: "443"
+            - port: "8443"
               protocol: TCP
     - fromEndpoints:
         - matchLabels:

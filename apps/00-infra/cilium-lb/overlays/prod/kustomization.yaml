@@ -7,6 +7,7 @@ resources:
   - ccnp-allow-traefik.yaml
   - ccnp-allow-prometheus.yaml
   - ccnp-allow-coredns.yaml
+  - ccnp-allow-kube-apiserver.yaml
 
 components:
 
