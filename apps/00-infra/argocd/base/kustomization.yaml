@@ -7,5 +7,6 @@ resources:
   - argocd-install.yaml
   - servicemonitor.yaml
   - pdb.yaml
+  - cilium-networkpolicy.yaml
 components:
   - ../../../_shared/components/revision-history-limit

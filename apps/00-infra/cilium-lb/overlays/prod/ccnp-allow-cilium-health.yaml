@@ -20,6 +20,14 @@ spec:
         - ports:
             - port: "4240"
               protocol: TCP
+    # ICMP EchoRequest pour les health IPs inter-nœuds (10.244.x.x/health)
+    - fromEntities:
+        - host
+        - remote-node
+      icmps:
+        - fields:
+            - type: 8
+              family: IPv4
   egress:
     - toEntities:
         - host
@@ -28,3 +36,11 @@ spec:
         - ports:
             - port: "4240"
               protocol: TCP
+    # ICMP EchoReply pour les health IPs inter-nœuds
+    - toEntities:
+        - host
+        - remote-node
+      icmps:
+        - fields:
+            - type: 0
+              family: IPv4
