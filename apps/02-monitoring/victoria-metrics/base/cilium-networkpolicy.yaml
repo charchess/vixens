@@ -16,6 +16,11 @@ spec:
         - ports:
             - port: "8429"
               protocol: TCP
+  egress:
+    # vmagent → vmalert, vmsingle, and other monitoring endpoints (scrape targets + remote_write)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
