@@ -34,6 +34,14 @@ spec:
     - fromEntities:
         - host
         - remote-node
+    # CloudNativePG operator — barman backup API (port 8000)
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: cnpg-system
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
     # Métriques Prometheus (pg_exporter port 9187)
     - fromEndpoints:
         - matchLabels:
