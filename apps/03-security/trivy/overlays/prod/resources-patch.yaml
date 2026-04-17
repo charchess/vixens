@@ -11,6 +11,8 @@ spec:
         vixens.io/sizing.trivy-operator: V-medium
       annotations:
         vixens.io/service-binding: "false"
+        # trivy-operator V-medium = 1280Mi
+        vixens.io/vpa.max-memory: "1280Mi"
     spec:
       priorityClassName: vixens-medium
       containers:

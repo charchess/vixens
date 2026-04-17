@@ -1,1 +1,11 @@
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hydrus-client
+spec:
+  template:
+    metadata:
+      annotations:
+        # hydrus-client V-large(2560Mi) + dataangel V-small(640Mi) = 3200Mi
+        vixens.io/vpa.max-memory: "3200Mi"

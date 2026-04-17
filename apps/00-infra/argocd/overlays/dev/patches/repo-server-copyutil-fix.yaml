@@ -1,0 +1,15 @@
+---
+# Fix copyutil init container: use ln -sf to handle retries on dirty emptyDir
+# When argocd-repo-server crashes and the pod retries init containers,
+# the emptyDir already has the argocd binary but the ln -s fails.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-repo-server
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: copyutil
+          args:
+            - /bin/cp --update=none /usr/local/bin/argocd /var/run/argocd/argocd && /bin/ln -sf /var/run/argocd/argocd /var/run/argocd/argocd-cmp-server

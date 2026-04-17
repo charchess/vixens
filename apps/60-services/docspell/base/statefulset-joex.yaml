@@ -18,6 +18,8 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
+        # joex V-large = 2560Mi
+        vixens.io/vpa.max-memory: "2560Mi"
 
       labels:
         app: docspell

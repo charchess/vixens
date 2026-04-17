@@ -13,3 +13,6 @@ spec:
         vixens.io/sizing.homeassistant: V-large
         vixens.io/sizing.litestream: SB-medium
         vixens.io/sizing.config-syncer: B-small
+      annotations:
+        # homeassistant V-large(2560Mi) + litestream SB-medium(1024Mi) + config-syncer B-small(512Mi) = 4096Mi
+        vixens.io/vpa.max-memory: "4096Mi"

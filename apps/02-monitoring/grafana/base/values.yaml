@@ -70,6 +70,8 @@ podAnnotations:
   prometheus.io/port: "3000"
   prometheus.io/path: "/metrics"
   vixens.io/fast-start: "true"
+  # grafana V-medium(1280Mi) + grafana-sc-dashboard V-small(640Mi) = 1920Mi
+  vixens.io/vpa.max-memory: "1920Mi"
 lifecycle:
   preStop:
     exec:

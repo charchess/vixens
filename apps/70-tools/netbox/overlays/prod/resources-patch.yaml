@@ -1,0 +1,11 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbox
+spec:
+  template:
+    metadata:
+      annotations:
+        # netbox B-medium(1024Mi) + dataangel V-small(640Mi) = 1664Mi
+        vixens.io/vpa.max-memory: "1664Mi"

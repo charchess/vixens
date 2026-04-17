@@ -10,6 +10,7 @@ components:
 
 patches:
   - path: patches/repo-server-resources.yaml
+  - path: patches/repo-server-copyutil-fix.yaml
   - path: patches/argocd-params.yaml
   - target:
       group: apps

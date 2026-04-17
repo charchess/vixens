@@ -1,0 +1,11 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radarr
+spec:
+  template:
+    metadata:
+      annotations:
+        # radarr V-medium(1280Mi) + dataangel V-small(640Mi) = 1920Mi
+        vixens.io/vpa.max-memory: "1920Mi"
