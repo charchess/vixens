@@ -1,0 +1,17 @@
+---
+# Dev cluster PVC was created with synelia-iscsi-retain (iSCSI).
+# PVC specs are immutable once bound — this patch ensures Git matches
+# the existing cluster PVC to prevent ArgoCD sync errors.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: frigate-config-pvc
+spec:
+  storageClassName: synelia-iscsi-retain
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: frigate-cache-pvc
+spec:
+  storageClassName: synelia-iscsi-retain

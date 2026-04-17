@@ -9,6 +9,7 @@ components:
   - ../../../../_shared/components/dataangel
   - ../../../../_shared/components/revision-history-limit
 patches:
+  - path: pvc-patch.yaml
   - path: dataangel.yaml
   - target:
       kind: Deployment
