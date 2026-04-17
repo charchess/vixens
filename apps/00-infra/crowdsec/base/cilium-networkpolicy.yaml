@@ -9,8 +9,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: crowdsec-agent
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -26,8 +24,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: crowdsec-lapi
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:

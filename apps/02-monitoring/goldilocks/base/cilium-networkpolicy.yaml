@@ -8,8 +8,6 @@ spec:
     matchLabels:
       app.kubernetes.io/name: goldilocks
       app.kubernetes.io/component: dashboard
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -32,8 +30,6 @@ spec:
     matchLabels:
       app.kubernetes.io/name: goldilocks
       app.kubernetes.io/component: controller
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:

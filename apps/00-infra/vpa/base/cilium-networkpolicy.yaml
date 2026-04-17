@@ -10,8 +10,6 @@ spec:
     matchLabels:
       app.kubernetes.io/name: vertical-pod-autoscaler
       app.kubernetes.io/component: admission-controller
-  egress:
-    - {}
   ingress:
     - fromEntities:
         - kube-apiserver
@@ -34,8 +32,6 @@ spec:
     matchLabels:
       app.kubernetes.io/name: vertical-pod-autoscaler
       app.kubernetes.io/component: recommender
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -52,8 +48,6 @@ spec:
     matchLabels:
       app.kubernetes.io/name: vertical-pod-autoscaler
       app.kubernetes.io/component: updater
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:

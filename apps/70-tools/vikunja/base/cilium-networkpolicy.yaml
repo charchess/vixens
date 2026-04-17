@@ -7,8 +7,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: vikunja
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:

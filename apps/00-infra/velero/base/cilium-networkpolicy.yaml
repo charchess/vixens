@@ -9,8 +9,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: velero
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:

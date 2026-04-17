@@ -17,5 +17,3 @@ spec:
         - ports:
             - port: "3100"
               protocol: TCP
-  egress:
-    - {}
