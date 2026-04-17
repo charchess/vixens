@@ -1,0 +1,41 @@
+---
+# postgresql-shared (CloudNativePG cluster) — accès PostgreSQL depuis tous les pods clients
+# Le cluster est partagé entre de nombreux namespaces (auth, networking, services, tools, etc.)
+# L'authentification PostgreSQL protège l'accès au niveau applicatif
+# Les pods CNPG ont le label cnpg.io/cluster: postgresql-shared (pas app.kubernetes.io/name)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: postgresql-shared
+  namespace: databases
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: postgresql-shared
+  ingress:
+    # PostgreSQL depuis tous les pods du cluster (multi-namespace)
+    - fromEndpoints:
+        - {}
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    # Réplication intra-cluster CNPG
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: databases
+            cnpg.io/cluster: postgresql-shared
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    # Kubelet health probes depuis host/remote-node
+    - fromEntities:
+        - host
+        - remote-node
+    # Métriques Prometheus (pg_exporter port 9187)
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+  egress:
+    - {}

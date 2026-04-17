@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: databases
 resources:
   - cluster.yaml
+  - cilium-networkpolicy.yaml
   - credentials/admin-secret.yaml
   - credentials/docspell-secret.yaml
   - credentials/linkwarden-secret.yaml
