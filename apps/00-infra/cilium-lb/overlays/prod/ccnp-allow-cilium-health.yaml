@@ -1,0 +1,30 @@
+---
+# Autorise les health checks inter-nœuds Cilium (port 4240)
+# remote-node → tous les pods sur port 4240 (cilium-health)
+# Nécessaire avec enableDefaultDeny.ingress: true
+# enableDefaultDeny: false = additif seulement
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: allow-cilium-health
+spec:
+  endpointSelector: {}
+  enableDefaultDeny:
+    ingress: false
+    egress: false
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "4240"
+              protocol: TCP
+  egress:
+    - toEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "4240"
+              protocol: TCP

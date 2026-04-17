@@ -27,3 +27,5 @@ spec:
               protocol: UDP
   egress:
     - {}
+    - toEntities:
+        - world
