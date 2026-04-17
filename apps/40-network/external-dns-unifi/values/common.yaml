@@ -17,10 +17,13 @@ rbac:
       resources: ["endpointslices"]
       verbs: ["get", "watch", "list"]
 
-# Sidecar Webhook
-sidecars:
+# Native K8s sidecar (1.28+): starts before external-dns and its readiness
+# probe must pass before external-dns starts — eliminates startup race condition
+# where external-dns would exit if the webhook wasn't ready within 3 seconds.
+initContainers:
   - name: unifi-webhook
     image: ghcr.io/kashalls/external-dns-unifi-webhook:v0.8.2
+    restartPolicy: Always
     args: ["--host", "0.0.0.0"]
     ports:
       - containerPort: 8888
