@@ -14,8 +14,9 @@ spec:
       cnpg.io/cluster: postgresql-shared
   ingress:
     # PostgreSQL depuis tous les pods du cluster (multi-namespace)
-    - fromEndpoints:
-        - {}
+    # fromEndpoints: [{}] cassé dans Cilium 1.18.3 → fromEntities: cluster
+    - fromEntities:
+        - cluster
       toPorts:
         - ports:
             - port: "5432"

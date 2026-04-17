@@ -9,8 +9,9 @@ spec:
     matchLabels:
       app.kubernetes.io/name: fluent-bit-syslog
   ingress:
-    - fromEndpoints:
-        - {}
+    # fromEndpoints: [{}] cassé dans Cilium 1.18.3 → fromEntities: cluster
+    - fromEntities:
+        - cluster
       toPorts:
         - ports:
             - port: "514"
