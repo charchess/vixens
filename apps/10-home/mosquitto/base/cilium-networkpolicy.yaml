@@ -17,3 +17,5 @@ spec:
         - ports:
             - port: "1883"
               protocol: TCP
+  egress:
+    - {}

@@ -1,3 +1,4 @@
+---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -24,3 +25,5 @@ spec:
               protocol: TCP
             - port: "6881"
               protocol: UDP
+  egress:
+    - {}

@@ -1,3 +1,4 @@
+---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -15,3 +16,5 @@ spec:
         - ports:
             - port: "9116"
               protocol: TCP
+  egress:
+    - {}

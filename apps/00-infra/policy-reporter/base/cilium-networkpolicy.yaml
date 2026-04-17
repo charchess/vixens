@@ -20,6 +20,8 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    - {}
 ---
 # policy-reporter kyverno-plugin
 apiVersion: cilium.io/v2
@@ -35,6 +37,8 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    - {}
 ---
 # policy-reporter UI
 apiVersion: cilium.io/v2
@@ -58,3 +62,5 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    - {}

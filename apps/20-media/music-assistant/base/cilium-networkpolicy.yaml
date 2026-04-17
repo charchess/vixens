@@ -15,3 +15,5 @@ spec:
         - ports:
             - port: "8095"
               protocol: TCP
+  egress:
+    - {}
