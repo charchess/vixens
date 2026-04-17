@@ -81,3 +81,5 @@ podAnnotations:
   vixens.io/service-binding: "false"
   vixens.io/nometrics: "true"
   vixens.io/no-long-connections: "true"
+  # stirling-pdf SB-medium = 1024Mi
+  vixens.io/vpa.max-memory: "1024Mi"

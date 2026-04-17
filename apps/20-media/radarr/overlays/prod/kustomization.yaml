@@ -22,3 +22,4 @@ components:
 
 patches:
   - path: dataangel.yaml
+  - path: resources-patch.yaml

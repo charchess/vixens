@@ -25,6 +25,8 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/nometrics: "true"
+        # openclaw V-xlarge(6Gi) + data-syncer sidecar = 6Gi
+        vixens.io/vpa.max-memory: "6Gi"
 
     spec:
       securityContext:

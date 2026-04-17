@@ -24,6 +24,8 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "5678"
         prometheus.io/path: "/metrics"
+        # n8n V-medium = 1280Mi
+        vixens.io/vpa.max-memory: "1280Mi"
     spec:
       priorityClassName: vixens-medium
       tolerations:

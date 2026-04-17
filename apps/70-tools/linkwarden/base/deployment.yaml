@@ -20,6 +20,7 @@ spec:
         vixens.io/backup-profile: relaxed
       annotations:
         vixens.io/no-long-connections: "true"
+        vixens.io/vpa.max-memory: "1280Mi"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane

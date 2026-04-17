@@ -25,6 +25,8 @@ spec:
       annotations:
         vixens.io/service-binding: "false"
         vixens.io/no-long-connections: "true"
+        # homepage V-small(640Mi); copy-initial-config is init container (excluded from VPA)
+        vixens.io/vpa.max-memory: "640Mi"
         kubectl.kubernetes.io/restartedAt: "2026-03-11T22:25:00Z"
     spec:
       serviceAccountName: homepage

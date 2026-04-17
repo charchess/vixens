@@ -19,6 +19,8 @@ spec:
     metadata:
       annotations:
         vixens.io/fast-start: "true"
+        # penpot-backend B-large = 2048Mi
+        vixens.io/vpa.max-memory: "2048Mi"
 
       labels:
         app: penpot-backend

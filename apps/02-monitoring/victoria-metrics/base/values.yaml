@@ -60,6 +60,8 @@ vmsingle:
         vixens.io/fast-start: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "8429"
+        # vmsingle V-large = 2560Mi
+        vixens.io/vpa.max-memory: "2560Mi"
       labels:
         vixens.io/sizing.vmsingle: V-large
     priorityClassName: vixens-critical

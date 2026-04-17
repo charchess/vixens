@@ -19,6 +19,7 @@ spec:
         vixens.io/fast-start: "true"
         vixens.io/service-binding: "false"
         vixens.io/no-long-connections: "true"
+        vixens.io/vpa.max-memory: "1280Mi"
       labels:
         app.kubernetes.io/name: g4f
         vixens.io/sizing.g4f: V-medium

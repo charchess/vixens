@@ -10,3 +10,6 @@ spec:
         vixens.io/sizing.sonarr: V-small
         vixens.io/sizing.litestream: V-nano
         vixens.io/sizing.config-syncer: V-nano
+      annotations:
+        # V-small(640Mi) + litestream V-nano(256Mi) + config-syncer V-nano(256Mi) + dataangel V-small(640Mi) = 1792Mi
+        vixens.io/vpa.max-memory: "1792Mi"

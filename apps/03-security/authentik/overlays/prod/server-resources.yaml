@@ -9,5 +9,8 @@ spec:
       labels:
         vixens.io/sizing.authentik-server: V-large
         vixens.io/sizing.config-syncer: V-nano
+      annotations:
+        # authentik-server V-large(2560Mi) + config-syncer V-nano(256Mi) = 2816Mi
+        vixens.io/vpa.max-memory: "2816Mi"
     spec:
       priorityClassName: vixens-critical

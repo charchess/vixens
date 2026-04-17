@@ -8,5 +8,8 @@ spec:
     metadata:
       labels:
         vixens.io/sizing.authentik-worker: V-large
+      annotations:
+        # authentik-worker V-large = 2560Mi
+        vixens.io/vpa.max-memory: "2560Mi"
     spec:
       priorityClassName: vixens-critical

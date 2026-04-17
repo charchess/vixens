@@ -22,6 +22,7 @@ spec:
         reloader.stakater.com/auto: "true"
         vixens.io/service-binding: "false"
         vixens.io/no-long-connections: "true"
+        vixens.io/vpa.max-memory: "640Mi"
 
     spec:
       priorityClassName: vixens-low

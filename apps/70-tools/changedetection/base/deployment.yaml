@@ -17,6 +17,8 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/no-long-connections: "true"
+        # changedetection V-small(640Mi) + browserless V-medium(1280Mi) = 1920Mi
+        vixens.io/vpa.max-memory: "1920Mi"
 
       labels:
         kubectl.kubernetes.io/restartedAt: "2026-03-12T110000Z"
