@@ -25,7 +25,5 @@ spec:
               protocol: TCP
             - port: "6881"
               protocol: UDP
-  egress:
-    - {}
     - toEntities:
         - world
