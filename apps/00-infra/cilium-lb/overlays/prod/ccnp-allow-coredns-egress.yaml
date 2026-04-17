@@ -1,0 +1,37 @@
+---
+# CoreDNS a besoin d'envoyer des requêtes DNS upstream (forwarder)
+# 169.254.116.108:53 (link-local node DNS) est classifié "world" par Cilium
+# enableDefaultDeny: false = additif seulement
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: allow-coredns-upstream-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      io.kubernetes.pod.namespace: kube-system
+      k8s-app: kube-dns
+  enableDefaultDeny:
+    ingress: false
+    egress: false
+  egress:
+    # Upstream DNS forwarder (link-local, world)
+    - toEntities:
+        - world
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    # Résolution DNS dans le cluster
+    - toEndpoints:
+        - {}
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
