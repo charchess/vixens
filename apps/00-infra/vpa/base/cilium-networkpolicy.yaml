@@ -20,8 +20,6 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    - {}
 ---
 # vpa-recommender
 apiVersion: cilium.io/v2
@@ -38,8 +36,6 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    - {}
 ---
 # vpa-updater
 apiVersion: cilium.io/v2
@@ -56,5 +52,3 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    - {}

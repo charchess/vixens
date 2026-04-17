@@ -13,8 +13,6 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    - {}
 ---
 # keda-admission-webhooks — reçoit des appels de kube-apiserver
 apiVersion: cilium.io/v2
@@ -36,8 +34,6 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    - {}
 ---
 # keda http-add-on (controller, scaler, interceptor)
 apiVersion: cilium.io/v2
@@ -53,5 +49,3 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    - {}

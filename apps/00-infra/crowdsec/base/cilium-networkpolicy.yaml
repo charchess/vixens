@@ -13,8 +13,6 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    - {}
 ---
 # crowdsec-lapi — reçoit des requêtes de Traefik (bouncer) et monitoring
 apiVersion: cilium.io/v2
@@ -37,5 +35,3 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    - {}

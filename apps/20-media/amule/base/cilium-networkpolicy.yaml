@@ -27,7 +27,5 @@ spec:
               protocol: UDP
             - port: "4672"
               protocol: UDP
-  egress:
-    - {}
     - toEntities:
         - world

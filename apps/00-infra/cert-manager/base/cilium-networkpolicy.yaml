@@ -14,8 +14,6 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    - {}
 ---
 # cert-manager cainjector
 apiVersion: cilium.io/v2
@@ -32,8 +30,6 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    - {}
 ---
 # cert-manager webhook — reçoit des appels de kube-apiserver
 apiVersion: cilium.io/v2
@@ -56,5 +52,3 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    - {}

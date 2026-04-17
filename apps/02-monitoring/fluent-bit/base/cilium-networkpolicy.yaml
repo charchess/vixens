@@ -16,5 +16,3 @@ spec:
         - ports:
             - port: "2020"
               protocol: TCP
-  egress:
-    - {}

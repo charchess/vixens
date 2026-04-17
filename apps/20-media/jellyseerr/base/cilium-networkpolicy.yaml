@@ -17,5 +17,3 @@ spec:
         - ports:
             - port: "5055"
               protocol: TCP
-  egress:
-    - {}

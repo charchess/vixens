@@ -22,5 +22,3 @@ spec:
         - ports:
             - port: "1080"
               protocol: TCP
-  egress:
-    - {}
