@@ -9,8 +9,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: keda-operator
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -26,8 +24,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: keda-admission-webhooks
-  egress:
-    - {}
   ingress:
     - fromEntities:
         - kube-apiserver
@@ -49,8 +45,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: http-add-on
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:

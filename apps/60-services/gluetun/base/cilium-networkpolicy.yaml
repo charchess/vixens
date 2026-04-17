@@ -15,5 +15,3 @@ spec:
         - ports:
             - port: "8888"
               protocol: TCP
-  egress:
-    - {}

@@ -21,5 +21,3 @@ spec:
         - ports:
             - port: "6379"
               protocol: TCP
-  egress:
-    - {}

@@ -10,8 +10,6 @@ spec:
     matchLabels:
       app.kubernetes.io/component: admission-controller
       app.kubernetes.io/instance: kyverno
-  egress:
-    - {}
   ingress:
     - fromEntities:
         - kube-apiserver
@@ -36,8 +34,6 @@ spec:
     matchLabels:
       app.kubernetes.io/component: background-controller
       app.kubernetes.io/instance: kyverno
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -54,8 +50,6 @@ spec:
     matchLabels:
       app.kubernetes.io/component: cleanup-controller
       app.kubernetes.io/instance: kyverno
-  egress:
-    - {}
   ingress:
     - fromEntities:
         - kube-apiserver
@@ -80,8 +74,6 @@ spec:
     matchLabels:
       app.kubernetes.io/component: reports-controller
       app.kubernetes.io/instance: kyverno
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:

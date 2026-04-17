@@ -7,8 +7,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: grafana
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:

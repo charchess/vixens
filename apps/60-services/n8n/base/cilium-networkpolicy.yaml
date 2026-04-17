@@ -18,5 +18,3 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: tools
-  egress:
-    - {}

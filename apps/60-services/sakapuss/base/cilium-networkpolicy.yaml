@@ -7,8 +7,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: sakapuss-backend
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -32,8 +30,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: sakapuss-frontend
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:

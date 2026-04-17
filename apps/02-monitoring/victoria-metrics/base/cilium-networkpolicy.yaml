@@ -7,8 +7,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: vmagent
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -27,8 +25,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: vmsingle
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -47,8 +43,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: vmalert
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -67,8 +61,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: vmalertmanager
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -87,8 +79,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: kube-state-metrics
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -107,8 +97,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: prometheus-node-exporter
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -127,8 +115,6 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: victoria-metrics-operator
-  egress:
-    - {}
   ingress:
     - fromEndpoints:
         - matchLabels:
