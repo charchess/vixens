@@ -1,5 +1,7 @@
 ---
 # vpa-admission-controller — reçoit des appels de kube-apiserver
+# Port 8000 = webhook TLS (--port=8000, named "https" dans le container)
+# Port 8944 = métriques Prometheus (--address=:8944, named "http-metrics")
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -11,15 +13,22 @@ spec:
       app.kubernetes.io/name: vertical-pod-autoscaler
       app.kubernetes.io/component: admission-controller
   ingress:
+    # kube-apiserver → webhook admission (port 8000 = containerPort "https")
     - fromEntities:
         - kube-apiserver
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+    # Prometheus scraping → métriques (port 8944)
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
       toPorts:
         - ports:
             - port: "8944"
               protocol: TCP
-    - fromEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: monitoring
 ---
 # vpa-recommender
 apiVersion: cilium.io/v2
