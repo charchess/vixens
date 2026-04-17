@@ -1,12 +1,15 @@
 ---
 # Autorise Traefik à accéder à tous les pods applicatifs (ingress)
-# Nécessaire avant d'activer le default-deny (issue #2935)
+# enableDefaultDeny: false = additif seulement, ne bloque pas le reste de l'ingress
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
   name: allow-traefik-ingress
 spec:
   endpointSelector: {}
+  enableDefaultDeny:
+    ingress: false
+    egress: false
   ingress:
     - fromEndpoints:
         - matchLabels:
