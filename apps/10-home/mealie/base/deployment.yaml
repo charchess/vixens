@@ -43,7 +43,7 @@ spec:
             limits:
               cpu: 200m
               memory: 2Gi
-          image: ghcr.io/mealie-recipes/mealie:v3.15.2
+          image: ghcr.io/mealie-recipes/mealie:v3.16.0
           ports:
             - containerPort: 9000
               name: http
