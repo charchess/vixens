@@ -85,6 +85,17 @@ spec:
                       ]
                     },
                     {
+                      "targets": ["%s"],
+                      "labels": {"device_type": "udm", "device_name": "udm-pro-se"},
+                      "scrapeTimeout": "30s", "interval": "60s", "path": "/snmp",
+                      "params": {"module": ["udm_resources"], "auth": ["unifi_v2c_full"]},
+                      "relabelConfigs": [
+                        {"sourceLabels": ["__address__"], "targetLabel": "__param_target"},
+                        {"sourceLabels": ["__param_target"], "targetLabel": "instance"},
+                        {"targetLabel": "__address__", "replacement": "snmp-exporter.monitoring.svc.cluster.local:9116"}
+                      ]
+                    },
+                    {
                       "targets": ["%s", "%s"],
                       "labels": {"device_type": "switch"},
                       "scrapeTimeout": "30s", "interval": "60s", "path": "/snmp",
@@ -115,6 +126,7 @@ spec:
                   ]
                 }
               }' \
+                "${SNMP_TARGET_UDM}" \
                 "${SNMP_TARGET_UDM}" \
                 "${SNMP_TARGET_SW_BAIE}" "${SNMP_TARGET_SW_ATELIER}" \
                 "${SNMP_TARGET_SW_BAIE}" "${SNMP_TARGET_SW_ATELIER}" \
