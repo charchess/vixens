@@ -48,6 +48,7 @@ resources:
   - policy-exception-csi-probes.yaml
   - policy-exception-mixed-sizing.yaml
   - policy-exception-nometrics.yaml
+  - rbac-priorityclasses.yaml
   - rbac-secrets.yaml
   - rbac-servicemonitors.yaml
   - require-goldilocks.yaml

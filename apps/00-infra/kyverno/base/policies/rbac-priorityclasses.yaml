@@ -1,0 +1,26 @@
+---
+# Grant Kyverno admission controller read access to PriorityClasses
+# Required for mutate-priority-class policy APICall evaluation
+# (rule inject-priority-class-from-label fetches the numeric value
+#  from /apis/scheduling.k8s.io/v1/priorityclasses/<name>)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:admission-controller:priorityclasses
+rules:
+  - apiGroups: ["scheduling.k8s.io"]
+    resources: ["priorityclasses"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kyverno:admission-controller:priorityclasses
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kyverno:admission-controller:priorityclasses
+subjects:
+  - kind: ServiceAccount
+    name: kyverno-admission-controller
+    namespace: kyverno
