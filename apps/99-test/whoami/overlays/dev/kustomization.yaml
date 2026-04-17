@@ -7,4 +7,3 @@ resources:
 - ingress.yaml
 components:
 - ../../../../_shared/components/dev-hibernate
-- ../../../../_shared/components/probes/basic
