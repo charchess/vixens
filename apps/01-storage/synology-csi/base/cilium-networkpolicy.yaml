@@ -1,14 +1,14 @@
 ---
-# keda-operator
+# synology-csi-controller — provisioner/attacher/resizer/snapshotter
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: keda-operator
-  namespace: keda
+  name: synology-csi-controller
+  namespace: synology-csi
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: keda-operator
+      app: synology-csi-controller
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -16,39 +16,33 @@ spec:
   egress:
     - {}
 ---
-# keda-admission-webhooks — reçoit des appels de kube-apiserver
+# synology-csi-node — node driver (iSCSI mount)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: keda-admission-webhooks
-  namespace: keda
+  name: synology-csi-node
+  namespace: synology-csi
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: keda-admission-webhooks
+      app: synology-csi-node
   ingress:
-    - fromEntities:
-        - kube-apiserver
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
   egress:
     - {}
 ---
-# keda http-add-on (controller, scaler, interceptor)
+# iscsi-lock-cleanup — DaemonSet lock management
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: keda-http-add-on
-  namespace: keda
+  name: iscsi-lock-cleanup
+  namespace: synology-csi
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: http-add-on
+      app: iscsi-lock-cleanup
   ingress:
     - fromEndpoints:
         - matchLabels:

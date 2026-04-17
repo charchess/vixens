@@ -2,18 +2,15 @@
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: gluetun
+  name: local-path-provisioner
+  namespace: local-path-storage
 spec:
   endpointSelector:
     matchLabels:
-      app: gluetun
+      app: local-path-provisioner
   ingress:
     - fromEndpoints:
         - matchLabels:
-            io.kubernetes.pod.namespace: traefik
-      toPorts:
-        - ports:
-            - port: "8888"
-              protocol: TCP
+            io.kubernetes.pod.namespace: monitoring
   egress:
     - {}

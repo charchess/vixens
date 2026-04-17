@@ -17,3 +17,5 @@ spec:
         - ports:
             - port: "60072"
               protocol: TCP
+  egress:
+    - {}

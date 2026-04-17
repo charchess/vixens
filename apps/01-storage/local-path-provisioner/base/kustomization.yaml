@@ -8,6 +8,7 @@ resources:
   - deployment.yaml
   - configmap.yaml
   - storage-class.yaml
+  - cilium-networkpolicy.yaml
 labels:
   - pairs:
       app.kubernetes.io/name: local-path-provisioner

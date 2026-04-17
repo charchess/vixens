@@ -22,3 +22,5 @@ spec:
         - matchLabels:
             app: n8n
             io.kubernetes.pod.namespace: services
+  egress:
+    - {}

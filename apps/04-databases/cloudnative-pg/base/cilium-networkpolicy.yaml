@@ -1,19 +1,20 @@
 ---
+# cloudnative-pg operator — reçoit des appels webhook de kube-apiserver
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: cert-manager-webhook-gandi
-  namespace: cert-manager
+  name: cloudnative-pg
+  namespace: cnpg-system
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: cert-manager-webhook-gandi
+      app.kubernetes.io/name: cloudnative-pg
   ingress:
     - fromEntities:
         - kube-apiserver
       toPorts:
         - ports:
-            - port: "443"
+            - port: "9443"
               protocol: TCP
     - fromEndpoints:
         - matchLabels:

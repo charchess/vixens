@@ -22,6 +22,8 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    - {}
 ---
 # kyverno background-controller
 apiVersion: cilium.io/v2
@@ -38,6 +40,8 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    - {}
 ---
 # kyverno cleanup-controller — reçoit des appels de kube-apiserver
 apiVersion: cilium.io/v2
@@ -62,6 +66,8 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    - {}
 ---
 # kyverno reports-controller
 apiVersion: cilium.io/v2
@@ -78,3 +84,5 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    - {}

@@ -17,3 +17,5 @@ spec:
         - ports:
             - port: "3000"
               protocol: TCP
+  egress:
+    - {}

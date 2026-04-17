@@ -17,3 +17,5 @@ spec:
         - ports:
             - port: "7880"
               protocol: TCP
+  egress:
+    - {}

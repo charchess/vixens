@@ -15,3 +15,5 @@ spec:
         - ports:
             - port: "8787"
               protocol: TCP
+  egress:
+    - {}

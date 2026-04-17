@@ -17,3 +17,5 @@ spec:
         - ports:
             - port: "4466"
               protocol: TCP
+  egress:
+    - {}
