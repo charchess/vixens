@@ -1,4 +1,10 @@
 ---
+# traefik — reverse proxy + ingress controller
+# Ports TCP: 80 (web), 443 (websecure), 25 (smtp), 514 (syslog), 587 (submission),
+#            993 (imaps), 1883 (mqtt), 3483 (slimproto), 5000 (frigate-api),
+#            5683 (coiot), 8554 (frigate-rtsp), 8555 (frigate-webrtc)
+# Ports UDP: 53 (dns), 514 (syslog), 3483 (slimproto), 5683 (coiot)
+# cross-node traffic: source = cilium_host IP → needs remote-node entity alongside world/cluster
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -12,12 +18,51 @@ spec:
     - fromEntities:
         - world
         - cluster
+        - remote-node
       toPorts:
         - ports:
             - port: "80"
               protocol: TCP
             - port: "443"
               protocol: TCP
+            - port: "25"
+              protocol: TCP
+            - port: "53"
+              protocol: TCP
+            - port: "514"
+              protocol: TCP
+            - port: "587"
+              protocol: TCP
+            - port: "993"
+              protocol: TCP
+            - port: "1883"
+              protocol: TCP
+            - port: "3483"
+              protocol: TCP
+            - port: "5000"
+              protocol: TCP
+            - port: "5683"
+              protocol: TCP
+            - port: "8554"
+              protocol: TCP
+            - port: "8555"
+              protocol: TCP
+    - fromEntities:
+        - world
+        - cluster
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "514"
+              protocol: UDP
+            - port: "3483"
+              protocol: UDP
+            - port: "5683"
+              protocol: UDP
+            - port: "8555"
+              protocol: UDP
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring

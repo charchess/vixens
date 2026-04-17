@@ -1,6 +1,6 @@
 ---
 # metrics-server — collecte les métriques kubelet sur chaque node
-# Ingress: kubelet (remote-node) → metrics-server:4443 (aggregated API)
+# Ingress: kube-apiserver (host/remote-node) → metrics-server:10250 (--secure-port=10250)
 # Egress: metrics-server → kubelet sur tous les nodes (port 10250)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -17,7 +17,7 @@ spec:
         - remote-node
       toPorts:
         - ports:
-            - port: "4443"
+            - port: "10250"
               protocol: TCP
     - fromEndpoints:
         - matchLabels:

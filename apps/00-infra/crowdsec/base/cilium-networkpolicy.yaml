@@ -14,7 +14,7 @@ spec:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
 ---
-# crowdsec-lapi — reçoit des requêtes de Traefik (bouncer) et monitoring
+# crowdsec-lapi — reçoit des requêtes de Traefik (bouncer), agents crowdsec et monitoring
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -28,6 +28,8 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: traefik
+        - matchLabels:
+            io.kubernetes.pod.namespace: crowdsec
       toPorts:
         - ports:
             - port: "8080"
