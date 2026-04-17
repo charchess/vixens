@@ -15,6 +15,13 @@ spec:
         - ports:
             - port: "9000"
               protocol: TCP
+    # remote-node: cilium_host health checks + cross-node VXLAN identity resolution fallback
+    - fromEntities:
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
