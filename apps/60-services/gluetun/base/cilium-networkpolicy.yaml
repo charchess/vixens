@@ -15,5 +15,12 @@ spec:
         - ports:
             - port: "8888"
               protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: downloads
+      toPorts:
+        - ports:
+            - port: "1080"
+              protocol: TCP
   egress:
     - {}
