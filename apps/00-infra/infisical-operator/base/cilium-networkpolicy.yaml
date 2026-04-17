@@ -12,3 +12,14 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # infisical-operator → kube-apiserver (watch InfisicalSecret CRDs, patch K8s Secrets)
+    - toEntities:
+        - kube-apiserver
+    # infisical-operator → Infisical instance (self-hosted on NAS at 192.168.111.69:8085)
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "8085"
+              protocol: TCP

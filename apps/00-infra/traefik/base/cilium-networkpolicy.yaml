@@ -66,3 +66,17 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # traefik → all backend services (reverse-proxy, TCP/UDP proxies to any namespace)
+    - toEntities:
+        - cluster
+    # traefik → kube-apiserver (service discovery, IngressRoutes via CRD watch)
+    - toEntities:
+        - kube-apiserver
+    # traefik → ACME (Let's Encrypt), external APIs
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

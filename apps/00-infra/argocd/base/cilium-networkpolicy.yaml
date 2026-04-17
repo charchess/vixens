@@ -20,3 +20,20 @@ spec:
     - fromEntities:
         - host
         - remote-node
+  egress:
+    # argocd-controller → redis, repo-server, dex, server (intra-namespace)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: argocd
+    # argocd-controller → kube-apiserver (manage cluster resources, watch CRDs)
+    - toEntities:
+        - kube-apiserver
+    # argocd-repo-server → git/helm repos, argocd-server → SSO/webhooks
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "80"
+              protocol: TCP
