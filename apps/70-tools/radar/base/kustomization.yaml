@@ -5,6 +5,7 @@ namespace: tools
 resources:
   - manifests.yaml
   - rbac-view-binding.yaml
+  - cilium-networkpolicy.yaml
 
 patches:
   - target:

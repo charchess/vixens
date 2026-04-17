@@ -1,0 +1,66 @@
+---
+# policy-reporter core
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: policy-reporter
+  namespace: policy-reporter
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: policy-reporter
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+---
+# policy-reporter kyverno-plugin
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: policy-reporter-kyverno-plugin
+  namespace: policy-reporter
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: kyverno-plugin
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+---
+# policy-reporter UI
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: policy-reporter-ui
+  namespace: policy-reporter
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: ui
+      app.kubernetes.io/part-of: policy-reporter
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring

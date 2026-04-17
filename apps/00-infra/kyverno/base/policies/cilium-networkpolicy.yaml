@@ -1,0 +1,84 @@
+---
+# kyverno admission-controller — reçoit des appels de kube-apiserver
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: kyverno-admission-controller
+  namespace: kyverno
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: admission-controller
+      app.kubernetes.io/instance: kyverno
+  egress:
+    - {}
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "9443"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+---
+# kyverno background-controller
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: kyverno-background-controller
+  namespace: kyverno
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: background-controller
+      app.kubernetes.io/instance: kyverno
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+---
+# kyverno cleanup-controller — reçoit des appels de kube-apiserver
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: kyverno-cleanup-controller
+  namespace: kyverno
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: cleanup-controller
+      app.kubernetes.io/instance: kyverno
+  egress:
+    - {}
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "9443"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+---
+# kyverno reports-controller
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: kyverno-reports-controller
+  namespace: kyverno
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: reports-controller
+      app.kubernetes.io/instance: kyverno
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring

@@ -1,0 +1,47 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: sakapuss-backend
+  namespace: sakapuss
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: sakapuss-backend
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+        - matchLabels:
+            app: sakapuss
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: sakapuss-frontend
+  namespace: sakapuss
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: sakapuss-frontend
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring

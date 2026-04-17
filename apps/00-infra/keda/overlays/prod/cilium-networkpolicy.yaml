@@ -1,0 +1,57 @@
+---
+# keda-operator
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: keda-operator
+  namespace: keda
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: keda-operator
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+---
+# keda-admission-webhooks — reçoit des appels de kube-apiserver
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: keda-admission-webhooks
+  namespace: keda
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: keda-admission-webhooks
+  egress:
+    - {}
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+---
+# keda http-add-on (controller, scaler, interceptor)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: keda-http-add-on
+  namespace: keda
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: http-add-on
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring

@@ -62,3 +62,4 @@ resources:
   - sizing-audit.yaml
   - sizing-v2-mutate.yaml
   - sizing-vpa-generate.yaml
+  - cilium-networkpolicy.yaml

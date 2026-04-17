@@ -1,0 +1,16 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: trivy-operator
+  namespace: security
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: trivy-operator
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring

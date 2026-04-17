@@ -1,0 +1,30 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: amule
+  namespace: downloads
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: amule
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+      toPorts:
+        - ports:
+            - port: "4711"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+    - toPorts:
+        - ports:
+            - port: "4662"
+              protocol: TCP
+            - port: "4665"
+              protocol: UDP
+            - port: "4672"
+              protocol: UDP

@@ -8,3 +8,4 @@ resources:
   - infisical-secret.yaml
   - rbac.yaml
   - vmscrape.yaml
+  - cilium-networkpolicy.yaml

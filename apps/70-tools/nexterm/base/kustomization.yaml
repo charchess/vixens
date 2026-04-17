@@ -7,5 +7,6 @@ resources:
   - service.yaml
   - infisical-secret.yaml
   - pdb.yaml
+  - cilium-networkpolicy.yaml
 components:
   - ../../../_shared/components/revision-history-limit

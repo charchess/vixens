@@ -1,0 +1,60 @@
+---
+# vpa-admission-controller — reçoit des appels de kube-apiserver
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: vpa-admission-controller
+  namespace: vpa
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: vertical-pod-autoscaler
+      app.kubernetes.io/component: admission-controller
+  egress:
+    - {}
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "8944"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+---
+# vpa-recommender
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: vpa-recommender
+  namespace: vpa
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: vertical-pod-autoscaler
+      app.kubernetes.io/component: recommender
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+---
+# vpa-updater
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: vpa-updater
+  namespace: vpa
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: vertical-pod-autoscaler
+      app.kubernetes.io/component: updater
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
