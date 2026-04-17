@@ -14,4 +14,5 @@ resources:
   - dashboards/velero.yaml
   - dashboards/cert-manager.yaml
   - dashboards/unifi-snmp.yaml
+  - dashboards/unifi-udm-resources.yaml
 # Helm chart managed by ArgoCD

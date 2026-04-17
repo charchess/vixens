@@ -195,3 +195,58 @@ data:
                 labelname: ifAlias
                 oid: 1.3.6.1.2.1.31.1.1.1.18
                 type: DisplayString
+
+      udm_resources:
+        walk:
+          - 1.3.6.1.4.1.2021.11  # UCD-SNMP-MIB CPU raw counters
+          - 1.3.6.1.4.1.2021.4   # UCD-SNMP-MIB memory
+          - 1.3.6.1.2.1.1.3      # sysUpTime
+        metrics:
+          - name: sysUpTime
+            oid: 1.3.6.1.2.1.1.3.0
+            type: gauge
+            help: Time since last reinit (centiseconds)
+
+          # CPU raw counters (UCD-SNMP-MIB) — use rate() in Grafana
+          - name: ssCpuRawUser
+            oid: 1.3.6.1.4.1.2021.11.50.0
+            type: counter
+            help: CPU time spent in user space (raw ticks)
+          - name: ssCpuRawNice
+            oid: 1.3.6.1.4.1.2021.11.51.0
+            type: counter
+            help: CPU time spent in nice processes (raw ticks)
+          - name: ssCpuRawSystem
+            oid: 1.3.6.1.4.1.2021.11.52.0
+            type: counter
+            help: CPU time spent in kernel space (raw ticks)
+          - name: ssCpuRawIdle
+            oid: 1.3.6.1.4.1.2021.11.53.0
+            type: counter
+            help: CPU idle time (raw ticks)
+          - name: ssCpuRawWait
+            oid: 1.3.6.1.4.1.2021.11.54.0
+            type: counter
+            help: CPU time waiting for I/O (raw ticks)
+          - name: ssCpuRawInterrupt
+            oid: 1.3.6.1.4.1.2021.11.56.0
+            type: counter
+            help: CPU time spent handling hardware interrupts (raw ticks)
+
+          # Memory (UCD-SNMP-MIB) — values in KB
+          - name: memTotalReal
+            oid: 1.3.6.1.4.1.2021.4.5.0
+            type: gauge
+            help: Total RAM in KB
+          - name: memAvailReal
+            oid: 1.3.6.1.4.1.2021.4.6.0
+            type: gauge
+            help: Available RAM in KB (excluding buffers/cache)
+          - name: memBuffer
+            oid: 1.3.6.1.4.1.2021.4.14.0
+            type: gauge
+            help: Memory used as buffers in KB
+          - name: memCached
+            oid: 1.3.6.1.4.1.2021.4.15.0
+            type: gauge
+            help: Memory used as cache in KB
