@@ -10,7 +10,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: metrics-server
+      k8s-app: metrics-server
   ingress:
     - fromEntities:
         - host

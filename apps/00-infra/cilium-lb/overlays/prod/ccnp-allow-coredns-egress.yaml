@@ -5,7 +5,7 @@
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
-  name: allow-coredns-egress
+  name: allow-coredns-upstream-egress
 spec:
   endpointSelector:
     matchLabels:

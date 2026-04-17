@@ -2,15 +2,14 @@
 # ArgoCD — communication interne entre composants
 # Critique : sans cette CNP, selfHeal est bloqué quand le default-deny est actif
 # argocd-application-controller <-> argocd-repo-server <-> argocd-redis <-> argocd-server
+# endpointSelector: {} = tous les pods du namespace argocd
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: argocd
   namespace: argocd
 spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/part-of: argocd
+  endpointSelector: {}
   ingress:
     - fromEndpoints:
         - matchLabels:
