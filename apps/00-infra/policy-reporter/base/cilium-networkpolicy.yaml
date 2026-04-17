@@ -36,7 +36,7 @@ spec:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
 ---
-# policy-reporter UI
+# policy-reporter UI — reçoit des requêtes de Traefik, monitoring, et du backend policy-reporter
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -51,6 +51,8 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: traefik
+        - matchLabels:
+            io.kubernetes.pod.namespace: policy-reporter
       toPorts:
         - ports:
             - port: "8080"
