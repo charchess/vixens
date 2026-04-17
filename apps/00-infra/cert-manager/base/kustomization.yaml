@@ -6,3 +6,4 @@ resources:
   - cluster-issuer-prod.yaml
   - servicemonitor.yaml
   - pdb.yaml
+  - cilium-networkpolicy.yaml

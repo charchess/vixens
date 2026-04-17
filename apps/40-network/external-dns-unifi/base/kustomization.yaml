@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - infisical-secret.yaml
   - rbac-fix.yaml
+  - cilium-networkpolicy.yaml

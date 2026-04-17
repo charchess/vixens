@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - servicemonitor.yaml
   - pdb.yaml
+  - cilium-networkpolicy.yaml

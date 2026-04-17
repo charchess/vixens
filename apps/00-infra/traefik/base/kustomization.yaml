@@ -5,3 +5,4 @@ resources:
   - middleware-redirect-https.yaml
   - middleware-crowdsec-bouncer.yaml
   - infisical-crowdsec-bouncer.yaml
+  - cilium-networkpolicy.yaml

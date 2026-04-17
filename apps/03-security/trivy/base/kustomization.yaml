@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: security
 resources:
   - manifests.yaml
+  - cilium-networkpolicy.yaml
 
 patches:
   # Add resources for Bronze maturity

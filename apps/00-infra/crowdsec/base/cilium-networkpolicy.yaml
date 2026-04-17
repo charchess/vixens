@@ -1,0 +1,41 @@
+---
+# crowdsec-agent (collecte logs, pas d'ingress externe)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: crowdsec-agent
+  namespace: crowdsec
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: crowdsec-agent
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+---
+# crowdsec-lapi — reçoit des requêtes de Traefik (bouncer) et monitoring
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: crowdsec-lapi
+  namespace: crowdsec
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: crowdsec-lapi
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring

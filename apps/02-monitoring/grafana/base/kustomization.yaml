@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: monitoring
 resources:
   - infisical-secret.yaml
+  - cilium-networkpolicy.yaml
   - dashboards/traefik.yaml
   - dashboards/postgresql.yaml
   - dashboards/homeassistant.yaml

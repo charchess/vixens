@@ -4,3 +4,4 @@ kind: Kustomization
 namespace: policy-reporter
 resources:
   - servicemonitor.yaml
+  - cilium-networkpolicy.yaml

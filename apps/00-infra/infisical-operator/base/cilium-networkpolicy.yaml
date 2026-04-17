@@ -1,0 +1,16 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: infisical-operator
+  namespace: infisical-operator-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: secrets-operator
+  egress:
+    - {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring

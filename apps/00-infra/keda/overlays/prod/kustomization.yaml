@@ -6,6 +6,7 @@ resources:
   - pdb-keda-operator.yaml
   - pdb-keda-metrics-apiserver.yaml
   - pdb-keda-webhooks.yaml
+  - cilium-networkpolicy.yaml
 
 patches:
   - patch: |-

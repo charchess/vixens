@@ -5,6 +5,7 @@ namespace: monitoring
 resources:
   - alertmanager-infisical-secret.yaml
   - vmrule-pvc-pending.yaml
+  - cilium-networkpolicy.yaml
 
 components:
   - ../../../_shared/components/revision-history-limit
