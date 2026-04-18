@@ -26,3 +26,36 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # firefly-iii → PostgreSQL database
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: databases
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    # firefly-iii → kube-apiserver (health checks, service discovery)
+    - toEntities:
+        - kube-apiserver
+---
+# firefly-iii CronJob pods have different labels from the main deployment
+# Pod template only sets: vixens.io/sizing.firefly-iii-cron: G-nano
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: firefly-iii-cron
+  namespace: finance
+spec:
+  endpointSelector:
+    matchLabels:
+      vixens.io/sizing.firefly-iii-cron: G-nano
+  egress:
+    # cron → PostgreSQL database (scheduled financial tasks)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: databases
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP

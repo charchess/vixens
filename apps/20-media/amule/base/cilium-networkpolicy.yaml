@@ -30,7 +30,7 @@ spec:
     - toEntities:
         - world
   egress:
-    # amule → gluetun SOCKS5 proxy (all P2P traffic tunneled through VPN)
+    # amule → gluetun SOCKS5 proxy (P2P traffic tunneled through VPN)
     - toEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: services
@@ -38,3 +38,6 @@ spec:
         - ports:
             - port: "1080"
               protocol: TCP
+    # amule → world (local NAS access, direct P2P connections not via proxy)
+    - toEntities:
+        - world
