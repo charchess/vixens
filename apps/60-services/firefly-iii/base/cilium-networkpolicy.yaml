@@ -38,6 +38,9 @@ spec:
     # firefly-iii → kube-apiserver (health checks, service discovery)
     - toEntities:
         - kube-apiserver
+    # firefly-iii → world (NAS/MinIO at 192.168.111.69:9000, external APIs)
+    - toEntities:
+        - world
 ---
 # firefly-iii CronJob pods have different labels from the main deployment
 # Pod template only sets: vixens.io/sizing.firefly-iii-cron: G-nano
