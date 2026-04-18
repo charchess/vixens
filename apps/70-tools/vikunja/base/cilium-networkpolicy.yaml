@@ -19,3 +19,14 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # vikunja → databases (MariaDB/PostgreSQL)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: databases
+    # vikunja → world (NAS/MinIO at 192.168.111.69:9000, external OAuth/SMTP)
+    - toEntities:
+        - world
+    # vikunja → kube-apiserver
+    - toEntities:
+        - kube-apiserver

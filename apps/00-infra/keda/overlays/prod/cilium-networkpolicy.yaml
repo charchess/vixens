@@ -17,6 +17,14 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: keda
+  egress:
+    # keda-operator → kube-apiserver (watch ScaledObjects, manage HPA)
+    - toEntities:
+        - kube-apiserver
+    # keda-operator → keda http-add-on components (external-scaler:9090, etc.)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: keda
 ---
 # keda-admission-webhooks — reçoit des appels de kube-apiserver
 apiVersion: cilium.io/v2
@@ -88,3 +96,8 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
+  egress:
+    # metrics-apiserver → keda-operator:9666 (aggregate metrics queries)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: keda
