@@ -25,3 +25,12 @@ spec:
         - ports:
             - port: "2020"
               protocol: TCP
+  egress:
+    # fluent-bit-syslog → loki (syslog log shipping)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "3100"
+              protocol: TCP

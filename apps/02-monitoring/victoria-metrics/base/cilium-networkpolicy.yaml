@@ -17,16 +17,17 @@ spec:
             - port: "8429"
               protocol: TCP
   egress:
-    # vmagent → vmalert, vmsingle, and other monitoring endpoints (scrape targets + remote_write)
-    - toEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: monitoring
-    # vmagent → kubelet on all nodes (node metrics scraping, port 10250)
+    # vmagent → all cluster pods (scrapes metrics from every namespace)
+    - toEntities:
+        - cluster
+    # vmagent → kubelet (port 10250) + node-exporter hostNetwork (port 9100) on all nodes
     - toEntities:
         - host
         - remote-node
       toPorts:
         - ports:
+            - port: "9100"
+              protocol: TCP
             - port: "10250"
               protocol: TCP
 ---
