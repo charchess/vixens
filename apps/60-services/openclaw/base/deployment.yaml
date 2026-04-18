@@ -228,7 +228,8 @@ spec:
                       'moonshot/kimi-k2.5': {'alias': 'Kimi'},
                       'kilocode/moonshotai/kimi-k2.5': {'alias': 'Kimi (kilocode)'},
                   })
-                  print('Default model: moonshot/kimi-k2.5')
+                  agent_defaults.setdefault('llm', {})['idleTimeoutSeconds'] = 300
+                  print('Default model: moonshot/kimi-k2.5, idleTimeout: 300s')
                   json.dump(d, open(p, 'w'))
                   print('Config keys checked')
 
