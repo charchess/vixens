@@ -5,7 +5,7 @@ namespace: cnpg-system
 resources:
   - servicemonitor.yaml
   - pdb.yaml
-  - ../../base/cilium-networkpolicy.yaml
+  - cilium-networkpolicy.yaml
 
 components:
   - ../../../../_shared/components/poddisruptionbudget/1

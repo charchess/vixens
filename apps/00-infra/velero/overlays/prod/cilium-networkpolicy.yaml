@@ -1,0 +1,22 @@
+---
+# velero server
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: velero
+  namespace: velero
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: velero
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+  egress:
+    # velero → world (NAS/MinIO at 192.168.111.69:9000 for backup storage)
+    - toEntities:
+        - world
+    # velero → kube-apiserver (watch/restore cluster resources)
+    - toEntities:
+        - kube-apiserver

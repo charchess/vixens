@@ -12,3 +12,28 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # trivy-operator → kube-apiserver (watch/create VulnerabilityReports)
+    - toEntities:
+        - kube-apiserver
+    # trivy-operator → world (pull images from registries for scanning)
+    - toEntities:
+        - world
+---
+# scan-vulnerabilityreport jobs spawned by trivy-operator to scan images
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: trivy-scan-jobs
+  namespace: security
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: trivy-operator
+  egress:
+    # scan jobs → world (pull images from container registries)
+    - toEntities:
+        - world
+    # scan jobs → kube-apiserver (report results)
+    - toEntities:
+        - kube-apiserver
