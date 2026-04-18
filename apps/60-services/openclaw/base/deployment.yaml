@@ -222,10 +222,11 @@ spec:
                   agent_defaults = d.setdefault('agents', {}).setdefault('defaults', {})
                   agent_defaults['model'] = {
                       'primary': 'moonshot/kimi-k2.5',
-                      'fallbacks': ['anthropic/claude-3-5-haiku-20241022'],
+                      'fallbacks': ['google-gemini-cli/gemini-3.1-flash-preview'],
                   }
                   agent_defaults.setdefault('models', {}).update({
                       'moonshot/kimi-k2.5': {'alias': 'Kimi'},
+                      'google-gemini-cli/gemini-3.1-flash-preview': {'alias': 'Gemini Flash'},
                   })
                   # idleTimeoutSeconds=0: kimi-k2.5 is a reasoning model — thinks silently
                   # before streaming. Idle timeout fires during silent reasoning phase.
