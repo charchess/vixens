@@ -13,6 +13,15 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # crowdsec-agent → crowdsec-lapi:8080 (push decisions/alerts)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: crowdsec
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
 ---
 # crowdsec-lapi — reçoit des requêtes de Traefik (bouncer), agents crowdsec et monitoring
 apiVersion: cilium.io/v2
@@ -37,3 +46,19 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # crowdsec-lapi → databases (PostgreSQL for decisions/bans storage)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: databases
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    # crowdsec-lapi → world (CrowdSec Central API for community blocklists)
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

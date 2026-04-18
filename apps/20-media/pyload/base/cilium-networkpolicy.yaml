@@ -19,3 +19,7 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # pyload → world (download sources, NAS/MinIO at 192.168.111.69:9000)
+    - toEntities:
+        - world

@@ -12,3 +12,14 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # external-dns-gandi → Gandi LiveDNS API (213.167.231.x:443)
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    # external-dns-gandi → kube-apiserver (watch Ingress/Service resources)
+    - toEntities:
+        - kube-apiserver
