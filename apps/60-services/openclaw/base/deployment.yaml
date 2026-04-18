@@ -218,18 +218,17 @@ spec:
                       control_ui['dangerouslyAllowHostHeaderOriginFallback'] = True
                       print('gateway.controlUi fallback enabled')
                   gateway_cfg.pop('agentModel', None)
-                  # Always force agents default to kilocode/kimi (credits via kilo.ai, not direct moonshot)
+                  # Always force agents default to moonshot/kimi-k2.5 (direct Moonshot API)
                   agent_defaults = d.setdefault('agents', {}).setdefault('defaults', {})
                   agent_defaults['model'] = {
-                      'primary': 'kilocode/moonshotai/kimi-k2.5',
-                      'fallbacks': ['kilocode/moonshotai/kimi-k2-thinking', 'kilocode/moonshotai/kimi-k2-0905'],
+                      'primary': 'moonshot/kimi-k2.5',
+                      'fallbacks': ['kilocode/moonshotai/kimi-k2.5', 'cerebras/qwen-3-235b-a22b-instruct-2507'],
                   }
                   agent_defaults.setdefault('models', {}).update({
-                      'kilocode/moonshotai/kimi-k2.5': {'alias': 'Kimi'},
-                      'kilocode/moonshotai/kimi-k2-thinking': {'alias': 'Kimi Thinking'},
-                      'kilocode/moonshotai/kimi-k2-0905': {'alias': 'Kimi K2 0905'},
+                      'moonshot/kimi-k2.5': {'alias': 'Kimi'},
+                      'kilocode/moonshotai/kimi-k2.5': {'alias': 'Kimi (kilocode)'},
                   })
-                  print('Default model: kilocode/moonshotai/kimi-k2.5')
+                  print('Default model: moonshot/kimi-k2.5')
                   json.dump(d, open(p, 'w'))
                   print('Config keys checked')
 
@@ -292,6 +291,7 @@ spec:
               # Part 4: Inject provider API keys into all agent auth-profiles.json
               # Also proactively create main agent dir so auth is available on first boot
               cerebras_key = os.environ.get('CEREBRAS_API_KEY', '')
+              moonshot_key = os.environ.get('MOONSHOT_API_KEY', '')
               kilo_key = os.environ.get('KILOCODE_API_KEY', '')
               main_agent_dir = pathlib.Path('/data/.openclaw/agents/main/agent')
               main_agent_dir.mkdir(parents=True, exist_ok=True)
@@ -318,7 +318,14 @@ spec:
                           'provider': 'ollama-local',
                           'key': 'none',
                       }
-                      # Kilo.ai gateway
+                      # Moonshot direct API
+                      if moonshot_key:
+                          profiles['moonshot:default'] = {
+                              'type': 'api_key',
+                              'provider': 'moonshot',
+                              'key': moonshot_key,
+                          }
+                      # Kilo.ai gateway (fallback)
                       if kilo_key:
                           profiles['kilocode:default'] = {
                               'type': 'api_key',
@@ -330,6 +337,8 @@ spec:
                       print(f'Warning: could not update {ap_path}: {e}')
               if cerebras_key:
                   print('Cerebras API key injected into auth profiles')
+              if moonshot_key:
+                  print('Moonshot API key injected into auth profiles')
               if kilo_key:
                   print('Kilo.ai API key injected into auth profiles')
               print('Ollama-local auth entry injected into auth profiles')
