@@ -27,3 +27,7 @@ spec:
               protocol: UDP
     - toEntities:
         - world
+  egress:
+    # qbittorrent → world (P2P traffic, BitTorrent peers)
+    - toEntities:
+        - world
