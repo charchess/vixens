@@ -1,7 +1,7 @@
 ---
 # Hubble-relay doit se connecter aux cilium agents sur chaque node
 # Port 4244 = cilium agent gRPC (Hubble observer)
-# enableDefaultDeny: false = additif seulement
+# enableDefaultDeny: true = default-deny actif (ingress + egress)
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
@@ -12,8 +12,8 @@ spec:
       io.kubernetes.pod.namespace: kube-system
       k8s-app: hubble-relay
   enableDefaultDeny:
-    ingress: false
-    egress: false
+    ingress: true
+    egress: true
   egress:
     - toEntities:
         - host

@@ -2,7 +2,7 @@
 # Autorise CoreDNS à recevoir les requêtes DNS depuis tous les pods/nodes
 # Nécessaire avec enableDefaultDeny.ingress: true sur CoreDNS
 # allow-coredns-egress couvre l'egress des pods SOURCE, mais pas l'ingress de CoreDNS lui-même
-# enableDefaultDeny: false = additif seulement
+# enableDefaultDeny: true = default-deny actif (ingress + egress)
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
@@ -13,8 +13,8 @@ spec:
       io.kubernetes.pod.namespace: kube-system
       k8s-app: kube-dns
   enableDefaultDeny:
-    ingress: false
-    egress: false
+    ingress: true
+    egress: true
   ingress:
     - fromEndpoints:
         - {}
