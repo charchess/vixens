@@ -21,6 +21,14 @@ spec:
     - toEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+    # vmagent → kubelet on all nodes (node metrics scraping, port 10250)
+    - toEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "10250"
+              protocol: TCP
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -130,4 +138,12 @@ spec:
       toPorts:
         - ports:
             - port: "8080"
+              protocol: TCP
+    # kube-apiserver calls admission webhook on port 9443
+    - fromEntities:
+        - kube-apiserver
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "9443"
               protocol: TCP
