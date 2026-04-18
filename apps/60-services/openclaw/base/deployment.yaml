@@ -233,8 +233,8 @@ spec:
                   # timeoutSeconds=1800: large session contexts need up to 30min to reason.
                   agent_defaults.setdefault('llm', {})['idleTimeoutSeconds'] = 0
                   agent_defaults['timeoutSeconds'] = 1800
-                  agent_defaults['compaction'] = {'mode': 'auto'}
-                  print('Default model: moonshot/kimi-k2.5, idleTimeout: disabled, total: 1800s, compaction: auto')
+                  agent_defaults['compaction'] = {'mode': 'safeguard'}
+                  print('Default model: moonshot/kimi-k2.5, idleTimeout: disabled, total: 1800s, compaction: safeguard')
                   json.dump(d, open(p, 'w'))
                   print('Config keys checked')
 
