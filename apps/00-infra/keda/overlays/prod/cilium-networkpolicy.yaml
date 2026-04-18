@@ -25,6 +25,10 @@ spec:
     - toEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: keda
+    # keda-operator → databases (PostgreSQL ScaledObject triggers)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: databases
 ---
 # keda-admission-webhooks — reçoit des appels de kube-apiserver
 apiVersion: cilium.io/v2
