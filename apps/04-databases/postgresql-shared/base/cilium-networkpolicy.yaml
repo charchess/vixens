@@ -46,3 +46,11 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # postgresql-shared → world (NAS/MinIO at 192.168.111.69:9000 for WAL archiving via barman)
+    - toEntities:
+        - world
+    # postgresql-shared → CNPG operator barman API + intra-cluster replication
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: databases
