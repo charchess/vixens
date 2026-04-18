@@ -169,6 +169,11 @@ spec:
                   d.setdefault('plugins', {}).setdefault('entries', {})['claw-hass'] = {'enabled': False}
                   # Enable kilocode plugin (kilo.ai gateway — MiniMax, etc.)
                   d['plugins']['entries']['kilocode'] = {'enabled': True}
+                  # Register kilocode auth profile (required for UI to show provider as authenticated)
+                  d.setdefault('auth', {}).setdefault('profiles', {}).setdefault('kilocode:default', {
+                      'provider': 'kilocode',
+                      'mode': 'api_key',
+                  })
                   # Ensure google-gemini-cli provider has gemini-3-flash-preview
                   # NOTE: only inject if the provider already exists (openclaw manages baseUrl internally)
                   # Creating it from scratch leaves baseUrl=undefined which fails validation
