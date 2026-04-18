@@ -1,6 +1,6 @@
 ---
 # Autorise tous les pods à résoudre le DNS via CoreDNS (kube-system)
-# enableDefaultDeny: false = additif seulement, ne bloque pas le reste de l'egress
+# enableDefaultDeny: true = default-deny actif (ingress + egress)
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
@@ -8,8 +8,8 @@ metadata:
 spec:
   endpointSelector: {}
   enableDefaultDeny:
-    ingress: false
-    egress: false
+    ingress: true
+    egress: true
   egress:
     - toEndpoints:
         - matchLabels:

@@ -2,7 +2,7 @@
 # Autorise tous les pods à joindre le kube-apiserver (port 6443)
 # Nécessaire pour les opérateurs/controllers : cert-manager, kyverno, ArgoCD, etc.
 # egress: [{}] ne couvre pas l'entité réservée kube-apiserver avec enableDefaultDeny
-# enableDefaultDeny: false = additif seulement, ne bloque pas le reste de l'egress
+# enableDefaultDeny: true = default-deny actif (ingress + egress)
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
@@ -10,8 +10,8 @@ metadata:
 spec:
   endpointSelector: {}
   enableDefaultDeny:
-    ingress: false
-    egress: false
+    ingress: true
+    egress: true
   egress:
     - toEntities:
         - kube-apiserver
