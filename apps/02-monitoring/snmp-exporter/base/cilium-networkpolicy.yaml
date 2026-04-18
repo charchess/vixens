@@ -16,3 +16,11 @@ spec:
         - ports:
             - port: "9116"
               protocol: TCP
+  egress:
+    # snmp-exporter → SNMP devices on local network (port 161 UDP)
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "161"
+              protocol: UDP
