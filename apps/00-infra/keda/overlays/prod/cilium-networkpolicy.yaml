@@ -13,6 +13,10 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+    # keda-operator-metrics-apiserver → keda-operator:9666 (internal keda communication)
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: keda
 ---
 # keda-admission-webhooks — reçoit des appels de kube-apiserver
 apiVersion: cilium.io/v2
@@ -49,6 +53,10 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+    # http-add-on internal: external-scaler → interceptor:9090 (scaling coordination)
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: keda
   egress:
     # keda-http-interceptor proxies HTTP requests to backend services across all namespaces
     - toEntities:
