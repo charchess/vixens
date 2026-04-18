@@ -1,0 +1,32 @@
+---
+# cloudnative-pg operator — reçoit des appels webhook de kube-apiserver
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: cloudnative-pg
+  namespace: cnpg-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: cloudnative-pg
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "9443"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+  egress:
+    # cloudnative-pg operator → databases (barman backup API port 8000, PostgreSQL)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: databases
+    # cloudnative-pg operator → kube-apiserver (watch PostgreSQL cluster CRDs)
+    - toEntities:
+        - kube-apiserver
+    # cloudnative-pg operator → world (MinIO/NAS for backup archives)
+    - toEntities:
+        - world
