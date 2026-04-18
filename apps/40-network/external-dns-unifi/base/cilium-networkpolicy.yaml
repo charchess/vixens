@@ -12,3 +12,14 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # external-dns-unifi → Unifi controller (192.168.200.1:443)
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    # external-dns-unifi → kube-apiserver (watch Ingress/Service resources)
+    - toEntities:
+        - kube-apiserver

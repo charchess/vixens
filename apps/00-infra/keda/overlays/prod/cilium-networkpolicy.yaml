@@ -49,6 +49,10 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # keda-http-interceptor proxies HTTP requests to backend services across all namespaces
+    - toEntities:
+        - cluster
 ---
 # keda-operator-metrics-apiserver — external metrics API called by kube-apiserver
 # kube-apiserver connects as remote-node (cross-node) or kube-apiserver entity
