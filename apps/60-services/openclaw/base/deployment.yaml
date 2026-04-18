@@ -25,8 +25,8 @@ spec:
       annotations:
         vixens.io/fast-start: "true"
         vixens.io/nometrics: "true"
-        # openclaw V-xlarge(6Gi) + data-syncer sidecar = 6Gi
-        vixens.io/vpa.max-memory: "6Gi"
+        # openclaw usage ~800Mi idle, 2Gi max cap (mempalace removed)
+        vixens.io/vpa.max-memory: "2Gi"
 
     spec:
       securityContext:
@@ -195,22 +195,7 @@ spec:
                           print('Gemini 3 Flash added to google-gemini-cli provider')
                   else:
                       print('google-gemini-cli provider not yet configured by user, skipping Gemini 3 Flash injection')
-                  # Inject mempalace MCP server if not already configured
-                  mcp = d.setdefault('mcp', {})
-                  servers = mcp.setdefault('servers', {})
-                  if 'mempalace' not in servers:
-                      servers['mempalace'] = {
-                          'type': 'stdio',
-                          'command': 'python3',
-                          'args': ['-m', 'mempalace.mcp_server'],
-                          'env': {
-                              'PYTHONPATH': '/data/tools/mempalace-packages',
-                              'MEMPALACE_PALACE_PATH': '/data/.mempalace',
-                          },
-                      }
-                      print('mempalace MCP server injected')
-                  # Fix Gemma compat: mark as not supporting tools so openclaw skips tool injection
-                  # (mempalace MCP adds tools to every request; Gemma rejects tool-bearing requests)
+                  # Fix Gemma compat: mark as not supporting tools (Gemma rejects tool-bearing requests)
                   # IMPORTANT: only touch ollama/gemma — never touch moonshot/kimi or other providers
                   providers_ref = d.get('models', {}).get('providers', {})
                   ollama = providers_ref.get('ollama-local', {})
@@ -233,19 +218,18 @@ spec:
                       control_ui['dangerouslyAllowHostHeaderOriginFallback'] = True
                       print('gateway.controlUi fallback enabled')
                   gateway_cfg.pop('agentModel', None)
-                  # Configure default model (cerebras) + fallbacks if not set
+                  # Always force agents default to kilocode/kimi (credits via kilo.ai, not direct moonshot)
                   agent_defaults = d.setdefault('agents', {}).setdefault('defaults', {})
-                  if not agent_defaults.get('model', {}).get('primary'):
-                      agent_defaults['model'] = {
-                          'primary': 'cerebras/qwen-3-235b-a22b-instruct-2507',
-                          'fallbacks': ['cerebras/gpt-oss-120b', 'cerebras/llama3.1-8b'],
-                      }
-                      agent_defaults.setdefault('models', {}).update({
-                          'cerebras/qwen-3-235b-a22b-instruct-2507': {},
-                          'cerebras/gpt-oss-120b': {},
-                          'cerebras/llama3.1-8b': {},
-                      })
-                      print('Default model set: cerebras/qwen-3-235b-a22b-instruct-2507')
+                  agent_defaults['model'] = {
+                      'primary': 'kilocode/moonshotai/kimi-k2.5',
+                      'fallbacks': ['kilocode/moonshotai/kimi-k2-thinking', 'kilocode/moonshotai/kimi-k2-0905'],
+                  }
+                  agent_defaults.setdefault('models', {}).update({
+                      'kilocode/moonshotai/kimi-k2.5': {'alias': 'Kimi'},
+                      'kilocode/moonshotai/kimi-k2-thinking': {'alias': 'Kimi Thinking'},
+                      'kilocode/moonshotai/kimi-k2-0905': {'alias': 'Kimi K2 0905'},
+                  })
+                  print('Default model: kilocode/moonshotai/kimi-k2.5')
                   json.dump(d, open(p, 'w'))
                   print('Config keys checked')
 
@@ -417,20 +401,6 @@ spec:
               mkdir -p /data/bin
               printf '#!/bin/sh\nexport HOME=/data\nexport CLAUDE_CONFIG_DIR=/data/.claude\nexec /data/node_modules/.bin/claude-agent-acp "$@"\n' > /data/bin/claude-acp
               chmod +x /data/bin/claude-acp
-              # Install MemPalace MCP server — node:24-bookworm has Python 3.11 = openclaw container
-              # Skips reinstall if version matches. No separate init container needed (same image).
-              MEMPALACE_VERSION="3.2.0"
-              MEMPALACE_PACKAGES="/data/tools/mempalace-packages"
-              VERSION_FILE="/data/tools/.mempalace-version"
-              if [ -f "$VERSION_FILE" ] && [ "$(cat $VERSION_FILE)" = "$MEMPALACE_VERSION" ] && [ -d "$MEMPALACE_PACKAGES" ]; then
-                echo "mempalace v$MEMPALACE_VERSION already installed, skipping"
-              else
-                echo "Installing mempalace v$MEMPALACE_VERSION..."
-                apt-get update -qq && apt-get install -y --no-install-recommends python3-pip -qq
-                python3 -m pip install --target="$MEMPALACE_PACKAGES" --no-cache-dir --break-system-packages "mempalace==$MEMPALACE_VERSION" -q
-                echo "$MEMPALACE_VERSION" > "$VERSION_FILE"
-                echo "mempalace installed successfully"
-              fi
               # Install clawhub — OpenClaw skills registry CLI
               CLAWHUB_VERSION="latest"
               if [ -f /data/bin/.clawhub-version ] && [ "$(cat /data/bin/.clawhub-version)" = "$CLAWHUB_VERSION" ] && [ -d /data/node_modules/clawhub ]; then
@@ -449,7 +419,7 @@ spec:
                 echo "clawhub installed successfully (entry: $CLAWHUB_ENTRY)"
               fi
               # Always fix permissions
-              chown -R 1000:1000 /data/node_modules /data/gemini-cli /data/claude-cli /data/bin "$MEMPALACE_PACKAGES" 2>/dev/null || true
+              chown -R 1000:1000 /data/node_modules /data/gemini-cli /data/claude-cli /data/bin 2>/dev/null || true
           volumeMounts:
             - name: data
               mountPath: /data
@@ -496,8 +466,6 @@ spec:
               value: /data/.gemini
             - name: OPENCLAW_HOME
               value: /data
-            - name: MEMPALACE_PALACE_PATH
-              value: /data/.mempalace
             - name: OPENCLAW_CONFIG_PATH
               value: /data/openclaw.json
             - name: OPENCLAW_PLUGINS
