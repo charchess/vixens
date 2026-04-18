@@ -30,7 +30,7 @@ spec:
       priorityClassName: vixens-low
       containers:
         - name: daemon
-          image: ghcr.io/scanopy/scanopy/daemon:v0.15.6
+          image: ghcr.io/scanopy/scanopy/daemon:v0.16.0
           securityContext:
             privileged: true
           env:
