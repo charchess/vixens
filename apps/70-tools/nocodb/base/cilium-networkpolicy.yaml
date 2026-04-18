@@ -19,3 +19,11 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # nocodb → world (NAS/MinIO at 192.168.111.69:9000 for file storage)
+    - toEntities:
+        - world
+    # nocodb → databases (PostgreSQL/MariaDB)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: databases

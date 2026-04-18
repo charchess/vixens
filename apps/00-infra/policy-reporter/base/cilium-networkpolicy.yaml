@@ -20,6 +20,18 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # policy-reporter → policy-reporter-ui:8080 (backend pushes results to UI)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: policy-reporter
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    # policy-reporter → kube-apiserver (watch PolicyReport CRDs)
+    - toEntities:
+        - kube-apiserver
 ---
 # policy-reporter kyverno-plugin
 apiVersion: cilium.io/v2
