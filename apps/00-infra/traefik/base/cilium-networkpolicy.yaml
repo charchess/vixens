@@ -73,10 +73,6 @@ spec:
     # traefik → kube-apiserver (service discovery, IngressRoutes via CRD watch)
     - toEntities:
         - kube-apiserver
-    # traefik → ACME (Let's Encrypt), external APIs
+    # traefik → ACME, external APIs, and NAS-hosted backends (frigate, etc.)
     - toEntities:
         - world
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
