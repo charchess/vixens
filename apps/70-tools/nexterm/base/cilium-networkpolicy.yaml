@@ -19,3 +19,7 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # nexterm → world (SSH targets, external servers)
+    - toEntities:
+        - world

@@ -19,5 +19,7 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # birdnet-go → world (NAS/MinIO at 192.168.111.69:9000 for recordings)
     - toEntities:
         - world
