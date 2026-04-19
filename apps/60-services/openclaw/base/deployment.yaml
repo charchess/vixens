@@ -218,22 +218,9 @@ spec:
                       control_ui['dangerouslyAllowHostHeaderOriginFallback'] = True
                       print('gateway.controlUi fallback enabled')
                   gateway_cfg.pop('agentModel', None)
-                  # Always force agents default to moonshot/kimi-k2.5 (direct Moonshot API)
-                  agent_defaults = d.setdefault('agents', {}).setdefault('defaults', {})
-                  agent_defaults['model'] = {
-                      'primary': 'moonshot/kimi-k2.5',
-                      'fallbacks': ['kilocode/moonshotai/kimi-k2.5', 'cerebras/qwen-3-235b-a22b-instruct-2507'],
-                  }
-                  agent_defaults.setdefault('models', {}).update({
-                      'moonshot/kimi-k2.5': {'alias': 'Kimi'},
-                      'kilocode/moonshotai/kimi-k2.5': {'alias': 'Kimi (kilocode)'},
-                  })
-                  # idleTimeoutSeconds=0: kimi-k2.5 is a reasoning model — it thinks silently
-                  # before streaming tokens. Idle timeout fires during reasoning phase.
-                  # timeoutSeconds=600: hard cap for truly hung requests.
-                  agent_defaults.setdefault('llm', {})['idleTimeoutSeconds'] = 0
-                  agent_defaults['timeoutSeconds'] = 600
-                  print('Default model: moonshot/kimi-k2.5, idleTimeout: disabled, total: 600s')
+                  # NOTE: agent model config (primary, fallbacks, timeouts) lives in
+                  # /data/openclaw.json and is managed via DataAngel backup/restore.
+                  # Do NOT inject model config here — it would overwrite the restored config.
                   json.dump(d, open(p, 'w'))
                   print('Config keys checked')
 
