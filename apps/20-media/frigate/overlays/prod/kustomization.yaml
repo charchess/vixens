@@ -37,9 +37,10 @@ patches:
         template:
           metadata:
             labels:
-              vixens.io/sizing.frigate: V-2xlarge
+              vixens.io/sizing.frigate: V-manual
             annotations:
               vixens.io/explicitly-allow-root: "true"
+              vixens.io/vpa.update-mode: "Off"
               vixens.io/vpa.max-cpu: "4000m"
               vixens.io/vpa.max-memory: "10Gi"
           spec:
@@ -58,5 +59,12 @@ patches:
                   privileged: true
                   runAsUser: 0
                   runAsGroup: 0
+                resources:
+                  requests:
+                    cpu: "2000m"
+                    memory: "6Gi"
+                  limits:
+                    cpu: "4000m"
+                    memory: "10Gi"
   - path: pvc-patch.yaml
   - path: dataangel.yaml
