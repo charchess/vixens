@@ -520,6 +520,11 @@ spec:
                 secretKeyRef:
                   name: openclaw-secrets
                   key: MOONSHOT_API_KEY
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: GEMINI_API_KEY
           livenessProbe:
             tcpSocket:
               port: 18789
