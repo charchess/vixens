@@ -57,5 +57,12 @@ patches:
                   privileged: true
                   runAsUser: 0
                   runAsGroup: 0
+                resources:
+                  requests:
+                    cpu: "2000m"
+                    memory: "6Gi"
+                  limits:
+                    cpu: "4000m"
+                    memory: "10Gi"
   - path: pvc-patch.yaml
   - path: dataangel.yaml
