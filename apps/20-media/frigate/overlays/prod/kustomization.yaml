@@ -37,10 +37,12 @@ patches:
         template:
           metadata:
             labels:
-              vixens.io/sizing.frigate: V-2xlarge
+              vixens.io/sizing.frigate: V-manual
             annotations:
               vixens.io/explicitly-allow-root: "true"
               vixens.io/vpa.update-mode: "Off"
+              vixens.io/vpa.max-cpu: "4000m"
+              vixens.io/vpa.max-memory: "10Gi"
           spec:
             securityContext:
               runAsNonRoot: false
