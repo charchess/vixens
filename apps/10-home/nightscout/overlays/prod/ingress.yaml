@@ -1,0 +1,35 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nightscout
+  namespace: nightscout
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd
+    external-dns.alpha.kubernetes.io/target: truxonline.com
+    external-dns.alpha.kubernetes.io/public: "true"
+    vixens.io/nossoneeded: "true"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Home
+    gethomepage.dev/name: Nightscout
+    gethomepage.dev/icon: nightscout.png
+    gethomepage.dev/description: Suivi glycémie
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: nightscout.truxonline.com
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: nightscout
+                port:
+                  number: 1337
+  tls:
+    - secretName: nightscout-tls-prod
+      hosts:
+        - nightscout.truxonline.com

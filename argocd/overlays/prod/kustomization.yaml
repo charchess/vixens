@@ -39,6 +39,7 @@ resources:
   - apps/nfs-storage.yaml
   - apps/mail-gateway.yaml
   - apps/homeassistant.yaml
+  - apps/nightscout.yaml
   - apps/mosquitto.yaml
   - apps/mealie.yaml
   - apps/birdnet-go.yaml
