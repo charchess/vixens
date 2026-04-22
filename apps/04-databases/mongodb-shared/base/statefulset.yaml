@@ -1,0 +1,188 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb-shared
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  labels:
+spec:
+  serviceName: mongodb-shared
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb-shared
+  template:
+    metadata:
+      labels:
+        app: mongodb-shared
+        vixens.io/sizing.mongodb: SB-micro
+        vixens.io/sizing.db-backup: V-nano
+        vixens.io/sizing.mongodb-exporter: V-nano
+        vixens.io/backup-profile: "standard"
+      annotations:
+        vixens.io/fast-start: "true"
+        vixens.io/no-long-connections: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9216"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: mongodb
+          image: mongo:8.0
+          ports:
+            - containerPort: 27017
+              name: mongodb
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-shared-credentials
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-shared-credentials
+                  key: MONGO_INITDB_ROOT_PASSWORD
+          startupProbe:
+            exec:
+              command:
+                - mongosh
+                - --quiet
+                - --eval
+                - "db.adminCommand('ping')"
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            exec:
+              command:
+                - mongosh
+                - --quiet
+                - --eval
+                - "db.adminCommand('ping')"
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - mongosh
+                - --quiet
+                - --eval
+                - "db.adminCommand('ping')"
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+        - name: db-backup
+          image: alpine:3.22
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              apk add --no-cache mongodb-tools rclone > /dev/null 2>&1
+              export RCLONE_CONFIG_S3_TYPE=s3
+              export RCLONE_CONFIG_S3_PROVIDER=Other
+              export RCLONE_CONFIG_S3_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+              export RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+              export RCLONE_CONFIG_S3_ENDPOINT=$LITESTREAM_ENDPOINT
+              while true; do
+                TIMESTAMP=$(date +%Y%m%d-%H%M)
+                mongodump \
+                  --uri="mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@localhost:27017" \
+                  --excludeDb=admin,config,local \
+                  --archive=/tmp/mongodb-backup.archive \
+                  --gzip 2>/dev/null
+                if [ $? -eq 0 ] && [ -s /tmp/mongodb-backup.archive ]; then
+                  rclone copyto /tmp/mongodb-backup.archive "s3:$LITESTREAM_BUCKET/mongodb/backup-${TIMESTAMP}.archive"
+                  rclone copyto /tmp/mongodb-backup.archive "s3:$LITESTREAM_BUCKET/mongodb/backup-latest.archive"
+                  echo "[$(date)] Backup OK (${TIMESTAMP})"
+                  rm -f /tmp/mongodb-backup.archive
+                fi
+                sleep 900
+              done
+          envFrom:
+            - secretRef:
+                name: mongodb-shared-credentials
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep -f "mongodump" || pgrep -f "sleep 900" || exit 1
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 5
+        - name: mongodb-exporter
+          image: percona/mongodb_exporter:0.42.0
+          command: ["/bin/sh", "-c"]
+          args:
+            - exec /mongodb_exporter --mongodb.uri="mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/admin?authSource=admin"
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-shared-credentials
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-shared-credentials
+                  key: MONGO_INITDB_ROOT_PASSWORD
+          ports:
+            - containerPort: 9216
+              name: metrics
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9216
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9216
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            timeoutSeconds: 3
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: synelia-iscsi-retain
+        resources:
+          requests:
+            storage: 10Gi

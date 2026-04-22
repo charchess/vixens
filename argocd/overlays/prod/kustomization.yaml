@@ -39,6 +39,7 @@ resources:
   - apps/nfs-storage.yaml
   - apps/mail-gateway.yaml
   - apps/homeassistant.yaml
+  - apps/nightscout.yaml
   - apps/mosquitto.yaml
   - apps/mealie.yaml
   - apps/birdnet-go.yaml
@@ -100,6 +101,7 @@ resources:
   - apps/external-dns-unifi.yaml
   - apps/external-dns-unifi-secrets.yaml
   - apps/mariadb-shared.yaml
+  - apps/mongodb-shared.yaml
   - apps/penpot.yaml
   - apps/vikunja.yaml
   # - apps/robusta.yaml  # disabled 2026-03-05 — reporting-only, OOMKilling, no local value

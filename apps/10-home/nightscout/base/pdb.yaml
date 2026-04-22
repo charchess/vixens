@@ -1,0 +1,9 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: nightscout
+spec:
+  selector:
+    matchLabels:
+      app: nightscout
