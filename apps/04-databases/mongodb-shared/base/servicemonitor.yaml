@@ -1,0 +1,15 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: mongodb-shared
+  labels:
+    app: mongodb-shared
+spec:
+  selector:
+    matchLabels:
+      app: mongodb-shared
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 60s

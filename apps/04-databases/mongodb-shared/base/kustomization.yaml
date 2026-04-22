@@ -8,3 +8,4 @@ resources:
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml
   - pdb.yaml
+  - servicemonitor.yaml
