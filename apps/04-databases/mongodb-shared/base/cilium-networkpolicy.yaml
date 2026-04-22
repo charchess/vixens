@@ -1,0 +1,17 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: mongodb-shared
+spec:
+  endpointSelector:
+    matchLabels:
+      app: mongodb-shared
+  ingress:
+    # fromEndpoints: [{}] cassé dans Cilium 1.18.3 → fromEntities: cluster
+    - fromEntities:
+        - cluster
+      toPorts:
+        - ports:
+            - port: "27017"
+              protocol: TCP

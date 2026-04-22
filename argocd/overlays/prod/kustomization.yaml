@@ -100,6 +100,7 @@ resources:
   - apps/external-dns-unifi.yaml
   - apps/external-dns-unifi-secrets.yaml
   - apps/mariadb-shared.yaml
+  - apps/mongodb-shared.yaml
   - apps/penpot.yaml
   - apps/vikunja.yaml
   # - apps/robusta.yaml  # disabled 2026-03-05 — reporting-only, OOMKilling, no local value

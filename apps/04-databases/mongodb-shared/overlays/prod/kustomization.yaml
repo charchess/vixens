@@ -1,0 +1,20 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: databases
+resources:
+  - ../../base
+components:
+  - ../../../../_shared/components/sync-wave/wave-2
+  - ../../../../_shared/components/goldilocks/enabled
+  - ../../../../_shared/components/revision-history-limit
+  - ../../../../_shared/components/poddisruptionbudget/1
+  - ../../../../_shared/components/scheduling/avoid-i915
+
+patches:
+  - path: patch-infisical-env.yaml
+  - path: resources-patch.yaml
+labels:
+  - pairs:
+      environment: prod
+    includeSelectors: false
