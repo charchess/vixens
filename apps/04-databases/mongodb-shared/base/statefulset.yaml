@@ -37,6 +37,15 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      initContainers:
+        - name: init-data-dir
+          image: busybox:1.37
+          command: ["sh", "-c", "mkdir -p /data/db && chown -R 999:999 /data/db"]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
       containers:
         - name: mongodb
           image: mongo:8.0
