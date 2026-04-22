@@ -218,19 +218,9 @@ spec:
                       control_ui['dangerouslyAllowHostHeaderOriginFallback'] = True
                       print('gateway.controlUi fallback enabled')
                   gateway_cfg.pop('agentModel', None)
-                  # Ensure google-gemini-cli/gemini-3-flash-preview is first fallback.
-                  # Idempotent: only reorders, never removes user-added fallbacks.
-                  gemini_flash = 'google-gemini-cli/gemini-3-flash-preview'
-                  agents_def = d.setdefault('agents', {}).setdefault('defaults', {})
-                  model_def = agents_def.setdefault('model', {})
-                  fallbacks = model_def.get('fallbacks', [])
-                  if not fallbacks or fallbacks[0] != gemini_flash:
-                      model_def['fallbacks'] = [gemini_flash] + [f for f in fallbacks if f != gemini_flash]
-                      print('Ensured Gemini Flash 3 as first fallback')
-                  # Ensure alias is set
-                  models_aliases = agents_def.setdefault('models', {})
-                  if gemini_flash not in models_aliases:
-                      models_aliases[gemini_flash] = {'alias': 'Gemini Flash 3'}
+                  # NOTE: agent model config (primary, fallbacks, timeouts) lives in
+                  # /data/openclaw.json and is managed via DataAngel backup/restore.
+                  # Do NOT inject model config here — it would overwrite the restored config.
                   json.dump(d, open(p, 'w'))
                   print('Config keys checked')
 
