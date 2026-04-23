@@ -141,9 +141,8 @@ spec:
             timeoutSeconds: 5
         - name: mongodb-exporter
           image: percona/mongodb_exporter:0.42.0
-          command: ["/bin/sh", "-c"]
           args:
-            - exec /mongodb_exporter --mongodb.uri="mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/admin?authSource=admin"
+            - --mongodb.uri=mongodb://$(MONGO_INITDB_ROOT_USERNAME):$(MONGO_INITDB_ROOT_PASSWORD)@localhost:27017/admin?authSource=admin
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
               valueFrom:
