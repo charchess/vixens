@@ -56,11 +56,17 @@ spec:
           envFrom:
             - secretRef:
                 name: nightscout-secrets
+          startupProbe:
+            httpGet:
+              path: /api/v1/status
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 40
           livenessProbe:
             httpGet:
               path: /api/v1/status
               port: http
-            initialDelaySeconds: 120
             periodSeconds: 30
             timeoutSeconds: 10
             failureThreshold: 3
@@ -68,7 +74,6 @@ spec:
             httpGet:
               path: /api/v1/status
               port: http
-            initialDelaySeconds: 60
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3
