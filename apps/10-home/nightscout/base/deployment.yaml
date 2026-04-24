@@ -17,6 +17,7 @@ spec:
       labels:
         app: nightscout
         vixens.io/sizing.nightscout: V-micro
+        vixens.io/priority-class: vixens-medium
       annotations:
         reloader.stakater.com/auto: "true"
         vixens.io/fast-start: "true"
