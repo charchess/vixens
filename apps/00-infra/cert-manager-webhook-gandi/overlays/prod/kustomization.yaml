@@ -15,7 +15,11 @@ namespace: cert-manager
 # The InfisicalSecret (gandi-credentials-sync) is managed by a SEPARATE ArgoCD app:
 #   cert-manager-secrets → apps/00-infra/cert-manager-webhook-gandi/secrets/prod
 # Do NOT add resources: ../../base here (was causing SharedResourceWarning double ownership).
+# CNP is included directly as a standalone file to avoid double-ownership.
 #
+resources:
+  - cilium-networkpolicy.yaml
+
 patches:
   # Patch: Deployment-level annotations (ArgoCD wave, Goldilocks VPA)
   - patch: |-
