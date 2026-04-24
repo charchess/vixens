@@ -57,23 +57,20 @@ spec:
             - secretRef:
                 name: nightscout-secrets
           startupProbe:
-            httpGet:
-              path: /api/v1/status
-              port: http
+            tcpSocket:
+              port: 1337
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 40
           livenessProbe:
-            httpGet:
-              path: /api/v1/status
-              port: http
+            tcpSocket:
+              port: 1337
             periodSeconds: 30
-            timeoutSeconds: 10
+            timeoutSeconds: 5
             failureThreshold: 3
           readinessProbe:
-            httpGet:
-              path: /api/v1/status
-              port: http
+            tcpSocket:
+              port: 1337
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3
