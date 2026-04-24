@@ -5,12 +5,6 @@ namespace: nightscout
 resources:
   - ../../base
   - ingress.yaml
-
-patches:
-  - path: resources.yaml
-    target:
-      kind: Deployment
-      name: nightscout
 components:
   - ../../../../_shared/components/infisical/env-prod
   - ../../../../_shared/components/sync-wave/wave-11

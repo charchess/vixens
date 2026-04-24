@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         app: nightscout
-        vixens.io/sizing.nightscout: V-small
+        vixens.io/sizing.nightscout: V-micro
       annotations:
         reloader.stakater.com/auto: "true"
         vixens.io/fast-start: "true"
