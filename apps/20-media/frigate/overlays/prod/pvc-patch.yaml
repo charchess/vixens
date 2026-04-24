@@ -4,6 +4,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: frigate-config-pvc
 spec:
+  storageClassName: synelia-iscsi-retain
   resources:
     requests:
       storage: 50Gi
