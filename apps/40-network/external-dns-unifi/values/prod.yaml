@@ -3,11 +3,6 @@
 txtOwnerId: prod-unifi
 domainFilters:
   - truxonline.com
-# Skip ingresses with target: truxonline.com — those point to the public apex
-# domain and create CNAMEs resolving to the external IP instead of the internal
-# Traefik LB. Gandi handles external DNS for these. UniFi records for public
-# services must be added manually as CNAME → vixens.truxonline.com.
-annotationFilter: "external-dns.alpha.kubernetes.io/target notin (truxonline.com)"
 resources:
   requests:
     cpu: 20m
