@@ -20,3 +20,7 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # gandi webhook → api.gandi.net (DNS-01 TXT record management)
+    - toEntities:
+        - world
