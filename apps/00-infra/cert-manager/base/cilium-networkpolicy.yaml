@@ -14,6 +14,22 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # cert-manager → kube-apiserver (manage Certificate/Secret/CertificateRequest resources)
+    - toEntities:
+        - kube-apiserver
+    # cert-manager → world (ACME: Let's Encrypt, DNS-01 Gandi API)
+    - toEntities:
+        - world
+    # cert-manager → gandi webhook (DNS-01 solver, same namespace)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: cert-manager
+            app.kubernetes.io/name: cert-manager-webhook-gandi
+      toPorts:
+        - ports:
+            - port: "8443"
+              protocol: TCP
 ---
 # cert-manager cainjector
 apiVersion: cilium.io/v2
