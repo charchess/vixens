@@ -23,7 +23,7 @@ spec:
         vixens.io/no-long-connections: "true"
         kubectl.kubernetes.io/restartedAt: "2026-03-11T22:15:00Z"
         vixens.io/explicitly-allow-root: "true"
-        vixens.io/vpa.min-memory: "512Mi"
+        vixens.io/vpa.min-memory: "64Mi"
     spec:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
