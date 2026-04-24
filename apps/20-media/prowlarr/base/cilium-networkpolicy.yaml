@@ -18,3 +18,11 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+    # *arr → Prowlarr (indexer searches)
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: media
+      toPorts:
+        - ports:
+            - port: "9696"
+              protocol: TCP

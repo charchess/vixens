@@ -20,6 +20,17 @@ spec:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
   egress:
+    # birdnet-go → Frigate (API + RTSP streams for audio analysis)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: media
+            app: frigate
+      toPorts:
+        - ports:
+            - port: "5000"
+              protocol: TCP
+            - port: "8554"
+              protocol: TCP
     # birdnet-go → world (NAS/MinIO at 192.168.111.69:9000 for recordings)
     - toEntities:
         - world

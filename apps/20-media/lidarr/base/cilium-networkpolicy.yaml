@@ -25,3 +25,16 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # lidarr → Prowlarr (indexer searches)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: media
+            app: prowlarr
+      toPorts:
+        - ports:
+            - port: "9696"
+              protocol: TCP
+    # lidarr → world (MusicBrainz, metadata APIs)
+    - toEntities:
+        - world
