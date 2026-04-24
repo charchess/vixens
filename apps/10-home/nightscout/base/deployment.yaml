@@ -50,6 +50,8 @@ spec:
               value: Europe/Paris
             - name: ENABLE
               value: careportal basal dbsize rawbg iob cob cage iage sage boluscalc cors
+            - name: INSECURE_USE_HTTP
+              value: "true"
           envFrom:
             - secretRef:
                 name: nightscout-secrets
