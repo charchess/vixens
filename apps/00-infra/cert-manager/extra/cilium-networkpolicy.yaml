@@ -1,0 +1,70 @@
+---
+# cert-manager controller
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: cert-manager
+  namespace: cert-manager
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: cert-manager
+      app.kubernetes.io/instance: cert-manager
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+  egress:
+    # cert-manager → kube-apiserver (manage Certificate/Secret/CertificateRequest resources)
+    - toEntities:
+        - kube-apiserver
+    # cert-manager → world (ACME: Let's Encrypt, DNS-01 Gandi API)
+    - toEntities:
+        - world
+    # cert-manager → gandi webhook (DNS-01 solver, same namespace)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: cert-manager
+            app.kubernetes.io/name: cert-manager-webhook-gandi
+      toPorts:
+        - ports:
+            - port: "8443"
+              protocol: TCP
+---
+# cert-manager cainjector
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: cert-manager-cainjector
+  namespace: cert-manager
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: cainjector
+      app.kubernetes.io/instance: cert-manager
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+---
+# cert-manager webhook — reçoit des appels de kube-apiserver
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: cert-manager-webhook
+  namespace: cert-manager
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: webhook
+      app.kubernetes.io/instance: cert-manager
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "10250"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
