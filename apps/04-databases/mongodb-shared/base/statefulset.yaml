@@ -68,30 +68,27 @@ spec:
           startupProbe:
             exec:
               command:
-                - mongosh
-                - --quiet
-                - --eval
-                - "db.adminCommand('ping')"
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 30
+                - bash
+                - -c
+                - "exec 3<>/dev/tcp/127.0.0.1/27017"
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 60
           livenessProbe:
             exec:
               command:
-                - mongosh
-                - --quiet
-                - --eval
-                - "db.adminCommand('ping')"
+                - bash
+                - -c
+                - "exec 3<>/dev/tcp/127.0.0.1/27017"
             periodSeconds: 20
-            timeoutSeconds: 5
+            timeoutSeconds: 3
             failureThreshold: 3
           readinessProbe:
             exec:
               command:
-                - mongosh
-                - --quiet
-                - --eval
-                - "db.adminCommand('ping')"
+                - bash
+                - -c
+                - "exec 3<>/dev/tcp/127.0.0.1/27017"
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
