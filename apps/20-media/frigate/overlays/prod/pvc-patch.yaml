@@ -3,6 +3,8 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: frigate-config-pvc
+  annotations:
+    argocd.argoproj.io/sync-wave: "7"
 spec:
   storageClassName: synelia-iscsi-retain
   resources:
