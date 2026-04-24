@@ -63,6 +63,8 @@ spec:
                 secretKeyRef:
                   name: mongodb-shared-credentials
                   key: MONGO_INITDB_ROOT_PASSWORD
+            - name: DO_NOT_TRACK
+              value: "1"
           startupProbe:
             exec:
               command:
