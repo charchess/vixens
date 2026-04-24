@@ -59,8 +59,10 @@ spec:
       app.kubernetes.io/name: webhook
       app.kubernetes.io/instance: cert-manager
   ingress:
+    # kube-apiserver calls webhook for admission — may arrive as remote-node when apiserver is on another node
     - fromEntities:
         - kube-apiserver
+        - remote-node
       toPorts:
         - ports:
             - port: "10250"
