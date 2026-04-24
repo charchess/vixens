@@ -6,6 +6,9 @@ resources:
   - ingress.yaml
   - infisical-secret.yaml
 
+patches:
+  - path: pvc-patch.yaml
+
 components:
   - ../../../../_shared/components/sync-wave/wave-15
   - ../../../../_shared/components/goldilocks/enabled

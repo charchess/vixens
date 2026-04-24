@@ -4,9 +4,4 @@ kind: PersistentVolumeClaim
 metadata:
   name: jellyfin-config-pvc
 spec:
-  accessModes:
-    - ReadWriteOnce
   storageClassName: synelia-iscsi-retain
-  resources:
-    requests:
-      storage: 10Gi
