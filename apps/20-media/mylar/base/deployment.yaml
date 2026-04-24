@@ -26,7 +26,7 @@ spec:
         prometheus.io/path: "/metrics"
         vixens.io/no-long-connections: "true"
         kubectl.kubernetes.io/restartedAt: "2026-03-11T21:40:00Z"
-        vixens.io/vpa.min-memory: "1Gi"
+        vixens.io/vpa.min-memory: "64Mi"
     spec:
       priorityClassName: vixens-medium
       tolerations:
