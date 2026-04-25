@@ -26,7 +26,7 @@ interceptor:
     min: 1
     max: 1
     # Stirling-PDF cold-start: ~40s JWT key gen + ~2min Spring Boot = ~3min total
-    waitTimeout: 300s
+    waitTimeout: 600s
   resources:
     requests:
       cpu: 10m

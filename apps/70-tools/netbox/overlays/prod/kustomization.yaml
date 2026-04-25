@@ -21,3 +21,4 @@ resources:
   - ingress.yaml
   - infisical-redis-secret.yaml
   - httpscaledobject.yaml
+  - keda-interceptor-svc.yaml
