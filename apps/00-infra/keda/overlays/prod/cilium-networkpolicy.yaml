@@ -69,6 +69,14 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: keda
+    # traefik → keda-interceptor-proxy:8080 (all KEDA HTTP scale-to-zero apps)
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
   egress:
     # keda-http-interceptor proxies HTTP requests to backend services across all namespaces
     - toEntities:
