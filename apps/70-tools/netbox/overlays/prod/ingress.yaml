@@ -23,7 +23,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: keda-interceptor-proxy
+                name: netbox
                 port:
                   number: 8080
   tls:
