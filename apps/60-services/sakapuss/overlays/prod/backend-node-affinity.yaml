@@ -5,13 +5,4 @@ metadata:
   name: sakapuss-backend
 spec:
   template:
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: kubernetes.io/hostname
-                    operator: In
-                    values:
-                      - peach
+    spec: {}

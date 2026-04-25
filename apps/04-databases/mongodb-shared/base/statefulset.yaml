@@ -33,15 +33,6 @@ spec:
         runAsGroup: 999
         fsGroup: 999
         fsGroupChangePolicy: OnRootMismatch
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: kubernetes.io/hostname
-                    operator: In
-                    values:
-                      - peach
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
