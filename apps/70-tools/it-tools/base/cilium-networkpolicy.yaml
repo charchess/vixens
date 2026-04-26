@@ -12,6 +12,8 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: traefik
+        - matchLabels:
+            io.kubernetes.pod.namespace: keda
       toPorts:
         - ports:
             - port: "8080"
