@@ -19,14 +19,14 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-    - toPorts:
+    - fromEntities:
+        - world
+      toPorts:
         - ports:
             - port: "6881"
               protocol: TCP
             - port: "6881"
               protocol: UDP
-    - toEntities:
-        - world
   egress:
     # qbittorrent → world (P2P traffic, BitTorrent peers)
     - toEntities:
