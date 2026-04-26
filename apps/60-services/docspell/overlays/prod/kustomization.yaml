@@ -15,6 +15,7 @@ patches:
 patchesStrategicMerge:
   - patch-configmap.yaml
   - patch-joex-startup.yaml
+  - patch-disable-consumedir.yaml
 resources:
   - ../../base
   - ingress.yaml
