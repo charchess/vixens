@@ -1,0 +1,15 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: renovate
+spec:
+  endpointSelector:
+    matchLabels:
+      app: renovate
+  egress:
+    # renovate → world (GitHub API, Docker Hub, npm, helm registries, etc.)
+    - toEntities:
+        - world
+    - toEntities:
+        - kube-apiserver
