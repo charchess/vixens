@@ -32,7 +32,7 @@ spec:
       initContainers: []
       containers:
         - name: booklore
-          image: ghcr.io/grimmory-tools/grimmory:v2.3.1
+          image: ghcr.io/grimmory-tools/grimmory:v3.0.2
           resources:
             requests:
               cpu: 10m
