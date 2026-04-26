@@ -109,7 +109,7 @@ spec:
             limits:
               cpu: 1000m
               memory: 2Gi
-          image: ghcr.io/home-assistant/home-assistant:2026.4.3
+          image: ghcr.io/home-assistant/home-assistant:2026.4.4
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8123
