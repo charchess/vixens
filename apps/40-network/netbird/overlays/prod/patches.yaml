@@ -27,16 +27,20 @@ spec:
               value: "https://authentik.truxonline.com/application/o/netbird/.well-known/openid-configuration"
       containers:
         - name: management
+          startupProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 60
           livenessProbe:
             tcpSocket:
               port: 8080
-            initialDelaySeconds: 120
             periodSeconds: 10
             failureThreshold: 3
           readinessProbe:
             tcpSocket:
               port: 8080
-            initialDelaySeconds: 30
             periodSeconds: 5
             failureThreshold: 3
           env:
