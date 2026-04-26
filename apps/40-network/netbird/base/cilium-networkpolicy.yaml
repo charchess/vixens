@@ -32,16 +32,25 @@ spec:
         - matchLabels:
             io.kubernetes.pod.namespace: networking
   egress:
-    # netbird-management → authentik OIDC (via external LB IP = world)
+    # netbird-management → authentik OIDC + geolocation DB download (world)
     - toEntities:
         - world
       toPorts:
         - ports:
             - port: "443"
               protocol: TCP
+            - port: "80"
+              protocol: TCP
     - toEntities:
         - kube-apiserver
-    # netbird-management → databases (SQLite via PVC, no DB egress needed)
+    # netbird-management → postgres (databases namespace)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: databases
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
     - toEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: networking
