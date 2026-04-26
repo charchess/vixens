@@ -5,3 +5,4 @@ resources:
   - cronjob.yaml
   - configmap.yaml
   - infisical-secret.yaml
+  - cilium-networkpolicy.yaml
