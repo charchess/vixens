@@ -19,7 +19,9 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-    - toPorts:
+    - fromEntities:
+        - world
+      toPorts:
         - ports:
             - port: "4662"
               protocol: TCP
@@ -27,8 +29,6 @@ spec:
               protocol: UDP
             - port: "4672"
               protocol: UDP
-    - toEntities:
-        - world
   egress:
     # amule → gluetun SOCKS5 proxy (P2P traffic tunneled through VPN)
     - toEndpoints:
