@@ -104,6 +104,60 @@ spec:
               mountPath: /etc/netbox/config/plugins.py
               subPath: plugins.py
               readOnly: true
+        - name: netbox-worker
+          image: ghcr.io/charchess/netbox-plugins:v4.5.8-12cb130
+          command:
+            - /opt/netbox/venv/bin/python3
+            - /opt/netbox/netbox/manage.py
+            - rqworker
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: DB_HOST
+              value: postgresql-shared-rw.databases.svc.cluster.local
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: netbox
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-db-secrets
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-db-secrets
+                  key: password
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: SECRET_KEY
+            - name: REDIS_HOST
+              value: redis-shared.databases.svc.cluster.local
+            - name: REDIS_PORT
+              value: "6379"
+            - name: ALLOWED_HOSTS
+              value: netbox.dev.truxonline.com
+            - name: DB_WAIT_DEBUG
+              value: "1"
+          volumeMounts:
+            - name: netbox-media-storage
+              mountPath: /opt/netbox/media
+            - name: plugins-config
+              mountPath: /etc/netbox/config/plugins.py
+              subPath: plugins.py
+              readOnly: true
       volumes:
         - name: netbox-media-storage
           emptyDir: {}
