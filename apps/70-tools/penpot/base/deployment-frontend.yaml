@@ -31,7 +31,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: frontend
-          image: penpotapp/frontend:2.14.3
+          image: penpotapp/frontend:2.14.4
           imagePullPolicy: IfNotPresent
           env:
             - name: PENPOT_BACKEND_URI
