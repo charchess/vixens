@@ -40,3 +40,10 @@ spec:
               httpHeaders:
                 - name: Host
                   value: localhost
+        - name: netbox-worker
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-redis-credentials
+                  key: password
