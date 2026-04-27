@@ -12,7 +12,7 @@ data:
         "netbox_inventory",
         "netbox_security",
         "netbox_interface_synchronization",
-        "slurpit_netbox",
+        "netbox_unifi_sync",
         "netbox_floorplan",
     ]
 
@@ -30,6 +30,6 @@ data:
         "netbox_interface_synchronization": {
             "exclude_virtual_interfaces": True,
         },
-        "slurpit_netbox": {},
+        "netbox_unifi_sync": {},
         "netbox_floorplan": {},
     }

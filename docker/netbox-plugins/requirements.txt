@@ -3,5 +3,5 @@ netbox-plugin-dns==1.5.5
 netbox-inventory==2.5.0
 netbox-security==1.4.4
 netbox-interface-synchronization==4.5.1
-slurpit_netbox==1.3.3
+netbox-unifi-sync==0.3.23
 netbox-floorplan-plugin==0.9.1
