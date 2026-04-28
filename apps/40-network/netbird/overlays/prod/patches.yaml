@@ -52,6 +52,11 @@ spec:
               value: "https://netbird-signal.truxonline.com"
             - name: NETBIRD_RELAY_ENDPOINT
               value: "https://netbird-relay.truxonline.com"
+            - name: NETBIRD_DATASTORE_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: netbird-secrets
+                  key: NETBIRD_DATASTORE_ENCRYPTION_KEY
 ---
 apiVersion: apps/v1
 kind: Deployment

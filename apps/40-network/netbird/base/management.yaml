@@ -66,8 +66,7 @@ spec:
                   "AuthAudience": "$AUTH_AUDIENCE",
                   "AuthKeysLocation": "$AUTH_KEYS_LOCATION",
                   "OIDCConfigEndpoint": "$AUTH_OIDC_CONFIG_ENDPOINT",
-                  "IdpSignKeyRefreshEnabled": true,
-                  "IdpSkipTlsVerify": true
+                  "IdpSignKeyRefreshEnabled": true
                 },
                 "DeviceAuthorizationFlow": {
                   "Provider": "hosted",
