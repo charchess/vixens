@@ -55,7 +55,7 @@ spec:
               service:
                 name: netbird-management
                 port:
-                  number: 33073
+                  number: 80
   tls:
     - hosts:
         - netbird-api.truxonline.com
