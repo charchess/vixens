@@ -130,7 +130,7 @@ spec:
             periodSeconds: 60
             timeoutSeconds: 5
         - name: mongodb-exporter
-          image: percona/mongodb_exporter:0.50.0
+          image: percona/mongodb_exporter:2.37.0
           args:
             - --mongodb.uri=mongodb://$(MONGO_INITDB_ROOT_USERNAME):$(MONGO_INITDB_ROOT_PASSWORD)@localhost:27017/admin?authSource=admin
           env:
