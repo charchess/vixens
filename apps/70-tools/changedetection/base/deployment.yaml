@@ -42,7 +42,7 @@ spec:
             limits:
               cpu: 100m
               memory: 1Gi
-          image: ghcr.io/dgtlmoon/changedetection.io:0.55.1
+          image: ghcr.io/dgtlmoon/changedetection.io:0.55.3
           ports:
             - containerPort: 5000
               name: http
