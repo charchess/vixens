@@ -30,6 +30,10 @@ spec:
               value: "https://authentik.truxonline.com/application/o/token/"
             - name: AUTH_OIDC_CONFIG_ENDPOINT
               value: "https://authentik.truxonline.com/application/o/netbird/.well-known/openid-configuration"
+            - name: SIGNAL_URI
+              value: "netbird-signal.truxonline.com:443"
+            - name: STUN_URI
+              value: "netbird-relay.truxonline.com:3478"
       containers:
         - name: management
           startupProbe:
