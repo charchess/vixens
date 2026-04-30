@@ -8,6 +8,8 @@ spec:
     matchLabels:
       app: headlamp
   ingress:
+    - fromEntities:
+        - host
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: traefik
