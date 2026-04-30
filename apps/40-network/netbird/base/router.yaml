@@ -6,6 +6,7 @@ metadata:
   annotations:
     vpa.kubernetes.io/updateMode: "Off"
   labels:
+    app.kubernetes.io/managed-by: argocd
 spec:
   replicas: 1
   revisionHistoryLimit: 3
@@ -48,6 +49,9 @@ spec:
               wait
           securityContext:
             privileged: true
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop: []
           env:
             - name: NB_SETUP_KEY
               valueFrom:
@@ -66,6 +70,13 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 30
             failureThreshold: 3
+            timeoutSeconds: 10
+          readinessProbe:
+            exec:
+              command: ["netbird", "status", "--json"]
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 5
             timeoutSeconds: 10
           volumeMounts:
             - name: netbird-data
