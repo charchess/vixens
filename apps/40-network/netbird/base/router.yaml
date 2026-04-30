@@ -50,6 +50,9 @@ spec:
               wait
           securityContext:
             privileged: true
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop: []
           env:
             - name: NB_SETUP_KEY
               valueFrom:
