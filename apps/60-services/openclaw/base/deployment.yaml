@@ -60,7 +60,7 @@ spec:
           args:
             - |
               set -e
-              TOOLS_VERSION="7"
+              TOOLS_VERSION="8"
               if [ -f /data/tools/.installed-version ] && [ "$(cat /data/tools/.installed-version)" = "$TOOLS_VERSION" ]; then
                 echo "Tools v$TOOLS_VERSION already present, skipping reinstall"
               else
@@ -77,6 +77,9 @@ spec:
                   ldd /usr/bin/$bin 2>/dev/null | grep "=>" | awk '{print $3}' | xargs -I {} cp {} /data/tools/lib/ 2>/dev/null || true
                 done
                 cp -r /usr/lib/x86_64-linux-gnu/* /data/tools/lib/ 2>/dev/null || true
+                # Copy python3 binary and stdlib
+                cp /usr/bin/python3* /data/tools/bin/ 2>/dev/null || true
+                cp -r /usr/lib/python3* /data/tools/lib/ 2>/dev/null || true
                 curl -sLo /data/tools/bin/kubectl "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
                 chmod +x /data/tools/bin/kubectl
                 curl -sLo /tmp/rclone.zip https://downloads.rclone.org/rclone-current-linux-amd64.zip
