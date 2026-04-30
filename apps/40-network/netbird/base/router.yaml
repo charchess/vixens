@@ -59,9 +59,13 @@ spec:
             failureThreshold: 3
             timeoutSeconds: 10
           volumeMounts:
+            - name: netbird-data
+              mountPath: /var/lib/netbird
             - name: tun
               mountPath: /dev/net/tun
       volumes:
+        - name: netbird-data
+          emptyDir: {}
         - name: tun
           hostPath:
             path: /dev/net/tun
