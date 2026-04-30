@@ -65,6 +65,19 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: netbird-router
+spec:
+  template:
+    spec:
+      containers:
+        - name: router
+          env:
+            - name: NB_MANAGEMENT_URL
+              value: "https://netbird-api.truxonline.com"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: netbird-relay
 spec:
   template:

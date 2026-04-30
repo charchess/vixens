@@ -1,0 +1,99 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-router
+  annotations:
+    vpa.kubernetes.io/updateMode: "Off"
+  labels:
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: netbird-router
+  template:
+    metadata:
+      labels:
+        app: netbird-router
+        vixens.io/sizing.router: V-nano
+      annotations:
+        vixens.io/fast-start: "true"
+    spec:
+      priorityClassName: vixens-low
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      # Root required for WireGuard kernel interface
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+      containers:
+        - name: router
+          image: netbirdio/client:0.70.4
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
+            allowPrivilegeEscalation: true
+          env:
+            - name: NB_SETUP_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: netbird-secrets
+                  key: NETBIRD_ROUTER_SETUP_KEY
+            - name: NB_MANAGEMENT_URL
+              value: "https://netbird-api.dev.truxonline.com"
+            - name: NB_HOSTNAME
+              value: "netbird-router"
+            - name: NB_LOG_LEVEL
+              value: "info"
+          livenessProbe:
+            exec:
+              command: ["netbird", "status"]
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+          volumeMounts:
+            - name: tun
+              mountPath: /dev/net/tun
+      volumes:
+        - name: tun
+          hostPath:
+            path: /dev/net/tun
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: netbird-router
+spec:
+  podSelector:
+    matchLabels:
+      app: netbird-router
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # WireGuard UDP from any peer
+    - ports:
+        - protocol: UDP
+          port: 51820
+  egress:
+    # DNS
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Management gRPC (via Traefik TLS)
+    - ports:
+        - protocol: TCP
+          port: 443
+    # Signal gRPC (via Traefik TLS)
+    # Relay WebSocket (via Traefik TLS)
+    # WireGuard UDP to peers
+    - ports:
+        - protocol: UDP
+          port: 51820
