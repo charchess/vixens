@@ -17,5 +17,6 @@ resources:
   - pdb-management.yaml
   - pdb-signal.yaml
   - pdb-relay.yaml
+  - router.yaml
 components:
   - ../../../_shared/components/revision-history-limit
