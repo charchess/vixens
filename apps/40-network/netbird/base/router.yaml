@@ -35,6 +35,15 @@ spec:
       containers:
         - name: router
           image: netbirdio/netbird:0.70.4
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              netbird service run &
+              sleep 10
+              netbird up --setup-key "$NB_SETUP_KEY" --management-url "$NB_MANAGEMENT_URL"
+              wait
           securityContext:
             capabilities:
               add: ["NET_ADMIN"]
