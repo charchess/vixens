@@ -23,6 +23,7 @@ spec:
         vixens.io/backup-profile: "ephemeral"
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/explicitly-allow-root: "true"
     spec:
       priorityClassName: vixens-low
       tolerations:
