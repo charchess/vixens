@@ -28,10 +28,12 @@ spec:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
-      # Root required for WireGuard kernel interface
+      # Root + privileged requis pour WireGuard (raw sockets + sysctl)
       securityContext:
         runAsUser: 0
         runAsGroup: 0
+        seccompProfile:
+          type: Unconfined
       containers:
         - name: router
           image: netbirdio/netbird:0.70.4
@@ -45,9 +47,7 @@ spec:
               netbird up --setup-key "$NB_SETUP_KEY" --management-url "$NB_MANAGEMENT_URL"
               wait
           securityContext:
-            capabilities:
-              add: ["NET_ADMIN"]
-            allowPrivilegeEscalation: true
+            privileged: true
           env:
             - name: NB_SETUP_KEY
               valueFrom:
