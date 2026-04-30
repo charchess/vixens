@@ -19,6 +19,7 @@ spec:
       labels:
         app: netbird-router
         vixens.io/sizing.router: V-nano
+        vixens.io/backup-profile: "ephemeral"
       annotations:
         vixens.io/fast-start: "true"
     spec:
@@ -33,7 +34,7 @@ spec:
         runAsGroup: 0
       containers:
         - name: router
-          image: netbirdio/client:0.70.4
+          image: netbirdio/netbird:0.70.4
           securityContext:
             capabilities:
               add: ["NET_ADMIN"]
@@ -52,14 +53,19 @@ spec:
               value: "info"
           livenessProbe:
             exec:
-              command: ["netbird", "status"]
+              command: ["netbird", "status", "--json"]
             initialDelaySeconds: 60
             periodSeconds: 30
             failureThreshold: 3
+            timeoutSeconds: 10
           volumeMounts:
+            - name: netbird-data
+              mountPath: /var/lib/netbird
             - name: tun
               mountPath: /dev/net/tun
       volumes:
+        - name: netbird-data
+          emptyDir: {}
         - name: tun
           hostPath:
             path: /dev/net/tun
