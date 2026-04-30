@@ -23,6 +23,7 @@ spec:
         vixens.io/backup-profile: "ephemeral"
       annotations:
         vixens.io/fast-start: "true"
+        vixens.io/explicitly-allow-root: "true"
     spec:
       priorityClassName: vixens-low
       tolerations:
@@ -49,9 +50,6 @@ spec:
               wait
           securityContext:
             privileged: true
-            allowPrivilegeEscalation: true
-            capabilities:
-              drop: []
           env:
             - name: NB_SETUP_KEY
               valueFrom:
