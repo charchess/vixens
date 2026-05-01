@@ -1,7 +1,7 @@
 # Post-Mortem : iSCSI emergency_ro multi-volume (2026-04-30)
 
 **Sévérité :** P1 — Home Assistant non fonctionnel, recorder KO, cascade DiskPressure cluster  
-**Durée :** ~26h (détection initiale tardive + recovery prolongée)  
+**Durée :** ~26h (événement réel 03:34, détection 20:45 soit +17h, recovery prolongée)  
 **Nœuds affectés :** `poison`, `pearl`, `peach`  
 **Volumes affectés :** Home Assistant (`/dev/sde` sur poison), Jellyfin (`/dev/sdh` sur poison), Hydrus Client (`/dev/sdg` sur poison), Loki (`/dev/sdb` sur pearl), Netbird Management (`/dev/sdc` sur peach)
 
@@ -11,22 +11,36 @@
 
 | Heure | Événement |
 |-------|-----------|
-| ~19:00 | Événement réseau/NAS probable (non confirmé) — sessions iSCSI interrompues au-delà du replacement_timeout (120s) |
-| ~19:00 | ext4 détecte des erreurs I/O → remonte 3 volumes en `emergency_ro` |
-| ~20:45 | HA recorder commence à logguer `OSError: [Errno 30] Read-only file system` |
-| ~20:50 | Détection via inspection manuelle des logs HA |
-| ~21:00 | Début de la recovery |
-| ~21:10 | Jellyfin et Hydrus : e2fsck via pod privilégié → OK |
-| ~21:20 | HA : zombie iSCSI session → logout/login via nsenter → e2fsck → OK |
-| ~23:05 | Home Assistant 2/2 Running (DataAngel restore inclus) |
+| **03:34:09** | **Tous les NICs du NAS tombent simultanément** (`eth3`, `eth1`, `eth0`, `eth0.204`) — événement réseau physique (switch?) |
+| 03:34:41–03:35:09 | Avalanche de `iscsit_handle_nopin_response_timeout` côté NAS sur **toutes** les sessions iSCSI (tous PVCs, tous nœuds) |
+| **03:36:03–03:36:13** | **NICs NAS remontent** — durée d'interruption : ~114 secondes |
+| ~03:35–03:36 | ext4 détecte des erreurs I/O sur les 5 PVCs dont le `replacement_timeout` (120s) avait expiré → `emergency_ro` / `shutdown` |
+| 06:01:49 | `iscsi_post_login_handler` — bulk reconnect des sessions récupérées |
+| 19:00:12 | `synowin net ads test join fail` (non lié à l'incident iSCSI) |
+| 19:04:56 | `syslog-ng reload` × 2 (maintenance DSM planifiée, non liée) |
+| 19:44:07 | `talos-csi has session timeout` — conséquence : CSI tente d'accéder aux volumes déjà emergency_ro |
+| **20:45** | **Première détection** : HA recorder logue `OSError: [Errno 30] Read-only file system` → gap de ~17h |
+| 20:50 | Détection via inspection manuelle des logs HA |
+| 21:00 | Début de la recovery |
+| 21:10 | Jellyfin et Hydrus : e2fsck via pod privilégié → OK |
+| 21:20 | HA : zombie iSCSI session → logout/login via nsenter → e2fsck → OK |
+| 23:05 | Home Assistant 2/2 Running (DataAngel restore inclus) |
 
 ---
 
 ## Root Cause
 
-Un événement **NAS-side** (redémarrage Synology ou maintenace?) a interrompu les sessions iSCSI au-delà du `replacement_timeout` par défaut (120s). L'initiateur iscsid a déclaré les sessions mortes, les I/Os en attente ont échoué, et ext4 a basculé 5 filesystems en `emergency_ro` / `shutdown`.
+**Confirmé par les logs NAS** (`/var/log/kern.log`, `/var/log/messages` sur Synelia) :
 
-**Confirmation NAS-side** : 5 volumes sur 3 nœuds différents (`poison`, `pearl`, `peach`) ont été impactés simultanément, ce qui exclut une cause purement réseau locale.
+À **03:34:09**, tous les NICs du NAS (`eth3`, `eth1`, `eth0`, `eth0.204`) sont tombés simultanément pendant **~114 secondes** (réseau revenu à 03:36:03–13). Cet événement réseau physique — probablement un redémarrage de switch ou une micro-coupure électrique — a déclenché une avalanche de `iscsit_handle_nopin_response_timeout` côté target sur la totalité des sessions iSCSI actives.
+
+Le `replacement_timeout` initiateur est de 120s. La panne réseau ayant duré ~114s, la marge était infime. Les 5 PVCs affectés sont ceux dont la session n'a pas réussi à être rétablie dans le délai (légère variance de timing, ordre des reconnexions, charge nœud) → `replacement_timeout` expiré → iscsid déclare les sessions mortes → ext4 `errors=remount-ro` → `emergency_ro` / `shutdown`.
+
+**La majorité des PVCs a survécu** car leurs sessions se sont reconnectées juste à temps (confirmation : `iscsi_post_login_handler` en masse à 06:01:49).
+
+**Les événements ~19:00 dans syslog sont non liés** : `synowin` domain-join check (AD), reload syslog-ng (maintenance DSM planifiée). Le `talos-csi has session timeout` à 19:44 est une conséquence — le CSI tentait d'accéder à des volumes déjà morts depuis 03:34.
+
+**Gap de détection : ~17 heures** (03:34 → 20:45) — les pods restaient en état "Running" avec filesystems silencieusement en read-only.
 
 **Cascade secondaire (2026-05-01)** : La recovery prolongée + les evictions mass sur `powder` (DiskPressure sur NVMe /var) ont provoqué :
 - Réallocation de tous les pods powder sur les autres nœuds → surcharge mémoire cluster
@@ -131,8 +145,8 @@ kubectl -n media scale deployment jellyfin hydrus-client --replicas=1
 
 ## Lessons Learned
 
-1. **Détection tardive** : aucune alerte sur `node_filesystem_readonly`. → Issue #3135
-2. **replacement_timeout trop court** : 120s insuffisant pour un reboot NAS (~2-3 min). → Issue #3136
+1. **Détection tardive critique** : gap de ~17h entre l'incident (03:34) et la détection (20:45). Aucune alerte sur `node_filesystem_readonly`. Les pods en `emergency_ro` restent `Running` → Kubernetes ne voit rien. → Issue #3135
+2. **replacement_timeout trop court** : 120s insuffisant — la panne a duré ~114s, laissant une marge de ~6s. Avec un switch qui redémarre ou une micro-coupure, c'est systématiquement fatal. → Issue #3136
 3. **Procédure non documentée** : chaque recovery se fait à tâtons. → Issue #3137
 4. **Un seul chemin réseau** : un seul chemin VLAN 111 → un point de défaillance unique. → Issue #3138 (multipath)
 5. **La Kyverno annotation `vixens.io/explicitly-allow-root`** est nécessaire pour tout pod debug privilégié.
