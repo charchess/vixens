@@ -86,7 +86,8 @@ spec:
               mountPath: /dev/net/tun
       volumes:
         - name: netbird-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: netbird-router-data
         - name: tun
           hostPath:
             path: /dev/net/tun
