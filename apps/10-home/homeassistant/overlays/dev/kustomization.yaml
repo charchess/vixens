@@ -13,6 +13,13 @@ components:
 patches:
   - path: dataangel.yaml
   - target:
+      kind: PersistentVolumeClaim
+      name: homeassistant-config
+    patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: synelia-iscsi-xfs-retain
+  - target:
       kind: Deployment
       name: homeassistant
     patch: |-
