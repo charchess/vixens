@@ -21,6 +21,9 @@ patches:
       name: homeassistant-config
     patch: |-
       - op: replace
+        path: /spec/storageClassName
+        value: synelia-iscsi-xfs-retain
+      - op: replace
         path: /spec/resources/requests/storage
         value: 250Gi
   - path: resources-patch.yaml
