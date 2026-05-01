@@ -60,7 +60,7 @@ spec:
           args:
             - |
               set -e
-              TOOLS_VERSION="10"
+              TOOLS_VERSION="11"
               if [ -f /data/tools/.installed-version ] && [ "$(cat /data/tools/.installed-version)" = "$TOOLS_VERSION" ]; then
                 echo "Tools v$TOOLS_VERSION already present, skipping reinstall"
               else
@@ -77,12 +77,9 @@ spec:
                   ldd /usr/bin/$bin 2>/dev/null | grep "=>" | awk '{print $3}' | xargs -I {} cp {} /data/tools/lib/ 2>/dev/null || true
                 done
                 cp -r /usr/lib/x86_64-linux-gnu/* /data/tools/lib/ 2>/dev/null || true
-                # Copy Debian python3 directly — avoids external download (python-build-standalone was unreliable)
-                mkdir -p /data/tools/python/bin /data/tools/python/lib
-                cp /usr/bin/python3.13 /data/tools/python/bin/python3.13
-                cp -r /usr/lib/python3.13 /data/tools/python/lib/ 2>/dev/null || true
-                cp -r /usr/lib/python3 /data/tools/python/lib/ 2>/dev/null || true
-                ln -sf /data/tools/python/bin/python3.13 /data/tools/python/bin/python3
+                # Install portable Python via python-build-standalone (glibc 2.17+, compatible with bookworm 2.36)
+                curl -fsSLo /tmp/python.tar.gz "https://github.com/indygreg/python-build-standalone/releases/download/20250408/cpython-3.13.3+20250408-x86_64-unknown-linux-gnu-install_only.tar.gz"
+                tar -xzf /tmp/python.tar.gz -C /data/tools/ && rm /tmp/python.tar.gz
                 ln -sf /data/tools/python/bin/python3 /data/tools/bin/python3
                 ln -sf /data/tools/python/bin/python3.13 /data/tools/bin/python3.13
                 curl -sLo /data/tools/bin/kubectl "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
