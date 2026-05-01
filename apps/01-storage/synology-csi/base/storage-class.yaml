@@ -26,3 +26,29 @@ parameters:
   protocol: iscsi
 reclaimPolicy: Delete
 allowVolumeExpansion: true
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: synelia-iscsi-xfs-retain
+provisioner: csi.san.synology.com
+parameters:
+  fsType: xfs
+  protocol: iscsi
+  lunType: thin
+  igroup: vixens-default-iscsi-group
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: synelia-iscsi-xfs-delete
+provisioner: csi.san.synology.com
+parameters:
+  fsType: xfs
+  protocol: iscsi
+  lunType: thin
+reclaimPolicy: Delete
+allowVolumeExpansion: true

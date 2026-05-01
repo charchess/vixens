@@ -32,6 +32,26 @@ patches:
       kind: StorageClass
       name: synelia-iscsi-delete
   - patch: |-
+      - op: replace
+        path: /parameters/igroup
+        value: "vixens-prod-iscsi-group"
+      - op: add
+        path: /parameters/targetIps
+        value: "192.168.111.69"
+    target:
+      kind: StorageClass
+      name: synelia-iscsi-xfs-retain
+  - patch: |-
+      - op: add
+        path: /parameters/igroup
+        value: "vixens-prod-iscsi-group"
+      - op: add
+        path: /parameters/targetIps
+        value: "192.168.111.69"
+    target:
+      kind: StorageClass
+      name: synelia-iscsi-xfs-delete
+  - patch: |-
       - op: add
         path: /spec/template/metadata/annotations/vixens.io~1fast-start
         value: "true"
