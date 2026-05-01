@@ -37,6 +37,8 @@ parameters:
   protocol: iscsi
   lunType: thin
   igroup: vixens-default-iscsi-group
+  # -K: skip TRIM/DISCARD on format — thin iSCSI LUNs hang indefinitely on DISCARD
+  formatOptions: "-K"
 reclaimPolicy: Retain
 allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
@@ -50,5 +52,7 @@ parameters:
   fsType: xfs
   protocol: iscsi
   lunType: thin
+  # -K: skip TRIM/DISCARD on format — thin iSCSI LUNs hang indefinitely on DISCARD
+  formatOptions: "-K"
 reclaimPolicy: Delete
 allowVolumeExpansion: true
