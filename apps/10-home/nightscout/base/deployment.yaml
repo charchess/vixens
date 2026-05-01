@@ -28,7 +28,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: nightscout
-          image: nightscout/cgm-remote-monitor:15.0.6
+          image: nightscout/cgm-remote-monitor:15.0.7
           ports:
             - containerPort: 1337
               name: http

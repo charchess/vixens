@@ -36,7 +36,7 @@ spec:
       initContainers:
         # 1. Optionnel: Restauration des fichiers de config plats
         - name: restore-config
-          image: rclone/rclone:1.73
+          image: rclone/rclone:1.74
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
@@ -147,7 +147,7 @@ spec:
             limits:
               cpu: 20m
               memory: 256Mi
-          image: rclone/rclone:1.73
+          image: rclone/rclone:1.74
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
