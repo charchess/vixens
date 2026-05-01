@@ -1,9 +1,9 @@
 # Post-Mortem : iSCSI emergency_ro multi-volume (2026-04-30)
 
-**Sévérité :** P1 — Home Assistant non fonctionnel, recorder KO  
-**Durée :** ~2h (détection tardive)  
-**Nœud affecté :** `poison`  
-**Volumes affectés :** Home Assistant (`/dev/sde`), Jellyfin (`/dev/sdh`), Hydrus Client (`/dev/sdg`)
+**Sévérité :** P1 — Home Assistant non fonctionnel, recorder KO, cascade DiskPressure cluster  
+**Durée :** ~26h (détection initiale tardive + recovery prolongée)  
+**Nœuds affectés :** `poison`, `pearl`, `peach`  
+**Volumes affectés :** Home Assistant (`/dev/sde` sur poison), Jellyfin (`/dev/sdh` sur poison), Hydrus Client (`/dev/sdg` sur poison), Loki (`/dev/sdb` sur pearl), Netbird Management (`/dev/sdc` sur peach)
 
 ---
 
@@ -24,9 +24,15 @@
 
 ## Root Cause
 
-Un événement réseau ou un redémarrage du NAS Synology a interrompu les sessions iSCSI **au-delà du `replacement_timeout` par défaut (120s)**. L'initiateur iscsid a déclaré les sessions mortes, les I/Os en attente ont échoué, et ext4 a basculé les 3 filesystem en `emergency_ro` (comportement par défaut `errors=remount-ro`).
+Un événement **NAS-side** (redémarrage Synology ou maintenace?) a interrompu les sessions iSCSI au-delà du `replacement_timeout` par défaut (120s). L'initiateur iscsid a déclaré les sessions mortes, les I/Os en attente ont échoué, et ext4 a basculé 5 filesystems en `emergency_ro` / `shutdown`.
 
-Les 3 volumes affectés sont sur le même nœud (`poison`) ce qui confirme un événement commun (réseau ou NAS).
+**Confirmation NAS-side** : 5 volumes sur 3 nœuds différents (`poison`, `pearl`, `peach`) ont été impactés simultanément, ce qui exclut une cause purement réseau locale.
+
+**Cascade secondaire (2026-05-01)** : La recovery prolongée + les evictions mass sur `powder` (DiskPressure sur NVMe /var) ont provoqué :
+- Réallocation de tous les pods powder sur les autres nœuds → surcharge mémoire cluster
+- DiskPressure temporaire sur `peach` (ephemeral storage des pods evictés)
+- CSI mount timeouts sur `peach` et `powder` (system I/O stress)
+- OOM kills sur `homepage`, pods Pending (`nocodb`)
 
 ---
 
@@ -35,6 +41,9 @@ Les 3 volumes affectés sont sur le même nœud (`poison`) ce qui confirme un é
 - **Home Assistant** : recorder SQLite inaccessible → perte d'historique pendant la durée de l'incident. Interface web accessible mais toutes les automations écrivant en base échouaient silencieusement.
 - **Jellyfin** : pod Running mais config inaccessible en écriture. Lecture des médias NFS non affectée.
 - **Hydrus Client** : pod Running mais données non accessibles en écriture.
+- **Loki** : pod en emergency_ro sur `pearl` — ingestion logs interrompue ~19h.
+- **Netbird Management** : pod bloqué en Init (I/O error PVC) sur `peach` — management VPN inaccessible.
+- **Cascade cluster** : DiskPressure `powder` + `peach` → OOM kills, pods Pending, CSI mount timeouts sur l'ensemble du cluster pendant ~2h.
 
 ---
 
@@ -127,6 +136,10 @@ kubectl -n media scale deployment jellyfin hydrus-client --replicas=1
 3. **Procédure non documentée** : chaque recovery se fait à tâtons. → Issue #3137
 4. **Un seul chemin réseau** : un seul chemin VLAN 111 → un point de défaillance unique. → Issue #3138 (multipath)
 5. **La Kyverno annotation `vixens.io/explicitly-allow-root`** est nécessaire pour tout pod debug privilégié.
+6. **DiskPressure powder pré-existant** : NVMe /var presque plein → moindre perturbation = cascade d'evictions cluster-wide. Corriger la taille /var (Terraform) est critique.
+7. **VolumeAttachment stale** : après scale-down/up d'un pod avec PVC RWO, vérifier que l'ancien VA (sur l'ancien nœud) a bien été supprimé avant de scale up sur un nouveau nœud.
+8. **CSI node plugin** : redémarrer le pod CSI sur le nœud impacté si les mount timeouts persistent après recovery iSCSI.
+9. **WaitForFirstConsumer deadlock ArgoCD** : avec `storageClassName: synelia-iscsi-retain` (WaitForFirstConsumer), ArgoCD attend que le PVC soit Healthy avant de syncer le Deployment → deadlock. Fix : `kubectl apply -n <ns> -f <deployment.yaml>` pour forcer l'état git.
 
 ---
 
@@ -139,3 +152,5 @@ kubectl -n media scale deployment jellyfin hydrus-client --replicas=1
 | 3 | Runbook iSCSI recovery + post-mortem | #3137 | P1 |
 | 4 | ADR multipath iSCSI (investigation) | #3138 | P2 |
 | 5 | StorageClass XFS pour nouvelles PVCs | #3139 | P3 |
+| 6 | Extend powder NVMe /var (Terraform) | — | P1 (user scope) |
+| 7 | Alerte Prometheus `node_disk_pressure` (kubelet) | — | P1 |
