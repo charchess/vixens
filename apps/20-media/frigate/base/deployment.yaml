@@ -46,6 +46,12 @@ spec:
         volumeMounts:
         - name: config
           mountPath: /config
+      - name: cleanup-cache
+        image: busybox:1.37.0
+        command: ["sh", "-c", "rm -f /tmp/cache/comms /tmp/cache/.comms"]
+        volumeMounts:
+        - name: cache
+          mountPath: /tmp/cache
       - name: validate-config
         image: python:3.14-alpine
         command:
