@@ -36,7 +36,7 @@ spec:
             limits:
               cpu: 500m
               memory: 1Gi
-          image: ghcr.io/charchess/netbox-plugins:v4.5.8-12cb130
+          image: ghcr.io/charchess/netbox-plugins:v4.6.0-a17ad14
           ports:
             - name: http
               containerPort: 8080
@@ -105,7 +105,7 @@ spec:
               subPath: plugins.py
               readOnly: true
         - name: netbox-worker
-          image: ghcr.io/charchess/netbox-plugins:v4.5.8-12cb130
+          image: ghcr.io/charchess/netbox-plugins:v4.6.0-a17ad14
           command:
             - /opt/netbox/venv/bin/python3
             - /opt/netbox/netbox/manage.py
