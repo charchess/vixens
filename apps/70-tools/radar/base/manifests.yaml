@@ -185,7 +185,7 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 65532
-          image: "ghcr.io/skyhook-io/radar:1.5.9"
+          image: "ghcr.io/skyhook-io/radar:1.5.10"
           imagePullPolicy: IfNotPresent
           args:
             - --port=9280

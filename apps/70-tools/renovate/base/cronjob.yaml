@@ -30,7 +30,7 @@ spec:
               effect: NoSchedule
           containers:
             - name: renovate
-              image: renovate/renovate:43.166.3 # Renovate latest stable
+              image: renovate/renovate:43.168.5 # Renovate latest stable
               env:
                 - name: RENOVATE_TOKEN
                   valueFrom:
