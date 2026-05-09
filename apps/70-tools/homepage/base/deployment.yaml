@@ -64,7 +64,7 @@ spec:
             limits:
               cpu: 100m
               memory: 1Gi
-          image: ghcr.io/gethomepage/homepage:v1.12
+          image: ghcr.io/gethomepage/homepage:v1.13
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
