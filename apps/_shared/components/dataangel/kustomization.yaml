@@ -51,6 +51,10 @@ patches:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.annotations['dataangel.io/rclone-interval']
+            - name: DATA_GUARD_RESTORE_TIMEOUT
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/restore-timeout']
             - name: DATA_GUARD_METRICS_PORT
               value: "9090"
             - name: DATA_GUARD_METRICS_ENABLED
