@@ -8,6 +8,8 @@ spec:
     matchLabels:
       app: redis-shared
   ingress:
+    - fromEntities:
+        - host
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: auth

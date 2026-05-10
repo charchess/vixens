@@ -8,6 +8,12 @@ spec:
     matchLabels:
       app: netbox
   ingress:
+    - fromEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: traefik

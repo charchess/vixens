@@ -8,6 +8,8 @@ spec:
     matchLabels:
       app: gluetun
   ingress:
+    - fromEntities:
+        - host
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: traefik
