@@ -28,6 +28,7 @@ spec:
         reloader.stakater.com/auto: "true"
         vixens.io/fast-start: "true"
         dataangel.io/metrics-port: "9090"
+        dataangel.io/restore-timeout: "90m"
         vixens.io/explicitly-allow-root: "true"
     spec:
       securityContext:
