@@ -29,6 +29,7 @@ spec:
         vixens.io/fast-start: "true"
         dataangel.io/metrics-port: "9090"
         dataangel.io/restore-timeout: "90m"
+        dataangel.io/snapshot-interval: "24h"
         vixens.io/explicitly-allow-root: "true"
     spec:
       securityContext:
