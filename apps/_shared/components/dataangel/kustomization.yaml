@@ -51,6 +51,10 @@ patches:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.annotations['dataangel.io/rclone-interval']
+            - name: DATA_GUARD_SNAPSHOT_INTERVAL
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['dataangel.io/snapshot-interval']
             - name: DATA_GUARD_RESTORE_TIMEOUT
               valueFrom:
                 fieldRef:
