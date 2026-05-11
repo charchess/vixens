@@ -30,7 +30,34 @@ spec:
           command:
             - sh
             - -c
-            - rm -f /host/run/lock/iscsi/lock.write && echo "iSCSI stale lock cleared"
+            - |
+              rm -f /host/run/lock/iscsi/lock.write && echo "iSCSI stale lock cleared"
+              OVERLAY=/host/system/overlays/usr-local-lib-containers-iscsid-diff
+              mkdir -p ${OVERLAY}/etc/iscsi
+              cat > ${OVERLAY}/etc/iscsi/iscsid.conf << 'EOF'
+              iscsid.startup = /usr/local/sbin/iscsid
+              node.startup = manual
+              node.session.timeo.replacement_timeout = 120
+              node.conn[0].timeo.login_timeout = 30
+              node.conn[0].timeo.logout_timeout = 15
+              node.conn[0].timeo.noop_out_interval = 5
+              node.conn[0].timeo.noop_out_timeout = 5
+              node.conn[0].iscsi.MaxRecvDataSegmentLength = 262144
+              node.session.iscsi.InitialR2T = No
+              node.session.iscsi.ImmediateData = Yes
+              node.session.iscsi.FirstBurstLength = 262144
+              node.session.iscsi.MaxBurstLength = 16776192
+              node.session.cmds_max = 128
+              node.session.queue_depth = 32
+              node.session.err_timeo.abort_timeout = 15
+              node.session.err_timeo.lu_reset_timeout = 30
+              node.session.err_timeo.tgt_reset_timeout = 30
+              discovery.sendtargets.auth.authmethod = None
+              discovery.sendtargets.timeo.login_timeout = 30
+              discovery.sendtargets.timeo.auth_timeout = 45
+              discovery.sendtargets.timeo.active_timeout = 30
+              EOF
+              echo "iSCSI iscsid.conf ensured in overlay"
           securityContext:
             privileged: true
           volumeMounts:
