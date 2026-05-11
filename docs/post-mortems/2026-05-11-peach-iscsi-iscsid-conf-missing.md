@@ -34,28 +34,33 @@
 
 ### Architecture overlay ext-iscsid sur Talos Linux
 
-Sur Talos Linux, le service iSCSI (`ext-iscsid`) tourne dans son propre namespace de montage via un overlay filesystem. L'overlay se compose de :
+Sur Talos Linux, le service iSCSI (`ext-iscsid`) tourne dans son propre namespace de montage via un overlay filesystem :
 
-- **Lower layer (base image)** : image OCI contenant `open-iscsi`. Contient `/etc/iscsi/nodes/` avec les 255 enregistrements de targets iSCSI (87 targets × 3 portals) créés lors des connexions précédentes. **Ne contient pas `iscsid.conf`.**
-- **Upper layer (runtime)** : répertoire inscriptible sur le nœud à `/system/overlays/usr-local-lib-containers-iscsid-diff/`. Vide après chaque reboot.
+- **Mount point** : `/usr/local/lib/containers/iscsid/` (vue merged)
+- **Lower layer** : `/usr/local/lib/containers/iscsid/` (image OCI ext-iscsid) — contient `etc/iscsi/iscsid.conf` + `etc/iscsi/nodes/` vide
+- **Upper layer** : `/system/overlays/usr-local-lib-containers-iscsid-diff/` (partition state, persistante entre reboots) — accumule les node records créés par le CSI driver et les fichiers écrits par iscsid lui-même (hosts, resolv.conf)
 
-Le CSI plugin Synology utilise `/csibin/iscsiadm`, un wrapper qui fait `nsenter` dans le namespace de montage d'iscsid pour exécuter les commandes iSCSI. Toute commande `iscsiadm` (discovery, login, etc.) requiert que `/etc/iscsi/iscsid.conf` existe dans ce namespace.
+**`iscsid.conf` EST dans la lower layer** — les nœuds pearl et powder ont un upper dir vide et lisent `iscsid.conf` depuis la lower layer sans problème. L'upper dir persiste entre les reboots normaux (partition state).
 
-### Pourquoi le fichier manque
+### Vraie root cause : répertoire opaque dans l'upper dir
 
-`iscsid.conf` n'est pas dans la base image de l'extension Talos `ext-iscsid`. L'upper layer est ephémère (non persisté entre reboots). Résultat : après chaque reboot, `iscsid.conf` est absent, et **toute opération iSCSI échoue silencieusement** du point de vue du kubelet (qui voit juste `NodeStageVolume` qui timeout).
+Le répertoire `/system/overlays/usr-local-lib-containers-iscsid-diff/etc/iscsi/` sur peach avait probablement l'attribut **opaque** (`trusted.overlay.opaque = "y"`), ce qui bloque l'accès à tous les fichiers de la lower layer correspondante — y compris `iscsid.conf`.
 
-Erreur exacte dans les logs du CSI plugin :
+Un répertoire devient opaque dans un overlay quand il est **supprimé puis recréé** à l'intérieur du namespace. Cela survient lors d'opérations de recovery agressives : si une procédure précédente a fait `rm -rf /etc/iscsi` puis `mkdir -p /etc/iscsi/nodes` à l'intérieur du namespace iscsid (via nsenter ou iscsadm), le kernel overlay a marqué le nouveau répertoire comme opaque, cachant definitivement la lower layer.
+
+L'attribut opaque survit aux reboots (l'upper dir est persistant). Après le reboot RAM upgrade, peach redémarre avec l'upper dir intact, l'opaque est toujours là, et `iscsid.conf` reste invisible dans la vue merged.
+
+Erreur dans les logs du CSI plugin :
 ```
 [ERROR] [driver/initiator.go:194] Failed in discovery of the target:
   iscsiadm: can't open iscsid.startup configuration file /etc/iscsi/iscsid.conf
 ```
 
-### Pourquoi l'incident n'a pas été détecté plus tôt
+### Pourquoi l'incident n'a pas été détecté avant le reboot
 
-1. **Les autres nœuds (pearl, powder, poison) fonctionnent** car leur overlay upper dir contient déjà `iscsid.conf` — créé lors d'installations/mises à jour antérieures via des chemins non tracés
-2. **peach avait un historique plus récent** : son overlay upper dir avait probablement déjà `iscsid.conf` avant le reboot, mais l'upgrade RAM impliquait peut-être un reset de l'overlay (ou peach n'avait jamais eu le fichier depuis sa reconfiguration)
-3. **L'erreur iscsiadm n'est pas propagée visiblement** : kubelet affiche `context deadline exceeded` plutôt que l'erreur iscsadm réelle
+L'attribut opaque existait peut-être déjà avant le reboot, mais iscsid avait ses sessions iSCSI maintenues en mémoire (le daemon n'a pas besoin de relire `iscsid.conf` pour les sessions existantes). Au reboot, iscsid repart de zéro et essaie d'ouvrir le fichier — qui n'est plus visible.
+
+**L'erreur iscsiadm n'est pas propagée visiblement** : kubelet affiche `context deadline exceeded` plutôt que l'erreur iscsadm réelle — ce qui a retardé le diagnostic.
 
 ---
 
@@ -137,37 +142,24 @@ kubectl delete pod -n kube-system iscsi-db-init
 
 ---
 
-## Fix Permanent (GitOps)
+## Fix Permanent
 
-PR #3191 — `apps/01-storage/synology-csi/base/node.yaml`
+**Aucun changement de code dans vixens.** L'incident est spécifique à peach (répertoire opaque dans l'upper dir persistant).
 
-L'init container `iscsi-lock-cleanup` a été étendu pour créer `iscsid.conf` dans l'overlay upper dir à chaque démarrage du pod CSI node :
+**Fix one-shot sur peach** : créer `iscsid.conf` dans l'upper dir (fait manuellement lors de la recovery) suffit à restaurer la visibilité — le fichier dans l'upper dir prend la précédence sur l'opaque et permet à iscsadm de fonctionner.
 
-```yaml
-initContainers:
-  - name: iscsi-lock-cleanup
-    image: busybox:1.37
-    command:
-      - sh
-      - -c
-      - |
-        rm -f /host/run/lock/iscsi/lock.write && echo "iSCSI stale lock cleared"
-        OVERLAY=/host/system/overlays/usr-local-lib-containers-iscsid-diff
-        mkdir -p ${OVERLAY}/etc/iscsi
-        cat > ${OVERLAY}/etc/iscsi/iscsid.conf << 'EOF'
-        iscsid.startup = /usr/local/sbin/iscsid
-        node.startup = manual
-        # ... paramètres open-iscsi standards
-        EOF
-        echo "iSCSI iscsid.conf ensured in overlay"
-    securityContext:
-      privileged: true
-    volumeMounts:
-      - name: host-root
-        mountPath: /host
+**Fix structurel** : supprimer l'attribut opaque du répertoire `etc/iscsi/` dans l'upper dir, ce qui permettrait de voir à nouveau `iscsid.conf` depuis la lower layer sans avoir le fichier en double. Mais c'est cosmétique — le fichier en double ne cause pas de problème fonctionnel.
+
+```bash
+# Diagnostic : vérifier si le répertoire est opaque
+kubectl debug node/<node> -it --image=busybox -- \
+  sh -c 'cat /proc/filesystems'  # vérifier support overlay
+# Via pod debug avec accès state partition :
+# getfattr -n trusted.overlay.opaque /host/system/overlays/usr-local-lib-containers-iscsid-diff/etc/iscsi/
+# Si retourne "y" → répertoire opaque → bloque lower layer
 ```
 
-**Pourquoi ça marche :** YAML strip l'indentation commune (14 espaces), donc le heredoc `EOF` se retrouve en colonne 0 dans le script bash — terminaison correcte. Le fichier est idempotent (écrasé à chaque redémarrage de pod).
+**À ne pas faire** : créer `iscsid.conf` depuis un init container Kubernetes à chaque démarrage. `iscsid.conf` est fourni par la lower layer de l'extension Talos ext-iscsid — l'écrire depuis K8s bypass le modèle de configuration Talos et écrase silencieusement la version bundlée à chaque mise à jour du CSI node pod.
 
 ---
 
@@ -189,41 +181,41 @@ Lors de l'investigation, un second problème a été identifié mais non résolu
 
 ## Lessons Learned
 
-### 1. L'overlay iscsid est ephémère sur Talos
+### 1. L'overlay upper dir iscsid est persistant entre reboots
 
-Tout fichier écrit dans `/system/overlays/usr-local-lib-containers-iscsid-diff/` est perdu au reboot. **La configuration runtime d'iscsid doit être injectée au démarrage du CSI node pod**, pas assumée présente.
+`/system/overlays/usr-local-lib-containers-iscsid-diff/` est sur la **partition state** de Talos — elle survit aux reboots. Les nœuds sains ont un upper dir vide et lisent `iscsid.conf` depuis la lower layer (bundlée avec ext-iscsid). Les attributs xattr (comme opaque) survivent aussi — c'est ce qui a rendu l'incident invisible jusqu'au reboot.
 
-**Action :** PR #3191 résout ce point de façon permanente.
+### 2. Un répertoire opaque dans l'upper dir bloque silencieusement la lower layer
 
-### 2. L'erreur iscsiadm réelle est masquée par kubelet
+Overlay filesystem : si un répertoire dans l'upper dir a l'attribut `trusted.overlay.opaque = "y"`, **tous** les fichiers de la lower layer correspondante deviennent invisibles. Il n'y a aucun log, aucune erreur — ils n'existent simplement plus dans la vue merged. Cela arrive quand un répertoire est supprimé puis recréé à l'intérieur du namespace overlay.
 
-Kubelet logue `context deadline exceeded` ou `failed to stage volume`. L'erreur réelle (iscsadm) est dans les logs du container CSI plugin :
+**Diagnostic rapide :** si `iscsid.conf` manque mais le lower layer `/usr/local/lib/containers/iscsid/etc/iscsi/iscsid.conf` existe → chercher un opaque sur le upper dir.
+
+### 3. L'erreur iscsiadm réelle est masquée par kubelet
+
+Kubelet logue `context deadline exceeded` ou `failed to stage volume`. L'erreur réelle est dans les logs du container CSI plugin :
 
 ```bash
 kubectl logs -n synology-csi <csi-node-pod> -c synology-csi-plugin | grep -i "iscsi\|failed\|error"
 ```
 
-**Action :** Toujours vérifier les logs CSI plugin en premier lors d'un échec de montage iSCSI, pas seulement `kubectl describe pod`.
+Toujours commencer par les logs CSI plugin, pas `kubectl describe pod`.
 
-### 3. Les 255 records base image ne sont pas dans l'upper dir
+### 4. Ne pas écrire la config OS depuis Kubernetes
 
-Confusion initiale : `iscsadm -m node` affiche 261 entries sur peach, mais elles viennent de la **lower layer** (base image). L'upper dir ne contient que les records créés localement. Supprimer l'upper dir n'aide pas pour les records existants — ils restent disponibles via la lower layer.
+`iscsid.conf` est fourni par Talos ext-iscsid. L'écrire depuis un init container K8s n'est pas la bonne approche — ça bypass le modèle de configuration Talos et écrase silencieusement la version bundlée. Si un fichier de la lower layer est absent ou masqué, le bon endroit pour corriger est le nœud Talos (machine.files ou suppression du whiteout), pas le CSI driver.
 
-### 4. Le reboot post-upgrade matériel nécessite une validation iSCSI
+### 5. Les opérations de recovery inside le namespace iscsid créent des whiteouts
 
-Avant de marquer un nœud comme sain après reboot, vérifier :
-```bash
-# Depuis un pod debug sur le nœud
-iscsiadm -m session   # Sessions actives
-iscsiadm -m discoverydb   # DB de discovery accessible (nécessite iscsid.conf)
-```
+Toute opération `rm` ou `rmdir` exécutée **à l'intérieur** du namespace iscsid (via nsenter ou dans le container iscsid) peut créer des whiteouts dans l'upper dir. À éviter lors des recoveries iSCSI — préférer les opérations via le chemin hostPath de l'upper dir (`/host/system/overlays/...`).
 
 ---
 
 ## Action Items
 
-- [x] **PR #3191** : iscsid.conf créé dans l'overlay à chaque démarrage CSI node (fix permanent)
+- [x] **Recovery peach** : iscsid.conf créé manuellement dans l'upper dir — peach opérationnel
+- [ ] **Supprimer l'opaque sur peach** : `setfattr -x trusted.overlay.opaque /system/overlays/usr-local-lib-containers-iscsid-diff/etc/iscsi/` (cosmétique — fonctionnel déjà OK)
 - [ ] **VPA memory injection** : désactiver Goldilocks pour namespace `synology-csi` OU augmenter minimum mémoire dans VPA resource policy pour `synology-csi-plugin`
-- [ ] **Runbook** : documenter `docs/troubleshooting/iscsi-iscsid-conf-missing.md` avec procédure de diagnostic rapide
-- [ ] **Alerte** : pod `ContainerCreating` > 5min avec PVC iSCSI → page oncall (Prometheus alerting sur `kube_pod_status_phase{phase="Pending"}` + PVC storageclass iSCSI)
-- [ ] **Validation post-reboot** : ajouter check `iscsid.conf` présent dans la procédure de validation après reboot nœud
+- [ ] **Runbook** : documenter procédure de diagnostic opaque overlay dans `docs/troubleshooting/iscsi-opaque-overlay.md`
+- [ ] **Alerte** : pod `ContainerCreating` > 5min avec PVC iSCSI → page oncall
+- [ ] **Procédure recovery** : explicitement interdire `rm` inside namespace iscsid — utiliser uniquement le chemin hostPath de l'upper dir
