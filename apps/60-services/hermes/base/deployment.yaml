@@ -34,8 +34,8 @@ spec:
           # on garde le conteneur vivant, puis on lance `hermes setup`
           # manuellement. On remplacera ensuite par gateway/run.
           args:
-            - sleep
-            - infinity
+            - gateway
+            - run
 
           env:
             - name: HERMES_HOME
