@@ -43,6 +43,37 @@ spec:
             - name: TERMINAL_ENV
               value: local
 
+            # Hermes web dashboard
+            - name: HERMES_DASHBOARD
+              value: "1"
+            - name: HERMES_DASHBOARD_HOST
+              value: "0.0.0.0"
+            - name: HERMES_DASHBOARD_PORT
+              value: "9119"
+
+            # Dashboard authentication
+            - name: HERMES_DASHBOARD_BASIC_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-dashboard-auth
+                  key: username
+            - name: HERMES_DASHBOARD_BASIC_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-dashboard-auth
+                  key: password
+            - name: HERMES_DASHBOARD_BASIC_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-dashboard-auth
+                  key: session-secret
+
+          ports:
+            - name: gateway
+              containerPort: 8642
+            - name: dashboard
+              containerPort: 9119
+
           resources:
             requests:
               cpu: 100m
