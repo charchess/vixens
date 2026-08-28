@@ -86,7 +86,29 @@ spec:
             - name: data
               mountPath: /opt/data
 
+            # hAIrem collaborative filesystem
+            - name: hairem-files
+              mountPath: /workspace/persona/lisa
+              subPath: persona/lisa
+
+            - name: hairem-files
+              mountPath: /workspace/shared
+              subPath: shared
+
+            - name: hairem-files
+              mountPath: /workspace/public
+              subPath: public
+              readOnly: true
+
+            - name: hairem-files
+              mountPath: /workspace/llmwiki
+              subPath: llmwiki
+
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: hermes-data
+
+        - name: hairem-files
+          persistentVolumeClaim:
+            claimName: hairem-files
