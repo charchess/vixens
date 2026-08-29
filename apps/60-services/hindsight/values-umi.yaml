@@ -39,6 +39,7 @@ api:
         - ReadWriteOnce
 
   env:
+    HINDSIGHT_API_WORKER_ID: "hindsight-api-umi"
     # ------------------------------------------------------------
     # LLM — Ollama distant / Qwen3.5
     # ------------------------------------------------------------
