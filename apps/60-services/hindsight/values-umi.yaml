@@ -1,0 +1,127 @@
+---
+# hAIrem / UMI laboratory configuration
+# Hindsight 0.9.1
+#
+# Objectif de cette première phase :
+# - API + Control Plane
+# - PostgreSQL/pgvector local
+# - embeddings/reranking multilingues CPU
+# - PAS encore de LLM
+#
+# La configuration production sera différente :
+# - PostgreSQL externe
+# - stockage bloc
+# - PGroonga
+# - LLM externe sur machine GPU
+# - secrets via Infisical
+
+version: "0.9.1"
+
+api:
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  persistence:
+    modelCache:
+      enabled: true
+      size: 5Gi
+      storageClass: local-path
+      accessModes:
+        - ReadWriteOnce
+
+  env:
+    # ------------------------------------------------------------
+    # LLM
+    # ------------------------------------------------------------
+    # Infrastructure uniquement pour le moment.
+    # retain/reflect seront activés lorsque le LLM sera branché.
+    HINDSIGHT_API_LLM_PROVIDER: "none"
+
+    # Ne PAS forcer la langue de sortie.
+    # On veut une mémoire naturellement FR/EN avec conservation
+    # des termes techniques et noms propres anglais.
+
+    # ------------------------------------------------------------
+    # Embeddings multilingues
+    # ------------------------------------------------------------
+    HINDSIGHT_API_EMBEDDINGS_PROVIDER: "onnx"
+    HINDSIGHT_API_EMBEDDINGS_ONNX_MODEL_ID: "intfloat/multilingual-e5-small"
+    HINDSIGHT_API_EMBEDDINGS_ONNX_DIMENSIONS: "384"
+    HINDSIGHT_API_EMBEDDINGS_ONNX_QUERY_PREFIX: "query: "
+    HINDSIGHT_API_EMBEDDINGS_ONNX_PASSAGE_PREFIX: "passage: "
+
+    # ------------------------------------------------------------
+    # Reranker multilingue CPU
+    # ------------------------------------------------------------
+    HINDSIGHT_API_RERANKER_PROVIDER: "local"
+    HINDSIGHT_API_RERANKER_LOCAL_MODEL: "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+    HINDSIGHT_API_RERANKER_LOCAL_FORCE_CPU: "true"
+    HINDSIGHT_API_RERANKER_LOCAL_MAX_CONCURRENT: "2"
+
+    # ------------------------------------------------------------
+    # Recherche lexicale
+    # ------------------------------------------------------------
+    # LAB : PostgreSQL natif avec tokenizer neutre FR/EN.
+    # PROD cible : PGroonga.
+    HINDSIGHT_API_TEXT_SEARCH_EXTENSION: "native"
+    HINDSIGHT_API_TEXT_SEARCH_EXTENSION_NATIVE_LANGUAGE: "simple"
+
+    # ------------------------------------------------------------
+    # API
+    # ------------------------------------------------------------
+    HINDSIGHT_API_ENABLE_BANK_CONFIG_API: "true"
+    HINDSIGHT_API_MCP_ENABLED: "true"
+    HINDSIGHT_API_LOG_LEVEL: "info"
+
+controlPlane:
+  enabled: true
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+postgresql:
+  enabled: true
+
+  auth:
+    username: hindsight
+    database: hindsight
+
+  persistence:
+    enabled: true
+    size: 8Gi
+    storageClass: local-path
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+# Pas d'Ingress dans le labo.
+# Accès via kubectl port-forward.
+ingress:
+  enabled: false
+
+worker:
+  enabled: false
+
+tei:
+  reranker:
+    enabled: false
+  embedding:
+    enabled: false
