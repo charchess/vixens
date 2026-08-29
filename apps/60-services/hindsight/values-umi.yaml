@@ -15,7 +15,7 @@
 # - LLM externe sur machine GPU
 # - secrets via Infisical
 
-version: "0.9.1"
+version: "0.9.2"
 
 existingSecret: "hindsight-runtime"
 
