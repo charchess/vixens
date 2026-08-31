@@ -45,3 +45,29 @@ None is default initially; `local-path` stays default until an explicit migratio
 ## Secret hygiene
 
 The `secret-templates/.gitignore` file ignores every non-example file in that directory so filled driver configs are not accidentally committed. Keep real rendered configs under a secure local state directory and feed them to `kubectl create secret --from-file`.
+
+
+## OpenBao / External Secrets target
+
+UMI is moving from the old Synology CSI Infisical flow to OpenBao + External Secrets Operator.
+
+Git now defines:
+
+- `external-secrets-umi`: installs External Secrets Operator.
+- `openbao-secrets-umi`: defines `ClusterSecretStore/openbao-umi`.
+- `truenas-csi-secrets-umi`: defines ExternalSecrets that materialize:
+  - `truenas-csi-iscsi-driver-config`
+  - `truenas-csi-nfs-driver-config`
+
+Bootstrap still needs one out-of-band credential, never committed:
+
+```bash
+kubectl -n external-secrets create secret generic openbao-token --from-literal=token=...
+```
+
+OpenBao KV v2 expected payloads:
+
+- mount: `kv`
+- path: `vixens/dev/apps/01-storage/truenas-csi/iscsi`
+- path: `vixens/dev/apps/01-storage/truenas-csi/nfs`
+- property at both paths: `driver-config-file.yaml` containing the full democratic-csi driver config YAML.

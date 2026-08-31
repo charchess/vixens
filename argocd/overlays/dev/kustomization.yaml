@@ -8,6 +8,8 @@ resources:
   - apps/priority-classes.yaml
   - apps/shared-namespaces.yaml
   - apps/infisical-operator.yaml
+  - apps/external-secrets-umi.yaml
+  - apps/openbao-secrets-umi.yaml
   - apps/cilium-lb.yaml
   - apps/traefik.yaml
   - apps/traefik-middlewares.yaml
