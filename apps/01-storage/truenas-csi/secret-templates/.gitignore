@@ -1,0 +1,4 @@
+# Do not commit filled TrueNAS driver configs.
+*
+!.gitignore
+!*.example.yaml

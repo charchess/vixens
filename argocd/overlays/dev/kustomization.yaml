@@ -25,6 +25,9 @@ resources:
   - apps/snapshot-controller.yaml
   - apps/synology-csi-secrets.yaml
   - apps/synology-csi.yaml
+  - apps/truenas-csi-secrets-umi.yaml
+  - apps/truenas-csi-iscsi-umi.yaml
+  - apps/truenas-csi-nfs-umi.yaml
   - apps/local-path-provisioner.yaml
   - apps/nfs-storage.yaml
   - apps/external-dns-unifi.yaml
