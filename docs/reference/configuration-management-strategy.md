@@ -86,7 +86,7 @@ spec:
       annotations:
         dataangel.io/bucket: "vixens-prod-myapp"
         dataangel.io/sqlite-paths: "/config/myapp.db"
-        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/s3-endpoint: "http://192.168.200.244:30157"
         dataangel.io/deployment-name: "myapp"
         dataangel.io/rclone-interval: "60s"
         dataangel.io/metrics-enabled: "true"
@@ -123,7 +123,7 @@ Pour les apps sans SQLite (config files only) :
 annotations:
   dataangel.io/bucket: "vixens-prod-myapp"
   dataangel.io/fs-paths: "/config"          # pas de sqlite-paths
-  dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+  dataangel.io/s3-endpoint: "http://192.168.200.244:30157"
   dataangel.io/rclone-interval: "60s"
 ```
 

@@ -22,7 +22,7 @@ spec:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
   egress:
-    # nocodb → world (NAS/MinIO at 192.168.111.69:9000 for file storage)
+    # nocodb → world (NAS/MinIO at 192.168.200.244:30157 for file storage)
     - toEntities:
         - world
     # nocodb → databases (PostgreSQL/MariaDB)

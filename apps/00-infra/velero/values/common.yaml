@@ -23,7 +23,7 @@ configuration:
       config:
         region: us-east-1
         s3ForcePathStyle: "true"
-        s3Url: http://192.168.111.69:9000
+        s3Url: http://192.168.200.244:30157
 
   # MAINTENANCE JOB RESOURCES
   # Template reads: .Values.configuration.repositoryMaintenanceJob.repositoryConfigData

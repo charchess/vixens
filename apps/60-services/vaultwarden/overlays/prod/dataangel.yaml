@@ -12,7 +12,7 @@ spec:
         dataangel.io/bucket: "vixens-prod-vaultwarden"
         dataangel.io/sqlite-paths: "/data/db.sqlite3"
         dataangel.io/fs-paths: "/data"
-        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/s3-endpoint: "http://192.168.200.244:30157"
         dataangel.io/deployment-name: "vaultwarden"
         dataangel.io/rclone-interval: "60s"
         dataangel.io/metrics-enabled: "true"

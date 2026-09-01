@@ -38,7 +38,7 @@ spec:
     # firefly-iii → kube-apiserver (health checks, service discovery)
     - toEntities:
         - kube-apiserver
-    # firefly-iii → world (NAS/MinIO at 192.168.111.69:9000, external APIs)
+    # firefly-iii → world (NAS/MinIO at 192.168.200.244:30157, external APIs)
     - toEntities:
         - world
 ---
