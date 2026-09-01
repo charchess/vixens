@@ -5,9 +5,9 @@
 driver: freenas-nfs
 instance_id: umi-truenas-nfs
 httpConnection:
-  protocol: http
+  protocol: https
   host: 192.168.200.244
-  port: 80
+  port: 443
   apiKey: REPLACE_WITH_TRUENAS_API_KEY
   allowInsecure: true
   apiVersion: 2
@@ -32,6 +32,8 @@ nfs:
   shareAllowedNetworks:
     - 172.30.208.64/32
     - 10.42.0.0/16
+    # UMI/WSL2 NFS requests are observed by TrueNAS as the Windows host/NAT source.
+    - 192.168.199.119/32
   shareMaprootUser: root
   shareMaprootGroup: root
   shareMapallUser: ""

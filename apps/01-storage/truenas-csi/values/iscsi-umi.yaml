@@ -29,6 +29,9 @@ controller:
     enabled: false
   driver:
     logLevel: info
+    env:
+      - name: PATH
+        value: /bin:/usr/bin:/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin
     resources:
       requests:
         cpu: 10m
@@ -56,6 +59,9 @@ node:
     vixens.io/sizing-rationale: "G-nano: CSI iSCSI node plugin on single-node UMI lab"
   driver:
     logLevel: info
+    env:
+      - name: PATH
+        value: /bin:/usr/bin:/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin
     iscsiDirHostPath: /etc/iscsi
     iscsiDirHostPathType: DirectoryOrCreate
     resources:
