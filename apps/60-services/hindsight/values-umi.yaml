@@ -34,7 +34,7 @@ api:
     modelCache:
       enabled: true
       size: 5Gi
-      storageClass: local-path
+      storageClass: truenas-iscsi-delete
       accessModes:
         - ReadWriteOnce
 
@@ -118,7 +118,7 @@ postgresql:
   persistence:
     enabled: true
     size: 8Gi
-    storageClass: local-path
+    storageClass: truenas-iscsi-retain
 
   resources:
     requests:

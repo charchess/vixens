@@ -107,8 +107,8 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: hermes-data
+            claimName: hermes-data-truenas
 
         - name: hairem-files
           persistentVolumeClaim:
-            claimName: hairem-files
+            claimName: hairem-files-truenas

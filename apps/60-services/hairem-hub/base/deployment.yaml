@@ -227,4 +227,4 @@ spec:
       volumes:
         - name: hairem-files
           persistentVolumeClaim:
-            claimName: hairem-files
+            claimName: hairem-files-truenas
