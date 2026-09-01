@@ -45,7 +45,7 @@ lapi:
     # Without this, the LAPI re-registers with CAPI on every restart → duplicate machine entries
     config:
       enabled: true
-      storageClassName: synelia-iscsi-retain
+      storageClassName: truenas-iscsi-retain
       accessModes:
         - ReadWriteOnce
       size: 1Gi

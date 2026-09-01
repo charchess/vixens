@@ -40,7 +40,7 @@ vmsingle:
     revisionHistoryLimitCount: 3
     retentionPeriod: "30d"
     storage:
-      storageClassName: synelia-iscsi-retain
+      storageClassName: truenas-iscsi-retain
       resources:
         requests:
           storage: 10Gi

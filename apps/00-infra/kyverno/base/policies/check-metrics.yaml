@@ -29,7 +29,7 @@ spec:
               namespaces:
                 - kube-system
                 - kyverno
-                - synology-csi
+                - truenas-csi
       validate:
         message: "Metrics annotations (prometheus.io/scrape) are required for maturity Level 3 (Gold)."
         anyPattern:

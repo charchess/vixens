@@ -7,7 +7,7 @@ deploymentStrategy:
 # Persistence
 persistence:
   enabled: true
-  storageClassName: synelia-iscsi-retain
+  storageClassName: truenas-iscsi-retain
   size: 10Gi
 # Admin credentials via Infisical (configured separately)
 admin:

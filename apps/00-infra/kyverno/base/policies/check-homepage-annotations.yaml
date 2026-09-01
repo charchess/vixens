@@ -31,7 +31,7 @@ spec:
                 - kyverno
                 - velero
                 - vpa
-                - synology-csi
+                - truenas-csi
                 - local-path-storage
                 - policy-reporter
           - resources:
