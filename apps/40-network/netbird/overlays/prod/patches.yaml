@@ -7,60 +7,60 @@ spec:
   template:
     spec:
       initContainers:
-        - name: init-config
-          env:
-            - name: NETBIRD_DATASTORE_ENCRYPTION_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: netbird-encryption-key
-                  key: NETBIRD_DATASTORE_ENCRYPTION_KEY
-            - name: AUTH_ISSUER
-              value: "https://authentik.truxonline.com/application/o/netbird/"
-            - name: AUTH_KEYS_LOCATION
-              value: "https://authentik.truxonline.com/application/o/netbird/jwks/"
-            - name: AUTH_CLIENT_ID
-              value: "netbird"
-            - name: AUTH_AUDIENCE
-              value: "netbird"
-            - name: AUTH_AUTHORIZATION_ENDPOINT
-              value: "https://authentik.truxonline.com/application/o/authorize/"
-            - name: AUTH_DEVICE_AUTH_ENDPOINT
-              value: "https://authentik.truxonline.com/application/o/device/"
-            - name: AUTH_TOKEN_ENDPOINT
-              value: "https://authentik.truxonline.com/application/o/token/"
-            - name: AUTH_OIDC_CONFIG_ENDPOINT
-              value: "https://authentik.truxonline.com/application/o/netbird/.well-known/openid-configuration"
-            - name: SIGNAL_URI
-              value: "netbird-signal.truxonline.com:443"
-            - name: STUN_URI
-              value: "netbird-relay.truxonline.com:3478"
+      - name: init-config
+        env:
+        - name: NETBIRD_DATASTORE_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: netbird-encryption-key
+              key: NETBIRD_DATASTORE_ENCRYPTION_KEY
+        - name: AUTH_ISSUER
+          value: https://authentik.truxonline.com/application/o/netbird/
+        - name: AUTH_KEYS_LOCATION
+          value: https://authentik.truxonline.com/application/o/netbird/jwks/
+        - name: AUTH_CLIENT_ID
+          value: netbird
+        - name: AUTH_AUDIENCE
+          value: netbird
+        - name: AUTH_AUTHORIZATION_ENDPOINT
+          value: https://authentik.truxonline.com/application/o/authorize/
+        - name: AUTH_DEVICE_AUTH_ENDPOINT
+          value: https://authentik.truxonline.com/application/o/device/
+        - name: AUTH_TOKEN_ENDPOINT
+          value: https://authentik.truxonline.com/application/o/token/
+        - name: AUTH_OIDC_CONFIG_ENDPOINT
+          value: https://authentik.truxonline.com/application/o/netbird/.well-known/openid-configuration
+        - name: SIGNAL_URI
+          value: netbird-signal.truxonline.com:443
+        - name: STUN_URI
+          value: netbird-relay.truxonline.com:3478
       containers:
-        - name: management
-          startupProbe:
-            tcpSocket:
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            failureThreshold: 60
-          livenessProbe:
-            tcpSocket:
-              port: 8080
-            periodSeconds: 10
-            failureThreshold: 3
-          readinessProbe:
-            tcpSocket:
-              port: 8080
-            periodSeconds: 5
-            failureThreshold: 3
-          env:
-            - name: NETBIRD_DOMAIN_NAME
-              value: "netbird.truxonline.com"
-            - name: NETBIRD_MGMT_API_ENDPOINT
-              value: "https://netbird-api.truxonline.com"
-            - name: NETBIRD_SIGNAL_ENDPOINT
-              value: "https://netbird-signal.truxonline.com"
-            - name: NETBIRD_RELAY_ENDPOINT
-              value: "https://netbird-relay.truxonline.com"
+      - name: management
+        startupProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 60
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 3
+        env:
+        - name: NETBIRD_DOMAIN_NAME
+          value: netbird.truxonline.com
+        - name: NETBIRD_MGMT_API_ENDPOINT
+          value: https://netbird-api.truxonline.com
+        - name: NETBIRD_SIGNAL_ENDPOINT
+          value: https://netbird-signal.truxonline.com
+        - name: NETBIRD_RELAY_ENDPOINT
+          value: https://netbird-relay.truxonline.com
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -70,10 +70,10 @@ spec:
   template:
     spec:
       containers:
-        - name: router
-          env:
-            - name: NB_MANAGEMENT_URL
-              value: "https://netbird-api.truxonline.com"
+      - name: router
+        env:
+        - name: NB_MANAGEMENT_URL
+          value: https://netbird-api.truxonline.com
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -83,12 +83,12 @@ spec:
   template:
     spec:
       containers:
-        - name: relay
-          env:
-            - name: NB_RELAY_EXPOSED_ADDRESS
-              value: "netbird-relay.truxonline.com:443"
-            - name: NETBIRD_RELAY_EXPOSED_ADDRESS
-              value: "netbird-relay.truxonline.com:443"
+      - name: relay
+        env:
+        - name: NB_RELAY_EXPOSED_ADDRESS
+          value: netbird-relay.truxonline.com:443
+        - name: NETBIRD_RELAY_EXPOSED_ADDRESS
+          value: netbird-relay.truxonline.com:443
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -98,32 +98,46 @@ spec:
   template:
     spec:
       containers:
-        - name: dashboard
-          env:
-            - name: AUTH_AUDIENCE
-              value: "netbird"
-            - name: AUTH_CLIENT_ID
-              value: "netbird"
-            - name: AUTH_AUTHORITY
-              value: "https://authentik.truxonline.com/application/o/netbird/"
-            - name: NETBIRD_AUTH_OIDC_CONFIGURATION_ENDPOINT
-              value: "https://authentik.truxonline.com/application/o/netbird/.well-known/openid-configuration"
-            - name: AUTH_SUPPORTED_SCOPES
-              value: "openid profile email offline_access"
-            - name: NETBIRD_MGMT_API_ENDPOINT
-              value: "https://netbird-api.truxonline.com"
-            - name: NETBIRD_MGMT_GRPC_API_ENDPOINT
-              value: "https://netbird-api.truxonline.com"
-            - name: USE_AUTH0
-              value: "false"
+      - name: dashboard
+        env:
+        - name: AUTH_AUDIENCE
+          value: netbird
+        - name: AUTH_CLIENT_ID
+          value: netbird
+        - name: AUTH_AUTHORITY
+          value: https://authentik.truxonline.com/application/o/netbird/
+        - name: NETBIRD_AUTH_OIDC_CONFIGURATION_ENDPOINT
+          value: https://authentik.truxonline.com/application/o/netbird/.well-known/openid-configuration
+        - name: AUTH_SUPPORTED_SCOPES
+          value: openid profile email offline_access
+        - name: NETBIRD_MGMT_API_ENDPOINT
+          value: https://netbird-api.truxonline.com
+        - name: NETBIRD_MGMT_GRPC_API_ENDPOINT
+          value: https://netbird-api.truxonline.com
+        - name: USE_AUTH0
+          value: 'false'
 ---
-apiVersion: secrets.infisical.com/v1alpha1
-kind: InfisicalSecret
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
   name: netbird-secrets-sync
   namespace: networking
 spec:
-  authentication:
-    universalAuth:
-      secretsScope:
-        envSlug: prod
+  refreshInterval: 60s
+  secretStoreRef:
+    name: openbao-umi
+    kind: ClusterSecretStore
+  target:
+    name: netbird-secrets
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      type: Opaque
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: external-secrets
+        annotations:
+          vixens.io/secret-source: openbao
+  dataFrom:
+  - extract:
+      key: vixens/prod/apps/40-network/netbird

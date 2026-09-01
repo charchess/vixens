@@ -3,35 +3,35 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: auth
 labels:
-  - pairs:
-      environment: prod
-    includeSelectors: false
+- pairs:
+    environment: prod
+  includeSelectors: false
 components:
-  - ../../../../_shared/components/infisical/env-prod
-  - ../../../../_shared/components/poddisruptionbudget/1
-  - ../../../../_shared/components/scheduling/avoid-i915
+- ../../../../_shared/components/poddisruptionbudget/1
+- ../../../../_shared/components/scheduling/avoid-i915
 patches:
-  - path: deployment-patch.yaml
-    target:
-      kind: Deployment
-      name: authentik-server
-  - path: worker-patch.yaml
-    target:
-      kind: Deployment
-      name: authentik-worker
-  - path: server-resources.yaml
-    target:
-      kind: Deployment
-      name: authentik-server
-  - path: worker-resources.yaml
-    target:
-      kind: Deployment
-      name: authentik-worker
-  - path: dataangel.yaml
-    target:
-      kind: Deployment
-      name: authentik-server
+- path: patch-openbao-env.yaml
+- path: deployment-patch.yaml
+  target:
+    kind: Deployment
+    name: authentik-server
+- path: worker-patch.yaml
+  target:
+    kind: Deployment
+    name: authentik-worker
+- path: server-resources.yaml
+  target:
+    kind: Deployment
+    name: authentik-server
+- path: worker-resources.yaml
+  target:
+    kind: Deployment
+    name: authentik-worker
+- path: dataangel.yaml
+  target:
+    kind: Deployment
+    name: authentik-server
 resources:
-  - ../../base
-  - ingress.yaml
-  - cors-middleware.yaml
+- ../../base
+- ingress.yaml
+- cors-middleware.yaml

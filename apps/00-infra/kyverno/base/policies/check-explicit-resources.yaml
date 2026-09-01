@@ -32,7 +32,7 @@ spec:
                 - kube-system
                 - kyverno
                 - cert-manager
-                - infisical-operator-system
+                - external-secrets
       validate:
         message: "Container defines explicit resources.requests without a vixens.io/sizing.<container> label. Consider migrating to the sizing label system."
         foreach:

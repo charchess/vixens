@@ -2,22 +2,19 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 components:
-  - ../../../../_shared/components/sync-wave/wave-9
-  - ../../../../_shared/components/goldilocks/enabled
-  - ../../../../_shared/components/nometrics
-  - ../../../../_shared/components/infisical/env-prod
-  - ../../../../_shared/components/dataangel
-  - ../../../../_shared/components/poddisruptionbudget/1
-
+- ../../../../_shared/components/sync-wave/wave-9
+- ../../../../_shared/components/goldilocks/enabled
+- ../../../../_shared/components/nometrics
+- ../../../../_shared/components/dataangel
+- ../../../../_shared/components/poddisruptionbudget/1
 patches:
-  - patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/env/0/value
-        value: https://changedetection.truxonline.com
-    target:
-      kind: Deployment
-      name: changedetection
-  - path: dataangel.yaml
+- path: patch-openbao-env.yaml
+- patch: "- op: replace\n  path: /spec/template/spec/containers/0/env/0/value\n  value:\
+    \ https://changedetection.truxonline.com"
+  target:
+    kind: Deployment
+    name: changedetection
+- path: dataangel.yaml
 resources:
-  - ../../base
-  - ingress.yaml
+- ../../base
+- ingress.yaml

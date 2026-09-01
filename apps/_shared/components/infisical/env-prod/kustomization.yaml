@@ -2,9 +2,7 @@
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
 patches:
-  - target:
-      kind: InfisicalSecret
-    patch: |-
-      - op: replace
-        path: /spec/authentication/universalAuth/secretsScope/envSlug
-        value: prod
+- target:
+    kind: ExternalSecret
+  patch: "- op: add\n  path: /metadata/annotations/vixens.io~1openbao-env\n  value:\
+    \ prod\n"

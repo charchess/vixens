@@ -28,7 +28,7 @@ spec:
                 - kyverno
                 # Helm charts without podLabels support — infrastructure operators
                 - cert-manager
-                - infisical-operator-system
+                - external-secrets
       validate:
         message: "At least one vixens.io/sizing.<container-name> label matching [G|B|SB|V]-* is required for maturity Level 4 (Platinum)."
         deny:

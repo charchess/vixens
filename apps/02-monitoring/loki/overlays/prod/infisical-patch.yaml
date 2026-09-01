@@ -1,12 +1,25 @@
 ---
-apiVersion: secrets.infisical.com/v1alpha1
-kind: InfisicalSecret
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
   name: loki-secrets-sync
+  namespace: monitoring
 spec:
-  authentication:
-    universalAuth:
-      secretsScope:
-        envSlug: prod
-  managedSecretReference:
-    secretNamespace: monitoring
+  refreshInterval: 60s
+  secretStoreRef:
+    name: openbao-umi
+    kind: ClusterSecretStore
+  target:
+    name: loki-secrets
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      type: Opaque
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: external-secrets
+        annotations:
+          vixens.io/secret-source: openbao
+  dataFrom:
+  - extract:
+      key: vixens/prod/apps/02-monitoring/loki

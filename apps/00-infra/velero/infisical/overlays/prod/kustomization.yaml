@@ -7,9 +7,9 @@ resources:
 patches:
   - path: velero-infisical-secret-patch.yaml
     target:
-      kind: InfisicalSecret
+      kind: ExternalSecret
       name: velero-credentials-sync
   - path: velero-repo-secret-patch.yaml
     target:
-      kind: InfisicalSecret
+      kind: ExternalSecret
       name: velero-repo-credentials

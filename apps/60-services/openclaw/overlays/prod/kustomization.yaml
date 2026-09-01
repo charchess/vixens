@@ -3,15 +3,14 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: services
 resources:
-  - ../../base
-  - ingress.yaml
+- ../../base
+- ingress.yaml
 components:
-  - ../../../../_shared/components/infisical/env-prod
-  - ../../../../_shared/components/sync-wave/wave-10
-  - ../../../../_shared/components/goldilocks/enabled
-  - ../../../../_shared/components/dataangel
-  - ../../../../_shared/components/poddisruptionbudget/1
-  - ../../../../_shared/components/scheduling/avoid-i915
-
+- ../../../../_shared/components/sync-wave/wave-10
+- ../../../../_shared/components/goldilocks/enabled
+- ../../../../_shared/components/dataangel
+- ../../../../_shared/components/poddisruptionbudget/1
+- ../../../../_shared/components/scheduling/avoid-i915
 patches:
-  - path: dataangel.yaml
+- path: patch-openbao-env.yaml
+- path: dataangel.yaml

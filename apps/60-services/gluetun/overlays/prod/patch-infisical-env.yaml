@@ -1,12 +1,25 @@
 ---
-apiVersion: secrets.infisical.com/v1alpha1
-kind: InfisicalSecret
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
   name: gluetun-wireguard-secrets-sync
+  namespace: services
 spec:
-  authentication:
-    universalAuth:
-      secretsScope:
-        envSlug: prod
-  managedSecretReference:
-    secretNamespace: services
+  refreshInterval: 60s
+  secretStoreRef:
+    name: openbao-umi
+    kind: ClusterSecretStore
+  target:
+    name: gluetun-wireguard-secrets
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      type: Opaque
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: external-secrets
+        annotations:
+          vixens.io/secret-source: openbao
+  dataFrom:
+  - extract:
+      key: vixens/prod/apps/60-services/gluetun

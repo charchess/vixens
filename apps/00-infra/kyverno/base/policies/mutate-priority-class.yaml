@@ -8,7 +8,7 @@
 #   Kyverno intercepts admission and injects spec.priorityClassName from the label value.
 #
 # Specific rules for charts without podLabels support:
-#   - infisical-operator (v0.10.x): match control-plane=controller-manager
+#   - external-secrets (v0.10.x): match control-plane=controller-manager
 #   - goldilocks (v10.2.x): chart ignores controller/dashboard.podLabels — match on component label
 #   - cert-manager-webhook-gandi (SINTEF v0.5.x): no podLabels/podAnnotations in chart
 #
@@ -79,18 +79,18 @@ spec:
             path: /spec/priority
             value: {{ priorityValue }}
 
-    # Rule 2: infisical-operator — chart has no podLabels support
-    # Match on existing chart label: control-plane=controller-manager in infisical-operator-system
+    # Rule 2: external-secrets — chart has no podLabels support
+    # Match on existing chart label: control-plane=controller-manager in external-secrets
     # Reads priority value from PriorityClass API (DRY — source of truth: _shared/priority-classes/).
     # If the apiCall HTTP request fails, failurePolicy:Ignore on the Kyverno webhook admits the pod
-    - name: inject-priority-class-infisical-operator
+    - name: inject-priority-class-external-secrets
       match:
         any:
           - resources:
               kinds:
                 - Pod
               namespaces:
-                - infisical-operator-system
+                - external-secrets
               selector:
                 matchLabels:
                   control-plane: controller-manager

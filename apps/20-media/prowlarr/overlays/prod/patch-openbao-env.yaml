@@ -1,0 +1,17 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: prowlarr-secrets-sync
+  namespace: media
+spec:
+  dataFrom:
+  - extract:
+      key: vixens/prod/apps/20-media/prowlarr
+  target:
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: external-secrets
+        annotations:
+          vixens.io/secret-source: openbao

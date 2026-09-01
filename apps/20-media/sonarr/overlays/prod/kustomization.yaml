@@ -1,32 +1,28 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: media
-
 resources:
-  - ../../base
-  - ingress.yaml
-
+- ../../base
+- ingress.yaml
 components:
-  - ../../../../_shared/components/infisical/env-prod
-  - ../../../../_shared/components/sync-wave/wave-10
-  - ../../../../_shared/components/goldilocks/enabled
-  - ../../../../_shared/components/base
-  - ../../../../_shared/components/revision-history-limit
-  - ../../../../_shared/components/metrics
-  - ../../../../_shared/components/poddisruptionbudget/0
-  - ../../../../_shared/components/securitycontext/s6-overlay
-  - ../../../../_shared/components/dataangel
-  - ../../../../_shared/components/scheduling/avoid-i915
-
+- ../../../../_shared/components/sync-wave/wave-10
+- ../../../../_shared/components/goldilocks/enabled
+- ../../../../_shared/components/base
+- ../../../../_shared/components/revision-history-limit
+- ../../../../_shared/components/metrics
+- ../../../../_shared/components/poddisruptionbudget/0
+- ../../../../_shared/components/securitycontext/s6-overlay
+- ../../../../_shared/components/dataangel
+- ../../../../_shared/components/scheduling/avoid-i915
 patches:
-  - target:
-      kind: Deployment
-      name: sonarr
-    path: resources-patch.yaml
-  - path: dataangel.yaml
-  - target:
-      kind: Deployment
-      name: sonarr
-    path: startup-probe-patch.yaml
+- path: patch-openbao-env.yaml
+- target:
+    kind: Deployment
+    name: sonarr
+  path: resources-patch.yaml
+- path: dataangel.yaml
+- target:
+    kind: Deployment
+    name: sonarr
+  path: startup-probe-patch.yaml

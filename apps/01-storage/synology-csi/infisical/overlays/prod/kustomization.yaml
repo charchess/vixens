@@ -5,7 +5,7 @@ namespace: synology-csi
 patches:
   - path: synology-infisical-secret-patch.yaml
     target:
-      kind: InfisicalSecret
+      kind: ExternalSecret
       name: synology-csi-credentials-sync
 resources:
   - ../../base

@@ -14,7 +14,7 @@ components:
 patches:
   - path: infisical-patch.yaml
     target:
-      kind: InfisicalSecret
+      kind: ExternalSecret
       name: vaultwarden-secrets
   - path: deployment-patch.yaml
     target:
