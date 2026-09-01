@@ -96,12 +96,12 @@ spec:
           emptyDir: {}
         - name: books
           nfs:
-            server: 192.168.111.69
-            path: /volume3/Content/ebooks
+            server: 192.168.200.244
+            path: /mnt/tank/data/media/books
         - name: bookdrop
           nfs:
-            server: 192.168.111.69
-            path: /volume3/Internal/incoming/ebooks
+            server: 192.168.200.244
+            path: /mnt/tank/data/documents/inbox/ebooks
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

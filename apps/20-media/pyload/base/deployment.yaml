@@ -104,8 +104,8 @@ spec:
           emptyDir: {}
         - name: downloads
           nfs:
-            server: 192.168.111.69
-            path: /volume3/Downloads/pyload
+            server: 192.168.200.244
+            path: /mnt/tank/scratch/downloads/pyload
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

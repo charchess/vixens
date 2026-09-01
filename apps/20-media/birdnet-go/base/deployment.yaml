@@ -90,8 +90,8 @@ spec:
           emptyDir: {}
         - name: internals
           nfs:
-            server: 192.168.111.69
-            path: /volume3/Internal
+            server: 192.168.200.244
+            path: /mnt/tank/data/media
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

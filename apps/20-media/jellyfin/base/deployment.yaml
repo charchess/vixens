@@ -81,7 +81,7 @@ spec:
               subPath: movies
             - name: content
               mountPath: /media/tv
-              subPath: TV Show
+              subPath: series
             - name: content
               mountPath: /media/music
               subPath: music
@@ -93,8 +93,8 @@ spec:
           emptyDir: {}
         - name: content
           nfs:
-            server: 192.168.111.69
-            path: /volume3/Content
+            server: 192.168.200.244
+            path: /mnt/tank/data/media
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
