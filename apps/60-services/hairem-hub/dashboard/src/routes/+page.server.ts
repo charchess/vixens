@@ -17,7 +17,7 @@ const GTDWIKI_URL = process.env.GTDWIKI_URL || 'http://hairem-hub.services.svc.c
 const LAN = process.env.HAIREM_LAN_BASE || 'http://192.168.199.119';
 
 type Led = 'ok' | 'warn' | 'down' | 'unknown';
-type Component = { id: string; label: string; led: Led; detail: string };
+type Component = { id: string; label: string; led: Led; detail: string; detailLines: string[] };
 
 async function probe(url: string, ok: (status: number, text: string) => boolean = (s) => s >= 200 && s < 400) {
   try {
@@ -197,15 +197,41 @@ async function runtime() {
   const lastErrorAges = bankDetails.map((b) => b.llm.lastErrorAt).filter(Boolean).sort().reverse();
   const lastErrorAge = ageLabel(lastErrorAges[0]);
 
-  const bankHover = bankDetails.map((b) => `${b.name || b.bank_id}: facts ${b.stats?.total_nodes || b.fact_count || 0}, ops pending/failed/processing/stuck ${b.stats?.pending_consolidation || 0}/${b.stats?.failed_consolidation || 0}/${b.stats?.operations_by_status?.processing || 0}/${b.operations.stuck.length}, llm err 1h/24h/7d ${b.llm.errors1h}/${b.llm.errors24h}/${b.llm.errors}, last ${b.llm.lastErrorAge}, stuck ${b.operations.stuck.map((op) => `${opName(op)} ${opId(op).slice(0, 8)} age ${ageLabel(op.updated_at || op.created_at)}`).join('; ') || 'none'}`).join(' | ');
+  const bankLines = bankDetails.flatMap((b) => [
+    `${b.name || b.bank_id}`,
+    `  facts          ${b.stats?.total_nodes || b.fact_count || 0}`,
+    `  ops p/f/r/s    ${b.stats?.pending_consolidation || 0}/${b.stats?.failed_consolidation || 0}/${b.stats?.operations_by_status?.processing || 0}/${b.operations.stuck.length}`,
+    `  llm err        1h ${b.llm.errors1h} · 24h ${b.llm.errors24h} · 7d ${b.llm.errors}`,
+    `  last error     ${b.llm.lastErrorAge}`,
+    `  stuck          ${b.operations.stuck.map((op) => `${opName(op)} ${opId(op).slice(0, 8)} age ${ageLabel(op.updated_at || op.created_at)}`).join('; ') || 'none'}`
+  ]);
+  const hindsightLines = hHealth.data?.database ? [
+    `API            ${hVersion.data?.api_version || '?'}`,
+    `DB             ${hHealth.data.database}`,
+    `Pool           wait ${hHealth.data.db_pool_waiting || 0} · use ${hHealth.data.db_pool_in_use || 0} · idle ${hHealth.data.db_pool_idle || 0}`,
+    '',
+    ...bankLines
+  ] : [hHealth.error || `http ${hHealth.status}`];
   const hindsightLed: Led = !hHealth.ok || hHealth.data?.status !== 'healthy' ? 'down' : (failed > 0 || stuck > 0 || llmErrors1h > 0 ? 'warn' : 'ok');
   const components: Component[] = [
-    { id: 'hindsight', label: `hindsight p${pending}/f${failed}/r${processing}/s${stuck}`, led: hindsightLed, detail: hHealth.data?.database ? `api ${hVersion.data?.api_version || '?'} · db ${hHealth.data.database} · pool w${hHealth.data.db_pool_waiting || 0}/u${hHealth.data.db_pool_in_use || 0}/i${hHealth.data.db_pool_idle || 0} · ${bankHover}` : hHealth.error || `http ${hHealth.status}` },
-    ...llms.map((llm) => ({ id: `llm-${llm.id}`, label: `llm:${llm.id} ${llm.loadedCount}/${llm.modelCount}`, led: llm.led, detail: `${llm.detail} · models: ${llm.models.map((m) => `${m.name}${m.size ? ` ${m.size}` : ''}${m.quant ? ` ${m.quant}` : ''}`).join(' | ') || 'none'}` })),
-    { id: 'llmwiki', label: `llmwiki ${llmwikiHttp.status || ''}`, led: llmwikiHttp.ok ? 'ok' : 'down', detail: llmwikiHttp.ok ? `gollum 4567 · ${LLMWIKI_URL}` : llmwikiHttp.text.slice(0, 120) },
-    { id: 'gtdwiki', label: `gtdwiki ${gtdwikiHttp.status || ''}`, led: gtdwikiHttp.ok ? 'ok' : 'down', detail: gtdwikiHttp.ok ? `gollum 4568 · ${GTDWIKI_URL}` : gtdwikiHttp.text.slice(0, 120) },
-    { id: 'hindsight-ui', label: `hindsight-ui ${hUi.status || ''}`, led: hUi.ok ? 'ok' : 'down', detail: hUi.ok ? `control-plane · ${HINDSIGHT_UI}` : hUi.text.slice(0, 120) },
-    { id: 'hermes', label: `hermes ${hermesUi.status || ''}`, led: hermesUi.ok ? 'ok' : 'down', detail: hermesUi.ok ? `ui/auth 9119 · ${HERMES_UI}` : hermesUi.text.slice(0, 120) }
+    { id: 'hindsight', label: `hindsight p${pending}/f${failed}/r${processing}/s${stuck}`, led: hindsightLed, detail: hindsightLines.join('\\n'), detailLines: hindsightLines },
+    ...llms.map((llm) => {
+      const modelLines = llm.models.map((m) => `  ${m.name}${m.size ? ` · ${m.size}` : ''}${m.quant ? ` · ${m.quant}` : ''}`);
+      const lines = [
+        `Endpoint       ${llm.url}`,
+        `Version        ${llm.version || 'proxy/health'}`,
+        `Loaded         ${llm.loadedCount}/${llm.modelCount}`,
+        `Active         ${llm.loaded.map((m) => m.name).join(', ') || 'idle'}`,
+        '',
+        'Models',
+        ...(modelLines.length ? modelLines : ['  none'])
+      ];
+      return { id: `llm-${llm.id}`, label: `llm:${llm.id} ${llm.loadedCount}/${llm.modelCount}`, led: llm.led, detail: lines.join('\\n'), detailLines: lines };
+    }),
+    { id: 'llmwiki', label: `llmwiki ${llmwikiHttp.status || ''}`, led: llmwikiHttp.ok ? 'ok' : 'down', detail: llmwikiHttp.ok ? `Gollum 4567\\n${LLMWIKI_URL}` : llmwikiHttp.text.slice(0, 120), detailLines: llmwikiHttp.ok ? ['Gollum         4567', `URL            ${LLMWIKI_URL}`] : [llmwikiHttp.text.slice(0, 120)] },
+    { id: 'gtdwiki', label: `gtdwiki ${gtdwikiHttp.status || ''}`, led: gtdwikiHttp.ok ? 'ok' : 'down', detail: gtdwikiHttp.ok ? `Gollum 4568\\n${GTDWIKI_URL}` : gtdwikiHttp.text.slice(0, 120), detailLines: gtdwikiHttp.ok ? ['Gollum         4568', `URL            ${GTDWIKI_URL}`] : [gtdwikiHttp.text.slice(0, 120)] },
+    { id: 'hindsight-ui', label: `hindsight-ui ${hUi.status || ''}`, led: hUi.ok ? 'ok' : 'down', detail: hUi.ok ? `Control plane\\n${HINDSIGHT_UI}` : hUi.text.slice(0, 120), detailLines: hUi.ok ? ['Control plane', `URL            ${HINDSIGHT_UI}`] : [hUi.text.slice(0, 120)] },
+    { id: 'hermes', label: `hermes ${hermesUi.status || ''}`, led: hermesUi.ok ? 'ok' : 'down', detail: hermesUi.ok ? `Hermes UI/auth 9119\\n${HERMES_UI}` : hermesUi.text.slice(0, 120), detailLines: hermesUi.ok ? ['Hermes UI/auth 9119', `URL            ${HERMES_UI}`] : [hermesUi.text.slice(0, 120)] }
   ];
 
   return {
