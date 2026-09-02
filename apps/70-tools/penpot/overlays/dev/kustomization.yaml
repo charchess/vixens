@@ -25,12 +25,5 @@ patches:
   target:
     kind: Deployment
     name: penpot-exporter
-- patch: "- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/envSlug\n\
-    \  value: dev\n- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/projectSlug\n\
-    \  value: vixens\n- op: replace\n  path: /spec/authentication/universalAuth/secretsScope/secretsPath\n\
-    \  value: /apps/70-tools/penpot"
-  target:
-    kind: InfisicalSecret
-    name: penpot-secrets-sync
 resources:
 - ../../base

@@ -1,12 +1,25 @@
 ---
-apiVersion: secrets.infisical.com/v1alpha1
-kind: InfisicalSecret
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
   name: homepage-config-sync
+  namespace: tools
 spec:
-  authentication:
-    universalAuth:
-      secretsScope:
-        envSlug: prod
-  managedSecretReference:
-    secretNamespace: tools
+  refreshInterval: 60s
+  secretStoreRef:
+    name: openbao-umi
+    kind: ClusterSecretStore
+  target:
+    name: homepage-config-secret
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      type: Opaque
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: external-secrets
+        annotations:
+          vixens.io/secret-source: openbao
+  dataFrom:
+  - extract:
+      key: vixens/prod/apps/70-tools/homepage/config

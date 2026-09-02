@@ -80,9 +80,9 @@ spec:
           emptyDir: {}
         - name: downloads
           nfs:
-            server: 192.168.111.69
-            path: /volume3/Downloads
+            server: 192.168.200.244
+            path: /mnt/tank/scratch/downloads
         - name: books
           nfs:
-            server: 192.168.111.69
-            path: /volume3/Content/ebooks
+            server: 192.168.200.244
+            path: /mnt/tank/data/media/books

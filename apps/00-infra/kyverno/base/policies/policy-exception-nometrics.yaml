@@ -15,4 +15,4 @@ spec:
           kinds:
             - Pod
           namespaces:
-            - infisical-operator-system
+            - external-secrets

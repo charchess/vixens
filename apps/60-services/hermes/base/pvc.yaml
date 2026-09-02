@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hermes-data-truenas
+  namespace: services
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi-retain
+  resources:
+    requests:
+      storage: 10Gi

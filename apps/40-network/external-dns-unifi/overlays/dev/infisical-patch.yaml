@@ -1,12 +1,25 @@
 ---
-apiVersion: secrets.infisical.com/v1alpha1
-kind: InfisicalSecret
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
   name: external-dns-unifi-sync
+  namespace: networking
 spec:
-  authentication:
-    universalAuth:
-      secretsScope:
-        envSlug: dev
-  managedSecretReference:
-    secretNamespace: networking
+  refreshInterval: 60s
+  secretStoreRef:
+    name: openbao-umi
+    kind: ClusterSecretStore
+  target:
+    name: external-dns-unifi-secret
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      type: Opaque
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: external-secrets
+        annotations:
+          vixens.io/secret-source: openbao
+  dataFrom:
+  - extract:
+      key: vixens/dev/apps/40-network/external-dns/unifi

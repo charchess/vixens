@@ -11,11 +11,11 @@ namespace: monitoring
 patches:
   - path: patch-infisical-env.yaml
     target:
-      kind: InfisicalSecret
+      kind: ExternalSecret
       name: prometheus-secrets-sync
   - path: patch-infisical-env.yaml
     target:
-      kind: InfisicalSecret
+      kind: ExternalSecret
       name: alertmanager-secrets-sync
 resources:
   - ../../base

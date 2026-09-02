@@ -4,7 +4,7 @@ kind: Kustomization
 patches:
 - path: patch-infisical-env.yaml
   target:
-    kind: InfisicalSecret
+    kind: ExternalSecret
     name: amule-secrets
 resources:
 - ../../base

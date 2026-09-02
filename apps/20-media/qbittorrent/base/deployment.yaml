@@ -121,12 +121,12 @@ spec:
           emptyDir: {}
         - name: downloads
           nfs:
-            server: 192.168.111.69
-            path: /volume3/Downloads/torrents
+            server: 192.168.200.244
+            path: /mnt/tank/scratch/downloads/torrents
         - name: blackhole
           nfs:
-            server: 192.168.111.69
-            path: /volume3/Downloads/blackhole/torrent
+            server: 192.168.200.244
+            path: /mnt/tank/scratch/downloads/blackhole/torrent
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000

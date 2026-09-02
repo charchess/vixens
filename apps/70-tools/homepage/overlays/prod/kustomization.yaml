@@ -10,7 +10,7 @@ components:
 patches:
   - path: infisical-config-patch.yaml
     target:
-      kind: InfisicalSecret
+      kind: ExternalSecret
       name: homepage-config-sync
   - path: deployment-patch.yaml
     target:

@@ -15,7 +15,7 @@ components:
 patches:
   - path: infisical-patch.yaml
     target:
-      kind: InfisicalSecret
+      kind: ExternalSecret
       name: loki-secrets-sync
   - target:
       kind: StatefulSet

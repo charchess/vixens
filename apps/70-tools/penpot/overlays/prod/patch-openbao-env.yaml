@@ -1,0 +1,17 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: penpot-secrets-sync
+  namespace: tools
+spec:
+  dataFrom:
+  - extract:
+      key: vixens/prod/apps/70-tools/penpot
+  target:
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: external-secrets
+        annotations:
+          vixens.io/secret-source: openbao

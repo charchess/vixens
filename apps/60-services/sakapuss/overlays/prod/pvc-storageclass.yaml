@@ -4,11 +4,11 @@ kind: PersistentVolumeClaim
 metadata:
   name: sakapuss-data
 spec:
-  storageClassName: synelia-iscsi-retain
+  storageClassName: truenas-iscsi-retain
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: sakapuss-media
 spec:
-  storageClassName: synelia-iscsi-retain
+  storageClassName: truenas-iscsi-retain

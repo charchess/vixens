@@ -1,0 +1,230 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hairem-hub
+  namespace: services
+  labels:
+    app: hairem-hub
+
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+
+  strategy:
+    type: Recreate
+
+  selector:
+    matchLabels:
+      app: hairem-hub
+
+  template:
+    metadata:
+      labels:
+        app: hairem-hub
+
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+
+      initContainers:
+
+        # Initialise l'arborescence hAIrem et le dépôt Git du LLMWiki.
+        - name: initialize-hairem-files
+          image: gollumwiki/gollum:sha-01a3610
+
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+
+          command:
+            - /bin/sh
+            - -ec
+
+          args:
+            - |
+              mkdir -p \
+                /data/persona/lisa \
+                /data/shared \
+                /data/public \
+                /data/llmwiki \
+                /data/dashboard
+
+              # LAB UMI :
+              # permissions volontairement permissives.
+              # En prod, NFS/ACL remplacera cette politique.
+              chmod 0777 \
+                /data/persona \
+                /data/persona/lisa \
+                /data/shared \
+                /data/dashboard
+
+              chmod 0755 /data/public
+
+              # -------------------------------------------------------
+              # LLMWiki / Gollum
+              # -------------------------------------------------------
+              if [ ! -d /data/llmwiki/.git ]; then
+                echo "Initialisation du dépôt LLMWiki..."
+
+                cd /data/llmwiki
+
+                git init -b main
+                git config user.name "hAIrem LLMWiki"
+                git config user.email "llmwiki@hairem.local"
+
+                cat > Home.md <<'WIKI'
+              # hAIrem LLMWiki
+
+              Base documentaire explicite du système hAIrem.
+
+              ## Principes
+
+              - Le LLMWiki contient des faits et de la documentation.
+              - Il ne constitue pas une mémoire cognitive commune.
+              - Les agentes le consultent explicitement lorsque nécessaire.
+              - Les informations importantes doivent conserver leur provenance.
+
+              ## Laboratoire
+
+              Cette instance tourne actuellement sur le cluster UMI de développement.
+              WIKI
+
+                git add Home.md
+                git commit -m "Initialize hAIrem LLMWiki"
+              fi
+
+              # Gollum tourne en UID 1000.
+              chown -R 1000:1000 /data/llmwiki
+              chmod -R a+rwX /data/llmwiki
+
+              # -------------------------------------------------------
+              # Dashboard hAIrem statique initial
+              # -------------------------------------------------------
+              if [ ! -f /data/dashboard/index.html ]; then
+                cat > /data/dashboard/index.html <<'HTML'
+              <!doctype html>
+              <html lang="fr">
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>hAIrem</title>
+                <style>
+                  body {
+                    font-family: system-ui, sans-serif;
+                    max-width: 900px;
+                    margin: 4rem auto;
+                    padding: 0 1.5rem;
+                    line-height: 1.6;
+                  }
+                  code {
+                    background: #eee;
+                    padding: .15rem .35rem;
+                    border-radius: .3rem;
+                  }
+                  .ok {
+                    font-size: 1.2rem;
+                  }
+                </style>
+              </head>
+              <body>
+                <h1>hAIrem</h1>
+
+                <p class="ok">🦊 Infrastructure de laboratoire opérationnelle.</p>
+
+                <h2>Services</h2>
+                <ul>
+                  <li>Hermes</li>
+                  <li>Lisa — agente laboratoire</li>
+                  <li>LLMWiki / Gollum</li>
+                </ul>
+
+                <p>
+                  Ce fichier vit dans
+                  <code>hairem-files/dashboard/index.html</code>.
+                </p>
+              </body>
+              </html>
+              HTML
+              fi
+
+              chmod -R a+rwX /data/dashboard
+
+              echo
+              echo "Arborescence hAIrem :"
+              find /data -maxdepth 2 -mindepth 1 -type d | sort
+
+          volumeMounts:
+            - name: hairem-files
+              mountPath: /data
+
+      containers:
+
+        # -------------------------------------------------------------
+        # LLMWiki
+        # -------------------------------------------------------------
+        - name: gollum
+          image: gollumwiki/gollum:sha-01a3610
+
+          workingDir: /wiki
+
+          ports:
+            - name: wiki
+              containerPort: 4567
+
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          readinessProbe:
+            tcpSocket:
+              port: 4567
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+          volumeMounts:
+            - name: hairem-files
+              mountPath: /wiki
+              subPath: llmwiki
+
+        # -------------------------------------------------------------
+        # Futur dashboard personnel hAIrem
+        # -------------------------------------------------------------
+        - name: dashboard
+          image: nginx:alpine
+
+          ports:
+            - name: dashboard
+              containerPort: 80
+
+          resources:
+            requests:
+              cpu: 5m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 2
+            periodSeconds: 5
+
+          volumeMounts:
+            - name: hairem-files
+              mountPath: /usr/share/nginx/html
+              subPath: dashboard
+              readOnly: true
+
+      volumes:
+        - name: hairem-files
+          persistentVolumeClaim:
+            claimName: hairem-files-truenas

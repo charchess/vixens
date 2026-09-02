@@ -23,7 +23,7 @@ The Helm values map `LITESTREAM_ACCESS_KEY_ID` → `AWS_ACCESS_KEY_ID` automatic
 ### Storage
 
 Backups are stored in MinIO on the Synology NAS:
-- **Endpoint:** `http://192.168.111.69:9000`
+- **Endpoint:** `http://192.168.200.244:30157`
 - **Bucket:** `backups-vixens-prod`
 - **Prefix:** `velero/`
 

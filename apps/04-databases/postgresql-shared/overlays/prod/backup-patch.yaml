@@ -7,7 +7,7 @@ spec:
   backup:
     barmanObjectStore:
       destinationPath: s3://vixens-prod-postgresql-shared/
-      endpointURL: http://192.168.111.69:9000
+      endpointURL: http://192.168.200.244:30157
       s3Credentials:
         accessKeyId:
           name: postgresql-backup-s3

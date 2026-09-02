@@ -1,0 +1,40 @@
+---
+# TEMPLATE ONLY — do not commit a filled copy.
+# Create as Secret key `driver-config-file.yaml` in namespace `truenas-csi`.
+
+driver: freenas-iscsi
+instance_id: umi-truenas-iscsi
+httpConnection:
+  protocol: http
+  host: 192.168.200.244
+  port: 80
+  apiKey: REPLACE_WITH_TRUENAS_API_KEY
+  allowInsecure: true
+  apiVersion: 2
+sshConnection:
+  host: 192.168.200.244
+  port: 22
+  username: root
+  privateKey: |
+    REPLACE_WITH_PRIVATE_KEY_IF_SSH_IS_USED
+zfs:
+  datasetParentName: tank/k8s/vixens/iscsi/vols
+  detachedSnapshotsDatasetParentName: tank/k8s/vixens/iscsi/snaps
+  zvolCompression: lz4
+  zvolEnableReservation: false
+iscsi:
+  targetPortal: 192.168.200.244:3260
+  targetPortals: []
+  namePrefix: csi-
+  nameSuffix: -umi
+  targetGroups:
+    - targetGroupPortalGroup: 1
+      targetGroupInitiatorGroup: 1
+      targetGroupAuthType: None
+      targetGroupAuthGroup:
+  extentInsecureTpc: true
+  extentXenCompat: false
+  extentDisablePhysicalBlocksize: true
+  extentBlocksize: 512
+  extentRpm: SSD
+  extentAvailThreshold: 0

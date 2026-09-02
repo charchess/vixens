@@ -42,7 +42,7 @@ curl -L -k https://adguard.dev.truxonline.com | grep "AdGuard Home"
 - Without DNS running, pod cannot start → infinite loop
 
 **Resolution:**
-1. Changed MinIO endpoint from DNS to IP: `http://192.168.111.69:9000`
+1. Changed MinIO endpoint from DNS to IP: `http://192.168.200.244:30157`
 2. This breaks the circular dependency (pod can start without DNS)
 
 **Alternative:** Use cluster bootstrap ordering (sync-wave priority) to ensure MinIO starts before AdGuard.

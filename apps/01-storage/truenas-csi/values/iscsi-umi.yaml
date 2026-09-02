@@ -1,0 +1,130 @@
+---
+# democratic-csi / TrueNAS SCALE iSCSI for UMI laboratory k3s.
+# Secret expected: truenas-csi/truenas-csi-iscsi-driver-config
+# key: driver-config-file.yaml
+
+fullnameOverride: truenas-csi-iscsi
+
+csiDriver:
+  name: org.democratic-csi.truenas-iscsi
+  attachRequired: true
+  podInfoOnMount: true
+
+controller:
+  replicaCount: 1
+  strategy: deployment
+  priorityClassName: system-cluster-critical
+  podLabels:
+    vixens.io/backup-profile: relaxed
+    vixens.io/single-replica: "true"
+  podAnnotations:
+    vixens.io/explicitly-allow-root: "true"
+    vixens.io/no-long-connections: "true"
+    vixens.io/nometrics: "true"
+    vixens.io/service-binding: "false"
+    vixens.io/sizing-rationale: "G-nano: democratic-csi controller and sidecars for lab storage"
+  externalSnapshotter:
+    enabled: false
+  externalHealthMonitorController:
+    enabled: false
+  driver:
+    logLevel: info
+    env:
+      - name: PATH
+        value: /bin:/usr/bin:/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin
+    resources:
+      requests:
+        cpu: 10m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 512Mi
+
+node:
+  enabled: true
+  hostNetwork: true
+  hostIPC: true
+  priorityClassName: system-node-critical
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+  podLabels:
+    vixens.io/single-replica: "true"
+  podAnnotations:
+    vixens.io/explicitly-allow-root: "true"
+    vixens.io/no-long-connections: "true"
+    vixens.io/nometrics: "true"
+    vixens.io/service-binding: "false"
+    vixens.io/sizing-rationale: "G-nano: CSI iSCSI node plugin on single-node UMI lab"
+  driver:
+    logLevel: info
+    env:
+      - name: PATH
+        value: /bin:/usr/bin:/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin
+    iscsiDirHostPath: /etc/iscsi
+    iscsiDirHostPathType: DirectoryOrCreate
+    resources:
+      requests:
+        cpu: 10m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 512Mi
+  driverRegistrar:
+    resources:
+      requests:
+        cpu: 5m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+
+csiProxy:
+  enabled: true
+
+# The chart reads the connection/driver config from an existing Secret.
+# Values still include driver.config.driver because the chart uses it for iSCSI-specific rendering.
+driver:
+  existingConfigSecret: truenas-csi-iscsi-driver-config
+  config:
+    driver: freenas-iscsi
+
+storageClasses:
+  - name: truenas-iscsi-retain
+    defaultClass: false
+    reclaimPolicy: Retain
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      fsType: ext4
+    mountOptions: []
+  - name: truenas-iscsi-delete
+    defaultClass: false
+    reclaimPolicy: Delete
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      fsType: ext4
+    mountOptions: []
+  - name: truenas-iscsi-xfs-retain
+    defaultClass: false
+    reclaimPolicy: Retain
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      fsType: xfs
+      # Skip TRIM/DISCARD on format; mirrors the Synology CSI XFS safety setting.
+      formatOptions: -K
+    mountOptions: []
+  - name: truenas-iscsi-xfs-delete
+    defaultClass: false
+    reclaimPolicy: Delete
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      fsType: xfs
+      formatOptions: -K
+    mountOptions: []
+
+volumeSnapshotClasses: []

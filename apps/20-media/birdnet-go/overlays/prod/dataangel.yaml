@@ -12,7 +12,7 @@ spec:
         dataangel.io/bucket: "vixens-prod-birdnet-go"
         dataangel.io/sqlite-paths: "/data/birdnet.db"
         dataangel.io/fs-paths: "/data"
-        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/s3-endpoint: "http://192.168.200.244:30157"
         dataangel.io/deployment-name: "birdnet-go"
         dataangel.io/rclone-interval: "60s"
         dataangel.io/metrics-enabled: "true"

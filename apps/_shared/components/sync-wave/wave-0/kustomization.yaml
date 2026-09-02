@@ -4,7 +4,7 @@
 # ArgoCD sync-wave annotation for infrastructure base layer.
 # Wave 0 is for CRITICAL infrastructure that must deploy immediately after negative waves.
 #
-# Typical usage: cert-manager, traefik, synology-csi, argocd self-management
+# Typical usage: cert-manager, traefik, truenas-csi, argocd self-management
 #
 # Usage in overlay:
 #   components:

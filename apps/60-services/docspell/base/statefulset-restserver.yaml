@@ -148,5 +148,5 @@ spec:
             name: docspell-restserver-config
         - name: nfs-inbox
           nfs:
-            server: 192.168.111.69
-            path: /volume3/Internal/incoming/docspell
+            server: 192.168.200.244
+            path: /mnt/tank/data/documents/inbox/docspell

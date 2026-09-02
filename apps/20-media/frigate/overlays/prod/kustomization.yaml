@@ -1,70 +1,42 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 resources:
-  - ../../base
-  - ingress.yaml
-
+- ../../base
+- ingress.yaml
 components:
-  - ../../../../_shared/components/infisical/env-prod
-  - ../../../../_shared/components/sync-wave/wave-7
-  - ../../../../_shared/components/goldilocks/enabled
-  - ../../../../_shared/components/base
-  - ../../../../_shared/components/revision-history-limit
-  - ../../../../_shared/components/metrics
-  - ../../../../_shared/components/poddisruptionbudget/0
-  - ../../../../_shared/components/dataangel
-
+- ../../../../_shared/components/sync-wave/wave-7
+- ../../../../_shared/components/goldilocks/enabled
+- ../../../../_shared/components/base
+- ../../../../_shared/components/revision-history-limit
+- ../../../../_shared/components/metrics
+- ../../../../_shared/components/poddisruptionbudget/0
+- ../../../../_shared/components/dataangel
 patches:
-  - target:
-      kind: Deployment
-      name: frigate
-    path: shm-patch-named.yaml
-  - target:
-      kind: Deployment
-      name: frigate
-    path: node-affinity-patch.yaml
-  - target:
-      kind: Deployment
-      name: frigate
-    patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: frigate
-      spec:
-        template:
-          metadata:
-            labels:
-              vixens.io/sizing.frigate: V-manual
-            annotations:
-              vixens.io/explicitly-allow-root: "true"
-              vixens.io/vpa.update-mode: "Off"
-              vixens.io/vpa.max-cpu: "4000m"
-              vixens.io/vpa.max-memory: "10Gi"
-          spec:
-            securityContext:
-              runAsNonRoot: false
-              runAsUser: 0
-              fsGroup: 0
-            initContainers:
-              - name: validate-config
-                securityContext:
-                  runAsUser: 0
-                  runAsGroup: 0
-            containers:
-              - name: frigate
-                securityContext:
-                  privileged: true
-                  runAsUser: 0
-                  runAsGroup: 0
-                resources:
-                  requests:
-                    cpu: "1000m"
-                    memory: "2Gi"
-                  limits:
-                    cpu: "4000m"
-                    memory: "10Gi"
-  - path: pvc-patch.yaml
-  - path: dataangel.yaml
+- path: patch-openbao-env.yaml
+- target:
+    kind: Deployment
+    name: frigate
+  path: shm-patch-named.yaml
+- target:
+    kind: Deployment
+    name: frigate
+  path: node-affinity-patch.yaml
+- target:
+    kind: Deployment
+    name: frigate
+  patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: frigate\nspec:\n\
+    \  template:\n    metadata:\n      labels:\n        vixens.io/sizing.frigate:\
+    \ V-manual\n      annotations:\n        vixens.io/explicitly-allow-root: \"true\"\
+    \n        vixens.io/vpa.update-mode: \"Off\"\n        vixens.io/vpa.max-cpu: \"\
+    4000m\"\n        vixens.io/vpa.max-memory: \"10Gi\"\n    spec:\n      securityContext:\n\
+    \        runAsNonRoot: false\n        runAsUser: 0\n        fsGroup: 0\n     \
+    \ initContainers:\n        - name: validate-config\n          securityContext:\n\
+    \            runAsUser: 0\n            runAsGroup: 0\n      containers:\n    \
+    \    - name: frigate\n          securityContext:\n            privileged: true\n\
+    \            runAsUser: 0\n            runAsGroup: 0\n          resources:\n \
+    \           requests:\n              cpu: \"1000m\"\n              memory: \"\
+    2Gi\"\n            limits:\n              cpu: \"4000m\"\n              memory:\
+    \ \"10Gi\""
+- path: pvc-patch.yaml
+- path: dataangel.yaml

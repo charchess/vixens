@@ -1,0 +1,17 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: nightscout-secrets-sync
+  namespace: nightscout
+spec:
+  dataFrom:
+  - extract:
+      key: vixens/prod/apps/10-home/nightscout
+  target:
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: external-secrets
+        annotations:
+          vixens.io/secret-source: openbao

@@ -1,0 +1,67 @@
+hostname: 192.168.111.69
+
+http:
+  port: 8180
+
+# Pas de HTTPS — usage interne VLAN 111 uniquement
+# https:
+#   port: 8443
+#   certificate: /your/certificate/path
+#   private_key: /your/private/key/path
+
+harbor_admin_password: CHANGE_ME
+
+database:
+  password: CHANGE_ME_DB
+  max_idle_conns: 50
+  max_open_conns: 100
+  conn_max_lifetime: 5m
+  conn_max_idle_time: 0
+
+data_volume: /volume3/docker/harbor/data
+
+trivy:
+  ignore_unfixed: false
+  skip_update: false
+  offline_scan: false
+  security_check: vuln
+  insecure: false
+
+jobservice:
+  max_job_workers: 10
+  logger_sweeper_duration: 1
+  job_loggers:
+    - STD_OUTPUT
+    - FILE
+
+notification:
+  webhook_job_max_retry: 3
+  webhook_job_http_client_timeout: 3
+
+log:
+  level: info
+  local:
+    rotate_count: 50
+    rotate_size: 200M
+    location: /volume3/docker/harbor/logs
+
+_version: 2.12.0
+
+proxy:
+  http_proxy:
+  https_proxy:
+  no_proxy:
+  components:
+    - core
+    - jobservice
+    - trivy
+
+upload_purging:
+  enabled: true
+  age: 168h
+  interval: 24h
+  dryrun: false
+
+cache:
+  enabled: true
+  expire_hours: 24

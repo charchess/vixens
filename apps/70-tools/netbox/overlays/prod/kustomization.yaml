@@ -2,22 +2,21 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 components:
-  - ../../../../_shared/components/infisical/env-prod
-  - ../../../../_shared/components/sync-wave/wave-11
-  - ../../../../_shared/components/goldilocks/enabled
-  - ../../../../_shared/components/nometrics
-  - ../../../../_shared/components/poddisruptionbudget/1
-  - ../../../../_shared/components/dataangel
-
+- ../../../../_shared/components/sync-wave/wave-11
+- ../../../../_shared/components/goldilocks/enabled
+- ../../../../_shared/components/nometrics
+- ../../../../_shared/components/poddisruptionbudget/1
+- ../../../../_shared/components/dataangel
 patches:
-  - path: dataangel.yaml
-  - path: deployment-patch.yaml
-    target:
-      kind: Deployment
-      name: netbox
-  - path: resources-patch.yaml
+- path: patch-openbao-env.yaml
+- path: dataangel.yaml
+- path: deployment-patch.yaml
+  target:
+    kind: Deployment
+    name: netbox
+- path: resources-patch.yaml
 resources:
-  - ../../base
-  - ingress.yaml
-  - infisical-redis-secret.yaml
-  - httpscaledobject.yaml
+- ../../base
+- ingress.yaml
+- infisical-redis-secret.yaml
+- httpscaledobject.yaml

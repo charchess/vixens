@@ -100,5 +100,5 @@ spec:
             claimName: hydrus-client-config-pvc
         - name: client-files
           nfs:
-            server: 192.168.111.69
-            path: /volume3/Content/pictures/hentai/client_files
+            server: 192.168.200.244
+            path: /mnt/tank/data/photos/library/hydrus-client-files

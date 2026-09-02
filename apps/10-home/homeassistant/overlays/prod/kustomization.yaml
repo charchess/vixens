@@ -3,29 +3,23 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: homeassistant
 resources:
-  - ../../base
-  - ingress.yaml
-  - ingressroute-udp.yaml
+- ../../base
+- ingress.yaml
+- ingressroute-udp.yaml
 components:
-  - ../../../../_shared/components/infisical/env-prod
-  - ../../../../_shared/components/sync-wave/wave-6
-  - ../../../../_shared/components/goldilocks/enabled
-  - ../../../../_shared/components/nometrics
-  - ../../../../_shared/components/dataangel
-  - ../../../../_shared/components/poddisruptionbudget/1
-  - ../../../../_shared/components/scheduling/prefer-i915
-
+- ../../../../_shared/components/sync-wave/wave-6
+- ../../../../_shared/components/goldilocks/enabled
+- ../../../../_shared/components/nometrics
+- ../../../../_shared/components/dataangel
+- ../../../../_shared/components/poddisruptionbudget/1
+- ../../../../_shared/components/scheduling/prefer-i915
 patches:
-  - target:
-      kind: PersistentVolumeClaim
-      name: homeassistant-config
-    patch: |-
-      - op: replace
-        path: /spec/storageClassName
-        value: synelia-iscsi-xfs-retain
-      - op: replace
-        path: /spec/resources/requests/storage
-        value: 250Gi
-  - path: resources-patch.yaml
-  - path: dataangel.yaml
-  - path: anti-affinity-frigate.yaml
+- path: patch-openbao-env.yaml
+- target:
+    kind: PersistentVolumeClaim
+    name: homeassistant-config
+  patch: "- op: replace\n  path: /spec/storageClassName\n  value: synelia-iscsi-xfs-retain\n\
+    - op: replace\n  path: /spec/resources/requests/storage\n  value: 250Gi"
+- path: resources-patch.yaml
+- path: dataangel.yaml
+- path: anti-affinity-frigate.yaml

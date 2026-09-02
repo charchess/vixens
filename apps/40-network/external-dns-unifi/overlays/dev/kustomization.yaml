@@ -4,7 +4,7 @@ kind: Kustomization
 patches:
 - path: infisical-patch.yaml
   target:
-    kind: InfisicalSecret
+    kind: ExternalSecret
     name: external-dns-unifi-sync
 resources:
 - ../../base

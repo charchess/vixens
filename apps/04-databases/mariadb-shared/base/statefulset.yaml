@@ -170,7 +170,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-        storageClassName: synelia-iscsi-retain
+        storageClassName: truenas-iscsi-retain
         resources:
           requests:
             storage: 10Gi

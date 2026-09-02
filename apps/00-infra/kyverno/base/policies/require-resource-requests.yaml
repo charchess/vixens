@@ -35,7 +35,7 @@ spec:
                 - kube-system
                 - kyverno
                 - cert-manager
-                - infisical-operator-system
+                - external-secrets
       validate:
         message: "Container has no sizing declaration. Add a vixens.io/sizing.<container> label or explicit resources.requests."
         foreach:

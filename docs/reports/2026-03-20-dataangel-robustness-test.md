@@ -28,7 +28,7 @@ Deep analysis revealed 4 new issues (#25-#28): missing startupProbe (race condit
 ## Round 3 — Final Comprehensive Testing (Post-Fix #20-#28)
 
 **DataAngel version:** `charchess/dataangel:dev` (commit `953abebcdcda` — all fixes #20-#28)
-**S3 Endpoint:** `http://192.168.111.69:9000` (direct IP)
+**S3 Endpoint:** `http://192.168.200.244:30157` (direct IP)
 **Image:** `sha256:8559b4d8e700be1623371ac540d0fcca390b2f896336c1206b1434bf5282dc23`
 **Note:** startupProbe temporarily disabled due to #29 (first-deploy deadlock)
 

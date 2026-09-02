@@ -1,0 +1,17 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: openclaw-secrets
+  namespace: services
+spec:
+  dataFrom:
+  - extract:
+      key: vixens/prod/apps/60-services/openclaw
+  target:
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: external-secrets
+        annotations:
+          vixens.io/secret-source: openbao

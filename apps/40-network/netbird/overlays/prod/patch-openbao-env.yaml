@@ -1,0 +1,17 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: netbird-secrets-sync
+  namespace: networking
+spec:
+  dataFrom:
+  - extract:
+      key: vixens/prod/apps/40-network/netbird
+  target:
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: external-secrets
+        annotations:
+          vixens.io/secret-source: openbao

@@ -1,0 +1,114 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hermes
+  namespace: services
+  labels:
+    app: hermes
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: hermes
+  template:
+    metadata:
+      labels:
+        app: hermes
+        vixens.io/sizing.hermes: V-large
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+
+      containers:
+        - name: hermes
+          image: nousresearch/hermes-agent:v2026.8.27
+          imagePullPolicy: IfNotPresent
+
+          # Phase bootstrap :
+          # on garde le conteneur vivant, puis on lance `hermes setup`
+          # manuellement. On remplacera ensuite par gateway/run.
+          args:
+            - gateway
+            - run
+
+          env:
+            - name: HERMES_HOME
+              value: /opt/data
+            - name: TERMINAL_ENV
+              value: local
+
+            # Hermes web dashboard
+            - name: HERMES_DASHBOARD
+              value: "1"
+            - name: HERMES_DASHBOARD_HOST
+              value: "0.0.0.0"
+            - name: HERMES_DASHBOARD_PORT
+              value: "9119"
+
+            # Dashboard authentication
+            - name: HERMES_DASHBOARD_BASIC_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-dashboard-auth
+                  key: username
+            - name: HERMES_DASHBOARD_BASIC_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-dashboard-auth
+                  key: password
+            - name: HERMES_DASHBOARD_BASIC_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-dashboard-auth
+                  key: session-secret
+
+          ports:
+            - name: gateway
+              containerPort: 8642
+            - name: dashboard
+              containerPort: 9119
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+
+          volumeMounts:
+            - name: data
+              mountPath: /opt/data
+
+            # hAIrem collaborative filesystem
+            - name: hairem-files
+              mountPath: /workspace/persona/lisa
+              subPath: persona/lisa
+
+            - name: hairem-files
+              mountPath: /workspace/shared
+              subPath: shared
+
+            - name: hairem-files
+              mountPath: /workspace/public
+              subPath: public
+              readOnly: true
+
+            - name: hairem-files
+              mountPath: /workspace/llmwiki
+              subPath: llmwiki
+
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: hermes-data-truenas
+
+        - name: hairem-files
+          persistentVolumeClaim:
+            claimName: hairem-files-truenas

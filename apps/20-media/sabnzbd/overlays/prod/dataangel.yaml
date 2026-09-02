@@ -12,7 +12,7 @@ spec:
         dataangel.io/bucket: "vixens-prod-sabnzbd"
         dataangel.io/sqlite-paths: "/config/admin/history1.db"
         dataangel.io/fs-paths: "/config"
-        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/s3-endpoint: "http://192.168.200.244:30157"
         dataangel.io/deployment-name: "sabnzbd"
         dataangel.io/rclone-interval: "60s"
         dataangel.io/metrics-enabled: "true"

@@ -100,5 +100,5 @@ spec:
           emptyDir: {}
         - name: media
           nfs:
-            server: 192.168.111.69
-            path: /volume3/Content/music
+            server: 192.168.200.244
+            path: /mnt/tank/data/media/music

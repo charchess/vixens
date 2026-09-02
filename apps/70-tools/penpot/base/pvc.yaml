@@ -9,7 +9,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: synelia-iscsi-retain
+  storageClassName: truenas-iscsi-retain
   resources:
     requests:
       storage: 50Gi

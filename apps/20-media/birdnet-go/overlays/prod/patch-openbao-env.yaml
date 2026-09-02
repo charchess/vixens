@@ -1,0 +1,17 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: birdnet-go-secrets-sync
+  namespace: birdnet-go
+spec:
+  dataFrom:
+  - extract:
+      key: vixens/prod/apps/20-media/birdnet-go
+  target:
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: external-secrets
+        annotations:
+          vixens.io/secret-source: openbao

@@ -16,7 +16,7 @@
 #
 # Specific rules for charts without podLabels/podAnnotations support:
 #   - cert-manager-webhook-gandi (SINTEF v0.5.2): match app.kubernetes.io/name
-#   - infisical-operator (v0.10.x): match control-plane=controller-manager
+#   - external-secrets (v0.10.x): match control-plane=controller-manager
 #
 # Why this approach:
 #   In ArgoCD multi-source, kustomize patches cannot target Helm-rendered Deployments.
@@ -150,17 +150,17 @@ spec:
             annotations:
               vixens.io/no-long-connections: "true"
 
-    # Rule 6: infisical-operator — chart has no podAnnotations support
-    # Match on control-plane=controller-manager in infisical-operator-system namespace.
+    # Rule 6: external-secrets — chart has no podAnnotations support
+    # Match on control-plane=controller-manager in external-secrets namespace.
     # Injects prometheus scrape annotations (metrics on port 8443 via HTTPS).
-    - name: inject-annotations-infisical-operator
+    - name: inject-annotations-external-secrets
       match:
         any:
           - resources:
               kinds:
                 - Pod
               namespaces:
-                - infisical-operator-system
+                - external-secrets
               selector:
                 matchLabels:
                   control-plane: controller-manager

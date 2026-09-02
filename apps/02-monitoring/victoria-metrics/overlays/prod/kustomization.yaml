@@ -15,5 +15,5 @@ resources:
 patches:
   - path: patch-infisical-env.yaml
     target:
-      kind: InfisicalSecret
+      kind: ExternalSecret
       name: vm-alertmanager-secrets-sync

@@ -1,0 +1,143 @@
+---
+# hAIrem / UMI laboratory configuration
+# Hindsight 0.9.1
+#
+# Objectif de cette première phase :
+# - API + Control Plane
+# - PostgreSQL/pgvector local
+# - embeddings/reranking multilingues CPU
+# - PAS encore de LLM
+#
+# La configuration production sera différente :
+# - PostgreSQL externe
+# - stockage bloc
+# - PGroonga
+# - LLM externe sur machine GPU
+# - secrets via Infisical
+
+version: "0.9.2"
+
+existingSecret: "hindsight-runtime"
+
+api:
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  persistence:
+    modelCache:
+      enabled: true
+      size: 5Gi
+      storageClass: truenas-iscsi-delete
+      accessModes:
+        - ReadWriteOnce
+
+  env:
+    HINDSIGHT_API_WORKER_ID: "hindsight-api-umi"
+    # ------------------------------------------------------------
+    # LLM — Ollama distant / Qwen3.5
+    # ------------------------------------------------------------
+    HINDSIGHT_API_LLM_PROVIDER: "ollama"
+    HINDSIGHT_API_LLM_BASE_URL: "http://192.168.199.119:11434/v1"
+    HINDSIGHT_API_LLM_MODEL: "qwen35-hindsight:9b-q5-16k"
+
+    # Une seule inférence à la fois sur la 2080 Ti pour la baseline.
+    HINDSIGHT_API_LLM_MAX_CONCURRENT: "1"
+    HINDSIGHT_API_LLM_TIMEOUT: "300"
+
+    # Qwen3.5 : pas de bloc de thinking pour les opérations Hindsight.
+    HINDSIGHT_API_LLM_REASONING_EFFORT: "none"
+
+    # Notre test JSON Schema Ollama est passé.
+    HINDSIGHT_API_LLM_STRICT_SCHEMA: "true"
+
+    # Le modèle dérivé est déjà 16K.
+    # Ceci garantit aussi 16K sur le chemin natif Ollama utilisé
+    # par Hindsight pour les sorties structurées.
+    HINDSIGHT_API_LLM_OLLAMA_NUM_CTX: "16384"
+
+    # ------------------------------------------------------------
+    # Embeddings — Ollama distant / BGE-M3
+    # ------------------------------------------------------------
+    HINDSIGHT_API_EMBEDDINGS_PROVIDER: "openai"
+    HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL: "http://192.168.200.67:11434/v1"
+    HINDSIGHT_API_EMBEDDINGS_OPENAI_MODEL: "bge-m3:latest"
+    HINDSIGHT_API_EMBEDDINGS_OPENAI_BATCH_SIZE: "32"
+    HINDSIGHT_API_EMBEDDINGS_MAX_INPUT_TOKENS: "8192"
+
+    # IMPORTANT :
+    # - pas de prefix query:/passage: (c'était spécifique E5/ONNX)
+    # - pas de OPENAI_DIMENSIONS: Hindsight auto-détecte 1024
+
+    # ------------------------------------------------------------
+    # Reranker — local CPU
+    # ------------------------------------------------------------
+    HINDSIGHT_API_RERANKER_PROVIDER: "local"
+    HINDSIGHT_API_RERANKER_LOCAL_MODEL: "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+    HINDSIGHT_API_RERANKER_LOCAL_FORCE_CPU: "true"
+    HINDSIGHT_API_RERANKER_LOCAL_MAX_CONCURRENT: "2"
+    HINDSIGHT_API_RERANKER_LOCAL_BUCKET_BATCHING: "true"
+
+    # Baseline : évite de faire passer 300 candidats au cross-encoder CPU.
+    HINDSIGHT_API_RERANKER_MAX_CANDIDATES: "100"
+
+    # ------------------------------------------------------------
+    # Search / API
+    # ------------------------------------------------------------
+    HINDSIGHT_API_TEXT_SEARCH_EXTENSION: "native"
+    HINDSIGHT_API_TEXT_SEARCH_EXTENSION_NATIVE_LANGUAGE: "simple"
+
+    HINDSIGHT_API_ENABLE_BANK_CONFIG_API: "true"
+    HINDSIGHT_API_MCP_ENABLED: "true"
+    HINDSIGHT_API_LOG_LEVEL: "info"
+controlPlane:
+  enabled: true
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+postgresql:
+  enabled: true
+
+  auth:
+    username: hindsight
+    database: hindsight
+
+  persistence:
+    enabled: true
+    size: 8Gi
+    storageClass: truenas-iscsi-retain
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+# Pas d'Ingress dans le labo.
+# Accès via kubectl port-forward.
+ingress:
+  enabled: false
+
+worker:
+  enabled: false
+
+tei:
+  reranker:
+    enabled: false
+  embedding:
+    enabled: false

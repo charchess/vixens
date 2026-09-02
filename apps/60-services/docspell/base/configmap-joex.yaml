@@ -41,7 +41,7 @@ data:
           minio {
             enabled = true
             type = "s3"
-            endpoint = "http://192.168.111.69:9000"
+            endpoint = "http://192.168.200.244:30157"
             access-key = ${MINIO_ACCESS_KEY}
             secret-key = ${MINIO_SECRET_KEY}
             bucket = "docspell"

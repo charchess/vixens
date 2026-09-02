@@ -12,7 +12,7 @@ spec:
         dataangel.io/bucket: "vixens-prod-hydrus-client"
         dataangel.io/sqlite-paths: "/opt/hydrus/db/client.db,/opt/hydrus/db/client.mappings.db,/opt/hydrus/db/client.master.db,/opt/hydrus/db/client.caches.db"
         dataangel.io/fs-paths: "/opt/hydrus/db"
-        dataangel.io/s3-endpoint: "http://192.168.111.69:9000"
+        dataangel.io/s3-endpoint: "http://192.168.200.244:30157"
         dataangel.io/deployment-name: "hydrus-client"
         dataangel.io/rclone-interval: "60s"
         dataangel.io/metrics-enabled: "true"
