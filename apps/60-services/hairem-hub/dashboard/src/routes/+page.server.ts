@@ -5,7 +5,13 @@ const LLM = process.env.LLMWIKI_PATH || '/data/llmwiki';
 const HINDSIGHT_API = process.env.HINDSIGHT_API_URL || 'http://hindsight-api.hindsight.svc.cluster.local:8888';
 const HINDSIGHT_UI = process.env.HINDSIGHT_UI_URL || 'http://hindsight-control-plane.hindsight.svc.cluster.local:3000';
 const HERMES_UI = process.env.HERMES_UI_URL || 'http://hermes.services.svc.cluster.local:9119';
-const OLLAMA = process.env.OLLAMA_URL || 'http://host.docker.internal:11434';
+const OLLAMA_TARGETS = (process.env.OLLAMA_TARGETS || 'umi=http://host.docker.internal:11434,fuu-proxy=http://host.docker.internal:11435')
+  .split(',')
+  .map((entry) => {
+    const [id, ...rest] = entry.split('=');
+    return { id: id.trim(), url: rest.join('=').trim() };
+  })
+  .filter((entry) => entry.id && entry.url);
 const LLMWIKI_URL = process.env.LLMWIKI_URL || 'http://hairem-hub.services.svc.cluster.local:4567/Home';
 const GTDWIKI_URL = process.env.GTDWIKI_URL || 'http://hairem-hub.services.svc.cluster.local:4568/Home';
 const LAN = process.env.HAIREM_LAN_BASE || 'http://192.168.199.119';
@@ -43,8 +49,30 @@ type OllamaVersion = { version?: string };
 type OllamaTags = { models?: Array<{ name: string; details?: { parameter_size?: string; quantization_level?: string; context_length?: number } }> };
 type OllamaPs = { models?: Array<{ name: string; size_vram?: number; expires_at?: string }> };
 
+async function ollamaRuntime(target: { id: string; url: string }) {
+  const [version, tags, ps] = await Promise.all([
+    jsonProbe<OllamaVersion>(`${target.url}/api/version`),
+    jsonProbe<OllamaTags>(`${target.url}/api/tags`),
+    jsonProbe<OllamaPs>(`${target.url}/api/ps`)
+  ]);
+  const models = tags.data?.models || [];
+  const loaded = ps.data?.models || [];
+  const led: Led = version.ok ? (ps.ok ? 'ok' : 'warn') : 'down';
+  return {
+    id: target.id,
+    url: target.url,
+    led,
+    detail: version.data?.version ? `v${version.data.version} · ${loaded.length}/${models.length}` : version.error || `http ${version.status}`,
+    version: version.data?.version || null,
+    modelCount: models.length,
+    loadedCount: loaded.length,
+    models: models.slice(0, 5).map((m) => ({ name: m.name, size: m.details?.parameter_size, quant: m.details?.quantization_level, ctx: m.details?.context_length })),
+    loaded: loaded.map((m) => ({ name: m.name, vram: m.size_vram }))
+  };
+}
+
 async function runtime() {
-  const [hHealth, hVersion, banksRes, hUi, llmwikiHttp, gtdwikiHttp, hermesUi, ollamaVersion, ollamaTags, ollamaPs] = await Promise.all([
+  const [hHealth, hVersion, banksRes, hUi, llmwikiHttp, gtdwikiHttp, hermesUi, llms] = await Promise.all([
     jsonProbe<HindsightHealth>(`${HINDSIGHT_API}/health`),
     jsonProbe<HindsightVersion>(`${HINDSIGHT_API}/version`),
     jsonProbe<BanksResponse>(`${HINDSIGHT_API}/v1/default/banks`),
@@ -52,9 +80,7 @@ async function runtime() {
     probe(LLMWIKI_URL),
     probe(GTDWIKI_URL),
     probe(HERMES_UI, (s, text) => s < 500 && (text.includes('Hermes Agent') || text.includes('Sign in') || text.length > 0)),
-    jsonProbe<OllamaVersion>(`${OLLAMA}/api/version`),
-    jsonProbe<OllamaTags>(`${OLLAMA}/api/tags`),
-    jsonProbe<OllamaPs>(`${OLLAMA}/api/ps`)
+    Promise.all(OLLAMA_TARGETS.map(ollamaRuntime))
   ]);
 
   const banks = banksRes.data?.banks || [];
@@ -76,16 +102,13 @@ async function runtime() {
   const llmErrors = bankDetails.reduce((n, b) => n + b.llm.errors, 0);
 
   const components: Component[] = [
-    { id: 'hindsight', label: 'hindsight', led: hHealth.ok && hHealth.data?.status === 'healthy' ? 'ok' : 'down', detail: hHealth.data?.database ? `api · db ${hHealth.data.database}` : hHealth.error || `http ${hHealth.status}` },
-    { id: 'hindsight-ui', label: 'hindsight-ui', led: hUi.ok ? 'ok' : 'down', detail: hUi.ok ? 'control-plane' : hUi.text.slice(0, 60) },
-    { id: 'llm', label: 'llm', led: ollamaVersion.ok ? (ollamaPs.ok ? 'ok' : 'warn') : 'down', detail: ollamaVersion.data?.version ? `ollama ${ollamaVersion.data.version}` : ollamaVersion.error || `http ${ollamaVersion.status}` },
+    { id: 'hindsight', label: `hindsight ${pending}/${failed}/${processing}`, led: hHealth.ok && hHealth.data?.status === 'healthy' ? 'ok' : 'down', detail: hHealth.data?.database ? `api · db ${hHealth.data.database}` : hHealth.error || `http ${hHealth.status}` },
+    ...llms.map((llm) => ({ id: `llm-${llm.id}`, label: `llm:${llm.id}`, led: llm.led, detail: llm.detail })),
     { id: 'llmwiki', label: 'llmwiki', led: llmwikiHttp.ok ? 'ok' : 'down', detail: llmwikiHttp.ok ? 'gollum 4567' : llmwikiHttp.text.slice(0, 60) },
     { id: 'gtdwiki', label: 'gtdwiki', led: gtdwikiHttp.ok ? 'ok' : 'down', detail: gtdwikiHttp.ok ? 'gollum 4568' : gtdwikiHttp.text.slice(0, 60) },
+    { id: 'hindsight-ui', label: 'hindsight-ui', led: hUi.ok ? 'ok' : 'down', detail: hUi.ok ? 'control-plane' : hUi.text.slice(0, 60) },
     { id: 'hermes', label: 'hermes', led: hermesUi.ok ? 'ok' : 'down', detail: hermesUi.ok ? 'ui/auth 9119' : hermesUi.text.slice(0, 60) }
   ];
-
-  const models = ollamaTags.data?.models || [];
-  const loaded = ollamaPs.data?.models || [];
 
   return {
     components,
@@ -96,13 +119,7 @@ async function runtime() {
       pool: hHealth.data ? { waiting: hHealth.data.db_pool_waiting || 0, inUse: hHealth.data.db_pool_in_use || 0, idle: hHealth.data.db_pool_idle || 0 } : null,
       llm: { total: bankDetails.reduce((n, b) => n + b.llm.total, 0), success: bankDetails.reduce((n, b) => n + b.llm.success, 0), errors: llmErrors }
     },
-    llm: {
-      version: ollamaVersion.data?.version || null,
-      modelCount: models.length,
-      loadedCount: loaded.length,
-      models: models.slice(0, 6).map((m) => ({ name: m.name, size: m.details?.parameter_size, quant: m.details?.quantization_level, ctx: m.details?.context_length })),
-      loaded: loaded.map((m) => ({ name: m.name, vram: m.size_vram }))
-    }
+    llms
   };
 }
 
