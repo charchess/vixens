@@ -23,8 +23,8 @@
   </section>
 
   <section class="grid metrics">
-    <article class="metric panel"><span>hindsight backlog</span><strong>{data.runtime.hindsight.backlog.pending}</strong><small>failed {data.runtime.hindsight.backlog.failed} · processing {data.runtime.hindsight.backlog.processing}</small></article>
-    <article class="metric panel"><span>llm req 7j</span><strong>{data.runtime.hindsight.llm.errors}</strong><small>{data.runtime.hindsight.llm.success} ok · {data.runtime.hindsight.llm.total} total</small></article>
+    <article class="metric panel"><span>hindsight ops</span><strong>{data.runtime.hindsight.backlog.processing}</strong><small>pending {data.runtime.hindsight.backlog.pending} · failed {data.runtime.hindsight.backlog.failed} · stuck {data.runtime.hindsight.backlog.stuck}</small></article>
+    <article class="metric panel"><span>llm err 1h</span><strong>{data.runtime.hindsight.llm.errors1h}</strong><small>24h {data.runtime.hindsight.llm.errors24h} · 7d {data.runtime.hindsight.llm.errors} · last {data.runtime.hindsight.llm.lastErrorAge}</small></article>
     <article class="metric panel"><span>llm endpoints</span><strong>{data.runtime.llms.filter((l) => l.led !== 'down').length}/{data.runtime.llms.length}</strong><small>{data.runtime.llms.map((l) => `${l.id}:${l.loadedCount}/${l.modelCount}`).join(' · ')}</small></article>
     <article class="metric panel"><span>wikis</span><strong>{data.counts.llmTotal}/{data.counts.gtdTotal}</strong><small>llmwiki/gtdwiki pages</small></article>
   </section>

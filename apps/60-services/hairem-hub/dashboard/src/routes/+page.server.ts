@@ -45,12 +45,54 @@ type HindsightHealth = { status?: string; database?: string; db_pool_waiting?: n
 type HindsightVersion = { api_version?: string; features?: Record<string, boolean> };
 type BankStats = { bank_id: string; total_nodes?: number; total_documents?: number; pending_operations?: number; failed_operations?: number; pending_consolidation?: number; failed_consolidation?: number; total_observations?: number; operations_by_status?: Record<string, number> };
 type LlmStats = { buckets?: Array<{ statuses?: Record<string, number>; total?: number; tokens?: { total?: number } }> };
+type LlmRequest = { id?: string; operation?: string; status?: string; started_at?: string; ended_at?: string; provider?: string; model?: string; error?: string };
+type LlmRequests = { total?: number; items?: LlmRequest[]; requests?: LlmRequest[]; data?: LlmRequest[] };
+type AsyncOperation = { id?: string; operation_id?: string; task_type?: string; operation_type?: string; status?: string; created_at?: string; updated_at?: string; retry_count?: number; progress?: Record<string, unknown>; error_message?: string | null };
+type OperationsResponse = { total?: number; operations?: AsyncOperation[] };
+
 type OllamaVersion = { version?: string };
 type OllamaTags = { models?: Array<{ name: string; details?: { parameter_size?: string; quantization_level?: string; context_length?: number } }> };
 type OllamaPs = { models?: Array<{ name: string; size_vram?: number; expires_at?: string }> };
 
 type OpenAiModels = { data?: Array<{ id: string; owned_by?: string }> };
 type ProxyHealth = { status?: string; model?: string; dimensions?: number };
+
+function isoHoursAgo(hours: number) {
+  return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+}
+
+function bucketTotals(stats: LlmStats | null | undefined) {
+  const buckets = stats?.buckets || [];
+  return {
+    total: buckets.reduce((n, b) => n + (b.total || 0), 0),
+    errors: buckets.reduce((n, b) => n + (b.statuses?.error || 0), 0),
+    success: buckets.reduce((n, b) => n + (b.statuses?.success || 0), 0),
+    tokens: buckets.reduce((n, b) => n + (b.tokens?.total || 0), 0)
+  };
+}
+
+function requestItems(data: LlmRequests | null | undefined) {
+  return data?.items || data?.requests || data?.data || [];
+}
+
+function ageLabel(iso?: string) {
+  if (!iso) return 'n/a';
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return iso;
+  const minutes = Math.floor(ms / 60000);
+  if (minutes < 90) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
+
+function opName(op: AsyncOperation) {
+  return op.task_type || op.operation_type || 'operation';
+}
+
+function opId(op: AsyncOperation) {
+  return op.id || op.operation_id || '?';
+}
 
 async function ollamaRuntime(target: { id: string; url: string }) {
   const isProxy = target.id.includes('proxy') || target.url.endsWith(':11435');
@@ -109,26 +151,56 @@ async function runtime() {
   ]);
 
   const banks = banksRes.data?.banks || [];
+  const oneHourAgo = isoHoursAgo(1);
   const bankDetails = await Promise.all(banks.map(async (bank) => {
-    const [stats, llm] = await Promise.all([
-      jsonProbe<BankStats>(`${HINDSIGHT_API}/v1/default/banks/${encodeURIComponent(bank.bank_id)}/stats`),
-      jsonProbe<LlmStats>(`${HINDSIGHT_API}/v1/default/banks/${encodeURIComponent(bank.bank_id)}/llm-requests/stats`)
+    const bankId = encodeURIComponent(bank.bank_id);
+    const [stats, llm7d, llm24h, err1h, lastErr, processingOps] = await Promise.all([
+      jsonProbe<BankStats>(`${HINDSIGHT_API}/v1/default/banks/${bankId}/stats`),
+      jsonProbe<LlmStats>(`${HINDSIGHT_API}/v1/default/banks/${bankId}/llm-requests/stats?period=7d`),
+      jsonProbe<LlmStats>(`${HINDSIGHT_API}/v1/default/banks/${bankId}/llm-requests/stats?period=1d`),
+      jsonProbe<LlmRequests>(`${HINDSIGHT_API}/v1/default/banks/${bankId}/llm-requests?status=error&start_date=${encodeURIComponent(oneHourAgo)}&limit=1`),
+      jsonProbe<LlmRequests>(`${HINDSIGHT_API}/v1/default/banks/${bankId}/llm-requests?status=error&limit=1`),
+      jsonProbe<OperationsResponse>(`${HINDSIGHT_API}/v1/default/banks/${bankId}/operations?status=processing&limit=100`)
     ]);
-    const buckets = llm.data?.buckets || [];
-    const llmTotal = buckets.reduce((n, b) => n + (b.total || 0), 0);
-    const llmErrors = buckets.reduce((n, b) => n + (b.statuses?.error || 0), 0);
-    const llmSuccess = buckets.reduce((n, b) => n + (b.statuses?.success || 0), 0);
-    return { ...bank, stats: stats.data, llm: { total: llmTotal, errors: llmErrors, success: llmSuccess } };
+    const ops = processingOps.data?.operations || [];
+    const stuckOps = ops.filter((op) => Date.now() - new Date(op.updated_at || op.created_at || 0).getTime() > 60 * 60 * 1000);
+    const lastError = requestItems(lastErr.data)[0];
+    const totals7d = bucketTotals(llm7d.data);
+    const totals24h = bucketTotals(llm24h.data);
+    return {
+      ...bank,
+      stats: stats.data,
+      llm: {
+        total: totals7d.total,
+        errors: totals7d.errors,
+        success: totals7d.success,
+        tokens7d: totals7d.tokens,
+        errors24h: totals24h.errors,
+        success24h: totals24h.success,
+        total24h: totals24h.total,
+        errors1h: err1h.data?.total ?? requestItems(err1h.data).length,
+        lastErrorAt: lastError?.started_at,
+        lastErrorAge: ageLabel(lastError?.started_at),
+        lastError: lastError?.error || `${lastError?.operation || 'llm'} ${lastError?.model || ''}`.trim()
+      },
+      operations: { processing: ops, stuck: stuckOps }
+    };
   }));
 
   const pending = bankDetails.reduce((n, b) => n + (b.stats?.pending_consolidation || 0), 0);
   const failed = bankDetails.reduce((n, b) => n + (b.stats?.failed_consolidation || 0), 0);
   const processing = bankDetails.reduce((n, b) => n + (b.stats?.operations_by_status?.processing || 0), 0);
+  const stuck = bankDetails.reduce((n, b) => n + b.operations.stuck.length, 0);
   const llmErrors = bankDetails.reduce((n, b) => n + b.llm.errors, 0);
+  const llmErrors24h = bankDetails.reduce((n, b) => n + b.llm.errors24h, 0);
+  const llmErrors1h = bankDetails.reduce((n, b) => n + b.llm.errors1h, 0);
+  const lastErrorAges = bankDetails.map((b) => b.llm.lastErrorAt).filter(Boolean).sort().reverse();
+  const lastErrorAge = ageLabel(lastErrorAges[0]);
 
-  const bankHover = bankDetails.map((b) => `${b.name || b.bank_id}: facts ${b.stats?.total_nodes || b.fact_count || 0}, pending ${b.stats?.pending_consolidation || 0}, failed ${b.stats?.failed_consolidation || 0}, llm err ${b.llm.errors}`).join(' | ');
+  const bankHover = bankDetails.map((b) => `${b.name || b.bank_id}: facts ${b.stats?.total_nodes || b.fact_count || 0}, ops pending/failed/processing/stuck ${b.stats?.pending_consolidation || 0}/${b.stats?.failed_consolidation || 0}/${b.stats?.operations_by_status?.processing || 0}/${b.operations.stuck.length}, llm err 1h/24h/7d ${b.llm.errors1h}/${b.llm.errors24h}/${b.llm.errors}, last ${b.llm.lastErrorAge}, stuck ${b.operations.stuck.map((op) => `${opName(op)} ${opId(op).slice(0, 8)} age ${ageLabel(op.updated_at || op.created_at)}`).join('; ') || 'none'}`).join(' | ');
+  const hindsightLed: Led = !hHealth.ok || hHealth.data?.status !== 'healthy' ? 'down' : (failed > 0 || stuck > 0 || llmErrors1h > 0 ? 'warn' : 'ok');
   const components: Component[] = [
-    { id: 'hindsight', label: `hindsight ${pending}/${failed}/${processing}`, led: hHealth.ok && hHealth.data?.status === 'healthy' ? 'ok' : 'down', detail: hHealth.data?.database ? `api ${hVersion.data?.api_version || '?'} · db ${hHealth.data.database} · pool w${hHealth.data.db_pool_waiting || 0}/u${hHealth.data.db_pool_in_use || 0}/i${hHealth.data.db_pool_idle || 0} · ${bankHover}` : hHealth.error || `http ${hHealth.status}` },
+    { id: 'hindsight', label: `hindsight p${pending}/f${failed}/r${processing}/s${stuck}`, led: hindsightLed, detail: hHealth.data?.database ? `api ${hVersion.data?.api_version || '?'} · db ${hHealth.data.database} · pool w${hHealth.data.db_pool_waiting || 0}/u${hHealth.data.db_pool_in_use || 0}/i${hHealth.data.db_pool_idle || 0} · ${bankHover}` : hHealth.error || `http ${hHealth.status}` },
     ...llms.map((llm) => ({ id: `llm-${llm.id}`, label: `llm:${llm.id} ${llm.loadedCount}/${llm.modelCount}`, led: llm.led, detail: `${llm.detail} · models: ${llm.models.map((m) => `${m.name}${m.size ? ` ${m.size}` : ''}${m.quant ? ` ${m.quant}` : ''}`).join(' | ') || 'none'}` })),
     { id: 'llmwiki', label: `llmwiki ${llmwikiHttp.status || ''}`, led: llmwikiHttp.ok ? 'ok' : 'down', detail: llmwikiHttp.ok ? `gollum 4567 · ${LLMWIKI_URL}` : llmwikiHttp.text.slice(0, 120) },
     { id: 'gtdwiki', label: `gtdwiki ${gtdwikiHttp.status || ''}`, led: gtdwikiHttp.ok ? 'ok' : 'down', detail: gtdwikiHttp.ok ? `gollum 4568 · ${GTDWIKI_URL}` : gtdwikiHttp.text.slice(0, 120) },
@@ -141,9 +213,9 @@ async function runtime() {
     hindsight: {
       apiVersion: hVersion.data?.api_version || 'n/a',
       banks: bankDetails,
-      backlog: { pending, failed, processing },
+      backlog: { pending, failed, processing, stuck },
       pool: hHealth.data ? { waiting: hHealth.data.db_pool_waiting || 0, inUse: hHealth.data.db_pool_in_use || 0, idle: hHealth.data.db_pool_idle || 0 } : null,
-      llm: { total: bankDetails.reduce((n, b) => n + b.llm.total, 0), success: bankDetails.reduce((n, b) => n + b.llm.success, 0), errors: llmErrors }
+      llm: { total: bankDetails.reduce((n, b) => n + b.llm.total, 0), success: bankDetails.reduce((n, b) => n + b.llm.success, 0), errors: llmErrors, errors24h: llmErrors24h, errors1h: llmErrors1h, lastErrorAge }
     },
     llms
   };
