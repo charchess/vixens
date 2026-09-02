@@ -15,6 +15,11 @@ spec:
       port: 4567
       targetPort: 4567
 
+    - name: gtdwiki
+      protocol: TCP
+      port: 4568
+      targetPort: 4568
+
     - name: dashboard
       protocol: TCP
       port: 8080

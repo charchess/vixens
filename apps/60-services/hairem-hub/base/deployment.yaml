@@ -50,6 +50,7 @@ spec:
                 /data/shared \
                 /data/public \
                 /data/llmwiki \
+                /data/gtdwiki \
                 /data/dashboard
 
               # LAB UMI :
@@ -101,6 +102,70 @@ spec:
               chmod -R a+rwX /data/llmwiki
 
               # -------------------------------------------------------
+              # GTDWiki / Gollum
+              # -------------------------------------------------------
+              if [ ! -d /data/gtdwiki/.git ]; then
+                echo "Initialisation du dépôt GTDWiki..."
+
+                cd /data/gtdwiki
+
+                git init -b main
+                git config user.name "hAIrem GTDWiki"
+                git config user.email "gtdwiki@hairem.local"
+
+                mkdir -p Inbox Projects Next-Actions Waiting Someday Done Contexts Areas Templates
+
+                cat > Home.md <<'GTDWIKI'
+              # hAIrem GTDWiki
+
+              Source canonique GTD pour Katia et les agentes hAIrem.
+
+              ## Surfaces
+
+              - [[Inbox]] — capture brute à clarifier.
+              - [[Projects]] — résultats multi-actions.
+              - [[Next-Actions]] — prochaines actions exécutables.
+              - [[Waiting]] — attente externe ou blocage délégué.
+              - [[Someday]] — idées non engagées.
+              - [[Done]] — éléments clos.
+              - [[Contexts]] — vues par contexte.
+              - [[Areas]] — responsabilités continues.
+
+              ## Règles
+
+              - Le GTD vit ici, pas dans le LLMWiki.
+              - Le LLMWiki peut lier vers ce wiki, sans recopier les tâches.
+              - Katia est propriétaire logique du GTD.
+              - Le dashboard peut lire et indexer ce dépôt; les écritures passent par Katia sauf mode admin explicite.
+              GTDWIKI
+
+                cat > Projects/Hairem-Dashboard.md <<'GTDPROJECT'
+              ---
+              id: project_hairem_dashboard
+              status: next
+              owner: katia
+              context: infra
+              priority: medium
+              updated: 2026-09-02T00:00:00Z
+              ---
+
+              # hAIrem Dashboard
+
+              Projet de cockpit SvelteKit lisant le GTDWiki et les états runtime.
+
+              ## Next action
+
+              Remplacer progressivement le dashboard statique nginx par une app SvelteKit adapter-node.
+              GTDPROJECT
+
+                git add Home.md Inbox Projects Next-Actions Waiting Someday Done Contexts Areas Templates
+                git commit -m "Initialize hAIrem GTDWiki"
+              fi
+
+              chown -R 1000:1000 /data/gtdwiki
+              chmod -R a+rwX /data/gtdwiki
+
+              # -------------------------------------------------------
               # Dashboard hAIrem statique initial
               # -------------------------------------------------------
               if [ ! -f /data/dashboard/index.html ]; then
@@ -138,7 +203,8 @@ spec:
                 <ul>
                   <li>Hermes</li>
                   <li>Lisa — agente laboratoire</li>
-                  <li>LLMWiki / Gollum</li>
+                  <li>LLMWiki / Gollum — port 4567</li>
+                  <li>GTDWiki / Gollum — port 4568</li>
                 </ul>
 
                 <p>
@@ -192,6 +258,42 @@ spec:
             - name: hairem-files
               mountPath: /wiki
               subPath: llmwiki
+
+        # -------------------------------------------------------------
+        # GTDWiki
+        # -------------------------------------------------------------
+        - name: gollum-gtdwiki
+          image: gollumwiki/gollum:sha-01a3610
+
+          workingDir: /wiki
+
+          args:
+            - --port
+            - "4568"
+            - /wiki
+
+          ports:
+            - name: gtdwiki
+              containerPort: 4568
+
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          readinessProbe:
+            tcpSocket:
+              port: 4568
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+          volumeMounts:
+            - name: hairem-files
+              mountPath: /wiki
+              subPath: gtdwiki
 
         # -------------------------------------------------------------
         # Futur dashboard personnel hAIrem
