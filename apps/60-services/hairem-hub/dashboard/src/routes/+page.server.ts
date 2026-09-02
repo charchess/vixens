@@ -5,7 +5,7 @@ const LLM = process.env.LLMWIKI_PATH || '/data/llmwiki';
 const HINDSIGHT_API = process.env.HINDSIGHT_API_URL || 'http://hindsight-api.hindsight.svc.cluster.local:8888';
 const HINDSIGHT_UI = process.env.HINDSIGHT_UI_URL || 'http://hindsight-control-plane.hindsight.svc.cluster.local:3000';
 const HERMES_UI = process.env.HERMES_UI_URL || 'http://hermes.services.svc.cluster.local:9119';
-const OLLAMA_TARGETS = (process.env.OLLAMA_TARGETS || 'umi=http://host.docker.internal:11434,fuu-proxy=http://172.30.208.64:11435')
+const OLLAMA_TARGETS = (process.env.OLLAMA_TARGETS || 'umi=http://host.docker.internal:11434,fuu=http://192.168.200.67:11434')
   .split(',')
   .map((entry) => {
     const [id, ...rest] = entry.split('=');
@@ -56,6 +56,18 @@ type OllamaPs = { models?: Array<{ name: string; size_vram?: number; expires_at?
 
 type OpenAiModels = { data?: Array<{ id: string; owned_by?: string }> };
 type ProxyHealth = { status?: string; model?: string; dimensions?: number };
+type LlmRuntime = {
+  id: string;
+  url: string;
+  led: Led;
+  detail: string;
+  version: string | null;
+  modelCount: number;
+  loadedCount: number;
+  models: Array<{ name: string; size?: string; quant?: string; ctx?: number }>;
+  loaded: Array<{ name: string; vram?: number }>;
+  apiMode: string;
+};
 
 function isoHoursAgo(hours: number) {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
@@ -94,49 +106,57 @@ function opId(op: AsyncOperation) {
   return op.id || op.operation_id || '?';
 }
 
-async function ollamaRuntime(target: { id: string; url: string }) {
-  const isProxy = target.id.includes('proxy') || target.url.endsWith(':11435');
-  if (isProxy) {
-    const [health, modelsRes] = await Promise.all([
-      jsonProbe<ProxyHealth>(`${target.url}/health`),
-      jsonProbe<OpenAiModels>(`${target.url}/v1/models`)
-    ]);
-    const models = modelsRes.data?.data || [];
-    const modelName = health.data?.model || models[0]?.id || 'proxy';
+async function ollamaRuntime(target: { id: string; url: string }): Promise<LlmRuntime> {
+  const [version, tags, ps, openaiModels, health] = await Promise.all([
+    jsonProbe<OllamaVersion>(`${target.url}/api/version`),
+    jsonProbe<OllamaTags>(`${target.url}/api/tags`),
+    jsonProbe<OllamaPs>(`${target.url}/api/ps`),
+    jsonProbe<OpenAiModels>(`${target.url}/v1/models`),
+    jsonProbe<ProxyHealth>(`${target.url}/health`)
+  ]);
+
+  const ollamaModels = tags.data?.models || [];
+  const loaded = ps.data?.models || [];
+  const v1Models = openaiModels.data?.data || [];
+  const isOllama = version.ok || tags.ok || ps.ok;
+  const isOpenAi = openaiModels.ok || health.ok;
+  const led: Led = isOllama
+    ? (version.ok && tags.ok ? 'ok' : 'warn')
+    : (isOpenAi ? 'ok' : 'down');
+  const apiMode = isOllama && isOpenAi ? 'ollama+/v1' : (isOllama ? 'ollama' : (isOpenAi ? 'openai/proxy' : 'unreachable'));
+
+  if (isOllama) {
+    const models = ollamaModels.length
+      ? ollamaModels.map((m) => ({ name: m.name, size: m.details?.parameter_size, quant: m.details?.quantization_level, ctx: m.details?.context_length }))
+      : v1Models.map((m) => ({ name: m.id, size: m.owned_by || 'openai-api', quant: '', ctx: undefined }));
     return {
       id: target.id,
       url: target.url,
-      led: health.ok ? 'ok' as Led : 'down' as Led,
-      detail: health.ok ? `${modelName} · ${health.data?.dimensions || '?'}d · ${target.url}` : health.error || `http ${health.status} · ${target.url}`,
-      version: null,
+      led,
+      detail: version.data?.version ? `v${version.data.version} · ${apiMode} · loaded ${loaded.length}/${models.length} · ${loaded.map((m) => m.name).join(', ') || 'idle'} · ${target.url}` : `http ${version.status || tags.status || openaiModels.status} · ${apiMode} · ${target.url}`,
+      version: version.data?.version || null,
       modelCount: models.length,
-      loadedCount: health.ok ? 1 : 0,
-      models: models.map((m) => ({ name: m.id, size: m.owned_by || 'openai-api', quant: '', ctx: undefined })).slice(0, 5),
-      loaded: health.ok ? [{ name: modelName, vram: undefined }] : []
+      loadedCount: loaded.length,
+      models: models.slice(0, 8),
+      loaded: loaded.map((m) => ({ name: m.name, vram: m.size_vram })),
+      apiMode
     };
   }
 
-  const [version, tags, ps] = await Promise.all([
-    jsonProbe<OllamaVersion>(`${target.url}/api/version`),
-    jsonProbe<OllamaTags>(`${target.url}/api/tags`),
-    jsonProbe<OllamaPs>(`${target.url}/api/ps`)
-  ]);
-  const models = tags.data?.models || [];
-  const loaded = ps.data?.models || [];
-  const led: Led = version.ok ? (ps.ok ? 'ok' : 'warn') : 'down';
+  const modelName = health.data?.model || v1Models[0]?.id || 'proxy';
   return {
     id: target.id,
     url: target.url,
     led,
-    detail: version.data?.version ? `v${version.data.version} · loaded ${loaded.length}/${models.length} · ${loaded.map((m) => m.name).join(', ') || 'idle'} · ${target.url}` : version.error || `http ${version.status} · ${target.url}`,
-    version: version.data?.version || null,
-    modelCount: models.length,
-    loadedCount: loaded.length,
-    models: models.slice(0, 5).map((m) => ({ name: m.name, size: m.details?.parameter_size, quant: m.details?.quantization_level, ctx: m.details?.context_length })),
-    loaded: loaded.map((m) => ({ name: m.name, vram: m.size_vram }))
+    detail: health.ok ? `${modelName} · ${health.data?.dimensions || '?'}d · ${apiMode} · ${target.url}` : health.error || openaiModels.error || `http ${health.status || openaiModels.status} · ${target.url}`,
+    version: null,
+    modelCount: v1Models.length,
+    loadedCount: health.ok || openaiModels.ok ? 1 : 0,
+    models: v1Models.map((m) => ({ name: m.id, size: m.owned_by || 'openai-api', quant: '', ctx: undefined })).slice(0, 8),
+    loaded: health.ok ? [{ name: modelName, vram: undefined }] : [],
+    apiMode
   };
 }
-
 
 async function runtime() {
   const [hHealth, hVersion, banksRes, hUi, llmwikiHttp, gtdwikiHttp, hermesUi, llms] = await Promise.all([
@@ -219,6 +239,7 @@ async function runtime() {
       const modelLines = llm.models.map((m) => `  ${m.name}${m.size ? ` · ${m.size}` : ''}${m.quant ? ` · ${m.quant}` : ''}`);
       const lines = [
         `Endpoint       ${llm.url}`,
+        `API mode       ${llm.apiMode}`,
         `Version        ${llm.version || 'proxy/health'}`,
         `Loaded         ${llm.loadedCount}/${llm.modelCount}`,
         `Active         ${llm.loaded.map((m) => m.name).join(', ') || 'idle'}`,
