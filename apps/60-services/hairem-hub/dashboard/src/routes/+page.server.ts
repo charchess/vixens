@@ -106,6 +106,30 @@ function opId(op: AsyncOperation) {
   return op.id || op.operation_id || '?';
 }
 
+function conciseError(error?: string) {
+  if (!error) return 'none';
+  return error
+    .replace(/\s+/g, ' ')
+    .replace(/^Error:\s*/i, '')
+    .replace(/^Ollama request failed:\s*/i, '')
+    .slice(0, 170);
+}
+
+function hindsightLabel(args: { pending: number; failed: number; processing: number; stuck: number; recentErrors: number }) {
+  const parts: string[] = [];
+  if (args.stuck > 0) parts.push(`${args.stuck} stuck`);
+  if (args.failed > 0) parts.push(`${args.failed} failed`);
+  if (args.recentErrors > 0) parts.push(`${args.recentErrors} err/h`);
+  if (parts.length) return `hindsight ${parts.slice(0, 2).join(' · ')}`;
+  if (args.processing > 0) return `hindsight ${args.processing} running`;
+  if (args.pending > 0) return `hindsight ${args.pending} pending`;
+  return 'hindsight ok';
+}
+
+function shortModelName(name: string) {
+  return name.replace(':latest', '').replace(':9b-q5-16k', '').replace(/^hf\.co\//, '');
+}
+
 async function ollamaRuntime(target: { id: string; url: string }): Promise<LlmRuntime> {
   const [version, tags, ps, openaiModels, health] = await Promise.all([
     jsonProbe<OllamaVersion>(`${target.url}/api/version`),
@@ -201,7 +225,7 @@ async function runtime() {
         errors1h: err1h.data?.total ?? requestItems(err1h.data).length,
         lastErrorAt: lastError?.started_at,
         lastErrorAge: ageLabel(lastError?.started_at),
-        lastError: lastError?.error || `${lastError?.operation || 'llm'} ${lastError?.model || ''}`.trim()
+        lastError: conciseError(lastError?.error || `${lastError?.operation || 'llm'} ${lastError?.model || ''}`.trim())
       },
       operations: { processing: ops, stuck: stuckOps }
     };
@@ -219,11 +243,15 @@ async function runtime() {
 
   const bankLines = bankDetails.flatMap((b) => [
     `${b.name || b.bank_id}`,
-    `  facts          ${b.stats?.total_nodes || b.fact_count || 0}`,
-    `  ops p/f/r/s    ${b.stats?.pending_consolidation || 0}/${b.stats?.failed_consolidation || 0}/${b.stats?.operations_by_status?.processing || 0}/${b.operations.stuck.length}`,
-    `  llm err        1h ${b.llm.errors1h} · 24h ${b.llm.errors24h} · 7d ${b.llm.errors}`,
-    `  last error     ${b.llm.lastErrorAge}`,
-    `  stuck          ${b.operations.stuck.map((op) => `${opName(op)} ${opId(op).slice(0, 8)} age ${ageLabel(op.updated_at || op.created_at)}`).join('; ') || 'none'}`
+    `  facts              ${b.stats?.total_nodes || b.fact_count || 0}`,
+    `  pending ops        ${b.stats?.pending_consolidation || 0}`,
+    `  failed ops         ${b.stats?.failed_consolidation || 0}`,
+    `  running ops        ${b.stats?.operations_by_status?.processing || 0}`,
+    `  stuck ops          ${b.operations.stuck.length}`,
+    `  llm errors         1h ${b.llm.errors1h} · 24h ${b.llm.errors24h} · 7d ${b.llm.errors}`,
+    `  last error age     ${b.llm.lastErrorAge}`,
+    `  last error summary ${b.llm.lastError || 'none'}`,
+    `  stuck details      ${b.operations.stuck.map((op) => `${opName(op)} ${opId(op).slice(0, 8)} age ${ageLabel(op.updated_at || op.created_at)}`).join('; ') || 'none'}`
   ]);
   const hindsightLines = hHealth.data?.database ? [
     `API            ${hVersion.data?.api_version || '?'}`,
@@ -234,20 +262,21 @@ async function runtime() {
   ] : [hHealth.error || `http ${hHealth.status}`];
   const hindsightLed: Led = !hHealth.ok || hHealth.data?.status !== 'healthy' ? 'down' : (failed > 0 || stuck > 0 || llmErrors1h > 0 ? 'warn' : 'ok');
   const components: Component[] = [
-    { id: 'hindsight', label: `hindsight p${pending}/f${failed}/r${processing}/s${stuck}`, led: hindsightLed, detail: hindsightLines.join('\\n'), detailLines: hindsightLines },
+    { id: 'hindsight', label: hindsightLabel({ pending, failed, processing, stuck, recentErrors: llmErrors1h }), led: hindsightLed, detail: hindsightLines.join('\\n'), detailLines: hindsightLines },
     ...llms.map((llm) => {
-      const modelLines = llm.models.map((m) => `  ${m.name}${m.size ? ` · ${m.size}` : ''}${m.quant ? ` · ${m.quant}` : ''}`);
+      const activeLines = llm.loaded.map((m) => `  ${m.name}${m.vram ? ` · vram ${Math.round(m.vram / 1024 / 1024 / 1024)}GiB` : ''}`);
+      const activeLabel = llm.loaded.map((m) => shortModelName(m.name)).slice(0, 1).join(', ');
       const lines = [
         `Endpoint       ${llm.url}`,
         `API mode       ${llm.apiMode}`,
         `Version        ${llm.version || 'proxy/health'}`,
-        `Loaded         ${llm.loadedCount}/${llm.modelCount}`,
-        `Active         ${llm.loaded.map((m) => m.name).join(', ') || 'idle'}`,
+        `Active models  ${llm.loadedCount}`,
+        `Available      ${llm.modelCount}`,
         '',
-        'Models',
-        ...(modelLines.length ? modelLines : ['  none'])
+        'Active only',
+        ...(activeLines.length ? activeLines : ['  idle'])
       ];
-      return { id: `llm-${llm.id}`, label: `llm:${llm.id} ${llm.loadedCount}/${llm.modelCount}`, led: llm.led, detail: lines.join('\\n'), detailLines: lines };
+      return { id: `llm-${llm.id}`, label: `llm:${llm.id} ${activeLabel || 'idle'}`, led: llm.led, detail: lines.join('\\n'), detailLines: lines };
     }),
     { id: 'llmwiki', label: `llmwiki ${llmwikiHttp.status || ''}`, led: llmwikiHttp.ok ? 'ok' : 'down', detail: llmwikiHttp.ok ? `Gollum 4567\\n${LLMWIKI_URL}` : llmwikiHttp.text.slice(0, 120), detailLines: llmwikiHttp.ok ? ['Gollum         4567', `URL            ${LLMWIKI_URL}`] : [llmwikiHttp.text.slice(0, 120)] },
     { id: 'gtdwiki', label: `gtdwiki ${gtdwikiHttp.status || ''}`, led: gtdwikiHttp.ok ? 'ok' : 'down', detail: gtdwikiHttp.ok ? `Gollum 4568\\n${GTDWIKI_URL}` : gtdwikiHttp.text.slice(0, 120), detailLines: gtdwikiHttp.ok ? ['Gollum         4568', `URL            ${GTDWIKI_URL}`] : [gtdwikiHttp.text.slice(0, 120)] },
