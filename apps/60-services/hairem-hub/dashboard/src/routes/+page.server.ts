@@ -65,7 +65,7 @@ async function ollamaRuntime(target: { id: string; url: string }) {
       id: target.id,
       url: target.url,
       led: health.ok ? 'ok' as Led : 'down' as Led,
-      detail: health.ok ? `${modelName} · ${health.data?.dimensions || '?'}d` : health.error || `http ${health.status}`,
+      detail: health.ok ? `${modelName} · ${health.data?.dimensions || '?'}d · ${target.url}` : health.error || `http ${health.status} · ${target.url}`,
       version: null,
       modelCount: models.length,
       loadedCount: health.ok ? 1 : 0,
@@ -86,7 +86,7 @@ async function ollamaRuntime(target: { id: string; url: string }) {
     id: target.id,
     url: target.url,
     led,
-    detail: version.data?.version ? `v${version.data.version} · ${loaded.length}/${models.length}` : version.error || `http ${version.status}`,
+    detail: version.data?.version ? `v${version.data.version} · loaded ${loaded.length}/${models.length} · ${loaded.map((m) => m.name).join(', ') || 'idle'} · ${target.url}` : version.error || `http ${version.status} · ${target.url}`,
     version: version.data?.version || null,
     modelCount: models.length,
     loadedCount: loaded.length,
@@ -126,13 +126,14 @@ async function runtime() {
   const processing = bankDetails.reduce((n, b) => n + (b.stats?.operations_by_status?.processing || 0), 0);
   const llmErrors = bankDetails.reduce((n, b) => n + b.llm.errors, 0);
 
+  const bankHover = bankDetails.map((b) => `${b.name || b.bank_id}: facts ${b.stats?.total_nodes || b.fact_count || 0}, pending ${b.stats?.pending_consolidation || 0}, failed ${b.stats?.failed_consolidation || 0}, llm err ${b.llm.errors}`).join(' | ');
   const components: Component[] = [
-    { id: 'hindsight', label: `hindsight ${pending}/${failed}/${processing}`, led: hHealth.ok && hHealth.data?.status === 'healthy' ? 'ok' : 'down', detail: hHealth.data?.database ? `api · db ${hHealth.data.database}` : hHealth.error || `http ${hHealth.status}` },
-    ...llms.map((llm) => ({ id: `llm-${llm.id}`, label: `llm:${llm.id}`, led: llm.led, detail: llm.detail })),
-    { id: 'llmwiki', label: 'llmwiki', led: llmwikiHttp.ok ? 'ok' : 'down', detail: llmwikiHttp.ok ? 'gollum 4567' : llmwikiHttp.text.slice(0, 60) },
-    { id: 'gtdwiki', label: 'gtdwiki', led: gtdwikiHttp.ok ? 'ok' : 'down', detail: gtdwikiHttp.ok ? 'gollum 4568' : gtdwikiHttp.text.slice(0, 60) },
-    { id: 'hindsight-ui', label: 'hindsight-ui', led: hUi.ok ? 'ok' : 'down', detail: hUi.ok ? 'control-plane' : hUi.text.slice(0, 60) },
-    { id: 'hermes', label: 'hermes', led: hermesUi.ok ? 'ok' : 'down', detail: hermesUi.ok ? 'ui/auth 9119' : hermesUi.text.slice(0, 60) }
+    { id: 'hindsight', label: `hindsight ${pending}/${failed}/${processing}`, led: hHealth.ok && hHealth.data?.status === 'healthy' ? 'ok' : 'down', detail: hHealth.data?.database ? `api ${hVersion.data?.api_version || '?'} · db ${hHealth.data.database} · pool w${hHealth.data.db_pool_waiting || 0}/u${hHealth.data.db_pool_in_use || 0}/i${hHealth.data.db_pool_idle || 0} · ${bankHover}` : hHealth.error || `http ${hHealth.status}` },
+    ...llms.map((llm) => ({ id: `llm-${llm.id}`, label: `llm:${llm.id} ${llm.loadedCount}/${llm.modelCount}`, led: llm.led, detail: `${llm.detail} · models: ${llm.models.map((m) => `${m.name}${m.size ? ` ${m.size}` : ''}${m.quant ? ` ${m.quant}` : ''}`).join(' | ') || 'none'}` })),
+    { id: 'llmwiki', label: `llmwiki ${llmwikiHttp.status || ''}`, led: llmwikiHttp.ok ? 'ok' : 'down', detail: llmwikiHttp.ok ? `gollum 4567 · ${LLMWIKI_URL}` : llmwikiHttp.text.slice(0, 120) },
+    { id: 'gtdwiki', label: `gtdwiki ${gtdwikiHttp.status || ''}`, led: gtdwikiHttp.ok ? 'ok' : 'down', detail: gtdwikiHttp.ok ? `gollum 4568 · ${GTDWIKI_URL}` : gtdwikiHttp.text.slice(0, 120) },
+    { id: 'hindsight-ui', label: `hindsight-ui ${hUi.status || ''}`, led: hUi.ok ? 'ok' : 'down', detail: hUi.ok ? `control-plane · ${HINDSIGHT_UI}` : hUi.text.slice(0, 120) },
+    { id: 'hermes', label: `hermes ${hermesUi.status || ''}`, led: hermesUi.ok ? 'ok' : 'down', detail: hermesUi.ok ? `ui/auth 9119 · ${HERMES_UI}` : hermesUi.text.slice(0, 120) }
   ];
 
   return {
