@@ -107,12 +107,25 @@ function opId(op: AsyncOperation) {
 }
 
 function conciseError(error?: string) {
-  if (!error) return 'none';
-  return error
+  if (!error) return 'no detail';
+  const cleaned = error
     .replace(/\s+/g, ' ')
     .replace(/^Error:\s*/i, '')
     .replace(/^Ollama request failed:\s*/i, '')
-    .slice(0, 170);
+    .trim();
+  if (!cleaned) return 'no detail';
+  if (/^ReadError:?$/i.test(cleaned)) return 'ReadError (no detail returned)';
+  return cleaned.slice(0, 170);
+}
+
+function summarizeLlmError(req?: LlmRequest) {
+  if (!req) return 'none';
+  const bits = [
+    req.operation || 'llm request',
+    [req.provider, req.model ? shortModelName(req.model) : undefined].filter(Boolean).join('/'),
+    conciseError(req.error || req.status)
+  ].filter(Boolean);
+  return bits.join(' · ');
 }
 
 function hindsightLabel(args: { pending: number; failed: number; processing: number; stuck: number; recentErrors: number }) {
@@ -225,7 +238,7 @@ async function runtime() {
         errors1h: err1h.data?.total ?? requestItems(err1h.data).length,
         lastErrorAt: lastError?.started_at,
         lastErrorAge: ageLabel(lastError?.started_at),
-        lastError: conciseError(lastError?.error || `${lastError?.operation || 'llm'} ${lastError?.model || ''}`.trim())
+        lastError: summarizeLlmError(lastError)
       },
       operations: { processing: ops, stuck: stuckOps }
     };
@@ -293,7 +306,16 @@ async function runtime() {
       pool: hHealth.data ? { waiting: hHealth.data.db_pool_waiting || 0, inUse: hHealth.data.db_pool_in_use || 0, idle: hHealth.data.db_pool_idle || 0 } : null,
       llm: { total: bankDetails.reduce((n, b) => n + b.llm.total, 0), success: bankDetails.reduce((n, b) => n + b.llm.success, 0), errors: llmErrors, errors24h: llmErrors24h, errors1h: llmErrors1h, lastErrorAge }
     },
-    llms
+    llms: llms.map((llm) => ({
+      id: llm.id,
+      url: llm.url,
+      led: llm.led,
+      version: llm.version,
+      modelCount: llm.modelCount,
+      loadedCount: llm.loadedCount,
+      loaded: llm.loaded,
+      apiMode: llm.apiMode
+    }))
   };
 }
 
