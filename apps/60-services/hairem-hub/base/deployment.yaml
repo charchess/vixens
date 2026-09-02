@@ -296,34 +296,44 @@ spec:
               subPath: gtdwiki
 
         # -------------------------------------------------------------
-        # Futur dashboard personnel hAIrem
+        # Dashboard hAIrem SvelteKit
         # -------------------------------------------------------------
         - name: dashboard
-          image: nginx:alpine
+          image: hairem-dashboard:dev
+          imagePullPolicy: Never
+
+          env:
+            - name: PORT
+              value: "3000"
+            - name: HOST
+              value: 0.0.0.0
+            - name: GTDWIKI_PATH
+              value: /data/gtdwiki
+            - name: LLMWIKI_PATH
+              value: /data/llmwiki
 
           ports:
             - name: dashboard
-              containerPort: 80
+              containerPort: 3000
 
           resources:
             requests:
-              cpu: 5m
-              memory: 32Mi
-            limits:
-              cpu: 100m
+              cpu: 25m
               memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
 
           readinessProbe:
             httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 2
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
             periodSeconds: 5
 
           volumeMounts:
             - name: hairem-files
-              mountPath: /usr/share/nginx/html
-              subPath: dashboard
+              mountPath: /data
               readOnly: true
 
       volumes:
