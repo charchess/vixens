@@ -1,4 +1,4 @@
-import { readWiki, countBy } from '$lib/wiki';
+import { readWiki, countBy, readGtdCockpit } from '$lib/wiki';
 
 const GTD = process.env.GTDWIKI_PATH || '/data/gtdwiki';
 const LLM = process.env.LLMWIKI_PATH || '/data/llmwiki';
@@ -320,8 +320,9 @@ async function runtime() {
 }
 
 export async function load() {
-  const [gtdItems, llmItems, rt] = await Promise.all([
+  const [gtdItems, gtdCockpit, llmItems, rt] = await Promise.all([
     readWiki(GTD, 120).catch((error) => ({ error: String(error), items: [] })),
+    readGtdCockpit(GTD).catch((error) => ({ error: String(error), source: GTD, inbox: [], next: [], doneRecent: [], projects: [], waiting: [], someday: [], review: [], now: [], updated: {}, trust: { inboxOpen: 0, nextOpen: 0, p1Open: 0, projectsActive: 0, projectsNoNext: 0, waiting: 0, someday: 0, label: 'unavailable', led: 'down' } })),
     readWiki(LLM, 60).catch((error) => ({ error: String(error), items: [] })),
     runtime()
   ]);
@@ -333,9 +334,10 @@ export async function load() {
     paths: { gtd: GTD, llm: LLM },
     links: { llmwiki: `${LAN}:4567/Home`, gtdwiki: `${LAN}:4568/Home`, hindsight: `${LAN}:8888/`, hermes: `${LAN}:9119/` },
     gtd,
+    gtdCockpit,
     llm,
     counts: { gtdTotal: gtd.length, llmTotal: llm.length, gtdByStatus: countBy(gtd, 'status'), gtdByOwner: countBy(gtd, 'owner') },
     runtime: rt,
-    errors: { gtd: Array.isArray(gtdItems) ? null : gtdItems.error, llm: Array.isArray(llmItems) ? null : llmItems.error }
+    errors: { gtd: Array.isArray(gtdItems) ? null : gtdItems.error, gtdCockpit: 'error' in gtdCockpit ? gtdCockpit.error : null, llm: Array.isArray(llmItems) ? null : llmItems.error }
   };
 }

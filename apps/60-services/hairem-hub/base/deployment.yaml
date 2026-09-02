@@ -308,7 +308,7 @@ spec:
             - name: HOST
               value: 0.0.0.0
             - name: GTDWIKI_PATH
-              value: /data/gtdwiki
+              value: /katia-gtd
             - name: LLMWIKI_PATH
               value: /data/llmwiki
 
@@ -335,8 +335,15 @@ spec:
             - name: hairem-files
               mountPath: /data
               readOnly: true
+            - name: katia-gtd
+              mountPath: /katia-gtd
+              readOnly: true
 
       volumes:
         - name: hairem-files
           persistentVolumeClaim:
             claimName: hairem-files-truenas
+        - name: katia-gtd
+          hostPath:
+            path: /home/charchess/persona-projects/katia/gtd
+            type: Directory
