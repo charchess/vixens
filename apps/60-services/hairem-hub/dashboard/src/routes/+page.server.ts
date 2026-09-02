@@ -5,7 +5,7 @@ const LLM = process.env.LLMWIKI_PATH || '/data/llmwiki';
 const HINDSIGHT_API = process.env.HINDSIGHT_API_URL || 'http://hindsight-api.hindsight.svc.cluster.local:8888';
 const HINDSIGHT_UI = process.env.HINDSIGHT_UI_URL || 'http://hindsight-control-plane.hindsight.svc.cluster.local:3000';
 const HERMES_UI = process.env.HERMES_UI_URL || 'http://hermes.services.svc.cluster.local:9119';
-const OLLAMA_TARGETS = (process.env.OLLAMA_TARGETS || 'umi=http://host.docker.internal:11434,fuu-proxy=http://host.docker.internal:11435')
+const OLLAMA_TARGETS = (process.env.OLLAMA_TARGETS || 'umi=http://host.docker.internal:11434,fuu-proxy=http://172.30.208.64:11435')
   .split(',')
   .map((entry) => {
     const [id, ...rest] = entry.split('=');
@@ -49,7 +49,31 @@ type OllamaVersion = { version?: string };
 type OllamaTags = { models?: Array<{ name: string; details?: { parameter_size?: string; quantization_level?: string; context_length?: number } }> };
 type OllamaPs = { models?: Array<{ name: string; size_vram?: number; expires_at?: string }> };
 
+type OpenAiModels = { data?: Array<{ id: string; owned_by?: string }> };
+type ProxyHealth = { status?: string; model?: string; dimensions?: number };
+
 async function ollamaRuntime(target: { id: string; url: string }) {
+  const isProxy = target.id.includes('proxy') || target.url.endsWith(':11435');
+  if (isProxy) {
+    const [health, modelsRes] = await Promise.all([
+      jsonProbe<ProxyHealth>(`${target.url}/health`),
+      jsonProbe<OpenAiModels>(`${target.url}/v1/models`)
+    ]);
+    const models = modelsRes.data?.data || [];
+    const modelName = health.data?.model || models[0]?.id || 'proxy';
+    return {
+      id: target.id,
+      url: target.url,
+      led: health.ok ? 'ok' as Led : 'down' as Led,
+      detail: health.ok ? `${modelName} · ${health.data?.dimensions || '?'}d` : health.error || `http ${health.status}`,
+      version: null,
+      modelCount: models.length,
+      loadedCount: health.ok ? 1 : 0,
+      models: models.map((m) => ({ name: m.id, size: m.owned_by || 'openai-api', quant: '', ctx: undefined })).slice(0, 5),
+      loaded: health.ok ? [{ name: modelName, vram: undefined }] : []
+    };
+  }
+
   const [version, tags, ps] = await Promise.all([
     jsonProbe<OllamaVersion>(`${target.url}/api/version`),
     jsonProbe<OllamaTags>(`${target.url}/api/tags`),
@@ -70,6 +94,7 @@ async function ollamaRuntime(target: { id: string; url: string }) {
     loaded: loaded.map((m) => ({ name: m.name, vram: m.size_vram }))
   };
 }
+
 
 async function runtime() {
   const [hHealth, hVersion, banksRes, hUi, llmwikiHttp, gtdwikiHttp, hermesUi, llms] = await Promise.all([
