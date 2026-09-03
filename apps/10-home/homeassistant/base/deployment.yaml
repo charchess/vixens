@@ -94,12 +94,12 @@ spec:
               fi
               if grep -q "192.168.0.0/16 - 172.16.0.0/12" /config/configuration.yaml; then
                 echo "Repairing malformed trusted proxy range..."
-                awk '{ if ($0 ~ /192[.]168[.]0[.]0\/16 - 172[.]16[.]0[.]0\/12/) { sub(/ - 172[.]16[.]0[.]0\/12/, ""); print; print "        - 172.16.0.0/12" } else { print } }' /config/configuration.yaml > /config/configuration.yaml.tmp
+                awk '{ if ($0 ~ /192[.]168[.]0[.]0\/16 - 172[.]16[.]0[.]0\/12/) { sub(/ - 172[.]16[.]0[.]0\/12/, ""); print; print "    - 172.16.0.0/12" } else { print } }' /config/configuration.yaml > /config/configuration.yaml.tmp
                 mv /config/configuration.yaml.tmp /config/configuration.yaml
                 chown 1000:1000 /config/configuration.yaml
               elif ! grep -q "172.16.0.0/12" /config/configuration.yaml; then
                 echo "Adding trusted proxy range for UMI/WSL routed access..."
-                awk '{ print; if ($0 ~ /192[.]168[.]0[.]0\/16/) print "        - 172.16.0.0/12" }' /config/configuration.yaml > /config/configuration.yaml.tmp
+                awk '{ print; if ($0 ~ /192[.]168[.]0[.]0\/16/) print "    - 172.16.0.0/12" }' /config/configuration.yaml > /config/configuration.yaml.tmp
                 mv /config/configuration.yaml.tmp /config/configuration.yaml
                 chown 1000:1000 /config/configuration.yaml
               fi
