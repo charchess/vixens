@@ -92,9 +92,16 @@ spec:
                 cp /tmp/ha-config/configuration.yaml /config/configuration.yaml
                 chown 1000:1000 /config/configuration.yaml
               fi
-              if ! grep -q "172.16.0.0/12" /config/configuration.yaml; then
+              if grep -q "192.168.0.0/16 - 172.16.0.0/12" /config/configuration.yaml; then
+                echo "Repairing malformed trusted proxy range..."
+                awk '{ if ($0 ~ /192[.]168[.]0[.]0\/16 - 172[.]16[.]0[.]0\/12/) { sub(/ - 172[.]16[.]0[.]0\/12/, ""); print; print "        - 172.16.0.0/12" } else { print } }' /config/configuration.yaml > /config/configuration.yaml.tmp
+                mv /config/configuration.yaml.tmp /config/configuration.yaml
+                chown 1000:1000 /config/configuration.yaml
+              elif ! grep -q "172.16.0.0/12" /config/configuration.yaml; then
                 echo "Adding trusted proxy range for UMI/WSL routed access..."
-                sed -i '/192.168.0.0\/16/a\        - 172.16.0.0/12' /config/configuration.yaml || true
+                awk '{ print; if ($0 ~ /192[.]168[.]0[.]0\/16/) print "        - 172.16.0.0/12" }' /config/configuration.yaml > /config/configuration.yaml.tmp
+                mv /config/configuration.yaml.tmp /config/configuration.yaml
+                chown 1000:1000 /config/configuration.yaml
               fi
               ensure_file() {
                 path="$1"
@@ -113,6 +120,10 @@ spec:
               ensure_file sensors.yaml "[]"
               ensure_file utility_meters.yaml "{}"
               ensure_file mediaplayer.yaml "[]"
+              if [ ! -d /config/python_scripts ]; then
+                mkdir -p /config/python_scripts
+                chown 1000:1000 /config/python_scripts
+              fi
           volumeMounts:
             - name: config
               mountPath: /config
