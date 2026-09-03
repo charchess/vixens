@@ -8,9 +8,7 @@ resources:
   - ingressroute-udp.yaml
 components:
   - ../../../../_shared/components/revision-history-limit
-  - ../../../../_shared/components/dataangel
 patches:
-  - path: dataangel.yaml
   - target:
       kind: PersistentVolumeClaim
       name: homeassistant-config
@@ -34,11 +32,11 @@ patches:
             cpu: 500m
             memory: 512Mi
       - op: replace
-        path: /spec/template/spec/initContainers/0/ports
-        value:
-          - containerPort: 9091
-            name: metrics
-            protocol: TCP
-      - op: replace
-        path: /spec/template/spec/initContainers/1/image
+        path: /spec/template/spec/initContainers/0/image
         value: "python:3.13-alpine"
+      - op: replace
+        path: /spec/template/spec/volumes/1
+        value:
+          name: ha-config
+          configMap:
+            name: homeassistant-config

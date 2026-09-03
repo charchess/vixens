@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: homeassistant
 resources:
 - ../../base
+- ../../base/optional-openbao
 - ../../base/optional-crds
 - ingress.yaml
 - ingressroute-udp.yaml
