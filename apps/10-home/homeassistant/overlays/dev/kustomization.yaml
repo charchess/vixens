@@ -7,7 +7,6 @@ resources:
   - ingress.yaml
   - ingressroute-udp.yaml
 components:
-  - ../../../../_shared/components/dev-hibernate
   - ../../../../_shared/components/revision-history-limit
   - ../../../../_shared/components/dataangel
 patches:
