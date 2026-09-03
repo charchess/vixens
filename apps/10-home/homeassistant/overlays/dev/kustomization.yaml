@@ -11,6 +11,8 @@ components:
   - ../../../../_shared/components/revision-history-limit
   - ../../../../_shared/components/dataangel
 patches:
+  - path: drop-cilium-networkpolicy.yaml
+  - path: drop-servicemonitor.yaml
   - path: dataangel.yaml
   - target:
       kind: PersistentVolumeClaim
@@ -18,11 +20,13 @@ patches:
     patch: |-
       - op: replace
         path: /spec/storageClassName
-        value: synelia-iscsi-xfs-retain
+        value: truenas-iscsi-xfs-retain
   - target:
       kind: Deployment
       name: homeassistant
     patch: |-
+      - op: remove
+        path: /spec/template/spec/priorityClassName
       - op: replace
         path: /spec/template/spec/containers/0/resources
         value:
