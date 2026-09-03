@@ -94,7 +94,7 @@ spec:
               fi
               if ! grep -q "172.16.0.0/12" /config/configuration.yaml; then
                 echo "Adding trusted proxy range for UMI/WSL routed access..."
-                sed -i /192.168.0.0\/16/a\ - 172.16.0.0/12 /config/configuration.yaml || true
+                sed -i '/192.168.0.0\/16/a\        - 172.16.0.0/12' /config/configuration.yaml || true
               fi
               ensure_file() {
                 path="$1"
