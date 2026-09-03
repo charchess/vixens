@@ -1,6 +1,0 @@
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: homeassistant
-  namespace: homeassistant
-$patch: delete

@@ -11,8 +11,6 @@ components:
   - ../../../../_shared/components/revision-history-limit
   - ../../../../_shared/components/dataangel
 patches:
-  - path: drop-cilium-networkpolicy.yaml
-  - path: drop-servicemonitor.yaml
   - path: dataangel.yaml
   - target:
       kind: PersistentVolumeClaim
