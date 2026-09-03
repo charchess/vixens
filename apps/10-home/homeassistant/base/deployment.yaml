@@ -89,7 +89,7 @@ spec:
             - |
               if [ ! -s /config/configuration.yaml ]; then
                 echo "No configuration found, copying default..."
-                cp /tmp/ha-config/homeassistant-config /config/configuration.yaml
+                cp /tmp/ha-config/configuration.yaml /config/configuration.yaml
                 chown 1000:1000 /config/configuration.yaml
               fi
           volumeMounts:
