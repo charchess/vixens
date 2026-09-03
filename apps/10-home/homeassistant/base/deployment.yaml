@@ -92,6 +92,27 @@ spec:
                 cp /tmp/ha-config/configuration.yaml /config/configuration.yaml
                 chown 1000:1000 /config/configuration.yaml
               fi
+              if ! grep -q "172.16.0.0/12" /config/configuration.yaml; then
+                echo "Adding trusted proxy range for UMI/WSL routed access..."
+                sed -i /192.168.0.0\/16/a\ - 172.16.0.0/12 /config/configuration.yaml || true
+              fi
+              ensure_file() {
+                path="$1"
+                content="$2"
+                if [ ! -e "/config/$path" ]; then
+                  printf "%s\n" "$content" > "/config/$path"
+                  chown 1000:1000 "/config/$path"
+                fi
+              }
+              ensure_file groups.yaml "{}"
+              ensure_file automations.yaml "[]"
+              ensure_file scripts.yaml "{}"
+              ensure_file scenes.yaml "[]"
+              ensure_file templates.yaml "[]"
+              ensure_file switches.yaml "[]"
+              ensure_file sensors.yaml "[]"
+              ensure_file utility_meters.yaml "{}"
+              ensure_file mediaplayer.yaml "[]"
           volumeMounts:
             - name: config
               mountPath: /config
