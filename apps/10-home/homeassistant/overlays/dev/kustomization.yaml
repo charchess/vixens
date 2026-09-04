@@ -27,10 +27,10 @@ patches:
         value:
           requests:
             cpu: 50m
-            memory: 256Mi
-          limits:
-            cpu: 500m
             memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
       - op: replace
         path: /spec/template/spec/initContainers/0/image
         value: "python:3.13-alpine"
