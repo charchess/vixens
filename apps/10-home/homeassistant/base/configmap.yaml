@@ -24,15 +24,6 @@ data:
     # Load default integrations
     default_config:
 
-    # HTTP Configuration for reverse proxy (Traefik/Ingress)
-    http:
-      use_x_forwarded_for: true
-      trusted_proxies:
-        - 10.0.0.0/8
-        - 192.168.0.0/16
-        - 172.16.0.0/12
-      server_port: 8123
-
     homeassistant:
       allowlist_external_urls:
         - "https://homeassistant.truxonline.com/local/"
