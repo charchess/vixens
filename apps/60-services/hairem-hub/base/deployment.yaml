@@ -257,10 +257,10 @@ spec:
           volumeMounts:
             - name: hairem-files
               mountPath: /wiki
-              subPath: llmwiki
+              subPath: public/llmwiki
 
         # -------------------------------------------------------------
-        # GTDWiki
+        # Workspace Wiki
         # -------------------------------------------------------------
         - name: gollum-gtdwiki
           image: gollumwiki/gollum:sha-01a3610
@@ -293,7 +293,6 @@ spec:
           volumeMounts:
             - name: hairem-files
               mountPath: /wiki
-              subPath: gtdwiki
 
         # -------------------------------------------------------------
         # Dashboard hAIrem SvelteKit
