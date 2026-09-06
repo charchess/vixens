@@ -86,24 +86,12 @@ spec:
             - name: data
               mountPath: /opt/data
 
-            # hAIrem collaborative filesystem
-            # Root is mounted so shared conventions such as /workspace/PERMS.md
-            # are visible. Trust/policy lives in PERMS.md, not in per-persona
-            # filesystem ACLs. Public is over-mounted read-only below.
+            # hAIrem collaborative filesystem.
+            # Access policy is by usage/convention in PERMS.md, not by
+            # per-persona filesystem ACLs. Public/shared/private are all
+            # normal subdirectories of the same writable workspace.
             - name: hairem-files
               mountPath: /workspace
-
-            - name: hairem-files
-              mountPath: /workspace/public
-              subPath: public
-              readOnly: true
-
-            # LLMWiki is a public use-case, not a special root-level workspace.
-            # It remains writable for Gollum/wiki maintenance while living at
-            # /workspace/public/llmwiki.
-            - name: hairem-files
-              mountPath: /workspace/public/llmwiki
-              subPath: public/llmwiki
 
       volumes:
         - name: data
