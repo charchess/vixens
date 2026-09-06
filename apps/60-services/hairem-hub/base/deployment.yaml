@@ -48,29 +48,60 @@ spec:
               mkdir -p \
                 /data/persona/lisa \
                 /data/shared \
-                /data/public \
-                /data/llmwiki \
-                /data/gtdwiki \
+                /data/public/llmwiki \
+                /data/public/GTD \
+                /data/private \
                 /data/dashboard
 
               # LAB UMI :
               # permissions volontairement permissives.
               # En prod, NFS/ACL remplacera cette politique.
               chmod 0777 \
+                /data \
                 /data/persona \
                 /data/persona/lisa \
                 /data/shared \
+                /data/public \
+                /data/public/llmwiki \
+                /data/public/GTD \
+                /data/private \
                 /data/dashboard
 
-              chmod 0755 /data/public
+              # Workspace root exposed by Gollum on :4568.
+              if [ ! -d /data/.git ]; then
+                echo "Initialisation du dépôt workspace root..."
+                cd /data
+                git init -b main
+                git config user.name "hAIrem Workspace"
+                git config user.email "workspace@hairem.local"
+                if [ ! -f Home.md ]; then
+                  cat > Home.md <<WORKSPACE
+              # hAIrem Workspace
+
+              Racine partagée hAIrem.
+
+              ## Zones
+
+              - [[public]] — systèmes publiés/lisibles avec propriétaire clair.
+              - [[shared]] — collaboration libre et brouillons partagés.
+              - [[private]] — espaces privés par convention relationnelle.
+
+              Lire [[PERMS]] avant toute écriture.
+              WORKSPACE
+                fi
+                git add Home.md PERMS.md 2>/dev/null || git add Home.md
+                git commit -m "Initialize hAIrem workspace root"
+              fi
+
+              chmod -R a+rwX /data/.git /data/Home.md 2>/dev/null || true
 
               # -------------------------------------------------------
               # LLMWiki / Gollum
               # -------------------------------------------------------
-              if [ ! -d /data/llmwiki/.git ]; then
+              if [ ! -d /data/public/llmwiki/.git ]; then
                 echo "Initialisation du dépôt LLMWiki..."
 
-                cd /data/llmwiki
+                cd /data/public/llmwiki
 
                 git init -b main
                 git config user.name "hAIrem LLMWiki"
@@ -98,72 +129,13 @@ spec:
               fi
 
               # Gollum tourne en UID 1000.
-              chown -R 1000:1000 /data/llmwiki
-              chmod -R a+rwX /data/llmwiki
+              chown -R 1000:1000 /data/public/llmwiki
+              chmod -R a+rwX /data/public/llmwiki
 
               # -------------------------------------------------------
-              # GTDWiki / Gollum
+              # Workspace root / Gollum :4568
               # -------------------------------------------------------
-              if [ ! -d /data/gtdwiki/.git ]; then
-                echo "Initialisation du dépôt GTDWiki..."
-
-                cd /data/gtdwiki
-
-                git init -b main
-                git config user.name "hAIrem GTDWiki"
-                git config user.email "gtdwiki@hairem.local"
-
-                mkdir -p Inbox Projects Next-Actions Waiting Someday Done Contexts Areas Templates
-
-                cat > Home.md <<'GTDWIKI'
-              # hAIrem GTDWiki
-
-              Source canonique GTD pour Katia et les agentes hAIrem.
-
-              ## Surfaces
-
-              - [[Inbox]] — capture brute à clarifier.
-              - [[Projects]] — résultats multi-actions.
-              - [[Next-Actions]] — prochaines actions exécutables.
-              - [[Waiting]] — attente externe ou blocage délégué.
-              - [[Someday]] — idées non engagées.
-              - [[Done]] — éléments clos.
-              - [[Contexts]] — vues par contexte.
-              - [[Areas]] — responsabilités continues.
-
-              ## Règles
-
-              - Le GTD vit ici, pas dans le LLMWiki.
-              - Le LLMWiki peut lier vers ce wiki, sans recopier les tâches.
-              - Katia est propriétaire logique du GTD.
-              - Le dashboard peut lire et indexer ce dépôt; les écritures passent par Katia sauf mode admin explicite.
-              GTDWIKI
-
-                cat > Projects/Hairem-Dashboard.md <<'GTDPROJECT'
-              ---
-              id: project_hairem_dashboard
-              status: next
-              owner: katia
-              context: infra
-              priority: medium
-              updated: 2026-09-02T00:00:00Z
-              ---
-
-              # hAIrem Dashboard
-
-              Projet de cockpit SvelteKit lisant le GTDWiki et les états runtime.
-
-              ## Next action
-
-              Remplacer progressivement le dashboard statique nginx par une app SvelteKit adapter-node.
-              GTDPROJECT
-
-                git add Home.md Inbox Projects Next-Actions Waiting Someday Done Contexts Areas Templates
-                git commit -m "Initialize hAIrem GTDWiki"
-              fi
-
-              chown -R 1000:1000 /data/gtdwiki
-              chmod -R a+rwX /data/gtdwiki
+              chmod -R a+rwX /data
 
               # -------------------------------------------------------
               # Dashboard hAIrem statique initial
@@ -307,9 +279,9 @@ spec:
             - name: HOST
               value: 0.0.0.0
             - name: GTDWIKI_PATH
-              value: /katia-gtd
+              value: /data/public/GTD
             - name: LLMWIKI_PATH
-              value: /data/llmwiki
+              value: /data/public/llmwiki
 
           ports:
             - name: dashboard
@@ -334,15 +306,8 @@ spec:
             - name: hairem-files
               mountPath: /data
               readOnly: true
-            - name: katia-gtd
-              mountPath: /katia-gtd
-              readOnly: true
 
       volumes:
         - name: hairem-files
           persistentVolumeClaim:
             claimName: hairem-files-truenas
-        - name: katia-gtd
-          hostPath:
-            path: /home/charchess/persona-projects/katia/gtd
-            type: Directory
