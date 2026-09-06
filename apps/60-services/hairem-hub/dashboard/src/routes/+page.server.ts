@@ -13,11 +13,11 @@ const OLLAMA_TARGETS = (process.env.OLLAMA_TARGETS || 'umi=http://host.docker.in
   })
   .filter((entry) => entry.id && entry.url);
 const LLMWIKI_URL = process.env.LLMWIKI_URL || 'http://hairem-hub.services.svc.cluster.local:4567/Home';
-const GTDWIKI_URL = process.env.GTDWIKI_URL || 'http://hairem-hub.services.svc.cluster.local:4568/Home';
+const GTDWIKI_URL = process.env.GTDWIKI_URL || 'http://hairem-hub.services.svc.cluster.local:4568/';
 const LAN = process.env.HAIREM_LAN_BASE || 'http://192.168.199.119';
 
 type Led = 'ok' | 'warn' | 'down' | 'unknown';
-type Component = { id: string; label: string; led: Led; detail: string; detailLines: string[] };
+type Component = { id: string; label: string; led: Led; detail: string; detailLines: string[]; href?: string; aria?: string; primaryIssue?: string; tableRows?: Array<{ bank: string; facts: number; pending: number; running: number; stuck: number; failed: number; llm1h: number; llm24h: number; last: string }> };
 
 async function probe(url: string, ok: (status: number, text: string) => boolean = (s) => s >= 200 && s < 400) {
   try {
@@ -254,18 +254,20 @@ async function runtime() {
   const lastErrorAges = bankDetails.map((b) => b.llm.lastErrorAt).filter(Boolean).sort().reverse();
   const lastErrorAge = ageLabel(lastErrorAges[0]);
 
-  const bankLines = bankDetails.flatMap((b) => [
-    `${b.name || b.bank_id}`,
-    `  facts              ${b.stats?.total_nodes || b.fact_count || 0}`,
-    `  pending ops        ${b.stats?.pending_consolidation || 0}`,
-    `  failed ops         ${b.stats?.failed_consolidation || 0}`,
-    `  running ops        ${b.stats?.operations_by_status?.processing || 0}`,
-    `  stuck ops          ${b.operations.stuck.length}`,
-    `  llm errors         1h ${b.llm.errors1h} · 24h ${b.llm.errors24h} · 7d ${b.llm.errors}`,
-    `  last error age     ${b.llm.lastErrorAge}`,
-    `  last error summary ${b.llm.lastError || 'none'}`,
-    `  stuck details      ${b.operations.stuck.map((op) => `${opName(op)} ${opId(op).slice(0, 8)} age ${ageLabel(op.updated_at || op.created_at)}`).join('; ') || 'none'}`
-  ]);
+  const bankRows = bankDetails.map((b) => ({
+    bank: b.name || b.bank_id,
+    facts: b.stats?.total_nodes || b.fact_count || 0,
+    pending: b.stats?.pending_consolidation || 0,
+    running: b.stats?.operations_by_status?.processing || 0,
+    stuck: b.operations.stuck.length,
+    failed: b.stats?.failed_consolidation || 0,
+    llm1h: b.llm.errors1h,
+    llm24h: b.llm.errors24h,
+    last: b.operations.stuck[0] ? `${opName(b.operations.stuck[0])} ${opId(b.operations.stuck[0]).slice(0, 8)} ${ageLabel(b.operations.stuck[0].updated_at || b.operations.stuck[0].created_at)}` : (b.llm.lastError !== 'none' ? `${b.llm.lastErrorAge} ${b.llm.lastError}` : 'ok')
+  }));
+  const stuckSummaries = bankDetails.flatMap((b) => b.operations.stuck.map((op) => `${b.name || b.bank_id}: ${opName(op)} ${opId(op).slice(0, 8)} stuck depuis ${ageLabel(op.updated_at || op.created_at)}${op.error_message ? ` · ${conciseError(op.error_message)}` : ''}`));
+  const primaryIssue = stuckSummaries[0] || (llmErrors1h > 0 ? `LLM errors 1h: ${llmErrors1h} · dernier: ${lastErrorAge}` : (failed > 0 ? `Failed consolidations: ${failed}` : 'Aucun stuck actif'));
+  const bankLines = bankRows.map((r) => `${r.bank.padEnd(10)} facts ${String(r.facts).padStart(5)} · pending ${String(r.pending).padStart(5)} · run ${r.running} · stuck ${r.stuck} · fail ${r.failed} · llm ${r.llm1h}/${r.llm24h} · ${r.last}`);
   const hindsightLines = hHealth.data?.database ? [
     `API            ${hVersion.data?.api_version || '?'}`,
     `DB             ${hHealth.data.database}`,
@@ -275,7 +277,7 @@ async function runtime() {
   ] : [hHealth.error || `http ${hHealth.status}`];
   const hindsightLed: Led = !hHealth.ok || hHealth.data?.status !== 'healthy' ? 'down' : (failed > 0 || stuck > 0 || llmErrors1h > 0 ? 'warn' : 'ok');
   const components: Component[] = [
-    { id: 'hindsight', label: hindsightLabel({ pending, failed, processing, stuck, recentErrors: llmErrors1h }), led: hindsightLed, detail: hindsightLines.join('\\n'), detailLines: hindsightLines },
+    { id: 'hindsight', label: hindsightLabel({ pending, failed, processing, stuck, recentErrors: llmErrors1h }), led: hindsightLed, detail: hindsightLines.join('\\n'), detailLines: hindsightLines, aria: `Hindsight: ${stuck} stuck, ${failed} failed, ${llmErrors1h} error per hour`, primaryIssue, tableRows: bankRows },
     ...llms.map((llm) => {
       const activeLines = llm.loaded.map((m) => `  ${m.name}${m.vram ? ` · vram ${Math.round(m.vram / 1024 / 1024 / 1024)}GiB` : ''}`);
       const activeLabel = llm.loaded.map((m) => shortModelName(m.name)).slice(0, 1).join(', ');
@@ -283,18 +285,14 @@ async function runtime() {
         `Endpoint       ${llm.url}`,
         `API mode       ${llm.apiMode}`,
         `Version        ${llm.version || 'proxy/health'}`,
-        `Active models  ${llm.loadedCount}`,
-        `Available      ${llm.modelCount}`,
-        '',
-        'Active only',
-        ...(activeLines.length ? activeLines : ['  idle'])
+        ...(activeLines.length ? activeLines.map((line) => `Model          ${line.trim()}`) : ['Model          idle'])
       ];
       return { id: `llm-${llm.id}`, label: `llm:${llm.id} ${activeLabel || 'idle'}`, led: llm.led, detail: lines.join('\\n'), detailLines: lines };
     }),
-    { id: 'llmwiki', label: `llmwiki ${llmwikiHttp.status || ''}`, led: llmwikiHttp.ok ? 'ok' : 'down', detail: llmwikiHttp.ok ? `Gollum 4567\\n${LLMWIKI_URL}` : llmwikiHttp.text.slice(0, 120), detailLines: llmwikiHttp.ok ? ['Gollum         4567', `URL            ${LLMWIKI_URL}`] : [llmwikiHttp.text.slice(0, 120)] },
-    { id: 'gtdwiki', label: `gtdwiki ${gtdwikiHttp.status || ''}`, led: gtdwikiHttp.ok ? 'ok' : 'down', detail: gtdwikiHttp.ok ? `Gollum 4568\\n${GTDWIKI_URL}` : gtdwikiHttp.text.slice(0, 120), detailLines: gtdwikiHttp.ok ? ['Gollum         4568', `URL            ${GTDWIKI_URL}`] : [gtdwikiHttp.text.slice(0, 120)] },
-    { id: 'hindsight-ui', label: `hindsight-ui ${hUi.status || ''}`, led: hUi.ok ? 'ok' : 'down', detail: hUi.ok ? `Control plane\\n${HINDSIGHT_UI}` : hUi.text.slice(0, 120), detailLines: hUi.ok ? ['Control plane', `URL            ${HINDSIGHT_UI}`] : [hUi.text.slice(0, 120)] },
-    { id: 'hermes', label: `hermes ${hermesUi.status || ''}`, led: hermesUi.ok ? 'ok' : 'down', detail: hermesUi.ok ? `Hermes UI/auth 9119\\n${HERMES_UI}` : hermesUi.text.slice(0, 120), detailLines: hermesUi.ok ? ['Hermes UI/auth 9119', `URL            ${HERMES_UI}`] : [hermesUi.text.slice(0, 120)] }
+    { id: 'llmwiki', label: `llmwiki ${llmwikiHttp.status || ''}`, led: llmwikiHttp.ok ? 'ok' : 'down', href: `${LAN}:4567/Home`, aria: 'Open LLMWiki in a new tab', detail: llmwikiHttp.ok ? `Gollum 4567\\n${LLMWIKI_URL}` : llmwikiHttp.text.slice(0, 120), detailLines: llmwikiHttp.ok ? ['Gollum         4567', `URL            ${LLMWIKI_URL}`] : [llmwikiHttp.text.slice(0, 120)] },
+    { id: 'gtd-files', label: `gtd files ${gtdwikiHttp.status || ''}`, led: gtdwikiHttp.ok ? 'ok' : 'down', href: `${LAN}:4568/`, aria: 'Open GTD File Browser in a new tab', detail: gtdwikiHttp.ok ? `File Browser 4568\\n${GTDWIKI_URL}` : gtdwikiHttp.text.slice(0, 120), detailLines: gtdwikiHttp.ok ? ['File Browser   4568', `URL            ${GTDWIKI_URL}`] : [gtdwikiHttp.text.slice(0, 120)] },
+    { id: 'hindsight-ui', label: `hindsight-ui ${hUi.status || ''}`, led: hUi.ok ? 'ok' : 'down', href: `${LAN}:3000/`, aria: 'Open Hindsight UI in a new tab', detail: hUi.ok ? `Control plane\\n${HINDSIGHT_UI}` : hUi.text.slice(0, 120), detailLines: hUi.ok ? ['Control plane', `URL            ${HINDSIGHT_UI}`] : [hUi.text.slice(0, 120)] },
+    { id: 'hermes', label: `hermes ${hermesUi.status || ''}`, led: hermesUi.ok ? 'ok' : 'down', href: `${LAN}:9119/`, aria: 'Open Hermes in a new tab', detail: hermesUi.ok ? `Hermes UI/auth 9119\\n${HERMES_UI}` : hermesUi.text.slice(0, 120), detailLines: hermesUi.ok ? ['Hermes UI/auth 9119', `URL            ${HERMES_UI}`] : [hermesUi.text.slice(0, 120)] }
   ];
 
   return {
@@ -332,7 +330,7 @@ export async function load() {
 
   return {
     paths: { gtd: GTD, llm: LLM },
-    links: { llmwiki: `${LAN}:4567/Home`, gtdwiki: `${LAN}:4568/Home`, hindsight: `${LAN}:8888/`, hermes: `${LAN}:9119/` },
+    links: { llmwiki: `${LAN}:4567/Home`, gtdwiki: `${LAN}:4568/`, hindsight: `${LAN}:8888/`, hindsightUi: `${LAN}:3000/`, hermes: `${LAN}:9119/` },
     gtd,
     gtdCockpit,
     llm,
