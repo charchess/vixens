@@ -232,17 +232,21 @@ spec:
               subPath: public/llmwiki
 
         # -------------------------------------------------------------
-        # Workspace Wiki
+        # Workspace File Browser
         # -------------------------------------------------------------
-        - name: gollum-gtdwiki
-          image: gollumwiki/gollum:sha-01a3610
-
-          workingDir: /wiki
+        - name: filebrowser-workspace
+          image: filebrowser/filebrowser:v2
 
           args:
+            - --address
+            - 0.0.0.0
             - --port
             - "4568"
-            - /wiki
+            - --root
+            - /srv
+            - --database
+            - /database/filebrowser.db
+            - --noauth
 
           ports:
             - name: gtdwiki
@@ -250,21 +254,24 @@ spec:
 
           resources:
             requests:
-              cpu: 25m
-              memory: 128Mi
+              cpu: 10m
+              memory: 64Mi
             limits:
-              cpu: 500m
-              memory: 512Mi
+              cpu: 250m
+              memory: 256Mi
 
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /health
               port: 4568
             initialDelaySeconds: 5
             periodSeconds: 5
 
           volumeMounts:
             - name: hairem-files
-              mountPath: /wiki
+              mountPath: /srv
+            - name: filebrowser-database
+              mountPath: /database
 
         # -------------------------------------------------------------
         # Dashboard hAIrem SvelteKit
@@ -311,3 +318,5 @@ spec:
         - name: hairem-files
           persistentVolumeClaim:
             claimName: hairem-files-truenas
+        - name: filebrowser-database
+          emptyDir: {}
