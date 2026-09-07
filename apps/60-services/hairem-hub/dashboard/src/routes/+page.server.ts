@@ -329,7 +329,7 @@ export async function load() {
   const llm = Array.isArray(llmItems) ? llmItems : llmItems.items;
 
   return {
-    version: process.env.DASHBOARD_VERSION || '0.2.2',
+    version: process.env.DASHBOARD_VERSION || '0.2.3',
     paths: { gtd: GTD, llm: LLM },
     links: { llmwiki: `${LAN}:4567/Home`, gtdwiki: `${LAN}:4568/Home`, hindsight: `${LAN}:8888/`, hindsightUi: `${LAN}:3000/`, hermes: `${LAN}:9119/` },
     gtd,
