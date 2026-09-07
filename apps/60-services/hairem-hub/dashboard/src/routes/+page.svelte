@@ -1,186 +1,114 @@
+
 <script lang="ts">
   let { data } = $props();
-  let page = $state('gtd');
-  let active = $state('now');
-  let nowFilter = $state('all');
+  let page = $state('actions');
   let selected = $state(null);
-  let reviewFocus = $state('all');
+  let query = $state('');
+  let filter = $state('all');
+  let projectQuery = $state('');
+  let referenceQuery = $state('');
+  let cart = $state([]);
+  let activeProject = $state(null);
 
   const cockpit = $derived(data.gtdCockpit);
-  const activeProjects = $derived(cockpit.projects.filter((p) => p.active));
+  const allProjects = $derived(cockpit.projects);
   const noNextProjects = $derived(cockpit.projects.filter((p) => p.noNextAction));
-  const filteredNow = $derived(cockpit.now.filter((item) => matchesNowFilter(item, nowFilter)));
-  const infraIssues = $derived(data.runtime.components.filter((c) => c.led !== 'ok'));
-  const gtdIssues = $derived([
-    ...(noNextProjects.length ? [{ level: 'yellow', title: `${noNextProjects.length} projet(s) actifs sans next action`, detail: 'Review GTD nécessaire', action: 'Lister' }] : []),
-    ...(cockpit.inbox.length ? [{ level: 'blue', title: `${cockpit.inbox.length} capture(s) à clarifier`, detail: 'Inbox ≠ engagement', action: 'Clarifier' }] : []),
-    ...(cockpit.trust.p1Open ? [{ level: 'red', title: `${cockpit.trust.p1Open} action(s) P1 disponible(s)`, detail: 'Choisir selon énergie/contexte', action: 'Filtrer' }] : [])
-  ]);
+  const filterChips = $derived(['all','@courses','@téléphone','@ordinateur','@maison','@admin','@infra','5-15min','30min+','énergie basse','énergie haute','sensible','blocked', ...cockpit.peopleOptions.slice(0,10).map((p)=>`avec:${p}`), ...cockpit.contextOptions.slice(0,12), ...cockpit.tagOptions.slice(0,14)].filter((v,i,a)=>a.indexOf(v)===i));
+  const filteredActions = $derived(cockpit.next.filter((a) => matches(a, filter, query)));
+  const filteredProjects = $derived(allProjects.filter((p) => projectMatches(p, projectQuery)));
+  const projectActions = $derived(activeProject ? cockpit.next.filter((a) => a.projectId === activeProject.id || a.project === activeProject.title) : []);
+  const filteredReferences = $derived(cockpit.references.filter((r) => referenceMatches(r, referenceQuery)).slice(0,80));
+  const refsForSelection = $derived(selected ? cockpit.references.filter((r) => r.projectId === selected.id || r.projectId === selected.projectId || r.actionId === selected.id).slice(0,12) : []);
 
-  const pageTabs = [
-    ['gtd', 'GTD'],
-    ['review', 'Review Queue'],
-    ['productivity', 'Productivity']
-  ];
-
-  const tabs = $derived([
-    ['now', 'Now', cockpit.now.length],
-    ['inbox', 'Inbox', cockpit.inbox.length],
-    ['clarify', 'Clarify', cockpit.inbox.length],
-    ['projects', 'Projects', activeProjects.length],
-    ['waiting', 'Waiting', cockpit.waiting.length],
-    ['someday', 'Someday', cockpit.someday.length]
-  ]);
-
-  const nowFilters = [
-    ['all', 'tout'],
-    ['short', '5–15 min'],
-    ['low', 'énergie basse'],
-    ['infra', 'infra'],
-    ['maison', 'maison'],
-    ['admin', 'admin'],
-    ['sensitive', 'sensible'],
-    ['blocked', 'blocked']
-  ];
-
-  const productivityCards = $derived([
-    ['GTD open', data.counts.gtdTotal, `${cockpit.trust.nextOpen} next · ${cockpit.trust.inboxOpen} inbox`],
-    ['Review queue', gtdIssues.length, `${noNextProjects.length} sans next · ${cockpit.inbox.length} inbox`],
-    ['Infra signal', infraIssues.length, infraIssues.length ? 'dégradation à part du GTD' : 'runtime sain'],
-    ['LLMWiki', data.counts.llmTotal, 'pages indexées']
-  ]);
-
-  function textOf(item) {
-    return [item.title, item.section, item.context, item.project, item.priority, item.criterion, item.guardrail, item.excerpt, item.statusText].filter(Boolean).join(' ').toLowerCase();
-  }
-
-  function matchesNowFilter(item, filter) {
-    if (filter === 'all') return true;
-    const text = textOf(item);
-    if (filter === 'short') return /5\s*[–-]\s*15|15\s*min|quart d.?heure|rapide|court/.test(text);
-    if (filter === 'low') return /énergie basse|energie basse|low energy|fatigue|facile|léger|leger/.test(text);
-    if (filter === 'sensitive') return /finance|santé|sante|juridique|électricité|electricite|network-prod|achat|publication|sensible/.test(text);
-    if (filter === 'blocked') return /blocked|bloqué|bloque|attente|waiting/.test(text);
-    return text.includes(filter);
-  }
-
-  function contextLabel(item) {
-    return item.section?.replace(/^@/, '') || item.context || 'contexte libre';
-  }
-
-  function selectItem(item, kind = 'action') {
-    selected = { ...item, kind };
-  }
-
-  function showMissingNext() {
-    page = 'review';
-    reviewFocus = 'missing-next';
-  }
-
-  function levelIcon(level) {
-    return level === 'red' ? '🔴' : level === 'yellow' ? '🟡' : level === 'green' ? '🟢' : level === 'blue' ? '🔵' : '⚪';
-  }
+  function hay(item){ return [item.title,item.status,item.priority,item.project,item.projectId,item.finish,item.criterion,item.guardrail,item.result,item.excerpt,...(item.contexts||[]),...(item.tags||[]),...(item.people||[])].filter(Boolean).join(' ').toLowerCase(); }
+  function matches(item, f, q){ const text=hay(item); const qq=q.trim().toLowerCase(); if(qq && !text.includes(qq)) return false; if(f==='all') return true; if(f==='5-15min') return /5\s*[–-]\s*15|15\s*min|rapide|court|quart/.test(text); if(f==='30min+') return /30\s*min|45\s*min|1\s*h|long|profond|focus/.test(text); if(f==='énergie basse') return /énergie basse|energie basse|facile|léger|leger|fatigue/.test(text); if(f==='énergie haute') return /énergie haute|energie haute|complexe|profond|focus|concentration/.test(text); if(f==='sensible') return /finance|santé|sante|juridique|électricité|electricite|achat|publication|sensible/.test(text); if(f==='blocked') return /blocked|bloqué|bloque|waiting|attente/.test(text); if(f.startsWith('avec:')) return (item.people||[]).map((p)=>p.toLowerCase()).includes(f.slice(5).toLowerCase()) || text.includes(f.slice(5).toLowerCase()); return text.includes(f.replace(/^@/,'').toLowerCase()); }
+  function projectMatches(project, q){ const qq=q.trim().toLowerCase(); if(!qq) return true; return hay(project).includes(qq); }
+  function referenceMatches(ref, q){ const qq=q.trim().toLowerCase(); if(!qq) return true; return [ref.title,ref.excerpt,ref.projectId,ref.actionId,...(ref.tags||[])].filter(Boolean).join(' ').toLowerCase().includes(qq); }
+  function meta(item){ return [item.priority, ...(item.people||[]).map((p)=>`avec ${p}`), item.dueAt?`due ${item.dueAt}`:null, item.followupAt?`relance ${item.followupAt}`:null, item.scheduledAt?`planifié ${item.scheduledAt}`:null].filter(Boolean).slice(0,5); }
+  function addCart(item){ if(!cart.some((x)=>x.path===item.path)) cart=[...cart,item]; }
+  function removeCart(item){ cart=cart.filter((x)=>x.path!==item.path); }
+  function openDetail(item, kind='action'){ selected={...item,kind}; }
+  function closeDetail(){ selected=null; }
+  function openProject(project){ activeProject=project; openDetail(project,'project'); }
 </script>
 
-<svelte:head>
-  <title>hAIrem Dashboard</title>
-  <meta name="description" content="Cockpit hAIrem GTD" />
-</svelte:head>
-
+<svelte:head><title>hAIrem GTD cockpit</title></svelte:head>
 <main class="shell">
   <section class="topbar panel">
-    <div class="brand"><span class="mark"></span><div><strong>hAIrem</strong><small>cockpit</small></div></div>
-    <div class="ledline">
+    <div class="brand"><span class="heart"></span><b>hAIrem</b><small>GTD</small></div>
+    <div class="leds">
       {#each data.runtime.components as c}
-        <svelte:element this={c.href ? 'a' : 'span'} class="ledchip" href={c.href} target={c.href ? '_blank' : undefined} rel={c.href ? 'noreferrer' : undefined} aria-label={c.aria || c.label}>
-          <i class:ok={c.led === 'ok'} class:warn={c.led === 'warn'} class:down={c.led === 'down'}></i>{c.label}
-          <span class="tooltip" class:wide={c.tableRows?.length} role="tooltip">
+        <svelte:element this={c.href?'a':'span'} class="led" href={c.href} target={c.href?'_blank':undefined} rel="noreferrer" aria-label={c.aria || c.detail || c.label}>
+          <i class:ok={c.led==='ok'} class:warn={c.led==='warn'} class:down={c.led==='down'}></i>{c.label}
+          <span class="tip">
             <b>{c.label}</b>
             {#if c.primaryIssue}<code class="issue">{c.primaryIssue}</code>{/if}
             {#if c.tableRows?.length}
-              <table class="banktable"><thead><tr><th>bank</th><th>facts</th><th>pend</th><th>run</th><th>stuck</th><th>fail</th><th>llm 1h/24h</th><th>last</th></tr></thead><tbody>{#each c.tableRows as row}<tr class:rowwarn={row.stuck || row.failed || row.llm1h}><td>{row.bank}</td><td>{row.facts}</td><td>{row.pending}</td><td>{row.running}</td><td>{row.stuck}</td><td>{row.failed}</td><td>{row.llm1h}/{row.llm24h}</td><td>{row.last}</td></tr>{/each}</tbody></table>
+              <table><thead><tr><th>bank</th><th>facts</th><th>pend</th><th>run</th><th>stuck</th><th>fail</th><th>llm</th><th>last</th></tr></thead><tbody>{#each c.tableRows as r}<tr class:bad={r.stuck||r.failed||r.llm1h}><td>{r.bank}</td><td>{r.facts}</td><td>{r.pending}</td><td>{r.running}</td><td>{r.stuck}</td><td>{r.failed}</td><td>{r.llm1h}/{r.llm24h}</td><td>{r.last}</td></tr>{/each}</tbody></table>
             {:else}
-              {#each c.detailLines as line}{#if line === ''}<em></em>{:else}<code>{line}</code>{/if}{/each}
+              {#each c.detailLines as l}<code>{l}</code>{/each}
             {/if}
           </span>
         </svelte:element>
       {/each}
     </div>
-    <nav><a href={data.links.llmwiki} target="_blank" rel="noreferrer">llmwiki</a><a href={data.links.gtdwiki} target="_blank" rel="noreferrer">gtd files</a></nav>
+    <nav><a href={data.links.gtdwiki} target="_blank" rel="noreferrer">GTD files</a><a href={data.links.llmwiki} target="_blank" rel="noreferrer">LLMWiki</a></nav>
   </section>
 
-  <section class="authority panel">
-    <div><b>Source d’autorité : fichiers GTD Katia</b><span>Dashboard = interface/vue. Capture ≠ engagement. Modifications auditées, Katia notifiée si écriture source.</span></div>
-    <code>{cockpit.source}</code>
+  <section class="authority"><b>Katia GTD</b><span>Dashboard = vue + sélection. Capture ≠ engagement.</span><code>{cockpit.schema}</code></section>
+
+  <section class="tabs panel">
+    {#each [['projects','Projets',allProjects.length],['actions','Actions',cockpit.next.length],['productivity','Productivité',cart.length],['review','Review',cockpit.review.length + noNextProjects.length]] as t}
+      <button class:active={page===t[0]} onclick={()=>page=t[0]}>{t[1]} <b>{t[2]}</b></button>
+    {/each}
   </section>
 
-  <section class="pagetabs panel">
-    {#each pageTabs as tab}<button class:active={page === tab[0]} onclick={() => page = tab[0]}>{tab[1]}</button>{/each}
-  </section>
-
-  {#if page === 'gtd'}
-    <section class="signalgrid">
-      <article class="signal human panel"><h3>Décision humaine / GTD</h3>{#if gtdIssues.length}{#each gtdIssues as issue}<button class="signalrow" onclick={() => issue.action === 'Lister' ? showMissingNext() : active = issue.action === 'Clarifier' ? 'clarify' : 'now'}><span>{levelIcon(issue.level)}</span><b>{issue.title}</b><small>{issue.detail}</small></button>{/each}{:else}<p>🟢 GTD clair. Aucune alerte humaine prioritaire.</p>{/if}</article>
-      <article class="signal infra panel"><h3>Runtime infra/personas</h3>{#if infraIssues.length}{#each infraIssues as c}<span class="signalrow passive"><i class:warn={c.led === 'warn'} class:down={c.led === 'down'}></i><b>{c.label}</b><small>surveillance infra, séparée du choix GTD</small></span>{/each}{:else}<p>🟢 Runtime sain. Rien à mélanger avec les next-actions.</p>{/if}</article>
+  {#if page==='actions'}
+    <section class="work actions-view">
+      <aside class="panel side"><h2>Filtres</h2><input bind:value={query} placeholder="personne, projet, contexte…" />{#each filterChips as chip}<button class:active={filter===chip} onclick={()=>filter=chip}>{chip}</button>{/each}</aside>
+      <article class="panel main"><header><p>Choisir maintenant</p><h1>Actions</h1><span>Uniquement les next actions. {filteredActions.length}/{cockpit.next.length} visibles · panier {cart.length}. Filtrage par contexte, personne, énergie, temps, projet.</span></header><div class="cards">{#each filteredActions as a}<article class="card action"><button class="cardopen" onclick={()=>openDetail(a,'action')}><div class="row"><strong>{a.title}</strong><small>{a.priority||'Px'} · {(a.contexts||[]).join(', ')||'sans contexte'}</small></div><div class="chips meta">{#each meta(a) as m}<em>{m}</em>{/each}</div><div class="chips">{#each [...(a.contexts||[]),...(a.tags||[])] as tag}<em>{tag}</em>{/each}</div>{#if a.project || a.projectId}<p>Projet : {a.project || a.projectId}</p>{/if}{#if a.finish}<p>Fini quand : {a.finish}</p>{/if}</button><footer><span>{a.updatedAt||'n/a'}</span><span class="footactions"><button type="button" onclick={()=>openDetail(a,'action')}>éditer/détail</button><button type="button" class="addcart" onclick={()=>addCart(a)}>+ panier</button></span></footer></article>{/each}</div></article>
     </section>
+  {/if}
 
-    <section class="capture panel"><div><b>Capture rapide</b><span>lecture seule · capturé ≠ engagé · source Katia</span></div><a class="ghost" href={data.links.gtdwiki} target="_blank" rel="noreferrer">ouvrir fichiers GTD</a></section>
+  {#if page==='projects'}
+    <section class="panel page"><header><p>Vision projets</p><h1>Projets</h1><span>Tous les projets, avec deadline, statut, tags, compteurs et next action liée.</span></header><input class="wide-search" bind:value={projectQuery} placeholder="chercher projet, domaine, tag, deadline…"/><div class="cards projects">{#each filteredProjects as p}<button class="card project" class:warncard={p.noNextAction} onclick={()=>openProject(p)}><strong>{p.title}</strong><div class="chips">{#each p.tags as tag}<em>{tag}</em>{/each}</div><p>{p.result||p.excerpt}</p><code>Next: {p.nextAction||'aucune next action liée'}</code><footer><span>{p.status} · due {p.dueAt||'n/a'}</span><span>{p.linkedActions} actions · {p.references} refs</span></footer></button>{/each}</div></section>
+  {/if}
 
-    <section class="layout">
-      <aside class="panel navpane">
-        <h2>GTD</h2>
-        {#each tabs as tab}<button class:active={active === tab[0]} onclick={() => active = tab[0]}><span>{tab[1]}</span><b>{tab[2]}</b></button>{/each}
-        <button class="reviewlink" onclick={showMissingNext}>🟡 Sans next action <b>{noNextProjects.length}</b></button>
-        <div class="trust" class:trust-warn={cockpit.trust.led === 'warn'} class:trust-down={cockpit.trust.led === 'down'}><small>Confiance GTD</small><strong>{cockpit.trust.label}</strong><code>inbox {cockpit.trust.inboxOpen}</code><code>P1 {cockpit.trust.p1Open} · next {cockpit.trust.nextOpen}</code><code>projets actifs {cockpit.trust.projectsActive}</code><code>waiting {cockpit.trust.waiting}</code></div>
-      </aside>
+  {#if page==='productivity'}
+    <section class="panel page"><header><p>Activation</p><h1>Productivité</h1><span>Panier de travail choisi consciemment + capture inbox visible. Aucune mutation réelle automatique.</span></header><div class="split"><section><h2>Panier</h2>{#if cart.length}<div class="cards compact">{#each cart as a}<article class="card action"><button class="cardopen" onclick={()=>openDetail(a,'action')}><strong>{a.title}</strong><p>{a.project||a.projectId||'hors projet'}</p></button><footer><span>{(a.contexts||[]).join(', ')}</span><button onclick={()=>removeCart(a)}>retirer</button></footer></article>{/each}</div>{:else}<div class="empty">Panier vide. Ajoute des next actions depuis l’onglet Actions.</div>{/if}</section><section><h2>Inbox rapide</h2><div class="capture"><input placeholder="Capture rapide — câblage écriture à venir" disabled/><button disabled>capturer</button></div><div class="cards compact">{#each cockpit.inbox.slice(0,12) as a}<button class="card" onclick={()=>openDetail(a,'inbox')}><strong>{a.title}</strong><p>{a.excerpt}</p><small>{a.path}</small></button>{/each}</div></section></div><section class="references-inline"><h2>Références</h2><input bind:value={referenceQuery} placeholder="chercher référence, projet, personne…"/><div class="cards compact">{#each filteredReferences as r}<button class="card" onclick={()=>openDetail(r,'reference')}><strong>{r.title}</strong><p>{r.excerpt}</p><small>{r.projectId||r.actionId||'global'} · {r.path}</small></button>{/each}</div></section></section>
+  {/if}
 
-      <article class="panel mainpane">
-        {#if active === 'now'}
-          <header><p>Engage</p><h1>Palette d’actions choisissables</h1><span>Toutes les next-actions actives filtrables. Katia ne force pas une seule action.</span></header>
-          <div class="filters">{#each nowFilters as filter}<button class:active={nowFilter === filter[0]} onclick={() => nowFilter = filter[0]}>{filter[1]}</button>{/each}</div>
-          {#if noNextProjects.length}<button class="warning clickable" onclick={showMissingNext}><b>{noNextProjects.length} projet(s) actif(s) sans prochaine action nette</b><span>Cliquer pour liste + correction/parquage/fusion/clarification.</span></button>{/if}
-          {#if filteredNow.length}<div class="cards actioncards">{#each filteredNow as item}<button type="button" class="task cardbutton" class:sensitive={matchesNowFilter(item, 'sensitive')} onclick={() => selectItem(item, 'action')}><div><strong>{item.title}</strong><small>{contextLabel(item)} · {item.priority || 'Px'}</small></div>{#if item.project}<p>Projet : {item.project}</p>{/if}{#if item.criterion}<p>Fini quand : {item.criterion}</p>{/if}<small>Pourquoi maintenant : priorité/contexte disponibles · source {item.path}</small></button>{/each}</div>{:else}<div class="empty">Aucune action ne correspond à ce filtre.</div>{/if}
-        {:else if active === 'inbox'}
-          <header><p>Capture</p><h1>Inbox brute</h1><span>Non clarifié. Non engagé. À traiter sans honte.</span></header>
-          <div class="cards">{#each cockpit.inbox as item}<button type="button" class="task cardbutton" onclick={() => selectItem(item, 'capture')}><strong>{item.title}</strong><small>{item.section}</small>{#if item.excerpt}<p>{item.excerpt}</p>{/if}</button>{/each}</div>
-        {:else if active === 'clarify'}
-          <header><p>Clarify</p><h1>Machine à décisions</h1><span>Sortir chaque capture vers trash, référence, someday, projet, next action, waiting-for ou calendrier.</span></header>
-          {#if cockpit.inbox[0]}<button type="button" class="clarify-card cardbutton" onclick={() => selectItem(cockpit.inbox[0], 'capture')}><small>Premier item inbox</small><h2>{cockpit.inbox[0].title}</h2><div class="decision-grid"><span>Qu’est-ce que c’est ?</span><b>à décider</b><span>Actionnable ?</span><b>oui / non</b><span>Sortie GTD</span><b>trash · référence · someday · projet · next · waiting</b></div></button>{:else}<div class="empty">Inbox claire. Rien à clarifier.</div>{/if}
-        {:else if active === 'projects'}
-          <header><p>Organize</p><h1>Projets actifs</h1><span>Résultat voulu + prochaine action visible. Sinon le projet casse la confiance.</span></header>
-          <div class="cards projectcards">{#each activeProjects as project}<button type="button" class="project cardbutton" class:bad={project.noNextAction} onclick={() => selectItem(project, 'project')}><strong>{project.title}</strong>{#if project.result}<p>{project.result}</p>{/if}<code>Next: {project.nextAction || 'aucune'}</code>{#if project.guardrail}<small>{project.guardrail}</small>{/if}</button>{/each}</div>
-        {:else if active === 'waiting'}
-          <header><p>Organize</p><h1>Waiting for</h1><span>Attentes externes visibles. Pas des obligations actives.</span></header>
-          <div class="cards">{#each cockpit.waiting as item}<button type="button" class="task cardbutton" onclick={() => selectItem(item, 'waiting_for')}><strong>{item.title}</strong>{#if item.expected}<p>Attendu : {item.expected}</p>{/if}{#if item.actionAfter}<small>Après déclencheur : {item.actionAfter}</small>{/if}</button>{/each}</div>
-        {:else if active === 'someday'}
-          <header><p>Parking</p><h1>Someday / Maybe</h1><span>Idées conservées, pas engagées.</span></header>
-          <div class="cards compactcards">{#each cockpit.someday as item}<button type="button" class="task cardbutton" onclick={() => selectItem(item, 'someday')}><strong>{item.title}</strong></button>{/each}</div>
-        {/if}
-      </article>
-
-      <aside class="panel detailpane">
-        <h2>Détail / Doctrine</h2>
-        {#if selected}
-          <small>{selected.kind} · {selected.path}</small><strong>{selected.title}</strong>{#if selected.project}<p>Projet : {selected.project}</p>{/if}{#if selected.criterion}<p>Fini quand : {selected.criterion}</p>{/if}{#if selected.guardrail}<p>Garde-fou : {selected.guardrail}</p>{/if}<div class="proposal"><b>Édition sûre</b><button disabled>proposer modification</button><button disabled>masquer aujourd’hui</button><small>Contrat audit/webhook prêt côté API. Écriture réelle à câbler après schéma source.</small></div>
-        {:else}
-          <p>Cliquer une action/projet pour voir contexte, source, critère fini et actions sûres.</p>
-        {/if}
-        <hr /><code>capture ≠ engagement</code><code>projet actif ⇒ next action</code><code>waiting ≠ obligation</code><hr /><small>Mises à jour</small><code>next {cockpit.updated.next}</code><code>projects {cockpit.updated.projects}</code><code>waiting {cockpit.updated.waiting}</code>
-      </aside>
-    </section>
-  {:else if page === 'review'}
-    <section class="reviewpage panel">
-      <header><p>Review Queue</p><h1>Confiance GTD</h1><span>Dette de clarification séparée des alertes infra.</span></header>
-      <div class="filters"><button class:active={reviewFocus === 'all'} onclick={() => reviewFocus = 'all'}>tout</button><button class:active={reviewFocus === 'missing-next'} onclick={() => reviewFocus = 'missing-next'}>sans next action</button><button class:active={reviewFocus === 'inbox'} onclick={() => reviewFocus = 'inbox'}>inbox</button></div>
-      {#if reviewFocus !== 'inbox'}<h2>Projets actifs sans prochaine action nette</h2><div class="cards projectcards">{#each noNextProjects as project}<article class="project bad"><strong>{project.title}</strong>{#if project.result}<p>{project.result}</p>{/if}<code>Source: {project.path}</code><div class="actions"><button disabled>corriger next</button><button disabled>parquer</button><button disabled>fusionner</button><button disabled>demander clarification Katia</button></div></article>{/each}</div>{/if}
-      {#if reviewFocus !== 'missing-next'}<h2>Inbox à clarifier</h2><div class="cards compactcards">{#each cockpit.inbox as item}<article class="task"><strong>{item.title}</strong><small>{item.section} · {item.path}</small></article>{/each}</div>{/if}
-      <h2>Rituel</h2><ol class="review">{#each cockpit.review as step}<li>{step}</li>{/each}</ol>
-    </section>
-  {:else if page === 'productivity'}
-    <section class="productivity panel"><header><p>Productivity</p><h1>Parking productivité</h1><span>Page volontairement légère tant que le GTD n’est pas propre. Pas de gamification culpabilisante.</span></header><div class="cards compactcards">{#each productivityCards as card}<article class="task"><strong>{card[0]}</strong><h2>{card[1]}</h2><small>{card[2]}</small></article>{/each}</div><div class="cards compactcards linksgrid"><a class="ghost" href={data.links.gtdwiki} target="_blank" rel="noreferrer">GTD files</a><a class="ghost" href={data.links.llmwiki} target="_blank" rel="noreferrer">LLMWiki</a><a class="ghost" href={data.links.hindsightUi} target="_blank" rel="noreferrer">Hindsight UI</a><a class="ghost" href={data.links.hermes} target="_blank" rel="noreferrer">Hermes</a></div></section>
+  {#if page==='review'}
+    <section class="panel page"><header><p>Pré-revue Katia</p><h1>Review</h1><span>Anomalies GTD à clarifier, sans bruit infra.</span></header><div class="alerts">{#each cockpit.review as r}<article>⚠️ {r}</article>{/each}</div><h2>Projets actifs sans next action</h2><div class="cards projects">{#each noNextProjects as p}<article class="card warncard"><strong>{p.title}</strong><p>{p.result||p.excerpt}</p><div class="actions"><button disabled>corriger next</button><button disabled>parquer</button><button disabled>demander Katia</button></div></article>{/each}</div><h2>Waiting / blocked</h2><div class="cards compact">{#each cockpit.waiting.slice(0,24) as a}<button class="card" onclick={()=>openDetail(a,'waiting')}><strong>{a.title}</strong><p>{a.finish||a.excerpt}</p><small>{a.followupAt||a.scheduledAt||'sans date'} · {a.project||a.projectId}</small></button>{/each}</div></section>
   {/if}
 </main>
 
+{#if selected}
+  <div class="modal-backdrop" role="presentation" onclick={closeDetail}>
+    <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="detail-title" tabindex="-1" onclick={(event)=>event.stopPropagation()} onkeydown={(event)=>{ if(event.key==='Escape') closeDetail(); }}>
+      <header class="modal-head"><div><p>{selected.kind||'item'}</p><h1 id="detail-title">{selected.title}</h1></div><button class="close" onclick={closeDetail} aria-label="Fermer">×</button></header>
+      <div class="modal-grid">
+        <article>
+          <small>{selected.path}</small>
+          {#if selected.project||selected.projectId}<p><b>Projet :</b> {selected.project||selected.projectId}</p>{/if}
+          {#if selected.result}<p><b>Résultat voulu :</b> {selected.result}</p>{/if}
+          {#if selected.finish||selected.criterion}<p><b>Fini quand :</b> {selected.finish||selected.criterion}</p>{/if}
+          {#if selected.guardrail}<p><b>Garde-fou :</b> {selected.guardrail}</p>{/if}
+          {#if selected.excerpt}<p class="excerpt">{selected.excerpt}</p>{/if}
+          <div class="chips">{#each [...(selected.contexts||[]),...(selected.tags||[]),...(selected.people||[])] as tag}<em>{tag}</em>{/each}</div>
+          <div class="proposal"><button disabled>éditer</button><button disabled>postpone</button><button disabled>done</button><small>Mutation réelle désactivée : audit/webhook Katia requis.</small></div>
+        </article>
+        <aside>
+          {#if selected.kind==='project'}
+            <h2>Actions liées</h2>{#each projectActions as a}<button class="mini" onclick={()=>openDetail(a,'action')}>{a.title}</button>{/each}
+          {/if}
+          <h2>Références liées</h2>{#if refsForSelection.length}{#each refsForSelection as r}<code>{r.title}</code>{/each}{:else}<p class="muted">Aucune référence liée détectée.</p>{/if}
+        </aside>
+      </div>
+    </div>
+  </div>
+{/if}
+
 <style>
-  :global(body){margin:0;background:#05070b;color:#dff8ff;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px}:global(a){color:#68e7ff;text-decoration:none}.shell{max-width:1500px;margin:0 auto;padding:14px}.panel{background:rgba(8,15,25,.82);border:1px solid rgba(100,220,255,.16);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.28)}.topbar{height:42px;padding:0 12px;display:flex;align-items:center;gap:18px;position:sticky;top:0;z-index:10;backdrop-filter:blur(10px);overflow:visible}.brand{display:flex;align-items:center;gap:9px;min-width:116px}.brand strong{font-size:13px}.brand small{display:block;color:#8aa6b8;font-size:10px}.mark{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle,#ff2c68 0 35%,#163245 40%);box-shadow:0 0 14px #ff2c68}.ledline{display:flex;gap:8px;align-items:center;flex:1}.ledchip{position:relative;display:inline-flex;gap:6px;align-items:center;padding:4px 8px;border:1px solid rgba(104,231,255,.16);border-radius:999px;background:rgba(255,255,255,.03);font-size:12px;white-space:nowrap}.tooltip{position:absolute;left:0;top:calc(100% + 10px);display:none;min-width:330px;max-width:620px;padding:12px;border:1px solid rgba(104,231,255,.32);border-radius:12px;background:linear-gradient(180deg,rgba(4,10,18,.98),rgba(8,18,30,.98));box-shadow:0 18px 60px rgba(0,0,0,.55);z-index:20}.tooltip.wide{min-width:760px;max-width:min(980px,92vw)}.ledchip:hover .tooltip{display:grid;gap:3px}.tooltip b{color:#fff;margin-bottom:5px}.tooltip code,.detailpane code,.trust code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#b9f4ff;background:transparent}.tooltip .issue{color:#ffd447;border-bottom:1px solid rgba(255,212,71,.25);padding-bottom:6px;margin-bottom:4px}.tooltip em{height:8px}.banktable{border-collapse:collapse;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;color:#b9f4ff}.banktable th,.banktable td{padding:3px 7px;border-bottom:1px solid rgba(104,231,255,.1);text-align:right}.banktable th:first-child,.banktable td:first-child{text-align:left;color:#fff}.banktable .rowwarn td{color:#ffd447}i{display:inline-block;width:9px;height:9px;border-radius:50%;background:#607080;box-shadow:0 0 7px #607080}.ok{background:#28ff9c;box-shadow:0 0 10px #28ff9c}.warn{background:#ffd447;box-shadow:0 0 10px #ffd447}.down{background:#ff3f6e;box-shadow:0 0 10px #ff3f6e}.topbar nav{display:flex;gap:10px;font-size:12px}.authority{margin-top:12px;padding:10px 14px;display:flex;justify-content:space-between;gap:12px;align-items:center;border-color:rgba(255,212,71,.32);background:linear-gradient(90deg,rgba(255,212,71,.10),rgba(8,15,25,.82))}.authority b{color:#ffd447}.authority span{display:block;color:#b9a96b}.authority code{font-size:11px;color:#b9f4ff}.pagetabs{margin-top:12px;padding:8px;display:flex;gap:8px}.pagetabs button,.filters button,.actions button{border:1px solid rgba(104,231,255,.16);border-radius:999px;background:rgba(255,255,255,.03);color:#b9f4ff;padding:8px 13px}.pagetabs button.active,.filters button.active{background:rgba(104,231,255,.16);border-color:rgba(104,231,255,.45);color:#fff}.signalgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.signal{padding:12px}.signal h3{margin:0 0 8px}.signalrow{width:100%;display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:8px;margin:6px 0;padding:9px 10px;border-radius:11px;border:1px solid rgba(104,231,255,.13);background:rgba(255,255,255,.03);color:#dff8ff;text-align:left}.signalrow.passive{display:grid}.capture{margin-top:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}.capture b{display:block}.capture span,header span,small{color:#8aa6b8}.ghost{border:1px solid rgba(104,231,255,.22);padding:7px 10px;border-radius:10px;background:rgba(104,231,255,.06)}.layout{display:grid;grid-template-columns:210px minmax(0,1fr) 320px;gap:12px;margin-top:12px}.navpane,.mainpane,.detailpane,.reviewpage,.productivity{padding:14px}.navpane h2,.detailpane h2{margin:0 0 10px}.navpane button{width:100%;display:flex;justify-content:space-between;align-items:center;margin:5px 0;padding:10px;border-radius:10px;border:1px solid rgba(104,231,255,.12);background:rgba(255,255,255,.025);color:#dff8ff;text-align:left}.navpane button.active{background:rgba(104,231,255,.13);border-color:rgba(104,231,255,.42)}.navpane button b{color:#68e7ff}.reviewlink{border-color:rgba(255,212,71,.28)!important}.trust{margin-top:14px;padding:11px;border-radius:12px;border:1px solid rgba(40,255,156,.24);display:grid;gap:4px}.trust strong{color:#28ff9c}.trust-warn{border-color:rgba(255,212,71,.35)}.trust-warn strong{color:#ffd447}.trust-down{border-color:rgba(255,63,110,.45)}.trust-down strong{color:#ff6f91}header{margin-bottom:14px}header p{color:#68e7ff;text-transform:uppercase;letter-spacing:.18em;font-size:11px;margin:0 0 5px}h1{font-size:28px;margin:0 0 5px}.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.warning{width:100%;display:flex;justify-content:space-between;gap:12px;padding:10px 12px;margin-bottom:12px;border-radius:12px;background:rgba(255,212,71,.09);border:1px solid rgba(255,212,71,.28);color:#dff8ff}.clickable{cursor:pointer}.cards{display:grid;gap:10px}.actioncards{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}.projectcards{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}.compactcards{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.task,.project,.clarify-card{border:1px solid rgba(104,231,255,.12);border-radius:12px;padding:12px;background:rgba(255,255,255,.03);cursor:pointer;text-align:left;color:#dff8ff;font:inherit}.cardbutton{display:block;width:100%}.task:hover,.project:hover,.clarify-card:hover{border-color:rgba(104,231,255,.38)}.task.sensitive{border-color:rgba(255,145,71,.5)}.task strong,.project strong{display:block;color:#fff}.task small,.project small{display:block;margin-top:4px}.task p,.project p,.detailpane p{color:#adc6d4;line-height:1.45}.project code{display:block;margin-top:8px;color:#b9f4ff}.project.bad{border-color:rgba(255,212,71,.45)}.clarify-card h2{font-size:24px}.decision-grid{display:grid;grid-template-columns:170px 1fr;gap:8px;padding-top:10px}.decision-grid span{color:#8aa6b8}.review{display:grid;gap:8px}.review li{padding:10px;border-radius:10px;background:rgba(255,255,255,.03)}.reviewpage,.productivity{margin-top:12px}.reviewpage h2{font-size:16px;color:#ffd447}.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.proposal{display:grid;gap:7px;margin-top:12px;padding:10px;border-radius:12px;background:rgba(104,231,255,.05)}.proposal button:disabled,.actions button:disabled{opacity:.55;cursor:not-allowed}.detailpane{display:grid;align-content:start;gap:8px}.detailpane hr{border:0;border-top:1px solid rgba(104,231,255,.14);width:100%}.empty{padding:22px;border:1px dashed rgba(104,231,255,.2);border-radius:12px;color:#8aa6b8}.linksgrid{margin-top:12px}@media(max-width:1100px){.signalgrid,.layout{grid-template-columns:1fr}.navpane{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.navpane h2,.trust{grid-column:1/-1}.topbar{height:auto;min-height:42px;flex-wrap:wrap;padding:8px 12px}.ledline{order:3;flex-basis:100%;flex-wrap:wrap}.authority{display:grid}.detailpane{display:block}}
+:global(body){margin:0;background:#05070b;color:#dff8ff;font-family:Inter,ui-sans-serif,system-ui,sans-serif}.shell{max-width:1540px;margin:0 auto;padding:12px}.panel{background:rgba(8,15,25,.86);border:1px solid rgba(100,220,255,.16);border-radius:14px;box-shadow:0 14px 44px rgba(0,0,0,.30)}a{color:#68e7ff;text-decoration:none}.topbar{position:sticky;top:0;z-index:20;display:flex;gap:12px;align-items:center;padding:7px 10px;backdrop-filter:blur(10px)}.brand{display:flex;align-items:center;gap:8px;min-width:128px}.brand small{color:#8aa6b8}.heart{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle,#ff2c68 0 35%,#163245 40%);box-shadow:0 0 14px #ff2c68}.leds{display:flex;gap:6px;flex-wrap:wrap;flex:1}.led{position:relative;display:inline-flex;align-items:center;gap:5px;padding:3px 7px;border:1px solid rgba(104,231,255,.16);border-radius:999px;background:rgba(255,255,255,.03);font-size:11px;line-height:1.2}.tip{display:none;position:absolute;top:calc(100% + 8px);left:0;min-width:360px;max-width:900px;padding:12px;border-radius:12px;border:1px solid rgba(104,231,255,.3);background:#06101b;z-index:40}.led:hover .tip{display:grid;gap:4px}.tip table{border-collapse:collapse;font:11px ui-monospace,monospace}.tip td,.tip th{padding:3px 6px;border-bottom:1px solid rgba(104,231,255,.12)}.bad td,.issue{color:#ffd447}i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#607080}.ok{background:#28ff9c;box-shadow:0 0 9px #28ff9c}.warn{background:#ffd447;box-shadow:0 0 9px #ffd447}.down{background:#ff3f6e;box-shadow:0 0 9px #ff3f6e}nav{display:flex;gap:10px;font-size:12px}.authority{max-width:1540px;margin:10px auto 0;padding:0 4px;display:flex;gap:10px;align-items:center;color:#8aa6b8;font-size:12px}.authority b{color:#ffd447}.authority code{margin-left:auto}.tabs{margin-top:10px;padding:7px;display:flex;gap:8px;flex-wrap:wrap}.tabs button,.side button,.card footer button,.actions button{border:1px solid rgba(104,231,255,.16);border-radius:999px;background:rgba(255,255,255,.03);color:#dff8ff;padding:8px 12px;cursor:pointer}.tabs button.active,.side button.active{background:rgba(104,231,255,.16);border-color:rgba(104,231,255,.45)}.work{display:grid;grid-template-columns:230px minmax(0,1fr);gap:12px;margin-top:12px}.side,.main,.page{padding:14px}.side{display:grid;align-content:start;gap:7px}.side h2{margin:0 0 8px}input{width:100%;box-sizing:border-box;border:1px solid rgba(104,231,255,.18);background:rgba(255,255,255,.04);color:#dff8ff;border-radius:10px;padding:10px}.wide-search{margin-bottom:12px}header{margin-bottom:14px}header p{margin:0 0 5px;color:#68e7ff;text-transform:uppercase;letter-spacing:.18em;font-size:11px}h1{margin:0 0 4px;font-size:30px}h2{margin:14px 0 10px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(315px,1fr));gap:10px}.cards.projects{grid-template-columns:repeat(auto-fit,minmax(360px,1fr))}.cards.compact{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}.card{border:1px solid rgba(104,231,255,.12);border-radius:13px;background:rgba(255,255,255,.03);color:#dff8ff;padding:12px;text-align:left;font:inherit}.card:hover{border-color:rgba(104,231,255,.38)}button.card{cursor:pointer}.cardopen{display:block;width:100%;padding:0;border:0;background:transparent;color:inherit;text-align:left;font:inherit;cursor:pointer}.card strong{display:block;color:#fff}.card p,.modal p{color:#adc6d4;line-height:1.45}.row{display:flex;justify-content:space-between;gap:10px}.chips{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0}.chips em{font-style:normal;color:#b9f4ff;border:1px solid rgba(104,231,255,.16);background:rgba(104,231,255,.06);border-radius:999px;padding:3px 7px;font-size:11px}.chips.meta em{color:#ffd447;border-color:rgba(255,212,71,.2);background:rgba(255,212,71,.06)}.references-inline{margin-top:16px}.card footer{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:10px;color:#8aa6b8;font-size:12px}.footactions{display:flex;gap:6px}.card footer button{padding:5px 8px}.card footer .addcart{border:0;color:#071016;background:#68e7ff}.warncard{border-color:rgba(255,212,71,.45);background:rgba(255,212,71,.055)}code{display:block;font:12px ui-monospace,monospace;color:#b9f4ff;margin:3px 0;overflow-wrap:anywhere}.page{margin-top:12px}.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}.capture{display:flex;gap:8px;margin-bottom:12px}.capture button,.proposal button{border:1px solid rgba(104,231,255,.18);background:rgba(255,255,255,.04);color:#8aa6b8;border-radius:10px;padding:9px}.empty,.alerts article{padding:14px;border:1px dashed rgba(104,231,255,.2);border-radius:12px;color:#8aa6b8}.alerts{display:grid;gap:8px}.actions{display:flex;gap:8px;flex-wrap:wrap}.modal-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:rgba(0,0,0,.66);backdrop-filter:blur(5px);padding:4vh 4vw}.modal{width:min(80vw,1220px);height:min(80vh,860px);overflow:auto;padding:18px}.modal-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:1px solid rgba(104,231,255,.12);padding-bottom:10px}.modal-head p{margin:0 0 5px;color:#68e7ff;text-transform:uppercase;letter-spacing:.18em;font-size:11px}.close{width:40px;height:40px;border-radius:50%;border:1px solid rgba(104,231,255,.2);background:rgba(255,255,255,.04);color:#dff8ff;font-size:26px;cursor:pointer}.modal-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;margin-top:14px}.excerpt{white-space:pre-wrap}.proposal{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:10px;border-radius:12px;background:rgba(104,231,255,.05)}.mini{display:block;width:100%;margin:5px 0;padding:8px;border-radius:9px;border:1px solid rgba(104,231,255,.14);background:rgba(255,255,255,.03);color:#dff8ff;text-align:left;cursor:pointer}.muted,.card small,header span{color:#8aa6b8}@media(max-width:1100px){.work,.split,.modal-grid{grid-template-columns:1fr}.authority{flex-wrap:wrap}.authority code{margin-left:0}.topbar{align-items:flex-start;flex-wrap:wrap}.modal{width:92vw;height:86vh}} 
 </style>

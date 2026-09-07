@@ -13,7 +13,7 @@ const OLLAMA_TARGETS = (process.env.OLLAMA_TARGETS || 'umi=http://host.docker.in
   })
   .filter((entry) => entry.id && entry.url);
 const LLMWIKI_URL = process.env.LLMWIKI_URL || 'http://hairem-hub.services.svc.cluster.local:4567/Home';
-const GTDWIKI_URL = process.env.GTDWIKI_URL || 'http://hairem-hub.services.svc.cluster.local:4568/';
+const GTDWIKI_URL = process.env.GTDWIKI_URL || 'http://hairem-hub.services.svc.cluster.local:4568/Home';
 const LAN = process.env.HAIREM_LAN_BASE || 'http://192.168.199.119';
 
 type Led = 'ok' | 'warn' | 'down' | 'unknown';
@@ -290,7 +290,7 @@ async function runtime() {
       return { id: `llm-${llm.id}`, label: `llm:${llm.id} ${activeLabel || 'idle'}`, led: llm.led, detail: lines.join('\\n'), detailLines: lines };
     }),
     { id: 'llmwiki', label: `llmwiki ${llmwikiHttp.status || ''}`, led: llmwikiHttp.ok ? 'ok' : 'down', href: `${LAN}:4567/Home`, aria: 'Open LLMWiki in a new tab', detail: llmwikiHttp.ok ? `Gollum 4567\\n${LLMWIKI_URL}` : llmwikiHttp.text.slice(0, 120), detailLines: llmwikiHttp.ok ? ['Gollum         4567', `URL            ${LLMWIKI_URL}`] : [llmwikiHttp.text.slice(0, 120)] },
-    { id: 'gtd-files', label: `gtd files ${gtdwikiHttp.status || ''}`, led: gtdwikiHttp.ok ? 'ok' : 'down', href: `${LAN}:4568/`, aria: 'Open GTD File Browser in a new tab', detail: gtdwikiHttp.ok ? `File Browser 4568\\n${GTDWIKI_URL}` : gtdwikiHttp.text.slice(0, 120), detailLines: gtdwikiHttp.ok ? ['File Browser   4568', `URL            ${GTDWIKI_URL}`] : [gtdwikiHttp.text.slice(0, 120)] },
+    { id: 'gtdwiki', label: `gtdwiki ${gtdwikiHttp.status || ''}`, led: gtdwikiHttp.ok ? 'ok' : 'down', href: `${LAN}:4568/Home`, aria: 'Open GTDWiki in a new tab', detail: gtdwikiHttp.ok ? `Gollum 4568\\n${GTDWIKI_URL}` : gtdwikiHttp.text.slice(0, 120), detailLines: gtdwikiHttp.ok ? ['Gollum         4568', `URL            ${GTDWIKI_URL}`] : [gtdwikiHttp.text.slice(0, 120)] },
     { id: 'hindsight-ui', label: `hindsight-ui ${hUi.status || ''}`, led: hUi.ok ? 'ok' : 'down', href: `${LAN}:3000/`, aria: 'Open Hindsight UI in a new tab', detail: hUi.ok ? `Control plane\\n${HINDSIGHT_UI}` : hUi.text.slice(0, 120), detailLines: hUi.ok ? ['Control plane', `URL            ${HINDSIGHT_UI}`] : [hUi.text.slice(0, 120)] },
     { id: 'hermes', label: `hermes ${hermesUi.status || ''}`, led: hermesUi.ok ? 'ok' : 'down', href: `${LAN}:9119/`, aria: 'Open Hermes in a new tab', detail: hermesUi.ok ? `Hermes UI/auth 9119\\n${HERMES_UI}` : hermesUi.text.slice(0, 120), detailLines: hermesUi.ok ? ['Hermes UI/auth 9119', `URL            ${HERMES_UI}`] : [hermesUi.text.slice(0, 120)] }
   ];
@@ -330,7 +330,7 @@ export async function load() {
 
   return {
     paths: { gtd: GTD, llm: LLM },
-    links: { llmwiki: `${LAN}:4567/Home`, gtdwiki: `${LAN}:4568/`, hindsight: `${LAN}:8888/`, hindsightUi: `${LAN}:3000/`, hermes: `${LAN}:9119/` },
+    links: { llmwiki: `${LAN}:4567/Home`, gtdwiki: `${LAN}:4568/Home`, hindsight: `${LAN}:8888/`, hindsightUi: `${LAN}:3000/`, hermes: `${LAN}:9119/` },
     gtd,
     gtdCockpit,
     llm,
