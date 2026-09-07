@@ -7,7 +7,7 @@ RUN npm run check && npm run build
 
 FROM node:22-alpine
 WORKDIR /app
-ARG DASHBOARD_VERSION=0.2.1
+ARG DASHBOARD_VERSION=0.2.2
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOST=0.0.0.0
