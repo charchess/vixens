@@ -312,7 +312,7 @@ spec:
           volumeMounts:
             - name: hairem-files
               mountPath: /data
-              readOnly: true
+              readOnly: false
 
       volumes:
         - name: hairem-files
