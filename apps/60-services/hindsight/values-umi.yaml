@@ -30,6 +30,11 @@ api:
       cpu: "2"
       memory: 4Gi
 
+  # Le reranker CPU charge son cache après une restauration de PVC ; 30 s
+  # déclenchait la liveness avant que l'API n'ouvre :8888.
+  livenessProbe:
+    initialDelaySeconds: 180
+
   persistence:
     modelCache:
       enabled: true
