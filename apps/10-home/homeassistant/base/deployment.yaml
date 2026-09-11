@@ -59,7 +59,7 @@ spec:
               # Persistent runtime requirements for explicitly installed HACS integrations.
               # roomba_plus 4.1.7 declares roombapy-prime[map]==0.3.4.
               PACKAGES="hass-web-proxy-lib==0.0.7 roombapy-prime[map]==0.3.4"
-              TARGET="/config/python_packages"
+              TARGET="/config/python_packages/py314"
               mkdir -p "$TARGET"
               INSTALLED=true
               for pkg in $PACKAGES; do
@@ -162,7 +162,7 @@ spec:
             - name: TZ
               value: Europe/Paris
             - name: PYTHONPATH
-              value: /config/python_packages:/usr/local/lib/python3.13/site-packages
+              value: /config/python_packages/py314:/usr/local/lib/python3.14/site-packages
           livenessProbe:
             httpGet:
               path: /

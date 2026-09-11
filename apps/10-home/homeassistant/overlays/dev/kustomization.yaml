@@ -33,7 +33,7 @@ patches:
             memory: 2Gi
       - op: replace
         path: /spec/template/spec/initContainers/0/image
-        value: "python:3.13-alpine"
+        value: "python:3.14.6-alpine"
       - op: replace
         path: /spec/template/spec/volumes/1
         value:
