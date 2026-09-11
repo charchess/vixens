@@ -35,6 +35,11 @@ data:
       chown 10000:10000 "$tmp"
       chmod 600 "$tmp"
       mv "$tmp" "$env_file"
+      # Existing profile config.yaml explicitly disables this adapter; explicit
+      # config wins over dotenv, so set enablement and loopback binding here.
+      /command/s6-setuidgid hermes "$HERMES" -p "$profile" config set platforms.api_server.enabled true >/dev/null
+      /command/s6-setuidgid hermes "$HERMES" -p "$profile" config set platforms.api_server.host 127.0.0.1 >/dev/null
+      /command/s6-setuidgid hermes "$HERMES" -p "$profile" config set platforms.api_server.port "$(port_for "$profile")" >/dev/null
     done
     # Register a full mesh of private loopback peers before gateways start.
     for sender in $PROFILES; do
