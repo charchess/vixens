@@ -1,0 +1,38 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: hermes-peer-api-keys
+  namespace: services
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: openbao-umi
+  target:
+    name: hermes-peer-api-keys
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: ahri
+      remoteRef: {key: shared/electra/hermes-peer-api, property: ahri}
+    - secretKey: aurelia
+      remoteRef: {key: shared/electra/hermes-peer-api, property: aurelia}
+    - secretKey: ivy
+      remoteRef: {key: shared/electra/hermes-peer-api, property: ivy}
+    - secretKey: katia
+      remoteRef: {key: shared/electra/hermes-peer-api, property: katia}
+    - secretKey: leona
+      remoteRef: {key: shared/electra/hermes-peer-api, property: leona}
+    - secretKey: lisa
+      remoteRef: {key: shared/electra/hermes-peer-api, property: lisa}
+    - secretKey: loona
+      remoteRef: {key: shared/electra/hermes-peer-api, property: loona}
+    - secretKey: meli
+      remoteRef: {key: shared/electra/hermes-peer-api, property: meli}
+    - secretKey: monara
+      remoteRef: {key: shared/electra/hermes-peer-api, property: monara}
+    - secretKey: sabrina
+      remoteRef: {key: shared/electra/hermes-peer-api, property: sabrina}
+    - secretKey: spark
+      remoteRef: {key: shared/electra/hermes-peer-api, property: spark}
