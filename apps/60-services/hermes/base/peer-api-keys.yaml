@@ -18,6 +18,8 @@ spec:
       remoteRef: {key: shared/electra/hermes-peer-api, property: ahri}
     - secretKey: aurelia
       remoteRef: {key: shared/electra/hermes-peer-api, property: aurelia}
+    - secretKey: electra
+      remoteRef: {key: shared/electra/hermes-peer-api, property: electra}
     - secretKey: ivy
       remoteRef: {key: shared/electra/hermes-peer-api, property: ivy}
     - secretKey: katia

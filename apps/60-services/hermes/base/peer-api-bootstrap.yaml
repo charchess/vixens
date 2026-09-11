@@ -11,10 +11,10 @@ data:
     HERMES_HOME=/opt/data
     export HERMES_HOME
     HERMES=/opt/hermes/.venv/bin/hermes
-    PROFILES="ahri aurelia ivy katia leona lisa loona meli monara sabrina spark"
+    PROFILES="ahri aurelia electra ivy katia leona lisa loona meli monara sabrina spark"
     port_for() {
       case "$1" in
-        ahri) echo 8651 ;; aurelia) echo 8652 ;; ivy) echo 8653 ;;
+        ahri) echo 8651 ;; aurelia) echo 8652 ;; electra) echo 8662 ;; ivy) echo 8653 ;;
         katia) echo 8654 ;; leona) echo 8655 ;; lisa) echo 8656 ;;
         loona) echo 8657 ;; meli) echo 8658 ;; monara) echo 8659 ;;
         sabrina) echo 8660 ;; spark) echo 8661 ;;

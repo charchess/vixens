@@ -19,7 +19,7 @@ spec:
       annotations:
         # Bump whenever the mounted bootstrap ConfigMap changes: ConfigMaps do
         # not otherwise alter the Deployment pod template.
-        vixens.io/peer-bootstrap-revision: "2"
+        vixens.io/peer-bootstrap-revision: "3"
       labels:
         app: hermes
         vixens.io/sizing.hermes: V-large
