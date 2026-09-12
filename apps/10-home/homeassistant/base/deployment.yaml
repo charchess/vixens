@@ -58,7 +58,7 @@ spec:
             - |
               # Persistent runtime requirements for explicitly installed HACS integrations.
               # roomba_plus 4.1.7 declares roombapy-prime[map]==0.3.4.
-              PACKAGES="hass-web-proxy-lib==0.0.8 roombapy-prime[map]==0.3.4"
+              PACKAGES="hass-web-proxy-lib==0.0.8 roombapy-prime[map]==0.3.4 aiofiles>=23.1.0 numpy>=1.26.4 scipy>=1.10.1 shapely>=2.0.2"
               TARGET="/config/python_packages/py314"
               mkdir -p "$TARGET"
               INSTALLED=true
