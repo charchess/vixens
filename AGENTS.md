@@ -84,6 +84,9 @@ kustomize version
 
 ### 2. Standard Workflow
 
+> **Trunk-based GitOps:** les branches de feature ouvrent une PR vers `main`, jamais vers `dev`. La branche `dev` est retirée ; ArgoCD déploie l’environnement dev depuis `main`, puis la promotion production utilise `prod-stable`.
+
+
 ```bash
 # 1. Entry point - Resume work
 just gh-resume

@@ -410,6 +410,9 @@ spec:
 
 ### Branches
 - **`main`** - Unique branche (trunk-based development)
+- **`dev`** - Retirée ; ne jamais cibler cette branche pour une PR ou un déploiement.
+
+Les PR de feature ciblent directement `main`. Le cluster dev est synchronisé par ArgoCD depuis `main`; la promotion production passe uniquement par le tag `prod-stable`.
 
 ### Environnements
 - **Dev**: ArgoCD watch `main` branch (HEAD)
