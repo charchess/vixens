@@ -129,7 +129,7 @@ docs/_build/
 .kube/
 .aider*
 
-# Secrets management (Infisical credentials)
+# Secrets management (OpenBao / External Secrets credentials)
 .secrets/
 
 # Beads issue tracking database

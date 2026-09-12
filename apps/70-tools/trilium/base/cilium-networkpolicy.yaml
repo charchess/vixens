@@ -22,6 +22,6 @@ spec:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
   egress:
-    # trilium → world (NAS/MinIO at 192.168.200.244:30157 for attachments)
+    # trilium → world (NAS/MinIO at nas.truxonline.com:30157 for attachments)
     - toEntities:
         - world

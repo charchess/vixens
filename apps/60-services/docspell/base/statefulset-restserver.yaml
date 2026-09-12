@@ -148,5 +148,5 @@ spec:
             name: docspell-restserver-config
         - name: nfs-inbox
           nfs:
-            server: 192.168.200.244
+            server: nas.truxonline.com
             path: /mnt/tank/data/documents/inbox/docspell

@@ -17,7 +17,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    server: 192.168.200.244
+    server: nas.truxonline.com
     path: /mnt/tank/scratch/downloads
 ---
 apiVersion: v1
@@ -38,7 +38,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    server: 192.168.200.244
+    server: nas.truxonline.com
     path: /mnt/tank/scratch/import-staging
 ---
 apiVersion: v1
@@ -59,7 +59,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    server: 192.168.200.244
+    server: nas.truxonline.com
     path: /mnt/tank/scratch/temp
 ---
 apiVersion: v1
@@ -80,7 +80,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    server: 192.168.200.244
+    server: nas.truxonline.com
     path: /mnt/tank/scratch/transcode
 ---
 apiVersion: v1
@@ -101,7 +101,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    server: 192.168.200.244
+    server: nas.truxonline.com
     path: /mnt/tank/data/media
 ---
 apiVersion: v1
@@ -122,7 +122,7 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    server: 192.168.200.244
+    server: nas.truxonline.com
     path: /mnt/tank/data/documents
 ---
 apiVersion: v1
@@ -143,5 +143,5 @@ spec:
   mountOptions:
     - nfsvers=4.1
   nfs:
-    server: 192.168.200.244
+    server: nas.truxonline.com
     path: /mnt/tank/data/photos

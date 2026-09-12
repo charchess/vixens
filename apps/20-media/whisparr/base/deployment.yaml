@@ -96,11 +96,11 @@ spec:
           emptyDir: {}
         - name: downloads
           nfs:
-            server: 192.168.200.244
+            server: nas.truxonline.com
             path: /mnt/tank/scratch/downloads
         - name: media
           nfs:
-            server: 192.168.200.244
+            server: nas.truxonline.com
             path: /mnt/tank/data/media
       securityContext:
         runAsNonRoot: true

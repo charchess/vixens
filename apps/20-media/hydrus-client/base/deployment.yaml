@@ -100,5 +100,5 @@ spec:
             claimName: hydrus-client-config-pvc
         - name: client-files
           nfs:
-            server: 192.168.200.244
+            server: nas.truxonline.com
             path: /mnt/tank/data/photos/library/hydrus-client-files

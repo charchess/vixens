@@ -2,7 +2,7 @@
 
 This app declares static Kubernetes PVs for existing TrueNAS trees. It intentionally does **not** use the democratic-csi NFS dynamic provisioner, because these paths already exist and must not be created/deleted/mutated by CSI.
 
-TrueNAS exports are expected on `192.168.200.244`, restricted to UMI's observed NFS source `192.168.199.119/32`.
+TrueNAS exports are expected on `nas.truxonline.com`, restricted to UMI's observed NFS source `192.168.199.119/32`.
 
 ## Static PVs
 

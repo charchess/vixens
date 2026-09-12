@@ -14,7 +14,7 @@ spec:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
   egress:
-    # velero → world (NAS/MinIO at 192.168.200.244:30157 for backup storage)
+    # velero → world (NAS/MinIO at nas.truxonline.com:30157 for backup storage)
     - toEntities:
         - world
     # velero → kube-apiserver (watch/restore cluster resources)

@@ -177,7 +177,7 @@ jobs:
 
           FAILED=0
           WARNED=0
-          SKIP_KINDS="Application,AppProject,CustomResourceDefinition,InfisicalSecret,Middleware,HelmRelease,HelmRepository,Kustomization,Cluster,PostgresCluster,Pooler,ScheduledBackup,VolumeSnapshotClass,VolumeSnapshot,CiliumL2AnnouncementPolicy,CiliumLoadBalancerIPPool"
+          SKIP_KINDS="Application,AppProject,CustomResourceDefinition,Middleware,HelmRelease,HelmRepository,Kustomization,Cluster,PostgresCluster,Pooler,ScheduledBackup,VolumeSnapshotClass,VolumeSnapshot,CiliumL2AnnouncementPolicy,CiliumLoadBalancerIPPool"
 
           # Fonction de validation
           validate_overlay() {

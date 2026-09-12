@@ -1,9 +1,9 @@
 # ADR 007: Infisical pour la Gestion des Secrets
 
 **Date:** 2025-11-16
-**Status:** Accepted
+**Status:** Superseded by ADR 018
 **Deciders:** User, Coding Agent
-**Tags:** security, secrets, infisical
+**Tags:** security, secrets, infisical, historical
 
 ---
 
