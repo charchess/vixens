@@ -10,4 +10,6 @@ spec:
   storageClassName: truenas-iscsi-retain
   resources:
     requests:
-      storage: 10Gi
+      # Persona profiles, durable memories, and staged migrations share this RWO volume.
+      # Keep headroom for copy-first migrations; legacy session databases stay outside it.
+      storage: 40Gi

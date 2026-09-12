@@ -172,7 +172,7 @@ def analyze_litestream_bucket():
 if __name__ == '__main__':
     if not ACCESS_KEY or not SECRET_KEY:
         print("❌ Error: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be set")
-        print("   Get from: kubectl get secret -n argocd infisical-universal-auth -o jsonpath='{.data}'")
+        print("   Obtain credentials through the approved OpenBao / External Secrets workflow.")
         exit(1)
     
     try:

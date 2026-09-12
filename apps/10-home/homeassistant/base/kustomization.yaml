@@ -8,9 +8,5 @@ resources:
   - service-nodeport.yaml
   - pvc.yaml
   - configmap.yaml
-  - infisical-config.yaml
-  - infisical-secret.yaml
-  - servicemonitor.yaml
   - networkpolicy.yaml
-  - cilium-networkpolicy.yaml
   - pdb.yaml

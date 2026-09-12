@@ -6,8 +6,8 @@ metadata:
   namespace: finance
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/60-services/firefly-iii
+    - extract:
+        key: vixens/prod/apps/60-services/firefly-iii
   target:
     template:
       metadata:

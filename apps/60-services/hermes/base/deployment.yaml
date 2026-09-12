@@ -16,6 +16,10 @@ spec:
       app: hermes
   template:
     metadata:
+      annotations:
+        # Bump whenever the mounted bootstrap ConfigMap changes: ConfigMaps do
+        # not otherwise alter the Deployment pod template.
+        vixens.io/peer-bootstrap-revision: "3"
       labels:
         app: hermes
         vixens.io/sizing.hermes: V-large
@@ -25,9 +29,30 @@ spec:
           operator: Exists
           effect: NoSchedule
 
+      # The external secret is mounted only into this init container. It
+      # injects distinct loopback-only API-server keys into each private
+      # profile and registers the sibling peer directory before s6 starts the
+      # gateways. No peer endpoint is published as a Service or Ingress.
+      initContainers:
+        - name: peer-api-bootstrap
+          image: nousresearch/hermes-agent:v2026.9.7
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - /bootstrap/bootstrap.sh
+          volumeMounts:
+            - name: data
+              mountPath: /opt/data
+            - name: peer-api-keys
+              mountPath: /run/secrets/hermes-peer-api
+              readOnly: true
+            - name: peer-api-bootstrap
+              mountPath: /bootstrap
+              readOnly: true
+
       containers:
         - name: hermes
-          image: nousresearch/hermes-agent:v2026.8.27
+          image: nousresearch/hermes-agent:v2026.9.7
           imagePullPolicy: IfNotPresent
 
           # Phase bootstrap :
@@ -86,25 +111,23 @@ spec:
             - name: data
               mountPath: /opt/data
 
-            # hAIrem collaborative filesystem
+            # hAIrem collaborative filesystem.
+            # Access policy is by usage/convention in PERMS.md, not by
+            # per-persona filesystem ACLs. Public/shared/private are all
+            # normal subdirectories of the same writable workspace.
             - name: hairem-files
-              mountPath: /workspace/persona/lisa
-              subPath: persona/lisa
-
-            - name: hairem-files
-              mountPath: /workspace/shared
-              subPath: shared
-
-            - name: hairem-files
-              mountPath: /workspace/public
-              subPath: public
-              readOnly: true
-
-            - name: hairem-files
-              mountPath: /workspace/llmwiki
-              subPath: llmwiki
+              mountPath: /workspace
 
       volumes:
+        - name: peer-api-keys
+          secret:
+            secretName: hermes-peer-api-keys
+
+        - name: peer-api-bootstrap
+          configMap:
+            name: hermes-peer-api-bootstrap
+            defaultMode: 0555
+
         - name: data
           persistentVolumeClaim:
             claimName: hermes-data-truenas

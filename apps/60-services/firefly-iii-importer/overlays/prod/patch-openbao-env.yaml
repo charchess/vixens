@@ -6,8 +6,8 @@ metadata:
   namespace: finance
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/60-services/firefly-iii-importer
+    - extract:
+        key: vixens/prod/apps/60-services/firefly-iii-importer
   target:
     template:
       metadata:

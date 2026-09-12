@@ -3,39 +3,39 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: argocd
 resources:
-- apps/priority-classes.yaml
-- apps/shared-namespaces.yaml
-- apps/external-secrets-umi.yaml
-- apps/openbao-secrets-umi.yaml
-- apps/cilium-lb.yaml
-- apps/traefik.yaml
-- apps/traefik-middlewares.yaml
-- apps/keda.yaml
-- apps/keda-http-addon.yaml
-- apps/vpa.yaml
-- apps/reloader.yaml
-- apps/kyverno.yaml
-- apps/policy-reporter.yaml
-- apps/descheduler.yaml
-- apps/cert-manager.yaml
-- apps/cert-manager-secrets.yaml
-- apps/cert-manager-webhook-gandi.yaml
-- apps/cert-manager-config.yaml
-- apps/snapshot-controller.yaml
-- apps/truenas-csi-secrets-umi.yaml
-- apps/truenas-csi-iscsi-umi.yaml
-- apps/truenas-csi-nfs-umi.yaml
-- apps/local-path-provisioner.yaml
-- apps/nfs-storage.yaml
-- apps/external-dns-unifi.yaml
-- apps/external-dns-unifi-secrets.yaml
-- apps/renovate.yaml
-- apps/trivy.yaml
-- apps/argocd.yaml
-- apps/whoami.yaml
-- apps/frigate.yaml
-- apps/openclaw.yaml
-- apps/mealie.yaml
-- apps/victoria-metrics.yaml
-- apps/snmp-exporter.yaml
-- apps/homeassistant.yaml
+  - apps/priority-classes.yaml
+  - apps/shared-namespaces.yaml
+  - apps/external-secrets-umi.yaml
+  - apps/openbao-secrets-umi.yaml
+  - apps/cilium-lb.yaml
+  - apps/traefik.yaml
+  - apps/traefik-middlewares.yaml
+  - apps/keda.yaml
+  - apps/keda-http-addon.yaml
+  - apps/vpa.yaml
+  - apps/reloader.yaml
+  - apps/kyverno.yaml
+  - apps/policy-reporter.yaml
+  - apps/descheduler.yaml
+  - apps/cert-manager.yaml
+  - apps/cert-manager-secrets.yaml
+  - apps/cert-manager-webhook-gandi.yaml
+  - apps/cert-manager-config.yaml
+  - apps/snapshot-controller.yaml
+  - apps/truenas-csi-secrets-umi.yaml
+  - apps/truenas-csi-iscsi-umi.yaml
+  - apps/truenas-csi-nfs-umi.yaml
+  - apps/local-path-provisioner.yaml
+  - apps/nfs-storage.yaml
+  - apps/external-dns-unifi.yaml
+  - apps/external-dns-unifi-secrets.yaml
+  - apps/renovate.yaml
+  - apps/trivy.yaml
+  - apps/argocd.yaml
+  - apps/whoami.yaml
+  - apps/frigate.yaml
+  - apps/openclaw.yaml
+  - apps/mealie.yaml
+  - apps/victoria-metrics.yaml
+  - apps/snmp-exporter.yaml
+  - apps/homeassistant.yaml

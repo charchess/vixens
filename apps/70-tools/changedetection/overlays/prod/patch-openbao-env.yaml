@@ -6,8 +6,8 @@ metadata:
   namespace: tools
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/70-tools/changedetection
+    - extract:
+        key: vixens/prod/apps/70-tools/changedetection
   target:
     template:
       metadata:

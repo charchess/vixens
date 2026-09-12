@@ -17,4 +17,4 @@ configuration:
       config:
         region: us-east-1
         s3ForcePathStyle: "true"
-        s3Url: http://192.168.200.244:30157
+        s3Url: http://nas.truxonline.com:30157

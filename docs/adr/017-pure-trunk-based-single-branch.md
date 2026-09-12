@@ -150,6 +150,18 @@ git push origin prod-stable --force
 
 ---
 
+## Implementation Verification (2026-09-12)
+
+The intended migration was already reflected in ArgoCD and the workflow documentation, but a stale `dev` Git ref still existed. Verification found **zero** current ArgoCD `targetRevision: dev` references; dev Applications track `main`, while production Applications track `prod-stable`.
+
+The stale remote and local `dev` branches were removed on 2026-09-12. Its final commit remains recoverable from the local archival ref `refs/archive/retired-dev-20260912`. This is an operational cleanup, not a return to a two-branch promotion flow.
+
+**Canonical flow:**
+
+```text
+feature branch → PR to main → ArgoCD dev validation from main → promotion workflow moves prod-stable → ArgoCD prod
+```
+
 ## Consequences
 
 ### Positive

@@ -13,7 +13,6 @@ spec:
           - cilium-secrets
           - cert-manager
           - argocd
-          - infisical-operator-system
           - snapshot-controller
           - velero
   enableDefaultDeny:

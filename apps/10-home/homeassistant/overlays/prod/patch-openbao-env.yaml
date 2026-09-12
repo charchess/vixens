@@ -6,8 +6,8 @@ metadata:
   namespace: homeassistant
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/10-home/homeassistant
+    - extract:
+        key: vixens/prod/apps/10-home/homeassistant
   target:
     template:
       metadata:
@@ -23,8 +23,8 @@ metadata:
   namespace: homeassistant
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/10-home/homeassistant
+    - extract:
+        key: vixens/prod/apps/10-home/homeassistant
   target:
     template:
       metadata:

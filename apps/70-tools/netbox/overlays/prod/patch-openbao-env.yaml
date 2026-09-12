@@ -6,8 +6,8 @@ metadata:
   namespace: tools
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/70-tools/netbox
+    - extract:
+        key: vixens/prod/apps/70-tools/netbox
   target:
     template:
       metadata:
@@ -23,8 +23,8 @@ metadata:
   namespace: tools
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/70-tools/netbox
+    - extract:
+        key: vixens/prod/apps/70-tools/netbox
   target:
     template:
       metadata:

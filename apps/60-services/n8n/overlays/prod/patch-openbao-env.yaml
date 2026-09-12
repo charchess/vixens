@@ -6,8 +6,8 @@ metadata:
   namespace: services
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/60-services/n8n
+    - extract:
+        key: vixens/prod/apps/60-services/n8n
   target:
     template:
       metadata:
@@ -23,8 +23,8 @@ metadata:
   namespace: services
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/60-services/n8n
+    - extract:
+        key: vixens/prod/apps/60-services/n8n
   target:
     template:
       metadata:

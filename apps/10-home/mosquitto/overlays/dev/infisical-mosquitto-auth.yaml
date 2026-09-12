@@ -21,5 +21,5 @@ spec:
         annotations:
           vixens.io/secret-source: openbao
   dataFrom:
-  - extract:
-      key: vixens/dev/apps/10-home/mosquitto
+    - extract:
+        key: vixens/dev/apps/10-home/mosquitto

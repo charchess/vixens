@@ -26,7 +26,7 @@ spec:
     - toEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: databases
-    # vikunja → world (NAS/MinIO at 192.168.200.244:30157, external OAuth/SMTP)
+    # vikunja → world (NAS/MinIO at nas.truxonline.com:30157, external OAuth/SMTP)
     - toEntities:
         - world
     # vikunja → kube-apiserver

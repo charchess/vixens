@@ -6,8 +6,8 @@ metadata:
   namespace: networking
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/40-network/netvisor
+    - extract:
+        key: vixens/prod/apps/40-network/netvisor
   target:
     template:
       metadata:

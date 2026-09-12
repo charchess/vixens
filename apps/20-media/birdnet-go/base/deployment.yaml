@@ -90,7 +90,7 @@ spec:
           emptyDir: {}
         - name: internals
           nfs:
-            server: 192.168.200.244
+            server: nas.truxonline.com
             path: /mnt/tank/data/media
       securityContext:
         fsGroup: 1000

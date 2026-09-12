@@ -70,6 +70,9 @@ spec:
 ## 5. Storage Sizing Guidelines
 
 - **Config-only:** 1Gi - 2Gi
+- **Hermes persona profiles:** 40Gi shared iSCSI RWO volume. This holds live profiles,
+  private memories, and copy-first staging material; do not place legacy `state.db`
+  archives on it.
 - **Databases:** 10Gi - 20Gi (Shared PG uses 50Gi)
 - **Media Cache:** 50Gi - 100Gi
 - **Media Library:** Direct NFS mount (No PVC)
@@ -87,3 +90,6 @@ To prevent volume corruption and the `emergency_ro` kernel flag on Talos nodes d
 ### Recovery from `emergency_ro`
 - **Detection:** Pod logs show `Read-only file system` or node dmesg shows iSCSI timeout.
 - **Fix:** Perform a clean `kubectl rollout restart deployment <app>` to cycle the session. **DO NOT** use `delete --force` as it leaves stale handles on the node.
+- **Resize:** first commit the larger request to GitOps, then perform the controlled
+  `Recreate` rollout. Confirm both the PVC status capacity and `df` inside the new pod
+  before staging new persistent workloads.

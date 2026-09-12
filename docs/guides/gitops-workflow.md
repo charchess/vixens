@@ -23,7 +23,9 @@ This guide explains the **pure trunk-based GitOps workflow** for the Vixens infr
 | `prod-working` (tag)| Last known working config| N/A | N/A | ❌ No |
 | `feature/*` | Development work | N/A | N/A | ❌ No |
 
-**Archived:** `dev`, `test`, and `staging` branches (ADR-017 migration)
+**Archived:** `dev`, `test`, and `staging` branches (ADR-017 migration).
+
+> **Operational status (2026-09-12):** the stale remote `dev` ref was archived locally and deleted after confirming that no current ArgoCD Application targets it. Do not create PRs to `dev`; feature PRs target `main`.
 
 ---
 

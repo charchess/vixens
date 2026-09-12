@@ -6,8 +6,8 @@ metadata:
   namespace: networking
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/40-network/external-dns/gandi
+    - extract:
+        key: vixens/prod/apps/40-network/external-dns/gandi
   target:
     template:
       metadata:

@@ -48,28 +48,60 @@ spec:
               mkdir -p \
                 /data/persona/lisa \
                 /data/shared \
-                /data/public \
-                /data/llmwiki \
+                /data/public/llmwiki \
+                /data/public/GTD \
+                /data/private \
                 /data/dashboard
 
               # LAB UMI :
               # permissions volontairement permissives.
               # En prod, NFS/ACL remplacera cette politique.
               chmod 0777 \
+                /data \
                 /data/persona \
                 /data/persona/lisa \
                 /data/shared \
+                /data/public \
+                /data/public/llmwiki \
+                /data/public/GTD \
+                /data/private \
                 /data/dashboard
 
-              chmod 0755 /data/public
+              # Workspace root exposed by Gollum on :4568.
+              if [ ! -d /data/.git ]; then
+                echo "Initialisation du dépôt workspace root..."
+                cd /data
+                git init -b main
+                git config user.name "hAIrem Workspace"
+                git config user.email "workspace@hairem.local"
+                if [ ! -f Home.md ]; then
+                  cat > Home.md <<WORKSPACE
+              # hAIrem Workspace
+
+              Racine partagée hAIrem.
+
+              ## Zones
+
+              - [[public]] — systèmes publiés/lisibles avec propriétaire clair.
+              - [[shared]] — collaboration libre et brouillons partagés.
+              - [[private]] — espaces privés par convention relationnelle.
+
+              Lire [[PERMS]] avant toute écriture.
+              WORKSPACE
+                fi
+                git add Home.md PERMS.md 2>/dev/null || git add Home.md
+                git commit -m "Initialize hAIrem workspace root"
+              fi
+
+              chmod -R a+rwX /data/.git /data/Home.md 2>/dev/null || true
 
               # -------------------------------------------------------
               # LLMWiki / Gollum
               # -------------------------------------------------------
-              if [ ! -d /data/llmwiki/.git ]; then
+              if [ ! -d /data/public/llmwiki/.git ]; then
                 echo "Initialisation du dépôt LLMWiki..."
 
-                cd /data/llmwiki
+                cd /data/public/llmwiki
 
                 git init -b main
                 git config user.name "hAIrem LLMWiki"
@@ -97,8 +129,13 @@ spec:
               fi
 
               # Gollum tourne en UID 1000.
-              chown -R 1000:1000 /data/llmwiki
-              chmod -R a+rwX /data/llmwiki
+              chown -R 1000:1000 /data/public/llmwiki
+              chmod -R a+rwX /data/public/llmwiki
+
+              # -------------------------------------------------------
+              # Workspace root / Gollum :4568
+              # -------------------------------------------------------
+              chmod -R a+rwX /data
 
               # -------------------------------------------------------
               # Dashboard hAIrem statique initial
@@ -138,7 +175,8 @@ spec:
                 <ul>
                   <li>Hermes</li>
                   <li>Lisa — agente laboratoire</li>
-                  <li>LLMWiki / Gollum</li>
+                  <li>LLMWiki / Gollum — port 4567</li>
+                  <li>GTDWiki / Gollum — port 4568</li>
                 </ul>
 
                 <p>
@@ -191,40 +229,94 @@ spec:
           volumeMounts:
             - name: hairem-files
               mountPath: /wiki
-              subPath: llmwiki
+              subPath: public/llmwiki
 
         # -------------------------------------------------------------
-        # Futur dashboard personnel hAIrem
+        # Workspace File Browser
         # -------------------------------------------------------------
-        - name: dashboard
-          image: nginx:alpine
+        - name: filebrowser-workspace
+          image: filebrowser/filebrowser:v2
+
+          args:
+            - --address
+            - 0.0.0.0
+            - --port
+            - "4568"
+            - --root
+            - /srv
+            - --database
+            - /database/filebrowser.db
+            - --noauth
 
           ports:
-            - name: dashboard
-              containerPort: 80
+            - name: gtdwiki
+              containerPort: 4568
 
           resources:
             requests:
-              cpu: 5m
-              memory: 32Mi
+              cpu: 10m
+              memory: 64Mi
             limits:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 250m
+              memory: 256Mi
 
           readinessProbe:
             httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 2
+              path: /health
+              port: 4568
+            initialDelaySeconds: 5
             periodSeconds: 5
 
           volumeMounts:
             - name: hairem-files
-              mountPath: /usr/share/nginx/html
-              subPath: dashboard
-              readOnly: true
+              mountPath: /srv
+            - name: filebrowser-database
+              mountPath: /database
+
+        # -------------------------------------------------------------
+        # Dashboard hAIrem SvelteKit
+        # -------------------------------------------------------------
+        - name: dashboard
+          image: hairem-dashboard:dev
+          imagePullPolicy: Never
+
+          env:
+            - name: PORT
+              value: "3000"
+            - name: HOST
+              value: 0.0.0.0
+            - name: GTDWIKI_PATH
+              value: /data/public/GTD
+            - name: LLMWIKI_PATH
+              value: /data/public/llmwiki
+
+          ports:
+            - name: dashboard
+              containerPort: 3000
+
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+          volumeMounts:
+            - name: hairem-files
+              mountPath: /data
+              readOnly: false
 
       volumes:
         - name: hairem-files
           persistentVolumeClaim:
             claimName: hairem-files-truenas
+        - name: filebrowser-database
+          emptyDir: {}

@@ -5,3 +5,5 @@ resources:
   - deployment.yaml
   - pvc.yaml
   - service.yaml
+  - peer-api-keys.yaml
+  - peer-api-bootstrap.yaml

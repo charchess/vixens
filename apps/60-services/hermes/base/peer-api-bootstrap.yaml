@@ -1,0 +1,53 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-peer-api-bootstrap
+  namespace: services
+data:
+  bootstrap.sh: |
+    #!/bin/sh
+    set -eu
+    HERMES_HOME=/opt/data
+    export HERMES_HOME
+    HERMES=/opt/hermes/.venv/bin/hermes
+    PROFILES="ahri aurelia electra ivy katia leona lisa loona meli monara sabrina spark"
+    port_for() {
+      case "$1" in
+        ahri) echo 8651 ;; aurelia) echo 8652 ;; electra) echo 8662 ;; ivy) echo 8653 ;;
+        katia) echo 8654 ;; leona) echo 8655 ;; lisa) echo 8656 ;;
+        loona) echo 8657 ;; meli) echo 8658 ;; monara) echo 8659 ;;
+        sabrina) echo 8660 ;; spark) echo 8661 ;;
+        *) return 1 ;;
+      esac
+    }
+    # Preserve existing profile dotenv fields; replace only API-server settings.
+    for profile in $PROFILES; do
+      key_file="/run/secrets/hermes-peer-api/${profile}"
+      env_file="/opt/data/profiles/${profile}/.env"
+      test -s "$key_file"
+      test -d "$(dirname "$env_file")"
+      umask 077
+      tmp="${env_file}.peer-api.$$"
+      (grep -v -E "^API_SERVER_(ENABLED|HOST|PORT|KEY|MODEL_NAME)=" "$env_file" 2>/dev/null || true) > "$tmp"
+      printf "API_SERVER_ENABLED=true\nAPI_SERVER_HOST=127.0.0.1\nAPI_SERVER_PORT=%s\nAPI_SERVER_KEY=%s\nAPI_SERVER_MODEL_NAME=%s\n" \
+        "$(port_for "$profile")" "$(cat "$key_file")" "$profile" >> "$tmp"
+      chown 10000:10000 "$tmp"
+      chmod 600 "$tmp"
+      mv "$tmp" "$env_file"
+      # Existing profile config.yaml explicitly disables this adapter; explicit
+      # config wins over dotenv, so set enablement and loopback binding here.
+      /command/s6-setuidgid hermes "$HERMES" -p "$profile" config set platforms.api_server.enabled true >/dev/null
+      /command/s6-setuidgid hermes "$HERMES" -p "$profile" config set platforms.api_server.host 127.0.0.1 >/dev/null
+      /command/s6-setuidgid hermes "$HERMES" -p "$profile" config set platforms.api_server.port "$(port_for "$profile")" >/dev/null
+    done
+    # Register a full mesh of private loopback peers before gateways start.
+    for sender in $PROFILES; do
+      for receiver in $PROFILES; do
+        [ "$sender" = "$receiver" ] && continue
+        /command/s6-setuidgid hermes "$HERMES" -p "$sender" peer add "$receiver" \
+          --url "http://127.0.0.1:$(port_for "$receiver")" \
+          --key "$(cat "/run/secrets/hermes-peer-api/${receiver}")" \
+          --note "private sister runtime" >/dev/null
+      done
+    done

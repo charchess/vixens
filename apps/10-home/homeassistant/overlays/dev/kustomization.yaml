@@ -7,37 +7,36 @@ resources:
   - ingress.yaml
   - ingressroute-udp.yaml
 components:
-  - ../../../../_shared/components/dev-hibernate
   - ../../../../_shared/components/revision-history-limit
-  - ../../../../_shared/components/dataangel
 patches:
-  - path: dataangel.yaml
   - target:
       kind: PersistentVolumeClaim
       name: homeassistant-config
     patch: |-
       - op: replace
         path: /spec/storageClassName
-        value: synelia-iscsi-xfs-retain
+        value: truenas-iscsi-xfs-retain
   - target:
       kind: Deployment
       name: homeassistant
     patch: |-
+      - op: remove
+        path: /spec/template/spec/priorityClassName
       - op: replace
         path: /spec/template/spec/containers/0/resources
         value:
           requests:
             cpu: 50m
-            memory: 256Mi
-          limits:
-            cpu: 500m
             memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
       - op: replace
-        path: /spec/template/spec/initContainers/0/ports
+        path: /spec/template/spec/initContainers/0/image
+        value: "python:3.14.6-alpine"
+      - op: replace
+        path: /spec/template/spec/volumes/1
         value:
-          - containerPort: 9091
-            name: metrics
-            protocol: TCP
-      - op: replace
-        path: /spec/template/spec/initContainers/1/image
-        value: "python:3.13-alpine"
+          name: ha-config
+          configMap:
+            name: homeassistant-config

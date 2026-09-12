@@ -13,7 +13,7 @@ spec:
         dataangel.io/bucket: "vixens-prod-openclaw"
         dataangel.io/sqlite-paths: ""
         dataangel.io/fs-paths: "/data"
-        dataangel.io/s3-endpoint: "http://192.168.200.244:30157"
+        dataangel.io/s3-endpoint: "http://nas.truxonline.com:30157"
         dataangel.io/deployment-name: "openclaw"
         dataangel.io/rclone-interval: "15s"
         dataangel.io/metrics-enabled: "true"
