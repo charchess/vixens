@@ -6,8 +6,8 @@ metadata:
   namespace: mealie
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/10-home/mealie
+    - extract:
+        key: vixens/prod/apps/10-home/mealie
   target:
     template:
       metadata:

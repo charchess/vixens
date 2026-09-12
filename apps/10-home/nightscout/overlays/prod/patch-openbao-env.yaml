@@ -6,8 +6,8 @@ metadata:
   namespace: nightscout
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/10-home/nightscout
+    - extract:
+        key: vixens/prod/apps/10-home/nightscout
   target:
     template:
       metadata:

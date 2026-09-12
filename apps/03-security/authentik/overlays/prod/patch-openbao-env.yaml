@@ -6,8 +6,8 @@ metadata:
   namespace: auth
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/03-security/authentik
+    - extract:
+        key: vixens/prod/apps/03-security/authentik
   target:
     template:
       metadata:
@@ -23,8 +23,8 @@ metadata:
   namespace: auth
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/04-databases/redis-shared
+    - extract:
+        key: vixens/prod/apps/04-databases/redis-shared
   target:
     template:
       metadata:

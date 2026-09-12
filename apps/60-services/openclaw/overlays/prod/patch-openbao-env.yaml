@@ -6,8 +6,8 @@ metadata:
   namespace: services
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/60-services/openclaw
+    - extract:
+        key: vixens/prod/apps/60-services/openclaw
   target:
     template:
       metadata:

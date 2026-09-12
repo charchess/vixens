@@ -6,8 +6,8 @@ metadata:
   namespace: media
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/20-media/sonarr
+    - extract:
+        key: vixens/prod/apps/20-media/sonarr
   target:
     template:
       metadata:

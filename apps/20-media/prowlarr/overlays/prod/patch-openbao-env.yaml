@@ -6,8 +6,8 @@ metadata:
   namespace: media
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/20-media/prowlarr
+    - extract:
+        key: vixens/prod/apps/20-media/prowlarr
   target:
     template:
       metadata:

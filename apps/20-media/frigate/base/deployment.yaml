@@ -27,131 +27,112 @@ spec:
     spec:
       priorityClassName: vixens-medium
       tolerations:
-      - key: node-role.kubernetes.io/control-plane
-        operator: Exists
-        effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       initContainers:
-      - name: patch-config
-        image: busybox:1.37.0
-        securityContext:
-          runAsUser: 1000
-          runAsGroup: 1000
-        command:
-        - sh
-        - -c
-        args:
-        - "if [ -f /config/config.yml ]; then\n  echo \"Patching config.yml to use\
-          \ /tmp/cache/frigate.db...\"\n  sed -i 's|/config/frigate.db|/tmp/cache/frigate.db|g'\
-          \ /config/config.yml\nfi\n"
-        volumeMounts:
-        - name: config
-          mountPath: /config
-      - name: cleanup-cache
-        image: busybox:1.37.0
-        command: ["sh", "-c", "rm -f /tmp/cache/comms /tmp/cache/.comms"]
-        volumeMounts:
-        - name: cache
-          mountPath: /tmp/cache
-      - name: validate-config
-        image: python:3.14-alpine
-        command:
-        - sh
-        - -c
-        args:
-        - "pip install pyyaml -q >/dev/null 2>&1\necho \"Validating Frigate config...\"\
-          \nif [ -f /config/config.yml ]; then\n  if python3 -c \"import yaml; yaml.safe_load(open('/config/config.yml'))\"\
-          \ 2>/dev/null; then\n    echo \"✅ Config is valid YAML\"\n    exit 0\n \
-          \ else\n    echo \"❌ Config is corrupted, restoring from backup...\"\n \
-          \   # Find most recent valid backup\n    for backup in $(ls -t /config/config.yml.backup.*\
-          \ 2>/dev/null); do\n      if python3 -c \"import yaml; yaml.safe_load(open('$backup'))\"\
-          \ 2>/dev/null; then\n        cp \"$backup\" /config/config.yml\n       \
-          \ echo \"✅ Restored from $backup\"\n        exit 0\n      fi\n    done\n\
-          \    # If no valid backup, try backup_config.yaml\n    if [ -f /config/backup_config.yaml\
-          \ ] && python3 -c \"import yaml; yaml.safe_load(open('/config/backup_config.yaml'))\"\
-          \ 2>/dev/null; then\n      cp /config/backup_config.yaml /config/config.yml\n\
-          \      echo \"✅ Restored from backup_config.yaml\"\n      exit 0\n    fi\n\
-          \    # Fallback: copy backup_config.yaml even if not explicitly a backup\n\
-          \    if [ -f /config/backup_config.yaml ]; then\n      cp /config/backup_config.yaml\
-          \ /config/config.yml\n      echo \"✅ Restored from backup_config.yaml (fallback)\"\
-          \n      exit 0\n    fi\n    echo \"❌ No valid backup found! Using default\
-          \ config.\"\n    exit 0\n  fi\nelse\n  echo \"⚠️ No config.yml found\"\n\
-          \  exit 0\nfi\n"
-        volumeMounts:
-        - name: config
-          mountPath: /config
-        resources:
-          requests:
-            cpu: 10m
-            memory: 32Mi
-          limits:
-            cpu: 100m
-            memory: 64Mi
+        - name: patch-config
+          image: busybox:1.37.0
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          command:
+            - sh
+            - -c
+          args:
+            - "if [ -f /config/config.yml ]; then\n  echo \"Patching config.yml to use /tmp/cache/frigate.db...\"\n  sed -i 's|/config/frigate.db|/tmp/cache/frigate.db|g' /config/config.yml\nfi\n"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+        - name: cleanup-cache
+          image: busybox:1.37.0
+          command: ["sh", "-c", "rm -f /tmp/cache/comms /tmp/cache/.comms"]
+          volumeMounts:
+            - name: cache
+              mountPath: /tmp/cache
+        - name: validate-config
+          image: python:3.14-alpine
+          command:
+            - sh
+            - -c
+          args:
+            - "pip install pyyaml -q >/dev/null 2>&1\necho \"Validating Frigate config...\"\nif [ -f /config/config.yml ]; then\n  if python3 -c \"import yaml; yaml.safe_load(open('/config/config.yml'))\" 2>/dev/null; then\n    echo \"✅ Config is valid YAML\"\n    exit 0\n  else\n    echo \"❌ Config is corrupted, restoring from backup...\"\n    # Find most recent valid backup\n    for backup in $(ls -t /config/config.yml.backup.* 2>/dev/null); do\n      if python3 -c \"import yaml; yaml.safe_load(open('$backup'))\" 2>/dev/null; then\n        cp \"$backup\" /config/config.yml\n        echo \"✅ Restored from $backup\"\n        exit 0\n      fi\n    done\n    # If no valid backup, try backup_config.yaml\n    if [ -f /config/backup_config.yaml ] && python3 -c \"import yaml; yaml.safe_load(open('/config/backup_config.yaml'))\" 2>/dev/null; then\n      cp /config/backup_config.yaml /config/config.yml\n      echo \"✅ Restored from backup_config.yaml\"\n      exit 0\n    fi\n    # Fallback: copy backup_config.yaml even if not explicitly a backup\n    if [ -f /config/backup_config.yaml ]; then\n      cp /config/backup_config.yaml /config/config.yml\n      echo \"✅ Restored from backup_config.yaml (fallback)\"\n      exit 0\n    fi\n    echo \"❌ No valid backup found! Using default config.\"\n    exit 0\n  fi\nelse\n  echo \"⚠️ No config.yml found\"\n  exit 0\nfi\n"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
       containers:
-      - name: frigate
-        image: ghcr.io/blakeblackshear/frigate:0.17.0-beta2
-        lifecycle:
-          preStop:
-            exec:
-              command: ["sleep", "5"]
-        securityContext:
-          privileged: true
-        ports:
-        - containerPort: 5000
-          name: http
-        - containerPort: 8554
-          name: rtsp
-        livenessProbe:
-          tcpSocket:
-            port: http
-          initialDelaySeconds: 120
-          periodSeconds: 20
-        readinessProbe:
-          tcpSocket:
-            port: http
-          initialDelaySeconds: 60
-          periodSeconds: 10
-        startupProbe:
-          tcpSocket:
-            port: http
-          failureThreshold: 30
-          periodSeconds: 10
-        resources:
-          requests:
-            cpu: 1000m
-            memory: 8Gi
-          limits:
-            cpu: 4000m
-            memory: 32Gi
-        volumeMounts:
-        - name: config
-          mountPath: /config
-        - name: storage
-          mountPath: /media/frigate
-          subPath: Frigate
-        - name: shm
-          mountPath: /dev/shm
-        - name: cache
-          mountPath: /tmp/cache
-        - name: dri
-          mountPath: /dev/dri
+        - name: frigate
+          image: ghcr.io/blakeblackshear/frigate:0.17.0-beta2
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
+          securityContext:
+            privileged: true
+          ports:
+            - containerPort: 5000
+              name: http
+            - containerPort: 8554
+              name: rtsp
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 120
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 8Gi
+            limits:
+              cpu: 4000m
+              memory: 32Gi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: storage
+              mountPath: /media/frigate
+              subPath: Frigate
+            - name: shm
+              mountPath: /dev/shm
+            - name: cache
+              mountPath: /tmp/cache
+            - name: dri
+              mountPath: /dev/dri
       volumes:
-      - name: config
-        persistentVolumeClaim:
-          claimName: frigate-config-pvc
-      - name: storage
-        nfs:
-          server: 192.168.200.244
-          path: /mnt/tank/data/media
-      - name: shm
-        emptyDir:
-          medium: Memory
-          sizeLimit: 1024Mi
-      - name: cache
-        persistentVolumeClaim:
-          claimName: frigate-cache-pvc
-      - name: dri
-        hostPath:
-          path: /dev/dri
+        - name: config
+          persistentVolumeClaim:
+            claimName: frigate-config-pvc
+        - name: storage
+          nfs:
+            server: 192.168.200.244
+            path: /mnt/tank/data/media
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1024Mi
+        - name: cache
+          persistentVolumeClaim:
+            claimName: frigate-cache-pvc
+        - name: dri
+          hostPath:
+            path: /dev/dri
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

@@ -6,8 +6,8 @@ metadata:
   namespace: tools
 spec:
   dataFrom:
-  - extract:
-      key: vixens/prod/apps/70-tools/nexterm
+    - extract:
+        key: vixens/prod/apps/70-tools/nexterm
   target:
     template:
       metadata:
