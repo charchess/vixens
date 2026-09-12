@@ -54,6 +54,9 @@ An **Architecture Decision Record** documents an important architectural decisio
 
 ### Future Architecture
 
+- **[ADR-027: Retire OpenClaw and Ollama Telemetry](027-retire-openclaw-and-ollama-telemetry.md)**
+  OpenClaw is retired through Argo CD; Hairem observes Hindsight/OpenRouter instead of probing Ollama.
+
 - **ADR-011: Namespace Ownership Strategy** 🚧
   Rules for namespace creation and ownership.
 
@@ -101,6 +104,7 @@ An **Architecture Decision Record** documents an important architectural decisio
 | 022 | 7-Tier Goldification System v1 | Superseded by ADR-023 | 2026-02 |
 | 023 | 7-Tier Goldification System v2 | Active | 2026-03 |
 | 024 | SSO Debt Diamond Wave 7 | Accepted | 2026-03 |
+| 027 | Retire OpenClaw and Ollama Telemetry | Accepted | 2026-09 |
 
 ---
 

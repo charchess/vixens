@@ -209,7 +209,7 @@ Last Updated: 2026-03-28
 | gluetun | ✅ | 🥇 Gold | VPN container |
 | firefly-iii | ✅ | 🥉 Bronze | Finance - needs upgrade |
 | firefly-iii-importer | ✅ | 💎 Platinum | |
-| openclaw | ⚠️ | 🥇 Gold | **34 restarts**, probes timeout |
+| OpenClaw | 💤 | - | Retired from GitOps; Argo CD will prune after the approved merge |
 
 ---
 
@@ -240,7 +240,7 @@ Last Updated: 2026-03-28
 |-------------|----------|------------------|
 | netbird-management | 42 | SecurityContext non durci |
 | vikunja | 37 | À investiguer |
-| openclaw | 34 | Probes en timeout |
+
 | homeassistant | 16 | PDB manquant |
 
 ---

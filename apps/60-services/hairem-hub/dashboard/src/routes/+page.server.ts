@@ -5,13 +5,6 @@ const LLM = process.env.LLMWIKI_PATH || '/data/llmwiki';
 const HINDSIGHT_API = process.env.HINDSIGHT_API_URL || 'http://hindsight-api.hindsight.svc.cluster.local:8888';
 const HINDSIGHT_UI = process.env.HINDSIGHT_UI_URL || 'http://hindsight-control-plane.hindsight.svc.cluster.local:3000';
 const HERMES_UI = process.env.HERMES_UI_URL || 'http://hermes.services.svc.cluster.local:9119';
-const OLLAMA_TARGETS = (process.env.OLLAMA_TARGETS || 'umi=http://host.docker.internal:11434,fuu=http://192.168.200.67:11434')
-  .split(',')
-  .map((entry) => {
-    const [id, ...rest] = entry.split('=');
-    return { id: id.trim(), url: rest.join('=').trim() };
-  })
-  .filter((entry) => entry.id && entry.url);
 const LLMWIKI_URL = process.env.LLMWIKI_URL || 'http://hairem-hub.services.svc.cluster.local:4567/Home';
 const GTDWIKI_URL = process.env.GTDWIKI_URL || 'http://hairem-hub.services.svc.cluster.local:4568/Home';
 const LAN = process.env.HAIREM_LAN_BASE || 'http://192.168.199.119';
@@ -50,24 +43,6 @@ type LlmRequests = { total?: number; items?: LlmRequest[]; requests?: LlmRequest
 type AsyncOperation = { id?: string; operation_id?: string; task_type?: string; operation_type?: string; status?: string; created_at?: string; updated_at?: string; retry_count?: number; progress?: Record<string, unknown>; error_message?: string | null };
 type OperationsResponse = { total?: number; operations?: AsyncOperation[] };
 
-type OllamaVersion = { version?: string };
-type OllamaTags = { models?: Array<{ name: string; details?: { parameter_size?: string; quantization_level?: string; context_length?: number } }> };
-type OllamaPs = { models?: Array<{ name: string; size_vram?: number; expires_at?: string }> };
-
-type OpenAiModels = { data?: Array<{ id: string; owned_by?: string }> };
-type ProxyHealth = { status?: string; model?: string; dimensions?: number };
-type LlmRuntime = {
-  id: string;
-  url: string;
-  led: Led;
-  detail: string;
-  version: string | null;
-  modelCount: number;
-  loadedCount: number;
-  models: Array<{ name: string; size?: string; quant?: string; ctx?: number }>;
-  loaded: Array<{ name: string; vram?: number }>;
-  apiMode: string;
-};
 
 function isoHoursAgo(hours: number) {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
@@ -143,68 +118,15 @@ function shortModelName(name: string) {
   return name.replace(':latest', '').replace(':9b-q5-16k', '').replace(/^hf\.co\//, '');
 }
 
-async function ollamaRuntime(target: { id: string; url: string }): Promise<LlmRuntime> {
-  const [version, tags, ps, openaiModels, health] = await Promise.all([
-    jsonProbe<OllamaVersion>(`${target.url}/api/version`),
-    jsonProbe<OllamaTags>(`${target.url}/api/tags`),
-    jsonProbe<OllamaPs>(`${target.url}/api/ps`),
-    jsonProbe<OpenAiModels>(`${target.url}/v1/models`),
-    jsonProbe<ProxyHealth>(`${target.url}/health`)
-  ]);
-
-  const ollamaModels = tags.data?.models || [];
-  const loaded = ps.data?.models || [];
-  const v1Models = openaiModels.data?.data || [];
-  const isOllama = version.ok || tags.ok || ps.ok;
-  const isOpenAi = openaiModels.ok || health.ok;
-  const led: Led = isOllama
-    ? (version.ok && tags.ok ? 'ok' : 'warn')
-    : (isOpenAi ? 'ok' : 'down');
-  const apiMode = isOllama && isOpenAi ? 'ollama+/v1' : (isOllama ? 'ollama' : (isOpenAi ? 'openai/proxy' : 'unreachable'));
-
-  if (isOllama) {
-    const models = ollamaModels.length
-      ? ollamaModels.map((m) => ({ name: m.name, size: m.details?.parameter_size, quant: m.details?.quantization_level, ctx: m.details?.context_length }))
-      : v1Models.map((m) => ({ name: m.id, size: m.owned_by || 'openai-api', quant: '', ctx: undefined }));
-    return {
-      id: target.id,
-      url: target.url,
-      led,
-      detail: version.data?.version ? `v${version.data.version} · ${apiMode} · loaded ${loaded.length}/${models.length} · ${loaded.map((m) => m.name).join(', ') || 'idle'} · ${target.url}` : `http ${version.status || tags.status || openaiModels.status} · ${apiMode} · ${target.url}`,
-      version: version.data?.version || null,
-      modelCount: models.length,
-      loadedCount: loaded.length,
-      models: models.slice(0, 8),
-      loaded: loaded.map((m) => ({ name: m.name, vram: m.size_vram })),
-      apiMode
-    };
-  }
-
-  const modelName = health.data?.model || v1Models[0]?.id || 'proxy';
-  return {
-    id: target.id,
-    url: target.url,
-    led,
-    detail: health.ok ? `${modelName} · ${health.data?.dimensions || '?'}d · ${apiMode} · ${target.url}` : health.error || openaiModels.error || `http ${health.status || openaiModels.status} · ${target.url}`,
-    version: null,
-    modelCount: v1Models.length,
-    loadedCount: health.ok || openaiModels.ok ? 1 : 0,
-    models: v1Models.map((m) => ({ name: m.id, size: m.owned_by || 'openai-api', quant: '', ctx: undefined })).slice(0, 8),
-    loaded: health.ok ? [{ name: modelName, vram: undefined }] : [],
-    apiMode
-  };
-}
-
 async function runtime() {
-  const [hHealth, hVersion, banksRes, hUi, llmwikiHttp, gtdwikiHttp, hermesUi, llms] = await Promise.all([
+  const [hHealth, hVersion, banksRes, hUi, llmwikiHttp, gtdwikiHttp, hermesUi] = await Promise.all([
     jsonProbe<HindsightHealth>(`${HINDSIGHT_API}/health`),
     jsonProbe<HindsightVersion>(`${HINDSIGHT_API}/version`),
     jsonProbe<BanksResponse>(`${HINDSIGHT_API}/v1/default/banks`),
     probe(HINDSIGHT_UI),
     probe(LLMWIKI_URL),
     probe(GTDWIKI_URL),
-    probe(HERMES_UI, (s, text) => s < 500 && (text.includes('Hermes Agent') || text.includes('Sign in') || text.length > 0)),
-    Promise.all(OLLAMA_TARGETS.map(ollamaRuntime))
+    probe(HERMES_UI, (s, text) => s < 500 && (text.includes('Hermes Agent') || text.includes('Sign in') || text.length > 0))
   ]);
 
   const banks = banksRes.data?.banks || [];
@@ -276,19 +198,17 @@ async function runtime() {
     ...bankLines
   ] : [hHealth.error || `http ${hHealth.status}`];
   const hindsightLed: Led = !hHealth.ok || hHealth.data?.status !== 'healthy' ? 'down' : (failed > 0 || stuck > 0 || llmErrors1h > 0 ? 'warn' : 'ok');
+  const openRouterLines = [
+    'Source         Hindsight LLM request telemetry',
+    'Transport      OpenRouter (configured in Hindsight GitOps)',
+    `Requests       7d ${llmErrors + bankDetails.reduce((n, b) => n + b.llm.success, 0)} · 24h ${llmErrors24h + bankDetails.reduce((n, b) => n + b.llm.success24h, 0)}`,
+    `Errors         1h ${llmErrors1h} · 24h ${llmErrors24h} · 7d ${llmErrors}`,
+    `Last error     ${lastErrorAge}`,
+    'Direct Ollama probes retired'
+  ];
   const components: Component[] = [
     { id: 'hindsight', label: hindsightLabel({ pending, failed, processing, stuck, recentErrors: llmErrors1h }), led: hindsightLed, detail: hindsightLines.join('\\n'), detailLines: hindsightLines, aria: `Hindsight: ${stuck} stuck, ${failed} failed, ${llmErrors1h} error per hour`, primaryIssue, tableRows: bankRows },
-    ...llms.map((llm) => {
-      const activeLines = llm.loaded.map((m) => `  ${m.name}${m.vram ? ` · vram ${Math.round(m.vram / 1024 / 1024 / 1024)}GiB` : ''}`);
-      const activeLabel = llm.loaded.map((m) => shortModelName(m.name)).slice(0, 1).join(', ');
-      const lines = [
-        `Endpoint       ${llm.url}`,
-        `API mode       ${llm.apiMode}`,
-        `Version        ${llm.version || 'proxy/health'}`,
-        ...(activeLines.length ? activeLines.map((line) => `Model          ${line.trim()}`) : ['Model          idle'])
-      ];
-      return { id: `llm-${llm.id}`, label: `llm:${llm.id} ${activeLabel || 'idle'}`, led: llm.led, detail: lines.join('\\n'), detailLines: lines };
-    }),
+    { id: 'openrouter-hindsight', label: `openrouter/hindsight ${llmErrors1h > 0 ? `${llmErrors1h} err/h` : 'ok'}`, led: hindsightLed, detail: openRouterLines.join('\\n'), detailLines: openRouterLines, aria: `OpenRouter through Hindsight: ${llmErrors1h} errors per hour` },
     { id: 'llmwiki', label: `llmwiki ${llmwikiHttp.status || ''}`, led: llmwikiHttp.ok ? 'ok' : 'down', href: `${LAN}:4567/Home`, aria: 'Open LLMWiki in a new tab', detail: llmwikiHttp.ok ? `Gollum 4567\\n${LLMWIKI_URL}` : llmwikiHttp.text.slice(0, 120), detailLines: llmwikiHttp.ok ? ['Gollum         4567', `URL            ${LLMWIKI_URL}`] : [llmwikiHttp.text.slice(0, 120)] },
     { id: 'gtdwiki', label: `gtdwiki ${gtdwikiHttp.status || ''}`, led: gtdwikiHttp.ok ? 'ok' : 'down', href: `${LAN}:4568/Home`, aria: 'Open GTDWiki in a new tab', detail: gtdwikiHttp.ok ? `Gollum 4568\\n${GTDWIKI_URL}` : gtdwikiHttp.text.slice(0, 120), detailLines: gtdwikiHttp.ok ? ['Gollum         4568', `URL            ${GTDWIKI_URL}`] : [gtdwikiHttp.text.slice(0, 120)] },
     { id: 'hindsight-ui', label: `hindsight-ui ${hUi.status || ''}`, led: hUi.ok ? 'ok' : 'down', href: `${LAN}:3000/`, aria: 'Open Hindsight UI in a new tab', detail: hUi.ok ? `Control plane\\n${HINDSIGHT_UI}` : hUi.text.slice(0, 120), detailLines: hUi.ok ? ['Control plane', `URL            ${HINDSIGHT_UI}`] : [hUi.text.slice(0, 120)] },
@@ -303,17 +223,7 @@ async function runtime() {
       backlog: { pending, failed, processing, stuck },
       pool: hHealth.data ? { waiting: hHealth.data.db_pool_waiting || 0, inUse: hHealth.data.db_pool_in_use || 0, idle: hHealth.data.db_pool_idle || 0 } : null,
       llm: { total: bankDetails.reduce((n, b) => n + b.llm.total, 0), success: bankDetails.reduce((n, b) => n + b.llm.success, 0), errors: llmErrors, errors24h: llmErrors24h, errors1h: llmErrors1h, lastErrorAge }
-    },
-    llms: llms.map((llm) => ({
-      id: llm.id,
-      url: llm.url,
-      led: llm.led,
-      version: llm.version,
-      modelCount: llm.modelCount,
-      loadedCount: llm.loadedCount,
-      loaded: llm.loaded,
-      apiMode: llm.apiMode
-    }))
+    }
   };
 }
 
