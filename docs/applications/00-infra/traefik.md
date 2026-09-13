@@ -28,4 +28,4 @@ kubectl get svc traefik -n traefik
 - **Namespace :** `traefik`
 - **Dépendances :**
     - `Cilium` (LoadBalancer)
-- **Particularités :** Ingress Controller principal du cluster. Gère le routage HTTP/HTTPS.
+- **Particularités :** Ingress Controller principal du cluster. Gère le routage HTTP/HTTPS. CrowdSec reste un composant de sécurité indépendant : son indisponibilité ne doit pas être une dépendance globale de l'entrypoint HTTPS Traefik.
