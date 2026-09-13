@@ -38,6 +38,8 @@ resources:
   - apps/keda.yaml
   - apps/keda-http-addon.yaml
   - apps/nfs-storage.yaml
+  - apps/truenas-csi-secrets.yaml
+  - apps/truenas-csi-iscsi.yaml
   - apps/mail-gateway.yaml
   - apps/homeassistant.yaml
   - apps/nightscout.yaml
