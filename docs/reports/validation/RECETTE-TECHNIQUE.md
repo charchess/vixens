@@ -40,3 +40,4 @@ Validation des aspects techniques (infra, logs, perfs).
 | **Velero** | Schedules (4) | ✅ OK | 2026-03-26 | daily-critical, daily-home, daily-media, weekly-full. 100% namespace coverage |
 | **Security** | runAsNonRoot | ✅ OK | 2026-03-26 | Enforced on 11 apps |
 | **Security** | preStop hooks | ✅ OK | 2026-03-26 | Configured on 8 critical apps for graceful shutdown |
+| **Cilium / Admission** | Kubernetes API webhook ingress | ✅ Declared | 2026-09-13 | Explicit `kube-apiserver` ingress rule required by the production default-deny baseline; restores admission for External Secrets and other webhooks. |
