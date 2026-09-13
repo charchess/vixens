@@ -20,7 +20,7 @@ patches:
   - target:
       kind: PersistentVolumeClaim
       name: homeassistant-config
-    patch: "- op: replace\n  path: /spec/storageClassName\n  value: synelia-iscsi-xfs-retain\n- op: replace\n  path: /spec/resources/requests/storage\n  value: 250Gi"
+    patch: "- op: replace\n  path: /spec/storageClassName\n  value: truenas-iscsi-xfs-retain\n- op: replace\n  path: /spec/resources/requests/storage\n  value: 250Gi"
   - path: resources-patch.yaml
   - path: dataangel.yaml
   - path: anti-affinity-frigate.yaml

@@ -92,7 +92,7 @@ spec:
         name: postgresql-admin-credentials
   storage:
     size: 200Gi # Shared across multiple databases
-    storageClass: synelia-iscsi-retain
+    storageClass: truenas-iscsi-retain
   resources:
     requests:
       cpu: 500m
@@ -110,7 +110,7 @@ spec:
   backup:
     barmanObjectStore:
       destinationPath: s3://vixens-prod-postgresql-shared/
-      endpointURL: http://synelia.internal.truxonline.com:9000
+      endpointURL: http://nas.truxonline.com:30157
       s3Credentials:
         accessKeyId:
           name: postgresql-backup-s3

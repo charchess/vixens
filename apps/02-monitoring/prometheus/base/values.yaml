@@ -22,7 +22,7 @@ server:
       effect: NoSchedule
   persistentVolume:
     enabled: true
-    storageClass: synelia-iscsi-retain
+    storageClass: truenas-iscsi-retain
     size: 50Gi
   retention: 30d
   # WAL replay on 50Gi data takes 10+ minutes — startup probe prevents liveness kill
@@ -48,7 +48,7 @@ alertmanager:
       effect: NoSchedule
   persistentVolume:
     enabled: true
-    storageClass: synelia-iscsi-retain
+    storageClass: truenas-iscsi-retain
     size: 10Gi
   resources:
     requests:

@@ -1,5 +1,5 @@
 ---
-# Dev cluster PVC was created with synelia-iscsi-retain (iSCSI).
+# Dev uses the current TrueNAS iSCSI storage class.
 # PVC specs are immutable once bound — this patch ensures Git matches
 # the existing cluster PVC to prevent ArgoCD sync errors.
 apiVersion: v1

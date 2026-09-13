@@ -7,7 +7,7 @@ lapi:
     config:
       # Existing production PVC is Bound to Synology.  StorageClass is immutable;
       # migrate via a parallel TrueNAS PVC instead of patching this claim in place.
-      storageClassName: synelia-iscsi-retain
+      storageClassName: truenas-iscsi-retain
   env:
     - name: BOUNCER_KEY_traefik
       valueFrom:
