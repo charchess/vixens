@@ -3,6 +3,9 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 commonLabels:
   environment: prod
 kind: Kustomization
+
+components:
+  - ../../../../_shared/components/prod-hibernate
 namespace: monitoring
 # NOTE: ArgoCD multi-source limitation — kustomize patches cannot target Helm-rendered resources.
 # patch-alertmanager-command.yaml targeted StatefulSet spec.template (dead code, removed).

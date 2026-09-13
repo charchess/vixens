@@ -19,12 +19,13 @@ KEDA controls are intentionally not modified in this temporary capacity-recovery
 
 - Authentik, BirdNET-Go, Booklore, Bookshelf, Changedetection, CrowdSec, Docspell
 - Firefly III and Firefly III Importer
-- Frigate, aMule, Gluetun, SABnzbd, pyLoad, qBittorrent
-- Radarr, Sonarr, Lidarr, Prowlarr, Whisparr, Mylar, Music Assistant
-- Grafana, Fluent Bit, Fluent Bit Syslog, Loki
+- Grafana, Grafana Ingress, Fluent Bit, Fluent Bit Syslog, Loki, Prometheus, Prometheus Ingress, Promtail, SNMP Exporter, VictoriaMetrics
 - Homepage, Hydrus Client, Jellyfin, Jellyseerr, Linkwarden, Mealie, n8n
 - NetBird, NetBox, NetVisor, Nexterm, Nightscout, NocoDB, Penpot
-- Sakapuss, Stirling PDF, Trivy, Vaultwarden, Vikunja
+- Prowlarr, pyLoad, qBittorrent, Sakapuss, Stirling PDF, Trivy, Vaultwarden, Vikunja, Whisparr
+- IT-Tools and Mylar
+
+`infisical-operator` is deprecated in favor of OpenBao/External Secrets, but is not stopped by this hibernation policy: active retained workloads still declare Infisical resources and need a separately validated migration before the operator can be retired.
 
 ## Retirement distinction
 

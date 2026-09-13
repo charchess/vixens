@@ -7,6 +7,7 @@ labels:
       environment: prod
     includeSelectors: false
 components:
+  - ../../../../_shared/components/prod-hibernate
   - ../../../../_shared/components/poddisruptionbudget/1
   - ../../../../_shared/components/scheduling/avoid-i915
 patches:

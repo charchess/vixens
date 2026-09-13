@@ -9,6 +9,7 @@ resources:
   - infisical-secret.yaml
 
 components:
+  - ../../../../_shared/components/prod-hibernate
   - ../../../../_shared/components/sync-wave/wave-15
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
