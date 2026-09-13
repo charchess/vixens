@@ -28,6 +28,7 @@ Last Updated: 2026-03-28
 
 - Le `ClusterSecretStore` canonique est `openbao` et pointe vers OpenBao sur TrueNAS (`nas.truxonline.com:8200`, moteur `kv` v2). Le suffixe historique `-umi` est retiré de tous les manifests ; UMI n'est pas une dépendance de production.
 - Les secrets Home Assistant sont synchronisés depuis `kv/vixens/prod/apps/10-home/homeassistant`. Les valeurs ne sont jamais stockées dans Git.
+- Le PVC Home Assistant est créé avant le Deployment (wave 5 avant wave 6) sur `truenas-iscsi-xfs-retain`. La remise en service est un démarrage vierge explicitement autorisé ; la restauration applicative provient du backup séparé.
 
 
 ### Incident résolu
