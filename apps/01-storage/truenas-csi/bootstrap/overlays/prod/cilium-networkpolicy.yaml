@@ -1,0 +1,34 @@
+---
+# TrueNAS API/iSCSI is outside the Kubernetes identity domain. The policy uses
+# its verified RFC1918 address; the driver configuration itself uses the
+# canonical FQDN nas.truxonline.com.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: truenas-csi-iscsi-egress
+  namespace: truenas-csi
+specs:
+  - endpointSelector:
+      matchLabels:
+        app.kubernetes.io/instance: truenas-csi-iscsi
+        app.kubernetes.io/csi-role: controller
+    egress:
+      - toCIDR:
+          - 192.168.200.244/32
+        toPorts:
+          - ports:
+              - port: "443"
+                protocol: TCP
+              - port: "22"
+                protocol: TCP
+  - endpointSelector:
+      matchLabels:
+        app.kubernetes.io/instance: truenas-csi-iscsi
+        app.kubernetes.io/csi-role: node
+    egress:
+      - toCIDR:
+          - 192.168.200.244/32
+        toPorts:
+          - ports:
+              - port: "3260"
+                protocol: TCP

@@ -30,6 +30,7 @@ Last Updated: 2026-03-28
 - Les secrets Home Assistant sont synchronisés depuis `kv/vixens/prod/apps/10-home/homeassistant`. Les valeurs ne sont jamais stockées dans Git.
 - Le PVC Home Assistant est créé avant le Deployment (wave 5 avant wave 6) sur `truenas-iscsi-xfs-retain`. La remise en service est un démarrage vierge explicitement autorisé ; la restauration applicative provient du backup séparé.
 - Les configurations CSI TrueNAS de production sont lues depuis `kv/vixens/prod/apps/01-storage/truenas-csi/{iscsi,nfs}` et utilisent le FQDN canonique `nas.truxonline.com`, sans identifiant UMI.
+- Le CSI iSCSI reçoit une egress Cilium minimale : contrôleur vers TrueNAS API/SSH (`443`, `22`) et nœuds CSI vers la cible iSCSI (`3260`). Elle cible uniquement `192.168.200.244/32`, adresse vérifiée du FQDN NAS.
 
 
 ### Incident résolu
