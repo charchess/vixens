@@ -22,10 +22,9 @@ logs:
     enabled: true
 resources: {}
 # High availability with multiple replicas
-additionalArguments:
-  - "--experimental.plugins.bouncer.moduleName=github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
-  - "--experimental.plugins.bouncer.version=v1.5.1"
-  - "--entrypoints.websecure.http.middlewares=traefik-bouncer@kubernetescrd"
+# CrowdSec remains independently deployed, but it is not a global Traefik
+# entrypoint dependency: an unavailable LAPI must not take down public routing.
+additionalArguments: []
 
 deployment:
   replicas: 2

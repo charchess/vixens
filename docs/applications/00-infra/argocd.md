@@ -32,4 +32,4 @@ curl -L -k https://argocd.dev.truxonline.com | grep "Argo CD"
     - `Traefik` (Ingress)
     - `Cilium` (LoadBalancer)
 - **Particularités :** Argo CD se gère désormais lui-même via le pattern App-of-Apps. L'utilisation du Server-Side Apply (SSA) permet la coexistence avec la release Helm initiale de Terraform. La transition a nécessité une application forcée des CRDs v3.3.0.
-- **Accès public prod :** sous Cilium default-deny, la CNP `argocd` autorise explicitement les Pods Traefik à joindre `argocd-server`; sans cette règle, Traefik ne dispose d'aucun backend exploitable pour `argocd.truxonline.com`.
+- **Accès public prod :** sous Cilium default-deny, la CNP `argocd` autorise explicitement les Pods Traefik à joindre `argocd-server`; sans cette règle, Traefik ne dispose d'aucun backend exploitable pour `argocd.truxonline.com`. Traefik ne dépend pas globalement de CrowdSec : une LAPI CrowdSec indisponible ne doit pas rendre l'accès ArgoCD indisponible.
