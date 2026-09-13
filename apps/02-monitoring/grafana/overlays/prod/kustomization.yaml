@@ -9,7 +9,6 @@ namespace: monitoring
 components:
   - ../../../../_shared/components/scheduling/avoid-i915
 
-  - ../../../../_shared/components/prod-hibernate
 patches:
   - path: patch-infisical-env.yaml
   - patch: |-

@@ -23,6 +23,5 @@ components:
   - ../../../../_shared/components/dataangel
   - ../../../../_shared/components/scheduling/avoid-i915
 
-  - ../../../../_shared/components/prod-hibernate
 patches:
   - path: dataangel.yaml

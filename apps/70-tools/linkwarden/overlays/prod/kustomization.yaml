@@ -11,7 +11,6 @@ components:
   - ../../../../_shared/components/dataangel
   - ../../../../_shared/components/poddisruptionbudget/1
 
-  - ../../../../_shared/components/prod-hibernate
 patches:
   - path: patch-nextauth-url.yaml
   - path: dataangel.yaml

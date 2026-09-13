@@ -10,7 +10,6 @@ components:
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/poddisruptionbudget/1
   - ../../../../_shared/components/scheduling/avoid-i915
-  - ../../../../_shared/components/prod-hibernate
 labels:
   - pairs:
       environment: prod

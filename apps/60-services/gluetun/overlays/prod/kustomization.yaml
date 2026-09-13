@@ -16,5 +16,4 @@ components:
   - ../../../../_shared/components/revision-history-limit
   - ../../../../_shared/components/poddisruptionbudget/1
 
-  - ../../../../_shared/components/prod-hibernate
 patches:
