@@ -1,5 +1,5 @@
 ---
-# democratic-csi / TrueNAS SCALE iSCSI for UMI laboratory k3s.
+# democratic-csi / TrueNAS SCALE iSCSI for Vixens production Talos.
 # Secret expected: truenas-csi/truenas-csi-iscsi-driver-config
 # key: driver-config-file.yaml
 
@@ -53,7 +53,7 @@ node:
     vixens.io/no-long-connections: "true"
     vixens.io/nometrics: "true"
     vixens.io/service-binding: "false"
-    vixens.io/sizing-rationale: "G-nano: CSI iSCSI node plugin on single-node UMI lab"
+    vixens.io/sizing-rationale: "G-nano: CSI iSCSI node plugin on Vixens production nodes"
   driver:
     logLevel: info
     iscsiDirHostPath: /etc/iscsi
