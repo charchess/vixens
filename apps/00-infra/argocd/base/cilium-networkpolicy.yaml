@@ -17,6 +17,11 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+    # Traefik forwards the public argocd.truxonline.com ingress to argocd-server.
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: traefik
+            app.kubernetes.io/name: traefik
     - fromEntities:
         - host
         - remote-node
