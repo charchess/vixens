@@ -15,6 +15,7 @@ components:
   - ../../../../_shared/components/securitycontext/s6-overlay
   - ../../../../_shared/components/dataangel
   - ../../../../_shared/components/scheduling/avoid-i915
+  - ../../../../_shared/components/prod-hibernate
 patches:
   - path: patch-openbao-env.yaml
   - target:

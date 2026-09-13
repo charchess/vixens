@@ -1,0 +1,53 @@
+---
+# Kustomize Component: Production Hibernate
+#
+# Stops workload controllers while retaining their ArgoCD Application and all
+# GitOps configuration. Remove this component from an overlay to reactivate it.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: all-deployments
+      spec:
+        replicas: 0
+    target:
+      kind: Deployment
+
+  - patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: all-statefulsets
+      spec:
+        replicas: 0
+    target:
+      kind: StatefulSet
+
+  - patch: |-
+      apiVersion: batch/v1
+      kind: CronJob
+      metadata:
+        name: all-cronjobs
+      spec:
+        suspend: true
+    target:
+      kind: CronJob
+
+  # DaemonSets have no replicas field. An unmatched node selector hibernates
+  # them without deleting the controller or its GitOps declaration.
+  - patch: |-
+      apiVersion: apps/v1
+      kind: DaemonSet
+      metadata:
+        name: all-daemonsets
+      spec:
+        template:
+          spec:
+            nodeSelector:
+              vixens.io/hibernate: "true"
+    target:
+      kind: DaemonSet

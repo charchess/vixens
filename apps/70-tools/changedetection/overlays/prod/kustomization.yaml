@@ -7,6 +7,7 @@ components:
   - ../../../../_shared/components/nometrics
   - ../../../../_shared/components/dataangel
   - ../../../../_shared/components/poddisruptionbudget/1
+  - ../../../../_shared/components/prod-hibernate
 patches:
   - path: patch-openbao-env.yaml
   - patch: "- op: replace\n  path: /spec/template/spec/containers/0/env/0/value\n  value: https://changedetection.truxonline.com"
