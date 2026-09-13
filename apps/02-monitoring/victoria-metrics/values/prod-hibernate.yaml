@@ -1,0 +1,18 @@
+---
+# Production capacity hibernation: all chart-managed VictoriaMetrics workloads.
+# The Kustomize prod-hibernate component cannot patch Helm-rendered resources
+# from a separate Argo CD source, so the Helm values are the authoritative gate.
+victoria-metrics-operator:
+  enabled: false
+vmsingle:
+  enabled: false
+vmagent:
+  enabled: false
+vmalert:
+  enabled: false
+alertmanager:
+  enabled: false
+prometheus-node-exporter:
+  enabled: false
+kube-state-metrics:
+  enabled: false
