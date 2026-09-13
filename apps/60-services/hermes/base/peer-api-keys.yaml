@@ -8,7 +8,7 @@ spec:
   refreshInterval: 1h
   secretStoreRef:
     kind: ClusterSecretStore
-    name: openbao-umi
+    name: openbao
   target:
     name: hermes-peer-api-keys
     creationPolicy: Owner
