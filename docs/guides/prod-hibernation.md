@@ -6,7 +6,7 @@ The production cluster is temporarily capacity-constrained. Selected non-core ap
 
 ## Mechanism
 
-Each selected production overlay imports `apps/_shared/components/prod-hibernate`.
+Each selected production overlay imports `apps/_shared/components/prod-hibernate`. Helm applications whose rendered workloads come from a separate Argo CD Helm source must additionally carry their hibernation values in that Helm source; CrowdSec and VictoriaMetrics use this explicit value-based gate.
 
 - `Deployment` and `StatefulSet` workloads are set to `replicas: 0`.
 - `CronJob` workloads are set to `suspend: true`.

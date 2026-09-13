@@ -30,6 +30,7 @@ Last Updated: 2026-03-28
 | `argocd.truxonline.com` répondait 404 / Traefik n'avait aucun backend | La CiliumNetworkPolicy du namespace `argocd` appliquait le default-deny sans autoriser les Pods Traefik | Ingress explicite Traefik → ArgoCD server dans la CNP GitOps |
 | Le routage HTTPS Traefik dépendait globalement de CrowdSec | Le plugin/middleware CrowdSec était injecté sur tout `websecure`, alors que la LAPI est indisponible | Retrait de la dépendance globale ; CrowdSec reste isolé de Traefik |
 | Workloads non-core redémarrés après reprise | La reprise globale avait retiré leur composant `prod-hibernate` | Hibernation GitOps réappliquée uniquement à la liste demandée ; socle, stockage et bases restent actifs |
+| CrowdSec et VictoriaMetrics restaient actifs malgré `prod-hibernate` | Les workloads sont rendus par une source Helm séparée, non patchable par le composant Kustomize | Valeurs Helm prod dédiées : désactivation explicite des contrôleurs et composants de collecte |
 
 ## Incidents & Changements notables — 2026-03-28
 

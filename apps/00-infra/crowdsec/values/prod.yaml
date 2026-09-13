@@ -1,5 +1,13 @@
 ---
 lapi:
+  # The production capacity policy hibernates CrowdSec.  Traefik has no
+  # global CrowdSec dependency, so the LAPI can remain stopped safely.
+  replicas: 0
+  persistentVolume:
+    config:
+      # Existing production PVC is Bound to Synology.  StorageClass is immutable;
+      # migrate via a parallel TrueNAS PVC instead of patching this claim in place.
+      storageClassName: synelia-iscsi-retain
   env:
     - name: BOUNCER_KEY_traefik
       valueFrom:
@@ -20,3 +28,7 @@ lapi:
         secretKeyRef:
           name: crowdsec-secrets
           key: CROWDSEC_DB_PASSWORD
+
+agent:
+  # Do not leave the chart's DaemonSet running while CrowdSec is hibernated.
+  enabled: false
