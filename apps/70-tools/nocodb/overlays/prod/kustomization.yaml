@@ -10,7 +10,6 @@ components:
   - ../../../../_shared/components/nometrics
   - ../../../../_shared/components/dataangel
   - ../../../../_shared/components/scheduling/avoid-i915
-  - ../../../../_shared/components/prod-hibernate
 patches:
   - path: patch-openbao-env.yaml
   - path: dataangel.yaml

@@ -9,7 +9,6 @@ components:
   - ../../../../_shared/components/sync-wave/wave-3
   - ../../../../_shared/components/goldilocks/enabled
 
-  - ../../../../_shared/components/prod-hibernate
 patches:
   - path: resources-patch.yaml
   - path: node-collector-patch.yaml
