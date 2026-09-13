@@ -1,0 +1,16 @@
+---
+# Admission webhooks are reached by the Kubernetes API server through
+# ClusterIP Services. The production baseline is default-deny in both
+# directions, so the API-server entity must be explicitly allowed inbound.
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: allow-kube-apiserver-ingress
+spec:
+  endpointSelector: {}
+  enableDefaultDeny:
+    ingress: true
+    egress: true
+  ingress:
+    - fromEntities:
+        - kube-apiserver

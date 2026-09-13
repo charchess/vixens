@@ -8,6 +8,7 @@ resources:
   - ccnp-allow-prometheus.yaml
   - ccnp-allow-coredns.yaml
   - ccnp-allow-kube-apiserver.yaml
+  - ccnp-allow-kube-apiserver-ingress.yaml
   - ccnp-allow-coredns-ingress.yaml
   - ccnp-allow-coredns-egress.yaml
   - ccnp-allow-cilium-health.yaml
