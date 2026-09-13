@@ -1,0 +1,19 @@
+---
+# Make the repo-server init container idempotent after a pod retry.
+# Without -f, the existing emptyDir symlink makes /bin/ln exit 1,
+# leaving ArgoCD unable to generate manifests or resolve prod-stable.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-repo-server
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: copyutil
+          args:
+            - |-
+              target=/var/run/argocd/argocd
+              link=/var/run/argocd/argocd-cmp-server
+              /bin/cp --update=none /usr/local/bin/argocd "$target" &&
+              /bin/ln -sf "$target" "$link"

@@ -11,6 +11,7 @@ patches:
   - path: patches/argocd-params.yaml
   - path: patches/argocd-cm-ignore-differences.yaml
   - path: patches/crds-replace-sync.yaml
+  - path: patches/repo-server-copyutil-fix.yaml
   - target:
       group: apps
       version: v1
