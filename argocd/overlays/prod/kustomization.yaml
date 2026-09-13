@@ -4,8 +4,11 @@ kind: Kustomization
 namespace: argocd
 resources:
   - apps/shared-namespaces.yaml
-  - apps/external-secrets-umi.yaml
-  - apps/openbao-secrets-umi.yaml
+  - apps/external-secrets.yaml
+  - apps/openbao-secrets.yaml
+  # UMI development overlays must never be deployed to production.
+  # Disabled by owner: apps/external-secrets-umi.yaml
+  # Disabled by owner: apps/openbao-secrets-umi.yaml
   - apps/velero-secrets.yaml
   - apps/velero.yaml
   - apps/cilium-lb.yaml
@@ -31,9 +34,10 @@ resources:
   - apps/cert-manager-webhook-gandi.yaml
   - apps/cert-manager-config.yaml
   - apps/snapshot-controller.yaml
-  - apps/truenas-csi-secrets-umi.yaml
-  - apps/truenas-csi-iscsi-umi.yaml
-  - apps/truenas-csi-nfs-umi.yaml
+  # UMI development overlays must never be deployed to production.
+  # Disabled by owner: apps/truenas-csi-secrets-umi.yaml
+  # Disabled by owner: apps/truenas-csi-iscsi-umi.yaml
+  # Disabled by owner: apps/truenas-csi-nfs-umi.yaml
   - apps/local-path-provisioner.yaml
   - apps/keda.yaml
   - apps/keda-http-addon.yaml
@@ -52,20 +56,20 @@ resources:
   - apps/hubble-ui.yaml
   # Disabled by owner: apps/homepage.yaml
   # Disabled by owner: apps/linkwarden.yaml
-  - apps/gluetun.yaml
-  - apps/sabnzbd.yaml
+  # Disabled by owner: apps/gluetun.yaml
+  # Disabled by owner: apps/sabnzbd.yaml
   # Disabled by owner: apps/pyload.yaml
   # Disabled by owner: apps/qbittorrent.yaml
-  - apps/amule.yaml
+  # Disabled by owner: apps/amule.yaml
   - apps/media-shared-secrets.yaml
-  - apps/radarr.yaml
+  # Disabled by owner: apps/radarr.yaml
   # Disabled by owner: apps/docspell.yaml
   # Disabled by owner: apps/firefly-iii.yaml
   # Disabled by owner: apps/firefly-iii-importer.yaml
   # Disabled by owner: apps/n8n.yaml
   - apps/lidarr.yaml
   # Disabled by owner: apps/booklore.yaml
-  - apps/sonarr.yaml
+  # Disabled by owner: apps/sonarr.yaml
   # Disabled by owner: apps/prowlarr.yaml
   # Disabled by owner: apps/whisparr.yaml
   # Disabled by owner: apps/mylar.yaml
@@ -80,7 +84,7 @@ resources:
   - apps/redis-shared.yaml
   - apps/postgresql-shared.yaml
   # Disabled by owner: apps/changedetection.yaml
-  - apps/adguard-home.yaml
+  # Disabled by owner: apps/adguard-home.yaml
   # Disabled by owner: apps/netbird.yaml
   # Disabled by owner: apps/netvisor.yaml
   # Disabled by owner: apps/nocodb.yaml

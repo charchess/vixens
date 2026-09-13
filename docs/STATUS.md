@@ -32,6 +32,7 @@ Last Updated: 2026-03-28
 | Workloads non-core redémarrés après reprise | La reprise globale avait retiré leur composant `prod-hibernate` | Hibernation GitOps réappliquée uniquement à la liste demandée ; socle, stockage et bases restent actifs |
 | CrowdSec et VictoriaMetrics restaient actifs malgré `prod-hibernate` | Les workloads sont rendus par une source Helm séparée, non patchable par le composant Kustomize | Valeurs Helm prod dédiées : désactivation explicite des contrôleurs et composants de collecte |
 | Applications non-core en dette de PVC/secrets legacy | Les garder dans l'app-of-apps entretenait des synchronisations en échec alors qu'elles étaient volontairement arrêtées | 41 Applications demandées par le propriétaire sont commentées dans l'overlay prod ; ArgoCD les prune au lieu de tenter de les réparer |
+| Overlays UMI inclus dans l'app-of-apps prod | Des Applications prod rendaient les valeurs et chemins de l'hôte de développement UMI (`*-umi`) | Remplacées par les Applications/valeurs prod ; les overlays UMI sont explicitement exclus de prod |
 
 ## Incidents & Changements notables — 2026-03-28
 
