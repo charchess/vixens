@@ -8,6 +8,7 @@ resources:
   - httpscaledobject.yaml
 
 components:
+  - ../../../../_shared/components/prod-hibernate
 
 patches:
   # gold-maturity annotations via direct JSON patches (Helm chart doesn't support deploymentAnnotations)
