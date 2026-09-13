@@ -4,7 +4,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: homeassistant-config
   annotations:
-    argocd.argoproj.io/sync-wave: "10"
+    # PVC must exist before the Deployment (sync wave 6); otherwise ArgoCD aborts before provisioning it.
+    argocd.argoproj.io/sync-wave: "5"
   namespace: homeassistant
 spec:
   accessModes:
