@@ -9,6 +9,7 @@ labels:
 components:
   - ../../../../_shared/components/poddisruptionbudget/1
   - ../../../../_shared/components/scheduling/avoid-i915
+  - ../../../../_shared/components/prod-hibernate
 patches:
   - path: patch-openbao-env.yaml
   - path: deployment-patch.yaml

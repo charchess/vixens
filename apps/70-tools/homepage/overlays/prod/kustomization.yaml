@@ -7,6 +7,7 @@ components:
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
 
+  - ../../../../_shared/components/prod-hibernate
 patches:
   - path: infisical-config-patch.yaml
     target:

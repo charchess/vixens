@@ -91,7 +91,6 @@ resources:
   - apps/renovate.yaml
   - apps/stirling-pdf.yaml
   - apps/it-tools.yaml
-  - apps/g4f.yaml
   - apps/contacts.yaml
   - apps/external-dns-gandi.yaml
   - apps/external-dns-gandi-secrets.yaml
