@@ -4,7 +4,7 @@
 | Environnement | Déployé | Configuré | Testé | Version |
 |---------------|---------|-----------|-------|---------|
 | Dev           | [x]     | [x]       | [x]   | 2026.1.3 |
-| Prod          | [x]     | [x]       | [x]   | 2026.1.3 |
+| Prod          | [x]     | [x]       | [ ]   | 2026.9.2 |
 
 ## Validation
 **URL :** https://homeassistant.[env].truxonline.com
