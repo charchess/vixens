@@ -33,7 +33,7 @@ curl -L -k https://homeassistant.dev.truxonline.com | grep "Home Assistant"
     - `PostgreSQL` (Cluster partagé, via `homeassistant-postgresql-credentials`)
     - `Traefik` (Ingress)
 - **Particularités :** Utilise `hostNetwork: true` pour la découverte mDNS. Configuration montée via `subPath`.
-- **Restauration DataAngel :** `python_packages/**` est exclu du restore S3 en production. Les dépendances Python sont reconstruites localement par `install-python-deps`, afin qu’un objet S3 obsolète ne bloque pas le démarrage.
+- **DataAngel prod :** désactivé pour Home Assistant. Le PVC TrueNAS et les sauvegardes archivées sont conservés, mais aucun restore/backup DataAngel ne s’exécute au démarrage ; cela évite que le sidecar de protection bloque le Core ou réécrive les stores d’auth pendant une récupération.
 - **Init Python :** `install-python-deps` réserve 256 MiB et est plafonné à 512 MiB, car NumPy/SciPy/Shapely dépassent le budget VPA générique pendant l’installation.
 - **Sizing prod :** le Core est `B-large` (100m/1 GiB demandés, burst 1 CPU/2 GiB). Le VPA généré reste en recommandation uniquement (`updateMode: Off`) : un profil `V-*` avait réduit le plafond effectif à 44mCPU et empêché le démarrage après restauration.
 ---
