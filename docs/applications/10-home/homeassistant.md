@@ -34,7 +34,7 @@ curl -L -k https://homeassistant.dev.truxonline.com | grep "Home Assistant"
     - `Traefik` (Ingress)
 - **Particularités :** Utilise `hostNetwork: true` pour la découverte mDNS. Configuration montée via `subPath`.
 - **Restauration DataAngel :** `python_packages/**` est exclu du restore S3 en production. Les dépendances Python sont reconstruites localement par `install-python-deps`, afin qu’un objet S3 obsolète ne bloque pas le démarrage.
-- **Init Python :** `install-python-deps` réserve 256 MiB et est plafonné à 512 MiB, car NumPy/SciPy/Shapely dépassent le budget VPA générique pendant l’installation.
+- **Init Python :** le label `vixens.io/sizing.install-python-deps: V-small` laisse Kyverno appliquer le budget adapté (256 MiB request / 1 GiB limit), car NumPy/SciPy/Shapely dépassent le défaut d’un init non étiqueté.
 ---
 > ⚠️ **HIBERNATION DEV**
 > Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
