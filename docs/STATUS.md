@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-03-28
+Last Updated: 2026-09-14
 
 ---
 
@@ -19,6 +19,16 @@ Last Updated: 2026-03-28
 | **Kustomize Build** | ✅ PASSING | |
 | **CI/CD Pipelines** | ✅ ACTIVE | |
 | **Quality Gates** | ✅ ENFORCED | Pre-commit + CI (secrets, YAML style, K8s validation) |
+
+---
+
+## Incidents & Changements notables — 2026-09-14
+
+### Data durability: DataAngel retiré des overlays prod
+
+- DataAngel est retiré de 32 overlays de production. Les démarrages applicatifs ne dépendent plus d'une restauration automatique S3 ni de son endpoint d'init.
+- La protection durable est assurée par snapshots ZFS TrueNAS avec rétention GFS et réplication `zfs send` vers une cible indépendante, complétée par les backups natifs applicatifs quand disponibles.
+- Les PVC/PV retenus, objets S3 historiques et chemins de recovery non-prod sont conservés. Une restauration est désormais une opération explicite, sélectionnant un point ZFS validé.
 
 ---
 

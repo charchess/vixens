@@ -1,6 +1,6 @@
 # Architecture Decision Records - Index
 
-**Last Updated:** 2026-01-17
+**Last Updated:** 2026-09-14
 
 ---
 
@@ -29,6 +29,7 @@ Ces documents représentent l'état actuel et obligatoire de l'architecture Vixe
 | [025](025-local-path-provisioner.md) | Local Path Provisioner for Node-Local Storage | 2026-03-25 | storage, local, performance |
 | [026](026-keda-scale-to-zero.md) | KEDA HTTP Add-on for Scale-to-Zero | 2026-03-26 | scaling, performance, keda |
 | [027](027-retire-openclaw-and-ollama-telemetry.md) | Retire OpenClaw and Ollama Telemetry | 2026-09-12 | gitops, argocd, observability, openrouter |
+| [028](028-retire-dataangel-prod-zfs.md) | Retire DataAngel Restore Init from Production Workloads | 2026-09-14 | backup, disaster-recovery, truenas, zfs, gitops |
 
 ---
 

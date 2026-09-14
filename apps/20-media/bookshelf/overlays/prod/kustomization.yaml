@@ -10,7 +10,5 @@ components:
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
   - ../../../../_shared/components/poddisruptionbudget/1
-  - ../../../../_shared/components/dataangel
 patches:
   - path: patch-openbao-env.yaml
-  - path: dataangel.yaml

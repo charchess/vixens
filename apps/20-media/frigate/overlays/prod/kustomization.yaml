@@ -11,7 +11,6 @@ components:
   - ../../../../_shared/components/revision-history-limit
   - ../../../../_shared/components/metrics
   - ../../../../_shared/components/poddisruptionbudget/0
-  - ../../../../_shared/components/dataangel
 patches:
   - path: patch-openbao-env.yaml
   - target:
@@ -27,4 +26,3 @@ patches:
       name: frigate
     patch: "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: frigate\nspec:\n  template:\n    metadata:\n      labels:\n        vixens.io/sizing.frigate: V-manual\n      annotations:\n        vixens.io/explicitly-allow-root: \"true\"\n        vixens.io/vpa.update-mode: \"Off\"\n        vixens.io/vpa.max-cpu: \"4000m\"\n        vixens.io/vpa.max-memory: \"10Gi\"\n    spec:\n      securityContext:\n        runAsNonRoot: false\n        runAsUser: 0\n        fsGroup: 0\n      initContainers:\n        - name: validate-config\n          securityContext:\n            runAsUser: 0\n            runAsGroup: 0\n      containers:\n        - name: frigate\n          securityContext:\n            privileged: true\n            runAsUser: 0\n            runAsGroup: 0\n          resources:\n            requests:\n              cpu: \"1000m\"\n              memory: \"2Gi\"\n            limits:\n              cpu: \"4000m\"\n              memory: \"10Gi\""
   - path: pvc-patch.yaml
-  - path: dataangel.yaml
