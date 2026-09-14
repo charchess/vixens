@@ -22,6 +22,14 @@ Last Updated: 2026-09-14
 
 ---
 
+## Désactivations demandées — 2026-09-14
+
+- L'app-of-apps production cesse de déclarer `lidarr`, `mongodb-shared`, `mariadb-shared`, `redis-shared` et `postgresql-shared` à la demande du propriétaire.
+- La promotion déclenche le prune Argo des workloads et ressources gérées. Les volumes TrueNAS sont conservés selon leurs politiques de rétention ; aucune suppression directe de PV, snapshot ZFS ou objet de sauvegarde n'est effectuée par ce changement.
+- L'opérateur `cloudnative-pg` reste déclaré : seule l'instance applicative `postgresql-shared` et ses dépendances de données sont retirées.
+
+---
+
 ## Incidents & Changements notables — 2026-09-14
 
 ### Data durability: DataAngel retiré des overlays prod
