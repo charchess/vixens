@@ -35,6 +35,7 @@ curl -L -k https://homeassistant.dev.truxonline.com | grep "Home Assistant"
 - **Particularités :** Utilise `hostNetwork: true` pour la découverte mDNS. Configuration montée via `subPath`.
 - **Restauration DataAngel :** `python_packages/**` est exclu du restore S3 en production. Les dépendances Python sont reconstruites localement par `install-python-deps`, afin qu’un objet S3 obsolète ne bloque pas le démarrage.
 - **Init Python :** `install-python-deps` réserve 256 MiB et est plafonné à 512 MiB, car NumPy/SciPy/Shapely dépassent le budget VPA générique pendant l’installation.
+- **Sizing prod :** le Core est `B-large` (100m/1 GiB demandés, burst 1 CPU/2 GiB). Le VPA généré reste en recommandation uniquement (`updateMode: Off`) : un profil `V-*` avait réduit le plafond effectif à 44mCPU et empêché le démarrage après restauration.
 ---
 > ⚠️ **HIBERNATION DEV**
 > Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.

@@ -4,15 +4,17 @@ kind: Deployment
 metadata:
   name: homeassistant
   labels:
-    vixens.io/sizing: V-large
+    vixens.io/sizing: B-large
 spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing: V-large
-        vixens.io/sizing.homeassistant: V-large
+        vixens.io/sizing: B-large
+        vixens.io/sizing.homeassistant: B-large
         vixens.io/sizing.litestream: SB-medium
         vixens.io/sizing.config-syncer: B-small
       annotations:
-        # homeassistant V-large(2560Mi) + litestream SB-medium(1024Mi) + config-syncer B-small(512Mi) = 4096Mi
+        # Home Assistant must retain B-large burst capacity (1 CPU / 2Gi) during Core startup and backup recovery.
+        # VPA recommendations remain available but must not in-place shrink this single-replica hostNetwork workload.
+        vixens.io/vpa.update-mode: "Off"
         vixens.io/vpa.max-memory: "4096Mi"
