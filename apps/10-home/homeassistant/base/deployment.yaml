@@ -76,6 +76,13 @@ spec:
                 pip install --no-cache-dir --target="$TARGET" $PACKAGES
                 chown -R 1000:1000 "$TARGET"
               fi
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           volumeMounts:
             - name: config
               mountPath: /config
