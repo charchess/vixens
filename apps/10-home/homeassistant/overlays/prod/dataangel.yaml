@@ -30,6 +30,10 @@ spec:
             periodSeconds: 2
             failureThreshold: 3600
           env:
+            # Runtime dependencies are rebuilt by install-python-deps; do not
+            # restore stale wheel artifacts from the application backup.
+            - name: DATA_GUARD_EXCLUDE_PATTERNS
+              value: "python_packages/**"
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
