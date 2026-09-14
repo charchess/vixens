@@ -33,6 +33,7 @@ curl -L -k https://homeassistant.dev.truxonline.com | grep "Home Assistant"
     - `PostgreSQL` (Cluster partagé, via `homeassistant-postgresql-credentials`)
     - `Traefik` (Ingress)
 - **Particularités :** Utilise `hostNetwork: true` pour la découverte mDNS. Configuration montée via `subPath`.
+- **Restauration DataAngel :** `python_packages/**` est exclu du restore S3 en production. Les dépendances Python sont reconstruites localement par `install-python-deps`, afin qu’un objet S3 obsolète ne bloque pas le démarrage.
 ---
 > ⚠️ **HIBERNATION DEV**
 > Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
