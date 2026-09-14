@@ -138,6 +138,11 @@ spec:
                 mkdir -p /config/python_scripts
                 chown 1000:1000 /config/python_scripts
               fi
+              # HA backup restore runs as UID/GID 1000 and must replace this
+              # disposable runtime dependency tree atomically.
+              mkdir -p /config/python_packages
+              chown 1000:1000 /config/python_packages
+              chmod 2775 /config/python_packages
           volumeMounts:
             - name: config
               mountPath: /config
