@@ -67,7 +67,7 @@ resources:
   # Disabled by owner: apps/firefly-iii.yaml
   # Disabled by owner: apps/firefly-iii-importer.yaml
   # Disabled by owner: apps/n8n.yaml
-  - apps/lidarr.yaml
+  # Disabled by owner: apps/lidarr.yaml
   # Disabled by owner: apps/booklore.yaml
   # Disabled by owner: apps/sonarr.yaml
   # Disabled by owner: apps/prowlarr.yaml
@@ -81,8 +81,8 @@ resources:
   # Disabled by owner: apps/sakapuss.yaml
 
   - apps/cloudnative-pg.yaml
-  - apps/redis-shared.yaml
-  - apps/postgresql-shared.yaml
+  # Disabled by owner: apps/redis-shared.yaml
+  # Disabled by owner: apps/postgresql-shared.yaml
   # Disabled by owner: apps/changedetection.yaml
   # Disabled by owner: apps/adguard-home.yaml
   # Disabled by owner: apps/netbird.yaml
@@ -102,8 +102,8 @@ resources:
   - apps/external-dns-gandi-secrets.yaml
   - apps/external-dns-unifi.yaml
   - apps/external-dns-unifi-secrets.yaml
-  - apps/mariadb-shared.yaml
-  - apps/mongodb-shared.yaml
+  # Disabled by owner: apps/mariadb-shared.yaml
+  # Disabled by owner: apps/mongodb-shared.yaml
   # Disabled by owner: apps/penpot.yaml
   # Disabled by owner: apps/vikunja.yaml
   # Disabled by owner: apps/trivy.yaml
