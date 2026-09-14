@@ -89,6 +89,9 @@ spec:
         - name: config-init
           image: busybox:1.37.0
           securityContext:
+            # The restored PVC can retain root-owned generated directories.
+            # This bootstrap normalizes their ownership before Core runs as 1000.
+            runAsUser: 0
             capabilities:
               add: [CHOWN]
           command:
