@@ -14,4 +14,3 @@ components:
 patches:
   - path: patch-openbao-env.yaml
   - path: patches.yaml
-  - path: dataangel.yaml

@@ -10,9 +10,7 @@ components:
   - ../../../../_shared/components/sync-wave/wave-11
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/revision-history-limit
-  - ../../../../_shared/components/dataangel
   - ../../../../_shared/components/poddisruptionbudget/1
   - ../../../../_shared/components/scheduling/avoid-i915
 patches:
   - path: patch-openbao-env.yaml
-  - path: dataangel.yaml

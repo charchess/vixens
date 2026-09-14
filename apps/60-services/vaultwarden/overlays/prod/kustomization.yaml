@@ -9,7 +9,6 @@ components:
   - ../../../../_shared/components/sync-wave/wave-7
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
-  - ../../../../_shared/components/dataangel
   - ../../../../_shared/components/poddisruptionbudget/1
 
 patches:
@@ -21,4 +20,3 @@ patches:
     target:
       kind: Deployment
       name: vaultwarden
-  - path: dataangel.yaml

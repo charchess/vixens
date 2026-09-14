@@ -9,11 +9,9 @@ components:
   - ../../../../_shared/components/sync-wave/wave-9
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
-  - ../../../../_shared/components/dataangel
   - ../../../../_shared/components/scheduling/avoid-i915
 patches:
   - path: patch-openbao-env.yaml
-  - path: dataangel.yaml
   - target:
       kind: Ingress
       name: nocodb
