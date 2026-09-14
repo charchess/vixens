@@ -12,7 +12,6 @@ components:
   - ../../../../_shared/components/sync-wave/wave-6
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
-  - ../../../../_shared/components/dataangel
   - ../../../../_shared/components/poddisruptionbudget/1
   - ../../../../_shared/components/scheduling/prefer-i915
 patches:
@@ -22,5 +21,4 @@ patches:
       name: homeassistant-config
     patch: "- op: replace\n  path: /spec/storageClassName\n  value: truenas-iscsi-xfs-retain\n- op: replace\n  path: /spec/resources/requests/storage\n  value: 250Gi"
   - path: resources-patch.yaml
-  - path: dataangel.yaml
   - path: anti-affinity-frigate.yaml
