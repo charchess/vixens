@@ -1,0 +1,75 @@
+---
+# Explicitly suspended: changing this field is the approval-controlled start
+# of the non-destructive initial Maildir synchronization.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mail-migration-rsync
+  namespace: mail
+  labels:
+    app.kubernetes.io/name: mail-migration
+    app.kubernetes.io/component: migration
+    app.kubernetes.io/part-of: truxonline-mail
+  annotations:
+    vixens.io/activation-gate: explicit-approval-required-before-unsuspend
+    vixens.io/source-authority: fuu
+spec:
+  suspend: true
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 604800
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mail-migration
+        app.kubernetes.io/component: migration
+        app.kubernetes.io/part-of: truxonline-mail
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+      containers:
+        - name: rsync
+          image: instrumentisto/rsync-ssh@sha256:ee4e9665a70742d526cea53d5d5b012990a39fbb4f87b7f094250e44ab93db5f
+          imagePullPolicy: IfNotPresent
+          command: [sh, -ec]
+          args:
+            - |
+              install -d -m 0700 /work/.ssh
+              cp /ssh/id_ed25519 /work/.ssh/id_ed25519
+              cp /ssh/known_hosts /work/.ssh/known_hosts
+              chmod 0400 /work/.ssh/id_ed25519
+              chmod 0444 /work/.ssh/known_hosts
+              # fuu rrsync maps remote / to the read-only Maildir root.
+              exec rsync -aHAX --numeric-ids --partial --info=stats2                 -e 'ssh -i /work/.ssh/id_ed25519 -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/work/.ssh/known_hosts'                 "root@${FUU_HOST}:/" /target-maildir/
+          env:
+            - name: FUU_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: mail-migration-ssh
+                  key: FUU_HOST
+          volumeMounts:
+            - name: mail-data
+              mountPath: /target-maildir
+            - name: migration-ssh
+              mountPath: /ssh
+              readOnly: true
+            - name: work
+              mountPath: /work
+      volumes:
+        - name: mail-data
+          persistentVolumeClaim:
+            # Created only after StatefulSet/mailserver is deliberately scaled to 1.
+            claimName: mail-data-mailserver-0
+        - name: migration-ssh
+          secret:
+            secretName: mail-migration-ssh
+            defaultMode: 0400
+            items:
+              - key: SSH_PRIVATE_KEY
+                path: id_ed25519
+              - key: KNOWN_HOSTS
+                path: known_hosts
+        - name: work
+          emptyDir:
+            medium: Memory

@@ -10,3 +10,6 @@ resources:
   - services.yaml
   - mailserver-statefulset.yaml
   - roundcube-deployment.yaml
+  - external-secret-migration.yaml
+  - migration-egress-policy.yaml
+  - migration-job.yaml

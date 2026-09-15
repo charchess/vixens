@@ -1,0 +1,21 @@
+---
+# The suspended rsync Job is the sole selected endpoint. It may pull only from
+# fuu's verified RFC1918 address over SSH; no broad namespace egress is added.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: mail-migration-fuu-ssh-egress
+  namespace: mail
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mail-migration
+      app.kubernetes.io/component: migration
+      app.kubernetes.io/part-of: truxonline-mail
+  egress:
+    - toCIDR:
+        - 192.168.201.110/32
+      toPorts:
+        - ports:
+            - port: "22"
+              protocol: TCP
