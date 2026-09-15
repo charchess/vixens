@@ -5,9 +5,9 @@ metadata:
   name: mailserver
   namespace: mail
   annotations:
-    vixens.io/activation-gate: blocked-pending-maildir-sync-and-public-cutover
+    vixens.io/activation-gate: private-validation-no-public-cutover
 spec:
-  replicas: 0
+  replicas: 1
   serviceName: mailserver
   selector:
     matchLabels: {app.kubernetes.io/name: mailserver}
