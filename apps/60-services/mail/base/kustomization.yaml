@@ -10,8 +10,7 @@ resources:
   - services.yaml
   - mailserver-statefulset.yaml
   - roundcube-deployment.yaml
-  - roundcube-private-lan-proxy.yaml
-  - roundcube-private-lan-ingress-policy.yaml
+  - roundcube-traefik-ingress-policy.yaml
   - external-secret-migration.yaml
   - migration-egress-policy.yaml
   - mailserver-ldap-egress-policy.yaml

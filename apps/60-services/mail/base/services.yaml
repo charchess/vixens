@@ -26,22 +26,3 @@ spec:
   selector: {app.kubernetes.io/name: roundcube}
   ports:
     - {name: http, port: 80, targetPort: http, protocol: TCP}
-
----
-# Temporary private validation endpoint. Cilium restricts the selected Pod to
-# 192.168.199.0/24; Local policy preserves the original client source address.
-apiVersion: v1
-kind: Service
-metadata:
-  name: roundcube-private-lan
-  namespace: mail
-  labels: {app.kubernetes.io/name: roundcube, app.kubernetes.io/part-of: truxonline-mail}
-  annotations:
-    vixens.io/temporary: private-lan-validation
-    vixens.io/removal: remove-after-user-login-validation
-spec:
-  type: NodePort
-  externalTrafficPolicy: Local
-  selector: {app.kubernetes.io/name: roundcube}
-  ports:
-    - {name: https-private, port: 443, targetPort: https-private, nodePort: 30443, protocol: TCP}
