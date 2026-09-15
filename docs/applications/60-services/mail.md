@@ -3,9 +3,9 @@
 ## Scope
 
 This application is the GitOps foundation for the Truxonline mail migration from
-fuu. It deliberately does **not** deploy a mail server yet.
+fuu. It declares pinned DMS and Roundcube workloads at **zero replicas**; no mail server is running yet.
 
-The active source remains fuu. No MTA, IMAP, webmail, Maildir PVC, public Service,
+The active source remains fuu. No active MTA, IMAP, webmail, instantiated Maildir PVC, public Service,
 Ingress, DNS/MX, UDM or Freebox change is declared here.
 
 ## Foundation resources

@@ -1,0 +1,78 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mailserver
+  namespace: mail
+  annotations:
+    vixens.io/activation-gate: blocked-pending-maildir-sync-and-public-cutover
+spec:
+  replicas: 0
+  serviceName: mailserver
+  selector:
+    matchLabels: {app.kubernetes.io/name: mailserver}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: mailserver, app.kubernetes.io/part-of: truxonline-mail}
+    spec:
+      securityContext: {fsGroup: 5000, fsGroupChangePolicy: OnRootMismatch}
+      initContainers:
+        - name: materialize-dms-config
+          image: ghcr.io/docker-mailserver/docker-mailserver@sha256:af51b15dd3fc72153c0e90eb7692bb5e3a463212d87959a80fa7aa89b617d44a
+          command: [sh, -ec]
+          args:
+            - |
+              cp /source/config/POSTFIX_ACCOUNTS_CF /work/postfix-accounts.cf
+              cp /source/config/POSTFIX_VIRTUAL_CF /work/postfix-virtual.cf
+              cp /source/config/POSTFIX_MAIN_CF /work/postfix-main.cf
+              cp /source/config/SENDER_ACCESS_PCRE /work/sender_access.pcre
+              cp /source/config/USER_PATCHES_SH /work/user-patches.sh
+              mkdir -p /work/opendkim/keys/truxonline.com
+              cp /source/config/OPENDKIM_KEYTABLE /work/opendkim/KeyTable
+              cp /source/config/OPENDKIM_SIGNINGTABLE /work/opendkim/SigningTable
+              cp /source/config/OPENDKIM_TRUSTEDHOSTS /work/opendkim/TrustedHosts
+              cp /source/dkim/RSPAMD_DKIM_PRIVATE_KEY /work/opendkim/keys/truxonline.com/dkim.private
+              chmod 0600 /work/opendkim/keys/truxonline.com/dkim.private
+          volumeMounts:
+            - {name: dms-config-source, mountPath: /source/config, readOnly: true}
+            - {name: dkim-source, mountPath: /source/dkim, readOnly: true}
+            - {name: dms-config-work, mountPath: /work}
+      containers:
+        - name: mailserver
+          image: ghcr.io/docker-mailserver/docker-mailserver@sha256:af51b15dd3fc72153c0e90eb7692bb5e3a463212d87959a80fa7aa89b617d44a
+          ports:
+            - {name: smtp, containerPort: 25}
+            - {name: smtps, containerPort: 465}
+            - {name: submission, containerPort: 587}
+            - {name: imaps, containerPort: 993}
+            - {name: managesieve, containerPort: 4190}
+          envFrom:
+            - {secretRef: {name: mail-auth}}
+            - {secretRef: {name: mail-dms-runtime}}
+          volumeMounts:
+            - {name: mail-data, mountPath: /var/mail}
+            - {name: mail-state, mountPath: /var/mail-state}
+            - {name: dms-config-work, mountPath: /tmp/docker-mailserver}
+            - {name: mail-tls, mountPath: /etc/letsencrypt/live/mail.truxonline.com, readOnly: true}
+      volumes:
+        - {name: dms-config-work, emptyDir: {}}
+        - {name: dms-config-source, secret: {secretName: mail-dms-config}}
+        - {name: dkim-source, secret: {secretName: mail-dkim}}
+        - name: mail-tls
+          secret:
+            secretName: mail-tls-prod
+            optional: true
+            items:
+              - {key: tls.crt, path: fullchain.pem}
+              - {key: tls.key, path: privkey.pem}
+  volumeClaimTemplates:
+    - metadata: {name: mail-data}
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: truenas-iscsi-xfs-retain
+        resources: {requests: {storage: 25Gi}}
+    - metadata: {name: mail-state}
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: truenas-iscsi-xfs-retain
+        resources: {requests: {storage: 2Gi}}
