@@ -4,7 +4,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: mail-migration-rsync-v2
+  name: mail-migration-rsync-v3
   namespace: mail
   labels:
     app.kubernetes.io/name: mail-migration
@@ -50,7 +50,7 @@ spec:
               chmod 0400 /work/.ssh/id_ed25519
               chmod 0444 /work/.ssh/known_hosts
               # fuu rrsync maps remote / to the read-only Maildir root.
-              exec rsync -aHAX --numeric-ids --partial --info=stats2                 -e 'ssh -i /work/.ssh/id_ed25519 -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/work/.ssh/known_hosts'                 "root@${FUU_HOST}:/" /target-maildir/
+              exec rsync -aHA --no-xattrs --numeric-ids --partial --info=stats2                 -e 'ssh -i /work/.ssh/id_ed25519 -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/work/.ssh/known_hosts'                 "root@${FUU_HOST}:/" /target-maildir/
           env:
             - name: FUU_HOST
               valueFrom:

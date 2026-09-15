@@ -59,3 +59,8 @@ The initial migration Job is enabled for one non-destructive, non-deleting `rsyn
 ### Initial sync ownership contract
 
 The initial rsync runs as UID/GID 0 with `fsGroup: 5000` to access the target Maildir root (`root:5000`, mode `2775`). It has only `CHOWN`, `FOWNER`, and `DAC_OVERRIDE` to preserve source Maildir numeric ownership and timestamps. It retains `drop: [ALL]`, `allowPrivilegeEscalation: false`, and `RuntimeDefault` seccomp. The failed v1 Job transferred zero bytes and is replaced by the v2 Job because Kubernetes Job templates are immutable.
+
+
+### SELinux xattrs excluded from portable Maildir sync
+
+The v2 initial transfer copied the Maildir payload but ended with rsync exit 23 because source `security.selinux` xattrs cannot be written to the target iSCSI XFS volume under Talos. These labels are source-host policy metadata, not portable mail data. The v3 Job deliberately uses `--no-xattrs` while retaining archive mode, hard links, ACL preservation, numeric IDs, and all non-destructive constraints.
