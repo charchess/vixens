@@ -10,7 +10,7 @@ metadata:
 data:
   status: blocked
   reason: >-
-    GitOps foundation only. Do not add SMTP/IMAP Services, workloads, a Maildir PVC,
+    GitOps foundation only. Do not activate SMTP/IMAP Services, workloads, or a Maildir PVC,
     or DNS/UDM cutover until the fuu inventory and explicit activation approval.
   required_gates: >-
     fuu audit; source secret migration; image/config review; parallel Maildir sync;

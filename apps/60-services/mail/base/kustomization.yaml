@@ -6,3 +6,7 @@ resources:
   - configmap.yaml
   - activation-gate.yaml
   - external-secrets.yaml
+  - external-secrets-runtime.yaml
+  - services.yaml
+  - mailserver-statefulset.yaml
+  - roundcube-deployment.yaml
