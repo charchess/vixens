@@ -44,3 +44,8 @@ The DMS StatefulSet runs at one private replica only after TLS and secret contra
 ### DMS capability boundary
 
 The DMS image uses `supervisord` and must `chown` only its container-local `/dev/shm` control socket. The mailserver container therefore explicitly drops every Linux capability except `CHOWN`, while retaining `allowPrivilegeEscalation: false`. This is a workload-level Linux capability, not Talos node access; it grants neither host mounts nor host namespaces nor privileged execution.
+
+
+### Runtime capabilities for DMS private validation
+
+DMS needs a limited set of workload-local Linux capabilities to supervise Postfix/Dovecot, switch service UIDs/GIDs, manage its own socket/files, bind the mail ports, and use Postfix chroot. The explicit allowlist is `CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `MKNOD`, `SETGID`, `SETUID`, `NET_BIND_SERVICE`, `SYS_CHROOT`, and `KILL`; all others are dropped. `NET_ADMIN` and `NET_RAW` remain absent because Fail2Ban is disabled. The container remains non-privileged with `allowPrivilegeEscalation: false` and `RuntimeDefault` seccomp; this grants no Talos node or host-namespace access.
