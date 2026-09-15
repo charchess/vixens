@@ -8,10 +8,10 @@ metadata:
     app.kubernetes.io/name: mail-platform
     app.kubernetes.io/part-of: truxonline-mail
 data:
-  status: blocked
+  status: private-lan-validation
   reason: >-
-    GitOps foundation only. Do not activate SMTP/IMAP Services, workloads, or a Maildir PVC,
-    or DNS/UDM cutover until the fuu inventory and explicit activation approval.
+    Private LAN validation only: Roundcube may be reachable over temporary TLS NodePort 30443
+    exclusively from 192.168.199.0/24. No DNS/MX/NAT/public cutover is authorized.
   required_gates: >-
     fuu audit; source secret migration; image/config review; parallel Maildir sync;
     explicit public-network cutover approval.

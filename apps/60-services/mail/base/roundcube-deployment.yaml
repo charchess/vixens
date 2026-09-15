@@ -5,9 +5,9 @@ metadata:
   name: roundcube
   namespace: mail
   annotations:
-    vixens.io/activation-gate: blocked-pending-mailserver-validation
+    vixens.io/activation-gate: private-lan-validation-192.168.199.0-24
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels: {app.kubernetes.io/name: roundcube}
   template:
@@ -28,5 +28,27 @@ spec:
               mountPath: /var/www/html/config/config.custom.inc.php
               subPath: ROUNDCUBE_CUSTOM_INC_PHP
               readOnly: true
+        - name: private-lan-tls
+          image: nginxinc/nginx-unprivileged@sha256:65e3e85dbaed8ba248841d9d58a899b6197106c23cb0ff1a132b7bfe0547e4c0
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 101
+            capabilities: {drop: ["ALL"]}
+            seccompProfile: {type: RuntimeDefault}
+          ports: [{name: https-private, containerPort: 8443}]
+          volumeMounts:
+            - {name: private-lan-proxy-config, mountPath: /etc/nginx/nginx.conf, subPath: nginx.conf, readOnly: true}
+            - {name: mail-tls, mountPath: /tls, readOnly: true}
+            - {name: private-lan-tmp, mountPath: /tmp}
       volumes:
         - {name: roundcube-config, secret: {secretName: mail-roundcube-config}}
+        - {name: private-lan-proxy-config, configMap: {name: roundcube-private-lan-proxy}}
+        - name: mail-tls
+          secret:
+            secretName: mail-tls-prod
+            items:
+              - {key: tls.crt, path: tls.crt}
+              - {key: tls.key, path: tls.key}
+        - {name: private-lan-tmp, emptyDir: {}}
