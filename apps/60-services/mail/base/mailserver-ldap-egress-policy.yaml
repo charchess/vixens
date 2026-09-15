@@ -1,0 +1,31 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: mailserver-private-ldap-egress
+  namespace: mail
+  labels:
+    environment: prod
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mailserver
+      app.kubernetes.io/part-of: truxonline-mail
+  egress:
+    - toCIDR:
+        - 192.168.200.21/32
+        - 192.168.200.22/32
+      toPorts:
+        - ports:
+            - port: "389"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
