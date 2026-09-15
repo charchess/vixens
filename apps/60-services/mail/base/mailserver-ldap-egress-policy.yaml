@@ -29,3 +29,14 @@ spec:
               protocol: UDP
             - port: "53"
               protocol: TCP
+
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: mail
+            k8s:app.kubernetes.io/name: roundcube
+            k8s:app.kubernetes.io/part-of: truxonline-mail
+      toPorts:
+        - ports:
+            - {port: "993", protocol: TCP}
+            - {port: "587", protocol: TCP}
