@@ -2,49 +2,35 @@
 
 ## Scope
 
-This application is the GitOps foundation for the Truxonline mail migration from
-fuu. It declares pinned DMS and Roundcube workloads at **zero replicas**; no mail server is running yet.
+This application migrates the Truxonline mail runtime from fuu into Vixens in controlled stages. fuu is the active authoritative source until the explicit public cutover gate.
 
-The active source remains fuu. No active MTA, IMAP, webmail, instantiated Maildir PVC, public Service,
-Ingress, DNS/MX, UDM or Freebox change is declared here.
+The production GitOps stage currently declares pinned Docker Mailserver (DMS) and Roundcube templates at **zero replicas**. No mail Pod or Maildir PVC exists; no public mail listener, TCPRoute/Ingress, DNS/MX, UDM or Freebox change has been declared.
 
-## Foundation resources
+## Live staging contract
 
-- `mail` namespace with restricted pod-security policy.
-- immutable non-secret contract ConfigMap: `truxonline.com`, Maildir, source `fuu`,
-  stable mail UID/GID `5000`.
-- four OpenBao-backed ExternalSecrets: `mail-auth`, `mail-dkim`, `mail-roundcube`,
-  `mail-gmail-import`.
-- a visible activation gate ConfigMap.
+- `mail` namespace uses Pod Security `baseline`: DMS needs a root bootstrap phase but receives no privileged container configuration.
+- DMS image is pinned to the audited fuu v15.1.0 digest; Roundcube is separately pinned.
+- Eight OpenBao-backed ExternalSecrets materialize auth, DKIM, DMS config/runtime, Roundcube config/runtime, and Gmail-import contracts. Values are never stored in Git.
+- DMS and Roundcube are both `replicas: 0`.
+- The two Services are `ClusterIP` only; they are not public endpoints.
+- Maildir and state claims are StatefulSet templates using `truenas-iscsi-xfs-retain`; `WaitForFirstConsumer` means no PVC is instantiated while replicas remain zero.
 
-The OpenBao paths are:
+## Migration model
 
-```text
-kv/vixens/prod/apps/60-services/mail/auth
-kv/vixens/prod/apps/60-services/mail/dkim
-kv/vixens/prod/apps/60-services/mail/roundcube
-kv/vixens/prod/apps/60-services/mail/gmail-import
-```
+The source is a DMS v15.1.0 stack with Postfix/Dovecot LMTP + Pigeonhole/ManageSieve, LDAP, OpenDKIM/OpenDMARC, Maildir, and separate Roundcube. The first Vixens migration preserves this server/client boundary and the portable Maildir format. Rspamd extraction remains a later, independent hardening migration rather than a simultaneous data-platform rewrite.
 
-Placeholders are intentionally present until the read-only fuu audit copies
-source values server-to-server. Never commit their values.
+The dedicated migration Job uses a pinned rsync+SSH image and pulls data from fuu through a restricted, revocable migration key. It is not part of the DMS image and is introduced only after separate approval.
 
-## Target architecture after explicit activation
+## Runbook and gates
 
-```text
-Postfix (SMTP/submission) -> Rspamd -> LMTP -> Dovecot/Pigeonhole -> Maildir
-Roundcube -> IMAP + SMTP submission + ManageSieve
-Gmail import CronJob -> authenticated SMTP -> Sieve -> Maildir
-```
+See [mail migration runbook](../../runbooks/60-services/mail-migration.md).
 
-The Maildir PVC will use `truenas-iscsi-xfs-retain` and remain single-writer.
-The source migration will use `doveadm sync`, not a live raw filesystem copy.
+Before any target workload runs, the following remain mandatory:
 
-## Activation gates
+1. reviewed Cilium egress policy and a restricted temporary source SSH identity;
+2. bound TrueNAS claims plus isolated DMS mount/ownership validation;
+3. non-deleting incremental transfer and aggregate parity evidence;
+4. private SMTP/IMAP/Sieve/Roundcube/DKIM validation;
+5. explicit scheduled approval for public TCP forwarding and any DNS/MX cutover.
 
-1. Verify fuu SSH host identity and inventory Postfix, Dovecot, LDAP, Maildir,
-   Roundcube database, DKIM and volumes read-only.
-2. Replace every OpenBao placeholder with audited source or newly generated value.
-3. Review the image/config manifests and validate the Maildir UID/GID contract.
-4. Prove parallel Dovecot Maildir synchronization and rollback.
-5. Obtain explicit approval for LoadBalancer ports, UDM/Freebox forwarding and DNS/MX cutover.
+A successful ExternalSecret or Git promotion is not activation proof.
