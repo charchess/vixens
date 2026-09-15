@@ -21,7 +21,7 @@ spec:
         - name: init-roundcube-session-state
           image: roundcube/roundcubemail@sha256:3ee1db2222659d12f11510f69b6c0d6423e56a876a40edd0a2821c309c74f212
           command: [sh, -ec]
-          args: ["install -d -o 33 -g 33 -m 2775 /var/roundcube/db /tmp/roundcube-temp"]
+          args: ["install -d -o 33 -g 33 -m 2775 /var/roundcube/db /tmp/roundcube-temp; rm -f /var/roundcube/db/sqlite.db /var/roundcube/db/sqlite.db-shm /var/roundcube/db/sqlite.db-wal; install -o 33 -g 33 -m 0660 /dev/null /var/roundcube/db/sqlite.db"]
           securityContext:
             allowPrivilegeEscalation: false
             capabilities: {drop: ["ALL"], add: ["CHOWN", "FOWNER", "DAC_OVERRIDE"]}
