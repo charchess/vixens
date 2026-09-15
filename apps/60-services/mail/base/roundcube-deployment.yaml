@@ -17,6 +17,18 @@ spec:
       securityContext:
         fsGroup: 33
         fsGroupChangePolicy: OnRootMismatch
+      initContainers:
+        - name: init-roundcube-session-state
+          image: busybox@sha256:2d5f2b6f6d29b0e0f84e7d4eebfd2c7e14989bc4389688a83cc8ea1f674fdf72
+          command: [sh, -ec]
+          args: ["install -d -o 33 -g 33 -m 2775 /var/roundcube/db /tmp/roundcube-temp"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: ["ALL"], add: ["CHOWN", "FOWNER", "DAC_OVERRIDE"]}
+            seccompProfile: {type: RuntimeDefault}
+          volumeMounts:
+            - {name: roundcube-state, mountPath: /var/roundcube}
+            - {name: roundcube-temp, mountPath: /tmp/roundcube-temp}
       containers:
         - name: roundcube
           securityContext:
