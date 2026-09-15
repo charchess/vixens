@@ -14,8 +14,17 @@ spec:
     metadata:
       labels: {app.kubernetes.io/name: roundcube, app.kubernetes.io/part-of: truxonline-mail}
     spec:
+      securityContext:
+        fsGroup: 33
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: roundcube
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
+            seccompProfile: {type: RuntimeDefault}
           image: roundcube/roundcubemail@sha256:3ee1db2222659d12f11510f69b6c0d6423e56a876a40edd0a2821c309c74f212
           ports: [{name: http, containerPort: 80}]
           envFrom: [{secretRef: {name: mail-roundcube-runtime}}]
@@ -28,6 +37,8 @@ spec:
               mountPath: /var/www/html/config/config.custom.inc.php
               subPath: ROUNDCUBE_CUSTOM_INC_PHP
               readOnly: true
+            - {name: roundcube-state, mountPath: /var/roundcube}
+            - {name: roundcube-temp, mountPath: /tmp/roundcube-temp}
         - name: private-lan-tls
           image: nginxinc/nginx-unprivileged@sha256:65e3e85dbaed8ba248841d9d58a899b6197106c23cb0ff1a132b7bfe0547e4c0
           securityContext:
@@ -52,3 +63,5 @@ spec:
               - {key: tls.crt, path: tls.crt}
               - {key: tls.key, path: tls.key}
         - {name: private-lan-tmp, emptyDir: {}}
+        - {name: roundcube-state, emptyDir: {}}
+        - {name: roundcube-temp, emptyDir: {}}

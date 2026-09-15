@@ -74,3 +74,6 @@ DMS authentication is constrained by a Cilium policy to the two audited LDAP end
 ### Temporary private LAN Roundcube validation
 
 The production overlay may temporarily run one Roundcube replica behind `roundcube-private-lan` NodePort `30443`. A non-root TLS proxy sidecar terminates the existing `mail.truxonline.com` certificate and permits only `192.168.199.0/24` through the selected Pod's Cilium ingress policy. `externalTrafficPolicy: Local` preserves client source addresses; use the Node IP hosting the Roundcube Pod. This is a test-only endpoint and must be removed after the owner validates login and mailbox visibility. No DNS, MX, NAT, or public route is changed.
+
+
+The private LAN Roundcube pod uses only workload-local bootstrap capabilities (`CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETGID`, `SETUID`) because the official Apache image creates its ephemeral SQLite state and drops to `www-data`. Its `/var/roundcube` and `/tmp/roundcube-temp` volumes are `emptyDir`: this test endpoint intentionally retains no application state after removal.
