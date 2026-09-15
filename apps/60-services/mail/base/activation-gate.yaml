@@ -8,10 +8,10 @@ metadata:
     app.kubernetes.io/name: mail-platform
     app.kubernetes.io/part-of: truxonline-mail
 data:
-  status: private-lan-validation
+  status: webmail-cutover-authorized
   reason: >-
-    Private LAN validation only: Roundcube may be reachable over temporary TLS NodePort 30443
-    exclusively from 192.168.199.0/24. No DNS/MX/NAT/public cutover is authorized.
+    Authorized HTTPS webmail reverse-proxy cutover only: Traefik serves Roundcube.
+    SMTP/IMAP/MX/DNS/NAT and fuu authority remain unchanged.
   required_gates: >-
-    fuu audit; source secret migration; image/config review; parallel Maildir sync;
-    explicit public-network cutover approval.
+    source audit; parallel Maildir sync; private DMS validation; explicit final mail
+    transport cutover approval.

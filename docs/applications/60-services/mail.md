@@ -77,3 +77,8 @@ The production overlay may temporarily run one Roundcube replica behind `roundcu
 
 
 The private LAN Roundcube pod uses only workload-local bootstrap capabilities (`CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETGID`, `SETUID`) because the official Apache image creates its ephemeral SQLite state and drops to `www-data`. Its `/var/roundcube` and `/tmp/roundcube-temp` volumes are `emptyDir`: this test endpoint intentionally retains no application state after removal.
+
+
+### Authorized webmail reverse-proxy cutover
+
+`mail.truxonline.com` continues to terminate TLS at the existing Traefik `mail-gateway` Ingress, but its former static HTTP endpoint was replaced by the internal `mail/roundcube` ClusterIP (`10.107.97.165:80`). The temporary NodePort/TLS sidecar path was removed. Cilium admits only the selected Traefik Pods to the Roundcube backend TCP/80. SMTP, IMAP, MX, DNS, NAT and fuu authority remain outside this webmail-only change.

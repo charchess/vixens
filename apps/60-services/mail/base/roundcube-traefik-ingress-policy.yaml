@@ -2,7 +2,7 @@
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: roundcube-private-lan-ingress
+  name: roundcube-traefik-ingress
   namespace: mail
   labels:
     environment: prod
@@ -12,8 +12,11 @@ spec:
       app.kubernetes.io/name: roundcube
       app.kubernetes.io/part-of: truxonline-mail
   ingress:
-    - fromCIDR: [192.168.199.0/24]
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
       toPorts:
         - ports:
-            - port: "8443"
+            - port: "80"
               protocol: TCP

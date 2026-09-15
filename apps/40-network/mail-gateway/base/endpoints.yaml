@@ -6,7 +6,7 @@ metadata:
   namespace: mail-gateway
 subsets:
   - addresses:
-      - ip: 192.168.111.69
+      - ip: 10.107.97.165
     ports:
       - port: 80
         protocol: TCP
