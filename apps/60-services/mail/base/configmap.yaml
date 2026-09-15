@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mail-platform-config
+  namespace: mail
+  labels:
+    app.kubernetes.io/name: mail-platform
+    app.kubernetes.io/part-of: truxonline-mail
+immutable: true
+data:
+  MAIL_DOMAIN: truxonline.com
+  MAIL_STORAGE_FORMAT: Maildir
+  MAIL_SOURCE_HOST: fuu
+  MAIL_ACTIVATION: blocked-pending-source-audit
+  MAIL_DATA_UID: "5000"
+  MAIL_DATA_GID: "5000"

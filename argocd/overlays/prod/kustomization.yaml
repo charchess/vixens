@@ -45,6 +45,7 @@ resources:
   - apps/truenas-csi-secrets.yaml
   - apps/truenas-csi-iscsi.yaml
   - apps/mail-gateway.yaml
+  - apps/mail.yaml
   - apps/homeassistant.yaml
   # Disabled by owner: apps/nightscout.yaml
   - apps/mosquitto.yaml
