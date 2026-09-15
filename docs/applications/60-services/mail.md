@@ -39,3 +39,8 @@ A successful ExternalSecret or Git promotion is not activation proof.
 ## Private DMS validation stage
 
 The DMS StatefulSet runs at one private replica only after TLS and secret contracts are verified. Roundcube remains at zero replicas and the migration Job remains suspended until its separate sync gate. No public mail routing, DNS, MX, NAT, or TCP exposure is declared by this stage.
+
+
+### DMS capability boundary
+
+The DMS image uses `supervisord` and must `chown` only its container-local `/dev/shm` control socket. The mailserver container therefore explicitly drops every Linux capability except `CHOWN`, while retaining `allowPrivilegeEscalation: false`. This is a workload-level Linux capability, not Talos node access; it grants neither host mounts nor host namespaces nor privileged execution.
