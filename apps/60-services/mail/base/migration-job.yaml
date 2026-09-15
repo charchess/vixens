@@ -4,7 +4,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: mail-migration-rsync
+  name: mail-migration-rsync-v2
   namespace: mail
   labels:
     app.kubernetes.io/name: mail-migration
@@ -28,10 +28,19 @@ spec:
       securityContext:
         runAsUser: 0
         runAsGroup: 0
+        fsGroup: 5000
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: rsync
           image: instrumentisto/rsync-ssh@sha256:ee4e9665a70742d526cea53d5d5b012990a39fbb4f87b7f094250e44ab93db5f
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN", "FOWNER", "DAC_OVERRIDE"]
+            seccompProfile:
+              type: RuntimeDefault
           command: [sh, -ec]
           args:
             - |
