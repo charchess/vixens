@@ -20,3 +20,22 @@ spec:
         - ports:
             - port: "80"
               protocol: TCP
+
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: mail
+            k8s:app.kubernetes.io/name: mailserver
+            k8s:app.kubernetes.io/part-of: truxonline-mail
+      toPorts:
+        - ports:
+            - {port: "993", protocol: TCP}
+            - {port: "587", protocol: TCP}
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - {port: "53", protocol: UDP}
+            - {port: "53", protocol: TCP}
