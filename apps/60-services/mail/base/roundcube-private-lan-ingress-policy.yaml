@@ -1,0 +1,19 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: roundcube-private-lan-ingress
+  namespace: mail
+  labels:
+    environment: prod
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: roundcube
+      app.kubernetes.io/part-of: truxonline-mail
+  ingress:
+    - fromCIDR: [192.168.199.0/24]
+      toPorts:
+        - ports:
+            - port: "8443"
+              protocol: TCP

@@ -69,3 +69,8 @@ The v2 initial transfer copied the Maildir payload but ended with rsync exit 23 
 ### Private LDAP and Postfix map readiness
 
 DMS authentication is constrained by a Cilium policy to the two audited LDAP endpoints (`192.168.200.21` and `.22`, TCP/389) plus Kubernetes CoreDNS TCP/UDP 53. It exposes no public mail route. The DMS config init generates `postfix-virtual.cf.db` through idempotent `postmap` after materializing the source map, fixing the required hash map without placing generated data in Git.
+
+
+### Temporary private LAN Roundcube validation
+
+The production overlay may temporarily run one Roundcube replica behind `roundcube-private-lan` NodePort `30443`. A non-root TLS proxy sidecar terminates the existing `mail.truxonline.com` certificate and permits only `192.168.199.0/24` through the selected Pod's Cilium ingress policy. `externalTrafficPolicy: Local` preserves client source addresses; use the Node IP hosting the Roundcube Pod. This is a test-only endpoint and must be removed after the owner validates login and mailbox visibility. No DNS, MX, NAT, or public route is changed.
