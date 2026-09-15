@@ -49,3 +49,8 @@ The DMS image uses `supervisord` and must `chown` only its container-local `/dev
 ### Runtime capabilities for DMS private validation
 
 DMS needs a limited set of workload-local Linux capabilities to supervise Postfix/Dovecot, switch service UIDs/GIDs, manage its own socket/files, bind the mail ports, and use Postfix chroot. The explicit allowlist is `CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `MKNOD`, `SETGID`, `SETUID`, `NET_BIND_SERVICE`, `SYS_CHROOT`, and `KILL`; all others are dropped. `NET_ADMIN` and `NET_RAW` remain absent because Fail2Ban is disabled. The container remains non-privileged with `allowPrivilegeEscalation: false` and `RuntimeDefault` seccomp; this grants no Talos node or host-namespace access.
+
+
+## Initial Maildir sync
+
+The initial migration Job is enabled for one non-destructive, non-deleting `rsync -aHAX --numeric-ids --partial` pull from fuu. It is intentionally single-completion with `backoffLimit: 0`; it does not alter fuu, public routing, or the final-cutover procedure. A final delta with deletion remains a separate explicitly approved window.

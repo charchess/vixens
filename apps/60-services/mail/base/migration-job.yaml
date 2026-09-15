@@ -14,7 +14,7 @@ metadata:
     vixens.io/activation-gate: explicit-approval-required-before-unsuspend
     vixens.io/source-authority: fuu
 spec:
-  suspend: true
+  suspend: false
   backoffLimit: 0
   ttlSecondsAfterFinished: 3600
   template:
