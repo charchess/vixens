@@ -13,7 +13,6 @@ labels:
 resources:
   - namespace.yaml
   - service.yaml
-  - endpoints.yaml
   - middleware.yaml
 components:
   - ../../../_shared/components/revision-history-limit

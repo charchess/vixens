@@ -5,6 +5,8 @@ metadata:
   name: mail-gateway-svc
   namespace: mail-gateway
 spec:
+  type: ExternalName
+  externalName: roundcube.mail.svc.cluster.local
   ports:
     - protocol: TCP
       port: 80
