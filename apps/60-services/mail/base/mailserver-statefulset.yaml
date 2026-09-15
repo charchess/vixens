@@ -24,6 +24,7 @@ spec:
             - |
               cp /source/config/POSTFIX_ACCOUNTS_CF /work/postfix-accounts.cf
               cp /source/config/POSTFIX_VIRTUAL_CF /work/postfix-virtual.cf
+              postmap /work/postfix-virtual.cf
               cp /source/config/POSTFIX_MAIN_CF /work/postfix-main.cf
               cp /source/config/SENDER_ACCESS_PCRE /work/sender_access.pcre
               cp /source/config/USER_PATCHES_SH /work/user-patches.sh

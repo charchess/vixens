@@ -64,3 +64,8 @@ The initial rsync runs as UID/GID 0 with `fsGroup: 5000` to access the target Ma
 ### SELinux xattrs excluded from portable Maildir sync
 
 The v2 initial transfer copied the Maildir payload but ended with rsync exit 23 because source `security.selinux` xattrs cannot be written to the target iSCSI XFS volume under Talos. These labels are source-host policy metadata, not portable mail data. The v3 Job deliberately uses `--no-xattrs` while retaining archive mode, hard links, ACL preservation, numeric IDs, and all non-destructive constraints.
+
+
+### Private LDAP and Postfix map readiness
+
+DMS authentication is constrained by a Cilium policy to the two audited LDAP endpoints (`192.168.200.21` and `.22`, TCP/389) plus Kubernetes CoreDNS TCP/UDP 53. It exposes no public mail route. The DMS config init generates `postfix-virtual.cf.db` through idempotent `postmap` after materializing the source map, fixing the required hash map without placing generated data in Git.

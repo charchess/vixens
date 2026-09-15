@@ -12,5 +12,6 @@ resources:
   - roundcube-deployment.yaml
   - external-secret-migration.yaml
   - migration-egress-policy.yaml
+  - mailserver-ldap-egress-policy.yaml
   - migration-job.yaml
   - mail-tls-certificate.yaml
