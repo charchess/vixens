@@ -54,3 +54,8 @@ DMS needs a limited set of workload-local Linux capabilities to supervise Postfi
 ## Initial Maildir sync
 
 The initial migration Job is enabled for one non-destructive, non-deleting `rsync -aHAX --numeric-ids --partial` pull from fuu. It is intentionally single-completion with `backoffLimit: 0`; it does not alter fuu, public routing, or the final-cutover procedure. A final delta with deletion remains a separate explicitly approved window.
+
+
+### Initial sync ownership contract
+
+The initial rsync runs as UID/GID 0 with `fsGroup: 5000` to access the target Maildir root (`root:5000`, mode `2775`). It has only `CHOWN`, `FOWNER`, and `DAC_OVERRIDE` to preserve source Maildir numeric ownership and timestamps. It retains `drop: [ALL]`, `allowPrivilegeEscalation: false`, and `RuntimeDefault` seccomp. The failed v1 Job transferred zero bytes and is replaced by the v2 Job because Kubernetes Job templates are immutable.
