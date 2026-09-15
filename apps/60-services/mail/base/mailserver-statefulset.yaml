@@ -40,14 +40,15 @@ spec:
       containers:
         - name: mailserver
           image: ghcr.io/docker-mailserver/docker-mailserver@sha256:af51b15dd3fc72153c0e90eb7692bb5e3a463212d87959a80fa7aa89b617d44a
-          # DMS supervisord must chown its own /dev/shm control socket. Keep the
-          # Kubernetes/Talos sandbox intact: no privilege escalation and all
-          # capabilities dropped except this one container-local operation.
+          # Least privilege set required by upstream DMS on Kubernetes. This is
+          # workload-local: no privileged mode or host namespace/mount access.
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-              add: ["CHOWN"]
+              add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "MKNOD", "SETGID", "SETUID", "NET_BIND_SERVICE", "SYS_CHROOT", "KILL"]
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - {name: smtp, containerPort: 25}
             - {name: smtps, containerPort: 465}
