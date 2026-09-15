@@ -1,0 +1,17 @@
+---
+# Private-stage TLS material for the DMS container only. This creates no route,
+# LoadBalancer, Ingress, TCPRoute, DNS record, or public listener.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mail-tls-prod
+  namespace: mail
+  annotations:
+    vixens.io/activation-gate: private-dms-validation-only
+spec:
+  secretName: mail-tls-prod
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - mail.truxonline.com
