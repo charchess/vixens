@@ -1,10 +1,11 @@
 ---
-# Explicitly suspended: changing this field is the approval-controlled start
-# of the non-destructive initial Maildir synchronization.
+# Stage C gate: this Job is created suspended.  Unsuspension is an explicit,
+# separately verified approval after the private mail workloads are quiesced and
+# the retained RWO Maildir claim is free to mount.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: mail-migration-rsync-v3
+  name: mail-migration-rsync-v4
   namespace: mail
   labels:
     app.kubernetes.io/name: mail-migration
@@ -14,7 +15,7 @@ metadata:
     vixens.io/activation-gate: explicit-approval-required-before-unsuspend
     vixens.io/source-authority: fuu
 spec:
-  suspend: false
+  suspend: true
   backoffLimit: 0
   ttlSecondsAfterFinished: 3600
   template:
@@ -50,7 +51,9 @@ spec:
               chmod 0400 /work/.ssh/id_ed25519
               chmod 0444 /work/.ssh/known_hosts
               # fuu rrsync maps remote / to the read-only Maildir root.
-              exec rsync -aHA --no-xattrs --numeric-ids --partial --info=stats2                 -e 'ssh -i /work/.ssh/id_ed25519 -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/work/.ssh/known_hosts'                 "root@${FUU_HOST}:/" /target-maildir/
+              exec rsync -aHA --no-xattrs --numeric-ids --partial --info=stats2 \
+                -e 'ssh -i /work/.ssh/id_ed25519 -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/work/.ssh/known_hosts' \
+                "root@${FUU_HOST}:/" /target-maildir/
           env:
             - name: FUU_HOST
               valueFrom:
@@ -68,7 +71,6 @@ spec:
       volumes:
         - name: mail-data
           persistentVolumeClaim:
-            # Created only after StatefulSet/mailserver is deliberately scaled to 1.
             claimName: mail-data-mailserver-0
         - name: migration-ssh
           secret:

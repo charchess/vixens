@@ -53,7 +53,7 @@ DMS needs a limited set of workload-local Linux capabilities to supervise Postfi
 
 ## Initial Maildir sync
 
-The initial migration Job is enabled for one non-destructive, non-deleting `rsync -aHAX --numeric-ids --partial` pull from fuu. It is intentionally single-completion with `backoffLimit: 0`; it does not alter fuu, public routing, or the final-cutover procedure. A final delta with deletion remains a separate explicitly approved window.
+The initial migration Job is declared **suspended** for one non-destructive, non-deleting `rsync -aHA --no-xattrs --numeric-ids --partial` pull from fuu. It may be unsuspended only after the private DMS and Roundcube workloads are quiesced and the retained RWO Maildir claim is verified free to mount. It is intentionally single-completion with `backoffLimit: 0`; it does not alter fuu, public routing, or the final-cutover procedure. A final delta with deletion remains a separate explicitly approved window.
 
 
 ### Initial sync ownership contract

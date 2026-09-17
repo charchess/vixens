@@ -14,5 +14,5 @@ resources:
   - external-secret-migration.yaml
   - migration-egress-policy.yaml
   - mailserver-ldap-egress-policy.yaml
-  - migration-job.yaml
+  - migration-job-v4.yaml
   - mail-tls-certificate.yaml
