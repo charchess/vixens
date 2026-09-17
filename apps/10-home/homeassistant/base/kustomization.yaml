@@ -10,3 +10,8 @@ resources:
   - configmap.yaml
   - networkpolicy.yaml
   - pdb.yaml
+
+configMapGenerator:
+  - name: homeassistant-python-requirements
+    files:
+      - ha-requirements.txt

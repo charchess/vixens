@@ -59,29 +59,81 @@ spec:
             - -c
           args:
             - |
-              # Persistent runtime requirements for explicitly installed HACS integrations.
-              # roomba_plus 4.1.7 declares roombapy-prime[map]==0.3.4.
-              PACKAGES="hass-web-proxy-lib==0.0.8 roombapy-prime[map]==0.3.4 aiofiles>=23.1.0 numpy>=1.26.4 scipy>=1.10.1 shapely>=2.0.2"
+              set -eu
+
+              REQUIREMENTS="/requirements/ha-requirements.txt"
               TARGET="/config/python_packages/py314"
+              CHECKER="/tmp/check-ha-requirements.py"
+
               mkdir -p "$TARGET"
-              INSTALLED=true
-              for pkg in $PACKAGES; do
-                NAME=$(echo "$pkg" | cut -d= -f1 | tr '-' '_')
-                VER=$(echo "$pkg" | cut -d= -f3)
-                if ls "$TARGET/"*"${NAME}"*".dist-info" 2>/dev/null | grep -q "$VER"; then
-                  echo "$pkg already installed, skipping."
-                else
-                  echo "$pkg not found or wrong version, installing..."
-                  INSTALLED=false
-                fi
-              done
-              if [ "$INSTALLED" = "false" ]; then
-                pip install --no-cache-dir --target="$TARGET" $PACKAGES
+
+              cat > "$CHECKER" <<'PY'
+              import sys
+              from importlib.metadata import distributions
+              from pathlib import Path
+
+              from pip._vendor.packaging.requirements import Requirement
+              from pip._vendor.packaging.utils import canonicalize_name
+
+              requirements_path = Path(sys.argv[1])
+              target = sys.argv[2]
+
+              installed = {}
+              for dist in distributions(path=[target]):
+                  name = dist.metadata.get("Name")
+                  if name:
+                      installed[canonicalize_name(name)] = dist.version
+
+              unsatisfied = []
+              for raw_line in requirements_path.read_text().splitlines():
+                  line = raw_line.split("#", 1)[0].strip()
+                  if not line:
+                      continue
+
+                  requirement = Requirement(line)
+                  if requirement.marker is not None and not requirement.marker.evaluate():
+                      continue
+
+                  name = canonicalize_name(requirement.name)
+                  version = installed.get(name)
+                  if version is None:
+                      unsatisfied.append(f"{line} (missing)")
+                      continue
+
+                  if requirement.specifier and not requirement.specifier.contains(
+                      version, prereleases=True
+                  ):
+                      unsatisfied.append(f"{line} (installed: {version})")
+                      continue
+
+                  print(f"{requirement.name} {version}: satisfied")
+
+              if unsatisfied:
+                  print("Unsatisfied runtime requirements:", file=sys.stderr)
+                  for item in unsatisfied:
+                      print(f" - {item}", file=sys.stderr)
+                  raise SystemExit(1)
+              PY
+
+              if python "$CHECKER" "$REQUIREMENTS" "$TARGET"; then
+                echo "Home Assistant runtime Python requirements already satisfied."
+              else
+                echo "Installing/upgrading Home Assistant runtime Python requirements..."
+                python -m pip install \\
+                  --no-cache-dir \\
+                  --upgrade \\
+                  --root-user-action=ignore \\
+                  --target="$TARGET" \\
+                  -r "$REQUIREMENTS"
                 chown -R 1000:1000 "$TARGET"
+                python "$CHECKER" "$REQUIREMENTS" "$TARGET"
               fi
           volumeMounts:
             - name: config
               mountPath: /config
+            - name: python-requirements
+              mountPath: /requirements
+              readOnly: true
         - name: config-init
           image: busybox:1.37.0
           securityContext:
@@ -203,3 +255,6 @@ spec:
         - name: ha-config
           secret:
             secretName: homeassistant-config
+        - name: python-requirements
+          configMap:
+            name: homeassistant-python-requirements

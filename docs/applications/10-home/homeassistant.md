@@ -34,7 +34,7 @@ curl -L -k https://homeassistant.dev.truxonline.com | grep "Home Assistant"
     - `Traefik` (Ingress)
 - **Particularités :** Utilise `hostNetwork: true` pour la découverte mDNS. Configuration montée via `subPath`.
 - **DataAngel prod :** désactivé pour Home Assistant. Le PVC TrueNAS et les sauvegardes archivées sont conservés, mais aucun restore/backup DataAngel ne s’exécute au démarrage ; cela évite que le sidecar de protection bloque le Core ou réécrive les stores d’auth pendant une récupération.
-- **Init Python :** le label `vixens.io/sizing.install-python-deps: V-small` laisse Kyverno appliquer le budget adapté (256 MiB request / 1 GiB limit), car NumPy/SciPy/Shapely dépassent le défaut d’un init non étiqueté.
+- **Init Python :** les dépendances runtime des intégrations custom sont déclarées dans `apps/10-home/homeassistant/base/ha-requirements.txt`, montées via ConfigMap puis installées dans `/config/python_packages/py314`. L’init vérifie les versions avec les métadonnées Python avant d’appeler `pip`, et utilise `--upgrade` uniquement lorsqu’un requirement est absent ou incompatible. Le label `vixens.io/sizing.install-python-deps: V-small` laisse Kyverno appliquer le budget adapté (256 MiB request / 1 GiB limit).
 - **Sizing prod :** le Core est `B-large` (100m/1 GiB demandés, burst 1 CPU/2 GiB). Le VPA généré reste en recommandation uniquement (`updateMode: Off`) : un profil `V-*` avait réduit le plafond effectif à 44mCPU et empêché le démarrage après restauration.
 ---
 > ⚠️ **HIBERNATION DEV**
