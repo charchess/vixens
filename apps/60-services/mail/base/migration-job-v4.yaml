@@ -1,7 +1,6 @@
 ---
-# Stage C gate: this Job is created suspended.  Unsuspension is an explicit,
-# separately verified approval after the private mail workloads are quiesced and
-# the retained RWO Maildir claim is free to mount.
+# Stage C initial-sync execution.  Prechecks verified that the private mail
+# workloads are quiesced and the retained RWO Maildir claim is free to mount.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -15,7 +14,7 @@ metadata:
     vixens.io/activation-gate: explicit-approval-required-before-unsuspend
     vixens.io/source-authority: fuu
 spec:
-  suspend: true
+  suspend: false
   backoffLimit: 0
   ttlSecondsAfterFinished: 3600
   template:
