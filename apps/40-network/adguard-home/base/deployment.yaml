@@ -108,7 +108,11 @@ spec:
             periodSeconds: 20
           volumeMounts:
             - name: adguard-data
-              mountPath: /opt/adguardhome
+              mountPath: /opt/adguardhome/conf
+              subPath: conf
+            - name: adguard-data
+              mountPath: /opt/adguardhome/work
+              subPath: work
       volumes:
         - name: adguard-data
           persistentVolumeClaim:
