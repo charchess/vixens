@@ -42,6 +42,7 @@ Last Updated: 2026-09-17
 
 - 🚧 Le premier rsync Maildir non destructif depuis fuu a terminé avec succès vers le PVC TrueNAS retenu.
 - La prochaine étape GitOps active uniquement un replica DMS privé ; Roundcube demeure à zéro et aucune route SMTP/IMAP publique, DNS/MX, NAT ou cutover source n’est déclaré.
+- ⚠️ Le DMS privé est Ready, mais le refus LDAP synthétique Dovecot expire. Le diagnostic temporaire #3267 active des logs auth sans password durant un rollout contrôlé unique.
 
 ---
 
