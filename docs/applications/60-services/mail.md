@@ -72,7 +72,7 @@ DMS authentication is constrained by a Cilium policy to the two audited LDAP end
 
 ### Temporary Dovecot LDAP diagnostics
 
-During issue #3267, a one-shot private DMS rollout enables `auth_debug` while explicitly keeping `auth_debug_passwords = no`. It exists only to diagnose the synthetic LDAP authentication timeout; remove the hook fragment and the Pod-template annotation after the bounded diagnosis. It changes neither the Maildir, external routes, source authority nor user credentials.
+During issue #3267, bounded private DMS rollouts enable `auth_debug` while explicitly keeping `auth_debug_passwords = no`. The second diagnostic rollout enables Dovecot LDAP `blocking = yes`: it replaces the default pipelined libldap client path with isolated worker lookups after an identical raw LDAP search was measured healthy from the Pod while Dovecot's async request timed out. Remove both hook fragments and the Pod-template annotation after the bounded diagnosis. It changes neither the Maildir, external routes, source authority nor user credentials.
 
 
 ### Temporary private LAN Roundcube validation
