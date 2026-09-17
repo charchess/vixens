@@ -70,6 +70,10 @@ The v2 initial transfer copied the Maildir payload but ended with rsync exit 23 
 
 DMS authentication is constrained by a Cilium policy to the two audited LDAP endpoints (`192.168.200.21` and `.22`, TCP/389) plus Kubernetes CoreDNS TCP/UDP 53. It exposes no public mail route. The DMS config init generates `postfix-virtual.cf.db` through idempotent `postmap` after materializing the source map, fixing the required hash map without placing generated data in Git.
 
+### Temporary Dovecot LDAP diagnostics
+
+During issue #3267, a one-shot private DMS rollout enables `auth_debug` while explicitly keeping `auth_debug_passwords = no`. It exists only to diagnose the synthetic LDAP authentication timeout; remove the hook fragment and the Pod-template annotation after the bounded diagnosis. It changes neither the Maildir, external routes, source authority nor user credentials.
+
 
 ### Temporary private LAN Roundcube validation
 

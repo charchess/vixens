@@ -16,6 +16,9 @@ spec:
     matchLabels: {app.kubernetes.io/name: mailserver}
   template:
     metadata:
+      annotations:
+        # Temporary, password-safe Dovecot LDAP diagnostics; remove after #3267.
+        vixens.io/dovecot-debug-session: "3267"
       labels: {app.kubernetes.io/name: mailserver, app.kubernetes.io/part-of: truxonline-mail}
     spec:
       securityContext: {fsGroup: 5000, fsGroupChangePolicy: OnRootMismatch}
