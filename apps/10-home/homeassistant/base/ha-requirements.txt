@@ -1,0 +1,13 @@
+# Runtime Python dependencies required by Home Assistant custom integrations.
+# Installed into /config/python_packages/py314 by the install-python-deps initContainer.
+#
+# Roomba+ requires both the classic local-MQTT library and the Prime/cloud library.
+hass-web-proxy-lib==0.0.8
+roombapy==2.0.2
+roombapy-prime[map]==0.3.4
+
+# BPS / scientific stack
+aiofiles>=23.1.0
+numpy>=1.26.4
+scipy>=1.10.1
+shapely>=2.0.2
