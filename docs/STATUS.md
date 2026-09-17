@@ -2,7 +2,7 @@
 
 **Quick reference for application deployment status across environments.**
 
-Last Updated: 2026-09-14
+Last Updated: 2026-09-17
 
 ---
 
@@ -27,6 +27,16 @@ Last Updated: 2026-09-14
 - L'app-of-apps production cesse de déclarer `lidarr`, `mongodb-shared`, `mariadb-shared`, `redis-shared` et `postgresql-shared` à la demande du propriétaire.
 - La promotion déclenche le prune Argo des workloads et ressources gérées. Les volumes TrueNAS sont conservés selon leurs politiques de rétention ; aucune suppression directe de PV, snapshot ZFS ou objet de sauvegarde n'est effectuée par ce changement.
 - L'opérateur `cloudnative-pg` reste déclaré : seule l'instance applicative `postgresql-shared` et ses dépendances de données sont retirées.
+
+---
+
+## Changements en préparation — 2026-09-17
+
+### CoreDNS GitOps runtime
+
+- 🚧 Une Application `coredns` est préparée pour rendre le Corefile de production déclaratif après bootstrap Terraform.
+- Le routage reste inchangé : zone `internal.truxonline.com` vers les DC, `truxonline.com` vers l’UDM, et résolution générale vers AdGuard Home via son FQDN Kubernetes.
+- Le changement n’est pas encore publié ni promu ; aucune prise de contrôle du ConfigMap live n’a eu lieu.
 
 ---
 
