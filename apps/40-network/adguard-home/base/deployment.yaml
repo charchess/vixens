@@ -49,15 +49,15 @@ spec:
           command: ["/bin/sh", "-ec"]
           args:
             - |
+              mkdir -p /adguard/conf /adguard/work
               if [ ! -f /adguard/conf/AdGuardHome.yaml ]; then
-                mkdir -p /adguard/conf /adguard/work
                 cp /bootstrap/AdGuardHome.yaml /adguard/conf/AdGuardHome.yaml
                 sed -i \
                   -e 's/192\.168\.201\.110:3000/0.0.0.0:3000/g' \
                   -e 's/- 192\.168\.201\.110/- 0.0.0.0/g' \
                   /adguard/conf/AdGuardHome.yaml
-                chown -R 65534:65534 /adguard
               fi
+              chown -R 65534:65534 /adguard/conf /adguard/work
           securityContext:
             runAsNonRoot: false
             runAsUser: 0
