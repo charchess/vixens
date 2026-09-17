@@ -7,9 +7,10 @@ metadata:
   annotations:
     vixens.io/activation-gate: private-validation-no-public-cutover
 spec:
-  # Stage C quiescence: release the retained RWO Maildir claim for rsync v4.
-  # Stage D re-enables this only after successful transfer evidence.
-  replicas: 0
+  # Stage D private validation follows the successful non-destructive rsync.
+  # fuu remains authoritative until the separate public cutover gate.
+  # Private validation only: no public TCP route, DNS/MX, NAT, or source cutover.
+  replicas: 1
   serviceName: mailserver
   selector:
     matchLabels: {app.kubernetes.io/name: mailserver}
