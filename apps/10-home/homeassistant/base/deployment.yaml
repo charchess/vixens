@@ -119,11 +119,11 @@ spec:
                 echo "Home Assistant runtime Python requirements already satisfied."
               else
                 echo "Installing/upgrading Home Assistant runtime Python requirements..."
-                python -m pip install \\
-                  --no-cache-dir \\
-                  --upgrade \\
-                  --root-user-action=ignore \\
-                  --target="$TARGET" \\
+                python -m pip install \
+                  --no-cache-dir \
+                  --upgrade \
+                  --root-user-action=ignore \
+                  --target="$TARGET" \
                   -r "$REQUIREMENTS"
                 chown -R 1000:1000 "$TARGET"
                 python "$CHECKER" "$REQUIREMENTS" "$TARGET"
