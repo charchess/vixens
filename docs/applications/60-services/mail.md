@@ -70,9 +70,9 @@ The v2 initial transfer copied the Maildir payload but ended with rsync exit 23 
 
 DMS authentication is constrained by a Cilium policy to the two audited LDAP endpoints (`192.168.200.21` and `.22`, TCP/389) plus Kubernetes CoreDNS TCP/UDP 53. It exposes no public mail route. The DMS config init generates `postfix-virtual.cf.db` through idempotent `postmap` after materializing the source map, fixing the required hash map without placing generated data in Git.
 
-### Temporary Dovecot LDAP diagnostics
+### Dovecot LDAP authentication blocker
 
-During issue #3267, bounded private DMS rollouts enable `auth_debug` while explicitly keeping `auth_debug_passwords = no`. The second diagnostic rollout enables Dovecot LDAP `blocking = yes`: it replaces the default pipelined libldap client path with isolated worker lookups after an identical raw LDAP search was measured healthy from the Pod while Dovecot's async request timed out. Remove both hook fragments and the Pod-template annotation after the bounded diagnosis. It changes neither the Maildir, external routes, source authority nor user credentials.
+Private validation established that the service-account bind and the exact LDAP search complete in approximately 100 ms from the DMS Pod against both DCs. However, Dovecot v2.3.19.1 times out during its own `auth_bind` DN lookup and returns `temp_fail`; the supported LDAP `blocking = yes` worker mode did not change that outcome. Temporary password-safe debug hooks have been removed. The next change requires an explicit review of a Dovecot passdb override that uses Active Directory UPN direct-bind semantics, rather than another runtime diagnostic.
 
 
 ### Temporary private LAN Roundcube validation
