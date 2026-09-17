@@ -38,6 +38,11 @@ Last Updated: 2026-09-17
 - Le routage reste inchangé : zone `internal.truxonline.com` vers les DC, `truxonline.com` vers l’UDM, et résolution générale vers AdGuard Home via son FQDN Kubernetes.
 - Le changement n’est pas encore publié ni promu ; aucune prise de contrôle du ConfigMap live n’a eu lieu.
 
+### Mail — validation DMS privée
+
+- 🚧 Le premier rsync Maildir non destructif depuis fuu a terminé avec succès vers le PVC TrueNAS retenu.
+- La prochaine étape GitOps active uniquement un replica DMS privé ; Roundcube demeure à zéro et aucune route SMTP/IMAP publique, DNS/MX, NAT ou cutover source n’est déclaré.
+
 ---
 
 ## Incidents & Changements notables — 2026-09-14

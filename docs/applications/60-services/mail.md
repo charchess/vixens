@@ -4,16 +4,16 @@
 
 This application migrates the Truxonline mail runtime from fuu into Vixens in controlled stages. fuu is the active authoritative source until the explicit public cutover gate.
 
-The production GitOps stage currently declares pinned Docker Mailserver (DMS) and Roundcube templates at **zero replicas**. No mail Pod or Maildir PVC exists; no public mail listener, TCPRoute/Ingress, DNS/MX, UDM or Freebox change has been declared.
+The production GitOps stage declares a pinned Docker Mailserver (DMS) at **one private replica** for validation and Roundcube at **zero replicas**. The Maildir and state PVCs are retained TrueNAS claims populated by the non-destructive initial sync. No public mail listener, TCPRoute/Ingress, DNS/MX, UDM or Freebox change is declared.
 
 ## Live staging contract
 
 - `mail` namespace uses Pod Security `baseline`: DMS needs a root bootstrap phase but receives no privileged container configuration.
 - DMS image is pinned to the audited fuu v15.1.0 digest; Roundcube is separately pinned.
 - Eight OpenBao-backed ExternalSecrets materialize auth, DKIM, DMS config/runtime, Roundcube config/runtime, and Gmail-import contracts. Values are never stored in Git.
-- DMS and Roundcube are both `replicas: 0`.
+- DMS is `replicas: 1` for private validation; Roundcube remains `replicas: 0`.
 - The two Services are `ClusterIP` only; they are not public endpoints.
-- Maildir and state claims are StatefulSet templates using `truenas-iscsi-xfs-retain`; `WaitForFirstConsumer` means no PVC is instantiated while replicas remain zero.
+- Maildir and state claims use `truenas-iscsi-xfs-retain`; the retained claims are Bound after the initial sync and attach only to the one private DMS replica during validation.
 
 ## Migration model
 
