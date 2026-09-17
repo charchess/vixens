@@ -7,7 +7,8 @@ metadata:
   annotations:
     vixens.io/activation-gate: webmail-traefik-cutover-authorized
 spec:
-  replicas: 1
+  # Keep the private UI inactive while the Stage C filesystem transfer runs.
+  replicas: 0
   selector:
     matchLabels: {app.kubernetes.io/name: roundcube}
   template:
