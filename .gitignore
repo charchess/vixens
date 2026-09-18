@@ -1,6 +1,5 @@
 # Local credentials and cluster access
-.secrets/*
-!.secrets/README.md
+.secrets/
 .kube/
 *.kubeconfig
 **/kubeconfig*
