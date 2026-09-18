@@ -1,0 +1,24 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: mailserver-traefik-ingress
+  namespace: mail
+  labels:
+    environment: prod
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mailserver
+      app.kubernetes.io/part-of: truxonline-mail
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            k8s:app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - {port: "25", protocol: TCP}
+            - {port: "465", protocol: TCP}
+            - {port: "587", protocol: TCP}
+            - {port: "993", protocol: TCP}
