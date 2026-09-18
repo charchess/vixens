@@ -1,56 +1,78 @@
-# Architecture Decision Records - Index
+# Architecture Decision Records — canonical index
 
-**Last Updated:** 2026-09-14
+This file is the registry for Vixens ADRs.
 
----
+## Immutability rule
 
-## 🏆 Active Decisions (Accepted)
+An ADR records the decision and rationale that existed at the time. Accepted, deprecated and superseded ADRs are historical records and are **not rewritten to match current architecture**.
 
-Ces documents représentent l'état actuel et obligatoire de l'architecture Vixens.
+When a decision changes, create a new ADR and mark the relationship here. Old records and incident history remain intact.
 
-| ADR | Title | Date | Tags |
-|-----|-------|------|------|
-| [001](001-choix-architecture-initiale.md) | Choix Architecture Initiale | 2025-11-15 | infra, talos, cilium |
-| [002](002-argocd-gitops.md) | ArgoCD GitOps | 2025-11-15 | gitops, argocd |
-| [003](003-vlan-segmentation.md) | VLAN Segmentation | 2025-11-15 | networking, vlan |
-| [004](004-cilium-cni.md) | Cilium CNI | 2025-11-15 | networking, cilium, cni |
-| [005](005-cilium-l2-announcements.md) | Cilium L2 Announcements | 2025-11-15 | networking, cilium, lb |
-| [006](006-terraform-3-level-architecture-REVISED.md) | Terraform 3-Level Architecture | 2025-11-15 | infra, terraform |
-| [007](007-renovate-trunk-based-workflow.md) | Renovate Trunk-Based Workflow | 2026-01-11 | renovate, gitops |
-| [011](011-infisical-secrets-management.md) | Infisical Secrets Management | 2025-11-16 | security, secrets |
-| [012](012-monitoring-modular-approach.md) | Modular Monitoring Approach | 2025-12-04 | monitoring, prometheus |
-| [013](013-layered-configuration-disaster-recovery.md) | Layered Config & Disaster Recovery | 2026-01-05 | backup, dr |
-| [014](014-litestream-backup-profiles-and-recovery-patterns.md) | Litestream Backup Profiles | 2026-01-10 | backup, litestream, sqlite |
-| [017](017-pure-trunk-based-single-branch.md) | **Pure Trunk-Based (Master Workflow)** | 2026-01-11 | gitops, workflow |
-| [019](019-renovate-discord-approval-workflow.md) | Renovate Discord Approval | 2026-01-02 | automation, renovate |
-| [020](020-automated-housekeeping-sanitization.md) | Automated Housekeeping | 2026-01-17 | infra, sanitization |
-| [021](021-netbird-native-manifests.md) | Netbird Native Manifests | 2026-01-17 | networking, netbird |
-| [022](022-7-tier-goldification-system.md) | 7-Tier Goldification System | 2026-02-24 | quality, goldification |
-| [025](025-local-path-provisioner.md) | Local Path Provisioner for Node-Local Storage | 2026-03-25 | storage, local, performance |
-| [026](026-keda-scale-to-zero.md) | KEDA HTTP Add-on for Scale-to-Zero | 2026-03-26 | scaling, performance, keda |
-| [027](027-retire-openclaw-and-ollama-telemetry.md) | Retire OpenClaw and Ollama Telemetry | 2026-09-12 | gitops, argocd, observability, openrouter |
-| [028](028-retire-dataangel-prod-zfs.md) | Retire DataAngel Restore Init from Production Workloads | 2026-09-14 | backup, disaster-recovery, truenas, zfs, gitops |
+## Current high-level decisions
 
----
+| ADR | Decision |
+|---|---|
+| [017](017-pure-trunk-based-single-branch.md) | Single long-lived `main`; dev tracks `main`, prod tracks `prod-stable` |
+| [021](021-netbird-native-manifests.md) | Netbird uses native manifests rather than the former chart architecture |
+| [023](023-7-tier-goldification-system-v2.md) | Current maturity model |
+| [024](024-sso-debt-diamond-wave7.md) | SSO debt/bypass decision |
+| [025](025-local-path-provisioner.md) | Node-local storage option |
+| [026](026-keda-scale-to-zero.md) | KEDA scale-to-zero architecture |
+| [027](027-retire-openclaw-and-ollama-telemetry.md) | Retire OpenClaw/Ollama telemetry |
+| [028](028-retire-dataangel-prod-zfs.md) | Retire DataAngel automatic restore from production workloads |
+| [029](029-openbao-external-secrets-and-nas-fqdn.md) | OpenBao + External Secrets and NAS FQDN are canonical |
+| [030](030-argocd-anonymous-admin-accepted-risk.md) | Anonymous ArgoCD admin access is an explicitly accepted homelab risk |
+| [031](031-gitops-only-repository-scope.md) | Vixens is a GitOps-only state repository with minimal supporting documentation/tooling |
 
-## 📜 Historical / Superseded Decisions
+## Supersession / deprecation map
 
-Documents conservés pour l'audit trail mais remplacés par des décisions plus récentes.
+| Record | Relationship |
+|---|---|
+| ADR-008 | superseded by ADR-017 |
+| ADR-009 | superseded by ADR-017 |
+| ADR-010 | deprecated in its own record |
+| ADR-011 | historical Infisical decision; superseded by ADR-029 |
+| ADR-015 | deprecated; maturity model replaced by ADR-022/023 |
+| ADR-016 | superseded by `WORKFLOW.md` / ADR-017 |
+| ADR-018 Netbird | superseded by ADR-021 |
+| ADR-018 OpenBao | historical numbering collision; preserved verbatim and superseded by ADR-029 |
+| ADR-022 | superseded by ADR-023 |
 
-| ADR | Title | Status | Superseded by |
-|-----|-------|--------|---------------|
-| [008](008-trunk-based-gitops-workflow.md) | Trunk-Based Migration (4->2) | Superseded | [ADR-017](017-pure-trunk-based-single-branch.md) |
-| [009](009-simplified-two-branch-workflow.md) | Simplified Two-Branch Workflow | Superseded | [ADR-017](017-pure-trunk-based-single-branch.md) |
-| [016](016-workflow-master-reference.md) | Workflow Master Reference | Superseded | [WORKFLOW.md](../../WORKFLOW.md) |
-| [018](018-netbird-deployment-architecture.md) | Netbird (Helm Chart) | Superseded | [ADR-021](021-netbird-native-manifests.md) |
+## Complete preserved record set
 
----
+The repository intentionally preserves the original records:
 
-## 🗑️ Deprecated Decisions
+- [001](001-choix-architecture-initiale.md)
+- [002](002-argocd-gitops.md)
+- [003](003-vlan-segmentation.md)
+- [004](004-cilium-cni.md)
+- [005](005-cilium-l2-announcements.md)
+- [006](006-terraform-3-level-architecture-REVISED.md)
+- [007](007-renovate-trunk-based-workflow.md)
+- [008](008-trunk-based-gitops-workflow.md)
+- [009](009-simplified-two-branch-workflow.md)
+- [010](010-static-manifests-for-infrastructure-apps.md)
+- [011](011-infisical-secrets-management.md)
+- [012](012-monitoring-modular-approach.md)
+- [013](013-layered-configuration-disaster-recovery.md)
+- [014](014-litestream-backup-profiles-and-recovery-patterns.md)
+- [015](015-conformity-scoring-grid.md)
+- [016](016-workflow-master-reference.md)
+- [017](017-pure-trunk-based-single-branch.md)
+- [018 Netbird](018-netbird-deployment-architecture.md)
+- [018 OpenBao legacy record](018-openbao-external-secrets-and-nas-fqdn.md)
+- [019](019-renovate-discord-approval-workflow.md)
+- [020](020-automated-housekeeping-sanitization.md)
+- [021](021-netbird-native-manifests.md)
+- [022](022-7-tier-goldification-system.md)
+- [023](023-7-tier-goldification-system-v2.md)
+- [024](024-sso-debt-diamond-wave7.md)
+- [025](025-local-path-provisioner.md)
+- [026](026-keda-scale-to-zero.md)
+- [027](027-retire-openclaw-and-ollama-telemetry.md)
+- [028](028-retire-dataangel-prod-zfs.md)
+- [029](029-openbao-external-secrets-and-nas-fqdn.md)
+- [030](030-argocd-anonymous-admin-accepted-risk.md)
+- [031](031-gitops-only-repository-scope.md)
 
-Décisions abandonnées ou inactives.
-
-| ADR | Title | Status | Reason |
-|-----|-------|--------|--------|
-| [010](010-static-manifests-for-infrastructure-apps.md) | Static Manifests for Infra | Deprecated | Manual maintenance too high |
-| [015](015-conformity-scoring-grid.md) | Conformity Scoring Grid | Deprecated | Superseded by [ADR-022](022-7-tier-goldification-system.md) |
+The two historical files numbered 018 are not renamed or edited: the collision itself is part of repository history. ADR-029 provides the canonical successor for the OpenBao decision.
