@@ -20,6 +20,9 @@ spec:
         # Runtime LDAP endpoint parity with the working fuu DMS source.
         # Explicit DOVECOT_URIS prevents the DMS template default from winning.
         vixens.io/ldap-endpoint-set: "dc1-dc2-explicit"
+        # All mail users are under this bounded AD OU. Avoid root-DSE
+        # partition referrals that make the Dovecot LDAP client hang.
+        vixens.io/ldap-search-base: "users-infra"
       labels: {app.kubernetes.io/name: mailserver, app.kubernetes.io/part-of: truxonline-mail}
     spec:
       securityContext: {fsGroup: 5000, fsGroupChangePolicy: OnRootMismatch}

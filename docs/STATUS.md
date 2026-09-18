@@ -43,6 +43,7 @@ Last Updated: 2026-09-17
 - 🚧 Le premier rsync Maildir non destructif depuis fuu a terminé avec succès vers le PVC TrueNAS retenu.
 - ✅ Roundcube est autorisé à un replica pour la validation webmail HTTPS sur la route existante. Aucune route SMTP/IMAP publique, DNS/MX, NAT ou cutover source n’est déclaré.
 - ✅ La validation LDAP Dovecot privée est conforme à fuu : `DOVECOT_URIS` explicite DC1+DC2 génère les URI source, le refus synthétique normal retourne `exit 77`, le Pod est Ready sans restart, les démons DMS requis sont Running et Argo Mail est `Synced/Healthy`. Aucun cutover public n’est impliqué ; un compte de test explicitement désigné reste requis avant l’authentification réelle.
+- 🚧 Un blocage Dovecot/libldap sur les referrals AD de la racine de domaine a été isolé malgré des recherches LDAP directes valides. La base de recherche est bornée à l’OU autorisée des comptes mail ; le rollout privé et le login Roundcube restent à valider.
 
 ---
 
