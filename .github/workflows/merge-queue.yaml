@@ -14,48 +14,42 @@ jobs:
     name: Validate Merge Queue Entry
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout merge queue branch
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.merge_group.head_sha }}
 
-      - name: Setup K8s tools
-        uses: ./.github/actions/setup-k8s-tools
+      - uses: ./.github/actions/setup-k8s-tools
+      - uses: ./.github/actions/setup-yaml-tools
 
-      - name: Setup YAML tools
-        uses: ./.github/actions/setup-yaml-tools
-
-      - name: Fast validation
+      - name: YAML and Kustomize validation
         run: |
-          echo "🔍 Merge Queue: Fast validation for SHA ${{ github.event.merge_group.head_sha }}"
+          set -euo pipefail
 
-          # YAML lint (fast)
-          echo "📋 YAML lint..."
-          yamllint -c yamllint-config.yml apps/ argocd/ || exit 1
+          find apps argocd \( -name '*.yaml' -o -name '*.yml' \)             ! -path '*/charts/*'             ! -path '*/crds/*'             ! -name 'argocd-crds.yaml'             ! -name 'argocd-install.yaml'             ! -name 'manifests.yaml'             ! -name 'servicemonitors.yaml'             ! -name 'upstream.yaml'             ! -name 'poolers.yaml'             -print0 | xargs -0 -r yamllint -c yamllint-config.yml
 
-          # Kustomize build test (sample)
-          echo "📦 Kustomize build test (sample)..."
-          for overlay in apps/*/overlays/dev apps/*/overlays/prod; do
-            if [ -f "$overlay/kustomization.yaml" ]; then
-              echo "  Testing: $overlay"
-              kustomize build --enable-helm "$overlay" > /dev/null || exit 1
-            fi
-          done | head -5
+          while IFS= read -r kustomization; do
+            overlay="$(dirname "$kustomization")"
+            echo "Building $overlay"
+            kustomize build --enable-helm "$overlay" >/dev/null
+          done < <(
+            find apps -type f -path '*/overlays/dev/kustomization.yaml' -o                       -type f -path '*/overlays/prod/kustomization.yaml'
+          )
 
-          echo "✅ Merge queue validation passed"
+          for overlay in argocd/overlays/dev argocd/overlays/prod; do
+            kustomize build --enable-helm "$overlay" >/dev/null
+          done
+
+          bash scripts/validation/validate-kustomization-refs.sh
+          python3 scripts/validation/validate-repository.py
 
   security-check:
     name: Security Check
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout merge queue branch
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.merge_group.head_sha }}
-          fetch-depth: 0
-
-      - name: Run gitleaks
-        uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
@@ -68,12 +62,9 @@ jobs:
     steps:
       - name: Check results
         run: |
-          if [ "${{ needs.validate-merge.result }}" != "success" ] || [ "${{ needs.security-check.result }}" != "success" ]; then
-            echo "❌ Merge queue validation failed"
-            echo "  - Validate: ${{ needs.validate-merge.result }}"
-            echo "  - Security: ${{ needs.security-check.result }}"
+          if [ "${{ needs.validate-merge.result }}" != success ] ||
+             [ "${{ needs.security-check.result }}" != success ]; then
+            echo "Merge queue validation failed"
             exit 1
           fi
-
-          echo "✅ All merge queue checks passed"
-          echo "SHA: ${{ github.event.merge_group.head_sha }}"
+          echo "Merge queue validation passed"

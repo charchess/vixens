@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Dev version to promote (e.g., v1.2.3 from dev-v1.2.3)'
+        description: 'Dev snapshot to promote (e.g. v2026.09.3271 from dev-v2026.09.3271)'
         required: true
         type: string
 
@@ -48,7 +48,7 @@ jobs:
         id: get_commit
         run: |
           DEV_TAG="${{ steps.validate.outputs.dev_tag }}"
-          COMMIT_SHA=$(git rev-parse "$DEV_TAG")
+          COMMIT_SHA=$(git rev-parse "${DEV_TAG}^{commit}")
 
           echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
           echo "📍 Dev tag $DEV_TAG points to commit: $COMMIT_SHA"
@@ -128,20 +128,3 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "ArgoCD will automatically sync production cluster to this version." >> $GITHUB_STEP_SUMMARY
 
-      - name: Create promotion record
-        run: |
-          # Optional: Create a JSON record of the promotion
-          mkdir -p .promotions
-          cat > .promotions/prod-${{ steps.validate.outputs.version }}.json <<EOF
-          {
-            "version": "${{ steps.validate.outputs.version }}",
-            "dev_tag": "${{ steps.validate.outputs.dev_tag }}",
-            "prod_tag": "${{ steps.validate.outputs.prod_tag }}",
-            "commit_sha": "${{ steps.get_commit.outputs.commit_sha }}",
-            "promoted_by": "${{ github.actor }}",
-            "promoted_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "workflow_run": "${{ github.run_id }}"
-          }
-          EOF
-
-          echo "📝 Created promotion record: .promotions/prod-${{ steps.validate.outputs.version }}.json"
