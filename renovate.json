@@ -21,7 +21,6 @@
   "automergeType": "pr",
   "automergeStrategy": "squash",
   "enabledManagers": [
-    "terraform",
     "helm-values",
     "kubernetes",
     "custom.regex",
@@ -39,15 +38,12 @@
       "/(^|/)values.*\\.yaml$/"
     ]
   },
-  "terraform": {
-    "managerFilePatterns": [
-      "/(^|/)\\.tf$/"
-    ]
-  },
   "packageRules": [
     {
       "description": "netbox-plugins image managed by build workflow, not Renovate",
-      "matchPackageNames": ["ghcr.io/charchess/netbox-plugins"],
+      "matchPackageNames": [
+        "ghcr.io/charchess/netbox-plugins"
+      ],
       "enabled": false
     },
     {
@@ -127,7 +123,7 @@
       ]
     },
     {
-      "description": "Auto-merge minor and patch updates after approval",
+      "description": "Auto-merge minor and patch updates after required checks",
       "matchUpdateTypes": [
         "minor",
         "patch",
@@ -173,5 +169,5 @@
   "commitMessageAction": "update",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to {{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}",
-  "prBodyTemplate": "{{{header}}}\n\n{{{table}}}\n\n{{{notes}}}\n\n{{{changelogs}}}\n\n---\n\n### 🚀 Deployment Strategy\n\n{{#if isMajor}}⚠️ **Major update** - Auto-merge enabled after required checks{{else}}✅ **Auto-merge enabled** - Will merge automatically after required checks{{/if}}\n\n- [ ] Reviewed changes\n- [ ] Optional human review completed\n- [ ] Required checks green\n\n---\n\n{{{footer}}}"
+  "prBodyTemplate": "{{{header}}}\n\n{{{table}}}\n\n{{{notes}}}\n\n{{{changelogs}}}\n\n---\n\n### 🚀 Deployment Strategy\n\n{{#if isMajor}}⚠️ **Major update** - Auto-merge enabled after required checks{{else}}✅ **Auto-merge enabled** - Will merge automatically after required checks{{/if}}\n\n- [ ] Optional human review completed\n- [ ] Required checks green\n\n---\n\n{{{footer}}}"
 }
