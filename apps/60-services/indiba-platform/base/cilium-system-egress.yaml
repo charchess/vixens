@@ -1,0 +1,17 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: control-plane-kube-api-egress
+  namespace: indiba-system
+spec:
+  endpointSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - control-plane
+          - hermes-operator
+  egress:
+    - toEntities:
+        - kube-apiserver

@@ -1,0 +1,44 @@
+---
+apiVersion: agents.indiba.io/v1alpha1
+kind: HermesRuntime
+metadata:
+  name: indiba-bertrand-nadia-sud-ouest
+  namespace: tenant-indiba
+spec:
+  tenantId: 018f0000-0000-7000-8000-000000000001
+  tenantRef: TEN00001
+  tenantSlug: indiba
+  principalId: 018f0000-0000-7000-8000-000000000002
+  principalRef: USR00001
+  agentIdentityId: 018f0000-0000-7000-8000-000000000003
+  agentRef: TEN00001-USR00001-TPL00001-INS001
+  agentAlias: indiba/bertrand/nadia/sud-ouest
+  personaRef: nadia@v8
+  hermesReleaseRef: hermes@v2026.9.7
+  llmProfileRef: commercial-standard@v6
+  skills:
+    - prepare-email@v5
+    - indiba-sales-tools@v2
+  capabilities:
+    - ref: browser-standard
+      executionEnvironmentRef: browser-playwright@v1
+    - ref: python-standard
+      executionEnvironmentRef: python-standard@v1
+  repositories:
+    - ref: indiba-shared
+      access: readOnly
+      accessMode: filesystem
+    - ref: commercial-shared
+      access: readOnly
+      accessMode: indexed
+    - ref: bertrand-private
+      access: readWrite
+      accessMode: filesystem
+  memory:
+    serviceRef: hs-indiba-stable
+    bankRef: MB-TEN00001-USR00001-TPL00001-INS001
+    profileRef: commercial-memory@v13
+  homeRef: HOME-TEN00001-USR00001-TPL00001-INS001
+  configurationRevision: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  lifecycle:
+    mode: alwaysOn

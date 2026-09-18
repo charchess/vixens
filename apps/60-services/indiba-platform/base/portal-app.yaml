@@ -1,0 +1,178 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: indiba-portal-app
+  namespace: indiba-system
+  labels:
+    app.kubernetes.io/name: indiba-portal
+    app.kubernetes.io/part-of: indiba-platform
+data:
+  server.mjs: |
+    import http from "node:http";
+
+    const port = Number(process.env.PORT || "3000");
+    const controlPlane = process.env.CONTROL_PLANE_URL ||
+      "http://control-plane.indiba-system.svc.cluster.local:8081";
+
+    const json = (res, status, body) => {
+      const payload = JSON.stringify(body);
+      res.writeHead(status, {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "no-store",
+        "content-length": Buffer.byteLength(payload),
+      });
+      res.end(payload);
+    };
+
+    const identity = (req) => ({
+      uid: req.headers["x-authentik-uid"] || "",
+      username: req.headers["x-authentik-username"] || "",
+      email: req.headers["x-authentik-email"] || "",
+      name: req.headers["x-authentik-name"] || "",
+      groups: String(req.headers["x-authentik-groups"] || "")
+        .split("|")
+        .filter(Boolean),
+    });
+
+    const page = `<!doctype html>
+    <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>INDIBA Agents</title><style>
+    body{font-family:system-ui,sans-serif;max-width:960px;margin:3rem auto;padding:0 1rem;background:#f7f7f8;color:#171717}
+    header{display:flex;justify-content:space-between;align-items:center} .card{background:white;border:1px solid #ddd;border-radius:12px;padding:1rem;margin:1rem 0}
+    button{padding:.6rem 1rem;border:0;border-radius:8px;background:#171717;color:white;cursor:pointer} .muted{color:#666}
+    </style></head><body><header><div><h1>Mes agents</h1><div id="me" class="muted">Chargement…</div></div></header>
+    <main id="agents"><div class="card">Chargement des agents…</div></main>
+    <section class="card"><h2>Fournisseurs IA</h2><p class="muted">La connexion OAuth déléguée sera pilotée ici par le LLM Gateway.</p></section>
+    <script>
+    async function load(){
+      const me=await fetch('/api/me').then(r=>r.json());
+      document.getElementById('me').textContent=me.name||me.username||me.email||'Utilisateur authentifié';
+      const root=document.getElementById('agents');
+      try{
+        const r=await fetch('/api/agents');
+        if(!r.ok) throw new Error('Control Plane indisponible');
+        const data=await r.json(); const agents=Array.isArray(data)?data:(data.items||[]);
+        root.innerHTML=agents.length?agents.map(a=>`<div class="card"><strong>${a.name||a.agentAlias||a.agentRef}</strong><div class="muted">${a.status||a.phase||'unknown'}</div><button disabled>Ouvrir</button></div>`).join(''):'<div class="card">Aucun agent autorisé.</div>';
+      }catch(e){root.innerHTML='<div class="card"><strong>Control Plane non disponible</strong><p class="muted">Le portail est prêt; la liste sera alimentée par le MVP Control Plane.</p></div>';}
+    } load();
+    </script></body></html>`;
+
+    const server = http.createServer(async (req, res) => {
+      if (req.url === "/healthz") return json(res, 200, {status: "ok"});
+      if (req.url === "/api/me") return json(res, 200, identity(req));
+      if (req.url === "/api/agents") {
+        try {
+          const me = identity(req);
+          const upstream = await fetch(`${controlPlane}/v1/agents`, {
+            headers: {
+              "x-indiba-auth-source": "authentik-forward-auth",
+              "x-indiba-principal-sub": me.uid,
+              "x-indiba-principal-name": me.username,
+            },
+          });
+          const body = await upstream.text();
+          res.writeHead(upstream.status, {"content-type": upstream.headers.get("content-type") || "application/json"});
+          return res.end(body);
+        } catch (error) {
+          return json(res, 502, {error: "control_plane_unavailable"});
+        }
+      }
+      if (req.url === "/" || req.url === "/index.html") {
+        res.writeHead(200, {"content-type": "text/html; charset=utf-8", "cache-control": "no-store"});
+        return res.end(page);
+      }
+      return json(res, 404, {error: "not_found"});
+    });
+    server.listen(port, "0.0.0.0");
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: indiba-portal
+  namespace: indiba-system
+  labels:
+    app.kubernetes.io/name: indiba-portal
+    app.kubernetes.io/part-of: indiba-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: indiba-portal
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: indiba-portal
+        app.kubernetes.io/part-of: indiba-platform
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: portal
+          image: node:22-alpine
+          command:
+            - node
+            - /app/server.mjs
+          env:
+            - name: PORT
+              value: "3000"
+            - name: CONTROL_PLANE_URL
+              value: http://control-plane.indiba-system.svc.cluster.local:8081
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: app
+              mountPath: /app/server.mjs
+              subPath: server.mjs
+              readOnly: true
+      volumes:
+        - name: app
+          configMap:
+            name: indiba-portal-app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: indiba-portal
+  namespace: indiba-system
+  labels:
+    app.kubernetes.io/name: indiba-portal
+    app.kubernetes.io/part-of: indiba-platform
+spec:
+  selector:
+    app.kubernetes.io/name: indiba-portal
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+      protocol: TCP

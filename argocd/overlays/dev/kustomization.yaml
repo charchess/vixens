@@ -39,3 +39,4 @@ resources:
   - apps/victoria-metrics.yaml
   - apps/snmp-exporter.yaml
   - apps/homeassistant.yaml
+  - apps/indiba-platform.yaml

@@ -41,3 +41,8 @@ Validation des aspects techniques (infra, logs, perfs).
 | **Security** | runAsNonRoot | ✅ OK | 2026-03-26 | Enforced on 11 apps |
 | **Security** | preStop hooks | ✅ OK | 2026-03-26 | Configured on 8 critical apps for graceful shutdown |
 | **Cilium / Admission** | Kubernetes API webhook ingress | ✅ Declared | 2026-09-13 | `kube-apiserver` baseline ingress plus a port-10250 control-plane rule for External Secrets under default-deny; restores ExternalSecret admission without broad pod ingress. |
+| **indiba-platform** | GitOps/Kustomize contracts | 🚧 Pending CI | 2026-09-19 | CRD, namespace/RBAC, default-deny trust boundaries and Phase 0 portal are declared in #3279. |
+| **indiba-platform** | Portal SSO | 🚧 Not run | 2026-09-19 | Validate `agents.dev.truxonline.com` -> Traefik -> Authentik -> Portal and verify unauthenticated access is denied. |
+| **indiba-platform** | Portal isolation | 🚧 Not run | 2026-09-19 | Browser must not reach Hermes/Hindsight directly; Portal may egress only to Control Plane plus DNS. |
+| **indiba-platform** | Phase 0 runtime mode | 🚧 Not run | 2026-09-19 | Reference HermesRuntime is `alwaysOn`; no KEDA/wake-up dependency is required for the POC. |
+| **indiba-platform** | Runtime security E2E | 🚧 Not run | 2026-09-19 | Required before merge-to-ready: cross-bank deny, cross-tenant deny, workload identity, no provider secret in Hermes, and gateway credential binding tests. |

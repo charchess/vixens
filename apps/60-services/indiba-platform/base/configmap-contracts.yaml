@@ -1,0 +1,99 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: indiba-platform-contracts
+  namespace: indiba-system
+  labels:
+    app.kubernetes.io/part-of: indiba-platform
+    indiba.io/contract: "true"
+data:
+  execution-context.yaml: |
+    version: v1alpha1
+    required:
+      - tenantId
+      - principalId
+      - agentIdentityId
+      - runtimeId
+      - sessionId
+      - traceId
+      - configurationRevision
+    trust:
+      callerHeadersAuthoritative: false
+      identitySource: authenticated-workload
+      rule: >-
+        Gateways MUST reconstruct or verify tenant/runtime identity from the
+        authenticated workload. Arbitrary caller-supplied identity headers are
+        never trusted.
+  portal-identity.yaml: |
+    version: v1alpha1
+    source: authentik-forward-auth
+    browserTrust: none
+    trustedHop: indiba-portal
+    claims:
+      - x-authentik-uid
+      - x-authentik-username
+      - x-authentik-email
+      - x-authentik-name
+      - x-authentik-groups
+    rule: >-
+      The Control Plane MAY accept normalized principal claims from the Portal
+      only when the request originates from the trusted Portal workload path.
+      The same headers received from arbitrary callers MUST be ignored. A later
+      OIDC/JWT verification flow may replace this Phase 0 trust path.
+  memory-authorization.yaml: |
+    version: v1alpha1
+    resource: MemoryBank
+    decisionKey:
+      - agentIdentityId
+      - bankRef
+      - operation
+    operations:
+      - retain
+      - recall
+      - reflect
+    rules:
+      - bankIdIsCredential: false
+      - defaultDecision: DENY
+      - selfHostedEnforcement: Hindsight TenantExtension + OperationValidatorExtension
+      - backgroundWorkers: authorize-at-request-boundary
+  llm-credential.yaml: |
+    version: v1alpha1
+    entity: LLMCredential
+    fields:
+      ownerType: tenant | principal | agentIdentity
+      provider: string
+      authMode: platform_managed_api_key | tenant_byok_api_key | delegated_oauth
+      secretRef: openbao://...
+      status: ACTIVE | REAUTH_REQUIRED | REVOKED
+    binding:
+      entity: LLMCredentialBinding
+      rule: >-
+        A principal-owned delegated OAuth credential may be granted to several
+        AgentIdentity objects, but the refresh token has one technical owner:
+        the LLM Gateway/Credential Broker.
+    forbidden:
+      - provider secrets in Git
+      - shared writable auth.json between Hermes runtimes
+  runtime-configuration-snapshot.yaml: |
+    version: v1alpha1
+    entity: RuntimeConfigurationSnapshot
+    immutable: true
+    required:
+      - revision
+      - tenant
+      - principal
+      - agentIdentity
+      - hermesImageDigest
+      - agentTemplateRevision
+      - memoryServiceRef
+      - memoryProfileRevision
+      - llmProfileRevision
+      - skillRevisions
+      - repositoryBindings
+      - effectivePolicies
+      - resourceLimits
+      - createdAt
+    note: >-
+      configurationRevision is the SHA-256 identity of this immutable snapshot;
+      the hash alone is not sufficient to reproduce a runtime.
