@@ -90,3 +90,7 @@ The private LAN Roundcube pod uses only workload-local bootstrap capabilities (`
 ### Authorized webmail reverse-proxy cutover
 
 `mail.truxonline.com` continues to terminate TLS at the existing Traefik `mail-gateway` Ingress, but its former static HTTP endpoint was replaced by the internal `mail/roundcube` ClusterIP (`10.107.97.165:80`). The temporary NodePort/TLS sidecar path was removed. Cilium admits only the selected Traefik Pods to the Roundcube backend TCP/80. SMTP, IMAP, MX, DNS, NAT and fuu authority remain outside this webmail-only change.
+
+### Roundcube authenticated Submission
+
+Roundcube submits through `tls://mailserver.mail.svc.cluster.local:587` using its authenticated session placeholders (`%u` and `%p`) with `PLAIN` after STARTTLS. This keeps SMTP within the mail namespace and validates the target Postfix Submission path without exposing a public SMTP endpoint or changing MX/NAT.
