@@ -21,7 +21,7 @@ spec:
     - repoURL: https://github.com/charchess/vixens
       targetRevision: prod-stable
       ref: vixens
-    # Source 3: The Kustomize overlay (Namespace, InfisicalSecret, Holmes)
+    # Source 3: The Kustomize overlay (Namespace, ExternalSecret, Holmes)
     - repoURL: https://github.com/charchess/vixens
       targetRevision: prod-stable
       path: apps/02-monitoring/robusta/overlays/prod
