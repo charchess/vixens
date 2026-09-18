@@ -1,40 +1,38 @@
 ---
-name: 'Setup YAML Tools'
-description: 'Install yamllint and yq for YAML validation and processing'
-author: 'charchess'
+name: Setup YAML Tools
+description: Install pinned yamllint and yq versions
+author: charchess
 
 inputs:
   install-yamllint:
-    description: 'Install yamllint'
     required: false
     default: 'true'
   install-yq:
-    description: 'Install yq'
     required: false
     default: 'true'
+  yamllint-version:
+    required: false
+    default: '1.35.1'
+  yq-version:
+    required: false
+    default: '4.44.1'
 
 runs:
-  using: 'composite'
+  using: composite
   steps:
-    - name: Install yamllint
+    - name: Install pinned yamllint
       if: inputs.install-yamllint == 'true'
       shell: bash
       run: |
-        echo "📦 Installing yamllint..."
-        sudo apt-get update && sudo apt-get install -y yamllint
+        set -euo pipefail
+        python3 -m pip install --quiet "yamllint==${{ inputs.yamllint-version }}"
         yamllint --version
 
-    - name: Install yq
+    - name: Install pinned yq
       if: inputs.install-yq == 'true'
-      uses: mikefarah/yq@v4.44.1
-
-    - name: Verify installations
       shell: bash
       run: |
-        echo "✅ Installed tools:"
-        if [ "${{ inputs.install-yamllint }}" = "true" ]; then
-          echo "  - yamllint: $(yamllint --version)"
-        fi
-        if [ "${{ inputs.install-yq }}" = "true" ]; then
-          echo "  - yq: $(yq --version)"
-        fi
+        set -euo pipefail
+        sudo curl -fsSL           "https://github.com/mikefarah/yq/releases/download/v${{ inputs.yq-version }}/yq_linux_amd64"           -o /usr/local/bin/yq
+        sudo chmod 0755 /usr/local/bin/yq
+        yq --version

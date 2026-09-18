@@ -1,2 +1,0 @@
-apps/00-infra/argocd/overlays/prod/patches/redis-probes-json.yaml
-apps/00-infra/argocd/overlays/prod/patches/redis-resources-json.yaml

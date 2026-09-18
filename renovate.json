@@ -25,7 +25,8 @@
     "helm-values",
     "kubernetes",
     "custom.regex",
-    "dockerfile"
+    "dockerfile",
+    "github-actions"
   ],
   "kubernetes": {
     "managerFilePatterns": [
