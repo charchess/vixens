@@ -18,7 +18,8 @@ spec:
     metadata:
       annotations:
         # Runtime LDAP endpoint parity with the working fuu DMS source.
-        vixens.io/ldap-endpoint-set: "dc1-dc2"
+        # Explicit DOVECOT_URIS prevents the DMS template default from winning.
+        vixens.io/ldap-endpoint-set: "dc1-dc2-explicit"
       labels: {app.kubernetes.io/name: mailserver, app.kubernetes.io/part-of: truxonline-mail}
     spec:
       securityContext: {fsGroup: 5000, fsGroupChangePolicy: OnRootMismatch}
