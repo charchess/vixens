@@ -42,7 +42,7 @@ Last Updated: 2026-09-17
 
 - 🚧 Le premier rsync Maildir non destructif depuis fuu a terminé avec succès vers le PVC TrueNAS retenu.
 - La prochaine étape GitOps active uniquement un replica DMS privé ; Roundcube demeure à zéro et aucune route SMTP/IMAP publique, DNS/MX, NAT ou cutover source n’est déclaré.
-- ⚠️ Le DMS privé est Ready, mais Dovecot v2.3.19.1 expire durant son `auth_bind` DN lookup alors que la même recherche LDAP depuis le Pod réussit sur les deux DC en environ 100 ms. L’essai supporté `blocking = yes` n’a pas modifié ce résultat ; les hooks temporaires de diagnostic sont retirés. Prochaine étape : revue explicite d’un passdb Dovecot à bind UPN direct Active Directory.
+- 🚧 Le DMS privé est Ready. La comparaison effective avec fuu a isolé un écart : fuu utilise les URI LDAP DC1+DC2 tandis que le Pod n’utilisait que DC1. Le runtime OpenBao est corrigé à parité source et un rollout GitOps contrôlé doit valider le refus synthétique normal avant toute autre modification Dovecot.
 
 ---
 

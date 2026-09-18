@@ -16,6 +16,9 @@ spec:
     matchLabels: {app.kubernetes.io/name: mailserver}
   template:
     metadata:
+      annotations:
+        # Runtime LDAP endpoint parity with the working fuu DMS source.
+        vixens.io/ldap-endpoint-set: "dc1-dc2"
       labels: {app.kubernetes.io/name: mailserver, app.kubernetes.io/part-of: truxonline-mail}
     spec:
       securityContext: {fsGroup: 5000, fsGroupChangePolicy: OnRootMismatch}
