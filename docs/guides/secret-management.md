@@ -1,85 +1,52 @@
-# Secret Management Guide (Infisical)
+# Secret management
 
-This guide covers secrets management, synchronization, and access within the Vixens infrastructure using **Infisical**.
+Vixens uses **External Secrets Operator** with an OpenBao-backed `ClusterSecretStore` named `openbao`.
 
----
+Secret values are never committed to Git.
 
-## 🏗️ Architecture
+## Application pattern
 
-1.  **Infisical Server:** Self-hosted at `http://192.168.111.69:8085`.
-2.  **Infisical Operator:** Runs in the cluster and synchronizes secrets from Infisical to Kubernetes `Secret` resources.
-3.  **Machine Identity:** Uses **Universal Auth** for secure, non-interactive access.
-
----
-
-## 💻 CLI Access (Critical for Automation)
-
-When using the Infisical CLI with Machine Identity (Universal Auth), there is a known issue where the project slug (`vixens`) might not resolve correctly (returning 404).
-
-**Standard Rule:** Always use the **Project ID (UUID)** instead of the slug.
-
-### 🔑 Credentials
-- **Project ID:** `47aca60e-543b-4fd6-b646-8ebd5a7b3433`
-- **Machine Identity Secret:** Stored in Kubernetes under `argocd/infisical-universal-auth`.
-
-### 🔓 Login Procedure
-```bash
-infisical login --method=universal-auth \
-  --client-id=<YOUR_CLIENT_ID> \
-  --client-secret=<YOUR_CLIENT_SECRET> \
-  --domain http://192.168.111.69:8085
-```
-
-### 📦 Fetching Secrets
-```bash
-# Use --projectId instead of --project
-infisical secrets --projectId 47aca60e-543b-4fd6-b646-8ebd5a7b3433 --env prod --path /apps/00-infra/velero
-```
-
----
-
-## 🔄 Synchronization Protocol
-
-### 1. In Infisical
-- Add your secret in the web UI.
-- Use paths like `/apps/<category>/<app-name>`.
-
-### 2. In Kubernetes (GitOps)
-Create an `InfisicalSecret` resource:
+A typical application resource is:
 
 ```yaml
-apiVersion: secrets.infisical.com/v1alpha1
-kind: InfisicalSecret
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
-  name: my-app-secrets
+  name: example-secrets
+  namespace: example
 spec:
-  hostAPI: http://192.168.111.69:8085
-  authentication:
-    universalAuth:
-      credentialsRef:
-        secretName: infisical-universal-auth
-        secretNamespace: argocd
-      secretsScope:
-        projectSlug: vixens
-        envSlug: prod
-        secretsPath: /apps/my-category/my-app
-  managedSecretReference:
-    secretName: my-app-secrets
+  refreshInterval: 60s
+  secretStoreRef:
+    name: openbao
+    kind: ClusterSecretStore
+  target:
+    name: example-secrets
     creationPolicy: Owner
+    deletionPolicy: Retain
+  dataFrom:
+    - extract:
+        key: vixens/dev/apps/60-services/example
 ```
 
----
+Production overlays must reference the corresponding production path.
 
-## 🛠️ Troubleshooting
+Use existing current manifests as the implementation pattern; for example,
+`apps/10-home/homeassistant/base/infisical-secret.yaml` has a legacy filename but contains a current `ExternalSecret`.
 
-### Error: "404 Project Not Found"
-- **Cause:** Using slug `vixens` with Universal Auth in CLI.
-- **Fix:** Use the UUID `47aca60e-543b-4fd6-b646-8ebd5a7b3433`.
+## Bootstrap boundary
 
-### Secrets not updating
-- Check operator logs: `kubectl logs -n infisical-operator-system -l app.kubernetes.io/name=secrets-operator`.
-- Force sync via annotation: `kubectl annotate infisicalsecret <name> secrets.infisical.com/force-sync=$(date +%s) --overwrite`.
+Credentials required to let External Secrets authenticate to OpenBao are bootstrap material and are not stored in this repository.
 
----
+## Safety
 
-**Last Updated:** 2026-02-05 (Fix for CLI 404 issue)
+Never paste secret values into:
+
+- manifests
+- Markdown
+- GitHub Issues or PR descriptions
+- logs committed for troubleshooting
+- agent instructions or examples
+
+Gitleaks scans documentation as well as manifests.
+
+The historical Infisical architecture remains documented in its original ADR for audit purposes; ADR-029 is the current decision.
