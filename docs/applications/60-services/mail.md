@@ -72,7 +72,7 @@ DMS authentication is constrained by a Cilium policy to the two audited LDAP end
 
 ### Dovecot LDAP authentication blocker
 
-Private validation established that the service-account bind and the exact LDAP search complete in approximately 100 ms from the DMS Pod against both DCs. The effective fuu DMS source configuration was then read through its approved operator path: its Dovecot LDAP URI list is `ldap://192.168.200.21 ldap://192.168.200.22`, while the target had only DC1. The source synthetic auth test returns its normal immediate refusal, while the target timed out during the Dovecot `auth_bind` DN lookup. Target runtime `LDAP_SERVER_HOST` now matches fuu exactly and the Pod rollout annotation records this endpoint-set change. No passdb semantic rewrite is required unless this parity correction fails validation.
+Private validation established that the service-account bind and the exact LDAP search complete in approximately 100 ms from the DMS Pod against both DCs. The effective fuu DMS source configuration was then read through its approved operator path: its Dovecot LDAP URI list is `ldap://192.168.200.21 ldap://192.168.200.22`, while the target had only DC1. The source synthetic auth test returns its normal immediate refusal, while the target timed out during the Dovecot `auth_bind` DN lookup. The DMS template did not derive `DOVECOT_URIS` from target `LDAP_SERVER_HOST` and retained `ldap://mail.example.com`; runtime now declares `DOVECOT_URIS` explicitly at the same DC1+DC2 value and the Pod rollout annotation records that endpoint-set change. No passdb semantic rewrite is required unless this parity correction fails validation.
 
 
 ### Temporary private LAN Roundcube validation
