@@ -96,3 +96,7 @@ The private LAN Roundcube pod uses only workload-local bootstrap capabilities (`
 Roundcube submits through `tls://mailserver.mail.svc.cluster.local:587` using its authenticated session placeholders (`%u` and `%p`) with `PLAIN` after STARTTLS. TLS peer and hostname validation remain enabled; the connection explicitly verifies the issued certificate name `mail.truxonline.com` while routing to the internal Service FQDN. This keeps SMTP within the mail namespace and validates the target Postfix Submission path without exposing a public SMTP endpoint or changing MX/NAT.
 
 The Docker runtime variables use the same internal STARTTLS endpoint and port. This prevents the image-generated runtime configuration from falling back to the legacy `mailserver:25` endpoint after startup.
+
+### Amavis runtime directories
+
+The DMS Pod provisions an ephemeral, Pod-local `/var/lib/amavis` volume before the mail container starts. Its init container creates `tmp` and `db` with Amavis ownership (`999:999`) and restrictive modes. This is required for the localhost content-filter listener on port `10024`; it contains no mailbox data and is deliberately separate from the retained Maildir and mail-state PVCs.
