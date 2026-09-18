@@ -93,4 +93,4 @@ The private LAN Roundcube pod uses only workload-local bootstrap capabilities (`
 
 ### Roundcube authenticated Submission
 
-Roundcube submits through `tls://mailserver.mail.svc.cluster.local:587` using its authenticated session placeholders (`%u` and `%p`) with `PLAIN` after STARTTLS. This keeps SMTP within the mail namespace and validates the target Postfix Submission path without exposing a public SMTP endpoint or changing MX/NAT.
+Roundcube submits through `tls://mailserver.mail.svc.cluster.local:587` using its authenticated session placeholders (`%u` and `%p`) with `PLAIN` after STARTTLS. TLS peer and hostname validation remain enabled; the connection explicitly verifies the issued certificate name `mail.truxonline.com` while routing to the internal Service FQDN. This keeps SMTP within the mail namespace and validates the target Postfix Submission path without exposing a public SMTP endpoint or changing MX/NAT.
