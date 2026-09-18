@@ -70,9 +70,13 @@ The v2 initial transfer copied the Maildir payload but ended with rsync exit 23 
 
 DMS authentication is constrained by a Cilium policy to the two audited LDAP endpoints (`192.168.200.21` and `.22`, TCP/389) plus Kubernetes CoreDNS TCP/UDP 53. It exposes no public mail route. The DMS config init generates `postfix-virtual.cf.db` through idempotent `postmap` after materializing the source map, fixing the required hash map without placing generated data in Git.
 
+### Bounded Active Directory search base
+
+All mail users are administered under `OU=users,OU=infra,DC=internal,DC=truxonline,DC=com`. `LDAP_SEARCH_BASE` is explicitly limited to that OU rather than the AD domain root. This prevents Dovecot/libldap from following unrelated AD partition referrals during passdb lookup while retaining the complete authorized mail-user population.
+
 ### Dovecot LDAP authentication blocker
 
-Private validation established that the service-account bind and the exact LDAP search complete in approximately 100 ms from the DMS Pod against both DCs. The effective fuu DMS source configuration was then read through its approved operator path: its Dovecot LDAP URI list is `ldap://192.168.200.21 ldap://192.168.200.22`, while the target had only DC1. The DMS template did not derive `DOVECOT_URIS` from target `LDAP_SERVER_HOST` and retained `ldap://mail.example.com`; runtime now declares `DOVECOT_URIS` explicitly at the same DC1+DC2 value. Production private validation passed: the generated target URI matches fuu, the synthetic `doveadm auth test` returns the same normal immediate refusal (`exit 77`), the Pod has zero restarts, required DMS daemons are running, and Argo reports `Synced/Healthy`. No passdb semantic rewrite is required.
+Private validation established that the service-account bind and the exact LDAP search complete in approximately 100 ms from the DMS Pod against both DCs. The effective fuu DMS source configuration was then read through its approved operator path: its Dovecot LDAP URI list is `ldap://192.168.200.21 ldap://192.168.200.22`, while the target had only DC1. The DMS template did not derive `DOVECOT_URIS` from target `LDAP_SERVER_HOST` and retained `ldap://mail.example.com`; runtime now declares `DOVECOT_URIS` explicitly at the same DC1+DC2 value. Dovecot/libldap later demonstrated an AD-domain-root referral hang despite successful raw LDAP queries, so the authorized mail-user OU is now the explicit `LDAP_SEARCH_BASE`. The validation gate is a prompt normal `doveadm` refusal for an unknown user and a real Roundcube login; no passdb semantic rewrite is required.
 
 
 ### Temporary private LAN Roundcube validation
