@@ -99,4 +99,4 @@ The Docker runtime variables use the same internal STARTTLS endpoint and port. T
 
 ### Amavis runtime directories
 
-The DMS Pod provisions an ephemeral, Pod-local `/var/lib/amavis` volume before the mail container starts. Its init container creates `tmp` and `db` with Amavis ownership (`999:999`) and restrictive modes. This is required for the localhost content-filter listener on port `10024`; it contains no mailbox data and is deliberately separate from the retained Maildir and mail-state PVCs.
+The DMS `user-patches.sh` hook creates `tmp` and `db` with Amavis ownership (`999:999`) and restrictive modes after DMS setup and before Amavis starts. This is required for the localhost content-filter listener on port `10024`; it contains no mailbox data and is deliberately separate from the retained Maildir and mail-state PVCs.
