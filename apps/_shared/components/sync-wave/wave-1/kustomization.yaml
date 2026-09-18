@@ -4,7 +4,7 @@
 # ArgoCD sync-wave annotation for infrastructure secrets and prerequisites.
 # Wave 1 resources deploy BEFORE databases and applications.
 #
-# Typical usage: InfisicalSecrets, Secrets, ConfigMaps needed by databases
+# Typical usage: ExternalSecrets, Secrets, ConfigMaps needed by databases
 #
 # Usage in overlay:
 #   components:
