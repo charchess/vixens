@@ -99,6 +99,11 @@ ports:
     exposedPort: 25
     expose: true
     protocol: TCP
+  smtps: # Mail SMTP implicit TLS (465)
+    port: 465
+    exposedPort: 465
+    expose: true
+    protocol: TCP
   submission: # Mail Submission client → Stalwart (587/STARTTLS)
     port: 587
     exposedPort: 587

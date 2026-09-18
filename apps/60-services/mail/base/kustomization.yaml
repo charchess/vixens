@@ -11,6 +11,8 @@ resources:
   - mailserver-statefulset.yaml
   - roundcube-deployment.yaml
   - roundcube-traefik-ingress-policy.yaml
+  - mailserver-traefik-tcp.yaml
+  - mailserver-traefik-ingress-policy.yaml
   - external-secret-migration.yaml
   - migration-egress-policy.yaml
   - mailserver-ldap-egress-policy.yaml
