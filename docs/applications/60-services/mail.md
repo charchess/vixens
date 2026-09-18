@@ -4,14 +4,14 @@
 
 This application migrates the Truxonline mail runtime from fuu into Vixens in controlled stages. fuu is the active authoritative source until the explicit public cutover gate.
 
-The production GitOps stage declares a pinned Docker Mailserver (DMS) at **one private replica** for validation and Roundcube at **zero replicas**. The Maildir and state PVCs are retained TrueNAS claims populated by the non-destructive initial sync. No public mail listener, TCPRoute/Ingress, DNS/MX, UDM or Freebox change is declared.
+The production GitOps stage declares a pinned Docker Mailserver (DMS) and Roundcube at **one replica each** for private functional validation. The Maildir and state PVCs are retained TrueNAS claims populated by the non-destructive initial sync. The existing HTTPS webmail Ingress is used for this validation; no mail-protocol public listener, DNS/MX, UDM or Freebox change is declared.
 
 ## Live staging contract
 
 - `mail` namespace uses Pod Security `baseline`: DMS needs a root bootstrap phase but receives no privileged container configuration.
 - DMS image is pinned to the audited fuu v15.1.0 digest; Roundcube is separately pinned.
 - Eight OpenBao-backed ExternalSecrets materialize auth, DKIM, DMS config/runtime, Roundcube config/runtime, and Gmail-import contracts. Values are never stored in Git.
-- DMS is `replicas: 1` for private validation; Roundcube remains `replicas: 0`.
+- DMS and Roundcube are each `replicas: 1` for private validation.
 - The two Services are `ClusterIP` only; they are not public endpoints.
 - Maildir and state claims use `truenas-iscsi-xfs-retain`; the retained claims are Bound after the initial sync and attach only to the one private DMS replica during validation.
 
@@ -38,7 +38,7 @@ A successful ExternalSecret or Git promotion is not activation proof.
 
 ## Private DMS validation stage
 
-The DMS StatefulSet runs at one private replica only after TLS and secret contracts are verified. Roundcube remains at zero replicas and the migration Job remains suspended until its separate sync gate. No public mail routing, DNS, MX, NAT, or TCP exposure is declared by this stage.
+The DMS StatefulSet and Roundcube Deployment run at one replica each after TLS and secret contracts are verified. The migration Job remains suspended until its separate sync gate. No public mail-protocol routing, DNS, MX, NAT, or TCP exposure is declared by this stage; the pre-existing HTTPS webmail Ingress is used only for the authorized validation.
 
 
 ### DMS capability boundary
