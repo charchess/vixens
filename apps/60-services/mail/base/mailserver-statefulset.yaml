@@ -27,6 +27,23 @@ spec:
     spec:
       securityContext: {fsGroup: 5000, fsGroupChangePolicy: OnRootMismatch}
       initContainers:
+        - name: prepare-amavis-runtime
+          # Amavis requires writable tmp and db directories before it opens
+          # its localhost content-filter listener. Keep this runtime state
+          # ephemeral and scoped to the Pod; mail data remains on its PVC.
+          image: ghcr.io/docker-mailserver/docker-mailserver@sha256:af51b15dd3fc72153c0e90eb7692bb5e3a463212d87959a80fa7aa89b617d44a
+          command: [sh, -ec]
+          args:
+            - install -d -o 999 -g 999 -m 0750 /var/lib/amavis/tmp /var/lib/amavis/db
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN", "DAC_OVERRIDE", "FOWNER"]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - {name: amavis-runtime, mountPath: /var/lib/amavis}
         - name: materialize-dms-config
           image: ghcr.io/docker-mailserver/docker-mailserver@sha256:af51b15dd3fc72153c0e90eb7692bb5e3a463212d87959a80fa7aa89b617d44a
           command: [sh, -ec]
@@ -72,9 +89,12 @@ spec:
           volumeMounts:
             - {name: mail-data, mountPath: /var/mail}
             - {name: mail-state, mountPath: /var/mail-state}
+            - {name: amavis-runtime, mountPath: /var/lib/amavis}
             - {name: dms-config-work, mountPath: /tmp/docker-mailserver}
             - {name: mail-tls, mountPath: /etc/letsencrypt/live/mail.truxonline.com, readOnly: true}
       volumes:
+        - name: amavis-runtime
+          emptyDir: {}
         - {name: dms-config-work, emptyDir: {}}
         - {name: dms-config-source, secret: {secretName: mail-dms-config}}
         - {name: dkim-source, secret: {secretName: mail-dkim}}
