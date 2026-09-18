@@ -15,7 +15,7 @@ spec:
     metadata:
       annotations:
         # Roll out the mounted SMTP session configuration explicitly.
-        vixens.io/smtp-submission: "mailserver-starttls-587-session-auth-peer-name"
+        vixens.io/smtp-submission: "mailserver-starttls-587-runtime-peer-name"
       labels: {app.kubernetes.io/name: roundcube, app.kubernetes.io/part-of: truxonline-mail}
     spec:
       securityContext:
