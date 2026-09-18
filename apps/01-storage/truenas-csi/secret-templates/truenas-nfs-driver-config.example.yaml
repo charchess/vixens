@@ -8,7 +8,7 @@ httpConnection:
   protocol: http
   host: 192.168.200.244
   port: 80
-  apiKey: REPLACE_WITH_TRUENAS_API_KEY
+  apiKey: <TRUENAS_API_KEY>
   allowInsecure: true
   apiVersion: 2
 sshConnection:
@@ -16,7 +16,7 @@ sshConnection:
   port: 22
   username: root
   privateKey: |
-    REPLACE_WITH_PRIVATE_KEY_IF_SSH_IS_USED
+    <PRIVATE_KEY_IF_SSH_IS_USED>
 zfs:
   datasetParentName: tank/k8s/vixens/nfs/vols
   detachedSnapshotsDatasetParentName: tank/k8s/vixens/nfs/snaps
