@@ -42,7 +42,7 @@ Last Updated: 2026-09-17
 
 - 🚧 Le premier rsync Maildir non destructif depuis fuu a terminé avec succès vers le PVC TrueNAS retenu.
 - La prochaine étape GitOps active uniquement un replica DMS privé ; Roundcube demeure à zéro et aucune route SMTP/IMAP publique, DNS/MX, NAT ou cutover source n’est déclaré.
-- 🚧 Le DMS privé est Ready. La comparaison effective avec fuu a isolé l’URI LDAP DC1+DC2 de la source. Le DMS Pod ne dérivait pas cette valeur depuis `LDAP_SERVER_HOST` et gardait le défaut `ldap://mail.example.com`; `DOVECOT_URIS` est maintenant explicite dans OpenBao et un rollout GitOps contrôlé doit valider le refus synthétique normal avant toute autre modification Dovecot.
+- ✅ La validation LDAP Dovecot privée est conforme à fuu : `DOVECOT_URIS` explicite DC1+DC2 génère les URI source, le refus synthétique normal retourne `exit 77`, le Pod est Ready sans restart, les démons DMS requis sont Running et Argo Mail est `Synced/Healthy`. Aucun cutover public n’est impliqué ; un compte de test explicitement désigné reste requis avant l’authentification réelle.
 
 ---
 
