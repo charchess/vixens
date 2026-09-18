@@ -1,184 +1,45 @@
-# ============= TERRAFORM (State of the Art) =============
-# State files (jamais versionnés)
-*.tfstate
-*.tfstate.backup
-*.tfstate.lock.info
-
-# Crash logs
-crash.log
-crash.*.log
-
-# Plan files (contiennent des secrets potentiels)
-*.tfplan
-*.tfplan.*
-
-# Provider plugins (téléchargeables)
-.terraform/
-# REMARQUE : .terraform.lock.hcl DOIT être versionné pour la déterminance !
-
-# Override files (locaux non commités)
-*_override.tf
-*_override.tf.json
-
-# CLI configuration files
-.terraformrc
-terraform.rc
-
-# Local secret files dans les environnements
-terraform/environments/*/backend.tfvars
-terraform/environments/*/*credentials*
-terraform/environments/*/kubeconfig*
-terraform/environments/*/talosconfig*
-
-# ============= KUBERNETES / KUSTOMIZE =============
-# Secrets non chiffrés (absolu)
-**/gandi-credentials-secret.yaml
-**/secret-values.yaml
-**/secret-*.yaml
-**/secrets.unseal-keys
-**/secrets-*.env
-
-# Kubeconfigs générés
+# Local credentials and cluster access
+.secrets/*
+!.secrets/README.md
+.kube/
+*.kubeconfig
 **/kubeconfig*
 **/talosconfig*
+.env
+.env.*
+*.env
+*.key
+*.pem
+*.p12
+*.pfx
 
-# Fichiers de valeurs sensibles
+# Kubernetes secret-value files
+**/secret-values.yaml
 **/values-secret.yaml
 **/values-*.secret.yaml
+**/secrets-*.env
+**/gandi-credentials-secret.yaml
 
-# Certificates et clés
-**/*.crt
-**/*.key
-**/*.pem
-**/*.p12
-**/*.pfx
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*~
 
-# ============= APPLICATIONS & BUILD =============
-# Node.js (si vous réutilisez des outils JS)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Python (si vous utilisez des scripts Python)
+# Python / Node local state
 __pycache__/
 *.py[cod]
-*$py.class
-*.egg-info/
 .venv/
 venv/
-ENV/
+node_modules/
+*.egg-info/
 
-# ============= IDE & ÉDITEURS =============
-# VS Code
-.vscode/
-*.code-workspace
-
-# JetBrains (IntelliJ, PyCharm, etc.)
-.idea/
-*.iml
-*.ipr
-*.iws
-
-# Vim
-*.swp
-*.swo
-*~
-
-# Emacs
-*#
-.#*
-
-# Sublime Text
-*.sublime-project
-*.sublime-workspace
-
-# ============= GEMINI =============
-.gemini/
-
-# ============= OS FILES =============
-# macOS
-.DS_Store
-.AppleDouble
-._*
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Linux
-*~
-
-# ============= LOGS & OUTPUTS =============
+# Build / temporary output
 *.log
-*.out
 *.tmp
-*.temp
 *.bak
 *.backup
-
-# ============= DOCUMENTATION =============
-# Build outputs
 _site/
 docs/_build/
-
-# ============= PROJET SPÉCIFIQUE =============
-# Claude AI artefacts
-.claude/
-.kube/
-.aider*
-
-# Secrets management (OpenBao / External Secrets credentials)
-.secrets/
-
-# Beads issue tracking database
-# .beads/ is git-tracked, but some items inside might be ignored
-
-# Security: issues.jsonl can contain credentials in task descriptions
-.beads/issues.jsonl
-# Fichiers temporaires de test
-*.test
-*.test.*
-
-# Fichiers non utilisés (comme vos .unused)
-*.unused
-*.unused.*
-
-# Dossiers obsolètes (gardés pour référence mais ignorés)
-_old/
-obsolete/
-archive/
-docs/archive/
-
-# ============= ENVIRONMENT FILES =============
-.env
-.env.local
-.env.*.local
-*.env
-*.local
-
-# ============= CERT-MANAGER & TLS =============
-# ACME challenge temp files (si vous en générez)
-.acme-challenge/
-*.acme-challenge
-
-# ============= DEBUG & PROFILING =============
-*.prof
-*.pstat
-
-terraform.tfstate*
-current_state.json
-*.hcl
-*.lock
-.envrc
-.envrc.example
-.serena
-.bd.db
-
-# Exception: commit README
-!.secrets/README.md
-**/charts/
-.gemini_env/
-_bmad*/
-_bmad-output/

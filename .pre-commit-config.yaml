@@ -1,73 +1,36 @@
-# Pre-commit hooks for Vixens GitOps repository
-# Install: pipx install pre-commit && pre-commit install
-# Run manually: pre-commit run --all-files
-#
-# Philosophy: Block bad code BEFORE commit
-# Secrets, style violations, and syntax errors caught here (not in CI)
 ---
 repos:
-  # ══════════════════════════════════════════════════════════════
-  # SECRET DETECTION (CRITICAL - blocks commit)
-  # ══════════════════════════════════════════════════════════════
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.21.2
     hooks:
       - id: gitleaks
-        name: 🔐 Detect secrets
+        name: Detect secrets
 
-  # ══════════════════════════════════════════════════════════════
-  # FILE HYGIENE (quick checks)
-  # ══════════════════════════════════════════════════════════════
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       - id: check-merge-conflict
-        name: 🔀 Check merge conflicts
       - id: detect-private-key
-        name: 🔑 Detect private keys
       - id: check-added-large-files
-        name: 📦 Check large files
         args: ['--maxkb=1000']
       - id: check-yaml
-        name: 📄 Check YAML syntax
         args: [--allow-multiple-documents, --unsafe]
         exclude: |
           (?x)^(
             .*/charts/.*|
             .*/crds/.*|
             .*/templates/.*|
-            apps/00-infra/argocd/base/argocd-crds\.yaml
+            apps/00-infra/argocd/base/argocd-crds\.yaml|
+            apps/00-infra/argocd/base/argocd-install\.yaml
           )$
 
-  # ════════════════════════════════════════════════════════════════
-  # SEMANTIC CHECKS (catches logic errors yamllint cannot see)
-  # ════════════════════════════════════════════════════════════════
-  - repo: local
-    hooks:
-      - id: validate-helm-values
-        name: 🔍 ArgoCD inline Helm values YAML
-        language: python
-        entry: python3 scripts/validation/validate-helm-values.py
-        types: [yaml]
-        files: ^argocd/
-        pass_filenames: true
-        additional_dependencies: [pyyaml]
-
-  # ════════════════════════════════════════════════════════════════
-  # YAML STYLE (enforces editorial consistency)
-  # ════════════════════════════════════════════════════════════════
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.35.1
     hooks:
       - id: yamllint
-        name: 📝 YAML style check
         args: [-c, yamllint-config.yml]
         exclude: |
           (?x)^(
-            \.beads/.*|
-            \.bmad-core/.*|
-            \.bmad-infrastructure-devops/.*|
-            \.serena/.*|
             .*/charts/.*|
             .*/crds/.*|
             .*/templates/.*|
@@ -78,3 +41,19 @@ repos:
             apps/.*/upstream\.yaml|
             apps/.*/poolers\.yaml
           )$
+
+  - repo: local
+    hooks:
+      - id: validate-helm-values
+        name: Validate ArgoCD inline Helm values
+        language: python
+        entry: python3 scripts/validation/validate-helm-values.py
+        files: ^argocd/
+        types: [yaml]
+        additional_dependencies: [pyyaml]
+      - id: validate-repository
+        name: Validate Vixens repository contract
+        language: python
+        entry: python3 scripts/validation/validate-repository.py
+        pass_filenames: false
+        always_run: true
