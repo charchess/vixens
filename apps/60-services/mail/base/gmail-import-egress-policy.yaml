@@ -21,6 +21,9 @@ spec:
               protocol: UDP
             - port: "53"
               protocol: TCP
+          rules:
+            dns:
+              - matchPattern: "*"
     - toFQDNs:
         - matchName: imap.gmail.com
       toPorts:
