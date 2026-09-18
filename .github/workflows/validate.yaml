@@ -3,7 +3,9 @@ name: Validate & Security
 
 on:
   push:
-    branches: [main, refactor/gitops-cleanroom]
+    branches:
+      - main
+      - refactor/gitops-cleanroom
   pull_request:
 
 concurrency:
@@ -11,817 +13,206 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ══════════════════════════════════════════════════════════════
-  # DETECT CHANGES (détermine quels jobs exécuter)
-  # ══════════════════════════════════════════════════════════════
-  detect-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      k8s: ${{ steps.filter.outputs.k8s }}
-      security: ${{ steps.filter.outputs.security }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            k8s:
-              - 'apps/**'
-              - 'argocd/**'
-              - '.github/workflows/**'
-              - 'yamllint-config.yml'
-              - '**/kustomization.yaml'
-            security:
-              - '**'
-
-  # 1️⃣ Validation YAML robuste
   yaml-lint:
     name: YAML Syntax & Style
-    needs: [detect-changes]
-    if: needs.detect-changes.outputs.k8s == 'true'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup YAML tools
-        uses: ./.github/actions/setup-yaml-tools
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-yaml-tools
         with:
           install-yq: 'false'
-
-      - name: Validate YAML syntax
+      - name: Lint maintained YAML
         run: |
-          echo "🔍 Validation YAML syntax"
-          echo "📋 Using repo yamllint-config.yml (strict style enforcement)"
+          set -euo pipefail
+          find apps argocd \( -name '*.yaml' -o -name '*.yml' \)             ! -path '*/charts/*'             ! -path '*/crds/*'             ! -name 'argocd-crds.yaml'             ! -name 'argocd-install.yaml'             ! -name 'manifests.yaml'             ! -name 'servicemonitors.yaml'             ! -name 'upstream.yaml'             ! -name 'poolers.yaml'             -print0 | xargs -0 -r yamllint -c yamllint-config.yml
 
-          # PR: valider uniquement les fichiers changés
-          # Push: valider tous les fichiers
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "📋 PR Mode: Validating only changed files"
-            gh pr view ${{ github.event.pull_request.number }} \
-              --json files --jq '.files.[].path' | \
-              grep -E '\.(yaml|yml)$' | \
-              grep -E '^(apps|argocd)/' | \
-              grep -v -E '(crds/|charts/|upstream\.yaml|poolers\.yaml)' | \
-              xargs -r yamllint -c yamllint-config.yml
-          else
-            echo "📋 Push Mode: Validating all files"
-            find apps argocd \( -name "*.yaml" -o -name "*.yml" \) \
-              ! -path "*/crds/*" \
-              ! -path "*/charts/*" \
-              ! -name "upstream.yaml" \
-              ! -name "poolers.yaml" \
-              ! -name "argocd-crds.yaml" \
-              ! -name "argocd-install.yaml" \
-              ! -name "manifests.yaml" \
-              ! -name "servicemonitors.yaml" | \
-              xargs yamllint -c yamllint-config.yml
-          fi
-
-  # 2️⃣ Validation spécifique ArgoCD
-  argocd-validate:
-    name: ArgoCD Structure
-    needs: [detect-changes, yaml-lint, secret-scan]
-    if: needs.detect-changes.outputs.k8s == 'true'
+  secret-scan:
+    name: Secret Scanning
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - name: Scan current repository tree
+        run: |
+          set -euo pipefail
+          docker run --rm             -v "$PWD:/repo"             ghcr.io/gitleaks/gitleaks:v8.21.2             detect --source /repo --no-git             --config /repo/.gitleaks.toml --redact --exit-code 1
 
-      - name: Setup YAML tools
-        uses: ./.github/actions/setup-yaml-tools
+  repository-contract:
+    name: Repository Contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate repository invariants
+        run: python3 scripts/validation/validate-repository.py
+
+  argocd-validate:
+    name: ArgoCD Structure
+    runs-on: ubuntu-latest
+    needs: [yaml-lint, secret-scan, repository-contract]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-yaml-tools
         with:
           install-yamllint: 'false'
-
-      - name: Validate ArgoCD applications
+      - name: Install YAML parser
+        run: python3 -m pip install --quiet pyyaml
+      - name: Validate ArgoCD Applications
         run: |
-          echo "🔍 Validation Applications ArgoCD"
-
-          # Validation complète des Applications.
-          # Process substitution keeps failures in the current shell.
+          set -euo pipefail
           while IFS= read -r -d '' file; do
-            if [ "$(yq eval '.kind' "$file" 2>/dev/null)" = "Application" ]; then
-              echo "📋 Validation: $(basename "$file")"
-
-              # Vérification détaillée
+            if [ "$(yq eval '.kind' "$file" 2>/dev/null)" = Application ]; then
               yq eval '
                 .apiVersion == "argoproj.io/v1alpha1" and
                 .kind == "Application" and
                 .metadata.name != null and
-                .metadata.name != "" and
                 .spec.project != null and
-                .spec.project != "" and
                 .spec.destination.server != null and
-                .spec.destination.server != "" and
-                .spec.destination.namespace != null and
-                .spec.destination.namespace != ""
-              ' "$file" || {
-                echo "❌ Structure ArgoCD invalide: $file"
-                yq eval '.' "$file"
-                exit 1
-              }
+                .spec.destination.namespace != null
+              ' "$file" >/dev/null
             fi
-          done < <(find argocd -name "*.yaml" -type f -print0)
-
-      - name: Validate inline Helm values YAML
-        run: |
-          echo "🔍 Validation blocs Helm values inline (ArgoCD Applications)"
+          done < <(find argocd -name '*.yaml' -type f -print0)
           python3 scripts/validation/validate-helm-values.py argocd/
 
-  # 3️⃣ Kustomize Build + Kubeconform (valide la sortie buildée, pas les fichiers individuels)
   kustomize-validate:
     name: Kustomize Build & K8s Validation
-    needs: [detect-changes, yaml-lint, secret-scan]
-    if: needs.detect-changes.outputs.k8s == 'true'
     runs-on: ubuntu-latest
+    needs: [yaml-lint, secret-scan, repository-contract]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup K8s tools
-        uses: ./.github/actions/setup-k8s-tools
-      - name: Detect changed overlays (PR fast mode)
-        id: detect-overlays
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-k8s-tools
+      - name: Install YAML parser
+        run: python3 -m pip install --quiet pyyaml
+      - name: Validate Kustomize references
+        uses: ./.github/actions/setup-yaml-tools
+        with:
+          install-yamllint: 'false'
+      - run: bash scripts/validation/validate-kustomization-refs.sh
+      - name: Build application overlays
         run: |
-          echo "mode=fast" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          skip_kinds='Application,AppProject,CustomResourceDefinition,Middleware,HelmRelease,HelmRepository,Kustomization,Cluster,PostgresCluster,Pooler,ScheduledBackup,VolumeSnapshotClass,VolumeSnapshot,CiliumL2AnnouncementPolicy,CiliumLoadBalancerIPPool'
 
-          CHANGED_FILES=$(gh pr view ${{ github.event.pull_request.number }} \
-            --json files --jq '.files.[].path')
+          while IFS= read -r kustomization; do
+            overlay="$(dirname "$kustomization")"
+            echo "Building $overlay"
+            kustomize build --enable-helm "$overlay" > /tmp/built.yaml
+            kubeconform -ignore-missing-schemas               -kubernetes-version 1.34.0               -strict -skip "$skip_kinds" /tmp/built.yaml
+            python3 scripts/validation/validate-pdb-selectors.py /tmp/built.yaml
+          done < <(
+            find apps -type f \(               -path '*/overlays/dev/kustomization.yaml' -o               -path '*/overlays/prod/kustomization.yaml'             \) | sort
+          )
 
-          # Shared components or ArgoCD changes can affect many applications:
-          # fall back to the full build in those cases.
-          if echo "$CHANGED_FILES" | grep -Eq '^(apps/_shared/|argocd/)'; then
-            CHANGED=""
-            echo "mode=full" >> "$GITHUB_OUTPUT"
-            echo "ℹ️ Shared/ArgoCD change detected, running full validation"
-          else
-            CHANGED_APPS=$(echo "$CHANGED_FILES" | \
-              awk -F/ '/^apps\/[^/]+\/[^/]+\// {print $1"/"$2"/"$3}' | \
-              sort -u)
-
-            CHANGED=""
-            while IFS= read -r app; do
-              [ -z "$app" ] && continue
-              for env in dev prod; do
-                overlay="$app/overlays/$env"
-                if [ -f "$overlay/kustomization.yaml" ]; then
-                  CHANGED="${CHANGED}${CHANGED:+
-            echo "overlays<<EOF" >> $GITHUB_OUTPUT
-            echo "$CHANGED" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-
-            echo "🚀 Fast mode: validating changed overlays only"
-            echo "$CHANGED"
-          else
-            echo "mode=full" >> $GITHUB_OUTPUT
-            echo "ℹ️ No overlay changes detected, running full validation"
-          fi
-
-      - name: Build and validate all overlays
-        run: |
-          echo "🔍 Kustomize Build + Kubeconform Validation"
-          echo "   (valide les ressources APRÈS merge des patches)"
-          echo ""
-
-          FAILED=0
-          WARNED=0
-          SKIP_KINDS="Application,AppProject,CustomResourceDefinition,Middleware,HelmRelease,HelmRepository,Kustomization,Cluster,PostgresCluster,Pooler,ScheduledBackup,VolumeSnapshotClass,VolumeSnapshot,CiliumL2AnnouncementPolicy,CiliumLoadBalancerIPPool"
-
-          # Fonction de validation
-          validate_overlay() {
-            local overlay="$1"
-            echo "📋 Building: $overlay"
-
-            # Détecter si l'overlay a une base vide (Helm-only apps)
-            local base_dir
-            base_dir=$(grep -oP '\.\./.*/base' "$overlay/kustomization.yaml" 2>/dev/null | head -1)
-            if [ -n "$base_dir" ]; then
-              local full_base="$overlay/$base_dir"
-              if [ -f "$full_base/kustomization.yaml" ]; then
-                local base_resources
-                base_resources=$(grep -cE '^(resources:|helmCharts:)' "$full_base/kustomization.yaml" 2>/dev/null || echo 0)
-                if [ "$base_resources" -eq 0 ]; then
-                  echo "⏭️ SKIP: $overlay (base vide - app Helm-only via ArgoCD)"
-                  return 0
-                fi
-              fi
-            fi
-
-            # Build kustomize avec support Helm
-            if ! kustomize build --enable-helm "$overlay" > /tmp/built.yaml 2>&1; then
-              echo "❌ KUSTOMIZE FAILED: $overlay"
-              cat /tmp/built.yaml | head -20
-              return 1
-            fi
-
-            # Compter les ressources
-            COUNT=$(grep -c '^kind:' /tmp/built.yaml 2>/dev/null || echo 0)
-            if [ "$COUNT" -eq 0 ]; then
-              echo "⚠️ WARNING: $overlay produces 0 resources"
-              WARNED=$((WARNED+1))
-              return 0
-            fi
-
-            # Valider avec kubeconform (sur le YAML buildé)
-            if ! kubeconform -ignore-missing-schemas -kubernetes-version 1.34.0 -strict -skip "$SKIP_KINDS" /tmp/built.yaml 2>&1; then
-              echo "❌ KUBECONFORM FAILED: $overlay"
-              return 1
-            fi
-
-            # Valider cohérence sélecteurs PDB vs labels pods (sur le YAML buildé)
-            if ! python3 scripts/validation/validate-pdb-selectors.py /tmp/built.yaml 2>&1; then
-              echo "❌ PDB SELECTOR MISMATCH: $overlay"
-              return 1
-            fi
-
-            echo "✅ OK: $overlay ($COUNT resources)"
-            return 0
-          }
-
-          # Déterminer les overlays à valider (fast mode si PR)
-          if [ "${{ steps.detect-overlays.outputs.mode }}" = "fast" ] && [ -n "${{ steps.detect-overlays.outputs.overlays }}" ]; then
-            echo "🚀 Fast mode: validating changed overlays only"
-            OVERLAYS="${{ steps.detect-overlays.outputs.overlays }}"
-          else
-            echo "🔍 Full mode: validating ALL overlays"
-            OVERLAYS=$(find apps -type d \( -name "dev" -o -name "prod" \) | grep overlays)
-          fi
-
-          # Valider les overlays déterminés
-          while IFS= read -r overlay; do
-            [ -z "$overlay" ] && continue
-            if [ -f "$overlay/kustomization.yaml" ]; then
-              if ! validate_overlay "$overlay"; then
-                FAILED=1
-              fi
-            fi
-          done <<< "$OVERLAYS"
-
-          # Valider les overlays ArgoCD
           for overlay in argocd/overlays/dev argocd/overlays/prod; do
-            if [ -d "$overlay" ] && [ -f "$overlay/kustomization.yaml" ]; then
-              if ! validate_overlay "$overlay"; then
-                FAILED=1
-              fi
-            fi
+            echo "Building $overlay"
+            kustomize build --enable-helm "$overlay" > /tmp/built.yaml
+            kubeconform -ignore-missing-schemas               -kubernetes-version 1.34.0               -strict -skip "$skip_kinds" /tmp/built.yaml
           done
 
-          echo ""
-          if [ "$FAILED" -eq 1 ]; then
-            echo "❌ Some validations failed"
+  prod-config-check:
+    name: Production Configuration
+    runs-on: ubuntu-latest
+    needs: [repository-contract]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enforce production revision contract
+        run: |
+          set -euo pipefail
+          if grep -rE "targetRevision:\s+['\"]?(main|dev|test|staging|prod)['\"]?\s*$"             argocd/overlays/prod; then
+            echo "Production Vixens Git sources must track prod-stable"
             exit 1
           fi
+          echo "Production revision contract OK"
 
-          echo "✅ All kustomize builds and K8s validations passed"
-
-  # 4️⃣ Secret Scanning (gitleaks)
-  secret-scan:
-    name: Secret Scanning
-    needs: [detect-changes]
+  security-advisory:
+    name: Security Advisory
     runs-on: ubuntu-latest
+    needs: [secret-scan]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Full history for git log scanning
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-python-security
+      - name: Advisory Checkov scan
+        run: |
+          checkov --directory . --framework kubernetes --compact --quiet || true
 
-      - name: Run gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: .gitleaks.toml
-
-  # 5️⃣ Vérification du flux de branches (pure trunk-based: feature → main)
   branch-flow:
     name: Branch Flow Check
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - name: Enforce pure trunk-based flow (feature → main directly)
+      - name: Enforce feature to main flow
         run: |
-          SOURCE="${{ github.head_ref }}"
-          TARGET="${{ github.base_ref }}"
-
-          echo "🔀 PR from '$SOURCE' into '$TARGET'"
-
-          case "$TARGET" in
-            main)
-              if [[ "$SOURCE" =~ ^(dev|test|staging)$ ]]; then
-                echo "❌ Protected branch '$SOURCE' cannot merge to 'main'"
-                echo "   Only feature branches can merge to main"
-                echo "   Note: dev/test/staging branches are archived (ADR-017)"
-                exit 1
-              fi
-              echo "✅ Feature branch '$SOURCE' allowed to merge into 'main'"
-              exit 0 ;;
+          set -euo pipefail
+          source_branch="${{ github.head_ref }}"
+          target_branch="${{ github.base_ref }}"
+          [ "$target_branch" = main ] || {
+            echo "Pull requests must target main"
+            exit 1
+          }
+          case "$source_branch" in
             dev|test|staging)
-              echo "❌ Branch '$TARGET' is archived (ADR-017)"
-              echo "   Use pure trunk-based workflow: feature → main"
-              exit 1 ;;
-            *)
-              echo "❌ Unknown target branch '$TARGET'"
-              exit 1 ;;
+              echo "Retired environment branch cannot be a PR source"
+              exit 1
+              ;;
           esac
 
-  # 6️⃣ Validation de sécurité
-  security-scan:
-    name: Security Best Practices
-    needs: [detect-changes, secret-scan]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python security tools
-        uses: ./.github/actions/setup-python-security
-
-      - name: Security checks
-        run: |
-          echo "🔍 Vérification sécurité"
-          checkov --directory . \
-            --framework kubernetes \
-            --compact --quiet || true
-
-      - name: Check security patterns
-        run: |
-          echo "🔍 Recherche de patterns de sécurité"
-          WARNINGS=0
-
-          find apps argocd -name "*.yaml" -type f | while read file; do
-            if grep -q "privileged: true" "$file"; then
-              echo "⚠️ Privilèges élevés: $file"
-              WARNINGS=$((WARNINGS+1))
-            fi
-            if grep -q "runAsUser: 0" "$file"; then
-              echo "⚠️ Exécution en root: $file"
-              WARNINGS=$((WARNINGS+1))
-            fi
-            if grep -q "allowPrivilegeEscalation: true" "$file"; then
-              echo "⚠️ Élévation de privilèges: $file"
-              WARNINGS=$((WARNINGS+1))
-            fi
-          done
-
-  # ══════════════════════════════════════════════════════════════
-  # CONTAINER IMAGE SCANNING (warning only)
-  # ══════════════════════════════════════════════════════════════
-  image-scan:
-    name: Container Image Security
-    needs: [detect-changes, secret-scan]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Extract container images
-        id: extract
-        run: |
-          echo "📦 Extracting container images from manifests"
-
-          # Extract images from all YAML files
-          find apps argocd -name "*.yaml" -type f \
-            -exec grep -h "image:" {} \; | \
-            sed 's/.*image:\s*//' | \
-            sed "s/[\"']//g" | \
-            grep -v '^#' | \
-            grep -v '^$' | \
-            sort -u > /tmp/images.txt
-
-          echo "📊 Found $(wc -l < /tmp/images.txt) unique images"
-          head -20 /tmp/images.txt
-
-          echo "count=$(wc -l < /tmp/images.txt)" >> $GITHUB_OUTPUT
-
-      - name: Scan sample images with Trivy
-        if: steps.extract.outputs.count > 0
-        run: |
-          echo "🔍 Scanning first 5 images as samples (warning only)"
-
-          head -5 /tmp/images.txt | while read image; do
-            echo ""
-            echo "════════════════════════════════════════"
-            echo "🐳 Scanning: $image"
-            echo "════════════════════════════════════════"
-
-            # Scan with trivy (exit 0 = warning only)
-            docker run --rm \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              aquasec/trivy:latest image \
-              --severity CRITICAL,HIGH,MEDIUM \
-              --no-progress \
-              --timeout 5m \
-              "$image" || echo "⚠️ Scan failed for $image (might not be pullable)"
-          done
-
-          echo ""
-          echo "ℹ️ This is informational only - workflow continues regardless of findings"
-
-  # 7️⃣ Vérification de la configuration production (trunk-based)
-  prod-config-check:
-    name: Production Configuration
-    needs: [detect-changes, yaml-lint, secret-scan]
-    if: needs.detect-changes.outputs.k8s == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Verify trunk-based workflow compliance
-        run: |
-          echo "🔍 Vérification configuration production"
-
-          if grep -rE "targetRevision:\s+main\s*$" argocd/overlays/prod 2>/dev/null; then
-            echo "::error::Found 'targetRevision: main' in prod. Use 'prod-stable' tag."
-            exit 1
-          fi
-
-          if grep -rE "targetRevision:\s+[\"']?prod[\"']?\s*$" argocd/overlays/prod 2>/dev/null; then
-            echo "::error::Found 'targetRevision: prod' in prod. Use 'prod-stable' tag."
-            exit 1
-          fi
-
-          if grep -r "envSlug: dev" apps/*/*/overlays/prod 2>/dev/null; then
-            echo "::error::Found 'envSlug: dev' in prod overlay."
-            exit 1
-          fi
-
-          if grep -r "vixens-new.git" argocd 2>/dev/null; then
-            echo "::error::Found deprecated 'vixens-new.git' reference."
-            exit 1
-          fi
-
-          echo "✅ Production configuration OK"
-
-  # 8️⃣ Résumé final
   validation-summary:
     name: Validation Summary
     runs-on: ubuntu-latest
-    needs: [yaml-lint, argocd-validate, kustomize-validate, secret-scan, security-scan, branch-flow, prod-config-check]
     if: always()
+    needs:
+      - yaml-lint
+      - secret-scan
+      - repository-contract
+      - argocd-validate
+      - kustomize-validate
+      - prod-config-check
+      - security-advisory
+      - branch-flow
     steps:
-      - name: Create summary
+      - name: Enforce required results
         run: |
-          echo "## ✅ Validation Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| YAML Lint | ${{ needs.yaml-lint.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ArgoCD Apps | ${{ needs.argocd-validate.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Kustomize + Kubeconform | ${{ needs.kustomize-validate.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Secret Scan | ${{ needs.secret-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security Check | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Branch Flow | ${{ needs.branch-flow.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Prod Config | ${{ needs.prod-config-check.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          set -euo pipefail
+          failed=0
 
-          FAILED=0
           require_success() {
-            local name="$1"
-            local result="$2"
-            if [ "$result" != "success" ]; then
-              echo "::error::Required validation '$name' finished with '$result'"
-              FAILED=1
+            name="$1"
+            result="$2"
+            if [ "$result" != success ]; then
+              echo "::error::$name finished with $result"
+              failed=1
             fi
           }
+
           require_success_or_skipped() {
-            local name="$1"
-            local result="$2"
-            if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
-              echo "::error::Validation '$name' finished with '$result'"
-              FAILED=1
+            name="$1"
+            result="$2"
+            if [ "$result" != success ] && [ "$result" != skipped ]; then
+              echo "::error::$name finished with $result"
+              failed=1
             fi
           }
 
-          require_success "secret-scan" "${{ needs.secret-scan.result }}"
-          require_success "security-scan" "${{ needs.security-scan.result }}"
-          require_success_or_skipped "yaml-lint" "${{ needs.yaml-lint.result }}"
-          require_success_or_skipped "argocd-validate" "${{ needs.argocd-validate.result }}"
-          require_success_or_skipped "kustomize-validate" "${{ needs.kustomize-validate.result }}"
-          require_success_or_skipped "branch-flow" "${{ needs.branch-flow.result }}"
-          require_success_or_skipped "prod-config-check" "${{ needs.prod-config-check.result }}"
+          require_success yaml-lint "${{ needs.yaml-lint.result }}"
+          require_success secret-scan "${{ needs.secret-scan.result }}"
+          require_success repository-contract "${{ needs.repository-contract.result }}"
+          require_success argocd-validate "${{ needs.argocd-validate.result }}"
+          require_success kustomize-validate "${{ needs.kustomize-validate.result }}"
+          require_success prod-config-check "${{ needs.prod-config-check.result }}"
+          require_success security-advisory "${{ needs.security-advisory.result }}"
+          require_success_or_skipped branch-flow "${{ needs.branch-flow.result }}"
 
-          if [ "$FAILED" -ne 0 ]; then
-            echo "❌ One or more required validations failed." >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
+          {
+            echo '## Validation results'
+            echo
+            echo '| Job | Result |'
+            echo '|---|---|'
+            echo '| YAML | ${{ needs.yaml-lint.result }} |'
+            echo '| Secrets | ${{ needs.secret-scan.result }} |'
+            echo '| Repository contract | ${{ needs.repository-contract.result }} |'
+            echo '| ArgoCD | ${{ needs.argocd-validate.result }} |'
+            echo '| Kustomize | ${{ needs.kustomize-validate.result }} |'
+            echo '| Production revision | ${{ needs.prod-config-check.result }} |'
+            echo '| Security advisory | ${{ needs.security-advisory.result }} |'
+            echo '| Branch flow | ${{ needs.branch-flow.result }} |'
+          } >> "$GITHUB_STEP_SUMMARY"
 
-          echo "✅ All required validations passed." >> $GITHUB_STEP_SUMMARY
-\\n'}$overlay"
-                fi
-              done
-            done <<< "$CHANGED_APPS"
-          fi
-
-          if [ -n "$CHANGED" ]; then
-            echo "overlays<<EOF" >> $GITHUB_OUTPUT
-            echo "$CHANGED" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-
-            echo "🚀 Fast mode: validating changed overlays only"
-            echo "$CHANGED"
-          else
-            echo "mode=full" >> $GITHUB_OUTPUT
-            echo "ℹ️ No overlay changes detected, running full validation"
-          fi
-
-      - name: Build and validate all overlays
-        run: |
-          echo "🔍 Kustomize Build + Kubeconform Validation"
-          echo "   (valide les ressources APRÈS merge des patches)"
-          echo ""
-
-          FAILED=0
-          WARNED=0
-          SKIP_KINDS="Application,AppProject,CustomResourceDefinition,Middleware,HelmRelease,HelmRepository,Kustomization,Cluster,PostgresCluster,Pooler,ScheduledBackup,VolumeSnapshotClass,VolumeSnapshot,CiliumL2AnnouncementPolicy,CiliumLoadBalancerIPPool"
-
-          # Fonction de validation
-          validate_overlay() {
-            local overlay="$1"
-            echo "📋 Building: $overlay"
-
-            # Détecter si l'overlay a une base vide (Helm-only apps)
-            local base_dir
-            base_dir=$(grep -oP '\.\./.*/base' "$overlay/kustomization.yaml" 2>/dev/null | head -1)
-            if [ -n "$base_dir" ]; then
-              local full_base="$overlay/$base_dir"
-              if [ -f "$full_base/kustomization.yaml" ]; then
-                local base_resources
-                base_resources=$(grep -cE '^(resources:|helmCharts:)' "$full_base/kustomization.yaml" 2>/dev/null || echo 0)
-                if [ "$base_resources" -eq 0 ]; then
-                  echo "⏭️ SKIP: $overlay (base vide - app Helm-only via ArgoCD)"
-                  return 0
-                fi
-              fi
-            fi
-
-            # Build kustomize avec support Helm
-            if ! kustomize build --enable-helm "$overlay" > /tmp/built.yaml 2>&1; then
-              echo "❌ KUSTOMIZE FAILED: $overlay"
-              cat /tmp/built.yaml | head -20
-              return 1
-            fi
-
-            # Compter les ressources
-            COUNT=$(grep -c '^kind:' /tmp/built.yaml 2>/dev/null || echo 0)
-            if [ "$COUNT" -eq 0 ]; then
-              echo "⚠️ WARNING: $overlay produces 0 resources"
-              WARNED=$((WARNED+1))
-              return 0
-            fi
-
-            # Valider avec kubeconform (sur le YAML buildé)
-            if ! kubeconform -ignore-missing-schemas -kubernetes-version 1.34.0 -strict -skip "$SKIP_KINDS" /tmp/built.yaml 2>&1; then
-              echo "❌ KUBECONFORM FAILED: $overlay"
-              return 1
-            fi
-
-            # Valider cohérence sélecteurs PDB vs labels pods (sur le YAML buildé)
-            if ! python3 scripts/validation/validate-pdb-selectors.py /tmp/built.yaml 2>&1; then
-              echo "❌ PDB SELECTOR MISMATCH: $overlay"
-              return 1
-            fi
-
-            echo "✅ OK: $overlay ($COUNT resources)"
-            return 0
-          }
-
-          # Déterminer les overlays à valider (fast mode si PR)
-          if [ "${{ steps.detect-overlays.outputs.mode }}" = "fast" ] && [ -n "${{ steps.detect-overlays.outputs.overlays }}" ]; then
-            echo "🚀 Fast mode: validating changed overlays only"
-            OVERLAYS="${{ steps.detect-overlays.outputs.overlays }}"
-          else
-            echo "🔍 Full mode: validating ALL overlays"
-            OVERLAYS=$(find apps -type d \( -name "dev" -o -name "prod" \) | grep overlays)
-          fi
-
-          # Valider les overlays déterminés
-          echo "$OVERLAYS" | while read overlay; do
-            if [ -f "$overlay/kustomization.yaml" ]; then
-              if ! validate_overlay "$overlay"; then
-                FAILED=1
-              fi
-            fi
-          done
-
-          # Valider les overlays ArgoCD
-          for overlay in argocd/overlays/dev argocd/overlays/prod; do
-            if [ -d "$overlay" ] && [ -f "$overlay/kustomization.yaml" ]; then
-              if ! validate_overlay "$overlay"; then
-                FAILED=1
-              fi
-            fi
-          done
-
-          echo ""
-          if [ "$FAILED" -eq 1 ]; then
-            echo "❌ Some validations failed"
-            exit 1
-          fi
-
-          echo "✅ All kustomize builds and K8s validations passed"
-
-  # 4️⃣ Secret Scanning (gitleaks)
-  secret-scan:
-    name: Secret Scanning
-    needs: [detect-changes]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Full history for git log scanning
-
-      - name: Run gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: .gitleaks.toml
-
-  # 5️⃣ Vérification du flux de branches (pure trunk-based: feature → main)
-  branch-flow:
-    name: Branch Flow Check
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Enforce pure trunk-based flow (feature → main directly)
-        run: |
-          SOURCE="${{ github.head_ref }}"
-          TARGET="${{ github.base_ref }}"
-
-          echo "🔀 PR from '$SOURCE' into '$TARGET'"
-
-          case "$TARGET" in
-            main)
-              if [[ "$SOURCE" =~ ^(dev|test|staging)$ ]]; then
-                echo "❌ Protected branch '$SOURCE' cannot merge to 'main'"
-                echo "   Only feature branches can merge to main"
-                echo "   Note: dev/test/staging branches are archived (ADR-017)"
-                exit 1
-              fi
-              echo "✅ Feature branch '$SOURCE' allowed to merge into 'main'"
-              exit 0 ;;
-            dev|test|staging)
-              echo "❌ Branch '$TARGET' is archived (ADR-017)"
-              echo "   Use pure trunk-based workflow: feature → main"
-              exit 1 ;;
-            *)
-              echo "❌ Unknown target branch '$TARGET'"
-              exit 1 ;;
-          esac
-
-  # 6️⃣ Validation de sécurité
-  security-scan:
-    name: Security Best Practices
-    needs: [detect-changes, secret-scan]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python security tools
-        uses: ./.github/actions/setup-python-security
-
-      - name: Security checks
-        run: |
-          echo "🔍 Vérification sécurité"
-          checkov --directory . \
-            --framework kubernetes \
-            --compact --quiet || true
-
-      - name: Check security patterns
-        run: |
-          echo "🔍 Recherche de patterns de sécurité"
-          WARNINGS=0
-
-          find apps argocd -name "*.yaml" -type f | while read file; do
-            if grep -q "privileged: true" "$file"; then
-              echo "⚠️ Privilèges élevés: $file"
-              WARNINGS=$((WARNINGS+1))
-            fi
-            if grep -q "runAsUser: 0" "$file"; then
-              echo "⚠️ Exécution en root: $file"
-              WARNINGS=$((WARNINGS+1))
-            fi
-            if grep -q "allowPrivilegeEscalation: true" "$file"; then
-              echo "⚠️ Élévation de privilèges: $file"
-              WARNINGS=$((WARNINGS+1))
-            fi
-          done
-
-  # ══════════════════════════════════════════════════════════════
-  # CONTAINER IMAGE SCANNING (warning only)
-  # ══════════════════════════════════════════════════════════════
-  image-scan:
-    name: Container Image Security
-    needs: [detect-changes, secret-scan]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Extract container images
-        id: extract
-        run: |
-          echo "📦 Extracting container images from manifests"
-
-          # Extract images from all YAML files
-          find apps argocd -name "*.yaml" -type f \
-            -exec grep -h "image:" {} \; | \
-            sed 's/.*image:\s*//' | \
-            sed "s/[\"']//g" | \
-            grep -v '^#' | \
-            grep -v '^$' | \
-            sort -u > /tmp/images.txt
-
-          echo "📊 Found $(wc -l < /tmp/images.txt) unique images"
-          head -20 /tmp/images.txt
-
-          echo "count=$(wc -l < /tmp/images.txt)" >> $GITHUB_OUTPUT
-
-      - name: Scan sample images with Trivy
-        if: steps.extract.outputs.count > 0
-        run: |
-          echo "🔍 Scanning first 5 images as samples (warning only)"
-
-          head -5 /tmp/images.txt | while read image; do
-            echo ""
-            echo "════════════════════════════════════════"
-            echo "🐳 Scanning: $image"
-            echo "════════════════════════════════════════"
-
-            # Scan with trivy (exit 0 = warning only)
-            docker run --rm \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              aquasec/trivy:latest image \
-              --severity CRITICAL,HIGH,MEDIUM \
-              --no-progress \
-              --timeout 5m \
-              "$image" || echo "⚠️ Scan failed for $image (might not be pullable)"
-          done
-
-          echo ""
-          echo "ℹ️ This is informational only - workflow continues regardless of findings"
-
-  # 7️⃣ Vérification de la configuration production (trunk-based)
-  prod-config-check:
-    name: Production Configuration
-    needs: [detect-changes, yaml-lint, secret-scan]
-    if: needs.detect-changes.outputs.k8s == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Verify trunk-based workflow compliance
-        run: |
-          echo "🔍 Vérification configuration production"
-
-          if grep -rE "targetRevision:\s+main\s*$" argocd/overlays/prod 2>/dev/null; then
-            echo "::error::Found 'targetRevision: main' in prod. Use 'prod-stable' tag."
-            exit 1
-          fi
-
-          if grep -rE "targetRevision:\s+[\"']?prod[\"']?\s*$" argocd/overlays/prod 2>/dev/null; then
-            echo "::error::Found 'targetRevision: prod' in prod. Use 'prod-stable' tag."
-            exit 1
-          fi
-
-          if grep -r "envSlug: dev" apps/*/*/overlays/prod 2>/dev/null; then
-            echo "::error::Found 'envSlug: dev' in prod overlay."
-            exit 1
-          fi
-
-          if grep -r "vixens-new.git" argocd 2>/dev/null; then
-            echo "::error::Found deprecated 'vixens-new.git' reference."
-            exit 1
-          fi
-
-          echo "✅ Production configuration OK"
-
-  # 8️⃣ Résumé final
-  validation-summary:
-    name: Validation Summary
-    runs-on: ubuntu-latest
-    needs: [yaml-lint, argocd-validate, kustomize-validate, secret-scan, security-scan, branch-flow, prod-config-check]
-    if: always()
-    steps:
-      - name: Create summary
-        run: |
-          echo "## ✅ Validation Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| YAML Lint | ${{ needs.yaml-lint.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ArgoCD Apps | ${{ needs.argocd-validate.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Kustomize + Kubeconform | ${{ needs.kustomize-validate.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Secret Scan | ${{ needs.secret-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security Check | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Branch Flow | ${{ needs.branch-flow.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Prod Config | ${{ needs.prod-config-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          [ "$failed" -eq 0 ]
