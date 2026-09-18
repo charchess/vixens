@@ -18,17 +18,11 @@ paths = [
     '''.*/crds/.*''',
     '''apps/00-infra/vpa/base/manifests\.yaml''',
     '''apps/00-infra/prometheus-operator-crds/.*''',
-    '''talos/.*''',
-    '''terraform/.*''',
-    '''docs/.*''',
-    '''openspec/.*''',
-    '''clusters/.*''',
     '''\.git/.*''',
     '''.*\.lock$''',
     '''.*-lock\.json$''',
     '''\.trivyignore''',
     '''\.gitleaks\.toml''',
-    '''\.opencode/.*''',  # AI agent documentation with example credentials
 ]
 
 regexes = [
@@ -60,6 +54,18 @@ stopwords = [
 # ══════════════════════════════════════════════════════════════
 # CUSTOM RULES for Kubernetes/GitOps
 # ══════════════════════════════════════════════════════════════
+
+[[rules]]
+id = "credential-assignment-long-token"
+description = "Long token assigned to a credential-like field"
+regex = '''(?i)(client[_-]?secret|api[_-]?key|access[_-]?token|secret[_-]?key)\s*[:=]\s*["\']?[A-Za-z0-9_+\/=.-]{24,}'''
+tags = ["credential", "token"]
+
+  [rules.allowlist]
+  regexes = [
+      '''(?i)(REDACTED|placeholder|changeme|YOUR_[A-Z0-9_]+|<[^>]+>)''',
+  ]
+
 
 [[rules]]
 id = "kubernetes-secret-data"
