@@ -34,7 +34,21 @@ jobs:
       - name: Scan current repository tree
         run: |
           set -euo pipefail
-          docker run --rm             -v "$PWD:/repo"             ghcr.io/gitleaks/gitleaks:v8.21.2             detect --source /repo --no-git             --config /repo/.gitleaks.toml --redact --exit-code 1
+          report="$PWD/gitleaks-report.json"
+          rm -f "$report"
+
+          set +e
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.21.2 detect --source /repo --no-git --config /repo/.gitleaks.toml --redact --exit-code 1 --report-format json --report-path /repo/gitleaks-report.json
+          rc=$?
+          set -e
+
+          if [ -s "$report" ]; then
+            echo "Gitleaks findings (safe metadata only):"
+            jq -r '.[] | " - \(.RuleID) \(.File):\(.StartLine)"' "$report"
+          fi
+
+          rm -f "$report"
+          exit "$rc"
 
   repository-contract:
     name: Repository Contract
