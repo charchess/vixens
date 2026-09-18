@@ -22,6 +22,15 @@ spec:
             - {port: "465", protocol: TCP}
             - {port: "587", protocol: TCP}
             - {port: "993", protocol: TCP}
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: mail
+            k8s:app.kubernetes.io/name: gmail-import
+            k8s:app.kubernetes.io/component: importer
+            k8s:app.kubernetes.io/part-of: truxonline-mail
+      toPorts:
+        - ports:
+            - {port: "25", protocol: TCP}
   egress:
     - toEntities: [world]
       toPorts:

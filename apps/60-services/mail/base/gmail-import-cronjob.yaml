@@ -1,0 +1,140 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gmail-import-script
+  namespace: mail
+  labels:
+    app.kubernetes.io/name: gmail-import
+    app.kubernetes.io/component: importer
+    app.kubernetes.io/part-of: truxonline-mail
+data:
+  gmail-import.py: |
+    #!/usr/bin/env python3
+    """Drain Gmail INBOX to the local DMS, deleting only after SMTP accepts."""
+    import imaplib
+    import os
+    import smtplib
+    import sys
+
+    gmail_user = os.environ["GMAIL_USER"]
+    gmail_password = os.environ["GMAIL_IMAP_PASSWORD"]
+    gmail_folder = os.environ.get("GMAIL_FOLDER", "INBOX")
+    batch_size = int(os.environ.get("GMAIL_BATCH", "50"))
+    smtp_host = os.environ.get("SMTP_HOST", "mailserver.mail.svc.cluster.local")
+    smtp_port = int(os.environ.get("SMTP_PORT", "25"))
+    recipient = os.environ["RCPT"]
+
+    def deliver(raw):
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as smtp:
+            smtp.sendmail("import@truxonline.com", [recipient], raw)
+
+    def main():
+        imap = imaplib.IMAP4_SSL("imap.gmail.com", 993, timeout=30)
+        try:
+            imap.login(gmail_user, gmail_password)
+            status, _ = imap.select(f'"{gmail_folder}"')
+            if status != "OK":
+                raise RuntimeError(f"unable to select {gmail_folder}")
+            status, data = imap.uid("SEARCH", None, "UNDELETED")
+            if status != "OK":
+                raise RuntimeError("UID SEARCH UNDELETED failed")
+            uids = (data[0].split() if data and data[0] else [])[:batch_size]
+            delivered = 0
+            for uid in uids:
+                status, fetched = imap.uid("FETCH", uid, "(RFC822)")
+                if status != "OK" or not fetched or not fetched[0]:
+                    raise RuntimeError(f"UID FETCH failed for {uid.decode()}")
+                deliver(fetched[0][1])
+                status, _ = imap.uid("STORE", uid, "+FLAGS.SILENT", r"(\Deleted)")
+                if status != "OK":
+                    raise RuntimeError(f"UID STORE deleted failed for {uid.decode()}")
+                status, _ = imap.expunge()
+                if status != "OK":
+                    raise RuntimeError(f"EXPUNGE failed after local delivery for {uid.decode()}")
+                delivered += 1
+            print(f"gmail_import folder={gmail_folder} delivered_and_expunged={delivered} selected={len(uids)}")
+        finally:
+            try:
+                imap.logout()
+            except Exception:
+                pass
+
+    if __name__ == "__main__":
+        try:
+            main()
+        except Exception as error:
+            print(f"gmail_import_failed={type(error).__name__}", file=sys.stderr)
+            raise
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: gmail-import
+  namespace: mail
+  labels:
+    app.kubernetes.io/name: gmail-import
+    app.kubernetes.io/component: importer
+    app.kubernetes.io/part-of: truxonline-mail
+spec:
+  schedule: "*/10 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: gmail-import
+            app.kubernetes.io/component: importer
+            app.kubernetes.io/part-of: truxonline-mail
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: gmail-import
+              image: python:3.13.5-alpine@sha256:37b14db89f587f9eaa890e4a442a3fe55db452b69cca1403cc730bd0fbdc8aaf
+              imagePullPolicy: IfNotPresent
+              command: ["python3", "/opt/gmail-import/gmail-import.py"]
+              env:
+                - name: GMAIL_USER
+                  value: charchess@gmail.com
+                - name: GMAIL_FOLDER
+                  value: INBOX
+                - name: GMAIL_BATCH
+                  value: "50"
+                - name: SMTP_HOST
+                  value: mailserver.mail.svc.cluster.local
+                - name: SMTP_PORT
+                  value: "25"
+                - name: RCPT
+                  value: charchess@truxonline.com
+                - name: GMAIL_IMAP_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: mail-gmail-import
+                      key: GMAIL_IMAP_PASSWORD
+              volumeMounts:
+                - name: script
+                  mountPath: /opt/gmail-import
+                  readOnly: true
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+          volumes:
+            - name: script
+              configMap:
+                name: gmail-import-script
+                defaultMode: 0555
