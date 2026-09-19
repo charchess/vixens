@@ -60,8 +60,6 @@ rules:
       - ""
     resources:
       - services
-      - configmaps
-      - serviceaccounts
       - persistentvolumeclaims
     verbs:
       - get
@@ -69,6 +67,14 @@ rules:
       - watch
       - create
       - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
       - patch
       - delete
   - apiGroups:
