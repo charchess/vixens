@@ -18,7 +18,7 @@ spec:
           serviceAccountName: maturity-controller
           initContainers:
             - name: kubectl-copy
-              image: bitnami/kubectl@sha256:a8373525af6a362dd256fd70ddd2492c6ac273eb745942dd0a22d318869269ee
+              image: bitnami/kubectl@sha256:b29d8c1665b70817259ceecaea16ab27aab6368b48daf485d19436c809067492
               command:
                 - sh
                 - -c
