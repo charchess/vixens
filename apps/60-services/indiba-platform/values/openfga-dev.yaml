@@ -1,0 +1,50 @@
+fullnameOverride: openfga
+replicaCount: 1
+
+image:
+  repository: openfga/openfga
+  tag: v1.20.0
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+datastore:
+  engine: postgres
+  uriSecret: indiba-openfga-db
+  applyMigrations: true
+  waitForMigrations: true
+  migrationType: job
+  maxOpenConns: 20
+  maxIdleConns: 5
+
+postgresql:
+  enabled: false
+mysql:
+  enabled: false
+
+playground:
+  enabled: false
+
+telemetry:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 96Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+securityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  capabilities:
+    drop:
+      - ALL
