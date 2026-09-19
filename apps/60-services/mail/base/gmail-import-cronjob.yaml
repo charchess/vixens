@@ -26,8 +26,9 @@ data:
     recipient = os.environ["RCPT"]
 
     def deliver(raw):
+        # SMTP envelope only: the original RFC822 headers and payload stay intact.
         with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as smtp:
-            smtp.sendmail("import@truxonline.com", [recipient], raw)
+            smtp.sendmail("gmail-import@truxonline.invalid", [recipient], raw)
 
     def main():
         imap = imaplib.IMAP4_SSL("imap.gmail.com", 993, timeout=30)
