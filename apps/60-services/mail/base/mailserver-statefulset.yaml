@@ -31,7 +31,7 @@ spec:
       securityContext: {fsGroup: 5000, fsGroupChangePolicy: OnRootMismatch}
       initContainers:
         - name: materialize-dms-config
-          image: ghcr.io/docker-mailserver/docker-mailserver@sha256:af51b15dd3fc72153c0e90eb7692bb5e3a463212d87959a80fa7aa89b617d44a
+          image: ghcr.io/docker-mailserver/docker-mailserver@sha256:d0fe7668defe157aad57ea31b1707ad1e2fb57d7a91bdf17cbdf876549946c86
           command: [sh, -ec]
           args:
             - |
@@ -53,7 +53,7 @@ spec:
             - {name: dms-config-work, mountPath: /work}
       containers:
         - name: mailserver
-          image: ghcr.io/docker-mailserver/docker-mailserver@sha256:af51b15dd3fc72153c0e90eb7692bb5e3a463212d87959a80fa7aa89b617d44a
+          image: ghcr.io/docker-mailserver/docker-mailserver@sha256:d0fe7668defe157aad57ea31b1707ad1e2fb57d7a91bdf17cbdf876549946c86
           # Least privilege set required by upstream DMS on Kubernetes. This is
           # workload-local: no privileged mode or host namespace/mount access.
           securityContext:
