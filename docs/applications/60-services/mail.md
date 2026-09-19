@@ -2,7 +2,7 @@
 
 ## Scope
 
-This application migrates the Truxonline mail runtime from fuu into Vixens in controlled stages. fuu is the active authoritative source until the explicit public cutover gate.
+This application runs the Truxonline mail platform on Vixens. The fuu migration source was retired after the controlled cutover; its one-shot rsync Job is no longer rendered, preventing reconciliation from retrying an unreachable source.
 
 The production GitOps stage declares a pinned Docker Mailserver (DMS) and Roundcube at **one replica each** for private functional validation. The Maildir and state PVCs are retained TrueNAS claims populated by the non-destructive initial sync. The existing HTTPS webmail Ingress is used for this validation; no mail-protocol public listener, DNS/MX, UDM or Freebox change is declared.
 
