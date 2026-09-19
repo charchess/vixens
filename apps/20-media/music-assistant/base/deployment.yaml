@@ -100,7 +100,8 @@ spec:
             timeoutSeconds: 5
       volumes:
         - name: config
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: music-assistant-config
         - name: media
           nfs:
             server: nas.truxonline.com
