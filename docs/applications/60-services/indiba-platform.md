@@ -4,179 +4,222 @@
 
 | Environment | Deployed | Configured | Tested | Version |
 |-------------|----------|------------|--------|---------|
-| Dev | [ ] | [x] Phase 0 GitOps contracts + portal | [ ] | v1alpha1 |
+| Dev | [ ] pending merge/sync | [x] Phase 0 vertical slice | [ ] E2E runtime | v1alpha1 |
 | Prod | [ ] | [ ] | [ ] | - |
 
 Issue: #3279
 
 ## Purpose
 
-This application is the production-shaped Kubernetes contract for the INDIBA
-multi-tenant agent platform. It separates persistent business identity from
-runtime:
+INDIBA is a multi-tenant AI-agent platform where persistent business identity is
+separated from runtime execution:
 
 ```text
 AgentTemplate -> AgentIdentity -> HermesRuntime -> Deployment/Pod
 ```
 
-The Control Plane remains the source of truth for tenants, principals, groups,
-AgentIdentity objects, grants, memory-bank registry, credentials metadata,
-runtime configuration snapshots and usage events. Kubernetes is the execution
-plane, not the business catalog.
+The Control Plane is the source of truth for platform identity and policy.
+Kubernetes is the execution plane.
 
-## Phase 0 / POC decisions
+## Phase 0 architecture
 
-The POC deliberately keeps the runtime model simple:
+Phase 0 deliberately runs authorized Hermes agents `alwaysOn` (`replicas: 1`).
+It does not require NATS/JetStream, a wake-up protocol, KEDA scale-to-zero or a
+session scheduler.
 
-- authorized Hermes agents are `alwaysOn` (`replicas: 1`);
-- no NATS/JetStream wake-up path is required yet;
-- no KEDA scale-to-zero is required for Hermes runtimes yet;
-- no session scheduler is required for 3-4 pilot users;
-- the user portal talks only to the Control Plane contract, never directly to
-  Hermes, Hindsight or Kubernetes.
+The POC nevertheless deploys the main architectural components so the product
+can be exercised end to end:
 
-The wake-up/message-bus decision remains deferred without blocking the POC.
+```text
+Browser
+  -> Traefik
+  -> Authentik
+  -> Portal/BFF
+  -> Control Plane MVP
+       -> OpenFGA
+       -> platform_core PostgreSQL
+       -> HermesRuntime
+            -> Hermes Operator MVP
+            -> Hermes always-on
+                 -> Memory Gateway POC -> Hindsight -> hindsight_indiba pgvector
+                 -> LLM Gateway MVP -> OpenRouter
+```
+
+OpenBao + External Secrets deliver runtime/database/provider credentials.
+
+## GitOps packaging
+
+The implementation follows Vixens conventions:
+
+- third-party packaged components use Helm through Argo CD;
+- INDIBA-owned workloads and policy resources use native manifests/Kustomize;
+- platform PostgreSQL uses CloudNativePG;
+- the Hindsight Phase 0 database is temporarily a tenant-local
+  `pgvector/pgvector:pg17` StatefulSet because a CNPG-compatible pgvector image
+  has not yet been qualified.
+
+Argo CD applications:
+
+- `indiba-platform`: native/Kustomize resources;
+- `indiba-openfga`: upstream OpenFGA Helm chart;
+- `indiba-hindsight`: upstream Hindsight 0.10.0 OCI Helm chart.
 
 ## User portal
 
-The Phase 0 portal is deployed in `indiba-system` behind Traefik + Authentik
+The bootstrap portal is deployed in `indiba-system` behind Traefik + Authentik
 ForwardAuth.
 
-Reference URL in dev:
+Reference dev URL:
 
 ```text
 https://agents.dev.truxonline.com
 ```
 
-The initial portal is intentionally tiny and replaceable. It exposes:
+It exposes authenticated identity and the `Mes agents` view through the Control
+Plane. The browser never receives Kubernetes, Hermes, Hindsight or provider
+credentials/endpoints.
 
-- authenticated user identity from Authentik;
-- `Mes agents`, populated through `GET /v1/agents` on the Control Plane;
-- a placeholder entry point for delegated LLM-provider credentials.
+The ConfigMap-hosted Node UI is replaceable; the intended product frontend is a
+SvelteKit application preserving the same BFF trust boundary.
 
-Target product flow:
+## Control Plane MVP
 
-```text
-browser
-  -> Traefik
-  -> Authentik ForwardAuth
-  -> INDIBA Portal/BFF
-  -> Control Plane
-  -> authorized HermesRuntime
-```
+The Control Plane uses `platform_core` PostgreSQL and currently implements the
+minimum POC functions:
 
-The browser never receives Kubernetes/Hindsight endpoints or provider secrets.
-For Phase 0 the portal forwards Authentik identity claims to the Control Plane,
-but the Control Plane must accept those claims only from the authenticated
-portal workload/trust path; arbitrary caller-supplied identity headers are not
-authoritative.
+- bootstrap schema and seeded Bertrand/Nadia AgentIdentity;
+- AgentIdentity -> runtime -> MemoryBank registry fields;
+- OpenFGA store/model bootstrap;
+- `GET /v1/agents`;
+- `POST /v1/agents/{agentRef}/chat` proxy to the Hermes API server;
+- internal `(AgentIdentity, bank, operation)` memory authorization;
+- initial durable `usage_event` table.
 
-The ConfigMap-hosted Node portal is a bootstrap implementation so the POC is
-usable before the final SvelteKit UX is built. Replacing it must not change the
-Portal -> Control Plane trust boundary.
+Phase 0 currently has `POC_ALLOW_ANY_AUTHENTICATED=true`, allowing the controlled
+pilot cohort to use the seeded agent. OpenFGA is deployed and wired, but must
+become authoritative before the trust scope is widened.
 
-## Namespaces and tenant cells
+## OpenFGA
 
-- `indiba-system`: platform control-plane/operator/gateway/portal trust domain.
-- `tenant-indiba`: reference tenant cell. Future tenants receive their own
-  namespace, Hindsight logical service, database/credential binding and
-  NetworkPolicy/RBAC bindings.
+OpenFGA runs in `indiba-system` with its own `openfga` database on the INDIBA
+CloudNativePG cluster.
 
-`indiba-system` enforces Pod Security `restricted`.
+The Phase 0 relation model is intentionally minimal (`user`, `agent`,
+`owner/viewer/can_use`). The full tenant/group/repository/credential/memory model
+and the platform force-allow/force-deny resolver semantics remain hardening work.
 
-For Phase 0, `tenant-indiba` enforces `baseline` while auditing/warning against
-`restricted`, because the current Hermes image/runtime contract is not yet
-qualified under a fully restricted pod security context. This is an explicit
-POC exception, not the production target.
+## PostgreSQL
 
-Both namespaces start from default-deny ingress/egress.
+`indiba-postgresql` is a one-instance CloudNativePG cluster used for:
 
-## HermesRuntime
+- `platform_core`;
+- `openfga`.
 
-`HermesRuntime` is namespaced. A Control Plane may create/update/delete it only
-in an authorized tenant namespace. The custom operator reconciles it to workload
-resources.
+Roles and credentials are delivered from OpenBao through External Secrets.
 
-The CR contains references and immutable configuration identity, not provider
-credentials, raw secret values or raw NFS paths.
+Hindsight uses a separate `hindsight_indiba` PostgreSQL/pgvector database in the
+tenant namespace for Phase 0, exercising the intended separate memory database
+and credential boundary. Moving this database to the target managed/CNPG pattern
+requires qualifying a pgvector-capable image and migration procedure.
 
-For Phase 0 the effective lifecycle is `alwaysOn`; the CRD retains `onDemand`
-for the later production scaling design.
+## Tenant cell and HermesRuntime
 
-`configurationRevision` identifies a separately persisted immutable
-`RuntimeConfigurationSnapshot`; the hash is verification, not the snapshot
-itself.
+`tenant-indiba` is the reference Phase 0 tenant cell.
 
-## Hindsight
+`HermesRuntime` is namespaced and protected by several controls:
 
-The service contract for INDIBA is:
+- RBAC grants Control Plane/Operator access only in `tenant-indiba`;
+- Kyverno Enforce denies Phase 0 `HermesRuntime` resources outside the tenant
+  namespace;
+- admission requires `tenantRef=TEN00001` and the matching immutable tenant UUID;
+- the Operator independently verifies namespace, `tenantRef` and `tenantId`
+  before creating runtime resources.
 
-```text
-HermesRuntime
-  -> hs-indiba.tenant-indiba.svc:8888
-  -> Hindsight tenant release
-  -> hindsight_indiba database
-```
+The dev overlay applies the Bertrand/Nadia example CR. The MVP Operator
+reconciles it to a one-replica Hermes Deployment, Service, private PVC,
+per-runtime capability Secret and runtime status.
 
-The current scaffold creates only the service/network contract. It does not
-reuse the existing laboratory Hindsight instance as a security boundary.
+`tenant-indiba` temporarily enforces Pod Security `baseline`, with `restricted`
+audit/warn, until the Hermes startup contract is qualified under restricted PSS.
 
-Required authorization for self-hosted Hindsight:
+## Hindsight and memory
 
-```text
-authenticated workload
-  -> custom TenantExtension
-  -> RequestContext(AgentIdentity)
-  -> OperationValidatorExtension
-  -> authorize AgentIdentity + MemoryBank + operation
-```
+Hindsight 0.10.0 is a first-class Phase 0 component, not an external placeholder.
+It is deployed in `tenant-indiba` and uses the dedicated `hindsight_indiba`
+pgvector database.
 
-`bank_id` is never accepted as proof of authorization. Cross-bank negative tests
-are mandatory for every candidate Hindsight release.
-
-## LLM Gateway and credentials
-
-Target flow:
+Stable memory service abstraction:
 
 ```text
-Hermes/Hindsight -> LLM Gateway -> approved provider
-                          |
-                          -> OpenBao credential material
+hs-indiba.tenant-indiba.svc:8888
 ```
 
-`LLMProfile` (model/routing/privacy/budget policy) and `LLMCredential`
-(authentication material metadata) are separate objects.
+The service selects the API pods of the `indiba-hindsight` Helm release.
 
-Credential ownership supports `tenant`, `principal`, and `AgentIdentity`.
-Normal delegated OAuth UX is principal-scoped: a user authorizes a provider once
-and grants that credential to several AgentIdentity objects. The LLM Gateway is
-the only technical owner allowed to rotate the refresh token.
+The target self-hosted architecture authorizes memory directly inside Hindsight
+with a custom `TenantExtension` + `OperationValidatorExtension`. To make bank
+isolation testable immediately, Phase 0 uses a replaceable Memory Gateway:
 
-Native Hermes provider OAuth stored in `~/.hermes/auth.json` is acceptable only
-as a POC/transitional mode. The same writable `auth.json` must not be mounted
-into multiple runtimes.
+```text
+Hermes workload capability
+  -> Memory Gateway
+  -> Control Plane memory authorization
+  -> Hindsight bank endpoint
+```
 
-The portal is the intended UX for `connect provider`, credential status and
-`reauth required`; provider refresh tokens never transit through browser code.
+The POC must demonstrate retain, recall and reflect persistence, runtime
+recreation without memory loss, and negative cross-bank access even when a
+foreign `bank_id` is known.
 
-## Privacy/data routing
+## LLM Gateway
 
-Provider routing must eventually enforce the tenant `DataPolicy`, including
-approved providers, retention/training policy and geographic transfer rules.
-ZDR alone is not considered sufficient evidence for lawful offshore transfers.
+The MVP LLM Gateway sits between Hermes/Hindsight and OpenRouter:
 
-No prompt/response body should be emitted to technical logs by default.
+```text
+Hermes/Hindsight -> LLM Gateway -> OpenRouter
+```
 
-## Not implemented by this GitOps slice
+It validates a platform workload capability and injects the actual OpenRouter
+credential obtained from OpenBao. Provider keys therefore do not enter Hermes
+or Hindsight runtime configuration.
 
-- Control Plane API/database schema and chat proxy;
-- Hermes Operator binary;
-- LLM Gateway/provider adapters/OAuth refresh code;
-- final SvelteKit portal UX;
-- OpenFGA deployment and exact relation model;
-- Hindsight authorization extension package;
-- tenant-managed PostgreSQL provisioning;
-- future Agent Gateway/message/session/wake-up protocol;
-- generic Python/browser execution environment strategy.
+The target credential model remains:
 
-These are explicit implementation gaps, not hidden assumptions.
+- `LLMProfile` = model/routing/privacy/budget policy;
+- `LLMCredential` = provider authentication metadata + secret reference;
+- `LLMCredentialBinding` = authorization to use a credential;
+- delegated OAuth normally belongs to a principal and can be reused by several
+  authorized AgentIdentity objects;
+- the LLM Gateway is the unique refresh-token authority.
+
+Delegated device OAuth is not yet implemented in the MVP; OpenRouter managed
+credentials unblock the POC first.
+
+## Network and secrets
+
+Both INDIBA namespaces are default-deny. Explicit flows permit only the current
+POC communication paths, including tenant workloads to Hindsight/LLM Gateway and
+LLM Gateway HTTPS egress to OpenRouter.
+
+OpenBao-backed External Secrets provide:
+
+- Control Plane/PostgreSQL credentials;
+- OpenFGA PostgreSQL credentials;
+- Hindsight PostgreSQL credentials;
+- workload gateway capability;
+- OpenRouter provider credential.
+
+## Deferred beyond Phase 0
+
+- runtime scale-to-zero and wake-up protocol;
+- NATS/JetStream/session scheduling;
+- full OpenFGA model and policy resolver semantics;
+- native Hindsight authorization extensions replacing the POC Memory Gateway;
+- delegated OAuth/device-flow credential brokerage;
+- CNPG-qualified pgvector lifecycle for tenant memory databases;
+- generic Python/browser tool runtimes;
+- full usage reconciliation/billing;
+- production HA and multi-region operation.
+
+These are explicit deferrals, not hidden dependencies for the first end-to-end
+POC.
