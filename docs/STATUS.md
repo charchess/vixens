@@ -285,7 +285,7 @@ Last Updated: 2026-09-17
 | vikunja | ⚠️ | 💎 Platinum | **37 restarts** |
 | penpot | ✅ | 🥇 Gold | Design platform |
 | renovate | ✅ | - | Fixed: OOMKilled - resources 512Mi→2Gi (PR #1980) |
-| trilium | ✅ | 💎 Platinum | Notes |
+| trilium | ✅ | 💎 Platinum | Notes — PVC TrueNAS retained |
 | nocodb | ✅ | 💎 Platinum | Airtable alternative |
 | radar | ✅ | 💎 Platinum | |
 
