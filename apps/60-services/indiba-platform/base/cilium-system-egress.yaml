@@ -15,3 +15,20 @@ spec:
   egress:
     - toEntities:
         - kube-apiserver
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: llm-gateway-provider-egress
+  namespace: indiba-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: llm-gateway
+  egress:
+    - toFQDNs:
+        - matchName: openrouter.ai
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
