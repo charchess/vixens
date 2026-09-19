@@ -26,10 +26,12 @@ api:
     HINDSIGHT_API_EMBEDDINGS_PROVIDER: "openai"
     HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL: "http://llm-gateway.indiba-system.svc.cluster.local:8080/v1"
     HINDSIGHT_API_EMBEDDINGS_OPENAI_MODEL: "baai/bge-m3"
+    HINDSIGHT_API_EMBEDDINGS_MAX_INPUT_TOKENS: "8000"
     HINDSIGHT_API_TEXT_SEARCH_EXTENSION: "native"
     HINDSIGHT_API_TEXT_SEARCH_EXTENSION_NATIVE_LANGUAGE: "simple"
     HINDSIGHT_API_ENABLE_BANK_CONFIG_API: "true"
     HINDSIGHT_API_MCP_ENABLED: "true"
+    HINDSIGHT_API_AUDIT_LOG_ENABLED: "true"
     HINDSIGHT_API_LOG_LEVEL: "info"
 
 controlPlane:
@@ -49,7 +51,7 @@ worker:
 postgresql:
   enabled: false
   external:
-    host: indiba-postgresql-rw.indiba-system.svc.cluster.local
+    host: hindsight-postgresql.tenant-indiba.svc.cluster.local
     port: 5432
     database: hindsight_indiba
     username: hindsight_indiba
