@@ -16,9 +16,10 @@ Le déploiement utilise une stratégie de **Split DNS** avec deux instances dist
 ## Configuration
 
 ### Instance UniFi (Interne)
-- **Image :** `registry.k8s.io/external-dns/external-dns:v0.14.2`
-- **Sidecar :** `ghcr.io/kashalls/external-dns-unifi-webhook:v0.8.0`
-- **Secrets (Infisical) :** `/apps/40-network/external-dns/unifi`
+- **Image :** `registry.k8s.io/external-dns/external-dns:v0.21.0`
+- **Sidecar :** `ghcr.io/kashalls/external-dns-unifi-webhook:v0.8.2`
+- **Secrets (OpenBao via External Secrets) :** `vixens/prod/apps/40-network/external-dns/unifi`
+- **Authentification :** clé API UniFi dédiée (`UNIFI_API_KEY`) ; le login utilisateur/mot de passe n’est pas injecté dans le webhook.
 - **Comportement :** Scanne tous les Ingress. Si l'entrée n'existe pas dans l'UDM Pro SE, elle est créée. Elle utilise des enregistrements `TXT` pour marquer la propriété.
 
 ### Instance Gandi (Public)
