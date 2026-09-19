@@ -93,7 +93,8 @@ spec:
               memory: 256Mi
       volumes:
         - name: trilium-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: trilium-data
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

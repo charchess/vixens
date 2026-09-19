@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: media
 resources:
   - deployment.yaml
+  - pvc.yaml
   - service.yaml
   - ingressroute-slimproto.yaml
   - networkpolicy.yaml
