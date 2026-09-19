@@ -38,7 +38,7 @@ spec:
       # to the writable PVC, if the PVC is empty.
       initContainers:
         - name: copy-initial-config
-          image: busybox:1.37
+          image: busybox:1.38
           # Clear the destination first to avoid pollution, then copy and set
           # ownership. Runs as root to handle files owned by previous pods.
           securityContext:

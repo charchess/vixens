@@ -37,7 +37,7 @@ spec:
           effect: NoSchedule
       initContainers:
         - name: fix-run-dir
-          image: busybox:1.37.0
+          image: busybox:1.38.0
           command: ["sh", "-c", "chown 1000:1000 /run"]
           securityContext:
             runAsUser: 0  # must run as root to chown /run (emptyDir created uid=0 by kubelet)

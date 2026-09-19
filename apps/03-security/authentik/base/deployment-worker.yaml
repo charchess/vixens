@@ -32,7 +32,7 @@ spec:
       priorityClassName: vixens-critical
       containers:
         - name: authentik-worker
-          image: ghcr.io/goauthentik/server:2026.2
+          image: ghcr.io/goauthentik/server:2026.8
           args:
             - worker
           resources:

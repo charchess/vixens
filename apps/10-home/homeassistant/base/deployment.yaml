@@ -49,7 +49,7 @@ spec:
           effect: NoSchedule
       initContainers:
         - name: install-python-deps
-          image: python:3.14.5-alpine
+          image: python:3.14.7-alpine
           securityContext:
             capabilities:
               add: [CHOWN]
@@ -135,7 +135,7 @@ spec:
               mountPath: /requirements
               readOnly: true
         - name: config-init
-          image: busybox:1.37.0
+          image: busybox:1.38.0
           securityContext:
             # The restored PVC can retain root-owned generated directories.
             # This bootstrap normalizes their ownership before Core runs as 1000.

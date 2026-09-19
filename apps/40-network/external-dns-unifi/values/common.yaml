@@ -6,7 +6,7 @@ logLevel: debug
 image:
   registry: registry.k8s.io
   repository: external-dns/external-dns
-  tag: v0.21.0
+  tag: v0.23.0
 extraArgs:
   webhook-provider-url: http://127.0.0.1:8888
 # RBAC permissions for EndpointSlices (required for some sources)
@@ -22,7 +22,7 @@ rbac:
 # where external-dns would exit if the webhook wasn't ready within 3 seconds.
 initContainers:
   - name: unifi-webhook
-    image: ghcr.io/kashalls/external-dns-unifi-webhook:v0.8.2
+    image: ghcr.io/kashalls/external-dns-unifi-webhook:v0.9.0
     restartPolicy: Always
     args: ["--host", "0.0.0.0"]
     ports:

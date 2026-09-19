@@ -43,7 +43,7 @@ spec:
       initContainers: []
       containers:
         - name: authentik-server
-          image: ghcr.io/goauthentik/server:2026.2
+          image: ghcr.io/goauthentik/server:2026.8
           args:
             - server
           ports:
