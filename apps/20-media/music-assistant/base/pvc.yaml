@@ -4,8 +4,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: music-assistant-config
   annotations:
-    # Provision before the Music Assistant Deployment consumes the RWO claim.
-    argocd.argoproj.io/sync-wave: "10"
+    # Share the Deployment's Argo wave: this storage class uses
+    # WaitForFirstConsumer, so an earlier wave would deadlock provisioning.
+    argocd.argoproj.io/sync-wave: "11"
   namespace: media
 spec:
   accessModes:
