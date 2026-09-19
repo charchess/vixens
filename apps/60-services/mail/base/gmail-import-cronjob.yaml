@@ -111,7 +111,7 @@ spec:
                 - name: GMAIL_USER
                   value: charchess@gmail.com
                 - name: GMAIL_FOLDER
-                  value: INBOX
+                  value: "[Gmail]/All Mail"
                 - name: GMAIL_BATCH
                   value: "50"
                 - name: SMTP_HOST
