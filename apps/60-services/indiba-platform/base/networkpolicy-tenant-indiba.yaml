@@ -36,22 +36,82 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: hindsight-api-ingress
+  name: memory-gateway-ingress
   namespace: tenant-indiba
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: hindsight
-      indiba.io/tenant-ref: TEN00001
+      app.kubernetes.io/name: memory-gateway
   policyTypes:
     - Ingress
+    - Egress
   ingress:
     - from:
         - podSelector:
             matchLabels:
               indiba.io/component: hermes-runtime
       ports:
+        - port: 8877
+          protocol: TCP
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: hindsight
+      ports:
         - port: 8888
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: indiba-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: control-plane
+      ports:
+        - port: 8081
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hindsight-api-ingress
+  namespace: tenant-indiba
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: hindsight
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: memory-gateway
+      ports:
+        - port: 8888
+          protocol: TCP
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: indiba-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: llm-gateway
+      ports:
+        - port: 8080
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: indiba-system
+          podSelector:
+            matchLabels:
+              cnpg.io/cluster: indiba-postgresql
+      ports:
+        - port: 5432
           protocol: TCP
 ---
 apiVersion: networking.k8s.io/v1
@@ -69,35 +129,10 @@ spec:
     - to:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: hindsight
-              indiba.io/tenant-ref: TEN00001
+              app.kubernetes.io/name: memory-gateway
       ports:
-        - port: 8888
+        - port: 8877
           protocol: TCP
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: indiba-system
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: llm-gateway
-      ports:
-        - port: 8080
-          protocol: TCP
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: hindsight-llm-egress
-  namespace: tenant-indiba
-spec:
-  podSelector:
-    matchLabels:
-      app.kubernetes.io/name: hindsight
-      indiba.io/tenant-ref: TEN00001
-  policyTypes:
-    - Egress
-  egress:
     - to:
         - namespaceSelector:
             matchLabels:
