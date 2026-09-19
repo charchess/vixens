@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trilium-data
+  annotations:
+    # Must share the workload wave: this class binds only after a consumer exists.
+    argocd.argoproj.io/sync-wave: "9"
+  namespace: tools
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi-xfs-retain
+  resources:
+    requests:
+      storage: 10Gi
