@@ -36,16 +36,11 @@ initContainers:
           secretKeyRef:
             name: external-dns-unifi-secret
             key: UNIFI_HOST
-      - name: UNIFI_USER
+      - name: UNIFI_API_KEY
         valueFrom:
           secretKeyRef:
             name: external-dns-unifi-secret
-            key: UNIFI_USER
-      - name: UNIFI_PASS
-        valueFrom:
-          secretKeyRef:
-            name: external-dns-unifi-secret
-            key: UNIFI_PASS
+            key: UNIFI_API_KEY
       - name: LOG_LEVEL
         value: debug
       - name: UNIFI_SKIP_TLS_VERIFY
