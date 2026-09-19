@@ -55,21 +55,6 @@ spec:
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
-  name: indiba-hindsight-db
-  namespace: indiba-system
-spec:
-  dataFrom:
-    - extract:
-        key: vixens/dev/apps/60-services/indiba/postgresql/hindsight
-  target:
-    template:
-      metadata:
-        annotations:
-          vixens.io/secret-source: openbao
----
-apiVersion: external-secrets.io/v1
-kind: ExternalSecret
-metadata:
   name: indiba-runtime-capability
   namespace: indiba-system
 spec:
@@ -110,11 +95,6 @@ spec:
         login: true
         passwordSecret:
           name: indiba-openfga-db
-      - name: hindsight_indiba
-        ensure: present
-        login: true
-        passwordSecret:
-          name: indiba-hindsight-db
   bootstrap:
     initdb:
       database: platform_core
@@ -144,16 +124,4 @@ spec:
     name: indiba-postgresql
   name: openfga
   owner: openfga
-  ensure: present
----
-apiVersion: postgresql.cnpg.io/v1
-kind: Database
-metadata:
-  name: indiba-hindsight
-  namespace: indiba-system
-spec:
-  cluster:
-    name: indiba-postgresql
-  name: hindsight_indiba
-  owner: hindsight_indiba
   ensure: present
