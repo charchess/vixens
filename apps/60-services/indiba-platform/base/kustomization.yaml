@@ -5,10 +5,14 @@ resources:
   - namespace-system.yaml
   - namespace-tenant-indiba.yaml
   - crd-hermesruntime.yaml
+  - tenant-admission.yaml
   - serviceaccounts.yaml
   - rbac.yaml
   - services.yaml
   - configmap-contracts.yaml
+  - postgresql.yaml
+  - mvp-workloads.yaml
+  - tenant-secrets.yaml
   - portal-app.yaml
   - networkpolicy-system.yaml
   - portal-networkpolicy.yaml
