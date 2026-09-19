@@ -232,7 +232,7 @@ Last Updated: 2026-09-17
 | mylar | ✅ | 🥈 Silver | Comics |
 | whisparr | ✅ | 🥈 Silver | Adult content |
 | lazylibrarian | ✅ | 🥈 Silver | Books/Audiobooks |
-| music-assistant | ✅ | 🥇 Gold | |
+| music-assistant | ✅ | 🥇 Gold | Configuration persistée sur PVC TrueNAS RWO |
 | frigate | ✅ | 🥈 Silver | NVR - **DB Migrée en RAM** |
 | hydrus-client | ✅ | 🥈 Silver | |
 | booklore | ✅ | 🥇 Gold | |
