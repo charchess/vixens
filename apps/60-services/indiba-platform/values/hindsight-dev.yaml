@@ -1,0 +1,78 @@
+version: "0.10.0"
+fullnameOverride: hindsight-indiba
+existingSecret: hindsight-indiba-runtime
+
+api:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+  persistence:
+    modelCache:
+      enabled: true
+      size: 5Gi
+      storageClass: truenas-iscsi-delete
+  env:
+    HINDSIGHT_API_LLM_PROVIDER: "openai"
+    HINDSIGHT_API_LLM_BASE_URL: "http://llm-gateway.indiba-system.svc.cluster.local:8080/v1"
+    HINDSIGHT_API_LLM_MODEL: "openai/gpt-oss-20b"
+    HINDSIGHT_API_RETAIN_LLM_MODEL: "openai/gpt-oss-20b"
+    HINDSIGHT_API_CONSOLIDATION_LLM_MODEL: "openai/gpt-oss-20b"
+    HINDSIGHT_API_REFLECT_LLM_MODEL: "openai/gpt-oss-120b"
+    HINDSIGHT_API_EMBEDDINGS_PROVIDER: "openai"
+    HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL: "http://llm-gateway.indiba-system.svc.cluster.local:8080/v1"
+    HINDSIGHT_API_EMBEDDINGS_OPENAI_MODEL: "baai/bge-m3"
+    HINDSIGHT_API_TEXT_SEARCH_EXTENSION: "native"
+    HINDSIGHT_API_TEXT_SEARCH_EXTENSION_NATIVE_LANGUAGE: "simple"
+    HINDSIGHT_API_ENABLE_BANK_CONFIG_API: "true"
+    HINDSIGHT_API_MCP_ENABLED: "true"
+    HINDSIGHT_API_LOG_LEVEL: "info"
+
+controlPlane:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+worker:
+  enabled: false
+
+postgresql:
+  enabled: false
+  external:
+    host: indiba-postgresql-rw.indiba-system.svc.cluster.local
+    port: 5432
+    database: hindsight_indiba
+    username: hindsight_indiba
+
+tei:
+  reranker:
+    enabled: false
+  embedding:
+    enabled: false
+
+ingress:
+  enabled: false
+
+autoscaling:
+  enabled: false
+
+podSecurityContext:
+  fsGroup: 1000
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
