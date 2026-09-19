@@ -38,7 +38,7 @@ spec:
             - name: TENANT_REF
               value: TEN00001
             - name: TENANT_ID
-              value: 00000000-0000-7000-8000-000000000001
+              value: 018f0000-0000-7000-8000-000000000001
             - name: POC_ALLOW_ANY_AUTHENTICATED
               value: "true"
             - name: POC_AGENT_ALIAS
@@ -46,11 +46,11 @@ spec:
             - name: POC_AGENT_REF
               value: TEN00001-USR00001-TPL00001-INS001
             - name: POC_RUNTIME_NAME
-              value: nadia-bertrand
+              value: indiba-bertrand-nadia-sud-ouest
             - name: POC_BANK_REF
               value: MB-TEN00001-USR00001-TPL00001-INS001
             - name: POC_BANK_ID
-              value: nadia-bertrand
+              value: MB-TEN00001-USR00001-TPL00001-INS001
           ports:
             - name: http
               containerPort: 8081
@@ -113,8 +113,15 @@ spec:
               value: "8082"
             - name: TENANT_REF
               value: TEN00001
+            - name: TENANT_ID
+              value: 018f0000-0000-7000-8000-000000000001
             - name: HERMES_IMAGE
               value: nousresearch/hermes-agent:v2026.9.7
+            - name: GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: indiba-runtime-capability
+                  key: gateway-token
           ports:
             - name: health
               containerPort: 8082
@@ -224,7 +231,12 @@ spec:
             - name: CONTROL_PLANE_URL
               value: http://control-plane.indiba-system.svc.cluster.local:8081
             - name: HINDSIGHT_URL
-              value: http://hindsight-indiba-api.tenant-indiba.svc.cluster.local:8888
+              value: http://hs-indiba.tenant-indiba.svc.cluster.local:8888
+            - name: GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: indiba-runtime-capability
+                  key: gateway-token
           ports:
             - name: http
               containerPort: 8877
