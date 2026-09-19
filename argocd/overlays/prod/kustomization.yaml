@@ -110,5 +110,6 @@ resources:
   # Disabled by owner: apps/vikunja.yaml
   # Disabled by owner: apps/trivy.yaml
   - apps/radar.yaml
+  - apps/trilium.yaml
   - apps/maturity-controller.yaml
   # Disabled by owner: apps/bookshelf.yaml
