@@ -23,9 +23,12 @@ spec:
         # All mail users are under this bounded AD OU. Avoid root-DSE
         # partition referrals that make the Dovecot LDAP client hang.
         vixens.io/ldap-search-base: "users-infra"
-        # Reload the DMS user-patches hook that recreates Amavis runtime dirs
-        # after DMS setup and before the Amavis daemon starts.
-        vixens.io/amavis-runtime-dirs: "user-patches-v1"
+        # DMS v16 runs Amavis as UID/GID 998; force an explicit rollout after
+        # the user-patches hook corrects its runtime directories accordingly.
+        vixens.io/amavis-runtime-dirs: "user-patches-v2-uid998"
+        # DMS v16 / Dovecot 2.4 consumes the normalized LDAP userdb mapping
+        # from OpenBao; env-backed Secret updates require a pod rollout.
+        vixens.io/dovecot-ldap-mapping: "dovecot-2.4-v1"
       labels: {app.kubernetes.io/name: mailserver, app.kubernetes.io/part-of: truxonline-mail}
     spec:
       securityContext: {fsGroup: 5000, fsGroupChangePolicy: OnRootMismatch}
