@@ -7,8 +7,6 @@ metadata:
   labels:
     app.kubernetes.io/name: llm-gateway
     app.kubernetes.io/part-of: indiba-platform
-  annotations:
-    indiba.io/implementation-status: contract-only
 spec:
   selector:
     app.kubernetes.io/name: llm-gateway
@@ -26,8 +24,6 @@ metadata:
   labels:
     app.kubernetes.io/name: control-plane
     app.kubernetes.io/part-of: indiba-platform
-  annotations:
-    indiba.io/implementation-status: contract-only
 spec:
   selector:
     app.kubernetes.io/name: control-plane
@@ -47,14 +43,13 @@ metadata:
     app.kubernetes.io/part-of: indiba-platform
     indiba.io/memory-service: hs-indiba-stable
     indiba.io/tenant-ref: TEN00001
-  annotations:
-    indiba.io/implementation-status: contract-only
 spec:
   selector:
     app.kubernetes.io/name: hindsight
-    indiba.io/tenant-ref: TEN00001
+    app.kubernetes.io/instance: indiba-hindsight
+    app.kubernetes.io/component: api
   ports:
     - name: api
       port: 8888
-      targetPort: api
+      targetPort: http
       protocol: TCP
