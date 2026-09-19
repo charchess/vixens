@@ -39,7 +39,7 @@ spec:
           effect: NoSchedule
       initContainers:
         - name: init-config
-          image: busybox:1.37
+          image: busybox:1.38
           command:
             - sh
             - -c
@@ -61,7 +61,7 @@ spec:
             - name: config-out
               mountPath: /config-out
         - name: init-vmscrape
-          image: curlimages/curl:8.20.0
+          image: curlimages/curl:8.22.0
           command:
             - sh
             - -c
