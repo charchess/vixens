@@ -38,7 +38,7 @@ spec:
           type: Unconfined
       containers:
         - name: router
-          image: netbirdio/netbird:0.70.5
+          image: netbirdio/netbird:0.79.0
           command:
             - /bin/sh
             - -c

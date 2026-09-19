@@ -68,7 +68,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: fix-nginx-dirs
-          image: busybox:1.37.0
+          image: busybox:1.38.0
           command:
             - sh
             - -c
@@ -80,7 +80,7 @@ spec:
               mountPath: /run/nginx
       containers:
         - name: dashboard
-          image: netbirdio/dashboard:v2.37.1
+          image: netbirdio/dashboard:v2.92.0
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
