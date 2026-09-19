@@ -13,6 +13,7 @@ resources:
   - postgresql.yaml
   - mvp-workloads.yaml
   - tenant-secrets.yaml
+  - hindsight-postgresql.yaml
   - portal-app.yaml
   - networkpolicy-system.yaml
   - portal-networkpolicy.yaml
