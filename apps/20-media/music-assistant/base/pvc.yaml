@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: music-assistant-config
+  annotations:
+    # Provision before the Music Assistant Deployment consumes the RWO claim.
+    argocd.argoproj.io/sync-wave: "10"
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi-xfs-retain
+  resources:
+    requests:
+      storage: 10Gi
