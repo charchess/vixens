@@ -15,74 +15,75 @@ data:
     const controlPlane = process.env.CONTROL_PLANE_URL ||
       "http://control-plane.indiba-system.svc.cluster.local:8081";
 
-    const json = (res, status, body) => {
-      const payload = JSON.stringify(body);
-      res.writeHead(status, {
-        "content-type": "application/json; charset=utf-8",
-        "cache-control": "no-store",
-        "content-length": Buffer.byteLength(payload),
-      });
-      res.end(payload);
-    };
-
     const identity = (req) => ({
       uid: req.headers["x-authentik-uid"] || "",
       username: req.headers["x-authentik-username"] || "",
       email: req.headers["x-authentik-email"] || "",
       name: req.headers["x-authentik-name"] || "",
-      groups: String(req.headers["x-authentik-groups"] || "")
-        .split("|")
-        .filter(Boolean),
     });
+    const principalHeaders = (req) => {
+      const me = identity(req);
+      return {
+        "x-indiba-auth-source": "authentik-forward-auth",
+        "x-indiba-principal-sub": me.uid,
+        "x-indiba-principal-name": me.username,
+      };
+    };
+    const json = (res, status, body) => {
+      const data = JSON.stringify(body);
+      res.writeHead(status, {"content-type":"application/json; charset=utf-8","cache-control":"no-store"});
+      res.end(data);
+    };
+    const body = async (req) => {
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      return Buffer.concat(chunks);
+    };
 
-    const page = `<!doctype html>
-    <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>INDIBA Agents</title><style>
-    body{font-family:system-ui,sans-serif;max-width:960px;margin:3rem auto;padding:0 1rem;background:#f7f7f8;color:#171717}
-    header{display:flex;justify-content:space-between;align-items:center} .card{background:white;border:1px solid #ddd;border-radius:12px;padding:1rem;margin:1rem 0}
-    button{padding:.6rem 1rem;border:0;border-radius:8px;background:#171717;color:white;cursor:pointer} .muted{color:#666}
-    </style></head><body><header><div><h1>Mes agents</h1><div id="me" class="muted">Chargement…</div></div></header>
-    <main id="agents"><div class="card">Chargement des agents…</div></main>
-    <section class="card"><h2>Fournisseurs IA</h2><p class="muted">La connexion OAuth déléguée sera pilotée ici par le LLM Gateway.</p></section>
+    const page = `<!doctype html><html lang="fr"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1"><title>INDIBA Agents</title>
+    <style>body{font-family:system-ui,sans-serif;max-width:980px;margin:2rem auto;padding:0 1rem;background:#f7f7f8;color:#171717}.card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:1rem;margin:1rem 0}.muted{color:#666}button{padding:.6rem 1rem;border:0;border-radius:8px;background:#171717;color:#fff;cursor:pointer}button:disabled{opacity:.5}textarea{width:100%;min-height:80px;box-sizing:border-box;margin:.5rem 0;padding:.7rem}.answer{white-space:pre-wrap;background:#f3f3f4;padding:1rem;border-radius:8px;min-height:2rem}</style></head>
+    <body><h1>Mes agents</h1><div id="me" class="muted">Chargement…</div><main id="agents"></main>
+    <section id="chat" class="card" hidden><h2 id="chat-title">Agent</h2><textarea id="prompt" placeholder="Écrire à votre agent…"></textarea><button id="send">Envoyer</button><div id="answer" class="answer"></div></section>
+    <section class="card"><h2>Fournisseurs IA</h2><p class="muted">Phase 0 : OpenRouter géré par la plateforme. OAuth délégué viendra ensuite.</p></section>
     <script>
-    async function load(){
-      const me=await fetch('/api/me').then(r=>r.json());
-      document.getElementById('me').textContent=me.name||me.username||me.email||'Utilisateur authentifié';
-      const root=document.getElementById('agents');
-      try{
-        const r=await fetch('/api/agents');
-        if(!r.ok) throw new Error('Control Plane indisponible');
-        const data=await r.json(); const agents=Array.isArray(data)?data:(data.items||[]);
-        root.innerHTML=agents.length?agents.map(a=>`<div class="card"><strong>${a.name||a.agentAlias||a.agentRef}</strong><div class="muted">${a.status||a.phase||'unknown'}</div><button disabled>Ouvrir</button></div>`).join(''):'<div class="card">Aucun agent autorisé.</div>';
-      }catch(e){root.innerHTML='<div class="card"><strong>Control Plane non disponible</strong><p class="muted">Le portail est prêt; la liste sera alimentée par le MVP Control Plane.</p></div>';}
-    } load();
-    </script></body></html>`;
+    let active=null;
+    const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    async function load(){const me=await fetch('/api/me').then(r=>r.json());document.getElementById('me').textContent=me.name||me.username||me.email||'Utilisateur authentifié';const root=document.getElementById('agents');try{const r=await fetch('/api/agents');if(!r.ok)throw new Error();const d=await r.json();const a=d.items||[];root.innerHTML=a.length?a.map(x=>'<div class="card"><strong>'+esc(x.name||x.agentRef)+'</strong><div class="muted">'+esc(x.status)+'</div><button data-agent="'+esc(x.agentRef)+'" data-name="'+esc(x.name)+'">Ouvrir</button></div>').join(''):'<div class="card">Aucun agent autorisé.</div>';root.querySelectorAll('button[data-agent]').forEach(b=>b.onclick=()=>openAgent(b.dataset.agent,b.dataset.name));}catch(e){root.innerHTML='<div class="card"><strong>Control Plane indisponible</strong></div>';}}
+    function openAgent(ref,name){active=ref;document.getElementById('chat').hidden=false;document.getElementById('chat-title').textContent=name||ref;document.getElementById('answer').textContent='';document.getElementById('prompt').focus();}
+    document.getElementById('send').onclick=async()=>{if(!active)return;const p=document.getElementById('prompt').value.trim();if(!p)return;const out=document.getElementById('answer');out.textContent='…';const r=await fetch('/api/agents/'+encodeURIComponent(active)+'/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({model:'hermes-agent',messages:[{role:'user',content:p}],stream:false})});const text=await r.text();if(!r.ok){out.textContent='Erreur '+r.status+' : '+text;return;}try{const d=JSON.parse(text);out.textContent=d.choices?.[0]?.message?.content||text;}catch{out.textContent=text;}};
+    load();</script></body></html>`;
 
     const server = http.createServer(async (req, res) => {
-      if (req.url === "/healthz") return json(res, 200, {status: "ok"});
-      if (req.url === "/api/me") return json(res, 200, identity(req));
-      if (req.url === "/api/agents") {
+      const url = new URL(req.url, "http://portal.local");
+      if (url.pathname === "/healthz") return json(res, 200, {status:"ok"});
+      if (url.pathname === "/api/me") return json(res, 200, identity(req));
+      if (url.pathname === "/api/agents" && req.method === "GET") {
         try {
-          const me = identity(req);
-          const upstream = await fetch(`${controlPlane}/v1/agents`, {
-            headers: {
-              "x-indiba-auth-source": "authentik-forward-auth",
-              "x-indiba-principal-sub": me.uid,
-              "x-indiba-principal-name": me.username,
-            },
-          });
-          const body = await upstream.text();
-          res.writeHead(upstream.status, {"content-type": upstream.headers.get("content-type") || "application/json"});
-          return res.end(body);
-        } catch (error) {
-          return json(res, 502, {error: "control_plane_unavailable"});
-        }
+          const upstream = await fetch(`${controlPlane}/v1/agents`, {headers: principalHeaders(req)});
+          const data = await upstream.text();
+          res.writeHead(upstream.status, {"content-type":upstream.headers.get("content-type")||"application/json"});
+          return res.end(data);
+        } catch { return json(res, 502, {error:"control_plane_unavailable"}); }
       }
-      if (req.url === "/" || req.url === "/index.html") {
-        res.writeHead(200, {"content-type": "text/html; charset=utf-8", "cache-control": "no-store"});
+      const match = url.pathname.match(/^\/api\/agents\/([^/]+)\/chat$/);
+      if (match && req.method === "POST") {
+        try {
+          const payload = await body(req);
+          const upstream = await fetch(`${controlPlane}/v1/agents/${encodeURIComponent(decodeURIComponent(match[1]))}/chat`, {
+            method:"POST", headers:{...principalHeaders(req),"content-type":"application/json"}, body:payload,
+          });
+          res.writeHead(upstream.status, {"content-type":upstream.headers.get("content-type")||"application/json"});
+          if (!upstream.body) return res.end();
+          for await (const chunk of upstream.body) res.write(chunk);
+          return res.end();
+        } catch { return json(res, 502, {error:"agent_unavailable"}); }
+      }
+      if (url.pathname === "/" || url.pathname === "/index.html") {
+        res.writeHead(200, {"content-type":"text/html; charset=utf-8","cache-control":"no-store"});
         return res.end(page);
       }
-      return json(res, 404, {error: "not_found"});
+      return json(res, 404, {error:"not_found"});
     });
     server.listen(port, "0.0.0.0");
 ---
@@ -109,9 +110,7 @@ spec:
       containers:
         - name: portal
           image: node:22-alpine
-          command:
-            - node
-            - /app/server.mjs
+          command: [node, /app/server.mjs]
           env:
             - name: PORT
               value: "3000"
@@ -120,36 +119,24 @@ spec:
           ports:
             - name: http
               containerPort: 3000
-              protocol: TCP
           readinessProbe:
-            httpGet:
-              path: /healthz
-              port: http
+            httpGet: {path: /healthz, port: http}
             initialDelaySeconds: 2
             periodSeconds: 10
           livenessProbe:
-            httpGet:
-              path: /healthz
-              port: http
+            httpGet: {path: /healthz, port: http}
             initialDelaySeconds: 10
             periodSeconds: 20
           resources:
-            requests:
-              cpu: 25m
-              memory: 32Mi
-            limits:
-              cpu: 250m
-              memory: 128Mi
+            requests: {cpu: 25m, memory: 32Mi}
+            limits: {cpu: 250m, memory: 128Mi}
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1000
-            capabilities:
-              drop:
-                - ALL
-            seccompProfile:
-              type: RuntimeDefault
+            capabilities: {drop: [ALL]}
+            seccompProfile: {type: RuntimeDefault}
           volumeMounts:
             - name: app
               mountPath: /app/server.mjs
@@ -175,4 +162,3 @@ spec:
     - name: http
       port: 3000
       targetPort: http
-      protocol: TCP
