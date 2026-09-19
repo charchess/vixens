@@ -6,9 +6,7 @@ metadata:
   namespace: indiba-system
 spec:
   podSelector: {}
-  policyTypes:
-    - Ingress
-    - Egress
+  policyTypes: [Ingress, Egress]
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -17,8 +15,7 @@ metadata:
   namespace: indiba-system
 spec:
   podSelector: {}
-  policyTypes:
-    - Egress
+  policyTypes: [Egress]
   egress:
     - to:
         - namespaceSelector:
@@ -28,37 +25,51 @@ spec:
             matchLabels:
               k8s-app: kube-dns
       ports:
-        - port: 53
-          protocol: UDP
-        - port: 53
-          protocol: TCP
+        - {port: 53, protocol: UDP}
+        - {port: 53, protocol: TCP}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: control-plane-egress
+  name: control-plane-tenant-flows
   namespace: indiba-system
 spec:
   podSelector:
     matchLabels:
       app.kubernetes.io/name: control-plane
-  policyTypes:
-    - Egress
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: tenant-indiba
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: memory-gateway
+      ports:
+        - {port: 8081, protocol: TCP}
   egress:
     - to:
         - podSelector:
             matchLabels:
               cnpg.io/cluster: indiba-postgresql
       ports:
-        - port: 5432
-          protocol: TCP
+        - {port: 5432, protocol: TCP}
     - to:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: openfga
       ports:
-        - port: 8080
-          protocol: TCP
+        - {port: 8080, protocol: TCP}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: tenant-indiba
+          podSelector:
+            matchLabels:
+              indiba.io/component: hermes-runtime
+      ports:
+        - {port: 8642, protocol: TCP}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -69,25 +80,21 @@ spec:
   podSelector:
     matchLabels:
       app.kubernetes.io/name: openfga
-  policyTypes:
-    - Ingress
-    - Egress
+  policyTypes: [Ingress, Egress]
   ingress:
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: control-plane
       ports:
-        - port: 8080
-          protocol: TCP
+        - {port: 8080, protocol: TCP}
   egress:
     - to:
         - podSelector:
             matchLabels:
               cnpg.io/cluster: indiba-postgresql
       ports:
-        - port: 5432
-          protocol: TCP
+        - {port: 5432, protocol: TCP}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -98,8 +105,7 @@ spec:
   podSelector:
     matchLabels:
       cnpg.io/cluster: indiba-postgresql
-  policyTypes:
-    - Ingress
+  policyTypes: [Ingress]
   ingress:
     - from:
         - podSelector:
@@ -109,18 +115,7 @@ spec:
             matchLabels:
               app.kubernetes.io/name: openfga
       ports:
-        - port: 5432
-          protocol: TCP
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: tenant-indiba
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: hindsight
-      ports:
-        - port: 5432
-          protocol: TCP
+        - {port: 5432, protocol: TCP}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -131,8 +126,7 @@ spec:
   podSelector:
     matchLabels:
       app.kubernetes.io/name: llm-gateway
-  policyTypes:
-    - Ingress
+  policyTypes: [Ingress]
   ingress:
     - from:
         - namespaceSelector:
@@ -142,8 +136,7 @@ spec:
             matchLabels:
               indiba.io/component: hermes-runtime
       ports:
-        - port: 8080
-          protocol: TCP
+        - {port: 8080, protocol: TCP}
     - from:
         - namespaceSelector:
             matchLabels:
@@ -152,5 +145,4 @@ spec:
             matchLabels:
               app.kubernetes.io/name: hindsight
       ports:
-        - port: 8080
-          protocol: TCP
+        - {port: 8080, protocol: TCP}
