@@ -1,0 +1,60 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: portal-ingress
+  namespace: indiba-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: indiba-portal
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - port: 3000
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: portal-egress-control-plane
+  namespace: indiba-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: indiba-portal
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: control-plane
+      ports:
+        - port: 8081
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: control-plane-ingress-portal
+  namespace: indiba-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: control-plane
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: indiba-portal
+      ports:
+        - port: 8081
+          protocol: TCP

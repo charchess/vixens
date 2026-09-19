@@ -1,0 +1,87 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: hindsight-postgresql
+  namespace: tenant-indiba
+  labels:
+    app.kubernetes.io/name: hindsight-postgresql
+    app.kubernetes.io/part-of: indiba-platform
+    indiba.io/tenant-ref: TEN00001
+spec:
+  serviceName: hindsight-postgresql
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hindsight-postgresql
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: hindsight-postgresql
+        app.kubernetes.io/part-of: indiba-platform
+        indiba.io/tenant-ref: TEN00001
+    spec:
+      containers:
+        - name: postgresql
+          image: pgvector/pgvector:pg17
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POSTGRES_USER
+              value: hindsight_indiba
+            - name: POSTGRES_DB
+              value: hindsight_indiba
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hindsight-indiba-runtime
+                  key: postgres-password
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          ports:
+            - name: postgresql
+              containerPort: 5432
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "hindsight_indiba", "-d", "hindsight_indiba"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "hindsight_indiba", "-d", "hindsight_indiba"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: truenas-iscsi-retain
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hindsight-postgresql
+  namespace: tenant-indiba
+  labels:
+    app.kubernetes.io/name: hindsight-postgresql
+    app.kubernetes.io/part-of: indiba-platform
+spec:
+  selector:
+    app.kubernetes.io/name: hindsight-postgresql
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql

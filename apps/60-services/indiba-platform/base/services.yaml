@@ -1,0 +1,55 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llm-gateway
+  namespace: indiba-system
+  labels:
+    app.kubernetes.io/name: llm-gateway
+    app.kubernetes.io/part-of: indiba-platform
+spec:
+  selector:
+    app.kubernetes.io/name: llm-gateway
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: control-plane
+  namespace: indiba-system
+  labels:
+    app.kubernetes.io/name: control-plane
+    app.kubernetes.io/part-of: indiba-platform
+spec:
+  selector:
+    app.kubernetes.io/name: control-plane
+  ports:
+    - name: http
+      port: 8081
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hs-indiba
+  namespace: tenant-indiba
+  labels:
+    app.kubernetes.io/name: hindsight
+    app.kubernetes.io/part-of: indiba-platform
+    indiba.io/memory-service: hs-indiba-stable
+    indiba.io/tenant-ref: TEN00001
+spec:
+  selector:
+    app.kubernetes.io/name: hindsight
+    app.kubernetes.io/instance: indiba-hindsight
+    app.kubernetes.io/component: api
+  ports:
+    - name: api
+      port: 8888
+      targetPort: http
+      protocol: TCP

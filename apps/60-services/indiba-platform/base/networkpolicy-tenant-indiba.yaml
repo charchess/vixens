@@ -1,0 +1,163 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: tenant-indiba
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: tenant-indiba
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - {port: 53, protocol: UDP}
+        - {port: 53, protocol: TCP}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hermes-runtime-ingress-control-plane
+  namespace: tenant-indiba
+spec:
+  podSelector:
+    matchLabels:
+      indiba.io/component: hermes-runtime
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: indiba-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: control-plane
+      ports:
+        - {port: 8642, protocol: TCP}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: memory-gateway-flow
+  namespace: tenant-indiba
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: memory-gateway
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              indiba.io/component: hermes-runtime
+      ports:
+        - {port: 8877, protocol: TCP}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: hindsight
+      ports:
+        - {port: 8888, protocol: TCP}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: indiba-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: control-plane
+      ports:
+        - {port: 8081, protocol: TCP}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hindsight-flow
+  namespace: tenant-indiba
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: hindsight
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: memory-gateway
+      ports:
+        - {port: 8888, protocol: TCP}
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: indiba-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: llm-gateway
+      ports:
+        - {port: 8080, protocol: TCP}
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: hindsight-postgresql
+      ports:
+        - {port: 5432, protocol: TCP}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hindsight-postgresql-ingress
+  namespace: tenant-indiba
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: hindsight-postgresql
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: hindsight
+      ports:
+        - {port: 5432, protocol: TCP}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hermes-runtime-egress
+  namespace: tenant-indiba
+spec:
+  podSelector:
+    matchLabels:
+      indiba.io/component: hermes-runtime
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: memory-gateway
+      ports:
+        - {port: 8877, protocol: TCP}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: indiba-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: llm-gateway
+      ports:
+        - {port: 8080, protocol: TCP}

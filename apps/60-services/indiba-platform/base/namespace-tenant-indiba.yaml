@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant-indiba
+  labels:
+    app.kubernetes.io/part-of: indiba-platform
+    indiba.io/tenant-cell: "true"
+    indiba.io/tenant-ref: TEN00001
+    indiba.io/tenant-slug: indiba
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

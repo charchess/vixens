@@ -1,0 +1,39 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: indiba-hermesruntime-tenant-boundary
+  labels:
+    app.kubernetes.io/part-of: indiba-platform
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: phase0-runtime-namespace
+      match:
+        any:
+          - resources:
+              kinds:
+                - agents.indiba.io/v1alpha1/HermesRuntime
+      validate:
+        message: HermesRuntime is restricted to the Phase 0 tenant cell.
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.namespace }}"
+                operator: NotEquals
+                value: tenant-indiba
+    - name: phase0-runtime-tenant-identity
+      match:
+        any:
+          - resources:
+              kinds:
+                - agents.indiba.io/v1alpha1/HermesRuntime
+              namespaces:
+                - tenant-indiba
+      validate:
+        message: HermesRuntime tenant identity must match namespace tenant-indiba.
+        pattern:
+          spec:
+            tenantRef: TEN00001
+            tenantId: 018f0000-0000-7000-8000-000000000001

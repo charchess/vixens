@@ -1,0 +1,127 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: indiba-postgres-superuser
+  namespace: indiba-system
+spec:
+  dataFrom:
+    - extract:
+        key: vixens/dev/apps/60-services/indiba/postgresql/admin
+  target:
+    template:
+      metadata:
+        annotations:
+          vixens.io/secret-source: openbao
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: indiba-control-plane-db
+  namespace: indiba-system
+spec:
+  dataFrom:
+    - extract:
+        key: vixens/dev/apps/60-services/indiba/postgresql/control-plane
+  target:
+    template:
+      metadata:
+        annotations:
+          vixens.io/secret-source: openbao
+      data:
+        username: "{{ .username }}"
+        password: "{{ .password }}"
+        DATABASE_URL: "postgresql://{{ .username }}:{{ .password }}@indiba-postgresql-rw.indiba-system.svc.cluster.local:5432/platform_core"
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: indiba-openfga-db
+  namespace: indiba-system
+spec:
+  dataFrom:
+    - extract:
+        key: vixens/dev/apps/60-services/indiba/postgresql/openfga
+  target:
+    template:
+      metadata:
+        annotations:
+          vixens.io/secret-source: openbao
+      data:
+        username: "{{ .username }}"
+        password: "{{ .password }}"
+        uri: "postgres://{{ .username }}:{{ .password }}@indiba-postgresql-rw.indiba-system.svc.cluster.local:5432/openfga?sslmode=disable"
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: indiba-runtime-capability
+  namespace: indiba-system
+spec:
+  dataFrom:
+    - extract:
+        key: vixens/dev/apps/60-services/indiba/runtime
+  target:
+    template:
+      metadata:
+        annotations:
+          vixens.io/secret-source: openbao
+      data:
+        gateway-token: "{{ .gateway_token }}"
+        openrouter-api-key: "{{ .openrouter_api_key }}"
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: indiba-postgresql
+  namespace: indiba-system
+  labels:
+    app.kubernetes.io/name: indiba-postgresql
+    app.kubernetes.io/part-of: indiba-platform
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.6-system-trixie
+  superuserSecret:
+    name: indiba-postgres-superuser
+  managed:
+    roles:
+      - name: indiba_cp
+        ensure: present
+        login: true
+        passwordSecret:
+          name: indiba-control-plane-db
+      - name: openfga
+        ensure: present
+        login: true
+        passwordSecret:
+          name: indiba-openfga-db
+  bootstrap:
+    initdb:
+      database: platform_core
+      owner: indiba_cp
+      secret:
+        name: indiba-control-plane-db
+  storage:
+    size: 20Gi
+    storageClass: truenas-iscsi-retain
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  monitoring:
+    enablePodMonitor: false
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: indiba-openfga
+  namespace: indiba-system
+spec:
+  cluster:
+    name: indiba-postgresql
+  name: openfga
+  owner: openfga
+  ensure: present
