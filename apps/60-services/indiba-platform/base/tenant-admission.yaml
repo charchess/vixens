@@ -36,4 +36,4 @@ spec:
         pattern:
           spec:
             tenantRef: TEN00001
-            tenantId: 00000000-0000-7000-8000-000000000001
+            tenantId: 018f0000-0000-7000-8000-000000000001
