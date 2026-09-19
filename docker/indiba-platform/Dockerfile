@@ -6,8 +6,8 @@ RUN addgroup -g 10001 indiba && adduser -D -u 10001 -G indiba indiba \
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY app.py .
+COPY runtime.py .
 
 USER 10001:10001
 ENV PYTHONUNBUFFERED=1
-ENTRYPOINT ["python", "/app/app.py"]
+ENTRYPOINT ["python", "/app/runtime.py"]
