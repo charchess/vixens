@@ -35,6 +35,11 @@ spec:
                   key: DATABASE_URL
             - name: OPENFGA_URL
               value: http://openfga.indiba-system.svc.cluster.local:8080
+            - name: GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: indiba-runtime-capability
+                  key: gateway-token
             - name: TENANT_REF
               value: TEN00001
             - name: TENANT_ID
