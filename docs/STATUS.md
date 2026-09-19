@@ -232,7 +232,7 @@ Last Updated: 2026-09-17
 | mylar | ✅ | 🥈 Silver | Comics |
 | whisparr | ✅ | 🥈 Silver | Adult content |
 | lazylibrarian | ✅ | 🥈 Silver | Books/Audiobooks |
-| music-assistant | ✅ | 🥇 Gold | |
+| music-assistant | ✅ | 🥇 Gold | Configuration persistée sur PVC TrueNAS RWO |
 | frigate | ✅ | 🥈 Silver | NVR - **DB Migrée en RAM** |
 | hydrus-client | ✅ | 🥈 Silver | |
 | booklore | ✅ | 🥇 Gold | |
@@ -285,7 +285,7 @@ Last Updated: 2026-09-17
 | vikunja | ⚠️ | 💎 Platinum | **37 restarts** |
 | penpot | ✅ | 🥇 Gold | Design platform |
 | renovate | ✅ | - | Fixed: OOMKilled - resources 512Mi→2Gi (PR #1980) |
-| trilium | ✅ | 💎 Platinum | Notes |
+| trilium | ✅ | 💎 Platinum | Notes — PVC TrueNAS retained |
 | nocodb | ✅ | 💎 Platinum | Airtable alternative |
 | radar | ✅ | 💎 Platinum | |
 
