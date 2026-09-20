@@ -20,7 +20,7 @@ spec:
         releaseName: victoria-metrics
         valueFiles:
           - $values/apps/02-monitoring/victoria-metrics/base/values.yaml
-          - $values/apps/02-monitoring/victoria-metrics/values/prod-hibernate.yaml
+          - $values/apps/02-monitoring/victoria-metrics/values/prod-observe.yaml
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
       ref: values

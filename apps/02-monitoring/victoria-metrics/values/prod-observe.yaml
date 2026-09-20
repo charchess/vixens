@@ -1,0 +1,19 @@
+---
+# Progressive production reactivation — monitoring phase 1.
+# Keep only the minimum metrics pipeline needed to observe cluster behaviour
+# before re-enabling dashboards, alerting, host exporters, or log ingestion.
+# Additional monitoring components must be reactivated in later, separate phases.
+victoria-metrics-operator:
+  enabled: true
+vmsingle:
+  enabled: true
+vmagent:
+  enabled: true
+vmalert:
+  enabled: false
+alertmanager:
+  enabled: false
+prometheus-node-exporter:
+  enabled: false
+kube-state-metrics:
+  enabled: true
