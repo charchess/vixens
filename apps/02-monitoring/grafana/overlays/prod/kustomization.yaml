@@ -6,30 +6,11 @@ labels:
     pairs:
       environment: prod
 namespace: monitoring
+components:
+  - ../../../../_shared/components/scheduling/avoid-i915
 
 patches:
   - path: patch-infisical-env.yaml
-  - patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: grafana
-      spec:
-        template:
-          spec:
-            affinity:
-              nodeAffinity:
-                preferredDuringSchedulingIgnoredDuringExecution:
-                  - weight: 100
-                    preference:
-                      matchExpressions:
-                        - key: kubernetes.io/hostname
-                          operator: NotIn
-                          values:
-                            - peach
-    target:
-      kind: Deployment
-      name: grafana
   - patch: |-
       - op: add
         path: /spec/template/spec/containers/0/lifecycle
