@@ -64,3 +64,95 @@ resources:
   - sizing-v2-mutate.yaml
   - sizing-vpa-generate.yaml
   - cilium-networkpolicy.yaml
+
+# Pod specs are largely immutable after creation. Admission mutations that alter
+# Pod spec must therefore run on CREATE only; otherwise metadata-only updates
+# (for example removing a stuck finalizer) can be rejected when Kyverno tries
+# to re-apply sizing, tolerations, priority, securityContext or probes.
+patches:
+  - target:
+      group: kyverno.io
+      version: v1
+      kind: ClusterPolicy
+      name: sizing-v2-mutate
+    patch: |-
+      - op: add
+        path: /spec/rules/0/match/any/0/resources/operations
+        value: [CREATE]
+      - op: add
+        path: /spec/rules/1/match/any/0/resources/operations
+        value: [CREATE]
+      - op: add
+        path: /spec/rules/2/match/any/0/resources/operations
+        value: [CREATE]
+
+  - target:
+      group: kyverno.io
+      version: v1
+      kind: ClusterPolicy
+      name: add-cp-toleration
+    patch: |-
+      - op: add
+        path: /spec/rules/0/match/any/0/resources/operations
+        value: [CREATE]
+
+  - target:
+      group: kyverno.io
+      version: v1
+      kind: ClusterPolicy
+      name: mutate-priority-class
+    patch: |-
+      - op: add
+        path: /spec/rules/0/match/any/0/resources/operations
+        value: [CREATE]
+      - op: add
+        path: /spec/rules/1/match/any/0/resources/operations
+        value: [CREATE]
+      - op: add
+        path: /spec/rules/2/match/any/0/resources/operations
+        value: [CREATE]
+      - op: add
+        path: /spec/rules/3/match/any/0/resources/operations
+        value: [CREATE]
+      - op: add
+        path: /spec/rules/6/match/any/0/resources/operations
+        value: [CREATE]
+      - op: add
+        path: /spec/rules/8/match/any/0/resources/operations
+        value: [CREATE]
+
+  - target:
+      group: kyverno.io
+      version: v1
+      kind: ClusterPolicy
+      name: mutate-security-context
+    patch: |-
+      - op: add
+        path: /spec/rules/0/match/any/0/resources/operations
+        value: [CREATE]
+      - op: add
+        path: /spec/rules/1/match/any/0/resources/operations
+        value: [CREATE]
+
+  - target:
+      group: kyverno.io
+      version: v1
+      kind: ClusterPolicy
+      name: mutate-sidecar-probes
+    patch: |-
+      - op: add
+        path: /spec/rules/0/match/any/0/resources/operations
+        value: [CREATE]
+
+  - target:
+      group: kyverno.io
+      version: v1
+      kind: ClusterPolicy
+      name: mutate-termination-message-policy
+    patch: |-
+      - op: add
+        path: /spec/rules/0/match/any/0/resources/operations
+        value: [CREATE]
+      - op: add
+        path: /spec/rules/1/match/any/0/resources/operations
+        value: [CREATE]
