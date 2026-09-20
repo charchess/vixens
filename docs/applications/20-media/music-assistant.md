@@ -27,7 +27,7 @@ curl -L -k https://music-assistant.dev.truxonline.com | grep "Music Assistant"
 ## Notes Techniques
 - **Namespace :** `media-stack`
 - **Dépendances :** `Home Assistant` (Optionnel mais recommandé)
-- **Particularités :** Agrégateur de sources musicales. Le nœud monte l’export TrueNAS parent `/mnt/tank/data/media`; le conteneur est restreint au sous-répertoire existant `music` via `subPath: music`, exposé sous `/media`. La configuration applicative `/data` est persistée sur le PVC RWO retenu `music-assistant-config` (TrueNAS iSCSI XFS, 10 Gi), afin de conserver comptes, réglages et base locale lors des recréations de Pod.
+- **Particularités :** Agrégateur de sources musicales. Le conteneur monte directement l’export NFS TrueNAS dédié `/mnt/tank/data/media/music` sous `/media`. `music` est un child dataset ZFS et constitue donc un filesystem distinct : il ne doit pas être atteint via l’export parent `/mnt/tank/data/media` + `subPath`, car TrueNAS NFS ne traverse pas ce child dataset depuis l’export parent. La configuration applicative `/data` est persistée sur le PVC RWO retenu `music-assistant-config` (TrueNAS iSCSI XFS, 10 Gi), afin de conserver comptes, réglages et base locale lors des recréations de Pod.
 - **Ports supplémentaires :** Le port 3483 (TCP/UDP) est redirigé via Traefik pour le protocole SlimProto (SlimServer).
 ---
 > ⚠️ **HIBERNATION DEV**
