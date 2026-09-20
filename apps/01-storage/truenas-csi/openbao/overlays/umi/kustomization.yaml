@@ -4,3 +4,18 @@ kind: Kustomization
 namespace: truenas-csi
 resources:
   - ../../base
+patches:
+  - target:
+      kind: ExternalSecret
+      name: truenas-csi-iscsi-driver-config
+    patch: |-
+      - op: replace
+        path: /spec/secretStoreRef/name
+        value: openbao-umi
+  - target:
+      kind: ExternalSecret
+      name: truenas-csi-nfs-driver-config
+    patch: |-
+      - op: replace
+        path: /spec/secretStoreRef/name
+        value: openbao-umi
