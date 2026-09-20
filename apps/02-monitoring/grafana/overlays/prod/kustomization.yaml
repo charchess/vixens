@@ -7,7 +7,6 @@ labels:
       environment: prod
 namespace: monitoring
 components:
-  - ../../../../_shared/components/prod-hibernate
   - ../../../../_shared/components/scheduling/avoid-i915
 
 patches:

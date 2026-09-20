@@ -52,8 +52,8 @@ resources:
   # Disabled by owner: apps/mealie.yaml
   # Disabled by owner: apps/birdnet-go.yaml
   - apps/victoria-metrics.yaml
-  # Disabled by owner: apps/grafana.yaml
-  # Disabled by owner: apps/grafana-ingress.yaml
+  - apps/grafana.yaml
+  - apps/grafana-ingress.yaml
   - apps/hubble-ui.yaml
   # Disabled by owner: apps/homepage.yaml
   # Disabled by owner: apps/linkwarden.yaml
