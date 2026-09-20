@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         app: music-assistant
-        vixens.io/sizing.music-assistant: SB-medium
+        vixens.io/sizing.music-assistant: V-medium
         vixens.io/backup-profile: "relaxed"
       annotations: {}
     spec:
