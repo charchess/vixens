@@ -9,6 +9,8 @@ persistence:
   enabled: true
   storageClassName: truenas-iscsi-retain
   size: 10Gi
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 # Admin credentials via Infisical (configured separately)
 admin:
   existingSecret: grafana-admin
