@@ -11,7 +11,6 @@ resources:
   - grafana-ingress.yaml
 
 components:
-  - ../../../../_shared/components/prod-hibernate
   - ../../../../_shared/components/revision-history-limit
 
 patches:
