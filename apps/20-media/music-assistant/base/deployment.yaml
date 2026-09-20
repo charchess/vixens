@@ -72,9 +72,6 @@ spec:
               mountPath: /data
             - name: media
               mountPath: /media
-              # TrueNAS exports the parent media tree; preserve least privilege
-              # inside Music Assistant by bind-mounting only its existing subdir.
-              subPath: music
           livenessProbe:
             httpGet:
               path: /
@@ -105,6 +102,7 @@ spec:
         - name: media
           nfs:
             server: nas.truxonline.com
-            # This is the TrueNAS export root. The container is restricted to
-            # its music child via volumeMount.subPath above.
-            path: /mnt/tank/data/media
+            # TrueNAS child datasets are separate filesystems and are not
+            # traversed through the parent NFS export. Mount the dedicated
+            # music dataset export directly instead of using subPath.
+            path: /mnt/tank/data/media/music
