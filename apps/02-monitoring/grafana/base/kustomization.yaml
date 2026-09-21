@@ -15,4 +15,5 @@ resources:
   - dashboards/cert-manager.yaml
   - dashboards/unifi-snmp.yaml
   - dashboards/unifi-udm-resources.yaml
+  - dashboards/talos-nodes-overview.yaml
 # Helm chart managed by ArgoCD
