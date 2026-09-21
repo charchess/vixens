@@ -20,3 +20,20 @@ patches:
     target:
       kind: Deployment
       name: trivy-trivy-operator
+  - patch: |-
+      - op: add
+        path: /rules/-
+        value:
+          apiGroups:
+            - ""
+          resources:
+            - persistentvolumes
+          verbs:
+            - get
+            - list
+            - watch
+    target:
+      group: rbac.authorization.k8s.io
+      version: v1
+      kind: ClusterRole
+      name: trivy-operator
