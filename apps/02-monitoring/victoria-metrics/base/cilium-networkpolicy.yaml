@@ -66,7 +66,26 @@ spec:
             io.kubernetes.pod.namespace: monitoring
       toPorts:
         - ports:
-            - port: "8080"
+            - port: "8880"
+              protocol: TCP
+  egress:
+    # vmalert → VMSingle query API
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+            app.kubernetes.io/name: vmsingle
+      toPorts:
+        - ports:
+            - port: "8428"
+              protocol: TCP
+    # vmalert → Alertmanager notifier
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+            app.kubernetes.io/name: vmalertmanager
+      toPorts:
+        - ports:
+            - port: "9093"
               protocol: TCP
 ---
 apiVersion: cilium.io/v2
@@ -85,6 +104,29 @@ spec:
       toPorts:
         - ports:
             - port: "9093"
+              protocol: TCP
+  egress:
+    # DNS required by Cilium FQDN policy below.
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+          rules:
+            dns:
+              - matchPattern: "*"
+    # Alertmanager → Discord webhook only.
+    - toFQDNs:
+        - matchName: discord.com
+        - matchPattern: "*.discord.com"
+      toPorts:
+        - ports:
+            - port: "443"
               protocol: TCP
 ---
 apiVersion: cilium.io/v2
