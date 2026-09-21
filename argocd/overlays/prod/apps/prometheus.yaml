@@ -1,4 +1,7 @@
 ---
+# DEPRECATED: standalone Prometheus is superseded in production by VictoriaMetrics
+# (vmagent/vmsingle/vmalert). Do not re-enable this Application without an explicit
+# migration/compatibility plan.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
