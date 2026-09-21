@@ -19,3 +19,15 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
+  egress:
+    # Grafana queries VictoriaMetrics through the in-cluster VMSingle service.
+    # The production cluster has cluster-wide egress default-deny enabled,
+    # so this path must be explicitly allowed.
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: monitoring
+            app.kubernetes.io/name: vmsingle
+      toPorts:
+        - ports:
+            - port: "8428"
+              protocol: TCP
