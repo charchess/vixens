@@ -95,7 +95,7 @@ resources:
   # Disabled by owner: apps/loki.yaml
   # Disabled by owner: apps/fluent-bit.yaml
   # Disabled by owner: apps/fluent-bit-syslog.yaml
-  # Disabled by owner: apps/snmp-exporter.yaml
+  - apps/snmp-exporter.yaml
   - apps/renovate.yaml
   # Disabled by owner: apps/stirling-pdf.yaml
   # Disabled by owner: apps/it-tools.yaml
