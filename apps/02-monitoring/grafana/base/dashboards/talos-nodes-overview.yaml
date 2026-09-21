@@ -9,9 +9,7 @@ immutable: false
 data:
   talos-nodes-overview.json: |
     {
-      "annotations": {
-        "list": []
-      },
+      "annotations": {"list": []},
       "editable": true,
       "graphTooltip": 1,
       "links": [],
@@ -21,205 +19,75 @@ data:
           "type": "stat",
           "title": "Nodes scraped",
           "gridPos": {"x": 0, "y": 0, "w": 4, "h": 4},
-          "options": {
-            "reduceOptions": {"calcs": ["lastNotNull"]},
-            "orientation": "auto",
-            "textMode": "auto",
-            "colorMode": "background",
-            "graphMode": "none"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "short",
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {"color": "red", "value": null},
-                  {"color": "green", "value": 1}
-                ]
-              }
-            }
-          },
-          "targets": [
-            {"expr": "count(node_uname_info{instance=~\"$instance\"})", "refId": "A"}
-          ]
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto", "textMode": "auto", "colorMode": "background", "graphMode": "none"},
+          "fieldConfig": {"defaults": {"unit": "short", "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 3}]}}},
+          "targets": [{"expr": "count(node_uname_info)", "refId": "A"}]
         },
         {
           "id": 2,
           "type": "stat",
           "title": "CPU used",
           "gridPos": {"x": 4, "y": 0, "w": 5, "h": 4},
-          "options": {
-            "reduceOptions": {"calcs": ["lastNotNull"]},
-            "orientation": "horizontal",
-            "textMode": "value_and_name",
-            "colorMode": "background",
-            "graphMode": "area"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "percent",
-              "min": 0,
-              "max": 100,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {"color": "green", "value": null},
-                  {"color": "yellow", "value": 70},
-                  {"color": "red", "value": 90}
-                ]
-              }
-            }
-          },
-          "targets": [
-            {
-              "expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\",instance=~\"$instance\"}[$__rate_interval]))) * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}",
-              "legendFormat": "{{nodename}}",
-              "refId": "A"
-            }
-          ]
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "horizontal", "textMode": "value_and_name", "colorMode": "background", "graphMode": "area"},
+          "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 70}, {"color": "red", "value": 90}]}}},
+          "targets": [{"expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval]))) * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}}", "refId": "A"}]
         },
         {
           "id": 3,
           "type": "stat",
           "title": "RAM used",
           "gridPos": {"x": 9, "y": 0, "w": 5, "h": 4},
-          "options": {
-            "reduceOptions": {"calcs": ["lastNotNull"]},
-            "orientation": "horizontal",
-            "textMode": "value_and_name",
-            "colorMode": "background",
-            "graphMode": "area"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "percent",
-              "min": 0,
-              "max": 100,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {"color": "green", "value": null},
-                  {"color": "yellow", "value": 75},
-                  {"color": "red", "value": 90}
-                ]
-              }
-            }
-          },
-          "targets": [
-            {
-              "expr": "100 * (1 - node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"}) * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}",
-              "legendFormat": "{{nodename}}",
-              "refId": "A"
-            }
-          ]
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "horizontal", "textMode": "value_and_name", "colorMode": "background", "graphMode": "area"},
+          "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 75}, {"color": "red", "value": 90}]}}},
+          "targets": [{"expr": "100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}}", "refId": "A"}]
         },
         {
           "id": 4,
           "type": "stat",
           "title": "Uptime",
           "gridPos": {"x": 14, "y": 0, "w": 5, "h": 4},
-          "options": {
-            "reduceOptions": {"calcs": ["lastNotNull"]},
-            "orientation": "horizontal",
-            "textMode": "value_and_name",
-            "colorMode": "none",
-            "graphMode": "none"
-          },
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "horizontal", "textMode": "value_and_name", "colorMode": "none", "graphMode": "none"},
           "fieldConfig": {"defaults": {"unit": "s"}},
-          "targets": [
-            {
-              "expr": "(time() - node_boot_time_seconds{instance=~\"$instance\"}) * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}",
-              "legendFormat": "{{nodename}}",
-              "refId": "A"
-            }
-          ]
+          "targets": [{"expr": "(time() - node_boot_time_seconds) * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}}", "refId": "A"}]
         },
         {
           "id": 5,
           "type": "stat",
           "title": "Max filesystem used",
           "gridPos": {"x": 19, "y": 0, "w": 5, "h": 4},
-          "options": {
-            "reduceOptions": {"calcs": ["lastNotNull"]},
-            "orientation": "horizontal",
-            "textMode": "value_and_name",
-            "colorMode": "background",
-            "graphMode": "none"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "percent",
-              "min": 0,
-              "max": 100,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {"color": "green", "value": null},
-                  {"color": "yellow", "value": 80},
-                  {"color": "red", "value": 90}
-                ]
-              }
-            }
-          },
-          "targets": [
-            {
-              "expr": "max by (instance) (100 * (1 - node_filesystem_avail_bytes{instance=~\"$instance\",fstype!~\"tmpfs|overlay|squashfs|nsfs\",mountpoint!~\"/(proc|sys|dev|run)($|/).*\"} / node_filesystem_size_bytes{instance=~\"$instance\",fstype!~\"tmpfs|overlay|squashfs|nsfs\",mountpoint!~\"/(proc|sys|dev|run)($|/).*\"})) * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}",
-              "legendFormat": "{{nodename}}",
-              "refId": "A"
-            }
-          ]
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "horizontal", "textMode": "value_and_name", "colorMode": "background", "graphMode": "none"},
+          "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 80}, {"color": "red", "value": 90}]}}},
+          "targets": [{"expr": "max by (instance) (100 * (1 - node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay|squashfs|nsfs\",mountpoint!~\"/(proc|sys|dev|run)($|/).*\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay|squashfs|nsfs\",mountpoint!~\"/(proc|sys|dev|run)($|/).*\"})) * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}}", "refId": "A"}]
         },
         {
           "id": 10,
           "type": "timeseries",
           "title": "CPU usage",
           "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
-          "options": {
-            "tooltip": {"mode": "multi", "sort": "desc"},
-            "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull", "mean", "max"]}
-          },
+          "options": {"tooltip": {"mode": "multi", "sort": "desc"}, "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull", "mean", "max"]}},
           "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100, "custom": {"fillOpacity": 10, "lineWidth": 2}}},
-          "targets": [
-            {
-              "expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\",instance=~\"$instance\"}[$__rate_interval]))) * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}",
-              "legendFormat": "{{nodename}}",
-              "refId": "A"
-            }
-          ]
+          "targets": [{"expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval]))) * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}}", "refId": "A"}]
         },
         {
           "id": 11,
           "type": "timeseries",
           "title": "Memory usage",
           "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
-          "options": {
-            "tooltip": {"mode": "multi", "sort": "desc"},
-            "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull", "mean", "max"]}
-          },
+          "options": {"tooltip": {"mode": "multi", "sort": "desc"}, "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull", "mean", "max"]}},
           "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100, "custom": {"fillOpacity": 10, "lineWidth": 2}}},
-          "targets": [
-            {
-              "expr": "100 * (1 - node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"}) * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}",
-              "legendFormat": "{{nodename}}",
-              "refId": "A"
-            }
-          ]
+          "targets": [{"expr": "100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}}", "refId": "A"}]
         },
         {
           "id": 12,
           "type": "timeseries",
           "title": "Load average",
           "gridPos": {"x": 0, "y": 12, "w": 12, "h": 8},
-          "options": {
-            "tooltip": {"mode": "multi", "sort": "desc"},
-            "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull", "max"]}
-          },
+          "options": {"tooltip": {"mode": "multi", "sort": "desc"}, "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull", "max"]}},
           "fieldConfig": {"defaults": {"unit": "short", "min": 0, "custom": {"fillOpacity": 5, "lineWidth": 2}}},
           "targets": [
-            {"expr": "node_load1{instance=~\"$instance\"} * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}", "legendFormat": "{{nodename}} load1", "refId": "A"},
-            {"expr": "node_load5{instance=~\"$instance\"} * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}", "legendFormat": "{{nodename}} load5", "refId": "B"},
-            {"expr": "node_load15{instance=~\"$instance\"} * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}", "legendFormat": "{{nodename}} load15", "refId": "C"}
+            {"expr": "node_load1 * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}} load1", "refId": "A"},
+            {"expr": "node_load5 * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}} load5", "refId": "B"},
+            {"expr": "node_load15 * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}} load15", "refId": "C"}
           ]
         },
         {
@@ -227,32 +95,20 @@ data:
           "type": "timeseries",
           "title": "CPU I/O wait",
           "gridPos": {"x": 12, "y": 12, "w": 12, "h": 8},
-          "options": {
-            "tooltip": {"mode": "multi", "sort": "desc"},
-            "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull", "max"]}
-          },
+          "options": {"tooltip": {"mode": "multi", "sort": "desc"}, "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull", "max"]}},
           "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "custom": {"fillOpacity": 10, "lineWidth": 2}}},
-          "targets": [
-            {
-              "expr": "100 * avg by (instance) (rate(node_cpu_seconds_total{mode=\"iowait\",instance=~\"$instance\"}[$__rate_interval])) * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}",
-              "legendFormat": "{{nodename}}",
-              "refId": "A"
-            }
-          ]
+          "targets": [{"expr": "100 * avg by (instance) (rate(node_cpu_seconds_total{mode=\"iowait\"}[$__rate_interval])) * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}}", "refId": "A"}]
         },
         {
           "id": 14,
           "type": "timeseries",
           "title": "Disk throughput",
           "gridPos": {"x": 0, "y": 20, "w": 12, "h": 8},
-          "options": {
-            "tooltip": {"mode": "multi", "sort": "desc"},
-            "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull", "max"]}
-          },
+          "options": {"tooltip": {"mode": "multi", "sort": "desc"}, "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull", "max"]}},
           "fieldConfig": {"defaults": {"unit": "Bps", "min": 0, "custom": {"fillOpacity": 5, "lineWidth": 2}}},
           "targets": [
-            {"expr": "sum by (instance) (rate(node_disk_read_bytes_total{instance=~\"$instance\",device!~\"loop.*|ram.*|dm-.*\"}[$__rate_interval])) * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}", "legendFormat": "{{nodename}} read", "refId": "A"},
-            {"expr": "sum by (instance) (rate(node_disk_written_bytes_total{instance=~\"$instance\",device!~\"loop.*|ram.*|dm-.*\"}[$__rate_interval])) * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}", "legendFormat": "{{nodename}} write", "refId": "B"}
+            {"expr": "sum by (instance) (rate(node_disk_read_bytes_total{device!~\"loop.*|ram.*|dm-.*\"}[$__rate_interval])) * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}} read", "refId": "A"},
+            {"expr": "sum by (instance) (rate(node_disk_written_bytes_total{device!~\"loop.*|ram.*|dm-.*\"}[$__rate_interval])) * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}} write", "refId": "B"}
           ]
         },
         {
@@ -260,14 +116,11 @@ data:
           "type": "timeseries",
           "title": "Network throughput",
           "gridPos": {"x": 12, "y": 20, "w": 12, "h": 8},
-          "options": {
-            "tooltip": {"mode": "multi", "sort": "desc"},
-            "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull", "max"]}
-          },
+          "options": {"tooltip": {"mode": "multi", "sort": "desc"}, "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull", "max"]}},
           "fieldConfig": {"defaults": {"unit": "Bps", "min": 0, "custom": {"fillOpacity": 5, "lineWidth": 2}}},
           "targets": [
-            {"expr": "sum by (instance) (rate(node_network_receive_bytes_total{instance=~\"$instance\",device!~\"lo|veth.*|cilium.*|lxc.*\"}[$__rate_interval])) * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}", "legendFormat": "{{nodename}} RX", "refId": "A"},
-            {"expr": "sum by (instance) (rate(node_network_transmit_bytes_total{instance=~\"$instance\",device!~\"lo|veth.*|cilium.*|lxc.*\"}[$__rate_interval])) * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}", "legendFormat": "{{nodename}} TX", "refId": "B"}
+            {"expr": "sum by (instance) (rate(node_network_receive_bytes_total{device!~\"lo|veth.*|cilium.*|lxc.*\"}[$__rate_interval])) * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}} RX", "refId": "A"},
+            {"expr": "sum by (instance) (rate(node_network_transmit_bytes_total{device!~\"lo|veth.*|cilium.*|lxc.*\"}[$__rate_interval])) * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}} TX", "refId": "B"}
           ]
         },
         {
@@ -275,44 +128,18 @@ data:
           "type": "timeseries",
           "title": "Filesystem usage",
           "gridPos": {"x": 0, "y": 28, "w": 24, "h": 8},
-          "options": {
-            "tooltip": {"mode": "multi", "sort": "desc"},
-            "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull", "max"]}
-          },
+          "options": {"tooltip": {"mode": "multi", "sort": "desc"}, "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull", "max"]}},
           "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100, "custom": {"fillOpacity": 5, "lineWidth": 2}}},
-          "targets": [
-            {
-              "expr": "100 * (1 - node_filesystem_avail_bytes{instance=~\"$instance\",fstype!~\"tmpfs|overlay|squashfs|nsfs\",mountpoint!~\"/(proc|sys|dev|run)($|/).*\"} / node_filesystem_size_bytes{instance=~\"$instance\",fstype!~\"tmpfs|overlay|squashfs|nsfs\",mountpoint!~\"/(proc|sys|dev|run)($|/).*\"}) * on(instance) group_left(nodename) node_uname_info{instance=~\"$instance\"}",
-              "legendFormat": "{{nodename}} {{mountpoint}}",
-              "refId": "A"
-            }
-          ]
+          "targets": [{"expr": "100 * (1 - node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay|squashfs|nsfs\",mountpoint!~\"/(proc|sys|dev|run)($|/).*\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay|squashfs|nsfs\",mountpoint!~\"/(proc|sys|dev|run)($|/).*\"}) * on(instance) group_left(nodename) node_uname_info", "legendFormat": "{{nodename}} {{mountpoint}}", "refId": "A"}]
         }
       ],
       "refresh": "30s",
       "schemaVersion": 39,
       "tags": ["talos", "node-exporter", "victoriametrics", "kubernetes"],
-      "templating": {
-        "list": [
-          {
-            "name": "instance",
-            "label": "Node",
-            "type": "query",
-            "query": {"query": "query_result(node_uname_info)", "refId": "StandardVariableQuery"},
-            "definition": "query_result(node_uname_info)",
-            "regex": "/instance=\"(?<value>[^\"]+)\".*nodename=\"(?<text>[^\"]+)\"/",
-            "includeAll": true,
-            "allValue": ".*",
-            "multi": true,
-            "refresh": 1,
-            "sort": 1,
-            "current": {"selected": true, "text": "All", "value": "$__all"}
-          }
-        ]
-      },
+      "templating": {"list": []},
       "time": {"from": "now-6h", "to": "now"},
       "timezone": "browser",
       "title": "Talos Nodes Overview",
       "uid": "talos-nodes-overview-vixens",
-      "version": 1
+      "version": 2
     }
