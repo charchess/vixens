@@ -6,7 +6,6 @@ resources:
   - servicemonitor.yaml
 
 components:
-  - ../../../../_shared/components/prod-hibernate
   - ../../../../_shared/components/sync-wave/wave-3
   - ../../../../_shared/components/goldilocks/enabled
 
