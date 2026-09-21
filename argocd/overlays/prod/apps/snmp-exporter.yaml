@@ -25,6 +25,7 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=false
+      - RespectIgnoreDifferences=true
   ignoreDifferences:
     - group: operator.victoriametrics.com
       kind: VMStaticScrape
