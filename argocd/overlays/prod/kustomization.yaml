@@ -92,8 +92,8 @@ resources:
   # Disabled by owner: apps/nocodb.yaml
   # Disabled by owner: apps/authentik.yaml
   # Disabled by owner: apps/netbox.yaml
-  # Disabled by owner: apps/loki.yaml
-  # Disabled by owner: apps/fluent-bit.yaml
+  - apps/loki.yaml
+  - apps/fluent-bit.yaml
   # Disabled by owner: apps/fluent-bit-syslog.yaml
   - apps/snmp-exporter.yaml
   - apps/renovate.yaml
