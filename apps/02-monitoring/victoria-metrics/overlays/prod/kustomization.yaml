@@ -11,6 +11,8 @@ resources:
   - ../../base
   - ssa-vmagent.yaml
   - ssa-vmsingle.yaml
+  - ssa-vmalert.yaml
+  - ssa-vmalertmanager.yaml
 patches:
   - path: patch-infisical-env.yaml
     target:
