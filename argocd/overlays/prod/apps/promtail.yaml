@@ -1,4 +1,6 @@
 ---
+# DEPRECATED: Promtail is superseded in production by Fluent Bit for Kubernetes
+# log shipping to Loki. Do not re-enable this Application.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
