@@ -26,8 +26,8 @@ Monitoring stack:
 - Headlamp - Kubernetes UI
 - Hubble UI - Cilium network visualization
 - Loki - Log aggregation
-- Promtail - Log shipper
-- Prometheus - Metrics & monitoring
+- Promtail - **deprecated**, replaced by Fluent Bit for Kubernetes log shipping
+- Prometheus - **deprecated**, replaced by VictoriaMetrics for production metrics and alerting
 - VPA - Vertical Pod Autoscaler
 
 ### [10-databases/](10-databases/) - Databases (3 apps)
@@ -126,7 +126,7 @@ apps/<category>/<app-name>/
 | `media` | *arr stack, Jellyfin, Jellyseerr | Media management (shared) |
 | `tools` | Homepage, Linkwarden, Docspell | Utility apps (shared) |
 | `services` | Home Assistant, Vaultwarden | General services (mixed) |
-| `monitoring` | Prometheus, Grafana, Loki | Monitoring stack (shared) |
+| `monitoring` | VictoriaMetrics, Grafana, Loki, Fluent Bit | Monitoring stack (shared) |
 | `homeassistant` | Home Assistant | Dedicated namespace |
 | `argocd` | ArgoCD | Dedicated namespace |
 | `traefik` | Traefik | Dedicated namespace |
@@ -144,4 +144,4 @@ When adding new application documentation:
 
 ---
 
-**Last Updated:** 2026-01-20 (After Terraform migration to terravixens)
+**Last Updated:** 2026-09-21
