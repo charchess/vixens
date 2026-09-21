@@ -13,6 +13,9 @@ vmalert:
 alertmanager:
   enabled: true
   spec:
+    # Base sets an explicit configSecret, which makes the chart ignore alertmanager.config.
+    # Clear it in prod so the chart generates and uses its managed config Secret.
+    configSecret: ""
     secrets:
       - alertmanager-secrets
   config:
