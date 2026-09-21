@@ -1,7 +1,7 @@
 ---
-# Progressive production reactivation — monitoring phase 3.
-# VictoriaMetrics core + kube-state-metrics + Grafana are validated.
-# Re-enable host metrics through node-exporter while keeping alerting and logs off.
+# Progressive production reactivation — monitoring phase 4.
+# VictoriaMetrics core, Grafana, node-exporter and kube-state-metrics are validated.
+# Enable alert evaluation and notification delivery while logs remain off.
 victoria-metrics-operator:
   enabled: true
 vmsingle:
@@ -9,9 +9,19 @@ vmsingle:
 vmagent:
   enabled: true
 vmalert:
-  enabled: false
+  enabled: true
 alertmanager:
-  enabled: false
+  enabled: true
+  spec:
+    secrets:
+      - alertmanager-secrets
+  config:
+    receivers:
+      - name: discord-notifications
+        slack_configs:
+          - api_url_file: /etc/vm/secrets/alertmanager-secrets/DISCORD_WEBHOOK_URL
+            channel: '#alerts'
+            send_resolved: true
 prometheus-node-exporter:
   enabled: true
 kube-state-metrics:
