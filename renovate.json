@@ -56,7 +56,7 @@
         "patch"
       ],
       "matchPackageNames": [
-        "*",
+        "/.*/",
         "!ghcr.io/home-assistant/home-assistant",
         "!grafana/promtail",
         "!grafana/loki"
