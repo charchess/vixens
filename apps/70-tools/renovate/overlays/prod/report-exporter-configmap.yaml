@@ -12,6 +12,10 @@ data:
       process.env.VICTORIAMETRICS_IMPORT_URL ??
       "http://vmsingle-vm-stack.monitoring.svc.cluster.local:8428/api/v1/import/prometheus";
     const waitSeconds = Number.parseInt(process.env.REPORT_WAIT_SECONDS ?? "14400", 10);
+    const githubApiUrl = process.env.GITHUB_API_URL ?? "https://api.github.com";
+    const mainRef = process.env.RENOVATE_MAIN_REF ?? "main";
+    const prodRef = process.env.RENOVATE_PROD_REF ?? "prod-stable";
+    const githubToken = process.env.GITHUB_TOKEN ?? process.env.RENOVATE_TOKEN ?? "";
     const startedAt = Date.now();
 
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -26,6 +30,26 @@ data:
     function appFromPackageFile(packageFile) {
       const match = String(packageFile ?? "").match(/^apps\/[^/]+\/([^/]+)\//);
       return match?.[1] ?? "";
+    }
+
+    function timestampSeconds(value) {
+      if (value === null || value === undefined || value === "") return 0;
+      if (typeof value === "number" && Number.isFinite(value)) {
+        return Math.floor(value > 1_000_000_000_000 ? value / 1000 : value);
+      }
+
+      const parsed = Date.parse(String(value));
+      return Number.isNaN(parsed) ? 0 : Math.floor(parsed / 1000);
+    }
+
+    function ageBucket(timestamp, now) {
+      if (!timestamp) return "none";
+
+      const ageDays = Math.max(0, now - timestamp) / 86400;
+      if (ageDays < 7) return "lt7d";
+      if (ageDays < 30) return "7to30d";
+      if (ageDays < 90) return "30to90d";
+      return "gt90d";
     }
 
     function selectTarget(updates) {
@@ -63,12 +87,68 @@ data:
       throw new Error(`Timed out waiting for a fresh Renovate report at ${reportPath}`);
     }
 
-    function collectDockerDependencies(report) {
+    async function fetchGitOpsComparison(repository) {
+      const url =
+        `${githubApiUrl}/repos/${repository}/compare/` +
+        `${encodeURIComponent(prodRef)}...${encodeURIComponent(mainRef)}`;
+      const headers = {
+        accept: "application/vnd.github+json",
+        "user-agent": "vixens-renovate-report-exporter",
+        "x-github-api-version": "2022-11-28",
+      };
+
+      if (githubToken) headers.authorization = `Bearer ${githubToken}`;
+
+      const response = await fetch(url, {
+        headers,
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (!response.ok) {
+        throw new Error(`GitHub compare failed: HTTP ${response.status} ${await response.text()}`);
+      }
+
+      const payload = await response.json();
+      const changedFiles = new Set((payload.files ?? []).map((file) => file.filename));
+      // GitHub caps compare-file output at 300 paths. Membership is still useful
+      // if truncated; a missing path is only considered "matches prod" when complete.
+      const complete = changedFiles.size < 300;
+      const commits = payload.commits ?? [];
+      const baseTimestamp = timestampSeconds(
+        payload.base_commit?.commit?.committer?.date ??
+          payload.base_commit?.commit?.author?.date,
+      );
+      const headTimestamp = timestampSeconds(
+        commits.at(-1)?.commit?.committer?.date ??
+          commits.at(-1)?.commit?.author?.date ??
+          payload.base_commit?.commit?.committer?.date ??
+          payload.base_commit?.commit?.author?.date,
+      );
+
+      return {
+        changedFiles,
+        complete,
+        status: payload.status ?? "unknown",
+        aheadBy: Number(payload.ahead_by ?? 0),
+        behindBy: Number(payload.behind_by ?? 0),
+        baseTimestamp,
+        headTimestamp,
+      };
+    }
+
+    function gitOpsFileState(comparison, packageFile) {
+      if (!comparison || !packageFile) return "unknown";
+      if (comparison.changedFiles.has(packageFile)) return "main_differs_from_prod";
+      return comparison.complete ? "main_matches_prod" : "unknown";
+    }
+
+    function collectDockerDependencies(report, comparisons, reportTimestamp) {
       const rows = [];
       const repositories = report?.repositories ?? {};
 
       for (const [repository, repositoryReport] of Object.entries(repositories)) {
         const packageFiles = repositoryReport?.packageFiles ?? {};
+        const comparison = comparisons.get(repository);
 
         for (const [manager, groups] of Object.entries(packageFiles)) {
           for (const group of groups ?? []) {
@@ -84,6 +164,10 @@ data:
               const targetVersion = target?.newVersion ?? target?.newValue ?? currentVersion;
               const targetValue = target?.newValue ?? target?.newVersion ?? currentValue;
               const status = updates.length > 0 ? "outdated" : dep.skipReason ? "skipped" : "current";
+              const targetReleaseTimestamp = timestampSeconds(target?.releaseTimestamp);
+              const currentReleaseTimestamp = timestampSeconds(
+                dep.currentVersionTimestamp ?? dep.currentReleaseTimestamp,
+              );
 
               rows.push({
                 repository,
@@ -99,6 +183,11 @@ data:
                 target_digest: target?.newDigest ?? dep.currentDigest ?? "",
                 update_type: target?.updateType ?? "none",
                 status,
+                gitops_file_state: gitOpsFileState(comparison, packageFile),
+                target_age_bucket: ageBucket(targetReleaseTimestamp, reportTimestamp),
+                current_age_bucket: ageBucket(currentReleaseTimestamp, reportTimestamp),
+                target_release_timestamp_seconds: targetReleaseTimestamp,
+                current_release_timestamp_seconds: currentReleaseTimestamp,
               });
             }
           }
@@ -106,6 +195,27 @@ data:
       }
 
       return rows;
+    }
+
+    function metricLabels(row) {
+      return {
+        repository: row.repository,
+        manager: row.manager,
+        package_file: row.package_file,
+        app: row.app,
+        dep_name: row.dep_name,
+        current_version: row.current_version,
+        current_value: row.current_value,
+        target_version: row.target_version,
+        target_value: row.target_value,
+        current_digest: row.current_digest,
+        target_digest: row.target_digest,
+        update_type: row.update_type,
+        status: row.status,
+        gitops_file_state: row.gitops_file_state,
+        target_age_bucket: row.target_age_bucket,
+        current_age_bucket: row.current_age_bucket,
+      };
     }
 
     function prometheusLine(metric, labels, value) {
@@ -119,20 +229,66 @@ data:
 
     try {
       const report = JSON.parse(await readFile(reportPath, "utf8"));
-      const rows = collectDockerDependencies(report);
       const reportTimestamp = Math.floor(Date.now() / 1000);
+      const repositories = Object.keys(report?.repositories ?? {});
+      const comparisons = new Map();
+
+      for (const repository of repositories) {
+        try {
+          comparisons.set(repository, await fetchGitOpsComparison(repository));
+        } catch (error) {
+          console.warn(
+            `GitOps comparison unavailable for ${repository}; promotion state will be unknown:`,
+            error,
+          );
+        }
+      }
+
+      const rows = collectDockerDependencies(report, comparisons, reportTimestamp);
       const lines = [];
 
       for (const row of rows) {
-        lines.push(prometheusLine("vixens_renovate_image_version_info", row, reportTimestamp));
+        const labels = metricLabels(row);
+        lines.push(
+          prometheusLine(
+            "vixens_renovate_image_version_info",
+            labels,
+            reportTimestamp,
+          ),
+        );
+
+        if (row.target_release_timestamp_seconds > 0) {
+          lines.push(
+            prometheusLine(
+              "vixens_renovate_image_target_release_timestamp_seconds",
+              labels,
+              row.target_release_timestamp_seconds,
+            ),
+          );
+        }
+
+        if (row.current_release_timestamp_seconds > 0) {
+          lines.push(
+            prometheusLine(
+              "vixens_renovate_image_current_release_timestamp_seconds",
+              labels,
+              row.current_release_timestamp_seconds,
+            ),
+          );
+        }
       }
 
-      const counts = new Map();
+      const statusCounts = new Map();
+      const gitOpsCounts = new Map();
       for (const row of rows) {
-        counts.set(row.status, (counts.get(row.status) ?? 0) + 1);
+        statusCounts.set(row.status, (statusCounts.get(row.status) ?? 0) + 1);
+        gitOpsCounts.set(
+          row.gitops_file_state,
+          (gitOpsCounts.get(row.gitops_file_state) ?? 0) + 1,
+        );
       }
 
-      for (const [status, count] of counts.entries()) {
+      for (const [status, count] of statusCounts.entries()) {
         lines.push(
           prometheusLine(
             "vixens_renovate_image_dependencies_total",
@@ -140,6 +296,76 @@ data:
             count,
           ),
         );
+      }
+
+      for (const [state, count] of gitOpsCounts.entries()) {
+        lines.push(
+          prometheusLine(
+            "vixens_renovate_gitops_dependencies_total",
+            { state },
+            count,
+          ),
+        );
+      }
+
+      for (const [repository, comparison] of comparisons.entries()) {
+        const refs = {
+          repository,
+          base_ref: prodRef,
+          head_ref: mainRef,
+        };
+
+        lines.push(
+          prometheusLine(
+            "vixens_renovate_gitops_compare_info",
+            {
+              ...refs,
+              status: comparison.status,
+              complete: String(comparison.complete),
+            },
+            1,
+          ),
+        );
+        lines.push(
+          prometheusLine(
+            "vixens_renovate_gitops_ahead_commits",
+            refs,
+            comparison.aheadBy,
+          ),
+        );
+        lines.push(
+          prometheusLine(
+            "vixens_renovate_gitops_behind_commits",
+            refs,
+            comparison.behindBy,
+          ),
+        );
+        lines.push(
+          prometheusLine(
+            "vixens_renovate_gitops_changed_files_total",
+            refs,
+            comparison.changedFiles.size,
+          ),
+        );
+
+        if (comparison.baseTimestamp > 0) {
+          lines.push(
+            prometheusLine(
+              "vixens_renovate_gitops_revision_timestamp_seconds",
+              { repository, revision: prodRef },
+              comparison.baseTimestamp,
+            ),
+          );
+        }
+        if (comparison.headTimestamp > 0) {
+          lines.push(
+            prometheusLine(
+              "vixens_renovate_gitops_revision_timestamp_seconds",
+              { repository, revision: mainRef },
+              comparison.headTimestamp,
+            ),
+          );
+        }
       }
 
       lines.push(`vixens_renovate_report_timestamp_seconds ${reportTimestamp}`);
