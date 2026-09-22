@@ -10,6 +10,7 @@ resources:
   - dashboards/trivy.yaml
   - dashboards/trivy-vulnerability-explorer.yaml
   - dashboards/container-image-versions.yaml
+  - dashboards/network-cilium-overview.yaml
   - dashboards/dataangel.yaml
   - dashboards/argocd.yaml
   - dashboards/velero.yaml
