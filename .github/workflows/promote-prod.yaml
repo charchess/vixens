@@ -48,7 +48,7 @@ jobs:
         id: get_commit
         run: |
           DEV_TAG="${{ steps.validate.outputs.dev_tag }}"
-          COMMIT_SHA=$(git rev-parse "$DEV_TAG")
+          COMMIT_SHA=$(git rev-parse "${DEV_TAG}^{commit}")
 
           echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
           echo "📍 Dev tag $DEV_TAG points to commit: $COMMIT_SHA"
