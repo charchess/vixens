@@ -50,6 +50,15 @@ spec:
               protocol: TCP
             - port: "8429"
               protocol: TCP
+    # Renovate report exporter → VMSingle import API only.
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: tools
+            app: renovate
+      toPorts:
+        - ports:
+            - port: "8428"
+              protocol: TCP
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
