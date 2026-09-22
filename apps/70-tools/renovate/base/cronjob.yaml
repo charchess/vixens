@@ -22,8 +22,11 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+            runAsNonRoot: true
             fsGroup: 1000
             fsGroupChangePolicy: OnRootMismatch
+            seccompProfile:
+              type: RuntimeDefault
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               operator: Exists
@@ -31,6 +34,11 @@ spec:
           containers:
             - name: renovate
               image: renovate/renovate:44.103.3 # Renovate latest stable
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
               env:
                 - name: RENOVATE_TOKEN
                   valueFrom:
