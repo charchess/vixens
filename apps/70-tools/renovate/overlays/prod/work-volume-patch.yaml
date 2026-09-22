@@ -10,6 +10,6 @@ spec:
         spec:
           volumes:
             - name: work
-              $patch: replace
+              emptyDir: null
               persistentVolumeClaim:
                 claimName: renovate-cache
