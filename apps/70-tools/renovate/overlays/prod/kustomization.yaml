@@ -14,15 +14,4 @@ patches:
   - path: patch-infisical-env.yaml
   - path: resources-patch.yaml
   - path: report-export-patch.yaml
-  - target:
-      group: batch
-      version: v1
-      kind: CronJob
-      name: renovate
-    patch: |-
-      - op: replace
-        path: /spec/jobTemplate/spec/template/spec/volumes/1
-        value:
-          name: work
-          persistentVolumeClaim:
-            claimName: renovate-cache
+  - path: work-volume-patch.yaml
