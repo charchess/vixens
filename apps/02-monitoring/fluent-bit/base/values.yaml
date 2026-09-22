@@ -34,10 +34,17 @@ extraVolumes:
     hostPath:
       path: /var/lib/fluent-bit
       type: DirectoryOrCreate
+  - name: hubble-flowlogs
+    hostPath:
+      path: /var/run/cilium/hubble
+      type: DirectoryOrCreate
 
 extraVolumeMounts:
   - name: positions
     mountPath: /var/lib/fluent-bit
+  - name: hubble-flowlogs
+    mountPath: /var/run/cilium/hubble
+    readOnly: true
 
 ## https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file
 config:
@@ -62,6 +69,17 @@ config:
         Skip_Long_Lines On
         DB /var/lib/fluent-bit/pos.db
 
+    [INPUT]
+        Name tail
+        Path /var/run/cilium/hubble/failed-flows.log
+        Parser json
+        Tag hubble.failed
+        Mem_Buf_Limit 5MB
+        Skip_Long_Lines On
+        DB /var/lib/fluent-bit/hubble-pos.db
+        Read_from_Head Off
+        Rotate_Wait 30
+
   filters: |
     [FILTER]
         Name kubernetes
@@ -80,6 +98,16 @@ config:
         Port 3100
         Labels job=fluent-bit, namespace=$kubernetes['namespace_name'], pod=$kubernetes['pod_name'], container=$kubernetes['container_name'], node=$NODE_NAME
         Auto_Kubernetes_Labels Off
+        Line_Format json
+        Retry_Limit 5
+        Workers 1
+
+    [OUTPUT]
+        Name loki
+        Match hubble.*
+        Host loki.monitoring.svc.cluster.local
+        Port 3100
+        Labels job=hubble-flow,node=$NODE_NAME
         Line_Format json
         Retry_Limit 5
         Workers 1
