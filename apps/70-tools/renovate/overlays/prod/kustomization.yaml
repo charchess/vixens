@@ -8,9 +8,12 @@ labels:
 resources:
   - ../../base
   - pvc.yaml
+  - report-exporter-configmap.yaml
+  - victoriametrics-egress.yaml
 patches:
   - path: patch-infisical-env.yaml
   - path: resources-patch.yaml
+  - path: report-export-patch.yaml
   - target:
       group: batch
       version: v1
