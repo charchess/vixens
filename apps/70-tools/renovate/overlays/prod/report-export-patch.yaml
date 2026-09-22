@@ -1,0 +1,54 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: renovate
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: renovate
+              env:
+                - name: RENOVATE_REPORT_TYPE
+                  value: file
+                - name: RENOVATE_REPORT_PATH
+                  value: /tmp/renovate/renovate-report.json
+                - name: RENOVATE_REPORT_FORMATTING
+                  value: "false"
+            - name: report-exporter
+              image: renovate/renovate:44.103.3
+              command:
+                - node
+                - /scripts/export-renovate-report.mjs
+              env:
+                - name: RENOVATE_REPORT_PATH
+                  value: /tmp/renovate/renovate-report.json
+                - name: VICTORIAMETRICS_IMPORT_URL
+                  value: http://vmsingle-vm-stack.monitoring.svc.cluster.local:8428/api/v1/import/prometheus
+                - name: REPORT_WAIT_SECONDS
+                  value: "14400"
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: work
+                  mountPath: /tmp/renovate
+                - name: report-exporter-script
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: report-exporter-script
+              configMap:
+                name: renovate-report-exporter

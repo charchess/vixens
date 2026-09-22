@@ -1,0 +1,18 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: renovate-victoriametrics-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app: renovate
+  egress:
+    - toServices:
+        - k8sService:
+            serviceName: vmsingle-vm-stack
+            namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "8428"
+              protocol: TCP
