@@ -5,9 +5,8 @@ namespace: monitoring
 resources:
   - infisical-secret.yaml
   - cilium-networkpolicy.yaml
-  - dashboards/traefik.yaml
-  - dashboards/postgresql.yaml
-  - dashboards/homeassistant.yaml
+  # Placeholder dashboard files stay in-repo but are not provisioned until they
+  # contain valid Grafana JSON; provisioning `{}` only creates repeated errors.
   - dashboards/trivy.yaml
   - dashboards/trivy-vulnerability-explorer.yaml
   - dashboards/container-image-versions.yaml
