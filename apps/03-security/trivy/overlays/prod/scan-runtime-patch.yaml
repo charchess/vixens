@@ -14,8 +14,16 @@ metadata:
   name: trivy-operator-trivy-config
   namespace: security
 data:
-  # Trivy Operator 0.34.0 ships with Trivy 0.74.0. The base manifest still
-  # pins 0.66.0, which can contend on the vulnerability DB for multi-container
-  # scan jobs. Give large images enough time to finish analysis as well.
+  # Keep the scanner version aligned with Trivy Operator 0.34.0 and leave
+  # enough time for large images to finish analysis.
   trivy.tag: "0.74.0"
   trivy.timeout: "15m0s"
+
+  # Standalone scan jobs run one Trivy process per workload container. Those
+  # processes share the same emptyDir cache, and Trivy's filesystem cache uses
+  # a BoltDB lock, so multi-container workloads can fail with
+  # "cache may be in use by another process". Keep the vulnerability DB shared
+  # read-only, but make the per-process scan cache in-memory to avoid the lock.
+  trivy.configFile: |
+    cache:
+      backend: memory
