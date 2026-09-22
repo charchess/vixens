@@ -32,7 +32,7 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: loki-config
+            name: loki-config-v2
             items:
               - key: loki.yaml
                 path: loki.yaml
