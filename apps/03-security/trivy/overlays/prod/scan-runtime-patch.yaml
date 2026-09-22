@@ -7,6 +7,11 @@ metadata:
 data:
   # Keep the Kubernetes job alive longer than the scanner's own timeout.
   OPERATOR_SCAN_JOB_TIMEOUT: "20m"
+
+  # Use the Trivy Operator built-in server workflow. The server is rendered
+  # explicitly in this overlay because the checked-in base manifests were
+  # generated with builtInTrivyServer=false.
+  OPERATOR_BUILT_IN_TRIVY_SERVER: "true"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -14,16 +19,35 @@ metadata:
   name: trivy-operator-trivy-config
   namespace: security
 data:
-  # Keep the scanner version aligned with Trivy Operator 0.34.0 and leave
-  # enough time for large images to finish analysis.
+  # Keep scanner and server aligned with Trivy Operator 0.34.0.
   trivy.tag: "0.74.0"
   trivy.timeout: "15m0s"
 
-  # Standalone scan jobs run one Trivy process per workload container. Those
-  # processes share the same emptyDir cache, and Trivy's filesystem cache uses
-  # a BoltDB lock, so multi-container workloads can fail with
-  # "cache may be in use by another process". Keep the vulnerability DB shared
-  # read-only, but make the per-process scan cache in-memory to avoid the lock.
-  trivy.configFile: |
-    cache:
-      backend: memory
+  # Client/server mode centralizes the vulnerability DB and scan cache. This
+  # avoids the shared filesystem-cache lock hit by multi-container workloads
+  # in Standalone mode without moving one cache into every scanner's RAM.
+  trivy.mode: "ClientServer"
+  trivy.serverURL: "http://trivy-service.security:4954"
+
+  # These are the same server settings rendered by the upstream 0.34.0 Helm
+  # chart when operator.builtInTrivyServer=true.
+  TRIVY_LISTEN: "0.0.0.0:4954"
+  TRIVY_CACHE_DIR: "/home/scanner/.cache/trivy"
+  TRIVY_DEBUG: "false"
+  TRIVY_SKIP_DB_UPDATE: "false"
+  TRIVY_DB_REPOSITORY: "mirror.gcr.io/aquasec/trivy-db"
+  TRIVY_JAVA_DB_REPOSITORY: "mirror.gcr.io/aquasec/trivy-java-db"
+  TRIVY_INSECURE: "false"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trivy-trivy-operator
+  namespace: security
+spec:
+  template:
+    metadata:
+      annotations:
+        # ConfigMaps are consumed through envFrom; changing this value makes
+        # the GitOps deployment roll the operator so it reads ClientServer mode.
+        vixens.io/runtime-revision: "client-server-v1"
