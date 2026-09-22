@@ -12,6 +12,12 @@ data:
   # explicitly in this overlay because the checked-in base manifests were
   # generated with builtInTrivyServer=false.
   OPERATOR_BUILT_IN_TRIVY_SERVER: "true"
+
+  # Export one Prometheus series per vulnerability finding. This powers the
+  # actionable Grafana tables (CVE, package, installed/fixed version, score).
+  # Keep the other detailed finding families disabled for now to limit
+  # VictoriaMetrics cardinality growth.
+  OPERATOR_METRICS_VULN_ID_ENABLED: "true"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -59,5 +65,5 @@ spec:
     metadata:
       annotations:
         # ConfigMaps are consumed through envFrom; changing this value makes
-        # the GitOps deployment roll the operator so it reads ClientServer mode.
-        vixens.io/runtime-revision: "client-server-v2"
+        # the GitOps deployment roll the operator so it reads the new metrics flag.
+        vixens.io/runtime-revision: "client-server-v3-vuln-metrics"
