@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - ../../base
   - servicemonitor.yaml
+  - client-server.yaml
 
 components:
   - ../../../../_shared/components/sync-wave/wave-3
