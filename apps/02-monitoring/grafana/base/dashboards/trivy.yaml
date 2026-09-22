@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: grafana-dashboard-trivy
+  name: grafana-dashboard-trivy-security
   labels:
     grafana_dashboard: "1"
 immutable: true
