@@ -2,7 +2,7 @@
 # Velero - Final SOTA 2026 Configuration
 image:
   repository: velero/velero
-  tag: v1.18.2
+  tag: v1.18.3
   pullPolicy: IfNotPresent
 
 features: EnableCSI
@@ -133,7 +133,7 @@ nodeAgent:
 
 initContainers:
   - name: velero-plugin-for-aws
-    image: velero/velero-plugin-for-aws:v1.14.2
+    image: velero/velero-plugin-for-aws:v1.14.3
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target
