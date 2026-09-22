@@ -1,0 +1,164 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: renovate-report-exporter
+data:
+  export-renovate-report.mjs: |
+    import { readFile, stat } from "node:fs/promises";
+
+    const reportPath = process.env.RENOVATE_REPORT_PATH ?? "/tmp/renovate/renovate-report.json";
+    const importUrl =
+      process.env.VICTORIAMETRICS_IMPORT_URL ??
+      "http://vmsingle-vm-stack.monitoring.svc.cluster.local:8428/api/v1/import/prometheus";
+    const waitSeconds = Number.parseInt(process.env.REPORT_WAIT_SECONDS ?? "14400", 10);
+    const startedAt = Date.now();
+
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    function esc(value) {
+      return String(value ?? "")
+        .replaceAll("\\", "\\\\")
+        .replaceAll("\n", "\\n")
+        .replaceAll('"', '\\"');
+    }
+
+    function appFromPackageFile(packageFile) {
+      const match = String(packageFile ?? "").match(/^apps\/[^/]+\/([^/]+)\//);
+      return match?.[1] ?? "";
+    }
+
+    function selectTarget(updates) {
+      const rank = {
+        digest: 10,
+        pin: 20,
+        bump: 30,
+        replacement: 35,
+        patch: 40,
+        minor: 50,
+        major: 60,
+      };
+
+      return [...updates].sort((a, b) => {
+        const byType = (rank[a.updateType] ?? 0) - (rank[b.updateType] ?? 0);
+        if (byType !== 0) return byType;
+        return String(a.releaseTimestamp ?? "").localeCompare(String(b.releaseTimestamp ?? ""));
+      }).at(-1);
+    }
+
+    async function waitForFreshReport() {
+      const deadline = startedAt + waitSeconds * 1000;
+
+      while (Date.now() < deadline) {
+        try {
+          const info = await stat(reportPath);
+          // Ignore a report left on the persistent work volume by an older CronJob.
+          if (info.size > 0 && info.mtimeMs >= startedAt - 5000) return;
+        } catch {
+          // Renovate has not written the report yet.
+        }
+        await sleep(5000);
+      }
+
+      throw new Error(`Timed out waiting for a fresh Renovate report at ${reportPath}`);
+    }
+
+    function collectDockerDependencies(report) {
+      const rows = [];
+      const repositories = report?.repositories ?? {};
+
+      for (const [repository, repositoryReport] of Object.entries(repositories)) {
+        const packageFiles = repositoryReport?.packageFiles ?? {};
+
+        for (const [manager, groups] of Object.entries(packageFiles)) {
+          for (const group of groups ?? []) {
+            const packageFile = group?.packageFile ?? "";
+
+            for (const dep of group?.deps ?? []) {
+              if (dep?.datasource !== "docker") continue;
+
+              const updates = Array.isArray(dep.updates) ? dep.updates : [];
+              const target = selectTarget(updates);
+              const currentVersion = dep.currentVersion ?? dep.currentValue ?? "";
+              const currentValue = dep.currentValue ?? dep.currentVersion ?? "";
+              const targetVersion = target?.newVersion ?? target?.newValue ?? currentVersion;
+              const targetValue = target?.newValue ?? target?.newVersion ?? currentValue;
+              const status = updates.length > 0 ? "outdated" : dep.skipReason ? "skipped" : "current";
+
+              rows.push({
+                repository,
+                manager,
+                package_file: packageFile,
+                app: appFromPackageFile(packageFile),
+                dep_name: dep.depName ?? dep.packageName ?? "",
+                current_version: currentVersion,
+                current_value: currentValue,
+                target_version: targetVersion,
+                target_value: targetValue,
+                current_digest: dep.currentDigest ?? "",
+                target_digest: target?.newDigest ?? dep.currentDigest ?? "",
+                update_type: target?.updateType ?? "none",
+                status,
+              });
+            }
+          }
+        }
+      }
+
+      return rows;
+    }
+
+    function prometheusLine(metric, labels, value) {
+      const encoded = Object.entries(labels)
+        .map(([key, labelValue]) => `${key}="${esc(labelValue)}"`)
+        .join(",");
+      return `${metric}{${encoded}} ${value}`;
+    }
+
+    await waitForFreshReport();
+
+    try {
+      const report = JSON.parse(await readFile(reportPath, "utf8"));
+      const rows = collectDockerDependencies(report);
+      const reportTimestamp = Math.floor(Date.now() / 1000);
+      const lines = [];
+
+      for (const row of rows) {
+        lines.push(prometheusLine("vixens_renovate_image_version_info", row, reportTimestamp));
+      }
+
+      const counts = new Map();
+      for (const row of rows) {
+        counts.set(row.status, (counts.get(row.status) ?? 0) + 1);
+      }
+
+      for (const [status, count] of counts.entries()) {
+        lines.push(
+          prometheusLine(
+            "vixens_renovate_image_dependencies_total",
+            { status },
+            count,
+          ),
+        );
+      }
+
+      lines.push(`vixens_renovate_report_timestamp_seconds ${reportTimestamp}`);
+
+      const response = await fetch(importUrl, {
+        method: "POST",
+        headers: { "content-type": "text/plain; version=0.0.4" },
+        body: `${lines.join("\n")}\n`,
+      });
+
+      if (!response.ok) {
+        throw new Error(`VictoriaMetrics import failed: HTTP ${response.status} ${await response.text()}`);
+      }
+
+      console.log(
+        `Exported ${rows.length} Renovate Docker dependency rows to VictoriaMetrics`,
+      );
+    } catch (error) {
+      // The report format is experimental. Do not make the Renovate maintenance
+      // job fail if only the observability export breaks.
+      console.error("Renovate report metrics export failed:", error);
+    }
