@@ -78,6 +78,8 @@ metadata:
     app.kubernetes.io/component: importer
     app.kubernetes.io/part-of: truxonline-mail
 spec:
+  # Gmail INBOX is the bounded source queue for the recurring importer.
+  suspend: false
   schedule: "*/10 * * * *"
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 300
@@ -111,7 +113,8 @@ spec:
                 - name: GMAIL_USER
                   value: charchess@gmail.com
                 - name: GMAIL_FOLDER
-                  value: "[Gmail]/All Mail"
+                  # The importer drains the inbox; Gmail All Mail is not a safe queue.
+                  value: "INBOX"
                 - name: GMAIL_BATCH
                   value: "50"
                 - name: SMTP_HOST
