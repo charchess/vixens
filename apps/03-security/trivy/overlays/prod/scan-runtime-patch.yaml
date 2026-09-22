@@ -16,6 +16,16 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  name: trivy-operator
+  namespace: security
+data:
+  # The workload controller reads this URL from the general operator config
+  # before it submits vulnerability ScanJobs when builtInTrivyServer=true.
+  trivy.serverURL: "http://trivy-service.security:4954"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
   name: trivy-operator-trivy-config
   namespace: security
 data:
@@ -50,4 +60,4 @@ spec:
       annotations:
         # ConfigMaps are consumed through envFrom; changing this value makes
         # the GitOps deployment roll the operator so it reads ClientServer mode.
-        vixens.io/runtime-revision: "client-server-v1"
+        vixens.io/runtime-revision: "client-server-v2"
