@@ -10,5 +10,6 @@ spec:
         spec:
           volumes:
             - name: work
+              $patch: replace
               persistentVolumeClaim:
                 claimName: renovate-cache
