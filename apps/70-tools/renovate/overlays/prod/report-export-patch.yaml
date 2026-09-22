@@ -3,6 +3,8 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: renovate
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
 spec:
   jobTemplate:
     spec:
