@@ -13,6 +13,9 @@ extraEnvVars: []
 # Arguments
 extraArgs:
   annotation-filter: external-dns.alpha.kubernetes.io/public=true
+  # Existing production Ingresses use alpha target/hostname annotations;
+  # keep their CNAME semantics while the controller uses the webhook provider.
+  annotation-prefix: external-dns.alpha.kubernetes.io/
   webhook-provider-url: http://localhost:8888
 sidecars:
   # The upstream Gandi provider was removed from ExternalDNS v0.23.0. Keep
