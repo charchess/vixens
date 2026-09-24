@@ -1,21 +1,46 @@
 ---
 # ExternalDNS Gandi Configuration (Public)
-provider: gandi
+provider: webhook
 domainFilters:
   - truxonline.com
 image:
   registry: registry.k8s.io
   repository: external-dns/external-dns
+  # v0.23.0 removed the in-tree Gandi provider; it runs as the webhook client.
+  # The legacy Gandi implementation is isolated in the localhost bridge below.
   tag: v0.23.0
-extraEnvVars:
-  - name: GANDI_PAT
-    valueFrom:
-      secretKeyRef:
-        name: external-dns-gandi-secret
-        key: GANDI_API_KEY
+extraEnvVars: []
 # Arguments
 extraArgs:
   annotation-filter: external-dns.alpha.kubernetes.io/public=true
+  webhook-provider-url: http://localhost:8888
+sidecars:
+  # The upstream Gandi provider was removed from ExternalDNS v0.23.0. Keep
+  # the current controller on v0.23.0 and isolate the compatible v0.21.0
+  # provider behind the upstream-supported localhost webhook interface.
+  - name: gandi-webhook-bridge
+    image: registry.k8s.io/external-dns/external-dns:v0.21.0
+    imagePullPolicy: IfNotPresent
+    args:
+      - --webhook-server
+      - --provider=gandi
+      # v0.21 validates --source before entering webhook-server mode; the
+      # source is ignored after startup, but ingress is a valid value.
+      - --source=ingress
+      - --domain-filter=truxonline.com
+      - --metrics-address=:7978
+      - --log-level=info
+    env:
+      - name: GANDI_PAT
+        valueFrom:
+          secretKeyRef:
+            name: external-dns-gandi-secret
+            key: GANDI_API_KEY
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]
 tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
