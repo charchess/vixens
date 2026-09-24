@@ -47,7 +47,10 @@ spec:
               import_user="$(< /source/imapsync-auth/IMAPSYNC_DOVECOT_USER)"
               import_hash="$(< /source/imapsync-auth/IMAPSYNC_DOVECOT_PASSWORD_HASH)"
               printf '%s:%s:5000:5000::/var/mail/truxonline.com/charchess/::userdb_mail_driver=maildir userdb_mail_path=/var/mail/truxonline.com/charchess/ userdb_mailbox_list_layout=Maildir++ userdb_namespace/inbox/mailbox_list_layout=Maildir++ userdb_namespace/inbox/separator=.\n' "$import_user" "$import_hash" > /work/gmail-import.passwd
-              chmod 0600 /work/gmail-import.passwd
+              # Dovecot's auth worker runs as uid 109 / gid 111 in this pinned image.
+              # Keep the Argon2id hash private while allowing only that worker to read it.
+              chown root:111 /work/gmail-import.passwd
+              chmod 0640 /work/gmail-import.passwd
               mkdir -p /work/opendkim/keys/truxonline.com
               cp /source/config/OPENDKIM_KEYTABLE /work/opendkim/KeyTable
               cp /source/config/OPENDKIM_SIGNINGTABLE /work/opendkim/SigningTable
