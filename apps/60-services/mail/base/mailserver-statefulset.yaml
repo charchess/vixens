@@ -43,7 +43,11 @@ spec:
               postmap /work/postfix-virtual.cf
               cp /source/config/POSTFIX_MAIN_CF /work/postfix-main.cf
               cp /source/config/SENDER_ACCESS_PCRE /work/sender_access.pcre
-              cp /source/config/USER_PATCHES_SH /work/user-patches.sh
+              cp /source/import-patch/user-patches.sh /work/user-patches.sh
+              import_user="$(< /source/imapsync-auth/IMAPSYNC_DOVECOT_USER)"
+              import_hash="$(< /source/imapsync-auth/IMAPSYNC_DOVECOT_PASSWORD_HASH)"
+              printf '%s:%s:5000:5000::/var/mail/truxonline.com/charchess/::userdb_mail_driver=maildir userdb_mail_path=/var/mail/truxonline.com/charchess/ userdb_mailbox_list_layout=Maildir++ userdb_namespace/inbox/mailbox_list_layout=Maildir++ userdb_namespace/inbox/separator=.\n' "$import_user" "$import_hash" > /work/gmail-import.passwd
+              chmod 0600 /work/gmail-import.passwd
               mkdir -p /work/opendkim/keys/truxonline.com
               cp /source/config/OPENDKIM_KEYTABLE /work/opendkim/KeyTable
               cp /source/config/OPENDKIM_SIGNINGTABLE /work/opendkim/SigningTable
@@ -52,6 +56,8 @@ spec:
               chmod 0600 /work/opendkim/keys/truxonline.com/dkim.private
           volumeMounts:
             - {name: dms-config-source, mountPath: /source/config, readOnly: true}
+            - {name: dovecot-import-patch, mountPath: /source/import-patch, readOnly: true}
+            - {name: imapsync-dovecot-auth, mountPath: /source/imapsync-auth, readOnly: true}
             - {name: dkim-source, mountPath: /source/dkim, readOnly: true}
             - {name: dms-config-work, mountPath: /work}
       containers:
@@ -83,6 +89,8 @@ spec:
       volumes:
         - {name: dms-config-work, emptyDir: {}}
         - {name: dms-config-source, secret: {secretName: mail-dms-config}}
+        - {name: dovecot-import-patch, configMap: {name: mail-dovecot-import-patch, defaultMode: 0555}}
+        - {name: imapsync-dovecot-auth, secret: {secretName: mail-imapsync-dovecot-auth, defaultMode: 0400}}
         - {name: dkim-source, secret: {secretName: mail-dkim}}
         - name: mail-tls
           secret:
