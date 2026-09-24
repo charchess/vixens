@@ -44,8 +44,8 @@ spec:
               cp /source/config/POSTFIX_MAIN_CF /work/postfix-main.cf
               cp /source/config/SENDER_ACCESS_PCRE /work/sender_access.pcre
               cp /source/import-patch/user-patches.sh /work/user-patches.sh
-              import_user="$(< /source/imapsync-auth/IMAPSYNC_DOVECOT_USER)"
-              import_hash="$(< /source/imapsync-auth/IMAPSYNC_DOVECOT_PASSWORD_HASH)"
+              import_user="$(cat /source/imapsync-auth/IMAPSYNC_DOVECOT_USER)"
+              import_hash="$(cat /source/imapsync-auth/IMAPSYNC_DOVECOT_PASSWORD_HASH)"
               printf '%s:%s:5000:5000::/var/mail/truxonline.com/charchess/::userdb_mail_driver=maildir userdb_mail_path=/var/mail/truxonline.com/charchess/ userdb_mailbox_list_layout=Maildir++ userdb_namespace/inbox/mailbox_list_layout=Maildir++ userdb_namespace/inbox/separator=.\n' "$import_user" "$import_hash" > /work/gmail-import.passwd
               # Dovecot's auth worker runs as uid 109 / gid 111 in this pinned image.
               # Keep the Argon2id hash private while allowing only that worker to read it.
