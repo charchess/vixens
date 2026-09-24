@@ -1,0 +1,48 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mail-dovecot-import-patch
+  namespace: mail
+  labels:
+    app.kubernetes.io/name: mailserver
+    app.kubernetes.io/component: imapsync-import-auth
+data:
+  user-patches.sh: |
+    #!/bin/bash
+    set -e
+    if [ -f /etc/postfix-policyd-spf-python/policyd-spf.conf ]; then
+      sed -i -E 's/^TestOnly\s*=.*/TestOnly = 0/' /etc/postfix-policyd-spf-python/policyd-spf.conf
+      sed -i -E 's/^Mail_From_reject\s*=.*/Mail_From_reject = Fail/' /etc/postfix-policyd-spf-python/policyd-spf.conf
+    fi
+
+    # Amavis runtime paths must exist after DMS setup and before daemons start.
+    install -d -o 998 -g 998 -m 0750 /var/lib/amavis/tmp /var/lib/amavis/db
+
+    # The importer login has a dedicated passwd-file entry and is mapped to
+    # the sole charchess Maildir. It is not a Dovecot master-user.
+    cat >/etc/dovecot/conf.d/auth-imapsync-import.conf.ext <<'EOF'
+    passdb gmail-import {
+      driver = passwd-file
+      passwd_file_path = /tmp/docker-mailserver/gmail-import.passwd
+      username_filter = gmail-import@truxonline.invalid
+      mechanisms_filter = PLAIN LOGIN
+      result_success = return-ok
+      result_failure = return-fail
+      result_internalfail = return-fail
+    }
+
+    userdb gmail-import {
+      driver = passwd-file
+      passwd_file_path = /tmp/docker-mailserver/gmail-import.passwd
+      result_success = return-ok
+      result_failure = continue
+      result_internalfail = continue
+    }
+    EOF
+
+    # LDAP remains authoritative for normal users. The dedicated importer
+    # must be evaluated first so its fixed Maildir mapping wins only for it.
+    if ! grep -qx '!include auth-imapsync-import.conf.ext' /etc/dovecot/conf.d/10-auth.conf; then
+      sed -i '/^!include auth-ldap\.conf\.ext$/i !include auth-imapsync-import.conf.ext' /etc/dovecot/conf.d/10-auth.conf
+    fi
