@@ -22,7 +22,7 @@ sidecars:
   # the current controller on v0.23.0 and isolate the compatible v0.21.0
   # provider behind the upstream-supported localhost webhook interface.
   - name: gandi-webhook-bridge
-    image: registry.k8s.io/external-dns/external-dns:v0.21.0
+    image: registry.k8s.io/external-dns/external-dns:v0.23.0
     imagePullPolicy: IfNotPresent
     args:
       - --webhook-server
