@@ -20,7 +20,7 @@ spec:
                 - name: RENOVATE_REPORT_FORMATTING
                   value: "false"
             - name: report-exporter
-              image: renovate/renovate:44.115.4
+              image: renovate/renovate:44.115.5
               command:
                 - node
                 - /scripts/export-renovate-report.mjs
