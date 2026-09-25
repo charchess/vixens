@@ -6,7 +6,7 @@ resources:
   - configmap.yaml
   - deployment.yaml
   - service.yaml
-  - infisical-config.yaml
+  - config-external-secret.yaml
   - cilium-networkpolicy.yaml
 
 components:
