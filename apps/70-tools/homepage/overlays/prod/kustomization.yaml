@@ -9,7 +9,7 @@ components:
   - ../../../../_shared/components/nometrics
 
 patches:
-  - path: infisical-config-patch.yaml
+  - path: config-external-secret-patch.yaml
     target:
       kind: ExternalSecret
       name: homepage-config-sync
@@ -21,4 +21,4 @@ resources:
   - ../../base
   - ingress.yaml
   - ingress-redirect.yaml
-  - infisical-secret.yaml
+  - external-secret.yaml

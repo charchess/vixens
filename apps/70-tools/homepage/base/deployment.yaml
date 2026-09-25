@@ -1,5 +1,5 @@
 ---
-# deployment.yaml - Final Correct Version
+# deployment.yaml - Homepage workload
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -34,13 +34,13 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-      # Init container to copy initial config from the read-only ConfigMap
-      # to the writable PVC, if the PVC is empty.
+      # Copy the config projected by External Secrets from the read-only
+      # Secret into a writable emptyDir before Homepage starts.
       initContainers:
         - name: copy-initial-config
           image: busybox:1.38
-          # Clear the destination first to avoid pollution, then copy and set
-          # ownership. Runs as root to handle files owned by previous pods.
+          # Clear the writable destination, copy the projected config and set
+          # ownership. Runs as root to handle files created by previous images.
           securityContext:
             runAsUser: 0
             runAsNonRoot: false
@@ -51,9 +51,8 @@ spec:
           volumeMounts:
             - name: initial-config-vol
               mountPath: /initial-config
-            - name: config-vol # The writable PVC
+            - name: config-vol
               mountPath: /config
-      # Main application container
       priorityClassName: vixens-low
       containers:
         - name: homepage
@@ -126,17 +125,14 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
           volumeMounts:
-            # Mount the writable PVC, which is now populated by the
-            # initContainer.
             - name: config-vol
               mountPath: /app/config
-      # Volume definitions
       volumes:
-        # The read-only Secret containing the configuration synced from
-        # Infisical
+        # Configuration projected by External Secrets Operator from OpenBao.
         - name: initial-config-vol
           secret:
             secretName: homepage-config-secret
+        # Writable runtime copy populated by copy-initial-config.
         - name: config-vol
           emptyDir: {}
       securityContext:
