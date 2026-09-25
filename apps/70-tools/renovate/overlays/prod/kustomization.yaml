@@ -11,7 +11,7 @@ resources:
   - report-exporter-configmap.yaml
   - victoriametrics-egress.yaml
 patches:
-  - path: patch-infisical-env.yaml
+  - path: patch-external-secret-env.yaml
   - path: resources-patch.yaml
   - path: report-export-patch.yaml
   - path: work-volume-patch.yaml
