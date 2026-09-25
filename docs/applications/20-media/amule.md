@@ -14,8 +14,13 @@ aMule est un client P2P compatible eMule. Il est configuré pour router son traf
 
 ## Configuration
 
-### Secrets Infisical
-**Chemin :** `/apps/20-media/amule`
+### Secrets (OpenBao / External Secrets Operator)
+Les valeurs secrètes sont stockées dans OpenBao puis projetées dans Kubernetes via `ClusterSecretStore/openbao` et `ExternalSecret/amule-secrets` vers `Secret/amule-secrets`.
+
+**Chemins OpenBao :**
+- Dev : `vixens/dev/apps/20-media/amule`
+- Prod : `vixens/prod/apps/20-media/amule`
+
 **Variables requises :**
 - `AMULE__WEBUI_PWD` - Mot de passe pour l'interface web (format MD5 souvent requis).
 
