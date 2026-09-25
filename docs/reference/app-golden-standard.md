@@ -1,404 +1,243 @@
-# App Golden Standard — Vixens Reference
+# Application Standard — Vixens Reference
 
-**Canonical reference for deploying applications on the Vixens cluster.**
+Ce document donne les conventions applicatives courantes. Il ne remplace pas les sources spécialisées :
 
-This document defines the mandatory and optional building blocks for an application deployment,
-explains the Kyverno-based sizing system, and provides annotated examples.
+- `AGENTS.md` / `WORKFLOW.md` — cycle de changement GitOps ;
+- [ADR-023](../adr/023-7-tier-goldification-system-v2.md) + [ADR-029](../adr/029-align-maturity-with-current-platform.md) — maturité ;
+- [RESOURCE_STANDARDS.md](RESOURCE_STANDARDS.md) — ressources/priorités ;
+- [Secret Management](../guides/secret-management.md) — OpenBao / External Secrets ;
+- [Deployment Standard](../procedures/deployment-standard.md) — structure de déploiement.
 
-The `apps/template-app/` directory is the living implementation of this standard.
+`apps/template-app/` est un exemple vivant. Une application récente du même type reste souvent la meilleure référence pour les détails spécifiques.
 
----
+## Principes
 
-## Table of Contents
+Une application Vixens doit :
 
-1. [Maturity Tiers at a Glance](#maturity-tiers-at-a-glance)
-2. [Mandatory Blocks](#mandatory-blocks)
-3. [Optional Blocks](#optional-blocks)
-4. [Sizing System (Kyverno Labels)](#sizing-system-kyverno-labels)
-5. [Priority Classes](#priority-classes)
-6. [Annotated Template](#annotated-template)
-7. [Common Patterns by Container Type](#common-patterns-by-container-type)
-8. [QoS: Burstable vs Guaranteed](#qos-burstable-vs-guaranteed)
-9. [Checklist](#checklist)
+1. être déclarative et reproductible depuis Git ;
+2. être validée par CI avant merge ;
+3. être déployée par ArgoCD, pas par une mutation persistante manuelle du cluster ;
+4. avoir des ressources explicites et un sizing adapté ;
+5. déclarer seulement les flux réseau nécessaires ;
+6. garder les valeurs secrètes hors Git ;
+7. choisir stockage, backup et observabilité selon le workload réel.
 
----
+## Structure courante
 
-## Maturity Tiers at a Glance
-
-| Block | Bronze | Silver | Gold | Platinum | Elite |
-|---|:---:|:---:|:---:|:---:|:---:|
-| `priorityClassName` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| CP toleration | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Kyverno sizing labels | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `revisionHistoryLimit: 3` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Infisical secret | — | ✓ | ✓ | ✓ | ✓ |
-| Liveness/Readiness probes | — | ✓ | ✓ | ✓ | ✓ |
-| Litestream (SQLite backup) | — | — | ✓ | ✓ | ✓ |
-| Config-Syncer (flat-file backup) | — | — | ✓ | ✓ | ✓ |
-| Metrics annotations | — | — | ✓ | ✓ | ✓ |
-| PodDisruptionBudget | — | — | — | ✓ | ✓ |
-| NetworkPolicy | — | — | — | ✓ | ✓ |
-| Guaranteed QoS (G-sizing) | — | — | — | — | ✓ |
-
-See [quality-standards.md](quality-standards.md) for full scoring criteria.
-
----
-
-## Mandatory Blocks
-
-Every application **must** have all of the following regardless of tier.
-
-### 1. `priorityClassName`
-
-```yaml
-spec:
-  template:
-    spec:
-      priorityClassName: vixens-medium  # see Priority Classes section
+```text
+apps/<category>/<app>/
+├── base/
+│   ├── kustomization.yaml
+│   ├── deployment.yaml | statefulset.yaml | manifests Helm
+│   ├── service.yaml
+│   ├── external-secret.yaml       # si nécessaire
+│   ├── networkpolicy.yaml         # si utilisé
+│   ├── cilium-networkpolicy.yaml  # si utilisé
+│   └── ...
+└── overlays/
+    ├── dev/
+    │   └── kustomization.yaml
+    └── prod/
+        └── kustomization.yaml
 ```
 
-### 2. Control Plane Toleration
+Toutes les applications n'ont pas besoin de tous ces fichiers. Ne pas ajouter un composant uniquement pour satisfaire une forme de template.
 
-Allows scheduling on CP nodes when workers are under memory pressure.
-Applied automatically by the `add-cp-toleration` Kyverno MutatePolicy,
-but **must be present in the manifest** to pass the `check-cp-toleration` audit.
+## Ressources
 
-```yaml
-spec:
-  template:
-    spec:
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
-```
+Les `resources.requests` et `resources.limits` explicites sont le socle Kubernetes et servent également de fallback lorsque les mécanismes d'admission/tuning ne sont pas disponibles pendant un bootstrap ou une récupération.
 
-### 3. Kyverno Sizing Labels
-
-Resource requests/limits are **never set in YAML**. They are injected at admission time
-by the `sizing-mutate` Kyverno policy based on pod labels.
-
-Labels must appear on **both** `metadata.labels` (Deployment) and
-`spec.template.metadata.labels` (Pod). The policy reads Pod labels.
-
-```yaml
-metadata:
-  labels:
-    app: my-app
-    vixens.io/sizing: small                # generic fallback (required)
-    vixens.io/sizing.my-app: small         # per main container (required)
-    vixens.io/sizing.litestream: micro     # if using litestream sidecar
-    vixens.io/sizing.config-syncer: micro  # if using config-syncer sidecar
-    vixens.io/sizing.restore-config: micro # if using restore-config init
-    vixens.io/sizing.restore-db: micro     # if using restore-db init
-```
-
-> **Fallback**: if no per-container label is found, the policy falls back to `micro`
-> (10m/128Mi). This is safe but **not what you want for the main container** — always
-> set `vixens.io/sizing.<container-name>` explicitly.
-
-### 4. `revisionHistoryLimit: 3`
-
-Reduces etcd storage by capping stored ReplicaSet revisions.
-
-```yaml
-spec:
-  revisionHistoryLimit: 3
-```
-
----
-
-## Optional Blocks
-
-### Litestream (SQLite backup + restore)
-
-Use when the app stores data in a SQLite file.
-
-**Init container** (`restore-db`) — restores from S3 at startup:
-```yaml
-initContainers:
-  - name: restore-db
-    image: litestream/litestream:0.5.9
-    args: [restore, -config, /etc/litestream.yml, -if-db-not-exists, -if-replica-exists, /config/app.db]
-    envFrom:
-      - secretRef:
-          name: my-app-secrets
-    volumeMounts:
-      - name: config
-        mountPath: /config
-      - name: my-app-litestream-config
-        mountPath: /etc/litestream.yml
-        subPath: litestream.yml
-```
-
-**Sidecar** (`litestream`) — continuous replication:
 ```yaml
 containers:
-  - name: litestream
-    image: litestream/litestream:0.5.9
-    args: [replicate, -config, /etc/litestream.yml]
-    ports:
-      - containerPort: 9090
-        name: metrics
-    envFrom:
-      - secretRef:
-          name: my-app-secrets
-    volumeMounts:
-      - name: config
-        mountPath: /config
-      - name: my-app-litestream-config
-        mountPath: /etc/litestream.yml
-        subPath: litestream.yml
+  - name: app
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
 ```
 
-### Config-Syncer (flat-file backup)
-
-Use when the app stores config as flat files (YAML, JSON, etc.) that must survive pod restart.
-
-**Init container** (`restore-config`) — pulls from S3 at startup.
-**Sidecar** (`config-syncer`) — pushes to S3 every 60 seconds.
-
-See `apps/template-app/base/deployment.yaml` for the full implementation.
-
-### Metrics annotations
+Les labels de sizing peuvent compléter ce bloc :
 
 ```yaml
-spec:
-  template:
-    metadata:
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9090"
-        prometheus.io/path: "/metrics"
-```
-
-### Reloader annotation
-
-Triggers pod restart when a referenced Secret or ConfigMap changes:
-```yaml
-annotations:
-  reloader.stakater.com/auto: "true"
-```
-
----
-
-## Sizing System (Kyverno Labels)
-
-### Standard Tiers (Burstable QoS)
-
-| Label value | CPU req/lim | Memory req/lim | Typical use |
-|---|---|---|---|
-| `micro` | 10m / 100m | 64Mi / 128Mi | Sidecars, exporters, restore inits |
-| `small` | 50m / 500m | 256Mi / 512Mi | Go/Rust apps, lightweight tools |
-| `medium` | 200m / 1000m | 512Mi / 1Gi | Python/Node web apps |
-| `large` | 1000m / 2000m | 2Gi / 4Gi | Databases, heavy apps (Jellyfin) |
-| `xlarge` | 2000m / 4000m | 4Gi / 8Gi | AI processing, heavy indexers |
-| `renovate` | 2000m / 4000m | 2Gi / 4Gi | Renovate bot (burst CPU, moderate RAM) |
-
-### Guaranteed QoS Tiers (Elite / Orichalcum only)
-
-Guaranteed QoS means `requests == limits`. Use only for truly critical services
-where OOMKill or CPU throttling is unacceptable.
-
-| Label value | CPU | Memory | QoS class |
-|---|---|---|---|
-| `G-small` | 50m / 50m | 128Mi / 128Mi | Guaranteed |
-| `G-medium` | 200m / 200m | 512Mi / 512Mi | Guaranteed |
-| `G-large` | 1000m / 1000m | 2Gi / 2Gi | Guaranteed |
-| `G-xl` | 2000m / 2000m | 4Gi / 4Gi | Guaranteed |
-
-See [guaranteed-qos-sizing.md](guaranteed-qos-sizing.md) for full rationale.
-
-### Per-Container Label Pattern
-
-```yaml
-# Pod template labels
-labels:
-  app: my-app
-  vixens.io/sizing: medium               # generic fallback — matches unnamed containers
-  vixens.io/sizing.my-app: medium        # main container
-  vixens.io/sizing.litestream: micro     # litestream sidecar
-  vixens.io/sizing.config-syncer: micro  # config-syncer sidecar
-  vixens.io/sizing.restore-config: micro # restore-config init
-  vixens.io/sizing.restore-db: micro     # restore-db init
-  vixens.io/sizing.fix-perms: micro      # fix-perms init (root, sets ownership)
-```
-
-> **Rule**: Sidecars and init containers always use `micro` unless you have
-> evidence they need more (check VPA/Goldilocks recommendations).
-
----
-
-## Priority Classes
-
-| Class | Value | Use when |
-|---|---|---|
-| `vixens-critical` | 100000 | Infra core — must never be evicted (Traefik, Cilium, ArgoCD) |
-| `vixens-high` | 50000 | Vital user services (Home Assistant, Authentik) |
-| `vixens-medium` | 10000 | Standard interactive apps (*arr, Jellyfin, tools) |
-| `vixens-low` | 0 | Background jobs, downloaders, batch tasks |
-
----
-
-## Annotated Template
-
-```yaml
----
-apiVersion: apps/v1
-kind: Deployment
 metadata:
-  name: my-app
   labels:
-    app: my-app
-    # Sizing labels at Deployment level — mirrors pod template labels
-    # (required for audit policy matching)
-    vixens.io/sizing: small
-    vixens.io/sizing.my-app: small
-    vixens.io/sizing.litestream: micro
-    vixens.io/sizing.config-syncer: micro
-    vixens.io/sizing.restore-config: micro
-    vixens.io/sizing.restore-db: micro
+    vixens.io/sizing.app: V-medium
+```
+
+Ne pas recopier une ancienne règle « jamais de `resources:` dans les manifests ». Utiliser `RESOURCE_STANDARDS.md`, les policies actuelles et les recommandations Goldilocks/VPA.
+
+## PriorityClass
+
+Choisir la classe selon la criticité réelle, pas selon la taille de l'application :
+
+- `vixens-critical` — infrastructure indispensable ;
+- `vixens-high` — services vitaux ;
+- `vixens-medium` — applications interactives standards ;
+- `vixens-low` — tâches de fond/sacrifiables.
+
+Les valeurs exactes restent définies dans `RESOURCE_STANDARDS.md` et les manifests de PriorityClass courants.
+
+## Probes
+
+Quand l'application les supporte :
+
+- **startupProbe** : laisse le temps de démarrer ;
+- **readinessProbe** : décide si le pod peut recevoir du trafic ;
+- **livenessProbe** : détecte un processus réellement bloqué.
+
+Éviter les probes basées sur un processus intermittent. Préférer les endpoints health natifs lorsqu'ils existent.
+
+## Secrets
+
+Architecture canonique :
+
+```text
+OpenBao
+  ↓
+ClusterSecretStore/openbao
+  ↓
+ExternalSecret
+  ↓
+Kubernetes Secret
+  ↓
+workload
+```
+
+Exemple :
+
+```yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: app-secrets
 spec:
-  replicas: 1
-  revisionHistoryLimit: 3        # MANDATORY — limit etcd growth
-  strategy:
-    type: Recreate               # required for RWO PVCs
-  selector:
-    matchLabels:
-      app: my-app
-  template:
-    metadata:
-      labels:
-        app: my-app
-        # Sizing labels at Pod level — read by Kyverno sizing-mutate policy
-        vixens.io/sizing: small
-        vixens.io/sizing.my-app: small
-        vixens.io/sizing.litestream: micro
-        vixens.io/sizing.config-syncer: micro
-        vixens.io/sizing.restore-config: micro
-        vixens.io/sizing.restore-db: micro
-      annotations:
-        reloader.stakater.com/auto: "true"
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9090"
-        prometheus.io/path: "/metrics"
-    spec:
-      priorityClassName: vixens-medium   # MANDATORY
-      tolerations:                       # MANDATORY — CP scheduling
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
-      securityContext:
-        fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
-      initContainers:
-        - name: restore-config           # optional — flat-file restore
-          image: rclone/rclone:1.73
-          # NO resources: block — injected by Kyverno from label micro
-          ...
-        - name: restore-db               # optional — SQLite restore
-          image: litestream/litestream:0.5.9
-          # NO resources: block
-          ...
-      containers:
-        - name: my-app                   # main container
-          image: my-org/my-app:latest
-          # NO resources: block — injected by Kyverno from label small
-          ports:
-            - containerPort: 8080
-              name: http
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: http
-            initialDelaySeconds: 15
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: http
-            initialDelaySeconds: 5
-          envFrom:
-            - secretRef:
-                name: my-app-secrets
-          volumeMounts:
-            - name: config
-              mountPath: /config
-        - name: litestream               # optional — SQLite replication sidecar
-          image: litestream/litestream:0.5.9
-          # NO resources: block
-          ...
-        - name: config-syncer            # optional — flat-file sync sidecar
-          image: rclone/rclone:1.73
-          # NO resources: block
-          ...
-      volumes:
-        - name: config
-          persistentVolumeClaim:
-            claimName: my-app-config-pvc
+  refreshInterval: 60s
+  secretStoreRef:
+    name: openbao
+    kind: ClusterSecretStore
+  target:
+    name: app-secrets
+    creationPolicy: Owner
+  dataFrom:
+    - extract:
+        key: vixens/prod/apps/category/app
 ```
 
----
+Les chemins sont des exemples : utiliser la convention réellement présente dans les overlays/manifests actuels.
 
-## Common Patterns by Container Type
+**Ne pas créer de nouvel `InfisicalSecret`.** Les anciennes mentions Infisical sont historiques sauf preuve contraire dans les manifests courants.
 
-| Container name | Type | Sizing label | Notes |
-|---|---|---|---|
-| `<app-name>` | main container | `vixens.io/sizing.<app-name>: <tier>` | Choose tier based on app profile |
-| `litestream` | sidecar | `vixens.io/sizing.litestream: micro` | Always micro unless VPA says otherwise |
-| `config-syncer` | sidecar | `vixens.io/sizing.config-syncer: micro` | Always micro |
-| `restore-config` | init | `vixens.io/sizing.restore-config: micro` | Short-lived, always micro |
-| `restore-db` | init | `vixens.io/sizing.restore-db: micro` | Short-lived, always micro |
-| `fix-perms` | init | `vixens.io/sizing.fix-perms: micro` | Root init, always micro |
-| `install-python-deps` | init | `vixens.io/sizing.install-python-deps: small` | May need more for pip install |
-| `config-init` | init | `vixens.io/sizing.config-init: micro` | Busybox copy, always micro |
+## Réseau
 
----
+Le cluster utilise Cilium et un modèle default-deny sur les zones concernées.
 
-## QoS: Burstable vs Guaranteed
+Une policy doit exprimer le besoin réel :
 
-**Burstable (default)** — `requests < limits`
+- ingress depuis Traefik ou un producteur identifié ;
+- egress DNS si nécessaire ;
+- egress vers des services/namespaces/ports déterminés ;
+- accès `world` uniquement lorsqu'il est nécessaire.
 
-- CPU and memory requests are reserved on the node.
-- Pod can burst up to limits if node has spare capacity.
-- If node runs out of memory, Burstable pods are candidates for OOMKill before Guaranteed.
-- Use for all non-critical apps.
+En cas de blocage, utiliser Hubble/Grafana/Loki pour identifier source, destination, port et raison avant d'élargir une policy.
 
-**Guaranteed** — `requests == limits` (G-sizing tiers)
+## Ingress et TLS
 
-- Kubernetes never OOMKills a Guaranteed pod except under extreme node pressure.
-- CPU is throttled at limit but not killed.
-- Wastes headroom if the app doesn't use its full allocation.
-- Reserve for `vixens-critical` priority class apps only.
+- Traefik assure l'entrée HTTP/HTTPS ;
+- cert-manager gère les certificats ;
+- réutiliser les patterns courants `Ingress` / `IngressRoute` ;
+- ne pas ajouter automatiquement un middleware de redirection HTTP→HTTPS sans vérifier la stratégie globale Traefik.
 
-**Rule of thumb**: Start with Burstable + appropriate tier. Upgrade to Guaranteed (G-sizing)
-only when the app has proven it needs stable, dedicated resources at Elite tier.
+## Stockage
 
----
+Choisir le pattern selon les caractéristiques du workload :
 
-## Checklist
+- stateless → pas de PVC inutile ;
+- PVC `ReadWriteOnce` → vérifier la stratégie de rollout ;
+- SQLite → Litestream seulement si ce mécanisme répond réellement au besoin ;
+- fichiers de config persistants → Config-Syncer seulement si pertinent ;
+- stockage CSI → utiliser les `StorageClass` existantes plutôt que coder les détails NAS dans l'application.
 
-Before merging any app deployment:
+`strategy: Recreate` peut être pertinent lorsque deux réplicas ne peuvent pas monter simultanément un volume RWO.
 
+## Résilience et backup
+
+La maturité ne signifie pas « ajouter tous les sidecars ».
+
+Déterminer :
+
+1. quelles données sont importantes ;
+2. où elles vivent ;
+3. leur RPO/RTO utile ;
+4. quel mécanisme les protège ;
+5. comment la restauration est testée.
+
+Une sauvegarde non testée n'est pas une restauration validée.
+
+## Observabilité
+
+Ajouter uniquement ce qui est exploitable :
+
+- métriques applicatives ;
+- `ServiceMonitor` lorsqu'approprié ;
+- alertes avec action opérateur claire ;
+- dashboard lorsque le signal mérite une visualisation dédiée ;
+- logs structurés lorsque possible.
+
+Éviter les labels à forte cardinalité dans les backends de métriques/logs.
+
+## Kustomize components
+
+Un component doit exprimer **un seul concern**. Préférer :
+
+```text
+revision-history-limit
+sync-wave/wave-6
+goldilocks/enabled
+poddisruptionbudget/1
 ```
-[ ] priorityClassName set
-[ ] CP toleration present
-[ ] Kyverno sizing labels on pod template (NOT explicit resources: blocks)
-[ ] revisionHistoryLimit: 3 set
-[ ] No explicit resources: blocks in any container (main, sidecars, inits)
-[ ] Litestream sidecar + restore-db init paired (if SQLite)
-[ ] Config-Syncer sidecar + restore-config init paired (if flat files)
-[ ] yamllint passes (just lint)
-[ ] kustomize build succeeds on overlay
+
+à un composant monolithique qui mélange sizing, priorité, observabilité et disponibilité.
+
+## Validation
+
+Avant merge :
+
+```bash
+kustomize build apps/<category>/<app>/overlays/dev
 ```
 
----
+La CI du repo reste l'autorité pour la validation complète.
 
-**References**
+Après merge :
 
-- Living template: [`apps/template-app/`](../../apps/template-app/)
-- Golden example (production): [`apps/10-home/homeassistant/`](../../apps/10-home/homeassistant/)
-- Sizing tiers detail: [`sizing.deprecated/README.md`](../../apps/_shared/components/sizing.deprecated/README.md)
-- Resource standards: [`RESOURCE_STANDARDS.md`](RESOURCE_STANDARDS.md)
-- Quality tiers: [`quality-standards.md`](quality-standards.md)
-- Guaranteed QoS: [`guaranteed-qos-sizing.md`](guaranteed-qos-sizing.md)
-- Kyverno policy: [`apps/00-infra/kyverno/base/policies/sizing-mutate.yaml`](../../apps/00-infra/kyverno/base/policies/sizing-mutate.yaml)
+1. laisser ArgoCD converger en dev ;
+2. tester le comportement ciblé ;
+3. vérifier réseau/logs/métriques lorsque pertinent ;
+4. promouvoir avec `.github/workflows/promote-prod.yaml` uniquement après validation.
+
+## Maturité
+
+La progression reste :
+
+```text
+Bronze → Silver → Gold → Platinum → Emerald → Diamond → Orichalcum
+```
+
+Le système mesure la **complétude de configuration**, pas une certification absolue de fiabilité.
+
+Voir `quality-standards.md`, ADR-023 et ADR-029 pour les critères.
+
+## Règle anti-fossile
+
+Si ce document, un template ou un skill contredit :
+
+- le `main` actuel ;
+- une décision plus récente ;
+- les manifests qui tournent réellement ;
+
+ne pas recopier aveuglément l'ancien pattern. Identifier la contradiction et corriger la documentation dans une PR séparée.
+
+**Last Updated:** 2026-09-25

@@ -1,50 +1,47 @@
 # Procedures
 
-Step-by-step operational procedures for the Vixens project.
+Procédures opérationnelles Vixens. Elles décrivent **comment opérer** le système ; le desired state reste dans Git et `WORKFLOW.md` définit le cycle de changement.
 
----
+## Procédures disponibles
 
-## Available Procedures
+- **[Deployment Standard](deployment-standard.md)** — conventions de déploiement applicatif.
+- **[Application Testing](application-testing.md)** — validation fonctionnelle après changement.
+- **[Adding a New Talos Node](adding-new-talos-node.md)** — procédure Talos ; pour les changements d'infrastructure déclaratifs, respecter le repo Terraform/Talos faisant autorité.
+- **[Dev Hibernation](dev-hibernation.md)** — opérations de mise en veille/réveil dev.
+- **[Scout Mode Sizing](scout-mode-sizing.md)** — observation/tuning des ressources.
 
-### Deployment
+## Secrets
 
-- **[Deployment Standard](deployment-standard.md)**
-  Standard procedure for deploying applications to the cluster.
+La rotation et le diagnostic des secrets suivent l'architecture courante :
 
-### Operations (Coming Soon)
+```text
+OpenBao → ClusterSecretStore/openbao → ExternalSecret → Secret → workload
+```
 
-- **Backup & Restore** 🚧
-  Backup and restore procedures using Velero.
+Voir :
 
-- **Disaster Recovery** 🚧
-  Disaster recovery procedures for cluster failures.
+- `docs/guides/secret-management.md`
+- `docs/adr/018-openbao-external-secrets-and-nas-fqdn.md`
 
-- **Cluster Upgrade** 🚧
-  Upgrading Kubernetes and Talos versions.
+Ne pas utiliser une ancienne procédure Infisical comme runbook actif.
 
-- **Secret Rotation** 🚧
-  Rotating secrets in Infisical and Kubernetes.
+## Procédure vs guide
 
-- **Certificate Renewal** 🚧
-  Renewing TLS certificates (manual process if needed).
+- **Procedure** : action opérateur séquencée, avec prérequis et validation.
+- **Guide** : explication/pattern pour construire ou modifier le système.
+- **ADR** : décision durable et rationale.
+- **Post-mortem/audit** : historique d'un état ou d'un incident ; pas une procédure courante.
 
----
+## Maintenance
 
-## Procedure vs Guide
+Lorsqu'une procédure change :
 
-**Procedure:** Operational step-by-step for **operators** (backup, DR, upgrades)
-**Guide:** How-to for **developers** (adding apps, GitOps, task management)
+1. vérifier le `main` actuel et les PR concurrentes ;
+2. mettre à jour la procédure dans la même PR que le contrat qu'elle décrit lorsque pertinent ;
+3. éviter les commandes mutantes qui contournent GitOps pour un changement persistant ;
+4. inclure une étape de validation observable ;
+5. retirer les références aux outils/architectures retirés.
 
----
+Pour une opération qui n'a pas encore de procédure durable, créer un fichier dédié plutôt que laisser un bloc « Coming Soon » ambigu dans cet index.
 
-## Creating New Procedures
-
-1. Use [templates/procedure-template.md](../templates/procedure-template.md)
-2. Follow naming: `<action>-<object>.md` (e.g., `backup-restore.md`)
-3. Include clear prerequisites and validation steps
-4. Add to this README
-5. Link from main [docs/README.md](../README.md)
-
----
-
-**Last Updated:** 2025-12-30
+**Last Updated:** 2026-09-25

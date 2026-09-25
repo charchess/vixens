@@ -2,110 +2,93 @@
 
 Architecture decisions and their rationale for the Vixens project.
 
----
+## Usage
 
-## What is an ADR?
+An ADR records a durable architectural decision. Active operational instructions should live in the current guides/runbooks; historical ADRs are preserved even when superseded.
 
-An **Architecture Decision Record** documents an important architectural decision made along with its context and consequences.
+When an ADR and a newer accepted decision conflict, the newer decision wins. Current manifests remain the implementation source of truth.
 
-**When to create an ADR:**
-- Significant architectural changes
-- Technology/tool selections
-- Design pattern adoptions
-- Infrastructure strategy decisions
-- Workflow changes affecting the team
+## Important current decisions
 
----
+### GitOps & workflow
 
-## Available ADRs
+- **[ADR-017: Pure Trunk-Based Development](017-pure-trunk-based-single-branch.md)** — single `main`; dev follows main; prod follows the promoted stable ref.
+- Historical ADR-008/009 are superseded by ADR-017.
 
-### GitOps & Workflow
+### Application maturity
 
-- **[ADR-007: Renovate Trunk-Based Workflow](007-renovate-trunk-based-workflow.md)**
-  Renovate bot updates dev branch first for validation. (⚠️ Needs update for single-branch)
+- **[ADR-023: 7-Tier Goldification System v2](023-7-tier-goldification-system-v2.md)** — maturity tier intent and scoring model.
+- **[ADR-029: Align application maturity with the current platform](029-align-maturity-with-current-platform.md)** — amends ADR-023 for OpenBao/ESO secrets and explicit resource fallbacks.
 
-- **[ADR-017: Pure Trunk-Based Development (Single Branch)](017-pure-trunk-based-single-branch.md)** ⭐
-  Single `main` branch workflow. Dev watches main HEAD, Prod watches prod-stable tag. **Supersedes ADR-008/009.**
+### Secrets
 
-- ~~**[ADR-008: Trunk-Based GitOps Workflow](008-trunk-based-gitops-workflow.md)**~~ (Superseded by ADR-017)
-  Two-branch strategy (dev/main) with trunk-based development.
+- **[ADR-018: OpenBao / External Secrets and NAS FQDN](018-openbao-external-secrets-and-nas-fqdn.md)** — current secret architecture.
+- **[ADR-011: Infisical Secrets Management](011-infisical-secrets-management.md)** — historical/superseded secret architecture.
 
-- ~~**[ADR-009: Simplified Two-Branch Workflow](009-simplified-two-branch-workflow.md)**~~ (Superseded by ADR-017)
-  Retire test/staging branches for simplified workflow.
-
-### Infrastructure & Disaster Recovery
-
-- **[ADR-010: Static Manifests for Infrastructure Apps](010-static-manifests-for-infrastructure-apps.md)**
-  Use static manifests (not Helm) for infrastructure components.
+### Storage / recovery
 
 - **[ADR-013: Layered Configuration Disaster Recovery](013-layered-configuration-disaster-recovery.md)**
-  Disaster recovery strategy with layered configuration backups.
-
-- **[ADR-013: Renovate Discord Approval Workflow](013-renovate-discord-approval-workflow.md)**
-  Discord integration for Renovate PR approvals.
-
 - **[ADR-014: Litestream Backup Profiles and Recovery Patterns](014-litestream-backup-profiles-and-recovery-patterns.md)**
-  Light vs Heavy backup profiles for SQLite databases with standardized recovery patterns.
+- **[ADR-025: Local Path Provisioner](025-local-path-provisioner.md)**
+- **[ADR-028: Retire DataAngel Restore Init from Production Workloads](028-retire-dataangel-prod-zfs.md)**
 
-### Network & Security
+### Networking / applications
 
-- **[ADR-018: Netbird VPN Deployment Architecture](018-netbird-deployment-architecture.md)**
-  Netbird VPN deployment with Helm chart, PostgreSQL shared, and Authentik integration.
-
-### Future Architecture
-
+- **[ADR-021: Netbird Native Manifests](021-netbird-native-manifests.md)** — supersedes the older Netbird Helm design.
+- **[ADR-026: KEDA Scale-to-Zero](026-keda-scale-to-zero.md)**
 - **[ADR-027: Retire OpenClaw and Ollama Telemetry](027-retire-openclaw-and-ollama-telemetry.md)**
-  OpenClaw is retired through Argo CD; Hairem observes Hindsight/OpenRouter instead of probing Ollama.
 
-- **ADR-011: Namespace Ownership Strategy** 🚧
-  Rules for namespace creation and ownership.
+## Historical numbering note
 
-- **ADR-012: Middleware Management** 🚧
-  Centralized vs distributed Traefik middleware strategy.
+The repository contains older ADR numbering collisions (notably `013` and `018`). They are preserved to avoid rewriting history and breaking existing links. New ADRs continue from the highest allocated number.
 
----
+Do not infer chronology or precedence from the number alone; use each ADR's date/status and explicit supersession links.
 
-## ADR Status
+## Status values
 
 | Status | Meaning |
-|--------|---------|
-| **Proposed** | Under discussion |
-| **Accepted** | Decision made, implementation pending |
-| **Implemented** | Fully implemented |
-| **Deprecated** | No longer valid |
-| **Superseded** | Replaced by another ADR |
+|---|---|
+| Proposed | Under discussion |
+| Accepted | Decision made/current unless superseded |
+| Active | Current operational architecture/standard |
+| Implemented | Decision fully implemented |
+| Deprecated | No longer recommended |
+| Superseded | Replaced by a newer decision |
 
----
+## Creating a new ADR
 
-## Creating a New ADR
+1. Start from the current `main` and check for concurrent PRs.
+2. Use `docs/templates/adr-template.md` when appropriate.
+3. Allocate the next unused number; do not renumber historical ADRs.
+4. State status, date, context, decision and consequences.
+5. Explicitly link decisions being amended/superseded.
+6. Update this README.
+7. Submit through the normal branch → PR → CI workflow.
 
-1. Use [templates/adr-template.md](../templates/adr-template.md)
-2. Number sequentially (e.g., `013-...`)
-3. Follow naming: `NNN-short-title.md`
-4. Update this README with link
-5. Link from main [docs/README.md](../README.md)
+## Compact index
 
----
+| Number | Decision | Status |
+|---:|---|---|
+| 007 | Renovate Trunk-Based Workflow | historical/current only where not superseded |
+| 008 | Trunk-Based GitOps Workflow | Superseded |
+| 009 | Simplified Two-Branch Workflow | Superseded |
+| 010 | Static Manifests for Infrastructure Apps | Accepted |
+| 011 | Infisical Secrets Management | Superseded by current OpenBao/ESO architecture |
+| 013 | Layered Configuration Disaster Recovery | Accepted |
+| 013 | Renovate Discord Approval Workflow | Accepted (historical numbering collision) |
+| 014 | Litestream Backup Profiles and Recovery Patterns | Accepted |
+| 017 | Pure Trunk-Based Development | Active |
+| 018 | Netbird Helm deployment architecture | Superseded by ADR-021 |
+| 018 | OpenBao / External Secrets and NAS FQDN | Accepted (historical numbering collision) |
+| 020 | Automated Housekeeping | Accepted |
+| 021 | Netbird Native Manifests | Accepted |
+| 022 | 7-Tier Goldification v1 | Superseded by ADR-023 |
+| 023 | 7-Tier Goldification v2 | Active |
+| 024 | SSO Debt Diamond Wave 7 | Active/Accepted |
+| 025 | Local Path Provisioner | Accepted |
+| 026 | KEDA Scale-to-Zero | Accepted |
+| 027 | Retire OpenClaw and Ollama Telemetry | Accepted |
+| 028 | Retire DataAngel Restore Init from Production Workloads | Accepted |
+| 029 | Align application maturity with current platform | Accepted |
 
-## ADR Index
-
-| Number | Title | Status | Date |
-|--------|-------|--------|------|
-| 007 | Renovate Dev-First Workflow | Implemented | 2024-12 |
-| 008 | Trunk-Based GitOps Workflow | Implemented | 2024-12 |
-| 009 | Simplified Two-Branch Workflow | Implemented | 2024-12 |
-| 010 | Static Manifests for Infrastructure Apps | Accepted | 2025-01 |
-| 011 | Namespace Ownership Strategy | Proposed | TBD |
-| 012 | Middleware Management | Proposed | TBD |
-| 013 | Layered Configuration Disaster Recovery | Accepted | 2026-01 |
-| 013 | Renovate Discord Approval Workflow | Accepted | 2026-01 |
-| 014 | Litestream Backup Profiles and Recovery Patterns | Accepted | 2026-01 |
-| 018 | Netbird VPN Deployment Architecture | Accepted | 2026-01 |
-| 022 | 7-Tier Goldification System v1 | Superseded by ADR-023 | 2026-02 |
-| 023 | 7-Tier Goldification System v2 | Active | 2026-03 |
-| 024 | SSO Debt Diamond Wave 7 | Accepted | 2026-03 |
-| 027 | Retire OpenClaw and Ollama Telemetry | Accepted | 2026-09 |
-
----
-
-**Last Updated:** 2026-03-05
+**Last Updated:** 2026-09-25
