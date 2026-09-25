@@ -12,11 +12,11 @@ namespace: monitoring
 # gold-maturity annotations on StatefulSet also dead code (removed).
 # alertmanager command override is not needed: ExtraEnv + config.global handles Discord webhook.
 patches:
-  - path: patch-infisical-env.yaml
+  - path: patch-external-secret-env.yaml
     target:
       kind: ExternalSecret
       name: prometheus-secrets-sync
-  - path: patch-infisical-env.yaml
+  - path: patch-external-secret-env.yaml
     target:
       kind: ExternalSecret
       name: alertmanager-secrets-sync
