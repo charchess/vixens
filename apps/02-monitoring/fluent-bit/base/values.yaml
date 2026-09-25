@@ -59,6 +59,14 @@ config:
         HTTP_Port 2020
         Health_Check On
 
+  customParsers: |
+    # Hubble emits RFC3339 timestamps at nanosecond precision. Keep its JSON
+    # timestamp as payload and let Fluent Bit assign ingestion time, avoiding
+    # parser failures while preserving the original flow.time field.
+    [PARSER]
+        Name hubble_json
+        Format json
+
   inputs: |
     [INPUT]
         Name tail
@@ -72,7 +80,7 @@ config:
     [INPUT]
         Name tail
         Path /var/run/cilium/hubble/failed-flows.log
-        Parser json
+        Parser hubble_json
         Tag hubble.failed
         Mem_Buf_Limit 5MB
         Skip_Long_Lines On
