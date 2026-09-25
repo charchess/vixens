@@ -1,56 +1,47 @@
 # Guides
 
-Practical how-to guides for common tasks in the Vixens project.
+Guides pratiques du dépôt Vixens. `WORKFLOW.md` reste la référence du cycle GitOps ; les guides détaillent des tâches spécifiques sans redéfinir le workflow.
 
----
+## Workflow et contribution
 
-## Available Guides
+- **[Adding a New Application](adding-new-application.md)** — structure et conventions pour ajouter une application.
+- **[Task Management](task-management.md)** — GitHub Issues comme backlog canonique.
+- **[GitOps Workflow](gitops-workflow.md)** — contexte GitOps complémentaire ; `WORKFLOW.md` prévaut en cas de divergence.
+- **[Promotion Workflow](promotion-workflow.md)** — promotion dev → prod via GitHub Actions.
+- **[Workflow Concurrency](workflow-concurrency.md)** — gestion des changements concurrents.
+- **[Merge Queue Configuration](merge-queue-configuration.md)** — configuration/usage de la merge queue lorsqu'elle est activée.
 
-### Core Workflows
+## Configuration et secrets
 
-- **[Adding a New Application](adding-new-application.md)** ⭐
-  Deploy new applications to the cluster using GitOps best practices.
+- **[Secret Management](secret-management.md)** — OpenBao + External Secrets Operator.
+- **[Config Syncer Pattern](pattern-config-syncer.md)** — persistance/synchronisation de configurations lorsqu'approprié.
 
-- **[GitOps Workflow](gitops-workflow.md)** ⭐
-  Promote changes from dev to production using trunk-based workflow.
+Le backend secret canonique est OpenBao via `ClusterSecretStore/openbao` et `ExternalSecret`. Les documents historiques Infisical ne sont pas des guides d'implémentation.
 
-- **[Task Management](task-management.md)** ⭐
-  Create and manage tasks in Archon using conventional commit format.
+## Résilience et exploitation
 
-### Infrastructure & Operations
+- **[Backup / Restore Pattern](backup-restore-pattern.md)** — patterns généraux de sauvegarde/restauration.
+- **[Production Hibernation](prod-hibernation.md)** — comportement de mise en veille prod lorsque ce mécanisme est utilisé.
+- **[Security & Observability](security-observability.md)** — repères sécurité/observabilité.
 
-- **[Secret Management](secret-management.md)** 🚧 Coming soon
-  Working with Infisical for secret management.
+## Sizing et qualité
 
-- **[Terraform Workflow](terraform-workflow.md)** 🚧 Coming soon
-  Making infrastructure changes with Terraform.
+- **[Sizing Migration](sizing-migration.md)** — contexte et conventions de sizing.
+- **[Quality Reports](quality-reports.md)** — exploitation des rapports qualité.
+- **[Bronzification Action Plan](bronzification-action-plan.md)** — plan historique/opérationnel de montée en maturité ; vérifier les standards actuels avant de reprendre une action ancienne.
 
-- **[Troubleshooting Guide](troubleshooting-guide.md)** 🚧 Coming soon
-  Common issues and how to resolve them.
+Références canoniques associées :
 
----
+- `docs/reference/quality-standards.md`
+- `docs/reference/RESOURCE_STANDARDS.md`
+- `docs/reference/app-golden-standard.md`
+- `docs/procedures/deployment-standard.md`
 
-## Guide Structure
+## Règles de maintenance
 
-Each guide follows this structure:
-1. **Overview** - What this guide covers
-2. **Prerequisites** - What you need before starting
-3. **Step-by-step instructions** - Detailed walkthrough
-4. **Validation** - How to verify success
-5. **Troubleshooting** - Common issues
-6. **Related documentation** - Links to other resources
+- Un guide actif doit décrire l'architecture **courante**.
+- Les décisions historiques restent dans les ADR/audits/post-mortems.
+- Ne pas recopier une procédure depuis un rapport ancien sans la confronter à `main`.
+- Ajouter ici tout nouveau guide durable.
 
----
-
-## Contributing
-
-When creating new guides:
-1. Use [templates/procedure-template.md](../templates/procedure-template.md)
-2. Follow naming convention: `<action>-<object>.md`
-3. Include clear acceptance criteria
-4. Add to this README
-5. Link from main [docs/README.md](../README.md)
-
----
-
-**Last Updated:** 2025-12-30
+**Last Updated:** 2026-09-25

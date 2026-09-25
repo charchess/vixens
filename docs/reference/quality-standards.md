@@ -1,196 +1,169 @@
 # Quality Standards (Goldification)
 
-## Overview
+Ce document résume le système de maturité applicative Vixens.
 
-Ce document est un **résumé** des standards de qualité pour les applications Vixens.
-
-> **⚠️ Source de vérité:** [ADR-023: 7-Tier Goldification System v2](../adr/023-7-tier-goldification-system-v2.md)
+> **Sources de vérité :**
+> - [ADR-023 — 7-Tier Goldification System v2](../adr/023-7-tier-goldification-system-v2.md) pour les niveaux et leur intention ;
+> - [ADR-029 — Align application maturity with the current platform](../adr/029-align-maturity-with-current-platform.md) pour l'alignement secrets/ressources actuel.
 >
-> En cas de divergence, ADR-023 fait autorité.
+> Les détails d'implémentation doivent toujours être vérifiés dans les manifests et politiques courants.
 
----
+## Système 7 tiers
 
-## Système 7-Tiers (ADR-023 v2)
+| Niveau | Nom | Intention |
+|---|---|---|
+| 🥉 1 | Bronze | L'application existe, tourne et est correctement structurée |
+| 🥈 2 | Silver | Production ready : limites, probes, TLS, secrets externes |
+| 🥇 3 | Gold | Observable : métriques, alerting pertinent, déploiement maîtrisé |
+| 💎 4 | Platinum | Reliable : priorité, sizing justifié, résilience |
+| 🟢 5 | Emerald | Data durability : sauvegarde/restauration adaptées aux données |
+| 💠 6 | Diamond | Secure & integrated : isolation, durcissement, intégrations |
+| 🌟 7 | Orichalcum | Éprouvée : stabilité, sizing validé, dette sécurité maîtrisée |
 
-| Niveau | Nom | Philosophie |
-|--------|-----|-------------|
-| 🥉 1 | **Bronze** | "Déployée" — L'app tourne et est accessible |
-| 🥈 2 | **Silver** | "Production Ready" — Limits, probes, TLS, secrets |
-| 🥇 3 | **Gold** | "Observable" — Métriques, ServiceMonitor, Goldilocks |
-| 💎 4 | **Platinum** | "Reliable" — PriorityClass, sizing justifié, PDB |
-| 🟢 5 | **Emerald** | "Data Durability" — Litestream, Config-Syncer, Velero |
-| 💠 6 | **Diamond** | "Secure & Integrated" — PSA, NetworkPolicies, SSO |
-| 🌟 7 | **Orichalcum** | "Parfaite" — 7j stabilité, 0 CVE, sizing validé |
+La progression reste séquentielle : un niveau non satisfait bloque les niveaux supérieurs.
 
----
+## Bronze — Déployée
 
-## Résumé des Prérequis par Niveau
+Principaux critères :
 
-### 🥉 Bronze — "Déployée"
+- image versionnée, pas de `:latest` ;
+- CPU/memory **requests** explicites ;
+- Service si nécessaire ;
+- structure Kustomize cohérente ;
+- Ingress si l'application doit être exposée.
 
-- Image valide (pas de `:latest`)
-- CPU/Memory requests définis
-- Service configuré
-- Structure Kustomize correcte (base/ + overlays/)
-- Ingress configuré (si exposée)
+## Silver — Production Ready
 
-### 🥈 Silver — "Production Ready"
+Bronze + :
 
-Bronze +
-- CPU/Memory limits définis
-- Readiness probe
-- Liveness probe
-- Startup probe (ou bypass `vixens.io/fast-start: "true"`)
-- TLS/HTTPS activé
-- Secrets via Infisical
+- CPU/memory **limits** explicites ;
+- readiness et liveness probes ;
+- startup probe ou bypass explicite lorsqu'elle est inutile ;
+- TLS/HTTPS si exposée ;
+- secrets gérés hors Git ;
+- stratégie de rollout cohérente avec le stockage persistant.
 
-### 🥇 Gold — "Observable"
+Le backend secret canonique actuel est :
 
-Silver +
-- Métriques exposées (prometheus.io/scrape ou ServiceMonitor)
-- Goldilocks activé
-- `revisionHistoryLimit: 3`
-- Sync-wave ArgoCD configuré
-- PrometheusRule (alerting) si applicable
+```text
+OpenBao → ClusterSecretStore/openbao → ExternalSecret → Secret → workload
+```
 
-### 💎 Platinum — "Reliable"
+Ne pas créer de nouvel `InfisicalSecret`.
 
-Gold +
-- PriorityClass assigné
-- Sizing mode justifié (annotation `vixens.io/sizing-rationale`)
-- Sizing revu post-Goldilocks
-- PodDisruptionBudget (si multi-replica)
-- Graceful shutdown (preStop hook) ou bypass `vixens.io/no-long-connections: "true"`
-- HPA/KEDA si charge variable
+## Gold — Observable
 
-### 🟢 Emerald — "Data Durability"
+Silver + :
 
-Platinum +
-- Backup profile défini (`vixens.io/backup-profile: critical|standard|relaxed|ephemeral`)
-- Litestream sidecar + restore initContainer (si SQLite)
-- Config-Syncer sidecar + restore initContainer (si config persistante)
-- Velero backup confirmé (si PVC)
-- Ressources sidecars définies
+- métriques exposées ou exemption explicite ;
+- ServiceMonitor lorsque pertinent ;
+- Goldilocks/VPA utilisables pour observer le sizing ;
+- `revisionHistoryLimit` conforme au pattern courant ;
+- ordre ArgoCD/sync-wave lorsque nécessaire ;
+- alerting utile lorsque l'application porte un risque opérationnel identifiable.
 
-### 💠 Diamond — "Secure & Integrated"
+## Platinum — Reliable
 
-Emerald +
-- PSA labels namespace (`pod-security.kubernetes.io/enforce: baseline`)
-- SecurityContext durci (runAsNonRoot, drop ALL capabilities)
-- NetworkPolicies Cilium L3/L4
-- Authentik SSO (si auth utilisateur)
-- Image digest pinning (si Renovate)
-- Velero restore testé
-- Homepage widget
+Gold + :
 
-### 🌟 Orichalcum — "Parfaite"
+- `priorityClassName` cohérent avec la criticité ;
+- sizing choisi et justifié ;
+- sizing revu à partir des observations ;
+- PDB/topology spread/anti-affinity lorsqu'ils ont un sens ;
+- graceful shutdown ou bypass explicite ;
+- HPA/KEDA lorsque la charge variable le justifie.
 
-Diamond +
-- 7 jours de stabilité (0 restart, 0 OOMKill)
-- Sizing validé (VPA recommendations appliquées + stable 7j)
-- Zéro CVE HIGH/CRITICAL (Trivy clean ou bypass documenté)
+## Emerald — Data Durability
 
----
+Platinum + :
 
-## Bypasses (Annotations)
+- profil de backup explicite ;
+- restauration cohérente avec le type de données ;
+- Litestream si SQLite et si ce pattern est approprié ;
+- Config-Syncer si fichiers persistants et si approprié ;
+- Velero/CSI/backup validés pour les PVC concernés ;
+- ressources explicites pour les sidecars et init containers.
 
-| Annotation | Check court-circuité | Signification |
-|------------|---------------------|---------------|
-| `vixens.io/fast-start: "true"` | Startup probe (Silver) | Container démarre < 5s |
-| `vixens.io/no-long-connections: "true"` | preStop hook (Platinum) | Pas de connexions longues |
-| `vixens.io/explicitly-allow-root: "true"` | SecurityContext (Diamond) | Root requis, risque accepté |
-| `vixens.io/nometrics: "true"` | Métriques + ServiceMonitor (Gold) | App sans métriques |
-| `vixens.io/nossoneeded: "true"` | Authentik SSO (Diamond) | Pas d'auth utilisateur |
-| `vixens.io/nohomepage: "true"` | Homepage widget (Diamond) | Non pertinent |
-| `vixens.io/noingressneeded: "true"` | Ingress (Bronze) | App interne |
-| `vixens.io/cve-accepted: "true"` | Trivy CVE (Diamond) | CVE accepté |
+Le mécanisme de backup doit être choisi selon le workload ; ne pas ajouter automatiquement Litestream ou Config-Syncer à une application qui n'en a pas besoin.
 
----
+## Diamond — Secure & Integrated
 
-## Health Check Requirements
+Emerald + :
 
-### Startup Probe (Silver - Universel)
+- PSA / SecurityContext adaptés ;
+- CiliumNetworkPolicy / NetworkPolicy avec flux minimaux nécessaires ;
+- SSO Authentik lorsque pertinent ;
+- politique supply-chain/image conforme ;
+- restauration réellement testée lorsque requise ;
+- intégrations de plateforme utiles (Homepage, etc.) ou bypass documenté.
 
-Protège les containers à démarrage lent.
+## Orichalcum — Éprouvée
+
+Diamond + :
+
+- période de stabilité définie par ADR-023 ;
+- sizing validé sur données réelles ;
+- CVE HIGH/CRITICAL absente ou risque explicitement accepté/documenté.
+
+## Ressources et sizing
+
+Les sizing labels **ne remplacent pas** les ressources Kubernetes explicites.
+
+Pattern attendu :
 
 ```yaml
-startupProbe:
-  httpGet:
-    path: /healthz
-    port: http
-  initialDelaySeconds: 0
-  periodSeconds: 10
-  timeoutSeconds: 3
-  failureThreshold: 30  # 300s total
+spec:
+  template:
+    metadata:
+      labels:
+        vixens.io/sizing.app: V-medium
+    spec:
+      containers:
+        - name: app
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
 ```
 
-### Liveness Probe (Silver)
+Les valeurs exactes et la convention de tier se prennent dans :
 
-Détermine si le container doit être redémarré.
+- [`RESOURCE_STANDARDS.md`](RESOURCE_STANDARDS.md) ;
+- les policies/components courants ;
+- une application récente comparable ;
+- les observations Goldilocks/VPA.
 
-```yaml
-livenessProbe:
-  httpGet:
-    path: /healthz
-    port: http
-  initialDelaySeconds: 30
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 3
-```
+## Bypasses
 
-### Readiness Probe (Silver)
+Les bypasses sont des déclarations intentionnelles, pas un moyen de masquer une dette. Les annotations précises et leur sémantique sont définies dans ADR-023 et les politiques courantes.
 
-Détermine si le container est prêt à recevoir du trafic.
+Avant d'en ajouter une :
 
-```yaml
-readinessProbe:
-  httpGet:
-    path: /ready
-    port: http
-  initialDelaySeconds: 10
-  periodSeconds: 5
-  timeoutSeconds: 3
-  failureThreshold: 3
-```
+1. vérifier que le critère est réellement non applicable ;
+2. vérifier l'annotation actuelle dans Git ;
+3. documenter la raison lorsqu'elle n'est pas évidente.
 
----
+## Validation
 
-## Progression
+Le score de maturité est un outil de complétude, pas un substitut au test fonctionnel.
 
-```
-Bronze → Silver → Gold → Platinum → Emerald → Diamond → Orichalcum
-```
+Après une modification :
 
-**Règle:** Une application ne peut pas sauter un niveau. Tous les prérequis d'un niveau doivent être validés avant de passer au suivant.
+1. CI/Kustomize doivent passer ;
+2. ArgoCD doit converger ;
+3. l'application doit être fonctionnellement validée ;
+4. logs, métriques et réseau doivent être vérifiés lorsque pertinents.
 
----
+## Références
 
-## État Actuel du Cluster (2026-03-08)
+- [ADR-023 — 7-Tier Goldification System v2](../adr/023-7-tier-goldification-system-v2.md)
+- [ADR-029 — Platform alignment](../adr/029-align-maturity-with-current-platform.md)
+- [Resource Standards](RESOURCE_STANDARDS.md)
+- [Deployment Standard](../procedures/deployment-standard.md)
+- [Secret Management](../guides/secret-management.md)
+- [Adding a New Application](../guides/adding-new-application.md)
 
-| Niveau | Count |
-|--------|-------|
-| 🥉 Bronze | 3 |
-| 🥈 Silver | 17 |
-| 🥇 Gold | 48 |
-| 💎 Platinum | 17 |
-| 🟢 Emerald | 0 |
-| 💠 Diamond | 0 |
-| 🌟 Orichalcum | 0 |
-
-**Blocages principaux vers Emerald/Diamond:**
-- 317 violations check-backup
-- 237 violations check-pdb
-- 121 violations check-security-context
-
----
-
-## Related Documentation
-
-- **[ADR-023: 7-Tier Goldification System v2](../adr/023-7-tier-goldification-system-v2.md)** — Source de vérité
-- **[Maturity Standards Matrix](maturity-standards-matrix.md)** — Matrice détaillée
-- **[STATUS.md](../STATUS.md)** — État actuel des applications
-
----
-
-**Last Updated:** 2026-03-08
+**Last Updated:** 2026-09-25
