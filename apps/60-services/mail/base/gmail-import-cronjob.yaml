@@ -43,7 +43,7 @@ spec:
               command: ["sh", "-ec"]
               args:
                 - |
-                  user2="$(< /var/run/imapsync-target/IMAPSYNC_DOVECOT_USER)"
+                  user2="$(cat /var/run/imapsync-target/IMAPSYNC_DOVECOT_USER)"
                   exec /usr/bin/imapsync \
                     --host1 imap.gmail.com --port1 993 --ssl1 \
                     --user1 charchess@gmail.com \
