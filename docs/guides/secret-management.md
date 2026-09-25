@@ -1,85 +1,117 @@
-# Secret Management Guide (Infisical)
+# Secret Management Guide
 
-This guide covers secrets management, synchronization, and access within the Vixens infrastructure using **Infisical**.
+Vixens utilise **OpenBao** comme source de vérité pour les valeurs secrètes et **External Secrets Operator (ESO)** pour les projeter vers des `Secret` Kubernetes.
 
----
+## Architecture canonique
 
-## 🏗️ Architecture
-
-1.  **Infisical Server:** Self-hosted at `http://192.168.111.69:8085`.
-2.  **Infisical Operator:** Runs in the cluster and synchronizes secrets from Infisical to Kubernetes `Secret` resources.
-3.  **Machine Identity:** Uses **Universal Auth** for secure, non-interactive access.
-
----
-
-## 💻 CLI Access (Critical for Automation)
-
-When using the Infisical CLI with Machine Identity (Universal Auth), there is a known issue where the project slug (`vixens`) might not resolve correctly (returning 404).
-
-**Standard Rule:** Always use the **Project ID (UUID)** instead of the slug.
-
-### 🔑 Credentials
-- **Project ID:** `47aca60e-543b-4fd6-b646-8ebd5a7b3433`
-- **Machine Identity Secret:** Stored in Kubernetes under `argocd/infisical-universal-auth`.
-
-### 🔓 Login Procedure
-```bash
-infisical login --method=universal-auth \
-  --client-id=<YOUR_CLIENT_ID> \
-  --client-secret=<YOUR_CLIENT_SECRET> \
-  --domain http://192.168.111.69:8085
+```text
+OpenBao (KV v2)
+    ↓
+ClusterSecretStore/openbao
+    ↓
+ExternalSecret
+    ↓
+Secret Kubernetes
+    ↓
+Pod
 ```
 
-### 📦 Fetching Secrets
-```bash
-# Use --projectId instead of --project
-infisical secrets --projectId 47aca60e-543b-4fd6-b646-8ebd5a7b3433 --env prod --path /apps/00-infra/velero
-```
+Les valeurs secrètes ne sont jamais stockées en clair dans Git.
 
----
+## ClusterSecretStore
 
-## 🔄 Synchronization Protocol
-
-### 1. In Infisical
-- Add your secret in the web UI.
-- Use paths like `/apps/<category>/<app-name>`.
-
-### 2. In Kubernetes (GitOps)
-Create an `InfisicalSecret` resource:
+Le store canonique est :
 
 ```yaml
-apiVersion: secrets.infisical.com/v1alpha1
-kind: InfisicalSecret
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
 metadata:
-  name: my-app-secrets
-spec:
-  hostAPI: http://192.168.111.69:8085
-  authentication:
-    universalAuth:
-      credentialsRef:
-        secretName: infisical-universal-auth
-        secretNamespace: argocd
-      secretsScope:
-        projectSlug: vixens
-        envSlug: prod
-        secretsPath: /apps/my-category/my-app
-  managedSecretReference:
-    secretName: my-app-secrets
-    creationPolicy: Owner
+  name: openbao
 ```
 
----
+Il est défini dans `apps/00-infra/openbao/` et pointe vers le moteur KV v2 d'OpenBao.
 
-## 🛠️ Troubleshooting
+## Convention des chemins
 
-### Error: "404 Project Not Found"
-- **Cause:** Using slug `vixens` with Universal Auth in CLI.
-- **Fix:** Use the UUID `47aca60e-543b-4fd6-b646-8ebd5a7b3433`.
+Utiliser des chemins explicites par environnement et application :
 
-### Secrets not updating
-- Check operator logs: `kubectl logs -n infisical-operator-system -l app.kubernetes.io/name=secrets-operator`.
-- Force sync via annotation: `kubectl annotate infisicalsecret <name> secrets.infisical.com/force-sync=$(date +%s) --overwrite`.
+```text
+vixens/dev/apps/<category>/<app>
+vixens/prod/apps/<category>/<app>
+```
 
----
+Exemple :
 
-**Last Updated:** 2026-02-05 (Fix for CLI 404 issue)
+```text
+vixens/prod/apps/00-infra/cert-manager-webhook-gandi
+```
+
+## ExternalSecret
+
+Pattern standard :
+
+```yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: my-app-secrets
+  namespace: my-namespace
+spec:
+  refreshInterval: 60s
+  secretStoreRef:
+    name: openbao
+    kind: ClusterSecretStore
+  target:
+    name: my-app-secrets
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  dataFrom:
+    - extract:
+        key: vixens/dev/apps/<category>/<app>
+```
+
+Le chemin est adapté dans l'overlay prod pour pointer vers `vixens/prod/...`.
+
+## Utilisation dans un workload
+
+Le workload consomme uniquement le `Secret` Kubernetes matérialisé par ESO :
+
+```yaml
+env:
+  - name: API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: my-app-secrets
+        key: API_KEY
+```
+
+Une application ne doit pas connaître les détails d'authentification OpenBao.
+
+## Validation
+
+Observer l'état sans mutation persistante :
+
+```bash
+kubectl get clustersecretstore openbao
+kubectl get externalsecret -A
+kubectl describe externalsecret -n <namespace> <name>
+kubectl get secret -n <namespace> <target-secret>
+```
+
+Ne jamais afficher ou copier la valeur d'un secret dans un ticket, une PR, un commit ou un log partagé.
+
+## Bootstrap OpenBao
+
+L'authentification ESO → OpenBao est actuellement un détail d'infrastructure géré séparément du contenu des `ExternalSecret`. Le contrat applicatif reste :
+
+```text
+ExternalSecret → ClusterSecretStore/openbao
+```
+
+Toute évolution du mécanisme d'authentification (par exemple token statique vers auth Kubernetes) doit préserver ce contrat autant que possible.
+
+## Ancien modèle Infisical
+
+L'ancien `InfisicalSecret` et l'Infisical Operator sont retirés du modèle actif. Les ADR, audits ou rapports historiques peuvent encore les mentionner pour conserver l'historique du projet ; ils ne constituent pas une procédure actuelle.
+
+Pour tout nouveau secret, utiliser **OpenBao + External Secrets Operator**.
