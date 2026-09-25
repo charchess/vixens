@@ -12,7 +12,7 @@ components:
   - ../../../../_shared/components/priority/high
 
 patches:
-  - path: patch-infisical-env.yaml
+  - path: patch-external-secret-env.yaml
 labels:
   - pairs:
       environment: prod
