@@ -13,9 +13,11 @@ Références techniques et spécifications du projet Vixens.
 
 - [WORKFLOW.md](../../WORKFLOW.md) — workflow canonique ;
 - [AGENTS.md](../../AGENTS.md) — règles multi-agent ;
+- [Task Management](../guides/task-management.md) — conventions actuelles GitHub Issues ;
 - [Multi-Agent Orchestration](multi-agent-orchestration.md) — principes de coordination agnostiques des outils ;
-- [Workflow State Machine](workflow-state-machine.md) — référence historique de l'ancien workflow local ;
-- [Task Formalism](task-formalism.md) — conventions de rédaction des tâches.
+- [Workflow State Machine](workflow-state-machine.md) — référence historique de l'ancien workflow local.
+
+L'ancienne proposition de formalisme Archon du 2025-12-30 est archivée sous `docs/reports/trash/20260208-112431/2025-12-30-archon-task-formalism.md`. Elle ne définit plus le workflow courant.
 
 ## Kubernetes / GitOps
 
@@ -25,4 +27,4 @@ Références techniques et spécifications du projet Vixens.
 
 ## Principe
 
-Une **reference** décrit un contrat ou un mécanisme. Un **guide** explique une procédure. Les anciennes références explicitement marquées `Superseded` restent disponibles pour l'historique mais ne définissent plus le workflow courant.
+Une **reference** décrit un contrat ou un mécanisme. Un **guide** explique une procédure. Les anciennes références explicitement marquées `Superseded` ou déplacées dans les archives restent disponibles pour l'historique mais ne définissent plus le workflow courant.
