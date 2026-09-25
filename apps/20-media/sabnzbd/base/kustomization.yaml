@@ -5,7 +5,7 @@ namespace: media # Specify the namespace here
 resources:
   - deployment.yaml
   - service.yaml
-  - infisical-secret.yaml
+  - external-secret.yaml
   - servicemonitor.yaml
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml
