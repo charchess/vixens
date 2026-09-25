@@ -6,7 +6,7 @@ resources:
   - deployment.yaml
   - service.yaml
   - ingress.yaml
-  - infisical-secret.yaml
+  - external-secret.yaml
   - vikunja-db-secrets.yaml
   - pdb.yaml
   - cilium-networkpolicy.yaml
