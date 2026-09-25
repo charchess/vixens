@@ -14,4 +14,4 @@ components:
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/nometrics
 patches:
-  - path: patch-infisical-env.yaml
+  - path: patch-external-secret-env.yaml
