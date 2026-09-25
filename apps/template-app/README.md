@@ -3,43 +3,70 @@
 Ce dossier sert de base pour toute nouvelle application intégrée au cluster.
 Il implémente le **Golden Standard** défini dans `docs/reference/app-golden-standard.md`.
 
-> **Reference canonique** : [`docs/reference/app-golden-standard.md`](../../docs/reference/app-golden-standard.md)
+> **Référence canonique** : [`docs/reference/app-golden-standard.md`](../../docs/reference/app-golden-standard.md)
 
 ---
 
-## Standards Obligatoires (DoD)
+## Standards obligatoires (DoD)
 
-Pour qu'une application soit "Production Ready", elle doit :
+Pour qu'une application soit « Production Ready », elle doit :
 
 1. **`priorityClassName`** — défini selon la criticité (voir [Priority Classes](../../docs/reference/app-golden-standard.md#priority-classes))
-2. **CP Toleration** — `node-role.kubernetes.io/control-plane` présente dans le manifest
-3. **Kyverno Sizing Labels** — labels `vixens.io/sizing.<container>: <tier>` sur le pod template (jamais de blocs `resources:` explicites)
-4. **`revisionHistoryLimit: 3`** — réduit la croissance etcd
-5. **Résilience Data** :
-   - **SQLite** : sidecar Litestream + init restore-db
-   - **Config plats** : sidecar Config-Syncer + init restore-config
-6. **Sécurité** : HTTPS obligatoire avec redirection (Middleware Traefik)
+2. **CP Toleration** — `node-role.kubernetes.io/control-plane` présente lorsque le pattern applicatif l'exige
+3. **Kyverno sizing labels** — utiliser les labels `vixens.io/sizing.<container>: <tier>` selon les conventions actuelles du repo
+4. **`revisionHistoryLimit: 3`** — sauf justification spécifique
+5. **Résilience data** selon le workload : Litestream, Config-Syncer, CSI ou autre pattern déjà présent dans le repo
+6. **Sécurité réseau** — flux Cilium explicitement déclarés avec le minimum nécessaire
+7. **Secrets** — OpenBao + External Secrets Operator ; aucun secret en clair dans Git
+8. **Exposition HTTP/TLS** — réutiliser les patterns Traefik/cert-manager actuels plutôt que copier d'anciens middlewares par défaut
 
 ---
 
-## Structure des Fichiers
+## Structure des fichiers
 
 ### Base
-- `deployment.yaml` — Patron complet (priorité, toleration, sizing labels, resilience inits & sidecars)
-- `infisical-secret.yaml` — Récupération des secrets via Infisical
-- `litestream-config.yaml` — Configuration de la réplication SQLite (Litestream)
+- `deployment.yaml` — patron du workload
+- `external-secret.yaml` — uniquement si l'application a besoin de secrets
+- `litestream-config.yaml` — si Litestream est utilisé
 - `service.yaml` — Service Kubernetes
-- `namespace.yaml` — Namespace de l'application
+- `namespace.yaml` — seulement pour les namespaces dédiés
+- `cilium-networkpolicy.yaml` / `networkpolicy.yaml` — selon les patterns de sécurité applicables
 
 ### Overlays
-- `prod/` — Patch `envSlug` vers `prod`, ajustements spécifiques prod
+- `dev/` — différences explicites de développement
+- `prod/` — différences explicites de production
+
+Pour les secrets, les overlays doivent modifier le **chemin OpenBao** ou les paramètres ESO nécessaires, jamais un ancien `envSlug` Infisical.
+
+Pattern canonique :
+
+```yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: my-app-secrets
+spec:
+  secretStoreRef:
+    name: openbao
+    kind: ClusterSecretStore
+  target:
+    name: my-app-secrets
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  dataFrom:
+    - extract:
+        key: vixens/dev/apps/<category>/<app>
+```
+
+En production, utiliser le chemin canonique `vixens/prod/apps/<category>/<app>`.
 
 ---
 
-## Sizing — Comment Ça Marche
+## Sizing — comment ça marche
 
-Les ressources (`requests`/`limits`) ne sont **jamais** définies dans le YAML.
-Elles sont injectées à l'admission par la policy Kyverno `sizing-mutate` via des labels :
+Suivre les conventions réellement présentes sur `main` et les références actuelles du repo. Ne pas recopier des tiers ou labels historiques sans vérifier `docs/reference/RESOURCE_STANDARDS.md` et les manifests applicatifs récents.
+
+Exemple de labels :
 
 ```yaml
 spec:
@@ -47,22 +74,33 @@ spec:
     metadata:
       labels:
         app: my-app
-        vixens.io/sizing: small                # fallback générique
-        vixens.io/sizing.my-app: small         # container principal
-        vixens.io/sizing.litestream: micro     # sidecar litestream
-        vixens.io/sizing.config-syncer: micro  # sidecar config-syncer
-        vixens.io/sizing.restore-config: micro # init restore-config
-        vixens.io/sizing.restore-db: micro     # init restore-db
+        vixens.io/sizing.my-app: small
+        vixens.io/sizing.litestream: micro
 ```
-
-Tiers disponibles : `micro`, `small`, `medium`, `large`, `xlarge`, `G-small`, `G-medium`, `G-large`, `G-xl`
 
 ---
 
-## Guides Techniques
+## Workflow
+
+Avant d'utiliser ce template :
+
+```bash
+git fetch origin
+git switch main
+git pull --ff-only
+gh pr list --state open
+```
+
+Créer ou rattacher le changement à une GitHub Issue, travailler sur une branche courte, ouvrir une PR, laisser la CI valider puis laisser ArgoCD réconcilier le cluster. Ne pas utiliser ce template pour contourner le workflow GitOps.
+
+---
+
+## Guides techniques
 
 - [Golden Standard complet](../../docs/reference/app-golden-standard.md)
+- [Ajouter une application](../../docs/guides/adding-new-application.md)
+- [Gestion des secrets](../../docs/guides/secret-management.md)
 - [Pattern Config-Syncer](../../docs/guides/pattern-config-syncer.md)
-- [Backup SQLite (Litestream)](../../docs/guides/adding-new-application.md#sqlite-backup-strategy-litestream)
 - [Standards de ressources](../../docs/reference/RESOURCE_STANDARDS.md)
-- [Niveaux de qualité (tiers)](../../docs/reference/quality-standards.md)
+- [Niveaux de qualité](../../docs/reference/quality-standards.md)
+- [`WORKFLOW.md`](../../WORKFLOW.md) — workflow canonique
