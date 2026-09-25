@@ -1,11 +1,9 @@
 ---
 name: vixens-kubernetes-patterns
 description: >-
-  Kubernetes patterns and best practices for Vixens cluster.
-  Resource management, volume patterns, probes, init containers,
-  and GitOps-compatible configurations. Use when: designing deployments,
-  troubleshooting volume issues, configuring probes, or ensuring cluster
-  bootstrap reproductibility.
+  Current Kubernetes patterns and best practices for Vixens. Use when designing
+  deployments, probes, volumes, resource sizing, secrets integration, Kustomize
+  composition, or validating manifests before promotion.
 argument-hint: "[pattern-name or component-type]"
 license: MIT
 compatibility: opencode
@@ -14,619 +12,184 @@ metadata:
   audience: homelab-operators
 ---
 
-# Vixens Kubernetes Patterns
+# Vixens Kubernetes patterns
 
-**Production-tested patterns for reliable, reproducible Kubernetes deployments.**
+Follow `AGENTS.md`, `WORKFLOW.md`, and current manifests first. This skill summarizes reusable patterns; it is not a second source of truth.
 
 **Focus:** $ARGUMENTS
 
----
+## Core principles
 
-## 🎯 Resource Management Patterns
+1. Git is desired state; persistent changes go through PR + CI + ArgoCD.
+2. Reuse an existing application pattern before inventing a new abstraction.
+3. Base manifests contain environment-independent structure; overlays contain environment-specific differences.
+4. Prefer narrow network policy and least privilege.
+5. Sensitive values live in OpenBao, not Git.
+6. Important validation belongs in CI, not in a workstation-only wrapper.
 
-### Pattern: Defense-in-Depth Resource Sizing
+## Resource sizing
 
-**Problem:** Kyverno policy mutations (like `sizing-v2-mutate`) are applied AFTER pod creation starts. Race conditions during cluster bootstrap or recovery can result in pods without resources.
-
-**Solution:** Always specify BOTH hardcoded resources AND sizing labels.
+Keep explicit resource requests/limits as a bootstrap-safe fallback even when VPA/Kyverno sizing metadata exists.
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    vixens.io/sizing-v2: "true"  # Enable VPA
 spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing.app: V-medium  # Target sizing tier
+        vixens.io/sizing.app: V-medium
     spec:
       containers:
-      - name: app
-        resources:  # ✅ Hardcoded fallback (REQUIRED)
-          requests:
-            cpu: 100m
-            memory: 256Mi
-          limits:
-            cpu: 1000m
-            memory: 1Gi
+        - name: app
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
 ```
 
-**Why both?**
-- **Hardcoded resources** → Guaranteed minimum during bootstrap/failover
-- **Sizing labels** → VPA can adjust dynamically in steady-state
-- **Prevents OOMKilled** → Even if Kyverno policy not ready yet
+Treat current shared sizing components/policies in Git as canonical for exact tier semantics.
 
-**Validation:**
-```bash
-# Check if pod has BOTH
-kubectl get pod $POD -o yaml | grep 'vixens.io/sizing'  # Should find label
-kubectl get pod $POD -o jsonpath='{.spec.containers[0].resources}'  # Should have values
-```
+## Dynamic configuration
 
----
-
-## 🔧 Init Container Patterns
-
-### Pattern: Dynamic Config Generation
-
-**Problem:** ConfigMaps are static. Environment variables in YAML config files (like `$BUCKET_NAME`) are not interpolated by applications.
-
-**Solution:** Use init container to generate config from environment variables.
+When an application does not interpolate environment variables inside its config format, generate the config in an init container and share it through `emptyDir`.
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-spec:
-  template:
-    spec:
-      initContainers:
-      - name: generate-config
-        image: busybox:1.37.0
-        command: ["sh", "-c"]
-        args:
-          - |
-            cat > /config/app.yml <<EOF
-            database:
-              host: ${DB_HOST}
-              port: ${DB_PORT}
-            storage:
-              bucket: ${S3_BUCKET}
-              endpoint: ${S3_ENDPOINT}
-            EOF
-        envFrom:
-          - secretRef:
-              name: app-secrets
-        volumeMounts:
-          - name: generated-config
-            mountPath: /config
-
-      containers:
-      - name: app
-        args: ["-config", "/etc/app-config/app.yml"]
-        volumeMounts:
-          - name: generated-config
-            mountPath: /etc/app-config  # ✅ Mount directory
-
-      volumes:
+initContainers:
+  - name: generate-config
+    image: busybox:1.37.0
+    command: ["sh", "-c"]
+    args:
+      - |
+        cat > /generated/app.yml <<EOF
+        database:
+          host: ${DB_HOST}
+        EOF
+    envFrom:
+      - secretRef:
+          name: app-secrets
+    volumeMounts:
       - name: generated-config
-        emptyDir: {}
-```
-
-**Key points:**
-1. Init container writes to emptyDir
-2. Main container reads from same emptyDir
-3. Shell interpolates `${VARS}` from secrets/configmaps
-4. Config is generated fresh on every pod restart
-
-**Anti-pattern:**
-```yaml
-# ❌ WRONG - Most apps don't interpolate shell vars in YAML
-configMap:
-  app.yml: |
-    bucket: $S3_BUCKET  # Will be literal "$S3_BUCKET"
-```
-
----
-
-## 📦 Volume Mount Patterns
-
-### Pattern: emptyDir Directory Mount (Not subPath)
-
-**Problem:** `subPath` mounts require the file/directory to exist when the volume is first mounted. If an init container creates the file AFTER the main container's volume mount is initialized, the mount fails.
-
-**Solution:** Mount entire directory, update config path in container args.
-
-```yaml
-# ❌ WRONG - subPath fails if file created by init container
-initContainers:
-- name: generate-config
-  volumeMounts:
-    - name: config
-      mountPath: /config  # Writes /config/app.yml
+        mountPath: /generated
 
 containers:
-- name: app
-  args: ["-config", "/etc/app.yml"]
-  volumeMounts:
-    - name: config
-      mountPath: /etc/app.yml  # ❌ FAILS - file doesn't exist at mount time
-      subPath: app.yml
+  - name: app
+    volumeMounts:
+      - name: generated-config
+        mountPath: /etc/app
 
-# ✅ CORRECT - Mount directory
-initContainers:
-- name: generate-config
-  volumeMounts:
-    - name: config
-      mountPath: /config  # Writes /config/app.yml
-
-containers:
-- name: app
-  args: ["-config", "/etc/config/app.yml"]  # Update path
-  volumeMounts:
-    - name: config
-      mountPath: /etc/config  # ✅ Mount whole directory
+volumes:
+  - name: generated-config
+    emptyDir: {}
 ```
 
-**Why this works:**
-- Directory mount is created immediately (empty)
-- Init container populates it
-- Main container sees populated directory
-- No race condition on file existence
+Avoid `subPath` for files that are created dynamically at runtime; mount the containing directory instead.
 
-**When to use subPath:**
-- Static ConfigMap/Secret (file exists before pod creation)
-- Never with emptyDir populated by init containers
+## Probes
 
----
+- Liveness: verify a persistent process or stable health endpoint.
+- Readiness: verify the application can actually serve traffic.
+- Startup: use when initialization is legitimately slow.
+- Do not probe a short-lived command inside a `while true; ...; sleep` loop.
 
-## 🏥 Probe Patterns
+Prefer application-native HTTP/TCP health endpoints over process-name checks when available.
 
-### Pattern: Check Persistent Process (Not Intermittent Command)
+## Secrets
 
-**Problem:** Liveness probe fails if it checks for a process that only runs intermittently.
+The active secret pattern is:
 
-**Example - Broken:**
-```yaml
-# Container runs: `sh -c "while true; do rclone sync ...; sleep 60; done"`
-
-livenessProbe:
-  exec:
-    command: ["pgrep", "rclone"]  # ❌ FAILS 58/60 seconds
-  periodSeconds: 30
+```text
+OpenBao → ClusterSecretStore/openbao → ExternalSecret → Secret → workload
 ```
-
-**Why it fails:**
-- rclone runs for ~2 seconds
-- Rest of time only `sleep 60` is running
-- Probe fails → container killed → CrashLoopBackOff
-
-**Solution - Check shell wrapper:**
-```yaml
-livenessProbe:
-  exec:
-    command: ["pgrep", "-f", "sh -c"]  # ✅ Checks persistent shell
-  periodSeconds: 30
-```
-
-**Alternative - Check pidfile/socket:**
-```yaml
-livenessProbe:
-  exec:
-    command: ["test", "-f", "/var/run/app.pid"]
-  periodSeconds: 30
-```
-
-**Rule of thumb:**
-- Liveness probe → Check **persistent process** (shell, supervisor, daemon)
-- Readiness probe → Check **application functionality** (HTTP /health, TCP port)
-
----
-
-## 🔐 Secret Management Patterns
-
-### Pattern: Validate InfisicalSecret Sync
-
-**Problem:** InfisicalSecret CRD shows `Synced` status but secret count is 0 (path empty in Infisical).
-
-**Diagnosis:**
-```bash
-# Check sync status
-kubectl get infisicalsecret $NAME -o jsonpath='{.status.conditions[?(@.type=="secrets.infisical.com/ReadyToSyncSecrets")].message}'
-
-# Expected: "Last reconcile synced N secrets"
-# Problem: "Last reconcile synced 0 secrets"
-
-# Verify path exists in Infisical
-curl -H "Authorization: Bearer $TOKEN" \
-  "http://infisical:8085/api/v3/secrets/raw?workspaceId=$ID&environment=prod&secretPath=/path"
-
-# Response: {"secrets": [], "imports": []}  # Empty = problem!
-```
-
-**Prevention:**
-1. Create Infisical secrets BEFORE deploying InfisicalSecret CR
-2. Monitor `status.conditions` in CI/CD
-3. Add validation step in ArgoCD pre-sync hook
 
 ```yaml
-# ArgoCD hook to validate secret count
-apiVersion: batch/v1
-kind: Job
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
-  annotations:
-    argocd.argoproj.io/hook: PreSync
+  name: app-secrets
 spec:
-  template:
-    spec:
-      containers:
-      - name: validate-secrets
-        image: curlimages/curl
-        command:
-        - sh
-        - -c
-        - |
-          # Wait for InfisicalSecret to sync
-          sleep 10
-          COUNT=$(kubectl get secret $SECRET_NAME -o json | jq '.data | length')
-          if [ "$COUNT" -eq 0 ]; then
-            echo "ERROR: Secret $SECRET_NAME is empty"
-            exit 1
-          fi
-          echo "OK: Secret has $COUNT keys"
+  refreshInterval: 60s
+  secretStoreRef:
+    name: openbao
+    kind: ClusterSecretStore
+  target:
+    name: app-secrets
+    creationPolicy: Owner
+  dataFrom:
+    - extract:
+        key: vixens/prod/apps/category/app
 ```
 
----
+Use the actual environment/path conventions from current manifests. Load `vixens-secrets` for diagnosis and rotation.
 
-## 🔄 YAML Field Order Patterns
+Do not create new `InfisicalSecret` resources. References to Infisical in superseded ADRs and historical incident reports are historical context only.
 
-### Pattern: Application-Specific Config Structure
+## Network policy
 
-**Problem:** Some applications expect specific YAML field order (even though YAML spec says order doesn't matter).
+With default-deny, declare only required traffic:
 
-**Example - Litestream:**
-```yaml
-# ✅ CORRECT - addr before dbs
-addr: ":9090"
-dbs:
-  - path: /data/app.db
-    replicas:
-      - url: s3://bucket/app.db
+- DNS as needed;
+- ingress from Traefik or explicitly allowed workloads;
+- egress to named in-cluster services/ports;
+- `world` only when external access is actually required.
 
-# ❌ WRONG - May fail with some versions
-dbs:
-  - path: /data/app.db
-addr: ":9090"
+Use Hubble failed-flow telemetry to determine the exact missing flow before widening a policy.
+
+## Storage
+
+- Reuse the established CSI/StorageClass pattern for the workload type.
+- Check access mode and rollout behavior for `ReadWriteOnce` volumes.
+- Consider `strategy: Recreate` where two simultaneous replicas cannot mount the same RWO volume safely.
+- Do not embed NAS endpoints or storage credentials in application manifests when the CSI layer already abstracts them.
+
+## Kustomize components
+
+Components should configure one concrete concern and be opt-in.
+
+Good examples:
+
+```text
+revision-history-limit
+sync-wave/wave-10
+goldilocks/enabled
 ```
 
-**Best practice:**
-1. Follow official examples exactly
-2. Test config locally before deploying
-3. Document quirks in comments
+Avoid outcome-oriented monoliths that silently bundle unrelated settings.
 
-```yaml
-# Litestream requires 'addr' field BEFORE 'dbs' section
-# See: https://github.com/benbjohnson/litestream/issues/XXX
-addr: ":9090"
-dbs: ...
+## Sync ordering
+
+Operators/CRDs and policies must exist before consumers. Use the current ArgoCD sync-wave conventions from the repo; do not copy historical wave numbers blindly.
+
+Typical dependency direction:
+
+```text
+CRDs/operators → stores/policies → shared infra → applications → optional tooling
 ```
 
----
+## Validation
 
-## 🎨 Sync Wave Patterns
+Before merge, rely on the repository CI. Useful local/read-only checks include:
 
-### Pattern: Policy Before Consumers
-
-**Problem:** Kyverno policies deployed in same wave as apps they mutate → race condition.
-
-**Solution:** Use sync waves to enforce ordering.
-
-```yaml
-# apps/00-infra/kyverno/base/kustomization.yaml
-resources:
-  - policies/sizing-v2-mutate.yaml
-  - policies/security-hardening.yaml
-
-# argocd/overlays/prod/apps/kyverno.yaml
-metadata:
-  annotations:
-    argocd.argoproj.io/sync-wave: "3"  # Early wave
-
-# argocd/overlays/prod/apps/my-app.yaml
-metadata:
-  annotations:
-    argocd.argoproj.io/sync-wave: "7"  # Later wave
-```
-
-**Sync wave guidelines:**
-| Wave | Purpose | Examples |
-|------|---------|----------|
-| 0-2 | Core infrastructure | Namespaces, CRDs, cert-manager |
-| 3-4 | Policies & operators | Kyverno, Infisical operator |
-| 5-6 | Critical services | DNS, ingress, monitoring |
-| 7-9 | Applications | Business apps |
-| 10+ | Optional/experimental | Dev tools, dashboards |
-
-**Gap between policy and apps:** Minimum 4 sync waves (policy wave + 30s readiness).
-
----
-
-## 🧪 Testing Patterns
-
-### Pattern: Validation Before Promotion
-
-**Pre-deployment checks:**
 ```bash
-# 1. YAML syntax
-yamllint -c yamllint-config.yml apps/$APP/**/*.yaml
-
-# 2. Kustomize build
-kustomize build apps/$APP/overlays/dev
-
-# 3. Kubernetes validation
-kustomize build apps/$APP/overlays/dev | kubectl apply --dry-run=client -f -
-
-# 4. Resource kinds diff (detect silent drops)
-kustomize build apps/$APP/overlays/dev | grep '^kind:' | sort > /tmp/before.txt
-# Make changes...
-kustomize build apps/$APP/overlays/dev | grep '^kind:' | sort > /tmp/after.txt
-diff /tmp/before.txt /tmp/after.txt  # Missing kind = regression!
+yamllint -c yamllint-config.yml <paths>
+kustomize build apps/<category>/<app>/overlays/dev
 ```
 
-**Post-deployment validation:**
-```bash
-# 1. ArgoCD sync status
-kubectl -n argocd get application $APP -o jsonpath='{.status.sync.status}'
+When changing Kustomize wiring, compare rendered object kinds/names before and after to detect accidental resource removal.
 
-# 2. Pod ready
-kubectl -n $NS get pods -l app=$APP -o jsonpath='{.items[*].status.phase}'
+After ArgoCD sync, verify health and the specific behavior changed by the PR; do not treat `Synced` alone as functional validation.
 
-# 3. Liveness/Readiness probes passing
-kubectl -n $NS get pods -l app=$APP -o jsonpath='{.items[*].status.containerStatuses[*].ready}'
+## Promotion
 
-# 4. No recent restarts
-kubectl -n $NS get pods -l app=$APP -o jsonpath='{.items[*].status.containerStatuses[*].restartCount}'
-```
+Dev follows `main`. Production promotion is performed only through `.github/workflows/promote-prod.yaml` after dev validation. Do not manually move `prod-stable`.
 
----
+## References
 
-## 🧩 Kustomize Component Patterns
-
-### Pattern: Granular Components (WHAT not WHY)
-
-**Problem:** Monolithic components that bundle multiple unrelated concerns violate single-responsibility principle and create maintenance burden.
-
-**Anti-pattern - Monolithic Component:**
-```yaml
-# ❌ apps/_shared/components/gold-maturity/kustomization.yaml
-# WRONG - Bundles 4 unrelated concerns
-apiVersion: kustomize.config.k8s.io/v1alpha1
-kind: Component
-patches:
-  - patch: |-
-      metadata:
-        annotations:
-          argocd.argoproj.io/sync-wave: "10"        # Concern 1: Deployment order
-          goldilocks.fairwinds.com/enabled: "true"  # Concern 2: VPA recommendations
-          vpa.kubernetes.io/updateMode: "Off"       # Concern 3: VPA mode
-      spec:
-        revisionHistoryLimit: 3                     # Concern 4: etcd optimization
-```
-
-**Why this is bad:**
-- **Cannot opt-out individually** - If you want sync-wave 10 but NOT goldilocks, impossible
-- **Named after outcome** - "gold-maturity" describes WHY (Gold tier status), not WHAT (concrete config)
-- **Tight coupling** - Changes to one concern affect all consumers
-- **Hidden dependencies** - Not clear what each app is using
-
-**Solution - Granular Components:**
-```yaml
-# ✅ apps/_shared/components/sync-wave/wave-10/kustomization.yaml
-apiVersion: kustomize.config.k8s.io/v1alpha1
-kind: Component
-patches:
-  - patch: |-
-      metadata:
-        annotations:
-          argocd.argoproj.io/sync-wave: "10"
-    target:
-      kind: Deployment
-
-# ✅ apps/_shared/components/goldilocks/enabled/kustomization.yaml
-apiVersion: kustomize.config.k8s.io/v1alpha1
-kind: Component
-patches:
-  - patch: |-
-      metadata:
-        annotations:
-          goldilocks.fairwinds.com/enabled: "true"
-          vpa.kubernetes.io/updateMode: "Off"
-    target:
-      kind: Deployment
-
-# ✅ apps/_shared/components/revision-history-limit/kustomization.yaml
-apiVersion: kustomize.config.k8s.io/v1alpha1
-kind: Component
-patches:
-  - patch: |-
-      spec:
-        revisionHistoryLimit: 3
-    target:
-      kind: Deployment
-```
-
-**App consumption:**
-```yaml
-# apps/my-app/overlays/prod/kustomization.yaml
-components:
-  - ../../../../_shared/components/sync-wave/wave-10
-  - ../../../../_shared/components/goldilocks/enabled
-  - ../../../../_shared/components/revision-history-limit
-  # ✅ Explicit, opt-in per concern
-```
-
----
-
-### Component Design Principles
-
-#### 1. Single Responsibility
-**Each component configures ONE concern.**
-
-✅ Good:
-- `sync-wave/wave-10` - Only sync-wave annotation
-- `goldilocks/enabled` - Only Goldilocks + VPA mode
-- `priority/high` - Only priorityClassName
-
-❌ Bad:
-- `gold-maturity` - Sync-wave + Goldilocks + VPA + revisionHistoryLimit
-- `base` - Security context + fsGroup + seccomp + revisionHistoryLimit
-- `resources` - Goldilocks + VPA autoscaling mode
-
-#### 2. Name What It Does (WHAT), Not Why (WHY)
-
-| ❌ Outcome-focused (WHY) | ✅ Configuration-focused (WHAT) |
-|-------------------------|--------------------------------|
-| `gold-maturity` | `sync-wave/wave-10`, `goldilocks/enabled` |
-| `security-baseline` | `security-context`, `seccomp-profile` |
-| `high-availability` | `poddisruptionbudget/1`, `topology-spread` |
-| `resource-optimization` | `goldilocks/enabled`, `vpa/auto` |
-
-**Why this matters:**
-- **WHAT** = Implementation detail (concrete config)
-- **WHY** = Business goal (abstract outcome)
-- Components are reusable building blocks → describe the block, not the building
-
-#### 3. Opt-In Composition
-
-Apps should compose granular components, not inherit monoliths:
-
-```yaml
-# ❌ WRONG - Monolithic inheritance
-components:
-  - ../../../../_shared/components/base  # What's in here? Who knows.
-
-# ✅ CORRECT - Explicit composition
-components:
-  - ../../../../_shared/components/security-context
-  - ../../../../_shared/components/seccomp-profile
-  - ../../../../_shared/components/revision-history-limit
-  # Clear what each app uses
-```
-
-#### 4. Minimal Duplication
-
-If 3+ apps use the same patch, extract to component:
-
-```yaml
-# ❌ WRONG - Duplicated in 36 dev overlays
-patches:
-  - patch: |-
-      spec:
-        replicas: 0
-    target:
-      kind: Deployment
-
-# ✅ CORRECT - Shared component
-# apps/_shared/components/dev-disable-replicas/kustomization.yaml
-# Then reference in each dev overlay
-```
-
----
-
-### Component Migration Checklist
-
-When refactoring a monolithic component:
-
-- [ ] **Identify concerns** - List all patches/configs bundled
-- [ ] **Create granular components** - One component per concern
-- [ ] **Update consumers** - Replace monolith with explicit list
-- [ ] **Validate builds** - `kustomize build` before/after match
-- [ ] **Check kind diff** - No missing resources after refactor
-- [ ] **Delete monolith** - Remove old component after migration
-- [ ] **Document** - Add comment explaining the split
-
-**Example validation:**
-```bash
-# Before refactoring
-kustomize build apps/my-app/overlays/prod | grep '^kind:' | sort > /tmp/before.txt
-
-# After replacing component
-kustomize build apps/my-app/overlays/prod | grep '^kind:' | sort > /tmp/after.txt
-
-# Ensure no resources dropped
-diff /tmp/before.txt /tmp/after.txt  # Should be identical
-```
-
----
-
-### Red Flags (When to Refactor)
-
-🚩 **Component bundles 2+ unrelated concerns**
-- Example: sync-wave + goldilocks + security context
-
-🚩 **Component name describes outcome, not config**
-- Example: `gold-maturity`, `production-ready`, `secure-baseline`
-
-🚩 **Apps can't opt-out of individual features**
-- Example: Want sync-wave but not VPA → impossible with monolith
-
-🚩 **Component exists as both component AND patches**
-- Example: `resources/` component + `goldilocks/enabled/` component (duplication)
-
-🚩 **Same patch in 5+ app overlays**
-- Example: `replicas: 0` duplicated in 36 dev overlays
-
----
-
-### Real-World Example: gold-maturity Refactoring
-
-**Before (Monolithic):**
-```yaml
-# apps/_shared/components/gold-maturity/kustomization.yaml
-# 54 apps using this
-patches:
-  - patch: sync-wave + goldilocks + vpa + revisionHistoryLimit
-```
-
-**Problem discovered:**
-- Apps stuck at wave-10 (couldn't change deployment order)
-- Couldn't disable VPA without losing other features
-- Name implies outcome (Gold tier) not configuration
-
-**After (Granular):**
-```yaml
-# Created:
-apps/_shared/components/
-├── sync-wave/
-│   ├── wave-0/
-│   ├── wave-1/
-│   ├── wave-2/
-│   ├── wave-10/
-│   └── ...
-├── goldilocks/enabled/
-└── revision-history-limit/
-
-# Migration:
-- 54 apps migrated from gold-maturity to explicit components
-- Apps now choose sync-wave independently (0-20)
-- Can opt-out of individual features
-- Clear dependencies
-```
-
-**Result:**
-- ✅ 48/50 apps now have coherent sync-waves
-- ✅ Apps can evolve independently
-- ✅ Components reusable across contexts
-- ✅ No hidden coupling
-
-**Lesson learned:** Components are configuration primitives, not maturity tier shortcuts.
-
----
-
-## 📚 References
-
-- [Vixens Troubleshoot Skill](../vixens-troubleshoot/SKILL.md) - Production incident lessons
-- [Vixens ArgoCD Safety](../vixens-argocd-safety/SKILL.md) - GitOps safety rules
-- [Vixens Maturity](../vixens-maturity/SKILL.md) - Maturity tier requirements
-- [Kubernetes Best Practices](https://kubernetes.io/docs/concepts/configuration/overview/) - Official docs
+- `AGENTS.md`
+- `WORKFLOW.md`
+- `docs/procedures/deployment-standard.md`
+- `docs/guides/adding-new-application.md`
+- `docs/guides/secret-management.md`
+- `.opencode/skills/vixens-secrets/SKILL.md`
+- `.opencode/skills/vixens-troubleshoot/SKILL.md`
