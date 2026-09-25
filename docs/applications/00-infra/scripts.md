@@ -1,35 +1,40 @@
-# Internal Toolset (scripts/)
+# Internal toolset (`scripts/`)
 
-Internal scripts for cluster management, report generation, and validation.
+Le répertoire `scripts/` contient des outils techniques réutilisables. Ils restent volontairement indépendants d'un command runner spécifique.
 
-## 📊 État du Déploiement
+## Organisation
 
-| Environnement | Déployé | Configuré | Testé | Version |
-|---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | N/A     |
-| Prod          | [x]     | [x]       | [x]   | N/A     |
+- `analysis/` — audits et analyses ponctuelles ;
+- `infra/` — helpers infrastructure / ArgoCD ;
+- `lib/` — bibliothèques partagées ;
+- `reports/` — génération de rapports ;
+- `testing/` — tests fonctionnels / techniques ;
+- `utils/` — utilitaires CLI ;
+- `validation/` — validation GitOps et conformité.
 
-## 🏗️ Architecture
+## Utilisation
 
-Le répertoire `scripts/` est organisé par catégories :
-- `analysis/`: Outils d'audit des ressources (VPA, priorités).
-- `infra/`: Automatisation de l'infrastructure et ArgoCD.
-- `lib/`: Bibliothèques partagées.
-- `reports/`: Génération de rapports pour la documentation.
-- `testing/`: Suites de tests fonctionnels et techniques.
-- `utils/`: Utilitaires CLI généraux (`k`, `gp`, `check`).
-- `validation/`: Scripts de conformité et validation GitOps.
+Les scripts sont appelés directement ou par GitHub Actions lorsqu'ils constituent un contrôle CI.
 
-## 🚀 Utilisation
+Exemples :
 
-Les scripts sont principalement invoqués via `just` :
-- `just reports`: Génère les rapports d'état.
-- `just lint`: Valide les manifests YAML.
-- `just start/next/close`: Gère le workflow des tâches.
+```bash
+# Rapports consolidés
+scripts/reports/generate-all.sh
 
-## ✅ Validation
+# Validation applicative
+python3 scripts/validation/validate.py <app> dev
 
-La validation des scripts consiste en :
-1. Vérification de la structure du répertoire.
-2. Validation du `justfile` pour s'assurer que les chemins sont corrects.
-3. Tests manuels des utilitaires critiques (`k`, `gp`).
+# Un générateur de rapport individuel
+python3 scripts/reports/generate_lint_report.py --help
+```
+
+Les contrôles obligatoires d'une PR doivent être implémentés dans `.github/workflows/` ; un script local peut fournir l'implémentation, mais le workflow GitHub porte le garde-fou partagé.
+
+## Principes
+
+- un script utile doit pouvoir être lancé sans Serena/Just/outil d'agent ;
+- les chemins doivent être relatifs au dépôt ou paramétrables lorsque possible ;
+- pas de secret en clair ;
+- pas de mutation persistante du cluster comme substitut à GitOps ;
+- documenter les entrées, sorties et effets de bord des scripts non triviaux.
