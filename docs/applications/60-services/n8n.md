@@ -28,29 +28,34 @@ curl -L -k https://n8n.dev.truxonline.com | grep "n8n"
 ## Notes Techniques
 - **Namespace :** `services`
 - **Dépendances :**
-    - `Infisical` (secrets: N8N_ENCRYPTION_KEY)
+    - OpenBao + External Secrets Operator (`ClusterSecretStore/openbao`)
     - `postgresql-shared` (database: n8n)
 - **Particularités :** Workflow automation tool (like Zapier). Standard **Gold** :
     - **Priorité :** `vixens-medium`.
     - **Profil :** B-medium.
     - **Stockage :** PVC 5Gi (synelia-iscsi-retain).
     - **Database :** PostgreSQL shared cluster.
-    - **Encryption :** Clé de chiffrement gérée par Infisical.
+    - **Encryption :** clé de chiffrement projetée depuis OpenBao via ESO.
 
-## Secrets Requis (Infisical)
+## Secrets requis
 
-### Chemin : `/apps/60-services/n8n`
+Les deux `ExternalSecret` actifs utilisent le même chemin OpenBao par environnement :
+
+- **Dev :** `vixens/dev/apps/60-services/n8n`
+- **Prod :** `vixens/prod/apps/60-services/n8n`
+
+Objets :
+
+- `ExternalSecret/n8n-secrets` → `Secret/n8n-secrets`
+- `ExternalSecret/n8n-db-credentials-sync` → `Secret/n8n-db-credentials`
 
 | Secret | Description | Required |
 |--------|-------------|----------|
 | `N8N_ENCRYPTION_KEY` | Clé de chiffrement pour les credentials | Oui |
-
-### Credentials DB (chemin: `/apps/04-databases/postgresql-shared`)
-
-| Secret | Description | Required |
-|--------|-------------|----------|
-| `username` | Username PostgreSQL (owner: n8n) | Oui |
+| `username` | Username PostgreSQL | Oui |
 | `password` | Password PostgreSQL | Oui |
+
+Ne pas recréer d'`InfisicalSecret` : l'ancienne intégration Infisical est retirée.
 
 ---
 > ⚠️ **HIBERNATION DEV**
