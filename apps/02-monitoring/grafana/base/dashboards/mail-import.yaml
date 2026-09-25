@@ -1,0 +1,27 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-mail-import
+  labels:
+    grafana_dashboard: "1"
+immutable: true
+data:
+  mail-import.json: |
+    {
+      "annotations":{"list":[]},
+      "description":"Scheduled Gmail IMAP to Dovecot import. Kubernetes Job status is authoritative; structured mail_sync_result logs provide run detail.",
+      "editable":true,
+      "panels":[
+        {"id":1,"title":"Last successful import age","type":"stat","gridPos":{"h":5,"w":8,"x":0,"y":0},"datasource":"VictoriaMetrics","targets":[{"expr":"time() - max(kube_job_status_completion_time{namespace=\"mail\",job_name=~\"gmail-import-[0-9]+\"} * on(namespace,job_name) group_left() kube_job_status_succeeded{namespace=\"mail\",job_name=~\"gmail-import-[0-9]+\"})","refId":"A"}],"fieldConfig":{"defaults":{"unit":"s","thresholds":{"mode":"absolute","steps":[{"color":"green","value":0},{"color":"yellow","value":1200},{"color":"red","value":1800}]}}}},
+        {"id":2,"title":"Successful jobs (30m)","type":"stat","gridPos":{"h":5,"w":8,"x":8,"y":0},"datasource":"VictoriaMetrics","targets":[{"expr":"sum(max_over_time(kube_job_status_succeeded{namespace=\"mail\",job_name=~\"gmail-import-[0-9]+\"}[30m]))","refId":"A"}],"fieldConfig":{"defaults":{"thresholds":{"mode":"absolute","steps":[{"color":"red","value":0},{"color":"green","value":1}]}}}},
+        {"id":3,"title":"Failed jobs (30m)","type":"stat","gridPos":{"h":5,"w":8,"x":16,"y":0},"datasource":"VictoriaMetrics","targets":[{"expr":"sum(max_over_time(kube_job_status_failed{namespace=\"mail\",job_name=~\"gmail-import-[0-9]+\"}[30m]))","refId":"A"}],"fieldConfig":{"defaults":{"thresholds":{"mode":"absolute","steps":[{"color":"green","value":0},{"color":"red","value":1}]}}}},
+        {"id":4,"title":"Import job outcomes","type":"timeseries","gridPos":{"h":8,"w":24,"x":0,"y":5},"datasource":"VictoriaMetrics","targets":[{"expr":"sum by (job_name) (kube_job_status_succeeded{namespace=\"mail\",job_name=~\"gmail-import-[0-9]+\"})","legendFormat":"success {{job_name}}","refId":"A"},{"expr":"sum by (job_name) (kube_job_status_failed{namespace=\"mail\",job_name=~\"gmail-import-[0-9]+\"})","legendFormat":"failed {{job_name}}","refId":"B"}]},
+        {"id":5,"title":"mail_sync_result logs","type":"logs","gridPos":{"h":10,"w":24,"x":0,"y":13},"datasource":"Loki","targets":[{"expr":"{namespace=\"mail\"} |= \"mail_sync_result\"","refId":"A"}],"options":{"showTime":true,"wrapLogMessage":true,"dedupStrategy":"none","sortOrder":"Descending"}}
+      ],
+      "schemaVersion":39,
+      "tags":["mail","gmail","imapsync","dovecot"],
+      "time":{"from":"now-24h","to":"now"},
+      "title":"Mail Import Overview",
+      "uid":"mail-import-overview"
+    }
