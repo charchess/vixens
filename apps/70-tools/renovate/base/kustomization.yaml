@@ -4,5 +4,5 @@ kind: Kustomization
 resources:
   - cronjob.yaml
   - configmap.yaml
-  - infisical-secret.yaml
+  - external-secret.yaml
   - cilium-networkpolicy.yaml
