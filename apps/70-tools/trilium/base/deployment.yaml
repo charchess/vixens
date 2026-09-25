@@ -36,7 +36,7 @@ spec:
             preStop:
               exec:
                 command: ["sleep", "5"]
-          image: triliumnext/trilium:v0.105.0
+          image: triliumnext/trilium:v0.106.0
           imagePullPolicy: IfNotPresent
           # init container handles chown; run node directly
           command: ["node", "./main.cjs"]
