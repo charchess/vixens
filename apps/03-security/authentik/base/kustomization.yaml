@@ -6,8 +6,8 @@ resources:
   - deployment-server.yaml
   - deployment-worker.yaml
   - service.yaml
-  - infisical-secret.yaml
-  - infisical-redis-secret.yaml
+  - external-secret.yaml
+  - external-redis-secret.yaml
   - configmap.yaml
   - middleware-forward-auth.yaml
   - servicemonitor.yaml
