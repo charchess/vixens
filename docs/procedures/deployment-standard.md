@@ -1,57 +1,94 @@
-# Standard Deployment Patcher
+# Application deployment standard
 
-This document defines the standard pattern for deploying applications in the Vixens cluster using GitOps, Kustomize, and Infisical.
+Ce document résume les conventions de déploiement Vixens. `WORKFLOW.md`, les manifests actifs et les policies CI/Kyverno font autorité lorsqu'un détail évolue.
 
-## Directory Structure
+## Structure
 
-Applications should follow a standard Kustomize structure:
+Pattern courant :
 
-```
-apps/<category>/<app-name>/
+```text
+apps/<category>/<app>/
 ├── base/
 │   ├── kustomization.yaml
-│   ├── namespace.yaml
-│   ├── deployment.yaml
+│   ├── deployment.yaml / statefulset.yaml / ressources natives
 │   ├── service.yaml
-│   └── infisical-secret.yaml
+│   ├── external-secret.yaml      # seulement si nécessaire
+│   └── ...
 └── overlays/
     ├── dev/
-    │   ├── kustomization.yaml
-    │   ├── ingress.yaml
-    │   └── http-redirect.yaml
+    │   └── kustomization.yaml
     └── prod/
-        ├── kustomization.yaml
-        ├── ingress.yaml
-        └── http-redirect.yaml
+        └── kustomization.yaml
 ```
 
-## Core Standards
+Le nom des fichiers est descriptif ; il ne doit pas refléter une technologie retirée.
 
-### 1. Infisical (Secrets Management)
-- Use `InfisicalSecret` to sync secrets from the centralized Infisical vault.
-- **Host API**: `http://192.168.111.69:8085`
-- **Environment Slug**: Default to `dev` in `base`, patch to `prod` in `prod` overlay.
-- **Secrets Path**: `/apps/<category>/<app-name>`
+## Secrets
 
-### 2. Ingress & TLS
-- **Annotations**:
-    - `cert-manager.io/cluster-issuer`: `letsencrypt-staging` (dev) / `letsencrypt-prod` (prod).
-    - `traefik.ingress.kubernetes.io/router.entrypoints`: `web, websecure`.
-    - `traefik.ingress.kubernetes.io/router.middlewares`: `monitoring-redirect-to-https@kubernetescrd`.
-- **Hostname**: `<app>.<env>.truxonline.com` (dev) / `<app>.truxonline.com` (prod).
+Backend canonique : **OpenBao + External Secrets Operator**.
 
-### 3. Stability & Resources
-- **Tolerations**: Always include control-plane tolerations to allow scheduling on all nodes.
-- **Strategy**: Use `type: Recreate` for deployments using RWO volumes (iSCSI).
-- **Resources**: Always define `requests` and `limits`.
+```yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: app-secrets
+spec:
+  secretStoreRef:
+    name: openbao
+    kind: ClusterSecretStore
+  target:
+    name: app-secrets
+    creationPolicy: Owner
+```
 
-### 4. Monitoring
-- **Namespace Label**: `goldilocks.fairwinds.com/enabled: "true"` for resource recommendations.
-- **Homepage Integration** (Optional): Use `gethomepage.dev/` annotations for dashboard integration.
+Les valeurs vivent dans OpenBao, jamais dans Git. Voir `docs/guides/secret-management.md`.
 
-### 5. DNS (ExternalDNS)
-- **Internal DNS**: Automatically managed for all Ingresses. Use `external-dns.alpha.kubernetes.io/target` to force a CNAME hostname if needed.
-- **Public DNS**: Add `external-dns.alpha.kubernetes.io/public: "true"` to expose the Ingress on Gandi (Prod only).
+## Ingress / TLS
 
-## Example: The Template App
-A reference implementation is available in `apps/template-app/`.
+- Traefik est l'ingress controller.
+- TLS est géré via cert-manager.
+- dev et prod utilisent leurs issuers/hostnames prévus par les manifests actuels.
+- authentification/middlewares seulement lorsque le besoin l'exige.
+- ne pas créer de redirection HTTP→HTTPS applicative si le comportement est déjà globalement fourni.
+
+Le chantier de normalisation Traefik/cert-manager peut encore faire évoluer ce pattern : copier une application récemment maintenue plutôt qu'un vieux document.
+
+## Ressources et disponibilité
+
+- définir `requests` et `limits` ;
+- probes adaptées au comportement réel ;
+- utiliser `strategy: Recreate` lorsque le stockage RWO l'impose ;
+- PriorityClass/PDB seulement selon le niveau de maturité et la criticité ;
+- ne pas forcer toutes les applications sur les control planes sans raison.
+
+## Sécurité réseau
+
+Cilium/default-deny implique des policies explicites.
+
+Autoriser le minimum nécessaire :
+
+- Traefik → backend ;
+- consommateurs internes connus ;
+- DNS ;
+- APIs externes réellement utilisées.
+
+Les drops Hubble servent à comprendre les flux avant de les autoriser.
+
+## Observabilité
+
+- `ServiceMonitor` lorsque des métriques utiles existent ;
+- dashboards/alertes basés sur un besoin opératoire ;
+- logs via les pipelines centraux ;
+- VPA/Goldilocks en recommandation lorsque le pattern de maturité le demande.
+
+## GitOps
+
+- pas de mutation persistante via `kubectl apply/edit/delete` ;
+- PR obligatoire vers `main` ;
+- ArgoCD dev suit `main` ;
+- production via `promote-prod.yaml` uniquement ;
+- validation après sync.
+
+## Référence applicative
+
+`apps/template-app/` peut aider à naviguer, mais les applications actives et récemment modifiées sont une meilleure source pour les détails. Toujours chercher au moins un exemple réel de même type avant de créer un nouveau pattern.

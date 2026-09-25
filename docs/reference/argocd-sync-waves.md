@@ -1,191 +1,115 @@
-# ArgoCD Sync Waves Configuration
+# ArgoCD sync waves
 
-## Objectif
+Les sync waves ordonnancent les ressources qui ont une dépendance **réelle**. Elles ne doivent pas devenir une seconde orchestration globale du cluster.
 
-Améliorer la vitesse et la fiabilité du déploiement en ordonnançant correctement les applications avec des sync waves.
+## Principe
 
-## Problème Actuel
+```yaml
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+```
 
-Après redéploiement du cluster dev (25/12/2024):
-- **1ère vague (t+0):** ~20 applications démarrées simultanément
-- **2ème vague (t+1h):** ~30 applications supplémentaires
-- **Problèmes identifiés:**
-  - Applications dépendantes démarrées avant leurs dépendances (ex: apps avec PostgreSQL)
-  - InfisicalSecrets avec erreurs de syntaxe bloquant les pods
-  - CRDs non synchronisées avant les opérateurs
+Une valeur plus basse est traitée avant une valeur plus haute. À wave égale, ArgoCD gère son ordre normal de synchronisation.
 
-## Stratégie de Sync Waves
+## Quand utiliser une wave
 
-### Wave -5: CRDs (Custom Resource Definitions)
-**Objectif:** Installer les CRDs avant tout le reste
+Une wave est justifiée lorsqu'un objet ne peut raisonnablement devenir sain avant un autre, par exemple :
 
-Applications:
-- `cloudnative-pg-crds` (actuellement wave 2 ✅)
+```text
+CRD
+ ↓
+operator/controller
+ ↓
+store/configuration gérée par ce controller
+ ↓
+workload consommateur
+```
 
-### Wave -4: Operators
-**Objectif:** Installer les opérateurs qui gèrent les CRDs
+Exemples de dépendances :
 
-Applications:
-- `infisical-operator`
-- `cloudnative-pg` (actuellement wave 3 ✅)
-- `cert-manager`
-- `synology-csi`
+- CRDs avant les Custom Resources qui les utilisent ;
+- External Secrets Operator avant les `ExternalSecret` ;
+- `ClusterSecretStore/openbao` avant les secrets applicatifs qui en dépendent ;
+- cert-manager/webhook avant certains `Certificate`/issuers ;
+- base de données partagée avant l'application lorsqu'une dépendance explicite est nécessaire.
 
-### Wave -3: Secrets & Configuration
-**Objectif:** Créer les secrets avant les services qui en dépendent
+Ne pas créer des waves uniquement pour "mettre de l'ordre" visuellement.
 
-Applications:
-- `cert-manager-secrets`
-- `cert-manager-config`
-- `synology-csi-secrets`
-- Tous les InfisicalSecret standalone
+## Application vs ressource
 
-### Wave -2: Infrastructure de Base
-**Objectif:** Déployer l'infrastructure réseau et stockage
+Deux niveaux existent :
 
-Applications:
-- `cilium-lb` (LoadBalancer IPAM)
-- `traefik` (Ingress controller)
-- `nfs-storage`
+### Application ArgoCD
 
-### Wave -1: Services Partagés
-**Objectif:** Déployer les services utilisés par plusieurs applications
-
-Applications:
-- `postgresql-shared` (base de données partagée)
-- `redis-shared` (cache partagé)
-
-### Wave 0: Applications (par défaut)
-**Objectif:** Déployer les applications métier
-
-Toutes les autres applications (homeassistant, authentik, netbox, etc.)
-
-## Implémentation
-
-### Méthode 1: Annotation dans Application
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: postgresql-shared
+  name: external-secrets
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "-4"
 ```
 
-### Méthode 2: Annotation dans les ressources Kubernetes
+Cela ordonne les Applications dans un app-of-apps.
+
+### Ressource Kubernetes
+
 ```yaml
-apiVersion: v1
-kind: Service
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
 metadata:
-  name: my-service
+  name: openbao
   annotations:
-    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-wave: "-3"
 ```
 
-## Délais Entre Waves
+Cela ordonne les ressources au sein d'une synchronisation.
 
-ArgoCD attend que toutes les ressources d'une wave soient **Healthy** avant de passer à la suivante.
+Choisir le niveau correspondant à la dépendance réelle ; ne pas dupliquer la même logique partout.
 
-**Recommandation:**
-- Pas de délai artificiel nécessaire
-- ArgoCD gère automatiquement la progression
-- Pour forcer un délai: utiliser un Job avec `sleep` si vraiment nécessaire
+## Modèle secrets actuel
 
-## Problèmes Spécifiques Identifiés
+L'ancien ordre Infisical n'est plus applicable.
 
-### CloudNativePG CRDs
+Le modèle actuel est :
 
-**Symptôme:** Application `cloudnative-pg-crds` reste OutOfSync malgré `ServerSideApply=true`
-
-**Cause:** Conflit de field managers entre:
-1. Application ArgoCD qui applique les CRDs (wave 2)
-2. Modifications ultérieures par l'opérateur ou Helm
-
-**Impact:** Les CRDs sont fonctionnelles, juste le status ArgoCD incorrect
-
-**Solution Testée:**
-```yaml
-syncOptions:
-  - ServerSideApply=true  # ✅ Déjà présent
-  - CreateNamespace=true  # ✅ Déjà présent
+```text
+External Secrets Operator / CRDs
+        ↓
+ClusterSecretStore/openbao
+        ↓
+ExternalSecret
+        ↓
+Kubernetes Secret
+        ↓
+workload
 ```
 
-**Solution Alternative (si problème persiste):**
-1. Supprimer l'app `cloudnative-pg-crds`
-2. Laisser le chart Helm `cloudnative-pg` gérer les CRDs avec `crds.create: true`
+Le nom exact des Applications et leurs waves courantes doivent être lus dans `argocd/` plutôt que copiés depuis ce document.
 
-**Décision:** Garder la configuration actuelle (CRDs séparées), c'est une best practice.
+## Health et attente
 
-### InfisicalSecret API Migration
+Les waves ne remplacent pas la health assessment. Une dépendance critique doit exposer un état que ArgoCD ou son controller peut observer.
 
-**Symptôme:** Certaines applications ne démarrent pas (homepage, prowlarr, sonarr)
+Éviter :
 
-**Cause:** InfisicalSecrets utilisent l'ancienne API sans `credentialsRef`
+- `sleep` arbitraires ;
+- Jobs uniquement destinés à ralentir une sync ;
+- dépendances implicites non documentées ;
+- mutations `kubectl` post-sync qui rendent Git incomplet.
 
-**Correction Appliquée (25/12/2024):**
-```yaml
-# AVANT (❌ invalide)
-spec:
-  authentication:
-    universalAuth:
-      secretsScope:
-        secretName: infisical-universal-auth  # ❌ Mauvais emplacement
-        secretNamespace: argocd
+## Validation
 
-# APRÈS (✅ correct)
-spec:
-  authentication:
-    universalAuth:
-      credentialsRef:  # ✅ Nouvelle section requise
-        secretName: infisical-universal-auth
-        secretNamespace: argocd
-      secretsScope:
-        projectSlug: vixens
-        envSlug: dev
-        secretsPath: "/apps/..."
-```
+Après modification des waves :
 
-**Applications corrigées:**
-- apps/70-tools/homepage/overlays/dev/ ✅
-- apps/70-tools/homepage/overlays/prod/ ✅
-- apps/20-media/prowlarr/base/ ✅
-- apps/20-media/sonarr/base/ ✅
+1. construire/rendre les overlays concernés ;
+2. vérifier que les annotations sont réellement présentes dans les objets rendus ;
+3. tester d'abord sur dev ;
+4. observer l'ordre et la santé dans ArgoCD ;
+5. vérifier le comportement des dépendances, pas seulement `Synced` ;
+6. documenter une dépendance inhabituelle près de la ressource concernée ou dans un ADR.
 
-## Plan d'Action
+## Historique
 
-### Phase 1: Vérification (Immédiate)
-- [ ] Lister toutes les applications ArgoCD
-- [ ] Identifier les dépendances entre applications
-- [ ] Vérifier les sync-waves actuelles
-
-### Phase 2: Configuration (Sprint actuel)
-- [ ] Ajouter sync-wave annotations aux Applications manquantes
-- [ ] Tester sur cluster dev
-- [ ] Documenter les dépendances dans chaque app/
-
-### Phase 3: Validation (Avant passage en test)
-- [ ] Destroy/recreate cluster dev pour valider l'ordre
-- [ ] Mesurer le temps total de déploiement
-- [ ] Vérifier qu'aucune application ne démarre avant ses dépendances
-
-### Phase 4: Propagation (Sprint suivant)
-- [x] Appliquer les mêmes waves sur prod (trunk-based workflow: dev/prod uniquement)
-- [ ] Créer des scripts de validation automatique
-
-## Métriques de Succès
-
-**Avant (Déploiement actuel):**
-- Temps total: ~2h (2 vagues)
-- Apps en erreur au démarrage: 3-5 (InfisicalSecret, dépendances)
-- Interventions manuelles: Plusieurs sync forcées
-
-**Cible (Avec sync waves):**
-- Temps total: ~30-45 minutes (déploiement séquentiel optimisé)
-- Apps en erreur: 0 (dépendances respectées)
-- Interventions manuelles: 0 (auto-sync fonctionne)
-
-## Références
-
-- [ArgoCD Sync Waves](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/)
-- [ArgoCD Sync Options](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/)
-- [CloudNativePG Best Practices](https://cloudnative-pg.io/documentation/current/installation_upgrade/)
+Les vieux rapports d'incident peuvent mentionner l'Infisical Operator, Synology CSI ou d'anciennes waves. Ils décrivent l'état du cluster à leur date et ne constituent pas le plan de waves courant.
