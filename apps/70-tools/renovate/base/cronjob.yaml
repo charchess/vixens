@@ -33,7 +33,7 @@ spec:
               effect: NoSchedule
           containers:
             - name: renovate
-              image: renovate/renovate:44.115.5 # Renovate latest stable
+              image: renovate/renovate:44.115.9 # Renovate latest stable
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
