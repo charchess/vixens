@@ -1,57 +1,108 @@
-# Standard Deployment Patcher
+# Standard de déploiement Vixens
 
-This document defines the standard pattern for deploying applications in the Vixens cluster using GitOps, Kustomize, and Infisical.
+Ce document décrit le pattern de déploiement actuel des applications Vixens avec GitOps, Kustomize, Traefik, cert-manager et External Secrets Operator.
 
-## Directory Structure
+## Structure
 
-Applications should follow a standard Kustomize structure:
-
-```
+```text
 apps/<category>/<app-name>/
 ├── base/
 │   ├── kustomization.yaml
-│   ├── namespace.yaml
 │   ├── deployment.yaml
 │   ├── service.yaml
-│   └── infisical-secret.yaml
+│   └── external-secret.yaml      # si nécessaire
 └── overlays/
     ├── dev/
-    │   ├── kustomization.yaml
-    │   ├── ingress.yaml
-    │   └── http-redirect.yaml
+    │   └── kustomization.yaml
     └── prod/
-        ├── kustomization.yaml
-        ├── ingress.yaml
-        └── http-redirect.yaml
+        └── kustomization.yaml
 ```
 
-## Core Standards
+La structure exacte peut varier selon l'application ; privilégier les patterns déjà présents dans le repo avant d'en créer de nouveaux.
 
-### 1. Infisical (Secrets Management)
-- Use `InfisicalSecret` to sync secrets from the centralized Infisical vault.
-- **Host API**: `http://192.168.111.69:8085`
-- **Environment Slug**: Default to `dev` in `base`, patch to `prod` in `prod` overlay.
-- **Secrets Path**: `/apps/<category>/<app-name>`
+## 1. Secrets
 
-### 2. Ingress & TLS
-- **Annotations**:
-    - `cert-manager.io/cluster-issuer`: `letsencrypt-staging` (dev) / `letsencrypt-prod` (prod).
-    - `traefik.ingress.kubernetes.io/router.entrypoints`: `web, websecure`.
-    - `traefik.ingress.kubernetes.io/router.middlewares`: `monitoring-redirect-to-https@kubernetescrd`.
-- **Hostname**: `<app>.<env>.truxonline.com` (dev) / `<app>.truxonline.com` (prod).
+Les valeurs secrètes vivent dans **OpenBao**. Les manifests Git contiennent uniquement des `ExternalSecret` qui utilisent le store canonique :
 
-### 3. Stability & Resources
-- **Tolerations**: Always include control-plane tolerations to allow scheduling on all nodes.
-- **Strategy**: Use `type: Recreate` for deployments using RWO volumes (iSCSI).
-- **Resources**: Always define `requests` and `limits`.
+```yaml
+secretStoreRef:
+  name: openbao
+  kind: ClusterSecretStore
+```
 
-### 4. Monitoring
-- **Namespace Label**: `goldilocks.fairwinds.com/enabled: "true"` for resource recommendations.
-- **Homepage Integration** (Optional): Use `gethomepage.dev/` annotations for dashboard integration.
+Convention de chemins :
 
-### 5. DNS (ExternalDNS)
-- **Internal DNS**: Automatically managed for all Ingresses. Use `external-dns.alpha.kubernetes.io/target` to force a CNAME hostname if needed.
-- **Public DNS**: Add `external-dns.alpha.kubernetes.io/public: "true"` to expose the Ingress on Gandi (Prod only).
+```text
+vixens/dev/apps/<category>/<app>
+vixens/prod/apps/<category>/<app>
+```
 
-## Example: The Template App
-A reference implementation is available in `apps/template-app/`.
+Ne jamais utiliser `InfisicalSecret` pour un nouveau déploiement.
+
+Voir `docs/guides/secret-management.md`.
+
+## 2. Ingress et TLS
+
+- Ingress controller : Traefik.
+- Dev : `<app>.dev.truxonline.com`.
+- Prod : `<app>.truxonline.com`.
+- Certificats : cert-manager.
+- Issuer dev : `letsencrypt-staging` lorsque l'application suit ce pattern.
+- Issuer prod : `letsencrypt-prod`.
+
+Réutiliser le pattern Traefik/cert-manager déjà utilisé par les applications similaires ; ne pas ajouter une nouvelle stratégie de redirection HTTP→HTTPS sans vérifier le comportement global de Traefik.
+
+## 3. Réseau
+
+Le cluster applique des politiques Cilium. Une nouvelle application doit déclarer explicitement les flux nécessaires lorsque le namespace ou le workload est soumis au default-deny.
+
+Ne pas élargir une CiliumNetworkPolicy à `world` ou à tout le cluster par commodité sans identifier le besoin réel.
+
+## 4. Stockage
+
+Pour un volume `ReadWriteOnce`, vérifier la stratégie de rollout adaptée ; les applications qui ne peuvent pas monter deux fois le même volume utilisent généralement `strategy: Recreate`.
+
+La couche CSI/TrueNAS est un contrat d'infrastructure séparé : réutiliser les `StorageClass` existantes plutôt que coder un endpoint NAS directement dans une application.
+
+## 5. Ressources et scheduling
+
+- Définir `requests` et `limits` selon les standards du repo.
+- Ajouter une tolération control-plane uniquement lorsqu'elle est réellement requise par le pattern de l'application.
+- Réutiliser les labels de sizing/maturité existants lorsqu'ils s'appliquent.
+
+## 6. Observabilité
+
+Quand l'application expose des métriques utiles :
+
+- déclarer un `ServiceMonitor`/ressource équivalente selon le pattern monitoring existant ;
+- éviter les labels à forte cardinalité ;
+- ajouter dashboard/alerting seulement lorsqu'ils apportent un signal opérationnel utile.
+
+## 7. ArgoCD
+
+Dev suit `main`. Prod suit `prod-stable` via le workflow de promotion documenté dans `WORKFLOW.md`.
+
+Tout changement persistant passe par Git → PR → CI → ArgoCD. Les commandes `kubectl apply/edit/delete` ne sont pas un mécanisme de déploiement normal.
+
+## 8. Validation minimale
+
+Avant PR :
+
+```bash
+kustomize build apps/<category>/<app>/overlays/dev >/dev/null
+```
+
+Après merge :
+
+```bash
+kubectl -n argocd get application <app>
+```
+
+Attendre `Synced` + `Healthy`, puis faire le test fonctionnel ciblé.
+
+## Référence
+
+- `WORKFLOW.md` — workflow canonique.
+- `AGENTS.md` — règles agents.
+- `docs/guides/secret-management.md` — secrets.
+- `apps/template-app/` — exemple uniquement si son contenu est encore conforme aux standards ci-dessus.
