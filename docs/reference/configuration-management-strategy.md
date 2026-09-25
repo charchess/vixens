@@ -1,270 +1,147 @@
-# Configuration Management Strategy
+# Configuration management strategy
 
-**Status:** Active
-**Last Updated:** 2026-03-28
-**Supersedes:** [backup-restore-pattern.md](../guides/backup-restore-pattern.md) (old rclone/CronJob approach)
-**Related:** [ADR-013](../adr/013-layered-configuration-disaster-recovery.md), [ADR-014](../adr/014-litestream-backup-profiles-and-recovery-patterns.md)
+**Status:** Active  
+**Last Updated:** 2026-09-25  
+**Related:** [ADR-013](../adr/013-layered-configuration-disaster-recovery.md), [ADR-014](../adr/014-litestream-backup-profiles-and-recovery-patterns.md), [ADR-018](../adr/018-openbao-external-secrets-and-nas-fqdn.md)
 
----
+Vixens sépare les données selon leur nature au lieu d'utiliser un mécanisme unique pour tout.
 
-## Overview
+## Modèle
 
-La stratégie repose sur **4 couches** selon le type de donnée :
+| Type | Source de vérité | Projection / persistance | Récupération |
+|---|---|---|---|
+| Secrets / credentials | OpenBao | ESO → Kubernetes Secret | resync depuis OpenBao |
+| Config statique non sensible | Git | ConfigMap / fichier manifest | ArgoCD |
+| Config applicative mutable | stockage persistant | pattern de backup de l'app | restore testé |
+| SQLite | stockage persistant | DataAngel/Litestream lorsqu'utilisé | restore Litestream |
+| PostgreSQL | CloudNativePG | volumes CNPG | mécanismes CNPG |
+| Fichiers partagés / médias | NAS / stockage partagé | NFS/CSI selon l'app | stratégie NAS |
+| Cache / scratch | aucune | `emptyDir` ou équivalent | recréation |
 
-| Type | Stockage | Backup | Exemples |
-|------|----------|--------|---------|
-| **Secrets** | Infisical → K8s Secret | N/A (source of truth = Infisical) | API keys, passwords, tokens |
-| **Config app** | local-path-retain PVC | DataAngel → MinIO | sonarr.db, /config, app settings |
-| **Base de données PostgreSQL** | CloudNativePG | CNPG built-in | n8n, vikunja, authentik |
-| **Fichiers partagés/média** | NFS direct (Synology) | N/A (NAS gère la redondance) | /movies, /music, /downloads |
+Le chantier stockage TrueNAS/CSI peut faire évoluer les StorageClass et backends ; les manifests courants restent la source de vérité pour ce détail.
 
----
+## Couche 1 — Secrets : OpenBao + External Secrets
 
-## Couche 1 : Secrets → Infisical
-
-Tous les secrets passent par **Infisical** (self-hosted sur le NAS à `192.168.111.69:8085`).
+Les valeurs sensibles vivent dans OpenBao et sont projetées via External Secrets Operator.
 
 ```yaml
-apiVersion: secrets.infisical.com/v1alpha1
-kind: InfisicalSecret
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
   name: myapp-secrets
+  namespace: myapp
 spec:
-  hostAPI: http://192.168.111.69:8085
-  resyncInterval: 60
-  authentication:
-    universalAuth:
-      credentialsRef:
-        secretName: infisical-universal-auth
-        secretNamespace: argocd
-      secretsScope:
-        projectSlug: vixens
-        envSlug: prod           # ou dev
-        secretsPath: /apps/20-media/myapp
-  managedSecretReference:
-    secretName: myapp-secrets
-    secretNamespace: media
+  refreshInterval: 60s
+  secretStoreRef:
+    name: openbao
+    kind: ClusterSecretStore
+  target:
+    name: myapp-secrets
     creationPolicy: Owner
+  dataFrom:
+    - extract:
+        key: vixens/prod/apps/60-services/myapp
 ```
 
-**Règle :** zéro secret dans Git. Tout ce qui est sensible va dans Infisical, référencé via `secretKeyRef` dans le déploiement.
+Règles :
 
----
+- zéro valeur sensible dans Git ;
+- une ressource `ExternalSecret` décrit seulement le contrat de synchronisation ;
+- le workload consomme le `Secret` Kubernetes généré ;
+- les différences dev/prod portent de préférence sur le chemin OpenBao, pas sur deux manifests presque identiques ;
+- toute credential exposée publiquement doit être révoquée/rotatée, même si elle est ensuite supprimée de Git.
 
-## Couche 2 : Config App → local-path-retain + DataAngel
+Voir [`docs/guides/secret-management.md`](../guides/secret-management.md).
 
-### Stockage : local-path-retain
+## Couche 2 — Config statique
 
-Les PVCs de config applicatif utilisent `local-path-retain` (stockage node-local). Plus rapide que iSCSI, pas de dépendance réseau.
+Une configuration qui est :
 
-```yaml
-# overlay prod : patch PVC
-- op: replace
-  path: /spec/storageClassName
-  value: local-path-retain
+- non sensible ;
+- reproductible ;
+- revue avec le code ;
+
+appartient dans Git, généralement via ConfigMap ou fichier monté depuis une ressource déclarative.
+
+Ne pas pousser dans OpenBao une configuration non sensible uniquement pour éviter de la versionner.
+
+## Couche 3 — Config applicative mutable
+
+Les applications qui modifient elles-mêmes leur configuration ont besoin d'un stockage persistant et d'une stratégie de restauration.
+
+Principe :
+
+```text
+PVC / stockage applicatif
+        ↓
+backup adapté au format
+        ↓
+stockage de sauvegarde
+        ↓
+restore testé
 ```
 
-**Important :** `local-path-retain` = `WaitForFirstConsumer`. La PVC reste `Pending` jusqu'à ce qu'un pod soit schedulé. C'est normal.
+Pour les applications utilisant le pattern DataAngel du dépôt, l'overlay configure les chemins et credentials tandis que le composant partagé fournit la mécanique commune. Chercher une application active utilisant DataAngel avant d'en créer une nouvelle intégration.
 
-### Backup/Restore : DataAngel
+## SQLite
 
-**DataAngel** est un init container (`restartPolicy: Always`) qui :
-- Au démarrage : restaure depuis MinIO S3
-- En fonctionnement : réplique en continu vers MinIO S3
+SQLite nécessite une sauvegarde consciente du WAL ; une copie de fichier périodique n'est pas suffisante pendant que la base est active.
 
-Deux modes selon le contenu :
+Lorsque le pattern Litestream/DataAngel est utilisé :
 
-#### Mode SQLite (litestream)
+- préciser le chemin réel de la DB ;
+- stocker les credentials S3 via OpenBao/ESO ;
+- tester un restore sur une copie/instance contrôlée ;
+- ne pas mélanger les fichiers SQLite actifs avec un `rclone sync` générique.
 
-Pour les apps avec une base SQLite :
+## PostgreSQL
 
-```yaml
-# overlay prod/dataangel.yaml
-spec:
-  template:
-    metadata:
-      annotations:
-        dataangel.io/bucket: "vixens-prod-myapp"
-        dataangel.io/sqlite-paths: "/config/myapp.db"
-        dataangel.io/s3-endpoint: "http://nas.truxonline.com:30157"
-        dataangel.io/deployment-name: "myapp"
-        dataangel.io/rclone-interval: "60s"
-        dataangel.io/metrics-enabled: "true"
-        dataangel.io/lock-enabled: "false"
-    spec:
-      initContainers:
-        - name: dataangel
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          env:
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: myapp-secrets
-                  key: LITESTREAM_ACCESS_KEY_ID
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: myapp-secrets
-                  key: LITESTREAM_SECRET_ACCESS_KEY
-          volumeMounts:
-            - mountPath: /data
-              $patch: delete
-            - name: config
-              mountPath: /config
+Les bases gérées par CloudNativePG utilisent les mécanismes CNPG pour réplication, sauvegarde et restauration.
+
+Ne pas ajouter DataAngel/Litestream autour d'un PostgreSQL CNPG : le moteur possède déjà les primitives appropriées.
+
+## Fichiers partagés et médias
+
+Les gros volumes partagés ne doivent pas être recopiés dans les PVC applicatifs par défaut. Utiliser le backend partagé/CSI prévu par l'application et la stratégie du NAS.
+
+Les chemins, permissions et StorageClass peuvent changer pendant le chantier TrueNAS/CSI ; éviter de figer dans la documentation générale une adresse ou un chemin qui n'est pas un contrat durable.
+
+## Secrets de backup
+
+Les clés S3/MinIO nécessaires aux sauvegardes suivent exactement la même règle que tout autre secret :
+
+```text
+OpenBao → ExternalSecret → Kubernetes Secret → DataAngel/Litestream/CNPG
 ```
 
-#### Mode Filesystem (rclone)
+Pas de `Secret` avec valeurs réelles dans Git, pas de credentials dans un script ou une documentation.
 
-Pour les apps sans SQLite (config files only) :
+## Matrice de décision
 
-```yaml
-annotations:
-  dataangel.io/bucket: "vixens-prod-myapp"
-  dataangel.io/fs-paths: "/config"          # pas de sqlite-paths
-  dataangel.io/s3-endpoint: "http://nas.truxonline.com:30157"
-  dataangel.io/rclone-interval: "60s"
-```
+| Situation | Pattern |
+|---|---|
+| API key / password / token | OpenBao + ExternalSecret |
+| configuration statique non sensible | Git / ConfigMap |
+| configuration mutable | PVC + backup adapté |
+| SQLite | PVC + Litestream/DataAngel si pattern applicable |
+| PostgreSQL | CloudNativePG |
+| gros fichiers partagés | stockage partagé / NAS / CSI |
+| cache | `emptyDir` / recréation |
 
-#### Mode mixte (SQLite + FS)
+## Validation d'une stratégie de persistance
 
-```yaml
-annotations:
-  dataangel.io/sqlite-paths: "/config/myapp.db"
-  dataangel.io/fs-paths: "/config"           # rclone les fichiers non-SQLite
-```
+Pour une nouvelle application, répondre explicitement à :
 
-### Prérequis : `initContainers: []` dans la base
+1. Qu'est-ce qui est la source de vérité ?
+2. Qu'est-ce qui peut être recréé ?
+3. Qu'est-ce qui doit survivre à la perte d'un pod ? d'un nœud ? d'un PVC ? du cluster ?
+4. Où sont les credentials du mécanisme de backup ?
+5. Quel est le RPO/RTO attendu ?
+6. Quand le restore a-t-il été testé pour la dernière fois ?
+7. Le mécanisme est-il représenté dans Git ou dépend-il d'une procédure manuelle non documentée ?
 
-Le patch JSON `op: add /spec/template/spec/initContainers/-` échoue si le champ n'existe pas. **Toujours** ajouter dans le déploiement base :
+Un backup non restauré en test n'est pas une garantie de récupération.
 
-```yaml
-spec:
-  template:
-    spec:
-      initContainers: []   # ← obligatoire pour compat DataAngel
-      containers:
-        - name: myapp
-```
+## Historique
 
-### Composants Kustomize partagés
-
-Le composant `_shared/components/dataangel` injecte automatiquement :
-- L'init container DataAngel avec `restartPolicy: Always`
-- Les env vars depuis les annotations
-- Les ports metrics (9090)
-
-L'overlay ne gère que les spécificités de l'app (credentials, chemins).
-
-### Buckets MinIO
-
-Convention de nommage : `vixens-{env}-{appname}`
-Exemples : `vixens-prod-sonarr`, `vixens-prod-jellyfin`, `vixens-dev-mealie`
-
-Les buckets sont créés automatiquement par DataAngel s'ils n'existent pas (option `auto-create`).
-
----
-
-## Couche 3 : PostgreSQL → CloudNativePG
-
-Les apps avec PostgreSQL n'utilisent **pas** DataAngel. CloudNativePG gère :
-- Réplication HA (primary + replicas)
-- Backup automatique (WAL archiving)
-- Restore automatique
-
-Apps concernées : n8n, vikunja, authentik, vaultwarden (optionnel).
-
-**Règle :** Ne jamais utiliser DataAngel pour PostgreSQL.
-
----
-
-## Couche 4 : Fichiers partagés → NFS
-
-Les médias et fichiers volumineux montent directement sur le NAS Synology (`192.168.111.69`).
-
-### Structure `/volume3/Content`
-
-```
-/volume3/Content/          ← root (perms 0000, inaccessible UID 1000)
-├── movies/                → radarr, jellyfin
-├── TV Show/               → sonarr (Animes/, Tv shows/)
-├── music/                 → lidarr, music-assistant, jellyfin
-├── ebooks/                → lazylibrarian
-├── xxx/xxx/               → whisparr
-└── pictures/hentai/       → hydrus-client
-```
-
-> ⚠️ **Le root `/volume3/Content` a des permissions `0000`** (Windows ACL Synology).
-> Ne jamais monter la racine directement pour une app qui tourne en UID 1000.
-> Utiliser soit `nfs.path` vers un sous-dossier, soit `subPath` dans le volumeMount.
-
-**Pattern correct :**
-
-```yaml
-# Option A : path direct (recommandé si pas d'espace)
-volumes:
-  - name: movies
-    nfs:
-      server: 192.168.111.69
-      path: /volume3/Content/movies
-
-# Option B : subPath (si le chemin contient un espace, ex: "TV Show")
-volumes:
-  - name: content
-    nfs:
-      server: 192.168.111.69
-      path: /volume3/Content   # kubelet (root) monte la racine
-volumeMounts:
-  - name: content
-    mountPath: /media/tv
-    subPath: TV Show           # bind-mount du sous-dossier
-```
-
-### `/volume3/Downloads`
-
-Downloads partagés entre qbittorrent, sabnzbd, sonarr, radarr, etc. Montés directement en NFS.
-
----
-
-## Décision Matrix
-
-| Situation | Solution |
-|-----------|----------|
-| Secret / credential | Infisical → InfisicalSecret |
-| Config app (fichiers) | local-path-retain PVC + DataAngel (fs-paths) |
-| Base SQLite | local-path-retain PVC + DataAngel (sqlite-paths) |
-| Base PostgreSQL | CloudNativePG |
-| Médias / gros fichiers | NFS direct (Synology) |
-| Cache / données éphémères | emptyDir |
-| Config statique (no secret) | ConfigMap dans Git |
-
----
-
-## Procédure : Ajouter DataAngel à une nouvelle app
-
-1. Ajouter `initContainers: []` dans `base/deployment.yaml`
-2. Créer `overlays/prod/dataangel.yaml` avec les annotations + credentials
-3. Créer le bucket MinIO si besoin (DataAngel le crée auto sinon)
-4. Ajouter les secrets MinIO dans Infisical (`LITESTREAM_ACCESS_KEY_ID`, `LITESTREAM_SECRET_ACCESS_KEY`)
-5. Référencer le composant dans `overlays/prod/kustomization.yaml` :
-   ```yaml
-   components:
-     - ../../../../_shared/components/dataangel
-   ```
-6. Ajouter le patch `dataangel.yaml` dans la section `patches:`
-
----
-
-## Profils de backup (DataAngel / litestream)
-
-Hérités de [ADR-014](../adr/014-litestream-backup-profiles-and-recovery-patterns.md) :
-
-| Profil | Intervalle snapshot | Rétention | Usage |
-|--------|-------------------|-----------|-------|
-| `critical` | 1h | 14j | Haute activité, perte < 1h inacceptable |
-| `standard` | 6h | 7j | Activité modérée |
-| `relaxed` | 24h | 3j | Config, faible activité |
-| `ephemeral` | — | — | Cache, ne pas backuper |
-
-Le label `vixens.io/backup-profile: "relaxed"` sur le pod indique le profil.
+L'ancien guide `backup-restore-pattern.md` décrivait une orchestration rclone/CronJob et Infisical. Il est conservé sous forme de stub historique uniquement et ne doit plus être utilisé comme template.
