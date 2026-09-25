@@ -64,8 +64,6 @@ repos:
         args: [-c, yamllint-config.yml]
         exclude: |
           (?x)^(
-            \.bmad-core/.*|
-            \.bmad-infrastructure-devops/.*|
             .*/charts/.*|
             .*/crds/.*|
             .*/templates/.*|

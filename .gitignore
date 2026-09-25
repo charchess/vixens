@@ -69,6 +69,10 @@ ENV/
 .serena/
 .beads/
 .bd.db
+.bmad-core/
+.bmad-infrastructure-devops/
+.clinerules/
+.context/
 .kube/
 _bmad*/
 _bmad-output/
