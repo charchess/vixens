@@ -4,7 +4,6 @@ backups/
 # Temporary files
 *.tmp
 *.bak
-.serena/
 **/templates/*.yaml
 **/templates/*.yml
 apps/02-monitoring/alertmanager/base/charts/
