@@ -5,7 +5,7 @@ commonLabels:
 kind: Kustomization
 namespace: tools
 patches:
-- path: patch-infisical-env.yaml
+- path: patch-external-secret-env.yaml
 resources:
 - ../../base
 components:
