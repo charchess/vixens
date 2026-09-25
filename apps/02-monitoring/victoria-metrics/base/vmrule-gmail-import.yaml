@@ -1,0 +1,52 @@
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: gmail-import-alerts
+  namespace: monitoring
+spec:
+  groups:
+    - name: mail-import-health
+      rules:
+        - alert: GmailImportNonConvergent
+          expr: |
+            max_over_time(
+              kube_job_status_failed{
+                namespace="mail",
+                job_name=~"gmail-import-[0-9]+"
+              }[20m]
+            ) > 0
+          for: 5m
+          labels:
+            severity: critical
+            component: gmail-import
+          annotations:
+            summary: "Gmail import is not convergent"
+            description: >-
+              The scheduled Gmail IMAP import failed its read-only convergence
+              check. Gmail may still contain messages absent from Dovecot; the
+              importer must be investigated before relying on the next run.
+        - alert: GmailImportNoRecentSuccess
+          expr: |
+            (kube_cronjob_spec_suspend{namespace="mail", cronjob="gmail-import"} == 0)
+            and on(namespace)
+            (
+              sum by(namespace) (
+                max_over_time(
+                  kube_job_status_succeeded{
+                    namespace="mail",
+                    job_name=~"gmail-import-[0-9]+"
+                  }[30m]
+                )
+              ) < 1
+            )
+          for: 5m
+          labels:
+            severity: critical
+            component: gmail-import
+          annotations:
+            summary: "Gmail import has no recent successful run"
+            description: >-
+              The Gmail importer is scheduled but no converged Job has succeeded
+              within 30 minutes. Check the Job logs in Loki and the mail
+              namespace Job status.
