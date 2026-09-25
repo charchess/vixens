@@ -64,7 +64,10 @@ if [[ -f "$REPORT_DIR/STATE-ACTUAL-prod.md" && -f "$REPORT_DIR/STATE-DESIRED.md"
     --output "$REPORT_DIR/CONFORMITY-prod.md"
 fi
 
-if [[ -f "$REPORT_DIR/STATE-dev.json" && -f "$REPORT_DIR/STATE-prod.json" ]]; then
+if [[ -f "$REPORT_DIR/STATE-dev.json" \
+   && -f "$REPORT_DIR/STATE-prod.json" \
+   && -f "$REPORT_DIR/CONFORMITY-dev.md" \
+   && -f "$REPORT_DIR/CONFORMITY-prod.md" ]]; then
   echo "[status] consolidated dashboard"
   python3 scripts/reports/generate_status_report.py \
     --dev-state "$REPORT_DIR/STATE-dev.json" \
@@ -72,6 +75,8 @@ if [[ -f "$REPORT_DIR/STATE-dev.json" && -f "$REPORT_DIR/STATE-prod.json" ]]; th
     --dev-conformity "$REPORT_DIR/CONFORMITY-dev.md" \
     --prod-conformity "$REPORT_DIR/CONFORMITY-prod.md" \
     --output "$REPORT_DIR/STATUS.md"
+else
+  echo "[skip] status: consolidated inputs incomplete"
 fi
 
 if [[ -f "$PROD_KUBECONFIG" ]]; then
