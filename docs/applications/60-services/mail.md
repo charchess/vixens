@@ -97,9 +97,14 @@ Roundcube submits through `tls://mailserver.mail.svc.cluster.local:587` using it
 
 The Docker runtime variables use the same internal STARTTLS endpoint and port. This prevents the image-generated runtime configuration from falling back to the legacy `mailserver:25` endpoint after startup.
 
-### Gmail IMAP import with explicit EXPUNGE
+### Gmail IMAP import with convergence verification and alerting
 
-The `gmail-import` CronJob drains `[Gmail]/All Mail` every ten minutes, in batches of 50. It therefore includes archived/label-only Gmail messages as well as those carrying INBOX. It fetches each RFC822 message over IMAPS from `imap.gmail.com`, delivers it to the local DMS through the in-cluster SMTP Service, then marks that exact Gmail UID `\\Deleted` and executes `EXPUNGE` only after SMTP acceptance. The user explicitly selected this expunge strategy; it permanently removes imported source messages from Gmail rather than retaining Gmail Trash as a backup. The completed Job record follows the platform-enforced 3600-second TTL. The SMTP transaction uses only the external envelope `gmail-import@truxonline.invalid`, which Postfix accepts without weakening unauthenticated local-domain sender protection; the imported RFC822 headers and payload remain unchanged. A failed SMTP delivery leaves the Gmail message untouched. The selected importer has no Kubernetes API token and Cilium permits only DNS through CoreDNS (for FQDN enforcement), `imap.gmail.com:993`, and `mailserver:25`.
+The `gmail-import` CronJob runs every ten minutes and synchronizes **INBOX only** from `imap.gmail.com:993` directly to the scoped Dovecot IMAPS identity on `mailserver.mail.svc.cluster.local:993`. It uses `--delete1` only; no import path may use `--delete2`, so the destination Maildir is never pruned by this process.
+
+Each run first performs the IMAP copy/deletion pass, then performs a second `imapsync --dry` comparison. Kubernetes records the Job as successful only when the read-only comparison proves that zero Gmail source messages are absent from Dovecot. An IMAP `EXPUNGE` warning is therefore reported as `converged_with_warnings` in the structured Job log when the post-check proves convergence; it is a Job failure when the post-check cannot run or finds source messages missing from Dovecot.
+
+VictoriaMetrics uses kube-state-metrics Job status as the authoritative alert signal. `GmailImportNonConvergent` and `GmailImportNoRecentSuccess` are `critical` VMRule alerts and route through the existing Alertmanager Discord receiver. Detailed `mail_sync_result` fields remain in Loki. The Job has no Kubernetes API token and Cilium permits only DNS, Gmail IMAPS and Dovecot IMAPS.
+
 
 ### Docker Mailserver v16 / Dovecot 2.4 compatibility
 

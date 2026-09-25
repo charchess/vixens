@@ -9,8 +9,8 @@ metadata:
     app.kubernetes.io/component: importer
     app.kubernetes.io/part-of: truxonline-mail
 spec:
-  # Keep the replacement inert until the controlled one-shot batch is verified.
-  suspend: true
+  # The wrapper only succeeds after a read-only IMAP convergence check.
+  suspend: false
   schedule: "*/10 * * * *"
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 300
@@ -44,7 +44,11 @@ spec:
               args:
                 - |
                   user2="$(cat /var/run/imapsync-target/IMAPSYNC_DOVECOT_USER)"
-                  exec /usr/bin/imapsync \
+                  sync_log=/var/tmp/imapsync-sync.log
+                  verify_log=/var/tmp/imapsync-verify.log
+
+                  set +e
+                  /usr/bin/imapsync \
                     --host1 imap.gmail.com --port1 993 --ssl1 \
                     --user1 charchess@gmail.com \
                     --passfile1 /var/run/gmail/GMAIL_IMAP_PASSWORD \
@@ -52,10 +56,37 @@ spec:
                     --user2 "$user2" \
                     --passfile2 /var/run/imapsync-target/IMAPSYNC_DOVECOT_PASSWORD \
                     --folder INBOX \
-                    --maxmessages 5 \
                     --syncinternaldates \
                     --delete1 \
-                    --nofoldersizes
+                    --nofoldersizes >"$sync_log" 2>&1
+                  sync_exit=$?
+
+                  /usr/bin/imapsync \
+                    --host1 imap.gmail.com --port1 993 --ssl1 \
+                    --user1 charchess@gmail.com \
+                    --passfile1 /var/run/gmail/GMAIL_IMAP_PASSWORD \
+                    --host2 mailserver.mail.svc.cluster.local --port2 993 --ssl2 \
+                    --user2 "$user2" \
+                    --passfile2 /var/run/imapsync-target/IMAPSYNC_DOVECOT_PASSWORD \
+                    --folder INBOX \
+                    --dry \
+                    --nofoldersizes >"$verify_log" 2>&1
+                  verify_exit=$?
+                  set -e
+
+                  source_missing="$(sed -n 's/^Messages found in host1 not in host2[[:space:]]*:[[:space:]]*\([0-9][0-9]*\) messages$/\1/p' "$verify_log")"
+                  if [ "$verify_exit" -eq 0 ] && [ "$source_missing" = "0" ]; then
+                    if [ "$sync_exit" -eq 0 ]; then
+                      outcome=converged
+                    else
+                      outcome=converged_with_warnings
+                    fi
+                    printf 'mail_sync_result outcome=%s sync_exit=%s verify_exit=%s source_missing=%s\n' "$outcome" "$sync_exit" "$verify_exit" "$source_missing"
+                    exit 0
+                  fi
+
+                  printf 'mail_sync_result outcome=nonconvergent sync_exit=%s verify_exit=%s source_missing=%s\n' "$sync_exit" "$verify_exit" "${source_missing:-unknown}" >&2
+                  exit 1
               volumeMounts:
                 - name: gmail-credentials
                   mountPath: /var/run/gmail
