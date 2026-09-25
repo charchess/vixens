@@ -5,7 +5,7 @@ namespace: velero
 resources:
   - ../../base
 patches:
-  - path: velero-infisical-secret-patch.yaml
+  - path: velero-external-secret-patch.yaml
     target:
       kind: ExternalSecret
       name: velero-credentials-sync
