@@ -1,6 +1,8 @@
 # Scripts Automation
 
-This directory contains various scripts for cluster management, validation, and report generation.
+This directory contains optional helper scripts for cluster management, validation, and report generation.
+
+The repository workflow does **not** depend on these helpers. Canonical task tracking and change orchestration live in GitHub Issues, Pull Requests, GitHub Actions, and ArgoCD; see `WORKFLOW.md` and `AGENTS.md`.
 
 ## 📂 Directory Structure
 
@@ -36,7 +38,6 @@ These scripts automate the generation of infrastructure reports in `docs/reports
 - **`destroy-namespace.sh`**: Safe namespace deletion.
 - **`bootstrap-secrets.sh`**: Secret management bootstrapping.
 - **`sync-waves-batch-update.sh`**: Batch update of ArgoCD sync waves.
-- **`create_archon_project.py`**: Archon project initialization.
 
 ## ✅ Validation (`scripts/validation/`)
 
@@ -44,6 +45,8 @@ These scripts automate the generation of infrastructure reports in `docs/reports
 - **`validate-yaml.sh`**: YAML linting and validation.
 - **`validate-sync-waves.sh`**: ArgoCD sync waves validation.
 - **`apply_resource_compliance.py`**: Automated resource compliance patching.
+
+Important repository checks belong in GitHub Actions. Local scripts are convenience tools and must not become an alternate source of workflow truth.
 
 ## 🧰 Utilities (`scripts/utils/`)
 
@@ -60,14 +63,6 @@ These scripts automate the generation of infrastructure reports in `docs/reports
 
 ## 🚀 Workflow
 
-To update all status reports:
+Use the repository-native commands or the relevant helper script directly. Do not require `just`, Serena, Archon, or another local orchestration layer for normal contributions.
 
-```bash
-just reports
-```
-
-To validate all manifests:
-
-```bash
-just lint
-```
+Before merge, rely on the PR CI checks as the authoritative validation gate. Persistent cluster changes must still go through Git and ArgoCD.
