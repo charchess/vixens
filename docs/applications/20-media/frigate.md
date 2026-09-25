@@ -53,12 +53,16 @@ kubectl -n media get ingressroutetcp
 
 ### Namespace & Configuration
 - **Namespace :** `media`
-- **Gestion de la Configuration :**
-    - Le fichier `config.yml` est géré dans **Infisical** au chemin `/apps/20-media/frigate/config/config.yml`.
-    - Un `InfisicalSecret` synchronise ce fichier vers un secret Kubernetes `frigate-config-secret`.
-    - Un **InitContainer** (`copy-config`) copie le contenu du secret vers le volume PVC `/config` au démarrage.
-    - Cela permet au fichier d'être inscriptible (non read-only) par Frigate tout en conservant Infisical comme source de vérité.
-    - Les secrets MQTT (User/Password) sont gérés via des variables d'environnement dans Infisical.
+- **Configuration Frigate :**
+    - `/config` est un PVC (`frigate-config-pvc`) monté directement dans le Deployment.
+    - `config.yml` est validé et ajusté au démarrage par les init containers définis dans le Deployment ; il n'est pas projeté depuis OpenBao.
+- **Secrets :**
+    - OpenBao est la source de vérité des valeurs secrètes.
+    - `ExternalSecret/frigate-secrets-sync` utilise `ClusterSecretStore/openbao` et matérialise `Secret/frigate-secrets`.
+    - Chemin dev : `vixens/dev/apps/20-media/frigate`.
+    - Chemin prod : `vixens/prod/apps/20-media/frigate` via `overlays/prod/patch-openbao-env.yaml`.
+    - Les workloads auxiliaires, notamment DataAngel/Litestream lorsqu'ils sont activés, consomment les credentials nécessaires depuis `Secret/frigate-secrets`.
+    - Ne pas recréer de `InfisicalSecret` : l'ancienne intégration Infisical est retirée.
 
 ### Dépendances
 - **MQTT :** `mosquitto.mosquitto.svc.cluster.local:1883`. Authentification requise (user `frigate` à créer dans Mosquitto via hash).
