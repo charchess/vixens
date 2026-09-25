@@ -63,6 +63,8 @@ spec:
                 - name: imapsync-target-credentials
                   mountPath: /var/run/imapsync-target
                   readOnly: true
+                - name: imapsync-tmp
+                  mountPath: /var/tmp
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true
@@ -77,3 +79,5 @@ spec:
               secret:
                 secretName: mail-imapsync-runtime
                 defaultMode: 0440
+            - name: imapsync-tmp
+              emptyDir: {}

@@ -30,7 +30,7 @@ spec:
             k8s:app.kubernetes.io/part-of: truxonline-mail
       toPorts:
         - ports:
-            - {port: "25", protocol: TCP}
+            - {port: "993", protocol: TCP}
   egress:
     - toEntities: [world]
       toPorts:
