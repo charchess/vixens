@@ -1,68 +1,77 @@
-# Application Template (Vixens Standard)
+# Application Template (Vixens)
 
-Ce dossier sert de base pour toute nouvelle application intégrée au cluster.
-Il implémente le **Golden Standard** défini dans `docs/reference/app-golden-standard.md`.
+Ce dossier est un **exemple de structure**, pas une spécification autonome. Les références canoniques restent :
 
-> **Reference canonique** : [`docs/reference/app-golden-standard.md`](../../docs/reference/app-golden-standard.md)
+- `AGENTS.md`
+- `WORKFLOW.md`
+- `docs/procedures/deployment-standard.md`
+- `docs/guides/adding-new-application.md`
+- `docs/guides/secret-management.md`
 
----
+Toujours comparer ce template à une application récente du même type avant de le copier : stockage, exposition réseau, probes et sidecars varient selon le workload.
 
-## Standards Obligatoires (DoD)
-
-Pour qu'une application soit "Production Ready", elle doit :
-
-1. **`priorityClassName`** — défini selon la criticité (voir [Priority Classes](../../docs/reference/app-golden-standard.md#priority-classes))
-2. **CP Toleration** — `node-role.kubernetes.io/control-plane` présente dans le manifest
-3. **Kyverno Sizing Labels** — labels `vixens.io/sizing.<container>: <tier>` sur le pod template (jamais de blocs `resources:` explicites)
-4. **`revisionHistoryLimit: 3`** — réduit la croissance etcd
-5. **Résilience Data** :
-   - **SQLite** : sidecar Litestream + init restore-db
-   - **Config plats** : sidecar Config-Syncer + init restore-config
-6. **Sécurité** : HTTPS obligatoire avec redirection (Middleware Traefik)
-
----
-
-## Structure des Fichiers
+## Structure
 
 ### Base
-- `deployment.yaml` — Patron complet (priorité, toleration, sizing labels, resilience inits & sidecars)
-- `infisical-secret.yaml` — Récupération des secrets via Infisical
-- `litestream-config.yaml` — Configuration de la réplication SQLite (Litestream)
-- `service.yaml` — Service Kubernetes
-- `namespace.yaml` — Namespace de l'application
+
+- `deployment.yaml` — exemple de Deployment avec priorité, tolération control-plane, sizing labels, probes et sidecars optionnels ;
+- `external-secret.yaml` — projection OpenBao via External Secrets Operator ;
+- `litestream-config.yaml` — exemple de configuration Litestream pour SQLite ;
+- `service.yaml` — Service Kubernetes ;
+- `namespace.yaml` — exemple de namespace dédié.
 
 ### Overlays
-- `prod/` — Patch `envSlug` vers `prod`, ajustements spécifiques prod
 
----
+Les overlays `dev` / `prod` portent les différences d'environnement nécessaires. Ne dupliquer dans un overlay que ce qui diffère réellement du `base`.
 
-## Sizing — Comment Ça Marche
+## Secrets
 
-Les ressources (`requests`/`limits`) ne sont **jamais** définies dans le YAML.
-Elles sont injectées à l'admission par la policy Kyverno `sizing-mutate` via des labels :
+Le modèle actif est :
 
-```yaml
-spec:
-  template:
-    metadata:
-      labels:
-        app: my-app
-        vixens.io/sizing: small                # fallback générique
-        vixens.io/sizing.my-app: small         # container principal
-        vixens.io/sizing.litestream: micro     # sidecar litestream
-        vixens.io/sizing.config-syncer: micro  # sidecar config-syncer
-        vixens.io/sizing.restore-config: micro # init restore-config
-        vixens.io/sizing.restore-db: micro     # init restore-db
+```text
+OpenBao → ClusterSecretStore/openbao → ExternalSecret → Secret → workload
 ```
 
-Tiers disponibles : `micro`, `small`, `medium`, `large`, `xlarge`, `G-small`, `G-medium`, `G-large`, `G-xl`
+Ne pas créer de nouvel `InfisicalSecret` et ne jamais stocker de valeur secrète dans Git.
 
----
+Le chemin OpenBao du template est un exemple. Lors de la création d'une application, utiliser la convention réellement en vigueur dans les manifests de la catégorie et distinguer dev/prod lorsque nécessaire.
 
-## Guides Techniques
+## Ressources
 
-- [Golden Standard complet](../../docs/reference/app-golden-standard.md)
-- [Pattern Config-Syncer](../../docs/guides/pattern-config-syncer.md)
-- [Backup SQLite (Litestream)](../../docs/guides/adding-new-application.md#sqlite-backup-strategy-litestream)
-- [Standards de ressources](../../docs/reference/RESOURCE_STANDARDS.md)
-- [Niveaux de qualité (tiers)](../../docs/reference/quality-standards.md)
+Les sizing labels restent utiles pour les politiques/VPA du cluster, mais les workloads peuvent aussi conserver des `resources.requests/limits` explicites comme fallback de bootstrap lorsque le pattern actuel de la catégorie le fait.
+
+Ne pas appliquer une règle historique du type « jamais de bloc `resources:` » sans vérifier les manifests et politiques actuels.
+
+## Stockage et résilience
+
+Les blocs Litestream / config-syncer de ce template sont **optionnels** :
+
+- SQLite → Litestream peut être pertinent ;
+- fichiers de configuration persistants → config-syncer peut être pertinent ;
+- une application stateless n'a pas besoin de ces sidecars ;
+- un PVC `ReadWriteOnce` peut nécessiter `strategy: Recreate` selon le comportement du CSI et du workload.
+
+Réutiliser le pattern de stockage déjà validé pour une application comparable.
+
+## Réseau, ingress et TLS
+
+- Traefik est l'ingress controller ;
+- cert-manager gère les certificats ;
+- les flux réseau requis doivent être explicités avec les NetworkPolicies/CiliumNetworkPolicies appropriées ;
+- ne pas ajouter d'egress large ou de middleware HTTP→HTTPS par habitude : vérifier le pattern actuel dans Git.
+
+## Validation
+
+Avant merge :
+
+```bash
+kustomize build apps/<category>/<app>/overlays/dev
+```
+
+Puis laisser la CI du repo exécuter les validations complètes.
+
+Après merge, dev suit `main` via ArgoCD. La production est promue uniquement via `.github/workflows/promote-prod.yaml` après validation dev.
+
+## Règle anti-template fossile
+
+Si ce template contredit une application récente ou la documentation canonique, **ne pas reproduire la contradiction**. Corriger le template dans une PR séparée ou suivre le pattern actuel le mieux établi.

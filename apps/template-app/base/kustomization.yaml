@@ -5,5 +5,5 @@ resources:
   - namespace.yaml
   - deployment.yaml
   - service.yaml
-  - infisical-secret.yaml
+  - external-secret.yaml
   - litestream-config.yaml
