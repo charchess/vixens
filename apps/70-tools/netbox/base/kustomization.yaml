@@ -5,7 +5,7 @@ resources:
   - deployment.yaml
   - service.yaml
   - netbox-db-secrets.yaml
-  - infisical-secret.yaml
+  - external-secret.yaml
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml
   - plugins-config.yaml
