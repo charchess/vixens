@@ -14,8 +14,13 @@ PyLoad est un gestionnaire de téléchargement polyvalent. Il est configuré pou
 
 ## Configuration
 
-### Secrets Infisical
-**Chemin :** `/apps/20-media/pyload`
+### Secrets (OpenBao / External Secrets Operator)
+Les valeurs secrètes sont stockées dans OpenBao puis projetées dans Kubernetes via `ClusterSecretStore/openbao` et `ExternalSecret/pyload-secrets`.
+
+**Chemins OpenBao :**
+- Dev : `vixens/dev/apps/20-media/pyload`
+- Prod : `vixens/prod/apps/20-media/pyload`
+
 **Variables requises :**
 - `PYLOAD__ADMIN_USER` - Utilisateur administrateur.
 - `PYLOAD__ADMIN_PASS` - Mot de passe administrateur.
