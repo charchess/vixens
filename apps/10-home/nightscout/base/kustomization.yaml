@@ -5,7 +5,7 @@ resources:
   - namespace.yaml
   - deployment.yaml
   - service.yaml
-  - infisical-secret.yaml
+  - external-secret.yaml
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml
   - pdb.yaml
