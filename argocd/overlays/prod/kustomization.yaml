@@ -6,9 +6,6 @@ resources:
   - apps/shared-namespaces.yaml
   - apps/external-secrets.yaml
   - apps/openbao-secrets.yaml
-  # UMI development overlays must never be deployed to production.
-  # Disabled by owner: apps/external-secrets-umi.yaml
-  # Disabled by owner: apps/openbao-secrets-umi.yaml
   - apps/velero-secrets.yaml
   - apps/velero.yaml
   - apps/cilium-lb.yaml
