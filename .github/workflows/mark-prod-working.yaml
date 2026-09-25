@@ -1,0 +1,68 @@
+---
+name: Mark Known-Good Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Production version to mark known-good (e.g. v2026.09.3416)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  mark:
+    name: Move prod-working explicitly
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve production release
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ inputs.version }}"
+          VERSION="${VERSION#v}"
+          PROD_TAG="prod-v${VERSION}"
+
+          if ! git rev-parse "${PROD_TAG}^{commit}" >/dev/null 2>&1; then
+            echo "::error::Production tag ${PROD_TAG} does not exist"
+            exit 1
+          fi
+
+          COMMIT_SHA=$(git rev-parse "${PROD_TAG}^{commit}")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "prod_tag=${PROD_TAG}" >> "$GITHUB_OUTPUT"
+          echo "commit_sha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Mark known-good production
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          git tag -d prod-working 2>/dev/null || true
+          git push origin :refs/tags/prod-working 2>/dev/null || true
+
+          git tag -a prod-working "${{ steps.resolve.outputs.commit_sha }}" \
+            -m "Known-good production: ${{ steps.resolve.outputs.version }}" \
+            -m "Source: ${{ steps.resolve.outputs.prod_tag }}" \
+            -m "Marked explicitly by: ${{ github.actor }}"
+
+          git push origin prod-working
+
+      - name: Summary
+        run: |
+          echo "## Known-good production" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Source: \`${{ steps.resolve.outputs.prod_tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: \`${{ steps.resolve.outputs.commit_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Updated: \`prod-working\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Requested by: @${{ github.actor }}" >> "$GITHUB_STEP_SUMMARY"
