@@ -111,7 +111,7 @@ config:
         Match kube.*
         Host loki.monitoring.svc.cluster.local
         Port 3100
-        Labels job=fluent-bit, namespace=$kubernetes['namespace_name'], pod=$kubernetes['pod_name'], container=$kubernetes['container_name'], node=$NODE_NAME
+        Labels job=fluent-bit, namespace=$kubernetes['namespace_name'], pod=$kubernetes['pod_name'], container=$kubernetes['container_name'], node=${NODE_NAME}
         Auto_Kubernetes_Labels Off
         Line_Format json
         Retry_Limit 5
@@ -122,7 +122,7 @@ config:
         Match hubble.*
         Host loki.monitoring.svc.cluster.local
         Port 3100
-        Labels job=hubble-flow,node=$NODE_NAME
+        Labels job=hubble-flow,node=${NODE_NAME}
         Line_Format json
         Retry_Limit 5
         Workers 1
