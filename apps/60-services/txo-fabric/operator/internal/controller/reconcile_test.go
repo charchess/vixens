@@ -15,10 +15,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestPOCContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
+func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
 	tenant := testTenant()
@@ -201,9 +202,16 @@ func testRuntimeProfile() *fabricv1alpha1.AgentRuntimeProfile {
 	}
 }
 
-func reconcileTenant(t *testing.T, ctx context.Context, c *fake.ClientBuilder, scheme *runtime.Scheme, name string) {
-	// Kept for compatibility with fake client builder? This signature is intentionally not used.
+func reconcileTenant(t *testing.T, ctx context.Context, c client.Client, scheme *runtime.Scheme, name string) {
 	t.Helper()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+	req := ctrl.Request{NamespacedName: types.NamespacedName{Name: name}}
+	if _, err := r.Reconcile(ctx, req); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.Reconcile(ctx, req); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func envValue(env []corev1.EnvVar, name string) string {
