@@ -13,7 +13,7 @@ components:
   - ../../../../_shared/components/scheduling/avoid-i915
 
 patches:
-  - path: infisical-patch.yaml
+  - path: patch-external-secret-env.yaml
     target:
       kind: ExternalSecret
       name: loki-secrets-sync
