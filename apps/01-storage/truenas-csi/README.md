@@ -30,7 +30,7 @@ Before testing iSCSI PVCs, install/enable the host iSCSI initiator on UMI and co
 
 ## StorageClasses
 
-Proposed names, aligned with the existing Synology `synelia-*` retention split:
+Proposed names, aligned with the existing legacy NAS `synelia-*` retention split:
 
 - `truenas-iscsi-retain`
 - `truenas-iscsi-delete`
