@@ -1,7 +1,11 @@
 # Vixens Infrastructure Brownfield Enhancement PRD
 
+> **Historical snapshot — superseded.** This document captures a January 2026 planning state and is retained for history only. It is **not** a current backlog, architecture reference, workflow guide, or source of truth for cluster versions/components. Current work is tracked in GitHub Issues/PRs; `WORKFLOW.md` defines the repository workflow; current architecture decisions live in `docs/adr/`; active operational guidance lives in `docs/guides/` and `docs/procedures/`.
+>
+> References below to Beads, Infisical, historical node/version details, or old application states describe the environment at that time and must not be copied into new work.
+
 **Version:** 1.0  
-**Status:** Draft / Ready for Execution  
+**Status:** Superseded / historical snapshot  
 **Author:** John (Product Manager)  
 
 ---

@@ -8,14 +8,19 @@
 
 ## Architecture
 **Type :** Application (Kustomize)
-**Namespace :** `downloads`
+**Namespace :** `media`
 
 qBittorrent est un client BitTorrent open-source. Il est configuré pour router son trafic sortant via le proxy VPN **Gluetun**.
 
 ## Configuration
 
-### Secrets Infisical
-**Chemin :** `/apps/20-media/qbittorrent`
+### Secrets (OpenBao / External Secrets Operator)
+Les valeurs secrètes sont stockées dans OpenBao puis projetées dans Kubernetes via `ClusterSecretStore/openbao` et `ExternalSecret/qbittorrent-secrets` vers `Secret/qbittorrent-secrets`.
+
+**Chemins OpenBao :**
+- Dev : `vixens/dev/apps/20-media/qbittorrent`
+- Prod : `vixens/prod/apps/20-media/qbittorrent`
+
 **Variables requises :**
 - `QBITTORRENT__WEBUI_USERNAME` - Utilisateur pour l'interface web.
 - `QBITTORRENT__WEBUI_PASSWORD` - Mot de passe pour l'interface web.
@@ -35,7 +40,7 @@ L'application utilise Gluetun comme proxy HTTP :
 ### Méthode Automatique (Command Line)
 ```bash
 # Vérifier que le pod est Running
-kubectl get pods -n downloads -l app.kubernetes.io/name=qbittorrent
+kubectl get pods -n media -l app.kubernetes.io/name=qbittorrent
 
 # Vérifier l'accès réseau (Ingress)
 curl -I https://qbittorrent.dev.truxonline.com
