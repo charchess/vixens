@@ -8,6 +8,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,42 +18,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestPOCContractReconcilesWithRealGatewayCommand(t *testing.T) {
+func TestPOCContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	ctx := context.Background()
-	scheme := runtime.NewScheme()
-	if err := clientgoscheme.AddToScheme(scheme); err != nil {
-		t.Fatal(err)
-	}
-	if err := fabricv1alpha1.AddToScheme(scheme); err != nil {
-		t.Fatal(err)
-	}
-
-	tenant := &fabricv1alpha1.TenantBundle{
-		ObjectMeta: metav1.ObjectMeta{Name: "hairem-sandbox"},
-		Spec: fabricv1alpha1.TenantBundleSpec{
-			TenantID:    "TEN90001",
-			DisplayName: "hAIrem Sandbox",
-			Persistence: fabricv1alpha1.TenantPersistenceSpec{PostgreSQL: &fabricv1alpha1.PostgreSQLSpec{Mode: "Shared", ProfileRef: "shared-poc"}},
-			Memory:      fabricv1alpha1.TenantMemorySpec{Hindsight: &fabricv1alpha1.HindsightMemorySpec{ProfileRef: "shared-poc"}},
-		},
-	}
-	profile := &fabricv1alpha1.AgentRuntimeProfile{
-		ObjectMeta: metav1.ObjectMeta{Name: "hermes-default"},
-		Spec: fabricv1alpha1.AgentRuntimeProfileSpec{
-			Engine:  "Hermes",
-			Image:   "nousresearch/hermes-agent:v2026.9.24",
-			Storage: fabricv1alpha1.RuntimeStorageSpec{Size: resource.MustParse("2Gi"), StorageClassName: "truenas-iscsi-delete"},
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("100m"), corev1.ResourceMemory: resource.MustParse("256Mi")},
-				Limits:   corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("1"), corev1.ResourceMemory: resource.MustParse("2Gi")},
-			},
-			Compatibility: fabricv1alpha1.RuntimeCompatibilitySpec{S6Overlay: true},
-		},
-	}
+	scheme := testScheme(t)
+	tenant := testTenant()
+	profile := testRuntimeProfile()
 	agent := &fabricv1alpha1.AgentIdentity{
-		ObjectMeta: metav1.ObjectMeta{Name: "tina"},
+		ObjectMeta: metav1.ObjectMeta{Name: "hairem-sandbox-tina"},
 		Spec: fabricv1alpha1.AgentIdentitySpec{
 			TenantRef:   fabricv1alpha1.ObjectReference{Name: "hairem-sandbox"},
+			AgentKey:    "tina",
 			DisplayName: "Tina",
 			Runtime:     fabricv1alpha1.AgentRuntimeBinding{ProfileRef: "hermes-default"},
 		},
@@ -63,14 +38,7 @@ func TestPOCContractReconcilesWithRealGatewayCommand(t *testing.T) {
 		WithObjects(tenant, profile, agent).
 		Build()
 
-	tenantReconciler := &TenantBundleReconciler{Client: c, Scheme: scheme}
-	reqTenant := ctrl.Request{NamespacedName: types.NamespacedName{Name: tenant.Name}}
-	if _, err := tenantReconciler.Reconcile(ctx, reqTenant); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := tenantReconciler.Reconcile(ctx, reqTenant); err != nil {
-		t.Fatal(err)
-	}
+	reconcileTenant(t, ctx, c, scheme, tenant.Name)
 
 	var ns corev1.Namespace
 	if err := c.Get(ctx, types.NamespacedName{Name: "tenant-hairem-sandbox"}, &ns); err != nil {
@@ -104,6 +72,12 @@ func TestPOCContractReconcilesWithRealGatewayCommand(t *testing.T) {
 	if deployment.Spec.Template.Annotations["vixens.io/explicitly-allow-root"] != "true" {
 		t.Fatal("s6 compatibility annotation is missing")
 	}
+	if got := envValue(container.Env, "TXO_AGENT_ID"); got != "hairem-sandbox-tina" {
+		t.Fatalf("TXO_AGENT_ID = %q, want global CR identity", got)
+	}
+	if got := envValue(container.Env, "TXO_AGENT_KEY"); got != "tina" {
+		t.Fatalf("TXO_AGENT_KEY = %q, want tenant-local key", got)
+	}
 
 	var pvc corev1.PersistentVolumeClaim
 	if err := c.Get(ctx, types.NamespacedName{Name: "hermes-tina-data", Namespace: ns.Name}, &pvc); err != nil {
@@ -120,4 +94,123 @@ func TestPOCContractReconcilesWithRealGatewayCommand(t *testing.T) {
 	if len(egress.Spec.Egress) != 2 {
 		t.Fatalf("expected DNS + tenant Hindsight egress rules, got %d", len(egress.Spec.Egress))
 	}
+
+	var current fabricv1alpha1.AgentIdentity
+	if err := c.Get(ctx, types.NamespacedName{Name: agent.Name}, &current); err != nil {
+		t.Fatal(err)
+	}
+	if current.Status.Memory.BankID != "hairem-sandbox-tina" {
+		t.Fatalf("resolved bank = %q, want hairem-sandbox-tina", current.Status.Memory.BankID)
+	}
+}
+
+func TestDuplicateAgentKeyInSameTenantIsRejected(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := testTenant()
+	profile := testRuntimeProfile()
+	first := &fabricv1alpha1.AgentIdentity{
+		ObjectMeta: metav1.ObjectMeta{Name: "hairem-sandbox-tina"},
+		Spec: fabricv1alpha1.AgentIdentitySpec{
+			TenantRef: fabricv1alpha1.ObjectReference{Name: tenant.Name}, AgentKey: "tina", DisplayName: "Tina",
+		},
+	}
+	duplicate := &fabricv1alpha1.AgentIdentity{
+		ObjectMeta: metav1.ObjectMeta{Name: "hairem-sandbox-tina-copy"},
+		Spec: fabricv1alpha1.AgentIdentitySpec{
+			TenantRef: fabricv1alpha1.ObjectReference{Name: tenant.Name}, AgentKey: "tina", DisplayName: "Tina copy",
+		},
+	}
+
+	c := fake.NewClientBuilder().WithScheme(scheme).
+		WithStatusSubresource(&fabricv1alpha1.TenantBundle{}, &fabricv1alpha1.AgentIdentity{}).
+		WithObjects(tenant, profile, first, duplicate).
+		Build()
+	reconcileTenant(t, ctx, c, scheme, tenant.Name)
+
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	req := ctrl.Request{NamespacedName: types.NamespacedName{Name: duplicate.Name}}
+	if _, err := r.Reconcile(ctx, req); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.Reconcile(ctx, req); err != nil {
+		t.Fatal(err)
+	}
+
+	var current fabricv1alpha1.AgentIdentity
+	if err := c.Get(ctx, types.NamespacedName{Name: duplicate.Name}, &current); err != nil {
+		t.Fatal(err)
+	}
+	if current.Status.Phase != "Failed" {
+		t.Fatalf("duplicate phase = %q, want Failed", current.Status.Phase)
+	}
+	found := false
+	for _, condition := range current.Status.Conditions {
+		if condition.Type == "IdentityUnique" && condition.Status == metav1.ConditionFalse && condition.Reason == "DuplicateAgentKey" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("DuplicateAgentKey condition missing: %#v", current.Status.Conditions)
+	}
+
+	var deployment appsv1.Deployment
+	err := c.Get(ctx, types.NamespacedName{Name: "hermes-tina", Namespace: "tenant-hairem-sandbox"}, &deployment)
+	if !apierrors.IsNotFound(err) {
+		t.Fatalf("duplicate identity must not create runtime, got err=%v deployment=%s", err, deployment.Name)
+	}
+}
+
+func testScheme(t *testing.T) *runtime.Scheme {
+	t.Helper()
+	scheme := runtime.NewScheme()
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Fatal(err)
+	}
+	if err := fabricv1alpha1.AddToScheme(scheme); err != nil {
+		t.Fatal(err)
+	}
+	return scheme
+}
+
+func testTenant() *fabricv1alpha1.TenantBundle {
+	return &fabricv1alpha1.TenantBundle{
+		ObjectMeta: metav1.ObjectMeta{Name: "hairem-sandbox"},
+		Spec: fabricv1alpha1.TenantBundleSpec{
+			TenantID:    "TEN90001",
+			DisplayName: "hAIrem Sandbox",
+			Persistence: fabricv1alpha1.TenantPersistenceSpec{PostgreSQL: &fabricv1alpha1.PostgreSQLSpec{Mode: "Shared", ProfileRef: "shared-poc"}},
+			Memory:      fabricv1alpha1.TenantMemorySpec{Hindsight: &fabricv1alpha1.HindsightMemorySpec{ProfileRef: "shared-poc"}},
+		},
+	}
+}
+
+func testRuntimeProfile() *fabricv1alpha1.AgentRuntimeProfile {
+	return &fabricv1alpha1.AgentRuntimeProfile{
+		ObjectMeta: metav1.ObjectMeta{Name: "hermes-default"},
+		Spec: fabricv1alpha1.AgentRuntimeProfileSpec{
+			Engine:  "Hermes",
+			Image:   "nousresearch/hermes-agent:v2026.9.24",
+			Storage: fabricv1alpha1.RuntimeStorageSpec{Size: resource.MustParse("2Gi"), StorageClassName: "truenas-iscsi-delete"},
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("100m"), corev1.ResourceMemory: resource.MustParse("256Mi")},
+				Limits:   corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("1"), corev1.ResourceMemory: resource.MustParse("2Gi")},
+			},
+			Compatibility: fabricv1alpha1.RuntimeCompatibilitySpec{S6Overlay: true},
+		},
+	}
+}
+
+func reconcileTenant(t *testing.T, ctx context.Context, c *fake.ClientBuilder, scheme *runtime.Scheme, name string) {
+	// Kept for compatibility with fake client builder? This signature is intentionally not used.
+	t.Helper()
+}
+
+func envValue(env []corev1.EnvVar, name string) string {
+	for _, item := range env {
+		if item.Name == name {
+			return item.Value
+		}
+	}
+	return ""
 }
