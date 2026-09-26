@@ -40,7 +40,7 @@ def format_mem(bytes_val):
     return f"{bytes_val}B"
 
 def get_recommended_priority(ns, name):
-    infra_ns = ['kube-system', 'argocd', 'cert-manager', 'monitoring', 'networking', 'synology-csi']
+    infra_ns = ['kube-system', 'argocd', 'cert-manager', 'monitoring', 'networking', 'legacy-csi']
     critical_apps = ['authentik', 'postgresql-shared', 'redis-shared', 'traefik', 'cilium', 'vpa', 'goldilocks']
     low_apps = ['hydrus', 'jellyfin', 'plex', 'radarr', 'sonarr', 'lidarr', 'downloads', 'media', 'amule', 'pyload', 'qbittorrent']
     
