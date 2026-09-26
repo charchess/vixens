@@ -2,29 +2,25 @@
 
 ## Deployment Information
 | Environment | Deployed | Configured | Tested | Version |
-|-------------|----------|-----------|-------|---------|
-| Dev         | [x]      | [x]       | [x]   | v0.32.0 |
-| Prod        | [x]      | [x]       | [x]   | v0.32.0 |
+|-------------|----------|-----------|--------|---------|
+| Dev         | [x]      | [x]       | [x]    | v0.32.0 |
+| Prod        | [x]      | [x]       | [x]    | v0.32.0 |
 
 ## Validation
-**URL:** N/A (Background Service)
+**URL:** N/A (background service)
 
-### Automatic Validation (CLI)
 ```bash
-# Check pod status
 kubectl get pods -n robusta
 ```
 
-### Manual Validation
-1. Trigger a test alert (e.g., create a crashing pod).
-2. Verify notification in Discord channel.
+For functional validation, trigger a controlled test alert and verify the expected notification path.
 
 ## Technical Notes
+
 - **Namespace:** `robusta`
 - **Category:** `02-monitoring`
-- **Dependencies:**
-    - Prometheus (Robusta connects to it)
-    - Infisical (for Secrets)
-- **Specifics:** 
-    - Configuration handled via `values.yaml` in overlays.
-    - Secrets (`DISCORD_WEBHOOK_URL`, `ROBUSTA_SIGNING_KEY`) injected via `InfisicalSecret`.
+- **Monitoring dependency:** Prometheus-compatible metrics/alerts according to the deployed Robusta configuration.
+- **Secrets:** Vixens' canonical secret architecture is OpenBao → External Secrets Operator → Kubernetes Secret. Do not create `InfisicalSecret` resources.
+- **Configuration:** use the current manifests/values in `apps/02-monitoring/robusta/` as the authoritative deployment definition; this document must not override Git desired state.
+
+See [`docs/guides/secret-management.md`](../../guides/secret-management.md) for the current secret-management contract.

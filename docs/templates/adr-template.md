@@ -21,4 +21,5 @@ Quelle est la décision prise ? (Détails techniques, schémas, choix d'outils).
 
 ## References
 - [Lien vers documentation]
-- [Lien vers ticket Beads]
+- GitHub Issue #XXX
+- Pull Request #XXX
