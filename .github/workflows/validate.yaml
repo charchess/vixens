@@ -153,8 +153,7 @@ jobs:
 
           CHANGED=$(gh pr view ${{ github.event.pull_request.number }} \
             --json files --jq '.files.[].path' | \
-            grep -oP 'apps/[^/]+/overlays/(dev|prod)' | \
-            sed 's|/[^/]*$||' | \
+            sed -nE 's|^(apps/[^/]+/[^/]+/overlays/(dev|prod))(/.*)?$|\1|p; s|^(argocd/overlays/(dev|prod))(/.*)?$|\1|p' | \
             sort -u)
 
           if [ -n "$CHANGED" ]; then
