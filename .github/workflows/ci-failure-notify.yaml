@@ -5,7 +5,6 @@ on:
   workflow_run:
     workflows:
       - "Validate & Security"
-      - "CI"
       - "Promote to Production"
     types:
       - completed
