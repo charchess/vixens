@@ -14,7 +14,7 @@ resources:
   - check-homepage-annotations.yaml
   - check-image-digest.yaml
   - check-image-tag.yaml
-  - check-infisical-secrets.yaml
+  - check-external-secrets.yaml
   - check-ingress-tls.yaml
   - check-managed-by-label.yaml
   - check-metrics.yaml
