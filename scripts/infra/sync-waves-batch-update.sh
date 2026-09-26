@@ -73,7 +73,7 @@ echo ""
 
 # Phase 2: Wave 0 (Infrastructure Réseau)
 echo "=== Phase 2: Wave 0 (Infrastructure Réseau) ==="
-add_sync_wave "argocd/overlays/dev/apps/synology-csi.yaml" "0"
+add_sync_wave "argocd/overlays/dev/apps/legacy-csi.yaml" "0"
 add_sync_wave "argocd/overlays/dev/apps/traefik.yaml" "0"
 echo ""
 
