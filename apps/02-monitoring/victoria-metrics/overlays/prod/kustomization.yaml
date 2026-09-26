@@ -14,7 +14,7 @@ resources:
   - ssa-vmalert.yaml
   - ssa-vmalertmanager.yaml
 patches:
-  - path: patch-infisical-env.yaml
+  - path: patch-external-secret-env.yaml
     target:
       kind: ExternalSecret
       name: vm-alertmanager-secrets-sync
