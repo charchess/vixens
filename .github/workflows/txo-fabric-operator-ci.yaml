@@ -25,6 +25,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.26.0'
+          cache: false
+
+      - name: Resolve module graph
+        working-directory: apps/60-services/txo-fabric/operator
+        run: go mod tidy
 
       - name: Test
         working-directory: apps/60-services/txo-fabric/operator
