@@ -8,8 +8,9 @@ resources:
 # TXO Fabric is currently bootstrapped through Kyverno. Keep the CRD discovery,
 # generate policies and trigger resources in distinct Argo CD sync waves so a
 # fresh cluster does not try to reconcile TenantBundle/AgentIdentity before the
-# API and policies exist. Policy revision also retriggers generateExisting for
-# resources created during the initial discovery-cache race.
+# API and policies exist. Reconciliation annotations on trigger resources are
+# deliberately bumped when an already-created trigger needs a fresh admission
+# UPDATE after a POC provisioning race.
 patches:
   - target:
       group: apiextensions.k8s.io
@@ -66,7 +67,10 @@ patches:
         path: /metadata/annotations
         value:
           argocd.argoproj.io/sync-wave: "-20"
-          fabric.truxonline.io/reconcile-revision: "2"
+          fabric.truxonline.io/reconcile-revision: "3"
+      - op: add
+        path: /spec/rules/0/skipBackgroundRequests
+        value: false
 
   - target:
       group: kyverno.io
@@ -99,4 +103,5 @@ patches:
       - op: add
         path: /metadata/annotations
         value:
-          argocd.argoproj.io/sync-wave: "0"
+          argocd.argoproj.io/sync-wave: "10"
+          fabric.truxonline.io/reconcile-revision: "3"
