@@ -17,4 +17,4 @@ components:
   - ../../../../_shared/components/scheduling/avoid-i915
 
 patches:
-  - path: patch-infisical-env.yaml
+  - path: patch-external-secret-env.yaml
