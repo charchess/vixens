@@ -67,10 +67,14 @@ patches:
         path: /metadata/annotations
         value:
           argocd.argoproj.io/sync-wave: "-20"
-          fabric.truxonline.io/reconcile-revision: "3"
-      - op: add
-        path: /spec/rules/0/skipBackgroundRequests
-        value: false
+          fabric.truxonline.io/reconcile-revision: "4"
+      - op: replace
+        path: /spec/rules/0/match/any/0/resources
+        value:
+          kinds: [fabric.truxonline.io/v1alpha1/TenantBundle]
+      - op: replace
+        path: /spec/rules/0/generate/namespace
+        value: "tenant-{{ request.object.spec.slug }}"
 
   - target:
       group: kyverno.io
@@ -83,7 +87,10 @@ patches:
         value: "-20"
       - op: add
         path: /metadata/annotations/fabric.truxonline.io~1reconcile-revision
-        value: "2"
+        value: "4"
+      - op: add
+        path: /spec/rules/0/generate/data/spec/storageClassName
+        value: truenas-iscsi-delete
 
   - target:
       group: fabric.truxonline.io
@@ -94,6 +101,7 @@ patches:
         path: /metadata/annotations
         value:
           argocd.argoproj.io/sync-wave: "-10"
+          fabric.truxonline.io/reconcile-revision: "4"
 
   - target:
       group: fabric.truxonline.io
@@ -104,4 +112,4 @@ patches:
         path: /metadata/annotations
         value:
           argocd.argoproj.io/sync-wave: "10"
-          fabric.truxonline.io/reconcile-revision: "3"
+          fabric.truxonline.io/reconcile-revision: "4"
