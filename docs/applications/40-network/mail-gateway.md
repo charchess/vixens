@@ -7,7 +7,7 @@
 | Prod          | [x]     | [x]       | [ ]   | -       |
 
 ## Description
-Service de passerelle mail exposant le service de messagerie Synology MailPlus via Ingress Kubernetes.
+Service de passerelle mail exposant le service de messagerie legacy NAS MailPlus via Ingress Kubernetes.
 Gère les redirections webmail (`/mail`) et l'exposition des services SMTP/IMAP si nécessaire.
 
 ## Validation
@@ -31,7 +31,7 @@ curl -I -L -k https://mail.dev.truxonline.com
 
 ## Notes Techniques
 - **Namespace :** `mail-gateway`
-- **Dépendances :** Synology MailPlus Server
+- **Dépendances :** legacy NAS MailPlus Server
 - **Particularités :** 
   - Utilise un Middleware Traefik `redirectRegex` pour rediriger la racine `/` vers `/mail/`.
   - Service de type `ExternalName` ou proxy vers l'IP du NAS.
