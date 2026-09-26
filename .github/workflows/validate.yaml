@@ -149,11 +149,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           echo "mode=fast" >> $GITHUB_OUTPUT
 
           CHANGED=$(gh pr view ${{ github.event.pull_request.number }} \
             --json files --jq '.files.[].path' | \
-            sed -nE 's|^(apps/[^/]+/[^/]+/overlays/(dev|prod))(/.*)?$|\1|p; s|^(argocd/overlays/(dev|prod))(/.*)?$|\1|p' | \
+            sed -nE 's~^(apps/[^/]+/[^/]+/overlays/(dev|prod))(/.*)?$~\1~p; s~^(argocd/overlays/(dev|prod))(/.*)?$~\1~p' | \
             sort -u)
 
           if [ -n "$CHANGED" ]; then
