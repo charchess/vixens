@@ -17,5 +17,5 @@ patches:
 resources:
   - ../../base
   - ingress.yaml
-  - infisical-redis-secret.yaml
+  - redis-external-secret.yaml
   - httpscaledobject.yaml

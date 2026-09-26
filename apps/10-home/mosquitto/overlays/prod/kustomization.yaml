@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: mosquitto
 resources:
   - ../../base
-  - infisical-mosquitto-auth.yaml
+  - mosquitto-auth-external-secret.yaml
   - mosquitto-tcp-ingressroute.yaml
 
 components:
