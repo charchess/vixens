@@ -15,6 +15,6 @@ patches:
   - path: patch-nextauth-url.yaml
 resources:
   - ../../base
-  - infisical-secret.yaml
+  - external-secret.yaml
   - ingress.yaml
   - httpscaledobject.yaml
