@@ -5,7 +5,7 @@ lapi:
   replicas: 0
   persistentVolume:
     config:
-      # Existing production PVC is Bound to Synology.  StorageClass is immutable;
+      # Existing production PVC is Bound to legacy NAS.  StorageClass is immutable;
       # migrate via a parallel TrueNAS PVC instead of patching this claim in place.
       storageClassName: truenas-iscsi-retain
   env:
