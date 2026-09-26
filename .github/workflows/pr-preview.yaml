@@ -70,7 +70,11 @@ jobs:
               continue
             fi
 
-            app_name=$(echo "$overlay" | sed -E 's|apps/[^/]+/([^/]+)/.*|\1|')
+            if [[ "$overlay" == apps/* ]]; then
+              app_name=$(echo "$overlay" | sed -E 's|apps/[^/]+/([^/]+)/.*|\1|')
+            else
+              app_name="argocd"
+            fi
             env=$(echo "$overlay" | sed -E 's|.*/overlays/([^/]+).*|\1|')
 
             echo "" >> /tmp/diff_output.md
