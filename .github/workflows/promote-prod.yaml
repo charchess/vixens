@@ -5,143 +5,220 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Dev version to promote (e.g., v1.2.3 from dev-v1.2.3)'
+        description: 'Dev version to promote (e.g. v2026.09.3512 from dev-v2026.09.3512)'
         required: true
         type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: production-promotion
+  cancel-in-progress: false
 
 jobs:
   promote:
     name: Promote dev to prod
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for tags
+          fetch-depth: 0
 
-      - name: Validate input version
-        id: validate
+      - name: Resolve immutable promotion target
+        id: resolve
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        shell: bash
         run: |
-          VERSION="${{ inputs.version }}"
+          set -euo pipefail
 
-          # Remove 'v' prefix if present
-          VERSION=${VERSION#v}
-
-          # Check if dev tag exists
-          DEV_TAG="dev-v${VERSION}"
-          if ! git rev-parse "$DEV_TAG" >/dev/null 2>&1; then
-            echo "❌ Error: Tag $DEV_TAG does not exist"
-            echo "Available dev tags:"
-            git tag -l "dev-v*" | sort -V | tail -n 10
+          VERSION="${INPUT_VERSION#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9A-Za-z][0-9A-Za-z._-]*$ ]]; then
+            echo "::error::Invalid version '${INPUT_VERSION}'. Expected vYYYY.MM.<PR-or-short-sha>."
             exit 1
           fi
 
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "dev_tag=$DEV_TAG" >> $GITHUB_OUTPUT
-          echo "prod_tag=prod-v${VERSION}" >> $GITHUB_OUTPUT
+          DEV_TAG="dev-v${VERSION}"
+          PROD_TAG="prod-v${VERSION}"
+          git fetch --force --tags origin main
 
-          echo "✅ Validated: promoting $DEV_TAG to prod-v${VERSION}"
+          if ! git rev-parse "${DEV_TAG}^{commit}" >/dev/null 2>&1; then
+            echo "::error::Tag ${DEV_TAG} does not exist"
+            echo "Available dev tags:"
+            git tag -l 'dev-v*' --sort=-version:refname | head -n 10
+            exit 1
+          fi
 
-      - name: Get dev tag commit
-        id: get_commit
-        run: |
-          DEV_TAG="${{ steps.validate.outputs.dev_tag }}"
           COMMIT_SHA=$(git rev-parse "${DEV_TAG}^{commit}")
+          if ! git merge-base --is-ancestor "$COMMIT_SHA" origin/main; then
+            echo "::error::${DEV_TAG} points to ${COMMIT_SHA}, which is not an ancestor of main"
+            exit 1
+          fi
 
-          echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
-          echo "📍 Dev tag $DEV_TAG points to commit: $COMMIT_SHA"
+          PROD_EXISTS=false
+          if git rev-parse "${PROD_TAG}^{commit}" >/dev/null 2>&1; then
+            EXISTING_PROD_COMMIT=$(git rev-parse "${PROD_TAG}^{commit}")
+            if [[ "$EXISTING_PROD_COMMIT" != "$COMMIT_SHA" ]]; then
+              echo "::error::${PROD_TAG} already exists on ${EXISTING_PROD_COMMIT}, expected ${COMMIT_SHA}"
+              exit 1
+            fi
+            PROD_EXISTS=true
+          fi
 
-      - name: Create prod versioned tag
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "dev_tag=$DEV_TAG" >> "$GITHUB_OUTPUT"
+          echo "prod_tag=$PROD_TAG" >> "$GITHUB_OUTPUT"
+          echo "commit_sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
+          echo "prod_exists=$PROD_EXISTS" >> "$GITHUB_OUTPUT"
+          echo "✅ Resolved ${DEV_TAG} -> ${COMMIT_SHA}"
+
+      - name: Checkout exact promoted commit
+        env:
+          COMMIT_SHA: ${{ steps.resolve.outputs.commit_sha }}
+        shell: bash
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          set -euo pipefail
+          git checkout --detach "$COMMIT_SHA"
+          ACTUAL_COMMIT=$(git rev-parse HEAD)
+          if [[ "$ACTUAL_COMMIT" != "$COMMIT_SHA" ]]; then
+            echo "::error::Checked out ${ACTUAL_COMMIT}, expected ${COMMIT_SHA}"
+            exit 1
+          fi
+          echo "✅ Release workspace pinned to ${COMMIT_SHA}"
 
-          PROD_TAG="${{ steps.validate.outputs.prod_tag }}"
-          COMMIT_SHA="${{ steps.get_commit.outputs.commit_sha }}"
-
-          # Create annotated tag pointing to the same commit as dev tag
-          git tag -a "$PROD_TAG" "$COMMIT_SHA" \
-            -m "Production release ${{ steps.validate.outputs.version }}" \
-            -m "Promoted from: ${{ steps.validate.outputs.dev_tag }}" \
-            -m "Commit: $COMMIT_SHA" \
-            -m "Promoted by: ${{ github.actor }}"
-
-          git push origin "$PROD_TAG"
-
-          echo "✅ Created prod tag: $PROD_TAG"
-
-      - name: Update prod-stable tag
+      - name: Create promotion metadata
+        id: metadata
+        env:
+          VERSION: ${{ steps.resolve.outputs.version }}
+          DEV_TAG: ${{ steps.resolve.outputs.dev_tag }}
+          PROD_TAG: ${{ steps.resolve.outputs.prod_tag }}
+          COMMIT_SHA: ${{ steps.resolve.outputs.commit_sha }}
+          PROMOTED_BY: ${{ github.actor }}
+        shell: bash
         run: |
-          COMMIT_SHA="${{ steps.get_commit.outputs.commit_sha }}"
+          set -euo pipefail
 
-          # Delete old prod-stable tag if exists
-          git tag -d prod-stable 2>/dev/null || true
-          git push origin :refs/tags/prod-stable 2>/dev/null || true
+          METADATA_FILE="promotion-prod-${VERSION}.json"
+          PROMOTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          WORKFLOW_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
-          # Create new prod-stable pointing to promoted commit
-          git tag -a prod-stable "$COMMIT_SHA" \
-            -m "Production stable: ${{ steps.validate.outputs.version }}" \
-            -m "Points to: ${{ steps.validate.outputs.prod_tag }}" \
-            -m "Promoted by: ${{ github.actor }}"
+          jq -n \
+            --arg version "$VERSION" \
+            --arg dev_tag "$DEV_TAG" \
+            --arg prod_tag "$PROD_TAG" \
+            --arg commit_sha "$COMMIT_SHA" \
+            --arg promoted_by "$PROMOTED_BY" \
+            --arg promoted_at "$PROMOTED_AT" \
+            --arg workflow_run "$GITHUB_RUN_ID" \
+            --arg workflow_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg workflow_url "$WORKFLOW_URL" \
+            '{
+              version: $version,
+              dev_tag: $dev_tag,
+              prod_tag: $prod_tag,
+              commit_sha: $commit_sha,
+              promoted_by: $promoted_by,
+              promoted_at: $promoted_at,
+              workflow_run: $workflow_run,
+              workflow_attempt: $workflow_attempt,
+              workflow_url: $workflow_url
+            }' > "$METADATA_FILE"
 
-          git push origin prod-stable
+          echo "metadata_file=$METADATA_FILE" >> "$GITHUB_OUTPUT"
+          echo "✅ Created ${METADATA_FILE}"
 
-          echo "✅ Updated prod-stable to ${{ steps.validate.outputs.version }}"
-
-      - name: Generate SBOM
+      - name: Generate SBOM from promoted commit
         uses: anchore/sbom-action@v0
         with:
           path: ./apps
           format: spdx-json
-          output-file: sbom-prod-${{ steps.validate.outputs.version }}.spdx.json
+          output-file: sbom-prod-${{ steps.resolve.outputs.version }}.spdx.json
 
-      - name: Upload SBOM to Release
+      - name: Create or verify immutable prod tag
+        env:
+          PROD_TAG: ${{ steps.resolve.outputs.prod_tag }}
+          DEV_TAG: ${{ steps.resolve.outputs.dev_tag }}
+          VERSION: ${{ steps.resolve.outputs.version }}
+          COMMIT_SHA: ${{ steps.resolve.outputs.commit_sha }}
+          PROD_EXISTS: ${{ steps.resolve.outputs.prod_exists }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          if [[ "$PROD_EXISTS" == "true" ]]; then
+            echo "✅ ${PROD_TAG} already exists on the expected commit"
+          else
+            git tag -a "$PROD_TAG" "$COMMIT_SHA" \
+              -m "Production release ${VERSION}" \
+              -m "Promoted from: ${DEV_TAG}" \
+              -m "Commit: ${COMMIT_SHA}" \
+              -m "Promoted by: ${{ github.actor }}"
+            git push origin "refs/tags/${PROD_TAG}"
+            echo "✅ Created immutable tag: ${PROD_TAG}"
+          fi
+
+      - name: Publish release artifacts
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.validate.outputs.prod_tag }}
+          tag_name: ${{ steps.resolve.outputs.prod_tag }}
+          fail_on_unmatched_files: true
           files: |
-            sbom-prod-${{ steps.validate.outputs.version }}.spdx.json
+            sbom-prod-${{ steps.resolve.outputs.version }}.spdx.json
+            ${{ steps.metadata.outputs.metadata_file }}
           body: |
-            ## 📦 Production Release ${{ steps.validate.outputs.version }}
+            ## Production Release ${{ steps.resolve.outputs.version }}
 
-            **SBOM included** for compliance tracking.
+            Promoted from: `${{ steps.resolve.outputs.dev_tag }}`
+            Commit: `${{ steps.resolve.outputs.commit_sha }}`
 
-            Promoted from: `${{ steps.validate.outputs.dev_tag }}`
-            Commit: `${{ steps.get_commit.outputs.commit_sha }}`
+            Release assets contain the SBOM and promotion metadata generated from this exact commit.
+
+      - name: Move prod-stable atomically
+        env:
+          VERSION: ${{ steps.resolve.outputs.version }}
+          PROD_TAG: ${{ steps.resolve.outputs.prod_tag }}
+          COMMIT_SHA: ${{ steps.resolve.outputs.commit_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag -fa prod-stable "$COMMIT_SHA" \
+            -m "Production stable: ${VERSION}" \
+            -m "Points to: ${PROD_TAG}" \
+            -m "Promoted by: ${{ github.actor }}"
+          git push --force origin refs/tags/prod-stable
+          echo "✅ Updated prod-stable to ${VERSION}"
+
+      - name: Verify production pointer
+        env:
+          COMMIT_SHA: ${{ steps.resolve.outputs.commit_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --force --tags origin
+          ACTUAL_COMMIT=$(git rev-parse 'prod-stable^{commit}')
+          if [[ "$ACTUAL_COMMIT" != "$COMMIT_SHA" ]]; then
+            echo "::error::prod-stable resolves to ${ACTUAL_COMMIT}, expected ${COMMIT_SHA}"
+            exit 1
+          fi
+          echo "✅ prod-stable resolves to ${COMMIT_SHA}"
 
       - name: Summary
         run: |
-          echo "## 🚀 Production Promotion Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Promoted version: \`${{ steps.validate.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Source:** \`${{ steps.validate.outputs.dev_tag }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Created:** \`${{ steps.validate.outputs.prod_tag }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Updated:** \`prod-stable\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** \`${{ steps.get_commit.outputs.commit_sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Promoted by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "ArgoCD will automatically sync production cluster to this version." >> $GITHUB_STEP_SUMMARY
-
-      - name: Create promotion record
-        run: |
-          # Optional: Create a JSON record of the promotion
-          mkdir -p .promotions
-          cat > .promotions/prod-${{ steps.validate.outputs.version }}.json <<EOF
-          {
-            "version": "${{ steps.validate.outputs.version }}",
-            "dev_tag": "${{ steps.validate.outputs.dev_tag }}",
-            "prod_tag": "${{ steps.validate.outputs.prod_tag }}",
-            "commit_sha": "${{ steps.get_commit.outputs.commit_sha }}",
-            "promoted_by": "${{ github.actor }}",
-            "promoted_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "workflow_run": "${{ github.run_id }}"
-          }
-          EOF
-
-          echo "📝 Created promotion record: .promotions/prod-${{ steps.validate.outputs.version }}.json"
+          echo "## 🚀 Production Promotion Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "✅ Promoted version: \`${{ steps.resolve.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Source:** \`${{ steps.resolve.outputs.dev_tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Immutable release:** \`${{ steps.resolve.outputs.prod_tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Deployment pointer:** \`prod-stable\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Commit:** \`${{ steps.resolve.outputs.commit_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Promoted by:** @${{ github.actor }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "ArgoCD can now reconcile production from this exact release." >> "$GITHUB_STEP_SUMMARY"

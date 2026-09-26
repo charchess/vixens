@@ -5,70 +5,104 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
   auto-tag:
     name: Create dev tags
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Compute version
+      - name: Resolve version from merged PR
         id: get_tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.sha }}
+        shell: bash
         run: |
+          set -euo pipefail
+
           YEAR_MONTH=$(date -u +%Y.%m)
+          PR_NUMBER=$(
+            gh api \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${REPOSITORY}/commits/${COMMIT_SHA}/pulls" \
+              --jq '[.[] | select(.merged_at != null and .base.ref == "main")] | sort_by(.merged_at) | last | .number // empty'
+          )
 
-          # Extract PR number from squash merge commit message "(#NNNN)"
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          PR_NUMBER=$(echo "$COMMIT_MSG" | grep -oP '\(#\K[0-9]+(?=\))' | head -1)
-
-          if [ -n "$PR_NUMBER" ]; then
+          if [[ -n "$PR_NUMBER" ]]; then
             NEW_VERSION="${YEAR_MONTH}.${PR_NUMBER}"
+            VERSION_SOURCE="pr-${PR_NUMBER}"
           else
-            # Direct push without PR — use short SHA as suffix
-            SHORT_SHA=$(git rev-parse --short HEAD)
+            SHORT_SHA=$(git rev-parse --short=9 "$COMMIT_SHA")
             NEW_VERSION="${YEAR_MONTH}.${SHORT_SHA}"
+            VERSION_SOURCE="direct-push"
           fi
 
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "new_tag=dev-v${NEW_VERSION}" >> $GITHUB_OUTPUT
-          echo "📦 New version: dev-v${NEW_VERSION}"
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "new_tag=dev-v${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "version_source=$VERSION_SOURCE" >> "$GITHUB_OUTPUT"
+          echo "📦 New version: dev-v${NEW_VERSION} (${VERSION_SOURCE})"
 
-      - name: Create versioned tag
+      - name: Create immutable versioned tag
+        env:
+          DEV_TAG: ${{ steps.get_tag.outputs.new_tag }}
+          DEV_VERSION: ${{ steps.get_tag.outputs.new_version }}
+          COMMIT_SHA: ${{ github.sha }}
+        shell: bash
         run: |
+          set -euo pipefail
+
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
+          git fetch --tags --force
 
-          git tag -a "${{ steps.get_tag.outputs.new_tag }}" \
-            -m "Auto-tagged dev version ${{ steps.get_tag.outputs.new_version }}" \
-            -m "Commit: ${{ github.sha }}" \
-            -m "Author: ${{ github.actor }}"
+          if git rev-parse "${DEV_TAG}^{commit}" >/dev/null 2>&1; then
+            EXISTING_COMMIT=$(git rev-parse "${DEV_TAG}^{commit}")
+            if [[ "$EXISTING_COMMIT" != "$COMMIT_SHA" ]]; then
+              echo "::error::${DEV_TAG} already exists on ${EXISTING_COMMIT}, expected ${COMMIT_SHA}"
+              exit 1
+            fi
+            echo "✅ ${DEV_TAG} already exists on the expected commit"
+          else
+            git tag -a "$DEV_TAG" "$COMMIT_SHA" \
+              -m "Auto-tagged dev version ${DEV_VERSION}" \
+              -m "Commit: ${COMMIT_SHA}" \
+              -m "Author: ${{ github.actor }}"
+            git push origin "refs/tags/${DEV_TAG}"
+            echo "✅ Created tag: ${DEV_TAG}"
+          fi
 
-          git push origin "${{ steps.get_tag.outputs.new_tag }}"
-          echo "✅ Created tag: ${{ steps.get_tag.outputs.new_tag }}"
-
-      - name: Update dev-latest tag
+      - name: Update dev-latest atomically
+        env:
+          DEV_TAG: ${{ steps.get_tag.outputs.new_tag }}
+          DEV_VERSION: ${{ steps.get_tag.outputs.new_version }}
+          COMMIT_SHA: ${{ github.sha }}
+        shell: bash
         run: |
-          git tag -d dev-latest 2>/dev/null || true
-          git push origin :refs/tags/dev-latest 2>/dev/null || true
+          set -euo pipefail
 
-          git tag -a dev-latest \
-            -m "Latest dev version: ${{ steps.get_tag.outputs.new_version }}" \
-            -m "Points to: ${{ steps.get_tag.outputs.new_tag }}"
-
-          git push origin dev-latest
-          echo "✅ Updated dev-latest to ${{ steps.get_tag.outputs.new_version }}"
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag -fa dev-latest "$COMMIT_SHA" \
+            -m "Latest dev version: ${DEV_VERSION}" \
+            -m "Points to: ${DEV_TAG}"
+          git push --force origin refs/tags/dev-latest
+          echo "✅ Updated dev-latest to ${DEV_VERSION}"
 
       - name: Summary
         run: |
-          echo "## 📦 Auto-tagging Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Created versioned tag: \`${{ steps.get_tag.outputs.new_tag }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Updated mobile tag: \`dev-latest\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Author:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Auto-tagging Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "✅ Versioned tag: \`${{ steps.get_tag.outputs.new_tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "✅ Updated mutable tag: \`dev-latest\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Version source:** \`${{ steps.get_tag.outputs.version_source }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Commit:** \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Author:** @${{ github.actor }}" >> "$GITHUB_STEP_SUMMARY"

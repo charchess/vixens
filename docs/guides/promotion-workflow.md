@@ -16,20 +16,28 @@ prod-vYYYY.MM.<PR>   (immuable)
 prod-stable          (alias mutable suivi par ArgoCD prod)
 ```
 
+Un push direct exceptionnel sans PR associée utilise un suffixe SHA court à la place du numéro de PR.
+
 Après validation explicite, `prod-working` peut être déplacé manuellement vers une release `prod-v*` connue comme bonne.
 
 ## 1. Vérifier la version dev
 
-Après le merge d'une PR vers `main`, `.github/workflows/auto-tag-dev.yaml` crée automatiquement :
+Après le merge d'une PR vers `main`, `.github/workflows/auto-tag-dev.yaml` retrouve la PR associée au commit via l'API GitHub et crée automatiquement :
 
 ```text
 dev-vYYYY.MM.<PR>
 ```
 
-Exemple pour la PR #3416 :
+Exemple pour la PR #3512 :
 
 ```text
-dev-v2026.09.3416
+dev-v2026.09.3512
+```
+
+Pour un push direct exceptionnel sans PR associée, le suffixe est un SHA court, par exemple :
+
+```text
+dev-v2026.09.7fe2e79d8
 ```
 
 Lister les versions récentes :
@@ -43,7 +51,7 @@ Ne pas recréer manuellement un tag dev déjà produit par le workflow.
 
 ## 2. Promouvoir
 
-Déclencher le workflow GitHub :
+Déclencher le workflow GitHub avec la version exacte du tag dev, sans le préfixe `dev-` :
 
 ```bash
 gh workflow run promote-prod.yaml -f version=vYYYY.MM.<PR>
@@ -56,16 +64,22 @@ gh run list --workflow=promote-prod.yaml --limit=1
 gh run watch
 ```
 
-Le workflow :
+Le workflow est sérialisé : deux promotions ne peuvent pas modifier `prod-stable` en parallèle.
+
+Il :
 
 1. vérifie que `dev-v<version>` existe ;
-2. résout le commit immuable correspondant ;
-3. crée `prod-v<version>` sur le même commit ;
-4. déplace `prod-stable` vers ce commit ;
-5. génère et attache un SBOM à la release GitHub ;
-6. laisse ArgoCD détecter le nouveau `prod-stable`.
+2. résout le commit immuable correspondant et vérifie qu'il appartient à l'historique de `main` ;
+3. checkout ce commit exact dans un workspace détaché ;
+4. génère depuis ce commit le SBOM et un JSON de métadonnées de promotion ;
+5. crée `prod-v<version>` sur le même commit, ou vérifie qu'un tag déjà présent pointe exactement au même endroit ;
+6. publie SBOM et métadonnées dans la GitHub Release associée à `prod-v<version>` ;
+7. déplace `prod-stable` atomiquement vers ce commit **en dernière étape de mutation prod** ;
+8. relit le tag distant et vérifie qu'il résout bien vers le commit attendu.
 
 `prod-stable` ne doit pas être déplacé manuellement lors d'une promotion normale.
+
+Si la génération du SBOM ou la publication de la release échoue, `prod-stable` n'est pas modifié. Si une exécution échoue après création du tag immuable mais avant la bascule, le workflow peut être relancé : il accepte le tag existant uniquement s'il pointe vers le commit attendu.
 
 ## 3. Vérifier la production
 
@@ -87,6 +101,11 @@ git rev-parse 'prod-vYYYY.MM.<PR>^{commit}'
 
 Les deux commits doivent être identiques.
 
+La GitHub Release `prod-v...` doit contenir :
+
+- `sbom-prod-<version>.spdx.json` ;
+- `promotion-prod-<version>.json` avec commit, source dev, opérateur et workflow d'origine.
+
 ## 4. Marquer un état connu-bon
 
 `prod-working` est un marqueur de secours **manuel**. Il n'est jamais mis à jour automatiquement après une promotion.
@@ -98,7 +117,7 @@ gh workflow run mark-prod-working.yaml -f version=vYYYY.MM.<PR>
 gh run watch
 ```
 
-Le workflow vérifie que `prod-v<version>` existe, puis déplace `prod-working` vers son commit avec un tag annoté.
+Le workflow vérifie que `prod-v<version>` existe, puis déplace `prod-working` atomiquement vers son commit et relit la cible pour confirmer l'opération.
 
 Vérification :
 
@@ -133,6 +152,7 @@ Après promotion :
 
 - workflow `promote-prod.yaml` vert ;
 - `prod-v...` et `prod-stable` pointent vers le même commit ;
+- release GitHub contient SBOM + métadonnées de promotion ;
 - ArgoCD prod `Synced/Healthy` ;
 - smoke tests applicatifs réussis ;
 - si la release est confirmée connue-bonne, déplacer explicitement `prod-working`.

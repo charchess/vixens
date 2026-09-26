@@ -5,12 +5,16 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Production version to mark known-good (e.g. v2026.09.3416)'
+        description: 'Production version to mark known-good (e.g. v2026.09.3512)'
         required: true
         type: string
 
 permissions:
   contents: write
+
+concurrency:
+  group: prod-working-marker
+  cancel-in-progress: false
 
 jobs:
   mark:
@@ -24,13 +28,20 @@ jobs:
 
       - name: Resolve production release
         id: resolve
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         shell: bash
         run: |
           set -euo pipefail
-          VERSION="${{ inputs.version }}"
-          VERSION="${VERSION#v}"
-          PROD_TAG="prod-v${VERSION}"
 
+          VERSION="${INPUT_VERSION#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9A-Za-z][0-9A-Za-z._-]*$ ]]; then
+            echo "::error::Invalid version '${INPUT_VERSION}'"
+            exit 1
+          fi
+
+          PROD_TAG="prod-v${VERSION}"
+          git fetch --force --tags origin
           if ! git rev-parse "${PROD_TAG}^{commit}" >/dev/null 2>&1; then
             echo "::error::Production tag ${PROD_TAG} does not exist"
             exit 1
@@ -41,22 +52,29 @@ jobs:
           echo "prod_tag=${PROD_TAG}" >> "$GITHUB_OUTPUT"
           echo "commit_sha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
 
-      - name: Mark known-good production
+      - name: Mark known-good production atomically
+        env:
+          VERSION: ${{ steps.resolve.outputs.version }}
+          PROD_TAG: ${{ steps.resolve.outputs.prod_tag }}
+          COMMIT_SHA: ${{ steps.resolve.outputs.commit_sha }}
         shell: bash
         run: |
           set -euo pipefail
+
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-
-          git tag -d prod-working 2>/dev/null || true
-          git push origin :refs/tags/prod-working 2>/dev/null || true
-
-          git tag -a prod-working "${{ steps.resolve.outputs.commit_sha }}" \
-            -m "Known-good production: ${{ steps.resolve.outputs.version }}" \
-            -m "Source: ${{ steps.resolve.outputs.prod_tag }}" \
+          git tag -fa prod-working "$COMMIT_SHA" \
+            -m "Known-good production: ${VERSION}" \
+            -m "Source: ${PROD_TAG}" \
             -m "Marked explicitly by: ${{ github.actor }}"
+          git push --force origin refs/tags/prod-working
 
-          git push origin prod-working
+          git fetch --force --tags origin
+          ACTUAL_COMMIT=$(git rev-parse 'prod-working^{commit}')
+          if [[ "$ACTUAL_COMMIT" != "$COMMIT_SHA" ]]; then
+            echo "::error::prod-working resolves to ${ACTUAL_COMMIT}, expected ${COMMIT_SHA}"
+            exit 1
+          fi
 
       - name: Summary
         run: |
