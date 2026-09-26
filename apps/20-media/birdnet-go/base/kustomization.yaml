@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: birdnet-go
 resources:
   - namespace.yaml
-  - infisical-secret.yaml
+  - external-secret.yaml
   - deployment.yaml
   - service.yaml
   - pdb.yaml
