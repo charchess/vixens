@@ -1,6 +1,6 @@
 # Application deployment standard
 
-Ce document résume les conventions de déploiement Vixens. `WORKFLOW.md`, les manifests actifs et les policies CI/Kyverno font autorité lorsqu'un détail évolue.
+Ce document résume les conventions de déploiement Vixens. Il ne constitue pas une autorité concurrente : `WORKFLOW.md` reste canonique pour le cycle de changement, puis les workflows GitHub, manifests et policies courants définissent le comportement exécutable. `docs/reference/app-golden-standard.md` décrit les conventions applicatives générales.
 
 ## Structure
 
@@ -88,6 +88,8 @@ Les drops Hubble servent à comprendre les flux avant de les autoriser.
 - ArgoCD dev suit `main` ;
 - production via `promote-prod.yaml` uniquement ;
 - validation après sync.
+
+Les commandes `kubectl` de lecture/diagnostic restent appropriées (`get`, `describe`, `logs`, tests ciblés). Une expérimentation qui modifie le cluster doit être éphémère et ne remplace jamais l'état désiré dans Git.
 
 ## Référence applicative
 
