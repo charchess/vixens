@@ -14,6 +14,7 @@ Références techniques et spécifications du projet Vixens.
 - [WORKFLOW.md](../../WORKFLOW.md) — workflow canonique ;
 - [AGENTS.md](../../AGENTS.md) — règles multi-agent ;
 - [Task Management](../guides/task-management.md) — conventions actuelles GitHub Issues ;
+- [Dependency Management](dependency-management.md) — responsabilité Renovate et politique d'auto-merge ;
 - [Multi-Agent Orchestration](multi-agent-orchestration.md) — principes de coordination agnostiques des outils ;
 - [Workflow State Machine](workflow-state-machine.md) — référence historique de l'ancien workflow local.
 
