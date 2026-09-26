@@ -67,7 +67,7 @@ jobs:
               grep -E '\.(yaml|yml)$' | \
               grep -E '^(apps|argocd)/' | \
               grep -v -E '(crds/|charts/|upstream\.yaml|poolers\.yaml)' | \
-              xargs -r yamllint -c yamllint-config.yml || true
+              xargs -r yamllint -c yamllint-config.yml
           else
             echo "📋 Push Mode: Validating all files"
             find apps argocd \( -name "*.yaml" -o -name "*.yml" \) \
