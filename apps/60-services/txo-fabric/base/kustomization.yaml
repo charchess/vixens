@@ -7,3 +7,10 @@ resources:
   - crd-agentidentity.yaml
   - networkpolicy-system.yaml
   - provisioning-kyverno.yaml
+patches:
+  - target:
+      group: kyverno.io
+      version: v1
+      kind: ClusterPolicy
+      name: txo-fabric-agent-provisioning
+    path: hermes-runtime-compat.patch.yaml
