@@ -1,5 +1,4 @@
 ---
-# Temporary smoke-test marker for PR Preview; removed before merge.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: argocd
