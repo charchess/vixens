@@ -4,4 +4,6 @@ kind: Kustomization
 resources:
   - namespace-system.yaml
   - crd-tenantbundle.yaml
+  - crd-agentidentity.yaml
   - networkpolicy-system.yaml
+  - provisioning-kyverno.yaml
