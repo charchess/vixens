@@ -5,7 +5,7 @@ commonLabels:
 kind: Kustomization
 namespace: services
 patchesStrategicMerge:
-  - patch-infisical-env.yaml
+  - patch-external-secret-env.yaml
 resources:
   - ../../base
 

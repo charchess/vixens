@@ -8,7 +8,7 @@ components:
   - ../../../../_shared/components/priority/low
 
 patches:
-  - path: patch-infisical-env.yaml
+  - path: patch-external-secret-env.yaml
   # Goldilocks Controller - Add sizing labels to deployment metadata
   - patch: |-
       - op: add
