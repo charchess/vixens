@@ -1,0 +1,21 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: TenantBundle
+metadata:
+  name: hairem-sandbox
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    fabric.truxonline.io/purpose: test
+spec:
+  tenantRef: TEN90001
+  slug: hairem-sandbox
+  displayName: hAIrem Sandbox
+  isolation:
+    profile: shared
+  persistence:
+    postgresql:
+      mode: shared
+  modules:
+    - name: hindsight
+      enabled: true
+      profileRef: shared-poc

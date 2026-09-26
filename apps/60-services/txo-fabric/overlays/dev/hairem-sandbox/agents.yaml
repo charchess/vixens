@@ -1,0 +1,42 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: tesla
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    fabric.truxonline.io/purpose: test
+spec:
+  tenantRef: TEN90001
+  tenantSlug: hairem-sandbox
+  displayName: Tesla
+  memoryBankId: hairem-sandbox-tesla
+  runtimeProfileRef: hermes-sandbox-v1
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: tina
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    fabric.truxonline.io/purpose: test
+spec:
+  tenantRef: TEN90001
+  tenantSlug: hairem-sandbox
+  displayName: Tina
+  memoryBankId: hairem-sandbox-tina
+  runtimeProfileRef: hermes-sandbox-v1
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: tiffa
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    fabric.truxonline.io/purpose: test
+spec:
+  tenantRef: TEN90001
+  tenantSlug: hairem-sandbox
+  displayName: Tiffa
+  memoryBankId: hairem-sandbox-tiffa
+  runtimeProfileRef: hermes-sandbox-v1
