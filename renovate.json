@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Renovate configuration for Vixens GitOps - Elite Automation",
+  "description": "Renovate configuration for Vixens GitOps",
   "extends": [
     "config:recommended",
     ":dependencyDashboard"
@@ -21,6 +21,7 @@
   "automergeType": "pr",
   "automergeStrategy": "squash",
   "enabledManagers": [
+    "github-actions",
     "terraform",
     "helm-values",
     "kubernetes",
@@ -46,7 +47,9 @@
   "packageRules": [
     {
       "description": "netbox-plugins image managed by build workflow, not Renovate",
-      "matchPackageNames": ["ghcr.io/charchess/netbox-plugins"],
+      "matchPackageNames": [
+        "ghcr.io/charchess/netbox-plugins"
+      ],
       "enabled": false
     },
     {
@@ -126,7 +129,7 @@
       ]
     },
     {
-      "description": "Auto-merge minor and patch updates after approval",
+      "description": "Auto-merge non-major updates after required checks",
       "matchUpdateTypes": [
         "minor",
         "patch",
@@ -145,7 +148,7 @@
       "matchUpdateTypes": [
         "major"
       ],
-      "automerge": true,
+      "automerge": false,
       "labels": [
         "dependencies",
         "renovate",
@@ -172,5 +175,5 @@
   "commitMessageAction": "update",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to {{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}",
-  "prBodyTemplate": "{{{header}}}\n\n{{{table}}}\n\n{{{notes}}}\n\n{{{changelogs}}}\n\n---\n\n### 🚀 Deployment Strategy\n\n{{#if isMajor}}⚠️ **Major update** - Manual review required{{else}}✅ **Auto-merge enabled** - Will merge automatically after approval{{/if}}\n\n- [ ] Reviewed changes\n- [ ] Ready to deploy to main branch (dev cluster)\n- [ ] Notify on Discord: `@everyone New dependency update ready for approval`\n\n---\n\n{{{footer}}}"
+  "prBodyTemplate": "{{{header}}}\n\n{{{table}}}\n\n{{{notes}}}\n\n{{{changelogs}}}\n\n---\n\n### 🚀 Deployment Strategy\n\n{{#if isMajor}}⚠️ **Major update** - Manual review required{{else}}✅ **Auto-merge enabled** - Will merge automatically after required checks pass{{/if}}\n\n- [ ] Reviewed changes\n- [ ] Ready to deploy to main branch (dev cluster)\n- [ ] Notify on Discord: `@everyone New dependency update ready for approval`\n\n---\n\n{{{footer}}}"
 }

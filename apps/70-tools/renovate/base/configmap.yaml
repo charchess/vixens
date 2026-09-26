@@ -12,14 +12,5 @@ data:
       "requireConfig": "optional",
       "repositories": ["charchess/vixens"],
       "baseBranches": ["main"],
-      "schedule": ["at any time"],
-      "dependencyDashboard": true,
-      "labels": ["dependencies", "renovate"],
-      "packageRules": [
-        {
-          "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
-          "automerge": true,
-          "platformAutomerge": true
-        }
-      ]
+      "schedule": ["at any time"]
     }
