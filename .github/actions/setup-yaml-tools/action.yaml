@@ -26,7 +26,7 @@ runs:
 
     - name: Install yq
       if: inputs.install-yq == 'true'
-      uses: mikefarah/yq@v4.44.1
+      uses: mikefarah/yq@v4.53.6
 
     - name: Verify installations
       shell: bash
