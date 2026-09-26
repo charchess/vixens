@@ -1,263 +1,154 @@
 #!/usr/bin/env python3
-"""
-MANAGEMENT REPORT GENERATOR
-Rapport consolidé pour la chefferie de projet.
+"""Generate a lightweight Vixens management report.
 
-Contient:
-- Vue d'ensemble cluster (kubectl get all -A)
-- État des tâches Beads (tous statuts)
-- Métriques clés (nodes, pods, services, etc.)
+Data sources:
+- current Kubernetes context/resources via kubectl;
+- repository task state via GitHub Issues (`gh issue list`).
+
+Git/ArgoCD remain the desired-state source of truth; this report is observational.
 """
 
-import subprocess
+import argparse
 import json
-import sys
+import subprocess
 from datetime import datetime
 
 
 def run_command(cmd, description):
-    """Run a command and return output."""
+    """Run a command and return stdout, or None on failure."""
     print(f"   → {description}...")
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        shell=isinstance(cmd, str)
-    )
-
+    result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        print(f"      ⚠️  Error: {result.stderr}")
+        print(f"      ⚠️  Error: {result.stderr.strip()}")
         return None
-
     return result.stdout
 
 
 def get_cluster_resources():
-    """Get all cluster resources."""
     return run_command(
-        "kubectl get all -A --no-headers",
-        "Fetching cluster resources"
+        ["kubectl", "get", "all", "-A", "--no-headers"],
+        "Fetching cluster resources",
     )
 
 
-def get_beads_tasks():
-    """Get all Beads tasks."""
-    result = subprocess.run(
-        ["bd", "list", "--status", "all", "--limit", "0", "--json"],
-        capture_output=True,
-        text=True,
-        cwd="/root/vixens"
+def get_github_issues():
+    output = run_command(
+        [
+            "gh",
+            "issue",
+            "list",
+            "--state",
+            "all",
+            "--limit",
+            "1000",
+            "--json",
+            "number,title,state,assignees,labels,url",
+        ],
+        "Fetching GitHub Issues",
     )
-
-    if result.returncode != 0:
-        print(f"      ⚠️  Error fetching Beads: {result.stderr}")
+    if output is None:
         return None
-
     try:
-        tasks = json.loads(result.stdout)
-        return tasks
-    except json.JSONDecodeError:
-        print(f"      ⚠️  Invalid JSON from Beads")
+        return json.loads(output)
+    except json.JSONDecodeError as exc:
+        print(f"      ⚠️  Invalid JSON from GitHub CLI: {exc}")
         return None
 
 
 def count_resources(resources_output):
-    """Count resources by type."""
-    if not resources_output:
-        return {}
-
     counts = {}
-    for line in resources_output.strip().split('\n'):
-        if not line:
-            continue
-
+    if not resources_output:
+        return counts
+    for line in resources_output.splitlines():
         parts = line.split()
         if len(parts) < 2:
             continue
-
-        # Format: NAMESPACE TYPE/NAME ...
-        resource_type = parts[1].split('/')[0]
-
-        if resource_type not in counts:
-            counts[resource_type] = 0
-        counts[resource_type] += 1
-
+        resource_type = parts[1].split("/")[0]
+        counts[resource_type] = counts.get(resource_type, 0) + 1
     return counts
 
 
-def count_beads_by_status(tasks):
-    """Count Beads tasks by status."""
-    if not tasks:
-        return {}
-
+def count_issues_by_state(issues):
     counts = {}
-    for task in tasks:
-        status = task.get('status', 'unknown')
-        if status not in counts:
-            counts[status] = 0
-        counts[status] += 1
-
+    for issue in issues or []:
+        state = issue.get("state", "UNKNOWN").lower()
+        counts[state] = counts.get(state, 0) + 1
     return counts
 
 
-def count_beads_by_assignee(tasks):
-    """Count Beads tasks by assignee."""
-    if not tasks:
-        return {}
+def issue_assignees(issue):
+    names = [item.get("login") for item in issue.get("assignees", []) if item.get("login")]
+    return ", ".join(names) if names else "unassigned"
 
-    counts = {}
-    for task in tasks:
-        assignee = task.get('assignee') or 'unassigned'
-        if assignee not in counts:
-            counts[assignee] = 0
-        counts[assignee] += 1
 
-    return counts
+def current_context():
+    output = run_command(["kubectl", "config", "current-context"], "Reading Kubernetes context")
+    return output.strip() if output else "unknown"
 
 
 def generate_report(output_file):
-    """Generate management report."""
-    print("📊 Génération du rapport chefferie...")
-    print("")
+    print("📊 Génération du rapport chefferie...\n")
 
-    # Fetch data
     resources = get_cluster_resources()
-    tasks = get_beads_tasks()
-
-    # Count metrics
+    issues = get_github_issues()
     resource_counts = count_resources(resources)
-    task_status_counts = count_beads_by_status(tasks)
-    task_assignee_counts = count_beads_by_assignee(tasks)
+    issue_counts = count_issues_by_state(issues)
 
-    # Build report
     content = "# 📊 Rapport Chefferie de Projet\n\n"
     content += f"**Généré:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-    content += f"**Environnement:** {subprocess.run(['kubectl', 'config', 'current-context'], capture_output=True, text=True).stdout.strip()}\n\n"
+    content += f"**Contexte Kubernetes:** {current_context()}\n"
+    content += "**Task tracker:** GitHub Issues\n\n"
+    content += "> Rapport observationnel : Git et ArgoCD restent les sources de vérité du desired state.\n\n"
 
-    content += "---\n\n"
-
-    # === CLUSTER OVERVIEW ===
     content += "## 🖥️ Vue d'ensemble Cluster\n\n"
-
     if resource_counts:
-        content += "### Ressources Kubernetes\n\n"
-        content += "| Type | Count |\n"
-        content += "|------|-------|\n"
-
-        # Sort by count (descending)
-        sorted_resources = sorted(resource_counts.items(), key=lambda x: x[1], reverse=True)
-        for resource_type, count in sorted_resources:
+        content += "| Type | Count |\n|---|---:|\n"
+        for resource_type, count in sorted(resource_counts.items(), key=lambda item: item[1], reverse=True):
             content += f"| {resource_type} | {count} |\n"
-
         content += "\n"
 
-    # === BEADS TASKS ===
-    content += "## 📋 État des Tâches (Beads)\n\n"
-
-    if task_status_counts:
-        content += "### Par Statut\n\n"
-        content += "| Statut | Count |\n"
-        content += "|--------|-------|\n"
-
-        status_order = ['open', 'in_progress', 'blocked', 'closed']
-        for status in status_order:
-            if status in task_status_counts:
-                count = task_status_counts[status]
-                emoji = {
-                    'open': '⚪',
-                    'in_progress': '🟡',
-                    'blocked': '🔴',
-                    'closed': '✅'
-                }.get(status, '❓')
-                content += f"| {emoji} {status} | {count} |\n"
-
+    content += "## 📋 GitHub Issues\n\n"
+    if issue_counts:
+        content += "| État | Count |\n|---|---:|\n"
+        for state in ("open", "closed"):
+            if state in issue_counts:
+                content += f"| {state} | {issue_counts[state]} |\n"
         content += "\n"
 
-    if task_assignee_counts:
-        content += "### Par Assignee\n\n"
-        content += "| Assignee | Count |\n"
-        content += "|----------|-------|\n"
-
-        sorted_assignees = sorted(task_assignee_counts.items(), key=lambda x: x[1], reverse=True)
-        for assignee, count in sorted_assignees:
-            content += f"| {assignee} | {count} |\n"
-
+    open_issues = [issue for issue in (issues or []) if issue.get("state") == "OPEN"]
+    if open_issues:
+        content += "### Issues ouvertes\n\n"
+        content += "| Issue | Titre | Assignee |\n|---|---|---|\n"
+        for issue in open_issues[:30]:
+            title = str(issue.get("title", "")).replace("|", "\\|")
+            content += f"| #{issue.get('number')} | {title} | {issue_assignees(issue)} |\n"
+        if len(open_issues) > 30:
+            content += f"\n*… et {len(open_issues) - 30} issues ouvertes supplémentaires.*\n"
         content += "\n"
 
-    # === DETAILED RESOURCES (Top 20) ===
-    content += "## 🔍 Détails Ressources (Top 20)\n\n"
-
+    content += "## 🔍 Ressources Kubernetes (échantillon)\n\n"
     if resources:
-        lines = resources.strip().split('\n')[:20]
-        content += "```\n"
-        content += "NAMESPACE          TYPE/NAME                                    STATUS\n"
-        content += "─" * 80 + "\n"
+        lines = resources.splitlines()
+        content += "```text\n"
+        content += "\n".join(lines[:20])
+        if len(lines) > 20:
+            content += f"\n… et {len(lines) - 20} ressources supplémentaires"
+        content += "\n```\n\n"
 
-        for line in lines:
-            parts = line.split()
-            if len(parts) >= 3:
-                ns = parts[0]
-                resource = parts[1]
-                status = ' '.join(parts[2:])
-                content += f"{ns[:18]:<18} {resource[:44]:<44} {status[:12]:<12}\n"
+    content += "## 📎 GitHub Issues (JSON)\n\n```json\n"
+    content += json.dumps(issues or [], indent=2, ensure_ascii=False)
+    content += "\n```\n"
 
-        if len(resources.strip().split('\n')) > 20:
-            remaining = len(resources.strip().split('\n')) - 20
-            content += f"\n... et {remaining} ressources supplémentaires\n"
-
-        content += "```\n\n"
-
-    # === DETAILED TASKS (Open + In Progress) ===
-    if tasks:
-        active_tasks = [t for t in tasks if t.get('status') in ['open', 'in_progress']]
-
-        if active_tasks:
-            content += "## 📝 Tâches Actives\n\n"
-            content += "| ID | Titre | Statut | Assignee | Priorité |\n"
-            content += "|----|-------|--------|----------|----------|\n"
-
-            for task in active_tasks[:20]:
-                task_id = task.get('id', 'N/A')
-                title = task.get('title', 'N/A')[:50]
-                status = task.get('status', 'N/A')
-                assignee = task.get('assignee') or 'unassigned'
-                priority = task.get('priority', 'N/A')
-
-                status_emoji = {
-                    'open': '⚪',
-                    'in_progress': '🟡',
-                    'blocked': '🔴'
-                }.get(status, '❓')
-
-                content += f"| {task_id} | {title} | {status_emoji} {status} | {assignee} | P{priority} |\n"
-
-            if len(active_tasks) > 20:
-                content += f"\n*... et {len(active_tasks) - 20} tâches actives supplémentaires*\n"
-
-            content += "\n"
-
-    # === RAW DATA (APPENDIX) ===
-    content += "---\n\n"
-    content += "## 📎 Annexes\n\n"
-
-    content += "### Beads Tasks (JSON)\n\n"
-    content += "```json\n"
-    content += json.dumps(tasks if tasks else [], indent=2)
-    content += "\n```\n\n"
-
-    # Write report
-    with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(content)
+    with open(output_file, "w", encoding="utf-8") as handle:
+        handle.write(content)
 
     print(f"✅ Rapport chefferie généré: {output_file}")
 
 
 def main():
-    import argparse
-    parser = argparse.ArgumentParser(description="Generate management report for project leadership")
+    parser = argparse.ArgumentParser(description="Generate Vixens management report")
     parser.add_argument("--output", default="docs/reports/MANAGEMENT-REPORT.md", help="Output file")
     args = parser.parse_args()
-
     generate_report(args.output)
 
 
