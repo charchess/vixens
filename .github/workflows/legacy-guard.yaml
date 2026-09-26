@@ -1,0 +1,70 @@
+---
+name: Legacy Guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  retired-tooling:
+    name: Retired tooling guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Reject retired active patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+          failed=0
+
+          echo "Checking retired root tooling..."
+          for path in .beads .serena justfile; do
+            if [ -e "$path" ]; then
+              echo "::error file=$path::Retired workflow artifact must not be reintroduced"
+              failed=1
+            fi
+          done
+
+          echo "Checking active Kubernetes desired state for retired Infisical CRDs..."
+          if rg -n --glob '*.yaml' --glob '*.yml' \
+            '(^|[[:space:]])apiVersion:[[:space:]]*secrets\.infisical\.com|(^|[[:space:]])kind:[[:space:]]*InfisicalSecret([[:space:]]|$)' \
+            apps argocd; then
+            echo "::error::Retired Infisical CRDs found in active GitOps manifests; use External Secrets Operator with ClusterSecretStore/openbao"
+            failed=1
+          fi
+
+          echo "Checking active GitOps filenames for retired Infisical naming..."
+          legacy_files="$(find apps argocd -type f -iname '*infisical*' -print)"
+          if [ -n "$legacy_files" ]; then
+            printf '%s\n' "$legacy_files"
+            echo "::error::Retired Infisical-era filenames found in active GitOps paths"
+            failed=1
+          fi
+
+          echo "Checking ArgoCD desired state for retired staging refs..."
+          if rg -n 'targetRevision:[[:space:]]*feat/hermes-staging' argocd; then
+            echo "::error::Retired feat/hermes-staging targetRevision found; dev Applications must follow main"
+            failed=1
+          fi
+
+          echo "Checking executable workflow paths for retired task/orchestration commands..."
+          if rg -n \
+            'ARCHON_API|/api/projects/.*/tasks|\bbd[[:space:]]+(ready|sync|list|show|update)|\bjust[[:space:]]+(lint|reports|SendToProd)|serena.*(memory|mcp)' \
+            scripts .github/workflows \
+            --glob '!legacy-guard.yaml'; then
+            echo "::error::Retired workflow command found in an active script/workflow path"
+            failed=1
+          fi
+
+          if [ "$failed" -ne 0 ]; then
+            exit 1
+          fi
+
+          echo "Legacy guard passed. Historical ADRs, audits and archived reports are intentionally out of scope."
