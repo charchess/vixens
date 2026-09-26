@@ -105,13 +105,21 @@ Pour une application ciblée, attendre `Synced` et `Healthy` puis réaliser les 
 
 ### 5. Tags dev
 
-Le workflow `auto-tag-dev.yaml` crée automatiquement un tag de version dev basé sur la PR squashée :
+Le workflow `auto-tag-dev.yaml` crée automatiquement un snapshot dev immuable après chaque push sur `main`.
+
+Pour un commit issu d'une PR mergée, le workflow interroge GitHub pour retrouver la PR associée au commit et produit :
 
 ```text
 dev-vYYYY.MM.<PR>
 ```
 
-Ces tags sont des snapshots immuables et servent de source à la promotion prod.
+Le numéro de PR ne dépend donc pas du texte du commit squash. Pour un push direct exceptionnel sans PR associée, le workflow utilise un suffixe SHA court :
+
+```text
+dev-vYYYY.MM.<short-sha>
+```
+
+`dev-latest` est un alias mutable mis à jour atomiquement vers le snapshot dev le plus récent. Les tags `dev-v*` sont les snapshots immuables utilisés comme source des promotions production.
 
 ### 6. Promotion production
 
@@ -121,12 +129,25 @@ La promotion production passe **uniquement** par GitHub Actions :
 gh workflow run promote-prod.yaml -f version=vYYYY.MM.<PR>
 ```
 
-Ne jamais créer ou déplacer `prod-stable` manuellement.
+Pour un snapshot issu d'un push direct exceptionnel, utiliser sa version SHA telle qu'elle apparaît dans le tag `dev-v*`.
+
+Le workflow de promotion est sérialisé et travaille exclusivement sur le commit exact résolu depuis le tag dev immuable. Il :
+
+1. vérifie que le tag `dev-v*` existe et pointe vers un ancêtre de `main` ;
+2. détache le workspace sur ce commit exact ;
+3. génère le SBOM et les métadonnées de promotion depuis ce commit ;
+4. crée ou vérifie le tag immuable `prod-v*` ;
+5. publie SBOM et métadonnées dans la GitHub Release ;
+6. déplace `prod-stable` atomiquement **en dernier**, puis vérifie le commit cible.
+
+Ne jamais créer ou déplacer `prod-stable` manuellement lors d'une promotion normale.
 
 Le workflow crée :
 
 - `prod-vYYYY.MM.<PR>` : release prod **immuable** ;
 - `prod-stable` : alias **mutable** suivi par ArgoCD prod.
+
+Les protections GitHub côté serveur pour les familles de tags immuables sont suivies séparément ; les workflows refusent déjà de réutiliser un tag versionné s'il pointe vers un autre commit.
 
 ### 7. `prod-working`
 
@@ -136,6 +157,7 @@ Le workflow crée :
 - Il n'est déplacé qu'avec accord explicite de l'utilisateur/opérateur.
 - Avant un chantier de nettoyage ou un changement à risque, il peut être repositionné sur la release prod actuellement validée.
 - Les tags `prod-v*` restent la trace historique immuable et permettent de retrouver précisément toute release.
+- Son workflow le déplace atomiquement et vérifie ensuite la cible résolue.
 
 ### 8. Validation prod
 

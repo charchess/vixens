@@ -25,6 +25,7 @@ resources:
   # Disabled by owner: apps/nexterm.yaml
   - apps/traefik-dashboard.yaml
   - apps/argocd.yaml
+  - apps/txo-fabric.yaml
   - apps/whoami.yaml
   - apps/cert-manager.yaml
   - apps/cert-manager-secrets.yaml
