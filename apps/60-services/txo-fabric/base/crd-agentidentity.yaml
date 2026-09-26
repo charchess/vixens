@@ -1,0 +1,106 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: agentidentities.fabric.truxonline.io
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: management-plane
+spec:
+  group: fabric.truxonline.io
+  scope: Cluster
+  names:
+    plural: agentidentities
+    singular: agentidentity
+    kind: AgentIdentity
+    shortNames:
+      - agentid
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - name: Tenant
+          type: string
+          jsonPath: .spec.tenantRef
+        - name: Agent
+          type: string
+          jsonPath: .spec.displayName
+        - name: Bank
+          type: string
+          jsonPath: .spec.memoryBankId
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            spec:
+              type: object
+              required: [tenantRef, tenantSlug, displayName, memoryBankId]
+              properties:
+                tenantRef:
+                  type: string
+                  pattern: '^TEN[0-9]{5,}$'
+                tenantSlug:
+                  type: string
+                  minLength: 2
+                  maxLength: 63
+                  pattern: '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'
+                displayName:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                memoryBankId:
+                  type: string
+                  minLength: 2
+                  maxLength: 128
+                  pattern: '^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$'
+                runtimeProfileRef:
+                  type: string
+                  maxLength: 128
+                  default: hermes-sandbox-v1
+            status:
+              type: object
+              properties:
+                observedGeneration:
+                  type: integer
+                  format: int64
+                  minimum: 0
+                phase:
+                  type: string
+                  enum: [Pending, Provisioning, Ready, AuthBlocked, Degraded, Failed, Deleting]
+                namespace:
+                  type: string
+                  maxLength: 63
+                deploymentName:
+                  type: string
+                  maxLength: 253
+                memoryBankId:
+                  type: string
+                  maxLength: 128
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    required: [type, status]
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                        enum: ["True", "False", Unknown]
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                        format: date-time

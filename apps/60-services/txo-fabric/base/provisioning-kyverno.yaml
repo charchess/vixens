@@ -1,0 +1,291 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:txo-fabric-provisioner
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: provisioning
+rules:
+  - apiGroups: [""]
+    resources: [namespaces, persistentvolumeclaims]
+    verbs: [create, delete, get, list, patch, update, watch]
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [create, delete, get, list, patch, update, watch]
+  - apiGroups: [networking.k8s.io]
+    resources: [networkpolicies]
+    verbs: [create, delete, get, list, patch, update, watch]
+  - apiGroups: [fabric.truxonline.io]
+    resources: [tenantbundles, agentidentities]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kyverno:txo-fabric-provisioner
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: provisioning
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kyverno:txo-fabric-provisioner
+subjects:
+  - kind: ServiceAccount
+    name: kyverno-background-controller
+    namespace: kyverno
+  - kind: ServiceAccount
+    name: kyverno-admission-controller
+    namespace: kyverno
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: txo-fabric-tenant-provisioning
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: provisioning
+  annotations:
+    policies.kyverno.io/title: TXO Fabric tenant provisioning
+    policies.kyverno.io/description: >-
+      POC reconciler which turns TenantBundle resources into tenant namespaces.
+      It is intentionally small and will be replaced by the TXO Fabric controller
+      once status, finalizers and module orchestration become authoritative.
+spec:
+  background: true
+  rules:
+    - name: generate-tenant-namespace
+      match:
+        any:
+          - resources:
+              kinds: [fabric.truxonline.io/v1alpha1/TenantBundle]
+      generate:
+        generateExisting: true
+        synchronize: true
+        orphanDownstreamOnPolicyDelete: true
+        apiVersion: v1
+        kind: Namespace
+        name: "tenant-{{ request.object.spec.slug }}"
+        data:
+          metadata:
+            labels:
+              app.kubernetes.io/part-of: txo-fabric
+              fabric.truxonline.io/managed: "true"
+              fabric.truxonline.io/tenant-ref: "{{ request.object.spec.tenantRef }}"
+              fabric.truxonline.io/tenant-slug: "{{ request.object.spec.slug }}"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: txo-fabric-tenant-network-baseline
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: provisioning
+spec:
+  background: true
+  rules:
+    - name: generate-default-deny
+      match:
+        any:
+          - resources:
+              kinds: [v1/Namespace]
+              selector:
+                matchLabels:
+                  fabric.truxonline.io/managed: "true"
+      generate:
+        generateExisting: true
+        synchronize: true
+        orphanDownstreamOnPolicyDelete: true
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        name: txo-fabric-default-deny
+        namespace: "{{ request.object.metadata.name }}"
+        data:
+          metadata:
+            labels:
+              app.kubernetes.io/part-of: txo-fabric
+              app.kubernetes.io/component: tenant-network-baseline
+          spec:
+            podSelector: {}
+            policyTypes: [Ingress, Egress]
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: txo-fabric-agent-provisioning
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: provisioning
+  annotations:
+    policies.kyverno.io/title: TXO Fabric Hermes agent provisioning
+    policies.kyverno.io/description: >-
+      POC reconciler which stages one isolated Hermes runtime per AgentIdentity.
+      Provider credentials are deliberately not inherited from legacy hAIrem;
+      model access remains blocked until a scoped TXO LLM credential broker exists.
+spec:
+  background: true
+  rules:
+    - name: generate-agent-pvc
+      match:
+        any:
+          - resources:
+              kinds: [fabric.truxonline.io/v1alpha1/AgentIdentity]
+      generate:
+        generateExisting: true
+        synchronize: true
+        orphanDownstreamOnPolicyDelete: true
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        name: "hermes-{{ request.object.metadata.name }}-data"
+        namespace: "tenant-{{ request.object.spec.tenantSlug }}"
+        data:
+          metadata:
+            labels:
+              app.kubernetes.io/part-of: txo-fabric
+              app.kubernetes.io/name: hermes-agent
+              fabric.truxonline.io/tenant-ref: "{{ request.object.spec.tenantRef }}"
+              fabric.truxonline.io/agent: "{{ request.object.metadata.name }}"
+          spec:
+            accessModes: [ReadWriteOnce]
+            resources:
+              requests:
+                storage: 2Gi
+    - name: generate-agent-runtime
+      match:
+        any:
+          - resources:
+              kinds: [fabric.truxonline.io/v1alpha1/AgentIdentity]
+      generate:
+        generateExisting: true
+        synchronize: true
+        orphanDownstreamOnPolicyDelete: true
+        apiVersion: apps/v1
+        kind: Deployment
+        name: "hermes-{{ request.object.metadata.name }}"
+        namespace: "tenant-{{ request.object.spec.tenantSlug }}"
+        data:
+          metadata:
+            labels:
+              app.kubernetes.io/part-of: txo-fabric
+              app.kubernetes.io/name: hermes-agent
+              app.kubernetes.io/instance: "{{ request.object.metadata.name }}"
+              fabric.truxonline.io/tenant-ref: "{{ request.object.spec.tenantRef }}"
+              fabric.truxonline.io/agent: "{{ request.object.metadata.name }}"
+            annotations:
+              fabric.truxonline.io/runtime-state: auth-blocked
+          spec:
+            replicas: 1
+            revisionHistoryLimit: 2
+            strategy:
+              type: Recreate
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: hermes-agent
+                app.kubernetes.io/instance: "{{ request.object.metadata.name }}"
+            template:
+              metadata:
+                labels:
+                  app.kubernetes.io/part-of: txo-fabric
+                  app.kubernetes.io/name: hermes-agent
+                  app.kubernetes.io/instance: "{{ request.object.metadata.name }}"
+                  fabric.truxonline.io/tenant-ref: "{{ request.object.spec.tenantRef }}"
+                  fabric.truxonline.io/agent: "{{ request.object.metadata.name }}"
+                  vixens.io/sizing.hermes: V-small
+              spec:
+                initContainers:
+                  - name: bootstrap-profile
+                    image: nousresearch/hermes-agent:v2026.9.24
+                    imagePullPolicy: IfNotPresent
+                    command:
+                      - /bin/sh
+                      - -lc
+                      - >-
+                        if [ ! -d "/opt/data/profiles/${AGENT_NAME}" ]; then
+                          /opt/hermes/.venv/bin/hermes profile create "${AGENT_NAME}"
+                          --no-alias --no-skills
+                          --description "${AGENT_DISPLAY_NAME} - disposable TXO Fabric test agent";
+                        fi
+                    env:
+                      - name: HERMES_HOME
+                        value: /opt/data
+                      - name: AGENT_NAME
+                        value: "{{ request.object.metadata.name }}"
+                      - name: AGENT_DISPLAY_NAME
+                        value: "{{ request.object.spec.displayName }}"
+                    volumeMounts:
+                      - name: data
+                        mountPath: /opt/data
+                containers:
+                  - name: hermes
+                    image: nousresearch/hermes-agent:v2026.9.24
+                    imagePullPolicy: IfNotPresent
+                    args: [-p, "{{ request.object.metadata.name }}", gateway, run]
+                    env:
+                      - name: HERMES_HOME
+                        value: /opt/data
+                      - name: TERMINAL_ENV
+                        value: local
+                      - name: TXO_AGENT_ID
+                        value: "{{ request.object.metadata.name }}"
+                      - name: TXO_TENANT_REF
+                        value: "{{ request.object.spec.tenantRef }}"
+                      - name: TXO_HINDSIGHT_BANK_ID
+                        value: "{{ request.object.spec.memoryBankId }}"
+                      - name: TXO_HINDSIGHT_API_URL
+                        value: http://hindsight-api.hindsight.svc.cluster.local:8888
+                      - name: TXO_LLM_AUTH_MODE
+                        value: unconfigured
+                    resources:
+                      requests:
+                        cpu: 100m
+                        memory: 256Mi
+                      limits:
+                        cpu: "1"
+                        memory: 2Gi
+                    volumeMounts:
+                      - name: data
+                        mountPath: /opt/data
+                volumes:
+                  - name: data
+                    persistentVolumeClaim:
+                      claimName: "hermes-{{ request.object.metadata.name }}-data"
+    - name: generate-agent-egress
+      match:
+        any:
+          - resources:
+              kinds: [fabric.truxonline.io/v1alpha1/AgentIdentity]
+      generate:
+        generateExisting: true
+        synchronize: true
+        orphanDownstreamOnPolicyDelete: true
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        name: "hermes-{{ request.object.metadata.name }}-egress"
+        namespace: "tenant-{{ request.object.spec.tenantSlug }}"
+        data:
+          metadata:
+            labels:
+              app.kubernetes.io/part-of: txo-fabric
+              app.kubernetes.io/name: hermes-agent
+              fabric.truxonline.io/agent: "{{ request.object.metadata.name }}"
+          spec:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: hermes-agent
+                app.kubernetes.io/instance: "{{ request.object.metadata.name }}"
+            policyTypes: [Egress]
+            egress:
+              - to:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: kube-system
+                ports:
+                  - {protocol: UDP, port: 53}
+                  - {protocol: TCP, port: 53}
+              - to:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: hindsight
+                ports:
+                  - {protocol: TCP, port: 8888}
