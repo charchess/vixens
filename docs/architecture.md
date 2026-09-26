@@ -19,7 +19,7 @@ This document defines the architectural approach for standardizing the Vixens cl
 - **Current Tech Stack:** 
     - **Platform:** Talos Linux v1.12.4 / K8s v1.34.0.
     - **Network:** Cilium (CNI) + AdGuard Home (Internal DNS HA).
-    - **Storage:** Synology CSI (iSCSI/NFS).
+    - **Storage:** legacy CSI (iSCSI/NFS).
     - **Secrets:** Infisical Operator (Injector for storage & app secrets).
     - **GitOps:** ArgoCD v3.3.3 using a Trunk-based workflow (main branch).
 
@@ -61,7 +61,7 @@ Pour atteindre le niveau **Emerald** (niveau 5), les applications doivent implé
 | :--- | :--- | :--- |
 | **Backup (DB)** | Litestream v0.5.6 | Sidecar for real-time SQLite replication to MinIO. |
 | **Backup (Files)** | rclone + inotify | Sidecar (Config-Syncer) for static file sync. |
-| **Storage Backend** | MinIO | S3-compatible internal endpoint hosted on Synology. |
+| **Storage Backend** | MinIO | S3-compatible internal endpoint hosted on legacy NAS. |
 | **Secrets Management**| Infisical | Automatic injection of S3 credentials. |
 | **Validation** | Python / Beads | `evaluate_maturity.py` and Beads status tracking. |
 | **Policy Enforcement** | Kyverno | Maturity checks automatisés. |
@@ -89,7 +89,7 @@ This diagram illustrates the sequence from Pod initialization to continuous prot
 sequenceDiagram
     participant S3 as MinIO (S3)
     participant Init as Restore-Init
-    participant PVC as Synology PVC
+    participant PVC as legacy NAS PVC
     participant App as Main Application
     participant LS as Litestream
     participant CS as Config-Syncer
