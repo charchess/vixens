@@ -1,0 +1,36 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: txo-fabric-operator
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: operator
+rules:
+  - apiGroups: [fabric.truxonline.io]
+    resources: [tenantbundles, agentidentities]
+    verbs: [get, list, watch, update, patch]
+  - apiGroups: [fabric.truxonline.io]
+    resources: [tenantbundles/status, agentidentities/status]
+    verbs: [get, update, patch]
+  - apiGroups: [fabric.truxonline.io]
+    resources: [tenantbundles/finalizers, agentidentities/finalizers]
+    verbs: [update]
+  - apiGroups: [fabric.truxonline.io]
+    resources: [agentruntimeprofiles]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [namespaces, persistentvolumeclaims]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [networking.k8s.io]
+    resources: [networkpolicies]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [coordination.k8s.io]
+    resources: [leases]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [""]
+    resources: [events]
+    verbs: [create, patch]

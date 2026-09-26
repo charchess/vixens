@@ -1,0 +1,16 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: txo-fabric-operator
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: txo-fabric-operator
+subjects:
+  - kind: ServiceAccount
+    name: txo-fabric-operator
+    namespace: txo-fabric-system

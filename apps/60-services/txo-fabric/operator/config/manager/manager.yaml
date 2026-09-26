@@ -1,0 +1,87 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: txo-fabric-operator
+  namespace: txo-fabric-system
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: operator
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: txo-fabric-operator
+  namespace: txo-fabric-system
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/name: txo-fabric-operator
+    app.kubernetes.io/component: operator
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: txo-fabric-operator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: txo-fabric
+        app.kubernetes.io/name: txo-fabric-operator
+        app.kubernetes.io/component: operator
+        vixens.io/sizing.txo-fabric-operator: V-small
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: /metrics
+    spec:
+      serviceAccountName: txo-fabric-operator
+      priorityClassName: vixens-high
+      terminationGracePeriodSeconds: 10
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: manager
+          image: ghcr.io/charchess/txo-fabric-operator:bootstrap
+          imagePullPolicy: IfNotPresent
+          args:
+            - --leader-elect=true
+            - --metrics-bind-address=:8080
+            - --health-probe-bind-address=:8081
+          ports:
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
+            - name: health
+              containerPort: 8081
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 192Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 20
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            failureThreshold: 3
