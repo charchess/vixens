@@ -16,15 +16,22 @@ Mealie est un gestionnaire de recettes auto-hébergé.
 - **Storage**: 1Gi PVC via `synelia-iscsi-retain` (RWO)
 - **Strategy**: `Recreate`
 
-## Configuration (Infisical)
+## Configuration des secrets
 
-Les secrets sont gérés dans Infisical sous le chemin `/apps/10-home/mealie`.
+Les valeurs secrètes sont stockées dans OpenBao et projetées dans Kubernetes par External Secrets Operator via `ClusterSecretStore/openbao`.
+
+- **ExternalSecret** : `mealie-secrets-sync`
+- **Secret Kubernetes cible** : `mealie-secrets`
+- **Chemin dev** : `vixens/dev/apps/10-home/mealie`
+- **Chemin prod** : `vixens/prod/apps/10-home/mealie` via l'overlay prod
 
 | Clé | Description | Valeur conseillée |
 | --- | --- | --- |
 | `ALLOW_SIGNUP` | Autoriser l'inscription | `true` ou `false` |
 | `MEALIE_SECRET_KEY` | Clé secrète de l'application | Chaîne aléatoire |
 | `BASE_URL` | URL de base de l'application | `https://mealie.truxonline.com` |
+
+Ne pas recréer d'`InfisicalSecret` : l'ancienne intégration Infisical est retirée.
 
 ## Ingress & Accès
 
@@ -35,7 +42,7 @@ Les secrets sont gérés dans Infisical sous le chemin `/apps/10-home/mealie`.
 
 ### Technique
 - Vérifier que le pod est `Running`: `kubectl get pods -n mealie`
-- Vérifier la synchro des secrets: `kubectl get infisicalsecret -n mealie`
+- Vérifier la synchro des secrets: `kubectl get externalsecret -n mealie`
 - Vérifier le certificat: `kubectl get certificate -n mealie`
 
 ### Fonctionnelle

@@ -25,7 +25,7 @@ containers:
   - dataangel      → backup continu SQLite + filesystem
 ```
 
-Configuration via **env vars uniquement**, injectées depuis un secret Infisical.
+Configuration via **env vars uniquement**, injectées depuis un Secret Kubernetes projeté par **External Secrets Operator depuis OpenBao**.
 
 ---
 
@@ -86,7 +86,13 @@ Les deux modes sont **indépendants et cumulables** : une app peut avoir SQLite 
 
 ### Credentials
 
-Les credentials S3 arrivent via **secret Kubernetes** géré par l'opérateur Infisical — exactement comme les setups Litestream actuels. L'app n'a pas à se soucier d'où vient le secret.
+Les credentials S3 arrivent via un **Secret Kubernetes géré par External Secrets Operator**, alimenté par le `ClusterSecretStore/openbao`. DataAngel consomme uniquement le Secret Kubernetes et n'a pas à connaître le backend de secrets.
+
+Pattern plateforme :
+
+```text
+OpenBao → ClusterSecretStore/openbao → ExternalSecret → Secret → DataAngel
+```
 
 Convention : les vars `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` sont lues automatiquement par le SDK AWS Go, Litestream, et Rclone — aucun mapping nécessaire.
 

@@ -14,6 +14,9 @@
 # Check pod status
 kubectl get pods -n velero
 
+# Check External Secrets projection
+kubectl get externalsecret -n velero
+
 # Check backup storage location
 kubectl get bsl -n velero
 
@@ -29,11 +32,13 @@ kubectl get schedules -n velero
 - **Namespace:** `velero`
 - **Category:** `00-infra`
 - **Dependencies:**
-    - `infisical-operator` (Secrets management)
-    - `minio` (External S3 storage)
-- **Specifics:** 
+    - OpenBao + External Secrets Operator for credentials
+    - MinIO / S3-compatible external storage
+- **Specifics:**
     - **Helm Chart:** v11.3.2
     - **Uploader:** `kopia`
     - **Node Agent:** Enabled (requires `privileged` label on namespace)
-    - **Secrets:** Integrated with Infisical (path: `/00-infra/velero`)
+    - **Secrets:** projected from OpenBao through External Secrets Operator; production uses `vixens/prod/apps/00-infra/velero`
     - **Kyverno:** Compliant with resource limits and priority classes.
+
+The retired Infisical integration must not be recreated; current GitOps manifests live under `apps/00-infra/velero/external-secrets/`.

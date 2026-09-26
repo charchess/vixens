@@ -27,14 +27,18 @@ curl -L -k https://homepage.truxonline.com | grep "Homepage"
 
 ## Notes Techniques
 - **Namespace :** `tools`
-- **Gestion de la Configuration :**
-    - Les fichiers de configuration (`services.yaml`, `settings.yaml`, `widgets.yaml`, `bookmarks.yaml`) sont gérés dans **Infisical** au chemin `/apps/70-tools/homepage/config`.
-    - Un `InfisicalSecret` synchronise ces fichiers vers un secret Kubernetes `homepage-config-secret`.
-    - Un `initContainer` (`copy-initial-config`) copie le contenu du secret vers le PVC persistant `/app/config` au démarrage.
-- **Dépendances :**
-    - `Infisical` pour la configuration et les secrets.
+- **Gestion de la configuration :**
+    - OpenBao est la source de vérité ; External Secrets Operator utilise `ClusterSecretStore/openbao`.
+    - `ExternalSecret/homepage-config-sync` matérialise `Secret/homepage-config-secret`.
+    - Chemin dev : `vixens/dev/apps/70-tools/homepage/config`.
+    - Chemin prod : `vixens/prod/apps/70-tools/homepage/config`.
+    - L'initContainer `copy-initial-config` copie la configuration du Secret en lecture seule vers un `emptyDir` writable monté sur `/app/config`.
+- **Secrets applicatifs :**
+    - En prod, `ExternalSecret/homepage-secrets-sync` matérialise `Secret/homepage-secrets` depuis `vixens/prod/apps/70-tools/homepage`.
+    - Le Deployment consomme notamment les clés Home Assistant et *arr depuis ce Secret.
 - **Sécurité :**
     - `HOMEPAGE_ALLOWED_HOSTS` doit être défini dans les overlays pour valider l'accès.
+    - Ne pas recréer de `InfisicalSecret` : l'ancienne intégration Infisical est retirée.
 
 ---
 > ⚠️ **HIBERNATION DEV**
