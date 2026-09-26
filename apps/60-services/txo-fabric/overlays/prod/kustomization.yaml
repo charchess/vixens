@@ -112,4 +112,4 @@ patches:
         path: /metadata/annotations
         value:
           argocd.argoproj.io/sync-wave: "10"
-          fabric.truxonline.io/reconcile-revision: "4"
+          fabric.truxonline.io/reconcile-revision: "5"
