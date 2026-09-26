@@ -11,11 +11,12 @@ on:
     paths:
       - apps/60-services/txo-fabric/operator/**/*.go
       - apps/60-services/txo-fabric/operator/go.mod
+      - apps/60-services/txo-fabric/operator/Dockerfile
       - .github/workflows/txo-fabric-operator-ci.yaml
 
 jobs:
   test:
-    name: Go test and API generation
+    name: Go test, API generation and image build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -48,3 +49,6 @@ jobs:
           test -s /tmp/txo-generated-crds/fabric.truxonline.io_tenantbundles.yaml
           test -s /tmp/txo-generated-crds/fabric.truxonline.io_agentidentities.yaml
           test -s /tmp/txo-generated-crds/fabric.truxonline.io_agentruntimeprofiles.yaml
+
+      - name: Build operator image
+        run: docker build -t txo-fabric-operator:ci apps/60-services/txo-fabric/operator
