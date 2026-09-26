@@ -82,9 +82,9 @@ tags = ["minio", "s3", "credentials"]
 
 # Disabled - triggers on shell variables like $(PASSWORD)
 # [[rules]]
-# id = "synology-credentials"
-# description = "Synology NAS credentials"
-# regex = '''(?i)synology[_-]?(password|secret|key)\s*[:=]\s*["\']?[^\s"\']{{8,}}'''
+# id = "legacy-nas-credentials"
+# description = "legacy NAS NAS credentials"
+# regex = '''(?i)legacy-nas[_-]?(password|secret|key)\s*[:=]\s*["\']?[^\s"\']{{8,}}'''
 
 [[rules]]
 id = "free-mobile-token"
