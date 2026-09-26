@@ -53,7 +53,6 @@ Important repository checks belong in GitHub Actions. Local scripts are convenie
 - **`check`**: Quick status check utility.
 - **`gp`**: Git push helper.
 - **`k`**: Kubectl alias with context.
-- **`synocli`**: Synology CSI interaction tool.
 - **`test-deployment-time.sh`**: Performance testing for deployments.
 
 ## 🧪 Testing (`scripts/testing/`)

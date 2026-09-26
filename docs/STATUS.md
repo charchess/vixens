@@ -166,7 +166,7 @@ Last Updated: 2026-09-17
 | cert-manager | ✅ | 🥈 Silver | TLS via Let's Encrypt |
 | cert-manager-webhook-gandi | ✅ | 🥇 Gold | DNS-01 challenge |
 | cilium-operator | ✅ | 💎 Platinum | CNI |
-| synology-csi | ✅ | - | iSCSI storage |
+| legacy-csi | ✅ | - | iSCSI storage |
 | infisical-operator | ✅ | 🥇 Gold | Secrets management |
 | reloader | ✅ | 🥈 Silver | ConfigMap/Secret reload |
 | vpa | ✅ | 💎 Platinum | Vertical Pod Autoscaler |

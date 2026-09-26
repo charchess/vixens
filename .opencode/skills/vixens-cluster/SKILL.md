@@ -4,7 +4,7 @@ description: >-
   Vixens Kubernetes cluster operations expert. ALWAYS USE for: kubectl commands,
   ArgoCD sync/refresh, Talos operations, pod debugging, deployment issues, GitOps workflow,
   prod-stable tag, namespace operations, resource usage, events, logs, storage, PVC,
-  Synology CSI, cluster health, node management. Trigger on: "check cluster", "kubectl",
+  legacy CSI, cluster health, node management. Trigger on: "check cluster", "kubectl",
   "argocd", "talos", "sync app", "deploy", "pod logs", "why isn't X working".
 license: MIT
 compatibility: opencode
@@ -183,14 +183,14 @@ kubectl get policyreport -n $NS -o json | jq -r '.items[] | select(.scope.name =
 kubectl get pvc -A -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,STATUS:.status.phase,SIZE:.spec.resources.requests.storage,STORAGECLASS:.spec.storageClassName'
 ```
 
-### Synology CSI
+### legacy CSI
 - StorageClass: `synelia-iscsi-retain` (prod), `synelia-iscsi-delete` (dev)
-- CSI namespace: `synology-csi`
+- CSI namespace: `legacy-csi`
 
-### Check Synology CSI Health
+### Check legacy CSI Health
 ```bash
-kubectl -n synology-csi get pods
-kubectl -n synology-csi logs -l app=synology-csi-controller --tail=50
+kubectl -n legacy-csi get pods
+kubectl -n legacy-csi logs -l app=legacy-csi-controller --tail=50
 ```
 
 ---

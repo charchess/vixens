@@ -29,7 +29,7 @@ kubectl get ingress -n finance
 - **Dependencies:**
     - `postgresql-shared` (Database)
     - `infisical` (Secrets)
-    - `synology-csi` (Backup storage/Litestream)
+    - `legacy-csi` (Backup storage/Litestream)
 - **Specifics:**
     - Uses `rclone` sidecar for Litestream S3 sync.
     - Uses `firefly-iii/core` image.

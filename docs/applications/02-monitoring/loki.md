@@ -33,7 +33,7 @@ curl -L -k https://loki.truxonline.com/ready
 ## Notes Techniques
 - **Namespace :** `monitoring`
 - **Dépendances :**
-    - `Synology-CSI` (Stockage logs via PVC `synelia-iscsi-retain`)
+    - `legacy NAS-CSI` (Stockage logs via PVC `synelia-iscsi-retain`)
 - **Particularités :** Déployé via Manifestes (StatefulSet). Mode monolithique (Single Binary). Stockage sur disque persistent.
 ---
 > ⚠️ **HIBERNATION DEV**

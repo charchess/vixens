@@ -35,4 +35,4 @@ KEDA controls are intentionally not modified in this temporary capacity-recovery
 
 To reactivate one application, remove the `../../../_shared/components/prod-hibernate` entry only from that application's `overlays/prod/kustomization.yaml`, then validate, merge to `main`, and promote `prod-stable`.
 
-Do not hibernate ArgoCD, Cilium, cert-manager, External Secrets/OpenBao, ingress/DNS, storage drivers, databases, or Synology CSI as part of this policy.
+Do not hibernate ArgoCD, Cilium, cert-manager, External Secrets/OpenBao, ingress/DNS, storage drivers, databases, or legacy CSI as part of this policy.

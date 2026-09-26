@@ -553,17 +553,17 @@ spec:
     requests:
       storage: 10Gi
 
-  storageClassName: synology-iscsi-retain  # Prod
+  storageClassName: legacy-nas-iscsi-retain  # Prod
   # OU
-  storageClassName: synology-iscsi-delete  # Dev
+  storageClassName: legacy-nas-iscsi-delete  # Dev
 ```
 
 #### Storage Classes
 
 | Environment | StorageClass | Reclaim Policy | Usage |
 |-------------|--------------|----------------|-------|
-| **Prod** | `synology-iscsi-retain` | Retain | Data critique |
-| **Dev** | `synology-iscsi-delete` | Delete | Dev/Test |
+| **Prod** | `legacy-nas-iscsi-retain` | Retain | Data critique |
+| **Dev** | `legacy-nas-iscsi-delete` | Delete | Dev/Test |
 | **Shared** | `nfs-storage` | Retain | Fichiers partagés |
 
 #### Sizing Guidelines

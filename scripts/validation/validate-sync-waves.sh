@@ -70,7 +70,7 @@ for file in argocd/overlays/dev/apps/*.yaml; do
 
   # Check for critical apps without waves
   case "$app_name" in
-    cilium-lb|synology-csi-secrets)
+    cilium-lb|legacy-csi-secrets)
       if [ "$wave" = "none" ]; then
         printf "%-10s %-40s %s\n" "$wave" "$app_name" "⚠️  MISSING"
         errors=$((errors + 1))

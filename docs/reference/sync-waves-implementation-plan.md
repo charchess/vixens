@@ -15,7 +15,7 @@
 ```
 Wave -3: infisical-operator ✅
 Wave -2: cilium-lb ✅
-Wave -1: synology-csi-secrets ✅
+Wave -1: legacy-csi-secrets ✅
 Wave  0: cert-manager, argocd-image-updater, cert-manager-secrets ✅
 Wave  1: cert-manager-webhook-gandi ✅
 Wave  2: cert-manager-config, cloudnative-pg-crds ✅
@@ -54,8 +54,8 @@ Wave -5: [Vide - réservé pour futurs CRDs]
 Wave -4: [Vide - operators déjà en -3 et 0]
 Wave -3: infisical-operator ✅ (déjà configuré)
 Wave -2: cilium-lb ✅ (déjà configuré)
-Wave -1: synology-csi-secrets, nfs-storage, redis-shared
-Wave  0: cert-manager, synology-csi, traefik [infrastructure de base]
+Wave -1: legacy-csi-secrets, nfs-storage, redis-shared
+Wave  0: cert-manager, legacy-csi, traefik [infrastructure de base]
 Wave  1: cert-manager-webhook-gandi ✅ (déjà configuré)
 Wave  2: cert-manager-config, cloudnative-pg-crds ✅ (déjà configuré)
 Wave  3: cloudnative-pg, argocd ✅ (déjà configuré)
@@ -86,8 +86,8 @@ Wave 10: Applications métier (par défaut - tout le reste)
 
 **Applications à modifier:**
 
-3. **synology-csi** → Wave 0
-   - Fichier: À CRÉER `argocd/overlays/dev/apps/synology-csi.yaml`
+3. **legacy-csi** → Wave 0
+   - Fichier: À CRÉER `argocd/overlays/dev/apps/legacy-csi.yaml`
    - Raison: Storage provider critique
 
 4. **traefik** → Wave 0
@@ -210,13 +210,13 @@ fi
 # Phase 2: Wave 0 (Infrastructure Réseau)
 echo "=== Phase 2: Wave 0 (Infrastructure Réseau) ==="
 
-# synology-csi (créer si n'existe pas)
-if [ ! -f argocd/overlays/dev/apps/synology-csi.yaml ]; then
-  cat > argocd/overlays/dev/apps/synology-csi.yaml <<'EOF'
+# legacy-csi (créer si n'existe pas)
+if [ ! -f argocd/overlays/dev/apps/legacy-csi.yaml ]; then
+  cat > argocd/overlays/dev/apps/legacy-csi.yaml <<'EOF'
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: synology-csi
+  name: legacy-csi
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -227,10 +227,10 @@ spec:
   source:
     repoURL: https://github.com/charchess/vixens.git
     targetRevision: main
-    path: apps/01-storage/synology-csi/overlays/dev
+    path: apps/01-storage/legacy-csi/overlays/dev
   destination:
     server: https://kubernetes.default.svc
-    namespace: synology-csi
+    namespace: legacy-csi
   syncPolicy:
     automated:
       prune: true

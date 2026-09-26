@@ -55,9 +55,9 @@ Le cluster Vixens nécessite une phase de consolidation après une période de c
 
 ### 4.1. Functional (FR)
 *   **FR1 : Standardisation "Goldification" :** Application du standard Elite à toutes les apps (Probes, Resource limits, stable tags).
-*   **FR2 : Résolution des États Inconnus :** Correction de `frigate`, `hydrus-client`, `sonarr`, `stirling-pdf-ingress` et `synology-csi-secrets`.
+*   **FR2 : Résolution des États Inconnus :** Correction de `frigate`, `hydrus-client`, `sonarr`, `stirling-pdf-ingress` et `legacy-csi-secrets`.
 *   **FR3 : Résolution des Dérives GitOps :** Convergence totale de `renovate` et `vixens-app-of-apps` (OutOfSync).
-*   **FR4 : Validation du Stockage :** Audit et stress-test du Synology CSI (iSCSI/NFS).
+*   **FR4 : Validation du Stockage :** Audit et stress-test du legacy CSI (iSCSI/NFS).
 *   **FR5 : Stabilisation DNS :** Investigation des redémarrages fréquents de `external-dns-gandi`.
 
 ### 4.2. Non-Functional (NFR)
@@ -70,7 +70,7 @@ Le cluster Vixens nécessite une phase de consolidation après une période de c
 *   **Nodes :** 3 Control-planes (phoebe, poison, powder), 2 Workers (peach, pearl)
 *   **IP Range :** 192.168.111.191 - 192.168.111.195
 *   **CNI :** Cilium
-*   **Secrets :** Infisical Operator (Critique pour `synology-csi-secrets`)
+*   **Secrets :** Infisical Operator (Critique pour `legacy-csi-secrets`)
 
 ## 5. Epic Structure
 
@@ -84,10 +84,10 @@ Le cluster Vixens nécessite une phase de consolidation après une période de c
     *   Convergence totale de l'App-of-Apps.
     *   Toutes les applications cibles sont `Synced` et `Healthy`.
 
-#### Story 1.2 : Sécurisation de la chaîne de confiance Stockage (Synology CSI)
-*   **Cibles :** `synology-csi-secrets` et ressource `InfisicalSecret`.
+#### Story 1.2 : Sécurisation de la chaîne de confiance Stockage (legacy CSI)
+*   **Cibles :** `legacy-csi-secrets` et ressource `InfisicalSecret`.
 *   **Acceptance Criteria :**
-    *   `synology-csi-secrets` est `Synced` et `Healthy`.
+    *   `legacy-csi-secrets` est `Synced` et `Healthy`.
     *   Validation de l'injection des credentials sans intervention manuelle.
     *   Stress-test de bascule de nœud avec remounting iSCSI réussi.
 

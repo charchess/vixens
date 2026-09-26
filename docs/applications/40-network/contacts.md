@@ -1,13 +1,13 @@
 # Contacts
 
-Service de redirection DNS pour l'accès aux contacts (Synology).
+Service de redirection DNS pour l'accès aux contacts (legacy NAS).
 
 ## Architecture
 
-Il s'agit d'un service "ExternalName" ou d'un Service/Endpoints pointant vers une IP externe au cluster (Synology NAS).
+Il s'agit d'un service "ExternalName" ou d'un Service/Endpoints pointant vers une IP externe au cluster (legacy NAS NAS).
 
 - **Namespace :** `contacts`
-- **Backend :** `192.168.111.69:5000` (DSM Synology)
+- **Backend :** `192.168.111.69:5000` (DSM legacy NAS)
 
 ## Ingress
 
