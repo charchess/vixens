@@ -35,13 +35,11 @@ jobs:
 
           # Get list of changed YAML files
           gh pr view ${{ github.event.pull_request.number }} \
-            --json files --jq '.files.[].path' | \
-            grep -E '^apps/.*/(dev|prod)/.*\.yaml$' || true > /tmp/changed_files.txt
+            --json files --jq '.files.[].path' > /tmp/changed_files.txt
 
-          # Extract unique overlay paths
-          cat /tmp/changed_files.txt | \
-            sed -E 's|(apps/[^/]+/[^/]+/overlays/(dev|prod)).*|\1|' | \
-            sort -u > /tmp/overlays.txt
+          # Extract unique application and ArgoCD overlay paths.
+          sed -nE 's|^(apps/[^/]+/[^/]+/overlays/(dev|prod))(/.*)?$|\1|p; s|^(argocd/overlays/(dev|prod))(/.*)?$|\1|p' \
+            /tmp/changed_files.txt | sort -u > /tmp/overlays.txt
 
           # Store overlays for next step
           if [ -s /tmp/overlays.txt ]; then
@@ -80,19 +78,21 @@ jobs:
             echo "" >> /tmp/diff_output.md
 
             # Build with PR branch (current)
-            if kustomize build "$overlay" > /tmp/new.yaml 2>/tmp/error.txt; then
-              # Checkout base branch
-              git fetch origin ${{ github.base_ref }}
-              git checkout origin/${{ github.base_ref }} -- "$overlay" 2>/dev/null || {
+            if kustomize build --enable-helm "$overlay" > /tmp/new.yaml 2>/tmp/error.txt; then
+              # Materialize the base version without changing the PR worktree.
+              rm -rf /tmp/base-tree
+              mkdir -p /tmp/base-tree
+              git archive "${{ github.event.pull_request.base.sha }}" | tar -x -C /tmp/base-tree
+              if [ ! -d "/tmp/base-tree/$overlay" ]; then
                 echo "⚠️ New overlay (not in base branch)" >> /tmp/diff_output.md
                 echo "\`\`\`yaml" >> /tmp/diff_output.md
                 cat /tmp/new.yaml >> /tmp/diff_output.md
                 echo "\`\`\`" >> /tmp/diff_output.md
                 continue
-              }
+              fi
 
               # Build with base branch
-              if kustomize build "$overlay" > /tmp/old.yaml 2>/dev/null; then
+              if kustomize build --enable-helm "/tmp/base-tree/$overlay" > /tmp/old.yaml 2>/dev/null; then
                 # Generate diff
                 if diff -u /tmp/old.yaml /tmp/new.yaml > /tmp/changes.diff; then
                   echo "✅ No changes" >> /tmp/diff_output.md
@@ -108,8 +108,6 @@ jobs:
                 echo "⚠️ Failed to build base version" >> /tmp/diff_output.md
               fi
 
-              # Restore PR version
-              git checkout HEAD -- "$overlay"
             else
               echo "❌ Build failed:" >> /tmp/diff_output.md
               echo "\`\`\`" >> /tmp/diff_output.md
