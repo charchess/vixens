@@ -9,4 +9,4 @@ resources:
 - ../../base
 - ingress.yaml
 - ingress-redirect.yaml
-- infisical-secret.yaml
+- external-secret.yaml
