@@ -11,7 +11,7 @@ resources:
   - pdb.yaml
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml
-  - infisical-secret.yaml
+  - external-secret.yaml
   - servicemonitor.yaml
 components:
   - ../../../_shared/components/revision-history-limit
