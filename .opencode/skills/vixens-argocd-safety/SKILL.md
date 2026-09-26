@@ -146,7 +146,7 @@ If you've already broken things:
 1. **STOP all manual interventions**
 2. **Check CSI driver** — storage is often the cascade trigger
    ```bash
-   kubectl get pods -n synology-csi
+   kubectl get pods -n legacy-csi
    ```
 3. **Wait for repo-server to stabilize** (2-3 minutes after restart)
 4. **Let ArgoCD self-heal** — it will reconcile automatically
