@@ -182,11 +182,13 @@ def check_silver(ns: str, app: str, workload, pods: list) -> dict:
             cnt.get("startupProbe") is not None for cnt in containers
         )
 
-    uses_secrets = _workload_uses_secrets(workload)
-    if not uses_secrets:
-        c["Infisical secret (app uses K8s secrets)"] = None
+    secret_names = _workload_secret_names(workload)
+    if not secret_names:
+        c["Secrets externally managed via OpenBao/ESO"] = None
     else:
-        c["Infisical secret (app uses K8s secrets)"] = _has_infisical_secret(ns, app)
+        c["Secrets externally managed via OpenBao/ESO"] = _has_openbao_external_secret(
+            ns, secret_names
+        )
 
     pvcs = _get_pvcs_for_workload(ns, workload)
     if not pvcs:
@@ -417,27 +419,46 @@ def check_orichalcum(ns: str, app: str, workload, pods: list) -> dict:
     return c
 
 
-def _workload_uses_secrets(workload) -> bool:
-    for cnt in _containers(workload):
+def _workload_secret_names(workload) -> set:
+    names = set()
+    pod_spec = _pod_spec(workload)
+    containers = pod_spec.get("containers", []) + pod_spec.get("initContainers", [])
+
+    for cnt in containers:
         for env in cnt.get("env", []):
-            if "secretKeyRef" in env.get("valueFrom", {}):
-                return True
-        for ef in cnt.get("envFrom", []):
-            if "secretRef" in ef:
-                return True
-    for vol in _pod_spec(workload).get("volumes", []):
-        if "secret" in vol:
-            return True
-    return False
+            name = env.get("valueFrom", {}).get("secretKeyRef", {}).get("name")
+            if name:
+                names.add(name)
+        for env_from in cnt.get("envFrom", []):
+            name = env_from.get("secretRef", {}).get("name")
+            if name:
+                names.add(name)
+
+    for volume in pod_spec.get("volumes", []):
+        name = volume.get("secret", {}).get("secretName")
+        if name:
+            names.add(name)
+
+    return names
 
 
-def _has_infisical_secret(ns: str, app: str) -> bool:
-    if list_resources("infisicalsecret", ns, f"app={app}"):
-        return True
-    return any(
-        app.lower() in i.get("metadata", {}).get("name", "").lower()
-        for i in list_resources("infisicalsecret", ns)
-    )
+def _has_openbao_external_secret(ns: str, secret_names: set) -> bool:
+    managed_secret_names = set()
+
+    for external_secret in list_resources("externalsecret", ns):
+        spec = external_secret.get("spec", {})
+        store_ref = spec.get("secretStoreRef", {})
+        if store_ref.get("name") != "openbao" or store_ref.get("kind") != "ClusterSecretStore":
+            continue
+
+        target_name = (
+            spec.get("target", {}).get("name")
+            or external_secret.get("metadata", {}).get("name")
+        )
+        if target_name:
+            managed_secret_names.add(target_name)
+
+    return bool(secret_names) and secret_names.issubset(managed_secret_names)
 
 
 def _get_pvcs_for_workload(ns: str, workload) -> list:
