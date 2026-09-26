@@ -153,6 +153,14 @@ def self_test() -> None:
     print("retired-pattern guard self-test: PASS")
 
 
+def github_error(violation: str) -> str:
+    """Render a file-aware GitHub Actions annotation when possible."""
+    rel, separator, _ = violation.partition(":")
+    if separator and rel:
+        return f"::error file={rel}::{violation}"
+    return f"::error::{violation}"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("root", nargs="?", default=".", help="repository root")
@@ -167,7 +175,7 @@ def main() -> int:
     if violations:
         print("Retired active patterns detected:")
         for violation in violations:
-            print(f"::error::{violation}")
+            print(github_error(violation))
         return 1
 
     print("retired-pattern guard: PASS")
