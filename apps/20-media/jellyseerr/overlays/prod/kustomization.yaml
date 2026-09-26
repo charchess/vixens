@@ -6,7 +6,7 @@ resources:
   - ingress.yaml
   - keda-interceptor-svc.yaml
   - httpscaledobject.yaml
-  - infisical-secret.yaml
+  - external-secret.yaml
 
 components:
   - ../../../../_shared/components/prod-hibernate
