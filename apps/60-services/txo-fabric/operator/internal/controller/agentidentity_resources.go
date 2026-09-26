@@ -15,7 +15,7 @@ import (
 )
 
 func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace string) error {
-	name := runtimePVCName(agent.Name)
+	name := runtimePVCName(agent.Spec.AgentKey)
 	var pvc corev1.PersistentVolumeClaim
 	err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &pvc)
 	if apierrors.IsNotFound(err) {
@@ -42,7 +42,7 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 }
 
 func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace string) error {
-	name := runtimeName(agent.Name)
+	name := runtimeName(agent.Spec.AgentKey)
 	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, deployment, func() error {
 		labels := agentLabels(agent, tenant)
@@ -53,7 +53,7 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 		deployment.Spec.Replicas = &replicas
 		deployment.Spec.RevisionHistoryLimit = &revisionHistory
 		deployment.Spec.Strategy = appsv1.DeploymentStrategy{Type: appsv1.RecreateDeploymentStrategyType}
-		deployment.Spec.Selector = &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hermes-agent", LabelInstance: agent.Name}}
+		deployment.Spec.Selector = &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hermes-agent", LabelInstance: agent.Spec.AgentKey}}
 
 		podLabels := copyStringMap(labels)
 		podLabels["vixens.io/sizing.hermes"] = defaultString(profile.Spec.SizingLabel, "V-small")
@@ -72,7 +72,7 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 					Image:           profile.Spec.Image,
 					ImagePullPolicy: corev1.PullIfNotPresent,
 					Command:         []string{"/bin/sh", "-lc", `if [ ! -d "/opt/data/profiles/${AGENT_NAME}" ]; then /opt/hermes/.venv/bin/hermes profile create "${AGENT_NAME}" --no-alias --no-skills --description "${AGENT_DISPLAY_NAME} - TXO Fabric agent"; fi`},
-					Env: []corev1.EnvVar{{Name: "HERMES_HOME", Value: "/opt/data"}, {Name: "AGENT_NAME", Value: agent.Name}, {Name: "AGENT_DISPLAY_NAME", Value: agent.Spec.DisplayName}},
+					Env: []corev1.EnvVar{{Name: "HERMES_HOME", Value: "/opt/data"}, {Name: "AGENT_NAME", Value: agent.Spec.AgentKey}, {Name: "AGENT_DISPLAY_NAME", Value: agent.Spec.DisplayName}},
 					VolumeMounts: []corev1.VolumeMount{{Name: "data", MountPath: "/opt/data"}},
 				}},
 				Containers: []corev1.Container{{
@@ -84,6 +84,7 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 						{Name: "HERMES_HOME", Value: "/opt/data"},
 						{Name: "TERMINAL_ENV", Value: "local"},
 						{Name: "TXO_AGENT_ID", Value: agent.Name},
+						{Name: "TXO_AGENT_KEY", Value: agent.Spec.AgentKey},
 						{Name: "TXO_TENANT_ID", Value: tenant.Spec.TenantID},
 						{Name: "TXO_TENANT_NAME", Value: tenant.Name},
 						{Name: "TXO_MEMORY_BANK_ID", Value: resolvedBankID(agent)},
@@ -95,7 +96,7 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 					ReadinessProbe: &corev1.Probe{ProbeHandler: corev1.ProbeHandler{Exec: &corev1.ExecAction{Command: probeCommand}}, PeriodSeconds: 10, FailureThreshold: 3},
 					LivenessProbe:  &corev1.Probe{ProbeHandler: corev1.ProbeHandler{Exec: &corev1.ExecAction{Command: probeCommand}}, PeriodSeconds: 20, FailureThreshold: 3},
 				}},
-				Volumes: []corev1.Volume{{Name: "data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: runtimePVCName(agent.Name)}}}},
+				Volumes: []corev1.Volume{{Name: "data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: runtimePVCName(agent.Spec.AgentKey)}}}},
 			},
 		}
 		return controllerutil.SetControllerReference(agent, deployment, r.Scheme)
@@ -104,12 +105,12 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 }
 
 func (r *AgentIdentityReconciler) ensureEgressPolicy(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, namespace string) error {
-	name := runtimeName(agent.Name) + "-egress"
+	name := runtimeName(agent.Spec.AgentKey) + "-egress"
 	np := &networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, np, func() error {
 		np.Labels = mergeStringMap(np.Labels, agentLabels(agent, tenant))
 		np.Spec = networkingv1.NetworkPolicySpec{
-			PodSelector: metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hermes-agent", LabelInstance: agent.Name}},
+			PodSelector: metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hermes-agent", LabelInstance: agent.Spec.AgentKey}},
 			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeEgress},
 			Egress: []networkingv1.NetworkPolicyEgressRule{{
 				To: []networkingv1.NetworkPolicyPeer{{NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"}}}},
