@@ -1,0 +1,50 @@
+---
+name: TXO Fabric Operator CI
+
+on:
+  pull_request:
+    paths:
+      - apps/60-services/txo-fabric/operator/**
+      - .github/workflows/txo-fabric-operator-ci.yaml
+  push:
+    branches: [main]
+    paths:
+      - apps/60-services/txo-fabric/operator/**/*.go
+      - apps/60-services/txo-fabric/operator/go.mod
+      - .github/workflows/txo-fabric-operator-ci.yaml
+
+jobs:
+  test:
+    name: Go test and API generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.0'
+          cache: false
+
+      - name: Resolve module graph
+        working-directory: apps/60-services/txo-fabric/operator
+        run: go mod tidy
+
+      - name: Test
+        working-directory: apps/60-services/txo-fabric/operator
+        run: go test ./...
+
+      - name: Vet
+        working-directory: apps/60-services/txo-fabric/operator
+        run: go vet ./...
+
+      - name: Validate controller markers
+        working-directory: apps/60-services/txo-fabric/operator
+        run: |
+          mkdir -p /tmp/txo-generated-crds
+          go run sigs.k8s.io/controller-tools/cmd/controller-gen@v0.19.0 \
+            crd paths=./api/... output:crd:artifacts:config=/tmp/txo-generated-crds
+          test -s /tmp/txo-generated-crds/fabric.truxonline.io_tenantbundles.yaml
+          test -s /tmp/txo-generated-crds/fabric.truxonline.io_agentidentities.yaml
+          test -s /tmp/txo-generated-crds/fabric.truxonline.io_agentruntimeprofiles.yaml

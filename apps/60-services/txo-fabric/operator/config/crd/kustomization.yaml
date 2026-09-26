@@ -1,0 +1,7 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - bases/fabric.truxonline.io_tenantbundles.yaml
+  - bases/fabric.truxonline.io_agentidentities.yaml
+  - bases/fabric.truxonline.io_agentruntimeprofiles.yaml

@@ -1,0 +1,17 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: TenantBundle
+metadata:
+  name: hairem-sandbox
+spec:
+  tenantId: TEN90001
+  displayName: hAIrem Sandbox
+  isolation:
+    profile: Shared
+  persistence:
+    postgresql:
+      mode: Shared
+      profileRef: shared-poc
+  memory:
+    hindsight:
+      profileRef: shared-poc

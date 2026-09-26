@@ -1,0 +1,25 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentRuntimeProfile
+metadata:
+  name: hermes-default
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: runtime-profile
+spec:
+  engine: Hermes
+  image: nousresearch/hermes-agent:v2026.9.24
+  storage:
+    size: 2Gi
+    storageClassName: truenas-iscsi-delete
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  priorityClassName: vixens-medium
+  sizingLabel: V-small
+  compatibility:
+    s6Overlay: true
