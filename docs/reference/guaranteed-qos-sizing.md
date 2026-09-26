@@ -43,10 +43,10 @@ All G-sizing profiles are now active in production via the `sizing-mutate` Kyver
 
 **Policy Location**: `apps/00-infra/kyverno/base/policies/sizing-mutate.yaml`
 
-**Test Command**:
+**Non-persistent admission test:**
 ```bash
-# Create test pod with G-large
-kubectl apply -f - <<EOF
+# Ask the API server/Kyverno to admit a G-large pod without creating it.
+kubectl create --dry-run=server -o yaml -f - <<EOF
 apiVersion: v1
 kind: Pod
 metadata:
@@ -58,11 +58,9 @@ spec:
   - name: test
     image: nginx:alpine
 EOF
-
-# Verify Guaranteed QoS
-kubectl get pod test-g-large -o jsonpath='{.status.qosClass}'
-# Expected output: Guaranteed
 ```
+
+Inspect the returned `resources:` block and confirm requests equal limits. The dry-run must not be replaced by a persistent test object merely to validate this policy.
 
 ## Usage
 
@@ -124,7 +122,7 @@ To migrate an app to Guaranteed QoS:
    labels:
      vixens.io/sizing: "G-small"
    ```
-4. **Deploy and verify:**
+4. **Merge through the normal GitOps workflow and verify the resulting pod:**
    ```bash
    kubectl get pod <pod> -o jsonpath='{.status.qosClass}'
    # Should output: Guaranteed
@@ -158,5 +156,6 @@ If requests != limits, verify:
 
 ## Changelog
 
+- **2026-09-26**: replaced persistent test instructions with server-side dry-run/GitOps verification
 - **2026-03-03**: G-sizing fully implemented in Kyverno policy
 - **2024-02-24**: Initial documentation created
