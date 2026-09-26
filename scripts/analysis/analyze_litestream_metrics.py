@@ -11,8 +11,8 @@ Requirements:
 Environment variables:
     LITESTREAM_ENDPOINT (default: http://192.168.111.69:9001)
     LITESTREAM_BUCKET (default: vixens-litestream)
-    AWS_ACCESS_KEY_ID (from Infisical)
-    AWS_SECRET_ACCESS_KEY (from Infisical)
+    AWS_ACCESS_KEY_ID (provisioned via OpenBao / External Secrets)
+    AWS_SECRET_ACCESS_KEY (provisioned via OpenBao / External Secrets)
 """
 
 import boto3
