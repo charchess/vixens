@@ -6,6 +6,7 @@ on:
     paths:
       - 'apps/**'
       - 'argocd/**'
+      - '.github/workflows/pr-preview.yaml'
 
 permissions:
   contents: read
@@ -26,22 +27,37 @@ jobs:
         with:
           kustomize-version: '5.5.0'
 
+      - name: Smoke-test overlay path parser
+        run: |
+          set -euo pipefail
+          actual=$(printf '%s\n' \
+            'apps/10-home/homeassistant/overlays/prod/kustomization.yaml' \
+            'apps/20-media/radarr/overlays/dev/patch-deployment.yaml' \
+            'apps/20-media/radarr/base/deployment.yaml' \
+            'argocd/overlays/dev/kustomization.yaml' \
+            'argocd/base/root-app.yaml' | \
+            sed -nE 's~^(apps/[^/]+/[^/]+/overlays/(dev|prod))(/.*)?$~\1~p; s~^(argocd/overlays/(dev|prod))(/.*)?$~\1~p' | \
+            sort -u)
+          expected=$(printf '%s\n' \
+            'apps/10-home/homeassistant/overlays/prod' \
+            'apps/20-media/radarr/overlays/dev' \
+            'argocd/overlays/dev')
+          test "$actual" = "$expected"
+
       - name: Detect changed overlays
         id: detect
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           echo "🔍 Detecting changed overlays..."
 
-          # Get list of changed YAML files
           gh pr view ${{ github.event.pull_request.number }} \
             --json files --jq '.files.[].path' > /tmp/changed_files.txt
 
-          # Extract unique application and ArgoCD overlay paths.
-          sed -nE 's|^(apps/[^/]+/[^/]+/overlays/(dev|prod))(/.*)?$|\1|p; s|^(argocd/overlays/(dev|prod))(/.*)?$|\1|p' \
+          sed -nE 's~^(apps/[^/]+/[^/]+/overlays/(dev|prod))(/.*)?$~\1~p; s~^(argocd/overlays/(dev|prod))(/.*)?$~\1~p' \
             /tmp/changed_files.txt | sort -u > /tmp/overlays.txt
 
-          # Store overlays for next step
           if [ -s /tmp/overlays.txt ]; then
             echo "Found $(wc -l < /tmp/overlays.txt) changed overlays:"
             cat /tmp/overlays.txt
@@ -56,7 +72,6 @@ jobs:
         run: |
           echo "📋 Generating Kustomize diff..."
 
-          # Create diff output file
           cat > /tmp/diff_output.md <<'HEADER'
           ## 🔍 Kustomize Preview
 
@@ -64,7 +79,6 @@ jobs:
 
           HEADER
 
-          # Process each changed overlay
           while IFS= read -r overlay; do
             if [ ! -d "$overlay" ]; then
               continue
@@ -81,9 +95,7 @@ jobs:
             echo "### 📦 \`$app_name\` ($env)" >> /tmp/diff_output.md
             echo "" >> /tmp/diff_output.md
 
-            # Build with PR branch (current)
             if kustomize build --enable-helm "$overlay" > /tmp/new.yaml 2>/tmp/error.txt; then
-              # Materialize the base version without changing the PR worktree.
               rm -rf /tmp/base-tree
               mkdir -p /tmp/base-tree
               git archive "${{ github.event.pull_request.base.sha }}" | tar -x -C /tmp/base-tree
@@ -95,9 +107,7 @@ jobs:
                 continue
               fi
 
-              # Build with base branch
               if kustomize build --enable-helm "/tmp/base-tree/$overlay" > /tmp/old.yaml 2>/dev/null; then
-                # Generate diff
                 if diff -u /tmp/old.yaml /tmp/new.yaml > /tmp/changes.diff; then
                   echo "✅ No changes" >> /tmp/diff_output.md
                 else
@@ -111,7 +121,6 @@ jobs:
               else
                 echo "⚠️ Failed to build base version" >> /tmp/diff_output.md
               fi
-
             else
               echo "❌ Build failed:" >> /tmp/diff_output.md
               echo "\`\`\`" >> /tmp/diff_output.md
@@ -120,7 +129,6 @@ jobs:
             fi
           done < /tmp/overlays.txt
 
-          # Add footer
           cat >> /tmp/diff_output.md <<'FOOTER'
 
           ---
@@ -136,7 +144,6 @@ jobs:
             const fs = require('fs');
             const diffOutput = fs.readFileSync('/tmp/diff_output.md', 'utf8');
 
-            // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -148,7 +155,6 @@ jobs:
               comment.body.includes('🔍 Kustomize Preview')
             );
 
-            // Update or create comment
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
