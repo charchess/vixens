@@ -154,7 +154,7 @@ metadata:
 spec:
   accessModes:
   - ReadWriteOnce
-  storageClassName: synology-iscsi-retain  # or synology-iscsi-delete
+  storageClassName: legacy-nas-iscsi-retain  # or legacy-nas-iscsi-delete
   resources:
     requests:
       storage: 1Gi
