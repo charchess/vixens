@@ -32,6 +32,7 @@ resources:
   - apps/renovate.yaml
   - apps/trivy.yaml
   - apps/argocd.yaml
+  - apps/txo-fabric.yaml
   - apps/whoami.yaml
   - apps/frigate.yaml
 

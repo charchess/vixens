@@ -1,0 +1,14 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: txo-fabric-system
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: management-plane
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
