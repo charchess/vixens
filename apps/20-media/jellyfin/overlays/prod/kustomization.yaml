@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
   - ../../base
   - ingress.yaml
-  - infisical-secret.yaml
+  - external-secret.yaml
 
 patches:
   - path: pvc-patch.yaml
