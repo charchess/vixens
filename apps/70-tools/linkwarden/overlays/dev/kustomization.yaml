@@ -6,7 +6,7 @@ labels:
     environment: dev
 resources:
 - ../../base
-- infisical-secret.yaml
+- external-secret.yaml
 - ingress.yaml
 components:
 - ../../../../_shared/components/dev-hibernate
