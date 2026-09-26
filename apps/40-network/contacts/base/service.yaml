@@ -6,5 +6,5 @@ metadata:
 spec:
   ports:
     - port: 80
-      targetPort: 5000 # Same as mail for consistency if pointing to Synology
+      targetPort: 5000 # Same as mail for consistency if pointing to legacy NAS
       protocol: TCP
