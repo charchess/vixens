@@ -4,3 +4,99 @@ kind: Kustomization
 resources:
   - ../../base
   - ../../tenants/hairem-sandbox
+
+# TXO Fabric is currently bootstrapped through Kyverno. Keep the CRD discovery,
+# generate policies and trigger resources in distinct Argo CD sync waves so a
+# fresh cluster does not try to reconcile TenantBundle/AgentIdentity before the
+# API and policies exist. Policy revision also retriggers generateExisting for
+# resources created during the initial discovery-cache race.
+patches:
+  - target:
+      group: apiextensions.k8s.io
+      version: v1
+      kind: CustomResourceDefinition
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/sync-wave: "-30"
+
+  - target:
+      group: rbac.authorization.k8s.io
+      version: v1
+      kind: ClusterRole
+      name: kyverno:txo-fabric-provisioner
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/sync-wave: "-20"
+
+  - target:
+      group: rbac.authorization.k8s.io
+      version: v1
+      kind: ClusterRoleBinding
+      name: kyverno:txo-fabric-provisioner
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/sync-wave: "-20"
+
+  - target:
+      group: kyverno.io
+      version: v1
+      kind: ClusterPolicy
+      name: txo-fabric-tenant-provisioning
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "-20"
+      - op: add
+        path: /metadata/annotations/fabric.truxonline.io~1reconcile-revision
+        value: "2"
+
+  - target:
+      group: kyverno.io
+      version: v1
+      kind: ClusterPolicy
+      name: txo-fabric-tenant-network-baseline
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/sync-wave: "-20"
+          fabric.truxonline.io/reconcile-revision: "2"
+
+  - target:
+      group: kyverno.io
+      version: v1
+      kind: ClusterPolicy
+      name: txo-fabric-agent-provisioning
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "-20"
+      - op: add
+        path: /metadata/annotations/fabric.truxonline.io~1reconcile-revision
+        value: "2"
+
+  - target:
+      group: fabric.truxonline.io
+      version: v1alpha1
+      kind: TenantBundle
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/sync-wave: "-10"
+
+  - target:
+      group: fabric.truxonline.io
+      version: v1alpha1
+      kind: AgentIdentity
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/sync-wave: "0"
