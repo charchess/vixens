@@ -1,0 +1,32 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: indiba-openfga
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: default
+  sources:
+    - repoURL: https://openfga.github.io/helm-charts
+      chart: openfga
+      targetRevision: 0.3.14
+      helm:
+        valueFiles:
+          - $values/apps/60-services/indiba-platform/values/openfga-dev.yaml
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: indiba-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+      - ServerSideApply=true

@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: indiba-platform-environment
+  namespace: indiba-system
+  labels:
+    app.kubernetes.io/part-of: indiba-platform
+data:
+  environment: dev
+  phase: phase0-poc
+  runtimeModeDefault: alwaysOn
+  portalEndpoint: https://agents.dev.truxonline.com
+  llmGatewayEndpoint: http://llm-gateway.indiba-system.svc.cluster.local:8080
+  controlPlaneEndpoint: http://control-plane.indiba-system.svc.cluster.local:8081
+  memoryServiceRef.hs-indiba-stable: http://hs-indiba.tenant-indiba.svc.cluster.local:8888
+  memoryServiceMode.hs-indiba-stable: selfHosted
+  note: >-
+    Phase 0 keeps Hermes runtimes always on: no wake-up bus, KEDA runtime scaling,
+    or session scheduler is required. The user portal is deployed behind Authentik
+    and calls only the Control Plane contract; Hermes and Hindsight remain private.

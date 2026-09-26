@@ -1,0 +1,130 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: indiba-hermesruntime-editor
+  labels:
+    app.kubernetes.io/part-of: indiba-platform
+rules:
+  - apiGroups:
+      - agents.indiba.io
+    resources:
+      - hermesruntimes
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: indiba-hermesruntime-operator
+  labels:
+    app.kubernetes.io/part-of: indiba-platform
+rules:
+  - apiGroups:
+      - agents.indiba.io
+    resources:
+      - hermesruntimes
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+      - patch
+  - apiGroups:
+      - agents.indiba.io
+    resources:
+      - hermesruntimes/status
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - services
+      - persistentvolumeclaims
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
+      - patch
+      - delete
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - networkpolicies
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: control-plane-hermesruntime-editor
+  namespace: tenant-indiba
+  labels:
+    app.kubernetes.io/part-of: indiba-platform
+subjects:
+  - kind: ServiceAccount
+    name: control-plane
+    namespace: indiba-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: indiba-hermesruntime-editor
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: hermes-operator-runtime-reconciler
+  namespace: tenant-indiba
+  labels:
+    app.kubernetes.io/part-of: indiba-platform
+subjects:
+  - kind: ServiceAccount
+    name: hermes-operator
+    namespace: indiba-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: indiba-hermesruntime-operator
