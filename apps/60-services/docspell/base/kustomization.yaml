@@ -10,7 +10,7 @@ resources:
   - configmap-restserver.yaml
   - configmap-joex.yaml
   - configmap-joex-entrypoint.yaml
-  - infisical-secrets.yaml
+  - external-secrets.yaml
   - middleware-redirect.yaml
   - middleware.yaml
   - networkpolicy.yaml
