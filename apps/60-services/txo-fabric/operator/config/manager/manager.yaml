@@ -47,7 +47,7 @@ spec:
       containers:
         - name: manager
           # Immutable image published from the source revision recorded by the build workflow.
-          image: ghcr.io/charchess/txo-fabric-operator:main-18b72023dd7b
+          image: ghcr.io/charchess/txo-fabric-operator:main-1f3b469ccc89
           imagePullPolicy: IfNotPresent
           args:
             - --leader-elect=true
