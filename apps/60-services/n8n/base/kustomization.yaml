@@ -7,6 +7,6 @@ resources:
   - service.yaml
   - networkpolicy.yaml
   - cilium-networkpolicy.yaml
-  - infisical-secret.yaml
-  - infisical-config.yaml
+  - external-secret.yaml
+  - db-credentials-external-secret.yaml
   - pdb.yaml
