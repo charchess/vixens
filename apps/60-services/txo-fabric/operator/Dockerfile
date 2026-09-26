@@ -5,6 +5,7 @@ RUN apk add --no-cache ca-certificates
 COPY go.mod ./
 RUN go mod download
 COPY . .
+RUN go mod tidy
 ARG TARGETOS=linux
 ARG TARGETARCH=amd64
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
