@@ -89,6 +89,6 @@ Lorsqu'un rapport n'est plus utilisé :
 
 1. vérifier qu'aucun workflow/script actif ne le consomme ;
 2. retirer son générateur et ses références dans la même PR ;
-3. conserver au besoin un exemplaire historique dans `docs/reports/trash/` plutôt que maintenir une chaîne morte.
+3. laisser Git conserver l'historique par défaut ; ne placer un document dans `docs/archive/` que s'il conserve une valeur de provenance durable et reste volontairement référencé.
 
 La création de tâches issues d'un rapport se fait dans GitHub Issues, conformément à `docs/guides/task-management.md`.

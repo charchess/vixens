@@ -17,7 +17,9 @@ Git manifests and ArgoCD remain authoritative for desired runtime configuration.
 
 ## Historical reports
 
-Dated reports and files under archival/trash locations are snapshots. They may reference retired tooling such as Beads, Archon, Serena, Just or Infisical. Preserve those references when they explain historical decisions, but do not use them as current instructions.
+Dated reports are point-in-time snapshots. Git history is the default archive for reports that are no longer useful in the current tree. Only historical documents with durable provenance value and intentional active references should remain under `docs/archive/`.
+
+Archived documents may reference retired tooling such as Beads, Archon, Serena, Just or Infisical. Preserve those references when they explain historical decisions, but do not use them as current instructions.
 
 ## Updating living reports
 

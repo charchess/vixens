@@ -30,7 +30,7 @@ Une ancienne référence conservée pour l'historique ne redevient jamais normat
 - [Multi-Agent Orchestration](multi-agent-orchestration.md) — principes de coordination agnostiques des outils ;
 - [Workflow State Machine](workflow-state-machine.md) — référence historique de l'ancien workflow local.
 
-L'ancienne proposition de formalisme Archon du 2025-12-30 est archivée sous `docs/reports/trash/20260208-112431/2025-12-30-archon-task-formalism.md`. Elle ne définit plus le workflow courant.
+L'ancienne proposition de formalisme Archon du 2025-12-30 est archivée sous `docs/archive/2025-12-30-archon-task-formalism.md`. Elle ne définit plus le workflow courant.
 
 ## Kubernetes / GitOps
 
