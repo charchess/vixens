@@ -108,7 +108,7 @@ storageClasses:
     allowVolumeExpansion: true
     parameters:
       fsType: xfs
-      # Skip TRIM/DISCARD on format; mirrors the Synology CSI XFS safety setting.
+      # Skip TRIM/DISCARD on format; mirrors the legacy CSI XFS safety setting.
       formatOptions: -K
     mountOptions: []
   - name: truenas-iscsi-xfs-delete
