@@ -33,14 +33,19 @@ jobs:
           echo "📋 YAML lint..."
           yamllint -c yamllint-config.yml apps/ argocd/ || exit 1
 
-          # Kustomize build test (sample)
-          echo "📦 Kustomize build test (sample)..."
-          for overlay in apps/*/overlays/dev apps/*/overlays/prod; do
+          # Kustomize build test (all application overlays)
+          echo "📦 Kustomize build test (all overlays)..."
+          while IFS= read -r overlay; do
+            echo "  Testing: $overlay"
+            kustomize build --enable-helm "$overlay" > /dev/null
+          done < <(find apps -type f -name kustomization.yaml -path '*/overlays/dev/*' -o -type f -name kustomization.yaml -path '*/overlays/prod/*' | sed 's|/kustomization.yaml$||' | sort -u)
+
+          for overlay in argocd/overlays/dev argocd/overlays/prod; do
             if [ -f "$overlay/kustomization.yaml" ]; then
               echo "  Testing: $overlay"
-              kustomize build --enable-helm "$overlay" > /dev/null || exit 1
+              kustomize build --enable-helm "$overlay" > /dev/null
             fi
-          done | head -5
+          done
 
           echo "✅ Merge queue validation passed"
 
