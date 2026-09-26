@@ -25,6 +25,9 @@ spec:
         - name: Tenant
           type: string
           jsonPath: .spec.tenantRef.name
+        - name: Key
+          type: string
+          jsonPath: .spec.agentKey
         - name: Agent
           type: string
           jsonPath: .spec.displayName
@@ -50,7 +53,7 @@ spec:
               type: object
             spec:
               type: object
-              required: [tenantRef, displayName]
+              required: [tenantRef, agentKey, displayName]
               properties:
                 tenantRef:
                   type: object
@@ -63,6 +66,14 @@ spec:
                   x-kubernetes-validations:
                     - rule: self.name == oldSelf.name
                       message: tenantRef.name is immutable
+                agentKey:
+                  type: string
+                  minLength: 1
+                  maxLength: 63
+                  pattern: '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'
+                  x-kubernetes-validations:
+                    - rule: self == oldSelf
+                      message: agentKey is immutable
                 displayName:
                   type: string
                   minLength: 1
