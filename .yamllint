@@ -1,16 +1,23 @@
 ---
+# Canonical yamllint policy for local use, pre-commit, scripts, and CI.
+# Legacy `-c yamllint-config.yml` invocations use a compatibility shim that extends this file.
 extends: default
 
-# Ignore auto-generated CRDs/manifests (reformatted on each upgrade)
+# Generated, vendored, or upstream YAML is intentionally excluded from style linting.
 ignore: |
   backups/
   .git/
   .terraform/
+  **/charts/
+  **/templates/
+  **/crds/
+  **/manifests.yaml
+  **/manifests.raw.yaml
+  **/servicemonitors.yaml
+  **/upstream.yaml
+  **/poolers.yaml
   apps/00-infra/argocd/base/argocd-crds.yaml
-  apps/00-infra/prometheus-operator-crds/
-  apps/00-infra/vpa/base/manifests.yaml
-  apps/00-infra/snapshot-controller/base/crds/
-  apps/03-security/trivy/base/manifests.yaml
+  apps/00-infra/argocd/base/argocd-install.yaml
   apps/02-monitoring/descheduler/base/descheduler-gen.yaml
 
 yaml-files:
@@ -19,32 +26,54 @@ yaml-files:
   - '.yamllint'
 
 rules:
-  # ============ ERREURS CRITIQUES ============
+  # Critical errors
   indentation:
     spaces: 2
-    indent-sequences: true
+    indent-sequences: whatever
     check-multi-line-strings: false
     level: error
 
   key-duplicates:
     level: error
 
-  # ============ WARNINGS ============
-  line-length:
-    max: 120
-    allow-non-breakable-words: true
-    allow-non-breakable-inline-mappings: true
+  # Kubernetes manifests frequently contain legitimate long URLs/expressions.
+  line-length: disable
+
+  # Editorial consistency
+  trailing-spaces:
+    level: error
+
+  document-start:
+    level: warning
+    present: true
+
+  empty-lines:
+    max: 1
+    max-start: 0
+    max-end: 0
     level: warning
 
-  trailing-spaces:
+  comments:
+    require-starting-space: true
+    ignore-shebangs: true
+    min-spaces-from-content: 1
+    level: warning
+
+  comments-indentation:
+    level: warning
+
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 0
+    min-spaces-inside-empty: 0
+    max-spaces-inside-empty: 0
+    level: warning
+
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+    check-keys: false
     level: warning
 
   new-lines:
     type: unix
     level: warning
-
-  # ============ DÉSACTIVÉES ============
-  comments: disable
-  comments-indentation: disable
-  brackets: disable
-  truthy: disable
