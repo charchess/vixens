@@ -1,0 +1,25 @@
+---
+name: Retired Pattern Guard
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  retired-patterns:
+    name: Retired Active Patterns
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Self-test guard semantics
+        run: python3 scripts/validation/check_retired_patterns.py --self-test
+
+      - name: Scan active repository zones
+        run: python3 scripts/validation/check_retired_patterns.py .
