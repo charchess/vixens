@@ -120,10 +120,10 @@ func (r *TenantBundleReconciler) reconcilePostgreSQL(ctx context.Context, bundle
 	if blocked != nil {
 		return *blocked, nil
 	}
-	if applied, _, _ := unstructured.NestedBool(role.Object, "status", "applied"); !applied {
+	if !cnpgAppliedForCurrentGeneration(role) {
 		message, _, _ := unstructured.NestedString(role.Object, "status", "message")
 		if message == "" {
-			message = "CloudNativePG has not applied the tenant DatabaseRole yet"
+			message = "CloudNativePG has not applied the current tenant DatabaseRole generation yet"
 		}
 		return postgresqlPending("DatabaseRolePending", message, names, 5*time.Second), nil
 	}
@@ -135,12 +135,15 @@ func (r *TenantBundleReconciler) reconcilePostgreSQL(ctx context.Context, bundle
 	if blocked != nil {
 		return *blocked, nil
 	}
-	if applied, _, _ := unstructured.NestedBool(database.Object, "status", "applied"); !applied {
+	if !cnpgAppliedForCurrentGeneration(database) {
 		message, _, _ := unstructured.NestedString(database.Object, "status", "message")
 		if message == "" {
-			message = "CloudNativePG has not applied the tenant Database yet"
+			message = "CloudNativePG has not applied the current tenant Database generation yet"
 		}
 		return postgresqlPending("DatabasePending", message, names, 5*time.Second), nil
+	}
+	if ready, message := requiredExtensionsReady(database, normalizedExtensions(profile.Spec.RequiredExtensions)); !ready {
+		return postgresqlPending("ExtensionsPending", message, names, 5*time.Second), nil
 	}
 
 	status := postgresqlComponentStatus("Ready", names)
@@ -430,6 +433,65 @@ func immutableCNPGIdentityMatches(obj *unstructured.Unstructured, clusterName, p
 	cluster, _, _ := unstructured.NestedString(obj.Object, "spec", "cluster", "name")
 	name, _, _ := unstructured.NestedString(obj.Object, "spec", "name")
 	return cluster == clusterName && name == postgresName
+}
+
+func cnpgAppliedForCurrentGeneration(obj *unstructured.Unstructured) bool {
+	applied, found, err := unstructured.NestedBool(obj.Object, "status", "applied")
+	if err != nil || !found || !applied {
+		return false
+	}
+	observedGeneration, found, err := unstructured.NestedInt64(obj.Object, "status", "observedGeneration")
+	if err != nil {
+		return false
+	}
+	// CloudNativePG v1.30 reports observedGeneration for Database and
+	// DatabaseRole. Accept an absent field defensively for compatibility with
+	// older/fake clients, but never accept a stale generation once it is reported.
+	return !found || observedGeneration == obj.GetGeneration()
+}
+
+func requiredExtensionsReady(database *unstructured.Unstructured, required []string) (bool, string) {
+	if len(required) == 0 {
+		return true, ""
+	}
+	statuses, found, err := unstructured.NestedSlice(database.Object, "status", "extensions")
+	if err != nil {
+		return false, fmt.Sprintf("CloudNativePG extension status is invalid: %v", err)
+	}
+	// Database.status.applied already means the aggregate database desired state
+	// is reconciled. When CNPG also publishes per-extension status, use it to
+	// prevent a required extension failure from being hidden behind an old ready
+	// state and to surface the concrete extension message.
+	if !found {
+		return true, ""
+	}
+	byName := make(map[string]map[string]interface{}, len(statuses))
+	for _, raw := range statuses {
+		entry, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name, _ := entry["name"].(string)
+		if name != "" {
+			byName[name] = entry
+		}
+	}
+	for _, name := range required {
+		entry, ok := byName[name]
+		if !ok {
+			return false, fmt.Sprintf("required PostgreSQL extension %s has not been reported by CloudNativePG", name)
+		}
+		applied, _ := entry["applied"].(bool)
+		if applied {
+			continue
+		}
+		message, _ := entry["message"].(string)
+		if message != "" {
+			return false, fmt.Sprintf("required PostgreSQL extension %s is not ready: %s", name, message)
+		}
+		return false, fmt.Sprintf("required PostgreSQL extension %s has not been applied by CloudNativePG", name)
+	}
+	return true, ""
 }
 
 func normalizedExtensions(extensions []string) []string {
