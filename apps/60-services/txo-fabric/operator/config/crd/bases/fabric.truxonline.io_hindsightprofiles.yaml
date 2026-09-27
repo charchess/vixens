@@ -60,7 +60,7 @@ spec:
               apiAuthMode:
                 default: ApiKey
                 description: |-
-                  APIAuthMode selects the inbound authentication contract for the Hindsight API.
+                  APIAuthMode selects the inbound authentication contract for the tenant-scoped Hindsight API.
                   ApiKey maps to the upstream ApiKeyTenantExtension; credential material is generated/injected via Secret and never stored in this CR.
                 enum:
                 - ApiKey
@@ -72,18 +72,9 @@ spec:
                 maximum: 65535
                 minimum: 1
                 type: integer
-              controlPlane:
-                description: ControlPlane configures the optional Hindsight administrative
-                  UI.
-                properties:
-                  enabled:
-                    default: false
-                    description: Enabled deploys the Hindsight administrative control
-                      plane for this profile.
-                    type: boolean
-                type: object
               image:
-                description: Image is an immutable, versioned Hindsight image reference.
+                description: Image is an immutable, versioned Hindsight API image
+                  reference.
                 maxLength: 512
                 minLength: 1
                 type: string
@@ -97,12 +88,16 @@ spec:
                 - PlatformGateway
                 type: string
               modelCache:
-                description: ModelCache configures optional persistent cache storage
-                  for local models/rerankers.
+                description: |-
+                  ModelCache configures optional persistent cache storage for local models/rerankers.
+                  It is disabled by default; production profiles should prefer models baked into the image.
                 properties:
                   enabled:
                     default: false
-                    description: Enabled provisions a persistent cache for local models/rerankers.
+                    description: |-
+                      Enabled provisions a persistent cache for local models/rerankers.
+                      The standard upstream full API image already contains its default models;
+                      enable this only for an explicitly designed runtime-download/cache path.
                     type: boolean
                   size:
                     anyOf:
@@ -191,11 +186,11 @@ spec:
                 type: string
               topology:
                 default: TenantScoped
-                description: Topology defines whether Hindsight runs per tenant or
-                  as a shared platform service.
+                description: |-
+                  Topology is tenant-scoped in the initial Fabric contract. A shared service
+                  requires a separately designed multi-tenant authentication/schema boundary.
                 enum:
                 - TenantScoped
-                - SharedService
                 type: string
             required:
             - image

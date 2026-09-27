@@ -62,41 +62,6 @@ spec:
                 - Retain
                 - Delete
                 type: string
-              dedicated:
-                description: Dedicated configures operator-created per-tenant CloudNativePG
-                  clusters.
-                properties:
-                  instances:
-                    default: 2
-                    description: Instances is the number of CloudNativePG instances
-                      for a dedicated tenant cluster.
-                    format: int32
-                    maximum: 5
-                    minimum: 1
-                    type: integer
-                  storage:
-                    properties:
-                      size:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        default: 8Gi
-                        description: Size is the PVC request for each dedicated CloudNativePG
-                          instance.
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                      storageClassName:
-                        description: StorageClassName is explicit because Vixens intentionally
-                          has no default StorageClass.
-                        maxLength: 253
-                        minLength: 1
-                        type: string
-                    required:
-                    - storageClassName
-                    type: object
-                required:
-                - storage
-                type: object
               provider:
                 default: CloudNativePG
                 description: Provider identifies the PostgreSQL lifecycle implementation.
@@ -123,8 +88,9 @@ spec:
                 description: Shared configures an existing shared CloudNativePG cluster.
                 properties:
                   clusterRef:
-                    description: ClusterRef selects the existing platform-owned CloudNativePG
-                      cluster.
+                    description: |-
+                      ClusterRef selects the existing CloudNativePG cluster used by this profile.
+                      The Fabric operator does not own or mutate the Cluster resource itself.
                     properties:
                       name:
                         description: Name is the CloudNativePG Cluster resource name.
@@ -159,13 +125,14 @@ spec:
                 - clusterRef
                 type: object
               topology:
-                description: Topology defines whether tenants consume an existing
-                  shared cluster or receive a dedicated cluster.
+                description: |-
+                  Topology is SharedCluster in the initial Fabric contract. Dedicated tenant
+                  clusters are intentionally deferred until the shared path is validated end-to-end.
                 enum:
                 - SharedCluster
-                - DedicatedCluster
                 type: string
             required:
+            - shared
             - topology
             type: object
         type: object
