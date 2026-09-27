@@ -121,6 +121,12 @@ dev-vYYYY.MM.<short-sha>
 
 `dev-latest` est un alias mutable mis à jour atomiquement vers le snapshot dev le plus récent. Les tags `dev-v*` sont les snapshots immuables utilisés comme source des promotions production.
 
+#### Artefacts générés après merge
+
+Certains changements source déclenchent volontairement une seconde PR générée afin de matérialiser un artefact immuable dans GitOps. C'est notamment le cas du TXO Fabric Operator : un changement de source Go mergé sur `main` déclenche `build-txo-fabric-operator.yaml`, qui construit l'image puis ouvre une PR automatique pour pinner `ghcr.io/charchess/txo-fabric-operator:main-<sha>` dans `operator/config/manager/manager.yaml`.
+
+Dans ce cas, le tag dev du changement source est **intermédiaire**. Il ne doit pas être promu en production. Le candidat à la promotion est le `dev-v*` créé après merge de la PR de pin générée, afin que le desired state Git et l'image immuable construite depuis les mêmes sources soient promus ensemble.
+
 ### 6. Promotion production
 
 La promotion production passe **uniquement** par GitHub Actions :
@@ -135,10 +141,11 @@ Le workflow de promotion est sérialisé et travaille exclusivement sur le commi
 
 1. vérifie que le tag `dev-v*` existe et pointe vers un ancêtre de `main` ;
 2. détache le workspace sur ce commit exact ;
-3. génère le SBOM et les métadonnées de promotion depuis ce commit ;
-4. crée ou vérifie le tag immuable `prod-v*` ;
-5. publie SBOM et métadonnées dans la GitHub Release ;
-6. déplace `prod-stable` atomiquement **en dernier**, puis vérifie le commit cible.
+3. vérifie les garde-fous de cohérence d'artefacts générés, notamment que le pin d'image TXO Fabric Operator correspond à la dernière source operator du snapshot ;
+4. génère le SBOM et les métadonnées de promotion depuis ce commit ;
+5. crée ou vérifie le tag immuable `prod-v*` ;
+6. publie SBOM et métadonnées dans la GitHub Release ;
+7. déplace `prod-stable` atomiquement **en dernier**, puis vérifie le commit cible.
 
 Ne jamais créer ou déplacer `prod-stable` manuellement lors d'une promotion normale.
 
