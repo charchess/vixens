@@ -283,6 +283,8 @@ func (r *TenantBundleReconciler) ensureDatabaseRole(ctx context.Context, bundle 
 		"createrole":                false,
 		"replication":               false,
 		"bypassrls":                 false,
+		"connectionLimit":           int64(-1),
+		"ensure":                    "present",
 		"passwordSecret":            map[string]interface{}{"name": secretName},
 		"databaseRoleReclaimPolicy": cnpgReclaimPolicy(profile.Spec.RoleReclaimPolicy),
 	}
