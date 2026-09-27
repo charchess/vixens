@@ -124,12 +124,7 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 func (r *TenantBundleReconciler) ensureNamespace(ctx context.Context, bundle *fabricv1alpha1.TenantBundle, name string) error {
 	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: name}}
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
-		if ns.Labels == nil {
-			ns.Labels = map[string]string{}
-		}
-		for k, v := range tenantLabels(bundle) {
-			ns.Labels[k] = v
-		}
+		ns.Labels = mergeStringMap(ns.Labels, tenantLabels(bundle))
 		// Deliberately do not owner-reference the Namespace. Tenant deletion is
 		// ordered by TenantFinalizer: AgentIdentity resources must disappear
 		// before the namespace is deleted. A controller ownerReference would let
@@ -142,16 +137,16 @@ func (r *TenantBundleReconciler) ensureNamespace(ctx context.Context, bundle *fa
 func (r *TenantBundleReconciler) ensureDefaultDeny(ctx context.Context, bundle *fabricv1alpha1.TenantBundle, namespace string) error {
 	np := &networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: "txo-fabric-default-deny", Namespace: namespace}}
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, np, func() error {
-		if np.Labels == nil {
-			np.Labels = map[string]string{}
-		}
-		np.Labels[LabelPartOf] = "txo-fabric"
+		np.Labels = mergeStringMap(np.Labels, tenantLabels(bundle))
 		np.Labels["app.kubernetes.io/component"] = "tenant-network-baseline"
 		np.Spec = networkingv1.NetworkPolicySpec{
 			PodSelector: metav1.LabelSelector{},
 			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress},
 		}
-		return controllerutil.SetControllerReference(bundle, np, r.Scheme)
+		// The baseline must remain while AgentIdentity resources keep the tenant
+		// finalizer blocked. Namespace deletion eventually removes it atomically
+		// with the rest of the tenant cell.
+		return nil
 	})
 	return err
 }
@@ -207,7 +202,7 @@ func (r *TenantBundleReconciler) setFailedStatus(ctx context.Context, bundle *fa
 	}
 }
 
-func tenantBundleRequestsForNamespace(_ context.Context, obj client.Object) []reconcile.Request {
+func tenantBundleRequestsForManagedObject(_ context.Context, obj client.Object) []reconcile.Request {
 	labels := obj.GetLabels()
 	if labels[LabelManaged] != "true" {
 		return nil
@@ -222,7 +217,7 @@ func tenantBundleRequestsForNamespace(_ context.Context, obj client.Object) []re
 func (r *TenantBundleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&fabricv1alpha1.TenantBundle{}).
-		Watches(&corev1.Namespace{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForNamespace)).
-		Owns(&networkingv1.NetworkPolicy{}).
+		Watches(&corev1.Namespace{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
+		Watches(&networkingv1.NetworkPolicy{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Complete(r)
 }
