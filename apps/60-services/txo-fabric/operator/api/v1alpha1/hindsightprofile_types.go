@@ -44,6 +44,12 @@ type HindsightProfileSpec struct {
 	// +kubebuilder:validation:Maximum=65535
 	APIPort int32 `json:"apiPort,omitempty"`
 
+	// APIAuthMode selects the inbound authentication contract for the Hindsight API.
+	// ApiKey maps to the upstream ApiKeyTenantExtension; credential material is generated/injected via Secret and never stored in this CR.
+	// +kubebuilder:validation:Enum=ApiKey
+	// +kubebuilder:default=ApiKey
+	APIAuthMode string `json:"apiAuthMode,omitempty"`
+
 	// Resources controls the generated Hindsight API container.
 	Resources corev1.ResourceRequirements `json:"resources"`
 
@@ -76,6 +82,7 @@ type HindsightProfileSpec struct {
 // +kubebuilder:resource:scope=Cluster,shortName=hsprofile,categories=txo-fabric
 // +kubebuilder:printcolumn:name="Topology",type=string,JSONPath=`.spec.topology`
 // +kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.image`
+// +kubebuilder:printcolumn:name="API Auth",type=string,JSONPath=`.spec.apiAuthMode`
 // +kubebuilder:printcolumn:name="LLM Auth",type=string,JSONPath=`.spec.llmAuthMode`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 type HindsightProfile struct {
