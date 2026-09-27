@@ -11,37 +11,7 @@ components:
   - ../../../../_shared/components/poddisruptionbudget/1
   - ../../../../_shared/components/priority/medium
 
-patches:
-  - patch: |-
-      - op: add
-        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
-        value: "10"
-      - op: add
-        path: /metadata/annotations/goldilocks.fairwinds.com~1enabled
-        value: "true"
-      - op: add
-        path: /metadata/annotations/vpa.kubernetes.io~1updateMode
-        value: "Off"
-    target:
-      kind: Deployment
-      name: cloudnative-pg
-  - patch: |-
-      - op: add
-        path: /spec/template/metadata/annotations/prometheus.io~1scrape
-        value: "true"
-      - op: add
-        path: /spec/template/metadata/annotations/prometheus.io~1port
-        value: "8080"
-      - op: add
-        path: /spec/template/metadata/annotations/prometheus.io~1path
-        value: "/metrics"
-    target:
-      kind: Deployment
-      name: cloudnative-pg
-  - patch: |-
-      - op: add
-        path: /spec/template/metadata/annotations/vixens.io~1no-long-connections
-        value: "true"
-    target:
-      kind: Deployment
-      name: cloudnative-pg
+# The CloudNativePG Deployment is rendered by the separate Helm source in the
+# ArgoCD Application. Deployment metadata/pod annotations therefore belong in
+# that Helm source's values; Kustomize cannot patch resources from another
+# Argo multi-source renderer.
