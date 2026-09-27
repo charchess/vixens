@@ -81,6 +81,7 @@ resources:
 
   - apps/cloudnative-pg-crds.yaml
   - apps/cloudnative-pg.yaml
+  - apps/plugin-barman-cloud.yaml
   # Disabled by owner: apps/redis-shared.yaml
   - apps/postgresql-shared.yaml
   # Disabled by owner: apps/changedetection.yaml

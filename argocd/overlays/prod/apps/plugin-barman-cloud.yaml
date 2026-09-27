@@ -1,0 +1,57 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: plugin-barman-cloud
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    # CloudNativePG operator is wave 3. The backup plugin must be healthy before
+    # PostgreSQL clusters that reference it are reconciled.
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  project: default
+  source:
+    repoURL: https://cloudnative-pg.github.io/charts
+    chart: plugin-barman-cloud
+    targetRevision: 0.8.0
+    helm:
+      releaseName: plugin-barman-cloud
+      values: |
+        # Chart 0.8.0 packages Barman Cloud Plugin v0.15.0.
+        crds:
+          create: true
+
+        priorityClassName: vixens-critical
+
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Exists"
+            effect: "NoSchedule"
+
+        podLabels:
+          vixens.io/sizing.manager: G-small
+
+        podAnnotations:
+          vixens.io/service-binding: "false"
+          vixens.io/fast-start: "true"
+          vixens.io/no-long-connections: "true"
+  destination:
+    server: https://kubernetes.default.svc
+    # CNPG-I plugins must be installed in the same namespace as the
+    # CloudNativePG operator.
+    namespace: cnpg-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
