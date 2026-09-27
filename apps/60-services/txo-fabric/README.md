@@ -58,13 +58,18 @@ those platform implementation details.
 
 ### PostgreSQLProfile
 
-`PostgreSQLProfile` is cluster-scoped and describes platform persistence topology.
-The initial `postgresql-shared` profile selects the existing Vixens CloudNativePG
-cluster `databases/postgresql-shared` as the candidate Shared target and establishes
-the intended contract: one logical database and one login role per tenant, required
+`PostgreSQLProfile` is cluster-scoped and describes platform persistence policy.
+The initial API deliberately supports only `SharedCluster`. The concrete
+`postgresql-shared` profile selects the existing Vixens CloudNativePG cluster
+`databases/postgresql-shared` as the candidate Shared target and establishes the
+intended contract: one logical database and one login role per tenant, required
 database extensions, and explicit reclaim policy. Authoritative ownership/reuse of
-that cluster is validated separately before the reconciler is implemented. A
-dedicated per-tenant cluster topology remains an API extension point.
+that cluster is validated separately before the reconciler is implemented.
+
+The Fabric operator must not own or mutate the referenced CloudNativePG `Cluster`.
+It will eventually own only the tenant logical resources derived from the profile.
+A dedicated per-tenant cluster topology is deferred until the Shared path has been
+validated end-to-end; that investigation is tracked separately in #3573.
 
 The profile contains implementation policy such as topology, naming, extension
 requirements and reclaim behavior. Passwords, connection credentials and physical
@@ -72,17 +77,24 @@ connection strings are never stored in the Fabric CRD or Git.
 
 ### HindsightProfile
 
-`HindsightProfile` is cluster-scoped and describes the Hindsight runtime contract:
-immutable image, tenant-scoped or shared topology, API port, inbound API-auth
-mechanism, resource envelope, optional model cache, scheduling policy and the
-platform LLM-auth mode. The profile selects an auth mechanism but never embeds the
-API key itself.
+`HindsightProfile` is cluster-scoped and describes the tenant-scoped Hindsight API
+runtime contract: immutable API image, API port, inbound API-auth mechanism,
+resource envelope, optional model cache, scheduling policy and the platform
+LLM-auth mode. The profile selects an auth mechanism but never embeds the API key
+itself.
 
-The initial `hindsight-standard` profile is tenant-scoped and requires API-key
-authentication. Its future controller will consume the tenant PostgreSQL binding,
-inject secret-backed credentials and expose banks to AgentIdentity resources.
+The initial `hindsight-standard` profile uses the upstream API-only image, requires
+API-key authentication and does not provision a model-cache PVC by default. The
+published full API image already contains the default local models; persistent
+runtime model caching remains an explicit opt-in for a separately designed use
+case. The Hindsight control plane is not part of this first Fabric contract.
+
+The future controller will consume the tenant PostgreSQL binding, inject
+secret-backed credentials and expose banks to AgentIdentity resources.
 Provider/database credentials and Hindsight API keys remain secret-backed rather
-than being embedded in the profile.
+than being embedded in the profile. A shared multi-tenant Hindsight service is
+deferred until its authentication and database/schema isolation model is proven;
+that investigation is tracked in #3574.
 
 ## Lifecycle and deletion
 
