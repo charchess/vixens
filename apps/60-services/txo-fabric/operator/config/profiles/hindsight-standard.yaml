@@ -20,6 +20,4 @@ spec:
       memory: 4Gi
   priorityClassName: vixens-medium
   sizingLabel: V-small
-  controlPlane:
-    enabled: false
   llmAuthMode: Unconfigured
