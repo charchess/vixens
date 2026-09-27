@@ -27,17 +27,18 @@ it is not a Fabric lifecycle engine.
 ### TenantBundle
 
 `TenantBundle` is cluster-scoped. `metadata.name` is the canonical tenant slug and
-`spec.tenantId` is the immutable business identifier. The operator currently
-reconciles the tenant namespace and its default-deny network baseline.
+`spec.tenantId` is the immutable business identifier. The operator reconciles the
+tenant namespace, its default-deny network baseline and the requested Shared
+PostgreSQL persistence capability.
 
 PostgreSQL, Hindsight and optional modules are explicit API capabilities. A
 TenantBundle selects platform-owned persistence and memory implementation profiles
 through `profileRef`; it does not contain database credentials, provider secrets,
 or provider-specific connection strings.
 
-The PostgreSQL and Hindsight lifecycle controllers are not implemented yet. When
-requested, these capabilities are reported through status as pending rather than
-being silently treated as ready.
+Shared PostgreSQL is reconciled through CloudNativePG. Hindsight and optional
+modules remain pending until their lifecycle reconcilers are implemented rather
+than being silently treated as ready.
 
 ### AgentIdentity
 
@@ -60,20 +61,31 @@ those platform implementation details.
 
 `PostgreSQLProfile` is cluster-scoped and describes platform persistence policy.
 The initial API deliberately supports only `SharedCluster`. The concrete
-`postgresql-shared` profile selects the existing Vixens CloudNativePG cluster
-`databases/postgresql-shared` as the candidate Shared target and establishes the
-intended contract: one logical database and one login role per tenant, required
-database extensions, and explicit reclaim policy. Authoritative ownership/reuse of
-that cluster is validated separately before the reconciler is implemented.
+`postgresql-shared` profile selects the GitOps-owned Vixens CloudNativePG cluster
+`databases/postgresql-shared` and establishes the contract: one logical database
+and one login role per tenant, required database extensions, and explicit reclaim
+policy.
 
-The Fabric operator must not own or mutate the referenced CloudNativePG `Cluster`.
-It will eventually own only the tenant logical resources derived from the profile.
-A dedicated per-tenant cluster topology is deferred until the Shared path has been
-validated end-to-end; that investigation is tracked separately in #3573.
+The Fabric operator does not own or mutate the referenced CloudNativePG `Cluster`.
+Its RBAC access to that dependency is read-only. It owns only the tenant logical
+`Database`, `DatabaseRole` and generated credential Secret derived from the
+profile. A dedicated per-tenant cluster topology is deferred until the Shared path
+has been validated end-to-end; that investigation is tracked separately in #3573.
 
-The profile contains implementation policy such as topology, naming, extension
-requirements and reclaim behavior. Passwords, connection credentials and physical
-connection strings are never stored in the Fabric CRD or Git.
+The controller derives stable PostgreSQL identifiers from the immutable tenant ID,
+creates a `kubernetes.io/basic-auth` credential Secret outside Git, then waits for
+CloudNativePG to apply the login role before creating the database. Required
+extensions such as `vector` are declared through `Database.spec.extensions`, so
+TXO does not connect directly to PostgreSQL to execute lifecycle SQL.
+
+Reclaim is explicit rather than relying on ownerReferences. With `Retain`, deleting
+the Fabric CR removes the CloudNativePG management CR while CloudNativePG retains
+the logical database/role; the generated credential Secret is retained with them.
+This prevents Kubernetes garbage collection from bypassing the profile's reclaim
+contract.
+
+Passwords, connection credentials and physical connection strings are never stored
+in the Fabric CRD or Git.
 
 ### HindsightProfile
 
@@ -89,7 +101,7 @@ published full API image already contains the default local models; persistent
 runtime model caching remains an explicit opt-in for a separately designed use
 case. The Hindsight control plane is not part of this first Fabric contract.
 
-The future controller will consume the tenant PostgreSQL binding, inject
+The future Hindsight controller will consume the tenant PostgreSQL binding, inject
 secret-backed credentials and expose banks to AgentIdentity resources.
 Provider/database credentials and Hindsight API keys remain secret-backed rather
 than being embedded in the profile. A shared multi-tenant Hindsight service is
@@ -103,7 +115,8 @@ Tenant Namespace and tenant default-deny NetworkPolicy are intentionally not
 owned through Kubernetes garbage-collection ownerReferences: a TenantBundle
 cannot delete its tenant cell while AgentIdentity resources still reference it.
 The Namespace is removed only after the tenant finalizer has observed zero
-remaining agents.
+remaining agents and the Fabric-owned PostgreSQL management resources have been
+released according to their reclaim policy.
 
 Agent runtime resources are reconciled from `AgentIdentity`. Existing compatible
 PVCs can be adopted without rewriting their storage contract, preserving their
@@ -122,7 +135,8 @@ semantic process probes. Named profiles live on the agent PVC and the host gatew
 serves them through Hermes' profile multiplexing model.
 
 Hindsight bank identity is already part of the API contract, but Hindsight itself
-is not provisioned by this controller version. The same is true for PostgreSQL.
+is not provisioned by this controller version. PostgreSQL persistence is resolved
+first and becomes the database binding consumed by the future Hindsight slice.
 
 ## Brownfield cutover
 
