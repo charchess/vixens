@@ -21,13 +21,34 @@ jobs:
     name: Build, push and pin image
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
-      pull-requests: write
 
     steps:
+      - name: Generate TXO release bot token
+        id: release-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.TXO_RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.TXO_RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ steps.release-token.outputs.token }}
+          persist-credentials: false
+
+      - name: Configure TXO release bot Git identity
+        env:
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
+          APP_SLUG: ${{ steps.release-token.outputs.app-slug }}
+        run: |
+          BOT_ID=$(gh api "/users/${APP_SLUG}%5Bbot%5D" --jq .id)
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${BOT_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
+          gh auth setup-git
 
       - name: Compute image tag
         id: tag
@@ -62,15 +83,13 @@ jobs:
 
       - name: Pin image and dependency lock in GitOps
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
           NEW_IMAGE: ${{ steps.tag.outputs.image }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
           BRANCH="chore/txo-fabric-operator-image-${TAG}"
           MANAGER="apps/60-services/txo-fabric/operator/config/manager/manager.yaml"
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
 
           sed -i "s|image: ghcr.io/charchess/txo-fabric-operator:.*|image: ${NEW_IMAGE}|" "$MANAGER"
@@ -87,7 +106,7 @@ jobs:
           git commit -m "chore(txo-fabric): pin operator image ${TAG}"
           git push -u origin "$BRANCH"
 
-          gh pr create \
+          PR_URL=$(gh pr create \
             --title "chore(txo-fabric): pin operator image ${TAG}" \
             --body "$(cat <<EOF_BODY
           Auto-generated after a successful TXO Fabric operator build.
@@ -99,4 +118,6 @@ jobs:
           EOF_BODY
           )" \
             --base main \
-            --head "$BRANCH"
+            --head "$BRANCH")
+
+          gh pr merge "$PR_URL" --squash --auto --delete-branch
