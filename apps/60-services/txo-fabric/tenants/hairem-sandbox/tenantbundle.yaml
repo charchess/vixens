@@ -7,15 +7,14 @@ metadata:
     app.kubernetes.io/part-of: txo-fabric
     fabric.truxonline.io/purpose: test
 spec:
-  tenantRef: TEN90001
-  slug: hairem-sandbox
+  tenantId: TEN90001
   displayName: hAIrem Sandbox
   isolation:
-    profile: shared
+    profile: Shared
   persistence:
     postgresql:
-      mode: shared
-  modules:
-    - name: hindsight
-      enabled: true
+      mode: Shared
+      profileRef: shared-poc
+  memory:
+    hindsight:
       profileRef: shared-poc
