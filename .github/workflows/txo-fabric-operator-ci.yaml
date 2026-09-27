@@ -15,6 +15,9 @@ on:
       - apps/60-services/txo-fabric/operator/Dockerfile
       - .github/workflows/txo-fabric-operator-ci.yaml
 
+permissions:
+  contents: write
+
 jobs:
   test:
     name: Go test, generated API and image build
@@ -22,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -46,6 +51,22 @@ jobs:
       - name: Generate API and RBAC
         working-directory: apps/60-services/txo-fabric/operator
         run: make generate manifests
+
+      - name: Materialize generated API on maintenance branch
+        if: github.event_name == 'pull_request' && github.head_ref == 'fix/txo-fabric-generated-api'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add \
+            apps/60-services/txo-fabric/operator/api/v1alpha1/zz_generated.deepcopy.go \
+            apps/60-services/txo-fabric/operator/config/crd/bases \
+            apps/60-services/txo-fabric/operator/config/rbac/role.yaml
+          if git diff --cached --quiet; then
+            echo "Generated API is already materialized"
+          else
+            git commit -m "chore(txo-fabric): regenerate API and RBAC"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
 
       - name: Upload generated API and RBAC
         uses: actions/upload-artifact@v4
