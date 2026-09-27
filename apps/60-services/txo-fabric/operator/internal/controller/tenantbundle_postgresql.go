@@ -250,6 +250,7 @@ func (r *TenantBundleReconciler) ensurePostgreSQLSecret(ctx context.Context, bun
 
 	desiredLabels := postgresqlLabels(bundle, profile, "credentials", profile.Spec.RoleReclaimPolicy)
 	desiredLabels[cnpgReloadLabel] = "true"
+	mergedLabels := mergeStringMap(copyStringMap(secret.Labels), desiredLabels)
 	desiredData := map[string][]byte{
 		corev1.BasicAuthUsernameKey: secret.Data[corev1.BasicAuthUsernameKey],
 		corev1.BasicAuthPasswordKey: secret.Data[corev1.BasicAuthPasswordKey],
@@ -257,8 +258,8 @@ func (r *TenantBundleReconciler) ensurePostgreSQLSecret(ctx context.Context, bun
 		"port":                    []byte("5432"),
 		"dbname":                  []byte(names.Database),
 	}
-	if !reflect.DeepEqual(secret.Labels, mergeStringMap(secret.Labels, desiredLabels)) || !reflect.DeepEqual(secret.Data, desiredData) {
-		secret.Labels = mergeStringMap(secret.Labels, desiredLabels)
+	if !reflect.DeepEqual(secret.Labels, mergedLabels) || !reflect.DeepEqual(secret.Data, desiredData) {
+		secret.Labels = mergedLabels
 		secret.Data = desiredData
 		if err := r.Update(ctx, &secret); err != nil {
 			return nil, nil, err
@@ -305,10 +306,14 @@ func (r *TenantBundleReconciler) ensureDatabaseRole(ctx context.Context, bundle 
 		blocked := postgresqlBlocked("OwnershipConflict", fmt.Sprintf("DatabaseRole %s/%s has an incompatible immutable cluster/name identity", namespace, names.RoleResource), 0)
 		return nil, &blocked, nil
 	}
-	role.SetLabels(mergeStringMap(role.GetLabels(), postgresqlLabels(bundle, profile, "role", profile.Spec.RoleReclaimPolicy)))
-	role.Object["spec"] = desiredSpec
-	if err := r.Update(ctx, role); err != nil {
-		return nil, nil, err
+	desiredLabels := mergeStringMap(copyStringMap(role.GetLabels()), postgresqlLabels(bundle, profile, "role", profile.Spec.RoleReclaimPolicy))
+	currentSpec, _, _ := unstructured.NestedMap(role.Object, "spec")
+	if !reflect.DeepEqual(role.GetLabels(), desiredLabels) || !reflect.DeepEqual(currentSpec, desiredSpec) {
+		role.SetLabels(desiredLabels)
+		role.Object["spec"] = desiredSpec
+		if err := r.Update(ctx, role); err != nil {
+			return nil, nil, err
+		}
 	}
 	return role, nil, nil
 }
@@ -349,10 +354,14 @@ func (r *TenantBundleReconciler) ensureDatabase(ctx context.Context, bundle *fab
 		blocked := postgresqlBlocked("OwnershipConflict", fmt.Sprintf("Database %s/%s has an incompatible immutable cluster/name identity", namespace, names.DatabaseResource), 0)
 		return nil, &blocked, nil
 	}
-	database.SetLabels(mergeStringMap(database.GetLabels(), postgresqlLabels(bundle, profile, "database", profile.Spec.DatabaseReclaimPolicy)))
-	database.Object["spec"] = desiredSpec
-	if err := r.Update(ctx, database); err != nil {
-		return nil, nil, err
+	desiredLabels := mergeStringMap(copyStringMap(database.GetLabels()), postgresqlLabels(bundle, profile, "database", profile.Spec.DatabaseReclaimPolicy))
+	currentSpec, _, _ := unstructured.NestedMap(database.Object, "spec")
+	if !reflect.DeepEqual(database.GetLabels(), desiredLabels) || !reflect.DeepEqual(currentSpec, desiredSpec) {
+		database.SetLabels(desiredLabels)
+		database.Object["spec"] = desiredSpec
+		if err := r.Update(ctx, database); err != nil {
+			return nil, nil, err
+		}
 	}
 	return database, nil, nil
 }
