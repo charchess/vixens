@@ -61,22 +61,27 @@ those platform implementation details.
 `PostgreSQLProfile` is cluster-scoped and describes platform persistence topology.
 The initial `postgresql-shared` profile targets the existing platform-owned
 CloudNativePG cluster and establishes the intended Shared contract: one logical
-database and one login role per tenant, with explicit reclaim policy. A dedicated
-per-tenant cluster topology remains an API extension point.
+database and one login role per tenant, required database extensions, and explicit
+reclaim policy. A dedicated per-tenant cluster topology remains an API extension
+point.
 
-The profile contains topology and naming policy only. Passwords and connection
-credentials are never stored in the Fabric CRD or Git.
+The profile contains implementation policy such as topology, naming, extension
+requirements and reclaim behavior. Passwords, connection credentials and physical
+connection strings are never stored in the Fabric CRD or Git.
 
 ### HindsightProfile
 
 `HindsightProfile` is cluster-scoped and describes the Hindsight runtime contract:
-immutable image, tenant-scoped or shared topology, API port, resource envelope,
-optional model cache, scheduling policy and the platform LLM-auth mode.
+immutable image, tenant-scoped or shared topology, API port, inbound API-auth
+mechanism, resource envelope, optional model cache, scheduling policy and the
+platform LLM-auth mode. The profile selects an auth mechanism but never embeds the
+API key itself.
 
-The initial `hindsight-standard` profile is tenant-scoped. Its future controller
-will consume the tenant PostgreSQL binding and expose banks to AgentIdentity
-resources. Provider/database credentials remain secret-backed rather than being
-embedded in the profile.
+The initial `hindsight-standard` profile is tenant-scoped and requires API-key
+authentication. Its future controller will consume the tenant PostgreSQL binding,
+inject secret-backed credentials and expose banks to AgentIdentity resources.
+Provider/database credentials and Hindsight API keys remain secret-backed rather
+than being embedded in the profile.
 
 ## Lifecycle and deletion
 
