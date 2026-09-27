@@ -45,9 +45,10 @@ jobs:
           git fetch --force --tags origin main
 
           if ! git rev-parse "${DEV_TAG}^{commit}" >/dev/null 2>&1; then
+            DEV_SERIES="${VERSION:0:7}"
             echo "::error::Tag ${DEV_TAG} does not exist"
-            echo "Available dev tags:"
-            git tag -l 'dev-v*' --sort=-version:refname | head -n 10
+            echo "Available dev tags for ${DEV_SERIES}:"
+            git tag -l "dev-v${DEV_SERIES}.*" --sort=-version:refname | sed -n '1,10p'
             exit 1
           fi
 
