@@ -11,12 +11,13 @@ on:
     paths:
       - apps/60-services/txo-fabric/operator/**/*.go
       - apps/60-services/txo-fabric/operator/go.mod
+      - apps/60-services/txo-fabric/operator/go.sum
       - apps/60-services/txo-fabric/operator/Dockerfile
       - .github/workflows/txo-fabric-operator-ci.yaml
 
 jobs:
   test:
-    name: Go test, API generation and image build
+    name: Go test, generated API and image build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -28,9 +29,11 @@ jobs:
           go-version: '1.26.0'
           cache: false
 
-      - name: Resolve module graph
+      - name: Verify module lock files
         working-directory: apps/60-services/txo-fabric/operator
-        run: go mod tidy
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
 
       - name: Test
         working-directory: apps/60-services/txo-fabric/operator
@@ -40,15 +43,26 @@ jobs:
         working-directory: apps/60-services/txo-fabric/operator
         run: go vet ./...
 
-      - name: Validate controller markers
+      - name: Generate API and RBAC
         working-directory: apps/60-services/txo-fabric/operator
+        run: make generate manifests
+
+      - name: Upload generated API and RBAC
+        uses: actions/upload-artifact@v4
+        with:
+          name: txo-fabric-generated-api
+          if-no-files-found: error
+          path: |
+            apps/60-services/txo-fabric/operator/api/v1alpha1/zz_generated.deepcopy.go
+            apps/60-services/txo-fabric/operator/config/crd/bases
+            apps/60-services/txo-fabric/operator/config/rbac/role.yaml
+
+      - name: Verify generated API and RBAC drift
         run: |
-          mkdir -p /tmp/txo-generated-crds
-          go run sigs.k8s.io/controller-tools/cmd/controller-gen@v0.19.0 \
-            crd paths=./api/... output:crd:artifacts:config=/tmp/txo-generated-crds
-          test -s /tmp/txo-generated-crds/fabric.truxonline.io_tenantbundles.yaml
-          test -s /tmp/txo-generated-crds/fabric.truxonline.io_agentidentities.yaml
-          test -s /tmp/txo-generated-crds/fabric.truxonline.io_agentruntimeprofiles.yaml
+          git diff --exit-code -- \
+            apps/60-services/txo-fabric/operator/api/v1alpha1/zz_generated.deepcopy.go \
+            apps/60-services/txo-fabric/operator/config/crd/bases \
+            apps/60-services/txo-fabric/operator/config/rbac/role.yaml
 
       - name: Build operator image
         run: docker build -t txo-fabric-operator:ci apps/60-services/txo-fabric/operator

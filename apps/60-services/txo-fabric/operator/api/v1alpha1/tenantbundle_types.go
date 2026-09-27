@@ -28,6 +28,7 @@ type TenantBundleSpec struct {
 	// Modules contains optional tenant capabilities. Core runtime, persistence and memory are
 	// explicit fields because other resources depend on their resolved status.
 	// +optional
+	// +kubebuilder:validation:MaxItems=64
 	// +listType=map
 	// +listMapKey=name
 	Modules []TenantModuleSpec `json:"modules,omitempty"`
@@ -44,6 +45,7 @@ type TenantBundleStatus struct {
 
 	// Namespace is the resolved tenant namespace.
 	// +optional
+	// +kubebuilder:validation:MaxLength=63
 	Namespace string `json:"namespace,omitempty"`
 
 	// +optional
@@ -66,7 +68,7 @@ type TenantBundleStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster,shortName=tbundle
+// +kubebuilder:resource:scope=Cluster,shortName=tbundle,categories=txo-fabric
 // +kubebuilder:printcolumn:name="Tenant",type=string,JSONPath=`.spec.tenantId`
 // +kubebuilder:printcolumn:name="Namespace",type=string,JSONPath=`.status.namespace`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`

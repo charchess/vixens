@@ -12,6 +12,8 @@ type RuntimeStorageSpec struct {
 	Size resource.Quantity `json:"size,omitempty"`
 
 	// StorageClassName is explicit because Vixens intentionally has no default StorageClass.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
 	StorageClassName string `json:"storageClassName"`
 }
 
@@ -29,6 +31,7 @@ type AgentRuntimeProfileSpec struct {
 
 	// Image is an immutable, versioned runtime image reference.
 	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=512
 	Image string `json:"image"`
 
 	Storage RuntimeStorageSpec `json:"storage"`
@@ -38,10 +41,12 @@ type AgentRuntimeProfileSpec struct {
 
 	// PriorityClassName maps the runtime to Vixens scheduling policy.
 	// +kubebuilder:default=vixens-medium
+	// +kubebuilder:validation:MaxLength=253
 	PriorityClassName string `json:"priorityClassName,omitempty"`
 
 	// SizingLabel is copied to vixens.io/sizing.hermes for platform resource governance.
 	// +kubebuilder:default=V-small
+	// +kubebuilder:validation:MaxLength=63
 	SizingLabel string `json:"sizingLabel,omitempty"`
 
 	// +optional
@@ -49,7 +54,7 @@ type AgentRuntimeProfileSpec struct {
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:resource:scope=Cluster,shortName=arprofile
+// +kubebuilder:resource:scope=Cluster,shortName=arprofile,categories=txo-fabric
 // +kubebuilder:printcolumn:name="Engine",type=string,JSONPath=`.spec.engine`
 // +kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.image`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`

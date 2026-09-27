@@ -5,6 +5,8 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 type AgentRuntimeBinding struct {
 	// ProfileRef references an AgentRuntimeProfile by metadata.name.
 	// +kubebuilder:default=hermes-default
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=128
 	ProfileRef string `json:"profileRef,omitempty"`
 }
 
@@ -12,6 +14,8 @@ type AgentMemoryBinding struct {
 	// BankID optionally pins a logical bank identifier. When omitted the operator resolves
 	// <tenant-name>-<agent-key> and records the result in status.memory.bankId.
 	// +optional
+	// +kubebuilder:validation:MinLength=2
+	// +kubebuilder:validation:MaxLength=128
 	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$`
 	BankID string `json:"bankId,omitempty"`
 }
@@ -54,6 +58,7 @@ type AgentIdentityStatus struct {
 	Phase string `json:"phase,omitempty"`
 
 	// +optional
+	// +kubebuilder:validation:MaxLength=63
 	Namespace string `json:"namespace,omitempty"`
 
 	// +optional
@@ -70,7 +75,7 @@ type AgentIdentityStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster,shortName=agentid
+// +kubebuilder:resource:scope=Cluster,shortName=agentid,categories=txo-fabric
 // +kubebuilder:printcolumn:name="Tenant",type=string,JSONPath=`.spec.tenantRef.name`
 // +kubebuilder:printcolumn:name="Key",type=string,JSONPath=`.spec.agentKey`
 // +kubebuilder:printcolumn:name="Agent",type=string,JSONPath=`.spec.displayName`
