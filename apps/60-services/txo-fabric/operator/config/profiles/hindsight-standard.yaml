@@ -1,0 +1,21 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: HindsightProfile
+metadata:
+  name: hindsight-standard
+spec:
+  image: ghcr.io/vectorize-io/hindsight:0.10.1
+  port: 8888
+  apiAuthMode: ApiKey
+  llmAuthMode: Unconfigured
+  fileStorageType: PostgreSQL
+  controlPlaneEnabled: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  priorityClassName: vixens-medium
+  sizingLabel: V-small
