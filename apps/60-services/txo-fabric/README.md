@@ -1,70 +1,96 @@
 # TXO Fabric — tenant-neutral management plane
 
-This directory defines the tenant-neutral TXO Fabric management-plane bootstrap
-and the first disposable provisioning POC.
+This directory defines the tenant-neutral TXO Fabric management-plane bootstrap,
+its authoritative Fabric API, and the operator that reconciles tenant cells.
 
 A fresh deployment remains healthy with **zero tenants**: no customer namespace,
 Hermes runtime, Hindsight bank, Paperclip or Valkey workload is created until a
 `TenantBundle` or `AgentIdentity` is declared.
 
+## Ownership model
+
+Git and Argo CD own the high-level desired state:
+
+- `TenantBundle` declares one Fabric Cell and its requested capabilities;
+- `AgentIdentity` declares one tenant-local agent identity;
+- `AgentRuntimeProfile` declares the platform-owned runtime implementation.
+
+The TXO Fabric operator owns the Kubernetes resources derived from that intent.
+It reconciles continuously instead of writing generated manifests back to Git.
+Kyverno remains available for admission, validation and generic security policy;
+it is not a Fabric lifecycle engine.
+
 ## API contracts
 
 ### TenantBundle
 
-`TenantBundle` represents the logical bundle owned by one customer entity. It
-separates logical ownership from physical placement: a module may later use a
-shared PostgreSQL cluster or another shared platform service while remaining
-owned and authorized as part of one tenant bundle.
+`TenantBundle` is cluster-scoped. `metadata.name` is the canonical tenant slug and
+`spec.tenantId` is the immutable business identifier. The operator currently
+reconciles the tenant namespace and its default-deny network baseline.
 
-Optional modules are declared as data instead of being hard-wired into a
-customer overlay. This is the extension point for Hindsight, object storage,
-Paperclip, Valkey and other capabilities.
+PostgreSQL, Hindsight and optional modules are already explicit API capabilities,
+but their lifecycle controllers are not implemented yet. When requested they are
+reported through status as pending rather than being silently treated as ready.
 
 ### AgentIdentity
 
-`AgentIdentity` is deliberately separate from `TenantBundle`: creating a tenant
-does not implicitly create agents. Each identity names its tenant and its logical
-Hindsight bank, while the runtime implementation remains controlled by TXO
-Fabric.
+`AgentIdentity` is cluster-scoped and separates global Fabric identity from the
+stable tenant-local runtime key. For example, `hairem-sandbox-tina` may use
+`agentKey: tina`; runtime names remain `hermes-tina`, `hermes-tina-data`, and
+`hermes-tina-egress`.
 
-## Provisioning POC
+This lets different tenants use the same local keys while keeping Kubernetes CR
+names globally unique.
 
-For the first end-to-end test, Kyverno acts as a small declarative reconciler:
+### AgentRuntimeProfile
 
-- `TenantBundle` generates a `tenant-<slug>` namespace;
-- every generated tenant namespace receives a default-deny NetworkPolicy;
-- `AgentIdentity` generates an isolated Hermes PVC, Deployment and restricted
-  egress policy inside its tenant namespace;
-- generated resources are synchronized with their trigger, so deleting an
-  `AgentIdentity` removes that agent runtime and deleting a `TenantBundle`
-  removes its generated namespace;
-- generated resources are orphaned if the provisioning policy itself is removed,
-  preventing a policy refactor from accidentally deleting tenant cells.
+`AgentRuntimeProfile` separates identity from infrastructure policy. The profile
+selects the Hermes image, storage class and size, resource envelope, scheduling
+priority and compatibility settings. Tenant and agent manifests do not embed
+those platform implementation details.
 
-This is intentionally **not** the final TXO Fabric controller. Kyverno does not
-make `status` authoritative and does not yet orchestrate database/module
-finalizers. A dedicated controller can replace this POC behind the same CRDs once
-those lifecycle semantics are required.
+## Lifecycle and deletion
 
-## Security and credential boundary
+The operator uses explicit finalizers for destructive tenant and agent lifecycle.
+Tenant Namespace and tenant default-deny NetworkPolicy are intentionally not
+owned through Kubernetes garbage-collection ownerReferences: a TenantBundle
+cannot delete its tenant cell while AgentIdentity resources still reference it.
+The Namespace is removed only after the tenant finalizer has observed zero
+remaining agents.
 
-New Hermes profiles are blank disposable profiles. They do **not** clone the
-legacy hAIrem profile, provider API keys, OAuth state, messaging channels, skills
-or persona data.
+Agent runtime resources are reconciled from `AgentIdentity`. Existing compatible
+PVCs can be adopted without rewriting their storage contract, preserving their
+UID and data. The current sandbox AgentIdentity deletion path is destructive and
+removes its runtime PVC; a customer-facing retention policy is a later milestone.
 
-The generated runtime carries only TXO metadata and a Hindsight endpoint/bank
-hook. `TXO_LLM_AUTH_MODE=unconfigured` is explicit: model access is not considered
-ready until the planned scoped LLM credential broker exists. Likewise, the
-Hindsight environment hook reserves the intended bank identity but is not a
-replacement for the future Memory Gateway contract.
+## Hermes runtime boundary
 
-Tenant namespaces default-deny ingress and egress. The POC Hermes policy permits
-only cluster DNS and the shared Hindsight API on TCP/8888; it does not grant
-arbitrary Internet egress.
+Hermes runs from the upstream `nousresearch/hermes-agent` image. TXO Fabric does
+not copy provider credentials or legacy OAuth state into generated runtimes.
+`TXO_LLM_AUTH_MODE=unconfigured` is deliberate: a healthy runtime is reported as
+`AuthBlocked` until the planned scoped TXO LLM credential broker exists.
+
+The operator starts the Hermes host gateway with `gateway run --replace` and uses
+semantic process probes. Named profiles live on the agent PVC and the host gateway
+serves them through Hermes' profile multiplexing model.
+
+Hindsight bank identity is already part of the API contract, but Hindsight itself
+is not provisioned by this controller version. The same is true for PostgreSQL.
+
+## Brownfield cutover
+
+The hAIrem sandbox is the first brownfield validation tenant. The temporary
+Kyverno provisioning policies were retired first, leaving Tesla, Tina and Tiffa
+runtime resources ownerless. The authoritative operator then adopts those
+resources using the new CR contract.
+
+PVC adoption is deliberately non-destructive. Deployment adoption may cause one
+controlled `Recreate` rollout when the operator normalizes the old POC Deployment
+spec, but the existing workspace PVC must retain its identity and data.
 
 ## Zero-tenant acceptance
 
-After Argo CD has reconciled the base without any tenant declarations:
+Without tenant declarations:
 
 ```console
 kubectl get tenantbundles
@@ -81,5 +107,5 @@ The following must also be true:
 - no tenant database, memory bank, repository, Paperclip or Valkey instance is
   created implicitly.
 
-`hAIrem` receives no special treatment. Test and production tenant cells must use
-the same API contracts as future external customers.
+`hAIrem` receives no special platform treatment. Test and production tenant cells
+use the same API contracts as future external customers.
