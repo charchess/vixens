@@ -6,7 +6,7 @@ import (
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sig.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestPostgreSQLUnsupportedTopologyIsExplicitlyBlocked(t *testing.T) {
