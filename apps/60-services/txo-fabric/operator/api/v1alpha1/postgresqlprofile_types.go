@@ -24,11 +24,13 @@ type SharedPostgreSQLProfileSpec struct {
 	// DatabaseNamePrefix is prepended to operator-generated tenant database names.
 	// +kubebuilder:default=txo_
 	// +kubebuilder:validation:MaxLength=32
+	// +kubebuilder:validation:Pattern=`^[a-z][a-z0-9_]*$`
 	DatabaseNamePrefix string `json:"databaseNamePrefix,omitempty"`
 
 	// RoleNamePrefix is prepended to operator-generated tenant login roles.
 	// +kubebuilder:default=txo_
 	// +kubebuilder:validation:MaxLength=32
+	// +kubebuilder:validation:Pattern=`^[a-z][a-z0-9_]*$`
 	RoleNamePrefix string `json:"roleNamePrefix,omitempty"`
 }
 
@@ -62,6 +64,12 @@ type PostgreSQLProfileSpec struct {
 	// Topology defines whether tenants consume an existing shared cluster or receive a dedicated cluster.
 	// +kubebuilder:validation:Enum=SharedCluster;DedicatedCluster
 	Topology string `json:"topology"`
+
+	// RequiredExtensions are PostgreSQL extensions that must be present in every tenant database created through this profile.
+	// The controller maps them to CloudNativePG Database.spec.extensions; binaries must already be available in the target cluster image/runtime.
+	// +optional
+	// +listType=set
+	RequiredExtensions []string `json:"requiredExtensions,omitempty"`
 
 	// Shared configures an existing shared CloudNativePG cluster.
 	// +optional
