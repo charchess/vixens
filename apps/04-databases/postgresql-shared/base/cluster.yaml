@@ -6,92 +6,26 @@ metadata:
   namespace: databases
   annotations:
     argocd.argoproj.io/sync-wave: "2"
-  labels:
-    environment: prod
 spec:
-  instances: 1 # Single instance in dev (scalable to 3 for HA in staging/prod)
+  instances: 1
   priorityClassName: vixens-critical
-  imageName: ghcr.io/cloudnative-pg/postgresql:17.6-system-trixie
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.11-system-trixie
   inheritedMetadata:
     annotations:
-      vixens.io/service-binding: "false"  # CNPG cluster pods have cnpg.io/cluster label, not app label
+      vixens.io/service-binding: "false"
     labels:
-      vixens.io/sizing.postgres: SB-large  # 1Gi memory request, 4Gi limit
-  superuserSecret:
-    name: postgresql-admin-credentials
-  managed:
-    roles:
-      - name: docspell
-        ensure: present
-        login: true
-        passwordSecret:
-          name: docspell-postgresql-credentials
-      - name: linkwarden
-        ensure: present
-        login: true
-        passwordSecret:
-          name: linkwarden-postgresql-credentials
-      - name: netbox
-        ensure: present
-        login: true
-        passwordSecret:
-          name: netbox-postgresql-credentials
-      #      - name: authentik
-      #        ensure: present
-      #        login: true
-      #        passwordSecret:
-      #          name: authentik-postgresql-credentials
-      - name: netvisor
-        ensure: present
-        login: true
-        passwordSecret:
-          name: netvisor-postgresql-credentials
-      - name: vaultwarden
-        ensure: present
-        login: true
-        passwordSecret:
-          name: vaultwarden-postgresql-credentials
-      - name: nocodb
-        ensure: present
-        login: true
-        passwordSecret:
-          name: nocodb-postgresql-credentials
-      #      - name: penpot  # TODO: re-enable once Infisical vault has 'username: penpot' at
-      #        ensure: present  #       /apps/04-databases/postgresql-shared/penpot (prod env)
-      #        login: true  #       Without this key, CNPG loops on 'username key doesn't exist'
-      #        passwordSecret:  #       blocking the entire cluster from becoming Ready.
-      #          name: penpot-postgresql-credentials  # penpot role still exists in DB, app still connects.
-      - name: sogo
-        ensure: present
-        login: true
-        passwordSecret:
-          name: sogo-postgresql-credentials
-      - name: firefly
-        ensure: present
-        login: true
-        passwordSecret:
-          name: firefly-iii-postgresql-credentials
-      - name: n8n
-        ensure: present
-        login: true
-        passwordSecret:
-          name: n8n-db-credentials
+      vixens.io/sizing.postgres: SB-large
+  bootstrap:
+    initdb:
+      database: txo_platform
+      owner: txo_platform
   postgresql:
-    pg_hba:
-      - host all postgres all trust
-      - host all all all md5
     parameters:
       max_connections: "500"
       shared_buffers: 512MB
       effective_cache_size: 512MB
-  bootstrap:
-    initdb:
-      database: postgres
-      owner: postgres
-      secret:
-        name: postgresql-admin-credentials
   storage:
-    size: 200Gi # Shared across multiple databases
+    size: 200Gi
     storageClass: truenas-iscsi-retain
   resources:
     requests:
@@ -106,16 +40,4 @@ spec:
         operator: Exists
         effect: NoSchedule
   monitoring:
-    enablePodMonitor: false # Enable later with Prometheus integration
-  backup:
-    barmanObjectStore:
-      destinationPath: s3://vixens-prod-postgresql-shared/
-      endpointURL: http://nas.truxonline.com:30157
-      s3Credentials:
-        accessKeyId:
-          name: postgresql-backup-s3
-          key: LITESTREAM_ACCESS_KEY_ID
-        secretAccessKey:
-          name: postgresql-backup-s3
-          key: LITESTREAM_SECRET_ACCESS_KEY
-    retentionPolicy: "30d"
+    enablePodMonitor: false
