@@ -79,6 +79,7 @@ resources:
   # Disabled by owner: apps/vaultwarden.yaml
   # Disabled by owner: apps/sakapuss.yaml
 
+  - apps/cloudnative-pg-crds.yaml
   - apps/cloudnative-pg.yaml
   # Disabled by owner: apps/redis-shared.yaml
   # Disabled by owner: apps/postgresql-shared.yaml

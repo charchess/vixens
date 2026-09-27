@@ -13,13 +13,15 @@ spec:
   sources:
     - repoURL: https://cloudnative-pg.github.io/charts
       chart: cloudnative-pg
-      targetRevision: 0.27.0
+      targetRevision: 0.29.1
       helm:
         releaseName: cloudnative-pg
         values: |
           replicaCount: 1
           priorityClassName: vixens-critical
 
+          # CRDs are managed by the dedicated cloudnative-pg-crds Application
+          # at sync wave 2 from the exact upstream v1.30.1 release commit.
           crds:
             create: false
 
@@ -41,6 +43,11 @@ spec:
 
           podLabels:
             vixens.io/sizing.manager: G-small
+
+          commonAnnotations:
+            argocd.argoproj.io/sync-wave: "10"
+            goldilocks.fairwinds.com/enabled: "true"
+            vpa.kubernetes.io/updateMode: "Off"
 
           podAnnotations:
             vixens.io/service-binding: "false"
