@@ -90,3 +90,7 @@ type HindsightProfileList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []HindsightProfile `json:"items"`
 }
+
+func init() {
+	SchemeBuilder.Register(&HindsightProfile{}, &HindsightProfileList{})
+}
