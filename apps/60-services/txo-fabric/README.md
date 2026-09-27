@@ -59,11 +59,12 @@ those platform implementation details.
 ### PostgreSQLProfile
 
 `PostgreSQLProfile` is cluster-scoped and describes platform persistence topology.
-The initial `postgresql-shared` profile targets the existing platform-owned
-CloudNativePG cluster and establishes the intended Shared contract: one logical
-database and one login role per tenant, required database extensions, and explicit
-reclaim policy. A dedicated per-tenant cluster topology remains an API extension
-point.
+The initial `postgresql-shared` profile selects the existing Vixens CloudNativePG
+cluster `databases/postgresql-shared` as the candidate Shared target and establishes
+the intended contract: one logical database and one login role per tenant, required
+database extensions, and explicit reclaim policy. Authoritative ownership/reuse of
+that cluster is validated separately before the reconciler is implemented. A
+dedicated per-tenant cluster topology remains an API extension point.
 
 The profile contains implementation policy such as topology, naming, extension
 requirements and reclaim behavior. Passwords, connection credentials and physical
