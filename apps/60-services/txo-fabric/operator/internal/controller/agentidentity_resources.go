@@ -83,7 +83,7 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 					Name:            "hermes",
 					Image:           profile.Spec.Image,
 					ImagePullPolicy: corev1.PullIfNotPresent,
-					Args:            []string{"gateway", "run"},
+					Args:            []string{"gateway", "run", "--replace"},
 					Env: []corev1.EnvVar{
 						{Name: "HERMES_HOME", Value: "/opt/data"},
 						{Name: "TERMINAL_ENV", Value: "local"},
