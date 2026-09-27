@@ -10,8 +10,12 @@ spec:
     matchLabels:
       app.kubernetes.io/name: cloudnative-pg
   ingress:
+    # kube-apiserver is the intended source. Some control-plane paths do not
+    # preserve that Cilium identity on ingress, so allow the broader cluster
+    # entity on the webhook port only (Cilium documents this fallback).
     - fromEntities:
         - kube-apiserver
+        - cluster
       toPorts:
         - ports:
             - port: "9443"
