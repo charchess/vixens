@@ -22,11 +22,8 @@ type PostgreSQLSpec struct {
 	// +kubebuilder:default=Shared
 	Mode string `json:"mode,omitempty"`
 
-	// ProfileRef selects a platform-owned database profile. The profile implementation is intentionally
-	// outside TenantBundle so tenants do not embed infrastructure credentials or topology.
-	// +optional
-	// +kubebuilder:validation:MaxLength=128
-	ProfileRef string `json:"profileRef,omitempty"`
+	// ProfileRef selects the platform-owned PostgreSQLProfile used to satisfy this capability.
+	ProfileRef ObjectReference `json:"profileRef"`
 }
 
 type TenantPersistenceSpec struct {
@@ -36,10 +33,8 @@ type TenantPersistenceSpec struct {
 }
 
 type HindsightMemorySpec struct {
-	// ProfileRef selects the Hindsight service profile owned by TXO Fabric.
-	// +optional
-	// +kubebuilder:validation:MaxLength=128
-	ProfileRef string `json:"profileRef,omitempty"`
+	// ProfileRef selects the platform-owned HindsightProfile used to satisfy this capability.
+	ProfileRef ObjectReference `json:"profileRef"`
 }
 
 type TenantMemorySpec struct {
