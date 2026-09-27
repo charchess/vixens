@@ -25,6 +25,16 @@ rules:
   - update
   - watch
 - apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - patch
+  - update
+- apiGroups:
   - apps
   resources:
   - deployments
@@ -79,6 +89,7 @@ rules:
   - fabric.truxonline.io
   resources:
   - agentruntimeprofiles
+  - postgresqlprofiles
   verbs:
   - get
   - list
@@ -87,6 +98,25 @@ rules:
   - networking.k8s.io
   resources:
   - networkpolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - postgresql.cnpg.io
+  resources:
+  - clusters
+  verbs:
+  - get
+- apiGroups:
+  - postgresql.cnpg.io
+  resources:
+  - databaseroles
+  - databases
   verbs:
   - create
   - delete

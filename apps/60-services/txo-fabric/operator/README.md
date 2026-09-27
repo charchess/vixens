@@ -18,24 +18,34 @@ policy/admission engine, not the Fabric lifecycle engine.
 - `AgentRuntimeProfile` describes how an agent runs (image, storage, resources,
   Vixens scheduling and s6 compatibility). Runtime infrastructure is not part of
   the identity object.
+- `PostgreSQLProfile` describes the platform-owned persistence implementation.
+  The first supported topology is `SharedCluster`: TXO references a GitOps-owned
+  CloudNativePG Cluster and owns only tenant `Database`, `DatabaseRole` and
+  credential Secret resources.
 
 The operator rejects two live `AgentIdentity` resources that claim the same
 `tenantRef.name + agentKey` pair instead of letting them fight over the same
 Deployment/PVC/NetworkPolicy.
 
-The first controller milestone intentionally reconciles only the behavior already
-proven by the sandbox POC:
+The current controller reconciles:
 
 - tenant namespace + default-deny network baseline;
 - isolated Hermes PVC, Deployment and egress policy per `AgentIdentity`;
+- Shared PostgreSQL persistence through CloudNativePG `Database` and
+  `DatabaseRole` resources, with generated secret-backed credentials and required
+  extensions declared by `PostgreSQLProfile`;
+- explicit reclaim semantics for tenant PostgreSQL resources;
 - finalizers and standard Kubernetes status conditions;
 - a semantic runtime probe that verifies a real `hermes gateway run` process,
   avoiding the prior `s6 + sleep infinity` false-positive readiness state.
 
-PostgreSQL, Hindsight, memory-bank lifecycle and optional Fabric modules are
-represented in `TenantBundle` but deliberately reported as pending until their
-reconcilers are implemented. They must not be added as more Kyverno generate
-rules.
+TXO never owns or mutates the referenced CloudNativePG `Cluster`; RBAC grants the
+operator read-only access to that dependency. Tenant database credentials are
+generated outside Git and never copied into Fabric status.
+
+Hindsight, memory-bank lifecycle and optional Fabric modules remain represented in
+`TenantBundle` but are reported as pending until their reconcilers are implemented.
+They must not be added as more Kyverno generate rules.
 
 ## Development
 
