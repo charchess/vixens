@@ -43,14 +43,26 @@ jobs:
         working-directory: apps/60-services/txo-fabric/operator
         run: go vet ./...
 
-      - name: Verify generated API and RBAC
+      - name: Generate API and RBAC
         working-directory: apps/60-services/txo-fabric/operator
+        run: make generate manifests
+
+      - name: Upload generated API and RBAC
+        uses: actions/upload-artifact@v4
+        with:
+          name: txo-fabric-generated-api
+          if-no-files-found: error
+          path: |
+            apps/60-services/txo-fabric/operator/api/v1alpha1/zz_generated.deepcopy.go
+            apps/60-services/txo-fabric/operator/config/crd/bases
+            apps/60-services/txo-fabric/operator/config/rbac/role.yaml
+
+      - name: Verify generated API and RBAC drift
         run: |
-          make generate manifests
           git diff --exit-code -- \
-            api/v1alpha1/zz_generated.deepcopy.go \
-            config/crd/bases \
-            config/rbac/role.yaml
+            apps/60-services/txo-fabric/operator/api/v1alpha1/zz_generated.deepcopy.go \
+            apps/60-services/txo-fabric/operator/config/crd/bases \
+            apps/60-services/txo-fabric/operator/config/rbac/role.yaml
 
       - name: Build operator image
         run: docker build -t txo-fabric-operator:ci apps/60-services/txo-fabric/operator
