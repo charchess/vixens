@@ -38,7 +38,11 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != profile.Spec.Storage.StorageClassName {
 		return fmt.Errorf("PVC %s/%s uses storageClass %q; profile %q requires %q (storageClassName is immutable)", namespace, name, valueOrEmpty(pvc.Spec.StorageClassName), profile.Name, profile.Spec.Storage.StorageClassName)
 	}
-	return nil
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, &pvc, func() error {
+		pvc.Labels = mergeStringMap(pvc.Labels, agentLabels(agent, tenant))
+		return controllerutil.SetControllerReference(agent, &pvc, r.Scheme)
+	})
+	return err
 }
 
 func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace string) error {
