@@ -16,8 +16,69 @@ on:
       - .github/workflows/txo-fabric-operator-ci.yaml
 
 jobs:
+  sync-generated:
+    name: Sync generated API on same-repo PR
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.sync.outputs.changed }}
+    steps:
+      - name: Generate TXO release bot token
+        id: release-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.TXO_RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.TXO_RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ steps.release-token.outputs.token }}
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.0'
+          cache: false
+
+      - name: Configure TXO release bot Git identity
+        env:
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
+          APP_SLUG: ${{ steps.release-token.outputs.app-slug }}
+        run: |
+          BOT_ID=$(gh api "/users/${APP_SLUG}%5Bbot%5D" --jq .id)
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${BOT_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
+          gh auth setup-git
+
+      - name: Generate and sync API/RBAC artifacts
+        id: sync
+        working-directory: apps/60-services/txo-fabric/operator
+        run: |
+          make generate manifests
+          cd "${GITHUB_WORKSPACE}"
+
+          git add \
+            apps/60-services/txo-fabric/operator/api/v1alpha1/zz_generated.deepcopy.go \
+            apps/60-services/txo-fabric/operator/config/crd/bases \
+            apps/60-services/txo-fabric/operator/config/rbac/role.yaml
+
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git commit -m "chore(txo-fabric): sync generated operator API"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
   test:
     name: Go test, generated API and image build
+    needs: [sync-generated]
+    if: ${{ always() && (needs.sync-generated.result == 'skipped' || needs.sync-generated.outputs.changed != 'true') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
