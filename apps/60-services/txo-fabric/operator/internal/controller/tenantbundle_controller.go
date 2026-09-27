@@ -193,7 +193,7 @@ func (r *TenantBundleReconciler) ensureDefaultDeny(ctx context.Context, bundle *
 		np.Labels["app.kubernetes.io/component"] = "tenant-network-baseline"
 		np.Spec = networkingv1.NetworkPolicySpec{
 			PodSelector: metav1.LabelSelector{},
-			PolicyTypes: []networkingv1.PolicyType{networkingv1.NetworkPolicyTypeIngress, networkingv1.NetworkPolicyTypeEgress},
+			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress},
 		}
 		// The baseline must remain while AgentIdentity resources keep the tenant
 		// finalizer blocked. Namespace deletion eventually removes it atomically
