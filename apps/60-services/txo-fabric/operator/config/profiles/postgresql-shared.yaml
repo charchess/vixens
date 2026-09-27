@@ -9,6 +9,8 @@ metadata:
 spec:
   provider: CloudNativePG
   topology: SharedCluster
+  requiredExtensions:
+    - vector
   shared:
     clusterRef:
       name: postgresql-shared
