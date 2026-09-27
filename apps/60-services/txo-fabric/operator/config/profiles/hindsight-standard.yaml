@@ -10,6 +10,7 @@ spec:
   topology: TenantScoped
   image: ghcr.io/vectorize-io/hindsight:0.10.1
   apiPort: 8888
+  apiAuthMode: ApiKey
   resources:
     requests:
       cpu: 500m
