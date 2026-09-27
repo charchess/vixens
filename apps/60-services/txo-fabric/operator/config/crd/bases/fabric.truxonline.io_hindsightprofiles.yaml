@@ -1,0 +1,196 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: hindsightprofiles.fabric.truxonline.io
+spec:
+  group: fabric.truxonline.io
+  names:
+    categories:
+    - txo-fabric
+    kind: HindsightProfile
+    listKind: HindsightProfileList
+    plural: hindsightprofiles
+    shortNames:
+    - hsprofile
+    singular: hindsightprofile
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.topology
+      name: Topology
+      type: string
+    - jsonPath: .spec.image
+      name: Image
+      type: string
+    - jsonPath: .spec.llmAuthMode
+      name: LLM Auth
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              apiPort:
+                default: 8888
+                description: APIPort is the Hindsight memory API port.
+                format: int32
+                maximum: 65535
+                minimum: 1
+                type: integer
+              controlPlane:
+                description: ControlPlane configures the optional Hindsight administrative
+                  UI.
+                properties:
+                  enabled:
+                    default: false
+                    description: Enabled deploys the Hindsight administrative control
+                      plane for this profile.
+                    type: boolean
+                type: object
+              image:
+                description: Image is an immutable, versioned Hindsight image reference.
+                maxLength: 512
+                minLength: 1
+                type: string
+              llmAuthMode:
+                default: Unconfigured
+                description: |-
+                  LLMAuthMode declares how the platform will eventually supply model credentials.
+                  It never contains provider credentials itself.
+                enum:
+                - Unconfigured
+                - PlatformGateway
+                type: string
+              modelCache:
+                description: ModelCache configures optional persistent cache storage
+                  for local models/rerankers.
+                properties:
+                  enabled:
+                    default: false
+                    description: Enabled provisions a persistent cache for local models/rerankers.
+                    type: boolean
+                  size:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    default: 5Gi
+                    description: Size is the cache PVC request when enabled.
+                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                    x-kubernetes-int-or-string: true
+                  storageClassName:
+                    description: StorageClassName is explicit because Vixens intentionally
+                      has no default StorageClass.
+                    maxLength: 253
+                    type: string
+                type: object
+              priorityClassName:
+                default: vixens-medium
+                description: PriorityClassName maps Hindsight to Vixens scheduling
+                  policy.
+                maxLength: 253
+                type: string
+              resources:
+                description: Resources controls the generated Hindsight API container.
+                properties:
+                  claims:
+                    description: |-
+                      Claims lists the names of resources, defined in spec.resourceClaims,
+                      that are used by this container.
+
+                      This field depends on the
+                      DynamicResourceAllocation feature gate.
+
+                      This field is immutable. It can only be set for containers.
+                    items:
+                      description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                      properties:
+                        name:
+                          description: |-
+                            Name must match the name of one entry in pod.spec.resourceClaims of
+                            the Pod where this field is used. It makes that resource available
+                            inside a container.
+                          type: string
+                        request:
+                          description: |-
+                            Request is the name chosen for a request in the referenced claim.
+                            If empty, everything from the claim is made available, otherwise
+                            only the result of this request.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                  limits:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: |-
+                      Limits describes the maximum amount of compute resources allowed.
+                      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                    type: object
+                  requests:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: |-
+                      Requests describes the minimum amount of compute resources required.
+                      If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                      otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                    type: object
+                type: object
+              sizingLabel:
+                default: V-small
+                description: SizingLabel is copied to the generated workload for platform
+                  resource governance.
+                maxLength: 63
+                type: string
+              topology:
+                default: TenantScoped
+                description: Topology defines whether Hindsight runs per tenant or
+                  as a shared platform service.
+                enum:
+                - TenantScoped
+                - SharedService
+                type: string
+            required:
+            - image
+            - resources
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources: {}
