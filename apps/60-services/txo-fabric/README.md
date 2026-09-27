@@ -13,7 +13,9 @@ Git and Argo CD own the high-level desired state:
 
 - `TenantBundle` declares one Fabric Cell and its requested capabilities;
 - `AgentIdentity` declares one tenant-local agent identity;
-- `AgentRuntimeProfile` declares the platform-owned runtime implementation.
+- `AgentRuntimeProfile` declares the platform-owned runtime implementation;
+- `PostgreSQLProfile` declares how the platform satisfies tenant persistence;
+- `HindsightProfile` declares how the platform satisfies tenant memory.
 
 The TXO Fabric operator owns the Kubernetes resources derived from that intent.
 It reconciles continuously instead of writing generated manifests back to Git.
@@ -28,9 +30,14 @@ it is not a Fabric lifecycle engine.
 `spec.tenantId` is the immutable business identifier. The operator currently
 reconciles the tenant namespace and its default-deny network baseline.
 
-PostgreSQL, Hindsight and optional modules are already explicit API capabilities,
-but their lifecycle controllers are not implemented yet. When requested they are
-reported through status as pending rather than being silently treated as ready.
+PostgreSQL, Hindsight and optional modules are explicit API capabilities. A
+TenantBundle selects platform-owned persistence and memory implementation profiles
+through `profileRef`; it does not contain database credentials, provider secrets,
+or provider-specific connection strings.
+
+The PostgreSQL and Hindsight lifecycle controllers are not implemented yet. When
+requested, these capabilities are reported through status as pending rather than
+being silently treated as ready.
 
 ### AgentIdentity
 
@@ -48,6 +55,28 @@ names globally unique.
 selects the Hermes image, storage class and size, resource envelope, scheduling
 priority and compatibility settings. Tenant and agent manifests do not embed
 those platform implementation details.
+
+### PostgreSQLProfile
+
+`PostgreSQLProfile` is cluster-scoped and describes platform persistence topology.
+The initial `postgresql-shared` profile targets the existing platform-owned
+CloudNativePG cluster and establishes the intended Shared contract: one logical
+database and one login role per tenant, with explicit reclaim policy. A dedicated
+per-tenant cluster topology remains an API extension point.
+
+The profile contains topology and naming policy only. Passwords and connection
+credentials are never stored in the Fabric CRD or Git.
+
+### HindsightProfile
+
+`HindsightProfile` is cluster-scoped and describes the Hindsight runtime contract:
+immutable image, tenant-scoped or shared topology, API port, resource envelope,
+optional model cache, scheduling policy and the platform LLM-auth mode.
+
+The initial `hindsight-standard` profile is tenant-scoped. Its future controller
+will consume the tenant PostgreSQL binding and expose banks to AgentIdentity
+resources. Provider/database credentials remain secret-backed rather than being
+embedded in the profile.
 
 ## Lifecycle and deletion
 
