@@ -1,0 +1,19 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: PostgreSQLProfile
+metadata:
+  name: postgresql-shared
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: persistence-profile
+spec:
+  provider: CloudNativePG
+  topology: SharedCluster
+  shared:
+    clusterRef:
+      name: postgresql-shared
+      namespace: databases
+    databaseNamePrefix: txo_
+    roleNamePrefix: txo_
+  databaseReclaimPolicy: Retain
+  roleReclaimPolicy: Retain
