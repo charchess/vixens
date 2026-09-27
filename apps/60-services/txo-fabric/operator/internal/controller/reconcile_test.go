@@ -64,7 +64,7 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 		t.Fatalf("runtime deployment not reconciled: %v", err)
 	}
 	container := deployment.Spec.Template.Spec.Containers[0]
-	if len(container.Args) != 2 || container.Args[0] != "gateway" || container.Args[1] != "run" {
+	if len(container.Args) != 3 || container.Args[0] != "gateway" || container.Args[1] != "run" || container.Args[2] != "--replace" {
 		t.Fatalf("unexpected Hermes args: %#v", container.Args)
 	}
 	if container.ReadinessProbe == nil || container.ReadinessProbe.Exec == nil {
