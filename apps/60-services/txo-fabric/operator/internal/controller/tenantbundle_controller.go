@@ -12,9 +12,12 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type TenantBundleReconciler struct {
@@ -127,7 +130,11 @@ func (r *TenantBundleReconciler) ensureNamespace(ctx context.Context, bundle *fa
 		for k, v := range tenantLabels(bundle) {
 			ns.Labels[k] = v
 		}
-		return controllerutil.SetControllerReference(bundle, ns, r.Scheme)
+		// Deliberately do not owner-reference the Namespace. Tenant deletion is
+		// ordered by TenantFinalizer: AgentIdentity resources must disappear
+		// before the namespace is deleted. A controller ownerReference would let
+		// Kubernetes garbage collection race that lifecycle contract.
+		return nil
 	})
 	return err
 }
@@ -142,7 +149,7 @@ func (r *TenantBundleReconciler) ensureDefaultDeny(ctx context.Context, bundle *
 		np.Labels["app.kubernetes.io/component"] = "tenant-network-baseline"
 		np.Spec = networkingv1.NetworkPolicySpec{
 			PodSelector: metav1.LabelSelector{},
-			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress},
+			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.NetworkPolicyTypeEgress},
 		}
 		return controllerutil.SetControllerReference(bundle, np, r.Scheme)
 	})
@@ -200,10 +207,22 @@ func (r *TenantBundleReconciler) setFailedStatus(ctx context.Context, bundle *fa
 	}
 }
 
+func tenantBundleRequestsForNamespace(_ context.Context, obj client.Object) []reconcile.Request {
+	labels := obj.GetLabels()
+	if labels[LabelManaged] != "true" {
+		return nil
+	}
+	tenantName := labels[LabelTenantName]
+	if tenantName == "" {
+		return nil
+	}
+	return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: tenantName}}}
+}
+
 func (r *TenantBundleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&fabricv1alpha1.TenantBundle{}).
-		Owns(&corev1.Namespace{}).
+		Watches(&corev1.Namespace{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForNamespace)).
 		Owns(&networkingv1.NetworkPolicy{}).
 		Complete(r)
 }
