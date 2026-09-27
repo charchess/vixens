@@ -11,9 +11,11 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/charchess/vixens.git
-    targetRevision: prod-stable
-    path: apps/04-databases/cloudnative-pg/crds
+    # Pin the exact upstream release commit so CRDs are immutable and upgraded
+    # independently before the Helm-managed operator.
+    repoURL: https://github.com/cloudnative-pg/cloudnative-pg.git
+    targetRevision: 2a35abb4628f209d149825ef3c38011e0701ff2f
+    path: config/crd/bases
   destination:
     server: https://kubernetes.default.svc
     namespace: cnpg-system
