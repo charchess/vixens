@@ -11,7 +11,9 @@ spec:
   persistence:
     postgresql:
       mode: Shared
-      profileRef: shared-poc
+      profileRef:
+        name: shared-standard
   memory:
     hindsight:
-      profileRef: shared-poc
+      profileRef:
+        name: hindsight-standard
