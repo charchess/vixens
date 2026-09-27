@@ -80,10 +80,20 @@ spec:
                       through Hindsight.
                     properties:
                       profileRef:
-                        description: ProfileRef selects the Hindsight service profile
-                          owned by TXO Fabric.
-                        maxLength: 128
-                        type: string
+                        description: ProfileRef selects the platform-owned HindsightProfile
+                          used to satisfy this capability.
+                        properties:
+                          name:
+                            description: Name is the metadata.name of the referenced
+                              cluster-scoped Fabric object.
+                            maxLength: 253
+                            minLength: 1
+                            type: string
+                        required:
+                        - name
+                        type: object
+                    required:
+                    - profileRef
                     type: object
                 type: object
               modules:
@@ -132,11 +142,20 @@ spec:
                         - Dedicated
                         type: string
                       profileRef:
-                        description: |-
-                          ProfileRef selects a platform-owned database profile. The profile implementation is intentionally
-                          outside TenantBundle so tenants do not embed infrastructure credentials or topology.
-                        maxLength: 128
-                        type: string
+                        description: ProfileRef selects the platform-owned PostgreSQLProfile
+                          used to satisfy this capability.
+                        properties:
+                          name:
+                            description: Name is the metadata.name of the referenced
+                              cluster-scoped Fabric object.
+                            maxLength: 253
+                            minLength: 1
+                            type: string
+                        required:
+                        - name
+                        type: object
+                    required:
+                    - profileRef
                     type: object
                 type: object
               tenantId:
