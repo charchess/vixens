@@ -89,6 +89,51 @@ jobs:
           fi
           echo "✅ Release workspace pinned to ${COMMIT_SHA}"
 
+      - name: Verify TXO Fabric operator image pin
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          MANAGER="apps/60-services/txo-fabric/operator/config/manager/manager.yaml"
+          if [[ ! -f "$MANAGER" ]]; then
+            echo "ℹ️ TXO Fabric operator manager not present in this release; skipping image-pin check"
+            exit 0
+          fi
+
+          PINNED_IMAGE=$(
+            awk '$1 == "image:" && $2 ~ /^ghcr.io\/charchess\/txo-fabric-operator:main-/ { print $2; exit }' "$MANAGER"
+          )
+          if [[ -z "$PINNED_IMAGE" ]]; then
+            echo "::error::Unable to resolve the TXO Fabric operator image pin from ${MANAGER}"
+            exit 1
+          fi
+
+          PINNED_TAG="${PINNED_IMAGE##*:}"
+          if [[ ! "$PINNED_TAG" =~ ^main-[0-9a-f]{12}$ ]]; then
+            echo "::error::Unexpected TXO Fabric operator image tag '${PINNED_TAG}'"
+            exit 1
+          fi
+
+          LATEST_OPERATOR_SOURCE=$(
+            git log -1 --format=%H -- \
+              ':(glob)apps/60-services/txo-fabric/operator/**/*.go' \
+              apps/60-services/txo-fabric/operator/go.mod \
+              apps/60-services/txo-fabric/operator/Dockerfile \
+              .github/workflows/build-txo-fabric-operator.yaml
+          )
+          if [[ -z "$LATEST_OPERATOR_SOURCE" ]]; then
+            echo "::error::Unable to resolve the latest TXO Fabric operator source commit"
+            exit 1
+          fi
+
+          EXPECTED_TAG="main-${LATEST_OPERATOR_SOURCE:0:12}"
+          if [[ "$PINNED_TAG" != "$EXPECTED_TAG" ]]; then
+            echo "::error::TXO Fabric operator image pin is stale: found ${PINNED_TAG}, expected ${EXPECTED_TAG} from ${LATEST_OPERATOR_SOURCE}. Promote the dev tag created after the generated operator-image pin PR merges."
+            exit 1
+          fi
+
+          echo "✅ TXO Fabric operator image pin ${PINNED_TAG} matches source ${LATEST_OPERATOR_SOURCE}"
+
       - name: Create promotion metadata
         id: metadata
         env:
