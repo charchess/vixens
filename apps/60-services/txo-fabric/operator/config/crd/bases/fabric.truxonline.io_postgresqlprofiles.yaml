@@ -103,6 +103,14 @@ spec:
                 enum:
                 - CloudNativePG
                 type: string
+              requiredExtensions:
+                description: |-
+                  RequiredExtensions are PostgreSQL extensions that must be present in every tenant database created through this profile.
+                  The controller maps them to CloudNativePG Database.spec.extensions; binaries must already be available in the target cluster image/runtime.
+                items:
+                  type: string
+                type: array
+                x-kubernetes-list-type: set
               roleReclaimPolicy:
                 default: Retain
                 description: RoleReclaimPolicy controls whether the tenant login role
@@ -138,12 +146,14 @@ spec:
                     description: DatabaseNamePrefix is prepended to operator-generated
                       tenant database names.
                     maxLength: 32
+                    pattern: ^[a-z][a-z0-9_]*$
                     type: string
                   roleNamePrefix:
                     default: txo_
                     description: RoleNamePrefix is prepended to operator-generated
                       tenant login roles.
                     maxLength: 32
+                    pattern: ^[a-z][a-z0-9_]*$
                     type: string
                 required:
                 - clusterRef

@@ -25,6 +25,9 @@ spec:
     - jsonPath: .spec.image
       name: Image
       type: string
+    - jsonPath: .spec.apiAuthMode
+      name: API Auth
+      type: string
     - jsonPath: .spec.llmAuthMode
       name: LLM Auth
       type: string
@@ -54,6 +57,14 @@ spec:
             type: object
           spec:
             properties:
+              apiAuthMode:
+                default: ApiKey
+                description: |-
+                  APIAuthMode selects the inbound authentication contract for the Hindsight API.
+                  ApiKey maps to the upstream ApiKeyTenantExtension; credential material is generated/injected via Secret and never stored in this CR.
+                enum:
+                - ApiKey
+                type: string
               apiPort:
                 default: 8888
                 description: APIPort is the Hindsight memory API port.
