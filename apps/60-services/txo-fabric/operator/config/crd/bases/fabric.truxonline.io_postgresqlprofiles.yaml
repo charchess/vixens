@@ -22,11 +22,11 @@ spec:
     - jsonPath: .spec.provider
       name: Provider
       type: string
-    - jsonPath: .spec.mode
-      name: Mode
+    - jsonPath: .spec.topology
+      name: Topology
       type: string
-    - jsonPath: .spec.clusterRef.name
-      name: Cluster
+    - jsonPath: .spec.databaseReclaimPolicy
+      name: DB Reclaim
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -54,91 +54,86 @@ spec:
             type: object
           spec:
             properties:
-              clusterRef:
-                description: |-
-                  ClusterRef identifies the existing CloudNativePG Cluster for Shared mode.
-                  Dedicated profiles may omit it because the Fabric operator will own the tenant cluster lifecycle.
-                properties:
-                  name:
-                    description: Name is the metadata.name of the referenced namespaced
-                      object.
-                    maxLength: 253
-                    minLength: 1
-                    type: string
-                  namespace:
-                    description: Namespace is the namespace of the referenced object.
-                    maxLength: 63
-                    minLength: 1
-                    type: string
-                required:
-                - name
-                - namespace
-                type: object
-              credentials:
-                description: Credentials defines where database credential material
-                  is sourced.
-                properties:
-                  remoteKeyPrefix:
-                    description: |-
-                      RemoteKeyPrefix is the platform-owned prefix below which tenant credential records live.
-                      The reconciler appends the canonical tenant name when materializing credentials.
-                    maxLength: 512
-                    minLength: 1
-                    type: string
-                  secretStoreRef:
-                    description: SecretStoreRef identifies the platform secret store
-                      used for tenant database credentials.
-                    properties:
-                      kind:
-                        default: ClusterSecretStore
-                        description: Kind selects a namespaced or cluster-scoped External
-                          Secrets store.
-                        enum:
-                        - SecretStore
-                        - ClusterSecretStore
-                        type: string
-                      name:
-                        description: Name is the External Secrets store name.
-                        maxLength: 253
-                        minLength: 1
-                        type: string
-                    required:
-                    - name
-                    type: object
-                required:
-                - remoteKeyPrefix
-                - secretStoreRef
-                type: object
-              databaseNamePrefix:
-                default: txo_
-                description: DatabaseNamePrefix is prepended to the canonical tenant
-                  name when deriving the logical database/user name.
-                maxLength: 32
-                pattern: ^[a-z][a-z0-9_]*$
-                type: string
-              mode:
-                default: Shared
-                description: Mode must match the TenantBundle persistence request
-                  that selects this profile.
+              databaseReclaimPolicy:
+                default: Retain
+                description: DatabaseReclaimPolicy controls whether the tenant database
+                  is retained when the TenantBundle stops requesting PostgreSQL.
                 enum:
-                - Shared
-                - Dedicated
+                - Retain
+                - Delete
                 type: string
               provider:
                 default: CloudNativePG
-                description: Provider identifies the database lifecycle implementation.
+                description: Provider identifies the PostgreSQL lifecycle implementation.
                 enum:
                 - CloudNativePG
                 type: string
               requiredExtensions:
-                description: RequiredExtensions are PostgreSQL extensions that must
-                  exist in every tenant database created by this profile.
+                description: |-
+                  RequiredExtensions are PostgreSQL extensions that must be present in every tenant database created through this profile.
+                  The controller maps them to CloudNativePG Database.spec.extensions; binaries must already be available in the target cluster image/runtime.
                 items:
                   type: string
                 type: array
                 x-kubernetes-list-type: set
+              roleReclaimPolicy:
+                default: Retain
+                description: RoleReclaimPolicy controls whether the tenant login role
+                  is retained with its database.
+                enum:
+                - Retain
+                - Delete
+                type: string
+              shared:
+                description: Shared configures an existing shared CloudNativePG cluster.
+                properties:
+                  clusterRef:
+                    description: |-
+                      ClusterRef selects the existing CloudNativePG cluster used by this profile.
+                      The Fabric operator does not own or mutate the Cluster resource itself.
+                    properties:
+                      name:
+                        description: Name is the CloudNativePG Cluster resource name.
+                        maxLength: 253
+                        minLength: 1
+                        type: string
+                      namespace:
+                        description: Namespace is the namespace containing the CloudNativePG
+                          Cluster.
+                        maxLength: 63
+                        minLength: 1
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  databaseNamePrefix:
+                    default: txo_
+                    description: DatabaseNamePrefix is prepended to operator-generated
+                      tenant database names.
+                    maxLength: 32
+                    pattern: ^[a-z][a-z0-9_]*$
+                    type: string
+                  roleNamePrefix:
+                    default: txo_
+                    description: RoleNamePrefix is prepended to operator-generated
+                      tenant login roles.
+                    maxLength: 32
+                    pattern: ^[a-z][a-z0-9_]*$
+                    type: string
+                required:
+                - clusterRef
+                type: object
+              topology:
+                description: |-
+                  Topology is SharedCluster in the initial Fabric contract. Dedicated tenant
+                  clusters are intentionally deferred until the shared path is validated end-to-end.
+                enum:
+                - SharedCluster
+                type: string
             required:
-            - credentials
+            - shared
+            - topology
             type: object
         type: object
     served: true

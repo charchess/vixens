@@ -94,6 +94,24 @@ patches:
         value:
           argocd.argoproj.io/sync-wave: "-10"
   - target:
+      group: fabric.truxonline.io
+      version: v1alpha1
+      kind: PostgreSQLProfile
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/sync-wave: "-10"
+  - target:
+      group: fabric.truxonline.io
+      version: v1alpha1
+      kind: HindsightProfile
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/sync-wave: "-10"
+  - target:
       group: apps
       version: v1
       kind: Deployment

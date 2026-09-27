@@ -3,19 +3,21 @@ apiVersion: fabric.truxonline.io/v1alpha1
 kind: HindsightProfile
 metadata:
   name: hindsight-standard
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: memory-profile
 spec:
-  image: ghcr.io/vectorize-io/hindsight:0.10.1
-  port: 8888
+  topology: TenantScoped
+  image: ghcr.io/vectorize-io/hindsight-api:0.10.1
+  apiPort: 8888
   apiAuthMode: ApiKey
-  llmAuthMode: Unconfigured
-  fileStorageType: PostgreSQL
-  controlPlaneEnabled: false
   resources:
     requests:
-      cpu: 100m
-      memory: 256Mi
+      cpu: 500m
+      memory: 1Gi
     limits:
-      cpu: "1"
-      memory: 2Gi
+      cpu: "2"
+      memory: 4Gi
   priorityClassName: vixens-medium
   sizingLabel: V-small
+  llmAuthMode: Unconfigured
