@@ -82,7 +82,7 @@ resources:
   - apps/cloudnative-pg-crds.yaml
   - apps/cloudnative-pg.yaml
   # Disabled by owner: apps/redis-shared.yaml
-  # Disabled by owner: apps/postgresql-shared.yaml
+  - apps/postgresql-shared.yaml
   # Disabled by owner: apps/changedetection.yaml
   - apps/adguard-home.yaml
   - apps/coredns.yaml
