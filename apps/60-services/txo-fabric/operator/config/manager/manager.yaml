@@ -46,8 +46,8 @@ spec:
           type: RuntimeDefault
       containers:
         - name: manager
-          # Immutable image published from the source revision recorded by the build workflow.
-          image: ghcr.io/charchess/txo-fabric-operator:main-18b72023dd7b
+          # Immutable image built from TXO Fabric operator source commit 1f3b469ccc89c6aad3cbdea2f3eaaf55f4e96bbe.
+          image: ghcr.io/charchess/txo-fabric-operator:main-1f3b469ccc89
           imagePullPolicy: IfNotPresent
           args:
             - --leader-elect=true

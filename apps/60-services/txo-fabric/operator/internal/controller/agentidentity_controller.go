@@ -57,6 +57,16 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
+	conflict, err := r.findAgentKeyConflict(ctx, &agent)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if conflict != "" {
+		r.setStatus(ctx, &agent, "Failed", "IdentityUnique", metav1.ConditionFalse, "DuplicateAgentKey", fmt.Sprintf("agentKey %q is already claimed by AgentIdentity %q in tenant %q", agent.Spec.AgentKey, conflict, tenant.Name))
+		return ctrl.Result{}, nil
+	}
+	setCondition(&agent.Status.Conditions, agent.Generation, "IdentityUnique", metav1.ConditionTrue, "Unique", fmt.Sprintf("agentKey %q is unique in tenant %q", agent.Spec.AgentKey, tenant.Name))
+
 	namespace := tenantNamespace(tenant.Name)
 	var ns corev1.Namespace
 	if err := r.Get(ctx, types.NamespacedName{Name: namespace}, &ns); err != nil {
@@ -96,13 +106,13 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	var deployment appsv1.Deployment
-	if err := r.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Name), Namespace: namespace}, &deployment); err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}, &deployment); err != nil {
 		return ctrl.Result{}, err
 	}
 	agent.Status.ObservedGeneration = agent.Generation
 	agent.Status.Namespace = namespace
 	agent.Status.Runtime.DeploymentName = deployment.Name
-	agent.Status.Runtime.PVCName = runtimePVCName(agent.Name)
+	agent.Status.Runtime.PVCName = runtimePVCName(agent.Spec.AgentKey)
 	agent.Status.Memory.BankID = resolvedBankID(&agent)
 	if tenant.Spec.Memory.Hindsight == nil {
 		agent.Status.Memory.Phase = "Unconfigured"
@@ -130,4 +140,21 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	}
 	return ctrl.Result{}, nil
+}
+
+func (r *AgentIdentityReconciler) findAgentKeyConflict(ctx context.Context, agent *fabricv1alpha1.AgentIdentity) (string, error) {
+	var agents fabricv1alpha1.AgentIdentityList
+	if err := r.List(ctx, &agents); err != nil {
+		return "", err
+	}
+	for i := range agents.Items {
+		other := &agents.Items[i]
+		if other.Name == agent.Name || !other.DeletionTimestamp.IsZero() {
+			continue
+		}
+		if other.Spec.TenantRef.Name == agent.Spec.TenantRef.Name && other.Spec.AgentKey == agent.Spec.AgentKey {
+			return other.Name, nil
+		}
+	}
+	return "", nil
 }

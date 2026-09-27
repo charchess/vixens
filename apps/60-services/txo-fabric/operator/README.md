@@ -9,10 +9,19 @@ policy/admission engine, not the Fabric lifecycle engine.
 - `TenantBundle` describes one Fabric Cell. `metadata.name` is the canonical
   tenant slug; `spec.tenantId` is the immutable business identifier.
 - `AgentIdentity` describes who an agent is and references a `TenantBundle` by
-  name. It does not repeat the tenant slug or business ID.
+  name. Because the CR is cluster-scoped, `metadata.name` is the globally unique
+  Kubernetes object identity (recommended form: `<tenant>-<agentKey>`), while
+  `spec.agentKey` is the immutable tenant-local machine identity used for Hermes
+  profiles, runtime resource names and the default memory-bank key. This lets
+  different tenants each have an agent called `sales`, `assistant`, etc. without
+  colliding. `displayName` remains purely user-facing.
 - `AgentRuntimeProfile` describes how an agent runs (image, storage, resources,
   Vixens scheduling and s6 compatibility). Runtime infrastructure is not part of
   the identity object.
+
+The operator rejects two live `AgentIdentity` resources that claim the same
+`tenantRef.name + agentKey` pair instead of letting them fight over the same
+Deployment/PVC/NetworkPolicy.
 
 The first controller milestone intentionally reconciles only the behavior already
 proven by the sandbox POC:

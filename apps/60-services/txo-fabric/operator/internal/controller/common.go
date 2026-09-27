@@ -27,12 +27,12 @@ func tenantNamespace(name string) string {
 	return "tenant-" + name
 }
 
-func runtimeName(agentName string) string {
-	return "hermes-" + agentName
+func runtimeName(agentKey string) string {
+	return "hermes-" + agentKey
 }
 
-func runtimePVCName(agentName string) string {
-	return runtimeName(agentName) + "-data"
+func runtimePVCName(agentKey string) string {
+	return runtimeName(agentKey) + "-data"
 }
 
 func setCondition(conditions *[]metav1.Condition, generation int64, conditionType string, status metav1.ConditionStatus, reason, message string) {
@@ -58,10 +58,10 @@ func agentLabels(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.Ten
 	return map[string]string{
 		LabelPartOf:     "txo-fabric",
 		LabelName:       "hermes-agent",
-		LabelInstance:   agent.Name,
+		LabelInstance:   agent.Spec.AgentKey,
 		LabelTenantID:   tenant.Spec.TenantID,
 		LabelTenantName: tenant.Name,
-		LabelAgent:      agent.Name,
+		LabelAgent:      agent.Spec.AgentKey,
 	}
 }
 
@@ -69,7 +69,7 @@ func resolvedBankID(agent *fabricv1alpha1.AgentIdentity) string {
 	if agent.Spec.Memory.BankID != "" {
 		return agent.Spec.Memory.BankID
 	}
-	return fmt.Sprintf("%s-%s", agent.Spec.TenantRef.Name, agent.Name)
+	return fmt.Sprintf("%s-%s", agent.Spec.TenantRef.Name, agent.Spec.AgentKey)
 }
 
 func normalizedProfileRef(agent *fabricv1alpha1.AgentIdentity) string {

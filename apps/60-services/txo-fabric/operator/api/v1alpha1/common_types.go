@@ -5,6 +5,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 type ObjectReference struct {
 	// Name is the metadata.name of the referenced cluster-scoped Fabric object.
 	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
 	Name string `json:"name"`
 }
 
@@ -24,6 +25,7 @@ type PostgreSQLSpec struct {
 	// ProfileRef selects a platform-owned database profile. The profile implementation is intentionally
 	// outside TenantBundle so tenants do not embed infrastructure credentials or topology.
 	// +optional
+	// +kubebuilder:validation:MaxLength=128
 	ProfileRef string `json:"profileRef,omitempty"`
 }
 
@@ -36,6 +38,7 @@ type TenantPersistenceSpec struct {
 type HindsightMemorySpec struct {
 	// ProfileRef selects the Hindsight service profile owned by TXO Fabric.
 	// +optional
+	// +kubebuilder:validation:MaxLength=128
 	ProfileRef string `json:"profileRef,omitempty"`
 }
 
@@ -47,6 +50,8 @@ type TenantMemorySpec struct {
 
 type TenantModuleSpec struct {
 	// Name is the stable Fabric module key (for example paperclip or valkey).
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
 	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
 	Name string `json:"name"`
 
@@ -56,6 +61,7 @@ type TenantModuleSpec struct {
 
 	// ProfileRef selects a platform-owned implementation profile for the module.
 	// +optional
+	// +kubebuilder:validation:MaxLength=128
 	ProfileRef string `json:"profileRef,omitempty"`
 }
 
