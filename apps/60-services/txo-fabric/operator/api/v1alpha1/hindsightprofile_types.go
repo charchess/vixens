@@ -8,6 +8,8 @@ import (
 
 type HindsightModelCacheSpec struct {
 	// Enabled provisions a persistent cache for local models/rerankers.
+	// The standard upstream full API image already contains its default models;
+	// enable this only for an explicitly designed runtime-download/cache path.
 	// +kubebuilder:default=false
 	Enabled bool `json:"enabled,omitempty"`
 
@@ -21,19 +23,14 @@ type HindsightModelCacheSpec struct {
 	StorageClassName string `json:"storageClassName,omitempty"`
 }
 
-type HindsightControlPlaneSpec struct {
-	// Enabled deploys the Hindsight administrative control plane for this profile.
-	// +kubebuilder:default=false
-	Enabled bool `json:"enabled,omitempty"`
-}
-
 type HindsightProfileSpec struct {
-	// Topology defines whether Hindsight runs per tenant or as a shared platform service.
-	// +kubebuilder:validation:Enum=TenantScoped;SharedService
+	// Topology is tenant-scoped in the initial Fabric contract. A shared service
+	// requires a separately designed multi-tenant authentication/schema boundary.
+	// +kubebuilder:validation:Enum=TenantScoped
 	// +kubebuilder:default=TenantScoped
 	Topology string `json:"topology,omitempty"`
 
-	// Image is an immutable, versioned Hindsight image reference.
+	// Image is an immutable, versioned Hindsight API image reference.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=512
 	Image string `json:"image"`
@@ -44,7 +41,7 @@ type HindsightProfileSpec struct {
 	// +kubebuilder:validation:Maximum=65535
 	APIPort int32 `json:"apiPort,omitempty"`
 
-	// APIAuthMode selects the inbound authentication contract for the Hindsight API.
+	// APIAuthMode selects the inbound authentication contract for the tenant-scoped Hindsight API.
 	// ApiKey maps to the upstream ApiKeyTenantExtension; credential material is generated/injected via Secret and never stored in this CR.
 	// +kubebuilder:validation:Enum=ApiKey
 	// +kubebuilder:default=ApiKey
@@ -64,12 +61,9 @@ type HindsightProfileSpec struct {
 	SizingLabel string `json:"sizingLabel,omitempty"`
 
 	// ModelCache configures optional persistent cache storage for local models/rerankers.
+	// It is disabled by default; production profiles should prefer models baked into the image.
 	// +optional
 	ModelCache HindsightModelCacheSpec `json:"modelCache,omitempty"`
-
-	// ControlPlane configures the optional Hindsight administrative UI.
-	// +optional
-	ControlPlane HindsightControlPlaneSpec `json:"controlPlane,omitempty"`
 
 	// LLMAuthMode declares how the platform will eventually supply model credentials.
 	// It never contains provider credentials itself.
