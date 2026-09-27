@@ -180,8 +180,8 @@ func testTenant() *fabricv1alpha1.TenantBundle {
 		Spec: fabricv1alpha1.TenantBundleSpec{
 			TenantID:    "TEN90001",
 			DisplayName: "hAIrem Sandbox",
-			Persistence: fabricv1alpha1.TenantPersistenceSpec{PostgreSQL: &fabricv1alpha1.PostgreSQLSpec{Mode: "Shared", ProfileRef: "shared-poc"}},
-			Memory:      fabricv1alpha1.TenantMemorySpec{Hindsight: &fabricv1alpha1.HindsightMemorySpec{ProfileRef: "shared-poc"}},
+			Persistence: fabricv1alpha1.TenantPersistenceSpec{PostgreSQL: &fabricv1alpha1.PostgreSQLSpec{Mode: "Shared", ProfileRef: fabricv1alpha1.ObjectReference{Name: "shared-standard"}}},
+			Memory:      fabricv1alpha1.TenantMemorySpec{Hindsight: &fabricv1alpha1.HindsightMemorySpec{ProfileRef: fabricv1alpha1.ObjectReference{Name: "hindsight-standard"}}},
 		},
 	}
 }

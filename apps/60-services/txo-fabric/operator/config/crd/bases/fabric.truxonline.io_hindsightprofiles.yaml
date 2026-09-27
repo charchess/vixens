@@ -1,0 +1,176 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: hindsightprofiles.fabric.truxonline.io
+spec:
+  group: fabric.truxonline.io
+  names:
+    categories:
+    - txo-fabric
+    kind: HindsightProfile
+    listKind: HindsightProfileList
+    plural: hindsightprofiles
+    shortNames:
+    - hprofile
+    singular: hindsightprofile
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.image
+      name: Image
+      type: string
+    - jsonPath: .spec.llmAuthMode
+      name: LLMAuth
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              apiAuthMode:
+                default: ApiKey
+                description: APIAuthMode selects the inbound authentication contract
+                  for the Hindsight API.
+                enum:
+                - ApiKey
+                type: string
+              controlPlaneEnabled:
+                default: false
+                description: ControlPlaneEnabled exposes the optional Hindsight web
+                  control plane for this tenant profile.
+                type: boolean
+              fileStorageType:
+                default: PostgreSQL
+                description: |-
+                  FileStorageType selects Hindsight attachment storage. PostgreSQL keeps the initial
+                  implementation self-contained; S3 is reserved for the tenant object-storage capability.
+                enum:
+                - PostgreSQL
+                - S3
+                type: string
+              image:
+                description: Image is the immutable Hindsight runtime image used for
+                  tenant memory services.
+                maxLength: 512
+                minLength: 1
+                type: string
+              llmAuthMode:
+                default: Unconfigured
+                description: |-
+                  LLMAuthMode describes how Hindsight obtains model access. Unconfigured is valid while
+                  the TXO Fabric LLM broker is not deployed; memory operations requiring an LLM remain blocked.
+                enum:
+                - Unconfigured
+                - Gateway
+                type: string
+              port:
+                default: 8888
+                description: Port is the Hindsight API port exposed inside the tenant
+                  namespace.
+                format: int32
+                maximum: 65535
+                minimum: 1
+                type: integer
+              priorityClassName:
+                default: vixens-medium
+                description: PriorityClassName maps the workload to Vixens scheduling
+                  policy.
+                maxLength: 253
+                type: string
+              resources:
+                description: Resources controls the generated Hindsight API container.
+                properties:
+                  claims:
+                    description: |-
+                      Claims lists the names of resources, defined in spec.resourceClaims,
+                      that are used by this container.
+
+                      This field depends on the
+                      DynamicResourceAllocation feature gate.
+
+                      This field is immutable. It can only be set for containers.
+                    items:
+                      description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                      properties:
+                        name:
+                          description: |-
+                            Name must match the name of one entry in pod.spec.resourceClaims of
+                            the Pod where this field is used. It makes that resource available
+                            inside a container.
+                          type: string
+                        request:
+                          description: |-
+                            Request is the name chosen for a request in the referenced claim.
+                            If empty, everything from the claim is made available, otherwise
+                            only the result of this request.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                  limits:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: |-
+                      Limits describes the maximum amount of compute resources allowed.
+                      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                    type: object
+                  requests:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: |-
+                      Requests describes the minimum amount of compute resources required.
+                      If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                      otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                    type: object
+                type: object
+              sizingLabel:
+                default: V-small
+                description: SizingLabel is copied to the Vixens sizing label on generated
+                  Hindsight pods.
+                maxLength: 63
+                type: string
+            required:
+            - image
+            - resources
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources: {}

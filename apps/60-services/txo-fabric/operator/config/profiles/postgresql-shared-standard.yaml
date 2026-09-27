@@ -1,0 +1,19 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: PostgreSQLProfile
+metadata:
+  name: shared-standard
+spec:
+  provider: CloudNativePG
+  mode: Shared
+  clusterRef:
+    name: postgresql-shared
+    namespace: databases
+  databaseNamePrefix: txo_
+  requiredExtensions:
+    - vector
+  credentials:
+    secretStoreRef:
+      name: openbao
+      kind: ClusterSecretStore
+    remoteKeyPrefix: vixens/prod/txo-fabric/tenants
