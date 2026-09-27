@@ -1,9 +1,6 @@
 package v1alpha1
 
-import (
-	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
+import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 type PostgreSQLClusterReference struct {
 	// Name is the CloudNativePG Cluster resource name.
@@ -18,7 +15,8 @@ type PostgreSQLClusterReference struct {
 }
 
 type SharedPostgreSQLProfileSpec struct {
-	// ClusterRef selects the existing platform-owned CloudNativePG cluster.
+	// ClusterRef selects the existing CloudNativePG cluster used by this profile.
+	// The Fabric operator does not own or mutate the Cluster resource itself.
 	ClusterRef PostgreSQLClusterReference `json:"clusterRef"`
 
 	// DatabaseNamePrefix is prepended to operator-generated tenant database names.
@@ -34,35 +32,15 @@ type SharedPostgreSQLProfileSpec struct {
 	RoleNamePrefix string `json:"roleNamePrefix,omitempty"`
 }
 
-type DedicatedPostgreSQLStorageSpec struct {
-	// Size is the PVC request for each dedicated CloudNativePG instance.
-	// +kubebuilder:default="8Gi"
-	Size resource.Quantity `json:"size,omitempty"`
-
-	// StorageClassName is explicit because Vixens intentionally has no default StorageClass.
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=253
-	StorageClassName string `json:"storageClassName"`
-}
-
-type DedicatedPostgreSQLProfileSpec struct {
-	// Instances is the number of CloudNativePG instances for a dedicated tenant cluster.
-	// +kubebuilder:default=2
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=5
-	Instances int32 `json:"instances,omitempty"`
-
-	Storage DedicatedPostgreSQLStorageSpec `json:"storage"`
-}
-
 type PostgreSQLProfileSpec struct {
 	// Provider identifies the PostgreSQL lifecycle implementation.
 	// +kubebuilder:validation:Enum=CloudNativePG
 	// +kubebuilder:default=CloudNativePG
 	Provider string `json:"provider,omitempty"`
 
-	// Topology defines whether tenants consume an existing shared cluster or receive a dedicated cluster.
-	// +kubebuilder:validation:Enum=SharedCluster;DedicatedCluster
+	// Topology is SharedCluster in the initial Fabric contract. Dedicated tenant
+	// clusters are intentionally deferred until the shared path is validated end-to-end.
+	// +kubebuilder:validation:Enum=SharedCluster
 	Topology string `json:"topology"`
 
 	// RequiredExtensions are PostgreSQL extensions that must be present in every tenant database created through this profile.
@@ -72,12 +50,7 @@ type PostgreSQLProfileSpec struct {
 	RequiredExtensions []string `json:"requiredExtensions,omitempty"`
 
 	// Shared configures an existing shared CloudNativePG cluster.
-	// +optional
-	Shared *SharedPostgreSQLProfileSpec `json:"shared,omitempty"`
-
-	// Dedicated configures operator-created per-tenant CloudNativePG clusters.
-	// +optional
-	Dedicated *DedicatedPostgreSQLProfileSpec `json:"dedicated,omitempty"`
+	Shared SharedPostgreSQLProfileSpec `json:"shared"`
 
 	// DatabaseReclaimPolicy controls whether the tenant database is retained when the TenantBundle stops requesting PostgreSQL.
 	// +kubebuilder:validation:Enum=Retain;Delete
