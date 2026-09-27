@@ -14,16 +14,22 @@ spec:
     listKind: HindsightProfileList
     plural: hindsightprofiles
     shortNames:
-    - hprofile
+    - hsprofile
     singular: hindsightprofile
   scope: Cluster
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .spec.topology
+      name: Topology
+      type: string
     - jsonPath: .spec.image
       name: Image
       type: string
+    - jsonPath: .spec.apiAuthMode
+      name: API Auth
+      type: string
     - jsonPath: .spec.llmAuthMode
-      name: LLMAuth
+      name: LLM Auth
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -53,51 +59,63 @@ spec:
             properties:
               apiAuthMode:
                 default: ApiKey
-                description: APIAuthMode selects the inbound authentication contract
-                  for the Hindsight API.
+                description: |-
+                  APIAuthMode selects the inbound authentication contract for the tenant-scoped Hindsight API.
+                  ApiKey maps to the upstream ApiKeyTenantExtension; credential material is generated/injected via Secret and never stored in this CR.
                 enum:
                 - ApiKey
                 type: string
-              controlPlaneEnabled:
-                default: false
-                description: ControlPlaneEnabled exposes the optional Hindsight web
-                  control plane for this tenant profile.
-                type: boolean
-              fileStorageType:
-                default: PostgreSQL
-                description: |-
-                  FileStorageType selects Hindsight attachment storage. PostgreSQL keeps the initial
-                  implementation self-contained; S3 is reserved for the tenant object-storage capability.
-                enum:
-                - PostgreSQL
-                - S3
-                type: string
+              apiPort:
+                default: 8888
+                description: APIPort is the Hindsight memory API port.
+                format: int32
+                maximum: 65535
+                minimum: 1
+                type: integer
               image:
-                description: Image is the immutable Hindsight runtime image used for
-                  tenant memory services.
+                description: Image is an immutable, versioned Hindsight API image
+                  reference.
                 maxLength: 512
                 minLength: 1
                 type: string
               llmAuthMode:
                 default: Unconfigured
                 description: |-
-                  LLMAuthMode describes how Hindsight obtains model access. Unconfigured is valid while
-                  the TXO Fabric LLM broker is not deployed; memory operations requiring an LLM remain blocked.
+                  LLMAuthMode declares how the platform will eventually supply model credentials.
+                  It never contains provider credentials itself.
                 enum:
                 - Unconfigured
-                - Gateway
+                - PlatformGateway
                 type: string
-              port:
-                default: 8888
-                description: Port is the Hindsight API port exposed inside the tenant
-                  namespace.
-                format: int32
-                maximum: 65535
-                minimum: 1
-                type: integer
+              modelCache:
+                description: |-
+                  ModelCache configures optional persistent cache storage for local models/rerankers.
+                  It is disabled by default; production profiles should prefer models baked into the image.
+                properties:
+                  enabled:
+                    default: false
+                    description: |-
+                      Enabled provisions a persistent cache for local models/rerankers.
+                      The standard upstream full API image already contains its default models;
+                      enable this only for an explicitly designed runtime-download/cache path.
+                    type: boolean
+                  size:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    default: 5Gi
+                    description: Size is the cache PVC request when enabled.
+                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                    x-kubernetes-int-or-string: true
+                  storageClassName:
+                    description: StorageClassName is explicit because Vixens intentionally
+                      has no default StorageClass.
+                    maxLength: 253
+                    type: string
+                type: object
               priorityClassName:
                 default: vixens-medium
-                description: PriorityClassName maps the workload to Vixens scheduling
+                description: PriorityClassName maps Hindsight to Vixens scheduling
                   policy.
                 maxLength: 253
                 type: string
@@ -162,9 +180,17 @@ spec:
                 type: object
               sizingLabel:
                 default: V-small
-                description: SizingLabel is copied to the Vixens sizing label on generated
-                  Hindsight pods.
+                description: SizingLabel is copied to the generated workload for platform
+                  resource governance.
                 maxLength: 63
+                type: string
+              topology:
+                default: TenantScoped
+                description: |-
+                  Topology is tenant-scoped in the initial Fabric contract. A shared service
+                  requires a separately designed multi-tenant authentication/schema boundary.
+                enum:
+                - TenantScoped
                 type: string
             required:
             - image

@@ -29,7 +29,6 @@ type TenantBundleReconciler struct {
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles/finalizers,verbs=update
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities,verbs=get;list;watch
-// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=postgresqlprofiles;hindsightprofiles,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
 
@@ -72,20 +71,20 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	setCondition(&bundle.Status.Conditions, bundle.Generation, "NetworkReady", metav1.ConditionTrue, "DefaultDenyReconciled", "tenant default-deny policy is reconciled")
 
 	waiting := false
-	postgresWaiting, err := r.reconcilePostgreSQLCapability(ctx, &bundle)
-	if err != nil {
-		r.setFailedStatus(ctx, &bundle, "PersistenceProfileResolveFailed", err.Error())
-		return ctrl.Result{}, err
+	if bundle.Spec.Persistence.PostgreSQL != nil {
+		waiting = true
+		bundle.Status.Persistence.PostgreSQL = &fabricv1alpha1.ComponentStatus{Phase: "Pending", Message: "PostgreSQL reconciliation is the next operator milestone"}
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "PersistenceReady", metav1.ConditionFalse, "ControllerNotImplemented", "PostgreSQL capability is declared but not reconciled by this controller version")
+	} else {
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "PersistenceReady", metav1.ConditionTrue, "NotRequested", "tenant does not request PostgreSQL capability")
 	}
-	waiting = waiting || postgresWaiting
-
-	hindsightWaiting, err := r.reconcileHindsightCapability(ctx, &bundle)
-	if err != nil {
-		r.setFailedStatus(ctx, &bundle, "MemoryProfileResolveFailed", err.Error())
-		return ctrl.Result{}, err
+	if bundle.Spec.Memory.Hindsight != nil {
+		waiting = true
+		bundle.Status.Memory.Hindsight = &fabricv1alpha1.ComponentStatus{Phase: "Pending", Message: "Hindsight reconciliation is the next operator milestone"}
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "MemoryReady", metav1.ConditionFalse, "ControllerNotImplemented", "Hindsight capability is declared but not reconciled by this controller version")
+	} else {
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "MemoryReady", metav1.ConditionTrue, "NotRequested", "tenant does not request Hindsight memory")
 	}
-	waiting = waiting || hindsightWaiting
-
 	enabledModules := 0
 	bundle.Status.Modules = make([]fabricv1alpha1.TenantModuleStatus, 0, len(bundle.Spec.Modules))
 	for _, module := range bundle.Spec.Modules {
@@ -220,7 +219,5 @@ func (r *TenantBundleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&fabricv1alpha1.TenantBundle{}).
 		Watches(&corev1.Namespace{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&networkingv1.NetworkPolicy{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
-		Watches(&fabricv1alpha1.PostgreSQLProfile{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForCapabilityProfile)).
-		Watches(&fabricv1alpha1.HindsightProfile{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForCapabilityProfile)).
 		Complete(r)
 }
