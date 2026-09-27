@@ -22,7 +22,8 @@ import (
 
 type TenantBundleReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	APIReader client.Reader
+	Scheme    *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles,verbs=get;list;watch;update;patch
@@ -302,6 +303,9 @@ func (r *TenantBundleReconciler) tenantBundleRequestsForPostgreSQLProfile(ctx co
 
 func (r *TenantBundleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	AddCNPGToScheme(mgr.GetScheme())
+	if r.APIReader == nil {
+		r.APIReader = mgr.GetAPIReader()
+	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&fabricv1alpha1.TenantBundle{}).
 		Watches(&fabricv1alpha1.PostgreSQLProfile{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForPostgreSQLProfile)).
