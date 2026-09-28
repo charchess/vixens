@@ -4,6 +4,11 @@ kind: Kustomization
 namespace: databases
 resources:
   - ../../base
+  - backup-s3-secret-patch.yaml
+  - backup-objectstore.yaml
+  - backup-scheduled.yaml
+patches:
+  - path: backup-patch.yaml
 labels:
   - pairs:
       environment: prod

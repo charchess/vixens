@@ -4,15 +4,8 @@ kind: Cluster
 metadata:
   name: postgresql-shared
 spec:
-  backup:
-    barmanObjectStore:
-      destinationPath: s3://vixens-prod-postgresql-shared/
-      endpointURL: http://nas.truxonline.com:30157
-      s3Credentials:
-        accessKeyId:
-          name: postgresql-backup-s3
-          key: LITESTREAM_ACCESS_KEY_ID
-        secretAccessKey:
-          name: postgresql-backup-s3
-          key: LITESTREAM_SECRET_ACCESS_KEY
-    retentionPolicy: 30d
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: postgresql-shared-backup

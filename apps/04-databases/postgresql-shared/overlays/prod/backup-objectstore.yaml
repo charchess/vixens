@@ -1,0 +1,24 @@
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: postgresql-shared-backup
+  namespace: databases
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  configuration:
+    destinationPath: s3://vixens-prod-postgresql-shared/
+    endpointURL: http://nas.truxonline.com:30157
+    s3Credentials:
+      accessKeyId:
+        name: postgresql-backup-s3
+        key: AWS_ACCESS_KEY_ID
+      secretAccessKey:
+        name: postgresql-backup-s3
+        key: AWS_SECRET_ACCESS_KEY
+    wal:
+      compression: gzip
+    data:
+      compression: gzip
+  retentionPolicy: 30d
