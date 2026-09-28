@@ -19,5 +19,5 @@ spec:
       cpu: "2"
       memory: 4Gi
   priorityClassName: vixens-medium
-  sizingLabel: V-small
+  sizingLabel: V-scout
   llmAuthMode: Unconfigured
