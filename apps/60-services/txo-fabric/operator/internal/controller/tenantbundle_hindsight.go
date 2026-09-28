@@ -250,6 +250,8 @@ func desiredHindsightSecretData(databaseURL, apiKey string, port int32) map[stri
 		"HINDSIGHT_API_TENANT_EXTENSION":   []byte("hindsight_api.extensions.builtin.tenant:ApiKeyTenantExtension"),
 		"HINDSIGHT_API_TENANT_API_KEY":     []byte(apiKey),
 		"HINDSIGHT_API_LLM_PROVIDER":       []byte("none"),
+		"HF_HUB_OFFLINE":                   []byte("1"),
+		"TRANSFORMERS_OFFLINE":             []byte("1"),
 		"HINDSIGHT_API_HOST":               []byte("0.0.0.0"),
 		"HINDSIGHT_API_PORT":               []byte(strconv.Itoa(int(port))),
 		"HINDSIGHT_API_LOG_LEVEL":          []byte("info"),
