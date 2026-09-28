@@ -6,6 +6,7 @@ resources:
   - servicemonitor.yaml
   - pdb.yaml
   - cilium-networkpolicy.yaml
+  - cilium-networkpolicy-barman-plugin.yaml
 
 components:
   - ../../../../_shared/components/poddisruptionbudget/1
