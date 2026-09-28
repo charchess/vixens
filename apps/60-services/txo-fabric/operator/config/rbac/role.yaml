@@ -16,6 +16,7 @@ rules:
   resources:
   - namespaces
   - persistentvolumeclaims
+  - services
   verbs:
   - create
   - delete
@@ -89,6 +90,7 @@ rules:
   - fabric.truxonline.io
   resources:
   - agentruntimeprofiles
+  - hindsightprofiles
   - postgresqlprofiles
   verbs:
   - get
