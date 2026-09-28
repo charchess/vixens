@@ -7,6 +7,7 @@ import (
 	"time"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,9 +31,11 @@ type TenantBundleReconciler struct {
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles/finalizers,verbs=update
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities,verbs=get;list;watch
-// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=postgresqlprofiles,verbs=get;list;watch
+// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=postgresqlprofiles;hindsightprofiles,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=postgresql.cnpg.io,resources=clusters,verbs=get
 // +kubebuilder:rbac:groups=postgresql.cnpg.io,resources=databases;databaseroles,verbs=get;list;watch;create;update;patch;delete
@@ -49,6 +52,7 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	previousStatus := bundle.DeepCopy().Status
 	hadPostgreSQL := previousStatus.Persistence.PostgreSQL != nil
+	hadHindsight := previousStatus.Memory.Hindsight != nil
 
 	if !controllerutil.ContainsFinalizer(&bundle, TenantFinalizer) {
 		controllerutil.AddFinalizer(&bundle, TenantFinalizer)
@@ -120,7 +124,9 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			waiting = true
 			bundle.Status.Persistence.PostgreSQL = &fabricv1alpha1.ComponentStatus{Phase: "Reclaiming", Message: "removing Fabric-owned CloudNativePG resources according to their reclaim policies"}
 			setCondition(&bundle.Status.Conditions, bundle.Generation, "PersistenceReady", metav1.ConditionFalse, "Reclaiming", "PostgreSQL capability is being released")
-			requeueAfter = 2 * time.Second
+			if requeueAfter == 0 || 2*time.Second < requeueAfter {
+				requeueAfter = 2 * time.Second
+			}
 		} else {
 			setCondition(&bundle.Status.Conditions, bundle.Generation, "PersistenceReady", metav1.ConditionTrue, "NotRequested", "tenant does not request PostgreSQL capability")
 		}
@@ -129,12 +135,56 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	if bundle.Spec.Memory.Hindsight != nil {
-		waiting = true
-		bundle.Status.Memory.Hindsight = &fabricv1alpha1.ComponentStatus{Phase: "Pending", Message: "Hindsight reconciliation is the next operator milestone"}
-		setCondition(&bundle.Status.Conditions, bundle.Generation, "MemoryReady", metav1.ConditionFalse, "ControllerNotImplemented", "Hindsight capability is declared but not reconciled by this controller version")
+		result, err := r.reconcileHindsight(ctx, &bundle)
+		if err != nil {
+			bundle.Status.Memory.Hindsight = &fabricv1alpha1.ComponentStatus{Phase: "Blocked", Message: err.Error()}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "MemoryReady", metav1.ConditionFalse, "ReconcileError", err.Error())
+			bundle.Status.Phase = "Degraded"
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "MemoryReconcileFailed", err.Error())
+			if !reflect.DeepEqual(previousStatus, bundle.Status) {
+				_ = r.Status().Update(ctx, &bundle)
+			}
+			return ctrl.Result{}, err
+		}
+		bundle.Status.Memory.Hindsight = result.Status
+		if result.Ready {
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "MemoryReady", metav1.ConditionTrue, result.Reason, result.Message)
+		} else {
+			waiting = true
+			if result.Status != nil && result.Status.Phase == "Blocked" {
+				degraded = true
+			}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "MemoryReady", metav1.ConditionFalse, result.Reason, result.Message)
+			if result.RequeueAfter > 0 && (requeueAfter == 0 || result.RequeueAfter < requeueAfter) {
+				requeueAfter = result.RequeueAfter
+			}
+		}
+	} else if hadHindsight {
+		pending, err := r.cleanupHindsight(ctx, &bundle)
+		if err != nil {
+			bundle.Status.Memory.Hindsight = &fabricv1alpha1.ComponentStatus{Phase: "Blocked", Message: err.Error()}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "MemoryReady", metav1.ConditionFalse, "ReclaimError", err.Error())
+			bundle.Status.Phase = "Degraded"
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "MemoryReclaimFailed", err.Error())
+			if !reflect.DeepEqual(previousStatus, bundle.Status) {
+				_ = r.Status().Update(ctx, &bundle)
+			}
+			return ctrl.Result{}, err
+		}
+		if pending {
+			waiting = true
+			bundle.Status.Memory.Hindsight = &fabricv1alpha1.ComponentStatus{Phase: "Reclaiming", Message: "removing Fabric-owned tenant Hindsight resources"}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "MemoryReady", metav1.ConditionFalse, "Reclaiming", "Hindsight capability is being released")
+			if requeueAfter == 0 || 2*time.Second < requeueAfter {
+				requeueAfter = 2 * time.Second
+			}
+		} else {
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "MemoryReady", metav1.ConditionTrue, "NotRequested", "tenant does not request Hindsight memory")
+		}
 	} else {
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "MemoryReady", metav1.ConditionTrue, "NotRequested", "tenant does not request Hindsight memory")
 	}
+
 	enabledModules := 0
 	bundle.Status.Modules = make([]fabricv1alpha1.TenantModuleStatus, 0, len(bundle.Spec.Modules))
 	for _, module := range bundle.Spec.Modules {
@@ -227,6 +277,20 @@ func (r *TenantBundleReconciler) reconcileDelete(ctx context.Context, bundle *fa
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
+	if bundle.Spec.Memory.Hindsight != nil || bundle.Status.Memory.Hindsight != nil {
+		pending, err := r.cleanupHindsight(ctx, bundle)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		if pending {
+			bundle.Status.Phase = "Deleting"
+			bundle.Status.Memory.Hindsight = &fabricv1alpha1.ComponentStatus{Phase: "Reclaiming", Message: "removing Fabric-owned tenant Hindsight resources"}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "HindsightReclaiming", "tenant Hindsight resources are being released before persistence")
+			_ = r.Status().Update(ctx, bundle)
+			return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
+		}
+	}
+
 	if bundle.Spec.Persistence.PostgreSQL != nil || bundle.Status.Persistence.PostgreSQL != nil {
 		pending, err := r.cleanupPostgreSQL(ctx, bundle)
 		if err != nil {
@@ -301,6 +365,26 @@ func (r *TenantBundleReconciler) tenantBundleRequestsForPostgreSQLProfile(ctx co
 	return requests
 }
 
+func (r *TenantBundleReconciler) tenantBundleRequestsForHindsightProfile(ctx context.Context, obj client.Object) []reconcile.Request {
+	profileName := obj.GetName()
+	if profileName == "" {
+		return nil
+	}
+	var bundles fabricv1alpha1.TenantBundleList
+	if err := r.List(ctx, &bundles); err != nil {
+		ctrl.LoggerFrom(ctx).Error(err, "unable to list TenantBundles for HindsightProfile watch", "profile", profileName)
+		return nil
+	}
+	requests := make([]reconcile.Request, 0)
+	for i := range bundles.Items {
+		hindsight := bundles.Items[i].Spec.Memory.Hindsight
+		if hindsight != nil && hindsight.ProfileRef == profileName {
+			requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{Name: bundles.Items[i].Name}})
+		}
+	}
+	return requests
+}
+
 func (r *TenantBundleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	AddCNPGToScheme(mgr.GetScheme())
 	if r.APIReader == nil {
@@ -309,7 +393,10 @@ func (r *TenantBundleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&fabricv1alpha1.TenantBundle{}).
 		Watches(&fabricv1alpha1.PostgreSQLProfile{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForPostgreSQLProfile)).
+		Watches(&fabricv1alpha1.HindsightProfile{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForHindsightProfile)).
 		Watches(&corev1.Namespace{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
+		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
+		Watches(&appsv1.Deployment{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&networkingv1.NetworkPolicy{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(cnpgObject(cnpgDatabaseGVK, "", ""), handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(cnpgObject(cnpgDatabaseRoleGVK, "", ""), handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
