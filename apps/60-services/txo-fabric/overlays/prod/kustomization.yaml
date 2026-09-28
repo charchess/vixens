@@ -7,6 +7,7 @@ resources:
   - ../../operator/config/network
   - ../../operator/config/profiles
   - ../../operator/config/manager
+  - ../../gateway
   - ../../tenants/hairem-sandbox
   - ../../tenants/fabric-smoke
 

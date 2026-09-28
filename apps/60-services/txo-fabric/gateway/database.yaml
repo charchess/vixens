@@ -1,0 +1,48 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: DatabaseRole
+metadata:
+  name: txo-ai-gateway-role
+  namespace: databases
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+    app.kubernetes.io/name: txo-ai-gateway
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: ai-egress
+spec:
+  cluster:
+    name: postgresql-shared
+  name: txo_ai_gateway
+  comment: TXO AI gateway control-plane role
+  login: true
+  inherit: true
+  superuser: false
+  createdb: false
+  createrole: false
+  replication: false
+  bypassrls: false
+  connectionLimit: -1
+  ensure: present
+  passwordSecret:
+    name: txo-ai-gateway-postgresql
+  databaseRoleReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: txo-ai-gateway-database
+  namespace: databases
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  labels:
+    app.kubernetes.io/name: txo-ai-gateway
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: ai-egress
+spec:
+  cluster:
+    name: postgresql-shared
+  name: txo_ai_gateway
+  owner: txo_ai_gateway
+  ensure: present
+  databaseReclaimPolicy: retain
