@@ -42,13 +42,12 @@ spec:
           ports:
             - containerPort: 8080
               name: http
+          # The upstream entrypoint must begin as root to repair the retained PVC,
+          # then it drops to the image's unprivileged `node` user before starting Trilium.
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-            runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
             seccompProfile:
               type: RuntimeDefault
           env:
@@ -94,9 +93,6 @@ spec:
           persistentVolumeClaim:
             claimName: trilium-data
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
