@@ -1,0 +1,20 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: TenantBundle
+metadata:
+  name: fabric-smoke
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    fabric.truxonline.io/purpose: test
+spec:
+  tenantId: TEN90002
+  displayName: Fabric Smoke
+  isolation:
+    profile: Shared
+  persistence:
+    postgresql:
+      mode: Shared
+      profileRef: postgresql-shared
+  memory:
+    hindsight:
+      profileRef: hindsight-standard
