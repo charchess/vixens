@@ -48,6 +48,9 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
+              # Required only for the root entrypoint to repair the retained PVC
+              # and switch to the unprivileged `node` account before exec.
+              add: ["CHOWN", "SETGID", "SETUID"]
             seccompProfile:
               type: RuntimeDefault
           env:
