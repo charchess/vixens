@@ -10,6 +10,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	apiMeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -117,9 +118,12 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if tenant.Spec.Memory.Hindsight == nil {
 		agent.Status.Memory.Phase = "Unconfigured"
 		setCondition(&agent.Status.Conditions, agent.Generation, "MemoryReady", metav1.ConditionFalse, "TenantMemoryUnconfigured", "TenantBundle does not declare Hindsight memory")
+	} else if memoryReady := apiMeta.FindStatusCondition(tenant.Status.Conditions, "MemoryReady"); memoryReady != nil && memoryReady.Status == metav1.ConditionTrue {
+		agent.Status.Memory.Phase = "Ready"
+		setCondition(&agent.Status.Conditions, agent.Generation, "MemoryReady", metav1.ConditionTrue, "MemoryProviderReady", fmt.Sprintf("bank binding %q is ready on the tenant Hindsight service", agent.Status.Memory.BankID))
 	} else {
 		agent.Status.Memory.Phase = "Pending"
-		setCondition(&agent.Status.Conditions, agent.Generation, "MemoryReady", metav1.ConditionFalse, "MemoryProviderPending", "Hindsight is declared on the tenant but has not been reconciled yet")
+		setCondition(&agent.Status.Conditions, agent.Generation, "MemoryReady", metav1.ConditionFalse, "MemoryProviderPending", "waiting for the tenant Hindsight service to become ready")
 	}
 	setCondition(&agent.Status.Conditions, agent.Generation, "TenantResolved", metav1.ConditionTrue, "Resolved", fmt.Sprintf("TenantBundle %q resolved", tenant.Name))
 	setCondition(&agent.Status.Conditions, agent.Generation, "RuntimeProfileResolved", metav1.ConditionTrue, "Resolved", fmt.Sprintf("AgentRuntimeProfile %q resolved", profile.Name))
