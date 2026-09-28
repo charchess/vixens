@@ -38,9 +38,7 @@ spec:
                 command: ["sleep", "5"]
           image: triliumnext/trilium:v0.106.0
           imagePullPolicy: IfNotPresent
-          # init container handles chown; run node directly
-          command: ["node", "./main.cjs"]
-          workingDir: /usr/src/app
+          # Use the image's supported entrypoint; v0.106.0 has no /usr/src/app/main.cjs.
           ports:
             - containerPort: 8080
               name: http
