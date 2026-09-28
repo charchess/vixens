@@ -260,6 +260,13 @@ func desiredHindsightSecretData(databaseURL, apiKey string, port int32) map[stri
 	}
 }
 
+func desiredHindsightEnv(bundle *fabricv1alpha1.TenantBundle, names hindsightNames) []corev1.EnvVar {
+	return []corev1.EnvVar{{
+		Name:  "HINDSIGHT_API_WORKER_ID",
+		Value: bundle.Name + "-" + names.Deployment,
+	}}
+}
+
 func (r *TenantBundleReconciler) ensureHindsightDeployment(ctx context.Context, bundle *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.HindsightProfile, names hindsightNames) (*hindsightResult, error) {
 	namespace := tenantNamespace(bundle.Name)
 	key := client.ObjectKey{Namespace: namespace, Name: names.Deployment}
@@ -301,6 +308,7 @@ func (r *TenantBundleReconciler) ensureHindsightDeployment(ctx context.Context, 
 					Name:            "hindsight",
 					Image:           profile.Spec.Image,
 					ImagePullPolicy: corev1.PullIfNotPresent,
+					Env:             desiredHindsightEnv(bundle, names),
 					EnvFrom:         []corev1.EnvFromSource{{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: names.Secret}}}},
 					Ports:           []corev1.ContainerPort{{Name: "http", ContainerPort: port, Protocol: corev1.ProtocolTCP}},
 					Resources:       profile.Spec.Resources,
