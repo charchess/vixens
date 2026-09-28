@@ -3,6 +3,7 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: postgresql-shared
+  namespace: databases
 spec:
   plugins:
     - name: barman-cloud.cloudnative-pg.io
