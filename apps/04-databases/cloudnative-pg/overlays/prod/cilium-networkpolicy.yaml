@@ -24,13 +24,22 @@ spec:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
   egress:
-    # cloudnative-pg operator → databases (barman backup API port 8000, PostgreSQL)
+    # cloudnative-pg operator → database instances
     - toEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: databases
+    # cloudnative-pg operator → Barman Cloud CNPG-I plugin
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: cnpg-system
+            app.kubernetes.io/name: plugin-barman-cloud
+      toPorts:
+        - ports:
+            - port: "9090"
+              protocol: TCP
     # cloudnative-pg operator → kube-apiserver (watch PostgreSQL cluster CRDs)
     - toEntities:
         - kube-apiserver
-    # cloudnative-pg operator → world (MinIO/NAS for backup archives)
+    # retained external egress for current operator integrations
     - toEntities:
         - world
