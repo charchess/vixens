@@ -3,7 +3,7 @@ package controller
 import (
 	"bytes"
 	"context"
-	"strings"
+	"net/url"
 	"testing"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
@@ -89,8 +89,13 @@ func TestTenantScopedHindsightReconcilesSecretDeploymentServiceAndNetwork(t *tes
 		t.Fatal("Hindsight API key was not generated")
 	}
 	databaseURL := string(runtimeSecret.Data["HINDSIGHT_API_DATABASE_URL"])
-	if !strings.HasPrefix(databaseURL, "postgresql://txo_ten90001:") || !strings.Contains(databaseURL, "@postgresql-shared-rw.databases.svc:5432/txo_ten90001") {
-		t.Fatalf("unexpected Hindsight database URL %q", databaseURL)
+	parsedDatabaseURL, err := url.Parse(databaseURL)
+	if err != nil {
+		t.Fatalf("invalid Hindsight database URL: %v", err)
+	}
+	password, hasPassword := parsedDatabaseURL.User.Password()
+	if parsedDatabaseURL.Scheme != "postgresql" || parsedDatabaseURL.User.Username() != "txo_ten90001" || !hasPassword || password != string(postgresqlSecret.Data[corev1.BasicAuthPasswordKey]) || parsedDatabaseURL.Host != "postgresql-shared-rw.databases.svc:5432" || parsedDatabaseURL.Path != "/txo_ten90001" {
+		t.Fatalf("unexpected Hindsight database URL components: scheme=%q user=%q host=%q path=%q", parsedDatabaseURL.Scheme, parsedDatabaseURL.User.Username(), parsedDatabaseURL.Host, parsedDatabaseURL.Path)
 	}
 
 	var deployment appsv1.Deployment
@@ -163,7 +168,12 @@ func TestTenantScopedHindsightReconcilesSecretDeploymentServiceAndNetwork(t *tes
 	if !bytes.Equal(apiKey, after.Data["HINDSIGHT_API_TENANT_API_KEY"]) {
 		t.Fatal("idempotent Hindsight reconciliation rotated the API key")
 	}
-	if !strings.Contains(string(after.Data["HINDSIGHT_API_DATABASE_URL"]), "rotated-postgresql-password") {
+	afterURL, err := url.Parse(string(after.Data["HINDSIGHT_API_DATABASE_URL"]))
+	if err != nil {
+		t.Fatalf("invalid rotated Hindsight database URL: %v", err)
+	}
+	afterPassword, hasPassword := afterURL.User.Password()
+	if !hasPassword || afterPassword != "rotated-postgresql-password" {
 		t.Fatal("Hindsight database binding did not follow PostgreSQL credential rotation")
 	}
 }
