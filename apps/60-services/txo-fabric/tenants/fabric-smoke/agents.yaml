@@ -1,0 +1,13 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: fabric-smoke-probe
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    fabric.truxonline.io/purpose: test
+spec:
+  tenantRef:
+    name: fabric-smoke
+  agentKey: probe
+  displayName: Probe
