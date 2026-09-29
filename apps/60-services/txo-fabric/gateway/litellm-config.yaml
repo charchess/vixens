@@ -9,5 +9,13 @@ model_list:
       api_key: os.environ/OPENROUTER_API_KEY
       input_cost_per_token: 0.00000002
       output_cost_per_token: 0.0
+  # Temporary #3649 canary route. Tenant Hindsight remains restricted to
+  # txo-embedding until the 384 -> 1024 blue-green bank migration is proven.
+  - model_name: txo-embedding-next
+    litellm_params:
+      model: openrouter/baai/bge-m3
+      api_key: os.environ/OPENROUTER_API_KEY
+      input_cost_per_token: 0.00000001
+      output_cost_per_token: 0.0
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
