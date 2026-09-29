@@ -6,4 +6,6 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: vpa-recommender
+      app.kubernetes.io/name: vertical-pod-autoscaler
+      app.kubernetes.io/instance: vpa
+      app.kubernetes.io/component: recommender
