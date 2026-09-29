@@ -150,14 +150,26 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          echo "mode=fast" >> $GITHUB_OUTPUT
 
-          CHANGED=$(gh pr view ${{ github.event.pull_request.number }} \
-            --json files --jq '.files.[].path' | \
+          FILES=$(gh pr view ${{ github.event.pull_request.number }} \
+            --json files --jq '.files.[].path')
+
+          CHANGED=$(printf '%s\n' "$FILES" | \
             sed -nE 's~^(apps/[^/]+/[^/]+/overlays/(dev|prod))(/.*)?$~\1~p; s~^(argocd/overlays/(dev|prod))(/.*)?$~\1~p' | \
             sort -u)
 
-          if [ -n "$CHANGED" ]; then
+          # Fast mode is safe only when every changed GitOps file maps directly
+          # to an overlay. Base/shared/workflow changes can affect several overlays.
+          UNMAPPED=$(printf '%s\n' "$FILES" | \
+            grep -E '^(apps|argocd)/' | \
+            grep -v -E '^(apps/[^/]+/[^/]+/overlays/(dev|prod)(/|$)|argocd/overlays/(dev|prod)(/|$))' || true)
+
+          if [ -n "$UNMAPPED" ]; then
+            echo "mode=full" >> $GITHUB_OUTPUT
+            echo "ℹ️ Non-overlay GitOps changes detected; running full validation"
+            printf '%s\n' "$UNMAPPED"
+          elif [ -n "$CHANGED" ]; then
+            echo "mode=fast" >> $GITHUB_OUTPUT
             echo "overlays<<EOF" >> $GITHUB_OUTPUT
             echo "$CHANGED" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
@@ -191,7 +203,8 @@ jobs:
               local full_base="$overlay/$base_dir"
               if [ -f "$full_base/kustomization.yaml" ]; then
                 local base_resources
-                base_resources=$(grep -cE '^(resources:|helmCharts:)' "$full_base/kustomization.yaml" 2>/dev/null || echo 0)
+                base_resources=$(grep -cE '^(resources:|helmCharts:)' "$full_base/kustomization.yaml" 2>/dev/null || true)
+                base_resources=${base_resources:-0}
                 if [ "$base_resources" -eq 0 ]; then
                   echo "⏭️ SKIP: $overlay (base vide - app Helm-only via ArgoCD)"
                   return 0
@@ -202,20 +215,60 @@ jobs:
             # Build kustomize avec support Helm
             if ! kustomize build --enable-helm "$overlay" > /tmp/built.yaml 2>&1; then
               echo "❌ KUSTOMIZE FAILED: $overlay"
-              cat /tmp/built.yaml | head -20
+              head -20 /tmp/built.yaml
               return 1
             fi
 
-            # Compter les ressources
-            COUNT=$(grep -c '^kind:' /tmp/built.yaml 2>/dev/null || echo 0)
+            # Compter les ressources. grep -c prints 0 even when it exits 1,
+            # so do not append a second fallback zero.
+            COUNT=$(grep -c '^kind:' /tmp/built.yaml 2>/dev/null || true)
+            COUNT=${COUNT:-0}
             if [ "$COUNT" -eq 0 ]; then
               echo "⚠️ WARNING: $overlay produces 0 resources"
               WARNED=$((WARNED+1))
               return 0
             fi
 
-            # Valider avec kubeconform (sur le YAML buildé)
-            if ! kubeconform -ignore-missing-schemas -kubernetes-version 1.34.0 -strict -skip "$SKIP_KINDS" /tmp/built.yaml 2>&1; then
+            # ArgoCD supports deliberately partial ServerSideApply manifests when
+            # they explicitly opt out of kubectl schema validation with
+            # argocd.argoproj.io/sync-options: Validate=false. Preserve the raw
+            # YAML while excluding only those explicitly marked documents from
+            # kubeconform; Kustomize itself has already rendered the full stream.
+            python3 - /tmp/built.yaml /tmp/kubeconform.yaml <<'PY'
+          import re
+          import sys
+          import yaml
+
+          source, target = sys.argv[1:3]
+          text = open(source, encoding="utf-8").read()
+          parts = re.split(r"(?m)^---\s*$", text)
+
+          with open(target, "w", encoding="utf-8") as out:
+              for raw in parts:
+                  if not raw.strip():
+                      continue
+                  doc = yaml.safe_load(raw)
+                  if not isinstance(doc, dict):
+                      continue
+                  meta = doc.get("metadata") or {}
+                  annotations = meta.get("annotations") or {}
+                  options = annotations.get("argocd.argoproj.io/sync-options", "")
+                  option_set = {item.strip().lower() for item in options.split(",")}
+                  if "validate=false" in option_set:
+                      print(
+                          "⏭️ KUBECONFORM SKIP: "
+                          f"{doc.get('kind', '<unknown>')}/{meta.get('name', '<unnamed>')} "
+                          "(ArgoCD Validate=false)"
+                      )
+                      continue
+                  out.write("---\n")
+                  out.write(raw.lstrip("\n"))
+                  if not raw.endswith("\n"):
+                      out.write("\n")
+          PY
+
+            # Valider avec kubeconform (sur le YAML buildé, hors SSA partiels explicitement marqués)
+            if ! kubeconform -ignore-missing-schemas -kubernetes-version 1.34.0 -strict -skip "$SKIP_KINDS" /tmp/kubeconform.yaml 2>&1; then
               echo "❌ KUBECONFORM FAILED: $overlay"
               return 1
             fi
@@ -239,14 +292,14 @@ jobs:
             OVERLAYS=$(find apps -type d \( -name "dev" -o -name "prod" \) | grep overlays)
           fi
 
-          # Valider les overlays déterminés
-          echo "$OVERLAYS" | while read overlay; do
+          # Keep FAILED in the current shell so any overlay failure makes the job fail.
+          while IFS= read -r overlay; do
             if [ -f "$overlay/kustomization.yaml" ]; then
               if ! validate_overlay "$overlay"; then
                 FAILED=1
               fi
             fi
-          done
+          done <<< "$OVERLAYS"
 
           # Valider les overlays ArgoCD
           for overlay in argocd/overlays/dev argocd/overlays/prod; do
