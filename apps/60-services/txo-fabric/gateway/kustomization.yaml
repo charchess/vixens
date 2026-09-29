@@ -4,9 +4,18 @@ kind: Kustomization
 resources:
   - external-secrets.yaml
   - database.yaml
-  - configmap.yaml
   - migration-job.yaml
   - migration-networkpolicy.yaml
   - deployment.yaml
   - service.yaml
   - networkpolicy.yaml
+configMapGenerator:
+  - name: txo-ai-gateway-config
+    namespace: txo-fabric-system
+    files:
+      - config.yaml=litellm-config.yaml
+generatorOptions:
+  labels:
+    app.kubernetes.io/name: txo-ai-gateway
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: ai-egress

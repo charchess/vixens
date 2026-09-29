@@ -17,4 +17,4 @@ spec:
       profileRef: postgresql-shared
   memory:
     hindsight:
-      profileRef: hindsight-standard
+      profileRef: hindsight-gateway
