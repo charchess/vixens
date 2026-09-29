@@ -20,6 +20,7 @@ spec:
         app.kubernetes.io/name: txo-ai-gateway-migration
         app.kubernetes.io/part-of: txo-fabric
         app.kubernetes.io/component: ai-egress
+        vixens.io/sizing.prisma-migrations: V-scout
     spec:
       automountServiceAccountToken: false
       restartPolicy: Never
@@ -60,7 +61,7 @@ spec:
               memory: 512Mi
             limits:
               cpu: "2"
-              memory: 2Gi
+              memory: 8Gi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
