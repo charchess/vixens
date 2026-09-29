@@ -24,9 +24,16 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 		return ctrl.Result{}, nil
 	}
 	namespace := tenantNamespace(agent.Spec.TenantRef.Name)
+
+	// Revocation is intentionally best-effort: a temporary gateway outage must not
+	// wedge tenant cleanup forever. The stable alias lets LiteLLM revoke any key
+	// associated with this identity without exposing the virtual key itself.
+	_ = revokeModelAccessKey(ctx, modelAccessKeyAliasForNames(agent.Spec.TenantRef.Name, agent.Spec.AgentKey))
+
 	objects := []client.Object{
 		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}},
 		&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: runtimeName(agent.Spec.AgentKey) + "-egress", Namespace: namespace}},
+		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: modelAccessSecretName(agent.Spec.AgentKey), Namespace: namespace}},
 		&corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimePVCName(agent.Spec.AgentKey), Namespace: namespace}},
 	}
 	pending := false
@@ -37,6 +44,8 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 			current = &appsv1.Deployment{}
 		case *networkingv1.NetworkPolicy:
 			current = &networkingv1.NetworkPolicy{}
+		case *corev1.Secret:
+			current = &corev1.Secret{}
 		case *corev1.PersistentVolumeClaim:
 			current = &corev1.PersistentVolumeClaim{}
 		}
@@ -114,6 +123,7 @@ func (r *AgentIdentityReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&fabricv1alpha1.AgentIdentity{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.PersistentVolumeClaim{}).
+		Owns(&corev1.Secret{}).
 		Owns(&networkingv1.NetworkPolicy{}).
 		Watches(&fabricv1alpha1.AgentRuntimeProfile{}, handler.EnqueueRequestsFromMapFunc(r.requestsForProfile)).
 		Watches(&fabricv1alpha1.TenantBundle{}, handler.EnqueueRequestsFromMapFunc(r.requestsForTenant)).
