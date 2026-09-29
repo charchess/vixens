@@ -36,9 +36,9 @@ TenantBundle selects platform-owned persistence and memory implementation profil
 through `profileRef`; it does not contain database credentials, provider secrets,
 or provider-specific connection strings.
 
-Shared PostgreSQL is reconciled through CloudNativePG. Hindsight and optional
-modules remain pending until their lifecycle reconcilers are implemented rather
-than being silently treated as ready.
+Shared PostgreSQL and tenant-scoped Hindsight are reconciled by the operator.
+Optional modules remain pending until their lifecycle reconcilers are implemented
+rather than being silently treated as ready.
 
 ### AgentIdentity
 
@@ -96,17 +96,18 @@ LLM-auth mode. The profile selects an auth mechanism but never embeds the API ke
 itself.
 
 The initial `hindsight-standard` profile uses the upstream API-only image, requires
-API-key authentication and does not provision a model-cache PVC by default. The
-published full API image already contains the default local models; persistent
-runtime model caching remains an explicit opt-in for a separately designed use
-case. The Hindsight control plane is not part of this first Fabric contract.
+API-key authentication, and keeps embeddings/reranking local. The published full
+API image contains the default local models; persistent runtime model caching
+remains an explicit opt-in for a separately designed use case. The Hindsight
+control plane is not part of this Fabric contract.
 
-The future Hindsight controller will consume the tenant PostgreSQL binding, inject
-secret-backed credentials and expose banks to AgentIdentity resources.
-Provider/database credentials and Hindsight API keys remain secret-backed rather
-than being embedded in the profile. A shared multi-tenant Hindsight service is
-deferred until its authentication and database/schema isolation model is proven;
-that investigation is tracked in #3574.
+The operator consumes the tenant PostgreSQL binding, creates a tenant-local runtime
+Secret, and reconciles one Hindsight Deployment and Service per tenant. Provider
+and database credentials plus the Hindsight API key remain secret-backed rather
+than being embedded in the profile. AgentIdentity resources resolve deterministic
+bank IDs against their tenant's Hindsight service. A shared multi-tenant Hindsight
+service remains deferred until its authentication and database/schema isolation
+model is proven; that investigation is tracked separately in #3574.
 
 ## Lifecycle and deletion
 
@@ -122,21 +123,39 @@ Agent runtime resources are reconciled from `AgentIdentity`. Existing compatible
 PVCs can be adopted without rewriting their storage contract, preserving their
 UID and data. The current sandbox AgentIdentity deletion path is destructive and
 removes its runtime PVC; a customer-facing retention policy is a later milestone.
+The scoped LiteLLM virtual key is revoked by deterministic alias on a best-effort
+basis and its tenant-local model-access Secret is deleted with the agent lifecycle.
 
 ## Hermes runtime boundary
 
 Hermes runs from the upstream `nousresearch/hermes-agent` image. TXO Fabric does
-not copy provider credentials or legacy OAuth state into generated runtimes.
-`TXO_LLM_AUTH_MODE=unconfigured` is deliberate: a healthy runtime is reported as
-`AuthBlocked` until the planned scoped TXO LLM credential broker exists.
+not copy upstream provider credentials or legacy OAuth state into generated
+runtimes.
+
+Model access is mediated by the shared TXO AI gateway. The operator provisions one
+LiteLLM virtual key per `AgentIdentity`, restricted to the local `txo-default`
+model alias and tagged with tenant/agent metadata. Only that scoped key is written
+to the tenant namespace. Hermes receives:
+
+- `TXO_LLM_AUTH_MODE=gateway`;
+- `OPENAI_BASE_URL=http://txo-ai-gateway.txo-fabric-system.svc:4000/v1`;
+- `OPENAI_API_KEY` from `Secret/hermes-<agentKey>-model-access`;
+- `HERMES_MODEL=txo-default`.
+
+Upstream provider credentials remain in the gateway boundary. Hermes network
+egress permits DNS, the local AI gateway, and its tenant Hindsight service when
+configured; direct provider Internet egress is not granted for model access.
+`ModelAccessReady=True` records successful scoped credential reconciliation, and
+an available Hermes Deployment can then make the AgentIdentity `Ready` instead of
+the previous deliberate `AuthBlocked` state.
 
 The operator starts the Hermes host gateway with `gateway run --replace` and uses
 semantic process probes. Named profiles live on the agent PVC and the host gateway
 serves them through Hermes' profile multiplexing model.
 
-Hindsight bank identity is already part of the API contract, but Hindsight itself
-is not provisioned by this controller version. PostgreSQL persistence is resolved
-first and becomes the database binding consumed by the future Hindsight slice.
+Hindsight bank identity is part of the AgentIdentity contract. When tenant memory
+is configured, the operator exposes the resolved bank through the tenant-scoped
+Hindsight service while PostgreSQL remains hidden behind Hindsight from the agent.
 
 ## Brownfield cutover
 
