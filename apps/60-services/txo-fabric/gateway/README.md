@@ -4,30 +4,60 @@ This directory contains the proprietor-managed AI egress boundary for TXO Fabric
 It is deliberately separate from tenant cells: tenant runtimes must not receive
 upstream provider credentials.
 
-## First implementation slice
+## Architecture
 
-The first slice uses LiteLLM as an OpenAI-compatible gateway in
-`txo-fabric-system`:
+TXO Fabric uses LiteLLM as an OpenAI-compatible gateway in `txo-fabric-system`:
 
 ```text
-Hermes (later in #3607)
+AgentIdentity controller
     |
-    | scoped LiteLLM virtual key
+    | LiteLLM admin credential
+    | /key/generate + /key/delete
     v
 Service/txo-ai-gateway:4000
     |
     +--> PostgreSQL txo_ai_gateway (keys, spend, budgets/rate-limit state)
     |
     +--> OpenRouter (provider credential exists only here)
+
+Hermes
+    |
+    | scoped LiteLLM virtual key
+    | model = txo-default
+    v
+Service/txo-ai-gateway:4000/v1
 ```
 
 Hindsight keeps the local embedding/reranker path already validated physically in
-#3602. Remote Hindsight embeddings are not part of this first gateway slice.
+#3602. Remote Hindsight embeddings are not part of this gateway slice.
 
 The gateway exposes one stable local model alias, `txo-default`. The initial
-upstream is `openrouter/openai/gpt-5.6-luna`; tenant declarations will bind to the
-local alias rather than to this provider/model identifier so routing can change
-centrally later.
+upstream is `openrouter/openai/gpt-5.6-luna`; tenant declarations bind to the local
+alias rather than to this provider/model identifier so routing can change centrally
+later.
+
+## AgentIdentity model access
+
+Each `AgentIdentity` receives one LiteLLM virtual key restricted to model
+`txo-default`. The operator creates the key with a deterministic alias and metadata
+containing the tenant and agent identities, then stores only the returned virtual
+key in the tenant namespace as `Secret/hermes-<agentKey>-model-access`.
+
+Hermes receives:
+
+- `OPENAI_BASE_URL=http://txo-ai-gateway.txo-fabric-system.svc:4000/v1`;
+- `OPENAI_API_KEY` from the scoped tenant Secret;
+- `HERMES_MODEL=txo-default`;
+- `TXO_LLM_AUTH_MODE=gateway`.
+
+The tenant runtime never receives the LiteLLM administrative credential or the
+OpenRouter provider credential. Agent deletion attempts to revoke the LiteLLM key
+by its deterministic alias before deleting the scoped Secret. Revocation is
+best-effort so a temporary gateway outage cannot wedge the AgentIdentity finalizer.
+
+`ModelAccessReady=True` means the scoped gateway credential has been reconciled.
+Once the Hermes Deployment is also available, the AgentIdentity may transition to
+`Ready` instead of the previous deliberate `AuthBlocked` state.
 
 ## Secrets
 
@@ -41,10 +71,14 @@ The OpenBao object must contain these properties:
 - `litellm_salt_key` — persistent LiteLLM encryption/hash salt;
 - `openrouter_api_key` — upstream OpenRouter credential.
 
-Two Kubernetes Secrets are projected with least necessary scope:
+Three platform Kubernetes Secrets are projected with distinct scope:
 
 - `databases/txo-ai-gateway-postgresql` contains only `username` and `password` for CloudNativePG;
-- `txo-fabric-system/txo-ai-gateway-runtime` contains the runtime variables consumed by LiteLLM.
+- `txo-fabric-system/txo-ai-gateway-runtime` contains the DB, LiteLLM and provider variables consumed by the gateway runtime;
+- `txo-fabric-system/txo-ai-gateway-admin` contains only the LiteLLM administrative token consumed by the TXO Fabric operator.
+
+Per-agent model-access Secrets live in their tenant namespace and contain only the
+scoped LiteLLM virtual key.
 
 ## Persistence
 
@@ -87,33 +121,33 @@ migration pod.
 `txo-fabric-system` is default-deny. `NetworkPolicy/txo-ai-gateway-access` allows:
 
 - inbound TCP/4000 from Fabric-managed tenant namespaces, limited to Hermes agent pods;
-- inbound TCP/4000 from the TXO Fabric operator for future virtual-key reconciliation;
+- inbound TCP/4000 from the TXO Fabric operator for virtual-key reconciliation;
 - DNS egress;
 - PostgreSQL egress only to the `postgresql-shared` pods on TCP/5432;
 - public HTTPS egress on TCP/443 while excluding private/link-local IPv4 ranges.
+
+The operator egress policy permits only DNS, the cluster-wide kube-apiserver path,
+and TCP/4000 to the local AI gateway. Each Hermes egress policy permits DNS,
+TCP/4000 to the local AI gateway and, when configured, TCP/8888 to its tenant-local
+Hindsight service. Hermes is not granted generic Internet egress for model access.
 
 `NetworkPolicy/txo-ai-gateway-migration-egress` separately limits the migration
 Job to DNS plus TCP/5432 toward `postgresql-shared`. The migration pod uses a
 distinct `app.kubernetes.io/name` label and is never selected by
 `Service/txo-ai-gateway`.
 
-The AgentIdentity integration slice must restrict each Hermes runtime to this
-Service instead of granting generic Internet egress.
+## Physical validation
 
-## Physical acceptance for this foundation
+The gateway foundation was physically validated on grenat for #3607:
 
-Before integrating AgentIdentity reconciliation, validate on grenat that:
+1. the dedicated Prisma migration Job applied all 171 bundled migrations successfully;
+2. `Deployment/txo-ai-gateway` became Ready and `/health/readiness` returned 200;
+3. a scoped virtual key restricted to `txo-default` was generated;
+4. that key reached `openrouter/openai/gpt-5.6-luna` through the local gateway and returned a successful completion;
+5. tenant/agent metadata was preserved on the key;
+6. the request cost was persisted in LiteLLM spend logs asynchronously.
 
-1. both ExternalSecrets are Ready without printing secret values;
-2. the CNPG DatabaseRole and Database are applied;
-3. `Job/txo-ai-gateway-migrations` completes successfully and the LiteLLM schema is present;
-4. `Deployment/txo-ai-gateway` is Ready;
-5. `/health/readiness` succeeds;
-6. a LiteLLM virtual key can be generated using the master credential without displaying either key;
-7. that virtual key can call model `txo-default` through the gateway;
-8. LiteLLM records the request against its PostgreSQL-backed key/spend state.
-
-The next slice of #3607 will create/reconcile one scoped virtual key per
-`AgentIdentity`, inject only that virtual key into Hermes, point Hermes at
-`http://txo-ai-gateway.txo-fabric-system.svc:4000/v1`, and replace the current
-`AuthBlocked` status with a real ModelAccessReady condition after validation.
+The AgentIdentity integration must now be physically validated by allowing a real
+Hermes runtime such as `fabric-smoke-probe` to leave `AuthBlocked`, call
+`txo-default` through the gateway, and produce tenant/agent-attributed spend without
+receiving any upstream provider credential.
