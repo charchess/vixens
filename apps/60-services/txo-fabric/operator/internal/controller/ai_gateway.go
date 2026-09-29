@@ -1,0 +1,26 @@
+package controller
+
+import (
+	"fmt"
+
+	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
+)
+
+const (
+	defaultAIGatewayURL     = "http://txo-ai-gateway.txo-fabric-system.svc:4000"
+	defaultAIGatewayModel   = "txo-default"
+	modelAccessSecretKey    = "OPENAI_API_KEY"
+	modelAccessSecretSuffix = "-model-access"
+)
+
+func modelAccessSecretName(agentKey string) string {
+	return runtimeName(agentKey) + modelAccessSecretSuffix
+}
+
+func modelAccessKeyAlias(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) string {
+	return modelAccessKeyAliasForNames(tenant.Name, agent.Spec.AgentKey)
+}
+
+func modelAccessKeyAliasForNames(tenantName, agentKey string) string {
+	return fmt.Sprintf("txo-fabric:%s:%s", tenantName, agentKey)
+}

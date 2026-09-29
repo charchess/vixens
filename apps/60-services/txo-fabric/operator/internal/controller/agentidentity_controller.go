@@ -29,6 +29,7 @@ type AgentIdentityReconciler struct {
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities/finalizers,verbs=update
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles;agentruntimeprofiles,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=namespaces;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
 
@@ -97,6 +98,11 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "PVCReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}
+	if err := r.ensureModelAccess(ctx, &agent, &tenant, namespace); err != nil {
+		r.setStatus(ctx, &agent, "AuthBlocked", "ModelAccessReady", metav1.ConditionFalse, "GatewayCredentialReconcileFailed", err.Error())
+		return ctrl.Result{}, err
+	}
+	setCondition(&agent.Status.Conditions, agent.Generation, "ModelAccessReady", metav1.ConditionTrue, "GatewayCredentialReady", "scoped TXO AI gateway credential is reconciled")
 	if err := r.ensureDeployment(ctx, &agent, &tenant, &profile, namespace); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "DeploymentReconcileFailed", err.Error())
 		return ctrl.Result{}, err
@@ -129,10 +135,9 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	setCondition(&agent.Status.Conditions, agent.Generation, "RuntimeProfileResolved", metav1.ConditionTrue, "Resolved", fmt.Sprintf("AgentRuntimeProfile %q resolved", profile.Name))
 	setCondition(&agent.Status.Conditions, agent.Generation, "NetworkReady", metav1.ConditionTrue, "Reconciled", "runtime egress policy is reconciled")
 	if deployment.Status.AvailableReplicas > 0 && deployment.Status.ObservedGeneration == deployment.Generation {
-		agent.Status.Phase = "AuthBlocked"
+		agent.Status.Phase = "Ready"
 		setCondition(&agent.Status.Conditions, agent.Generation, "RuntimeReady", metav1.ConditionTrue, "DeploymentAvailable", "Hermes runtime Deployment is available")
-		setCondition(&agent.Status.Conditions, agent.Generation, "ModelAccessReady", metav1.ConditionFalse, "LLMAuthUnconfigured", "TXO LLM credential broker is not configured yet")
-		setCondition(&agent.Status.Conditions, agent.Generation, "Ready", metav1.ConditionFalse, "LLMAuthUnconfigured", "runtime is healthy but model access is intentionally blocked")
+		setCondition(&agent.Status.Conditions, agent.Generation, "Ready", metav1.ConditionTrue, "Ready", "runtime and scoped model access are ready")
 	} else {
 		agent.Status.Phase = "Provisioning"
 		setCondition(&agent.Status.Conditions, agent.Generation, "RuntimeReady", metav1.ConditionFalse, "DeploymentProgressing", "waiting for the Hermes Deployment to become available")

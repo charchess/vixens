@@ -52,6 +52,14 @@ spec:
             - --leader-elect=true
             - --metrics-bind-address=:8080
             - --health-probe-bind-address=:8081
+          env:
+            - name: TXO_AI_GATEWAY_URL
+              value: http://txo-ai-gateway.txo-fabric-system.svc:4000
+            - name: TXO_AI_GATEWAY_ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: txo-ai-gateway-admin
+                  key: admin-token
           ports:
             - name: metrics
               containerPort: 8080

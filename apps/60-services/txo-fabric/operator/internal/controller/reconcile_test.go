@@ -2,6 +2,9 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
@@ -21,6 +24,24 @@ import (
 
 func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	ctx := context.Background()
+	var keyRequest map[string]any
+	gateway := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path != "/key/generate" {
+			t.Fatalf("unexpected gateway path %q", req.URL.Path)
+		}
+		if req.Header.Get("Authorization") != "Bearer test-admin-token" {
+			t.Fatalf("unexpected gateway authorization header")
+		}
+		if err := json.NewDecoder(req.Body).Decode(&keyRequest); err != nil {
+			t.Fatal(err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"key":"test-virtual-key"}`))
+	}))
+	defer gateway.Close()
+	t.Setenv("TXO_AI_GATEWAY_URL", gateway.URL)
+	t.Setenv("TXO_AI_GATEWAY_ADMIN_TOKEN", "test-admin-token")
+
 	scheme := testScheme(t)
 	tenant := testTenant()
 	profile := testRuntimeProfile()
@@ -59,6 +80,22 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if got := keyRequest["key_alias"]; got != "txo-fabric:hairem-sandbox:tina" {
+		t.Fatalf("gateway key alias = %#v", got)
+	}
+	models, ok := keyRequest["models"].([]any)
+	if !ok || len(models) != 1 || models[0] != "txo-default" {
+		t.Fatalf("gateway models = %#v", keyRequest["models"])
+	}
+
+	var modelSecret corev1.Secret
+	if err := c.Get(ctx, types.NamespacedName{Name: "hermes-tina-model-access", Namespace: ns.Name}, &modelSecret); err != nil {
+		t.Fatalf("model access Secret not reconciled: %v", err)
+	}
+	if string(modelSecret.Data["OPENAI_API_KEY"]) != "test-virtual-key" {
+		t.Fatal("model access Secret does not contain generated virtual key")
+	}
+
 	var deployment appsv1.Deployment
 	if err := c.Get(ctx, types.NamespacedName{Name: "hermes-tina", Namespace: ns.Name}, &deployment); err != nil {
 		t.Fatalf("runtime deployment not reconciled: %v", err)
@@ -79,6 +116,19 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	if got := envValue(container.Env, "TXO_AGENT_KEY"); got != "tina" {
 		t.Fatalf("TXO_AGENT_KEY = %q, want tenant-local key", got)
 	}
+	if got := envValue(container.Env, "TXO_LLM_AUTH_MODE"); got != "gateway" {
+		t.Fatalf("TXO_LLM_AUTH_MODE = %q, want gateway", got)
+	}
+	if got := envValue(container.Env, "OPENAI_BASE_URL"); got != defaultAIGatewayURL+"/v1" {
+		t.Fatalf("OPENAI_BASE_URL = %q", got)
+	}
+	if got := envValue(container.Env, "HERMES_MODEL"); got != "txo-default" {
+		t.Fatalf("HERMES_MODEL = %q", got)
+	}
+	apiKey := envVar(container.Env, "OPENAI_API_KEY")
+	if apiKey == nil || apiKey.ValueFrom == nil || apiKey.ValueFrom.SecretKeyRef == nil || apiKey.ValueFrom.SecretKeyRef.Name != "hermes-tina-model-access" || apiKey.ValueFrom.SecretKeyRef.Key != "OPENAI_API_KEY" {
+		t.Fatalf("OPENAI_API_KEY does not reference scoped model access Secret: %#v", apiKey)
+	}
 
 	var pvc corev1.PersistentVolumeClaim
 	if err := c.Get(ctx, types.NamespacedName{Name: "hermes-tina-data", Namespace: ns.Name}, &pvc); err != nil {
@@ -92,8 +142,8 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	if err := c.Get(ctx, types.NamespacedName{Name: "hermes-tina-egress", Namespace: ns.Name}, &egress); err != nil {
 		t.Fatalf("runtime egress policy not reconciled: %v", err)
 	}
-	if len(egress.Spec.Egress) != 2 {
-		t.Fatalf("expected DNS + tenant Hindsight egress rules, got %d", len(egress.Spec.Egress))
+	if len(egress.Spec.Egress) != 3 {
+		t.Fatalf("expected DNS + AI gateway + tenant Hindsight egress rules, got %d", len(egress.Spec.Egress))
 	}
 
 	var current fabricv1alpha1.AgentIdentity
@@ -102,6 +152,15 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	}
 	if current.Status.Memory.BankID != "hairem-sandbox-tina" {
 		t.Fatalf("resolved bank = %q, want hairem-sandbox-tina", current.Status.Memory.BankID)
+	}
+	modelReady := false
+	for _, condition := range current.Status.Conditions {
+		if condition.Type == "ModelAccessReady" && condition.Status == metav1.ConditionTrue && condition.Reason == "GatewayCredentialReady" {
+			modelReady = true
+		}
+	}
+	if !modelReady {
+		t.Fatalf("ModelAccessReady condition missing: %#v", current.Status.Conditions)
 	}
 }
 
@@ -215,10 +274,17 @@ func reconcileTenant(t *testing.T, ctx context.Context, c client.Client, scheme 
 }
 
 func envValue(env []corev1.EnvVar, name string) string {
-	for _, item := range env {
-		if item.Name == name {
-			return item.Value
-		}
+	if item := envVar(env, name); item != nil {
+		return item.Value
 	}
 	return ""
+}
+
+func envVar(env []corev1.EnvVar, name string) *corev1.EnvVar {
+	for i := range env {
+		if env[i].Name == name {
+			return &env[i]
+		}
+	}
+	return nil
 }
