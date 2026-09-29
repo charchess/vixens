@@ -31,13 +31,24 @@ func aiGatewayAdminToken() string {
 }
 
 func generateModelAccessKey(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) (string, error) {
+	return generateScopedModelAccessKey(ctx, modelAccessKeyAlias(agent, tenant), []string{defaultAIGatewayModel}, map[string]string{
+		"tenant": tenant.Name, "tenant_id": tenant.Spec.TenantID,
+		"agent": agent.Spec.AgentKey, "agent_id": agent.Name,
+	})
+}
+
+func generateHindsightEmbeddingAccessKey(ctx context.Context, tenant *fabricv1alpha1.TenantBundle) (string, error) {
+	return generateScopedModelAccessKey(ctx, hindsightEmbeddingKeyAlias(tenant), []string{defaultAIEmbeddingModel}, map[string]string{
+		"tenant": tenant.Name, "tenant_id": tenant.Spec.TenantID,
+		"component": "hindsight", "capability": "embeddings",
+	})
+}
+
+func generateScopedModelAccessKey(ctx context.Context, alias string, models []string, metadata map[string]string) (string, error) {
 	payload := map[string]any{
-		"key_alias": modelAccessKeyAlias(agent, tenant),
-		"models":    []string{defaultAIGatewayModel},
-		"metadata": map[string]string{
-			"tenant": tenant.Name, "tenant_id": tenant.Spec.TenantID,
-			"agent": agent.Spec.AgentKey, "agent_id": agent.Name,
-		},
+		"key_alias": alias,
+		"models":    models,
+		"metadata":  metadata,
 	}
 	var response generateKeyResponse
 	if err := aiGatewayJSON(ctx, "/key/generate", payload, &response); err != nil {
