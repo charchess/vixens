@@ -49,6 +49,24 @@ gh workflow run promote-prod.yaml -f version=v2026.09.1234
 
 The promotion workflow owns `prod-stable`. Do **not** create or force-move `prod-stable` manually during normal operation.
 
+## Authoritative PR validation gate
+
+The `main` ruleset requires one status check: `Validation Summary` from `.github/workflows/validate.yaml`.
+
+That job is the authoritative merge gate, not an informational report. It waits for every validation family that applies to the current change and fails unless each applicable family completed with `success`. A path-based `skipped` result is accepted only when that family is explicitly non-applicable; `failure`, `cancelled`, `timed_out`, or an unexpected `skipped` result block the PR.
+
+The orchestration remains path-aware:
+
+- documentation-only changes do not require Kubernetes render checks or TXO Fabric operator CI;
+- Kubernetes/GitOps changes run YAML, ArgoCD, Kustomize/Kubeconform and production-configuration validation;
+- changes under `apps/60-services/txo-fabric/operator/**` (or to its reusable workflow) run module drift, `go test ./...`, `go vet ./...`, generated API/RBAC drift and image build checks;
+- the retired-pattern guard is part of the central gate for every PR;
+- informational workflows such as PR preview/metrics remain outside the required gate by design.
+
+Component-specific validation is invoked as a reusable workflow from `Validate & Security` instead of being configured as a separate path-scoped required status. This prevents unrelated PRs from waiting for checks that were never meant to run.
+
+This gate validates repository state before merge. It does not replace ArgoCD dev reconciliation, physical runtime validation, or the deliberate manual production promotion decision.
+
 ## Secrets
 
 The canonical secret path is:
