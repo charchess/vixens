@@ -1,0 +1,23 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: HindsightProfile
+metadata:
+  name: hindsight-gateway
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: memory-profile
+spec:
+  topology: TenantScoped
+  image: ghcr.io/vectorize-io/hindsight-api:0.10.1
+  apiPort: 8888
+  apiAuthMode: ApiKey
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+  priorityClassName: vixens-medium
+  sizingLabel: V-scout
+  llmAuthMode: PlatformGateway
