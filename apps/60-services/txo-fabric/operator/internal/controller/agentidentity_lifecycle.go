@@ -119,6 +119,9 @@ func (r *AgentIdentityReconciler) requestsForTenant(ctx context.Context, obj cli
 }
 
 func (r *AgentIdentityReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if r.APIReader == nil {
+		r.APIReader = mgr.GetAPIReader()
+	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&fabricv1alpha1.AgentIdentity{}).
 		Owns(&appsv1.Deployment{}).
