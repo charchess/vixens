@@ -51,7 +51,7 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, deployment, func() error {
 		labels := agentLabels(agent, tenant)
 		deployment.Labels = mergeStringMap(deployment.Labels, labels)
-		deployment.Annotations = mergeStringMap(deployment.Annotations, map[string]string{AnnotationRuntimeState: "auth-blocked"})
+		deployment.Annotations = mergeStringMap(deployment.Annotations, map[string]string{AnnotationRuntimeState: "gateway"})
 		replicas := int32(1)
 		revisionHistory := int32(2)
 		deployment.Spec.Replicas = &replicas
@@ -92,7 +92,16 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 						{Name: "TXO_TENANT_ID", Value: tenant.Spec.TenantID},
 						{Name: "TXO_TENANT_NAME", Value: tenant.Name},
 						{Name: "TXO_MEMORY_BANK_ID", Value: resolvedBankID(agent)},
-						{Name: "TXO_LLM_AUTH_MODE", Value: "unconfigured"},
+						{Name: "TXO_LLM_AUTH_MODE", Value: "gateway"},
+						{Name: "OPENAI_BASE_URL", Value: defaultAIGatewayURL + "/v1"},
+						{Name: "HERMES_MODEL", Value: defaultAIGatewayModel},
+						{
+							Name: "OPENAI_API_KEY",
+							ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{Name: modelAccessSecretName(agent.Spec.AgentKey)},
+								Key:                  modelAccessSecretKey,
+							}},
+						},
 					},
 					Resources:      profile.Spec.Resources,
 					VolumeMounts:   []corev1.VolumeMount{{Name: "data", MountPath: "/opt/data"}},
@@ -116,10 +125,19 @@ func (r *AgentIdentityReconciler) ensureEgressPolicy(ctx context.Context, agent 
 		np.Spec = networkingv1.NetworkPolicySpec{
 			PodSelector: metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hermes-agent", LabelInstance: agent.Spec.AgentKey}},
 			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeEgress},
-			Egress: []networkingv1.NetworkPolicyEgressRule{{
-				To: []networkingv1.NetworkPolicyPeer{{NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"}}}},
-				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolUDP), Port: intOrStringPtr(53)}, {Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(53)}},
-			}},
+			Egress: []networkingv1.NetworkPolicyEgressRule{
+				{
+					To:    []networkingv1.NetworkPolicyPeer{{NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"}}}},
+					Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolUDP), Port: intOrStringPtr(53)}, {Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(53)}},
+				},
+				{
+					To: []networkingv1.NetworkPolicyPeer{{
+						NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "txo-fabric-system"}},
+						PodSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "txo-ai-gateway"}},
+					}},
+					Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(4000)}},
+				},
+			},
 		}
 		if tenant.Spec.Memory.Hindsight != nil {
 			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
