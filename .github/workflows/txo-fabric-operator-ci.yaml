@@ -2,18 +2,7 @@
 name: TXO Fabric Operator CI
 
 on:
-  pull_request:
-    paths:
-      - apps/60-services/txo-fabric/operator/**
-      - .github/workflows/txo-fabric-operator-ci.yaml
-  push:
-    branches: [main]
-    paths:
-      - apps/60-services/txo-fabric/operator/**/*.go
-      - apps/60-services/txo-fabric/operator/go.mod
-      - apps/60-services/txo-fabric/operator/go.sum
-      - apps/60-services/txo-fabric/operator/Dockerfile
-      - .github/workflows/txo-fabric-operator-ci.yaml
+  workflow_call:
 
 jobs:
   sync-generated:
