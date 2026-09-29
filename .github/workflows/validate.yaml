@@ -19,6 +19,7 @@ jobs:
     outputs:
       k8s: ${{ steps.filter.outputs.k8s }}
       security: ${{ steps.filter.outputs.security }}
+      txo_operator: ${{ steps.filter.outputs.txo_operator }}
     steps:
       - uses: actions/checkout@v4
 
@@ -34,6 +35,9 @@ jobs:
               - '**/kustomization.yaml'
             security:
               - '**'
+            txo_operator:
+              - 'apps/60-services/txo-fabric/operator/**'
+              - '.github/workflows/txo-fabric-operator-ci.yaml'
 
   # 1️⃣ Validation YAML robuste
   yaml-lint:
@@ -460,7 +464,19 @@ jobs:
           echo ""
           echo "ℹ️ This is informational only - workflow continues regardless of findings"
 
-  # 7️⃣ Vérification de la configuration production (trunk-based)
+  # 7️⃣ Reusable validation families orchestrated by the required gate
+  retired-patterns:
+    name: Retired Pattern Guard
+    uses: ./.github/workflows/retired-patterns.yaml
+
+  txo-fabric-operator:
+    name: TXO Fabric Operator CI
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.txo_operator == 'true'
+    uses: ./.github/workflows/txo-fabric-operator-ci.yaml
+    secrets: inherit
+
+  # 8️⃣ Vérification de la configuration production (trunk-based)
   prod-config-check:
     name: Production Configuration
     needs: [detect-changes, yaml-lint, secret-scan]
@@ -496,23 +512,107 @@ jobs:
 
           echo "✅ Production configuration OK"
 
-  # 8️⃣ Résumé final
+  # 9️⃣ Authoritative required gate
   validation-summary:
     name: Validation Summary
     runs-on: ubuntu-latest
-    needs: [yaml-lint, argocd-validate, kustomize-validate, secret-scan, security-scan, branch-flow, prod-config-check]
+    needs:
+      - detect-changes
+      - yaml-lint
+      - argocd-validate
+      - kustomize-validate
+      - secret-scan
+      - security-scan
+      - image-scan
+      - branch-flow
+      - retired-patterns
+      - txo-fabric-operator
+      - prod-config-check
     if: always()
     steps:
-      - name: Create summary
+      - name: Evaluate authoritative gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          K8S_APPLICABLE: ${{ needs.detect-changes.outputs.k8s == 'true' }}
+          OPERATOR_APPLICABLE: ${{ needs.detect-changes.outputs.txo_operator == 'true' }}
+          DETECT_RESULT: ${{ needs.detect-changes.result }}
+          YAML_RESULT: ${{ needs.yaml-lint.result }}
+          ARGOCD_RESULT: ${{ needs.argocd-validate.result }}
+          KUSTOMIZE_RESULT: ${{ needs.kustomize-validate.result }}
+          SECRET_RESULT: ${{ needs.secret-scan.result }}
+          SECURITY_RESULT: ${{ needs.security-scan.result }}
+          IMAGE_RESULT: ${{ needs.image-scan.result }}
+          BRANCH_RESULT: ${{ needs.branch-flow.result }}
+          RETIRED_RESULT: ${{ needs.retired-patterns.result }}
+          OPERATOR_RESULT: ${{ needs.txo-fabric-operator.result }}
+          PROD_RESULT: ${{ needs.prod-config-check.result }}
         run: |
-          echo "## ✅ Validation Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| YAML Lint | ${{ needs.yaml-lint.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ArgoCD Apps | ${{ needs.argocd-validate.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Kustomize + Kubeconform | ${{ needs.kustomize-validate.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Secret Scan | ${{ needs.secret-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security Check | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Branch Flow | ${{ needs.branch-flow.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Prod Config | ${{ needs.prod-config-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          set -euo pipefail
+
+          BLOCKING=0
+          SUMMARY="$GITHUB_STEP_SUMMARY"
+
+          {
+            echo "## Validation Report"
+            echo ""
+            echo "| Validation family | Applicability | Result |"
+            echo "|---|---|---|"
+          } >> "$SUMMARY"
+
+          record() {
+            local label="$1"
+            local applicability="$2"
+            local result="$3"
+            printf '| %s | %s | %s |\n' "$label" "$applicability" "$result" >> "$SUMMARY"
+          }
+
+          require_success() {
+            local label="$1"
+            local result="$2"
+            if [ "$result" = "success" ]; then
+              record "$label" "applicable" "✅ success"
+            else
+              record "$label" "applicable" "❌ $result"
+              BLOCKING=1
+            fi
+          }
+
+          require_conditional() {
+            local label="$1"
+            local result="$2"
+            local applicable="$3"
+            if [ "$applicable" = "true" ]; then
+              require_success "$label" "$result"
+            elif [ "$result" = "skipped" ]; then
+              record "$label" "not applicable" "⏭️ skipped"
+            else
+              record "$label" "not applicable" "❌ expected skipped, got $result"
+              BLOCKING=1
+            fi
+          }
+
+          require_success "Change detection" "$DETECT_RESULT"
+          require_success "Secret scanning" "$SECRET_RESULT"
+          require_success "Security best practices" "$SECURITY_RESULT"
+          require_success "Container image security" "$IMAGE_RESULT"
+          require_success "Retired pattern guard" "$RETIRED_RESULT"
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            require_conditional "Branch flow" "$BRANCH_RESULT" "true"
+          else
+            require_conditional "Branch flow" "$BRANCH_RESULT" "false"
+          fi
+
+          require_conditional "YAML syntax & style" "$YAML_RESULT" "$K8S_APPLICABLE"
+          require_conditional "ArgoCD structure" "$ARGOCD_RESULT" "$K8S_APPLICABLE"
+          require_conditional "Kustomize + Kubeconform" "$KUSTOMIZE_RESULT" "$K8S_APPLICABLE"
+          require_conditional "Production configuration" "$PROD_RESULT" "$K8S_APPLICABLE"
+          require_conditional "TXO Fabric operator CI" "$OPERATOR_RESULT" "$OPERATOR_APPLICABLE"
+
+          echo "" >> "$SUMMARY"
+          if [ "$BLOCKING" -ne 0 ]; then
+            echo "❌ One or more applicable validation families did not complete successfully." >> "$SUMMARY"
+            exit 1
+          fi
+
+          echo "✅ All applicable validation families completed successfully; non-applicable families were intentionally skipped." >> "$SUMMARY"
