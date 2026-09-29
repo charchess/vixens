@@ -2,6 +2,8 @@ package controller
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
@@ -14,6 +16,14 @@ import (
 
 func TestAgentReconcileAdoptsExistingPVCWithoutRecreating(t *testing.T) {
 	ctx := context.Background()
+	gateway := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"key":"test-adoption-key"}`))
+	}))
+	defer gateway.Close()
+	t.Setenv("TXO_AI_GATEWAY_URL", gateway.URL)
+	t.Setenv("TXO_AI_GATEWAY_ADMIN_TOKEN", "test-admin-token")
+
 	scheme := testScheme(t)
 	tenant := testTenant()
 	profile := testRuntimeProfile()
