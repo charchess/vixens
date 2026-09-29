@@ -18,5 +18,9 @@ func modelAccessSecretName(agentKey string) string {
 }
 
 func modelAccessKeyAlias(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) string {
-	return fmt.Sprintf("txo-fabric:%s:%s", tenant.Name, agent.Spec.AgentKey)
+	return modelAccessKeyAliasForNames(tenant.Name, agent.Spec.AgentKey)
+}
+
+func modelAccessKeyAliasForNames(tenantName, agentKey string) string {
+	return fmt.Sprintf("txo-fabric:%s:%s", tenantName, agentKey)
 }
