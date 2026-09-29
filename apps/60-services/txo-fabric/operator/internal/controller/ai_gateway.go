@@ -7,10 +7,13 @@ import (
 )
 
 const (
-	defaultAIGatewayURL     = "http://txo-ai-gateway.txo-fabric-system.svc:4000"
-	defaultAIGatewayModel   = "txo-default"
-	modelAccessSecretKey    = "OPENAI_API_KEY"
-	modelAccessSecretSuffix = "-model-access"
+	defaultAIGatewayURL         = "http://txo-ai-gateway.txo-fabric-system.svc:4000"
+	defaultAIGatewayModel       = "txo-default"
+	defaultAIEmbeddingModel     = "txo-embedding"
+	defaultAIEmbeddingDimension = "384"
+	modelAccessSecretKey        = "OPENAI_API_KEY"
+	modelAccessSecretSuffix     = "-model-access"
+	hindsightEmbeddingSecretKey = "HINDSIGHT_API_EMBEDDINGS_OPENAI_API_KEY"
 )
 
 func modelAccessSecretName(agentKey string) string {
@@ -23,4 +26,8 @@ func modelAccessKeyAlias(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1al
 
 func modelAccessKeyAliasForNames(tenantName, agentKey string) string {
 	return fmt.Sprintf("txo-fabric:%s:%s", tenantName, agentKey)
+}
+
+func hindsightEmbeddingKeyAlias(bundle *fabricv1alpha1.TenantBundle) string {
+	return fmt.Sprintf("txo-fabric:%s:hindsight-embeddings", bundle.Name)
 }

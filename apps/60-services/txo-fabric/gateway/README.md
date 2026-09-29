@@ -9,7 +9,7 @@ upstream provider credentials.
 TXO Fabric uses LiteLLM as an OpenAI-compatible gateway in `txo-fabric-system`:
 
 ```text
-AgentIdentity controller
+TXO Fabric operator
     |
     | LiteLLM admin credential
     | /key/generate + /key/delete
@@ -22,19 +22,27 @@ Service/txo-ai-gateway:4000
 
 Hermes
     |
-    | scoped LiteLLM virtual key
+    | per-AgentIdentity scoped LiteLLM virtual key
     | model = txo-default
     v
 Service/txo-ai-gateway:4000/v1
+
+Tenant Hindsight
+    |
+    | per-TenantBundle scoped LiteLLM virtual key
+    | model = txo-embedding
+    v
+Service/txo-ai-gateway:4000/v1/embeddings
 ```
 
-Hindsight keeps the local embedding/reranker path already validated physically in
-#3602. Remote Hindsight embeddings are not part of this gateway slice.
+The gateway exposes stable local aliases instead of leaking provider/model identifiers
+to tenant workloads:
 
-The gateway exposes one stable local model alias, `txo-default`. The initial
-upstream is `openrouter/openai/gpt-5.6-luna`; tenant declarations bind to the local
-alias rather than to this provider/model identifier so routing can change centrally
-later.
+- `txo-default` -> initially `openrouter/openai/gpt-5.6-luna`;
+- `txo-embedding` -> initially `openrouter/openai/text-embedding-3-small`.
+
+Provider/model routing can therefore change centrally without rebuilding tenant
+workloads or rewriting tenant intent.
 
 ## AgentIdentity model access
 
@@ -59,6 +67,37 @@ best-effort so a temporary gateway outage cannot wedge the AgentIdentity finaliz
 Once the Hermes Deployment is also available, the AgentIdentity may transition to
 `Ready` instead of the previous deliberate `AuthBlocked` state.
 
+## Hindsight embedding access
+
+`HindsightProfile.spec.llmAuthMode=PlatformGateway` activates the existing platform
+model-credential boundary for tenant Hindsight. In the current slice this does not
+enable Hindsight LLM processing: `HINDSIGHT_API_LLM_PROVIDER` remains `none` so
+retain behavior does not silently change. The scoped credential is used only for
+remote embeddings.
+
+The operator stores the tenant-scoped LiteLLM key inside the existing
+`Secret/hindsight-runtime` and configures Hindsight 0.10.1 with its supported
+OpenAI-compatible embedding contract:
+
+- `HINDSIGHT_API_EMBEDDINGS_PROVIDER=openai`;
+- `HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL=http://txo-ai-gateway.txo-fabric-system.svc:4000/v1`;
+- `HINDSIGHT_API_EMBEDDINGS_OPENAI_MODEL=txo-embedding`;
+- `HINDSIGHT_API_EMBEDDINGS_OPENAI_API_KEY=<scoped LiteLLM virtual key>`;
+- `HINDSIGHT_API_EMBEDDINGS_OPENAI_DIMENSIONS=384`.
+
+The virtual key is restricted to `txo-embedding` and carries tenant metadata plus
+`component=hindsight` and `capability=embeddings`. Hindsight therefore cannot use
+this credential to call `txo-default`.
+
+The explicit 384-dimensional output preserves compatibility with banks created
+using the previous local `BAAI/bge-small-en-v1.5` embedding path. The local reranker
+remains in place and the baked-model offline flags remain enabled; only embedding
+inference moves behind the gateway.
+
+Tenant deletion revokes the deterministic Hindsight embedding-key alias on a
+best-effort basis after Fabric-owned Hindsight resources have been removed. A
+gateway outage must not wedge tenant cleanup.
+
 ## Secrets
 
 No secret value is stored in Git. `ExternalSecret` resources read
@@ -78,7 +117,9 @@ Three platform Kubernetes Secrets are projected with distinct scope:
 - `txo-fabric-system/txo-ai-gateway-admin` contains only the LiteLLM administrative token consumed by the TXO Fabric operator.
 
 Per-agent model-access Secrets live in their tenant namespace and contain only the
-scoped LiteLLM virtual key.
+scoped LiteLLM virtual key. Tenant Hindsight reuses its existing `hindsight-runtime`
+Secret and adds only its scoped embedding virtual key; it never receives the
+OpenRouter provider credential or LiteLLM administrative credential.
 
 ## Persistence
 
@@ -120,7 +161,7 @@ migration pod.
 
 `txo-fabric-system` is default-deny. `NetworkPolicy/txo-ai-gateway-access` allows:
 
-- inbound TCP/4000 from Fabric-managed tenant namespaces, limited to Hermes agent pods;
+- inbound TCP/4000 from Fabric-managed tenant namespaces, limited to Hermes and Hindsight pods;
 - inbound TCP/4000 from the TXO Fabric operator for virtual-key reconciliation;
 - DNS egress;
 - PostgreSQL egress only to the `postgresql-shared` pods on TCP/5432;
@@ -131,23 +172,44 @@ and TCP/4000 to the local AI gateway. Each Hermes egress policy permits DNS,
 TCP/4000 to the local AI gateway and, when configured, TCP/8888 to its tenant-local
 Hindsight service. Hermes is not granted generic Internet egress for model access.
 
+A gateway-backed Hindsight egress policy permits only DNS, its tenant PostgreSQL
+binding, and TCP/4000 to `txo-ai-gateway`. Hindsight receives no generic provider
+Internet egress.
+
 `NetworkPolicy/txo-ai-gateway-migration-egress` separately limits the migration
 Job to DNS plus TCP/5432 toward `postgresql-shared`. The migration pod uses a
 distinct `app.kubernetes.io/name` label and is never selected by
 `Service/txo-ai-gateway`.
 
+## Privacy / RGPD boundary
+
+Brokered embeddings change the data boundary: the text sent for embedding leaves
+the tenant pod and cluster through the proprietor gateway and is then sent to the
+configured upstream provider. The gateway centralizes the provider credential,
+routing and accounting, but it does not make that upstream processing local.
+
+Deployment/contract decisions must therefore treat embedding input as customer
+data and document the selected provider/subprocessor, processing location,
+retention/logging behavior and any required data-processing agreement. The stable
+`txo-embedding` alias intentionally keeps those provider choices on the platform
+side so a local/on-cluster embedding backend can replace offshore routing later
+without changing tenant workloads.
+
 ## Physical validation
 
-The gateway foundation was physically validated on grenat for #3607:
+The gateway and AgentIdentity LLM path were physically validated on grenat for
+#3607:
 
 1. the dedicated Prisma migration Job applied all 171 bundled migrations successfully;
 2. `Deployment/txo-ai-gateway` became Ready and `/health/readiness` returned 200;
-3. a scoped virtual key restricted to `txo-default` was generated;
-4. that key reached `openrouter/openai/gpt-5.6-luna` through the local gateway and returned a successful completion;
-5. tenant/agent metadata was preserved on the key;
-6. the request cost was persisted in LiteLLM spend logs asynchronously.
+3. a scoped `fabric-smoke-probe` virtual key restricted to `txo-default` was reconciled;
+4. the real Hermes pod called `txo-default` through the local gateway and returned `TXO_AGENT_GATEWAY_OK` with HTTP 200;
+5. the response reported token usage and cost (`1.52e-05` for the validation call);
+6. the AgentIdentity reached `ModelAccessReady=True`, `RuntimeReady=True` and `Ready=True`;
+7. the operator no longer requires cluster-wide Secret list/watch access.
 
-The AgentIdentity integration must now be physically validated by allowing a real
-Hermes runtime such as `fabric-smoke-probe` to leave `AuthBlocked`, call
-`txo-default` through the gateway, and produce tenant/agent-attributed spend without
-receiving any upstream provider credential.
+The remaining #3607 physical gate is the Hindsight embedding slice: after the
+operator image pin is promoted, perform a real tenant Hindsight retain/recall using
+the gateway-backed embedding path, verify the request is attributed/metered in
+LiteLLM, and confirm the existing `capybara` and `ultraviolet` memory markers remain
+recallable.

@@ -21,6 +21,12 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: hermes-agent
+        - namespaceSelector:
+            matchLabels:
+              fabric.truxonline.io/managed: "true"
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: hindsight
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: txo-fabric-operator

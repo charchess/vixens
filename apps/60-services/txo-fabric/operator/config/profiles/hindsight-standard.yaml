@@ -20,4 +20,4 @@ spec:
       memory: 4Gi
   priorityClassName: vixens-medium
   sizingLabel: V-scout
-  llmAuthMode: Unconfigured
+  llmAuthMode: PlatformGateway
