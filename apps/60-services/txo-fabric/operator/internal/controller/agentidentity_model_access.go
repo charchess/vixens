@@ -20,7 +20,7 @@ func (r *AgentIdentityReconciler) ensureModelAccess(ctx context.Context, agent *
 		if len(secret.Data[modelAccessSecretKey]) == 0 {
 			return fmt.Errorf("model access Secret %s/%s is missing %s", namespace, name, modelAccessSecretKey)
 		}
-		_, err = controllerutil.CreateOrUpdate(ctx, r.Client, &secret, func() error {
+		_, err = controllerutil.CreateOrUpdate(ctx, r, &secret, func() error {
 			secret.Labels = mergeStringMap(secret.Labels, agentLabels(agent, tenant))
 			secret.Type = corev1.SecretTypeOpaque
 			return controllerutil.SetControllerReference(agent, &secret, r.Scheme)
