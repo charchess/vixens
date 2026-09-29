@@ -23,6 +23,7 @@ spec:
         app.kubernetes.io/name: txo-ai-gateway
         app.kubernetes.io/part-of: txo-fabric
         app.kubernetes.io/component: ai-egress
+        vixens.io/sizing.litellm: V-scout
     spec:
       automountServiceAccountToken: false
       priorityClassName: vixens-medium
@@ -82,7 +83,7 @@ spec:
               memory: 512Mi
             limits:
               cpu: "2"
-              memory: 2Gi
+              memory: 8Gi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
