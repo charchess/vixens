@@ -7,5 +7,7 @@ model_list:
     litellm_params:
       model: openrouter/openai/text-embedding-3-small
       api_key: os.environ/OPENROUTER_API_KEY
+      input_cost_per_token: 0.00000002
+      output_cost_per_token: 0.0
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
