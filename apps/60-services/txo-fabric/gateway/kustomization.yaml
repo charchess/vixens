@@ -5,6 +5,8 @@ resources:
   - external-secrets.yaml
   - database.yaml
   - configmap.yaml
+  - migration-job.yaml
+  - migration-networkpolicy.yaml
   - deployment.yaml
   - service.yaml
   - networkpolicy.yaml

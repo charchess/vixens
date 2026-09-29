@@ -1,0 +1,67 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: txo-ai-gateway-migrations
+  namespace: txo-fabric-system
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+  labels:
+    app.kubernetes.io/name: txo-ai-gateway-migration
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: ai-egress
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: txo-ai-gateway-migration
+        app.kubernetes.io/part-of: txo-fabric
+        app.kubernetes.io/component: ai-egress
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      priorityClassName: vixens-medium
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: prisma-migrations
+          image: ghcr.io/berriai/litellm-non_root:v1.102.1
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              export DATABASE_URL="$(python -c 'import os, urllib.parse; u=urllib.parse.quote(os.environ["DB_USERNAME"], safe=""); p=urllib.parse.quote(os.environ["DB_PASSWORD"], safe=""); print(f"postgresql://{u}:{p}@postgresql-shared-rw.databases.svc:5432/txo_ai_gateway")')"
+              exec python litellm/proxy/prisma_migration.py
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: txo-ai-gateway-runtime
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: txo-ai-gateway-runtime
+                  key: DB_PASSWORD
+            - name: DISABLE_SCHEMA_UPDATE
+              value: "false"
+            - name: ENFORCE_PRISMA_MIGRATION_CHECK
+              value: "true"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
