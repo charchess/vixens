@@ -67,8 +67,8 @@ func (r *TenantBundleReconciler) reconcileHindsight(ctx context.Context, bundle 
 	if profile.Spec.APIAuthMode != "" && profile.Spec.APIAuthMode != "ApiKey" {
 		return hindsightBlocked("UnsupportedAPIAuthMode", fmt.Sprintf("Hindsight API auth mode %q is not implemented; only ApiKey is supported", profile.Spec.APIAuthMode), 0), nil
 	}
-	if profile.Spec.LLMAuthMode != "" && profile.Spec.LLMAuthMode != "Unconfigured" {
-		return hindsightBlocked("UnsupportedLLMAuthMode", fmt.Sprintf("Hindsight LLM auth mode %q is not implemented; only Unconfigured is supported", profile.Spec.LLMAuthMode), 0), nil
+	if mode := defaultString(profile.Spec.LLMAuthMode, "Unconfigured"); mode != "Unconfigured" && mode != "PlatformGateway" {
+		return hindsightBlocked("UnsupportedLLMAuthMode", fmt.Sprintf("Hindsight model auth mode %q is not implemented", profile.Spec.LLMAuthMode), 0), nil
 	}
 	if strings.TrimSpace(profile.Spec.Image) == "" {
 		return hindsightBlocked("InvalidProfile", "HindsightProfile image is required", 0), nil
@@ -137,11 +137,15 @@ func (r *TenantBundleReconciler) reconcileHindsight(ctx context.Context, bundle 
 	}
 
 	status := hindsightComponentStatus("Ready", names)
+	message := "tenant-scoped Hindsight API is available with secret-backed PostgreSQL and API-key authentication"
+	if hindsightUsesPlatformGateway(&profile) {
+		message += "; embeddings are routed through the scoped TXO AI gateway credential"
+	}
 	return hindsightResult{
 		Ready:   true,
 		Status:  status,
 		Reason:  "Reconciled",
-		Message: "tenant-scoped Hindsight API is available with secret-backed PostgreSQL and API-key authentication",
+		Message: message,
 	}, nil
 }
 
@@ -172,6 +176,11 @@ func (r *TenantBundleReconciler) cleanupHindsight(ctx context.Context, bundle *f
 			}
 		}
 	}
+	if !pending {
+		// Revocation is intentionally best-effort: gateway unavailability must not
+		// wedge TenantBundle deletion. The deterministic alias contains no secret.
+		_ = revokeModelAccessKey(ctx, hindsightEmbeddingKeyAlias(bundle))
+	}
 	return pending, nil
 }
 
@@ -196,6 +205,7 @@ func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bund
 		Path:   "/" + database,
 	}
 
+	gatewayEnabled := hindsightUsesPlatformGateway(profile)
 	namespace := tenantNamespace(bundle.Name)
 	key := client.ObjectKey{Namespace: namespace, Name: names.Secret}
 	var secret corev1.Secret
@@ -207,12 +217,22 @@ func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bund
 		if err != nil {
 			return nil, err
 		}
+		embeddingKey := ""
+		if gatewayEnabled {
+			embeddingKey, err = generateHindsightEmbeddingAccessKey(ctx, bundle)
+			if err != nil {
+				return nil, fmt.Errorf("provision Hindsight embedding gateway credential: %w", err)
+			}
+		}
 		secret = corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{Name: names.Secret, Namespace: namespace, Labels: hindsightLabels(bundle, profile, "runtime-secret")},
 			Type:       corev1.SecretTypeOpaque,
-			Data:       desiredHindsightSecretData(databaseURL.String(), apiKey, hindsightAPIPort(profile)),
+			Data:       desiredHindsightSecretData(databaseURL.String(), apiKey, hindsightAPIPort(profile), embeddingKey, gatewayEnabled),
 		}
 		if err := r.Create(ctx, &secret); err != nil {
+			if embeddingKey != "" {
+				_ = revokeModelAccessKey(ctx, hindsightEmbeddingKeyAlias(bundle))
+			}
 			return nil, err
 		}
 		return nil, nil
@@ -229,21 +249,37 @@ func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bund
 			return nil, err
 		}
 	}
+	embeddingKey := string(secret.Data[hindsightEmbeddingSecretKey])
+	generatedEmbeddingKey := false
+	if gatewayEnabled && embeddingKey == "" {
+		var err error
+		embeddingKey, err = generateHindsightEmbeddingAccessKey(ctx, bundle)
+		if err != nil {
+			return nil, fmt.Errorf("provision Hindsight embedding gateway credential: %w", err)
+		}
+		generatedEmbeddingKey = true
+	} else if !gatewayEnabled && embeddingKey != "" {
+		_ = revokeModelAccessKey(ctx, hindsightEmbeddingKeyAlias(bundle))
+		embeddingKey = ""
+	}
 	desiredLabels := mergeStringMap(copyStringMap(secret.Labels), hindsightLabels(bundle, profile, "runtime-secret"))
-	desiredData := desiredHindsightSecretData(databaseURL.String(), apiKey, hindsightAPIPort(profile))
+	desiredData := desiredHindsightSecretData(databaseURL.String(), apiKey, hindsightAPIPort(profile), embeddingKey, gatewayEnabled)
 	if secret.Type != corev1.SecretTypeOpaque || !reflect.DeepEqual(secret.Labels, desiredLabels) || !reflect.DeepEqual(secret.Data, desiredData) {
 		secret.Type = corev1.SecretTypeOpaque
 		secret.Labels = desiredLabels
 		secret.Data = desiredData
 		if err := r.Update(ctx, &secret); err != nil {
+			if generatedEmbeddingKey {
+				_ = revokeModelAccessKey(ctx, hindsightEmbeddingKeyAlias(bundle))
+			}
 			return nil, err
 		}
 	}
 	return nil, nil
 }
 
-func desiredHindsightSecretData(databaseURL, apiKey string, port int32) map[string][]byte {
-	return map[string][]byte{
+func desiredHindsightSecretData(databaseURL, apiKey string, port int32, embeddingKey string, gatewayEnabled bool) map[string][]byte {
+	data := map[string][]byte{
 		"HINDSIGHT_API_DATABASE_URL":       []byte(databaseURL),
 		"HINDSIGHT_API_DATABASE_SCHEMA":    []byte("public"),
 		"HINDSIGHT_API_VECTOR_EXTENSION":   []byte("pgvector"),
@@ -258,6 +294,14 @@ func desiredHindsightSecretData(databaseURL, apiKey string, port int32) map[stri
 		"HINDSIGHT_ENABLE_API":             []byte("true"),
 		"HINDSIGHT_ENABLE_CP":              []byte("false"),
 	}
+	if gatewayEnabled {
+		data["HINDSIGHT_API_EMBEDDINGS_PROVIDER"] = []byte("openai")
+		data["HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL"] = []byte(aiGatewayURL() + "/v1")
+		data["HINDSIGHT_API_EMBEDDINGS_OPENAI_MODEL"] = []byte(defaultAIEmbeddingModel)
+		data["HINDSIGHT_API_EMBEDDINGS_OPENAI_DIMENSIONS"] = []byte(defaultAIEmbeddingDimension)
+		data[hindsightEmbeddingSecretKey] = []byte(embeddingKey)
+	}
+	return data
 }
 
 func desiredHindsightEnv(bundle *fabricv1alpha1.TenantBundle, names hindsightNames) []corev1.EnvVar {
@@ -377,6 +421,28 @@ func (r *TenantBundleReconciler) ensureHindsightNetworkPolicy(ctx context.Contex
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, policy, func() error {
 		policy.Labels = mergeStringMap(policy.Labels, hindsightLabels(bundle, profile, "network-policy"))
 		apiPort := int(hindsightAPIPort(profile))
+		egress := []networkingv1.NetworkPolicyEgressRule{
+			{
+				To: []networkingv1.NetworkPolicyPeer{{NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"}}}},
+				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolUDP), Port: intOrStringPtr(53)}, {Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(53)}},
+			},
+			{
+				To: []networkingv1.NetworkPolicyPeer{{
+					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": postgresqlProfile.Spec.Shared.ClusterRef.Namespace}},
+					PodSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{"cnpg.io/cluster": postgresqlProfile.Spec.Shared.ClusterRef.Name}},
+				}},
+				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(5432)}},
+			},
+		}
+		if hindsightUsesPlatformGateway(profile) {
+			egress = append(egress, networkingv1.NetworkPolicyEgressRule{
+				To: []networkingv1.NetworkPolicyPeer{{
+					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "txo-fabric-system"}},
+					PodSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "txo-ai-gateway"}},
+				}},
+				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(4000)}},
+			})
+		}
 		policy.Spec = networkingv1.NetworkPolicySpec{
 			PodSelector: metav1.LabelSelector{MatchLabels: hindsightPodSelector(bundle)},
 			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress},
@@ -384,19 +450,7 @@ func (r *TenantBundleReconciler) ensureHindsightNetworkPolicy(ctx context.Contex
 				From:  []networkingv1.NetworkPolicyPeer{{PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hermes-agent"}}}},
 				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(apiPort)}},
 			}},
-			Egress: []networkingv1.NetworkPolicyEgressRule{
-				{
-					To: []networkingv1.NetworkPolicyPeer{{NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"}}}},
-					Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolUDP), Port: intOrStringPtr(53)}, {Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(53)}},
-				},
-				{
-					To: []networkingv1.NetworkPolicyPeer{{
-						NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": postgresqlProfile.Spec.Shared.ClusterRef.Namespace}},
-						PodSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{"cnpg.io/cluster": postgresqlProfile.Spec.Shared.ClusterRef.Name}},
-					}},
-					Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(5432)}},
-				},
-			},
+			Egress: egress,
 		}
 		return nil
 	})
@@ -423,6 +477,10 @@ func hindsightAPIPort(profile *fabricv1alpha1.HindsightProfile) int32 {
 		return profile.Spec.APIPort
 	}
 	return 8888
+}
+
+func hindsightUsesPlatformGateway(profile *fabricv1alpha1.HindsightProfile) bool {
+	return profile.Spec.LLMAuthMode == "PlatformGateway"
 }
 
 func hindsightPodSelector(bundle *fabricv1alpha1.TenantBundle) map[string]string {
