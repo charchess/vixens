@@ -5,3 +5,4 @@ resources:
   - hermes-default.yaml
   - postgresql-shared.yaml
   - hindsight-standard.yaml
+  - hindsight-gateway.yaml
