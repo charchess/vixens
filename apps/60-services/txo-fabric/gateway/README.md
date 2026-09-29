@@ -56,6 +56,32 @@ state survive gateway workload replacement.
 The gateway role is the owner of its database but is not superuser and cannot
 create databases or roles.
 
+## Database schema lifecycle
+
+LiteLLM database migrations are owned by a dedicated Argo CD Sync hook Job rather
+than by the serving Deployment. `Job/txo-ai-gateway-migrations` runs with the same
+pinned LiteLLM image as the gateway and applies that image's bundled Prisma
+migrations before the serving workload is allowed to start.
+
+The ordering is explicit:
+
+```text
+wave 1  DatabaseRole
+wave 2  Database
+wave 3  txo-ai-gateway-migrations
+wave 4  txo-ai-gateway Deployment
+```
+
+The serving Deployment sets `DISABLE_SCHEMA_UPDATE=true`; this does not freeze the
+database schema. On every LiteLLM image upgrade the migration Job is recreated and
+runs the migrations bundled with the new image before that version of the gateway
+starts. The completed Job is kept for diagnostics until the next sync, when
+`BeforeHookCreation` replaces it.
+
+The migration pod receives only the PostgreSQL username/password from the runtime
+Secret. Provider credentials and the LiteLLM master key are not projected into the
+migration pod.
+
 ## Network boundary
 
 `txo-fabric-system` is default-deny. `NetworkPolicy/txo-ai-gateway-access` allows:
@@ -66,6 +92,11 @@ create databases or roles.
 - PostgreSQL egress only to the `postgresql-shared` pods on TCP/5432;
 - public HTTPS egress on TCP/443 while excluding private/link-local IPv4 ranges.
 
+`NetworkPolicy/txo-ai-gateway-migration-egress` separately limits the migration
+Job to DNS plus TCP/5432 toward `postgresql-shared`. The migration pod uses a
+distinct `app.kubernetes.io/name` label and is never selected by
+`Service/txo-ai-gateway`.
+
 The AgentIdentity integration slice must restrict each Hermes runtime to this
 Service instead of granting generic Internet egress.
 
@@ -75,11 +106,12 @@ Before integrating AgentIdentity reconciliation, validate on grenat that:
 
 1. both ExternalSecrets are Ready without printing secret values;
 2. the CNPG DatabaseRole and Database are applied;
-3. `Deployment/txo-ai-gateway` is Ready;
-4. `/health/readiness` succeeds;
-5. a LiteLLM virtual key can be generated using the master credential without displaying either key;
-6. that virtual key can call model `txo-default` through the gateway;
-7. LiteLLM records the request against its PostgreSQL-backed key/spend state.
+3. `Job/txo-ai-gateway-migrations` completes successfully and the LiteLLM schema is present;
+4. `Deployment/txo-ai-gateway` is Ready;
+5. `/health/readiness` succeeds;
+6. a LiteLLM virtual key can be generated using the master credential without displaying either key;
+7. that virtual key can call model `txo-default` through the gateway;
+8. LiteLLM records the request against its PostgreSQL-backed key/spend state.
 
 The next slice of #3607 will create/reconcile one scoped virtual key per
 `AgentIdentity`, inject only that virtual key into Hermes, point Hermes at
