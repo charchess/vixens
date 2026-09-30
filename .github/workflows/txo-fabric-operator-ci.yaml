@@ -116,5 +116,27 @@ jobs:
             apps/60-services/txo-fabric/operator/config/crd/bases \
             apps/60-services/txo-fabric/operator/config/rbac/role.yaml
 
+      - name: Verify generated CRDs are wired into Kustomize
+        run: |
+          set -euo pipefail
+
+          CRD_DIR="apps/60-services/txo-fabric/operator/config/crd/bases"
+          KUSTOMIZATION="apps/60-services/txo-fabric/operator/config/crd/kustomization.yaml"
+          MISSING=0
+
+          for crd in "$CRD_DIR"/*.yaml; do
+            resource="bases/$(basename "$crd")"
+            if ! grep -Fxq "  - $resource" "$KUSTOMIZATION"; then
+              echo "::error file=$KUSTOMIZATION::Generated CRD $resource is not referenced by Kustomize"
+              MISSING=1
+            fi
+          done
+
+          if [ "$MISSING" -ne 0 ]; then
+            exit 1
+          fi
+
+          echo "✅ All generated CRDs are referenced by Kustomize"
+
       - name: Build operator image
         run: docker build -t txo-fabric-operator:ci apps/60-services/txo-fabric/operator
