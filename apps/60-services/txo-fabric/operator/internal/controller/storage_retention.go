@@ -37,3 +37,9 @@ func (r *TenantBundleReconciler) retainedFabricPVCCount(ctx context.Context, bun
 	}
 	return retained, nil
 }
+
+// retainedAgentPVCCount is kept as the tenant teardown call-site contract while
+// retained Fabric storage now includes both agent-private and shared workspace PVCs.
+func (r *TenantBundleReconciler) retainedAgentPVCCount(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (int, error) {
+	return r.retainedFabricPVCCount(ctx, bundle)
+}
