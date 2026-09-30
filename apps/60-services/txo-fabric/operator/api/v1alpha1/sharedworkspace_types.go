@@ -41,6 +41,8 @@ type SharedWorkspaceProfileList struct {
 }
 
 // WorkspaceScopeSpec defines the two business-data trust modes exposed to agents.
+// The zero value is valid for the organization scope so tenants can enable only
+// group/user workspaces without fabricating an organization share.
 type WorkspaceScopeSpec struct {
 	// Reference exposes authoritative material read-only to the agent runtime.
 	// +optional
@@ -52,6 +54,7 @@ type WorkspaceScopeSpec struct {
 }
 
 // NamedWorkspaceScopeSpec defines a group or user scope available in one tenant.
+// +kubebuilder:validation:XValidation:rule="self.reference || self.collaborative",message="workspace scope must enable reference or collaborative access"
 type NamedWorkspaceScopeSpec struct {
 	// Name is the stable scope key used in paths and agent bindings.
 	// +kubebuilder:validation:MinLength=1
@@ -74,8 +77,11 @@ type TenantWorkspaceSpec struct {
 	ProfileRef string `json:"profileRef"`
 
 	// RetentionPolicy controls tenant teardown. Retain is the safe default.
+	// Changing destructive intent after storage exists would make teardown behavior
+	// ambiguous, so it is immutable just like the private AgentIdentity workspace.
 	// +kubebuilder:default=Retain
 	// +kubebuilder:validation:Enum=Retain;Delete
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="retentionPolicy is immutable"
 	RetentionPolicy string `json:"retentionPolicy,omitempty"`
 
 	// Organization declares tenant-wide scopes.
