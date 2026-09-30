@@ -32,6 +32,7 @@ nfs:
   shareAllowedNetworks:
     - 172.30.208.64/32
     - 10.42.0.0/16
+    - 192.168.111.0/24
   shareMaprootUser: root
   shareMaprootGroup: root
   shareMapallUser: ""
