@@ -58,9 +58,17 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 }
 
 func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace string) error {
+	workspaceVolumes, workspaceMounts, err := resolvedWorkspaceVolumes(agent, tenant)
+	if err != nil {
+		return err
+	}
+	dataMount := corev1.VolumeMount{Name: "data", MountPath: "/opt/data"}
+	hermesMounts := append([]corev1.VolumeMount{dataMount}, workspaceMounts...)
+	volumes := append([]corev1.Volume{{Name: "data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: runtimePVCName(agent.Spec.AgentKey)}}}}, workspaceVolumes...)
+
 	name := runtimeName(agent.Spec.AgentKey)
 	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
-	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, deployment, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, deployment, func() error {
 		labels := agentLabels(agent, tenant)
 		deployment.Labels = mergeStringMap(deployment.Labels, labels)
 		deployment.Annotations = mergeStringMap(deployment.Annotations, map[string]string{AnnotationRuntimeState: "gateway"})
@@ -89,7 +97,7 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 					ImagePullPolicy: corev1.PullIfNotPresent,
 					Command:         []string{"/bin/sh", "-lc", `if [ ! -d "/opt/data/profiles/${AGENT_NAME}" ]; then /opt/hermes/.venv/bin/hermes profile create "${AGENT_NAME}" --no-alias --no-skills --description "${AGENT_DISPLAY_NAME} - TXO Fabric agent"; fi`},
 					Env: []corev1.EnvVar{{Name: "HERMES_HOME", Value: "/opt/data"}, {Name: "AGENT_NAME", Value: agent.Spec.AgentKey}, {Name: "AGENT_DISPLAY_NAME", Value: agent.Spec.DisplayName}},
-					VolumeMounts: []corev1.VolumeMount{{Name: "data", MountPath: "/opt/data"}},
+					VolumeMounts: []corev1.VolumeMount{dataMount},
 				}},
 				Containers: []corev1.Container{{
 					Name:            "hermes",
@@ -116,12 +124,12 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 						},
 					},
 					Resources:      profile.Spec.Resources,
-					VolumeMounts:   []corev1.VolumeMount{{Name: "data", MountPath: "/opt/data"}},
+					VolumeMounts:   hermesMounts,
 					StartupProbe:   &corev1.Probe{ProbeHandler: corev1.ProbeHandler{Exec: &corev1.ExecAction{Command: probeCommand}}, PeriodSeconds: 5, FailureThreshold: 30},
 					ReadinessProbe: &corev1.Probe{ProbeHandler: corev1.ProbeHandler{Exec: &corev1.ExecAction{Command: probeCommand}}, PeriodSeconds: 10, FailureThreshold: 3},
 					LivenessProbe:  &corev1.Probe{ProbeHandler: corev1.ProbeHandler{Exec: &corev1.ExecAction{Command: probeCommand}}, PeriodSeconds: 20, FailureThreshold: 3},
 				}},
-				Volumes: []corev1.Volume{{Name: "data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: runtimePVCName(agent.Spec.AgentKey)}}}},
+				Volumes: volumes,
 			},
 		}
 		return controllerutil.SetControllerReference(agent, deployment, r.Scheme)
