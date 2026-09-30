@@ -1,0 +1,10 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: SharedWorkspaceProfile
+metadata:
+  name: shared-nfs
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  storageClassName: truenas-nfs-retain
+  size: 5Gi
