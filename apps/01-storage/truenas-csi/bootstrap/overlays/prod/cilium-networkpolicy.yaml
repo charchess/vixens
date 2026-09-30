@@ -32,3 +32,37 @@ specs:
           - ports:
               - port: "3260"
                 protocol: TCP
+---
+# The production NFS release uses the same TrueNAS appliance. The controller
+# needs API/SSH access to provision datasets and shares; NFSv4.1 mounts use
+# TCP/2049 from the node plugin path.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: truenas-csi-nfs-egress
+  namespace: truenas-csi
+specs:
+  - endpointSelector:
+      matchLabels:
+        app.kubernetes.io/instance: truenas-csi-nfs
+        app.kubernetes.io/csi-role: controller
+    egress:
+      - toCIDR:
+          - 192.168.200.244/32
+        toPorts:
+          - ports:
+              - port: "443"
+                protocol: TCP
+              - port: "22"
+                protocol: TCP
+  - endpointSelector:
+      matchLabels:
+        app.kubernetes.io/instance: truenas-csi-nfs
+        app.kubernetes.io/csi-role: node
+    egress:
+      - toCIDR:
+          - 192.168.200.244/32
+        toPorts:
+          - ports:
+              - port: "2049"
+                protocol: TCP
