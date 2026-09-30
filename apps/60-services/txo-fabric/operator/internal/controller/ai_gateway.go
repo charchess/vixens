@@ -10,7 +10,7 @@ const (
 	defaultAIGatewayURL         = "http://txo-ai-gateway.txo-fabric-system.svc:4000"
 	defaultAIGatewayModel       = "txo-default"
 	defaultAIEmbeddingModel     = "txo-embedding"
-	defaultAIEmbeddingDimension = "384"
+	defaultAIEmbeddingDimension = ""
 	modelAccessSecretKey        = "OPENAI_API_KEY"
 	modelAccessSecretSuffix     = "-model-access"
 	hindsightEmbeddingSecretKey = "HINDSIGHT_API_EMBEDDINGS_OPENAI_API_KEY"
