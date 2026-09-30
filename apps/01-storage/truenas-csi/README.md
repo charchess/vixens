@@ -1,23 +1,35 @@
-# TrueNAS CSI for UMI/k3s
+# TrueNAS CSI
 
-This app group prepares two `democratic-csi` Helm releases for the UMI laboratory cluster using the current TrueNAS test appliance.
+This app group manages `democratic-csi` releases for TrueNAS-backed storage.
 
 - `truenas-csi-iscsi` provisions RWO block volumes through TrueNAS iSCSI/zvols.
 - `truenas-csi-nfs` provisions RWX/RWO filesystem volumes through TrueNAS NFS datasets.
 
-The Helm values are safe to commit. The driver connection config is **not** committed and must be created as Kubernetes Secrets before syncing the Applications:
+The Helm values are safe to commit. Driver connection configs are secrets and must never be committed.
 
-```bash
-kubectl -n truenas-csi create secret generic truenas-csi-iscsi-driver-config \
-  --from-file=driver-config-file.yaml=/secure/path/truenas-iscsi-driver-config.yaml
+## Environments
 
-kubectl -n truenas-csi create secret generic truenas-csi-nfs-driver-config \
-  --from-file=driver-config-file.yaml=/secure/path/truenas-nfs-driver-config.yaml
-```
+### Production
 
-Use the templates in `secret-templates/` as shape references only. Do not commit filled copies.
+Production uses dedicated values files and OpenBao-backed `ExternalSecret` resources:
 
-## UMI prerequisites
+- `values/iscsi-prod.yaml`
+- `values/nfs-prod.yaml`
+- `vixens/prod/apps/01-storage/truenas-csi/iscsi`
+- `vixens/prod/apps/01-storage/truenas-csi/nfs`
+
+The resulting Kubernetes Secrets are:
+
+- `truenas-csi-iscsi-driver-config`
+- `truenas-csi-nfs-driver-config`
+
+Both expect the key `driver-config-file.yaml`.
+
+The production ArgoCD overlay must use the production applications (`truenas-csi-iscsi.yaml` and `truenas-csi-nfs.yaml`). UMI applications are development-only and must not be enabled in the production overlay.
+
+### UMI development
+
+UMI keeps its own development values and OpenBao paths. The `truenas-csi-secrets-umi` Application points at the UMI OpenBao store and rewrites the secret paths to `vixens/dev/...`.
 
 Read-only scan on 2026-09-01 showed:
 
@@ -26,11 +38,11 @@ Read-only scan on 2026-09-01 showed:
 - snapshot CRDs are not present except k3s etcd snapshots.
 - current cluster storage class is only `local-path`.
 
-Before testing iSCSI PVCs, install/enable the host iSCSI initiator on UMI and confirm the TrueNAS target portal/initiator group IDs. The bootstrap Application `truenas-csi-secrets-umi` creates the privileged namespace first; create the two driver config Secrets after that and before syncing the CSI Applications.
+Before testing iSCSI PVCs on UMI, install/enable the host iSCSI initiator and confirm the TrueNAS target portal/initiator group IDs.
 
 ## StorageClasses
 
-Proposed names, aligned with the existing legacy NAS `synelia-*` retention split:
+Names are aligned with the existing retention split:
 
 - `truenas-iscsi-retain`
 - `truenas-iscsi-delete`
@@ -41,7 +53,8 @@ Proposed names, aligned with the existing legacy NAS `synelia-*` retention split
 
 None is default initially; `local-path` stays default until an explicit migration decision.
 
+TXO Fabric shared-workspace profiles currently use `truenas-nfs-retain`, so that StorageClass must exist in every environment where those profiles are enabled.
 
 ## Secret hygiene
 
-The `secret-templates/.gitignore` file ignores every non-example file in that directory so filled driver configs are not accidentally committed. Keep real rendered configs under a secure local state directory and feed them to `kubectl create secret --from-file`.
+Use the templates in `secret-templates/` only as shape references. Do not commit filled copies. Production and UMI credentials/configuration are sourced from their respective OpenBao paths through External Secrets.
