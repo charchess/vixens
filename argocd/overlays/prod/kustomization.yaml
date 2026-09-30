@@ -42,6 +42,7 @@ resources:
   - apps/nfs-storage.yaml
   - apps/truenas-csi-secrets.yaml
   - apps/truenas-csi-iscsi.yaml
+  - apps/truenas-csi-nfs.yaml
   - apps/mail-gateway.yaml
   - apps/mail.yaml
   - apps/homeassistant.yaml
