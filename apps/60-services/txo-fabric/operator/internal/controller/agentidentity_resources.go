@@ -68,7 +68,7 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 		revisionHistory := int32(2)
 		deployment.Spec.Replicas = &replicas
 		deployment.Spec.RevisionHistoryLimit = &revisionHistory
-		deployment.Spec.Strategy = appsv1.RecreateDeploymentStrategyType
+		deployment.Spec.Strategy = appsv1.DeploymentStrategy{Type: appsv1.RecreateDeploymentStrategyType}
 		deployment.Spec.Selector = &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hermes-agent", LabelInstance: agent.Spec.AgentKey}}
 
 		podLabels := copyStringMap(labels)
