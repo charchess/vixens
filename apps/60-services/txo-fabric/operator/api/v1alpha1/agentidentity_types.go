@@ -2,12 +2,26 @@ package v1alpha1
 
 import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+type AgentRuntimeStorageBinding struct {
+	// RetentionPolicy controls what happens to the Hermes runtime PVC when the
+	// AgentIdentity is deleted. Retain is the safe default for durable customer
+	// workspaces; Delete is an explicit opt-in for disposable identities.
+	// +kubebuilder:default=Retain
+	// +kubebuilder:validation:Enum=Retain;Delete
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="retentionPolicy is immutable"
+	RetentionPolicy string `json:"retentionPolicy,omitempty"`
+}
+
 type AgentRuntimeBinding struct {
 	// ProfileRef references an AgentRuntimeProfile by metadata.name.
 	// +kubebuilder:default=hermes-default
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=128
 	ProfileRef string `json:"profileRef,omitempty"`
+
+	// Storage defines lifecycle intent for the identity's runtime workspace.
+	// +optional
+	Storage AgentRuntimeStorageBinding `json:"storage,omitempty"`
 }
 
 type AgentMemoryBinding struct {
