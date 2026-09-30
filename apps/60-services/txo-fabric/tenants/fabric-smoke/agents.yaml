@@ -14,3 +14,22 @@ spec:
   runtime:
     storage:
       retentionPolicy: Delete
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: fabric-smoke-sales-probe
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    fabric.truxonline.io/purpose: test
+spec:
+  tenantRef:
+    name: fabric-smoke
+  agentKey: sales-probe
+  displayName: Sales Probe
+  access:
+    groups:
+      - sales
+  runtime:
+    storage:
+      retentionPolicy: Delete
