@@ -58,6 +58,10 @@ func main() {
 		setupLog.Error(err, "unable to create TenantBundle controller")
 		os.Exit(1)
 	}
+	if err := (&controller.SharedWorkspaceReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create SharedWorkspace controller")
+		os.Exit(1)
+	}
 	if err := (&controller.AgentIdentityReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create AgentIdentity controller")
 		os.Exit(1)

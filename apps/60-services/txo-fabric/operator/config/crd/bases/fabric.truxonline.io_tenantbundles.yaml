@@ -148,6 +148,105 @@ spec:
                 x-kubernetes-validations:
                 - message: tenantId is immutable
                   rule: self == oldSelf
+              workspace:
+                description: |-
+                  Workspace declares tenant-owned shared business-data scopes. It is independent
+                  from every AgentIdentity private /opt/data workspace.
+                properties:
+                  groups:
+                    description: Groups declares team scopes that can be bound to
+                      agents.
+                    items:
+                      description: NamedWorkspaceScopeSpec defines a group or user
+                        scope available in one tenant.
+                      properties:
+                        collaborative:
+                          type: boolean
+                        name:
+                          description: Name is the stable scope key used in paths
+                            and agent bindings.
+                          maxLength: 32
+                          minLength: 1
+                          pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                          type: string
+                        reference:
+                          type: boolean
+                      required:
+                      - name
+                      type: object
+                      x-kubernetes-validations:
+                      - message: workspace scope must enable reference or collaborative
+                          access
+                        rule: self.reference || self.collaborative
+                    maxItems: 64
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                  organization:
+                    description: Organization declares tenant-wide scopes.
+                    properties:
+                      collaborative:
+                        description: Collaborative exposes a writable exchange/collaboration
+                          area.
+                        type: boolean
+                      reference:
+                        description: Reference exposes authoritative material read-only
+                          to the agent runtime.
+                        type: boolean
+                    type: object
+                  profileRef:
+                    description: ProfileRef selects platform-owned RWX storage implementation
+                      policy.
+                    maxLength: 128
+                    minLength: 1
+                    type: string
+                  retentionPolicy:
+                    default: Retain
+                    description: |-
+                      RetentionPolicy controls tenant teardown. Retain is the safe default.
+                      Changing destructive intent after storage exists would make teardown behavior
+                      ambiguous, so it is immutable just like the private AgentIdentity workspace.
+                    enum:
+                    - Retain
+                    - Delete
+                    type: string
+                    x-kubernetes-validations:
+                    - message: retentionPolicy is immutable
+                      rule: self == oldSelf
+                  users:
+                    description: Users declares human/user scopes that can be bound
+                      to agents.
+                    items:
+                      description: NamedWorkspaceScopeSpec defines a group or user
+                        scope available in one tenant.
+                      properties:
+                        collaborative:
+                          type: boolean
+                        name:
+                          description: Name is the stable scope key used in paths
+                            and agent bindings.
+                          maxLength: 32
+                          minLength: 1
+                          pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                          type: string
+                        reference:
+                          type: boolean
+                      required:
+                      - name
+                      type: object
+                      x-kubernetes-validations:
+                      - message: workspace scope must enable reference or collaborative
+                          access
+                        rule: self.reference || self.collaborative
+                    maxItems: 256
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                required:
+                - profileRef
+                type: object
             required:
             - displayName
             - tenantId

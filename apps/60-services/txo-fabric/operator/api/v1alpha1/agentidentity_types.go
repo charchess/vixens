@@ -61,6 +61,10 @@ type AgentIdentitySpec struct {
 	// Memory binds the identity to its logical tenant memory bank.
 	// +optional
 	Memory AgentMemoryBinding `json:"memory,omitempty"`
+
+	// Access selects tenant-declared user/group shared workspace scopes.
+	// +optional
+	Access AgentAccessSpec `json:"access,omitempty"`
 }
 
 type AgentIdentityStatus struct {

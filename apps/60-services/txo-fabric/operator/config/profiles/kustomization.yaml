@@ -6,3 +6,4 @@ resources:
   - postgresql-shared.yaml
   - hindsight-standard.yaml
   - hindsight-gateway.yaml
+  - workspace-shared.yaml
