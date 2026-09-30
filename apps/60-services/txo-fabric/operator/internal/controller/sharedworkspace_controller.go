@@ -39,6 +39,7 @@ type workspaceScope struct {
 
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles;sharedworkspaceprofiles,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
+
 func (r *SharedWorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var bundle fabricv1alpha1.TenantBundle
 	if err := r.Get(ctx, req.NamespacedName, &bundle); err != nil {
