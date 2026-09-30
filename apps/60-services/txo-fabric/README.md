@@ -121,8 +121,20 @@ released according to their reclaim policy.
 
 Agent runtime resources are reconciled from `AgentIdentity`. Existing compatible
 PVCs can be adopted without rewriting their storage contract, preserving their
-UID and data. The current sandbox AgentIdentity deletion path is destructive and
-removes its runtime PVC; a customer-facing retention policy is a later milestone.
+UID and data. Runtime workspace deletion is explicit through
+`spec.runtime.storage.retentionPolicy`, with values `Retain` or `Delete`. The safe
+default is `Retain`; `Delete` is an immutable opt-in for disposable identities.
+When an AgentIdentity using `Retain` is deleted, the operator removes the PVC's
+AgentIdentity ownerReference and leaves tenant/agent retention labels in place so
+a replacement identity with the same tenant and `agentKey` can re-adopt it.
+
+A TenantBundle cannot delete its tenant Namespace while retained Fabric agent PVCs
+remain inside it. Intentional destructive tenant removal must therefore release
+those workspaces explicitly first, for example by using an AgentIdentity declared
+with `retentionPolicy: Delete`. The `fabric-smoke` fixture opts into `Delete` so it
+remains suitable for destructive lifecycle tests; customer identities inherit
+`Retain` unless they explicitly choose otherwise.
+
 The scoped LiteLLM virtual key is revoked by deterministic alias on a best-effort
 basis and its tenant-local model-access Secret is deleted with the agent lifecycle.
 
