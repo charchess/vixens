@@ -114,25 +114,40 @@ jobs:
             exit 1
           fi
 
-          LATEST_OPERATOR_SOURCE=$(
-            git log -1 --format=%H -- \
-              ':(glob)apps/60-services/txo-fabric/operator/**/*.go' \
-              apps/60-services/txo-fabric/operator/go.mod \
-              apps/60-services/txo-fabric/operator/Dockerfile \
-              .github/workflows/build-txo-fabric-operator.yaml
+          # Image tags are generated from the main commit checked out by the build
+          # workflow. Resolve that exact provenance instead of walking merged branch
+          # internals, which can expose PR commits that never produced main-* images.
+          PINNED_SOURCE_SHORT="${PINNED_TAG#main-}"
+          if ! PINNED_SOURCE=$(git rev-parse "${PINNED_SOURCE_SHORT}^{commit}" 2>/dev/null); then
+            echo "::error::Unable to resolve TXO Fabric operator image source ${PINNED_SOURCE_SHORT}"
+            exit 1
+          fi
+
+          # A release image must come from the promoted commit's mainline history,
+          # never from an internal commit reachable only through a merged PR branch.
+          if ! git rev-list --first-parent HEAD | grep -qx "$PINNED_SOURCE"; then
+            echo "::error::TXO Fabric operator image source ${PINNED_SOURCE} is not on the promoted commit's mainline history"
+            exit 1
+          fi
+
+          # Keep this list aligned with build-txo-fabric-operator.yaml triggers.
+          # go.sum and manager.yaml are deliberately excluded because the generated
+          # image-pin PR may materialize them after the image has already been built.
+          OPERATOR_BUILD_INPUTS=(
+            ':(glob)apps/60-services/txo-fabric/operator/**/*.go'
+            apps/60-services/txo-fabric/operator/go.mod
+            apps/60-services/txo-fabric/operator/Dockerfile
+            .github/workflows/build-txo-fabric-operator.yaml
           )
-          if [[ -z "$LATEST_OPERATOR_SOURCE" ]]; then
-            echo "::error::Unable to resolve the latest TXO Fabric operator source commit"
+
+          if ! git diff --quiet "$PINNED_SOURCE" HEAD -- "${OPERATOR_BUILD_INPUTS[@]}"; then
+            echo "::error::TXO Fabric operator image pin is stale: build inputs changed after ${PINNED_SOURCE}. Promote the dev tag created after the generated operator-image pin PR merges."
+            echo "Changed operator build inputs:"
+            git diff --name-only "$PINNED_SOURCE" HEAD -- "${OPERATOR_BUILD_INPUTS[@]}" | sed 's/^/  - /'
             exit 1
           fi
 
-          EXPECTED_TAG="main-${LATEST_OPERATOR_SOURCE:0:12}"
-          if [[ "$PINNED_TAG" != "$EXPECTED_TAG" ]]; then
-            echo "::error::TXO Fabric operator image pin is stale: found ${PINNED_TAG}, expected ${EXPECTED_TAG} from ${LATEST_OPERATOR_SOURCE}. Promote the dev tag created after the generated operator-image pin PR merges."
-            exit 1
-          fi
-
-          echo "✅ TXO Fabric operator image pin ${PINNED_TAG} matches source ${LATEST_OPERATOR_SOURCE}"
+          echo "✅ TXO Fabric operator image pin ${PINNED_TAG} matches build inputs from ${PINNED_SOURCE}"
 
       - name: Create promotion metadata
         id: metadata
