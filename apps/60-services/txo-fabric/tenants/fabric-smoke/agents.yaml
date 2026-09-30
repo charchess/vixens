@@ -11,3 +11,6 @@ spec:
     name: fabric-smoke
   agentKey: probe
   displayName: Probe
+  runtime:
+    storage:
+      retentionPolicy: Delete
