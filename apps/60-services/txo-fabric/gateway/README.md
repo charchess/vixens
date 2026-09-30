@@ -39,7 +39,7 @@ The gateway exposes stable local aliases instead of leaking provider/model ident
 to tenant workloads:
 
 - `txo-default` -> initially `openrouter/openai/gpt-5.6-luna`;
-- `txo-embedding` -> initially `openrouter/openai/text-embedding-3-small`.
+- `txo-embedding` -> `openrouter/baai/bge-m3`.
 
 Provider/model routing can therefore change centrally without rebuilding tenant
 workloads or rewriting tenant intent. Provider-specific pricing belongs to the same
@@ -73,10 +73,9 @@ Once the Hermes Deployment is also available, the AgentIdentity may transition t
 ## Hindsight embedding access
 
 `HindsightProfile.spec.llmAuthMode=PlatformGateway` activates the existing platform
-model-credential boundary for tenant Hindsight. In the current slice this does not
-enable Hindsight LLM processing: `HINDSIGHT_API_LLM_PROVIDER` remains `none` so
-retain behavior does not silently change. The scoped credential is used only for
-remote embeddings.
+model-credential boundary for tenant Hindsight. This does not enable Hindsight LLM
+processing: `HINDSIGHT_API_LLM_PROVIDER` remains `none` so retain behavior does not
+silently change. The scoped credential is used only for remote embeddings.
 
 The operator stores the tenant-scoped LiteLLM key inside the existing
 `Secret/hindsight-runtime` and configures Hindsight 0.10.1 with its supported
@@ -86,20 +85,18 @@ OpenAI-compatible embedding contract:
 - `HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL=http://txo-ai-gateway.txo-fabric-system.svc:4000/v1`;
 - `HINDSIGHT_API_EMBEDDINGS_OPENAI_MODEL=txo-embedding`;
 - `HINDSIGHT_API_EMBEDDINGS_OPENAI_API_KEY=<scoped LiteLLM virtual key>`;
-- `HINDSIGHT_API_EMBEDDINGS_OPENAI_DIMENSIONS=384` for the current compatibility canary only.
+- `HINDSIGHT_API_EMBEDDINGS_OPENAI_DIMENSIONS=` (empty), which Hindsight 0.10.1 resolves to `None` and therefore auto-detects the provider width.
 
 The virtual key is restricted to `txo-embedding` and carries tenant metadata plus
 `component=hindsight` and `capability=embeddings`. Hindsight therefore cannot use
 this credential to call `txo-default`.
 
-The explicit 384-dimensional output preserves compatibility with banks created
-using the previous local `BAAI/bge-small-en-v1.5` embedding path. It is a migration
-constraint, not a stable platform contract. Hindsight 0.10.1 can auto-detect the
-embedding width at startup when `HINDSIGHT_API_EMBEDDINGS_OPENAI_DIMENSIONS` is
-unset. The intended steady-state default is `BAAI/bge-m3`, using its native
-1024-dimensional output and leaving the dimension unset so Hindsight detects it.
-Existing 384-dimensional banks must be migrated/re-embedded explicitly before that
-cutover; changing the alias alone is not a safe bank migration.
+The steady-state embedding backend is `BAAI/bge-m3`, exposed through the stable
+`txo-embedding` alias. BGE-M3 returns native 1024-dimensional vectors and Hindsight
+is intentionally allowed to detect that width rather than pinning a platform
+constant. Existing banks created with the former 384-dimensional path cannot be
+switched in place: export/import must rebuild them against a fresh target bank so
+Hindsight regenerates embeddings with the active model.
 
 The local reranker remains in place and the baked-model offline flags remain
 enabled; only embedding inference moves behind the gateway.
@@ -218,26 +215,22 @@ The gateway and AgentIdentity LLM path were physically validated on grenat for
 6. the AgentIdentity reached `ModelAccessReady=True`, `RuntimeReady=True` and `Ready=True`;
 7. the operator no longer requires cluster-wide Secret list/watch access.
 
-The Hindsight canary path was then physically exercised on `fabric-smoke` with the
-`hindsight-gateway` profile:
+The initial Hindsight gateway path was then physically exercised on `fabric-smoke`
+with the `hindsight-gateway` profile using the temporary 384-dimensional
+`text-embedding-3-small` compatibility route. Retain/recall succeeded, existing
+memories remained accessible, scoped key attribution was proven, and #3644 added an
+explicit provider rate so persisted embedding spend became positive.
 
-1. a synchronous retain of marker `txo-embedding-3643` returned HTTP 200;
-2. recall returned that marker (`axolotl`) and also preserved the pre-existing
-   `capybara` memory from the 384-dimensional local bank;
-3. gateway access logs recorded two `POST /v1/embeddings` requests with HTTP 200 at
-   the retain/recall timestamps;
-4. persisted spend logs recorded two `aembedding` calls through model group
-   `txo-embedding` to `openrouter/openai/text-embedding-3-small`, with 34 and 14
-   input tokens respectively;
-5. the spend rows carry the deterministic key alias
-   `txo-fabric:fabric-smoke:hindsight-embeddings`; `/key/info` resolves that key to
-   metadata `tenant=fabric-smoke`, `tenant_id=TEN90002`, `component=hindsight`,
-   `capability=embeddings`.
+For #3649, the BGE-M3 route was independently proven before changing the stable
+alias. A temporary key restricted to `txo-embedding-next` saw only that model;
+LiteLLM `/v1/embeddings` returned HTTP 200 with a native 1024-dimensional vector,
+17 input tokens and persisted spend `1.7e-07` against upstream
+`openrouter/baai/bge-m3`. `/key/info` preserved the expected tenant-independent
+validation metadata and the temporary key was deleted afterwards.
 
-LiteLLM 1.102.1 does not include a cost-map entry for the provider-prefixed model
-name `openrouter/openai/text-embedding-3-small`, so those otherwise valid spend
-rows were initially persisted with `spend=0.0`. The gateway config therefore pins
-the current provider rate explicitly for `txo-embedding`; after that config is
-promoted, repeat the canary and require a positive persisted spend before closing
-#3607. The unchanged hAIrem local-profile `ultraviolet` recall remains the final
-non-regression check.
+The remaining physical cutover is deliberately destructive only for the disposable
+`fabric-smoke` canary: export the existing bank, reset that tenant's Hindsight
+database, deploy the stable `txo-embedding -> BGE-M3` mapping with automatic
+embedding-width detection, import the bank archive, and prove that the known
+`quokka`, `axolotl`, and `capybara` memories are recalled after re-embedding.
+The hAIrem `hindsight-standard` local path remains a non-regression boundary.
