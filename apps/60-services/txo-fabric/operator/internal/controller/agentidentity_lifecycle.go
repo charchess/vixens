@@ -30,12 +30,21 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 	// associated with this identity without exposing the virtual key itself.
 	_ = revokeModelAccessKey(ctx, modelAccessKeyAliasForNames(agent.Spec.TenantRef.Name, agent.Spec.AgentKey))
 
+	if storageRetentionPolicy(agent) == StorageRetentionRetain {
+		if err := r.retainRuntimePVC(ctx, agent, namespace); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	objects := []client.Object{
 		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}},
 		&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: runtimeName(agent.Spec.AgentKey) + "-egress", Namespace: namespace}},
 		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: modelAccessSecretName(agent.Spec.AgentKey), Namespace: namespace}},
-		&corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimePVCName(agent.Spec.AgentKey), Namespace: namespace}},
 	}
+	if storageRetentionPolicy(agent) == StorageRetentionDelete {
+		objects = append(objects, &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimePVCName(agent.Spec.AgentKey), Namespace: namespace}})
+	}
+
 	pending := false
 	for _, obj := range objects {
 		var current client.Object
@@ -69,6 +78,33 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
+}
+
+func (r *AgentIdentityReconciler) retainRuntimePVC(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, namespace string) error {
+	var pvc corev1.PersistentVolumeClaim
+	key := types.NamespacedName{Name: runtimePVCName(agent.Spec.AgentKey), Namespace: namespace}
+	if err := r.Get(ctx, key, &pvc); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+
+	pvc.Labels = mergeStringMap(pvc.Labels, map[string]string{
+		LabelPartOf:           "txo-fabric",
+		LabelTenantName:       agent.Spec.TenantRef.Name,
+		LabelAgent:            agent.Spec.AgentKey,
+		LabelStorageRetention: StorageRetentionRetain,
+	})
+	ownerReferences := pvc.OwnerReferences[:0]
+	for _, owner := range pvc.OwnerReferences {
+		if owner.UID == agent.UID {
+			continue
+		}
+		ownerReferences = append(ownerReferences, owner)
+	}
+	pvc.OwnerReferences = ownerReferences
+	return r.Update(ctx, &pvc)
 }
 
 func (r *AgentIdentityReconciler) setStatus(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, phase, conditionType string, status metav1.ConditionStatus, reason, message string) {

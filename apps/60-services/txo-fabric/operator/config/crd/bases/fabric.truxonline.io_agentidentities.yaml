@@ -101,6 +101,24 @@ spec:
                     maxLength: 128
                     minLength: 1
                     type: string
+                  storage:
+                    description: Storage defines lifecycle intent for the identity's
+                      runtime workspace.
+                    properties:
+                      retentionPolicy:
+                        default: Retain
+                        description: |-
+                          RetentionPolicy controls what happens to the Hermes runtime PVC when the
+                          AgentIdentity is deleted. Retain is the safe default for durable customer
+                          workspaces; Delete is an explicit opt-in for disposable identities.
+                        enum:
+                        - Retain
+                        - Delete
+                        type: string
+                        x-kubernetes-validations:
+                        - message: retentionPolicy is immutable
+                          rule: self == oldSelf
+                    type: object
                 type: object
               tenantRef:
                 description: TenantRef references the owning TenantBundle by metadata.name.

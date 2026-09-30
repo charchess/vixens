@@ -277,6 +277,18 @@ func (r *TenantBundleReconciler) reconcileDelete(ctx context.Context, bundle *fa
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
+	retainedPVCs, err := r.retainedAgentPVCCount(ctx, bundle)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if retainedPVCs > 0 {
+		bundle.Status.Phase = "Deleting"
+		bundle.Status.ObservedGeneration = bundle.Generation
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "RetainedAgentStorage", fmt.Sprintf("%d retained agent PVCs block tenant namespace deletion; delete them explicitly or recreate the AgentIdentity with runtime.storage.retentionPolicy=Delete before retrying", retainedPVCs))
+		_ = r.Status().Update(ctx, bundle)
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
 	if bundle.Spec.Memory.Hindsight != nil || bundle.Status.Memory.Hindsight != nil {
 		pending, err := r.cleanupHindsight(ctx, bundle)
 		if err != nil {

@@ -13,6 +13,9 @@ const (
 	TenantFinalizer = "fabric.truxonline.io/tenant-cleanup"
 	AgentFinalizer  = "fabric.truxonline.io/agent-cleanup"
 
+	StorageRetentionRetain = "Retain"
+	StorageRetentionDelete = "Delete"
+
 	LabelPartOf            = "app.kubernetes.io/part-of"
 	LabelName              = "app.kubernetes.io/name"
 	LabelInstance          = "app.kubernetes.io/instance"
@@ -20,6 +23,7 @@ const (
 	LabelTenantID          = "fabric.truxonline.io/tenant-id"
 	LabelTenantName        = "fabric.truxonline.io/tenant-name"
 	LabelAgent             = "fabric.truxonline.io/agent"
+	LabelStorageRetention  = "fabric.truxonline.io/storage-retention"
 	AnnotationRuntimeState = "fabric.truxonline.io/runtime-state"
 )
 
@@ -63,6 +67,13 @@ func agentLabels(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.Ten
 		LabelTenantName: tenant.Name,
 		LabelAgent:      agent.Spec.AgentKey,
 	}
+}
+
+func storageRetentionPolicy(agent *fabricv1alpha1.AgentIdentity) string {
+	if agent.Spec.Runtime.Storage.RetentionPolicy == StorageRetentionDelete {
+		return StorageRetentionDelete
+	}
+	return StorageRetentionRetain
 }
 
 func resolvedBankID(agent *fabricv1alpha1.AgentIdentity) string {

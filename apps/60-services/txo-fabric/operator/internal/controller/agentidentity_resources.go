@@ -19,8 +19,10 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	var pvc corev1.PersistentVolumeClaim
 	err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &pvc)
 	if apierrors.IsNotFound(err) {
+		labels := agentLabels(agent, tenant)
+		labels[LabelStorageRetention] = storageRetentionPolicy(agent)
 		pvc = corev1.PersistentVolumeClaim{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, Labels: agentLabels(agent, tenant)},
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, Labels: labels},
 			Spec: corev1.PersistentVolumeClaimSpec{
 				AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 				StorageClassName: stringPtr(profile.Spec.Storage.StorageClassName),
@@ -38,8 +40,18 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != profile.Spec.Storage.StorageClassName {
 		return fmt.Errorf("PVC %s/%s uses storageClass %q; profile %q requires %q (storageClassName is immutable)", namespace, name, valueOrEmpty(pvc.Spec.StorageClassName), profile.Name, profile.Spec.Storage.StorageClassName)
 	}
+	if tenantName := pvc.Labels[LabelTenantName]; tenantName != "" && tenantName != tenant.Name {
+		return fmt.Errorf("PVC %s/%s belongs to tenant %q, not %q", namespace, name, tenantName, tenant.Name)
+	}
+	if agentKey := pvc.Labels[LabelAgent]; agentKey != "" && agentKey != agent.Spec.AgentKey {
+		return fmt.Errorf("PVC %s/%s belongs to agentKey %q, not %q", namespace, name, agentKey, agent.Spec.AgentKey)
+	}
+	if owner := metav1.GetControllerOf(&pvc); owner != nil && owner.UID != agent.UID {
+		return fmt.Errorf("PVC %s/%s is controlled by %s %q and cannot be adopted", namespace, name, owner.Kind, owner.Name)
+	}
 	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, &pvc, func() error {
 		pvc.Labels = mergeStringMap(pvc.Labels, agentLabels(agent, tenant))
+		pvc.Labels[LabelStorageRetention] = storageRetentionPolicy(agent)
 		return controllerutil.SetControllerReference(agent, &pvc, r.Scheme)
 	})
 	return err
