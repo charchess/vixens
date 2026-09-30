@@ -25,6 +25,11 @@ type TenantBundleSpec struct {
 	// +optional
 	Memory TenantMemorySpec `json:"memory,omitempty"`
 
+	// Workspace declares tenant-owned shared business-data scopes. It is independent
+	// from every AgentIdentity private /opt/data workspace.
+	// +optional
+	Workspace *TenantWorkspaceSpec `json:"workspace,omitempty"`
+
 	// Modules contains optional tenant capabilities. Core runtime, persistence and memory are
 	// explicit fields because other resources depend on their resolved status.
 	// +optional
