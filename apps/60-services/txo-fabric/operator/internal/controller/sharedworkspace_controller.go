@@ -145,9 +145,6 @@ func workspaceLabels(bundle *fabricv1alpha1.TenantBundle, scope workspaceScope) 
 	labels[LabelWorkspaceKey] = scope.Key
 	labels[LabelWorkspaceMode] = scope.Mode
 	labels[LabelWorkspaceRetention] = workspaceRetentionPolicy(bundle.Spec.Workspace)
-	// All shared workspace PVCs participate in the existing tenant namespace
-	// retention guard. The actual destructive policy is carried separately above.
-	labels[LabelStorageRetention] = StorageRetentionRetain
 	return labels
 }
 
@@ -219,6 +216,7 @@ func workspaceRequestForPVC(_ context.Context, obj client.Object) []reconcile.Re
 
 func (r *SharedWorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
+		Named("sharedworkspace").
 		For(&fabricv1alpha1.TenantBundle{}).
 		Watches(&fabricv1alpha1.SharedWorkspaceProfile{}, handler.EnqueueRequestsFromMapFunc(r.requestsForWorkspaceProfile)).
 		Watches(&corev1.PersistentVolumeClaim{}, handler.EnqueueRequestsFromMapFunc(workspaceRequestForPVC)).
