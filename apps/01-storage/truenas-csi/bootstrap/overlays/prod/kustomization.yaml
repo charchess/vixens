@@ -4,4 +4,5 @@ kind: Kustomization
 resources:
   - ../../base
   - externalsecret-iscsi-config.yaml
+  - externalsecret-nfs-config.yaml
   - cilium-networkpolicy.yaml
