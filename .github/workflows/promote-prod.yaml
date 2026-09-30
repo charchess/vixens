@@ -125,7 +125,9 @@ jobs:
 
           # A release image must come from the promoted commit's mainline history,
           # never from an internal commit reachable only through a merged PR branch.
-          if ! git rev-list --first-parent HEAD | grep -qx "$PINNED_SOURCE"; then
+          # awk consumes the whole rev-list stream, avoiding grep -q/SIGPIPE false
+          # negatives under pipefail on longer histories.
+          if ! git rev-list --first-parent HEAD | awk -v sha="$PINNED_SOURCE" '$0 == sha { found=1 } END { exit !found }'; then
             echo "::error::TXO Fabric operator image source ${PINNED_SOURCE} is not on the promoted commit's mainline history"
             exit 1
           fi
