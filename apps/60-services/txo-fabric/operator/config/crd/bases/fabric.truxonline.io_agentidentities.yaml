@@ -60,6 +60,24 @@ spec:
             type: object
           spec:
             properties:
+              access:
+                description: Access selects tenant-declared user/group shared workspace
+                  scopes.
+                properties:
+                  groups:
+                    description: Groups selects declared tenant group workspace scopes.
+                    items:
+                      type: string
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-type: set
+                  userRef:
+                    description: UserRef selects one declared tenant user workspace
+                      scope.
+                    maxLength: 32
+                    pattern: ^$|^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                    type: string
+                type: object
               agentKey:
                 description: |-
                   AgentKey is the immutable tenant-local machine identifier. AgentIdentity is cluster-scoped,
