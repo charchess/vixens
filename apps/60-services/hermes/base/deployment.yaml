@@ -68,7 +68,7 @@ spec:
             # Keep Hermes state private while allowing the persona's intended
             # collaborative workspace roots through the file-write sandbox.
             - name: HERMES_WRITE_SAFE_ROOT
-              value: /opt/data:/workspace/private/electra:/workspace/shared:/workspace/public
+              value: /opt/data:/workspace
             - name: TERMINAL_ENV
               value: local
 
