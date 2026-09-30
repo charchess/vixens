@@ -18,3 +18,8 @@ spec:
   memory:
     hindsight:
       profileRef: hindsight-gateway
+  workspace:
+    profileRef: shared-nfs
+    retentionPolicy: Delete
+    organization:
+      reference: true
