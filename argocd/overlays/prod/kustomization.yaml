@@ -57,7 +57,7 @@ resources:
   # Disabled by owner: apps/linkwarden.yaml
   # Disabled by owner: apps/gluetun.yaml
   # Disabled by owner: apps/sabnzbd.yaml
-  # Disabled by owner: apps/pyload.yaml
+  - apps/pyload.yaml
   # Disabled by owner: apps/qbittorrent.yaml
   # Disabled by owner: apps/amule.yaml
   - apps/media-shared-secrets.yaml
