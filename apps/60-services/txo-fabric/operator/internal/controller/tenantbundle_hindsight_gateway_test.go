@@ -83,7 +83,7 @@ func TestHindsightPlatformGatewayReconcilesScopedEmbeddingAccess(t *testing.T) {
 		"HINDSIGHT_API_EMBEDDINGS_PROVIDER":             "openai",
 		"HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL":      gateway.URL + "/v1",
 		"HINDSIGHT_API_EMBEDDINGS_OPENAI_MODEL":         "txo-embedding",
-		"HINDSIGHT_API_EMBEDDINGS_OPENAI_DIMENSIONS":    "384",
+		"HINDSIGHT_API_EMBEDDINGS_OPENAI_DIMENSIONS":    "",
 		"HINDSIGHT_API_EMBEDDINGS_OPENAI_API_KEY":       "sk-hindsight-embedding-test",
 	}
 	for key, want := range wantSecretValues {
