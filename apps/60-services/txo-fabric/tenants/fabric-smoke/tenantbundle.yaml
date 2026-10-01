@@ -23,6 +23,8 @@ spec:
     retentionPolicy: Delete
     organization:
       reference: true
+      skillsReference: true
     groups:
       - name: sales
         collaborative: true
+        skillsCollaborative: true
