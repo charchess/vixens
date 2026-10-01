@@ -1,94 +1,95 @@
 # Architecture Decision Records (ADRs)
 
-Architecture decisions and their rationale for the Vixens project.
+Architecture Decision Records preserve durable architecture decisions and their rationale for the Vixens monorepo.
 
-## Usage
+The authoritative catalog is [`000-index.md`](000-index.md). Governance is defined by [ADR-030](030-project-scoped-adr-governance.md).
 
-An ADR records a durable architectural decision. Active operational instructions should live in the current guides/runbooks; historical ADRs are preserved even when superseded.
+## What belongs in an ADR
 
-When an ADR and a newer accepted decision conflict, the newer decision wins. Current manifests remain the implementation source of truth.
+Use an ADR when a decision establishes a durable boundary, ownership model or architectural trade-off that future changes need to understand.
 
-## Important current decisions
+Do **not** use ADRs as a second copy of mutable operational documentation. Current commands, image tags, release procedures, application inventories and runbooks belong in `WORKFLOW.md`, guides, procedures, reference docs or application docs. ADRs should link to those living sources when useful.
 
-### GitOps & workflow
+GitHub Projects/issues track work and acceptance. ADRs record the architectural result. There is no one-issue-one-ADR rule.
 
-- **[ADR-017: Pure Trunk-Based Development](017-pure-trunk-based-single-branch.md)** — single `main`; dev follows main; prod follows the promoted stable ref.
-- Historical ADR-008/009 are superseded by ADR-017.
+## Numbering
 
-### Application maturity
+New ADRs use one repository-wide monotonically increasing `ADR-NNN` sequence, regardless of GitHub Project.
 
-- **[ADR-023: 7-Tier Goldification System v2](023-7-tier-goldification-system-v2.md)** — maturity tier intent and scoring model.
-- **[ADR-029: Align application maturity with the current platform](029-align-maturity-with-current-platform.md)** — amends ADR-023 for OpenBao/ESO secrets and explicit resource fallbacks.
+Historical numbering/header collisions already exist (notably the old `013` and `018` identities). They are preserved to avoid rewriting history and breaking links. They are called out explicitly in the catalog. **New numbers must be unique.**
 
-### Secrets
+Do not infer chronology or precedence from the number alone; use date, status and explicit supersession links.
 
-- **[ADR-018: OpenBao / External Secrets and NAS FQDN](018-openbao-external-secrets-and-nas-fqdn.md)** — current secret architecture.
-- **[ADR-011: Infisical Secrets Management](011-infisical-secrets-management.md)** — historical/superseded secret architecture.
+## Canonical status values
 
-### Storage / recovery
-
-- **[ADR-013: Layered Configuration Disaster Recovery](013-layered-configuration-disaster-recovery.md)**
-- **[ADR-014: Litestream Backup Profiles and Recovery Patterns](014-litestream-backup-profiles-and-recovery-patterns.md)**
-- **[ADR-025: Local Path Provisioner](025-local-path-provisioner.md)**
-- **[ADR-028: Retire DataAngel Restore Init from Production Workloads](028-retire-dataangel-prod-zfs.md)**
-
-### Networking / applications
-
-- **[ADR-021: Netbird Native Manifests](021-netbird-native-manifests.md)** — supersedes the older Netbird Helm design.
-- **[ADR-026: KEDA Scale-to-Zero](026-keda-scale-to-zero.md)**
-- **[ADR-027: Retire OpenClaw and Ollama Telemetry](027-retire-openclaw-and-ollama-telemetry.md)**
-
-## Historical numbering note
-
-The repository contains older ADR numbering collisions (notably `013` and `018`). They are preserved to avoid rewriting history and breaking existing links. New ADRs continue from the highest allocated number.
-
-Do not infer chronology or precedence from the number alone; use each ADR's date/status and explicit supersession links.
-
-## Status values
+New ADRs use:
 
 | Status | Meaning |
 |---|---|
-| Proposed | Under discussion |
-| Accepted | Decision made/current unless superseded |
-| Active | Current operational architecture/standard |
-| Implemented | Decision fully implemented |
-| Deprecated | No longer recommended |
-| Superseded | Replaced by a newer decision |
+| Proposed | Candidate decision; not authoritative architecture |
+| Accepted | Decision made/current unless explicitly superseded |
+| Superseded | Replaced by a newer explicit decision |
+| Deprecated | Abandoned/no longer recommended without requiring a direct replacement |
+
+Older ADRs may contain `Active` or `Implemented`. Preserve their historical wording; the index may normalize them to the closest canonical meaning.
+
+## Scope and GitHub Project ownership
+
+New ADRs declare both architectural **Scope** and planning **Related Project**.
+
+| Scope | Meaning |
+|---|---|
+| Repository | Cross-monorepo development/governance/architecture decisions |
+| Core | Shared infrastructure/platform foundations independent of a specific product tenant |
+| AIaaS | TXO Fabric tenant/agent product contracts |
+| Personal | Personal/application architecture consuming Core |
+
+Current Project names are `vixens core`, `vixens roadmap`, and `vixens perso`. A Repository-scoped decision can relate to more than one Project.
+
+Existing ADRs do not need noisy rewrites just to add metadata; their retrospective classification is maintained in the index when that is sufficient.
+
+## Retrospective ADRs
+
+A durable contract may be documented after implementation when the architecture is already established. Mark the ADR explicitly as **retrospective** and link to the issues/PRs/physical acceptance that made the behavior real.
+
+A retrospective ADR records the accepted implementation. It must not make an unresolved proposal look accepted or pretend the record existed before the decision.
+
+## Important current decisions
+
+### Repository workflow and governance
+
+- [ADR-017: Pure Trunk-Based Development](017-pure-trunk-based-single-branch.md) — single `main` architecture; use `WORKFLOW.md` for current promotion mechanics.
+- [ADR-030: Project-scoped ADR governance](030-project-scoped-adr-governance.md) — global numbering, scopes, Projects, status and lifecycle rules.
+
+### Application maturity
+
+- [ADR-023: 7-Tier Goldification System v2](023-7-tier-goldification-system-v2.md) — maturity model.
+- [ADR-029: Align application maturity with the current platform](029-align-maturity-with-current-platform.md) — current OpenBao/ESO and resource interpretation amendment.
+
+### Core secrets and platform foundations
+
+- [ADR-018: OpenBao / External Secrets and NAS FQDN](018-openbao-external-secrets-and-nas-fqdn.md) — current secret architecture; this number is a documented historical collision.
+- [ADR-021: Netbird Native Manifests](021-netbird-native-manifests.md) — current Netbird deployment architecture.
+- [ADR-025: Local Path Provisioner](025-local-path-provisioner.md)
+- [ADR-028: Retire DataAngel Restore Init from Production Workloads](028-retire-dataangel-prod-zfs.md)
+
+### TXO Fabric / AIaaS
+
+- [ADR-031: AgentIdentity is the Fabric runtime agent identity](031-agentidentity-is-the-fabric-runtime-identity.md)
+- [ADR-032: TXO Fabric is tenant-neutral and valid with zero clients](032-fabric-is-tenant-neutral.md)
+- [ADR-033: Separate private agent state, shared business data and shared skills](033-separate-agent-state-workspace-and-skills.md)
+- [ADR-034: Build Hermes extensions into an immutable TXO runtime image](034-immutable-hermes-runtime-supply-chain.md)
+
+Future Fabric decisions are added only after their owning implementation/acceptance establishes a durable contract; #3710 tracks that harvesting work.
 
 ## Creating a new ADR
 
-1. Start from the current `main` and check for concurrent PRs.
-2. Use `docs/templates/adr-template.md` when appropriate.
-3. Allocate the next unused number; do not renumber historical ADRs.
-4. State status, date, context, decision and consequences.
-5. Explicitly link decisions being amended/superseded.
-6. Update this README.
-7. Submit through the normal branch → PR → CI workflow.
-
-## Compact index
-
-| Number | Decision | Status |
-|---:|---|---|
-| 007 | Renovate Trunk-Based Workflow | historical/current only where not superseded |
-| 008 | Trunk-Based GitOps Workflow | Superseded |
-| 009 | Simplified Two-Branch Workflow | Superseded |
-| 010 | Static Manifests for Infrastructure Apps | Accepted |
-| 011 | Infisical Secrets Management | Superseded by current OpenBao/ESO architecture |
-| 013 | Layered Configuration Disaster Recovery | Accepted |
-| 013 | Renovate Discord Approval Workflow | Accepted (historical numbering collision) |
-| 014 | Litestream Backup Profiles and Recovery Patterns | Accepted |
-| 017 | Pure Trunk-Based Development | Active |
-| 018 | Netbird Helm deployment architecture | Superseded by ADR-021 |
-| 018 | OpenBao / External Secrets and NAS FQDN | Accepted (historical numbering collision) |
-| 020 | Automated Housekeeping | Accepted |
-| 021 | Netbird Native Manifests | Accepted |
-| 022 | 7-Tier Goldification v1 | Superseded by ADR-023 |
-| 023 | 7-Tier Goldification v2 | Active |
-| 024 | SSO Debt Diamond Wave 7 | Active/Accepted |
-| 025 | Local Path Provisioner | Accepted |
-| 026 | KEDA Scale-to-Zero | Accepted |
-| 027 | Retire OpenClaw and Ollama Telemetry | Accepted |
-| 028 | Retire DataAngel Restore Init from Production Workloads | Accepted |
-| 029 | Align application maturity with current platform | Accepted |
-
-**Last Updated:** 2026-09-25
+1. Start from current `main` and check concurrent PRs.
+2. Read [ADR-030](030-project-scoped-adr-governance.md).
+3. Allocate the next unused global number; do not renumber historical ADRs.
+4. Start from `docs/templates/adr-template.md`.
+5. State `Status`, `Scope`, `Related Project` and `Related Issues`.
+6. Explain context, decision, consequences and meaningful alternatives.
+7. Add explicit supersession links when a previous durable decision changes.
+8. Update `000-index.md` and this README when the set of important current decisions changes.
+9. Submit through the normal branch → PR → CI workflow.
