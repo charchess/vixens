@@ -44,16 +44,16 @@ func TestHermesHindsightDeploymentWiring(t *testing.T) {
 	}
 	command := bootstrap.Command[2]
 	for _, want := range []string{
-		`config set skills.external_dirs '["/workspace/skills"]'`,
-		`config set memory.provider hindsight`,
-		`"mode": "local_external"`,
-		`"api_url": "http://hindsight:8888"`,
-		`"memory_mode": "context"`,
-		`"auto_retain": True`,
-		`"auto_recall": True`,
-		`"retain_indicator": False`,
-		`"recall_indicator": False`,
-		`profile_home / "hindsight" / "config.json"`,
+		"config set skills.external_dirs '[\"/workspace/skills\"]'",
+		"config set memory.provider hindsight",
+		"\"mode\": \"local_external\"",
+		"\"api_url\": \"http://hindsight:8888\"",
+		"\"memory_mode\": \"context\"",
+		"\"auto_retain\": True",
+		"\"auto_recall\": True",
+		"\"retain_indicator\": False",
+		"\"recall_indicator\": False",
+		"profile_home / \"hindsight\" / \"config.json\"",
 	} {
 		if !strings.Contains(command, want) {
 			t.Fatalf("bootstrap command missing %q:\n%s", want, command)
@@ -136,7 +136,7 @@ func TestHermesTenantWithoutHindsightRemainsUnmodified(t *testing.T) {
 		t.Fatal(err)
 	}
 	bootstrap := deployment.Spec.Template.Spec.InitContainers[0]
-	if strings.Contains(bootstrap.Command[2], "memory.provider hindsight") || strings.Contains(bootstrap.Command[2], "hindsight/config.json") {
+	if strings.Contains(bootstrap.Command[2], "memory.provider hindsight") || strings.Contains(bootstrap.Command[2], "profile_home / \"hindsight\"") {
 		t.Fatalf("tenant without Hindsight received provider bootstrap:\n%s", bootstrap.Command[2])
 	}
 	if envVar(bootstrap.Env, "HINDSIGHT_BANK_ID") != nil {
