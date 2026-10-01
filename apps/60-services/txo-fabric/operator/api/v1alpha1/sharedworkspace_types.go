@@ -40,21 +40,31 @@ type SharedWorkspaceProfileList struct {
 	Items           []SharedWorkspaceProfile `json:"items"`
 }
 
-// WorkspaceScopeSpec defines the two business-data trust modes exposed to agents.
-// The zero value is valid for the organization scope so tenants can enable only
-// group/user workspaces without fabricating an organization share.
+// WorkspaceScopeSpec defines the business-file and shared-skill modes exposed for
+// one scope. Files and skills use separate PVCs/mount roots even when they share
+// the same platform storage profile and access binding.
 type WorkspaceScopeSpec struct {
-	// Reference exposes authoritative material read-only to the agent runtime.
+	// Reference exposes authoritative business material read-only to the agent runtime.
 	// +optional
 	Reference bool `json:"reference,omitempty"`
 
-	// Collaborative exposes a writable exchange/collaboration area.
+	// Collaborative exposes a writable business exchange/collaboration area.
 	// +optional
 	Collaborative bool `json:"collaborative,omitempty"`
+
+	// SkillsReference exposes a shared skill library read-only to Hermes. Agent-local
+	// skills under /opt/data remain private and writable.
+	// +optional
+	SkillsReference bool `json:"skillsReference,omitempty"`
+
+	// SkillsCollaborative exposes a shared skill library writable by authorized agents,
+	// allowing deliberate cross-agent skill sharing and improvement.
+	// +optional
+	SkillsCollaborative bool `json:"skillsCollaborative,omitempty"`
 }
 
 // NamedWorkspaceScopeSpec defines a group or user scope available in one tenant.
-// +kubebuilder:validation:XValidation:rule="self.reference || self.collaborative",message="workspace scope must enable reference or collaborative access"
+// +kubebuilder:validation:XValidation:rule="self.reference || self.collaborative || self.skillsReference || self.skillsCollaborative",message="workspace scope must enable file or skill access"
 type NamedWorkspaceScopeSpec struct {
 	// Name is the stable scope key used in paths and agent bindings.
 	// +kubebuilder:validation:MinLength=1
@@ -67,9 +77,17 @@ type NamedWorkspaceScopeSpec struct {
 
 	// +optional
 	Collaborative bool `json:"collaborative,omitempty"`
+
+	// +optional
+	SkillsReference bool `json:"skillsReference,omitempty"`
+
+	// +optional
+	SkillsCollaborative bool `json:"skillsCollaborative,omitempty"`
 }
 
-// TenantWorkspaceSpec declares shared business-data scopes for one Fabric tenant.
+// TenantWorkspaceSpec declares tenant-owned shared storage. Business files and
+// shared skills remain separate trust domains and therefore receive different PVCs
+// and mount roots even when backed by the same platform storage profile.
 type TenantWorkspaceSpec struct {
 	// ProfileRef selects platform-owned RWX storage implementation policy.
 	// +kubebuilder:validation:MinLength=1
@@ -84,18 +102,18 @@ type TenantWorkspaceSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="retentionPolicy is immutable"
 	RetentionPolicy string `json:"retentionPolicy,omitempty"`
 
-	// Organization declares tenant-wide scopes.
+	// Organization declares tenant-wide file and skill-library scopes.
 	// +optional
 	Organization WorkspaceScopeSpec `json:"organization,omitempty"`
 
-	// Groups declares team scopes that can be bound to agents.
+	// Groups declares team file and skill-library scopes that can be bound to agents.
 	// +optional
 	// +kubebuilder:validation:MaxItems=64
 	// +listType=map
 	// +listMapKey=name
 	Groups []NamedWorkspaceScopeSpec `json:"groups,omitempty"`
 
-	// Users declares human/user scopes that can be bound to agents.
+	// Users declares human/user file and skill-library scopes that can be bound to agents.
 	// +optional
 	// +kubebuilder:validation:MaxItems=256
 	// +listType=map

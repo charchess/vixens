@@ -95,8 +95,15 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 					Name:            "bootstrap-profile",
 					Image:           profile.Spec.Image,
 					ImagePullPolicy: corev1.PullIfNotPresent,
-					Command:         []string{"/bin/sh", "-lc", `if [ ! -d "/opt/data/profiles/${AGENT_NAME}" ]; then /opt/hermes/.venv/bin/hermes profile create "${AGENT_NAME}" --no-alias --no-skills --description "${AGENT_DISPLAY_NAME} - TXO Fabric agent"; fi`},
-					Env: []corev1.EnvVar{{Name: "HERMES_HOME", Value: "/opt/data"}, {Name: "AGENT_NAME", Value: agent.Spec.AgentKey}, {Name: "AGENT_DISPLAY_NAME", Value: agent.Spec.DisplayName}},
+					Command: []string{"/bin/sh", "-lc", `if [ ! -d "/opt/data/profiles/${AGENT_NAME}" ]; then
+  /opt/hermes/.venv/bin/hermes profile create "${AGENT_NAME}" --no-alias --no-skills --description "${AGENT_DISPLAY_NAME} - TXO Fabric agent"
+fi
+/opt/hermes/.venv/bin/hermes -p "${AGENT_NAME}" config set skills.external_dirs /workspace/skills`},
+					Env: []corev1.EnvVar{
+						{Name: "HERMES_HOME", Value: "/opt/data"},
+						{Name: "AGENT_NAME", Value: agent.Spec.AgentKey},
+						{Name: "AGENT_DISPLAY_NAME", Value: agent.Spec.DisplayName},
+					},
 					VolumeMounts: []corev1.VolumeMount{dataMount},
 				}},
 				Containers: []corev1.Container{{

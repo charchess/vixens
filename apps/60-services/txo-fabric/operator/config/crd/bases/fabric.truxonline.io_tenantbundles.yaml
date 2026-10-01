@@ -154,8 +154,8 @@ spec:
                   from every AgentIdentity private /opt/data workspace.
                 properties:
                   groups:
-                    description: Groups declares team scopes that can be bound to
-                      agents.
+                    description: Groups declares team file and skill-library scopes
+                      that can be bound to agents.
                     items:
                       description: NamedWorkspaceScopeSpec defines a group or user
                         scope available in one tenant.
@@ -171,28 +171,43 @@ spec:
                           type: string
                         reference:
                           type: boolean
+                        skillsCollaborative:
+                          type: boolean
+                        skillsReference:
+                          type: boolean
                       required:
                       - name
                       type: object
                       x-kubernetes-validations:
-                      - message: workspace scope must enable reference or collaborative
-                          access
-                        rule: self.reference || self.collaborative
+                      - message: workspace scope must enable file or skill access
+                        rule: self.reference || self.collaborative || self.skillsReference
+                          || self.skillsCollaborative
                     maxItems: 64
                     type: array
                     x-kubernetes-list-map-keys:
                     - name
                     x-kubernetes-list-type: map
                   organization:
-                    description: Organization declares tenant-wide scopes.
+                    description: Organization declares tenant-wide file and skill-library
+                      scopes.
                     properties:
                       collaborative:
-                        description: Collaborative exposes a writable exchange/collaboration
+                        description: Collaborative exposes a writable business exchange/collaboration
                           area.
                         type: boolean
                       reference:
-                        description: Reference exposes authoritative material read-only
-                          to the agent runtime.
+                        description: Reference exposes authoritative business material
+                          read-only to the agent runtime.
+                        type: boolean
+                      skillsCollaborative:
+                        description: |-
+                          SkillsCollaborative exposes a shared skill library writable by authorized agents,
+                          allowing deliberate cross-agent skill sharing and improvement.
+                        type: boolean
+                      skillsReference:
+                        description: |-
+                          SkillsReference exposes a shared skill library read-only to Hermes. Agent-local
+                          skills under /opt/data remain private and writable.
                         type: boolean
                     type: object
                   profileRef:
@@ -215,8 +230,8 @@ spec:
                     - message: retentionPolicy is immutable
                       rule: self == oldSelf
                   users:
-                    description: Users declares human/user scopes that can be bound
-                      to agents.
+                    description: Users declares human/user file and skill-library
+                      scopes that can be bound to agents.
                     items:
                       description: NamedWorkspaceScopeSpec defines a group or user
                         scope available in one tenant.
@@ -232,13 +247,17 @@ spec:
                           type: string
                         reference:
                           type: boolean
+                        skillsCollaborative:
+                          type: boolean
+                        skillsReference:
+                          type: boolean
                       required:
                       - name
                       type: object
                       x-kubernetes-validations:
-                      - message: workspace scope must enable reference or collaborative
-                          access
-                        rule: self.reference || self.collaborative
+                      - message: workspace scope must enable file or skill access
+                        rule: self.reference || self.collaborative || self.skillsReference
+                          || self.skillsCollaborative
                     maxItems: 256
                     type: array
                     x-kubernetes-list-map-keys:
