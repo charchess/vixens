@@ -70,9 +70,13 @@ spec:
 ## 5. Storage Sizing Guidelines
 
 - **Config-only:** 1Gi - 2Gi
-- **Hermes persona profiles:** 40Gi shared iSCSI RWO volume. This holds live profiles,
-  private memories, and copy-first staging material; do not place legacy `state.db`
-  archives on it.
+- **Legacy standalone Hermes profiles:** 40Gi shared iSCSI RWO volume. This holds live
+  profiles, private memories, and copy-first staging material; do not place legacy
+  `state.db` archives on it. TXO Fabric uses the separate per-`AgentIdentity`
+  private-runtime and shared-storage contracts defined by
+  [ADR-031](../adr/031-agentidentity-is-the-fabric-runtime-identity.md) and
+  [ADR-033](../adr/033-separate-agent-state-workspace-and-skills.md); do not infer
+  Fabric storage ownership from this legacy standalone sizing rule.
 - **Databases:** 10Gi - 20Gi (Shared PG uses 50Gi)
 - **Media Cache:** 50Gi - 100Gi
 - **Media Library:** Direct NFS mount (No PVC)
