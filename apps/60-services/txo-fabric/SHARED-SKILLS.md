@@ -135,19 +135,18 @@ hermes -p <agentKey> config set skills.external_dirs '["/workspace/skills"]'
 
 The Hermes host gateway continues to use its profile multiplexing model.
 
-Hermes' current precedence remains part of the Fabric contract:
+Hermes `v2026.9.24` does **not** apply silent local-over-external precedence for a
+bare skill name when a local skill and an `external_dirs` skill collide. It reports
+both matching paths and refuses to guess. Fabric therefore treats same-name
+collisions as an explicit, observable condition: callers must use an unambiguous
+categorized/full relative path, or one of the colliding skills must be renamed.
 
-```text
-project skills > local Hermes skills > external_dirs
-```
+An agent may still import/copy a shared skill locally and personalize it without
+mutating the common copy, but the personalized copy should use an unambiguous
+name/path rather than relying on implicit shadowing.
 
-Therefore an agent can import/copy a shared skill into its local skill directory,
-customize it privately and naturally shadow the shared version without mutating
-the common copy. This is intentional personalization, not a collision bug.
-
-Collisions between multiple shared libraries still need to remain deterministic
-and observable; the POC does not invent an additional precedence policy beyond
-Hermes' existing behavior.
+The POC does not invent an additional precedence policy beyond Hermes' actual
+runtime behavior.
 
 ## Sharing workflow
 
@@ -174,7 +173,8 @@ content to reference libraries.
 
 Likewise, a commercial agent may publish a useful technique to the sales
 collaborative library, while another commercial agent may import that shared skill
-locally and tune it without changing the original.
+locally and tune it without changing the original. The local copy must remain
+unambiguous with respect to visible shared skills.
 
 ## Trusted provider library
 
@@ -193,21 +193,23 @@ local autonomy plus shared libraries with explicit trust and write boundaries.
 
 ## Initial physical acceptance
 
-`fabric-smoke` proves the first useful slice:
+`fabric-smoke` has physically accepted the first useful slice:
 
-1. `skills-org-ref` exists on RWX storage and is mounted at
+1. [x] `skills-org-ref` exists on RWX storage and is mounted at
    `/workspace/skills/organization/reference` read-only to Hermes;
-2. `skills-group-sales-rw` exists on RWX storage and is mounted at
+2. [x] `skills-group-sales-rw` exists on RWX storage and is mounted at
    `/workspace/skills/groups/sales/collaborative` writable to `sales-probe`;
-3. the outsider `probe` receives no sales skill mount;
-4. Hermes' sales profile uses `/workspace/skills` as its external root and
+3. [x] the outsider `probe` receives no sales skill mount;
+4. [x] Hermes' sales profile uses `/workspace/skills` as its external root and
    lists/discovers a skill created in the sales collaborative library;
-5. a management/curator write can seed the organization reference library and the
+5. [x] a management/curator write can seed the organization reference library and the
    agent can read/discover it but cannot modify it;
-6. agent-local skills remain writable and private under `/opt/data`;
-7. a same-named local skill shadows a shared external skill as Hermes currently
-   defines;
-8. shared skill data survives deletion/recreation of an individual agent.
+6. [x] agent-local skills remain writable and private under `/opt/data`;
+7. [x] a same-named local/shared pair produces an explicit collision and Hermes
+   refuses ambiguous bare-name resolution rather than silently selecting one;
+8. [x] shared skill data survives deletion/recreation of an individual
+   `AgentIdentity`; with `runtime.storage.retentionPolicy: Delete`, the private
+   runtime PVC is recreated and the old local skill disappears while the shared
+   PVC identity and shared skill data remain intact.
 
-Only after those physical checks pass is the shared-skill slice considered
-accepted.
+The shared-skill slice is therefore physically accepted for the v0 POC contract.
