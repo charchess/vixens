@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	hermesHindsightAPIURL     = "http://hindsight:8888"
+	hermesHindsightAPIURL      = "http://hindsight:8888"
 	hermesHindsightSecretName = "hindsight-runtime"
 	hermesHindsightSecretKey  = "HINDSIGHT_API_TENANT_API_KEY"
 )
@@ -29,14 +29,14 @@ func configureHermesHindsight(agent *fabricv1alpha1.AgentIdentity, tenant *fabri
 	}
 	bootstrap.Env = append(bootstrap.Env, corev1.EnvVar{Name: "HINDSIGHT_BANK_ID", Value: bankID})
 	bootstrap.Command[2] += `
-/opt/hermes/.venv/bin/hermes -p "${AGENT_NAME}" config set memory.provider hindsight
+/opt/hermes/.venv/bin/hermes config set memory.provider hindsight
 /opt/hermes/.venv/bin/python - <<'PY'
 import json
 import os
 from pathlib import Path
 
-profile_home = Path(os.environ["HERMES_HOME"]) / "profiles" / os.environ["AGENT_NAME"]
-config_path = profile_home / "hindsight" / "config.json"
+hermes_home = Path(os.environ["HERMES_HOME"])
+config_path = hermes_home / "hindsight" / "config.json"
 config_path.parent.mkdir(parents=True, exist_ok=True)
 config = {
     "mode": "local_external",
