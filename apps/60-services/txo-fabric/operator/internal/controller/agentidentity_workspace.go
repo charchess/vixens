@@ -3,6 +3,8 @@ package controller
 import (
 	"fmt"
 	"path"
+	"sort"
+	"strings"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -27,15 +29,21 @@ func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabri
 	}
 
 	scopes := make([]workspaceScope, 0)
-	appendModes := func(scope, key string, reference, collaborative bool) {
+	appendModes := func(domain, scope, key string, reference, collaborative bool) {
 		if reference {
-			scopes = append(scopes, workspaceScope{Scope: scope, Key: key, Mode: "reference", ReadOnly: true})
+			scopes = append(scopes, workspaceScope{Domain: domain, Scope: scope, Key: key, Mode: "reference", ReadOnly: true})
 		}
 		if collaborative {
-			scopes = append(scopes, workspaceScope{Scope: scope, Key: key, Mode: "collaborative"})
+			scopes = append(scopes, workspaceScope{Domain: domain, Scope: scope, Key: key, Mode: "collaborative"})
 		}
 	}
-	appendModes("organization", "organization", workspace.Organization.Reference, workspace.Organization.Collaborative)
+	appendScope := func(scope, key string, reference, collaborative, skillsReference, skillsCollaborative bool) {
+		appendModes("shared", scope, key, reference, collaborative)
+		appendModes("skills", scope, key, skillsReference, skillsCollaborative)
+	}
+
+	organization := workspace.Organization
+	appendScope("organization", "organization", organization.Reference, organization.Collaborative, organization.SkillsReference, organization.SkillsCollaborative)
 
 	seenGroups := map[string]struct{}{}
 	for _, groupName := range agent.Spec.Access.Groups {
@@ -47,7 +55,7 @@ func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabri
 		if !ok {
 			return nil, nil, fmt.Errorf("AgentIdentity %q requests undeclared workspace group %q in tenant %q", agent.Name, groupName, tenant.Name)
 		}
-		appendModes("group", group.Name, group.Reference, group.Collaborative)
+		appendScope("group", group.Name, group.Reference, group.Collaborative, group.SkillsReference, group.SkillsCollaborative)
 	}
 
 	if agent.Spec.Access.UserRef != "" {
@@ -55,7 +63,7 @@ func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabri
 		if !ok {
 			return nil, nil, fmt.Errorf("AgentIdentity %q requests undeclared workspace user %q in tenant %q", agent.Name, agent.Spec.Access.UserRef, tenant.Name)
 		}
-		appendModes("user", user.Name, user.Reference, user.Collaborative)
+		appendScope("user", user.Name, user.Reference, user.Collaborative, user.SkillsReference, user.SkillsCollaborative)
 	}
 
 	volumes := make([]corev1.Volume, 0, len(scopes))
@@ -73,14 +81,29 @@ func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabri
 }
 
 func workspaceMountPath(scope workspaceScope) string {
+	root := "/workspace/shared"
+	if scope.Domain == "skills" {
+		root = "/workspace/skills"
+	}
 	switch scope.Scope {
 	case "organization":
-		return path.Join("/workspace/shared/organization", scope.Mode)
+		return path.Join(root, "organization", scope.Mode)
 	case "group":
-		return path.Join("/workspace/shared/groups", scope.Key, scope.Mode)
+		return path.Join(root, "groups", scope.Key, scope.Mode)
 	case "user":
-		return path.Join("/workspace/shared/users", scope.Key, scope.Mode)
+		return path.Join(root, "users", scope.Key, scope.Mode)
 	default:
-		return path.Join("/workspace/shared", scope.Scope, scope.Key, scope.Mode)
+		return path.Join(root, scope.Scope, scope.Key, scope.Mode)
 	}
+}
+
+func skillExternalDirs(mounts []corev1.VolumeMount) []string {
+	dirs := make([]string, 0)
+	for _, mount := range mounts {
+		if strings.HasPrefix(mount.MountPath, "/workspace/skills/") {
+			dirs = append(dirs, mount.MountPath)
+		}
+	}
+	sort.Strings(dirs)
+	return dirs
 }
