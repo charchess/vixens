@@ -19,6 +19,7 @@ import (
 )
 
 const (
+	LabelWorkspaceDomain    = "fabric.truxonline.io/workspace-domain"
 	LabelWorkspaceScope     = "fabric.truxonline.io/workspace-scope"
 	LabelWorkspaceKey       = "fabric.truxonline.io/workspace-key"
 	LabelWorkspaceMode      = "fabric.truxonline.io/workspace-mode"
@@ -31,6 +32,7 @@ type SharedWorkspaceReconciler struct {
 }
 
 type workspaceScope struct {
+	Domain   string
 	Scope    string
 	Key      string
 	Mode     string
@@ -142,6 +144,7 @@ func (r *SharedWorkspaceReconciler) ensureWorkspacePVC(ctx context.Context, bund
 
 func workspaceLabels(bundle *fabricv1alpha1.TenantBundle, scope workspaceScope) map[string]string {
 	labels := tenantLabels(bundle)
+	labels[LabelWorkspaceDomain] = scope.Domain
 	labels[LabelWorkspaceScope] = scope.Scope
 	labels[LabelWorkspaceKey] = scope.Key
 	labels[LabelWorkspaceMode] = scope.Mode
@@ -161,28 +164,36 @@ func desiredWorkspaceScopes(bundle *fabricv1alpha1.TenantBundle) []workspaceScop
 		return nil
 	}
 	result := make([]workspaceScope, 0)
-	appendModes := func(scope, key string, reference, collaborative bool) {
+	appendModes := func(domain, scope, key string, reference, collaborative bool) {
 		if reference {
-			result = append(result, workspaceScope{Scope: scope, Key: key, Mode: "reference", ReadOnly: true})
+			result = append(result, workspaceScope{Domain: domain, Scope: scope, Key: key, Mode: "reference", ReadOnly: true})
 		}
 		if collaborative {
-			result = append(result, workspaceScope{Scope: scope, Key: key, Mode: "collaborative"})
+			result = append(result, workspaceScope{Domain: domain, Scope: scope, Key: key, Mode: "collaborative"})
 		}
 	}
-	appendModes("organization", "organization", bundle.Spec.Workspace.Organization.Reference, bundle.Spec.Workspace.Organization.Collaborative)
+	organization := bundle.Spec.Workspace.Organization
+	appendModes("shared", "organization", "organization", organization.Reference, organization.Collaborative)
+	appendModes("skills", "organization", "organization", organization.SkillsReference, organization.SkillsCollaborative)
 	for _, group := range bundle.Spec.Workspace.Groups {
-		appendModes("group", group.Name, group.Reference, group.Collaborative)
+		appendModes("shared", "group", group.Name, group.Reference, group.Collaborative)
+		appendModes("skills", "group", group.Name, group.SkillsReference, group.SkillsCollaborative)
 	}
 	for _, user := range bundle.Spec.Workspace.Users {
-		appendModes("user", user.Name, user.Reference, user.Collaborative)
+		appendModes("shared", "user", user.Name, user.Reference, user.Collaborative)
+		appendModes("skills", "user", user.Name, user.SkillsReference, user.SkillsCollaborative)
 	}
 	return result
 }
 
 func workspacePVCName(scope workspaceScope) string {
-	prefix := "ws-" + scope.Scope
+	root := "ws"
+	if scope.Domain == "skills" {
+		root = "skills"
+	}
+	prefix := root + "-" + scope.Scope
 	if scope.Scope == "organization" {
-		prefix = "ws-org"
+		prefix = root + "-org"
 	} else {
 		prefix += "-" + scope.Key
 	}
