@@ -98,7 +98,7 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 					Command: []string{"/bin/sh", "-lc", `if [ ! -d "/opt/data/profiles/${AGENT_NAME}" ]; then
   /opt/hermes/.venv/bin/hermes profile create "${AGENT_NAME}" --no-alias --no-skills --description "${AGENT_DISPLAY_NAME} - TXO Fabric agent"
 fi
-/opt/hermes/.venv/bin/hermes -p "${AGENT_NAME}" config set skills.external_dirs /workspace/skills`},
+/opt/hermes/.venv/bin/hermes -p "${AGENT_NAME}" config set skills.external_dirs '["/workspace/skills"]'`},
 					Env: []corev1.EnvVar{
 						{Name: "HERMES_HOME", Value: "/opt/data"},
 						{Name: "AGENT_NAME", Value: agent.Spec.AgentKey},

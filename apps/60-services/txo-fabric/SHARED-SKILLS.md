@@ -124,12 +124,13 @@ root recursively, but cannot discover content Kubernetes did not mount. If an
 agent has no shared-skill scopes, `/workspace/skills` is absent and Hermes simply
 has no shared library content to discover.
 
-Using one stable root also avoids depending on CLI serialization of a list-valued
-`skills.external_dirs` setting. The configuration is written explicitly to the
-agent's named profile with:
+Using one stable root also avoids depending on a dynamic path list. Hermes
+`v2026.9.24` validates `skills.external_dirs` as a list, so the CLI value must be
+passed as a YAML/JSON list literal rather than as a scalar string. The configuration
+is written explicitly to the agent's named profile with:
 
 ```text
-hermes -p <agentKey> config set skills.external_dirs /workspace/skills
+hermes -p <agentKey> config set skills.external_dirs '["/workspace/skills"]'
 ```
 
 The Hermes host gateway continues to use its profile multiplexing model.

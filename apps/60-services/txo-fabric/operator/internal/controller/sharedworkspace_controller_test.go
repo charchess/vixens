@@ -172,8 +172,8 @@ func TestHermesDeploymentMountsOnlyAuthorizedWorkspaceScopes(t *testing.T) {
 	}
 
 	bootstrap := deployment.Spec.Template.Spec.InitContainers[0]
-	if len(bootstrap.Command) != 3 || !strings.Contains(bootstrap.Command[2], "config set skills.external_dirs /workspace/skills") {
-		t.Fatalf("bootstrap command does not configure Hermes shared skill root: %#v", bootstrap.Command)
+	if len(bootstrap.Command) != 3 || !strings.Contains(bootstrap.Command[2], `config set skills.external_dirs '["/workspace/skills"]'`) {
+		t.Fatalf("bootstrap command does not configure Hermes shared skill root as a list: %#v", bootstrap.Command)
 	}
 }
 
