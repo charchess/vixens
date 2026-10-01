@@ -100,23 +100,39 @@ Fabric does not replace Hermes' local skill system. The operator keeps creating
 profiles with `--no-skills` so no template skills are injected, while local skill
 creation remains available afterward in the private profile.
 
-At pod bootstrap the operator resolves only the shared skill mounts authorized for
-that agent and writes those paths to the named Hermes profile as
-`skills.external_dirs`. An empty resolved set is written as `[]`, so removing a
-binding also removes stale shared-library discovery on the next rollout.
-
-Example resolved configuration for a sales agent:
+At pod bootstrap the operator writes one stable external skill root to the named
+Hermes profile:
 
 ```yaml
 skills:
   external_dirs:
-    - /workspace/skills/groups/sales/collaborative
-    - /workspace/skills/organization/reference
+    - /workspace/skills
 ```
 
-The Hermes host gateway continues to use its profile multiplexing model; the
-configuration is written explicitly to the agent's named profile with
-`hermes -p <agentKey> config set ...`.
+Authorization does **not** depend on giving Hermes a dynamic list of paths. It is
+enforced by Kubernetes mount topology: only the organization/group/user skill PVCs
+resolved for that `AgentIdentity` are mounted below `/workspace/skills`. For
+example, a sales agent may physically have:
+
+```text
+/workspace/skills/organization/reference
+/workspace/skills/groups/sales/collaborative
+```
+
+while an unrelated agent has no sales subtree at all. Hermes can scan the stable
+root recursively, but cannot discover content Kubernetes did not mount. If an
+agent has no shared-skill scopes, `/workspace/skills` is absent and Hermes simply
+has no shared library content to discover.
+
+Using one stable root also avoids depending on CLI serialization of a list-valued
+`skills.external_dirs` setting. The configuration is written explicitly to the
+agent's named profile with:
+
+```text
+hermes -p <agentKey> config set skills.external_dirs /workspace/skills
+```
+
+The Hermes host gateway continues to use its profile multiplexing model.
 
 Hermes' current precedence remains part of the Fabric contract:
 
@@ -183,8 +199,8 @@ local autonomy plus shared libraries with explicit trust and write boundaries.
 2. `skills-group-sales-rw` exists on RWX storage and is mounted at
    `/workspace/skills/groups/sales/collaborative` writable to `sales-probe`;
 3. the outsider `probe` receives no sales skill mount;
-4. Hermes' sales profile lists/discovers a skill created in the sales collaborative
-   library through `skills.external_dirs`;
+4. Hermes' sales profile uses `/workspace/skills` as its external root and
+   lists/discovers a skill created in the sales collaborative library;
 5. a management/curator write can seed the organization reference library and the
    agent can read/discover it but cannot modify it;
 6. agent-local skills remain writable and private under `/opt/data`;
