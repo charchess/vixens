@@ -40,9 +40,9 @@ type SharedWorkspaceProfileList struct {
 	Items           []SharedWorkspaceProfile `json:"items"`
 }
 
-// WorkspaceScopeSpec defines the two business-data trust modes exposed to agents.
+// WorkspaceScopeSpec defines reference and collaborative trust modes.
 // The zero value is valid for the organization scope so tenants can enable only
-// group/user workspaces without fabricating an organization share.
+// group/user scopes without fabricating an organization share.
 type WorkspaceScopeSpec struct {
 	// Reference exposes authoritative material read-only to the agent runtime.
 	// +optional
@@ -69,7 +69,32 @@ type NamedWorkspaceScopeSpec struct {
 	Collaborative bool `json:"collaborative,omitempty"`
 }
 
-// TenantWorkspaceSpec declares shared business-data scopes for one Fabric tenant.
+// TenantSkillLibrarySpec declares shared skill-library scopes. These scopes use
+// separate PVCs and /workspace/skills mounts from business files, while reusing
+// the same tenant access bindings and RWX storage profile.
+type TenantSkillLibrarySpec struct {
+	// Organization declares tenant-wide shared skill libraries.
+	// +optional
+	Organization WorkspaceScopeSpec `json:"organization,omitempty"`
+
+	// Groups declares team skill libraries bound through AgentIdentity.spec.access.groups.
+	// +optional
+	// +kubebuilder:validation:MaxItems=64
+	// +listType=map
+	// +listMapKey=name
+	Groups []NamedWorkspaceScopeSpec `json:"groups,omitempty"`
+
+	// Users declares user-scoped skill libraries bound through AgentIdentity.spec.access.userRef.
+	// +optional
+	// +kubebuilder:validation:MaxItems=256
+	// +listType=map
+	// +listMapKey=name
+	Users []NamedWorkspaceScopeSpec `json:"users,omitempty"`
+}
+
+// TenantWorkspaceSpec declares shared tenant storage. Business files and shared
+// skill libraries remain separate trust domains and therefore receive different
+// PVCs and mount roots even when backed by the same platform storage profile.
 type TenantWorkspaceSpec struct {
 	// ProfileRef selects platform-owned RWX storage implementation policy.
 	// +kubebuilder:validation:MinLength=1
@@ -84,23 +109,29 @@ type TenantWorkspaceSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="retentionPolicy is immutable"
 	RetentionPolicy string `json:"retentionPolicy,omitempty"`
 
-	// Organization declares tenant-wide scopes.
+	// Organization declares tenant-wide business-data scopes.
 	// +optional
 	Organization WorkspaceScopeSpec `json:"organization,omitempty"`
 
-	// Groups declares team scopes that can be bound to agents.
+	// Groups declares team business-data scopes that can be bound to agents.
 	// +optional
 	// +kubebuilder:validation:MaxItems=64
 	// +listType=map
 	// +listMapKey=name
 	Groups []NamedWorkspaceScopeSpec `json:"groups,omitempty"`
 
-	// Users declares human/user scopes that can be bound to agents.
+	// Users declares human/user business-data scopes that can be bound to agents.
 	// +optional
 	// +kubebuilder:validation:MaxItems=256
 	// +listType=map
 	// +listMapKey=name
 	Users []NamedWorkspaceScopeSpec `json:"users,omitempty"`
+
+	// Skills declares shared behavioral skill libraries. Agent-local skills remain
+	// private and writable under /opt/data; these libraries are additional Hermes
+	// external_dirs mounted under /workspace/skills.
+	// +optional
+	Skills *TenantSkillLibrarySpec `json:"skills,omitempty"`
 }
 
 // AgentAccessSpec binds an agent to tenant workspace populations. A future IAM
