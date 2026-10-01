@@ -43,6 +43,7 @@ config = {
     "api_url": "http://hindsight:8888",
     "bank_id": os.environ["HINDSIGHT_BANK_ID"],
     "memory_mode": "context",
+    "recall_types": [],
     "auto_retain": True,
     "auto_recall": True,
     "retain_indicator": False,
