@@ -139,6 +139,9 @@ fi
 				Volumes: volumes,
 			},
 		}
+		if err := configureHermesHindsight(agent, tenant, deployment); err != nil {
+			return err
+		}
 		return controllerutil.SetControllerReference(agent, deployment, r.Scheme)
 	})
 	return err
