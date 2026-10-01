@@ -1,8 +1,15 @@
 # Hindsight
 
+> **Scope note:** this page describes the standalone/laboratory Hindsight application under
+> `apps/60-services/hindsight/`. It is not the tenant-local Hindsight service reconciled by
+> TXO Fabric. In Fabric, the logical runtime identity is `AgentIdentity`; see
+> [ADR-031](../../adr/031-agentidentity-is-the-fabric-runtime-identity.md). The durable
+> memory-provider contract remains tracked by #3685 until its implementation/physical
+> acceptance is complete.
+
 ## Purpose
 
-Hindsight provides long-term memory services for Hermes personas: retain, recall,
+Hindsight provides long-term memory services for Hermes agents: retain, recall,
 consolidation, graph/entity resolution, and reflect synthesis.
 
 ## Runtime configuration
