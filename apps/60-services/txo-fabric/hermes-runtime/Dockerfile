@@ -41,7 +41,6 @@ RUN set -eux; \
     uv pip install \
       --python /opt/hermes/.venv/bin/python \
       --no-deps \
-      --require-hashes \
       --requirement /tmp/txo-hindsight-requirements.lock; \
     /opt/hermes/.venv/bin/python /tmp/verify-runtime.py; \
     rm -f /tmp/txo-hindsight-requirements.lock /tmp/verify-runtime.py
