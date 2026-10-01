@@ -52,6 +52,7 @@ func TestHermesHindsightDeploymentWiring(t *testing.T) {
 		"\"mode\": \"local_external\"",
 		"\"api_url\": \"http://hindsight:8888\"",
 		"\"memory_mode\": \"context\"",
+		"\"recall_types\": []",
 		"\"auto_retain\": True",
 		"\"auto_recall\": True",
 		"\"retain_indicator\": False",
@@ -211,7 +212,7 @@ func countEnv(env []corev1.EnvVar, name string) int {
 	for i := range env {
 		if env[i].Name == name {
 			count++
-		}
+	}
 	}
 	return count
 }
