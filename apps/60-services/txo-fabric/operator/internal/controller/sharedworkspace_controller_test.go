@@ -94,13 +94,13 @@ func TestResolvedWorkspaceVolumesEnforcesScopesAndReadOnly(t *testing.T) {
 	}
 
 	want := map[string]bool{
-		"/workspace/shared/organization/reference":          true,
-		"/workspace/shared/organization/collaborative":      false,
-		"/workspace/shared/groups/sales/reference":          true,
-		"/workspace/shared/groups/sales/collaborative":      false,
-		"/workspace/shared/users/bertrand/collaborative":    false,
-		"/workspace/skills/organization/reference":          true,
-		"/workspace/skills/groups/sales/collaborative":      false,
+		"/workspace/shared/organization/reference":       true,
+		"/workspace/shared/organization/collaborative":   false,
+		"/workspace/shared/groups/sales/reference":       true,
+		"/workspace/shared/groups/sales/collaborative":   false,
+		"/workspace/shared/users/bertrand/collaborative": false,
+		"/workspace/skills/organization/reference":       true,
+		"/workspace/skills/groups/sales/collaborative":   false,
 	}
 	for _, mount := range mounts {
 		readOnly, ok := want[mount.MountPath]
@@ -172,11 +172,8 @@ func TestHermesDeploymentMountsOnlyAuthorizedWorkspaceScopes(t *testing.T) {
 	}
 
 	bootstrap := deployment.Spec.Template.Spec.InitContainers[0]
-	if len(bootstrap.Command) != 3 || !strings.Contains(bootstrap.Command[2], "config set skills.external_dirs") {
-		t.Fatalf("bootstrap command does not configure Hermes external skill dirs: %#v", bootstrap.Command)
-	}
-	if got := envValue(bootstrap.Env, "TXO_SKILL_EXTERNAL_DIRS"); got != `["/workspace/skills/groups/sales/collaborative","/workspace/skills/organization/reference"]` {
-		t.Fatalf("TXO_SKILL_EXTERNAL_DIRS=%q", got)
+	if len(bootstrap.Command) != 3 || !strings.Contains(bootstrap.Command[2], "config set skills.external_dirs /workspace/skills") {
+		t.Fatalf("bootstrap command does not configure Hermes shared skill root: %#v", bootstrap.Command)
 	}
 }
 
@@ -187,15 +184,6 @@ func hasMount(mounts []corev1.VolumeMount, path string, readOnly bool) bool {
 		}
 	}
 	return false
-}
-
-func envValue(env []corev1.EnvVar, name string) string {
-	for _, item := range env {
-		if item.Name == name {
-			return item.Value
-		}
-	}
-	return ""
 }
 
 func workspaceTestTenant() *fabricv1alpha1.TenantBundle {
