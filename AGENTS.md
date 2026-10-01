@@ -28,6 +28,26 @@ Quand une issue est donnée comme objectif de travail :
 - si une validation dépend du cluster physique, ne pas déclarer l'issue terminée sur la seule base de CI ou d'un rendu YAML ;
 - documenter les découvertes stables qui permettront à un autre agent de reprendre l'issue sans reconstituer tout l'historique de conversation.
 
+## GitHub Project / roadmap
+
+Le GitHub Project personnel **`vixens roadmap`** (owner `charchess`) est la vue de planification active du travail. L'issue reste la source du besoin et de ses critères d'acceptation ; Git et les manifests restent la source du comportement exécutable ; le Project porte la planification (`Target`, `Status` et autres champs de pilotage).
+
+Lorsqu'un chantier touche une issue planifiée :
+
+- vérifier que l'issue est présente dans `vixens roadmap` avant de commencer un travail significatif ;
+- si une nouvelle issue est créée pendant l'analyse ou l'implémentation, l'ajouter au Project dans le même flux de travail plutôt que la laisser hors roadmap ;
+- maintenir le champ de cible de release (`Target`, par exemple `v0`, `v0.1`, `v1`) cohérent avec la décision produit courante ; ne pas confondre une cible de release avec une itération/sprint temporel ;
+- maintenir `Status` cohérent avec l'état réel du chantier lorsque l'environnement permet de le faire ; une PR ouverte, un merge ou une CI verte ne remplacent pas une validation physique requise ;
+- lorsqu'une découverte change réellement le scope ou la cible, mettre à jour l'issue et le Project ensemble, avec une justification traçable ;
+- ne pas déplacer silencieusement un ticket vers une release ultérieure pour contourner un critère d'acceptation ; toute sortie de scope doit être une décision explicite ;
+- avant de considérer un objectif/release terminé, vérifier que les issues correspondantes et la roadmap reflètent l'état réellement accepté, pas seulement l'état du code.
+
+Le Project ne doit pas devenir une seconde spécification technique. Éviter d'y recopier les détails d'architecture ou les critères d'acceptation déjà portés par les issues et la documentation.
+
+Les outils GitHub Project disponibles peuvent varier selon l'agent. Préférer l'API/connector disponible ; sinon utiliser `gh project` ou l'API GraphQL GitHub. Ne pas faire dépendre les règles du dépôt d'une version particulière du CLI. Si l'environnement ne permet pas de modifier le Project, ne pas ignorer la mise à jour : signaler précisément la carte/le champ à modifier ou fournir une commande/action reproductible pour terminer la synchronisation.
+
+Ne pas coder en dur le numéro du Project dans une règle durable lorsque son titre permet de le retrouver. Les opérations CLI sur les Projects peuvent nécessiter le scope OAuth `project`.
+
 ## Multi-agent / concurrence
 
 Plusieurs humains ou agents peuvent intervenir en parallèle. Avant chaque série de modifications significatives :
