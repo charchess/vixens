@@ -212,7 +212,7 @@ func countEnv(env []corev1.EnvVar, name string) int {
 	for i := range env {
 		if env[i].Name == name {
 			count++
-	}
+		}
 	}
 	return count
 }
