@@ -1,25 +1,43 @@
-# ADR-XXX: [TITRE]
+# ADR-XXX: [TITLE]
 
-**Date:** YYYY-MM-DD
-**Status:** [Accepted | Deprecated | Superseded by [ADR-YYY](Lien.md)]
-**Deciders:** Architecture Team, User, Coding Agent
+**Date:** YYYY-MM-DD  
+**Status:** [Proposed | Accepted | Superseded | Deprecated]  
+**Scope:** [Repository | Core | AIaaS | Personal]  
+**Related Project:** [vixens core | vixens roadmap | vixens perso | N/A]  
+**Related Issues:** [#XXX, #YYY | N/A]  
+**Supersedes:** [ADR-YYY | N/A]  
+**Superseded by:** [ADR-ZZZ | N/A]  
+**Deciders:** Vixens maintainers  
 **Tags:** [tags]
 
----
+> Remove `Supersedes` / `Superseded by` when they do not apply. For a retrospective ADR, add an explicit note here saying that the record documents a decision already implemented/accepted before the ADR was written.
 
 ## Context
-Pourquoi cette décision est-elle nécessaire ? Quel problème essayons-nous de résoudre ?
+
+Why is this durable architecture decision needed? What problem or constraint led to it?
 
 ## Decision
-Quelle est la décision prise ? (Détails techniques, schémas, choix d'outils).
+
+State the decision and its durable ownership/boundaries. Keep mutable commands, current image tags, inventories and runbook procedures in living documentation and link to them instead.
 
 ## Consequences
-### Positives ✅
-- ...
-### Négatives ⚠️
+
+### Positive
+
 - ...
 
+### Negative
+
+- ...
+
+## Alternatives considered
+
+### Alternative A
+
+Why it was not selected.
+
 ## References
-- [Lien vers documentation]
+
 - GitHub Issue #XXX
 - Pull Request #XXX
+- [Living documentation](../...)
