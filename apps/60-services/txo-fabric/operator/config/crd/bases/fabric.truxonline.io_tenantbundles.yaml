@@ -150,9 +150,8 @@ spec:
                   rule: self == oldSelf
               workspace:
                 description: |-
-                  TenantWorkspaceSpec declares tenant-owned shared storage. Business files and
-                  shared skills remain separate trust domains and therefore receive different PVCs
-                  and mount roots even when backed by the same platform storage profile.
+                  Workspace declares tenant-owned shared business-data scopes. It is independent
+                  from every AgentIdentity private /opt/data workspace.
                 properties:
                   groups:
                     description: Groups declares team file and skill-library scopes
@@ -181,7 +180,8 @@ spec:
                       type: object
                       x-kubernetes-validations:
                       - message: workspace scope must enable file or skill access
-                        rule: self.reference || self.collaborative || self.skillsReference || self.skillsCollaborative
+                        rule: self.reference || self.collaborative || self.skillsReference
+                          || self.skillsCollaborative
                     maxItems: 64
                     type: array
                     x-kubernetes-list-map-keys:
@@ -200,14 +200,14 @@ spec:
                           read-only to the agent runtime.
                         type: boolean
                       skillsCollaborative:
-                        description: SkillsCollaborative exposes a shared skill library
-                          writable by authorized agents, allowing deliberate cross-agent
-                          skill sharing and improvement.
+                        description: |-
+                          SkillsCollaborative exposes a shared skill library writable by authorized agents,
+                          allowing deliberate cross-agent skill sharing and improvement.
                         type: boolean
                       skillsReference:
-                        description: SkillsReference exposes a shared skill library
-                          read-only to Hermes. Agent-local skills under /opt/data remain
-                          private and writable.
+                        description: |-
+                          SkillsReference exposes a shared skill library read-only to Hermes. Agent-local
+                          skills under /opt/data remain private and writable.
                         type: boolean
                     type: object
                   profileRef:
@@ -256,7 +256,8 @@ spec:
                       type: object
                       x-kubernetes-validations:
                       - message: workspace scope must enable file or skill access
-                        rule: self.reference || self.collaborative || self.skillsReference || self.skillsCollaborative
+                        rule: self.reference || self.collaborative || self.skillsReference
+                          || self.skillsCollaborative
                     maxItems: 256
                     type: array
                     x-kubernetes-list-map-keys:
@@ -293,7 +294,7 @@ spec:
                     observedGeneration:
                       description: |-
                         observedGeneration represents the .metadata.generation that the condition was set based upon.
-                        For instance, if .metadata.generation is currently 12, but .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
                         with respect to the current state of the instance.
                       format: int64
                       minimum: 0
