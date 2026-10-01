@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
@@ -33,15 +34,18 @@ func TestSharedWorkspaceReconcilesIsolatedRWXPVCs(t *testing.T) {
 	}
 
 	checks := map[string]struct {
-		scope string
-		key   string
-		mode  string
+		domain string
+		scope  string
+		key    string
+		mode   string
 	}{
-		"ws-org-ref":         {scope: "organization", key: "organization", mode: "reference"},
-		"ws-org-rw":          {scope: "organization", key: "organization", mode: "collaborative"},
-		"ws-group-sales-ref": {scope: "group", key: "sales", mode: "reference"},
-		"ws-group-sales-rw":  {scope: "group", key: "sales", mode: "collaborative"},
-		"ws-user-bertrand-rw": {scope: "user", key: "bertrand", mode: "collaborative"},
+		"ws-org-ref":            {domain: "shared", scope: "organization", key: "organization", mode: "reference"},
+		"ws-org-rw":             {domain: "shared", scope: "organization", key: "organization", mode: "collaborative"},
+		"ws-group-sales-ref":    {domain: "shared", scope: "group", key: "sales", mode: "reference"},
+		"ws-group-sales-rw":     {domain: "shared", scope: "group", key: "sales", mode: "collaborative"},
+		"ws-user-bertrand-rw":   {domain: "shared", scope: "user", key: "bertrand", mode: "collaborative"},
+		"skills-org-ref":        {domain: "skills", scope: "organization", key: "organization", mode: "reference"},
+		"skills-group-sales-rw": {domain: "skills", scope: "group", key: "sales", mode: "collaborative"},
 	}
 	for name, want := range checks {
 		var pvc corev1.PersistentVolumeClaim
@@ -54,7 +58,7 @@ func TestSharedWorkspaceReconcilesIsolatedRWXPVCs(t *testing.T) {
 		if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != "truenas-nfs-retain" {
 			t.Fatalf("PVC %s storageClass = %#v", name, pvc.Spec.StorageClassName)
 		}
-		if pvc.Labels[LabelWorkspaceScope] != want.scope || pvc.Labels[LabelWorkspaceKey] != want.key || pvc.Labels[LabelWorkspaceMode] != want.mode {
+		if pvc.Labels[LabelWorkspaceDomain] != want.domain || pvc.Labels[LabelWorkspaceScope] != want.scope || pvc.Labels[LabelWorkspaceKey] != want.key || pvc.Labels[LabelWorkspaceMode] != want.mode {
 			t.Fatalf("PVC %s workspace labels = %#v", name, pvc.Labels)
 		}
 		if pvc.Labels[LabelWorkspaceRetention] != fabricv1alpha1.WorkspaceRetentionRetain {
@@ -85,16 +89,18 @@ func TestResolvedWorkspaceVolumesEnforcesScopesAndReadOnly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(volumes) != 5 || len(mounts) != 5 {
-		t.Fatalf("resolved volumes=%d mounts=%d, want 5/5", len(volumes), len(mounts))
+	if len(volumes) != 7 || len(mounts) != 7 {
+		t.Fatalf("resolved volumes=%d mounts=%d, want 7/7", len(volumes), len(mounts))
 	}
 
 	want := map[string]bool{
-		"/workspace/shared/organization/reference":   true,
-		"/workspace/shared/organization/collaborative": false,
-		"/workspace/shared/groups/sales/reference":   true,
-		"/workspace/shared/groups/sales/collaborative": false,
-		"/workspace/shared/users/bertrand/collaborative": false,
+		"/workspace/shared/organization/reference":          true,
+		"/workspace/shared/organization/collaborative":      false,
+		"/workspace/shared/groups/sales/reference":          true,
+		"/workspace/shared/groups/sales/collaborative":      false,
+		"/workspace/shared/users/bertrand/collaborative":    false,
+		"/workspace/skills/organization/reference":          true,
+		"/workspace/skills/groups/sales/collaborative":      false,
 	}
 	for _, mount := range mounts {
 		readOnly, ok := want[mount.MountPath]
@@ -153,10 +159,24 @@ func TestHermesDeploymentMountsOnlyAuthorizedWorkspaceScopes(t *testing.T) {
 	if !hasMount(mounts, "/workspace/shared/groups/sales/collaborative", false) {
 		t.Fatal("sales collaborative mount missing or unexpectedly read-only")
 	}
+	if !hasMount(mounts, "/workspace/skills/organization/reference", true) {
+		t.Fatal("organization skill reference mount missing or not read-only")
+	}
+	if !hasMount(mounts, "/workspace/skills/groups/sales/collaborative", false) {
+		t.Fatal("sales collaborative skill mount missing or unexpectedly read-only")
+	}
 	for _, mount := range mounts {
-		if mount.MountPath == "/workspace/shared/groups/tech/reference" || mount.MountPath == "/workspace/shared/groups/tech/collaborative" {
+		if strings.Contains(mount.MountPath, "/groups/tech/") {
 			t.Fatalf("sales agent must not receive tech mount: %#v", mount)
 		}
+	}
+
+	bootstrap := deployment.Spec.Template.Spec.InitContainers[0]
+	if len(bootstrap.Command) != 3 || !strings.Contains(bootstrap.Command[2], "config set skills.external_dirs") {
+		t.Fatalf("bootstrap command does not configure Hermes external skill dirs: %#v", bootstrap.Command)
+	}
+	if got := envValue(bootstrap.Env, "TXO_SKILL_EXTERNAL_DIRS"); got != `["/workspace/skills/groups/sales/collaborative","/workspace/skills/organization/reference"]` {
+		t.Fatalf("TXO_SKILL_EXTERNAL_DIRS=%q", got)
 	}
 }
 
@@ -169,6 +189,15 @@ func hasMount(mounts []corev1.VolumeMount, path string, readOnly bool) bool {
 	return false
 }
 
+func envValue(env []corev1.EnvVar, name string) string {
+	for _, item := range env {
+		if item.Name == name {
+			return item.Value
+		}
+	}
+	return ""
+}
+
 func workspaceTestTenant() *fabricv1alpha1.TenantBundle {
 	return &fabricv1alpha1.TenantBundle{
 		ObjectMeta: metav1.ObjectMeta{Name: "fabric-smoke"},
@@ -178,9 +207,11 @@ func workspaceTestTenant() *fabricv1alpha1.TenantBundle {
 			Workspace: &fabricv1alpha1.TenantWorkspaceSpec{
 				ProfileRef:      "shared-nfs",
 				RetentionPolicy: fabricv1alpha1.WorkspaceRetentionRetain,
-				Organization:    fabricv1alpha1.WorkspaceScopeSpec{Reference: true, Collaborative: true},
+				Organization: fabricv1alpha1.WorkspaceScopeSpec{
+					Reference: true, Collaborative: true, SkillsReference: true,
+				},
 				Groups: []fabricv1alpha1.NamedWorkspaceScopeSpec{
-					{Name: "sales", Reference: true, Collaborative: true},
+					{Name: "sales", Reference: true, Collaborative: true, SkillsCollaborative: true},
 					{Name: "tech", Reference: true},
 				},
 				Users: []fabricv1alpha1.NamedWorkspaceScopeSpec{
