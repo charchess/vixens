@@ -52,7 +52,7 @@ func TestHermesHindsightDeploymentWiring(t *testing.T) {
 		"\"mode\": \"local_external\"",
 		"\"api_url\": \"http://hindsight:8888\"",
 		"\"memory_mode\": \"context\"",
-		"\"recall_types\": []",
+		"\"recall_types\": \"\"",
 		"\"auto_retain\": True",
 		"\"auto_recall\": True",
 		"\"retain_indicator\": False",
