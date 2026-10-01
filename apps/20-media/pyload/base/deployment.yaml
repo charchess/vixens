@@ -97,6 +97,7 @@ spec:
               mountPath: /config
             - name: downloads
               mountPath: /downloads
+              subPath: pyload
       volumes:
         - name: run
           emptyDir: {}
@@ -105,7 +106,7 @@ spec:
         - name: downloads
           nfs:
             server: nas.truxonline.com
-            path: /mnt/tank/scratch/downloads/pyload
+            path: /mnt/tank/scratch/downloads
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
