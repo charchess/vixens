@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
@@ -62,6 +63,10 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 	if err != nil {
 		return err
 	}
+	skillDirsJSON, err := json.Marshal(skillExternalDirs(workspaceMounts))
+	if err != nil {
+		return fmt.Errorf("encode Hermes external skill dirs: %w", err)
+	}
 	dataMount := corev1.VolumeMount{Name: "data", MountPath: "/opt/data"}
 	hermesMounts := append([]corev1.VolumeMount{dataMount}, workspaceMounts...)
 	volumes := append([]corev1.Volume{{Name: "data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: runtimePVCName(agent.Spec.AgentKey)}}}}, workspaceVolumes...)
@@ -95,8 +100,16 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 					Name:            "bootstrap-profile",
 					Image:           profile.Spec.Image,
 					ImagePullPolicy: corev1.PullIfNotPresent,
-					Command:         []string{"/bin/sh", "-lc", `if [ ! -d "/opt/data/profiles/${AGENT_NAME}" ]; then /opt/hermes/.venv/bin/hermes profile create "${AGENT_NAME}" --no-alias --no-skills --description "${AGENT_DISPLAY_NAME} - TXO Fabric agent"; fi`},
-					Env: []corev1.EnvVar{{Name: "HERMES_HOME", Value: "/opt/data"}, {Name: "AGENT_NAME", Value: agent.Spec.AgentKey}, {Name: "AGENT_DISPLAY_NAME", Value: agent.Spec.DisplayName}},
+					Command: []string{"/bin/sh", "-lc", `if [ ! -d "/opt/data/profiles/${AGENT_NAME}" ]; then
+  /opt/hermes/.venv/bin/hermes profile create "${AGENT_NAME}" --no-alias --no-skills --description "${AGENT_DISPLAY_NAME} - TXO Fabric agent"
+fi
+/opt/hermes/.venv/bin/hermes -p "${AGENT_NAME}" config set skills.external_dirs "${TXO_SKILL_EXTERNAL_DIRS}"`},
+					Env: []corev1.EnvVar{
+						{Name: "HERMES_HOME", Value: "/opt/data"},
+						{Name: "AGENT_NAME", Value: agent.Spec.AgentKey},
+						{Name: "AGENT_DISPLAY_NAME", Value: agent.Spec.DisplayName},
+						{Name: "TXO_SKILL_EXTERNAL_DIRS", Value: string(skillDirsJSON)},
+					},
 					VolumeMounts: []corev1.VolumeMount{dataMount},
 				}},
 				Containers: []corev1.Container{{
