@@ -44,6 +44,9 @@ func TestHermesHindsightDeploymentWiring(t *testing.T) {
 	}
 	command := bootstrap.Command[2]
 	for _, want := range []string{
+		`legacy_profile="/opt/data/profiles/${AGENT_NAME}"`,
+		`TXO_RUNTIME_STORAGE_RETENTION`,
+		`explicit migration is required`,
 		"config set skills.external_dirs '[\"/workspace/skills\"]'",
 		"config set memory.provider hindsight",
 		"\"mode\": \"local_external\"",
@@ -53,10 +56,15 @@ func TestHermesHindsightDeploymentWiring(t *testing.T) {
 		"\"auto_recall\": True",
 		"\"retain_indicator\": False",
 		"\"recall_indicator\": False",
-		"profile_home / \"hindsight\" / \"config.json\"",
+		`hermes_home / "hindsight" / "config.json"`,
 	} {
 		if !strings.Contains(command, want) {
 			t.Fatalf("bootstrap command missing %q:\n%s", want, command)
+		}
+	}
+	for _, forbidden := range []string{"hermes profile create", `hermes -p "${AGENT_NAME}"`, `profile_home / "hindsight"`} {
+		if strings.Contains(command, forbidden) {
+			t.Fatalf("bootstrap still contains named-profile behavior %q:\n%s", forbidden, command)
 		}
 	}
 	if got := strings.Count(command, "config set memory.provider hindsight"); got != 1 {
@@ -65,11 +73,20 @@ func TestHermesHindsightDeploymentWiring(t *testing.T) {
 	if strings.Contains(command, "HINDSIGHT_API_KEY") || strings.Contains(command, "HINDSIGHT_API_DATABASE_URL") || strings.Contains(command, "POSTGRES") {
 		t.Fatalf("bootstrap config contains a credential/database surface:\n%s", command)
 	}
+	if got := envValue(bootstrap.Env, "HERMES_HOME"); got != "/opt/data" {
+		t.Fatalf("bootstrap HERMES_HOME = %q", got)
+	}
 	if got := envValue(bootstrap.Env, "HINDSIGHT_BANK_ID"); got != "hairem-sandbox-tina" {
 		t.Fatalf("bootstrap HINDSIGHT_BANK_ID = %q", got)
 	}
+	if got := envValue(bootstrap.Env, "TXO_RUNTIME_STORAGE_RETENTION"); got != StorageRetentionRetain {
+		t.Fatalf("bootstrap retention = %q", got)
+	}
 
 	hermes := deployment.Spec.Template.Spec.Containers[0]
+	if got := envValue(hermes.Env, "HERMES_HOME"); got != "/opt/data" {
+		t.Fatalf("runtime HERMES_HOME = %q", got)
+	}
 	apiKey := envVar(hermes.Env, "HINDSIGHT_API_KEY")
 	if apiKey == nil || apiKey.Value != "" || apiKey.ValueFrom == nil || apiKey.ValueFrom.SecretKeyRef == nil {
 		t.Fatalf("HINDSIGHT_API_KEY is not Secret-backed: %#v", apiKey)
@@ -88,6 +105,33 @@ func TestHermesHindsightDeploymentWiring(t *testing.T) {
 		if strings.Contains(name, "DATABASE") || strings.Contains(name, "POSTGRES") || strings.Contains(name, "HINDSIGHT_API_LLM_API_KEY") {
 			t.Fatalf("Hermes received forbidden Hindsight/DB credential env %q", item.Name)
 		}
+	}
+}
+
+func TestHermesDisposableRuntimeCanDropLegacyNamedProfile(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := testTenant()
+	profile := testRuntimeProfile()
+	agent := testAgentIdentity()
+	agent.Spec.Runtime.Storage.RetentionPolicy = StorageRetentionDelete
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	namespace := tenantNamespace(tenant.Name)
+
+	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace); err != nil {
+		t.Fatal(err)
+	}
+	var deployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	bootstrap := deployment.Spec.Template.Spec.InitContainers[0]
+	if got := envValue(bootstrap.Env, "TXO_RUNTIME_STORAGE_RETENTION"); got != StorageRetentionDelete {
+		t.Fatalf("bootstrap retention = %q", got)
+	}
+	if !strings.Contains(bootstrap.Command[2], `rm -rf -- "${legacy_profile}"`) {
+		t.Fatalf("disposable migration cleanup missing:\n%s", bootstrap.Command[2])
 	}
 }
 
@@ -136,8 +180,11 @@ func TestHermesTenantWithoutHindsightRemainsUnmodified(t *testing.T) {
 		t.Fatal(err)
 	}
 	bootstrap := deployment.Spec.Template.Spec.InitContainers[0]
-	if strings.Contains(bootstrap.Command[2], "memory.provider hindsight") || strings.Contains(bootstrap.Command[2], "profile_home / \"hindsight\"") {
+	if strings.Contains(bootstrap.Command[2], "memory.provider hindsight") || strings.Contains(bootstrap.Command[2], `hermes_home / "hindsight"`) {
 		t.Fatalf("tenant without Hindsight received provider bootstrap:\n%s", bootstrap.Command[2])
+	}
+	if strings.Contains(bootstrap.Command[2], "hermes profile create") || strings.Contains(bootstrap.Command[2], `hermes -p "${AGENT_NAME}"`) {
+		t.Fatalf("tenant without Hindsight still uses a named profile:\n%s", bootstrap.Command[2])
 	}
 	if envVar(bootstrap.Env, "HINDSIGHT_BANK_ID") != nil {
 		t.Fatal("tenant without Hindsight received HINDSIGHT_BANK_ID")
