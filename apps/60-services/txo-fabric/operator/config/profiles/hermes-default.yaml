@@ -65,6 +65,10 @@ spec:
       # /opt/data/config.yaml is edited locally.
       - name: computer_use
         state: Off
+      # Bundled platform plugin in the pinned runtime; Hermes otherwise treats
+      # it as a plugin toolset. Keep it explicitly denied in the POC profile.
+      - name: a2a
+        state: Off
       - name: x_search
         state: Off
       - name: video
