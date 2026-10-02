@@ -40,6 +40,7 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}},
 		&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: runtimeName(agent.Spec.AgentKey) + "-egress", Namespace: namespace}},
 		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: modelAccessSecretName(agent.Spec.AgentKey), Namespace: namespace}},
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: managedToolsetPolicyName(agent.Spec.AgentKey), Namespace: namespace}},
 	}
 	if storageRetentionPolicy(agent) == StorageRetentionDelete {
 		objects = append(objects, &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimePVCName(agent.Spec.AgentKey), Namespace: namespace}})
@@ -55,6 +56,8 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 			current = &networkingv1.NetworkPolicy{}
 		case *corev1.Secret:
 			current = &corev1.Secret{}
+		case *corev1.ConfigMap:
+			current = &corev1.ConfigMap{}
 		case *corev1.PersistentVolumeClaim:
 			current = &corev1.PersistentVolumeClaim{}
 		}
@@ -162,6 +165,7 @@ func (r *AgentIdentityReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&fabricv1alpha1.AgentIdentity{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.PersistentVolumeClaim{}).
+		Owns(&corev1.ConfigMap{}).
 		Owns(&networkingv1.NetworkPolicy{}).
 		Watches(&fabricv1alpha1.AgentRuntimeProfile{}, handler.EnqueueRequestsFromMapFunc(r.requestsForProfile)).
 		Watches(&fabricv1alpha1.TenantBundle{}, handler.EnqueueRequestsFromMapFunc(r.requestsForTenant)).
