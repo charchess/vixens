@@ -375,7 +375,12 @@ func (r *TenantBundleReconciler) ensureHindsightDeployment(ctx context.Context, 
 		podLabels["vixens.io/sizing.hindsight"] = defaultString(profile.Spec.SizingLabel, "V-small")
 		podAnnotations := map[string]string{}
 		if hindsightUsesPlatformGateway(profile) {
+			var runtimeSecret corev1.Secret
+			if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: names.Secret}, &runtimeSecret); err != nil {
+				return err
+			}
 			podAnnotations[AnnotationHindsightEmbeddingRevision] = hindsightEmbeddingRotationRevision(bundle)
+			podAnnotations[AnnotationHindsightEmbeddingSecretUID] = string(runtimeSecret.UID)
 		}
 		runAsNonRoot := true
 		runAsUser := int64(1000)
