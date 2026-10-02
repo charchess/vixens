@@ -28,7 +28,7 @@ type AgentIdentityReconciler struct {
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities/finalizers,verbs=update
-// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles;agentruntimeprofiles,verbs=get;list;watch
+// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles;agentruntimeprofiles;integrationconnections;integrationbindings,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=namespaces;persistentvolumeclaims;configmaps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
@@ -134,11 +134,22 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		"GatewayCredentialReady",
 		fmt.Sprintf("scoped TXO AI gateway credential is reconciled (gateway=%s model=%s rotation=%s)", aiGatewayURL(), defaultAIGatewayModel, rotation),
 	)
-	if err := r.ensureDeployment(ctx, &agent, &tenant, &profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy); err != nil {
+
+	integrationAccess, err := r.resolveIntegrationAccess(ctx, &agent, &tenant, namespace)
+	if err != nil {
+		r.setStatus(ctx, &agent, "Degraded", "IntegrationAccessReady", metav1.ConditionFalse, "IntegrationResolutionFailed", err.Error())
+		return ctrl.Result{}, err
+	}
+	if integrationAccess.Ready {
+		setCondition(&agent.Status.Conditions, agent.Generation, "IntegrationAccessReady", metav1.ConditionTrue, "Reconciled", integrationAccess.Message)
+	} else {
+		setCondition(&agent.Status.Conditions, agent.Generation, "IntegrationAccessReady", metav1.ConditionFalse, "AuthorizationDenied", integrationAccess.Message)
+	}
+	if err := r.ensureDeploymentWithIntegrations(ctx, &agent, &tenant, &profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrationAccess); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "DeploymentReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}
-	if err := r.ensureEgressPolicy(ctx, &agent, &tenant, namespace); err != nil {
+	if err := r.ensureEgressPolicy(ctx, &agent, &tenant, namespace, integrationAccess); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "NetworkReady", metav1.ConditionFalse, "NetworkPolicyReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}
@@ -154,6 +165,8 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	agent.Status.Runtime.ToolsetPolicyRevision = toolPolicy.Revision
 	agent.Status.Runtime.EnabledToolsets = append([]string(nil), toolPolicy.Enabled...)
 	agent.Status.Runtime.DeniedToolsets = append([]string(nil), toolPolicy.Denied...)
+	agent.Status.Runtime.IntegrationPolicyRevision = integrationAccess.Revision
+	agent.Status.Runtime.Integrations = append([]fabricv1alpha1.IntegrationAuthorizationStatus(nil), integrationAccess.Status...)
 	agent.Status.Memory.BankID = resolvedBankID(&agent)
 	if tenant.Spec.Memory.Hindsight == nil {
 		agent.Status.Memory.Phase = "Unconfigured"
@@ -167,11 +180,20 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 	setCondition(&agent.Status.Conditions, agent.Generation, "TenantResolved", metav1.ConditionTrue, "Resolved", fmt.Sprintf("TenantBundle %q resolved", tenant.Name))
 	setCondition(&agent.Status.Conditions, agent.Generation, "RuntimeProfileResolved", metav1.ConditionTrue, "Resolved", fmt.Sprintf("AgentRuntimeProfile %q resolved", profile.Name))
-	setCondition(&agent.Status.Conditions, agent.Generation, "NetworkReady", metav1.ConditionTrue, "Reconciled", "runtime egress policy is reconciled")
+	networkMessage := "runtime egress policy is reconciled"
+	if len(integrationAccess.Effective) > 0 {
+		networkMessage = "runtime egress policy is reconciled; effective v0 integration binding admits temporary broad HTTP(S) POC egress"
+	}
+	setCondition(&agent.Status.Conditions, agent.Generation, "NetworkReady", metav1.ConditionTrue, "Reconciled", networkMessage)
 	if deployment.Status.AvailableReplicas > 0 && deployment.Status.ObservedGeneration == deployment.Generation {
-		agent.Status.Phase = "Ready"
 		setCondition(&agent.Status.Conditions, agent.Generation, "RuntimeReady", metav1.ConditionTrue, "DeploymentAvailable", "Hermes runtime Deployment is available")
-		setCondition(&agent.Status.Conditions, agent.Generation, "Ready", metav1.ConditionTrue, "Ready", "runtime, capability policy and scoped model access are ready")
+		if integrationAccess.Ready {
+			agent.Status.Phase = "Ready"
+			setCondition(&agent.Status.Conditions, agent.Generation, "Ready", metav1.ConditionTrue, "Ready", "runtime, capability policy, scoped model access and declared integration access are ready")
+		} else {
+			agent.Status.Phase = "Degraded"
+			setCondition(&agent.Status.Conditions, agent.Generation, "Ready", metav1.ConditionFalse, "IntegrationAccessDenied", integrationAccess.Message)
+		}
 	} else {
 		agent.Status.Phase = "Provisioning"
 		setCondition(&agent.Status.Conditions, agent.Generation, "RuntimeReady", metav1.ConditionFalse, "DeploymentProgressing", "waiting for the Hermes Deployment to become available")
@@ -181,6 +203,9 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		if err := r.Status().Update(ctx, &agent); err != nil {
 			return ctrl.Result{}, err
 		}
+	}
+	if integrationAccess.HasBindings {
+		return ctrl.Result{RequeueAfter: integrationRefreshInterval}, nil
 	}
 	return ctrl.Result{}, nil
 }

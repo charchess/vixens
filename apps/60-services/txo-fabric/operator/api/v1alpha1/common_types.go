@@ -94,6 +94,31 @@ type TenantModuleStatus struct {
 	ComponentStatus `json:",inline"`
 }
 
+type IntegrationAuthorizationStatus struct {
+	// BindingName is the Fabric authorization object evaluated for this runtime.
+	BindingName string `json:"bindingName"`
+
+	// ConnectionName is the logical integration connection referenced by the binding.
+	ConnectionName string `json:"connectionName"`
+
+	// Phase is Effective, Revoked or Denied. It never carries credential material.
+	Phase string `json:"phase"`
+
+	// Reason is a stable non-secret diagnostic explaining the phase.
+	Reason string `json:"reason,omitempty"`
+
+	// Revision changes when binding, connection or credential metadata changes.
+	Revision string `json:"revision,omitempty"`
+
+	// Operations are the effective generic operations requested by the binding.
+	// +optional
+	Operations []string `json:"operations,omitempty"`
+
+	// Scopes are the effective connection-defined scope labels.
+	// +optional
+	Scopes []string `json:"scopes,omitempty"`
+}
+
 type RuntimeStatus struct {
 	// DeploymentName is the generated Hermes Deployment.
 	// +optional
@@ -114,6 +139,14 @@ type RuntimeStatus struct {
 	// DeniedToolsets lists profile-declared toolsets denied by the effective platform policy.
 	// +optional
 	DeniedToolsets []string `json:"deniedToolsets,omitempty"`
+
+	// IntegrationPolicyRevision identifies the effective non-secret integration projection.
+	// +optional
+	IntegrationPolicyRevision string `json:"integrationPolicyRevision,omitempty"`
+
+	// Integrations exposes effective/revoked/denied Fabric authorization without secret values.
+	// +optional
+	Integrations []IntegrationAuthorizationStatus `json:"integrations,omitempty"`
 }
 
 type MemoryBindingStatus struct {

@@ -29,9 +29,9 @@ func (r *TenantBundleReconciler) Get(ctx context.Context, key client.ObjectKey, 
 	return r.Client.Get(ctx, key, obj, opts...)
 }
 
-// AgentIdentity model-access credentials are also intentionally uncached. A
-// cached Secret Get would lazily start a cluster-wide Secret informer and turn
-// a narrow `get` permission into an implicit `list/watch` requirement.
+// AgentIdentity model-access and v0 integration credentials are intentionally
+// uncached. A cached Secret Get would lazily start a cluster-wide Secret informer
+// and turn a narrow `get` permission into an implicit `list/watch` requirement.
 func (r *AgentIdentityReconciler) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	if r.APIReader != nil {
 		if _, ok := obj.(*corev1.Secret); ok {

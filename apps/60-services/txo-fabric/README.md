@@ -15,7 +15,10 @@ Git and Argo CD own the high-level desired state:
 - `AgentIdentity` declares one tenant-local agent identity;
 - `AgentRuntimeProfile` declares the platform-owned runtime implementation;
 - `PostgreSQLProfile` declares how the platform satisfies tenant persistence;
-- `HindsightProfile` declares how the platform satisfies tenant memory.
+- `HindsightProfile` declares how the platform satisfies tenant memory;
+- `IntegrationConnection` and `IntegrationBinding` declare logical external
+  integration metadata and per-agent authorization without embedding credential
+  values.
 
 The TXO Fabric operator owns the Kubernetes resources derived from that intent.
 It reconciles continuously instead of writing generated manifests back to Git.
@@ -58,6 +61,14 @@ priority, compatibility settings and platform-owned executable toolset policy.
 Tenant and agent manifests do not embed those implementation details. The
 three-state Hermes capability contract and pinned-runtime inventory are documented
 in [CAPABILITIES.md](CAPABILITIES.md).
+
+### IntegrationConnection / IntegrationBinding
+
+The v0 integration contract keeps logical connection metadata and per-agent
+authorization in Fabric rather than in writable Hermes `/opt/data`. Credential
+values remain outside the CRDs and Git. The current v0 adapter, temporary broad
+POC egress, authenticated `fabric-smoke` canary, revocation semantics and v0.2
+broker migration boundary are documented in [INTEGRATIONS.md](INTEGRATIONS.md).
 
 ### PostgreSQLProfile
 

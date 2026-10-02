@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -59,11 +60,8 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 }
 
 func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, policies ...effectiveToolsetPolicy) error {
-	workspaceVolumes, workspaceMounts, err := resolvedWorkspaceVolumes(agent, tenant)
-	if err != nil {
-		return err
-	}
 	var toolPolicy effectiveToolsetPolicy
+	var err error
 	if len(policies) > 0 {
 		toolPolicy = policies[0]
 	} else {
@@ -71,6 +69,22 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 		if err != nil {
 			return err
 		}
+	}
+	return r.ensureDeploymentRuntime(ctx, agent, tenant, profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrationResolution{})
+}
+
+func (r *AgentIdentityReconciler) ensureDeploymentWithIntegrations(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution) error {
+	return r.ensureDeploymentRuntime(ctx, agent, tenant, profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrations)
+}
+
+func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution) error {
+	workspaceVolumes, workspaceMounts, err := resolvedWorkspaceVolumes(agent, tenant)
+	if err != nil {
+		return err
+	}
+	integrationManifest, err := renderRuntimeIntegrationManifest(integrations.Effective)
+	if err != nil {
+		return err
 	}
 	dataMount := corev1.VolumeMount{Name: "data", MountPath: "/opt/data"}
 	managedPolicyMount := corev1.VolumeMount{Name: managedPolicyVolumeName, MountPath: managedPolicyMountPath, ReadOnly: true}
@@ -82,6 +96,20 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 		}}},
 	}
 	volumes = append(volumes, workspaceVolumes...)
+	for _, integration := range integrations.Effective {
+		volumes = append(volumes, corev1.Volume{
+			Name: integration.VolumeName,
+			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
+				SecretName: integration.CredentialName,
+				Items: []corev1.KeyToPath{{Key: integrationCredentialKey, Path: integrationCredentialKey}},
+			}},
+		})
+		hermesMounts = append(hermesMounts, corev1.VolumeMount{
+			Name:      integration.VolumeName,
+			MountPath: fmt.Sprintf("%s/%s", integrationCredentialMountRoot, integration.ConnectionName),
+			ReadOnly:  true,
+		})
+	}
 
 	name := runtimeName(agent.Spec.AgentKey)
 	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
@@ -99,9 +127,10 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 		podLabels := copyStringMap(labels)
 		podLabels["vixens.io/sizing.hermes"] = defaultString(profile.Spec.SizingLabel, "V-small")
 		podAnnotations := map[string]string{
-			AnnotationModelAccessRevision:   modelAccessRevision,
-			AnnotationModelAccessSecretUID:  modelAccessSecretUID,
-			AnnotationToolsetPolicyRevision: toolPolicy.Revision,
+			AnnotationModelAccessRevision:       modelAccessRevision,
+			AnnotationModelAccessSecretUID:      modelAccessSecretUID,
+			AnnotationToolsetPolicyRevision:     toolPolicy.Revision,
+			AnnotationIntegrationPolicyRevision: integrations.Revision,
 		}
 		if profile.Spec.Compatibility.S6Overlay {
 			podAnnotations["vixens.io/explicitly-allow-root"] = "true"
@@ -157,6 +186,7 @@ fi
 						{Name: "TXO_TENANT_NAME", Value: tenant.Name},
 						{Name: "TXO_MEMORY_BANK_ID", Value: resolvedBankID(agent)},
 						{Name: "TXO_LLM_AUTH_MODE", Value: "gateway"},
+						{Name: integrationManifestEnv, Value: integrationManifest},
 						{Name: "OPENAI_BASE_URL", Value: defaultAIGatewayURL + "/v1"},
 						{Name: "HERMES_MODEL", Value: defaultAIGatewayModel},
 						{
@@ -184,7 +214,45 @@ fi
 	return err
 }
 
-func (r *AgentIdentityReconciler) ensureEgressPolicy(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, namespace string) error {
+type runtimeIntegrationManifestEntry struct {
+	Binding        string   `json:"binding"`
+	Connection     string   `json:"connection"`
+	Protocol       string   `json:"protocol"`
+	Endpoint       string   `json:"endpoint"`
+	Authentication string   `json:"authentication"`
+	Operations     []string `json:"operations"`
+	Scopes         []string `json:"scopes,omitempty"`
+	CredentialPath string   `json:"credentialPath"`
+	Revision       string   `json:"revision"`
+}
+
+func renderRuntimeIntegrationManifest(integrations []runtimeIntegration) (string, error) {
+	manifest := make([]runtimeIntegrationManifestEntry, 0, len(integrations))
+	for _, integration := range integrations {
+		manifest = append(manifest, runtimeIntegrationManifestEntry{
+			Binding:        integration.BindingName,
+			Connection:     integration.ConnectionName,
+			Protocol:       integration.Protocol,
+			Endpoint:       integration.Endpoint,
+			Authentication: integration.Authentication,
+			Operations:     append([]string(nil), integration.Operations...),
+			Scopes:         append([]string(nil), integration.Scopes...),
+			CredentialPath: integration.CredentialPath,
+			Revision:       integration.Revision,
+		})
+	}
+	encoded, err := json.Marshal(manifest)
+	if err != nil {
+		return "", fmt.Errorf("render runtime integration manifest: %w", err)
+	}
+	return string(encoded), nil
+}
+
+func (r *AgentIdentityReconciler) ensureEgressPolicy(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, namespace string, resolutions ...integrationResolution) error {
+	var integrations integrationResolution
+	if len(resolutions) > 0 {
+		integrations = resolutions[0]
+	}
 	name := runtimeName(agent.Spec.AgentKey) + "-egress"
 	np := &networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, np, func() error {
@@ -210,6 +278,20 @@ func (r *AgentIdentityReconciler) ensureEgressPolicy(ctx context.Context, agent 
 			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
 				To: []networkingv1.NetworkPolicyPeer{{PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hindsight"}}}},
 				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(8888)}},
+			})
+		}
+		if len(integrations.Effective) > 0 {
+			// v0 POC only: an effective Fabric integration binding admits broad HTTP(S)
+			// egress. This is deliberately not a destination sandbox. The durable
+			// production direction is policy-derived least-privilege egress/brokering.
+			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+				// Empty To means every destination. This is intentionally broad for
+				// v0 POC compatibility and is not the production egress contract.
+				Ports: []networkingv1.NetworkPolicyPort{
+					{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(80)},
+					{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(443)},
+					{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(8080)},
+				},
 			})
 		}
 		return controllerutil.SetControllerReference(agent, np, r.Scheme)
