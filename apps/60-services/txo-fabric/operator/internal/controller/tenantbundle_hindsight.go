@@ -274,8 +274,8 @@ func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bund
 		needsReplacement := embeddingKey == "" || currentRevision != desiredRevision
 		if needsReplacement {
 			if embeddingKey != "" {
-				if err := revokeModelAccessKeyValueIfExists(ctx, embeddingKey); err != nil {
-					return nil, fmt.Errorf("revoke previous Hindsight embedding key: %w", err)
+				if err := revokeModelAccessKeyIfExists(ctx, alias); err != nil {
+					return nil, fmt.Errorf("revoke previous Hindsight embedding key alias %q: %w", alias, err)
 				}
 			} else if err := revokeModelAccessKeyIfExists(ctx, alias); err != nil {
 				return nil, fmt.Errorf("revoke stale Hindsight embedding key alias %q: %w", alias, err)
@@ -288,7 +288,9 @@ func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bund
 			generatedEmbeddingKey = true
 		}
 	} else if embeddingKey != "" {
-		_ = revokeModelAccessKey(ctx, alias)
+		if err := revokeModelAccessKeyIfExists(ctx, alias); err != nil {
+			return nil, fmt.Errorf("revoke disabled Hindsight embedding key alias %q: %w", alias, err)
+		}
 		embeddingKey = ""
 	}
 
