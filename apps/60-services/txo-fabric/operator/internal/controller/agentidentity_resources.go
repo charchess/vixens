@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -145,6 +146,10 @@ fi
 						{Name: "HERMES_MANAGED_DIR", Value: managedPolicyMountPath},
 						{Name: "HERMES_DISABLE_LAZY_INSTALLS", Value: "1"},
 						{Name: "TXO_TOOLSET_POLICY_REVISION", Value: toolPolicy.Revision},
+						// Hermes TUI/Desktop intentionally add client-only toolsets after config
+						// resolution. This operator pin replaces that fold-in with the exact
+						// platform-approved set for interactive UI sessions.
+						{Name: "HERMES_TUI_TOOLSETS", Value: strings.Join(toolPolicy.Enabled, ",")},
 						{Name: "TERMINAL_ENV", Value: "local"},
 						{Name: "TXO_AGENT_ID", Value: agent.Name},
 						{Name: "TXO_AGENT_KEY", Value: agent.Spec.AgentKey},
