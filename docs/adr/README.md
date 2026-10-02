@@ -79,6 +79,7 @@ A retrospective ADR records the accepted implementation. It must not make an unr
 - [ADR-032: TXO Fabric is tenant-neutral and valid with zero clients](032-fabric-is-tenant-neutral.md)
 - [ADR-033: Separate private agent state, shared business data and shared skills](033-separate-agent-state-workspace-and-skills.md)
 - [ADR-034: Build Hermes extensions into an immutable TXO runtime image](034-immutable-hermes-runtime-supply-chain.md)
+- [ADR-035: Centralize Fabric external inference behind the TXO AI Gateway](035-centralized-fabric-inference-boundary.md)
 
 Future Fabric decisions are added only after their owning implementation/acceptance establishes a durable contract; #3710 tracks that harvesting work.
 
