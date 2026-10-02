@@ -139,7 +139,15 @@ func (r *TenantBundleReconciler) reconcileHindsight(ctx context.Context, bundle 
 	status := hindsightComponentStatus("Ready", names)
 	message := "tenant-scoped Hindsight API is available with secret-backed PostgreSQL and API-key authentication"
 	if hindsightUsesPlatformGateway(&profile) {
-		rotation := hindsightEmbeddingRotationRevision(bundle)
+		var runtimeSecret corev1.Secret
+		reader := r.APIReader
+		if reader == nil {
+			reader = r.Client
+		}
+		if err := reader.Get(ctx, client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: names.Secret}, &runtimeSecret); err != nil {
+			return hindsightResult{}, err
+		}
+		rotation := runtimeSecret.Annotations[AnnotationHindsightEmbeddingRevision]
 		if rotation == "" {
 			rotation = "baseline"
 		}
@@ -211,7 +219,7 @@ func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bund
 
 	gatewayEnabled := hindsightUsesPlatformGateway(profile)
 	alias := hindsightEmbeddingKeyAlias(bundle)
-	desiredRevision := hindsightEmbeddingRotationRevision(bundle)
+	requestedRevision := hindsightEmbeddingRotationRevision(bundle)
 	namespace := tenantNamespace(bundle.Name)
 	key := client.ObjectKey{Namespace: namespace, Name: names.Secret}
 	var secret corev1.Secret
@@ -233,7 +241,9 @@ func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bund
 			if err != nil {
 				return nil, fmt.Errorf("provision Hindsight embedding gateway credential: %w", err)
 			}
-			annotations[AnnotationHindsightEmbeddingRevision] = desiredRevision
+			if requestedRevision != "" {
+				annotations[AnnotationHindsightEmbeddingRevision] = requestedRevision
+			}
 		}
 		secret = corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -271,7 +281,7 @@ func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bund
 	currentRevision := secret.Annotations[AnnotationHindsightEmbeddingRevision]
 	generatedEmbeddingKey := false
 	if gatewayEnabled {
-		needsReplacement := embeddingKey == "" || currentRevision != desiredRevision
+		needsReplacement := embeddingKey == "" || (requestedRevision != "" && appliedRevision != requestedRevision)
 		if needsReplacement {
 			if embeddingKey != "" {
 				if err := revokeModelAccessKeyIfExists(ctx, alias); err != nil {
@@ -297,7 +307,9 @@ func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bund
 	desiredLabels := mergeStringMap(copyStringMap(secret.Labels), hindsightLabels(bundle, profile, "runtime-secret"))
 	desiredAnnotations := copyStringMap(secret.Annotations)
 	if gatewayEnabled {
-		desiredAnnotations[AnnotationHindsightEmbeddingRevision] = desiredRevision
+		if requestedRevision != "" {
+			desiredAnnotations[AnnotationHindsightEmbeddingRevision] = requestedRevision
+		}
 	} else {
 		delete(desiredAnnotations, AnnotationHindsightEmbeddingRevision)
 	}
@@ -385,7 +397,7 @@ func (r *TenantBundleReconciler) ensureHindsightDeployment(ctx context.Context, 
 			if err := reader.Get(ctx, client.ObjectKey{Namespace: namespace, Name: names.Secret}, &runtimeSecret); err != nil {
 				return err
 			}
-			podAnnotations[AnnotationHindsightEmbeddingRevision] = hindsightEmbeddingRotationRevision(bundle)
+			podAnnotations[AnnotationHindsightEmbeddingRevision] = runtimeSecret.Annotations[AnnotationHindsightEmbeddingRevision]
 			podAnnotations[AnnotationHindsightEmbeddingSecretUID] = string(runtimeSecret.UID)
 		}
 		runAsNonRoot := true
