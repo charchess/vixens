@@ -11,7 +11,7 @@ The first policy implementation targets:
 - Hermes image baseline: `nousresearch/hermes-agent:v2026.9.24`
 - upstream commit behind that tag: `f97608f178d1ffeca59860195ab7da295f7c8e5f`
 
-An immutable TXO Hermes image may add reviewed runtime providers, but the Hermes toolset catalog belongs to the pinned Hermes source version. A runtime-image upgrade must review this compatibility inventory before promotion.
+An immutable TXO Hermes image may add reviewed runtime providers, but the Hermes toolset catalog belongs to the pinned Hermes source version. A runtime-image upgrade must review this compatibility inventory before promotion; the profile policy is the versioned admission catalog for that image and must not be carried forward blindly.
 
 ## Pinned Hermes toolset inventory
 
@@ -90,16 +90,19 @@ Hermes v2026.9.24 already implements this as its administrator-managed scope. Ma
 
 The generated managed policy pins:
 
-- an explicit toolset list for every built-in Hermes platform surface in the pinned runtime;
+- an explicit toolset list for every built-in Hermes platform surface in the pinned runtime, plus the TUI/Desktop/ACP session surfaces;
 - `no_mcp` to prevent implicit MCP server admission;
-- `plugins.enabled: []` so user-installed plugins are not silently activated;
+- `known_plugin_toolsets` from the profile catalog so a declared Off/AllowedOff plugin toolset cannot auto-admit itself during plugin discovery;
+- `plugins.enabled: []` so user-installed/standalone plugins are not silently activated;
 - `security.allow_lazy_installs: false`.
 
-The pod also sets:
+The pod also pins `HERMES_TUI_TOOLSETS` to the effective enabled list. This is necessary because the pinned TUI/Desktop client intentionally folds client-only toolsets into a session after normal platform selection; the operator pin replaces that fold-in.
+
+The pod additionally sets:
 
 `HERMES_DISABLE_LAZY_INSTALLS=1`
 
-This process-level guard is outside `/opt/data` and provides a second independent block against first-use dependency installation.
+The authoritative global block is the managed `security.allow_lazy_installs: false`. The upstream Docker image also defines a durable `HERMES_LAZY_INSTALL_TARGET`, so `HERMES_DISABLE_LAZY_INSTALLS=1` alone would still allow redirected durable installs; Fabric keeps the environment guard as defense-in-depth while the managed config supplies the fail-closed policy.
 
 The effective policy revision is copied to the pod template and AgentIdentity status. A profile policy change or an `AllowedOff` activation therefore causes an observable Deployment rollout.
 
@@ -109,7 +112,7 @@ The initial `hermes-default` profile deliberately keeps the existing broad POC c
 
 - `cronjob` is explicitly **On**.
 - `delegation` is **AllowedOff** and requires an authorized AgentIdentity change.
-- `computer_use` and other upstream opt-in/platform-specific capability families are **Off** unless deliberately promoted later.
+- `computer_use`, the bundled `a2a` toolset and other upstream opt-in/platform-specific capability families are **Off** unless deliberately promoted later.
 
 This is capability admission, not a claim that every admitted tool is operational. Provider configuration, credentials and egress policy may independently make an admitted tool unavailable.
 
