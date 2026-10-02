@@ -376,7 +376,11 @@ func (r *TenantBundleReconciler) ensureHindsightDeployment(ctx context.Context, 
 		podAnnotations := map[string]string{}
 		if hindsightUsesPlatformGateway(profile) {
 			var runtimeSecret corev1.Secret
-			if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: names.Secret}, &runtimeSecret); err != nil {
+			reader := r.APIReader
+			if reader == nil {
+				reader = r.Client
+			}
+			if err := reader.Get(ctx, client.ObjectKey{Namespace: namespace, Name: names.Secret}, &runtimeSecret); err != nil {
 				return err
 			}
 			podAnnotations[AnnotationHindsightEmbeddingRevision] = hindsightEmbeddingRotationRevision(bundle)
