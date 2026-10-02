@@ -2,6 +2,10 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: actual-budget-data
+  annotations:
+    # WaitForFirstConsumer must share the Deployment wave; Argo otherwise
+    # waits for this PVC to bind before creating its first consumer.
+    argocd.argoproj.io/sync-wave: "9"
 spec:
   accessModes: [ReadWriteOnce]
   storageClassName: truenas-iscsi-xfs-retain
