@@ -9,6 +9,14 @@ const (
 	IntegrationBindingStateRevoked    = "Revoked"
 )
 
+type IntegrationCredentialReference struct {
+	// Name is a logical platform-managed credential identifier. It is not a
+	// backend path and never carries a credential value.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	Name string `json:"name"`
+}
+
 // IntegrationConnectionSpec describes one logical external integration without
 // embedding implementation-specific secret storage details or secret values.
 type IntegrationConnectionSpec struct {
@@ -34,7 +42,7 @@ type IntegrationConnectionSpec struct {
 
 	// CredentialRef is a logical platform-managed credential reference. It never
 	// contains a credential value and does not expose a vault path.
-	CredentialRef ObjectReference `json:"credentialRef"`
+	CredentialRef IntegrationCredentialReference `json:"credentialRef"`
 }
 
 // +kubebuilder:object:root=true
