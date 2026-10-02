@@ -57,7 +57,7 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	return err
 }
 
-func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace string, modelAccessSecretUID string) error {
+func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string) error {
 	workspaceVolumes, workspaceMounts, err := resolvedWorkspaceVolumes(agent, tenant)
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 		podLabels := copyStringMap(labels)
 		podLabels["vixens.io/sizing.hermes"] = defaultString(profile.Spec.SizingLabel, "V-small")
 		podAnnotations := map[string]string{
-			AnnotationModelAccessRevision:  modelAccessRotationRevision(agent),
+			AnnotationModelAccessRevision:  modelAccessRevision,
 			AnnotationModelAccessSecretUID: modelAccessSecretUID,
 		}
 		if profile.Spec.Compatibility.S6Overlay {
