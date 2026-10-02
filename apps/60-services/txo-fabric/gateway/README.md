@@ -217,8 +217,10 @@ wave 4  txo-ai-gateway Deployment
 The serving Deployment sets `DISABLE_SCHEMA_UPDATE=true`; this does not freeze the
 database schema. On every LiteLLM image upgrade the migration Job is recreated and
 runs the migrations bundled with the new image before that version of the gateway
-starts. The completed Job is kept for diagnostics until the next sync, when
-`BeforeHookCreation` replaces it.
+starts. A successful migration Job is deleted by Argo CD as soon as the hook succeeds, so
+later syncs do not depend on cleaning up a retained successful hook. `BeforeHookCreation`
+remains as a defensive rerun policy for a fixed-name Job, while failed Jobs are retained
+for diagnostics.
 
 The migration pod receives only the PostgreSQL username/password from the runtime
 Secret. Provider credentials and the LiteLLM master key are not projected into the
