@@ -23,3 +23,71 @@ spec:
   sizingLabel: V-small
   compatibility:
     s6Overlay: true
+  capabilities:
+    toolsets:
+      # Keep the v2026.9.24 POC core surface explicitly platform-owned.
+      - name: web
+        state: On
+      - name: vision
+        state: On
+      - name: image_gen
+        state: On
+      - name: terminal
+        state: On
+      - name: skills
+        state: On
+      - name: browser
+        state: On
+      - name: cronjob
+        state: On
+      - name: file
+        state: On
+      - name: tts
+        state: On
+      - name: todo
+        state: On
+      - name: memory
+        state: On
+      - name: session_search
+        state: On
+      - name: connections
+        state: On
+      - name: clarify
+        state: On
+      - name: code_execution
+        state: On
+
+      # Deliberate authorized opt-in: agents may not self-enable delegation.
+      - name: delegation
+        state: AllowedOff
+
+      # POC-denied executable surfaces. These remain unavailable even if
+      # /opt/data/config.yaml is edited locally.
+      - name: computer_use
+        state: Off
+      - name: x_search
+        state: Off
+      - name: video
+        state: Off
+      - name: video_gen
+        state: Off
+      - name: homeassistant
+        state: Off
+      - name: kanban
+        state: Off
+      - name: discord
+        state: Off
+      - name: discord_admin
+        state: Off
+      - name: yuanbao
+        state: Off
+      - name: feishu_doc
+        state: Off
+      - name: feishu_drive
+        state: Off
+      - name: spotify
+        state: Off
+      - name: project
+        state: Off
+      - name: desktop_ui
+        state: Off
