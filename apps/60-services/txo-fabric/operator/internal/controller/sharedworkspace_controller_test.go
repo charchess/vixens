@@ -145,7 +145,7 @@ func TestHermesDeploymentMountsOnlyAuthorizedWorkspaceScopes(t *testing.T) {
 	}
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile, agent).Build()
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
-	if err := r.ensureDeployment(ctx, agent, tenant, profile, "tenant-fabric-smoke", ""); err != nil {
+	if err := r.ensureDeployment(ctx, agent, tenant, profile, "tenant-fabric-smoke", "", ""); err != nil {
 		t.Fatal(err)
 	}
 	var deployment appsv1.Deployment
