@@ -98,6 +98,11 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	if deleteCalls != 1 {
 		t.Fatalf("initial stale-key cleanup calls=%d, want 1", deleteCalls)
 	}
+	for _, unset := range []string{"max_budget", "rpm_limit", "tpm_limit"} {
+		if _, exists := keyRequest[unset]; exists {
+			t.Fatalf("v0 key request unexpectedly sets platform quota %q: %#v", unset, keyRequest[unset])
+		}
+	}
 	if got := keyRequest["key_alias"]; got != "txo-fabric:hairem-sandbox:tina" {
 		t.Fatalf("gateway key alias = %#v", got)
 	}
