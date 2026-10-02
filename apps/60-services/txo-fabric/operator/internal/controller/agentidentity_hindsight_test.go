@@ -23,10 +23,10 @@ func TestHermesHindsightDeploymentWiring(t *testing.T) {
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 	namespace := tenantNamespace(tenant.Name)
 
-	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace); err != nil {
+	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace, ""); err != nil {
 		t.Fatal(err)
 	}
-	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace); err != nil {
+	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace, ""); err != nil {
 		t.Fatal(err)
 	}
 
@@ -120,7 +120,7 @@ func TestHermesDisposableRuntimeCanDropLegacyNamedProfile(t *testing.T) {
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 	namespace := tenantNamespace(tenant.Name)
 
-	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace); err != nil {
+	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace, ""); err != nil {
 		t.Fatal(err)
 	}
 	var deployment appsv1.Deployment
@@ -147,7 +147,7 @@ func TestHermesHindsightUsesExplicitBankID(t *testing.T) {
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 	namespace := tenantNamespace(tenant.Name)
 
-	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace); err != nil {
+	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace, ""); err != nil {
 		t.Fatal(err)
 	}
 	var deployment appsv1.Deployment
@@ -173,7 +173,7 @@ func TestHermesTenantWithoutHindsightRemainsUnmodified(t *testing.T) {
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 	namespace := tenantNamespace(tenant.Name)
 
-	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace); err != nil {
+	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace, ""); err != nil {
 		t.Fatal(err)
 	}
 	var deployment appsv1.Deployment
