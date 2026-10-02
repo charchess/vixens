@@ -102,6 +102,18 @@ type RuntimeStatus struct {
 	// PVCName is the generated runtime workspace PVC.
 	// +optional
 	PVCName string `json:"pvcName,omitempty"`
+
+	// ToolsetPolicyRevision identifies the effective platform-owned Hermes toolset policy.
+	// +optional
+	ToolsetPolicyRevision string `json:"toolsetPolicyRevision,omitempty"`
+
+	// EnabledToolsets lists toolsets admitted by the effective platform policy.
+	// +optional
+	EnabledToolsets []string `json:"enabledToolsets,omitempty"`
+
+	// DeniedToolsets lists profile-declared toolsets denied by the effective platform policy.
+	// +optional
+	DeniedToolsets []string `json:"deniedToolsets,omitempty"`
 }
 
 type MemoryBindingStatus struct {

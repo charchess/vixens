@@ -6,6 +6,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	ToolsetPolicyOn         = "On"
+	ToolsetPolicyOff        = "Off"
+	ToolsetPolicyAllowedOff = "AllowedOff"
+)
+
 type RuntimeStorageSpec struct {
 	// Size is the runtime workspace PVC request.
 	// +kubebuilder:default="2Gi"
@@ -21,6 +27,28 @@ type RuntimeCompatibilitySpec struct {
 	// S6Overlay marks images that require the documented Vixens root/capability bypass for s6-overlay.
 	// +kubebuilder:default=false
 	S6Overlay bool `json:"s6Overlay,omitempty"`
+}
+
+type RuntimeToolsetPolicy struct {
+	// Name is the Hermes toolset name governed by this immutable runtime profile.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=128
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9._/-]*[a-z0-9])?$`
+	Name string `json:"name"`
+
+	// State defines platform ownership for this toolset.
+	// On is always enabled, Off is forbidden, AllowedOff requires an AgentIdentity opt-in.
+	// +kubebuilder:validation:Enum=On;Off;AllowedOff
+	State string `json:"state"`
+}
+
+type RuntimeCapabilityPolicySpec struct {
+	// Toolsets freezes the Hermes executable-capability policy for this runtime profile.
+	// A Hermes profile without an explicit toolset policy is rejected fail-closed.
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	Toolsets []RuntimeToolsetPolicy `json:"toolsets,omitempty"`
 }
 
 type AgentRuntimeProfileSpec struct {
@@ -51,6 +79,9 @@ type AgentRuntimeProfileSpec struct {
 
 	// +optional
 	Compatibility RuntimeCompatibilitySpec `json:"compatibility,omitempty"`
+
+	// Capabilities declares platform-owned executable capability policy for this runtime profile.
+	Capabilities RuntimeCapabilityPolicySpec `json:"capabilities,omitempty"`
 }
 
 // +kubebuilder:object:root=true

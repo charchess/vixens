@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -57,14 +58,30 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	return err
 }
 
-func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string) error {
+func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, policies ...effectiveToolsetPolicy) error {
 	workspaceVolumes, workspaceMounts, err := resolvedWorkspaceVolumes(agent, tenant)
 	if err != nil {
 		return err
 	}
+	var toolPolicy effectiveToolsetPolicy
+	if len(policies) > 0 {
+		toolPolicy = policies[0]
+	} else {
+		toolPolicy, err = resolveToolsetPolicy(agent, profile)
+		if err != nil {
+			return err
+		}
+	}
 	dataMount := corev1.VolumeMount{Name: "data", MountPath: "/opt/data"}
-	hermesMounts := append([]corev1.VolumeMount{dataMount}, workspaceMounts...)
-	volumes := append([]corev1.Volume{{Name: "data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: runtimePVCName(agent.Spec.AgentKey)}}}}, workspaceVolumes...)
+	managedPolicyMount := corev1.VolumeMount{Name: managedPolicyVolumeName, MountPath: managedPolicyMountPath, ReadOnly: true}
+	hermesMounts := append([]corev1.VolumeMount{dataMount, managedPolicyMount}, workspaceMounts...)
+	volumes := []corev1.Volume{
+		{Name: "data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: runtimePVCName(agent.Spec.AgentKey)}}},
+		{Name: managedPolicyVolumeName, VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+			LocalObjectReference: corev1.LocalObjectReference{Name: managedToolsetPolicyName(agent.Spec.AgentKey)},
+		}}},
+	}
+	volumes = append(volumes, workspaceVolumes...)
 
 	name := runtimeName(agent.Spec.AgentKey)
 	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
@@ -82,8 +99,9 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 		podLabels := copyStringMap(labels)
 		podLabels["vixens.io/sizing.hermes"] = defaultString(profile.Spec.SizingLabel, "V-small")
 		podAnnotations := map[string]string{
-			AnnotationModelAccessRevision:  modelAccessRevision,
-			AnnotationModelAccessSecretUID: modelAccessSecretUID,
+			AnnotationModelAccessRevision:   modelAccessRevision,
+			AnnotationModelAccessSecretUID:  modelAccessSecretUID,
+			AnnotationToolsetPolicyRevision: toolPolicy.Revision,
 		}
 		if profile.Spec.Compatibility.S6Overlay {
 			podAnnotations["vixens.io/explicitly-allow-root"] = "true"
@@ -110,10 +128,13 @@ fi
 /opt/hermes/.venv/bin/hermes config set skills.external_dirs '["/workspace/skills"]'`},
 					Env: []corev1.EnvVar{
 						{Name: "HERMES_HOME", Value: "/opt/data"},
+						{Name: "HERMES_MANAGED_DIR", Value: managedPolicyMountPath},
+						{Name: "HERMES_DISABLE_LAZY_INSTALLS", Value: "1"},
 						{Name: "AGENT_NAME", Value: agent.Spec.AgentKey},
 						{Name: "TXO_RUNTIME_STORAGE_RETENTION", Value: storageRetentionPolicy(agent)},
+						{Name: "TXO_TOOLSET_POLICY_REVISION", Value: toolPolicy.Revision},
 					},
-					VolumeMounts: []corev1.VolumeMount{dataMount},
+					VolumeMounts: []corev1.VolumeMount{dataMount, managedPolicyMount},
 				}},
 				Containers: []corev1.Container{{
 					Name:            "hermes",
@@ -122,6 +143,13 @@ fi
 					Args:            []string{"gateway", "run", "--replace"},
 					Env: []corev1.EnvVar{
 						{Name: "HERMES_HOME", Value: "/opt/data"},
+						{Name: "HERMES_MANAGED_DIR", Value: managedPolicyMountPath},
+						{Name: "HERMES_DISABLE_LAZY_INSTALLS", Value: "1"},
+						{Name: "TXO_TOOLSET_POLICY_REVISION", Value: toolPolicy.Revision},
+						// Hermes TUI/Desktop intentionally add client-only toolsets after config
+						// resolution. This operator pin replaces that fold-in with the exact
+						// platform-approved set for interactive UI sessions.
+						{Name: "HERMES_TUI_TOOLSETS", Value: strings.Join(toolPolicy.Enabled, ",")},
 						{Name: "TERMINAL_ENV", Value: "local"},
 						{Name: "TXO_AGENT_ID", Value: agent.Name},
 						{Name: "TXO_AGENT_KEY", Value: agent.Spec.AgentKey},
