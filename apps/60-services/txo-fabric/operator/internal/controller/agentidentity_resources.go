@@ -285,7 +285,8 @@ func (r *AgentIdentityReconciler) ensureEgressPolicy(ctx context.Context, agent 
 			// egress. This is deliberately not a destination sandbox. The durable
 			// production direction is policy-derived least-privilege egress/brokering.
 			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-				To: []networkingv1.NetworkPolicyPeer{{IPBlock: &networkingv1.IPBlock{CIDR: "0.0.0.0/0"}}},
+				// Empty To means every destination. This is intentionally broad for
+				// v0 POC compatibility and is not the production egress contract.
 				Ports: []networkingv1.NetworkPolicyPort{
 					{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(80)},
 					{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(443)},
