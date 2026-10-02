@@ -169,5 +169,7 @@ func (r *AgentIdentityReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&networkingv1.NetworkPolicy{}).
 		Watches(&fabricv1alpha1.AgentRuntimeProfile{}, handler.EnqueueRequestsFromMapFunc(r.requestsForProfile)).
 		Watches(&fabricv1alpha1.TenantBundle{}, handler.EnqueueRequestsFromMapFunc(r.requestsForTenant)).
+		Watches(&fabricv1alpha1.IntegrationBinding{}, handler.EnqueueRequestsFromMapFunc(r.requestsForIntegrationBinding)).
+		Watches(&fabricv1alpha1.IntegrationConnection{}, handler.EnqueueRequestsFromMapFunc(r.requestsForIntegrationConnection)).
 		Complete(r)
 }
