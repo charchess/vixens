@@ -65,6 +65,7 @@ resources:
   # Disabled by owner: apps/radarr.yaml
   # Disabled by owner: apps/docspell.yaml
   # Disabled by owner: apps/firefly-iii.yaml
+  - apps/actual-budget.yaml
   # Disabled by owner: apps/firefly-iii-importer.yaml
   # Disabled by owner: apps/n8n.yaml
   # Disabled by owner: apps/lidarr.yaml
