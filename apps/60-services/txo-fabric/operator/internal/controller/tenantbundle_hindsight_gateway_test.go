@@ -183,6 +183,7 @@ func TestHindsightPlatformGatewayReconcilesScopedEmbeddingAccess(t *testing.T) {
 		t.Fatalf("Hindsight embedding revision=%q, want %q", got, wantRevision)
 	}
 
+	var deployment appsv1.Deployment
 	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight"}, &deployment); err != nil {
 		t.Fatal(err)
 	}
