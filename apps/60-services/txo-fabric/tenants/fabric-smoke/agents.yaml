@@ -12,6 +12,9 @@ spec:
   agentKey: probe
   displayName: Probe
   runtime:
+    capabilities:
+      enableToolsets:
+        - delegation
     storage:
       retentionPolicy: Delete
 ---
