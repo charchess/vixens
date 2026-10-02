@@ -46,6 +46,7 @@ Planning projects are `vixens core`, `vixens roadmap`, and `vixens perso`.
 | [032](032-fabric-is-tenant-neutral.md) | TXO Fabric is tenant-neutral and valid with zero clients | Accepted | AIaaS | vixens roadmap |
 | [033](033-separate-agent-state-workspace-and-skills.md) | Separate private agent state, shared business data and shared skills | Accepted | AIaaS | vixens roadmap |
 | [034](034-immutable-hermes-runtime-supply-chain.md) | Build Hermes extensions into an immutable TXO runtime image | Accepted | AIaaS | vixens roadmap |
+| [035](035-centralized-fabric-inference-boundary.md) | Centralize Fabric external inference behind the TXO AI Gateway | Accepted | AIaaS | vixens roadmap |
 
 ## Historical / superseded decisions
 
@@ -73,7 +74,7 @@ These anomalies predate ADR-030 and are preserved so existing links/history rema
 - **‡ Renovate Discord header collision:** `019-renovate-discord-approval-workflow.md` is the repository file identity, but its historical document header says `ADR-013`. The separate `013-layered-configuration-disaster-recovery.md` also exists. The file is cataloged here by its stable path and is not renumbered retroactively.
 - **§ Infisical restored-file mismatch:** `011-infisical-secrets-management.md` is the stable repository path, while its restored historical header says `ADR 007`. It is superseded and retained only as history.
 
-No new ADR may reuse an allocated number. The next ADR after this catalog is **035** unless another PR allocates it first.
+No new ADR may reuse an allocated number. The next ADR after this catalog is **036** unless another PR allocates it first.
 
 ## Project view
 
