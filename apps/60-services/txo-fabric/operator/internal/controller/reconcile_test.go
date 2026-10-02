@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
@@ -25,18 +26,32 @@ import (
 func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	ctx := context.Background()
 	var keyRequest map[string]any
+	deleteCalls := 0
 	gateway := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.URL.Path != "/key/generate" {
-			t.Fatalf("unexpected gateway path %q", req.URL.Path)
-		}
 		if req.Header.Get("Authorization") != "Bearer test-admin-token" {
 			t.Fatalf("unexpected gateway authorization header")
 		}
-		if err := json.NewDecoder(req.Body).Decode(&keyRequest); err != nil {
-			t.Fatal(err)
+		switch req.URL.Path {
+		case "/key/delete":
+			deleteCalls++
+			var payload map[string]any
+			if err := json.NewDecoder(req.Body).Decode(&payload); err != nil {
+				t.Fatal(err)
+			}
+			aliases, ok := payload["key_aliases"].([]any)
+			if !ok || len(aliases) != 1 || aliases[0] != "txo-fabric:hairem-sandbox:tina" {
+				t.Fatalf("initial stale-key cleanup payload = %#v", payload)
+			}
+			http.Error(w, "not found", http.StatusNotFound)
+		case "/key/generate":
+			if err := json.NewDecoder(req.Body).Decode(&keyRequest); err != nil {
+				t.Fatal(err)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"key":"test-virtual-key"}`))
+		default:
+			t.Fatalf("unexpected gateway path %q", req.URL.Path)
 		}
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"key":"test-virtual-key"}`))
 	}))
 	defer gateway.Close()
 	t.Setenv("TXO_AI_GATEWAY_URL", gateway.URL)
@@ -80,6 +95,9 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if deleteCalls != 1 {
+		t.Fatalf("initial stale-key cleanup calls=%d, want 1", deleteCalls)
+	}
 	if got := keyRequest["key_alias"]; got != "txo-fabric:hairem-sandbox:tina" {
 		t.Fatalf("gateway key alias = %#v", got)
 	}
@@ -157,6 +175,9 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	for _, condition := range current.Status.Conditions {
 		if condition.Type == "ModelAccessReady" && condition.Status == metav1.ConditionTrue && condition.Reason == "GatewayCredentialReady" {
 			modelReady = true
+			if !strings.Contains(condition.Message, "model=txo-default") || !strings.Contains(condition.Message, "gateway=") || !strings.Contains(condition.Message, "rotation=baseline") {
+				t.Fatalf("ModelAccessReady does not expose effective non-secret binding: %q", condition.Message)
+			}
 		}
 	}
 	if !modelReady {
