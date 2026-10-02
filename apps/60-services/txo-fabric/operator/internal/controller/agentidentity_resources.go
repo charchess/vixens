@@ -289,6 +289,7 @@ func (r *AgentIdentityReconciler) ensureEgressPolicy(ctx context.Context, agent 
 				Ports: []networkingv1.NetworkPolicyPort{
 					{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(80)},
 					{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(443)},
+					{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(8080)},
 				},
 			})
 		}
