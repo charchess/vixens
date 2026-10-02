@@ -301,6 +301,55 @@ func TestIntegrationRevocationAndRestoreAreIndependentFromPVCState(t *testing.T)
 	}
 }
 
+func TestIntegrationCredentialMetadataRotationChangesPolicyRevision(t *testing.T) {
+	ctx := context.Background()
+	tenant := testTenant()
+	agent := testAgentIdentity()
+	connection := testIntegrationConnection(tenant.Name)
+	binding := testIntegrationBinding(agent.Name, tenant.Name, connection.Name)
+	credential := testIntegrationCredential(tenant.Name, connection.Name, connection.Spec.CredentialRef.Name)
+
+	scheme := testScheme(t)
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(connection, binding, credential).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+
+	before, err := r.resolveIntegrationAccess(ctx, agent, tenant, tenantNamespace(tenant.Name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(before.Effective) != 1 || before.Revision == "" {
+		t.Fatalf("initial integration resolution is not effective: %#v", before)
+	}
+
+	var current corev1.Secret
+	key := types.NamespacedName{Name: credential.Name, Namespace: credential.Namespace}
+	if err := c.Get(ctx, key, &current); err != nil {
+		t.Fatal(err)
+	}
+	current.Data[integrationCredentialKey] = []byte("rotated-fixture-credential-value")
+	if err := c.Update(ctx, &current); err != nil {
+		t.Fatal(err)
+	}
+
+	after, err := r.resolveIntegrationAccess(ctx, agent, tenant, tenantNamespace(tenant.Name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(after.Effective) != 1 {
+		t.Fatalf("rotated integration resolution is not effective: %#v", after)
+	}
+	if after.Revision == before.Revision || after.Effective[0].Revision == before.Effective[0].Revision {
+		t.Fatalf("credential metadata rotation did not change integration revision: before=%#v after=%#v", before, after)
+	}
+	statusJSON, err := json.Marshal(after.Status)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(statusJSON), "rotated-fixture-credential-value") {
+		t.Fatal("rotated credential leaked into status")
+	}
+}
+
 func integrationTestReconciler(t *testing.T, objects ...client.Object) *AgentIdentityReconciler {
 	t.Helper()
 	scheme := testScheme(t)
