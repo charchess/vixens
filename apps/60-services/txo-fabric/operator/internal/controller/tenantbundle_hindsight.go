@@ -278,7 +278,7 @@ func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bund
 	}
 
 	embeddingKey := string(secret.Data[hindsightEmbeddingSecretKey])
-	currentRevision := secret.Annotations[AnnotationHindsightEmbeddingRevision]
+	appliedRevision := secret.Annotations[AnnotationHindsightEmbeddingRevision]
 	generatedEmbeddingKey := false
 	if gatewayEnabled {
 		needsReplacement := embeddingKey == "" || (requestedRevision != "" && appliedRevision != requestedRevision)
