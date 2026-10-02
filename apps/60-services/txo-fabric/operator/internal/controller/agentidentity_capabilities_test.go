@@ -50,6 +50,18 @@ func TestResolveToolsetPolicyStatesAndManagedConfig(t *testing.T) {
 	if !ok {
 		t.Fatalf("platform_toolsets = %#v", managed["platform_toolsets"])
 	}
+	for _, surface := range []string{"cli", "tui", "desktop", "acp", "api_server", "cron"} {
+		if _, ok := platforms[surface].([]any); !ok {
+			t.Fatalf("platform_toolsets.%s = %#v", surface, platforms[surface])
+		}
+	}
+	knownPlugins, ok := managed["known_plugin_toolsets"].(map[string]any)
+	if !ok {
+		t.Fatalf("known_plugin_toolsets = %#v", managed["known_plugin_toolsets"])
+	}
+	if knownCLI, ok := knownPlugins["cli"].([]any); !ok || !jsonArrayContains(knownCLI, "delegation") {
+		t.Fatalf("known_plugin_toolsets.cli = %#v", knownPlugins["cli"])
+	}
 	cli, ok := platforms["cli"].([]any)
 	if !ok {
 		t.Fatalf("platform_toolsets.cli = %#v", platforms["cli"])
@@ -148,6 +160,9 @@ func TestManagedToolsetPolicyIsMountedOutsideAgentState(t *testing.T) {
 	}
 	if got := envValue(container.Env, "TXO_TOOLSET_POLICY_REVISION"); got != policy.Revision {
 		t.Fatalf("TXO_TOOLSET_POLICY_REVISION = %q, want %q", got, policy.Revision)
+	}
+	if got := envValue(container.Env, "HERMES_TUI_TOOLSETS"); got != "cronjob,skills,terminal" {
+		t.Fatalf("HERMES_TUI_TOOLSETS = %q", got)
 	}
 	if deployment.Spec.Template.Annotations[AnnotationToolsetPolicyRevision] != policy.Revision {
 		t.Fatalf("pod policy revision = %q", deployment.Spec.Template.Annotations[AnnotationToolsetPolicyRevision])
