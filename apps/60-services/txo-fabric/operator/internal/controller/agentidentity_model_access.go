@@ -27,8 +27,8 @@ func (r *AgentIdentityReconciler) ensureModelAccess(ctx context.Context, agent *
 
 		currentRevision := secret.Annotations[AnnotationModelAccessRevision]
 		if currentRevision != desiredRevision {
-			if err := revokeModelAccessKeyValueIfExists(ctx, currentKey); err != nil {
-				return "", fmt.Errorf("revoke previous scoped model key: %w", err)
+			if err := revokeModelAccessKeyIfExists(ctx, alias); err != nil {
+				return "", fmt.Errorf("revoke previous scoped model key alias %q: %w", alias, err)
 			}
 			replacementKey, err := generateModelAccessKey(ctx, agent, tenant)
 			if err != nil {
