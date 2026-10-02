@@ -1,4 +1,18 @@
 ---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: fabric-smoke-http-canary-credential
+  namespace: tenant-fabric-smoke
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  length: 48
+  digits: 12
+  symbols: 0
+  noUpper: false
+  allowRepeat: true
+---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
@@ -7,15 +21,13 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "10"
 spec:
-  refreshInterval: 60s
-  secretStoreRef:
-    name: openbao
-    kind: ClusterSecretStore
+  refreshPolicy: CreatedOnce
   target:
     name: fabric-smoke-http-canary-credential
     creationPolicy: Owner
-    deletionPolicy: Retain
+    immutable: true
     template:
+      engineVersion: v2
       type: Opaque
       metadata:
         labels:
@@ -25,14 +37,15 @@ spec:
           fabric.truxonline.io/tenant-name: fabric-smoke
           fabric.truxonline.io/integration-connection: fabric-smoke-http-canary
         annotations:
-          vixens.io/secret-source: openbao
-  data:
-    - secretKey: credential
-      remoteRef:
-        # v0 POC only: this is a dedicated disposable canary credential in the
-        # Vixens platform secret store, not the future IAaaS customer vault.
-        key: vixens/prod/apps/60-services/txo-fabric/fabric-smoke-integration-canary
-        property: bearer_token
+          vixens.io/secret-source: eso-password-generator
+      data:
+        credential: "{{ .password }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: fabric-smoke-http-canary-credential
 ---
 apiVersion: v1
 kind: ConfigMap
