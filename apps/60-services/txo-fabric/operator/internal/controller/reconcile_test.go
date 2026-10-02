@@ -294,6 +294,21 @@ func TestAgentModelAccessRotationRevokesOldKeyAndRollsRuntime(t *testing.T) {
 	if deleteCalls != 1 || generateCalls != 1 {
 		t.Fatalf("idempotent reconcile repeated rotation: delete=%d generate=%d", deleteCalls, generateCalls)
 	}
+
+	// ArgoCD may later remove an imperative rotation request annotation because it
+	// is not part of the GitOps manifest. Absence means "no new rotation", not
+	// "rotate back to baseline".
+	agent.Annotations = nil
+	uidAfterRemoval, revisionAfterRemoval, err := r.ensureModelAccess(ctx, agent, tenant, namespace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if deleteCalls != 1 || generateCalls != 1 {
+		t.Fatalf("annotation removal triggered a second rotation: delete=%d generate=%d", deleteCalls, generateCalls)
+	}
+	if uidAfterRemoval != secretUID || revisionAfterRemoval != wantRevision {
+		t.Fatalf("applied credential state changed after annotation removal: uid=%q revision=%q", uidAfterRemoval, revisionAfterRemoval)
+	}
 }
 
 func TestDuplicateAgentKeyInSameTenantIsRejected(t *testing.T) {
