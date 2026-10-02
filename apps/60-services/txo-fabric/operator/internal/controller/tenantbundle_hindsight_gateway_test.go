@@ -86,6 +86,11 @@ func TestHindsightPlatformGatewayReconcilesScopedEmbeddingAccess(t *testing.T) {
 	if !ok || len(aliases) != 1 || aliases[0] != "txo-fabric:hairem-sandbox:hindsight-embeddings" {
 		t.Fatalf("initial stale-key cleanup payload=%#v", deletePayloads[0])
 	}
+	for _, unset := range []string{"max_budget", "rpm_limit", "tpm_limit"} {
+		if _, exists := keyRequest[unset]; exists {
+			t.Fatalf("v0 key request unexpectedly sets platform quota %q: %#v", unset, keyRequest[unset])
+		}
+	}
 	if got := keyRequest["key_alias"]; got != "txo-fabric:hairem-sandbox:hindsight-embeddings" {
 		t.Fatalf("gateway key alias=%#v", got)
 	}
