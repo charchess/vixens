@@ -197,6 +197,29 @@ func TestIntegrationRevocationAndRestoreAreIndependentFromPVCState(t *testing.T)
 	if len(active.Effective) != 1 {
 		t.Fatalf("active binding not effective: %#v", active)
 	}
+	statusJSON, err := json.Marshal(active.Status)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(statusJSON), testIntegrationSecretValue) {
+		t.Fatal("integration status leaked credential value")
+	}
+
+	profile := testRuntimeProfile()
+	toolPolicy, err := resolveToolsetPolicy(agent, profile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ensureDeploymentWithIntegrations(ctx, agent, tenant, profile, tenantNamespace(tenant.Name), "", "", toolPolicy, active); err != nil {
+		t.Fatal(err)
+	}
+	var activeDeployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: tenantNamespace(tenant.Name)}, &activeDeployment); err != nil {
+		t.Fatal(err)
+	}
+	if !deploymentReferencesSecret(&activeDeployment, credential.Name) {
+		t.Fatal("active binding did not project integration credential")
+	}
 
 	var current fabricv1alpha1.IntegrationBinding
 	if err := c.Get(ctx, types.NamespacedName{Name: binding.Name}, &current); err != nil {
@@ -219,11 +242,6 @@ func TestIntegrationRevocationAndRestoreAreIndependentFromPVCState(t *testing.T)
 		t.Fatalf("revocation touched retained private PVC: %v", err)
 	}
 
-	profile := testRuntimeProfile()
-	toolPolicy, err := resolveToolsetPolicy(agent, profile)
-	if err != nil {
-		t.Fatal(err)
-	}
 	if err := r.ensureDeploymentWithIntegrations(ctx, agent, tenant, profile, tenantNamespace(tenant.Name), "", "", toolPolicy, revoked); err != nil {
 		t.Fatal(err)
 	}
@@ -262,6 +280,25 @@ func TestIntegrationRevocationAndRestoreAreIndependentFromPVCState(t *testing.T)
 	if !restored.Ready || len(restored.Effective) != 1 || restored.Status[0].Phase != "Effective" {
 		t.Fatalf("restored binding did not reconcile authorization: %#v", restored)
 	}
+	if err := r.ensureDeploymentWithIntegrations(ctx, agent, tenant, profile, tenantNamespace(tenant.Name), "", "", toolPolicy, restored); err != nil {
+		t.Fatal(err)
+	}
+	var restoredDeployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: tenantNamespace(tenant.Name)}, &restoredDeployment); err != nil {
+		t.Fatal(err)
+	}
+	if !deploymentReferencesSecret(&restoredDeployment, credential.Name) {
+		t.Fatal("restored binding did not re-project integration credential")
+	}
+	if err := r.ensureEgressPolicy(ctx, agent, tenant, tenantNamespace(tenant.Name), restored); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey) + "-egress", Namespace: tenantNamespace(tenant.Name)}, &policy); err != nil {
+		t.Fatal(err)
+	}
+	if len(policy.Spec.Egress) != 4 {
+		t.Fatalf("restore should re-add temporary integration egress: got %d rules", len(policy.Spec.Egress))
+	}
 }
 
 func integrationTestReconciler(t *testing.T, objects ...client.Object) *AgentIdentityReconciler {
@@ -279,7 +316,7 @@ func testIntegrationConnection(tenantName string) *fabricv1alpha1.IntegrationCon
 			Protocol:       fabricv1alpha1.IntegrationProtocolHTTP,
 			Endpoint:       "http://http-canary.tenant-" + tenantName + ".svc:80/",
 			Authentication: fabricv1alpha1.IntegrationAuthenticationBearer,
-			CredentialRef:  fabricv1alpha1.ObjectReference{Name: "http-canary-credential"},
+			CredentialRef:  fabricv1alpha1.IntegrationCredentialReference{Name: "http-canary-credential"},
 		},
 	}
 }
