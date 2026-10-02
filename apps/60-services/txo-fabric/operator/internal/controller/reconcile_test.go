@@ -404,6 +404,13 @@ func testRuntimeProfile() *fabricv1alpha1.AgentRuntimeProfile {
 				Limits:   corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("1"), corev1.ResourceMemory: resource.MustParse("2Gi")},
 			},
 			Compatibility: fabricv1alpha1.RuntimeCompatibilitySpec{S6Overlay: true},
+			Capabilities: fabricv1alpha1.RuntimeCapabilityPolicySpec{Toolsets: []fabricv1alpha1.RuntimeToolsetPolicy{
+				{Name: "terminal", State: fabricv1alpha1.ToolsetPolicyOn},
+				{Name: "skills", State: fabricv1alpha1.ToolsetPolicyOn},
+				{Name: "cronjob", State: fabricv1alpha1.ToolsetPolicyOn},
+				{Name: "delegation", State: fabricv1alpha1.ToolsetPolicyAllowedOff},
+				{Name: "computer_use", State: fabricv1alpha1.ToolsetPolicyOff},
+			}},
 		},
 	}
 }
