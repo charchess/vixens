@@ -20,6 +20,7 @@ const (
 	AnnotationModelAccessSecretUID          = "fabric.truxonline.io/model-access-secret-uid"
 	AnnotationHindsightEmbeddingRotation    = "fabric.truxonline.io/hindsight-embedding-rotation"
 	AnnotationHindsightEmbeddingRevision    = "fabric.truxonline.io/hindsight-embedding-revision"
+	AnnotationHindsightEmbeddingSecretUID   = "fabric.truxonline.io/hindsight-embedding-secret-uid"
 )
 
 func modelAccessSecretName(agentKey string) string {
