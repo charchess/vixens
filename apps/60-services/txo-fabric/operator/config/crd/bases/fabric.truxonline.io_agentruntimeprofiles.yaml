@@ -51,6 +51,41 @@ spec:
             type: object
           spec:
             properties:
+              capabilities:
+                description: Capabilities declares platform-owned executable capability
+                  policy for this runtime profile.
+                properties:
+                  toolsets:
+                    description: |-
+                      Toolsets freezes the Hermes executable-capability policy for this runtime profile.
+                      A Hermes profile without an explicit toolset policy is rejected fail-closed.
+                    items:
+                      properties:
+                        name:
+                          description: Name is the Hermes toolset name governed by
+                            this immutable runtime profile.
+                          maxLength: 128
+                          minLength: 1
+                          pattern: ^[a-z0-9]([a-z0-9._/-]*[a-z0-9])?$
+                          type: string
+                        state:
+                          description: |-
+                            State defines platform ownership for this toolset.
+                            On is always enabled, Off is forbidden, AllowedOff requires an AgentIdentity opt-in.
+                          enum:
+                          - "On"
+                          - "Off"
+                          - AllowedOff
+                          type: string
+                      required:
+                      - name
+                      - state
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                type: object
               compatibility:
                 properties:
                   s6Overlay:

@@ -113,6 +113,20 @@ spec:
                 description: Runtime selects how this identity is executed. Infrastructure
                   details remain in the profile.
                 properties:
+                  capabilities:
+                    description: Capabilities selects only profile-declared AllowedOff
+                      capabilities.
+                    properties:
+                      enableToolsets:
+                        description: |-
+                          EnableToolsets activates profile entries whose state is AllowedOff.
+                          On entries require no opt-in; Off or undeclared entries cannot be requested.
+                        items:
+                          type: string
+                        maxItems: 64
+                        type: array
+                        x-kubernetes-list-type: set
+                    type: object
                   profileRef:
                     default: hermes-default
                     description: ProfileRef references an AgentRuntimeProfile by metadata.name.
@@ -246,11 +260,27 @@ spec:
                 type: string
               runtime:
                 properties:
+                  deniedToolsets:
+                    description: DeniedToolsets lists profile-declared toolsets denied
+                      by the effective platform policy.
+                    items:
+                      type: string
+                    type: array
                   deploymentName:
                     description: DeploymentName is the generated Hermes Deployment.
                     type: string
+                  enabledToolsets:
+                    description: EnabledToolsets lists toolsets admitted by the effective
+                      platform policy.
+                    items:
+                      type: string
+                    type: array
                   pvcName:
                     description: PVCName is the generated runtime workspace PVC.
+                    type: string
+                  toolsetPolicyRevision:
+                    description: ToolsetPolicyRevision identifies the effective platform-owned
+                      Hermes toolset policy.
                     type: string
                 type: object
             type: object
