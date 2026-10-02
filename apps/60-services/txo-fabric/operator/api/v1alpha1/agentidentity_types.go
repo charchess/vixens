@@ -12,6 +12,15 @@ type AgentRuntimeStorageBinding struct {
 	RetentionPolicy string `json:"retentionPolicy,omitempty"`
 }
 
+type AgentRuntimeCapabilityBinding struct {
+	// EnableToolsets activates profile entries whose state is AllowedOff.
+	// On entries require no opt-in; Off or undeclared entries cannot be requested.
+	// +optional
+	// +kubebuilder:validation:MaxItems=64
+	// +listType=set
+	EnableToolsets []string `json:"enableToolsets,omitempty"`
+}
+
 type AgentRuntimeBinding struct {
 	// ProfileRef references an AgentRuntimeProfile by metadata.name.
 	// +kubebuilder:default=hermes-default
@@ -22,6 +31,10 @@ type AgentRuntimeBinding struct {
 	// Storage defines lifecycle intent for the identity's runtime workspace.
 	// +optional
 	Storage AgentRuntimeStorageBinding `json:"storage,omitempty"`
+
+	// Capabilities selects only profile-declared AllowedOff capabilities.
+	// +optional
+	Capabilities AgentRuntimeCapabilityBinding `json:"capabilities,omitempty"`
 }
 
 type AgentMemoryBinding struct {
