@@ -99,12 +99,12 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "PVCReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}
-	modelAccessSecretUID, err := r.ensureModelAccess(ctx, &agent, &tenant, namespace)
+	modelAccessSecretUID, modelAccessRevision, err := r.ensureModelAccess(ctx, &agent, &tenant, namespace)
 	if err != nil {
 		r.setStatus(ctx, &agent, "AuthBlocked", "ModelAccessReady", metav1.ConditionFalse, "GatewayCredentialReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}
-	rotation := modelAccessRotationRevision(&agent)
+	rotation := modelAccessRevision
 	if rotation == "" {
 		rotation = "baseline"
 	}
@@ -116,7 +116,7 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		"GatewayCredentialReady",
 		fmt.Sprintf("scoped TXO AI gateway credential is reconciled (gateway=%s model=%s rotation=%s)", aiGatewayURL(), defaultAIGatewayModel, rotation),
 	)
-	if err := r.ensureDeployment(ctx, &agent, &tenant, &profile, namespace, modelAccessSecretUID); err != nil {
+	if err := r.ensureDeployment(ctx, &agent, &tenant, &profile, namespace, modelAccessSecretUID, modelAccessRevision); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "DeploymentReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}
