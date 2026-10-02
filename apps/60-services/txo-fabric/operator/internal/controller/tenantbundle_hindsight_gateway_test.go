@@ -159,8 +159,8 @@ func TestHindsightPlatformGatewayReconcilesScopedEmbeddingAccess(t *testing.T) {
 	if generateCalls != 2 || deleteCalls != 2 {
 		t.Fatalf("rotation gateway calls generate=%d delete=%d, want 2/2 total", generateCalls, deleteCalls)
 	}
-	keys, ok := deletePayloads[1]["keys"].([]any)
-	if !ok || len(keys) != 1 || keys[0] != "sk-hindsight-embedding-test" {
+	aliases, ok = deletePayloads[1]["key_aliases"].([]any)
+	if !ok || len(aliases) != 1 || aliases[0] != "txo-fabric:hairem-sandbox:hindsight-embeddings" {
 		t.Fatalf("rotation delete payload=%#v", deletePayloads[1])
 	}
 	models, ok = keyRequest["models"].([]any)
