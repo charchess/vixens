@@ -54,8 +54,10 @@ names globally unique.
 
 `AgentRuntimeProfile` separates identity from infrastructure policy. The profile
 selects the Hermes image, storage class and size, resource envelope, scheduling
-priority and compatibility settings. Tenant and agent manifests do not embed
-those platform implementation details.
+priority, compatibility settings and platform-owned executable toolset policy.
+Tenant and agent manifests do not embed those implementation details. The
+three-state Hermes capability contract and pinned-runtime inventory are documented
+in [CAPABILITIES.md](CAPABILITIES.md).
 
 ### PostgreSQLProfile
 
@@ -140,9 +142,9 @@ basis and its tenant-local model-access Secret is deleted with the agent lifecyc
 
 ## Hermes runtime boundary
 
-Hermes runs from the upstream `nousresearch/hermes-agent` image. TXO Fabric does
-not copy upstream provider credentials or legacy OAuth state into generated
-runtimes.
+Hermes runs from the TXO-owned immutable runtime image derived from a reviewed
+upstream `nousresearch/hermes-agent` release. TXO Fabric does not copy upstream
+provider credentials or legacy OAuth state into generated runtimes.
 
 Model access is mediated by the shared TXO AI gateway. The operator provisions one
 LiteLLM virtual key per `AgentIdentity`, restricted to the local `txo-default`
@@ -162,8 +164,9 @@ an available Hermes Deployment can then make the AgentIdentity `Ready` instead o
 the previous deliberate `AuthBlocked` state.
 
 The operator starts the Hermes host gateway with `gateway run --replace` and uses
-semantic process probes. Named profiles live on the agent PVC and the host gateway
-serves them through Hermes' profile multiplexing model.
+semantic process probes. Each AgentIdentity uses its pod-level
+`HERMES_HOME=/opt/data` as the single private Hermes home; TXO Fabric does not add
+a second named-profile layer inside that runtime.
 
 Hindsight bank identity is part of the AgentIdentity contract. When tenant memory
 is configured, the operator exposes the resolved bank through the tenant-scoped
