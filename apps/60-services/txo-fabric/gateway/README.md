@@ -139,7 +139,11 @@ agent's retained `/opt/data`.
   under the deterministic LiteLLM alias before a replacement is minted;
 - the applied rotation revision is a short hash of the requested nonce. It is
   non-secret diagnostic metadata; the raw virtual key is never copied into
-  status, labels or annotations.
+  status, labels or annotations;
+- rotation requests are edge-triggered: a non-empty nonce rotates only when its
+  hash differs from the revision already applied to the generated Secret. If
+  GitOps later removes an imperative request annotation, that means "no new
+  rotation" and does not rotate the credential back to a baseline state.
 
 Rotation is intentionally fail-closed: the old key is revoked before the
 replacement becomes active. A failed replacement may temporarily block inference,
