@@ -251,7 +251,7 @@ func TestAgentModelAccessRotationRevokesOldKeyAndRollsRuntime(t *testing.T) {
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent, oldSecret).Build()
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 
-	secretUID, err := r.ensureModelAccess(ctx, agent, tenant, namespace)
+	secretUID, appliedRevision, err := r.ensureModelAccess(ctx, agent, tenant, namespace)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -274,7 +274,7 @@ func TestAgentModelAccessRotationRevokesOldKeyAndRollsRuntime(t *testing.T) {
 		t.Fatalf("rotation revision = %q, want %q", got, wantRevision)
 	}
 
-	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace, secretUID); err != nil {
+	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace, secretUID, appliedRevision); err != nil {
 		t.Fatal(err)
 	}
 	var deployment appsv1.Deployment
@@ -288,7 +288,7 @@ func TestAgentModelAccessRotationRevokesOldKeyAndRollsRuntime(t *testing.T) {
 		t.Fatalf("pod model-access Secret UID = %q, want %q", got, secretUID)
 	}
 
-	if _, err := r.ensureModelAccess(ctx, agent, tenant, namespace); err != nil {
+	if _, _, err := r.ensureModelAccess(ctx, agent, tenant, namespace); err != nil {
 		t.Fatal(err)
 	}
 	if deleteCalls != 1 || generateCalls != 1 {
