@@ -213,7 +213,7 @@ spec:
     name: fabric-smoke-probe
   connectionRef:
     name: fabric-smoke-http-canary
-  state: Revoked
+  state: Active
   operations:
     - GET
   scopes:
