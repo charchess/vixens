@@ -223,8 +223,8 @@ func TestAgentModelAccessRotationRevokesOldKeyAndRollsRuntime(t *testing.T) {
 		switch req.URL.Path {
 		case "/key/delete":
 			deleteCalls++
-			keys, ok := payload["keys"].([]any)
-			if !ok || len(keys) != 1 || keys[0] != "old-agent-key" {
+			aliases, ok := payload["key_aliases"].([]any)
+			if !ok || len(aliases) != 1 || aliases[0] != modelAccessKeyAlias(agent, tenant) {
 				t.Fatalf("rotation delete payload = %#v", payload)
 			}
 			w.Header().Set("Content-Type", "application/json")
