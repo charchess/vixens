@@ -185,6 +185,112 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	}
 }
 
+func TestAgentModelAccessRotationRevokesOldKeyAndRollsRuntime(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := testTenant()
+	profile := testRuntimeProfile()
+	agent := testAgentIdentity()
+	agent.Annotations = map[string]string{AnnotationModelAccessRotation: "rotate-agent-model-key"}
+
+	namespace := tenantNamespace(tenant.Name)
+	oldSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        modelAccessSecretName(agent.Spec.AgentKey),
+			Namespace:   namespace,
+			UID:         types.UID("model-access-secret-uid"),
+			Annotations: map[string]string{AnnotationModelAccessRevision: "previous"},
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{modelAccessSecretKey: []byte("old-agent-key")},
+	}
+
+	deleteCalls := 0
+	generateCalls := 0
+	gateway := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.Header.Get("Authorization") != "Bearer test-admin-token" {
+			t.Fatalf("unexpected gateway authorization header")
+		}
+		var payload map[string]any
+		if err := json.NewDecoder(req.Body).Decode(&payload); err != nil {
+			t.Fatal(err)
+		}
+		switch req.URL.Path {
+		case "/key/delete":
+			deleteCalls++
+			keys, ok := payload["keys"].([]any)
+			if !ok || len(keys) != 1 || keys[0] != "old-agent-key" {
+				t.Fatalf("rotation delete payload = %#v", payload)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"deleted_keys":["old-agent-key"]}`))
+		case "/key/generate":
+			generateCalls++
+			models, ok := payload["models"].([]any)
+			if !ok || len(models) != 1 || models[0] != defaultAIGatewayModel {
+				t.Fatalf("rotation models = %#v", payload["models"])
+			}
+			if payload["key_alias"] != modelAccessKeyAlias(agent, tenant) {
+				t.Fatalf("rotation key alias = %#v", payload["key_alias"])
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"key":"new-agent-key"}`))
+		default:
+			t.Fatalf("unexpected gateway path %q", req.URL.Path)
+		}
+	}))
+	defer gateway.Close()
+	t.Setenv("TXO_AI_GATEWAY_URL", gateway.URL)
+	t.Setenv("TXO_AI_GATEWAY_ADMIN_TOKEN", "test-admin-token")
+
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent, oldSecret).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+
+	secretUID, err := r.ensureModelAccess(ctx, agent, tenant, namespace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if deleteCalls != 1 || generateCalls != 1 {
+		t.Fatalf("rotation gateway calls delete=%d generate=%d, want 1/1", deleteCalls, generateCalls)
+	}
+	if secretUID != "model-access-secret-uid" {
+		t.Fatalf("model access Secret UID = %q", secretUID)
+	}
+
+	var rotated corev1.Secret
+	if err := c.Get(ctx, types.NamespacedName{Name: oldSecret.Name, Namespace: namespace}, &rotated); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(rotated.Data[modelAccessSecretKey]); got != "new-agent-key" {
+		t.Fatalf("rotated model key = %q", got)
+	}
+	wantRevision := modelAccessRotationRevision(agent)
+	if got := rotated.Annotations[AnnotationModelAccessRevision]; got != wantRevision || got == "" {
+		t.Fatalf("rotation revision = %q, want %q", got, wantRevision)
+	}
+
+	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace, secretUID); err != nil {
+		t.Fatal(err)
+	}
+	var deployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	if got := deployment.Spec.Template.Annotations[AnnotationModelAccessRevision]; got != wantRevision {
+		t.Fatalf("pod model-access revision = %q, want %q", got, wantRevision)
+	}
+	if got := deployment.Spec.Template.Annotations[AnnotationModelAccessSecretUID]; got != secretUID {
+		t.Fatalf("pod model-access Secret UID = %q, want %q", got, secretUID)
+	}
+
+	if _, err := r.ensureModelAccess(ctx, agent, tenant, namespace); err != nil {
+		t.Fatal(err)
+	}
+	if deleteCalls != 1 || generateCalls != 1 {
+		t.Fatalf("idempotent reconcile repeated rotation: delete=%d generate=%d", deleteCalls, generateCalls)
+	}
+}
+
 func TestDuplicateAgentKeyInSameTenantIsRejected(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
