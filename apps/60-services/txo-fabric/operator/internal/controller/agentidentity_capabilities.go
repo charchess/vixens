@@ -23,6 +23,9 @@ const (
 
 var managedHermesPlatforms = []string{
 	"cli",
+	"tui",
+	"desktop",
+	"acp",
 	"telegram",
 	"discord",
 	"slack",
@@ -122,12 +125,22 @@ func resolveToolsetPolicy(agent *fabricv1alpha1.AgentIdentity, profile *fabricv1
 
 	platformSelection := append(append([]string(nil), enabled...), "no_mcp")
 	platforms := make(map[string][]string, len(managedHermesPlatforms))
+	knownPluginToolsets := make(map[string][]string, len(managedHermesPlatforms))
+	knownPolicyNames := make([]string, 0, len(normalizedEntries))
+	for _, entry := range normalizedEntries {
+		knownPolicyNames = append(knownPolicyNames, entry.Name)
+	}
 	for _, platform := range managedHermesPlatforms {
 		platforms[platform] = append([]string(nil), platformSelection...)
+		// Hermes plugin toolsets are otherwise auto-enabled on first discovery unless
+		// the platform has previously seen them. Treat every profile-declared name as
+		// known so an Off/AllowedOff plugin toolset cannot auto-admit itself.
+		knownPluginToolsets[platform] = append([]string(nil), knownPolicyNames...)
 	}
 
 	managedConfig := map[string]any{
-		"platform_toolsets": platforms,
+		"platform_toolsets":     platforms,
+		"known_plugin_toolsets": knownPluginToolsets,
 		"agent": map[string]any{
 			"disabled_toolsets": denied,
 		},
