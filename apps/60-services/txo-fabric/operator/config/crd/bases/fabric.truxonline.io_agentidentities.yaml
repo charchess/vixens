@@ -275,6 +275,53 @@ spec:
                     items:
                       type: string
                     type: array
+                  integrationPolicyRevision:
+                    description: IntegrationPolicyRevision identifies the effective
+                      non-secret integration projection.
+                    type: string
+                  integrations:
+                    description: Integrations exposes effective/revoked/denied Fabric
+                      authorization without secret values.
+                    items:
+                      properties:
+                        bindingName:
+                          description: BindingName is the Fabric authorization object
+                            evaluated for this runtime.
+                          type: string
+                        connectionName:
+                          description: ConnectionName is the logical integration connection
+                            referenced by the binding.
+                          type: string
+                        operations:
+                          description: Operations are the effective generic operations
+                            requested by the binding.
+                          items:
+                            type: string
+                          type: array
+                        phase:
+                          description: Phase is Effective, Revoked or Denied. It never
+                            carries credential material.
+                          type: string
+                        reason:
+                          description: Reason is a stable non-secret diagnostic explaining
+                            the phase.
+                          type: string
+                        revision:
+                          description: Revision changes when binding, connection or
+                            credential metadata changes.
+                          type: string
+                        scopes:
+                          description: Scopes are the effective connection-defined
+                            scope labels.
+                          items:
+                            type: string
+                          type: array
+                      required:
+                      - bindingName
+                      - connectionName
+                      - phase
+                      type: object
+                    type: array
                   pvcName:
                     description: PVCName is the generated runtime workspace PVC.
                     type: string

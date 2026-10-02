@@ -92,6 +92,8 @@ rules:
   resources:
   - agentruntimeprofiles
   - hindsightprofiles
+  - integrationbindings
+  - integrationconnections
   - postgresqlprofiles
   - sharedworkspaceprofiles
   verbs:
