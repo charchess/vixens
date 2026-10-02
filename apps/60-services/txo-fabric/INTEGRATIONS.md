@@ -91,14 +91,15 @@ AgentIdentity reconciliation.
 canary. It requires an exact Bearer token and logs only HTTP method/outcome, never
 the Authorization header.
 
-The dedicated test credential is delivered by External Secrets from:
+The dedicated test credential is generated locally by External Secrets Operator's
+namespaced `Password` generator and materialized once as the tenant-local
+`Secret/fabric-smoke-http-canary-credential`. It has no `SecretStore` reference,
+does not enter the Vixens Core OpenBao trust domain, and is marked immutable so the
+same disposable value survives the Active -> Revoked -> Active acceptance round-trip.
 
-`vixens/prod/apps/60-services/txo-fabric/fabric-smoke-integration-canary`
-(property `bearer_token`)
-
-That location is a disposable platform test credential in the existing Vixens
-secret boundary. It is **not customer/user IAaaS secret storage** and must not be
-used as precedent for #3728.
+This is a test fixture only. It is **not customer/user IAaaS secret storage**, is
+not a credential backend for tenant integrations, and must not be used as precedent
+for #3728/#3729.
 
 Only `fabric-smoke-probe` receives the canary binding.
 `fabric-smoke-sales-probe` remains intentionally unbound.
@@ -111,8 +112,8 @@ cluster round-trip.
 
 After an explicit human promotion, physical acceptance still needs to verify:
 
-1. the dedicated `bearer_token` exists in the documented platform secret path;
-2. External Secrets creates the tenant-local credential and canary becomes ready;
+1. the ESO Password generator and ExternalSecret create the tenant-local disposable credential without any Core OpenBao dependency;
+2. the generated credential Secret exists with the required non-secret labels and the canary becomes ready;
 3. `fabric-smoke-probe` sees an Effective integration status and can call the
    canary using its projected credential;
 4. `fabric-smoke-sales-probe` cannot use the canary through the Fabric runtime
