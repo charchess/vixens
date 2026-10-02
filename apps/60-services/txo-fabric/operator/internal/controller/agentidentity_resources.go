@@ -57,10 +57,19 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	return err
 }
 
-func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy) error {
+func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, policies ...effectiveToolsetPolicy) error {
 	workspaceVolumes, workspaceMounts, err := resolvedWorkspaceVolumes(agent, tenant)
 	if err != nil {
 		return err
+	}
+	var toolPolicy effectiveToolsetPolicy
+	if len(policies) > 0 {
+		toolPolicy = policies[0]
+	} else {
+		toolPolicy, err = resolveToolsetPolicy(agent, profile)
+		if err != nil {
+			return err
+		}
 	}
 	dataMount := corev1.VolumeMount{Name: "data", MountPath: "/opt/data"}
 	managedPolicyMount := corev1.VolumeMount{Name: managedPolicyVolumeName, MountPath: managedPolicyMountPath, ReadOnly: true}
