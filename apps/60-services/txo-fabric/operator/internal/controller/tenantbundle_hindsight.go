@@ -283,12 +283,8 @@ func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bund
 	if gatewayEnabled {
 		needsReplacement := embeddingKey == "" || (requestedRevision != "" && appliedRevision != requestedRevision)
 		if needsReplacement {
-			if embeddingKey != "" {
-				if err := revokeModelAccessKeyIfExists(ctx, alias); err != nil {
-					return nil, fmt.Errorf("revoke previous Hindsight embedding key alias %q: %w", alias, err)
-				}
-			} else if err := revokeModelAccessKeyIfExists(ctx, alias); err != nil {
-				return nil, fmt.Errorf("revoke stale Hindsight embedding key alias %q: %w", alias, err)
+			if err := revokeModelAccessKeyIfExists(ctx, alias); err != nil {
+				return nil, fmt.Errorf("revoke previous Hindsight embedding key alias %q: %w", alias, err)
 			}
 			var err error
 			embeddingKey, err = generateHindsightEmbeddingAccessKey(ctx, bundle)
