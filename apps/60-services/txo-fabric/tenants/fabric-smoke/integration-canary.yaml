@@ -96,6 +96,8 @@ spec:
           image: python:3.14-slim
           command: ["python3", "/opt/canary/server.py"]
           env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
             - name: CANARY_TOKEN
               valueFrom:
                 secretKeyRef:
