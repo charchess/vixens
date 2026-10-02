@@ -12,40 +12,84 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *AgentIdentityReconciler) ensureModelAccess(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, namespace string) error {
+func (r *AgentIdentityReconciler) ensureModelAccess(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, namespace string) (string, error) {
 	name := modelAccessSecretName(agent.Spec.AgentKey)
+	alias := modelAccessKeyAlias(agent, tenant)
+	desiredRevision := modelAccessRotationRevision(agent)
+
 	var secret corev1.Secret
 	err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &secret)
 	if err == nil {
-		if len(secret.Data[modelAccessSecretKey]) == 0 {
-			return fmt.Errorf("model access Secret %s/%s is missing %s", namespace, name, modelAccessSecretKey)
+		currentKey := string(secret.Data[modelAccessSecretKey])
+		if currentKey == "" {
+			return "", fmt.Errorf("model access Secret %s/%s is missing %s", namespace, name, modelAccessSecretKey)
 		}
+
+		currentRevision := secret.Annotations[AnnotationModelAccessRevision]
+		if currentRevision != desiredRevision {
+			if err := revokeModelAccessKeyValueIfExists(ctx, currentKey); err != nil {
+				return "", fmt.Errorf("revoke previous scoped model key: %w", err)
+			}
+			replacementKey, err := generateModelAccessKey(ctx, agent, tenant)
+			if err != nil {
+				return "", fmt.Errorf("generate replacement scoped model key: %w", err)
+			}
+			secret.Data[modelAccessSecretKey] = []byte(replacementKey)
+			secret.Annotations = mergeStringMap(secret.Annotations, map[string]string{AnnotationModelAccessRevision: desiredRevision})
+			secret.Labels = mergeStringMap(secret.Labels, agentLabels(agent, tenant))
+			secret.Type = corev1.SecretTypeOpaque
+			if err := controllerutil.SetControllerReference(agent, &secret, r.Scheme); err != nil {
+				_ = revokeModelAccessKeyValueIfExists(ctx, replacementKey)
+				return "", err
+			}
+			if err := r.Update(ctx, &secret); err != nil {
+				_ = revokeModelAccessKeyValueIfExists(ctx, replacementKey)
+				return "", err
+			}
+			return string(secret.UID), nil
+		}
+
+		secret.Annotations = mergeStringMap(secret.Annotations, map[string]string{AnnotationModelAccessRevision: desiredRevision})
 		secret.Labels = mergeStringMap(secret.Labels, agentLabels(agent, tenant))
 		secret.Type = corev1.SecretTypeOpaque
 		if err := controllerutil.SetControllerReference(agent, &secret, r.Scheme); err != nil {
-			return err
+			return "", err
 		}
-		return r.Update(ctx, &secret)
+		if err := r.Update(ctx, &secret); err != nil {
+			return "", err
+		}
+		return string(secret.UID), nil
 	}
 	if !apierrors.IsNotFound(err) {
-		return err
+		return "", err
 	}
 
+	// Secret loss/recreation is also a credential replacement event. Clear any
+	// key left behind under the deterministic alias before minting the replacement.
+	if err := revokeModelAccessKeyIfExists(ctx, alias); err != nil {
+		return "", fmt.Errorf("revoke stale scoped model key alias %q: %w", alias, err)
+	}
 	key, err := generateModelAccessKey(ctx, agent, tenant)
 	if err != nil {
-		return err
+		return "", err
 	}
 	secret = corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, Labels: agentLabels(agent, tenant)},
-		Type:       corev1.SecretTypeOpaque,
-		Data:       map[string][]byte{modelAccessSecretKey: []byte(key)},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        name,
+			Namespace:   namespace,
+			Labels:      agentLabels(agent, tenant),
+			Annotations: map[string]string{AnnotationModelAccessRevision: desiredRevision},
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{modelAccessSecretKey: []byte(key)},
 	}
 	if err := controllerutil.SetControllerReference(agent, &secret, r.Scheme); err != nil {
-		return err
+		_ = revokeModelAccessKeyValueIfExists(ctx, key)
+		return "", err
 	}
 	if err := r.Create(ctx, &secret); err != nil {
-		_ = revokeModelAccessKey(ctx, modelAccessKeyAlias(agent, tenant))
-		return err
+		_ = revokeModelAccessKeyValueIfExists(ctx, key)
+		return "", err
 	}
-	return nil
+	return string(secret.UID), nil
 }
