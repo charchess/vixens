@@ -26,20 +26,41 @@ func TestHindsightPlatformGatewayReconcilesScopedEmbeddingAccess(t *testing.T) {
 	postgresqlSecret := hindsightPostgreSQLSecret(tenant, postgresqlProfile)
 
 	generateCalls := 0
+	deleteCalls := 0
 	var keyRequest map[string]any
+	var deletePayloads []map[string]any
 	gateway := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.URL.Path != "/key/generate" {
-			t.Fatalf("unexpected gateway path %q", req.URL.Path)
-		}
 		if req.Header.Get("Authorization") != "Bearer test-admin-token" {
 			t.Fatalf("unexpected gateway authorization header")
 		}
-		generateCalls++
-		if err := json.NewDecoder(req.Body).Decode(&keyRequest); err != nil {
-			t.Fatal(err)
+		switch req.URL.Path {
+		case "/key/delete":
+			deleteCalls++
+			var payload map[string]any
+			if err := json.NewDecoder(req.Body).Decode(&payload); err != nil {
+				t.Fatal(err)
+			}
+			deletePayloads = append(deletePayloads, payload)
+			if deleteCalls == 1 {
+				http.Error(w, "not found", http.StatusNotFound)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"deleted_keys":["sk-hindsight-embedding-test"]}`))
+		case "/key/generate":
+			generateCalls++
+			if err := json.NewDecoder(req.Body).Decode(&keyRequest); err != nil {
+				t.Fatal(err)
+			}
+			key := "sk-hindsight-embedding-test"
+			if generateCalls > 1 {
+				key = "sk-hindsight-embedding-rotated"
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"key":"` + key + `"}`))
+		default:
+			t.Fatalf("unexpected gateway path %q", req.URL.Path)
 		}
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"key":"sk-hindsight-embedding-test"}`))
 	}))
 	defer gateway.Close()
 	t.Setenv("TXO_AI_GATEWAY_URL", gateway.URL)
@@ -58,8 +79,17 @@ func TestHindsightPlatformGatewayReconcilesScopedEmbeddingAccess(t *testing.T) {
 	if result.Ready || result.Reason != "DeploymentProgressing" {
 		t.Fatalf("unexpected initial Hindsight result: %#v", result)
 	}
-	if generateCalls != 1 {
-		t.Fatalf("gateway key generation calls=%d, want 1", generateCalls)
+	if generateCalls != 1 || deleteCalls != 1 {
+		t.Fatalf("gateway calls generate=%d delete=%d, want 1/1", generateCalls, deleteCalls)
+	}
+	aliases, ok := deletePayloads[0]["key_aliases"].([]any)
+	if !ok || len(aliases) != 1 || aliases[0] != "txo-fabric:hairem-sandbox:hindsight-embeddings" {
+		t.Fatalf("initial stale-key cleanup payload=%#v", deletePayloads[0])
+	}
+	for _, unset := range []string{"max_budget", "rpm_limit", "tpm_limit"} {
+		if _, exists := keyRequest[unset]; exists {
+			t.Fatalf("v0 key request unexpectedly sets platform quota %q: %#v", unset, keyRequest[unset])
+		}
 	}
 	if got := keyRequest["key_alias"]; got != "txo-fabric:hairem-sandbox:hindsight-embeddings" {
 		t.Fatalf("gateway key alias=%#v", got)
@@ -115,7 +145,74 @@ func TestHindsightPlatformGatewayReconcilesScopedEmbeddingAccess(t *testing.T) {
 	if _, err := r.reconcileHindsight(ctx, tenant); err != nil {
 		t.Fatal(err)
 	}
-	if generateCalls != 1 {
-		t.Fatalf("idempotent reconcile generated %d gateway keys, want 1", generateCalls)
+	if generateCalls != 1 || deleteCalls != 1 {
+		t.Fatalf("idempotent reconcile repeated credential mutation: generate=%d delete=%d", generateCalls, deleteCalls)
+	}
+
+	initialAPIKey := string(runtimeSecret.Data["HINDSIGHT_API_TENANT_API_KEY"])
+	initialDatabaseURL := string(runtimeSecret.Data["HINDSIGHT_API_DATABASE_URL"])
+
+	tenant.Annotations = map[string]string{AnnotationHindsightEmbeddingRotation: "rotate-hindsight-embedding"}
+	if _, err := r.reconcileHindsight(ctx, tenant); err != nil {
+		t.Fatal(err)
+	}
+	if generateCalls != 2 || deleteCalls != 2 {
+		t.Fatalf("rotation gateway calls generate=%d delete=%d, want 2/2 total", generateCalls, deleteCalls)
+	}
+	aliases, ok = deletePayloads[1]["key_aliases"].([]any)
+	if !ok || len(aliases) != 1 || aliases[0] != "txo-fabric:hairem-sandbox:hindsight-embeddings" {
+		t.Fatalf("rotation delete payload=%#v", deletePayloads[1])
+	}
+	models, ok = keyRequest["models"].([]any)
+	if !ok || len(models) != 1 || models[0] != defaultAIEmbeddingModel {
+		t.Fatalf("rotated embedding models=%#v", keyRequest["models"])
+	}
+
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight-runtime"}, &runtimeSecret); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(runtimeSecret.Data[hindsightEmbeddingSecretKey]); got != "sk-hindsight-embedding-rotated" {
+		t.Fatalf("rotated embedding key=%q", got)
+	}
+	if got := string(runtimeSecret.Data["HINDSIGHT_API_TENANT_API_KEY"]); got != initialAPIKey {
+		t.Fatal("Hindsight API key changed during embedding credential rotation")
+	}
+	if got := string(runtimeSecret.Data["HINDSIGHT_API_DATABASE_URL"]); got != initialDatabaseURL {
+		t.Fatal("Hindsight database credential changed during embedding credential rotation")
+	}
+	if got := string(runtimeSecret.Data["HINDSIGHT_API_LLM_PROVIDER"]); got != "none" {
+		t.Fatalf("Hindsight LLM provider changed to %q", got)
+	}
+	wantRevision := hindsightEmbeddingRotationRevision(tenant)
+	if got := runtimeSecret.Annotations[AnnotationHindsightEmbeddingRevision]; got != wantRevision || got == "" {
+		t.Fatalf("Hindsight embedding revision=%q, want %q", got, wantRevision)
+	}
+
+	var deployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight"}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	if got := deployment.Spec.Template.Annotations[AnnotationHindsightEmbeddingRevision]; got != wantRevision {
+		t.Fatalf("Hindsight pod rotation revision=%q, want %q", got, wantRevision)
+	}
+
+	tenant.Annotations = nil
+	if _, err := r.reconcileHindsight(ctx, tenant); err != nil {
+		t.Fatal(err)
+	}
+	if generateCalls != 2 || deleteCalls != 2 {
+		t.Fatalf("annotation removal triggered a second Hindsight rotation: generate=%d delete=%d", generateCalls, deleteCalls)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight-runtime"}, &runtimeSecret); err != nil {
+		t.Fatal(err)
+	}
+	if got := runtimeSecret.Annotations[AnnotationHindsightEmbeddingRevision]; got != wantRevision {
+		t.Fatalf("applied Hindsight revision changed after annotation removal: %q", got)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight"}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	if got := deployment.Spec.Template.Annotations[AnnotationHindsightEmbeddingRevision]; got != wantRevision {
+		t.Fatalf("Hindsight pod rolled back revision after annotation removal: %q", got)
 	}
 }

@@ -105,6 +105,66 @@ Tenant deletion revokes the deterministic Hindsight embedding-key alias on a
 best-effort basis after Fabric-owned Hindsight resources have been removed. A
 gateway outage must not wedge tenant cleanup.
 
+## Inference policy and credential lifecycle
+
+The active TXO Fabric external-inference consumers are deliberately small:
+
+- Hermes uses the logical chat/model alias `txo-default` through a per-`AgentIdentity`
+  LiteLLM virtual key;
+- tenant Hindsight uses only the logical embedding alias `txo-embedding` through
+  a per-`TenantBundle` LiteLLM virtual key;
+- Hindsight generative/reflection LLM processing remains disabled with
+  `HINDSIGHT_API_LLM_PROVIDER=none`;
+- Paperclip is not yet an active Fabric-managed inference consumer (#3672). If an
+  optional module later uses external LLM/embedding inference, it must join this
+  gateway/scoped-credential contract instead of receiving an upstream provider key.
+
+The model allowlists are enforced when each virtual key is created. Concrete
+provider/model mappings remain solely in the gateway configuration, so changing
+the backend for `txo-default` or `txo-embedding` does not require editing tenant
+or agent intent.
+
+### Scoped credential rotation
+
+Credential rotation is a platform lifecycle operation and is independent from an
+agent's retained `/opt/data`.
+
+- changing `fabric.truxonline.io/model-access-rotation` on an `AgentIdentity`
+  revokes its currently projected LiteLLM key, mints a replacement restricted to
+  `txo-default`, updates the tenant-local Secret and rolls that Hermes runtime;
+- changing `fabric.truxonline.io/hindsight-embedding-rotation` on a
+  `TenantBundle` performs the equivalent replacement for the Hindsight
+  `txo-embedding` key and rolls the tenant Hindsight workload;
+- loss/recreation of a generated model-access Secret first clears any stale key
+  under the deterministic LiteLLM alias before a replacement is minted;
+- the applied rotation revision is a short hash of the requested nonce. It is
+  non-secret diagnostic metadata; the raw virtual key is never copied into
+  status, labels or annotations;
+- rotation requests are edge-triggered: a non-empty nonce rotates only when its
+  hash differs from the revision already applied to the generated Secret. If
+  GitOps later removes an imperative request annotation, that means "no new
+  rotation" and does not rotate the credential back to a baseline state.
+
+Rotation is intentionally fail-closed: the old key is revoked before the
+replacement becomes active. A failed replacement may temporarily block inference,
+but it must not preserve an undisclosed old credential or silently bypass the
+gateway.
+
+### v0 budgets and rate limits
+
+For the Client 0 POC, virtual-key `max_budget`, RPM and TPM limits are
+**platform-owned but deliberately unset**. The enforced v0 control is the
+workload-specific model allowlist plus independently revocable scoped credentials.
+TenantBundle and AgentIdentity APIs do not own arbitrary quota values.
+
+Future budget/rate-limit policy can be applied centrally when the operating policy
+is known; choosing placeholder numbers now would turn an arbitrary POC value into
+an accidental product contract.
+
+There is no direct-provider fallback. If the TXO AI gateway or a scoped credential
+is unavailable, the workload's external inference fails rather than switching to a
+provider credential or generic Internet route.
+
 ## Secrets
 
 No secret value is stored in Git. `ExternalSecret` resources read

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -17,6 +18,14 @@ const modelAccessRequestTimeout = 15 * time.Second
 
 type generateKeyResponse struct {
 	Key string `json:"key"`
+}
+
+type aiGatewayHTTPError struct {
+	StatusCode int
+}
+
+func (e *aiGatewayHTTPError) Error() string {
+	return fmt.Sprintf("TXO AI gateway request failed with HTTP %d", e.StatusCode)
 }
 
 func aiGatewayURL() string {
@@ -64,6 +73,29 @@ func revokeModelAccessKey(ctx context.Context, alias string) error {
 	return aiGatewayJSON(ctx, "/key/delete", map[string]any{"key_aliases": []string{alias}}, nil)
 }
 
+func revokeModelAccessKeyIfExists(ctx context.Context, alias string) error {
+	return ignoreAIGatewayNotFound(revokeModelAccessKey(ctx, alias))
+}
+
+func revokeModelAccessKeyValueIfExists(ctx context.Context, key string) error {
+	if strings.TrimSpace(key) == "" {
+		return nil
+	}
+	err := aiGatewayJSON(ctx, "/key/delete", map[string]any{"keys": []string{key}}, nil)
+	return ignoreAIGatewayNotFound(err)
+}
+
+func ignoreAIGatewayNotFound(err error) error {
+	if err == nil {
+		return nil
+	}
+	var httpErr *aiGatewayHTTPError
+	if errors.As(err, &httpErr) && httpErr.StatusCode == http.StatusNotFound {
+		return nil
+	}
+	return err
+}
+
 func aiGatewayJSON(ctx context.Context, path string, payload any, out any) error {
 	token := aiGatewayAdminToken()
 	if token == "" {
@@ -87,7 +119,7 @@ func aiGatewayJSON(ctx context.Context, path string, payload any, out any) error
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("TXO AI gateway request failed with HTTP %d", resp.StatusCode)
+		return &aiGatewayHTTPError{StatusCode: resp.StatusCode}
 	}
 	if out == nil {
 		return nil
