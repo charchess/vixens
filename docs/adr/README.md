@@ -80,8 +80,10 @@ A retrospective ADR records the accepted implementation. It must not make an unr
 - [ADR-033: Separate private agent state, shared business data and shared skills](033-separate-agent-state-workspace-and-skills.md)
 - [ADR-034: Build Hermes extensions into an immutable TXO runtime image](034-immutable-hermes-runtime-supply-chain.md)
 - [ADR-035: Centralize Fabric external inference behind the TXO AI Gateway](035-centralized-fabric-inference-boundary.md)
+- [ADR-036: Keep durable agent memory behind the tenant Hindsight service boundary](036-hindsight-external-durable-memory-boundary.md)
+- [ADR-037: Separate agent-extensible skills from platform-governed executable capabilities](037-skills-vs-platform-governed-executable-capabilities.md)
 
-Future Fabric decisions are added only after their owning implementation/acceptance establishes a durable contract; #3710 tracks that harvesting work.
+Future Fabric decisions are added only after their owning implementation/acceptance establishes a durable contract. Unsettled candidates remain in their owning issues rather than appearing here as premature Accepted architecture.
 
 ## Creating a new ADR
 

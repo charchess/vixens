@@ -47,6 +47,8 @@ Planning projects are `vixens core`, `vixens roadmap`, and `vixens perso`.
 | [033](033-separate-agent-state-workspace-and-skills.md) | Separate private agent state, shared business data and shared skills | Accepted | AIaaS | vixens roadmap |
 | [034](034-immutable-hermes-runtime-supply-chain.md) | Build Hermes extensions into an immutable TXO runtime image | Accepted | AIaaS | vixens roadmap |
 | [035](035-centralized-fabric-inference-boundary.md) | Centralize Fabric external inference behind the TXO AI Gateway | Accepted | AIaaS | vixens roadmap |
+| [036](036-hindsight-external-durable-memory-boundary.md) | Keep durable agent memory behind the tenant Hindsight service boundary | Accepted | AIaaS | vixens roadmap |
+| [037](037-skills-vs-platform-governed-executable-capabilities.md) | Separate agent-extensible skills from platform-governed executable capabilities | Accepted | AIaaS | vixens roadmap |
 
 ## Historical / superseded decisions
 
@@ -74,10 +76,10 @@ These anomalies predate ADR-030 and are preserved so existing links/history rema
 - **‡ Renovate Discord header collision:** `019-renovate-discord-approval-workflow.md` is the repository file identity, but its historical document header says `ADR-013`. The separate `013-layered-configuration-disaster-recovery.md` also exists. The file is cataloged here by its stable path and is not renumbered retroactively.
 - **§ Infisical restored-file mismatch:** `011-infisical-secrets-management.md` is the stable repository path, while its restored historical header says `ADR 007`. It is superseded and retained only as history.
 
-No new ADR may reuse an allocated number. The next ADR after this catalog is **036** unless another PR allocates it first.
+No new ADR may reuse an allocated number. The next ADR after this catalog is **038** unless another PR allocates it first.
 
 ## Project view
 
 The catalog currently contains Core and Repository decisions plus the first AIaaS/Fabric decisions. No durable Personal-scoped ADR is created merely for symmetry; `vixens perso` receives ADRs when an actual personal-application architecture decision warrants one.
 
-For unresolved TXO Fabric v0/v0.1 contracts, see #3710. A proposal in an issue is not promoted into this Accepted catalog until implementation/acceptance establishes the decision.
+Unresolved TXO Fabric candidates remain with their owning issues (notably #3687, #3689 and later #3688). A proposal in an issue is not promoted into this Accepted catalog until implementation/acceptance establishes the decision.
