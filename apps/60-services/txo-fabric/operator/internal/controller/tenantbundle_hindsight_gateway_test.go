@@ -195,4 +195,24 @@ func TestHindsightPlatformGatewayReconcilesScopedEmbeddingAccess(t *testing.T) {
 	if got := deployment.Spec.Template.Annotations[AnnotationHindsightEmbeddingRevision]; got != wantRevision {
 		t.Fatalf("Hindsight pod rotation revision=%q, want %q", got, wantRevision)
 	}
+
+	tenant.Annotations = nil
+	if _, err := r.reconcileHindsight(ctx, tenant); err != nil {
+		t.Fatal(err)
+	}
+	if generateCalls != 2 || deleteCalls != 2 {
+		t.Fatalf("annotation removal triggered a second Hindsight rotation: generate=%d delete=%d", generateCalls, deleteCalls)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight-runtime"}, &runtimeSecret); err != nil {
+		t.Fatal(err)
+	}
+	if got := runtimeSecret.Annotations[AnnotationHindsightEmbeddingRevision]; got != wantRevision {
+		t.Fatalf("applied Hindsight revision changed after annotation removal: %q", got)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight"}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	if got := deployment.Spec.Template.Annotations[AnnotationHindsightEmbeddingRevision]; got != wantRevision {
+		t.Fatalf("Hindsight pod rolled back revision after annotation removal: %q", got)
+	}
 }
