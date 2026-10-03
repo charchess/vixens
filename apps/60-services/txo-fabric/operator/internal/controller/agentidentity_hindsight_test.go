@@ -109,6 +109,80 @@ func TestHermesHindsightDeploymentWiring(t *testing.T) {
 	}
 }
 
+func TestHermesRetainedRuntimeCanAdoptLegacyNamedProfile(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := testTenant()
+	profile := testRuntimeProfile()
+	agent := testAgentIdentity()
+	agent.Spec.Runtime.Storage.RetentionPolicy = StorageRetentionRetain
+	agent.Spec.Runtime.Storage.AdoptLegacyProfile = true
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	namespace := tenantNamespace(tenant.Name)
+
+	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace, "", ""); err != nil {
+		t.Fatal(err)
+	}
+	var deployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+
+	bootstrap := deployment.Spec.Template.Spec.InitContainers[0]
+	if got := envValue(bootstrap.Env, "HERMES_HOME"); got != "/mnt/txo-data/profiles/tina" {
+		t.Fatalf("bootstrap HERMES_HOME = %q", got)
+	}
+	if got := envValue(bootstrap.Env, "TXO_LEGACY_PROFILE_ADOPTION"); got != "true" {
+		t.Fatalf("legacy adoption env = %q", got)
+	}
+	if !strings.Contains(bootstrap.Command[2], "requested legacy Hermes profile") {
+		t.Fatalf("bootstrap does not fail closed for a missing adopted profile:\n%s", bootstrap.Command[2])
+	}
+	var bootstrapDataMount corev1.VolumeMount
+	for _, mount := range bootstrap.VolumeMounts {
+		if mount.Name == "data" {
+			bootstrapDataMount = mount
+			break
+		}
+	}
+	if bootstrapDataMount.MountPath != "/mnt/txo-data" || bootstrapDataMount.SubPath != "" {
+		t.Fatalf("bootstrap data mount = %#v", bootstrapDataMount)
+	}
+
+	hermes := deployment.Spec.Template.Spec.Containers[0]
+	if got := envValue(hermes.Env, "HERMES_HOME"); got != "/opt/data" {
+		t.Fatalf("runtime HERMES_HOME = %q", got)
+	}
+	var runtimeDataMount corev1.VolumeMount
+	for _, mount := range hermes.VolumeMounts {
+		if mount.Name == "data" {
+			runtimeDataMount = mount
+			break
+		}
+	}
+	if runtimeDataMount.MountPath != "/opt/data" || runtimeDataMount.SubPath != "profiles/tina" {
+		t.Fatalf("runtime data mount = %#v", runtimeDataMount)
+	}
+}
+
+func TestHermesLegacyProfileAdoptionRejectsDisposableStorage(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := testTenant()
+	profile := testRuntimeProfile()
+	agent := testAgentIdentity()
+	agent.Spec.Runtime.Storage.RetentionPolicy = StorageRetentionDelete
+	agent.Spec.Runtime.Storage.AdoptLegacyProfile = true
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+
+	err := r.ensureDeployment(ctx, agent, tenant, profile, tenantNamespace(tenant.Name), "", "")
+	if err == nil || !strings.Contains(err.Error(), "requires retained runtime storage") {
+		t.Fatalf("expected retained-storage validation error, got %v", err)
+	}
+}
+
 func TestHermesDisposableRuntimeCanDropLegacyNamedProfile(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)

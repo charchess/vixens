@@ -90,9 +90,20 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, a
 	if err != nil {
 		return err
 	}
-	dataMount := corev1.VolumeMount{Name: "data", MountPath: "/opt/data"}
+	runtimeDataMount := corev1.VolumeMount{Name: "data", MountPath: "/opt/data"}
+	bootstrapDataMount := runtimeDataMount
+	bootstrapHome := "/opt/data"
+	if agent.Spec.Runtime.Storage.AdoptLegacyProfile {
+		if storageRetentionPolicy(agent) != StorageRetentionRetain {
+			return fmt.Errorf("legacy Hermes profile adoption requires retained runtime storage")
+		}
+		legacySubPath := fmt.Sprintf("profiles/%s", agent.Spec.AgentKey)
+		runtimeDataMount.SubPath = legacySubPath
+		bootstrapDataMount = corev1.VolumeMount{Name: "data", MountPath: "/mnt/txo-data"}
+		bootstrapHome = fmt.Sprintf("/mnt/txo-data/%s", legacySubPath)
+	}
 	managedPolicyMount := corev1.VolumeMount{Name: managedPolicyVolumeName, MountPath: managedPolicyMountPath, ReadOnly: true}
-	hermesMounts := append([]corev1.VolumeMount{dataMount, managedPolicyMount}, workspaceMounts...)
+	hermesMounts := append([]corev1.VolumeMount{runtimeDataMount, managedPolicyMount}, workspaceMounts...)
 	volumes := []corev1.Volume{
 		{Name: "data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: runtimePVCName(agent.Spec.AgentKey)}}},
 		{Name: managedPolicyVolumeName, VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
@@ -150,7 +161,12 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, a
 					Image:           profile.Spec.Image,
 					ImagePullPolicy: corev1.PullIfNotPresent,
 					Command: []string{"/bin/sh", "-lc", `legacy_profile="/opt/data/profiles/${AGENT_NAME}"
-if [ -d "${legacy_profile}" ]; then
+if [ "${TXO_LEGACY_PROFILE_ADOPTION}" = "true" ]; then
+  if [ ! -d "${HERMES_HOME}" ]; then
+    echo "requested legacy Hermes profile ${AGENT_NAME} is absent from retained runtime storage" >&2
+    exit 78
+  fi
+elif [ -d "${legacy_profile}" ]; then
   if [ "${TXO_RUNTIME_STORAGE_RETENTION}" = "Delete" ]; then
     rm -rf -- "${legacy_profile}"
   else
@@ -162,20 +178,21 @@ fi
 # The init container runs as root for retained-PVC migration checks, but the
 # Hermes gateway itself runs as the image's hermes user. Keep only the
 # Hermes-owned mutable config/backup surface writable by that runtime user.
-install -d -o hermes -g hermes -m 0750 /opt/data/backups /opt/data/backups/config
-if [ -e /opt/data/config.yaml ]; then
-  chown hermes:hermes /opt/data/config.yaml
+install -d -o hermes -g hermes -m 0750 "${HERMES_HOME}/backups" "${HERMES_HOME}/backups/config"
+if [ -e "${HERMES_HOME}/config.yaml" ]; then
+  chown hermes:hermes "${HERMES_HOME}/config.yaml"
 fi
 /command/s6-setuidgid hermes /opt/hermes/.venv/bin/hermes config set skills.external_dirs '["/workspace/skills"]'`},
 					Env: []corev1.EnvVar{
-						{Name: "HERMES_HOME", Value: "/opt/data"},
+						{Name: "HERMES_HOME", Value: bootstrapHome},
 						{Name: "HERMES_MANAGED_DIR", Value: managedPolicyMountPath},
 						{Name: "HERMES_DISABLE_LAZY_INSTALLS", Value: "1"},
 						{Name: "AGENT_NAME", Value: agent.Spec.AgentKey},
 						{Name: "TXO_RUNTIME_STORAGE_RETENTION", Value: storageRetentionPolicy(agent)},
+						{Name: "TXO_LEGACY_PROFILE_ADOPTION", Value: fmt.Sprintf("%t", agent.Spec.Runtime.Storage.AdoptLegacyProfile)},
 						{Name: "TXO_TOOLSET_POLICY_REVISION", Value: toolPolicy.Revision},
 					},
-					VolumeMounts: []corev1.VolumeMount{dataMount, managedPolicyMount},
+					VolumeMounts: []corev1.VolumeMount{bootstrapDataMount, managedPolicyMount},
 				}},
 				Containers: []corev1.Container{{
 					Name:            "hermes",

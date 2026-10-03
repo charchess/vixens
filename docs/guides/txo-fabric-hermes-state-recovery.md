@@ -102,3 +102,11 @@ copied representative profile has passed:
 
 The first migration is copy/rehearsal only. Cutover happens only after functional
 parity and recovery evidence exist.
+
+For an AgentIdentity using the explicit legacy-profile adoption mode, take the
+checkpoint **before** promoting the Git change that enables
+`runtime.storage.adoptLegacyProfile`. The adoption itself does not copy or delete
+the legacy directory: `profiles/<agentKey>` is mounted as the runtime's
+`/opt/data` through `subPath`. Bootstrap may still update runtime-owned config,
+permissions and Hindsight provider metadata inside that retained profile, so the
+pre-cutover checkpoint remains mandatory.

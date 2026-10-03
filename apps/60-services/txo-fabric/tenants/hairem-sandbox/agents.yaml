@@ -13,6 +13,9 @@ spec:
   displayName: Tesla
   runtime:
     profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+      adoptLegacyProfile: true
   access:
     userRef: client0
   humanAccess:
@@ -34,6 +37,9 @@ spec:
   displayName: Tina
   runtime:
     profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+      adoptLegacyProfile: true
   access:
     userRef: client0
   humanAccess:
