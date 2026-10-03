@@ -68,6 +68,11 @@ For hAIrem Client 0, Authentik owns the OIDC application
 `txo-fabric-hairem`. The registered redirect URI is regex-bounded to the
 hAIrem Fabric agent hostname shape and `/auth/callback`.
 
+Application access is bound to the Authentik group
+`txo-fabric-hairem-client0`. The group/policy is platform GitOps; user
+membership is enterprise IAM data managed in Authentik and is deliberately not
+copied into AgentIdentity or TenantBundle.
+
 Human identity remains an Authentik identity. AgentIdentity remains the
 machine/agent identity. Fabric does not become the enterprise user directory.
 
