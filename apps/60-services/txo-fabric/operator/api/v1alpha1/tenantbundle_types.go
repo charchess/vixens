@@ -4,11 +4,9 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 type HumanAccessOIDCSpec struct {
 	// Issuer is the HTTPS OpenID Connect issuer used by the runtime dashboard.
-	// +kubebuilder:validation:Pattern=`^https://[^[:space:]]+package v1alpha1
-
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-
+	// Runtime validation also enforces an HTTPS issuer before exposure.
+	// +kubebuilder:validation:MinLength=8
+	// +kubebuilder:validation:MaxLength=2048
 	Issuer string `json:"issuer"`
 
 	// ClientID is a public PKCE client identifier. Client secrets are not part
