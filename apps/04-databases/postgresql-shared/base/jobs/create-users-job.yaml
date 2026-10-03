@@ -41,8 +41,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: authentik-postgresql-credentials
-                  key: POSTGRES_PASSWORD
-                  optional: true
+                  key: postgresql-password
             # Netbird (via Password direct)
             - name: NETBIRD_PASS
               valueFrom:
