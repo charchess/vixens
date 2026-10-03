@@ -33,6 +33,7 @@ type AgentIdentityReconciler struct {
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies;ingresses,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=cilium.io,resources=ciliumnetworkpolicies,verbs=get;list;watch;create;update;patch;delete
 
 func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var agent fabricv1alpha1.AgentIdentity
@@ -226,7 +227,7 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			return ctrl.Result{}, err
 		}
 	}
-	if integrationAccess.HasBindings {
+	if integrationAccess.HasBindings || humanAccess.Enabled {
 		return ctrl.Result{RequeueAfter: integrationRefreshInterval}, nil
 	}
 	return ctrl.Result{}, nil
