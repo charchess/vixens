@@ -27,6 +27,8 @@ type humanAccessResolution struct {
 	OIDCScopes     string
 	IngressClass   string
 	TLSIssuer      string
+	PublicDNS      bool
+	DNSTarget      string
 }
 
 func resolveHumanAccess(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) (humanAccessResolution, error) {
@@ -92,6 +94,8 @@ func resolveHumanAccess(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alp
 		OIDCScopes:   scopes,
 		IngressClass: ingressClass,
 		TLSIssuer:    tlsIssuer,
+		PublicDNS:   web.PublicDNS,
+		DNSTarget:   strings.TrimSpace(web.DNSTarget),
 	}, nil
 }
 
@@ -144,11 +148,18 @@ func (r *AgentIdentityReconciler) ensureHumanAccessResources(
 	ingress := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ingress, func() error {
 		ingress.Labels = mergeStringMap(ingress.Labels, labels)
-		ingress.Annotations = mergeStringMap(ingress.Annotations, map[string]string{
-			"cert-manager.io/cluster-issuer":                      access.TLSIssuer,
-			"traefik.ingress.kubernetes.io/router.entrypoints":   "web, websecure",
-			"traefik.ingress.kubernetes.io/router.middlewares":   "traefik-redirect-https@kubernetescrd",
-		})
+		annotations := map[string]string{
+			"cert-manager.io/cluster-issuer":                    access.TLSIssuer,
+			"traefik.ingress.kubernetes.io/router.entrypoints": "web, websecure",
+			"traefik.ingress.kubernetes.io/router.middlewares": "traefik-redirect-https@kubernetescrd",
+		}
+		if access.PublicDNS {
+			annotations["external-dns.alpha.kubernetes.io/public"] = "true"
+		}
+		if access.DNSTarget != "" {
+			annotations["external-dns.alpha.kubernetes.io/target"] = access.DNSTarget
+		}
+		ingress.Annotations = mergeStringMap(ingress.Annotations, annotations)
 		ingress.Spec = networkingv1.IngressSpec{
 			IngressClassName: &ingressClass,
 			Rules: []networkingv1.IngressRule{{
