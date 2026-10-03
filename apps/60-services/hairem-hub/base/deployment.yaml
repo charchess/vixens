@@ -267,6 +267,38 @@ spec:
               mountPath: /data
               subPath: public/llmwiki
 
+        # SilverBullet needs a secure browser context for Web Crypto.
+        # This test-only proxy provides TLS on the existing exposed port.
+        - name: silverbullet-tls
+          image: caddy:2.10.2-alpine
+
+          ports:
+            - name: silverbullet-tls
+              containerPort: 3443
+
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+
+          readinessProbe:
+            tcpSocket:
+              port: 3443
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+          volumeMounts:
+            - name: silverbullet-caddy-config
+              mountPath: /etc/caddy
+              readOnly: true
+            - name: silverbullet-caddy-data
+              mountPath: /data
+            - name: silverbullet-caddy-config-dir
+              mountPath: /config
+
         # -------------------------------------------------------------
         # Workspace File Browser
         # -------------------------------------------------------------
@@ -355,4 +387,11 @@ spec:
           persistentVolumeClaim:
             claimName: hairem-files-truenas
         - name: filebrowser-database
+          emptyDir: {}
+        - name: silverbullet-caddy-config
+          configMap:
+            name: silverbullet-caddy-config
+        - name: silverbullet-caddy-data
+          emptyDir: {}
+        - name: silverbullet-caddy-config-dir
           emptyDir: {}
