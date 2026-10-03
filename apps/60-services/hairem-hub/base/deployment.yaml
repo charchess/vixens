@@ -20,6 +20,9 @@ spec:
 
   template:
     metadata:
+      annotations:
+        # Changes to Caddyfile require a process restart; bump alongside it.
+        checksum/silverbullet-caddy-config: "v2-umi-ip"
       labels:
         app: hairem-hub
 
