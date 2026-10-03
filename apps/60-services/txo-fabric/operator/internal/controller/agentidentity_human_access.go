@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
@@ -10,6 +11,8 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -17,18 +20,25 @@ import (
 
 const hermesDashboardPort int32 = 9119
 
+var ciliumNetworkPolicyGVK = schema.GroupVersionKind{
+	Group:   "cilium.io",
+	Version: "v2",
+	Kind:    "CiliumNetworkPolicy",
+}
+
 type humanAccessResolution struct {
-	Enabled        bool
-	Host           string
-	PublicURL      string
-	FilesRoot      string
-	OIDCIssuer     string
-	OIDCClientID   string
-	OIDCScopes     string
-	IngressClass   string
-	TLSIssuer      string
-	PublicDNS      bool
-	DNSTarget      string
+	Enabled      bool
+	Host         string
+	PublicURL    string
+	FilesRoot    string
+	OIDCIssuer   string
+	OIDCHost     string
+	OIDCClientID string
+	OIDCScopes   string
+	IngressClass string
+	TLSIssuer    string
+	PublicDNS    bool
+	DNSTarget    string
 }
 
 func resolveHumanAccess(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) (humanAccessResolution, error) {
@@ -46,8 +56,9 @@ func resolveHumanAccess(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alp
 	if domain == "" || issuer == "" || clientID == "" || tlsIssuer == "" {
 		return humanAccessResolution{}, fmt.Errorf("TenantBundle %q humanAccess.web requires domainSuffix, tlsClusterIssuer and OIDC issuer/clientId", tenant.Name)
 	}
-	if !strings.HasPrefix(issuer, "https://") {
-		return humanAccessResolution{}, fmt.Errorf("TenantBundle %q humanAccess OIDC issuer must use https", tenant.Name)
+	issuerURL, err := url.Parse(issuer)
+	if err != nil || issuerURL.Scheme != "https" || issuerURL.Hostname() == "" {
+		return humanAccessResolution{}, fmt.Errorf("TenantBundle %q humanAccess OIDC issuer must be an absolute https URL", tenant.Name)
 	}
 	if agent.Spec.Access.UserRef == "" {
 		return humanAccessResolution{}, fmt.Errorf("AgentIdentity %q human access requires access.userRef so the dashboard file surface is bound to an authorized user workspace", agent.Name)
@@ -90,17 +101,26 @@ func resolveHumanAccess(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alp
 		PublicURL:    "https://" + host,
 		FilesRoot:    filesRoot,
 		OIDCIssuer:   issuer,
+		OIDCHost:     strings.ToLower(issuerURL.Hostname()),
 		OIDCClientID: clientID,
 		OIDCScopes:   scopes,
 		IngressClass: ingressClass,
 		TLSIssuer:    tlsIssuer,
-		PublicDNS:   web.PublicDNS,
-		DNSTarget:   strings.TrimSpace(web.DNSTarget),
+		PublicDNS:    web.PublicDNS,
+		DNSTarget:    strings.TrimSpace(web.DNSTarget),
 	}, nil
 }
 
 func humanAccessResourceName(agentKey string) string {
 	return runtimeName(agentKey) + "-dashboard"
+}
+
+func humanOIDCEgressPolicyObject(agentKey, namespace string) *unstructured.Unstructured {
+	obj := &unstructured.Unstructured{}
+	obj.SetGroupVersionKind(ciliumNetworkPolicyGVK)
+	obj.SetName(humanAccessResourceName(agentKey) + "-oidc-egress")
+	obj.SetNamespace(namespace)
+	return obj
 }
 
 func (r *AgentIdentityReconciler) ensureHumanAccessResources(
@@ -116,6 +136,7 @@ func (r *AgentIdentityReconciler) ensureHumanAccessResources(
 			&networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}},
 			&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}},
 			&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: name + "-ingress", Namespace: namespace}},
+			humanOIDCEgressPolicyObject(agent.Spec.AgentKey, namespace),
 		} {
 			if err := r.Delete(ctx, obj); err != nil && !apierrors.IsNotFound(err) {
 				return err
@@ -209,5 +230,63 @@ func (r *AgentIdentityReconciler) ensureHumanAccessResources(
 	}); err != nil {
 		return err
 	}
-	return nil
+	return r.ensureHumanOIDCEgressPolicy(ctx, agent, namespace, access)
+}
+
+func (r *AgentIdentityReconciler) ensureHumanOIDCEgressPolicy(
+	ctx context.Context,
+	agent *fabricv1alpha1.AgentIdentity,
+	namespace string,
+	access humanAccessResolution,
+) error {
+	policy := humanOIDCEgressPolicyObject(agent.Spec.AgentKey, namespace)
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, policy, func() error {
+		policy.SetLabels(mergeStringMap(policy.GetLabels(), map[string]string{
+			LabelPartOf:   "txo-fabric",
+			LabelName:     "hermes-agent",
+			LabelInstance: agent.Spec.AgentKey,
+			LabelAgent:    agent.Spec.AgentKey,
+		}))
+		policy.Object["spec"] = map[string]any{
+			"endpointSelector": map[string]any{
+				"matchLabels": map[string]any{
+					LabelName:     "hermes-agent",
+					LabelInstance: agent.Spec.AgentKey,
+				},
+			},
+			"egress": []any{
+				map[string]any{
+					"toEndpoints": []any{
+						map[string]any{
+							"matchLabels": map[string]any{
+								"k8s:io.kubernetes.pod.namespace": "kube-system",
+								"k8s:k8s-app":                     "kube-dns",
+							},
+						},
+					},
+					"toPorts": []any{
+						map[string]any{
+							"ports": []any{
+								map[string]any{"port": "53", "protocol": "UDP"},
+								map[string]any{"port": "53", "protocol": "TCP"},
+							},
+							"rules": map[string]any{
+								"dns": []any{map[string]any{"matchPattern": "*"}},
+							},
+						},
+					},
+				},
+				map[string]any{
+					"toFQDNs": []any{map[string]any{"matchName": access.OIDCHost}},
+					"toPorts": []any{
+						map[string]any{
+							"ports": []any{map[string]any{"port": "443", "protocol": "TCP"}},
+						},
+					},
+				},
+			},
+		}
+		return controllerutil.SetControllerReference(agent, policy, r.Scheme)
+	})
+	return err
 }
