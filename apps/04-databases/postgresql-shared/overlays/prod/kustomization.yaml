@@ -5,6 +5,7 @@ namespace: databases
 resources:
   - ../../base
   - ../../base/credentials
+  - ../../base/databases
   - ../../base/jobs
   - backup-s3-secret-patch.yaml
   - backup-objectstore.yaml
