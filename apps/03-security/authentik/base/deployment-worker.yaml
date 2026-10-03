@@ -102,6 +102,9 @@ spec:
             - name: blueprints
               mountPath: /blueprints/vixens-netbird.yaml
               subPath: vixens-netbird.yaml
+            - name: blueprints
+              mountPath: /blueprints/vixens-txo-fabric-hairem.yaml
+              subPath: vixens-txo-fabric-hairem.yaml
       volumes:
         - name: authentik-data
           emptyDir: {}
