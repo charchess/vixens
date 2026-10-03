@@ -1,12 +1,40 @@
 ---
 apiVersion: postgresql.cnpg.io/v1
+kind: DatabaseRole
+metadata:
+  name: authentik
+  namespace: databases
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  cluster:
+    name: postgresql-shared
+  name: authentik
+  comment: Authentik application role
+  login: true
+  inherit: true
+  superuser: false
+  createdb: false
+  createrole: false
+  replication: false
+  bypassrls: false
+  connectionLimit: -1
+  ensure: present
+  passwordSecret:
+    name: authentik-postgresql-credentials
+  databaseRoleReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
   name: authentik
   namespace: databases
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   cluster:
     name: postgresql-shared
   name: authentik
   owner: authentik
   ensure: present
+  databaseReclaimPolicy: retain
