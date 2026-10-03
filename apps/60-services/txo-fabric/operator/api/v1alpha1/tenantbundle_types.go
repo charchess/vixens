@@ -41,6 +41,16 @@ type HumanWebAccessSpec struct {
 	// +kubebuilder:validation:MaxLength=253
 	TLSClusterIssuer string `json:"tlsClusterIssuer"`
 
+	// PublicDNS opts generated agent Ingresses into the platform public-DNS
+	// controller. Internal split DNS still follows the Ingress host normally.
+	// +optional
+	PublicDNS bool `json:"publicDNS,omitempty"`
+
+	// DNSTarget optionally requests a CNAME-style target from external-dns.
+	// +optional
+	// +kubebuilder:validation:MaxLength=253
+	DNSTarget string `json:"dnsTarget,omitempty"`
+
 	OIDC HumanAccessOIDCSpec `json:"oidc"`
 }
 
