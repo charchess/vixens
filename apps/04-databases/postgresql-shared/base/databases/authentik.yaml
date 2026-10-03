@@ -21,7 +21,7 @@ spec:
   connectionLimit: -1
   ensure: present
   passwordSecret:
-    name: authentik-postgresql-credentials
+    name: authentik-postgresql-cnpg
   databaseRoleReclaimPolicy: retain
 ---
 apiVersion: postgresql.cnpg.io/v1
