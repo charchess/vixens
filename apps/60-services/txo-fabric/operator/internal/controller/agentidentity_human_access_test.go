@@ -106,6 +106,25 @@ func TestHumanAccessReconcilesStableAuthenticatedDashboard(t *testing.T) {
 		t.Fatalf("dashboard ingress rules=%d", len(ingressPolicy.Spec.Ingress))
 	}
 
+	tenant.Spec.HumanAccess.Web.PublicDNS = false
+	tenant.Spec.HumanAccess.Web.DNSTarget = ""
+	internalOnly, err := resolveHumanAccess(agent, tenant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ensureHumanAccessResources(ctx, agent, tenant, namespace, internalOnly); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &ingress); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := ingress.Annotations["external-dns.alpha.kubernetes.io/public"]; ok {
+		t.Fatalf("stale public DNS annotation remains: %#v", ingress.Annotations)
+	}
+	if _, ok := ingress.Annotations["external-dns.alpha.kubernetes.io/target"]; ok {
+		t.Fatalf("stale DNS target annotation remains: %#v", ingress.Annotations)
+	}
+
 	var egress networkingv1.NetworkPolicy
 	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey) + "-egress", Namespace: namespace}, &egress); err != nil {
 		t.Fatal(err)
