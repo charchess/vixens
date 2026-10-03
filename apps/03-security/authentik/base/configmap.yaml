@@ -74,3 +74,40 @@ data:
         attrs:
           name: Hydrus (Prod)
           provider: !KeyOf hydrus-provider-prod
+  vixens-txo-fabric-hairem.yaml: |
+    version: 1
+    metadata:
+      name: txo-fabric-hairem-oidc
+    entries:
+      - model: authentik_core.group
+        id: txo-fabric-hairem-client0-group
+        identifiers:
+          name: txo-fabric-hairem-client0
+
+      - model: authentik_providers_oauth2.oauth2provider
+        id: txo-fabric-hairem-provider
+        identifiers:
+          name: txo-fabric-hairem
+        attrs:
+          client_id: txo-fabric-hairem
+          client_type: public
+          authentication_flow: !Find [authentik_core.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_core.flow, [slug, default-provider-authorization-explicit-consent]]
+          redirect_uris:
+            - matching_mode: regex
+              url: '^https://[a-z0-9-]+-hairem-sandbox\.truxonline\.com/auth/callback$'
+              redirect_uri_type: authorization
+      - model: authentik_core.application
+        id: txo-fabric-hairem-app
+        identifiers:
+          slug: txo-fabric-hairem
+        attrs:
+          name: TXO Fabric hAIrem
+          provider: !KeyOf txo-fabric-hairem-provider
+
+      - model: authentik_policies.policybinding
+        identifiers:
+          target: !KeyOf txo-fabric-hairem-app
+          order: 0
+        attrs:
+          group: !KeyOf txo-fabric-hairem-client0-group

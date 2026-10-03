@@ -96,6 +96,18 @@ spec:
                 maxLength: 128
                 minLength: 1
                 type: string
+              humanAccess:
+                description: |-
+                  HumanAccess opts this identity into the tenant-scoped authenticated human
+                  entry boundary. The tenant owns transport, public-domain and IAM settings.
+                properties:
+                  enabled:
+                    description: |-
+                      Enabled opts this stable AgentIdentity into the tenant's configured human
+                      entry transport. Transport/OIDC details stay tenant-owned so AgentIdentity
+                      remains channel-neutral.
+                    type: boolean
+                type: object
               memory:
                 description: Memory binds the identity to its logical tenant memory
                   bank.
@@ -275,6 +287,11 @@ spec:
                     items:
                       type: string
                     type: array
+                  humanEndpoint:
+                    description: |-
+                      HumanEndpoint is the stable authenticated human-facing endpoint when the
+                      AgentIdentity is opted into tenant human access.
+                    type: string
                   integrationPolicyRevision:
                     description: IntegrationPolicyRevision identifies the effective
                       non-secret integration projection.

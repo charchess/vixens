@@ -47,6 +47,14 @@ type AgentMemoryBinding struct {
 	BankID string `json:"bankId,omitempty"`
 }
 
+type AgentHumanAccessBinding struct {
+	// Enabled opts this stable AgentIdentity into the tenant's configured human
+	// entry transport. Transport/OIDC details stay tenant-owned so AgentIdentity
+	// remains channel-neutral.
+	// +optional
+	Enabled bool `json:"enabled,omitempty"`
+}
+
 type AgentIdentitySpec struct {
 	// TenantRef references the owning TenantBundle by metadata.name.
 	// +kubebuilder:validation:XValidation:rule="self.name == oldSelf.name",message="tenantRef.name is immutable"
@@ -78,6 +86,11 @@ type AgentIdentitySpec struct {
 	// Access selects tenant-declared user/group shared workspace scopes.
 	// +optional
 	Access AgentAccessSpec `json:"access,omitempty"`
+
+	// HumanAccess opts this identity into the tenant-scoped authenticated human
+	// entry boundary. The tenant owns transport, public-domain and IAM settings.
+	// +optional
+	HumanAccess AgentHumanAccessBinding `json:"humanAccess,omitempty"`
 }
 
 type AgentIdentityStatus struct {

@@ -2,6 +2,65 @@ package v1alpha1
 
 import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+type HumanAccessOIDCSpec struct {
+	// Issuer is the HTTPS OpenID Connect issuer used by the runtime dashboard.
+	// Runtime validation also enforces an HTTPS issuer before exposure.
+	// +kubebuilder:validation:MinLength=8
+	// +kubebuilder:validation:MaxLength=2048
+	Issuer string `json:"issuer"`
+
+	// ClientID is a public PKCE client identifier. Client secrets are not part
+	// of the Fabric CRD contract.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	ClientID string `json:"clientId"`
+
+	// Scopes defaults to the identity claims required by Hermes.
+	// +optional
+	// +kubebuilder:default="openid profile email"
+	// +kubebuilder:validation:MaxLength=512
+	Scopes string `json:"scopes,omitempty"`
+}
+
+type HumanWebAccessSpec struct {
+	// DomainSuffix is the platform-managed DNS suffix. Runtime hosts are derived
+	// as <agentKey>-<tenantName>.<domainSuffix>.
+	// +kubebuilder:validation:MinLength=3
+	// +kubebuilder:validation:MaxLength=253
+	DomainSuffix string `json:"domainSuffix"`
+
+	// IngressClassName selects the platform ingress implementation.
+	// +optional
+	// +kubebuilder:default=traefik
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
+	IngressClassName string `json:"ingressClassName,omitempty"`
+
+	// TLSClusterIssuer selects the cert-manager ClusterIssuer for per-agent TLS.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	TLSClusterIssuer string `json:"tlsClusterIssuer"`
+
+	// PublicDNS opts generated agent Ingresses into the platform public-DNS
+	// controller. Internal split DNS still follows the Ingress host normally.
+	// +optional
+	PublicDNS bool `json:"publicDNS,omitempty"`
+
+	// DNSTarget optionally requests a CNAME-style target from external-dns.
+	// +optional
+	// +kubebuilder:validation:MaxLength=253
+	DNSTarget string `json:"dnsTarget,omitempty"`
+
+	OIDC HumanAccessOIDCSpec `json:"oidc"`
+}
+
+type TenantHumanAccessSpec struct {
+	// Web configures the first v0 human transport. Additional channels belong
+	// beside Web rather than inside AgentIdentity.
+	// +optional
+	Web *HumanWebAccessSpec `json:"web,omitempty"`
+}
+
 // TenantBundleSpec is the desired state of one Fabric Cell.
 type TenantBundleSpec struct {
 	// TenantID is the immutable business identifier. Kubernetes metadata.name is the canonical
@@ -29,6 +88,11 @@ type TenantBundleSpec struct {
 	// from every AgentIdentity private /opt/data workspace.
 	// +optional
 	Workspace *TenantWorkspaceSpec `json:"workspace,omitempty"`
+
+	// HumanAccess declares tenant-owned IAM/transport policy for authenticated
+	// human interaction with explicitly opted-in AgentIdentity resources.
+	// +optional
+	HumanAccess *TenantHumanAccessSpec `json:"humanAccess,omitempty"`
 
 	// Modules contains optional tenant capabilities. Core runtime, persistence and memory are
 	// explicit fields because other resources depend on their resolved status.
