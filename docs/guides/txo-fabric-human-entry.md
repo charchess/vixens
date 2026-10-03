@@ -24,6 +24,8 @@ spec:
       domainSuffix: truxonline.com
       ingressClassName: traefik
       tlsClusterIssuer: letsencrypt-prod
+      publicDNS: true
+      dnsTarget: truxonline.com
       oidc:
         issuer: https://authentik.truxonline.com/application/o/txo-fabric-hairem/
         clientId: txo-fabric-hairem
@@ -83,7 +85,10 @@ Tenant namespaces remain default-deny.
 For an opted-in agent Fabric adds:
 
 - ingress to dashboard port 9119 only from the `traefik` namespace;
-- HTTPS egress (TCP/443) for OIDC discovery/token exchange.
+- HTTPS egress (TCP/443) for OIDC discovery/token exchange;
+- split-DNS publication through the existing external-dns controllers. Internal
+  UniFi DNS follows the Ingress host; public Gandi publication is an explicit
+  tenant policy (`publicDNS`) and may request a CNAME target (`dnsTarget`).
 
 The TCP/443 rule is a v0 limitation of standard Kubernetes NetworkPolicy,
 which cannot express an FQDN destination. It must not be generalized into
