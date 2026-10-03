@@ -86,6 +86,10 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, a
 	if err != nil {
 		return err
 	}
+	humanAccess, err := resolveHumanAccess(agent, tenant)
+	if err != nil {
+		return err
+	}
 	dataMount := corev1.VolumeMount{Name: "data", MountPath: "/opt/data"}
 	managedPolicyMount := corev1.VolumeMount{Name: managedPolicyVolumeName, MountPath: managedPolicyMountPath, ReadOnly: true}
 	hermesMounts := append([]corev1.VolumeMount{dataMount, managedPolicyMount}, workspaceMounts...)
@@ -214,6 +218,24 @@ fi
 				Volumes: volumes,
 			},
 		}
+		if humanAccess.Enabled {
+			container := &deployment.Spec.Template.Spec.Containers[0]
+			container.Ports = append(container.Ports, corev1.ContainerPort{
+				Name:          "dashboard",
+				ContainerPort: hermesDashboardPort,
+				Protocol:      corev1.ProtocolTCP,
+			})
+			container.Env = append(container.Env,
+				corev1.EnvVar{Name: "HERMES_DASHBOARD", Value: "1"},
+				corev1.EnvVar{Name: "HERMES_DASHBOARD_HOST", Value: "0.0.0.0"},
+				corev1.EnvVar{Name: "HERMES_DASHBOARD_PORT", Value: fmt.Sprintf("%d", hermesDashboardPort)},
+				corev1.EnvVar{Name: "HERMES_DASHBOARD_PUBLIC_URL", Value: humanAccess.PublicURL},
+				corev1.EnvVar{Name: "HERMES_DASHBOARD_OIDC_ISSUER", Value: humanAccess.OIDCIssuer},
+				corev1.EnvVar{Name: "HERMES_DASHBOARD_OIDC_CLIENT_ID", Value: humanAccess.OIDCClientID},
+				corev1.EnvVar{Name: "HERMES_DASHBOARD_OIDC_SCOPES", Value: humanAccess.OIDCScopes},
+				corev1.EnvVar{Name: "HERMES_DASHBOARD_FILES_ROOT", Value: humanAccess.FilesRoot},
+			)
+		}
 		if err := configureHermesHindsight(agent, tenant, deployment); err != nil {
 			return err
 		}
@@ -261,6 +283,10 @@ func (r *AgentIdentityReconciler) ensureEgressPolicy(ctx context.Context, agent 
 	if len(resolutions) > 0 {
 		integrations = resolutions[0]
 	}
+	humanAccess, err := resolveHumanAccess(agent, tenant)
+	if err != nil {
+		return err
+	}
 	name := runtimeName(agent.Spec.AgentKey) + "-egress"
 	np := &networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, np, func() error {
@@ -286,6 +312,16 @@ func (r *AgentIdentityReconciler) ensureEgressPolicy(ctx context.Context, agent 
 			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
 				To: []networkingv1.NetworkPolicyPeer{{PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hindsight"}}}},
 				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(8888)}},
+			})
+		}
+		if humanAccess.Enabled {
+			// v0 human entry: Hermes' self-hosted OIDC provider performs discovery,
+			// code exchange and refresh against the tenant's HTTPS issuer. Standard
+			// NetworkPolicy cannot express FQDN destinations, so only TCP/443 is
+			// admitted here. Replace this with policy-derived FQDN/brokered egress
+			// when the platform egress contract grows beyond v0.
+			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(443)}},
 			})
 		}
 		if len(integrations.Effective) > 0 {
