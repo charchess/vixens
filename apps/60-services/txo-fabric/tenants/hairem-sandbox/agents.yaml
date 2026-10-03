@@ -15,6 +15,7 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      adoptLegacyProfile: true
   access:
     userRef: client0
   humanAccess:
@@ -38,6 +39,7 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      adoptLegacyProfile: true
   access:
     userRef: client0
   humanAccess:
