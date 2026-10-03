@@ -1,3 +1,4 @@
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -5,10 +6,10 @@ metadata:
   namespace: databases
   annotations:
     argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
 spec:
   ttlSecondsAfterFinished: 300
-  backoffLimit: 1
+  backoffLimit: 3
   template:
     metadata:
       labels:
@@ -18,39 +19,83 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-      restartPolicy: Never
+      restartPolicy: OnFailure
+      serviceAccountName: default
       containers:
-        - name: verify-authentik
+        - name: create-users
           image: postgres:18
           env:
             - name: PGHOST
               value: postgresql-shared-rw
             - name: PGPORT
               value: "5432"
-            - name: PGDATABASE
-              value: authentik
             - name: PGUSER
-              valueFrom:
-                secretKeyRef:
-                  name: authentik-postgresql-credentials
-                  key: username
+              value: postgres
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: authentik-postgresql-credentials
+                  name: postgresql-admin-credentials
                   key: password
+            # Authentik (via individual keys if present)
+            - name: AUTHENTIK_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-postgresql-credentials
+                  key: postgresql-password
+            # Netbird (via Password direct)
+            - name: NETBIRD_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: netbird-postgresql-credentials
+                  key: POSTGRES_PASSWORD
+                  optional: true
+            # Standard Apps
+            - name: DOCSPELL_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: docspell-postgresql-credentials
+                  key: password
+                  optional: true
+            - name: VAULTWARDEN_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-postgresql-credentials
+                  key: password
+                  optional: true
+            - name: PENPOT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: penpot-postgresql-credentials
+                  key: password
+                  optional: true
           command:
             - /bin/bash
             - -c
             - |
               set -e
-              for attempt in $(seq 1 60); do
-                if psql -v ON_ERROR_STOP=1 -c 'SELECT current_user, current_database();'; then
-                  echo "✅ Authentik PostgreSQL role/database acceptance passed"
-                  exit 0
+              sync_db() {
+                local user=$1
+                local pass=$2
+                if [ -z "$pass" ]; then
+                  echo "⚠️ Skipping $user: password secret not found"
+                  return
                 fi
-                echo "Waiting for declarative Authentik PostgreSQL reconciliation (attempt ${attempt}/60)..."
-                sleep 2
-              done
-              echo "❌ Authentik PostgreSQL role/database acceptance timed out"
-              exit 1
+                echo "Syncing database and user: $user"
+                psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$user'" | grep -q 1 || psql -c "CREATE USER \"$user\" WITH PASSWORD '$pass';"
+                psql -c "ALTER USER \"$user\" WITH PASSWORD '$pass';"
+                psql -lqt | cut -d '|' -f 1 | grep -qw "$user" || psql -c "CREATE DATABASE \"$user\" OWNER \"$user\";"
+              }
+
+              until psql -c '\q' 2>/dev/null; do echo "Waiting for DB..."; sleep 2; done
+
+              # Sync Authentik
+              sync_db "authentik" "$AUTHENTIK_PASS"
+
+              # Sync Netbird
+              sync_db "netbird" "$NETBIRD_PASS"
+
+              # Sync others
+              sync_db "docspell" "$DOCSPELL_PASS"
+              sync_db "vaultwarden" "$VAULTWARDEN_PASS"
+              sync_db "penpot" "$PENPOT_PASS"
+              echo "=== Sync Finished ==="
