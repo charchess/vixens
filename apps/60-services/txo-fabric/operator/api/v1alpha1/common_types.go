@@ -128,6 +128,11 @@ type RuntimeStatus struct {
 	// +optional
 	PVCName string `json:"pvcName,omitempty"`
 
+	// HumanEndpoint is the stable authenticated human-facing endpoint when the
+	// AgentIdentity is opted into tenant human access.
+	// +optional
+	HumanEndpoint string `json:"humanEndpoint,omitempty"`
+
 	// ToolsetPolicyRevision identifies the effective platform-owned Hermes toolset policy.
 	// +optional
 	ToolsetPolicyRevision string `json:"toolsetPolicyRevision,omitempty"`
