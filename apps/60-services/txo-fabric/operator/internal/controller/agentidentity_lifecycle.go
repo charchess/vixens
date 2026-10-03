@@ -11,6 +11,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,6 +43,7 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 		&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: humanAccessResourceName(agent.Spec.AgentKey) + "-ingress", Namespace: namespace}},
 		&networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: humanAccessResourceName(agent.Spec.AgentKey), Namespace: namespace}},
 		&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: humanAccessResourceName(agent.Spec.AgentKey), Namespace: namespace}},
+		humanOIDCEgressPolicyObject(agent.Spec.AgentKey, namespace),
 		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: modelAccessSecretName(agent.Spec.AgentKey), Namespace: namespace}},
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: managedToolsetPolicyName(agent.Spec.AgentKey), Namespace: namespace}},
 	}
@@ -59,6 +61,10 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 			current = &networkingv1.NetworkPolicy{}
 		case *networkingv1.Ingress:
 			current = &networkingv1.Ingress{}
+		case *unstructured.Unstructured:
+			u := &unstructured.Unstructured{}
+			u.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
+			current = u
 		case *corev1.Service:
 			current = &corev1.Service{}
 		case *corev1.Secret:
