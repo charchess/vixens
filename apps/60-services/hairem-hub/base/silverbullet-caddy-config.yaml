@@ -15,5 +15,5 @@ data:
 
     https://192.168.199.119:3443 {
       tls internal
-      reverse_proxy 127.0.0.1:3000
+      reverse_proxy 127.0.0.1:3001
     }

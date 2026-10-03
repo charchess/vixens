@@ -22,7 +22,7 @@ spec:
     metadata:
       annotations:
         # Changes to Caddyfile require a process restart; bump alongside it.
-        checksum/silverbullet-caddy-config: "v3-umi-ip-default-sni"
+        checksum/silverbullet-caddy-config: "v4-silverbullet-3001"
       labels:
         app: hairem-hub
 
@@ -245,9 +245,15 @@ spec:
           # disposable UMI lab test. Pin a digest before a durable rollout.
           image: ghcr.io/silverbulletmd/silverbullet:latest
 
+          # The dashboard already owns Pod-local :3000. Containers in a Pod
+          # share a network namespace, so SilverBullet must use its own port.
+          env:
+            - name: SB_PORT
+              value: "3001"
+
           ports:
             - name: silverbullet
-              containerPort: 3000
+              containerPort: 3001
 
           resources:
             requests:
@@ -259,7 +265,7 @@ spec:
 
           readinessProbe:
             tcpSocket:
-              port: 3000
+              port: 3001
             initialDelaySeconds: 10
             periodSeconds: 5
 
