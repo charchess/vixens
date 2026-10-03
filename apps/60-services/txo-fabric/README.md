@@ -141,6 +141,14 @@ When an AgentIdentity using `Retain` is deleted, the operator removes the PVC's
 AgentIdentity ownerReference and leaves tenant/agent retention labels in place so
 a replacement identity with the same tenant and `agentKey` can re-adopt it.
 
+For a bound `Retain` runtime PVC, the operator also promotes the concrete
+PersistentVolume reclaim policy to `Retain`. This is the backend-safety contract:
+it protects durable state even when a brownfield PVC was originally provisioned
+from a StorageClass whose default reclaim policy was `Delete`. The controller only
+promotes to the safer policy; an AgentIdentity using `Delete` does not
+automatically downgrade an already-retained PV. Disposable profiles should
+therefore continue to use a Delete StorageClass when backend deletion is desired.
+
 A TenantBundle cannot delete its tenant Namespace while retained Fabric agent PVCs
 remain inside it. Intentional destructive tenant removal must therefore release
 those workspaces explicitly first, for example by using an AgentIdentity declared
