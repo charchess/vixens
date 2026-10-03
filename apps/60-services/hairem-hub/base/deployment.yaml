@@ -273,7 +273,7 @@ spec:
           image: caddy:2.10.2-alpine
 
           ports:
-            - name: silverbullet-tls
+            - name: sb-tls
               containerPort: 3443
 
           resources:
