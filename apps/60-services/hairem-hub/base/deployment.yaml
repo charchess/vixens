@@ -232,6 +232,39 @@ spec:
               subPath: public/llmwiki
 
         # -------------------------------------------------------------
+        # SilverBullet — filesystem-native LLMWiki workspace (lab POC)
+        # -------------------------------------------------------------
+        - name: silverbullet
+          # Intentionally tracks the upstream release channel for this
+          # disposable UMI lab test. Pin a digest before a durable rollout.
+          image: ghcr.io/silverbulletmd/silverbullet:latest
+
+          ports:
+            - name: silverbullet
+              containerPort: 3000
+
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          readinessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+          volumeMounts:
+            # The existing Markdown tree remains the source of truth.
+            # SilverBullet edits files directly in this directory.
+            - name: hairem-files
+              mountPath: /data
+              subPath: public/llmwiki
+
+        # -------------------------------------------------------------
         # Workspace File Browser
         # -------------------------------------------------------------
         - name: filebrowser-workspace
