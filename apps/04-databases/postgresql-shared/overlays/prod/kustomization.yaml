@@ -4,11 +4,31 @@ kind: Kustomization
 namespace: databases
 resources:
   - ../../base
+  - ../../base/credentials
+  - ../../base/jobs
   - backup-s3-secret-patch.yaml
   - backup-objectstore.yaml
   - backup-scheduled.yaml
 patches:
   - path: backup-patch.yaml
+  - target:
+      group: external-secrets.io
+      version: v1
+      kind: ExternalSecret
+      name: postgresql-admin-credentials
+    patch: |-
+      - op: replace
+        path: /spec/dataFrom/0/extract/key
+        value: vixens/prod/apps/04-databases/postgresql-shared/admin
+  - target:
+      group: external-secrets.io
+      version: v1
+      kind: ExternalSecret
+      name: authentik-postgresql-credentials
+    patch: |-
+      - op: replace
+        path: /spec/dataFrom/0/extract/key
+        value: vixens/prod/apps/03-security/authentik
 labels:
   - pairs:
       environment: prod
