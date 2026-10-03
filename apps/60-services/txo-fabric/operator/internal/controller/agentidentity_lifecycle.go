@@ -39,6 +39,9 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 	objects := []client.Object{
 		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}},
 		&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: runtimeName(agent.Spec.AgentKey) + "-egress", Namespace: namespace}},
+		&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: humanAccessResourceName(agent.Spec.AgentKey) + "-ingress", Namespace: namespace}},
+		&networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: humanAccessResourceName(agent.Spec.AgentKey), Namespace: namespace}},
+		&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: humanAccessResourceName(agent.Spec.AgentKey), Namespace: namespace}},
 		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: modelAccessSecretName(agent.Spec.AgentKey), Namespace: namespace}},
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: managedToolsetPolicyName(agent.Spec.AgentKey), Namespace: namespace}},
 	}
@@ -54,6 +57,10 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 			current = &appsv1.Deployment{}
 		case *networkingv1.NetworkPolicy:
 			current = &networkingv1.NetworkPolicy{}
+		case *networkingv1.Ingress:
+			current = &networkingv1.Ingress{}
+		case *corev1.Service:
+			current = &corev1.Service{}
 		case *corev1.Secret:
 			current = &corev1.Secret{}
 		case *corev1.ConfigMap:
@@ -166,6 +173,8 @@ func (r *AgentIdentityReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.PersistentVolumeClaim{}).
 		Owns(&corev1.ConfigMap{}).
+		Owns(&corev1.Service{}).
+		Owns(&networkingv1.Ingress{}).
 		Owns(&networkingv1.NetworkPolicy{}).
 		Watches(&fabricv1alpha1.AgentRuntimeProfile{}, handler.EnqueueRequestsFromMapFunc(r.requestsForProfile)).
 		Watches(&fabricv1alpha1.TenantBundle{}, handler.EnqueueRequestsFromMapFunc(r.requestsForTenant)).
