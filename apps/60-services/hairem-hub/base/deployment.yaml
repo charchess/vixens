@@ -128,10 +128,10 @@ spec:
                 git commit -m "Initialize hAIrem LLMWiki"
               fi
 
-              # The shared NFS tree may be large. Do not recursively chown it
-              # during every rollout: it blocks the whole pod in PodInitializing.
-              # The lab contract is intentionally group/world writable instead.
-              chmod -R a+rwX /data/public/llmwiki
+              # The shared NFS tree may be large. Do not recursively chown or
+              # chmod it during every rollout: either walk blocks this pod in
+              # PodInitializing. The lab contract already permits shared writes.
+              chmod a+rwX /data/public/llmwiki
 
               # -------------------------------------------------------
               # Workspace root / Gollum :4568
