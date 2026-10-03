@@ -85,15 +85,15 @@ Tenant namespaces remain default-deny.
 For an opted-in agent Fabric adds:
 
 - ingress to dashboard port 9119 only from the `traefik` namespace;
-- HTTPS egress (TCP/443) for OIDC discovery/token exchange;
+- a Cilium FQDN egress policy allowing DNS plus TCP/443 only to the exact OIDC
+  issuer hostname (for hAIrem: `authentik.truxonline.com`);
 - split-DNS publication through the existing external-dns controllers. Internal
   UniFi DNS follows the Ingress host; public Gandi publication is an explicit
   tenant policy (`publicDNS`) and may request a CNAME target (`dnsTarget`).
 
-The TCP/443 rule is a v0 limitation of standard Kubernetes NetworkPolicy,
-which cannot express an FQDN destination. It must not be generalized into
-arbitrary integration egress. A later platform egress contract may replace it
-with FQDN-aware or brokered policy.
+The ordinary Kubernetes egress policy is not widened for human access. This is
+deliberate: enabling a UI must not grant arbitrary HTTPS access or bypass the
+IntegrationBinding authorization/egress contract proven by #3733.
 
 Disabling human access removes the Service, Ingress and ingress allow-policy.
 Invalid/missing tenant human policy also removes those external resources
