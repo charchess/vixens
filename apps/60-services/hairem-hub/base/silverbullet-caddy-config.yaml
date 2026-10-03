@@ -8,6 +8,9 @@ data:
   Caddyfile: |
     {
       auto_https disable_redirects
+      # Browsers omit SNI when the URL host is a literal IP. Select the
+      # test certificate explicitly so the TLS handshake can proceed.
+      default_sni 192.168.199.119
     }
 
     https://192.168.199.119:3443 {
