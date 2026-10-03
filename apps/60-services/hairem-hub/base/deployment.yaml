@@ -93,7 +93,8 @@ spec:
                 git commit -m "Initialize hAIrem workspace root"
               fi
 
-              chmod -R a+rwX /data/.git /data/Home.md 2>/dev/null || true
+              # Do not recursively walk the NFS workspace during startup.
+              chmod a+rwX /data/.git /data/Home.md 2>/dev/null || true
 
               # -------------------------------------------------------
               # LLMWiki / Gollum
@@ -134,9 +135,10 @@ spec:
               chmod a+rwX /data/public/llmwiki
 
               # -------------------------------------------------------
-              # Workspace root / Gollum :4568
+              # Workspace root / File Browser :4568
               # -------------------------------------------------------
-              chmod -R a+rwX /data
+              # Directory modes were set above. Avoid a recursive NFS walk.
+              chmod a+rwX /data
 
               # -------------------------------------------------------
               # Dashboard hAIrem statique initial
