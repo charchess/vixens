@@ -7,7 +7,6 @@ resources:
   - deployment-worker.yaml
   - service.yaml
   - external-secret.yaml
-  - external-redis-secret.yaml
   - configmap.yaml
   - middleware-forward-auth.yaml
   - servicemonitor.yaml
