@@ -86,6 +86,10 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, a
 	if err != nil {
 		return err
 	}
+	humanAccess, err := resolveHumanAccess(agent, tenant)
+	if err != nil {
+		return err
+	}
 	dataMount := corev1.VolumeMount{Name: "data", MountPath: "/opt/data"}
 	managedPolicyMount := corev1.VolumeMount{Name: managedPolicyVolumeName, MountPath: managedPolicyMountPath, ReadOnly: true}
 	hermesMounts := append([]corev1.VolumeMount{dataMount, managedPolicyMount}, workspaceMounts...)
@@ -278,10 +282,6 @@ func (r *AgentIdentityReconciler) ensureEgressPolicy(ctx context.Context, agent 
 	var integrations integrationResolution
 	if len(resolutions) > 0 {
 		integrations = resolutions[0]
-	}
-	humanAccess, err := resolveHumanAccess(agent, tenant)
-	if err != nil {
-		return err
 	}
 	name := runtimeName(agent.Spec.AgentKey) + "-egress"
 	np := &networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
