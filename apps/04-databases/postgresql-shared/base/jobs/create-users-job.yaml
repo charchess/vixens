@@ -9,6 +9,7 @@ metadata:
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 spec:
   ttlSecondsAfterFinished: 300
+  activeDeadlineSeconds: 180
   backoffLimit: 1
   template:
     metadata:
@@ -33,12 +34,12 @@ spec:
             - name: PGUSER
               valueFrom:
                 secretKeyRef:
-                  name: authentik-postgresql-credentials
+                  name: authentik-postgresql-cnpg
                   key: username
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: authentik-postgresql-credentials
+                  name: authentik-postgresql-cnpg
                   key: password
           command:
             - /bin/bash
