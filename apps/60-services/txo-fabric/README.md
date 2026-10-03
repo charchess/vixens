@@ -194,6 +194,15 @@ PVC adoption is deliberately non-destructive. Deployment adoption may cause one
 controlled `Recreate` rollout when the operator normalizes the old POC Deployment
 spec, but the existing workspace PVC must retain its identity and data.
 
+A retained brownfield PVC that still uses Hermes' former named-profile layout can
+opt into `runtime.storage.adoptLegacyProfile: true`. In that mode the operator
+validates `profiles/<agentKey>` from the full retained volume during bootstrap,
+then mounts that existing directory with Kubernetes `subPath` as the runtime's
+single `/opt/data`. The profile is neither copied nor flattened. Hermes still sees
+`HERMES_HOME=/opt/data`, so this is a storage-layout adoption mechanism rather
+than a return to named-profile runtime multiplexing. The opt-in requires retained
+storage and must be checkpointed before production cutover.
+
 ## Zero-tenant acceptance
 
 Without tenant declarations:
