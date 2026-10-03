@@ -23,7 +23,7 @@ spec:
     - name: silverbullet
       protocol: TCP
       port: 4569
-      targetPort: 3000
+      targetPort: 3443
 
     - name: dashboard
       protocol: TCP
