@@ -20,6 +20,11 @@ spec:
       port: 4568
       targetPort: 4568
 
+    - name: silverbullet
+      protocol: TCP
+      port: 4569
+      targetPort: 3000
+
     - name: dashboard
       protocol: TCP
       port: 8080
