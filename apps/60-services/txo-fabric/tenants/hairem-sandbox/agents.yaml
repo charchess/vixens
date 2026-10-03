@@ -13,6 +13,10 @@ spec:
   displayName: Tesla
   runtime:
     profileRef: hermes-default
+  access:
+    userRef: client0
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-sandbox-tesla
 ---
@@ -30,6 +34,10 @@ spec:
   displayName: Tina
   runtime:
     profileRef: hermes-default
+  access:
+    userRef: client0
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-sandbox-tina
 ---
