@@ -46,7 +46,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: manager
-          image: ghcr.io/charchess/txo-fabric-operator:main-61293d495af5
+          image: ghcr.io/charchess/txo-fabric-operator:main-1c5d06cd182e
           imagePullPolicy: IfNotPresent
           args:
             - --leader-elect=true
