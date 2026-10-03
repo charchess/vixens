@@ -130,6 +130,18 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	if container.ReadinessProbe == nil || container.ReadinessProbe.Exec == nil {
 		t.Fatal("semantic Hermes readiness probe is missing")
 	}
+	for name, probe := range map[string]*corev1.Probe{
+		"startup":   container.StartupProbe,
+		"readiness": container.ReadinessProbe,
+		"liveness":  container.LivenessProbe,
+	} {
+		if probe == nil || probe.Exec == nil {
+			t.Fatalf("%s Hermes probe is missing", name)
+		}
+		if probe.TimeoutSeconds != 3 {
+			t.Fatalf("%s Hermes probe timeoutSeconds=%d, want 3", name, probe.TimeoutSeconds)
+		}
+	}
 	if deployment.Spec.Template.Annotations["vixens.io/explicitly-allow-root"] != "true" {
 		t.Fatal("s6 compatibility annotation is missing")
 	}
