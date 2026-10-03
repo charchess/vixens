@@ -91,6 +91,12 @@ func TestHumanAccessReconcilesStableAuthenticatedDashboard(t *testing.T) {
 	if ingress.Annotations["cert-manager.io/cluster-issuer"] != "letsencrypt-prod" {
 		t.Fatalf("cluster issuer=%q", ingress.Annotations["cert-manager.io/cluster-issuer"])
 	}
+	if ingress.Annotations["external-dns.alpha.kubernetes.io/public"] != "true" {
+		t.Fatalf("public DNS annotation=%q", ingress.Annotations["external-dns.alpha.kubernetes.io/public"])
+	}
+	if ingress.Annotations["external-dns.alpha.kubernetes.io/target"] != "truxonline.com" {
+		t.Fatalf("DNS target annotation=%q", ingress.Annotations["external-dns.alpha.kubernetes.io/target"])
+	}
 
 	var ingressPolicy networkingv1.NetworkPolicy
 	if err := c.Get(ctx, types.NamespacedName{Name: name + "-ingress", Namespace: namespace}, &ingressPolicy); err != nil {
@@ -171,6 +177,8 @@ func humanAccessTestTenant() *fabricv1alpha1.TenantBundle {
 					DomainSuffix:     "truxonline.com",
 					IngressClassName:  "traefik",
 					TLSClusterIssuer:  "letsencrypt-prod",
+					PublicDNS:         true,
+					DNSTarget:         "truxonline.com",
 					OIDC: fabricv1alpha1.HumanAccessOIDCSpec{
 						Issuer:   "https://authentik.truxonline.com/application/o/txo-fabric-hairem/",
 						ClientID: "txo-fabric-hairem",
