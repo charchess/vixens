@@ -86,10 +86,6 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, a
 	if err != nil {
 		return err
 	}
-	humanAccess, err := resolveHumanAccess(agent, tenant)
-	if err != nil {
-		return err
-	}
 	dataMount := corev1.VolumeMount{Name: "data", MountPath: "/opt/data"}
 	managedPolicyMount := corev1.VolumeMount{Name: managedPolicyVolumeName, MountPath: managedPolicyMountPath, ReadOnly: true}
 	hermesMounts := append([]corev1.VolumeMount{dataMount, managedPolicyMount}, workspaceMounts...)
