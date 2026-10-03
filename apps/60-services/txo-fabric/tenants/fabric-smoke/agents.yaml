@@ -33,3 +33,21 @@ spec:
   runtime:
     storage:
       retentionPolicy: Delete
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: fabric-smoke-upgrade-probe
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    fabric.truxonline.io/purpose: upgrade-canary
+spec:
+  tenantRef:
+    name: fabric-smoke
+  agentKey: upgrade-probe
+  displayName: Upgrade Probe
+  runtime:
+    profileRef: hermes-upgrade-canary
+    storage:
+      retentionPolicy: Retain
+
