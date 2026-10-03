@@ -148,6 +148,11 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	humanAccess, err := resolveHumanAccess(&agent, &tenant)
 	if err != nil {
+		// Fail closed on policy drift: remove the externally reachable Service,
+		// Ingress and ingress allow-rule even if a previous generation exposed
+		// this runtime successfully.
+		_ = r.ensureHumanAccessResources(ctx, &agent, &tenant, namespace, humanAccessResolution{})
+		agent.Status.Runtime.HumanEndpoint = ""
 		r.setStatus(ctx, &agent, "Degraded", "HumanAccessReady", metav1.ConditionFalse, "HumanAccessInvalid", err.Error())
 		return ctrl.Result{}, nil
 	}
