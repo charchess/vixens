@@ -1,0 +1,19 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: postgresql-create-users
+  namespace: databases
+spec:
+  endpointSelector:
+    matchLabels:
+      app: postgresql-create-users
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: databases
+            cnpg.io/cluster: postgresql-shared
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
