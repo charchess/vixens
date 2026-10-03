@@ -142,8 +142,8 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	}
 	bootstrapScript := bootstrap.Command[2]
 	for _, required := range []string{
-		"install -d -o 10000 -g 10000 -m 0750 /opt/data/backups /opt/data/backups/config",
-		"chown 10000:10000 /opt/data/config.yaml",
+		"install -d -o hermes -g hermes -m 0750 /opt/data/backups /opt/data/backups/config",
+		"chown hermes:hermes /opt/data/config.yaml",
 		"/command/s6-setuidgid hermes /opt/hermes/.venv/bin/hermes config set skills.external_dirs",
 	} {
 		if !strings.Contains(bootstrapScript, required) {
