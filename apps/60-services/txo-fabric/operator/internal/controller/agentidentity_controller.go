@@ -145,6 +145,13 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	} else {
 		setCondition(&agent.Status.Conditions, agent.Generation, "IntegrationAccessReady", metav1.ConditionFalse, "AuthorizationDenied", integrationAccess.Message)
 	}
+
+	humanAccess, err := resolveHumanAccess(&agent, &tenant)
+	if err != nil {
+		r.setStatus(ctx, &agent, "Degraded", "HumanAccessReady", metav1.ConditionFalse, "HumanAccessInvalid", err.Error())
+		return ctrl.Result{}, nil
+	}
+
 	if err := r.ensureDeploymentWithIntegrations(ctx, &agent, &tenant, &profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrationAccess); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "DeploymentReconcileFailed", err.Error())
 		return ctrl.Result{}, err
@@ -152,6 +159,15 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err := r.ensureEgressPolicy(ctx, &agent, &tenant, namespace, integrationAccess); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "NetworkReady", metav1.ConditionFalse, "NetworkPolicyReconcileFailed", err.Error())
 		return ctrl.Result{}, err
+	}
+	if err := r.ensureHumanAccessResources(ctx, &agent, &tenant, namespace, humanAccess); err != nil {
+		r.setStatus(ctx, &agent, "Degraded", "HumanAccessReady", metav1.ConditionFalse, "HumanAccessReconcileFailed", err.Error())
+		return ctrl.Result{}, err
+	}
+	if humanAccess.Enabled {
+		setCondition(&agent.Status.Conditions, agent.Generation, "HumanAccessReady", metav1.ConditionTrue, "WebEndpointReconciled", fmt.Sprintf("authenticated human endpoint is reconciled at %s", humanAccess.PublicURL))
+	} else {
+		setCondition(&agent.Status.Conditions, agent.Generation, "HumanAccessReady", metav1.ConditionTrue, "NotRequested", "human entry is disabled for this AgentIdentity")
 	}
 
 	var deployment appsv1.Deployment
@@ -162,6 +178,7 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	agent.Status.Namespace = namespace
 	agent.Status.Runtime.DeploymentName = deployment.Name
 	agent.Status.Runtime.PVCName = runtimePVCName(agent.Spec.AgentKey)
+	agent.Status.Runtime.HumanEndpoint = humanAccess.PublicURL
 	agent.Status.Runtime.ToolsetPolicyRevision = toolPolicy.Revision
 	agent.Status.Runtime.EnabledToolsets = append([]string(nil), toolPolicy.Enabled...)
 	agent.Status.Runtime.DeniedToolsets = append([]string(nil), toolPolicy.Denied...)
