@@ -23,6 +23,97 @@ func TestStorageRetentionPolicyDefaultsToRetain(t *testing.T) {
 	}
 }
 
+func TestRetainedPVCPromotesBoundPVReclaimPolicy(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := testTenant()
+	profile := testRuntimeProfile()
+	agent := &fabricv1alpha1.AgentIdentity{
+		ObjectMeta: metav1.ObjectMeta{Name: "hairem-sandbox-tina", UID: types.UID("agent-uid")},
+		Spec: fabricv1alpha1.AgentIdentitySpec{
+			TenantRef: fabricv1alpha1.ObjectReference{Name: tenant.Name},
+			AgentKey:  "tina",
+			Runtime: fabricv1alpha1.AgentRuntimeBinding{Storage: fabricv1alpha1.AgentRuntimeStorageBinding{
+				RetentionPolicy: StorageRetentionRetain,
+			}},
+		},
+	}
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "hermes-tina-data",
+			Namespace: "tenant-hairem-sandbox",
+			UID:       types.UID("pvc-uid"),
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			StorageClassName: stringPtr(profile.Spec.Storage.StorageClassName),
+			VolumeName:       "pvc-tina",
+		},
+	}
+	pv := &corev1.PersistentVolume{
+		ObjectMeta: metav1.ObjectMeta{Name: "pvc-tina"},
+		Spec: corev1.PersistentVolumeSpec{
+			ClaimRef: &corev1.ObjectReference{
+				Namespace: pvc.Namespace,
+				Name:      pvc.Name,
+				UID:       pvc.UID,
+			},
+			PersistentVolumeReclaimPolicy: corev1.PersistentVolumeReclaimDelete,
+		},
+	}
+
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(pvc, pv).Build()
+	r := &AgentIdentityReconciler{Client: c, APIReader: c, Scheme: scheme}
+
+	if err := r.ensurePVC(ctx, agent, tenant, profile, pvc.Namespace); err != nil {
+		t.Fatal(err)
+	}
+
+	var current corev1.PersistentVolume
+	if err := c.Get(ctx, types.NamespacedName{Name: pv.Name}, &current); err != nil {
+		t.Fatal(err)
+	}
+	if current.Spec.PersistentVolumeReclaimPolicy != corev1.PersistentVolumeReclaimRetain {
+		t.Fatalf("PV reclaim policy = %q, want %q", current.Spec.PersistentVolumeReclaimPolicy, corev1.PersistentVolumeReclaimRetain)
+	}
+}
+
+func TestDeletePolicyDoesNotDemoteRetainedPV(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	agent := &fabricv1alpha1.AgentIdentity{
+		Spec: fabricv1alpha1.AgentIdentitySpec{
+			Runtime: fabricv1alpha1.AgentRuntimeBinding{Storage: fabricv1alpha1.AgentRuntimeStorageBinding{
+				RetentionPolicy: StorageRetentionDelete,
+			}},
+		},
+	}
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{Name: "hermes-probe-data", Namespace: "tenant-fabric-smoke", UID: types.UID("pvc-uid")},
+		Spec:       corev1.PersistentVolumeClaimSpec{VolumeName: "pvc-probe"},
+	}
+	pv := &corev1.PersistentVolume{
+		ObjectMeta: metav1.ObjectMeta{Name: "pvc-probe"},
+		Spec: corev1.PersistentVolumeSpec{
+			ClaimRef: &corev1.ObjectReference{Namespace: pvc.Namespace, Name: pvc.Name, UID: pvc.UID},
+			PersistentVolumeReclaimPolicy: corev1.PersistentVolumeReclaimRetain,
+		},
+	}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(pv).Build()
+	r := &AgentIdentityReconciler{Client: c, APIReader: c, Scheme: scheme}
+
+	if err := r.ensureRetainedPersistentVolume(ctx, agent, pvc); err != nil {
+		t.Fatal(err)
+	}
+
+	var current corev1.PersistentVolume
+	if err := c.Get(ctx, types.NamespacedName{Name: pv.Name}, &current); err != nil {
+		t.Fatal(err)
+	}
+	if current.Spec.PersistentVolumeReclaimPolicy != corev1.PersistentVolumeReclaimRetain {
+		t.Fatalf("Delete policy unexpectedly demoted PV reclaim policy to %q", current.Spec.PersistentVolumeReclaimPolicy)
+	}
+}
+
 func TestAgentDeleteRetainsPVCAndRemovesOwnerReference(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
@@ -42,6 +133,7 @@ func TestAgentDeleteRetainsPVCAndRemovesOwnerReference(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "hermes-tina-data",
 			Namespace: "tenant-hairem-sandbox",
+			UID:       types.UID("pvc-uid"),
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion: "fabric.truxonline.io/v1alpha1",
 				Kind:       "AgentIdentity",
@@ -50,9 +142,21 @@ func TestAgentDeleteRetainsPVCAndRemovesOwnerReference(t *testing.T) {
 				Controller: &controller,
 			}},
 		},
+		Spec: corev1.PersistentVolumeClaimSpec{VolumeName: "pvc-tina"},
 	}
-	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent, pvc).Build()
-	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	pv := &corev1.PersistentVolume{
+		ObjectMeta: metav1.ObjectMeta{Name: "pvc-tina"},
+		Spec: corev1.PersistentVolumeSpec{
+			ClaimRef: &corev1.ObjectReference{
+				Namespace: pvc.Namespace,
+				Name:      pvc.Name,
+				UID:       pvc.UID,
+			},
+			PersistentVolumeReclaimPolicy: corev1.PersistentVolumeReclaimDelete,
+		},
+	}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent, pvc, pv).Build()
+	r := &AgentIdentityReconciler{Client: c, APIReader: c, Scheme: scheme}
 
 	if _, err := r.reconcileDelete(ctx, agent); err != nil {
 		t.Fatal(err)
@@ -69,6 +173,13 @@ func TestAgentDeleteRetainsPVCAndRemovesOwnerReference(t *testing.T) {
 		if owner.UID == agent.UID {
 			t.Fatalf("retained PVC still owned by deleted AgentIdentity: %#v", retained.OwnerReferences)
 		}
+	}
+	var retainedPV corev1.PersistentVolume
+	if err := c.Get(ctx, types.NamespacedName{Name: pv.Name}, &retainedPV); err != nil {
+		t.Fatal(err)
+	}
+	if retainedPV.Spec.PersistentVolumeReclaimPolicy != corev1.PersistentVolumeReclaimRetain {
+		t.Fatalf("retained agent deletion left PV reclaim policy = %q", retainedPV.Spec.PersistentVolumeReclaimPolicy)
 	}
 	var current fabricv1alpha1.AgentIdentity
 	if err := c.Get(ctx, types.NamespacedName{Name: agent.Name}, &current); err != nil {

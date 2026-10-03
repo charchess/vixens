@@ -13,6 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -56,7 +57,42 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 		pvc.Labels[LabelStorageRetention] = storageRetentionPolicy(agent)
 		return controllerutil.SetControllerReference(agent, &pvc, r.Scheme)
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	return r.ensureRetainedPersistentVolume(ctx, agent, &pvc)
+}
+
+func (r *AgentIdentityReconciler) ensureRetainedPersistentVolume(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, pvc *corev1.PersistentVolumeClaim) error {
+	if storageRetentionPolicy(agent) != StorageRetentionRetain || pvc.Spec.VolumeName == "" {
+		return nil
+	}
+
+	reader := client.Reader(r.Client)
+	if r.APIReader != nil {
+		reader = r.APIReader
+	}
+
+	var pv corev1.PersistentVolume
+	if err := reader.Get(ctx, types.NamespacedName{Name: pvc.Spec.VolumeName}, &pv); err != nil {
+		return fmt.Errorf("read bound PV %q for retained PVC %s/%s: %w", pvc.Spec.VolumeName, pvc.Namespace, pvc.Name, err)
+	}
+	if pv.Spec.ClaimRef == nil ||
+		pv.Spec.ClaimRef.Namespace != pvc.Namespace ||
+		pv.Spec.ClaimRef.Name != pvc.Name ||
+		(pvc.UID != "" && pv.Spec.ClaimRef.UID != "" && pv.Spec.ClaimRef.UID != pvc.UID) {
+		return fmt.Errorf("bound PV %q claimRef does not match retained PVC %s/%s", pv.Name, pvc.Namespace, pvc.Name)
+	}
+	if pv.Spec.PersistentVolumeReclaimPolicy == corev1.PersistentVolumeReclaimRetain {
+		return nil
+	}
+
+	before := pv.DeepCopy()
+	pv.Spec.PersistentVolumeReclaimPolicy = corev1.PersistentVolumeReclaimRetain
+	if err := r.Patch(ctx, &pv, client.MergeFrom(before)); err != nil {
+		return fmt.Errorf("promote bound PV %q reclaim policy to Retain for PVC %s/%s: %w", pv.Name, pvc.Namespace, pvc.Name, err)
+	}
+	return nil
 }
 
 func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, policies ...effectiveToolsetPolicy) error {

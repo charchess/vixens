@@ -106,6 +106,10 @@ func (r *AgentIdentityReconciler) retainRuntimePVC(ctx context.Context, agent *f
 		return err
 	}
 
+	if err := r.ensureRetainedPersistentVolume(ctx, agent, &pvc); err != nil {
+		return err
+	}
+
 	pvc.Labels = mergeStringMap(pvc.Labels, map[string]string{
 		LabelPartOf:           "txo-fabric",
 		LabelTenantName:       agent.Spec.TenantRef.Name,
