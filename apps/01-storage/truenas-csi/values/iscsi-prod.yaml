@@ -24,7 +24,7 @@ controller:
     vixens.io/service-binding: "false"
     vixens.io/sizing-rationale: "G-nano: democratic-csi controller and sidecars for lab storage"
   externalSnapshotter:
-    enabled: false
+    enabled: true
   externalHealthMonitorController:
     enabled: false
   driver:
