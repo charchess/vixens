@@ -314,16 +314,6 @@ func (r *AgentIdentityReconciler) ensureEgressPolicy(ctx context.Context, agent 
 				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(8888)}},
 			})
 		}
-		if humanAccess.Enabled {
-			// v0 human entry: Hermes' self-hosted OIDC provider performs discovery,
-			// code exchange and refresh against the tenant's HTTPS issuer. Standard
-			// NetworkPolicy cannot express FQDN destinations, so only TCP/443 is
-			// admitted here. Replace this with policy-derived FQDN/brokered egress
-			// when the platform egress contract grows beyond v0.
-			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(443)}},
-			})
-		}
 		if len(integrations.Effective) > 0 {
 			// v0 POC only: an effective Fabric integration binding admits broad HTTP(S)
 			// egress. This is deliberately not a destination sandbox. The durable
