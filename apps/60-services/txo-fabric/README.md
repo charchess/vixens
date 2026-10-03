@@ -201,7 +201,7 @@ then mounts that existing directory with Kubernetes `subPath` as the runtime's
 single `/opt/data`. The profile is neither copied nor flattened. Hermes still sees
 `HERMES_HOME=/opt/data`, so this is a storage-layout adoption mechanism rather
 than a return to named-profile runtime multiplexing. The opt-in requires retained
-storage and must be checkpointed before production cutover.
+storage and must be checkpointed before production cutover. New identities use the normal flat runtime home and do not need this brownfield-only flag.
 
 ## Zero-tenant acceptance
 
