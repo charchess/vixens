@@ -97,3 +97,18 @@ To prevent volume corruption and the `emergency_ro` kernel flag on Talos nodes d
 - **Resize:** first commit the larger request to GitOps, then perform the controlled
   `Recreate` rollout. Confirm both the PVC status capacity and `df` inside the new pod
   before staging new persistent workloads.
+
+---
+
+## 7. TXO Fabric fleet-scale resilience
+
+The operational rules above describe the current storage baseline. They are not the final large-fleet architecture for TXO Fabric.
+
+The 2026-10-03 UMI Hermes/Hindsight recovery demonstrated that a common iSCSI-path failure can affect multiple volumes at once and that manual PVC/session/filesystem recovery is not a scalable operating model for a large agent fleet.
+
+Long-term requirements, including state reconstructibility, bounded storage failure domains, storage canaries, automated recovery and a future cell-based fleet model, are tracked in:
+
+- [TXO Fabric — Long-Term Agent Storage Resilience and Fleet Recovery](TXO-FABRIC-STORAGE-RESILIENCE-ROADMAP.md)
+- issue #3760
+
+The roadmap intentionally treats very large populations (up to ~500,000 agents) as an architectural stress case rather than a current capacity commitment. It does not replace the near-term hardening tracked by #3135–#3139.
