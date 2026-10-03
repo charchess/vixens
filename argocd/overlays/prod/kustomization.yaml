@@ -84,7 +84,7 @@ resources:
   - apps/cloudnative-pg-crds.yaml
   - apps/cloudnative-pg.yaml
   - apps/plugin-barman-cloud.yaml
-  # Disabled by owner: apps/redis-shared.yaml
+  - apps/redis-shared.yaml
   - apps/postgresql-shared.yaml
   # Disabled by owner: apps/changedetection.yaml
   - apps/adguard-home.yaml
@@ -92,7 +92,7 @@ resources:
   # Disabled by owner: apps/netbird.yaml
   # Disabled by owner: apps/netvisor.yaml
   # Disabled by owner: apps/nocodb.yaml
-  # Disabled by owner: apps/authentik.yaml
+  - apps/authentik.yaml
   # Disabled by owner: apps/netbox.yaml
   - apps/loki.yaml
   - apps/fluent-bit.yaml
