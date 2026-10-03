@@ -261,11 +261,11 @@ spec:
             periodSeconds: 5
 
           volumeMounts:
-            # The existing Markdown tree remains the source of truth.
-            # SilverBullet edits files directly in this directory.
+            # The shared hAIrem workspace root remains the source of truth.
+            # SilverBullet browses and edits the existing hierarchy directly:
+            # public/, shared/, persona/, and the root Markdown documents.
             - name: hairem-files
               mountPath: /data
-              subPath: public/llmwiki
 
         # SilverBullet needs a secure browser context for Web Crypto.
         # This test-only proxy provides TLS on the existing exposed port.
