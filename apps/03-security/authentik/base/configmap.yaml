@@ -90,7 +90,7 @@ data:
           authorization_flow: !Find [authentik_core.flow, [slug, default-provider-authorization-explicit-consent]]
           redirect_uris:
             - matching_mode: regex
-              url: '^https://[a-z0-9-]+-hairem-sandbox\\.truxonline\\.com/auth/callback$'
+              url: '^https://[a-z0-9-]+-hairem-sandbox\.truxonline\.com/auth/callback$'
               redirect_uri_type: authorization
       - model: authentik_core.application
         id: txo-fabric-hairem-app
