@@ -10,6 +10,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -129,12 +130,29 @@ func TestHumanAccessReconcilesStableAuthenticatedDashboard(t *testing.T) {
 	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey) + "-egress", Namespace: namespace}, &egress); err != nil {
 		t.Fatal(err)
 	}
-	if len(egress.Spec.Egress) != 3 {
-		t.Fatalf("egress rules=%d want DNS + AI gateway + OIDC HTTPS", len(egress.Spec.Egress))
+	if len(egress.Spec.Egress) != 2 {
+		t.Fatalf("egress rules=%d want DNS + AI gateway only", len(egress.Spec.Egress))
 	}
-	last := egress.Spec.Egress[len(egress.Spec.Egress)-1]
-	if len(last.Ports) != 1 || last.Ports[0].Port == nil || last.Ports[0].Port.IntVal != 443 {
-		t.Fatalf("OIDC egress=%#v", last)
+
+	oidcPolicy := humanOIDCEgressPolicyObject(agent.Spec.AgentKey, namespace)
+	if err := c.Get(ctx, types.NamespacedName{Name: oidcPolicy.GetName(), Namespace: namespace}, oidcPolicy); err != nil {
+		t.Fatal(err)
+	}
+	ciliumEgress, found, err := unstructured.NestedSlice(oidcPolicy.Object, "spec", "egress")
+	if err != nil || !found || len(ciliumEgress) != 2 {
+		t.Fatalf("Cilium OIDC egress rules=%#v found=%v err=%v", ciliumEgress, found, err)
+	}
+	fqdnRule, ok := ciliumEgress[1].(map[string]any)
+	if !ok {
+		t.Fatalf("FQDN rule has unexpected type: %#v", ciliumEgress[1])
+	}
+	toFQDNs, ok := fqdnRule["toFQDNs"].([]any)
+	if !ok || len(toFQDNs) != 1 {
+		t.Fatalf("toFQDNs=%#v", fqdnRule["toFQDNs"])
+	}
+	fqdn, ok := toFQDNs[0].(map[string]any)
+	if !ok || fqdn["matchName"] != "authentik.truxonline.com" {
+		t.Fatalf("OIDC FQDN=%#v", toFQDNs[0])
 	}
 
 	agent.Spec.HumanAccess.Enabled = false
@@ -156,6 +174,10 @@ func TestHumanAccessReconcilesStableAuthenticatedDashboard(t *testing.T) {
 		{"service", func() error { return c.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &corev1.Service{}) }},
 		{"ingress", func() error { return c.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &networkingv1.Ingress{}) }},
 		{"ingress-policy", func() error { return c.Get(ctx, types.NamespacedName{Name: name + "-ingress", Namespace: namespace}, &networkingv1.NetworkPolicy{}) }},
+		{"oidc-egress-policy", func() error {
+			obj := humanOIDCEgressPolicyObject(agent.Spec.AgentKey, namespace)
+			return c.Get(ctx, types.NamespacedName{Name: obj.GetName(), Namespace: namespace}, obj)
+		}},
 	} {
 		if err := obj.get(); !apierrors.IsNotFound(err) {
 			t.Fatalf("%s remains after disable: %v", obj.name, err)
