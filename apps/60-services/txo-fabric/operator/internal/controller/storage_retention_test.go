@@ -133,6 +133,7 @@ func TestAgentDeleteRetainsPVCAndRemovesOwnerReference(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "hermes-tina-data",
 			Namespace: "tenant-hairem-sandbox",
+			UID:       types.UID("pvc-uid"),
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion: "fabric.truxonline.io/v1alpha1",
 				Kind:       "AgentIdentity",
@@ -141,9 +142,21 @@ func TestAgentDeleteRetainsPVCAndRemovesOwnerReference(t *testing.T) {
 				Controller: &controller,
 			}},
 		},
+		Spec: corev1.PersistentVolumeClaimSpec{VolumeName: "pvc-tina"},
 	}
-	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent, pvc).Build()
-	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	pv := &corev1.PersistentVolume{
+		ObjectMeta: metav1.ObjectMeta{Name: "pvc-tina"},
+		Spec: corev1.PersistentVolumeSpec{
+			ClaimRef: &corev1.ObjectReference{
+				Namespace: pvc.Namespace,
+				Name:      pvc.Name,
+				UID:       pvc.UID,
+			},
+			PersistentVolumeReclaimPolicy: corev1.PersistentVolumeReclaimDelete,
+		},
+	}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent, pvc, pv).Build()
+	r := &AgentIdentityReconciler{Client: c, APIReader: c, Scheme: scheme}
 
 	if _, err := r.reconcileDelete(ctx, agent); err != nil {
 		t.Fatal(err)
@@ -160,6 +173,13 @@ func TestAgentDeleteRetainsPVCAndRemovesOwnerReference(t *testing.T) {
 		if owner.UID == agent.UID {
 			t.Fatalf("retained PVC still owned by deleted AgentIdentity: %#v", retained.OwnerReferences)
 		}
+	}
+	var retainedPV corev1.PersistentVolume
+	if err := c.Get(ctx, types.NamespacedName{Name: pv.Name}, &retainedPV); err != nil {
+		t.Fatal(err)
+	}
+	if retainedPV.Spec.PersistentVolumeReclaimPolicy != corev1.PersistentVolumeReclaimRetain {
+		t.Fatalf("retained agent deletion left PV reclaim policy = %q", retainedPV.Spec.PersistentVolumeReclaimPolicy)
 	}
 	var current fabricv1alpha1.AgentIdentity
 	if err := c.Get(ctx, types.NamespacedName{Name: agent.Name}, &current); err != nil {
