@@ -79,6 +79,11 @@ data:
     metadata:
       name: txo-fabric-hairem-oidc
     entries:
+      - model: authentik_core.group
+        id: txo-fabric-hairem-client0-group
+        identifiers:
+          name: txo-fabric-hairem-client0
+
       - model: authentik_providers_oauth2.oauth2provider
         id: txo-fabric-hairem-provider
         identifiers:
@@ -99,3 +104,10 @@ data:
         attrs:
           name: TXO Fabric hAIrem
           provider: !KeyOf txo-fabric-hairem-provider
+
+      - model: authentik_policies.policybinding
+        identifiers:
+          target: !KeyOf txo-fabric-hairem-app
+          order: 0
+        attrs:
+          group: !KeyOf txo-fabric-hairem-client0-group
