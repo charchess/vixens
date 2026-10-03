@@ -58,20 +58,17 @@ spec:
             - name: AUTHENTIK_POSTGRESQL__NAME
               value: authentik
             - name: AUTHENTIK_POSTGRESQL__USER
-              valueFrom:
-                secretKeyRef:
-                  name: authentik-secrets
-                  key: POSTGRES_USER
+              value: authentik
             - name: AUTHENTIK_POSTGRESQL__PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: authentik-secrets
-                  key: POSTGRES_PASSWORD
+                  key: postgresql-password
             - name: AUTHENTIK_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: authentik-secrets
-                  key: SECRET_KEY
+                  key: AUTHENTIK_SECRET_KEY
             - name: AUTHENTIK_HTTP__CORS_ORIGINS
               value: "https://netbird.dev.truxonline.com,https://netbird.truxonline.com"
             - name: AUTHENTIK_BLUEPRINTS__BOOTSTRAP_AND_OVERWRITE

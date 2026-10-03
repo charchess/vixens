@@ -30,6 +30,7 @@ type AgentIdentityReconciler struct {
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities/finalizers,verbs=update
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles;agentruntimeprofiles;integrationconnections;integrationbindings,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=namespaces;persistentvolumeclaims;configmaps;services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=persistentvolumes,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies;ingresses,verbs=get;list;watch;create;update;patch;delete
