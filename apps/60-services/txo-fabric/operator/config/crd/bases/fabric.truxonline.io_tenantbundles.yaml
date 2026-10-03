@@ -60,6 +60,78 @@ spec:
                 maxLength: 253
                 minLength: 1
                 type: string
+              humanAccess:
+                description: |-
+                  HumanAccess declares tenant-owned IAM/transport policy for authenticated
+                  human interaction with explicitly opted-in AgentIdentity resources.
+                properties:
+                  web:
+                    description: |-
+                      Web configures the first v0 human transport. Additional channels belong
+                      beside Web rather than inside AgentIdentity.
+                    properties:
+                      dnsTarget:
+                        description: DNSTarget optionally requests a CNAME-style target
+                          from external-dns.
+                        maxLength: 253
+                        type: string
+                      domainSuffix:
+                        description: |-
+                          DomainSuffix is the platform-managed DNS suffix. Runtime hosts are derived
+                          as <agentKey>-<tenantName>.<domainSuffix>.
+                        maxLength: 253
+                        minLength: 3
+                        type: string
+                      ingressClassName:
+                        default: traefik
+                        description: IngressClassName selects the platform ingress
+                          implementation.
+                        maxLength: 63
+                        minLength: 1
+                        type: string
+                      oidc:
+                        properties:
+                          clientId:
+                            description: |-
+                              ClientID is a public PKCE client identifier. Client secrets are not part
+                              of the Fabric CRD contract.
+                            maxLength: 253
+                            minLength: 1
+                            type: string
+                          issuer:
+                            description: |-
+                              Issuer is the HTTPS OpenID Connect issuer used by the runtime dashboard.
+                              Runtime validation also enforces an HTTPS issuer before exposure.
+                            maxLength: 2048
+                            minLength: 8
+                            type: string
+                          scopes:
+                            default: openid profile email
+                            description: Scopes defaults to the identity claims required
+                              by Hermes.
+                            maxLength: 512
+                            type: string
+                        required:
+                        - clientId
+                        - issuer
+                        type: object
+                      publicDNS:
+                        description: |-
+                          PublicDNS opts generated agent Ingresses into the platform public-DNS
+                          controller. Internal split DNS still follows the Ingress host normally.
+                        type: boolean
+                      tlsClusterIssuer:
+                        description: TLSClusterIssuer selects the cert-manager ClusterIssuer
+                          for per-agent TLS.
+                        maxLength: 253
+                        minLength: 1
+                        type: string
+                    required:
+                    - domainSuffix
+                    - oidc
+                    - tlsClusterIssuer
+                    type: object
+                type: object
               isolation:
                 properties:
                   profile:
