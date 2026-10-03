@@ -2,6 +2,8 @@ package v1alpha1
 
 import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+// +kubebuilder:validation:XValidation:rule="!has(self.adoptLegacyProfile) || !self.adoptLegacyProfile || self.retentionPolicy == 'Retain'",message="adoptLegacyProfile requires retentionPolicy Retain"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.adoptLegacyProfile) || (has(self.adoptLegacyProfile) && self.adoptLegacyProfile == oldSelf.adoptLegacyProfile)",message="adoptLegacyProfile cannot be changed once declared"
 type AgentRuntimeStorageBinding struct {
 	// RetentionPolicy controls what happens to the Hermes runtime PVC when the
 	// AgentIdentity is deleted. Retain is the safe default for durable customer
@@ -10,6 +12,12 @@ type AgentRuntimeStorageBinding struct {
 	// +kubebuilder:validation:Enum=Retain;Delete
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="retentionPolicy is immutable"
 	RetentionPolicy string `json:"retentionPolicy,omitempty"`
+
+	// AdoptLegacyProfile non-destructively presents an existing retained
+	// profiles/<agentKey> directory as the runtime's single /opt/data home.
+	// It is a brownfield cutover switch: no profile copy or flattening occurs.
+	// +optional
+	AdoptLegacyProfile bool `json:"adoptLegacyProfile,omitempty"`
 }
 
 type AgentRuntimeCapabilityBinding struct {
