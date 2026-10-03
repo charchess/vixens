@@ -154,7 +154,15 @@ if [ -d "${legacy_profile}" ]; then
     exit 78
   fi
 fi
-/opt/hermes/.venv/bin/hermes config set skills.external_dirs '["/workspace/skills"]'`},
+
+# The init container runs as root for retained-PVC migration checks, but the
+# Hermes gateway itself runs as the image's hermes user. Keep only the
+# Hermes-owned mutable config/backup surface writable by that runtime user.
+install -d -o hermes -g hermes -m 0750 /opt/data/backups /opt/data/backups/config
+if [ -e /opt/data/config.yaml ]; then
+  chown hermes:hermes /opt/data/config.yaml
+fi
+/command/s6-setuidgid hermes /opt/hermes/.venv/bin/hermes config set skills.external_dirs '["/workspace/skills"]'`},
 					Env: []corev1.EnvVar{
 						{Name: "HERMES_HOME", Value: "/opt/data"},
 						{Name: "HERMES_MANAGED_DIR", Value: managedPolicyMountPath},

@@ -133,6 +133,23 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	if deployment.Spec.Template.Annotations["vixens.io/explicitly-allow-root"] != "true" {
 		t.Fatal("s6 compatibility annotation is missing")
 	}
+	if len(deployment.Spec.Template.Spec.InitContainers) != 1 {
+		t.Fatalf("unexpected init container count: %d", len(deployment.Spec.Template.Spec.InitContainers))
+	}
+	bootstrap := deployment.Spec.Template.Spec.InitContainers[0]
+	if bootstrap.Name != "bootstrap-profile" || len(bootstrap.Command) != 3 {
+		t.Fatalf("unexpected bootstrap container: %#v", bootstrap)
+	}
+	bootstrapScript := bootstrap.Command[2]
+	for _, required := range []string{
+		"install -d -o hermes -g hermes -m 0750 /opt/data/backups /opt/data/backups/config",
+		"chown hermes:hermes /opt/data/config.yaml",
+		"/command/s6-setuidgid hermes /opt/hermes/.venv/bin/hermes config set skills.external_dirs",
+	} {
+		if !strings.Contains(bootstrapScript, required) {
+			t.Fatalf("bootstrap script missing %q: %s", required, bootstrapScript)
+		}
+	}
 	if got := envValue(container.Env, "TXO_AGENT_ID"); got != "hairem-sandbox-tina" {
 		t.Fatalf("TXO_AGENT_ID = %q, want global CR identity", got)
 	}
