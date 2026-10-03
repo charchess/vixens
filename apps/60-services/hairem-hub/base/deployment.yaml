@@ -128,8 +128,9 @@ spec:
                 git commit -m "Initialize hAIrem LLMWiki"
               fi
 
-              # Gollum tourne en UID 1000.
-              chown -R 1000:1000 /data/public/llmwiki
+              # The shared NFS tree may be large. Do not recursively chown it
+              # during every rollout: it blocks the whole pod in PodInitializing.
+              # The lab contract is intentionally group/world writable instead.
               chmod -R a+rwX /data/public/llmwiki
 
               # -------------------------------------------------------
