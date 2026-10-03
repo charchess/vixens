@@ -148,6 +148,10 @@ func (r *AgentIdentityReconciler) ensureHumanAccessResources(
 	ingress := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ingress, func() error {
 		ingress.Labels = mergeStringMap(ingress.Labels, labels)
+		if ingress.Annotations != nil {
+			delete(ingress.Annotations, "external-dns.alpha.kubernetes.io/public")
+			delete(ingress.Annotations, "external-dns.alpha.kubernetes.io/target")
+		}
 		annotations := map[string]string{
 			"cert-manager.io/cluster-issuer":                    access.TLSIssuer,
 			"traefik.ingress.kubernetes.io/router.entrypoints": "web, websecure",
