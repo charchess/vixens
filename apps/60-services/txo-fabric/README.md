@@ -108,19 +108,39 @@ resource envelope, optional model cache, scheduling policy and the platform
 LLM-auth mode. The profile selects an auth mechanism but never embeds the API key
 itself.
 
-The initial `hindsight-standard` profile uses the upstream API-only image, requires
+The initial `hindsight-standard` profile uses the upstream API image, requires
 API-key authentication, and keeps embeddings/reranking local. The published full
 API image contains the default local models; persistent runtime model caching
-remains an explicit opt-in for a separately designed use case. The Hindsight
-control plane is not part of this Fabric contract.
+remains an explicit opt-in for a separately designed use case.
 
 The operator consumes the tenant PostgreSQL binding, creates a tenant-local runtime
-Secret, and reconciles one Hindsight Deployment and Service per tenant. Provider
+Secret, and reconciles one Hindsight API Deployment and Service per tenant. Provider
 and database credentials plus the Hindsight API key remain secret-backed rather
 than being embedded in the profile. AgentIdentity resources resolve deterministic
-bank IDs against their tenant's Hindsight service. A shared multi-tenant Hindsight
-service remains deferred until its authentication and database/schema isolation
-model is proven; that investigation is tracked separately in #3574.
+bank IDs against their tenant's Hindsight service.
+
+When a Hindsight-enabled TenantBundle also declares `humanAccess.web`, Fabric
+additionally reconciles the paired upstream Hindsight Control Plane image, a private
+Service, default-deny-compatible NetworkPolicies and a stable authenticated route:
+
+`https://hindsight-<tenant>.<domainSuffix>`
+
+The Control Plane receives the tenant API key only through a Secret-backed
+server-side environment variable and talks to the private Hindsight API inside the
+tenant namespace. Browsers never receive the API key, the memory API is not routed
+publicly, and PostgreSQL remains hidden behind Hindsight. The public route is
+protected with the platform Authentik ForwardAuth middleware; tenant onboarding is
+responsible for an Authentik Proxy Provider/application whose policy binds the
+appropriate tenant IAM group to that hostname. The separate
+`/outpost.goauthentik.io` route is sent directly to the embedded Authentik outpost
+so the sign-in flow itself is not recursively protected.
+
+`TenantBundle.status.memory.hindsight.endpoint` remains the private API endpoint,
+while `humanEndpoint` reports the stable authenticated WebUI URL.
+
+A shared multi-tenant Hindsight service remains deferred until its authentication
+and database/schema isolation model is proven; that investigation is tracked
+separately in #3574.
 
 ## Lifecycle and deletion
 
