@@ -40,6 +40,12 @@ type HindsightMemorySpec struct {
 	// +optional
 	// +kubebuilder:validation:MaxLength=128
 	ProfileRef string `json:"profileRef,omitempty"`
+
+	// HumanAccess opts this tenant into the authenticated Hindsight Control Plane
+	// WebUI using TenantBundle.spec.humanAccess.web for DNS/TLS/ingress policy.
+	// +optional
+	// +kubebuilder:default=false
+	HumanAccess bool `json:"humanAccess,omitempty"`
 }
 
 type TenantMemorySpec struct {
