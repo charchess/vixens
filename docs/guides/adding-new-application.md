@@ -133,6 +133,30 @@ Dev suit `main`. Prod suit `prod-stable` et n'est promu qu'après validation dev
 
 Ne jamais créer une branche `dev` ou déplacer `prod-stable` manuellement.
 
+
+### Classification opérationnelle des Applications
+
+Toute `Application` rendue par un overlay ArgoCD doit porter exactement un label :
+
+```yaml
+metadata:
+  labels:
+    vixens.io/domain: <domain>
+```
+
+Valeurs autorisées :
+
+- `core` : socle Kubernetes/GitOps nécessaire au fonctionnement normal de la plateforme ;
+- `infra` : service ou outil mutualisé utilisé par plusieurs workloads ou domaines ;
+- `fabric` : composant qui existe parce que TXO Fabric / IAaaS existe ;
+- `personal` : application déployée pour un usage personnel ou utilisateur final.
+
+Classer selon **la raison pour laquelle le composant est déployé**, pas selon son consommateur du moment. Par exemple, une base PostgreSQL mutualisée reste `infra` même si Fabric et des applications personnelles l'utilisent.
+
+Ce label sert à l'inventaire et au filtrage opérationnel. Il ne constitue **pas** une frontière de sécurité et ne remplace pas un `AppProject`, du RBAC ou une politique d'autorisation.
+
+Les fichiers d'Application désactivés qui ne sont pas référencés par un overlay ne font pas partie du desired state courant. Lorsqu'ils sont réactivés, leur domaine doit être ajouté au mécanisme de classification avant leur entrée dans `resources`. La CI rend les overlays ArgoCD et rejette toute Application active sans domaine ou avec une valeur inconnue.
+
 ## 9. Validation avant PR
 
 Au minimum :

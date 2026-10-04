@@ -223,6 +223,52 @@ jobs:
               return 1
             fi
 
+            # Every rendered ArgoCD Application must have one known operational domain.
+            if ! python3 - /tmp/built.yaml "$overlay" <<'PY'
+          import sys
+          import yaml
+
+          manifest, overlay = sys.argv[1:3]
+          allowed = {"core", "infra", "fabric", "personal"}
+          failures = []
+          applications = 0
+
+          with open(manifest, encoding="utf-8") as stream:
+              documents = yaml.safe_load_all(stream)
+              for document in documents:
+                  if not isinstance(document, dict):
+                      continue
+                  if document.get("kind") != "Application":
+                      continue
+
+                  applications += 1
+                  metadata = document.get("metadata") or {}
+                  name = metadata.get("name", "<unnamed>")
+                  labels = metadata.get("labels") or {}
+                  domain = labels.get("vixens.io/domain")
+
+                  if domain not in allowed:
+                      failures.append(
+                          f"{name}: vixens.io/domain={domain!r}; "
+                          f"expected one of {sorted(allowed)}"
+                      )
+
+          if applications:
+              print(
+                  f"🏷️ ArgoCD domains: {applications} Application(s) "
+                  f"checked in {overlay}"
+              )
+
+          if failures:
+              for failure in failures:
+                  print(f"❌ {failure}")
+              sys.exit(1)
+          PY
+            then
+              echo "❌ ARGOCD DOMAIN VALIDATION FAILED: $overlay"
+              return 1
+            fi
+
             # Compter les ressources. grep -c prints 0 even when it exits 1,
             # so do not append a second fallback zero.
             COUNT=$(grep -c '^kind:' /tmp/built.yaml 2>/dev/null || true)

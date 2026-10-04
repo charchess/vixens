@@ -115,3 +115,249 @@ resources:
   - apps/trilium.yaml
   - apps/maturity-controller.yaml
   # Disabled by owner: apps/bookshelf.yaml
+
+patches:
+  # Operational domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(shared-namespaces|external-secrets|openbao-secrets)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(cilium-lb|traefik|traefik-middlewares|metrics-server)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(priority-classes|argocd|cert-manager|cert-manager-secrets)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(cert-manager-webhook-gandi|cert-manager-config)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(snapshot-controller|local-path-provisioner|nfs-storage)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(truenas-csi-secrets|truenas-csi-iscsi|truenas-csi-nfs)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(coredns)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  # Operational domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(velero-secrets|velero|vpa|goldilocks|reloader)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(prometheus-operator-crds|kyverno|policy-reporter)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(descheduler|headlamp|traefik-dashboard|whoami|keda)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(keda-http-addon|mail-gateway|mosquitto|victoria-metrics)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(grafana|grafana-ingress|hubble-ui|media-shared-secrets)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(cloudnative-pg-crds|cloudnative-pg|plugin-barman-cloud)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(redis-shared|postgresql-shared|adguard-home|authentik|loki)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(fluent-bit|snmp-exporter|renovate|external-dns-gandi)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(external-dns-gandi-secrets|external-dns-unifi)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(external-dns-unifi-secrets|trivy|maturity-controller)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  # Operational domain: fabric
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(txo-fabric)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: fabric
+  # Operational domain: personal
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(mail|homeassistant|pyload|actual-budget|music-assistant)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: personal
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(contacts|radar|trilium)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: personal

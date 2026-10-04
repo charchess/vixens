@@ -41,3 +41,570 @@ resources:
   - apps/victoria-metrics.yaml
   - apps/snmp-exporter.yaml
   - apps/homeassistant.yaml
+
+patches:
+  # Operational domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(priority-classes|shared-namespaces|external-secrets-umi)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(openbao-secrets-umi|cilium-lb|traefik|traefik-middlewares)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(cert-manager|cert-manager-secrets)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(cert-manager-webhook-gandi|cert-manager-config)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(snapshot-controller|truenas-csi-secrets-umi)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(truenas-csi-iscsi-umi|truenas-csi-nfs-umi)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(local-path-provisioner|nfs-storage|argocd)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  # Operational domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(keda|keda-http-addon|vpa|reloader|kyverno|policy-reporter)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(descheduler|external-dns-unifi|external-dns-unifi-secrets)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(renovate|trivy|whoami|victoria-metrics|snmp-exporter)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  # Operational domain: fabric
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(hermes-umi|txo-fabric)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: fabric
+  # Operational domain: personal
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(frigate|mealie|homeassistant)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: personal
+
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(openbao-secrets|cilium-lb|traefik|traefik-middlewares)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(cert-manager|cert-manager-secrets)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(cert-manager-webhook-gandi|cert-manager-config)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(snapshot-controller|truenas-csi-secrets-umi)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(truenas-csi-iscsi-umi|truenas-csi-nfs-umi)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(local-path-provisioner|nfs-storage|argocd)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  # Operational domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(keda|keda-http-addon|vpa|reloader|kyverno|policy-reporter)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(descheduler|external-dns-unifi|external-dns-unifi-secrets)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(renovate|trivy|whoami|victoria-metrics|snmp-exporter)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  # Operational domain: fabric
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(hermes-umi|txo-fabric)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: fabric
+  # Operational domain: personal
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(frigate|mealie|homeassistant)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: personal
+
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(cert-manager|cert-manager-secrets)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(cert-manager-webhook-gandi|cert-manager-config)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(snapshot-controller|truenas-csi-secrets-umi)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(truenas-csi-iscsi-umi|truenas-csi-nfs-umi)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(local-path-provisioner|nfs-storage|argocd)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  # Operational domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(keda|keda-http-addon|vpa|reloader|kyverno|policy-reporter)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(descheduler|external-dns-unifi|external-dns-unifi-secrets)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(renovate|trivy|whoami|victoria-metrics|snmp-exporter)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  # Operational domain: fabric
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(hermes-umi|txo-fabric)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: fabric
+  # Operational domain: personal
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(frigate|mealie|homeassistant)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: personal
+
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(openbao-secrets|cilium-lb|traefik|traefik-middlewares)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(cert-manager|cert-manager-secrets)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(cert-manager-webhook-gandi|cert-manager-config)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(snapshot-controller|truenas-csi-secrets-umi)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(truenas-csi-iscsi-umi|truenas-csi-nfs-umi)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(local-path-provisioner|nfs-storage|argocd)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: core
+  # Operational domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(keda|keda-http-addon|vpa|reloader|kyverno|policy-reporter)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(descheduler|external-dns-unifi|external-dns-unifi-secrets)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(renovate|trivy|whoami|victoria-metrics|snmp-exporter)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: infra
+  # Operational domain: fabric
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(hermes-umi|txo-fabric)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: fabric
+  # Operational domain: personal
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: '^(frigate|mealie|homeassistant)$'
+    patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: domain-classification
+        labels:
+          vixens.io/domain: personal
