@@ -17,6 +17,7 @@ spec:
   memory:
     hindsight:
       profileRef: hindsight-gateway
+      humanAccess: true
   workspace:
     profileRef: shared-nfs
     retentionPolicy: Retain
