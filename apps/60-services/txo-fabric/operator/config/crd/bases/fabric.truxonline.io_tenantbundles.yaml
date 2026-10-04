@@ -414,8 +414,9 @@ spec:
                           when the component exposes one.
                         type: string
                       humanEndpoint:
-                        description: HumanEndpoint is the stable authenticated human-facing
-                          endpoint when the component exposes an operator/admin WebUI.
+                        description: |-
+                          HumanEndpoint is the stable authenticated human-facing endpoint when the
+                          component exposes an operator/admin WebUI.
                         type: string
                       message:
                         description: Message contains a human-readable explanation
@@ -435,8 +436,9 @@ spec:
                         the component exposes one.
                       type: string
                     humanEndpoint:
-                      description: HumanEndpoint is the stable authenticated human-facing
-                        endpoint when the component exposes an operator/admin WebUI.
+                      description: |-
+                        HumanEndpoint is the stable authenticated human-facing endpoint when the
+                        component exposes an operator/admin WebUI.
                       type: string
                     message:
                       description: Message contains a human-readable explanation for
@@ -470,8 +472,9 @@ spec:
                           when the component exposes one.
                         type: string
                       humanEndpoint:
-                        description: HumanEndpoint is the stable authenticated human-facing
-                          endpoint when the component exposes an operator/admin WebUI.
+                        description: |-
+                          HumanEndpoint is the stable authenticated human-facing endpoint when the
+                          component exposes an operator/admin WebUI.
                         type: string
                       message:
                         description: Message contains a human-readable explanation
