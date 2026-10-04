@@ -191,14 +191,6 @@ patches:
         name: domain-classification
         labels:
           vixens.io/domain: personal
-
-    patch: |-
-      apiVersion: argoproj.io/v1alpha1
-      kind: Application
-      metadata:
-        name: domain-classification
-        labels:
-          vixens.io/domain: core
   - target:
       group: argoproj.io
       version: v1alpha1
@@ -334,14 +326,6 @@ patches:
         name: domain-classification
         labels:
           vixens.io/domain: personal
-
-    patch: |-
-      apiVersion: argoproj.io/v1alpha1
-      kind: Application
-      metadata:
-        name: domain-classification
-        labels:
-          vixens.io/domain: core
   - target:
       group: argoproj.io
       version: v1alpha1
@@ -465,14 +449,6 @@ patches:
         name: domain-classification
         labels:
           vixens.io/domain: personal
-
-    patch: |-
-      apiVersion: argoproj.io/v1alpha1
-      kind: Application
-      metadata:
-        name: domain-classification
-        labels:
-          vixens.io/domain: core
   - target:
       group: argoproj.io
       version: v1alpha1
