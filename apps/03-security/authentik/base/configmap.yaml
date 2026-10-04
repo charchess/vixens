@@ -149,6 +149,43 @@ data:
           order: 0
         attrs:
           group: !KeyOf txo-fabric-hairem-client0-group
+
+      - model: authentik_providers_proxy.proxyprovider
+        id: txo-fabric-hairem-hindsight-provider
+        identifiers:
+          name: txo-fabric-hairem-hindsight
+        attrs:
+          mode: forward_auth
+          external_host: https://hindsight-hairem.truxonline.com
+          authentication_flow: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-authorization-flow]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+
+      - model: authentik_core.application
+        id: txo-fabric-hairem-hindsight-app
+        identifiers:
+          slug: txo-fabric-hairem-hindsight
+        attrs:
+          name: TXO Fabric hAIrem Hindsight
+          provider: !KeyOf txo-fabric-hairem-hindsight-provider
+
+      - model: authentik_policies.policybinding
+        identifiers:
+          target: !KeyOf txo-fabric-hairem-hindsight-app
+          order: 0
+        attrs:
+          group: !KeyOf txo-fabric-hairem-client0-group
+
+      - model: authentik_outposts.outpost
+        identifiers:
+          managed: goauthentik.io/outposts/embedded
+        attrs:
+          name: authentik Embedded Outpost
+          type: proxy
+          providers:
+            - !Find [authentik_providers_proxy.proxyprovider, [name, hydrus-dev]]
+            - !Find [authentik_providers_proxy.proxyprovider, [name, hydrus-prod]]
+            - !KeyOf txo-fabric-hairem-hindsight-provider
   vixens-txo-fabric-indiba.yaml: |
     version: 1
     metadata:
