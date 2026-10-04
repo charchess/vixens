@@ -182,6 +182,7 @@ func TestHindsightHumanAccessReconcilesAuthenticatedControlPlane(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
 	tenant := hindsightTestTenant()
+	tenant.Spec.Memory.Hindsight.HumanAccess = true
 	tenant.Spec.HumanAccess = &fabricv1alpha1.TenantHumanAccessSpec{Web: &fabricv1alpha1.HumanWebAccessSpec{
 		DomainSuffix:       "truxonline.com",
 		IngressClassName:   "traefik",
