@@ -81,8 +81,9 @@ machine/agent identity. Fabric does not become the enterprise user directory.
 ## Tenant admin dashboards
 
 The tenant human-access policy also governs administrative WebUI surfaces owned
-by tenant capabilities. A Hindsight-enabled tenant with `humanAccess.web`
-receives a stable memory administration endpoint:
+by tenant capabilities. A Hindsight-enabled tenant explicitly opts in with
+`memory.hindsight.humanAccess: true`; when `humanAccess.web` is also present,
+Fabric reconciles a stable memory administration endpoint:
 
 `https://hindsight-<tenantName>.<domainSuffix>`
 
