@@ -48,7 +48,7 @@ patches:
       group: argoproj.io
       version: v1alpha1
       kind: Application
-      name: '^(priority-classes|shared-namespaces|external-secrets-umi)
+      name: '^(priority-classes|shared-namespaces|external-secrets-umi)$'
     patch: |-
       apiVersion: argoproj.io/v1alpha1
       kind: Application
@@ -60,7 +60,7 @@ patches:
       group: argoproj.io
       version: v1alpha1
       kind: Application
-      name: '^(openbao-secrets-umi|cilium-lb|traefik|traefik-middlewares)
+      name: '^(openbao-secrets-umi|cilium-lb|traefik|traefik-middlewares)$'
     patch: |-
       apiVersion: argoproj.io/v1alpha1
       kind: Application
