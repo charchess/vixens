@@ -28,3 +28,14 @@ spec:
       - name: edfoley
         collaborative: true
         skillsCollaborative: true
+  humanAccess:
+    web:
+      domainSuffix: truxonline.com
+      ingressClassName: traefik
+      tlsClusterIssuer: letsencrypt-prod
+      publicDNS: true
+      dnsTarget: truxonline.com
+      oidc:
+        issuer: https://authentik.truxonline.com/application/o/txo-fabric-indiba/
+        clientId: txo-fabric-indiba
+        scopes: openid profile email

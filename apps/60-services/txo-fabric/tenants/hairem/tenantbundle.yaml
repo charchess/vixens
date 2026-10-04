@@ -28,3 +28,14 @@ spec:
       - name: charchess
         collaborative: true
         skillsCollaborative: true
+  humanAccess:
+    web:
+      domainSuffix: truxonline.com
+      ingressClassName: traefik
+      tlsClusterIssuer: letsencrypt-prod
+      publicDNS: true
+      dnsTarget: truxonline.com
+      oidc:
+        issuer: https://authentik.truxonline.com/application/o/txo-fabric-hairem/
+        clientId: txo-fabric-hairem
+        scopes: openid profile email

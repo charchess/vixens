@@ -95,7 +95,7 @@ data:
           authorization_flow: !Find [authentik_core.flow, [slug, default-provider-authorization-explicit-consent]]
           redirect_uris:
             - matching_mode: regex
-              url: '^https://[a-z0-9-]+-hairem-sandbox\.truxonline\.com/auth/callback$'
+              url: '^https://[a-z0-9-]+-hairem(?:-sandbox)?\.truxonline\.com/auth/callback$'
               redirect_uri_type: authorization
       - model: authentik_core.application
         id: txo-fabric-hairem-app
@@ -111,3 +111,40 @@ data:
           order: 0
         attrs:
           group: !KeyOf txo-fabric-hairem-client0-group
+  vixens-txo-fabric-indiba.yaml: |
+    version: 1
+    metadata:
+      name: txo-fabric-indiba-oidc
+    entries:
+      - model: authentik_core.group
+        id: txo-fabric-indiba-sales-group
+        identifiers:
+          name: txo-fabric-indiba-sales
+
+      - model: authentik_providers_oauth2.oauth2provider
+        id: txo-fabric-indiba-provider
+        identifiers:
+          name: txo-fabric-indiba
+        attrs:
+          client_id: txo-fabric-indiba
+          client_type: public
+          authentication_flow: !Find [authentik_core.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_core.flow, [slug, default-provider-authorization-explicit-consent]]
+          redirect_uris:
+            - matching_mode: regex
+              url: '^https://[a-z0-9-]+-indiba\.truxonline\.com/auth/callback$'
+              redirect_uri_type: authorization
+      - model: authentik_core.application
+        id: txo-fabric-indiba-app
+        identifiers:
+          slug: txo-fabric-indiba
+        attrs:
+          name: TXO Fabric Indiba
+          provider: !KeyOf txo-fabric-indiba-provider
+
+      - model: authentik_policies.policybinding
+        identifiers:
+          target: !KeyOf txo-fabric-indiba-app
+          order: 0
+        attrs:
+          group: !KeyOf txo-fabric-indiba-sales-group
