@@ -20,11 +20,3 @@ spec:
                     values:
                       - authentik-worker
               topologyKey: "kubernetes.io/hostname"
-      containers:
-        - name: authentik-server
-          env:
-            - name: AUTHENTIK_REDIS__PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: authentik-redis-credentials
-                  key: password
