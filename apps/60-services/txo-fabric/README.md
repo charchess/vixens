@@ -119,7 +119,8 @@ and database credentials plus the Hindsight API key remain secret-backed rather
 than being embedded in the profile. AgentIdentity resources resolve deterministic
 bank IDs against their tenant's Hindsight service.
 
-When a Hindsight-enabled TenantBundle also declares `humanAccess.web`, Fabric
+When a Hindsight-enabled TenantBundle explicitly sets
+`memory.hindsight.humanAccess: true` and declares `humanAccess.web`, Fabric
 additionally reconciles the paired upstream Hindsight Control Plane image, a private
 Service, default-deny-compatible NetworkPolicies and a stable authenticated route:
 
