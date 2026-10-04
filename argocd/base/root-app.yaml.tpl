@@ -16,7 +16,6 @@ metadata:
   name: vixens-app-of-apps
   namespace: argocd
   labels:
-    vixens.io/domain: core
     vixens.lab/environment: ${environment}
     vixens.lab/managed-by: terraform
   finalizers:

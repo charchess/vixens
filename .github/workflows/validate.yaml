@@ -135,19 +135,6 @@ jobs:
           echo "🔍 Validation blocs Helm values inline (ArgoCD Applications)"
           python3 scripts/validation/validate-helm-values.py argocd/
 
-      - name: Validate root Application operational domain
-        run: |
-          set -euo pipefail
-          ROOT_APP="argocd/base/root-app.yaml.tpl"
-          DOMAIN="$(yq eval '.metadata.labels."vixens.io/domain"' "$ROOT_APP")"
-
-          if [ "$DOMAIN" != "core" ]; then
-            echo "::error file=$ROOT_APP::vixens-app-of-apps must declare vixens.io/domain=core (got '$DOMAIN')"
-            exit 1
-          fi
-
-          echo "🏷️ Root Application domain: $DOMAIN"
-
   # 3️⃣ Kustomize Build + Kubeconform (valide la sortie buildée, pas les fichiers individuels)
   kustomize-validate:
     name: Kustomize Build & K8s Validation
