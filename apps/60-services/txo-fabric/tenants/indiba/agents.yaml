@@ -1,0 +1,88 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: indiba-tania
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: indiba
+  agentKey: tania
+  displayName: Tania
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  access:
+    userRef: edfoley
+    groups:
+      - sales
+  memory:
+    bankId: indiba-tania
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: indiba-nadia
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: indiba
+  agentKey: nadia
+  displayName: Nadia
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  access:
+    userRef: edfoley
+    groups:
+      - sales
+  memory:
+    bankId: indiba-nadia
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: indiba-sylvia
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: indiba
+  agentKey: sylvia
+  displayName: Sylvia
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  access:
+    userRef: edfoley
+    groups:
+      - sales
+  memory:
+    bankId: indiba-sylvia
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: indiba-maria
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: indiba
+  agentKey: maria
+  displayName: Maria
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  access:
+    userRef: edfoley
+    groups:
+      - sales
+  memory:
+    bankId: indiba-maria
