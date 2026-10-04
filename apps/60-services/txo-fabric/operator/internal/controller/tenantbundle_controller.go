@@ -409,6 +409,7 @@ func (r *TenantBundleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&corev1.Namespace{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&appsv1.Deployment{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
+		Watches(&networkingv1.Ingress{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&networkingv1.NetworkPolicy{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(cnpgObject(cnpgDatabaseGVK, "", ""), handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(cnpgObject(cnpgDatabaseRoleGVK, "", ""), handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).

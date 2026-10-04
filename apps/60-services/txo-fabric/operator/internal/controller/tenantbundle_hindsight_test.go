@@ -178,6 +178,180 @@ func TestTenantScopedHindsightReconcilesSecretDeploymentServiceAndNetwork(t *tes
 	}
 }
 
+func TestHindsightHumanAccessRequiresExplicitMemoryOptIn(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := hindsightTestTenant()
+	tenant.Spec.HumanAccess = &fabricv1alpha1.TenantHumanAccessSpec{Web: &fabricv1alpha1.HumanWebAccessSpec{
+		DomainSuffix:     "truxonline.com",
+		TLSClusterIssuer: "letsencrypt-prod",
+		OIDC: fabricv1alpha1.HumanAccessOIDCSpec{
+			Issuer:   "https://authentik.truxonline.com/application/o/example/",
+			ClientID: "example",
+		},
+	}}
+	tenant.Status.Persistence.PostgreSQL = &fabricv1alpha1.ComponentStatus{Phase: "Ready"}
+	hindsightProfile := hindsightTestProfile()
+	postgresqlProfile := postgresqlTestProfile()
+	postgresqlSecret := hindsightPostgreSQLSecret(tenant, postgresqlProfile)
+
+	c := fake.NewClientBuilder().WithScheme(scheme).
+		WithStatusSubresource(&appsv1.Deployment{}).
+		WithObjects(tenant, hindsightProfile, postgresqlProfile, postgresqlSecret).
+		Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	if _, err := r.reconcileHindsight(ctx, tenant); err != nil {
+		t.Fatal(err)
+	}
+	var controlPlane appsv1.Deployment
+	err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: "hindsight-control-plane"}, &controlPlane)
+	if !apierrors.IsNotFound(err) {
+		t.Fatalf("Hindsight Control Plane must remain absent without memory.hindsight.humanAccess opt-in: %v", err)
+	}
+}
+
+func TestHindsightHumanAccessReconcilesAuthenticatedControlPlane(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := hindsightTestTenant()
+	tenant.Spec.Memory.Hindsight.HumanAccess = true
+	tenant.Spec.HumanAccess = &fabricv1alpha1.TenantHumanAccessSpec{Web: &fabricv1alpha1.HumanWebAccessSpec{
+		DomainSuffix:       "truxonline.com",
+		IngressClassName:   "traefik",
+		TLSClusterIssuer:   "letsencrypt-prod",
+		PublicDNS:          true,
+		DNSTarget:          "truxonline.com",
+		OIDC: fabricv1alpha1.HumanAccessOIDCSpec{
+			Issuer:   "https://authentik.truxonline.com/application/o/txo-fabric-hairem/",
+			ClientID: "txo-fabric-hairem",
+			Scopes:   "openid profile email",
+		},
+	}}
+	tenant.Status.Persistence.PostgreSQL = &fabricv1alpha1.ComponentStatus{Phase: "Ready"}
+	hindsightProfile := hindsightTestProfile()
+	postgresqlProfile := postgresqlTestProfile()
+	postgresqlSecret := hindsightPostgreSQLSecret(tenant, postgresqlProfile)
+
+	c := fake.NewClientBuilder().WithScheme(scheme).
+		WithStatusSubresource(&appsv1.Deployment{}).
+		WithObjects(tenant, hindsightProfile, postgresqlProfile, postgresqlSecret).
+		Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	result, err := r.reconcileHindsight(ctx, tenant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Ready || result.Reason != "DeploymentProgressing" {
+		t.Fatalf("unexpected initial Hindsight result: %#v", result)
+	}
+
+	namespace := tenantNamespace(tenant.Name)
+	var controlPlane appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight-control-plane"}, &controlPlane); err != nil {
+		t.Fatalf("Hindsight Control Plane Deployment not reconciled: %v", err)
+	}
+	if len(controlPlane.Spec.Template.Spec.Containers) != 1 {
+		t.Fatalf("unexpected Control Plane containers: %#v", controlPlane.Spec.Template.Spec.Containers)
+	}
+	cp := controlPlane.Spec.Template.Spec.Containers[0]
+	if cp.Image != "ghcr.io/vectorize-io/hindsight-control-plane:0.10.1" {
+		t.Fatalf("Control Plane image=%q", cp.Image)
+	}
+	if got := envValue(cp.Env, "HINDSIGHT_CP_DATAPLANE_API_URL"); got != "http://hindsight.tenant-hairem-sandbox.svc:8888" {
+		t.Fatalf("Control Plane dataplane URL=%q", got)
+	}
+	keyEnv := envVar(cp.Env, "HINDSIGHT_CP_DATAPLANE_API_KEY")
+	if keyEnv == nil || keyEnv.ValueFrom == nil || keyEnv.ValueFrom.SecretKeyRef == nil ||
+		keyEnv.ValueFrom.SecretKeyRef.Name != "hindsight-runtime" ||
+		keyEnv.ValueFrom.SecretKeyRef.Key != "HINDSIGHT_API_TENANT_API_KEY" {
+		t.Fatalf("Control Plane API key is not secret-backed: %#v", keyEnv)
+	}
+
+	var cpService corev1.Service
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight-control-plane"}, &cpService); err != nil {
+		t.Fatalf("Control Plane Service not reconciled: %v", err)
+	}
+	if len(cpService.Spec.Ports) != 1 || cpService.Spec.Ports[0].Port != 3000 {
+		t.Fatalf("unexpected Control Plane Service ports: %#v", cpService.Spec.Ports)
+	}
+
+	var authentikService corev1.Service
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight-authentik"}, &authentikService); err != nil {
+		t.Fatalf("Authentik ExternalName Service not reconciled: %v", err)
+	}
+	if authentikService.Spec.Type != corev1.ServiceTypeExternalName || authentikService.Spec.ExternalName != "authentik.auth.svc.cluster.local" {
+		t.Fatalf("unexpected Authentik Service: %#v", authentikService.Spec)
+	}
+
+	var ingress networkingv1.Ingress
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight-control-plane"}, &ingress); err != nil {
+		t.Fatalf("Control Plane Ingress not reconciled: %v", err)
+	}
+	if got := ingress.Spec.Rules[0].Host; got != "hindsight-hairem-sandbox.truxonline.com" {
+		t.Fatalf("Control Plane host=%q", got)
+	}
+	if got := ingress.Annotations["traefik.ingress.kubernetes.io/router.middlewares"]; got != "traefik-redirect-https@kubernetescrd,auth-authentik-forward-auth@kubernetescrd" {
+		t.Fatalf("Control Plane middleware=%q", got)
+	}
+	if ingress.Annotations["external-dns.alpha.kubernetes.io/public"] != "true" ||
+		ingress.Annotations["external-dns.alpha.kubernetes.io/target"] != "truxonline.com" {
+		t.Fatalf("Control Plane DNS annotations=%#v", ingress.Annotations)
+	}
+
+	var authIngress networkingv1.Ingress
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight-control-plane-auth"}, &authIngress); err != nil {
+		t.Fatalf("Control Plane Authentik path Ingress not reconciled: %v", err)
+	}
+	path := authIngress.Spec.Rules[0].HTTP.Paths[0]
+	if path.Path != "/outpost.goauthentik.io" || path.Backend.Service == nil || path.Backend.Service.Name != "hindsight-authentik" {
+		t.Fatalf("unexpected Authentik outpost route: %#v", path)
+	}
+	if _, ok := authIngress.Annotations["traefik.ingress.kubernetes.io/router.middlewares"]; ok {
+		t.Fatalf("outpost route must not be protected by ForwardAuth: %#v", authIngress.Annotations)
+	}
+
+	var apiPolicy networkingv1.NetworkPolicy
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight-access"}, &apiPolicy); err != nil {
+		t.Fatal(err)
+	}
+	if len(apiPolicy.Spec.Ingress) != 1 || len(apiPolicy.Spec.Ingress[0].From) != 2 {
+		t.Fatalf("API policy must admit Hermes + Control Plane, got %#v", apiPolicy.Spec.Ingress)
+	}
+
+	var cpPolicy networkingv1.NetworkPolicy
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight-control-plane-access"}, &cpPolicy); err != nil {
+		t.Fatalf("Control Plane NetworkPolicy not reconciled: %v", err)
+	}
+	if len(cpPolicy.Spec.Ingress) != 1 || len(cpPolicy.Spec.Egress) != 2 {
+		t.Fatalf("unexpected Control Plane network contract: ingress=%d egress=%d", len(cpPolicy.Spec.Ingress), len(cpPolicy.Spec.Egress))
+	}
+
+	var apiDeployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "hindsight"}, &apiDeployment); err != nil {
+		t.Fatal(err)
+	}
+	apiDeployment.Status.ObservedGeneration = apiDeployment.Generation
+	apiDeployment.Status.AvailableReplicas = 1
+	if err := c.Status().Update(ctx, &apiDeployment); err != nil {
+		t.Fatal(err)
+	}
+	controlPlane.Status.ObservedGeneration = controlPlane.Generation
+	controlPlane.Status.AvailableReplicas = 1
+	if err := c.Status().Update(ctx, &controlPlane); err != nil {
+		t.Fatal(err)
+	}
+
+	result, err = r.reconcileHindsight(ctx, tenant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.Ready || result.Status == nil || result.Status.HumanEndpoint != "https://hindsight-hairem-sandbox.truxonline.com" {
+		t.Fatalf("unexpected ready Hindsight WebUI result: %#v", result)
+	}
+}
+
 func TestHindsightRefusesForeignRuntimeSecretAdoption(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
