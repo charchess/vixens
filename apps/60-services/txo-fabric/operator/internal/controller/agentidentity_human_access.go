@@ -284,6 +284,21 @@ func (r *AgentIdentityReconciler) ensureHumanOIDCEgressPolicy(
 						},
 					},
 				},
+				map[string]any{
+					"toServices": []any{
+						map[string]any{
+							"k8sService": map[string]any{
+								"serviceName": "traefik",
+								"namespace":   "traefik",
+							},
+						},
+					},
+					"toPorts": []any{
+						map[string]any{
+							"ports": []any{map[string]any{"port": "443", "protocol": "TCP"}},
+						},
+					},
+				},
 			},
 		}
 		return controllerutil.SetControllerReference(agent, policy, r.Scheme)
