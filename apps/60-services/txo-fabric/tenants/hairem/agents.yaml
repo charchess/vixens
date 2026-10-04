@@ -14,6 +14,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+  access:
+    userRef: charchess
+    groups:
+      - admin
   memory:
     bankId: hairem-meli
 ---
@@ -32,6 +36,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+  access:
+    userRef: charchess
+    groups:
+      - admin
   memory:
     bankId: hairem-electra
 ---
@@ -50,6 +58,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+  access:
+    userRef: charchess
+    groups:
+      - admin
   memory:
     bankId: hairem-aurelia
 ---
@@ -68,6 +80,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+  access:
+    userRef: charchess
+    groups:
+      - admin
   memory:
     bankId: hairem-loona
 ---
@@ -86,6 +102,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+  access:
+    userRef: charchess
+    groups:
+      - admin
   memory:
     bankId: hairem-sabrina
 ---
@@ -104,6 +124,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+  access:
+    userRef: charchess
+    groups:
+      - admin
   memory:
     bankId: hairem-monara
 ---
@@ -122,6 +146,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+  access:
+    userRef: charchess
+    groups:
+      - admin
   memory:
     bankId: hairem-ahri
 ---
@@ -140,6 +168,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+  access:
+    userRef: charchess
+    groups:
+      - admin
   memory:
     bankId: hairem-lisa
 ---
@@ -158,6 +190,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+  access:
+    userRef: charchess
+    groups:
+      - admin
   memory:
     bankId: hairem-leona
 ---
@@ -176,6 +212,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+  access:
+    userRef: charchess
+    groups:
+      - admin
   memory:
     bankId: hairem-ivy
 ---
@@ -194,6 +234,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+  access:
+    userRef: charchess
+    groups:
+      - admin
   memory:
     bankId: hairem-spark
 ---
@@ -212,6 +256,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+  access:
+    userRef: charchess
+    groups:
+      - admin
   memory:
     bankId: hairem-katia
 ---
@@ -230,5 +278,9 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+  access:
+    userRef: charchess
+    groups:
+      - admin
   memory:
     bankId: hairem-nora

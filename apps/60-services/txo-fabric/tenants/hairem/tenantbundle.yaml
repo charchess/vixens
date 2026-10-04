@@ -20,3 +20,11 @@ spec:
   workspace:
     profileRef: shared-nfs
     retentionPolicy: Retain
+    groups:
+      - name: admin
+        collaborative: true
+        skillsCollaborative: true
+    users:
+      - name: charchess
+        collaborative: true
+        skillsCollaborative: true
