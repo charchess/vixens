@@ -178,6 +178,39 @@ func TestTenantScopedHindsightReconcilesSecretDeploymentServiceAndNetwork(t *tes
 	}
 }
 
+func TestHindsightHumanAccessRequiresExplicitMemoryOptIn(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := hindsightTestTenant()
+	tenant.Spec.HumanAccess = &fabricv1alpha1.TenantHumanAccessSpec{Web: &fabricv1alpha1.HumanWebAccessSpec{
+		DomainSuffix:     "truxonline.com",
+		TLSClusterIssuer: "letsencrypt-prod",
+		OIDC: fabricv1alpha1.HumanAccessOIDCSpec{
+			Issuer:   "https://authentik.truxonline.com/application/o/example/",
+			ClientID: "example",
+		},
+	}}
+	tenant.Status.Persistence.PostgreSQL = &fabricv1alpha1.ComponentStatus{Phase: "Ready"}
+	hindsightProfile := hindsightTestProfile()
+	postgresqlProfile := postgresqlTestProfile()
+	postgresqlSecret := hindsightPostgreSQLSecret(tenant, postgresqlProfile)
+
+	c := fake.NewClientBuilder().WithScheme(scheme).
+		WithStatusSubresource(&appsv1.Deployment{}).
+		WithObjects(tenant, hindsightProfile, postgresqlProfile, postgresqlSecret).
+		Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	if _, err := r.reconcileHindsight(ctx, tenant); err != nil {
+		t.Fatal(err)
+	}
+	var controlPlane appsv1.Deployment
+	err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: "hindsight-control-plane"}, &controlPlane)
+	if !apierrors.IsNotFound(err) {
+		t.Fatalf("Hindsight Control Plane must remain absent without memory.hindsight.humanAccess opt-in: %v", err)
+	}
+}
+
 func TestHindsightHumanAccessReconcilesAuthenticatedControlPlane(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
