@@ -74,6 +74,11 @@ type ComponentStatus struct {
 	// +optional
 	Endpoint string `json:"endpoint,omitempty"`
 
+	// HumanEndpoint is the stable authenticated human-facing endpoint when the
+	// component exposes an operator/admin WebUI.
+	// +optional
+	HumanEndpoint string `json:"humanEndpoint,omitempty"`
+
 	// Message contains a human-readable explanation for non-ready states.
 	// +optional
 	Message string `json:"message,omitempty"`
