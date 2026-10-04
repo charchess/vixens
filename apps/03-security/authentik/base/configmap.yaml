@@ -17,8 +17,8 @@ data:
         attrs:
           client_id: netbird
           client_type: confidential
-          authentication_flow: !Find [authentik_core.flow, [slug, default-authentication-flow]]
-          authorization_flow: !Find [authentik_core.flow, [slug, default-provider-authorization-explicit-consent]]
+          authentication_flow: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
           redirect_uris:
             - https://netbird.dev.truxonline.com
             - https://netbird.dev.truxonline.com/
@@ -48,8 +48,8 @@ data:
         attrs:
           mode: forward_auth
           external_host: https://hydrus.dev.truxonline.com
-          authentication_flow: !Find [authentik_core.flow, [slug, default-authentication-flow]]
-          authorization_flow: !Find [authentik_core.flow, [slug, default-authorization-flow]]
+          authentication_flow: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-authorization-flow]]
       - model: authentik_core.application
         id: hydrus-app-dev
         identifiers:
@@ -65,8 +65,8 @@ data:
         attrs:
           mode: forward_auth
           external_host: https://hydrus.truxonline.com
-          authentication_flow: !Find [authentik_core.flow, [slug, default-authentication-flow]]
-          authorization_flow: !Find [authentik_core.flow, [slug, default-authorization-flow]]
+          authentication_flow: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-authorization-flow]]
       - model: authentik_core.application
         id: hydrus-app-prod
         identifiers:
@@ -91,8 +91,8 @@ data:
         attrs:
           client_id: txo-fabric-hairem
           client_type: public
-          authentication_flow: !Find [authentik_core.flow, [slug, default-authentication-flow]]
-          authorization_flow: !Find [authentik_core.flow, [slug, default-provider-authorization-explicit-consent]]
+          authentication_flow: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
           redirect_uris:
             - matching_mode: regex
               url: '^https://[a-z0-9-]+-hairem(?:-sandbox)?\.truxonline\.com/auth/callback$'
@@ -128,8 +128,8 @@ data:
         attrs:
           client_id: txo-fabric-indiba
           client_type: public
-          authentication_flow: !Find [authentik_core.flow, [slug, default-authentication-flow]]
-          authorization_flow: !Find [authentik_core.flow, [slug, default-provider-authorization-explicit-consent]]
+          authentication_flow: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
           redirect_uris:
             - matching_mode: regex
               url: '^https://[a-z0-9-]+-indiba\.truxonline\.com/auth/callback$'
