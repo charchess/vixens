@@ -1,0 +1,234 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: hairem-meli
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: hairem
+  agentKey: meli
+  displayName: Meli
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  memory:
+    bankId: hairem-meli
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: hairem-electra
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: hairem
+  agentKey: electra
+  displayName: Electra
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  memory:
+    bankId: hairem-electra
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: hairem-aurelia
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: hairem
+  agentKey: aurelia
+  displayName: Aurelia
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  memory:
+    bankId: hairem-aurelia
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: hairem-loona
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: hairem
+  agentKey: loona
+  displayName: Loona
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  memory:
+    bankId: hairem-loona
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: hairem-sabrina
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: hairem
+  agentKey: sabrina
+  displayName: Sabrina
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  memory:
+    bankId: hairem-sabrina
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: hairem-monara
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: hairem
+  agentKey: monara
+  displayName: Monara
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  memory:
+    bankId: hairem-monara
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: hairem-ahri
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: hairem
+  agentKey: ahri
+  displayName: Ahri
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  memory:
+    bankId: hairem-ahri
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: hairem-lisa
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: hairem
+  agentKey: lisa
+  displayName: Lisa
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  memory:
+    bankId: hairem-lisa
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: hairem-leona
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: hairem
+  agentKey: leona
+  displayName: Leona
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  memory:
+    bankId: hairem-leona
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: hairem-ivy
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: hairem
+  agentKey: ivy
+  displayName: Ivy
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  memory:
+    bankId: hairem-ivy
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: hairem-spark
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: hairem
+  agentKey: spark
+  displayName: Spark
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  memory:
+    bankId: hairem-spark
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: hairem-katia
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: hairem
+  agentKey: katia
+  displayName: Katia
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  memory:
+    bankId: hairem-katia
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentIdentity
+metadata:
+  name: hairem-nora
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantRef:
+    name: hairem
+  agentKey: nora
+  displayName: Nora
+  runtime:
+    profileRef: hermes-default
+    storage:
+      retentionPolicy: Retain
+  memory:
+    bankId: hairem-nora
