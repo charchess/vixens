@@ -139,7 +139,7 @@ func TestHumanAccessReconcilesStableAuthenticatedDashboard(t *testing.T) {
 		t.Fatal(err)
 	}
 	ciliumEgress, found, err := unstructured.NestedSlice(oidcPolicy.Object, "spec", "egress")
-	if err != nil || !found || len(ciliumEgress) != 2 {
+	if err != nil || !found || len(ciliumEgress) != 3 {
 		t.Fatalf("Cilium OIDC egress rules=%#v found=%v err=%v", ciliumEgress, found, err)
 	}
 	fqdnRule, ok := ciliumEgress[1].(map[string]any)
@@ -153,6 +153,22 @@ func TestHumanAccessReconcilesStableAuthenticatedDashboard(t *testing.T) {
 	fqdn, ok := toFQDNs[0].(map[string]any)
 	if !ok || fqdn["matchName"] != "authentik.truxonline.com" {
 		t.Fatalf("OIDC FQDN=%#v", toFQDNs[0])
+	}
+	serviceRule, ok := ciliumEgress[2].(map[string]any)
+	if !ok {
+		t.Fatalf("service rule has unexpected type: %#v", ciliumEgress[2])
+	}
+	toServices, ok := serviceRule["toServices"].([]any)
+	if !ok || len(toServices) != 1 {
+		t.Fatalf("toServices=%#v", serviceRule["toServices"])
+	}
+	service, ok := toServices[0].(map[string]any)
+	if !ok {
+		t.Fatalf("service entry=%#v", toServices[0])
+	}
+	k8sService, ok := service["k8sService"].(map[string]any)
+	if !ok || k8sService["serviceName"] != "traefik" || k8sService["namespace"] != "traefik" {
+		t.Fatalf("OIDC Traefik service=%#v", service["k8sService"])
 	}
 
 	agent.Spec.HumanAccess.Enabled = false
