@@ -162,13 +162,13 @@ func TestHumanAccessReconcilesStableAuthenticatedDashboard(t *testing.T) {
 	if !ok || len(toServices) != 1 {
 		t.Fatalf("toServices=%#v", serviceRule["toServices"])
 	}
-	service, ok := toServices[0].(map[string]any)
+	serviceEntry, ok := toServices[0].(map[string]any)
 	if !ok {
 		t.Fatalf("service entry=%#v", toServices[0])
 	}
-	k8sService, ok := service["k8sService"].(map[string]any)
+	k8sService, ok := serviceEntry["k8sService"].(map[string]any)
 	if !ok || k8sService["serviceName"] != "traefik" || k8sService["namespace"] != "traefik" {
-		t.Fatalf("OIDC Traefik service=%#v", service["k8sService"])
+		t.Fatalf("OIDC Traefik service=%#v", serviceEntry["k8sService"])
 	}
 
 	agent.Spec.HumanAccess.Enabled = false
