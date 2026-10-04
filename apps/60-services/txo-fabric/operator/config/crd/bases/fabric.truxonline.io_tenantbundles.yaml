@@ -151,6 +151,12 @@ spec:
                     description: Hindsight enables tenant-scoped durable agent memory
                       through Hindsight.
                     properties:
+                      humanAccess:
+                        default: false
+                        description: |-
+                          HumanAccess opts this tenant into the authenticated Hindsight Control Plane
+                          WebUI using TenantBundle.spec.humanAccess.web for DNS/TLS/ingress policy.
+                        type: boolean
                       profileRef:
                         description: ProfileRef selects the Hindsight service profile
                           owned by TXO Fabric.
