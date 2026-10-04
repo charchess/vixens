@@ -8,6 +8,7 @@ resources:
   - ../../operator/config/profiles
   - ../../operator/config/manager
   - ../../gateway
+  - ../../tenants/indiba
   - ../../tenants/hairem
   - ../../tenants/hairem-sandbox
   - ../../tenants/fabric-smoke
