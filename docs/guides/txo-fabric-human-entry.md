@@ -78,6 +78,36 @@ copied into AgentIdentity or TenantBundle.
 Human identity remains an Authentik identity. AgentIdentity remains the
 machine/agent identity. Fabric does not become the enterprise user directory.
 
+## Tenant admin dashboards
+
+The tenant human-access policy also governs administrative WebUI surfaces owned
+by tenant capabilities. A Hindsight-enabled tenant with `humanAccess.web`
+receives a stable memory administration endpoint:
+
+`https://hindsight-<tenantName>.<domainSuffix>`
+
+For hAIrem Client 0 this resolves to:
+
+`https://hindsight-hairem.truxonline.com`
+
+The Hindsight Control Plane is a separate server-side component. It receives the
+tenant Hindsight API key from the tenant runtime Secret and calls the private
+tenant Hindsight API directly. The browser never receives that API key, and
+neither the Hindsight API nor PostgreSQL is exposed publicly.
+
+The public Control Plane route is protected by the platform Authentik
+ForwardAuth boundary. The tenant IAM application/provider decides which human
+group may enter the dashboard. For hAIrem, access is bound to
+`txo-fabric-hairem-client0`, the same Client 0 population used by the Hermes
+human entry path.
+
+The Authentik outpost callback path `/outpost.goauthentik.io` is routed to the
+embedded Authentik outpost without recursively applying ForwardAuth.
+
+Fabric reports the private memory endpoint in
+`TenantBundle.status.memory.hindsight.endpoint` and the stable human-facing
+dashboard in `TenantBundle.status.memory.hindsight.humanEndpoint`.
+
 ## Network boundary
 
 Tenant namespaces remain default-deny.
