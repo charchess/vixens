@@ -18,6 +18,8 @@ spec:
     userRef: charchess
     groups:
       - admin
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-meli
 ---
@@ -40,6 +42,8 @@ spec:
     userRef: charchess
     groups:
       - admin
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-electra
 ---
@@ -62,6 +66,8 @@ spec:
     userRef: charchess
     groups:
       - admin
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-aurelia
 ---
@@ -84,6 +90,8 @@ spec:
     userRef: charchess
     groups:
       - admin
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-loona
 ---
@@ -106,6 +114,8 @@ spec:
     userRef: charchess
     groups:
       - admin
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-sabrina
 ---
@@ -128,6 +138,8 @@ spec:
     userRef: charchess
     groups:
       - admin
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-monara
 ---
@@ -150,6 +162,8 @@ spec:
     userRef: charchess
     groups:
       - admin
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-ahri
 ---
@@ -172,6 +186,8 @@ spec:
     userRef: charchess
     groups:
       - admin
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-lisa
 ---
@@ -194,6 +210,8 @@ spec:
     userRef: charchess
     groups:
       - admin
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-leona
 ---
@@ -216,6 +234,8 @@ spec:
     userRef: charchess
     groups:
       - admin
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-ivy
 ---
@@ -238,6 +258,8 @@ spec:
     userRef: charchess
     groups:
       - admin
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-spark
 ---
@@ -260,6 +282,8 @@ spec:
     userRef: charchess
     groups:
       - admin
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-katia
 ---
@@ -282,5 +306,7 @@ spec:
     userRef: charchess
     groups:
       - admin
+  humanAccess:
+    enabled: true
   memory:
     bankId: hairem-nora

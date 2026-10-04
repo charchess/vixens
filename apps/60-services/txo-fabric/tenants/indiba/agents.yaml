@@ -18,6 +18,8 @@ spec:
     userRef: edfoley
     groups:
       - sales
+  humanAccess:
+    enabled: true
   memory:
     bankId: indiba-tania
 ---
@@ -40,6 +42,8 @@ spec:
     userRef: edfoley
     groups:
       - sales
+  humanAccess:
+    enabled: true
   memory:
     bankId: indiba-nadia
 ---
@@ -62,6 +66,8 @@ spec:
     userRef: edfoley
     groups:
       - sales
+  humanAccess:
+    enabled: true
   memory:
     bankId: indiba-sylvia
 ---
@@ -84,5 +90,7 @@ spec:
     userRef: edfoley
     groups:
       - sales
+  humanAccess:
+    enabled: true
   memory:
     bankId: indiba-maria
