@@ -562,7 +562,7 @@ func (r *TenantBundleReconciler) ensureHindsightNetworkPolicy(ctx context.Contex
 		ingressPeers := []networkingv1.NetworkPolicyPeer{{
 			PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hermes-agent"}},
 		}}
-		if bundle.Spec.HumanAccess != nil && bundle.Spec.HumanAccess.Web != nil {
+		if bundle.Spec.Memory.Hindsight != nil && bundle.Spec.Memory.Hindsight.HumanAccess {
 			ingressPeers = append(ingressPeers, networkingv1.NetworkPolicyPeer{
 				PodSelector: &metav1.LabelSelector{MatchLabels: hindsightControlPlanePodSelector(bundle)},
 			})
@@ -586,8 +586,11 @@ func (r *TenantBundleReconciler) ensureHindsightNetworkPolicy(ctx context.Contex
 
 
 func resolveHindsightHumanAccess(bundle *fabricv1alpha1.TenantBundle) (hindsightHumanAccessResolution, error) {
-	if bundle.Spec.HumanAccess == nil || bundle.Spec.HumanAccess.Web == nil {
+	if bundle.Spec.Memory.Hindsight == nil || !bundle.Spec.Memory.Hindsight.HumanAccess {
 		return hindsightHumanAccessResolution{}, nil
+	}
+	if bundle.Spec.HumanAccess == nil || bundle.Spec.HumanAccess.Web == nil {
+		return hindsightHumanAccessResolution{}, fmt.Errorf("TenantBundle %q enables Hindsight human access but has no humanAccess.web policy", bundle.Name)
 	}
 	web := bundle.Spec.HumanAccess.Web
 	domain := strings.Trim(strings.TrimSpace(web.DomainSuffix), ".")
