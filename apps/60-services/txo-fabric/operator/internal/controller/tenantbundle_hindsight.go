@@ -16,6 +16,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -23,16 +24,24 @@ import (
 )
 
 const (
-	labelHindsightProfile  = "fabric.truxonline.io/hindsight-profile"
-	labelHindsightResource = "fabric.truxonline.io/hindsight-resource"
+	labelHindsightProfile       = "fabric.truxonline.io/hindsight-profile"
+	labelHindsightResource      = "fabric.truxonline.io/hindsight-resource"
+	hindsightControlPlanePort   = int32(3000)
+	hindsightControlPlanePrefix = "ghcr.io/vectorize-io/hindsight-control-plane:"
 )
 
 type hindsightNames struct {
-	Deployment    string
-	Service       string
-	Secret        string
-	NetworkPolicy string
-	Endpoint      string
+	Deployment                string
+	Service                   string
+	Secret                    string
+	NetworkPolicy             string
+	Endpoint                  string
+	ControlPlaneDeployment    string
+	ControlPlaneService       string
+	ControlPlaneNetworkPolicy string
+	ControlPlaneIngress       string
+	ControlPlaneAuthIngress   string
+	AuthentikExternalService  string
 }
 
 type hindsightResult struct {
@@ -41,6 +50,16 @@ type hindsightResult struct {
 	Reason       string
 	Message      string
 	RequeueAfter time.Duration
+}
+
+type hindsightHumanAccessResolution struct {
+	Enabled      bool
+	Host         string
+	PublicURL    string
+	IngressClass string
+	TLSIssuer    string
+	PublicDNS    bool
+	DNSTarget    string
 }
 
 func (r *TenantBundleReconciler) reconcileHindsight(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (hindsightResult, error) {
@@ -72,6 +91,16 @@ func (r *TenantBundleReconciler) reconcileHindsight(ctx context.Context, bundle 
 	}
 	if strings.TrimSpace(profile.Spec.Image) == "" {
 		return hindsightBlocked("InvalidProfile", "HindsightProfile image is required", 0), nil
+	}
+
+	humanAccess, err := resolveHindsightHumanAccess(bundle)
+	if err != nil {
+		return hindsightBlocked("InvalidHumanAccess", err.Error(), 0), nil
+	}
+	if humanAccess.Enabled {
+		if _, err := hindsightControlPlaneImage(&profile); err != nil {
+			return hindsightBlocked("InvalidControlPlaneImage", err.Error(), 0), nil
+		}
 	}
 
 	postgresqlRequest := bundle.Spec.Persistence.PostgreSQL
@@ -128,6 +157,12 @@ func (r *TenantBundleReconciler) reconcileHindsight(ctx context.Context, bundle 
 		return *blocked, nil
 	}
 
+	if blocked, err := r.ensureHindsightControlPlane(ctx, bundle, &profile, names, humanAccess); err != nil {
+		return hindsightResult{}, err
+	} else if blocked != nil {
+		return *blocked, nil
+	}
+
 	var deployment appsv1.Deployment
 	if err := r.Get(ctx, types.NamespacedName{Name: names.Deployment, Namespace: tenantNamespace(bundle.Name)}, &deployment); err != nil {
 		return hindsightResult{}, err
@@ -135,9 +170,24 @@ func (r *TenantBundleReconciler) reconcileHindsight(ctx context.Context, bundle 
 	if deployment.Status.ObservedGeneration != deployment.Generation || deployment.Status.AvailableReplicas < 1 {
 		return hindsightPending("DeploymentProgressing", "waiting for the tenant Hindsight Deployment to become available", names, 5*time.Second), nil
 	}
+	if humanAccess.Enabled {
+		var controlPlane appsv1.Deployment
+		if err := r.Get(ctx, types.NamespacedName{Name: names.ControlPlaneDeployment, Namespace: tenantNamespace(bundle.Name)}, &controlPlane); err != nil {
+			return hindsightResult{}, err
+		}
+		if controlPlane.Status.ObservedGeneration != controlPlane.Generation || controlPlane.Status.AvailableReplicas < 1 {
+			return hindsightPending("ControlPlaneProgressing", "waiting for the tenant Hindsight WebUI to become available", names, 5*time.Second), nil
+		}
+	}
 
 	status := hindsightComponentStatus("Ready", names)
+	if humanAccess.Enabled {
+		status.HumanEndpoint = humanAccess.PublicURL
+	}
 	message := "tenant-scoped Hindsight API is available with secret-backed PostgreSQL and API-key authentication"
+	if humanAccess.Enabled {
+		message += fmt.Sprintf("; authenticated WebUI=%s", humanAccess.PublicURL)
+	}
 	if hindsightUsesPlatformGateway(&profile) {
 		var runtimeSecret corev1.Secret
 		reader := r.APIReader
@@ -169,6 +219,12 @@ func (r *TenantBundleReconciler) cleanupHindsight(ctx context.Context, bundle *f
 		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "hindsight", Namespace: namespace}},
 		&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "hindsight", Namespace: namespace}},
 		&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: "hindsight-access", Namespace: namespace}},
+		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "hindsight-control-plane", Namespace: namespace}},
+		&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "hindsight-control-plane", Namespace: namespace}},
+		&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: "hindsight-control-plane-access", Namespace: namespace}},
+		&networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: "hindsight-control-plane", Namespace: namespace}},
+		&networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: "hindsight-control-plane-auth", Namespace: namespace}},
+		&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "hindsight-authentik", Namespace: namespace}},
 		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "hindsight-runtime", Namespace: namespace}},
 	}
 	for _, object := range objects {
@@ -503,11 +559,19 @@ func (r *TenantBundleReconciler) ensureHindsightNetworkPolicy(ctx context.Contex
 				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(4000)}},
 			})
 		}
+		ingressPeers := []networkingv1.NetworkPolicyPeer{{
+			PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hermes-agent"}},
+		}}
+		if bundle.Spec.HumanAccess != nil && bundle.Spec.HumanAccess.Web != nil {
+			ingressPeers = append(ingressPeers, networkingv1.NetworkPolicyPeer{
+				PodSelector: &metav1.LabelSelector{MatchLabels: hindsightControlPlanePodSelector(bundle)},
+			})
+		}
 		policy.Spec = networkingv1.NetworkPolicySpec{
 			PodSelector: metav1.LabelSelector{MatchLabels: hindsightPodSelector(bundle)},
 			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress},
 			Ingress: []networkingv1.NetworkPolicyIngressRule{{
-				From:  []networkingv1.NetworkPolicyPeer{{PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hermes-agent"}}}},
+				From:  ingressPeers,
 				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(apiPort)}},
 			}},
 			Egress: egress,
@@ -520,15 +584,291 @@ func (r *TenantBundleReconciler) ensureHindsightNetworkPolicy(ctx context.Contex
 	return nil, nil
 }
 
+
+func resolveHindsightHumanAccess(bundle *fabricv1alpha1.TenantBundle) (hindsightHumanAccessResolution, error) {
+	if bundle.Spec.HumanAccess == nil || bundle.Spec.HumanAccess.Web == nil {
+		return hindsightHumanAccessResolution{}, nil
+	}
+	web := bundle.Spec.HumanAccess.Web
+	domain := strings.Trim(strings.TrimSpace(web.DomainSuffix), ".")
+	tlsIssuer := strings.TrimSpace(web.TLSClusterIssuer)
+	if domain == "" || tlsIssuer == "" {
+		return hindsightHumanAccessResolution{}, fmt.Errorf("TenantBundle %q Hindsight WebUI requires humanAccess.web domainSuffix and tlsClusterIssuer", bundle.Name)
+	}
+	ingressClass := strings.TrimSpace(web.IngressClassName)
+	if ingressClass == "" {
+		ingressClass = "traefik"
+	}
+	host := fmt.Sprintf("hindsight-%s.%s", bundle.Name, domain)
+	if len(host) > 253 {
+		return hindsightHumanAccessResolution{}, fmt.Errorf("derived Hindsight WebUI host %q exceeds DNS length", host)
+	}
+	return hindsightHumanAccessResolution{
+		Enabled:      true,
+		Host:         host,
+		PublicURL:    "https://" + host,
+		IngressClass: ingressClass,
+		TLSIssuer:    tlsIssuer,
+		PublicDNS:    web.PublicDNS,
+		DNSTarget:    strings.TrimSpace(web.DNSTarget),
+	}, nil
+}
+
+func hindsightControlPlaneImage(profile *fabricv1alpha1.HindsightProfile) (string, error) {
+	image := strings.TrimSpace(profile.Spec.Image)
+	const apiPrefix = "ghcr.io/vectorize-io/hindsight-api:"
+	if !strings.HasPrefix(image, apiPrefix) || strings.Contains(image, "@") {
+		return "", fmt.Errorf("Hindsight WebUI currently requires paired upstream image %s<version>; got %q", apiPrefix, image)
+	}
+	version := strings.TrimPrefix(image, apiPrefix)
+	if version == "" {
+		return "", fmt.Errorf("Hindsight API image %q has no version tag for Control Plane pairing", image)
+	}
+	return hindsightControlPlanePrefix + version, nil
+}
+
+func hindsightControlPlanePodSelector(bundle *fabricv1alpha1.TenantBundle) map[string]string {
+	return map[string]string{
+		LabelName:     "hindsight-control-plane",
+		LabelInstance: strings.ToLower(bundle.Spec.TenantID),
+	}
+}
+
+func (r *TenantBundleReconciler) ensureHindsightControlPlane(
+	ctx context.Context,
+	bundle *fabricv1alpha1.TenantBundle,
+	profile *fabricv1alpha1.HindsightProfile,
+	names hindsightNames,
+	access hindsightHumanAccessResolution,
+) (*hindsightResult, error) {
+	namespace := tenantNamespace(bundle.Name)
+	if !access.Enabled {
+		for _, obj := range []client.Object{
+			&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: names.ControlPlaneDeployment, Namespace: namespace}},
+			&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: names.ControlPlaneService, Namespace: namespace}},
+			&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: names.ControlPlaneNetworkPolicy, Namespace: namespace}},
+			&networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: names.ControlPlaneIngress, Namespace: namespace}},
+			&networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: names.ControlPlaneAuthIngress, Namespace: namespace}},
+			&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: names.AuthentikExternalService, Namespace: namespace}},
+		} {
+			if err := r.Delete(ctx, obj); err != nil && !apierrors.IsNotFound(err) {
+				return nil, err
+			}
+		}
+		return nil, nil
+	}
+
+	image, err := hindsightControlPlaneImage(profile)
+	if err != nil {
+		blocked := hindsightBlocked("InvalidControlPlaneImage", err.Error(), 0)
+		return &blocked, nil
+	}
+	labels := hindsightLabels(bundle, profile, "control-plane")
+	selector := hindsightControlPlanePodSelector(bundle)
+	labels = mergeStringMap(labels, selector)
+
+	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: names.ControlPlaneDeployment, Namespace: namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, deployment, func() error {
+		deployment.Labels = mergeStringMap(deployment.Labels, labels)
+		replicas := int32(1)
+		revisionHistory := int32(2)
+		deployment.Spec.Replicas = &replicas
+		deployment.Spec.RevisionHistoryLimit = &revisionHistory
+		deployment.Spec.Selector = &metav1.LabelSelector{MatchLabels: selector}
+		runAsNonRoot := true
+		runAsUser := int64(1000)
+		allowPrivilegeEscalation := false
+		deployment.Spec.Template = corev1.PodTemplateSpec{
+			ObjectMeta: metav1.ObjectMeta{Labels: labels},
+			Spec: corev1.PodSpec{
+				PriorityClassName: defaultString(profile.Spec.PriorityClassName, "vixens-medium"),
+				SecurityContext:   &corev1.PodSecurityContext{FSGroup: int64Ptr(1000)},
+				Containers: []corev1.Container{{
+					Name:            "control-plane",
+					Image:           image,
+					ImagePullPolicy: corev1.PullIfNotPresent,
+					Ports: []corev1.ContainerPort{{Name: "http", ContainerPort: hindsightControlPlanePort, Protocol: corev1.ProtocolTCP}},
+					Env: []corev1.EnvVar{
+						{Name: "NODE_ENV", Value: "production"},
+						{Name: "HINDSIGHT_CP_HOSTNAME", Value: "0.0.0.0"},
+						{Name: "HINDSIGHT_CP_PORT", Value: strconv.Itoa(int(hindsightControlPlanePort))},
+						{Name: "HINDSIGHT_CP_DATAPLANE_API_URL", Value: names.Endpoint},
+						{
+							Name: "HINDSIGHT_CP_DATAPLANE_API_KEY",
+							ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{Name: names.Secret},
+								Key:                  "HINDSIGHT_API_TENANT_API_KEY",
+							}},
+						},
+					},
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("250m"),
+							corev1.ResourceMemory: resource.MustParse("512Mi"),
+						},
+						Limits: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("1"),
+							corev1.ResourceMemory: resource.MustParse("2Gi"),
+						},
+					},
+					SecurityContext: &corev1.SecurityContext{
+						RunAsNonRoot:             &runAsNonRoot,
+						RunAsUser:                &runAsUser,
+						AllowPrivilegeEscalation: &allowPrivilegeEscalation,
+						Capabilities:             &corev1.Capabilities{Drop: []corev1.Capability{"ALL"}},
+					},
+					StartupProbe: &corev1.Probe{
+						ProbeHandler: corev1.ProbeHandler{TCPSocket: &corev1.TCPSocketAction{Port: intstr.FromInt32(hindsightControlPlanePort)}},
+						PeriodSeconds: 5, TimeoutSeconds: 3, FailureThreshold: 60,
+					},
+					ReadinessProbe: &corev1.Probe{
+						ProbeHandler: corev1.ProbeHandler{TCPSocket: &corev1.TCPSocketAction{Port: intstr.FromInt32(hindsightControlPlanePort)}},
+						InitialDelaySeconds: 10, PeriodSeconds: 5, TimeoutSeconds: 3, FailureThreshold: 3,
+					},
+					LivenessProbe: &corev1.Probe{
+						ProbeHandler: corev1.ProbeHandler{TCPSocket: &corev1.TCPSocketAction{Port: intstr.FromInt32(hindsightControlPlanePort)}},
+						InitialDelaySeconds: 30, PeriodSeconds: 10, TimeoutSeconds: 5, FailureThreshold: 3,
+					},
+				}},
+			},
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	service := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: names.ControlPlaneService, Namespace: namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, service, func() error {
+		service.Labels = mergeStringMap(service.Labels, labels)
+		service.Spec.Type = corev1.ServiceTypeClusterIP
+		service.Spec.Selector = selector
+		service.Spec.Ports = []corev1.ServicePort{{
+			Name: "http", Protocol: corev1.ProtocolTCP, Port: hindsightControlPlanePort, TargetPort: intstr.FromInt32(hindsightControlPlanePort),
+		}}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	authentikService := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: names.AuthentikExternalService, Namespace: namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, authentikService, func() error {
+		authentikService.Labels = mergeStringMap(authentikService.Labels, labels)
+		authentikService.Spec = corev1.ServiceSpec{
+			Type:         corev1.ServiceTypeExternalName,
+			ExternalName: "authentik.auth.svc.cluster.local",
+			Ports: []corev1.ServicePort{{
+				Name: "http", Protocol: corev1.ProtocolTCP, Port: 9000, TargetPort: intstr.FromInt32(9000),
+			}},
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	pathType := networkingv1.PathTypePrefix
+	ingressClass := access.IngressClass
+	ingress := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: names.ControlPlaneIngress, Namespace: namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ingress, func() error {
+		ingress.Labels = mergeStringMap(ingress.Labels, labels)
+		annotations := map[string]string{
+			"cert-manager.io/cluster-issuer":                    access.TLSIssuer,
+			"traefik.ingress.kubernetes.io/router.entrypoints": "web, websecure",
+			"traefik.ingress.kubernetes.io/router.middlewares": "traefik-redirect-https@kubernetescrd,auth-authentik-forward-auth@kubernetescrd",
+		}
+		if access.PublicDNS {
+			annotations["external-dns.alpha.kubernetes.io/public"] = "true"
+		}
+		if access.DNSTarget != "" {
+			annotations["external-dns.alpha.kubernetes.io/target"] = access.DNSTarget
+		}
+		ingress.Annotations = annotations
+		ingress.Spec = networkingv1.IngressSpec{
+			IngressClassName: &ingressClass,
+			Rules: []networkingv1.IngressRule{{
+				Host: access.Host,
+				IngressRuleValue: networkingv1.IngressRuleValue{HTTP: &networkingv1.HTTPIngressRuleValue{Paths: []networkingv1.HTTPIngressPath{{
+					Path: "/", PathType: &pathType,
+					Backend: networkingv1.IngressBackend{Service: &networkingv1.IngressServiceBackend{
+						Name: names.ControlPlaneService, Port: networkingv1.ServiceBackendPort{Number: hindsightControlPlanePort},
+					}},
+				}}}},
+			}},
+			TLS: []networkingv1.IngressTLS{{Hosts: []string{access.Host}, SecretName: names.ControlPlaneIngress + "-tls"}},
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	authIngress := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: names.ControlPlaneAuthIngress, Namespace: namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, authIngress, func() error {
+		authIngress.Labels = mergeStringMap(authIngress.Labels, labels)
+		authIngress.Annotations = map[string]string{
+			"traefik.ingress.kubernetes.io/router.entrypoints": "web, websecure",
+		}
+		authIngress.Spec = networkingv1.IngressSpec{
+			IngressClassName: &ingressClass,
+			Rules: []networkingv1.IngressRule{{
+				Host: access.Host,
+				IngressRuleValue: networkingv1.IngressRuleValue{HTTP: &networkingv1.HTTPIngressRuleValue{Paths: []networkingv1.HTTPIngressPath{{
+					Path: "/outpost.goauthentik.io", PathType: &pathType,
+					Backend: networkingv1.IngressBackend{Service: &networkingv1.IngressServiceBackend{
+						Name: names.AuthentikExternalService, Port: networkingv1.ServiceBackendPort{Number: 9000},
+					}},
+				}}}},
+			}},
+			TLS: []networkingv1.IngressTLS{{Hosts: []string{access.Host}, SecretName: names.ControlPlaneIngress + "-tls"}},
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	policy := &networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: names.ControlPlaneNetworkPolicy, Namespace: namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, policy, func() error {
+		policy.Labels = mergeStringMap(policy.Labels, labels)
+		policy.Spec = networkingv1.NetworkPolicySpec{
+			PodSelector: metav1.LabelSelector{MatchLabels: selector},
+			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress},
+			Ingress: []networkingv1.NetworkPolicyIngressRule{{
+				From: []networkingv1.NetworkPolicyPeer{{
+					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "traefik"}},
+				}},
+				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(int(hindsightControlPlanePort))}},
+			}},
+			Egress: []networkingv1.NetworkPolicyEgressRule{
+				{
+					To: []networkingv1.NetworkPolicyPeer{{NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"}}}},
+					Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolUDP), Port: intOrStringPtr(53)}, {Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(53)}},
+				},
+				{
+					To: []networkingv1.NetworkPolicyPeer{{PodSelector: &metav1.LabelSelector{MatchLabels: hindsightPodSelector(bundle)}}},
+					Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(int(hindsightAPIPort(profile)))}},
+				},
+			},
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
 func resolveHindsightNames(bundle *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.HindsightProfile) hindsightNames {
 	port := hindsightAPIPort(profile)
 	namespace := tenantNamespace(bundle.Name)
 	return hindsightNames{
-		Deployment:    "hindsight",
-		Service:       "hindsight",
-		Secret:        "hindsight-runtime",
-		NetworkPolicy: "hindsight-access",
-		Endpoint:      fmt.Sprintf("http://hindsight.%s.svc:%d", namespace, port),
+		Deployment:                "hindsight",
+		Service:                   "hindsight",
+		Secret:                    "hindsight-runtime",
+		NetworkPolicy:             "hindsight-access",
+		Endpoint:                  fmt.Sprintf("http://hindsight.%s.svc:%d", namespace, port),
+		ControlPlaneDeployment:    "hindsight-control-plane",
+		ControlPlaneService:       "hindsight-control-plane",
+		ControlPlaneNetworkPolicy: "hindsight-control-plane-access",
+		ControlPlaneIngress:       "hindsight-control-plane",
+		ControlPlaneAuthIngress:   "hindsight-control-plane-auth",
+		AuthentikExternalService:  "hindsight-authentik",
 	}
 }
 
