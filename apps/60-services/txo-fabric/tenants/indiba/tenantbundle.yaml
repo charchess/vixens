@@ -1,0 +1,30 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: TenantBundle
+metadata:
+  name: indiba
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  tenantId: TEN00002
+  displayName: Indiba
+  isolation:
+    profile: Shared
+  persistence:
+    postgresql:
+      mode: Shared
+      profileRef: postgresql-shared
+  memory:
+    hindsight:
+      profileRef: hindsight-gateway
+  workspace:
+    profileRef: shared-nfs
+    retentionPolicy: Retain
+    groups:
+      - name: sales
+        collaborative: true
+        skillsCollaborative: true
+    users:
+      - name: edfoley
+        collaborative: true
+        skillsCollaborative: true
