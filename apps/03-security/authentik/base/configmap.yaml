@@ -73,7 +73,7 @@ data:
         identifiers:
           name: hydrus-dev
         attrs:
-          mode: forward_auth
+          mode: forward_single
           external_host: https://hydrus.dev.truxonline.com
           authentication_flow: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
           authorization_flow: !Find [authentik_flows.flow, [slug, default-authorization-flow]]
@@ -91,7 +91,7 @@ data:
         identifiers:
           name: hydrus-prod
         attrs:
-          mode: forward_auth
+          mode: forward_single
           external_host: https://hydrus.truxonline.com
           authentication_flow: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
           authorization_flow: !Find [authentik_flows.flow, [slug, default-authorization-flow]]
@@ -155,7 +155,7 @@ data:
         identifiers:
           name: txo-fabric-hairem-hindsight
         attrs:
-          mode: forward_auth
+          mode: forward_single
           external_host: https://hindsight-hairem.truxonline.com
           authentication_flow: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
           authorization_flow: !Find [authentik_flows.flow, [slug, default-authorization-flow]]
