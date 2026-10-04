@@ -413,6 +413,10 @@ spec:
                         description: Endpoint is the resolved in-cluster endpoint,
                           when the component exposes one.
                         type: string
+                      humanEndpoint:
+                        description: HumanEndpoint is the stable authenticated human-facing
+                          endpoint when the component exposes an operator/admin WebUI.
+                        type: string
                       message:
                         description: Message contains a human-readable explanation
                           for non-ready states.
@@ -429,6 +433,10 @@ spec:
                     endpoint:
                       description: Endpoint is the resolved in-cluster endpoint, when
                         the component exposes one.
+                      type: string
+                    humanEndpoint:
+                      description: HumanEndpoint is the stable authenticated human-facing
+                        endpoint when the component exposes an operator/admin WebUI.
                       type: string
                     message:
                       description: Message contains a human-readable explanation for
@@ -460,6 +468,10 @@ spec:
                       endpoint:
                         description: Endpoint is the resolved in-cluster endpoint,
                           when the component exposes one.
+                        type: string
+                      humanEndpoint:
+                        description: HumanEndpoint is the stable authenticated human-facing
+                          endpoint when the component exposes an operator/admin WebUI.
                         type: string
                       message:
                         description: Message contains a human-readable explanation
