@@ -1,14 +1,17 @@
+# Canonical POC owner identity: usr000001 = charchess.
+# access.userRef deliberately remains the existing workspace scope key until #3802/#3852 define IAM/user-ID mapping.
+# Human display names stay mutable; machine identity and Hindsight bank IDs stay stable.
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: hairem-meli
+  name: ten00001-usr000001-agt00001
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: hairem
-  agentKey: meli
+  agentKey: usr000001-agt00001
   displayName: Meli
   runtime:
     profileRef: hermes-default
@@ -21,18 +24,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: hairem-meli
+    bankId: ten00001-usr000001-agt00001
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: hairem-electra
+  name: ten00001-usr000001-agt00002
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: hairem
-  agentKey: electra
+  agentKey: usr000001-agt00002
   displayName: Electra
   runtime:
     profileRef: hermes-default
@@ -45,18 +48,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: hairem-electra
+    bankId: ten00001-usr000001-agt00002
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: hairem-aurelia
+  name: ten00001-usr000001-agt00003
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: hairem
-  agentKey: aurelia
+  agentKey: usr000001-agt00003
   displayName: Aurelia
   runtime:
     profileRef: hermes-default
@@ -69,18 +72,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: hairem-aurelia
+    bankId: ten00001-usr000001-agt00003
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: hairem-loona
+  name: ten00001-usr000001-agt00004
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: hairem
-  agentKey: loona
+  agentKey: usr000001-agt00004
   displayName: Loona
   runtime:
     profileRef: hermes-default
@@ -93,18 +96,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: hairem-loona
+    bankId: ten00001-usr000001-agt00004
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: hairem-sabrina
+  name: ten00001-usr000001-agt00005
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: hairem
-  agentKey: sabrina
+  agentKey: usr000001-agt00005
   displayName: Sabrina
   runtime:
     profileRef: hermes-default
@@ -117,18 +120,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: hairem-sabrina
+    bankId: ten00001-usr000001-agt00005
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: hairem-monara
+  name: ten00001-usr000001-agt00006
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: hairem
-  agentKey: monara
+  agentKey: usr000001-agt00006
   displayName: Monara
   runtime:
     profileRef: hermes-default
@@ -141,18 +144,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: hairem-monara
+    bankId: ten00001-usr000001-agt00006
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: hairem-ahri
+  name: ten00001-usr000001-agt00007
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: hairem
-  agentKey: ahri
+  agentKey: usr000001-agt00007
   displayName: Ahri
   runtime:
     profileRef: hermes-default
@@ -165,18 +168,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: hairem-ahri
+    bankId: ten00001-usr000001-agt00007
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: hairem-lisa
+  name: ten00001-usr000001-agt00008
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: hairem
-  agentKey: lisa
+  agentKey: usr000001-agt00008
   displayName: Lisa
   runtime:
     profileRef: hermes-default
@@ -189,18 +192,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: hairem-lisa
+    bankId: ten00001-usr000001-agt00008
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: hairem-leona
+  name: ten00001-usr000001-agt00009
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: hairem
-  agentKey: leona
+  agentKey: usr000001-agt00009
   displayName: Leona
   runtime:
     profileRef: hermes-default
@@ -213,18 +216,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: hairem-leona
+    bankId: ten00001-usr000001-agt00009
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: hairem-ivy
+  name: ten00001-usr000001-agt00010
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: hairem
-  agentKey: ivy
+  agentKey: usr000001-agt00010
   displayName: Ivy
   runtime:
     profileRef: hermes-default
@@ -237,18 +240,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: hairem-ivy
+    bankId: ten00001-usr000001-agt00010
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: hairem-spark
+  name: ten00001-usr000001-agt00011
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: hairem
-  agentKey: spark
+  agentKey: usr000001-agt00011
   displayName: Spark
   runtime:
     profileRef: hermes-default
@@ -261,18 +264,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: hairem-spark
+    bankId: ten00001-usr000001-agt00011
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: hairem-katia
+  name: ten00001-usr000001-agt00012
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: hairem
-  agentKey: katia
+  agentKey: usr000001-agt00012
   displayName: Katia
   runtime:
     profileRef: hermes-default
@@ -285,18 +288,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: hairem-katia
+    bankId: ten00001-usr000001-agt00012
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: hairem-nora
+  name: ten00001-usr000001-agt00013
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: hairem
-  agentKey: nora
+  agentKey: usr000001-agt00013
   displayName: Nora
   runtime:
     profileRef: hermes-default
@@ -309,4 +312,4 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: hairem-nora
+    bankId: ten00001-usr000001-agt00013
