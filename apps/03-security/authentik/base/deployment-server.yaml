@@ -104,9 +104,6 @@ spec:
             - name: blueprints
               mountPath: /blueprints/vixens-netbird.yaml
               subPath: vixens-netbird.yaml
-            - name: blueprints
-              mountPath: /blueprints/vixens-hydrus.yaml
-              subPath: vixens-hydrus.yaml
           lifecycle:
             preStop:
               exec:
