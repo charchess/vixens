@@ -69,6 +69,9 @@ func TestRenderAuthentikBlueprintAggregatesTenantIAM(t *testing.T) {
 	if got := strings.Count(blueprint, "model: authentik_outposts.outpost"); got != 1 {
 		t.Fatalf("embedded outpost declarations=%d, want 1", got)
 	}
+	if got := strings.Count(blueprint, "policy_engine_mode: any"); got != 3 {
+		t.Fatalf("application policy-engine any declarations=%d, want 3", got)
+	}
 }
 
 func TestRenderAuthentikBlueprintAggregatesAllHindsightProviders(t *testing.T) {
