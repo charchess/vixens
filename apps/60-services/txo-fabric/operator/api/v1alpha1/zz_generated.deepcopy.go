@@ -1118,7 +1118,7 @@ func (in *TenantHumanAccessSpec) DeepCopyInto(out *TenantHumanAccessSpec) {
 	if in.Web != nil {
 		in, out := &in.Web, &out.Web
 		*out = new(HumanWebAccessSpec)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 

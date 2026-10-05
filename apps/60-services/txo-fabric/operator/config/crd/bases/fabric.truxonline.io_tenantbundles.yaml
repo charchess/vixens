@@ -82,13 +82,6 @@ spec:
                         maxLength: 253
                         minLength: 3
                         type: string
-                      ingressClassName:
-                        default: traefik
-                        description: IngressClassName selects the platform ingress
-                          implementation.
-                        maxLength: 63
-                        minLength: 1
-                        type: string
                       iamGroups:
                         description: |-
                           IAMGroups are tenant-local structural IAM group keys authorized to enter
@@ -100,6 +93,13 @@ spec:
                         minItems: 1
                         type: array
                         x-kubernetes-list-type: set
+                      ingressClassName:
+                        default: traefik
+                        description: IngressClassName selects the platform ingress
+                          implementation.
+                        maxLength: 63
+                        minLength: 1
+                        type: string
                       oidc:
                         properties:
                           clientId:
