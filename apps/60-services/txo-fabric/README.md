@@ -189,12 +189,23 @@ provider credentials or legacy OAuth state into generated runtimes.
 Model access is mediated by the shared TXO AI gateway. The operator provisions one
 LiteLLM virtual key per `AgentIdentity`, restricted to the local `txo-default`
 model alias and tagged with tenant/agent metadata. Only that scoped key is written
-to the tenant namespace. Hermes receives:
+to the tenant namespace.
+
+The platform-owned Hermes managed scope pins the behavioral model route in
+`/etc/hermes/config.yaml`, so the pinned Hermes gateway runtime sees the same
+route on every surface and the user-owned `/opt/data/config.yaml` cannot replace
+it:
+
+- `model.default=txo-default`;
+- `model.provider=custom`;
+- `model.base_url=http://txo-ai-gateway.txo-fabric-system.svc:4000/v1`.
+
+Hermes additionally receives the secret/runtime bridge:
 
 - `TXO_LLM_AUTH_MODE=gateway`;
 - `OPENAI_BASE_URL=http://txo-ai-gateway.txo-fabric-system.svc:4000/v1`;
 - `OPENAI_API_KEY` from `Secret/hermes-<agentKey>-model-access`;
-- `HERMES_MODEL=txo-default`.
+- `HERMES_MODEL=txo-default` as a compatibility/process seed.
 
 Upstream provider credentials remain in the gateway boundary. Hermes network
 egress permits DNS, the local AI gateway, and its tenant Hindsight service when
