@@ -81,12 +81,20 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	setCondition(&bundle.Status.Conditions, bundle.Generation, "NamespaceReady", metav1.ConditionTrue, "Reconciled", "tenant namespace is reconciled")
 	setCondition(&bundle.Status.Conditions, bundle.Generation, "NetworkReady", metav1.ConditionTrue, "DefaultDenyReconciled", "tenant default-deny policy is reconciled")
 
-	if err := validateTenantIAM(&bundle); err != nil {
+	if validationErr := validateTenantIAM(&bundle); validationErr != nil {
+		message := validationErr.Error()
+		blueprintErr := r.reconcileAuthentikBlueprint(ctx)
+		if blueprintErr != nil {
+			message += fmt.Sprintf("; failed to withdraw invalid IAM desired state: %v", blueprintErr)
+		}
 		bundle.Status.Phase = "Degraded"
-		setCondition(&bundle.Status.Conditions, bundle.Generation, "IAMDesiredStateReady", metav1.ConditionFalse, "InvalidHumanAccessIAM", err.Error())
-		setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "IAMConfigurationInvalid", err.Error())
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "IAMDesiredStateReady", metav1.ConditionFalse, "InvalidHumanAccessIAM", message)
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "IAMConfigurationInvalid", message)
 		if !reflect.DeepEqual(previousStatus, bundle.Status) {
 			_ = r.Status().Update(ctx, &bundle)
+		}
+		if blueprintErr != nil {
+			return ctrl.Result{}, blueprintErr
 		}
 		return ctrl.Result{}, nil
 	}
