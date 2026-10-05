@@ -85,6 +85,24 @@ Préfixes usuels : `feat/`, `fix/`, `chore/`, `docs/`, `refactor/`.
 
 La PR doit rester limitée au scope de l'issue. Les checks GitHub constituent les garde-fous exécutables du dépôt : rendu YAML/Kustomize, qualité, sécurité et contrôles structurels selon le workflow concerné.
 
+#### TXO Fabric Operator — politique de tests de non-régression
+
+Le TXO Fabric Operator est un composant à fort blast radius. Toute modification de son comportement doit être accompagnée de tests unitaires/reconciliation adaptés dans la même PR.
+
+Règles minimales :
+
+- toute nouvelle fonctionnalité ou nouvelle branche de comportement de l'operator doit ajouter ou étendre des `*_test.go` couvrant le contrat introduit ;
+- toute correction de bug doit ajouter un test de régression qui aurait échoué avant le correctif ;
+- les chemins de sécurité, isolation tenant, lifecycle/finalizers, rétention/destruction, credentials, IAM et permissions doivent inclure les cas négatifs/fail-closed pertinents ;
+- les réconciliations doivent être testées pour l'idempotence lorsqu'une répétition sans changement ne doit provoquer ni mutation ni rollout ;
+- les fonctionnalités multi-tenant/multi-agent doivent tester l'absence de collision et de contamination entre tenants/agents ;
+- un refactor ne doit pas réduire silencieusement la couverture des contrats existants ; toute suppression ou adaptation de test doit être justifiée par un changement explicite du contrat ;
+- viser le maximum de branches et d'invariants utiles en tests rapides et déterministes, sans écrire des tests tautologiques uniquement pour augmenter un pourcentage de couverture ;
+- la couverture Go est publiée comme artefact CI et sert à repérer les zones non testées ; un seuil global arbitraire n'est pas utilisé comme substitut à la couverture par scénario ;
+- les comportements impossibles à prouver correctement en TU (API server réel, CSI/TrueNAS, Cilium, ArgoCD, services externes réels) restent couverts par envtest/kind/validation physique selon le besoin.
+
+La CI de l'operator refuse une PR qui modifie du code Go métier de l'operator sans modification/ajout de tests unitaires correspondants. Les fichiers générés et les PR de pin d'image ne déclenchent pas cette exigence.
+
 ```bash
 gh pr create --base main --fill
 ```
