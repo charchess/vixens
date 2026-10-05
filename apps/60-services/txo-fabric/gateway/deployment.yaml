@@ -19,6 +19,10 @@ spec:
       app.kubernetes.io/name: txo-ai-gateway
   template:
     metadata:
+      annotations:
+        # LiteLLM cold start is CPU-bound; keep VPA from throttling startup below the
+        # deployment's proven 250m baseline while still allowing VPA to scale upward.
+        vixens.io/vpa.min-cpu: "250m"
       labels:
         app.kubernetes.io/name: txo-ai-gateway
         app.kubernetes.io/part-of: txo-fabric
