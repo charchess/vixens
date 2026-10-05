@@ -37,6 +37,20 @@ func TestResolveToolsetPolicyStatesAndManagedConfig(t *testing.T) {
 	if !ok || security["allow_lazy_installs"] != false {
 		t.Fatalf("managed security policy = %#v", managed["security"])
 	}
+	model, ok := managed["model"].(map[string]any)
+	if !ok {
+		t.Fatalf("managed model route = %#v", managed["model"])
+	}
+	if got, want := model["default"], defaultAIGatewayModel; got != want {
+		t.Fatalf("managed model.default = %#v, want %q", got, want)
+	}
+	if got, want := model["provider"], "custom"; got != want {
+		t.Fatalf("managed model.provider = %#v, want %q", got, want)
+	}
+	if got, want := model["base_url"], defaultAIGatewayURL+"/v1"; got != want {
+		t.Fatalf("managed model.base_url = %#v, want %q", got, want)
+	}
+
 	plugins, ok := managed["plugins"].(map[string]any)
 	if !ok {
 		t.Fatalf("managed plugins policy = %#v", managed["plugins"])
