@@ -82,6 +82,17 @@ spec:
                         maxLength: 253
                         minLength: 3
                         type: string
+                      iamGroups:
+                        description: |-
+                          IAMGroups are tenant-local structural IAM group keys authorized to enter
+                          Fabric human-facing surfaces. Fabric reconciles the corresponding Authentik
+                          groups but never manages human membership in them.
+                        items:
+                          type: string
+                        maxItems: 32
+                        minItems: 1
+                        type: array
+                        x-kubernetes-list-type: set
                       ingressClassName:
                         default: traefik
                         description: IngressClassName selects the platform ingress

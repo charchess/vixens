@@ -30,6 +30,8 @@ spec:
         skillsCollaborative: true
   humanAccess:
     web:
+      iamGroups:
+        - sales
       domainSuffix: truxonline.com
       ingressClassName: traefik
       tlsClusterIssuer: letsencrypt-prod

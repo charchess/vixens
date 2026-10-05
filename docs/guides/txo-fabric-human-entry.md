@@ -26,6 +26,8 @@ spec:
       tlsClusterIssuer: letsencrypt-prod
       publicDNS: true
       dnsTarget: truxonline.com
+      iamGroups:
+        - client0
       oidc:
         issuer: https://authentik.truxonline.com/application/o/txo-fabric-hairem/
         clientId: txo-fabric-hairem
@@ -66,14 +68,24 @@ Fabric injects only non-secret public OIDC configuration:
 
 No OIDC client secret is used or stored in the AgentIdentity/TenantBundle CRDs.
 
-For hAIrem Client 0, Authentik owns the OIDC application
-`txo-fabric-hairem`. The registered redirect URI is regex-bounded to the
-hAIrem Fabric agent hostname shape and `/auth/callback`.
+TenantBundle declares the structural IAM group keys allowed to enter human
+surfaces through `humanAccess.web.iamGroups`. TXO Fabric derives Authentik
+groups as:
 
-Application access is bound to the Authentik group
-`txo-fabric-hairem-client0`. The group/policy is platform GitOps; user
-membership is enterprise IAM data managed in Authentik and is deliberately not
-copied into AgentIdentity or TenantBundle.
+`txo-fabric-<tenantName>-<iamGroup>`
+
+and publishes one aggregate Authentik blueprint for all active tenants. The
+blueprint contains the tenant structural groups, public PKCE OIDC
+provider/application and policy bindings. This removes the previous requirement
+to hand-author one Authentik blueprint per tenant.
+
+For hAIrem Client 0, `iamGroups: [client0]` therefore resolves to
+`txo-fabric-hairem-client0`. For Indiba, `iamGroups: [sales]` resolves to
+`txo-fabric-indiba-sales`.
+
+Fabric owns these structural IAM objects, but **not their human membership**.
+Users, passwords, MFA, invitations and user/group membership remain live
+enterprise IAM data managed in Authentik.
 
 Human identity remains an Authentik identity. AgentIdentity remains the
 machine/agent identity. Fabric does not become the enterprise user directory.
@@ -97,10 +109,11 @@ tenant Hindsight API directly. The browser never receives that API key, and
 neither the Hindsight API nor PostgreSQL is exposed publicly.
 
 The public Control Plane route is protected by the platform Authentik
-ForwardAuth boundary. The tenant IAM application/provider decides which human
-group may enter the dashboard. For hAIrem, access is bound to
-`txo-fabric-hairem-client0`, the same Client 0 population used by the Hermes
-human entry path.
+ForwardAuth boundary. When Hindsight human access is enabled, the same
+Fabric-generated aggregate Authentik blueprint adds the tenant proxy
+provider/application and binds it to the TenantBundle `iamGroups`. Fabric also
+aggregates every Fabric-owned Hindsight proxy provider into the Embedded Outpost
+declaration so one tenant cannot replace another tenant's provider membership.
 
 The Authentik outpost callback path `/outpost.goauthentik.io` is routed to the
 embedded Authentik outpost without recursively applying ForwardAuth.

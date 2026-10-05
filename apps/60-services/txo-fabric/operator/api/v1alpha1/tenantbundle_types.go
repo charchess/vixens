@@ -51,6 +51,15 @@ type HumanWebAccessSpec struct {
 	// +kubebuilder:validation:MaxLength=253
 	DNSTarget string `json:"dnsTarget,omitempty"`
 
+	// IAMGroups are tenant-local structural IAM group keys authorized to enter
+	// Fabric human-facing surfaces. Fabric reconciles the corresponding Authentik
+	// groups but never manages human membership in them.
+	// +optional
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=32
+	// +listType=set
+	IAMGroups []string `json:"iamGroups,omitempty"`
+
 	OIDC HumanAccessOIDCSpec `json:"oidc"`
 }
 
