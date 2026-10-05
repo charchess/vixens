@@ -11,6 +11,7 @@ import (
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -139,8 +140,17 @@ func (r *TenantBundleReconciler) reconcileAuthentikBlueprint(ctx context.Context
 	if err := r.List(ctx, &bundles); err != nil {
 		return err
 	}
-	content := renderAuthentikBlueprint(bundles.Items)
+	active := activeIAMBundles(bundles.Items)
 	configMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: authentikBlueprintConfigMapName, Namespace: authentikNamespace}}
+	if len(active) == 0 {
+		if err := r.Get(ctx, client.ObjectKeyFromObject(configMap), configMap); err != nil {
+			if apierrors.IsNotFound(err) {
+				return nil
+			}
+			return err
+		}
+	}
+	content := renderAuthentikBlueprint(active)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, configMap, func() error {
 		configMap.Labels = map[string]string{
 			LabelPartOf:                    "txo-fabric",
