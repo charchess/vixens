@@ -80,6 +80,24 @@ Les actions runtime sont acceptables pour **observer et diagnostiquer** (`get`, 
 - Pour les commandes destinées à être copiées dans un shell interactif, ne pas utiliser `set -euo pipefail` au niveau supérieur. Si un strict mode est utile, l'isoler dans un sous-shell ou un script. Les diagnostics doivent autant que possible collecter plusieurs signaux avant de sortir.
 - Privilégier les preuves causales : intention Git → rendu ArgoCD → ressource live → comportement fonctionnel.
 
+## Tests TXO Fabric Operator
+
+Pour toute intervention sur le TXO Fabric Operator :
+
+- considérer les tests unitaires/reconciliation comme une partie du livrable, pas comme une étape optionnelle après implémentation ;
+- avant de modifier un comportement, identifier les invariants existants qui pourraient régresser et vérifier qu'ils sont déjà couverts ; compléter les TU si nécessaire ;
+- toute fonctionnalité nouvelle doit avoir des TU dédiés couvrant ses chemins principaux et, lorsqu'ils existent, ses chemins d'échec/fail-closed ;
+- toute correction de bug doit ajouter un test de régression reproduisant le défaut corrigé ;
+- ajouter des cas de non-régression multi-tenant/multi-agent pour toute logique susceptible de partager noms, statuts, credentials, policies, ConfigMaps, outposts, workspaces ou autres ressources ;
+- tester l'idempotence des reconcile paths : un second reconcile sans changement ne doit pas muter inutilement les objets ni provoquer de rollout ;
+- privilégier les assertions de contrat observable (ressource dérivée, condition/status, permission, absence de secret, isolation, conservation/suppression) plutôt que les détails internes fragiles ;
+- maximiser la couverture utile des branches critiques, en particulier finalizers/delete, stockage Retain/Delete, IAM/human access, Hindsight, gateway credentials, capabilities/toolsets, integrations et status transitions ;
+- ne jamais supprimer/affaiblir un test uniquement pour faire passer une nouvelle implémentation : si le contrat change, documenter explicitement ce changement dans l'issue/PR ;
+- traiter `go test -race` comme un gate de l'operator ; une race détectée est un défaut bloquant ;
+- consulter les artefacts de couverture CI pour repérer les chemins non testés, sans poursuivre un pourcentage au détriment de scénarios significatifs.
+
+Ces TU complètent, mais ne remplacent pas, envtest/kind et les validations physiques exigées par les dépendances réelles.
+
 ## Validation
 
 Choisir les validations adaptées au changement :

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
@@ -204,6 +205,105 @@ func TestHumanAccessReconcilesStableAuthenticatedDashboard(t *testing.T) {
 	}
 	if got := envValue(deployment.Spec.Template.Spec.Containers[0].Env, "HERMES_DASHBOARD"); got != "" {
 		t.Fatalf("dashboard env remains after disable: %q", got)
+	}
+}
+
+func TestResolveHumanAccessValidationMatrix(t *testing.T) {
+	tests := []struct {
+		name      string
+		mutate    func(*fabricv1alpha1.TenantBundle, *fabricv1alpha1.AgentIdentity)
+		wantError string
+	}{
+		{
+			name: "disabled agent ignores incomplete tenant human policy",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle, agent *fabricv1alpha1.AgentIdentity) {
+				agent.Spec.HumanAccess.Enabled = false
+				tenant.Spec.HumanAccess = nil
+			},
+		},
+		{
+			name: "tenant web policy required",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle, agent *fabricv1alpha1.AgentIdentity) {
+				tenant.Spec.HumanAccess = nil
+			},
+			wantError: "has no humanAccess.web policy",
+		},
+		{
+			name: "https issuer required",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle, agent *fabricv1alpha1.AgentIdentity) {
+				tenant.Spec.HumanAccess.Web.OIDC.Issuer = "http://authentik.truxonline.com/application/o/txo-fabric-hairem/"
+			},
+			wantError: "absolute https URL",
+		},
+		{
+			name: "user ref required",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle, agent *fabricv1alpha1.AgentIdentity) {
+				agent.Spec.Access.UserRef = ""
+			},
+			wantError: "requires access.userRef",
+		},
+		{
+			name: "workspace required",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle, agent *fabricv1alpha1.AgentIdentity) {
+				tenant.Spec.Workspace = nil
+			},
+			wantError: "requires TenantBundle",
+		},
+		{
+			name: "workspace user must exist",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle, agent *fabricv1alpha1.AgentIdentity) {
+				agent.Spec.Access.UserRef = "missing-user"
+			},
+			wantError: "requires collaborative workspace user",
+		},
+		{
+			name: "workspace user must be collaborative",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle, agent *fabricv1alpha1.AgentIdentity) {
+				tenant.Spec.Workspace.Users[0].Collaborative = false
+			},
+			wantError: "requires collaborative workspace user",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tenant := humanAccessTestTenant()
+			agent := humanAccessTestAgent()
+			if test.mutate != nil {
+				test.mutate(tenant, agent)
+			}
+			access, err := resolveHumanAccess(agent, tenant)
+			if test.wantError == "" {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				if agent.Spec.HumanAccess.Enabled == false && access.Enabled {
+					t.Fatal("disabled human access unexpectedly resolved as enabled")
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), test.wantError) {
+				t.Fatalf("resolve error=%v, want substring %q", err, test.wantError)
+			}
+		})
+	}
+}
+
+func TestResolveHumanAccessDefaultsAreStable(t *testing.T) {
+	tenant := humanAccessTestTenant()
+	tenant.Spec.HumanAccess.Web.IngressClassName = ""
+	tenant.Spec.HumanAccess.Web.OIDC.Scopes = ""
+	agent := humanAccessTestAgent()
+
+	access, err := resolveHumanAccess(agent, tenant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if access.IngressClass != "traefik" {
+		t.Fatalf("default ingress class=%q, want traefik", access.IngressClass)
+	}
+	if access.OIDCScopes != "openid profile email" {
+		t.Fatalf("default OIDC scopes=%q", access.OIDCScopes)
 	}
 }
 

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -217,6 +218,13 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	if !modelReady {
 		t.Fatalf("ModelAccessReady condition missing: %#v", current.Status.Conditions)
 	}
+	statusJSON, err := json.Marshal(current.Status)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(statusJSON, []byte("test-virtual-key")) {
+		t.Fatal("AgentIdentity status leaked the scoped AI gateway credential")
+	}
 }
 
 func TestAgentModelAccessRotationRevokesOldKeyAndRollsRuntime(t *testing.T) {
@@ -337,6 +345,71 @@ func TestAgentModelAccessRotationRevokesOldKeyAndRollsRuntime(t *testing.T) {
 	}
 	if uidAfterRemoval != secretUID || revisionAfterRemoval != wantRevision {
 		t.Fatalf("applied credential state changed after annotation removal: uid=%q revision=%q", uidAfterRemoval, revisionAfterRemoval)
+	}
+}
+
+func TestSameAgentKeyAcrossDifferentTenantsIsAllowed(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	first := &fabricv1alpha1.AgentIdentity{
+		ObjectMeta: metav1.ObjectMeta{Name: "hairem-usr000001-agt00001"},
+		Spec: fabricv1alpha1.AgentIdentitySpec{
+			TenantRef: fabricv1alpha1.ObjectReference{Name: "hairem"},
+			AgentKey:  "usr000001-agt00001",
+		},
+	}
+	second := &fabricv1alpha1.AgentIdentity{
+		ObjectMeta: metav1.ObjectMeta{Name: "indiba-usr000001-agt00001"},
+		Spec: fabricv1alpha1.AgentIdentitySpec{
+			TenantRef: fabricv1alpha1.ObjectReference{Name: "indiba"},
+			AgentKey:  "usr000001-agt00001",
+		},
+	}
+
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(first, second).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+
+	conflict, err := r.findAgentKeyConflict(ctx, second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if conflict != "" {
+		t.Fatalf("tenant-local agentKey collided across tenants with %q", conflict)
+	}
+}
+
+func TestDeletingDuplicateAgentDoesNotBlockReplacement(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	now := metav1.Now()
+	deleting := &fabricv1alpha1.AgentIdentity{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "hairem-old-agent",
+			DeletionTimestamp: &now,
+			Finalizers:        []string{AgentFinalizer},
+		},
+		Spec: fabricv1alpha1.AgentIdentitySpec{
+			TenantRef: fabricv1alpha1.ObjectReference{Name: "hairem"},
+			AgentKey:  "usr000001-agt00012",
+		},
+	}
+	replacement := &fabricv1alpha1.AgentIdentity{
+		ObjectMeta: metav1.ObjectMeta{Name: "hairem-new-agent"},
+		Spec: fabricv1alpha1.AgentIdentitySpec{
+			TenantRef: fabricv1alpha1.ObjectReference{Name: "hairem"},
+			AgentKey:  "usr000001-agt00012",
+		},
+	}
+
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(deleting, replacement).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+
+	conflict, err := r.findAgentKeyConflict(ctx, replacement)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if conflict != "" {
+		t.Fatalf("deleting AgentIdentity unexpectedly blocked replacement with %q", conflict)
 	}
 }
 

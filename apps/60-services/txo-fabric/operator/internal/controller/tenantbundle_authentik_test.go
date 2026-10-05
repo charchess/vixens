@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -36,6 +37,133 @@ func tenantWithIAM(name, displayName, group string, hindsightHumanAccess bool) *
 				},
 			},
 		},
+	}
+}
+
+
+
+type countingClient struct {
+	client.Client
+	creates int
+	updates int
+	patches int
+}
+
+func (c *countingClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+	c.creates++
+	return c.Client.Create(ctx, obj, opts...)
+}
+
+func (c *countingClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+	c.updates++
+	return c.Client.Update(ctx, obj, opts...)
+}
+
+func (c *countingClient) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+	c.patches++
+	return c.Client.Patch(ctx, obj, patch, opts...)
+}
+
+func TestRenderAuthentikBlueprintExcludesInvalidTenantWithoutAffectingValidTenant(t *testing.T) {
+	hairem := tenantWithIAM("hairem", "hAIrem", "client0", true)
+	indiba := tenantWithIAM("indiba", "Indiba", "sales", false)
+	indiba.Spec.HumanAccess.Web.IAMGroups = nil
+
+	blueprint := renderAuthentikBlueprint([]fabricv1alpha1.TenantBundle{*hairem, *indiba})
+	if !strings.Contains(blueprint, "txo-fabric-hairem-client0") {
+		t.Fatalf("valid tenant disappeared when another tenant became invalid:\n%s", blueprint)
+	}
+	if strings.Contains(blueprint, "txo-fabric-indiba") {
+		t.Fatalf("invalid tenant remained in aggregate IAM desired state:\n%s", blueprint)
+	}
+}
+
+func TestRenderAuthentikBlueprintExcludesDeletingTenantWithoutAffectingOthers(t *testing.T) {
+	hairem := tenantWithIAM("hairem", "hAIrem", "client0", true)
+	indiba := tenantWithIAM("indiba", "Indiba", "sales", false)
+	now := metav1.Now()
+	indiba.DeletionTimestamp = &now
+
+	blueprint := renderAuthentikBlueprint([]fabricv1alpha1.TenantBundle{*indiba, *hairem})
+	if !strings.Contains(blueprint, "txo-fabric-hairem-client0") {
+		t.Fatalf("active tenant disappeared while another tenant was deleting:\n%s", blueprint)
+	}
+	if strings.Contains(blueprint, "txo-fabric-indiba") {
+		t.Fatalf("deleting tenant remained in aggregate IAM desired state:\n%s", blueprint)
+	}
+}
+
+func TestRenderAuthentikBlueprintNeverPublishesHumanUsersOrMemberships(t *testing.T) {
+	tenant := tenantWithIAM("indiba", "Indiba", "sales", false)
+	tenant.Spec.Workspace = &fabricv1alpha1.TenantWorkspaceSpec{
+		Users: []fabricv1alpha1.NamedWorkspaceScopeSpec{{
+			Name:          "edfoley",
+			Collaborative: true,
+		}},
+	}
+
+	blueprint := renderAuthentikBlueprint([]fabricv1alpha1.TenantBundle{*tenant})
+	for _, forbidden := range []string{
+		"authentik_core.user",
+		"edfoley",
+		"users:",
+		"members:",
+	} {
+		if strings.Contains(blueprint, forbidden) {
+			t.Fatalf("Fabric IAM blueprint leaked human IAM state %q:\n%s", forbidden, blueprint)
+		}
+	}
+}
+
+func TestRenderAuthentikBlueprintSortsMultipleIAMGroupsDeterministically(t *testing.T) {
+	tenant := tenantWithIAM("acme", "Acme", "support", false)
+	tenant.Spec.HumanAccess.Web.IAMGroups = []string{"support", "admin"}
+
+	blueprint := renderAuthentikBlueprint([]fabricv1alpha1.TenantBundle{*tenant})
+	admin := strings.Index(blueprint, "txo-fabric-acme-admin")
+	support := strings.Index(blueprint, "txo-fabric-acme-support")
+	if admin < 0 || support < 0 {
+		t.Fatalf("multi-group blueprint missing expected groups:\n%s", blueprint)
+	}
+	if admin > support {
+		t.Fatalf("IAM groups are not rendered deterministically:\n%s", blueprint)
+	}
+	if got := strings.Count(blueprint, "model: authentik_policies.policybinding"); got != 2 {
+		t.Fatalf("policy bindings=%d, want 2 for two authorized IAM groups:\n%s", got, blueprint)
+	}
+	for _, want := range []string{"order: 0", "order: 10"} {
+		if !strings.Contains(blueprint, want) {
+			t.Fatalf("multi-group policy binding missing %q:\n%s", want, blueprint)
+		}
+	}
+}
+
+func TestReconcileAuthentikBlueprintIsNoOpWhenDesiredStateIsUnchanged(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	hairem := tenantWithIAM("hairem", "hAIrem", "client0", true)
+	indiba := tenantWithIAM("indiba", "Indiba", "sales", false)
+
+	base := fake.NewClientBuilder().WithScheme(scheme).WithObjects(
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: authentikNamespace}},
+		hairem,
+		indiba,
+	).Build()
+	c := &countingClient{Client: base}
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	if err := r.reconcileAuthentikBlueprint(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	c.creates = 0
+	c.updates = 0
+	c.patches = 0
+	if err := r.reconcileAuthentikBlueprint(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if c.creates != 0 || c.updates != 0 || c.patches != 0 {
+		t.Fatalf("no-op IAM reconcile mutated API objects: creates=%d updates=%d patches=%d", c.creates, c.updates, c.patches)
 	}
 }
 
@@ -90,11 +218,343 @@ func TestRenderAuthentikBlueprintAggregatesAllHindsightProviders(t *testing.T) {
 	}
 }
 
+func TestTenantIAMValidationMatrix(t *testing.T) {
+	tests := []struct {
+		name      string
+		mutate    func(*fabricv1alpha1.TenantBundle)
+		wantError string
+	}{
+		{
+			name: "valid",
+		},
+		{
+			name: "human access absent",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle) {
+				tenant.Spec.HumanAccess = nil
+			},
+		},
+		{
+			name: "web access absent",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle) {
+				tenant.Spec.HumanAccess.Web = nil
+			},
+		},
+		{
+			name: "missing iam group",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle) {
+				tenant.Spec.HumanAccess.Web.IAMGroups = nil
+			},
+			wantError: "iamGroups",
+		},
+		{
+			name: "uppercase iam group rejected",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle) {
+				tenant.Spec.HumanAccess.Web.IAMGroups = []string{"Sales"}
+			},
+			wantError: "lowercase DNS-like key",
+		},
+		{
+			name: "unsafe iam group rejected",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle) {
+				tenant.Spec.HumanAccess.Web.IAMGroups = []string{"sales/admin"}
+			},
+			wantError: "lowercase DNS-like key",
+		},
+		{
+			name: "duplicate iam group rejected",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle) {
+				tenant.Spec.HumanAccess.Web.IAMGroups = []string{"sales", "sales"}
+			},
+			wantError: "repeats iamGroup",
+		},
+		{
+			name: "invalid domain rejected",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle) {
+				tenant.Spec.HumanAccess.Web.DomainSuffix = "truxonline..com"
+			},
+			wantError: "valid DNS suffix",
+		},
+		{
+			name: "non https issuer rejected",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle) {
+				tenant.Spec.HumanAccess.Web.OIDC.Issuer = "http://authentik.truxonline.com/application/o/txo-fabric-indiba/"
+			},
+			wantError: "absolute https URL",
+		},
+		{
+			name: "issuer path must match tenant application",
+			mutate: func(tenant *fabricv1alpha1.TenantBundle) {
+				tenant.Spec.HumanAccess.Web.OIDC.Issuer = "https://authentik.truxonline.com/application/o/txo-fabric-other/"
+			},
+			wantError: "must match generated Authentik application",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tenant := tenantWithIAM("indiba", "Indiba", "sales", false)
+			if test.mutate != nil {
+				test.mutate(tenant)
+			}
+			err := validateTenantIAM(tenant)
+			if test.wantError == "" {
+				if err != nil {
+					t.Fatalf("unexpected validation error: %v", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), test.wantError) {
+				t.Fatalf("validation error=%v, want substring %q", err, test.wantError)
+			}
+		})
+	}
+}
+
+func TestRenderAuthentikBlueprintWithNoActiveTenantIsExplicitlyEmpty(t *testing.T) {
+	blueprint := renderAuthentikBlueprint(nil)
+	if blueprint != "version: 1\nmetadata:\n  name: txo-fabric-tenants-generated\nentries: []\n" {
+		t.Fatalf("empty blueprint changed unexpectedly:\n%s", blueprint)
+	}
+}
+
+func TestReconcileAuthentikBlueprintRepairsDrift(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := tenantWithIAM("indiba", "Indiba", "sales", false)
+	stale := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      authentikBlueprintConfigMapName,
+			Namespace: authentikNamespace,
+			Labels:    map[string]string{"stale": "true"},
+		},
+		Data: map[string]string{authentikBlueprintKey: "stale"},
+	}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: authentikNamespace}},
+		tenant,
+		stale,
+	).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	if err := r.reconcileAuthentikBlueprint(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	var current corev1.ConfigMap
+	if err := c.Get(ctx, types.NamespacedName{Name: authentikBlueprintConfigMapName, Namespace: authentikNamespace}, &current); err != nil {
+		t.Fatal(err)
+	}
+	if current.Data[authentikBlueprintKey] == "stale" || !strings.Contains(current.Data[authentikBlueprintKey], "txo-fabric-indiba-sales") {
+		t.Fatalf("drifted blueprint was not repaired:\n%s", current.Data[authentikBlueprintKey])
+	}
+	if current.Labels[LabelManaged] != "true" || current.Labels["app.kubernetes.io/component"] != "tenant-iam" {
+		t.Fatalf("managed labels were not repaired: %#v", current.Labels)
+	}
+	if _, ok := current.Labels["stale"]; ok {
+		t.Fatalf("stale labels survived desired-state repair: %#v", current.Labels)
+	}
+}
+
+func TestReconcileAuthentikBlueprintWithdrawsDeletingTenant(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	hairem := tenantWithIAM("hairem", "hAIrem", "client0", true)
+	indiba := tenantWithIAM("indiba", "Indiba", "sales", false)
+
+	initial := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: authentikBlueprintConfigMapName, Namespace: authentikNamespace},
+		Data: map[string]string{
+			authentikBlueprintKey: renderAuthentikBlueprint([]fabricv1alpha1.TenantBundle{*hairem, *indiba}),
+		},
+	}
+	now := metav1.Now()
+	indiba.DeletionTimestamp = &now
+	indiba.Finalizers = []string{TenantFinalizer}
+
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: authentikNamespace}},
+		hairem,
+		indiba,
+		initial,
+	).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	if err := r.reconcileAuthentikBlueprint(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	var current corev1.ConfigMap
+	if err := c.Get(ctx, types.NamespacedName{Name: authentikBlueprintConfigMapName, Namespace: authentikNamespace}, &current); err != nil {
+		t.Fatal(err)
+	}
+	blueprint := current.Data[authentikBlueprintKey]
+	if !strings.Contains(blueprint, "txo-fabric-hairem-client0") {
+		t.Fatalf("active hAIrem tenant disappeared after Indiba withdrawal:\n%s", blueprint)
+	}
+	if strings.Contains(blueprint, "txo-fabric-indiba") {
+		t.Fatalf("deleting Indiba tenant remained in blueprint:\n%s", blueprint)
+	}
+}
+
 func TestTenantIAMRequiresExplicitStructuralGroup(t *testing.T) {
 	tenant := tenantWithIAM("indiba", "Indiba", "sales", false)
 	tenant.Spec.HumanAccess.Web.IAMGroups = nil
 	if err := validateTenantIAM(tenant); err == nil || !strings.Contains(err.Error(), "iamGroups") {
 		t.Fatalf("expected missing iamGroups validation error, got %v", err)
+	}
+}
+
+func TestTenantReconcileReportsIAMDesiredStateReady(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := tenantWithIAM("indiba", "Indiba", "sales", false)
+	tenant.Spec.Memory.Hindsight = nil
+
+	c := fake.NewClientBuilder().WithScheme(scheme).
+		WithStatusSubresource(&fabricv1alpha1.TenantBundle{}).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: authentikNamespace}},
+			tenant,
+		).
+		Build()
+
+	reconcileTenant(t, ctx, c, scheme, tenant.Name)
+
+	var current fabricv1alpha1.TenantBundle
+	if err := c.Get(ctx, types.NamespacedName{Name: tenant.Name}, &current); err != nil {
+		t.Fatal(err)
+	}
+	if current.Status.Phase != "Ready" {
+		t.Fatalf("tenant phase=%q, want Ready; conditions=%#v", current.Status.Phase, current.Status.Conditions)
+	}
+	foundIAM := false
+	foundReady := false
+	for _, condition := range current.Status.Conditions {
+		switch condition.Type {
+		case "IAMDesiredStateReady":
+			if condition.Status != metav1.ConditionTrue || condition.Reason != "BlueprintPublished" {
+				t.Fatalf("IAMDesiredStateReady=%#v", condition)
+			}
+			if !strings.Contains(condition.Message, "txo-fabric-indiba-sales") {
+				t.Fatalf("IAM condition does not expose structural group: %q", condition.Message)
+			}
+			foundIAM = true
+		case "Ready":
+			if condition.Status == metav1.ConditionTrue {
+				foundReady = true
+			}
+		}
+	}
+	if !foundIAM || !foundReady {
+		t.Fatalf("expected ready IAM/tenant conditions, got %#v", current.Status.Conditions)
+	}
+}
+
+func TestTenantReconcileInvalidIAMFailsClosedInStatus(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := tenantWithIAM("indiba", "Indiba", "sales", false)
+	tenant.Spec.Memory.Hindsight = nil
+	tenant.Spec.HumanAccess.Web.IAMGroups = nil
+
+	c := fake.NewClientBuilder().WithScheme(scheme).
+		WithStatusSubresource(&fabricv1alpha1.TenantBundle{}).
+		WithObjects(tenant).
+		Build()
+
+	reconcileTenant(t, ctx, c, scheme, tenant.Name)
+
+	var current fabricv1alpha1.TenantBundle
+	if err := c.Get(ctx, types.NamespacedName{Name: tenant.Name}, &current); err != nil {
+		t.Fatal(err)
+	}
+	if current.Status.Phase != "Degraded" {
+		t.Fatalf("invalid IAM tenant phase=%q, want Degraded", current.Status.Phase)
+	}
+	foundIAMFailure := false
+	foundReadyFailure := false
+	for _, condition := range current.Status.Conditions {
+		switch condition.Type {
+		case "IAMDesiredStateReady":
+			if condition.Status == metav1.ConditionFalse && condition.Reason == "InvalidHumanAccessIAM" {
+				foundIAMFailure = true
+			}
+		case "Ready":
+			if condition.Status == metav1.ConditionFalse && condition.Reason == "IAMConfigurationInvalid" {
+				foundReadyFailure = true
+			}
+		}
+	}
+	if !foundIAMFailure || !foundReadyFailure {
+		t.Fatalf("invalid IAM fail-closed conditions missing: %#v", current.Status.Conditions)
+	}
+}
+
+func TestReconcileAuthentikBlueprintEmptiesWhenLastHumanTenantWithdraws(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	stale := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: authentikBlueprintConfigMapName, Namespace: authentikNamespace},
+		Data: map[string]string{
+			authentikBlueprintKey: "version: 1\nmetadata:\n  name: txo-fabric-tenants-generated\nentries:\n  - stale\n",
+		},
+	}
+	tenant := testTenant()
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(stale, tenant).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	if err := r.reconcileAuthentikBlueprint(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	var current corev1.ConfigMap
+	if err := c.Get(ctx, types.NamespacedName{Name: authentikBlueprintConfigMapName, Namespace: authentikNamespace}, &current); err != nil {
+		t.Fatal(err)
+	}
+	want := "version: 1\nmetadata:\n  name: txo-fabric-tenants-generated\nentries: []\n"
+	if got := current.Data[authentikBlueprintKey]; got != want {
+		t.Fatalf("last human tenant withdrawal did not publish explicit empty blueprint:\n%s", got)
+	}
+}
+
+func TestTenantWithoutHumanAccessReportsIAMNotRequested(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := testTenant()
+	tenant.Spec.Persistence.PostgreSQL = nil
+	tenant.Spec.Memory.Hindsight = nil
+
+	c := fake.NewClientBuilder().WithScheme(scheme).
+		WithStatusSubresource(&fabricv1alpha1.TenantBundle{}).
+		WithObjects(tenant).
+		Build()
+
+	reconcileTenant(t, ctx, c, scheme, tenant.Name)
+
+	var current fabricv1alpha1.TenantBundle
+	if err := c.Get(ctx, types.NamespacedName{Name: tenant.Name}, &current); err != nil {
+		t.Fatal(err)
+	}
+	for _, condition := range current.Status.Conditions {
+		if condition.Type == "IAMDesiredStateReady" {
+			if condition.Status != metav1.ConditionTrue || condition.Reason != "NotRequested" {
+				t.Fatalf("IAMDesiredStateReady=%#v, want True/NotRequested", condition)
+			}
+			return
+		}
+	}
+	t.Fatalf("IAMDesiredStateReady condition missing: %#v", current.Status.Conditions)
+}
+
+func TestRenderAuthentikBlueprintWithoutHindsightHumanAccessHasNoOutpost(t *testing.T) {
+	hairem := tenantWithIAM("hairem", "hAIrem", "client0", false)
+	indiba := tenantWithIAM("indiba", "Indiba", "sales", false)
+	blueprint := renderAuthentikBlueprint([]fabricv1alpha1.TenantBundle{*hairem, *indiba})
+	if strings.Contains(blueprint, "authentik_outposts.outpost") {
+		t.Fatalf("embedded outpost rendered without any Fabric proxy provider:\n%s", blueprint)
+	}
+	if strings.Contains(blueprint, "-hindsight-provider") {
+		t.Fatalf("Hindsight proxy provider rendered while human access is disabled:\n%s", blueprint)
 	}
 }
 
