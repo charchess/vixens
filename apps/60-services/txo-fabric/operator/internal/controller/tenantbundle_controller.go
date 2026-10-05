@@ -34,6 +34,7 @@ type TenantBundleReconciler struct {
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=postgresqlprofiles;hindsightprofiles,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
@@ -79,6 +80,34 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	bundle.Status.Modules = nil
 	setCondition(&bundle.Status.Conditions, bundle.Generation, "NamespaceReady", metav1.ConditionTrue, "Reconciled", "tenant namespace is reconciled")
 	setCondition(&bundle.Status.Conditions, bundle.Generation, "NetworkReady", metav1.ConditionTrue, "DefaultDenyReconciled", "tenant default-deny policy is reconciled")
+
+	if err := validateTenantIAM(&bundle); err != nil {
+		bundle.Status.Phase = "Degraded"
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "IAMDesiredStateReady", metav1.ConditionFalse, "InvalidHumanAccessIAM", err.Error())
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "IAMConfigurationInvalid", err.Error())
+		if !reflect.DeepEqual(previousStatus, bundle.Status) {
+			_ = r.Status().Update(ctx, &bundle)
+		}
+		return ctrl.Result{}, nil
+	}
+	if err := r.reconcileAuthentikBlueprint(ctx); err != nil {
+		bundle.Status.Phase = "Degraded"
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "IAMDesiredStateReady", metav1.ConditionFalse, "BlueprintReconcileFailed", err.Error())
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "IAMReconcileFailed", err.Error())
+		if !reflect.DeepEqual(previousStatus, bundle.Status) {
+			_ = r.Status().Update(ctx, &bundle)
+		}
+		return ctrl.Result{}, err
+	}
+	if bundle.Spec.HumanAccess != nil && bundle.Spec.HumanAccess.Web != nil {
+		groups := make([]string, 0, len(bundle.Spec.HumanAccess.Web.IAMGroups))
+		for _, group := range bundle.Spec.HumanAccess.Web.IAMGroups {
+			groups = append(groups, authentikGroupName(bundle.Name, group))
+		}
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "IAMDesiredStateReady", metav1.ConditionTrue, "BlueprintPublished", fmt.Sprintf("Authentik desired state published for application %q and groups %v", authentikApplicationName(bundle.Name), groups))
+	} else {
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "IAMDesiredStateReady", metav1.ConditionTrue, "NotRequested", "tenant does not request human IAM access")
+	}
 
 	waiting := false
 	degraded := false
@@ -289,6 +318,10 @@ func (r *TenantBundleReconciler) reconcileDelete(ctx context.Context, bundle *fa
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
+	if err := r.reconcileAuthentikBlueprint(ctx); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	if bundle.Spec.Memory.Hindsight != nil || bundle.Status.Memory.Hindsight != nil {
 		pending, err := r.cleanupHindsight(ctx, bundle)
 		if err != nil {
@@ -408,6 +441,7 @@ func (r *TenantBundleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&fabricv1alpha1.HindsightProfile{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForHindsightProfile)).
 		Watches(&corev1.Namespace{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
+		Watches(&corev1.ConfigMap{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForAuthentikBlueprint)).
 		Watches(&appsv1.Deployment{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&networkingv1.Ingress{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&networkingv1.NetworkPolicy{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
