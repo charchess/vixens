@@ -118,7 +118,7 @@ data:
           mode: forward_single
           external_host: https://hindsight-hairem.truxonline.com
           authentication_flow: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
-          authorization_flow: !Find [authentik_flows.flow, [slug, default-authorization-flow]]
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
           invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
 
       - model: authentik_core.application
