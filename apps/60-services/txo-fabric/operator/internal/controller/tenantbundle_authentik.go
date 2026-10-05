@@ -87,6 +87,9 @@ func activeIAMBundles(bundles []fabricv1alpha1.TenantBundle) []fabricv1alpha1.Te
 
 func renderAuthentikBlueprint(bundles []fabricv1alpha1.TenantBundle) string {
 	active := activeIAMBundles(bundles)
+	if len(active) == 0 {
+		return "version: 1\nmetadata:\n  name: txo-fabric-tenants-generated\nentries: []\n"
+	}
 	var out strings.Builder
 	out.WriteString("version: 1\nmetadata:\n  name: txo-fabric-tenants-generated\nentries:\n")
 
