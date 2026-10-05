@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - apps/60-services/txo-fabric/operator/**/*.go
+      - '!apps/60-services/txo-fabric/operator/**/*_test.go'
       - apps/60-services/txo-fabric/operator/go.mod
       - apps/60-services/txo-fabric/operator/Dockerfile
       - .github/workflows/build-txo-fabric-operator.yaml
