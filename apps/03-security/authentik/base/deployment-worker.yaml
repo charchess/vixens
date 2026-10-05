@@ -92,15 +92,19 @@ spec:
             - name: blueprints
               mountPath: /blueprints/vixens-netbird.yaml
               subPath: vixens-netbird.yaml
-            - name: blueprints
-              mountPath: /blueprints/vixens-txo-fabric-hairem.yaml
-              subPath: vixens-txo-fabric-hairem.yaml
+            - name: fabric-blueprints
+              mountPath: /blueprints/txo-fabric
+              readOnly: true
       volumes:
         - name: authentik-data
           emptyDir: {}
         - name: blueprints
           configMap:
             name: authentik-config
+        - name: fabric-blueprints
+          configMap:
+            name: txo-fabric-authentik-blueprints
+            optional: true
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
