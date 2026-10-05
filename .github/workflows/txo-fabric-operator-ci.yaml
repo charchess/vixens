@@ -87,9 +87,20 @@ jobs:
           go mod tidy
           git diff --exit-code -- go.mod go.sum
 
-      - name: Test
+      - name: Test with race detector and coverage
         working-directory: apps/60-services/txo-fabric/operator
-        run: go test ./...
+        run: |
+          go test -race -covermode=atomic -coverprofile=coverage.out ./...
+          go tool cover -func=coverage.out | tee coverage.txt
+
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: txo-fabric-operator-coverage
+          if-no-files-found: error
+          path: |
+            apps/60-services/txo-fabric/operator/coverage.out
+            apps/60-services/txo-fabric/operator/coverage.txt
 
       - name: Vet
         working-directory: apps/60-services/txo-fabric/operator
