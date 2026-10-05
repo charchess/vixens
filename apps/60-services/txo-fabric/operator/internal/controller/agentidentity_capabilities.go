@@ -141,6 +141,11 @@ func resolveToolsetPolicy(agent *fabricv1alpha1.AgentIdentity, profile *fabricv1
 	managedConfig := map[string]any{
 		"platform_toolsets":     platforms,
 		"known_plugin_toolsets": knownPluginToolsets,
+		"model": map[string]any{
+			"default":  defaultAIGatewayModel,
+			"provider": "custom",
+			"base_url": defaultAIGatewayURL + "/v1",
+		},
 		"agent": map[string]any{
 			"disabled_toolsets": denied,
 		},
@@ -158,15 +163,21 @@ func resolveToolsetPolicy(agent *fabricv1alpha1.AgentIdentity, profile *fabricv1
 	configJSON = append(configJSON, '\n')
 
 	revisionInput := struct {
-		ProfileName string                                `json:"profileName"`
-		Image       string                                `json:"image"`
-		Entries     []fabricv1alpha1.RuntimeToolsetPolicy `json:"entries"`
-		Requested   []string                              `json:"requested"`
+		ProfileName   string                                `json:"profileName"`
+		Image         string                                `json:"image"`
+		Entries       []fabricv1alpha1.RuntimeToolsetPolicy `json:"entries"`
+		Requested     []string                              `json:"requested"`
+		ModelDefault  string                                `json:"modelDefault"`
+		ModelProvider string                                `json:"modelProvider"`
+		ModelBaseURL  string                                `json:"modelBaseURL"`
 	}{
-		ProfileName: profile.Name,
-		Image:       profile.Spec.Image,
-		Entries:     normalizedEntries,
-		Requested:   requested,
+		ProfileName:   profile.Name,
+		Image:         profile.Spec.Image,
+		Entries:       normalizedEntries,
+		Requested:     requested,
+		ModelDefault:  defaultAIGatewayModel,
+		ModelProvider: "custom",
+		ModelBaseURL:  defaultAIGatewayURL + "/v1",
 	}
 	revisionJSON, err := json.Marshal(revisionInput)
 	if err != nil {
