@@ -1,14 +1,17 @@
+# Canonical POC owner identity: usr000001 = edfoley.
+# access.userRef deliberately remains the existing workspace scope key until #3802/#3852 define IAM/user-ID mapping.
+# Human display names stay mutable; machine identity and Hindsight bank IDs stay stable.
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: indiba-sam
+  name: ten00002-usr000001-agt00001
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: indiba
-  agentKey: sam
+  agentKey: usr000001-agt00001
   displayName: Sam
   runtime:
     profileRef: hermes-default
@@ -21,18 +24,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: indiba-sam
+    bankId: ten00002-usr000001-agt00001
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: indiba-alex
+  name: ten00002-usr000001-agt00002
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: indiba
-  agentKey: alex
+  agentKey: usr000001-agt00002
   displayName: Alex
   runtime:
     profileRef: hermes-default
@@ -45,18 +48,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: indiba-alex
+    bankId: ten00002-usr000001-agt00002
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: indiba-clover
+  name: ten00002-usr000001-agt00003
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: indiba
-  agentKey: clover
+  agentKey: usr000001-agt00003
   displayName: Clover
   runtime:
     profileRef: hermes-default
@@ -69,18 +72,18 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: indiba-clover
+    bankId: ten00002-usr000001-agt00003
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: indiba-jerry
+  name: ten00002-usr000001-agt00004
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: indiba
-  agentKey: jerry
+  agentKey: usr000001-agt00004
   displayName: Jerry
   runtime:
     profileRef: hermes-default
@@ -93,4 +96,4 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: indiba-jerry
+    bankId: ten00002-usr000001-agt00004
