@@ -2,14 +2,14 @@
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: indiba-tania
+  name: indiba-sam
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: indiba
-  agentKey: tania
-  displayName: Tania
+  agentKey: sam
+  displayName: Sam
   runtime:
     profileRef: hermes-default
     storage:
@@ -21,19 +21,19 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: indiba-tania
+    bankId: indiba-sam
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: indiba-nadia
+  name: indiba-alex
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: indiba
-  agentKey: nadia
-  displayName: Nadia
+  agentKey: alex
+  displayName: Alex
   runtime:
     profileRef: hermes-default
     storage:
@@ -45,19 +45,19 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: indiba-nadia
+    bankId: indiba-alex
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: indiba-sylvia
+  name: indiba-clover
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: indiba
-  agentKey: sylvia
-  displayName: Sylvia
+  agentKey: clover
+  displayName: Clover
   runtime:
     profileRef: hermes-default
     storage:
@@ -69,19 +69,19 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: indiba-sylvia
+    bankId: indiba-clover
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentIdentity
 metadata:
-  name: indiba-maria
+  name: indiba-jerry
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
   tenantRef:
     name: indiba
-  agentKey: maria
-  displayName: Maria
+  agentKey: jerry
+  displayName: Jerry
   runtime:
     profileRef: hermes-default
     storage:
@@ -93,4 +93,4 @@ spec:
   humanAccess:
     enabled: true
   memory:
-    bankId: indiba-maria
+    bankId: indiba-jerry
