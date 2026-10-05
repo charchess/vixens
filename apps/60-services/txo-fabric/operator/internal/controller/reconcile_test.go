@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -216,6 +217,13 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	}
 	if !modelReady {
 		t.Fatalf("ModelAccessReady condition missing: %#v", current.Status.Conditions)
+	}
+	statusJSON, err := json.Marshal(current.Status)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(statusJSON, []byte("test-virtual-key")) {
+		t.Fatal("AgentIdentity status leaked the scoped AI gateway credential")
 	}
 }
 
