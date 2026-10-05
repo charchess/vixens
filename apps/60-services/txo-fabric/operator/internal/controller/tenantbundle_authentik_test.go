@@ -490,6 +490,74 @@ func TestTenantReconcileInvalidIAMFailsClosedInStatus(t *testing.T) {
 	}
 }
 
+func TestReconcileAuthentikBlueprintEmptiesWhenLastHumanTenantWithdraws(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	stale := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: authentikBlueprintConfigMapName, Namespace: authentikNamespace},
+		Data: map[string]string{
+			authentikBlueprintKey: "version: 1\nmetadata:\n  name: txo-fabric-tenants-generated\nentries:\n  - stale\n",
+		},
+	}
+	tenant := testTenant()
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(stale, tenant).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	if err := r.reconcileAuthentikBlueprint(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	var current corev1.ConfigMap
+	if err := c.Get(ctx, types.NamespacedName{Name: authentikBlueprintConfigMapName, Namespace: authentikNamespace}, &current); err != nil {
+		t.Fatal(err)
+	}
+	want := "version: 1\nmetadata:\n  name: txo-fabric-tenants-generated\nentries: []\n"
+	if got := current.Data[authentikBlueprintKey]; got != want {
+		t.Fatalf("last human tenant withdrawal did not publish explicit empty blueprint:\n%s", got)
+	}
+}
+
+func TestTenantWithoutHumanAccessReportsIAMNotRequested(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := testTenant()
+	tenant.Spec.Persistence.PostgreSQL = nil
+	tenant.Spec.Memory.Hindsight = nil
+
+	c := fake.NewClientBuilder().WithScheme(scheme).
+		WithStatusSubresource(&fabricv1alpha1.TenantBundle{}).
+		WithObjects(tenant).
+		Build()
+
+	reconcileTenant(t, ctx, c, scheme, tenant.Name)
+
+	var current fabricv1alpha1.TenantBundle
+	if err := c.Get(ctx, types.NamespacedName{Name: tenant.Name}, &current); err != nil {
+		t.Fatal(err)
+	}
+	for _, condition := range current.Status.Conditions {
+		if condition.Type == "IAMDesiredStateReady" {
+			if condition.Status != metav1.ConditionTrue || condition.Reason != "NotRequested" {
+				t.Fatalf("IAMDesiredStateReady=%#v, want True/NotRequested", condition)
+			}
+			return
+		}
+	}
+	t.Fatalf("IAMDesiredStateReady condition missing: %#v", current.Status.Conditions)
+}
+
+func TestRenderAuthentikBlueprintWithoutHindsightHumanAccessHasNoOutpost(t *testing.T) {
+	hairem := tenantWithIAM("hairem", "hAIrem", "client0", false)
+	indiba := tenantWithIAM("indiba", "Indiba", "sales", false)
+	blueprint := renderAuthentikBlueprint([]fabricv1alpha1.TenantBundle{*hairem, *indiba})
+	if strings.Contains(blueprint, "authentik_outposts.outpost") {
+		t.Fatalf("embedded outpost rendered without any Fabric proxy provider:\n%s", blueprint)
+	}
+	if strings.Contains(blueprint, "-hindsight-provider") {
+		t.Fatalf("Hindsight proxy provider rendered while human access is disabled:\n%s", blueprint)
+	}
+}
+
 func TestReconcileAuthentikBlueprintPublishesAggregateConfigMap(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
