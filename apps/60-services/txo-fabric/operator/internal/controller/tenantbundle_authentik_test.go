@@ -404,6 +404,92 @@ func TestTenantIAMRequiresExplicitStructuralGroup(t *testing.T) {
 	}
 }
 
+func TestTenantReconcileReportsIAMDesiredStateReady(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := tenantWithIAM("indiba", "Indiba", "sales", false)
+	tenant.Spec.Memory.Hindsight = nil
+
+	c := fake.NewClientBuilder().WithScheme(scheme).
+		WithStatusSubresource(&fabricv1alpha1.TenantBundle{}).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: authentikNamespace}},
+			tenant,
+		).
+		Build()
+
+	reconcileTenant(t, ctx, c, scheme, tenant.Name)
+
+	var current fabricv1alpha1.TenantBundle
+	if err := c.Get(ctx, types.NamespacedName{Name: tenant.Name}, &current); err != nil {
+		t.Fatal(err)
+	}
+	if current.Status.Phase != "Ready" {
+		t.Fatalf("tenant phase=%q, want Ready; conditions=%#v", current.Status.Phase, current.Status.Conditions)
+	}
+	foundIAM := false
+	foundReady := false
+	for _, condition := range current.Status.Conditions {
+		switch condition.Type {
+		case "IAMDesiredStateReady":
+			if condition.Status != metav1.ConditionTrue || condition.Reason != "BlueprintPublished" {
+				t.Fatalf("IAMDesiredStateReady=%#v", condition)
+			}
+			if !strings.Contains(condition.Message, "txo-fabric-indiba-sales") {
+				t.Fatalf("IAM condition does not expose structural group: %q", condition.Message)
+			}
+			foundIAM = true
+		case "Ready":
+			if condition.Status == metav1.ConditionTrue {
+				foundReady = true
+			}
+		}
+	}
+	if !foundIAM || !foundReady {
+		t.Fatalf("expected ready IAM/tenant conditions, got %#v", current.Status.Conditions)
+	}
+}
+
+func TestTenantReconcileInvalidIAMFailsClosedInStatus(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := tenantWithIAM("indiba", "Indiba", "sales", false)
+	tenant.Spec.Memory.Hindsight = nil
+	tenant.Spec.HumanAccess.Web.IAMGroups = nil
+
+	c := fake.NewClientBuilder().WithScheme(scheme).
+		WithStatusSubresource(&fabricv1alpha1.TenantBundle{}).
+		WithObjects(tenant).
+		Build()
+
+	reconcileTenant(t, ctx, c, scheme, tenant.Name)
+
+	var current fabricv1alpha1.TenantBundle
+	if err := c.Get(ctx, types.NamespacedName{Name: tenant.Name}, &current); err != nil {
+		t.Fatal(err)
+	}
+	if current.Status.Phase != "Degraded" {
+		t.Fatalf("invalid IAM tenant phase=%q, want Degraded", current.Status.Phase)
+	}
+	foundIAMFailure := false
+	foundReadyFailure := false
+	for _, condition := range current.Status.Conditions {
+		switch condition.Type {
+		case "IAMDesiredStateReady":
+			if condition.Status == metav1.ConditionFalse && condition.Reason == "InvalidHumanAccessIAM" {
+				foundIAMFailure = true
+			}
+		case "Ready":
+			if condition.Status == metav1.ConditionFalse && condition.Reason == "IAMConfigurationInvalid" {
+				foundReadyFailure = true
+			}
+		}
+	}
+	if !foundIAMFailure || !foundReadyFailure {
+		t.Fatalf("invalid IAM fail-closed conditions missing: %#v", current.Status.Conditions)
+	}
+}
+
 func TestReconcileAuthentikBlueprintPublishesAggregateConfigMap(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
