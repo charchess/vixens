@@ -87,6 +87,38 @@ jobs:
           go mod tidy
           git diff --exit-code -- go.mod go.sum
 
+      - name: Require regression tests for operator behavior changes
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch --no-tags origin "$BASE_SHA"
+
+          SOURCE_CHANGES="$(
+            git diff --name-only "$BASE_SHA"...HEAD -- ':(glob)apps/60-services/txo-fabric/operator/**/*.go' |
+              awk '!/_test\.go$/ && !/\/zz_generated\.deepcopy\.go$/'
+          )"
+          TEST_CHANGES="$(
+            git diff --name-only "$BASE_SHA"...HEAD -- ':(glob)apps/60-services/txo-fabric/operator/**/*_test.go'
+          )"
+
+          if [ -n "$SOURCE_CHANGES" ] && [ -z "$TEST_CHANGES" ]; then
+            echo "::error::TXO Fabric operator behavior changed without corresponding unit/regression test changes."
+            echo "Operator Go source changes:"
+            printf '%s\n' "$SOURCE_CHANGES" | sed 's/^/  - /'
+            echo "Add or update *_test.go coverage in the same PR."
+            exit 1
+          fi
+
+          if [ -n "$SOURCE_CHANGES" ]; then
+            echo "✅ Operator behavior changes include unit/regression test changes"
+          else
+            echo "ℹ️ No operator Go behavior changes require new unit tests"
+          fi
+
       - name: Test with race detector and coverage
         working-directory: apps/60-services/txo-fabric/operator
         run: |
