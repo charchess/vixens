@@ -9,7 +9,7 @@ Guides pratiques du dépôt Vixens. `WORKFLOW.md` reste la référence du cycle 
 - **[GitOps Workflow](gitops-workflow.md)** — contexte GitOps complémentaire ; `WORKFLOW.md` prévaut en cas de divergence.
 - **[Promotion Workflow](promotion-workflow.md)** — promotion dev → prod via GitHub Actions.
 - **[Workflow Concurrency](workflow-concurrency.md)** — gestion des changements concurrents.
-- **[Merge Queue Configuration](merge-queue-configuration.md)** — configuration/usage de la merge queue lorsqu'elle est activée.
+- **[Merge Queue Status](merge-queue-configuration.md)** — état réel (non actif actuellement) et prérequis d'une future activation.
 
 ## Configuration et secrets
 
@@ -26,9 +26,9 @@ Le backend secret canonique est OpenBao via `ClusterSecretStore/openbao` et `Ext
 
 ## Sizing et qualité
 
-- **[Sizing Migration](sizing-migration.md)** — contexte et conventions de sizing.
+- **[Sizing Migration](sizing-migration.md)** — **stub historique** de l'ancienne migration v1 ; utiliser RESOURCE_STANDARDS/ADR-029 pour le sizing courant.
 - **[Quality Reports](quality-reports.md)** — exploitation des rapports qualité.
-- **[Bronzification Action Plan](bronzification-action-plan.md)** — plan historique/opérationnel de montée en maturité ; vérifier les standards actuels avant de reprendre une action ancienne.
+- **[Bronzification Action Plan](bronzification-action-plan.md)** — **stub historique** ; ne pas l'utiliser comme runbook courant.
 
 Références canoniques associées :
 
@@ -44,4 +44,4 @@ Références canoniques associées :
 - Ne pas recopier une procédure depuis un rapport ancien sans la confronter à `main`.
 - Ajouter ici tout nouveau guide durable.
 
-**Last Updated:** 2026-09-25
+**Last Updated:** 2026-10-06
