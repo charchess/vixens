@@ -7,6 +7,7 @@ import (
 	"time"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -94,19 +95,38 @@ func (r *TenantBundleReconciler) reconcileAIGateway(ctx context.Context, bundle 
 		return aiGatewayResult{Status: status, Reason: migrationReason, Message: migrationMessage, RequeueAfter: requeueAfter}, nil
 	}
 
-	status := &fabricv1alpha1.ComponentStatus{
-		Phase: "Blocked",
-		Message: fmt.Sprintf(
-			"dedicated LiteLLM PostgreSQL state is ready (database=%s role=%s) and Prisma migrations are applied; gateway runtime routing reconciliation is not implemented in this slice",
-			postgresql.Names.Database,
-			postgresql.Names.Role,
-		),
+	backends, backendMessage, err := r.resolveAIGatewayBackends(ctx, bundle)
+	if err != nil {
+		return aiGatewayResult{}, err
 	}
-	return aiGatewayResult{
-		Status:  status,
-		Reason:  "RuntimeNotImplemented",
-		Message: status.Message,
-	}, nil
+	if backendMessage != "" {
+		status := &fabricv1alpha1.ComponentStatus{Phase: "Provisioning", Message: backendMessage}
+		return aiGatewayResult{Status: status, Reason: "BackendPending", Message: backendMessage, RequeueAfter: 5 * time.Second}, nil
+	}
+
+	config := renderTenantLiteLLMConfig(backends)
+	_, configHash, err := r.ensureTenantAIGatewayConfig(ctx, bundle, config)
+	if err != nil {
+		return aiGatewayResult{}, err
+	}
+	if err := r.ensureTenantAIGatewayService(ctx, bundle, &profile); err != nil {
+		return aiGatewayResult{}, err
+	}
+	if err := r.ensureTenantAIGatewayNetworkPolicy(ctx, bundle, &profile, postgresql.Profile, backends); err != nil {
+		return aiGatewayResult{}, err
+	}
+	deployment, err := r.ensureTenantAIGatewayDeployment(ctx, bundle, &profile, backends, configHash)
+	if err != nil {
+		return aiGatewayResult{}, err
+	}
+
+	endpoint := fmt.Sprintf("http://%s.%s.svc:%d", tenantAIGatewayName, tenantNamespace(bundle.Name), aiGatewayPort(&profile))
+	if deployment.Status.ObservedGeneration != deployment.Generation || deployment.Status.AvailableReplicas < 1 {
+		status := &fabricv1alpha1.ComponentStatus{Phase: "Provisioning", Endpoint: endpoint, Message: "waiting for tenant LiteLLM Deployment to become available"}
+		return aiGatewayResult{Status: status, Reason: "DeploymentProgressing", Message: status.Message, RequeueAfter: 5 * time.Second}, nil
+	}
+	status := &fabricv1alpha1.ComponentStatus{Phase: "Ready", Endpoint: endpoint}
+	return aiGatewayResult{Ready: true, Status: status, Reason: "DeploymentAvailable", Message: "tenant LiteLLM AI gateway is available"}, nil
 }
 
 func (r *TenantBundleReconciler) cleanupAIGateway(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (bool, error) {
@@ -114,7 +134,11 @@ func (r *TenantBundleReconciler) cleanupAIGateway(ctx context.Context, bundle *f
 	pending := false
 
 	objects := []client.Object{
+		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayName, Namespace: namespace}},
+		&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayName, Namespace: namespace}},
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayConfigMapName, Namespace: namespace}},
 		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayRuntimeSecretName, Namespace: namespace}},
+		&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayNetworkPolicy, Namespace: namespace}},
 		&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayMigrationPolicyName, Namespace: namespace}},
 	}
 	for _, object := range objects {
