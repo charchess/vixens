@@ -1,53 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ------------- config -------------
-YAMLLINT_CONFIG="${YAMLLINT_CONFIG:-yamllint-config.yml}"
-K8S_VERSION="${K8S_VERSION:-1.30.0}"
-SKIP_KINDS="${SKIP_KINDS:-Application,AppProject,CustomResourceDefinition}"
-# ------------- helpers -------------
-R=$(tput setaf 1) G=$(tput setaf 2) Y=$(tput setaf 3) N=$(tput sgr0)
-log()  { echo -e "$*"; }
-ok()   { log "${G}✅ $*${N}"; }
-err()  { log "${R}❌ $*${N}"; }
+cat >&2 <<'EOF'
+scripts/utils/gp is RETIRED.
 
-git_root=$(git rev-parse --show-toplevel)
+It encoded the removed permanent dev -> main workflow and must not be used.
 
-# ------------- 0. YAML fixes -------------
-mapfile -t files < <(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(yaml|yml)$' || true)
-for f in "${files[@]}"; do
-  perl -0777 -pe 's/[ \t]+\n/\n/g; s/\n*\z/\n/' -i "${git_root}/${f}"
-done
-git add "${files[@]}" 2>/dev/null || true
+Current Vixens flow:
+  1. refresh main and inspect concurrent PRs;
+  2. create a short-lived branch;
+  3. run applicable local/pre-commit validation;
+  4. push the branch and open a PR to main;
+  5. let CI gate the merge;
+  6. let ArgoCD reconcile dev;
+  7. promote an explicitly approved immutable dev-v* snapshot through
+     .github/workflows/promote-prod.yaml.
 
-# ------------- 1. lint / kubeval -------------
-if [[ ${#files[@]} -gt 0 ]]; then
-  log "${Y}🔍 Lint YAML…${N}"
-  yamllint -c "${git_root}/${YAMLLINT_CONFIG}" "${files[@]}"
-  log "${Y}🔍 Kubeval…${N}"
-  kubeval --ignore-missing-schemas --kubernetes-version "${K8S_VERSION}" \
-          --strict --skip-kinds "${SKIP_KINDS}" "${files[@]}"
-fi
+Read WORKFLOW.md and AGENTS.md for the canonical process.
+EOF
 
-# ------------- 2. push -------------
-git fetch origin
-git pull --rebase origin dev
-git push "$@"
-
-# ------------- 3. ensure delta -------------
-git fetch origin
-if git merge-base --is-ancestor origin/main HEAD; then
-  log "${Y}Creating delta…${N}"
-  git commit --allow-empty -m "delta: keep dev→main PR open"
-  git push
-fi
-
-# ------------- 4. PR auto-merge -------------
-# --- PR + auto-merge ---
-if ! gh pr view dev >/dev/null 2>&1; then
-  gh pr create --base main --head dev \
-               --title "Auto-sync dev → main (permanent)" \
-               --body "Do not close"
-fi
-gh pr merge dev --auto --merge 2>/dev/null || true
-ok "Push + PR OK"
+exit 2
