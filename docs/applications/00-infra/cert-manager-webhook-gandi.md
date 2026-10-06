@@ -24,5 +24,5 @@ kubectl get pods -n cert-manager -l app.kubernetes.io/name=cert-manager-webhook-
 - **Namespace :** `cert-manager`
 - **Dépendances :**
     - `cert-manager`
-    - `Infisical` (Secret `gandi-credentials`)
-- **Particularités :** Permet la validation DNS pour les domaines gérés par Gandi. Le secret API Key est synchronisé depuis Infisical.
+    - OpenBao + External Secrets Operator (`ExternalSecret/gandi-credentials-sync` → `Secret/gandi-credentials`)
+- **Particularités :** Permet la validation DNS pour les domaines gérés par Gandi. Le secret API Key est projeté depuis OpenBao via `ClusterSecretStore/openbao`.
