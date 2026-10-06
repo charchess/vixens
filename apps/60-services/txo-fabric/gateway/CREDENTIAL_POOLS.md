@@ -241,9 +241,11 @@ Hermes/Hindsight -> tenant LiteLLM -> CPA and/or ordinary model backends
 The shared gateway remains authoritative until the tenant-local gateway has an
 accepted database/key/metering contract and the physical smoke tests pass.
 
-The direct-CPA `fabric-smoke` activation from #3884 is not a production
-candidate. #3885 converts that desired state to an internal credential broker
-before promotion.
+`fabric-smoke` is a parked recovery shell under #3815 and must remain free of
+steady-state runtime compute. The temporary direct-CPA activation introduced by
+#3884/#3886 is retired before promotion. Physical AI-plane acceptance must use a
+purpose-built disposable test tenant created for the validation window, then
+removed again through GitOps.
 
 ## Required tests
 
