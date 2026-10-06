@@ -55,15 +55,27 @@ spec:
           spec:
             description: TenantBundleSpec is the desired state of one Fabric Cell.
             properties:
-              aiGateway:
+              aiCredentialBroker:
                 description: |-
-                  AIGateway requests the tenant-local inference gateway. The profile owns
-                  implementation details; provider/OAuth credentials never appear in this CR.
+                  AICredentialBroker requests the tenant-local OAuth/subscription credential
+                  broker used as an internal backend by the AI gateway.
                 properties:
                   profileRef:
                     default: cliproxyapi-standard
-                    description: ProfileRef selects a platform-owned tenant gateway
-                      implementation profile.
+                    description: ProfileRef selects the tenant-local OAuth/subscription
+                      credential broker profile.
+                    maxLength: 128
+                    type: string
+                type: object
+              aiGateway:
+                description: |-
+                  AIGateway requests the tenant-facing LiteLLM inference gateway. The profile
+                  owns runtime details; provider/OAuth credentials never appear in this CR.
+                properties:
+                  profileRef:
+                    default: litellm-standard
+                    description: ProfileRef selects the tenant-facing LiteLLM gateway
+                      profile.
                     maxLength: 128
                     type: string
                 type: object
@@ -374,6 +386,25 @@ spec:
           status:
             description: TenantBundleStatus is the observed state of a Fabric Cell.
             properties:
+              aiCredentialBroker:
+                properties:
+                  endpoint:
+                    description: Endpoint is the resolved in-cluster endpoint, when
+                      the component exposes one.
+                    type: string
+                  humanEndpoint:
+                    description: |-
+                      HumanEndpoint is the stable authenticated human-facing endpoint when the
+                      component exposes an operator/admin WebUI.
+                    type: string
+                  message:
+                    description: Message contains a human-readable explanation for
+                      non-ready states.
+                    type: string
+                  phase:
+                    description: Phase is a concise machine-readable lifecycle state.
+                    type: string
+                type: object
               aiGateway:
                 properties:
                   endpoint:
