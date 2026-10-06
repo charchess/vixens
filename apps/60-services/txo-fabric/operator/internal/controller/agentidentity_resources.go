@@ -357,6 +357,20 @@ func (r *AgentIdentityReconciler) ensureEgressPolicy(ctx context.Context, agent 
 				},
 			},
 		}
+		if tenant.Spec.AIGateway != nil {
+			// During staged migration, keep the historical shared gateway route above
+			// while also allowing this tenant's Hermes runtimes to reach the
+			// tenant-local LiteLLM facade. The shared route is removed only when the
+			// consumer cutover is completed.
+			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+				To: []networkingv1.NetworkPolicyPeer{{PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+					LabelManaged:    "true",
+					LabelTenantName: tenant.Name,
+					"app.kubernetes.io/component": "tenant-ai-gateway",
+				}}}},
+				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(4000)}},
+			})
+		}
 		if tenant.Spec.Memory.Hindsight != nil {
 			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
 				To: []networkingv1.NetworkPolicyPeer{{PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hindsight"}}}},
