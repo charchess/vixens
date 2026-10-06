@@ -12,6 +12,7 @@ resources:
   - ../../tenants/hairem
   - ../../tenants/hairem-sandbox
   - ../../tenants/fabric-smoke
+  - ../../tenants/ai-plane-smoke
 
 # Phase 2b activates the authoritative operator after phase 2a proved that the
 # legacy control objects could be pruned without affecting the running sandbox.
