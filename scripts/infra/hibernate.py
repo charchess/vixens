@@ -247,7 +247,9 @@ def main():
             subprocess.run(["git", "add", patch_path, ARGOCD_KUST_PATH])
             subprocess.run(["git", "commit", "-m", commit_msg])
             print(f"🔄 Commit effectué: {commit_msg}")
-            print("💡 N'oubliez pas de faire 'git push origin main' pour appliquer.")
+            print("💡 Push la branche puis ouvre une PR vers main :")
+            print("   git push -u origin HEAD")
+            print("   gh pr create --base main --fill")
         else:
             print(f"❌ Erreur patch: {patch_path}, Erreur ArgoCD: {argocd_msg}")
 
