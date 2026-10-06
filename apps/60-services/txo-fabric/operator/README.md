@@ -22,6 +22,9 @@ policy/admission engine, not the Fabric lifecycle engine.
   The first supported topology is `SharedCluster`: TXO references a GitOps-owned
   CloudNativePG Cluster and owns only tenant `Database`, `DatabaseRole` and
   credential Secret resources.
+- `AIGatewayProfile` describes the platform-owned tenant inference gateway
+  implementation. The v0.1 target is one pinned CLIProxyAPI instance per
+  `TenantBundle`, with provider OAuth state isolated from every AgentIdentity PVC.
 
 The operator rejects two live `AgentIdentity` resources that claim the same
 `tenantRef.name + agentKey` pair instead of letting them fight over the same
@@ -35,6 +38,8 @@ The current controller reconciles:
   `DatabaseRole` resources, with generated secret-backed credentials and required
   extensions declared by `PostgreSQLProfile`;
 - explicit reclaim semantics for tenant PostgreSQL resources;
+- opt-in tenant-scoped CLIProxyAPI gateway substrate, including isolated OAuth-state
+  storage, generated client/management credentials, Service and NetworkPolicy;
 - finalizers and standard Kubernetes status conditions;
 - a semantic runtime probe that verifies a real `hermes gateway run` process,
   avoiding the prior `s6 + sleep infinity` false-positive readiness state.
@@ -43,9 +48,15 @@ TXO never owns or mutates the referenced CloudNativePG `Cluster`; RBAC grants th
 operator read-only access to that dependency. Tenant database credentials are
 generated outside Git and never copied into Fabric status.
 
-Hindsight, memory-bank lifecycle and optional Fabric modules remain represented in
-`TenantBundle` but are reported as pending until their reconcilers are implemented.
-They must not be added as more Kyverno generate rules.
+Hindsight and its memory-bank lifecycle are reconciled by the current controller.
+Optional Fabric modules remain represented in `TenantBundle` but are reported as
+pending until their reconcilers are implemented. They must not be added as more
+Kyverno generate rules.
+
+The tenant AI gateway is an incremental #3868 substrate. Existing tenants are not
+cut over from the shared LiteLLM/OpenRouter path until the pinned CLIProxyAPI runtime,
+OAuth lifecycle, cross-tenant isolation and accounting collector path pass physical
+acceptance.
 
 ## Development
 
