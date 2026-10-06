@@ -6,6 +6,7 @@ metadata:
   namespace: databases
   annotations:
     argocd.argoproj.io/sync-wave: "2"
+    cnpg.io/hibernation: "on"
 spec:
   instances: 1
   priorityClassName: vixens-critical
