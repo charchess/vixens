@@ -28,7 +28,7 @@ curl -L -k https://homeassistant.dev.truxonline.com | grep "Home Assistant"
 ## Notes Techniques
 - **Namespace :** `homeassistant`
 - **Dépendances :**
-    - `Infisical` (Secret `homeassistant-config`)
+    - OpenBao + External Secrets Operator (`ExternalSecret/homeassistant-secrets-sync` when the optional OpenBao component is enabled)
     - `Reloader` (Redémarrage auto sur modif config)
     - `PostgreSQL` (Cluster partagé, via `homeassistant-postgresql-credentials`)
     - `Traefik` (Ingress)
