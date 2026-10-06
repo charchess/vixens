@@ -17,6 +17,30 @@ Ce fichier complète [WORKFLOW.md](WORKFLOW.md) pour les assistants et agents au
 9. Laisser CI valider la PR, puis ArgoCD réconcilier le cluster.
 10. Mettre à jour la documentation lorsque le contrat, l'architecture ou la procédure change.
 
+## Sources de vérité et reprise à froid
+
+Un agent qui reprend le projet doit reconstruire le contexte depuis les sources partagées, pas depuis une conversation privée ou un résumé ancien.
+
+| Sujet | Source de vérité |
+|---|---|
+| Workflow de contribution, validation et promotion | `WORKFLOW.md` |
+| Besoin, scope et critères d'acceptation | GitHub Issue et ses commentaires |
+| Planification | GitHub Project `vixens roadmap` : `Status`, `Priority`, `Target` |
+| État désiré exécutable | `main`, workflows GitHub et manifests courants |
+| Architecture / décisions | documentation active et ADR pertinents |
+| Réalité runtime | observation read-only du cluster, lorsqu'elle est nécessaire à la validation |
+
+Ordre minimal pour reprendre un chantier à froid :
+
+1. lire `WORKFLOW.md` et `AGENTS.md` ;
+2. lire l'issue complète, ses commentaires et ses critères d'acceptation ;
+3. vérifier sa carte dans `vixens roadmap` et ses champs de pilotage ;
+4. vérifier le `main` GitHub courant et les PR ouvertes concurrentes ;
+5. lire les documents/ADR liés puis vérifier le comportement réellement exécutable dans Git ;
+6. observer le cluster en lecture seule uniquement si la question dépend de l'état runtime.
+
+Un résumé de chat, une copie locale, un rapport historique ou un ancien guide peut aider à retrouver des pistes, mais ne doit jamais remplacer ces sources. Si une documentation active contredit le comportement exécutable courant, corriger ou signaler la dérive au lieu de construire dessus silencieusement.
+
 ## Traiter une issue
 
 Quand une issue est donnée comme objectif de travail :
@@ -30,13 +54,19 @@ Quand une issue est donnée comme objectif de travail :
 
 ## GitHub Project / roadmap
 
-Le GitHub Project personnel **`vixens roadmap`** (owner `charchess`) est la vue de planification active du travail. L'issue reste la source du besoin et de ses critères d'acceptation ; Git et les manifests restent la source du comportement exécutable ; le Project porte la planification (`Target`, `Status` et autres champs de pilotage).
+Le GitHub Project personnel **`vixens roadmap`** (owner `charchess`) est la vue de planification active du travail. L'issue reste la source du besoin et de ses critères d'acceptation ; Git et les manifests restent la source du comportement exécutable ; le Project porte la planification (`Status`, `Priority`, `Target` et autres champs de pilotage).
+
+Les champs actifs à maintenir sont notamment :
+
+- `Status` : `Todo`, `In Progress`, `On hold`, `Done` ;
+- `Priority` : `P0` priorité absolue/bloquante, `P1` haute, `P2` normale, `P3` opportuniste ;
+- `Target` : cible produit/release telle que `v0`, `v0.1`, `v0.2`, `v1`, distincte d'une itération temporelle.
 
 Lorsqu'un chantier touche une issue planifiée :
 
 - vérifier que l'issue est présente dans `vixens roadmap` avant de commencer un travail significatif ;
 - si une nouvelle issue est créée pendant l'analyse ou l'implémentation, l'ajouter au Project dans le même flux de travail plutôt que la laisser hors roadmap ;
-- maintenir le champ de cible de release (`Target`, par exemple `v0`, `v0.1`, `v1`) cohérent avec la décision produit courante ; ne pas confondre une cible de release avec une itération/sprint temporel ;
+- maintenir `Priority` et le champ de cible de release (`Target`) cohérents avec la décision produit courante ; ne pas confondre une cible de release avec une itération/sprint temporel ;
 - maintenir `Status` cohérent avec l'état réel du chantier lorsque l'environnement permet de le faire ; une PR ouverte, un merge ou une CI verte ne remplacent pas une validation physique requise ;
 - lorsqu'une découverte change réellement le scope ou la cible, mettre à jour l'issue et le Project ensemble, avec une justification traçable ;
 - ne pas déplacer silencieusement un ticket vers une release ultérieure pour contourner un critère d'acceptation ; toute sortie de scope doit être une décision explicite ;
@@ -58,6 +88,19 @@ Plusieurs humains ou agents peuvent intervenir en parallèle. Avant chaque séri
 - éviter de réécrire le travail d'un autre agent sans vérifier GitHub ;
 - préférer plusieurs petites PR indépendantes à une PR transversale difficile à raisonner.
 
+## Handoff / reprise de chantier
+
+Avant d'interrompre un chantier significatif ou de le transmettre à un autre agent, laisser dans l'issue assez d'information pour reprendre sans historique privé :
+
+- conclusion ou hypothèse causale actuelle ;
+- branche/PR/commit pertinent ;
+- validations réellement effectuées et résultats ;
+- candidat `dev-v*` éventuel et son statut de validation ;
+- validation physique encore nécessaire ;
+- blockers, risques et prochain geste recommandé.
+
+Synchroniser également `Status`, `Priority` et `Target` du Project lorsqu'ils ont réellement changé. Ne pas marquer `Done` uniquement parce que le code a mergé si les critères d'acceptation exigent encore une validation runtime/physique.
+
 ## GitOps
 
 Le chemin normal est :
@@ -73,8 +116,8 @@ Les actions runtime sont acceptables pour **observer et diagnostiquer** (`get`, 
 - `hAIrem` est le **Client 0** de TXO Fabric. Il doit utiliser les mêmes contrats génériques que les futurs clients ; ne pas ajouter de comportement spécial codé pour `hAIrem` dans les contrôleurs génériques.
 - `TenantBundle` porte l'intention tenant/bundle ; `AgentIdentity` porte l'identité et le runtime d'un agent. Vérifier les ressources dérivées live lorsqu'un changement touche leur réconciliation.
 - GitHub Actions n'a pas accès au cluster physique ni à ArgoCD. Ne pas inventer de smoke test CI qui suppose cet accès. Les validations physiques nécessaires sont effectuées après convergence GitOps.
-- La promotion production est une autorisation humaine explicite. Le workflow de promotion crée le `prod-v*` immuable et déplace `prod-stable` ; ne pas promouvoir automatiquement parce qu'une PR a mergé.
-- `prod-working` est un bookmark manuel d'un état physiquement validé. Il ne doit pas être déplacé automatiquement à chaque promotion.
+- La promotion production est une autorisation humaine explicite **pour un candidat précis**. Un agent peut préparer/recommander la commande, mais ne doit exécuter `promote-prod.yaml` que si l'utilisateur/opérateur a explicitement autorisé ce `dev-v*`. Une PR mergée, une CI verte ou un tag dev existant ne constituent pas cette autorisation.
+- `prod-working` est un bookmark manuel d'un état physiquement validé. Un agent ne doit exécuter son workflow que sur autorisation explicite pour la release concernée ; il ne doit pas être déplacé automatiquement à chaque promotion.
 - Pour l'opérateur Fabric, les artefacts générés (`CRD`, RBAC, etc.) ne sont utiles que s'ils sont à la fois correctement générés **et effectivement inclus** dans les rendus/Kustomizations consommés par ArgoCD.
 - Une validation doit distinguer un vrai résultat fonctionnel d'un prérequis absent. Exemple : un test d'écriture n'est pas un PASS si le pod, le mount ou le PVC attendu n'existe pas.
 - Pour les commandes destinées à être copiées dans un shell interactif, ne pas utiliser `set -euo pipefail` au niveau supérieur. Si un strict mode est utile, l'isoler dans un sous-shell ou un script. Les diagnostics doivent autant que possible collecter plusieurs signaux avant de sortir.
@@ -96,7 +139,7 @@ Pour toute intervention sur le TXO Fabric Operator :
 - traiter `go test -race` comme un gate de l'operator ; une race détectée est un défaut bloquant ;
 - consulter les artefacts de couverture CI pour repérer les chemins non testés, sans poursuivre un pourcentage au détriment de scénarios significatifs.
 
-Ces TU complètent, mais ne remplacent pas, envtest/kind et les validations physiques exigées par les dépendances réelles.
+Ces TU complètent les couches plus réalistes disponibles pour le scope. Utiliser envtest/kind lorsqu'une telle fondation existe réellement ; leur généralisation pour l'operator reste suivie séparément. Les dépendances impossibles à simuler correctement (CSI/TrueNAS, Cilium, ArgoCD, services externes réels) nécessitent toujours la validation adaptée, pouvant aller jusqu'au cluster physique.
 
 ## Validation
 
