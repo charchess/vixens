@@ -11,6 +11,7 @@ spec:
   implementation: LiteLLM
   image: ghcr.io/berriai/litellm-non_root:v1.102.1
   apiPort: 4000
+  postgresqlProfileRef: postgresql-litellm
   resources:
     requests:
       cpu: 250m
