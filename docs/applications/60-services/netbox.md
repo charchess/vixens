@@ -32,7 +32,7 @@ curl -L -k https://netbox.dev.truxonline.com | grep "NetBox"
 - **Dépendances :**
     - `PostgreSQL` (Cluster partagé)
     - `Redis` (Cluster partagé)
-    - `Infisical` (Secrets DB et Secret Key)
+    - OpenBao + External Secrets Operator (`ExternalSecret/netbox-secrets-sync`; DB/Redis credentials are also projected through ESO)
 - **Particularités :** IPAM et DCIM. Migrations de base de données exécutées au démarrage du conteneur (délai possible).
 ---
 > ⚠️ **HIBERNATION DEV**
