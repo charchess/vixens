@@ -28,7 +28,7 @@ kubectl get ingress -n finance
 - **Category:** `60-services`
 - **Dependencies:**
     - `postgresql-shared` (Database)
-    - `infisical` (Secrets)
+    - OpenBao + External Secrets Operator (`ExternalSecret/firefly-iii-secrets-sync` → `Secret/firefly-iii-secrets`)
     - `legacy-csi` (Backup storage/Litestream)
 - **Specifics:**
     - Uses `rclone` sidecar for Litestream S3 sync.
