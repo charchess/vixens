@@ -7,7 +7,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 cd "$REPO_ROOT"
 
@@ -125,9 +125,10 @@ if [ $errors -eq 0 ]; then
   echo "✅ Validation réussie! Aucune erreur détectée."
   echo ""
   echo "Prochaines étapes:"
-  echo "  1. Commit: git add -A && git commit -m 'feat(argocd): add sync waves'"
-  echo "  2. Push: git push origin main (via PR)"
-  echo "  3. Observer ArgoCD auto-sync"
+  echo "  1. Commit sur une branche courte: git add -A && git commit -m 'feat(argocd): adjust sync waves'"
+  echo "  2. Push de la branche: git push -u origin HEAD"
+  echo "  3. Ouvrir la PR: gh pr create --base main --fill"
+  echo "  4. Après merge, observer ArgoCD auto-sync"
   exit 0
 else
   echo "❌ Validation échouée: $errors erreur(s) détectée(s)"
