@@ -1,7 +1,16 @@
 # ADR-013: Renovate Discord Approval Workflow
 
 **Date:** 2026-01-02
-**Status:** Accepted
+**Status:** Deprecated
+
+> **Current implementation note (2026-10-06):** Discord notifications remain in
+> `.github/workflows/renovate-discord-notify.yaml`, but this ADR's mandatory
+> label-based approval policy is no longer the repository contract. Renovate now
+> targets `main` and `renovate.json` enables platform auto-merge for non-major
+> updates after required checks; major updates remain manual. The `approved`
+> label workflow still exists as an additional explicit path/notification, not as
+> the sole authorization mechanism. See `renovate.json`, ADR-007 and the current
+> application documentation for executable behavior.
 **Deciders:** DevOps, Automation Team
 **Tags:** automation, renovate, discord
 
