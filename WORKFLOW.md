@@ -44,6 +44,10 @@ GitHub Issue
     ↓
 feature/fix/chore branch depuis main courant
     ↓
+modifications locales + validations adaptées / pre-commit
+    ↓
+commit + push
+    ↓
 Pull Request
     ↓
 CI / review
@@ -97,9 +101,46 @@ git switch -c feat/<issue>-<slug>
 
 Préfixes usuels : `feat/`, `fix/`, `chore/`, `docs/`, `refactor/`.
 
-### 3. Pull Request et CI
+### 3. Validation locale et pre-commit
+
+La validation locale est la première couche de feedback. Elle doit rester proportionnée au changement et ne remplace jamais la CI.
+
+Installer les hooks lorsque l'environnement local le permet :
+
+```bash
+pipx install pre-commit
+pre-commit install
+```
+
+Exécuter les hooks sur les fichiers stagés avant commit :
+
+```bash
+pre-commit run
+```
+
+Pour une vérification complète ponctuelle :
+
+```bash
+pre-commit run --all-files
+```
+
+Les hooks actuels couvrent notamment la détection de secrets, l'hygiène de fichiers, la syntaxe/style YAML et certains contrôles sémantiques ArgoCD.
+
+Choisir ensuite les validations supplémentaires selon le scope :
+
+- documentation uniquement : liens/cohérence documentaire et checks rapides applicables ;
+- manifests/Kustomize/ArgoCD : rendu YAML/Kustomize/Kubeconform et contrôles structurels pertinents ;
+- code d'un composant : tests/lint/vet propres à ce composant ;
+- TXO Fabric Operator : politique de tests dédiée ci-dessous ;
+- impact impossible à borner proprement : préférer une validation plus profonde plutôt qu'une confiance artificielle.
+
+Ne pas exécuter des tests runtime coûteux et sans rapport uniquement par cérémonie. À l'inverse, ne jamais annoncer comme validé un contrôle qui n'a pas réellement été exécuté.
+
+### 4. Pull Request et CI
 
 La PR doit rester limitée au scope de l'issue. Les checks GitHub constituent les garde-fous exécutables du dépôt : rendu YAML/Kustomize, qualité, sécurité et contrôles structurels selon le workflow concerné.
+
+La CI est le **gate de merge autoritatif** : les validations locales donnent un feedback plus tôt mais ne prouvent pas qu'elles ont été installées/exécutées partout. Le job requis `Validation Summary` agrège les familles de validation applicables ; un check explicitement non applicable peut être skipped, mais un échec, timeout, annulation ou skip inattendu bloque le merge.
 
 #### TXO Fabric Operator — politique de tests de non-régression
 
@@ -125,7 +166,7 @@ gh pr create --base main --fill
 
 Ne pas contourner un check en modifiant le cluster à la main.
 
-### 4. Dev
+### 5. Dev
 
 Après merge, `main` représente l'état désiré de dev. ArgoCD synchronise automatiquement.
 
@@ -137,7 +178,7 @@ kubectl -n argocd get applications
 
 Pour une application ciblée, attendre `Synced` et `Healthy` puis réaliser les tests fonctionnels pertinents.
 
-### 5. Tags dev
+### 6. Tags dev
 
 Le workflow `auto-tag-dev.yaml` crée automatiquement un snapshot dev immuable après chaque push sur `main`.
 
@@ -163,7 +204,7 @@ Certains changements source déclenchent volontairement une seconde PR généré
 
 Dans ce cas, le tag dev du changement source est **intermédiaire**. Il ne doit pas être promu en production. Le candidat à la promotion est le `dev-v*` créé après merge de la PR de pin générée, afin que le desired state Git et l'image immuable construite depuis les mêmes sources soient promus ensemble.
 
-### 6. Promotion production
+### 7. Promotion production
 
 La promotion production passe **uniquement** par GitHub Actions et constitue une décision humaine explicite sur le snapshot choisi :
 
@@ -194,7 +235,7 @@ Le workflow crée :
 
 Les protections GitHub côté serveur pour les familles de tags immuables sont suivies séparément ; les workflows refusent déjà de réutiliser un tag versionné s'il pointe vers un autre commit.
 
-### 7. `prod-working`
+### 8. `prod-working`
 
 `prod-working` est un marqueur manuel vers un état production connu comme fonctionnel.
 
@@ -204,7 +245,7 @@ Les protections GitHub côté serveur pour les familles de tags immuables sont s
 - Les tags `prod-v*` restent la trace historique immuable et permettent de retrouver précisément toute release.
 - Son workflow le déplace atomiquement et vérifie ensuite la cible résolue.
 
-### 8. Validation prod
+### 9. Validation prod
 
 Après promotion, attendre ArgoCD `Synced/Healthy` puis tester le comportement réellement modifié. Une issue n'est considérée terminée qu'après validation adaptée au changement.
 

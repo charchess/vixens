@@ -5,6 +5,18 @@
 **Deciders:** System Architect, DevOps
 **Tags:** gitops, workflow, trunk-based
 
+> **Current implementation note (2026-10-06):** the architectural decision in
+> this ADR remains accepted: `main` is the only long-lived development branch
+> and production follows a promoted tag. Some operational commands and tag
+> semantics below record the 2026-01 implementation state and are **not current
+> runbook instructions**. Today `auto-tag-dev.yaml` creates immutable
+> `dev-vYYYY.MM.<PR-or-sha>` snapshots automatically; production is promoted from
+> one explicitly validated snapshot only through `promote-prod.yaml`, which
+> creates/verifies `prod-v*` and moves `prod-stable`. Do not manually
+> force-move `prod-stable` or use the rollback snippets below as the normal
+> procedure. See root `WORKFLOW.md` and `docs/guides/promotion-workflow.md` for
+> the current operational contract.
+
 ---
 
 ## Context

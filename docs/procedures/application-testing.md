@@ -1,5 +1,10 @@
 # Application Testing Process
 
+> This procedure supplements the canonical repository workflow. `WORKFLOW.md`
+> and `AGENTS.md` remain authoritative: experiments also use a short-lived
+> branch, PR, CI and ArgoCD reconciliation. Do not push directly to `main` or
+> move production tags manually.
+
 ## Overview
 
 This document describes the process for testing and evaluating new applications before deploying them to production.
@@ -22,11 +27,16 @@ When evaluating multiple similar applications (e.g., comparing different note-ta
    - No authentication required for initial testing
 
 3. **Deploy to Dev Cluster**
+   - Add the test application on a short-lived branch.
+   - Run applicable local/pre-commit checks.
+   - Open a PR to `main`; after CI/merge, ArgoCD dev reconciles `main`.
+
    ```bash
-   # Applications in apps/99-test/ will be auto-synced by ArgoCD
+   git switch -c test/<issue>-<app-name>
    git add apps/99-test/<app-name>
    git commit -m "test: add <app-name> for evaluation"
-   git push
+   git push -u origin HEAD
+   gh pr create --base main --fill
    ```
 
 4. **User Evaluation**
@@ -35,11 +45,15 @@ When evaluating multiple similar applications (e.g., comparing different note-ta
    - User decides which application to keep
 
 5. **Cleanup Test Applications**
+   - Remove rejected desired state through the same branch/PR/CI flow and let
+     ArgoCD prune what Git no longer declares.
+
    ```bash
-   # Remove unused applications from test directory
+   git switch -c test/<issue>-cleanup
    git rm -r apps/99-test/<rejected-app>
    git commit -m "test: remove rejected <app-name>"
-   git push
+   git push -u origin HEAD
+   gh pr create --base main --fill
    ```
 
 ### Phase 2: Proper Deployment
@@ -67,10 +81,12 @@ Once the user has selected an application:
    - Validate resource usage
 
 4. **Promotion to Production**
-   - Follow standard GitOps promotion workflow
-   - Update production overlay with prod-specific config
-   - Tag with `prod-stable` tag
-   - Validate in production
+   - Follow the canonical promotion workflow in `WORKFLOW.md`.
+   - Update production overlay/config through Git and PR if needed.
+   - Validate the selected immutable `dev-v*` candidate in dev.
+   - After explicit operator authorization, run `promote-prod.yaml`; the
+     workflow owns `prod-v*` and `prod-stable`.
+   - Validate the resulting production behavior.
 
 ---
 
@@ -188,7 +204,8 @@ mkdir -p apps/99-test/{joplin,trilium,obsidian}
 
 git add apps/99-test/
 git commit -m "test: compare note-taking applications"
-git push
+git push -u origin HEAD
+gh pr create --base main --fill
 
 # User tests each:
 # - https://joplin-test.dev.truxonline.com
@@ -214,7 +231,7 @@ git push
 After testing is complete:
 
 - [ ] Remove test applications from `apps/99-test/`
-- [ ] Delete test PVCs (if any)
+- [ ] Retire test PVC desired state through Git; perform any destructive retained-volume cleanup only when explicitly intended
 - [ ] Remove test DNS records (if custom)
 - [ ] Clean up test secrets (if any)
 - [ ] Verify ArgoCD has removed test applications
@@ -229,4 +246,4 @@ After testing is complete:
 
 ---
 
-**Last Updated:** 2026-01-11
+**Last Updated:** 2026-10-06

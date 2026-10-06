@@ -51,6 +51,11 @@ Ne pas recréer manuellement un tag dev déjà produit par le workflow.
 
 ## 2. Promouvoir
 
+La commande de promotion est l'autorisation humaine explicite pour **ce candidat
+`dev-v*` précis**. Un agent automatisé peut préparer la commande mais ne doit pas
+l'exécuter sans instruction explicite de l'utilisateur/opérateur après les
+validations pertinentes.
+
 Déclencher le workflow GitHub avec la version exacte du tag dev, sans le préfixe `dev-` :
 
 ```bash
@@ -110,7 +115,8 @@ La GitHub Release `prod-v...` doit contenir :
 
 `prod-working` est un marqueur de secours **manuel**. Il n'est jamais mis à jour automatiquement après une promotion.
 
-Après avoir confirmé qu'une release fonctionne réellement :
+Après avoir confirmé qu'une release fonctionne réellement et après autorisation
+explicite pour marquer cette release connue-bonne :
 
 ```bash
 gh workflow run mark-prod-working.yaml -f version=vYYYY.MM.<PR>

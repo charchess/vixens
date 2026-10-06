@@ -19,14 +19,18 @@ You are an expert in operating the Vixens Kubernetes clusters.
 
 ## ⚠️ GitOps Reminder
 
-| Operation Type | Allowed? | Why |
-|----------------|----------|-----|
-| **Read-only** (`get`, `describe`, `logs`) | ✅ Always | Diagnosis doesn't modify state |
-| **ArgoCD control plane** (`patch application`) | ✅ Yes | Triggers sync, doesn't modify apps directly |
-| **Talos operations** | ✅ Yes | Infrastructure layer, not app state |
-| **App modifications** (`apply`, `patch deployment`) | ❌ No | Will be overwritten by ArgoCD self-heal |
+| Operation Type | Default stance | Why |
+|----------------|----------------|-----|
+| **Read-only** (`get`, `describe`, `logs`) | ✅ Normal | Diagnosis doesn't modify desired state |
+| **ArgoCD refresh** | ⚠️ Diagnose first | Cache refresh is usually non-destructive but still a live control-plane action |
+| **ArgoCD sync/patch/restart/prune** | ⛔ Not blanket-safe | Can mutate live state or amplify a repository/control-plane failure |
+| **Talos reboot/upgrade/config changes** | ⛔ Separate infrastructure operation | Vixens is not the desired-state source for Talos infrastructure |
+| **App modifications** (`apply`, `patch deployment`) | ❌ No persistent fix | Desired state belongs in Git |
 
-**For app changes, see `vixens-gitops` skill (Git → ArgoCD flow).**
+For app changes, follow `WORKFLOW.md` / `AGENTS.md` and the `vixens-gitops` adapter.
+Before any invasive ArgoCD action, load `vixens-argocd-safety`.
+Infrastructure mutations such as Talos upgrade/reconfiguration require the
+appropriate infrastructure source of truth and explicit operator intent.
 
 ---
 
@@ -57,9 +61,11 @@ export TALOSCONFIG=.secrets/dev/talosconfig-dev
 
 ---
 
-## ArgoCD Operations (Control Plane)
+## ArgoCD observation and recovery
 
-> These commands modify ArgoCD Application resources, not app deployments directly. This is GitOps-safe.
+Read-only inspection is the default. Refresh/sync/restart/prune operations are not
+automatically safe simply because they target ArgoCD. Diagnose first and use
+`vixens-argocd-safety` before a live control-plane mutation.
 
 ### Check All Apps
 ```bash
@@ -81,42 +87,23 @@ kubectl -n argocd get application $APP -o yaml
 kubectl -n argocd get application $APP -o jsonpath='{.status.sync.revision}'
 ```
 
-### Force Refresh (Fetch Latest from Git)
+### Refresh after diagnosis
+
+A normal/hard refresh may be appropriate when Git is already known-correct and the
+problem is only ArgoCD's cached repository resolution:
+
 ```bash
-# Safe: just triggers Git fetch, no app changes
-kubectl -n argocd annotate application $APP argocd.argoproj.io/refresh=hard --overwrite
+kubectl -n argocd annotate application "$APP" \
+  argocd.argoproj.io/refresh=normal --overwrite
+
+# escalate to hard refresh only when justified
+kubectl -n argocd annotate application "$APP" \
+  argocd.argoproj.io/refresh=hard --overwrite
 ```
 
-### Force Sync (Apply Git State to Cluster)
-```bash
-# Safe: applies what's in Git, not manual changes
-kubectl -n argocd patch application $APP --type merge -p '{"operation":{"initiatedBy":{"automated":true},"sync":{"revision":"HEAD"}}}'
-```
-
-### Force Sync with Prune
-```bash
-kubectl -n argocd patch application $APP --type merge -p '{"operation":{"initiatedBy":{"automated":true},"sync":{"revision":"HEAD","prune":true}}}'
-```
-
----
-
-## GitOps Workflow
-
-### Branch Strategy
-- `main` = Dev HEAD (deployed to dev cluster)
-- `prod-stable` tag = Production (deployed to prod cluster)
-- Apps target `prod-stable` for prod, `main` for dev
-
-### Check prod-stable vs main
-```bash
-git log --oneline -1 prod-stable
-git log --oneline -1 main
-git rev-list --left-right --count prod-stable...main
-```
-
-> **For promotion workflow, see `vixens-gitops` skill.**
-
----
+Do **not** embed generic force-sync or prune snippets here. If reconciliation still
+fails, inspect targetRevision, repo-server health, events and the expected Git
+revision, then follow `vixens-argocd-safety`.
 
 ## Debugging (Read-Only)
 
@@ -197,7 +184,11 @@ kubectl -n legacy-csi logs -l app=legacy-csi-controller --tail=50
 
 ## Talos Operations (Infrastructure Layer)
 
-> Talos operations are GitOps-safe: they manage the infrastructure, not app state.
+Talos is a separate infrastructure boundary. Read-only inspection can support a
+Vixens diagnosis, but reboot, upgrade and configuration changes are **not**
+implicitly authorized by this repository workflow and are not automatically
+"GitOps-safe". Use the infrastructure repository/process and explicit operator
+authorization for persistent or disruptive actions.
 
 ```bash
 # Cluster health

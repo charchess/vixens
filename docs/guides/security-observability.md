@@ -393,7 +393,7 @@ feature branch
 Promote a version:
 
 ```bash
-gh workflow run promote-prod.yaml --ref main -f version=YYYY.MM.PR
+gh workflow run promote-prod.yaml --ref main -f version=vYYYY.MM.PR
 ```
 
 For the work documented here, the main PR sequence was:
