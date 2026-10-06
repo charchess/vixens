@@ -1,0 +1,22 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: PostgreSQLProfile
+metadata:
+  name: postgresql-litellm
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: persistence-profile
+    fabric.truxonline.io/purpose: ai-gateway
+spec:
+  provider: CloudNativePG
+  topology: SharedCluster
+  shared:
+    clusterRef:
+      name: postgresql-shared
+      namespace: databases
+    databaseNamePrefix: txo_
+    roleNamePrefix: txo_
+  # Gateway virtual keys, metering and budget state are durable platform state.
+  # Removing an opt-in capability must not silently destroy that ledger.
+  databaseReclaimPolicy: Retain
+  roleReclaimPolicy: Retain
