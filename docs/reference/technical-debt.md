@@ -1,9 +1,16 @@
 # Registre de la Dette Technique (Technical Debt Registry) 📒
 
-## 🎯 Rôle du document
-Ce registre n'est pas un simple inventaire de bugs, mais un journal de bord des **arbitrages d'ingénierie**. Il documente les moments où nous avons délibérément choisi de dévier de nos standards (Goldification, Sizing Kyverno, DRY) pour privilégier la **continuité de service** ou la **stabilité immédiate** du cluster.
+> **Tracking actuel : GitHub Issues + `vixens roadmap`.**
+>
+> Les anciens identifiants `vixens-*` / Beads conservés ci-dessous sont des
+> références historiques et ne constituent pas un backlog actif. Toute dette
+> encore pertinente doit avoir une GitHub Issue compréhensible et planifiée selon
+> les règles de `AGENTS.md`.
 
-L'objectif est de s'assurer que chaque "raccourci" est identifié, justifié et associé à une trajectoire de retour à la conformité via une tâche **Beads**.
+## 🎯 Rôle du document
+Ce registre n'est pas un simple inventaire de bugs, mais un journal de bord des **arbitrages d'ingénierie**. Il documente les moments où nous avons délibérément choisi de dévier de nos standards pour privilégier la **continuité de service** ou la **stabilité immédiate** du cluster.
+
+L'objectif est de conserver le contexte des arbitrages. L'état d'exécution, la priorité, la cible et la trajectoire de retour à la conformité vivent dans GitHub Issues / `vixens roadmap`, pas dans une base locale parallèle.
 
 ---
 
@@ -20,7 +27,7 @@ Dans le cadre du projet **Vixens**, la dette technique est principalement géné
 ## 🔴 Dette Critique (Mise en conformité requise)
 
 ### 1. Mode Scout (V-scout) - Arbitrage Stabilité vs Standard
-*   **ID Tâche :** `vixens-pgk8`
+*   **Ancien ID historique :** `vixens-pgk8`
 *   **Composants :** `booklore`, `lazylibrarian`
 *   **Contexte :** Ces pods restaient en `Pending` car leurs profils standards demandaient trop de RAM garantie (`Requests`).
 *   **Dérive :** Utilisation du label `V-scout` (inconnu de Kyverno) et définition manuelle des ressources (`requests: 16Mi/128Mi`, `limits: 4Gi/8Gi`).
@@ -28,7 +35,7 @@ Dans le cadre du projet **Vixens**, la dette technique est principalement géné
 *   **Risque :** Masque la pression réelle sur le cluster aux yeux de l'ordonnanceur.
 
 ### 2. Ressources Sidecars Frigate - Arbitrage DRY vs Urgence
-*   **ID Tâche :** `vixens-qkyq`
+*   **Ancien ID historique :** `vixens-qkyq`
 *   **Composant :** `frigate`
 *   **Contexte :** Migration d'urgence de la DB SQLite vers la RAM pour stopper les verrous iSCSI.
 *   **Dérive :** Ajout de conteneurs `restore-db` et `patch-config` avec des blocs `resources:` définis en dur dans le déploiement de base.
@@ -40,7 +47,7 @@ Dans le cadre du projet **Vixens**, la dette technique est principalement géné
 ## 🟡 Dette Modérée (Optimisation requise)
 
 ### 3. Erreurs de logique Kyverno
-*   **ID Tâche :** `vixens-mg4n`
+*   **Ancien ID historique :** `vixens-mg4n`
 *   **Composant :** `Kyverno Policies`
 *   **Description :** Certaines règles (vulnerability-scan, velero-schedule) échouent avec des erreurs JMESPath (`Invalid type for: <nil>`).
 *   **Origine :** Accroissement de la complexité des manifestes dépassant la robustesse actuelle des expressions régulières de la politique.
@@ -51,7 +58,7 @@ Dans le cadre du projet **Vixens**, la dette technique est principalement géné
 ## 🟢 Dette Légère (Maintenance différée)
 
 ### 4. NetworkPolicies manuelles
-*   **ID Tâche :** `vixens-avrb`
+*   **Ancien ID historique :** `vixens-avrb`
 *   **Composant :** `Cilium / NetworkPolicies`
 *   **Dérive :** Écriture manuelle de règles de flux (ex: Whisparr -> Sabnzbd) dans chaque base d'application.
 *   **Motivation :** Pas d'opérateur d'intention (type Otterize) déployé pour l'instant.
