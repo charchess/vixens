@@ -24,7 +24,7 @@ Le déploiement utilise une stratégie de **Split DNS** avec deux instances dist
 
 ### Instance Gandi (Public)
 - **Image :** `registry.k8s.io/external-dns/external-dns:v0.14.2`
-- **Secrets (Infisical) :** `/apps/40-network/external-dns/gandi` (Utilise un Personal Access Token - PAT)
+- **Secrets (OpenBao via External Secrets) :** `vixens/dev/apps/40-network/external-dns/gandi` in base (prod overlay patches the environment path); `ExternalSecret/external-dns-gandi-sync` materializes `Secret/external-dns-gandi-secret` for the Gandi PAT.
 - **Filtrage :** Uniquement les Ingress avec l'annotation `external-dns.alpha.kubernetes.io/public: "true"`.
 
 ## Utilisation
@@ -53,7 +53,7 @@ annotations:
 ## Notes Techniques (Gold)
 - **Priorité :** `vixens-critical`
 - **Ressources :** Profil Micro (20m/64Mi)
-- **Secrets :** Gérés par Infisical (`external-dns-gandi-secret`) via une Application ArgoCD dédiée pour plus de stabilité.
+- **Secrets :** OpenBao est la source de vérité ; External Secrets Operator matérialise les Secrets utilisés par les instances Gandi/UniFi.
 
 ### Test de résolution
 ```bash
