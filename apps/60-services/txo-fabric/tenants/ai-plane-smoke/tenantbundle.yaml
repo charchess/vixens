@@ -1,0 +1,19 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: TenantBundle
+metadata:
+  name: ai-plane-smoke
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    fabric.truxonline.io/purpose: test
+  annotations:
+    fabric.truxonline.io/disposable: "true"
+spec:
+  tenantId: TEN90003
+  displayName: AI Plane Smoke
+  isolation:
+    profile: Shared
+  aiCredentialBroker:
+    profileRef: cliproxyapi-standard
+  aiGateway:
+    profileRef: litellm-smoke
