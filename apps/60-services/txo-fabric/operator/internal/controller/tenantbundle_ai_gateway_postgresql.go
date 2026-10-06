@@ -40,6 +40,7 @@ type aiGatewayPostgreSQLNames struct {
 type aiGatewayPostgreSQLResult struct {
 	Ready        bool
 	Secret       *corev1.Secret
+	Profile      *fabricv1alpha1.PostgreSQLProfile
 	Names        aiGatewayPostgreSQLNames
 	Reason       string
 	Message      string
@@ -171,6 +172,7 @@ func (r *TenantBundleReconciler) reconcileAIGatewayPostgreSQL(
 	return aiGatewayPostgreSQLResult{
 		Ready:   true,
 		Secret:  secret,
+		Profile: profile.DeepCopy(),
 		Names:   names,
 		Reason:  "PostgreSQLReady",
 		Message: fmt.Sprintf("dedicated LiteLLM PostgreSQL database %s and role %s are ready", names.Database, names.Role),
@@ -445,9 +447,9 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrations(
 	gatewayProfile *fabricv1alpha1.AIGatewayProfile,
 	postgresqlProfile *fabricv1alpha1.PostgreSQLProfile,
 	databaseSecret *corev1.Secret,
-) (bool, string, error) {
+) (bool, string, string, error) {
 	if err := r.ensureAIGatewayMigrationNetworkPolicy(ctx, bundle, postgresqlProfile); err != nil {
-		return false, "", err
+		return false, "ReconcileError", "", err
 	}
 
 	namespace := tenantNamespace(bundle.Name)
@@ -456,16 +458,16 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrations(
 	var existing batchv1.Job
 	if err := r.Get(ctx, key, &existing); err == nil {
 		if !aiGatewayRuntimeOwnedBy(&existing, bundle) {
-			return false, "migration Job exists but is not owned by this tenant AI gateway", nil
+			return false, "MigrationOwnershipConflict", "migration Job exists but is not owned by this tenant AI gateway", nil
 		}
 		if existing.Status.Failed > 0 {
-			return false, "LiteLLM schema migration Job failed", nil
+			return false, "MigrationFailed", "LiteLLM schema migration Job failed", nil
 		}
 		if existing.Status.Succeeded > 0 {
 			_ = r.cleanupObsoleteAIGatewayMigrationJobs(ctx, bundle, name)
-			return true, "LiteLLM schema migrations are applied", nil
+			return true, "MigrationReady", "LiteLLM schema migrations are applied", nil
 		}
-		return false, "waiting for LiteLLM schema migration Job to complete", nil
+		return false, "MigrationPending", "waiting for LiteLLM schema migration Job to complete", nil
 	} else if !apierrors.IsNotFound(err) {
 		return false, "", err
 	}
@@ -530,7 +532,7 @@ exec python litellm/proxy/prisma_migration.py
 	if err := r.Create(ctx, job); err != nil {
 		return false, "", err
 	}
-	return false, "LiteLLM schema migration Job created", nil
+	return false, "MigrationPending", "LiteLLM schema migration Job created", nil
 }
 
 func secretEnvSource(secretName, key string) *corev1.EnvVarSource {
