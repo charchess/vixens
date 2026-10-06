@@ -7,4 +7,5 @@ resources:
   - postgresql-shared.yaml
   - hindsight-standard.yaml
   - hindsight-gateway.yaml
+  - cliproxyapi-standard.yaml
   - workspace-shared.yaml
