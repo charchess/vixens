@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -403,7 +404,20 @@ func (r *TenantBundleReconciler) ensureAIGatewayRuntimeSecret(
 }
 
 func aiGatewayMigrationName(profile *fabricv1alpha1.AIGatewayProfile, databaseSecret *corev1.Secret) string {
-	sum := sha256.Sum256([]byte(profile.Spec.Image + "|" + string(databaseSecret.UID)))
+	contract, _ := json.Marshal(struct {
+		Image             string                      `json:"image"`
+		DatabaseSecretUID string                      `json:"databaseSecretUID"`
+		Resources         corev1.ResourceRequirements `json:"resources"`
+		PriorityClassName string                      `json:"priorityClassName"`
+		SizingLabel       string                      `json:"sizingLabel"`
+	}{
+		Image:             profile.Spec.Image,
+		DatabaseSecretUID: string(databaseSecret.UID),
+		Resources:         profile.Spec.Resources,
+		PriorityClassName: profile.Spec.PriorityClassName,
+		SizingLabel:       profile.Spec.SizingLabel,
+	})
+	sum := sha256.Sum256(contract)
 	return boundedDNSName("txo-ai-gateway-migrations-" + hex.EncodeToString(sum[:4]))
 }
 
@@ -479,6 +493,9 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrations(
 	allowPrivilegeEscalation := false
 	labels := mergeStringMap(aiGatewayRuntimeLabels(bundle), aiGatewayMigrationPodSelector(bundle))
 	labels["fabric.truxonline.io/ai-gateway-resource"] = "migration"
+	if gatewayProfile.Spec.SizingLabel != "" {
+		labels["vixens.io/sizing.prisma-migrations"] = gatewayProfile.Spec.SizingLabel
+	}
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, Labels: labels},
