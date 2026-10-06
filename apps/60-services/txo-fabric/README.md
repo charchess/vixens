@@ -46,12 +46,14 @@ rather than being silently treated as ready.
 ### AgentIdentity
 
 `AgentIdentity` is cluster-scoped and separates global Fabric identity from the
-stable tenant-local runtime key. For example, `hairem-sandbox-tina` may use
-`agentKey: tina`; runtime names remain `hermes-tina`, `hermes-tina-data`, and
-`hermes-tina-egress`.
+stable tenant-local runtime key. Canonical populated agents use stable keys such as
+`usr000001-agt00012`; derived runtime resources therefore use names such as
+`hermes-usr000001-agt00012`, `hermes-usr000001-agt00012-data`, and the
+corresponding agent-scoped network resources.
 
-This lets different tenants use the same local keys while keeping Kubernetes CR
-names globally unique.
+Different tenants may use the same tenant-local `agentKey` while globally scoped
+Fabric CR names and tenant ownership keep those identities distinct. Do not derive
+identity from mutable display names, Pod names or group membership.
 
 ### AgentRuntimeProfile
 
@@ -108,16 +110,19 @@ resource envelope, optional model cache, scheduling policy and the platform
 LLM-auth mode. The profile selects an auth mechanism but never embeds the API key
 itself.
 
-The initial `hindsight-standard` profile uses the upstream API image, requires
-API-key authentication, and keeps embeddings/reranking local. The published full
-API image contains the default local models; persistent runtime model caching
-remains an explicit opt-in for a separately designed use case.
+The initial `hindsight-standard` profile uses the upstream API image and requires
+API-key authentication. Hindsight generative/reflection LLM processing remains
+disabled with `HINDSIGHT_API_LLM_PROVIDER=none`. Embeddings are routed through
+the shared TXO AI Gateway using the logical `txo-embedding` model and a
+tenant-scoped LiteLLM virtual key; upstream embedding-provider credentials never
+enter the tenant Hindsight Pod.
 
-The operator consumes the tenant PostgreSQL binding, creates a tenant-local runtime
-Secret, and reconciles one Hindsight API Deployment and Service per tenant. Provider
-and database credentials plus the Hindsight API key remain secret-backed rather
-than being embedded in the profile. AgentIdentity resources resolve deterministic
-bank IDs against their tenant's Hindsight service.
+The operator consumes the tenant PostgreSQL binding, creates tenant-local runtime
+Secrets, and reconciles one Hindsight API Deployment and Service per tenant.
+Database credentials, the Hindsight tenant API key and the scoped embedding-gateway
+credential remain Secret-backed rather than being embedded in the profile or
+TenantBundle. AgentIdentity resources resolve deterministic bank IDs against their
+tenant's Hindsight service.
 
 When a Hindsight-enabled TenantBundle explicitly sets
 `memory.hindsight.humanAccess: true` and declares `humanAccess.web`, Fabric
@@ -129,10 +134,18 @@ Service, default-deny-compatible NetworkPolicies and a stable authenticated rout
 The Control Plane receives the tenant API key only through a Secret-backed
 server-side environment variable and talks to the private Hindsight API inside the
 tenant namespace. Browsers never receive the API key, the memory API is not routed
-publicly, and PostgreSQL remains hidden behind Hindsight. The public route is
-protected with the platform Authentik ForwardAuth middleware; tenant onboarding is
-responsible for an Authentik Proxy Provider/application whose policy binds the
-appropriate tenant IAM group to that hostname. The separate
+publicly, and PostgreSQL remains hidden behind Hindsight.
+
+For tenants declaring `humanAccess.web`, the Fabric operator also publishes the
+structural Authentik desired state through the aggregate
+`auth/txo-fabric-authentik-blueprints` ConfigMap. That generated blueprint owns
+the tenant structural groups, public OIDC provider/application and policy bindings,
+plus the Hindsight Proxy Provider/application when Hindsight human access is
+requested. It also publishes the deterministic provider union consumed by the
+embedded Authentik outpost, avoiding per-tenant outpost-provider clobbering.
+
+Fabric owns this **structural IAM intent only**. Authentik remains the live source
+for human users, passwords, MFA and group membership. The separate
 `/outpost.goauthentik.io` route is sent directly to the embedded Authentik outpost
 so the sign-in flow itself is not recursively protected.
 
@@ -223,12 +236,15 @@ Hindsight bank identity is part of the AgentIdentity contract. When tenant memor
 is configured, the operator exposes the resolved bank through the tenant-scoped
 Hindsight service while PostgreSQL remains hidden behind Hindsight from the agent.
 
-## Brownfield cutover
+## Historical brownfield cutover
 
-The hAIrem sandbox is the first brownfield validation tenant. The temporary
-Kyverno provisioning policies were retired first, leaving Tesla, Tina and Tiffa
-runtime resources ownerless. The authoritative operator then adopts those
-resources using the new CR contract.
+The now-retired hAIrem sandbox was the first brownfield validation path. The
+temporary Kyverno provisioning policies were retired first, leaving the historical
+Tesla, Tina and Tiffa runtime resources ownerless so the authoritative operator
+could prove adoption through the new CR contract.
+
+This section records that migration mechanism; it is not the current Client0
+population or an onboarding recipe for new tenants.
 
 PVC adoption is deliberately non-destructive. Deployment adoption may cause one
 controlled `Recreate` rollout when the operator normalizes the old POC Deployment
