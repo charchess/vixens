@@ -139,6 +139,15 @@ func TestReconcileAICredentialBrokerCreatesTenantScopedCPAWithoutProviderSecrets
 	if len(policy.Spec.Egress) != 2 {
 		t.Fatalf("broker egress rules=%d want DNS + HTTPS", len(policy.Spec.Egress))
 	}
+	// Kubernetes represents "all destinations on this port" by omitting To.
+	// A peer written as `to: - {}` is rejected by the API server.
+	httpsEgress := policy.Spec.Egress[1]
+	if len(httpsEgress.To) != 0 {
+		t.Fatalf("broker HTTPS egress must omit To (all destinations), got %#v", httpsEgress.To)
+	}
+	if len(httpsEgress.Ports) != 1 || httpsEgress.Ports[0].Port == nil || httpsEgress.Ports[0].Port.IntValue() != 443 {
+		t.Fatalf("broker HTTPS egress must allow only TCP/443: %#v", httpsEgress.Ports)
+	}
 	if len(policy.Spec.Ingress) != 1 || len(policy.Spec.Ingress[0].From) != 1 || policy.Spec.Ingress[0].From[0].PodSelector == nil {
 		t.Fatalf("broker ingress must be restricted to tenant LiteLLM: %#v", policy.Spec.Ingress)
 	}

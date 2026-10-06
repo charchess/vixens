@@ -307,7 +307,7 @@ func (r *TenantBundleReconciler) ensureTenantAICredentialBrokerNetworkPolicy(ctx
 					{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(53)},
 				},
 			},
-			{To: []networkingv1.NetworkPolicyPeer{{}}, Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(443)}}},
+			{Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(443)}}},
 		}
 		return nil
 	})
