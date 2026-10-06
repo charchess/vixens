@@ -9,4 +9,5 @@ resources:
   - bases/fabric.truxonline.io_agentruntimeprofiles.yaml
   - bases/fabric.truxonline.io_postgresqlprofiles.yaml
   - bases/fabric.truxonline.io_hindsightprofiles.yaml
+  - bases/fabric.truxonline.io_aigatewayprofiles.yaml
   - bases/fabric.truxonline.io_sharedworkspaceprofiles.yaml

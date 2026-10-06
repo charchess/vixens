@@ -6,6 +6,7 @@ import (
 )
 
 func stringPtr(v string) *string                     { return &v }
+func boolPtr(v bool) *bool                            { return &v }
 func int64Ptr(v int64) *int64                        { return &v }
 func protocolPtr(v corev1.Protocol) *corev1.Protocol { return &v }
 func intOrStringPtr(v int) *intstr.IntOrString {

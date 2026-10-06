@@ -7,11 +7,16 @@ upstream provider credentials.
 ## Architecture
 
 The tenant-scoped multi-credential target contract for #3868 is documented in
-[`CREDENTIAL_POOLS.md`](CREDENTIAL_POOLS.md). It is an incremental target: the
-current OpenRouter routes remain authoritative until a tenant pool is explicitly
-reconciled and physically validated.
+[`CREDENTIAL_POOLS.md`](CREDENTIAL_POOLS.md). The target has moved to **one
+CLIProxyAPI gateway per TenantBundle**. It is an incremental migration: the
+current shared LiteLLM/OpenRouter route remains authoritative until the tenant CPA
+path is explicitly enabled and physically validated.
 
-TXO Fabric uses LiteLLM as an OpenAI-compatible gateway in `txo-fabric-system`:
+The following section documents the **currently active compatibility path**, not
+the #3868 target architecture.
+
+TXO Fabric currently uses LiteLLM as an OpenAI-compatible gateway in
+`txo-fabric-system`:
 
 ```text
 TXO Fabric operator
