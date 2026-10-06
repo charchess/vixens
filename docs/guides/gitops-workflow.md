@@ -12,10 +12,13 @@ feature/fix branch
 Pull Request + CI
   ↓
 main
+  ├──→ auto-tag-dev.yaml → dev-vYYYY.MM.PR (immutable candidate snapshot)
   ↓
 ArgoCD dev
   ↓
-dev-vYYYY.MM.PR
+candidate validation when relevant
+  ↓
+explicit production authorization
   ↓
 promote-prod.yaml
   ↓
@@ -24,7 +27,11 @@ prod-vYYYY.MM.PR + prod-stable
 ArgoCD prod
 ```
 
-`main` is the source of truth for development. Production tracks the mutable deployment alias `prod-stable`; every promotion also creates an immutable `prod-vYYYY.MM.PR` release tag.
+`main` is the source of truth for development. `auto-tag-dev.yaml` snapshots
+every push to `main`; therefore the existence of a `dev-v*` tag proves snapshot
+identity, **not** that dev validation already succeeded. Production tracks the
+mutable deployment alias `prod-stable`; every promotion also creates an immutable
+`prod-vYYYY.MM.PR` release tag.
 
 `prod-working` is reserved as a manually chosen last-known-good recovery marker. Do not move it as part of routine promotion.
 
@@ -39,7 +46,7 @@ ArgoCD prod
 7. Merge only when required checks pass.
 8. Let ArgoCD reconcile dev from `main`.
 9. Validate the result in dev when runtime validation is relevant.
-10. Promote the generated dev release through the GitHub Actions production workflow.
+10. After explicit operator authorization for the validated candidate, promote that exact dev snapshot through the GitHub Actions production workflow.
 
 Example promotion:
 
