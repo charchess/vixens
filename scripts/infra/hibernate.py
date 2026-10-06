@@ -8,6 +8,22 @@ import yaml # Pour manipuler les fichiers YAML plus proprement
 
 ARGOCD_KUST_PATH = "argocd/overlays/dev/kustomization.yaml"
 
+def require_change_branch():
+    """Refuse les mutations Git depuis main ou un HEAD détaché."""
+    try:
+        branch = subprocess.check_output(
+            ["git", "branch", "--show-current"],
+            text=True,
+        ).strip()
+    except subprocess.CalledProcessError:
+        branch = ""
+
+    if not branch or branch == "main":
+        print("❌ Refus: créez d'abord une branche courte depuis le main courant.")
+        print("   Exemple: git switch -c chore/<issue>-hibernate-<app>")
+        print("   Voir WORKFLOW.md / AGENTS.md.")
+        sys.exit(2)
+
 def find_app_dir(app_name):
     """Recherche le répertoire de l'application dans apps/"""
     for root, dirs, files in os.walk("apps"):
@@ -169,6 +185,8 @@ def main():
         print("❌ Erreur: Nom de l'application requis")
         sys.exit(1)
 
+    require_change_branch()
+
     app_dir = find_app_dir(args.app)
     if not app_dir:
         print(f"❌ Erreur: Application '{args.app}' non trouvée dans apps/")
@@ -204,7 +222,9 @@ def main():
             subprocess.run(["git", "add", patch_path, ARGOCD_KUST_PATH])
             subprocess.run(["git", "commit", "-m", commit_msg])
             print(f"🔄 Commit effectué: {commit_msg}")
-            print("💡 N'oubliez pas de faire 'git push origin main' pour appliquer.")
+            print("💡 Push la branche puis ouvre une PR vers main :")
+            print("   git push -u origin HEAD")
+            print("   gh pr create --base main --fill")
         else:
             print(f"❌ Erreur patch: {patch_path}, Erreur ArgoCD: {argocd_msg}")
 
