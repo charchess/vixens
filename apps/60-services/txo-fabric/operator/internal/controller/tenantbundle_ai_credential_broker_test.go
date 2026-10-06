@@ -43,7 +43,7 @@ func aiCredentialBrokerTestTenant(name, tenantID string) *fabricv1alpha1.TenantB
 		Spec: fabricv1alpha1.TenantBundleSpec{
 			TenantID:    tenantID,
 			DisplayName: name,
-			AICredentialBroker:   &fabricv1alpha1.TenantAICredentialBrokerSpec{ProfileRef: defaultAICredentialBrokerProfileName},
+			AICredentialBroker: &fabricv1alpha1.TenantAICredentialBrokerSpec{ProfileRef: defaultAICredentialBrokerProfileName},
 		},
 	}
 }
@@ -66,7 +66,7 @@ func TestReconcileAICredentialBrokerCreatesTenantScopedCPAWithoutProviderSecrets
 		t.Fatal(err)
 	}
 	if result.Ready {
-		t.Fatal("new gateway must remain provisioning until its Deployment is available")
+		t.Fatal("new credential broker must remain provisioning until its Deployment is available")
 	}
 
 	var secret corev1.Secret
