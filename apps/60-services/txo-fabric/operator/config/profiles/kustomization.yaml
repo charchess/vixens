@@ -8,4 +8,5 @@ resources:
   - hindsight-standard.yaml
   - hindsight-gateway.yaml
   - cliproxyapi-standard.yaml
+  - litellm-standard.yaml
   - workspace-shared.yaml

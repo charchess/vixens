@@ -32,7 +32,7 @@ type TenantBundleReconciler struct {
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles/finalizers,verbs=update
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities,verbs=get;list;watch
-// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=postgresqlprofiles;hindsightprofiles;aigatewayprofiles,verbs=get;list;watch
+// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=postgresqlprofiles;hindsightprofiles;aigatewayprofiles;aicredentialbrokerprofiles,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
@@ -56,6 +56,7 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	hadPostgreSQL := previousStatus.Persistence.PostgreSQL != nil
 	hadHindsight := previousStatus.Memory.Hindsight != nil
 	hadAIGateway := previousStatus.AIGateway != nil
+	hadAICredentialBroker := previousStatus.AICredentialBroker != nil
 
 	if !controllerutil.ContainsFinalizer(&bundle, TenantFinalizer) {
 		controllerutil.AddFinalizer(&bundle, TenantFinalizer)
@@ -80,6 +81,7 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	bundle.Status.Persistence = fabricv1alpha1.TenantPersistenceStatus{}
 	bundle.Status.Memory = fabricv1alpha1.TenantMemoryStatus{}
 	bundle.Status.AIGateway = nil
+	bundle.Status.AICredentialBroker = nil
 	bundle.Status.Modules = nil
 	setCondition(&bundle.Status.Conditions, bundle.Generation, "NamespaceReady", metav1.ConditionTrue, "Reconciled", "tenant namespace is reconciled")
 	setCondition(&bundle.Status.Conditions, bundle.Generation, "NetworkReady", metav1.ConditionTrue, "DefaultDenyReconciled", "tenant default-deny policy is reconciled")
@@ -223,6 +225,55 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 	} else {
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "MemoryReady", metav1.ConditionTrue, "NotRequested", "tenant does not request Hindsight memory")
+	}
+
+
+	if bundle.Spec.AICredentialBroker != nil {
+		result, err := r.reconcileAICredentialBroker(ctx, &bundle)
+		if err != nil {
+			bundle.Status.AICredentialBroker = &fabricv1alpha1.ComponentStatus{Phase: "Blocked", Message: err.Error()}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionFalse, "ReconcileError", err.Error())
+			bundle.Status.Phase = "Degraded"
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AICredentialBrokerReconcileFailed", err.Error())
+			if !reflect.DeepEqual(previousStatus, bundle.Status) {
+				_ = r.Status().Update(ctx, &bundle)
+			}
+			return ctrl.Result{}, err
+		}
+		bundle.Status.AICredentialBroker = result.Status
+		if result.Ready {
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionTrue, result.Reason, result.Message)
+		} else {
+			waiting = true
+			if result.Status != nil && result.Status.Phase == "Blocked" {
+				degraded = true
+			}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionFalse, result.Reason, result.Message)
+		}
+	} else if hadAICredentialBroker {
+		pending, err := r.cleanupAICredentialBroker(ctx, &bundle)
+		if err != nil {
+			bundle.Status.AICredentialBroker = &fabricv1alpha1.ComponentStatus{Phase: "Blocked", Message: err.Error()}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionFalse, "ReclaimError", err.Error())
+			bundle.Status.Phase = "Degraded"
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AICredentialBrokerReclaimFailed", err.Error())
+			if !reflect.DeepEqual(previousStatus, bundle.Status) {
+				_ = r.Status().Update(ctx, &bundle)
+			}
+			return ctrl.Result{}, err
+		}
+		if pending {
+			waiting = true
+			bundle.Status.AICredentialBroker = &fabricv1alpha1.ComponentStatus{Phase: "Reclaiming", Message: "removing Fabric-owned tenant AI credential broker resources"}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionFalse, "Reclaiming", "tenant AI credential broker capability is being released")
+			if requeueAfter == 0 || 2*time.Second < requeueAfter {
+				requeueAfter = 2 * time.Second
+			}
+		} else {
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionTrue, "NotRequested", "tenant does not request an AI credential broker")
+		}
+	} else {
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionTrue, "NotRequested", "tenant does not request an AI credential broker")
 	}
 
 	if bundle.Spec.AIGateway != nil {
@@ -381,6 +432,20 @@ func (r *TenantBundleReconciler) reconcileDelete(ctx context.Context, bundle *fa
 		return ctrl.Result{}, err
 	}
 
+	if bundle.Spec.AICredentialBroker != nil || bundle.Status.AICredentialBroker != nil {
+		pending, err := r.cleanupAICredentialBroker(ctx, bundle)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		if pending {
+			bundle.Status.Phase = "Deleting"
+			bundle.Status.AICredentialBroker = &fabricv1alpha1.ComponentStatus{Phase: "Reclaiming", Message: "removing Fabric-owned tenant AI credential broker resources"}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AICredentialBrokerReclaiming", "tenant AI credential broker resources are being released")
+			_ = r.Status().Update(ctx, bundle)
+			return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
+		}
+	}
+
 	if bundle.Spec.Memory.Hindsight != nil || bundle.Status.Memory.Hindsight != nil {
 		pending, err := r.cleanupHindsight(ctx, bundle)
 		if err != nil {
@@ -489,6 +554,33 @@ func (r *TenantBundleReconciler) tenantBundleRequestsForHindsightProfile(ctx con
 	return requests
 }
 
+func (r *TenantBundleReconciler) tenantBundleRequestsForAICredentialBrokerProfile(ctx context.Context, obj client.Object) []reconcile.Request {
+	profileName := obj.GetName()
+	if profileName == "" {
+		return nil
+	}
+	var bundles fabricv1alpha1.TenantBundleList
+	if err := r.List(ctx, &bundles); err != nil {
+		ctrl.LoggerFrom(ctx).Error(err, "unable to list TenantBundles for AICredentialBrokerProfile watch", "profile", profileName)
+		return nil
+	}
+	requests := make([]reconcile.Request, 0)
+	for i := range bundles.Items {
+		broker := bundles.Items[i].Spec.AICredentialBroker
+		if broker == nil {
+			continue
+		}
+		requested := strings.TrimSpace(broker.ProfileRef)
+		if requested == "" {
+			requested = defaultAICredentialBrokerProfileName
+		}
+		if requested == profileName {
+			requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{Name: bundles.Items[i].Name}})
+		}
+	}
+	return requests
+}
+
 func (r *TenantBundleReconciler) tenantBundleRequestsForAIGatewayProfile(ctx context.Context, obj client.Object) []reconcile.Request {
 	profileName := obj.GetName()
 	if profileName == "" {
@@ -526,6 +618,7 @@ func (r *TenantBundleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&fabricv1alpha1.PostgreSQLProfile{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForPostgreSQLProfile)).
 		Watches(&fabricv1alpha1.HindsightProfile{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForHindsightProfile)).
 		Watches(&fabricv1alpha1.AIGatewayProfile{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForAIGatewayProfile)).
+		Watches(&fabricv1alpha1.AICredentialBrokerProfile{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForAICredentialBrokerProfile)).
 		Watches(&corev1.Namespace{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&corev1.ConfigMap{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForAuthentikBlueprint)).

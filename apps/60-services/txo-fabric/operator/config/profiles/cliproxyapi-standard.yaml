@@ -1,11 +1,11 @@
 ---
 apiVersion: fabric.truxonline.io/v1alpha1
-kind: AIGatewayProfile
+kind: AICredentialBrokerProfile
 metadata:
   name: cliproxyapi-standard
   labels:
     app.kubernetes.io/part-of: txo-fabric
-    app.kubernetes.io/component: ai-gateway-profile
+    app.kubernetes.io/component: ai-credential-broker-profile
 spec:
   topology: TenantScoped
   implementation: CLIProxyAPI

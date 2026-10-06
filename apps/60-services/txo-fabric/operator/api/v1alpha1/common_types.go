@@ -55,7 +55,15 @@ type TenantMemorySpec struct {
 }
 
 type TenantAIGatewaySpec struct {
-	// ProfileRef selects a platform-owned tenant gateway implementation profile.
+	// ProfileRef selects the tenant-facing LiteLLM gateway profile.
+	// +optional
+	// +kubebuilder:default=litellm-standard
+	// +kubebuilder:validation:MaxLength=128
+	ProfileRef string `json:"profileRef,omitempty"`
+}
+
+type TenantAICredentialBrokerSpec struct {
+	// ProfileRef selects the tenant-local OAuth/subscription credential broker profile.
 	// +optional
 	// +kubebuilder:default=cliproxyapi-standard
 	// +kubebuilder:validation:MaxLength=128

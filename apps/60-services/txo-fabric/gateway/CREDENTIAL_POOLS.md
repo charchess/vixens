@@ -1,298 +1,262 @@
-# Tenant-scoped LLM credential pools
+# Tenant-scoped AI plane and credential pools
 
-Status: **target implementation contract for #3868**.
+Status: **target implementation contract for #3868, #3869 and #3885**.
 
 The currently deployed inference path still uses the shared LiteLLM gateway and
-OpenRouter. The target described here is deliberately opt-in until the
-CLIProxyAPI path has passed physical acceptance. No tenant is cut over merely by
-adding the substrate.
+OpenRouter. The target remains opt-in until the tenant-local AI plane passes
+physical acceptance.
 
 ## Decision
 
-The v0.1 target is **one CLIProxyAPI (CPA) gateway per TenantBundle**.
-
-TXO Fabric remains the control plane. CPA becomes the tenant-local provider
-credential broker.
+The v0.1 target is a **tenant-local LiteLLM facade** plus an optional
+**tenant-local CLIProxyAPI (CPA) credential broker**.
 
 ```text
-                       TXO Fabric
-                       control plane
-                            |
-             +--------------+--------------+
-             |                             |
-             v                             v
-      tenant hAIrem                  tenant Indiba
-             |                             |
-      CLIProxyAPI hAIrem             CLIProxyAPI Indiba
-        |       |                       |
-        |       +-- OAuth account B     +-- OAuth account C
-        +---------- OAuth account A
+Tenant workloads
+      |
+      v
+tenant LiteLLM
+  auth / logical models / routing / metering
+      |
+      +-- txo-coding ----> tenant CPA ----> Codex OAuth account A/B/...
+      +-- txo-general ---> OpenRouter / API / OSS backend
+      +-- txo-reasoning -> OpenRouter / API / OSS backend
+      +-- txo-embedding -> OpenRouter / local embedding backend
 ```
 
-Hermes never receives an upstream provider credential. It eventually receives
-only a Fabric-owned credential for the CPA belonging to its own tenant.
+Fabric is the control plane. LiteLLM is the tenant-facing AI gateway. CPA is an
+internal backend specialized in OAuth/subscription credential lifecycle.
 
-This supersedes the earlier #3868 design that proposed one LiteLLM worker per
-OAuth credential. The alias support added in #3880 remains harmless rollout
-substrate for the currently active LiteLLM path but is not the target credential
-pool implementation.
+This supersedes the temporary #3882 interpretation where CPA itself was called
+the tenant AI gateway. The CPA substrate remains useful; only its responsibility
+and resource/API naming change.
 
-## Why CPA is the credential broker
+## Responsibility boundaries
 
-The selected baseline is CLIProxyAPI **v8.0.16**. Its upstream implementation
-already owns the behaviors #3868 would otherwise have to recreate around
-LiteLLM:
+### TXO Fabric
 
-- multiple file/OAuth-backed credentials;
-- Codex/OpenAI OAuth support;
-- round-robin, weighted-round-robin and fill-first credential selection;
-- retry/failover across eligible credentials;
-- session affinity when wanted;
-- per-credential and per-model cooldown/quota state;
-- disable/unavailable lifecycle state;
-- persisted mutable auth files and refresh state;
-- authenticated management APIs for credential and quota observation;
-- an in-memory usage-event queue and API-key usage views.
+Fabric owns:
 
-Fabric must consume those capabilities instead of reimplementing their internal
-scheduler.
+- tenant ownership and topology;
+- logical model/catalog policy;
+- consumer allowlists;
+- lifecycle of the tenant gateway and credential broker;
+- non-secret status;
+- generation/rotation/revocation intent.
 
-## Tenant isolation boundary
+Provider secrets never belong in TenantBundle/AgentIdentity spec or status.
 
-CPA's ordinary incoming API-key authentication is not treated as a sufficient
-multi-tenant authorization boundary. In v0.1, credential pools are isolated by
-topology:
+### Tenant LiteLLM
 
-- one CPA Deployment per TenantBundle;
-- one tenant namespace per CPA;
-- one OAuth-state PVC per CPA;
-- one generated management credential per CPA;
-- one generated bootstrap/client credential per CPA;
-- no shared credential directory between tenants;
-- no global CPA process allowed to select from several tenants' provider
-  accounts.
+LiteLLM owns the tenant-facing concerns:
 
-Therefore a hAIrem failover cannot select an Indiba credential unless the
-platform itself violates the Kubernetes/configuration boundary.
+- one OpenAI-compatible endpoint for tenant consumers;
+- Fabric-scoped virtual keys;
+- logical model aliases and allowlists;
+- provider/deployment routing;
+- explicitly authorized cross-provider/model fallback;
+- request/token/spend metering;
+- budgets and rate limits where configured.
 
-CPA credential/model prefixes and `routing.force-model-prefix=true` remain
-enabled as defense in depth, not as the primary tenant boundary.
+LiteLLM requires a database for virtual keys and durable spend/budget state.
+A DB-less tenant gateway must never be presented as having enforceable budgets.
+
+### Tenant CPA
+
+CPA owns only the subscription/OAuth provider-account pool:
+
+- interactive OAuth connect/re-auth;
+- persisted refresh/access state;
+- selection between equivalent credentials;
+- quota/cooldown and retry state;
+- disable/revoke lifecycle;
+- provider-account health observations.
+
+CPA is not the tenant authorization source of truth and is not the primary
+billing ledger.
 
 ## Fabric API contract
 
-`TenantBundle.spec.aiGateway` requests the tenant capability and references a
-platform-owned `AIGatewayProfile`.
+`TenantBundle.spec.aiGateway` references `AIGatewayProfile`.
 
-The profile owns implementation details such as:
+For v0.1:
 
-- exact CPA image;
-- service port;
-- resources and scheduling class;
-- OAuth-state storage class/size;
-- bounded usage-queue retention.
+- implementation = `LiteLLM`;
+- default profile = `litellm-standard`;
+- this is the consumer-facing inference endpoint.
 
-The tenant CR never contains OAuth tokens, upstream account identifiers,
-provider API keys or management passwords.
+`TenantBundle.spec.aiCredentialBroker` references
+`AICredentialBrokerProfile`.
 
-The first standard profile pins:
+For v0.1:
 
-```text
-eceasy/cli-proxy-api:v8.0.16
-```
+- implementation = `CLIProxyAPI`;
+- default profile = `cliproxyapi-standard`;
+- this is internal provider-credential infrastructure.
 
-The image/version must be upgraded deliberately and revalidated; `latest` is
-not an acceptable Fabric contract.
+The API separation prevents CPA from accidentally becoming the consumer-facing
+security/metering plane.
 
-## Runtime resources
+## Resource naming
 
-For a tenant named `hairem`, the reconciler owns resources in
-`tenant-hairem`:
+For tenant `hairem`, the CPA broker owns:
 
 ```text
-Deployment/txo-ai-gateway
-Service/txo-ai-gateway
-Secret/txo-ai-gateway-runtime
-PersistentVolumeClaim/txo-ai-gateway-auth
-NetworkPolicy/txo-ai-gateway
+Deployment/txo-ai-credential-broker
+Service/txo-ai-credential-broker
+Secret/txo-ai-credential-broker-runtime
+PersistentVolumeClaim/txo-ai-credential-broker-auth
+NetworkPolicy/txo-ai-credential-broker
 ```
 
-The auth PVC is **gateway/provider state**, not agent state. It is never mounted
-into an AgentIdentity runtime and is independent from retained Hermes workspaces.
+The future LiteLLM facade owns the `txo-ai-gateway` resource family. The two
+components must coexist without resource-name collisions.
 
-The runtime Secret contains only Fabric-to-CPA bootstrap/control material and
-the generated CPA configuration. Provider OAuth access/refresh tokens belong on
-the dedicated CPA auth volume.
-
-## CPA baseline configuration
-
-The generated baseline deliberately disables discovery, control-panel
-auto-update and plugins. It enables:
-
-- round-robin routing;
-- retry/failover;
-- `force-model-prefix=true`;
-- usage statistics;
-- a bounded management usage queue;
-- OAuth state under the dedicated `/data/auth` volume.
-
-The Management API is protected by a generated `MANAGEMENT_PASSWORD`. Provider
-credentials are never copied into TenantBundle/AgentIdentity status, labels or
-annotations.
-
-The first substrate does **not** hand the bootstrap CPA key to Hermes and does
-not change `OPENAI_BASE_URL`. That cutover happens only after physical CPA
-acceptance.
-
-## OAuth lifecycle
-
-Interactive OAuth is an administrative operation, never a side effect of an
-inference request.
-
-Target lifecycle:
-
-1. Fabric/admin chooses the tenant gateway and requests connect/re-auth for one
-   provider credential.
-2. The action is performed against only that tenant CPA.
-3. CPA persists the resulting mutable auth state on that tenant's gateway PVC.
-4. CPA owns ordinary refresh and credential eligibility.
-5. Fabric/collector observes only log-safe lifecycle/quota data.
-6. Disable/revoke removes the credential from eligibility before destructive
-   cleanup of its persisted token state.
-
-### Codex device authorization caveat
-
-CLIProxyAPI exposes Codex OAuth and its CLI includes a Codex device-login path,
-but the exact **remote administrative device-flow contract required by TXO has
-not yet been physically proven** for v8.0.16. The inspected management/TUI flow
-for Codex is browser/callback oriented.
-
-Therefore #3868 must remain open until the chosen administrative flow is proven
-without shell access to the tenant runtime and without exposing tokens to
-Hermes.
+The CPA auth PVC is provider credential state, never agent state. It is not
+mounted into AgentIdentity or Hindsight workloads.
 
 ## Logical models
 
-Agents must continue to choose a logical model, never an account.
-
-The final mapping belongs to #3869, for example:
+Consumers select logical capabilities, never provider credentials:
 
 ```text
+txo-auto
 txo-general
 txo-coding
 txo-fast
-txo-auto
+txo-reasoning
 txo-embedding
 ```
 
-Fabric projects those logical choices into the tenant CPA configuration. CPA
-then chooses an eligible credential/provider account inside that tenant.
+Examples:
 
-Provider account identity is not part of the agent-facing contract.
+- Hermes may receive `txo-coding` and resolve through LiteLLM -> CPA -> Codex;
+- Hindsight may receive only `txo-embedding` and resolve through LiteLLM ->
+  OpenRouter/BGE-M3 or a future local embedding service;
+- another service may receive `txo-reasoning` without any access to CPA.
 
-## Accounting, budgets and collector contract
+Provider account identity remains invisible to consumers.
 
-LiteLLM is **not required merely for accounting**.
+## Retry and fallback layering
 
-CPA v8 exposes authenticated observability/management surfaces including:
+Retries must not multiply across layers.
 
-```text
-GET /v8/management/observability/usage/api-keys
-GET /v8/management/observability/usage/queue
-```
+CPA is responsible for retry/failover **between credentials serving the same
+provider/model pool**.
 
-Credential observations also expose success/failure counts, recent request
-buckets, quota/cooldown state and recovery timestamps when known.
+LiteLLM is responsible for fallback **between logical deployments/providers**.
 
-A TXO accounting collector may therefore:
-
-1. authenticate to each tenant CPA Management API with platform-owned
-   credentials;
-2. drain usage events inside the configured retention window;
-3. normalize tenant, agent/client key, logical/served model, tokens and provider
-   observations;
-4. enrich events with the platform pricing catalog;
-5. persist durable accounting outside CPA;
-6. derive dashboards, alerts and budget enforcement from that durable ledger.
-
-CPA's in-memory usage queue is an **observation transport, not the billing
-ledger**. Missing a polling window must be detectable, and durable budget
-enforcement must not depend solely on volatile CPA state.
-
-Because every tenant has its own CPA, tenant attribution is already fixed by the
-endpoint being collected. Per-agent attribution can later use distinct
-Fabric-generated CPA client keys and/or a Fabric-owned request identity
-projection once that contract is proven.
-
-## Network boundary
-
-The tenant CPA is ClusterIP-only and is selected by the tenant default-deny
-network posture.
-
-Required intent:
-
-- tenant workloads reach only their own CPA for model inference;
-- CPA reaches DNS and explicitly permitted HTTPS provider endpoints;
-- CPA Management API requires its separate generated management credential;
-- no tenant workload receives that management credential;
-- a future collector/control-plane path is explicitly allowed rather than
-  opening the Management API publicly;
-- hAIrem and Indiba CPA pods cannot mount or address each other's auth PVCs.
-
-NetworkPolicy is defense in depth; namespace/resource ownership is the primary
-credential-state isolation boundary.
-
-## Rollout and LiteLLM retirement
-
-During migration:
+Example:
 
 ```text
-existing path:
-Hermes -> shared LiteLLM -> OpenRouter
-
-target path:
-Hermes -> tenant CPA -> tenant provider pool
+txo-coding
+   |
+   +-> CPA
+   |    +-> Codex A (cooldown)
+   |    +-> Codex B (healthy)
+   |
+   +-> explicitly-authorized alternate provider only if the CPA pool is unavailable
 ```
 
-The existing LiteLLM route remains authoritative until CPA acceptance is green.
-There is no automatic fallback from a CPA-enabled tenant to another tenant or a
-global credential pool.
+No retry or fallback may cross the tenant boundary or widen a consumer/model
+allowlist.
 
-LiteLLM can be removed only after all of the following are true:
+## Metering and accounting
 
-- AgentIdentity inference uses the tenant CPA contract;
-- Hindsight embedding routing has an accepted replacement path;
-- scoped credential revocation/rotation has an equivalent Fabric/CPA contract;
-- accounting/budget observation has moved to the collector path;
-- no active module depends on the shared LiteLLM gateway.
+LiteLLM is the primary tenant-side usage observation point.
 
-Removal is a separate GitOps change, not part of the initial CPA substrate.
+The durable ledger should be able to attribute:
+
+- tenant;
+- consumer key / AgentIdentity / platform service;
+- requested logical model;
+- resolved deployment/model when safe;
+- input/output tokens;
+- requests;
+- calculated provider cost when pricing semantics are meaningful.
+
+For subscription-backed Codex, token usage is measurable but provider billing is
+not necessarily per-token. TXO internal cost allocation must therefore remain a
+separate policy from observed token usage.
+
+CPA management/usage observations remain useful for provider quota and credential
+health, but they are secondary to gateway-side metering.
+
+## Tenant isolation
+
+v0.1 isolation remains topological:
+
+```text
+tenant-hairem
+  LiteLLM-hairem
+  CPA-hairem
+  OAuth PVC-hairem
+
+tenant-indiba
+  LiteLLM-indiba
+  CPA-indiba
+  OAuth PVC-indiba
+```
+
+No global LiteLLM router or CPA process may select provider credentials from
+multiple tenants.
+
+## OAuth lifecycle
+
+Interactive OAuth remains an administrative operation.
+
+1. Admin/Fabric selects one tenant broker.
+2. CPA performs provider authorization.
+3. Mutable auth state is persisted only on that tenant broker PVC.
+4. CPA owns refresh and account eligibility.
+5. Fabric exposes only log-safe lifecycle/quota state.
+6. Disable/revoke removes an account from eligibility before destructive cleanup.
+
+The exact remote Codex authorization flow still requires physical proof for the
+pinned CPA version before #3868 can close.
+
+## Migration
+
+Current path:
+
+```text
+Hermes/Hindsight -> shared LiteLLM -> OpenRouter
+```
+
+Target path:
+
+```text
+Hermes/Hindsight -> tenant LiteLLM -> CPA and/or ordinary model backends
+```
+
+The shared gateway remains authoritative until the tenant-local gateway has an
+accepted database/key/metering contract and the physical smoke tests pass.
+
+The direct-CPA `fabric-smoke` activation from #3884 is not a production
+candidate. #3885 converts that desired state to an internal credential broker
+before promotion.
 
 ## Required tests
 
-Fast controller tests must prove:
+Controller tests must prove:
 
-- two tenants receive separate CPA Secrets and auth PVCs;
-- generated gateway credentials are different per tenant and stable across
-  idempotent reconciliation;
-- unsupported/shared CPA topology fails closed;
-- provider tokens do not appear in generated config, CR status or logs;
-- the CPA image is explicitly pinned;
-- deleting/removing the capability cannot delete resources not owned by that
-  TenantBundle;
-- current tenants that do not request `spec.aiGateway` keep their existing
-  inference path unchanged.
+- CPA broker state is isolated per tenant;
+- broker client and management credentials are distinct and stable;
+- provider tokens never enter Fabric status/generated config;
+- unsupported/shared broker topology fails closed;
+- CPA cannot be accepted as an `AIGatewayProfile`;
+- LiteLLM is the only accepted v0.1 tenant gateway implementation;
+- gateway and broker resource families do not collide;
+- removing a capability cannot delete resources not owned by the TenantBundle.
 
-Physical acceptance for #3868 must prove at least:
+Physical acceptance will later prove:
 
-1. one disposable tenant CPA starts from the pinned image under the generated
-   security/storage contract;
-2. two hAIrem Codex credentials can be authorized and survive CPA restart;
-3. selection/failover stays inside hAIrem;
-4. a separate Indiba CPA cannot use hAIrem credentials;
-5. forced quota exhaustion/cooldown makes the next eligible hAIrem credential
-   serve the request;
-6. revoke/disable/re-auth works without giving a provider token to Hermes;
-7. the collector can consume usage/quota observations without provider secret
-   leakage;
-8. the existing OpenRouter/LiteLLM path remains available until explicit
-   cutover.
+1. tenant LiteLLM starts and is the only consumer-facing endpoint;
+2. LiteLLM can route a Responses API model to tenant CPA;
+3. an embedding route can bypass CPA;
+4. scoped keys enforce model allowlists;
+5. LiteLLM metering observes CPA-backed and non-CPA routes;
+6. CPA OAuth state survives restart;
+7. credential failover stays inside a tenant;
+8. fallback/retry behavior does not multiply unexpectedly;
+9. the shared gateway remains available until explicit cutover.
