@@ -9,6 +9,7 @@ import (
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -36,8 +37,9 @@ type TenantBundleReconciler struct {
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=postgresql.cnpg.io,resources=clusters,verbs=get
 // +kubebuilder:rbac:groups=postgresql.cnpg.io,resources=databases;databaseroles,verbs=get;list;watch;create;update;patch;delete
@@ -289,6 +291,9 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, err
 		}
 		bundle.Status.AIGateway = result.Status
+		if result.RequeueAfter > 0 && (requeueAfter == 0 || result.RequeueAfter < requeueAfter) {
+			requeueAfter = result.RequeueAfter
+		}
 		if result.Ready {
 			setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionTrue, result.Reason, result.Message)
 		} else {
@@ -519,16 +524,51 @@ func (r *TenantBundleReconciler) tenantBundleRequestsForPostgreSQLProfile(ctx co
 	if profileName == "" {
 		return nil
 	}
+
+	gatewayProfiles := map[string]struct{}{}
+	var aiGatewayProfiles fabricv1alpha1.AIGatewayProfileList
+	if err := r.List(ctx, &aiGatewayProfiles); err != nil {
+		ctrl.LoggerFrom(ctx).Error(err, "unable to list AIGatewayProfiles for PostgreSQLProfile watch", "profile", profileName)
+		return nil
+	}
+	for i := range aiGatewayProfiles.Items {
+		postgresqlProfileRef := strings.TrimSpace(aiGatewayProfiles.Items[i].Spec.PostgreSQLProfileRef)
+		if postgresqlProfileRef == "" {
+			postgresqlProfileRef = defaultAIGatewayPostgreSQLProfileName
+		}
+		if postgresqlProfileRef == profileName {
+			gatewayProfiles[aiGatewayProfiles.Items[i].Name] = struct{}{}
+		}
+	}
+
 	var bundles fabricv1alpha1.TenantBundleList
 	if err := r.List(ctx, &bundles); err != nil {
 		ctrl.LoggerFrom(ctx).Error(err, "unable to list TenantBundles for PostgreSQLProfile watch", "profile", profileName)
 		return nil
 	}
 	requests := make([]reconcile.Request, 0)
+	seen := map[string]struct{}{}
 	for i := range bundles.Items {
-		postgresql := bundles.Items[i].Spec.Persistence.PostgreSQL
+		bundle := &bundles.Items[i]
+		postgresql := bundle.Spec.Persistence.PostgreSQL
 		if postgresql != nil && postgresql.ProfileRef == profileName {
-			requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{Name: bundles.Items[i].Name}})
+			requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{Name: bundle.Name}})
+			seen[bundle.Name] = struct{}{}
+		}
+
+		gateway := bundle.Spec.AIGateway
+		if gateway == nil {
+			continue
+		}
+		gatewayProfileRef := strings.TrimSpace(gateway.ProfileRef)
+		if gatewayProfileRef == "" {
+			gatewayProfileRef = defaultAIGatewayProfileName
+		}
+		if _, matches := gatewayProfiles[gatewayProfileRef]; matches {
+			if _, duplicate := seen[bundle.Name]; !duplicate {
+				requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{Name: bundle.Name}})
+				seen[bundle.Name] = struct{}{}
+			}
 		}
 	}
 	return requests
@@ -621,8 +661,10 @@ func (r *TenantBundleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&fabricv1alpha1.AICredentialBrokerProfile{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForAICredentialBrokerProfile)).
 		Watches(&corev1.Namespace{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
+		Watches(&corev1.Secret{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&corev1.ConfigMap{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForAuthentikBlueprint)).
 		Watches(&appsv1.Deployment{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
+		Watches(&batchv1.Job{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&networkingv1.Ingress{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&networkingv1.NetworkPolicy{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(cnpgObject(cnpgDatabaseGVK, "", ""), handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).

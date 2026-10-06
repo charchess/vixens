@@ -73,6 +73,16 @@ spec:
                 enum:
                 - LiteLLM
                 type: string
+              postgresqlProfileRef:
+                default: postgresql-litellm
+                description: |-
+                  PostgreSQLProfileRef selects the CloudNativePG-backed persistence profile
+                  used for LiteLLM virtual keys, metering, budgets and proxy state. Fabric
+                  creates a dedicated database/role for the gateway; it never reuses the
+                  tenant application/Hindsight database.
+                maxLength: 128
+                minLength: 1
+                type: string
               priorityClassName:
                 default: vixens-medium
                 description: PriorityClassName maps the gateway to Vixens scheduling

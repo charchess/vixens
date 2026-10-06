@@ -61,6 +61,15 @@ LiteLLM owns the tenant-facing concerns:
 LiteLLM requires a database for virtual keys and durable spend/budget state.
 A DB-less tenant gateway must never be presented as having enforceable budgets.
 
+Fabric provisions that state as a **dedicated CloudNativePG database and login
+role per tenant gateway**, selected by `AIGatewayProfile.postgresqlProfileRef`
+(default `postgresql-litellm`). It reuses the platform CNPG cluster but never
+reuses the tenant application/Hindsight database. Database/role credentials live
+in the database namespace, are copied only into the tenant-local
+`txo-ai-gateway-runtime` Secret, and never enter CR spec/status. Schema changes
+are applied by a pinned-image Prisma migration Job before the LiteLLM serving
+runtime may become Ready.
+
 ### Tenant CPA
 
 CPA owns only the subscription/OAuth provider-account pool:
