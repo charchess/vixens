@@ -49,7 +49,7 @@ spec:
               value: nordvpn
             - name: VPN_TYPE
               value: wireguard
-            # Wireguard credentials from Infisical-managed secret
+            # Wireguard credentials from OpenBao-backed ExternalSecret target
             - name: WIREGUARD_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
