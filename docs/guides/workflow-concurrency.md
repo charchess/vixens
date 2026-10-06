@@ -107,17 +107,27 @@ concurrency:
 - Prevents duplicate queue validations
 - SHA-based ensures uniqueness
 
-## Workflows WITHOUT Concurrency
+## Production workflow serialization
+
+### promote-prod.yaml
+
+Production promotions are intentional **and serialized**:
+
+```yaml
+concurrency:
+  group: production-promotion
+  cancel-in-progress: false
+```
+
+A second promotion waits for the current promotion instead of racing it or cancelling it. This protects the mutable `prod-stable` pointer while preserving every explicit promotion request.
+
+## Workflows without cancellation-oriented concurrency
 
 ### 1. k8s-version-matrix.yaml
 
 **Why:** Scheduled workflow, one run per week
 
-### 2. promote-prod.yaml
-
-**Why:** Manual workflow, each promotion is intentional
-
-### 3. renovate-discord-notify.yaml
+### 2. renovate-discord-notify.yaml
 
 **Why:** Event-driven, each event should notify
 
@@ -193,11 +203,15 @@ concurrency:
 
 ### ❌ DON'T
 
-1. **Don't use concurrency on production workflows**
+1. **Don't cancel an in-progress production promotion**
    ```yaml
-   # Bad: Production deployments should never cancel
-   # promote-prod.yaml should NOT have concurrency
+   # Bad for production
+   concurrency:
+     group: production-promotion
+     cancel-in-progress: true
    ```
+
+   Production mutation should be serialized with `cancel-in-progress: false`, not left race-prone and not cancelled mid-flight.
 
 2. **Don't use repo-wide concurrency unnecessarily**
    ```yaml
@@ -366,5 +380,5 @@ Concurrency group: "validate-refs/heads/feature-x"
 
 ---
 
-**Last Updated:** 2026-03-13  
+**Last Updated:** 2026-10-06  
 **Owner:** CI/CD Team
