@@ -30,18 +30,22 @@ requests.memory == limits.memory
 
 | Label | CPU | Memory | Use Case |
 |-------|-----|--------|----------|
-| `G-small` | 50m | 128Mi | Minimal apps, test services |
-| `G-medium` | 200m | 512Mi | Small production apps |
-| `G-large` | 1000m | 2Gi | Medium production apps |
-| `G-xl` | 2000m | 4Gi | Large critical apps |
+| `G-small` | 25m | 256Mi | Small fixed-footprint workloads |
+| `G-medium` | 50m | 512Mi | Medium fixed-footprint workloads |
+| `G-large` | 100m | 1Gi | Larger fixed-footprint workloads |
+| `G-xlarge` | 200m | 2Gi | High-memory fixed-footprint workloads |
+| `G-2xlarge` | 500m | 4Gi | Very large fixed-footprint workloads |
 
 ## Implementation Status
 
 ✅ **FULLY IMPLEMENTED** (as of 2026-03-03)
 
-All G-sizing profiles are now active in production via the `sizing-mutate` Kyverno policy.
+Current G-sizing profiles are implemented by the per-container v2 sizing policy.
 
-**Policy Location**: `apps/00-infra/kyverno/base/policies/sizing-mutate.yaml`
+**Policy Location**: `apps/00-infra/kyverno/base/policies/sizing-v2-mutate.yaml`
+
+The executable policy is authoritative for exact values; do not copy older v1
+global-label examples.
 
 **Non-persistent admission test:**
 ```bash
@@ -75,7 +79,7 @@ spec:
   template:
     metadata:
       labels:
-        vixens.io/sizing: "G-small"  # or G-medium, G-large, G-xl
+        vixens.io/sizing.app: "G-small"  # key suffix must match the container name
     spec:
       containers:
         - name: app
@@ -106,10 +110,11 @@ Kyverno will automatically mutate the pod to add matching requests and limits.
 
 ## Policy Reference
 
-- **Policy Name:** `sizing-mutate` (includes Guaranteed profiles)
-- **Location:** `apps/00-infra/kyverno/base/policies/sizing-mutate.yaml`
-- **Guaranteed profiles:** G-small, G-medium, G-large, G-xl
-- **Burstable profiles:** micro, small, medium, large, xlarge
+- **Policy Name:** `sizing-v2-mutate`
+- **Location:** `apps/00-infra/kyverno/base/policies/sizing-v2-mutate.yaml`
+- **Label shape:** `vixens.io/sizing.<container-name>: G-<size>`
+- **Guaranteed profiles:** G-nano through G-2xlarge as admitted by the current policy
+- Other B/SB/V modes use the same per-container label namespace with different burst semantics.
 
 ## Migration Guide
 
@@ -120,7 +125,7 @@ To migrate an app to Guaranteed QoS:
 3. **Add sizing label:**
    ```yaml
    labels:
-     vixens.io/sizing: "G-small"
+     vixens.io/sizing.<container-name>: "G-small"
    ```
 4. **Merge through the normal GitOps workflow and verify the resulting pod:**
    ```bash
@@ -143,19 +148,21 @@ kubectl get pod <pod> -o yaml | grep -A5 resources
 ```
 
 If requests != limits, verify:
-1. Label is correct: `vixens.io/sizing: G-small`
-2. Kyverno is running: `kubectl get pods -n kyverno`
-3. Policy is active: `kubectl get clusterpolicy sizing-mutate`
+1. Label key matches the real container name, e.g. `vixens.io/sizing.app: G-small`.
+2. Kyverno is running: `kubectl get pods -n kyverno`.
+3. Current policy is active: `kubectl get clusterpolicy sizing-v2-mutate`.
+4. Compare the admitted resources with the executable policy rather than a stale copied table.
 
 ## See Also
 
 - [ADR-022: 7-Tier Goldification System](../adr/022-7-tier-goldification-system.md)
-- [Sizing Migration Guide](../guides/sizing-migration.md)
+- [Sizing Migration Guide](../guides/sizing-migration.md) — historical compatibility stub
 - [Sizing Standards](./RESOURCE_STANDARDS.md) - Standard Burstable profiles
-- [Kyverno Policy Source](../../apps/00-infra/kyverno/base/policies/sizing-mutate.yaml) - Implementation
+- [Kyverno Policy Source](../../apps/00-infra/kyverno/base/policies/sizing-v2-mutate.yaml) - Implementation
 
 ## Changelog
 
+- **2026-10-06**: align G profiles, per-container label shape and policy source with sizing-v2-mutate
 - **2026-09-26**: replaced persistent test instructions with server-side dry-run/GitOps verification
 - **2026-03-03**: G-sizing fully implemented in Kyverno policy
 - **2024-02-24**: Initial documentation created
