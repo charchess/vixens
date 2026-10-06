@@ -469,7 +469,7 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrations(
 		}
 		return false, "MigrationPending", "waiting for LiteLLM schema migration Job to complete", nil
 	} else if !apierrors.IsNotFound(err) {
-		return false, "", err
+		return false, "ReconcileError", "", err
 	}
 
 	backoffLimit := int32(1)
@@ -501,7 +501,7 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrations(
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"/bin/sh", "-ec"},
 						Args: []string{`
-export DATABASE_URL="$(python -c 'import os, urllib.parse; u=urllib.parse.quote(os.environ["DB_USERNAME"], safe=""); p=urllib.parse.quote(os.environ["DB_PASSWORD"], safe=""); print(f"postgresql://{u}:{p}@{os.environ["DB_HOST"]}:{os.environ.get("DB_PORT", "5432")}/{os.environ["DB_NAME"]}")')"
+export DATABASE_URL="$(python -c 'import os, urllib.parse; u=urllib.parse.quote(os.environ["DB_USERNAME"], safe=""); p=urllib.parse.quote(os.environ["DB_PASSWORD"], safe=""); h=os.environ["DB_HOST"]; port=os.environ.get("DB_PORT", "5432"); d=os.environ["DB_NAME"]; print(f"postgresql://{u}:{p}@{h}:{port}/{d}")')"
 exec python litellm/proxy/prisma_migration.py
 `},
 						Env: []corev1.EnvVar{
@@ -527,10 +527,10 @@ exec python litellm/proxy/prisma_migration.py
 		},
 	}
 	if err := controllerutil.SetControllerReference(bundle, job, r.Scheme); err != nil {
-		return false, "", err
+		return false, "ReconcileError", "", err
 	}
 	if err := r.Create(ctx, job); err != nil {
-		return false, "", err
+		return false, "ReconcileError", "", err
 	}
 	return false, "MigrationPending", "LiteLLM schema migration Job created", nil
 }
