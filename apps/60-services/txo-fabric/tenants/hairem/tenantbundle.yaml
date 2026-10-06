@@ -10,6 +10,10 @@ spec:
   displayName: hAIrem
   isolation:
     profile: Shared
+  aiCredentialBroker:
+    profileRef: cliproxyapi-standard
+  aiGateway:
+    profileRef: litellm-standard
   persistence:
     postgresql:
       mode: Shared
