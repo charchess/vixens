@@ -1,252 +1,298 @@
 # Tenant-scoped LLM credential pools
 
-Status: **target implementation contract for #3868**. The current production-shaped
-gateway still routes `txo-default` and `txo-embedding` through OpenRouter. Nothing
-in this document means that a ChatGPT/Codex credential pool is active until its
-controller resources and physical acceptance tests have landed.
+Status: **target implementation contract for #3868**.
 
-## Goal and trust boundary
+The currently deployed inference path still uses the shared LiteLLM gateway and
+OpenRouter. The target described here is deliberately opt-in until the
+CLIProxyAPI path has passed physical acceptance. No tenant is cut over merely by
+adding the substrate.
 
-TXO Fabric must let one tenant own several upstream LLM credentials without ever
-giving those credentials to Hermes or allowing another tenant to consume them.
+## Decision
 
-The public contract remains:
+The v0.1 target is **one CLIProxyAPI (CPA) gateway per TenantBundle**.
 
-```text
-Hermes
-  |
-  | Fabric virtual key
-  | public logical model, e.g. txo-default
-  v
-TXO AI Gateway
-  |
-  | authenticated, tenant-scoped resolution
-  v
-tenant-private provider pool
-  |
-  +-- credential worker A
-  +-- credential worker B
-  +-- ...
-```
-
-The agent selects a public logical model. Fabric/LiteLLM selects the provider
-deployment and credential. An agent must never select an upstream account.
-
-## Verified LiteLLM v1.102.1 constraints
-
-The gateway is pinned to
-`ghcr.io/berriai/litellm-non_root:v1.102.1`. The design below was checked
-against that exact source tag rather than against current upstream documentation.
-
-### ChatGPT OAuth is process-scoped
-
-In `litellm/llms/chatgpt/authenticator.py`, `Authenticator` resolves exactly one
-`CHATGPT_TOKEN_DIR` and one `CHATGPT_AUTH_FILE` from process environment. Reads,
-device authorization and refresh all use that file, and refresh writes the updated
-OAuth state back to it.
-
-Therefore a single LiteLLM process with several mounted ChatGPT auth files does not
-provide a trustworthy account-selection boundary. For v0.1, **one ChatGPT OAuth
-credential means one isolated worker process**.
-
-### Virtual-key aliases can hide tenant-private routes
-
-In v1.102.1, `/key/generate` accepts an `aliases` map. During request setup,
-`_update_model_if_key_alias_exists` rewrites the requested model from the
-authenticated virtual key's alias map before provider routing.
-
-Fabric can therefore mint an AgentIdentity key with a contract such as:
-
-```json
-{
-  "models": ["txo-default"],
-  "aliases": {
-    "txo-default": "txo-tenant-ten00001-default"
-  }
-}
-```
-
-Hermes still requests `txo-default`; the internal group is never part of its
-configuration. Because key aliases are intentionally capable of redirecting model
-selection, **only the Fabric control plane may author them**. Tenant/user input must
-never be copied into this map unchecked.
-
-### Dynamic frontend deployments are available but must be enabled deliberately
-
-The exact v1.102.1 proxy implements `POST /model/new`. Persisting and reconciling
-those models through the proxy database is conditional on
-`store_model_in_db = true` / `STORE_MODEL_IN_DB=True`.
-
-The current TXO gateway does not enable that behavior. Enabling it and making the
-operator own model registration/deletion is a later #3868 implementation slice; it
-must not be silently switched on as part of the alias-only substrate.
-
-## Canonical identities and naming
-
-Tenant ownership uses the immutable Fabric `TenantBundle.spec.tenantId`, not an
-upstream account name.
-
-Recommended internal naming:
+TXO Fabric remains the control plane. CPA becomes the tenant-local provider
+credential broker.
 
 ```text
-public logical model:
-  txo-default
-
-tenant-private model group:
-  txo-tenant-<lowercase tenantId>-default
-  example: txo-tenant-ten00001-default
-
-credential identity:
-  Fabric non-secret credential object
-  tenantRef + credentialKey + provider
-
-worker resources:
-  txo-llm-<tenantId>-<credentialKey>
+                       TXO Fabric
+                       control plane
+                            |
+             +--------------+--------------+
+             |                             |
+             v                             v
+      tenant hAIrem                  tenant Indiba
+             |                             |
+      CLIProxyAPI hAIrem             CLIProxyAPI Indiba
+        |       |                       |
+        |       +-- OAuth account B     +-- OAuth account C
+        +---------- OAuth account A
 ```
 
-Provider account identifiers, OAuth access tokens, refresh tokens and auth files are
-not part of AgentIdentity, TenantBundle, virtual-key metadata, logs or status.
+Hermes never receives an upstream provider credential. It eventually receives
+only a Fabric-owned credential for the CPA belonging to its own tenant.
 
-## Credential ownership model
+This supersedes the earlier #3868 design that proposed one LiteLLM worker per
+OAuth credential. The alias support added in #3880 remains harmless rollout
+substrate for the currently active LiteLLM path but is not the target credential
+pool implementation.
 
-Each upstream credential needs an explicit Fabric-owned non-secret identity with at
-least:
+## Why CPA is the credential broker
 
-- `tenantRef`;
-- immutable non-secret `credentialKey`;
-- provider type (`ChatGPT` first);
-- administrative owner/re-auth authority;
-- allowed logical model families;
-- desired lifecycle state such as enabled, drained or revoked.
+The selected baseline is CLIProxyAPI **v8.0.16**. Its upstream implementation
+already owns the behaviors #3868 would otherwise have to recreate around
+LiteLLM:
 
-Observed status may expose only log-safe operational data:
+- multiple file/OAuth-backed credentials;
+- Codex/OpenAI OAuth support;
+- round-robin, weighted-round-robin and fill-first credential selection;
+- retry/failover across eligible credentials;
+- session affinity when wanted;
+- per-credential and per-model cooldown/quota state;
+- disable/unavailable lifecycle state;
+- persisted mutable auth files and refresh state;
+- authenticated management APIs for credential and quota observation;
+- an in-memory usage-event queue and API-key usage views.
 
-- `PendingAuth`, `Healthy`, `Degraded`, `RateLimited`, `Cooldown`,
-  `ReauthRequired`, `Disabled`;
-- last successful request time;
-- last failure class/status, without response bodies that may contain secrets;
-- provider-reported remaining quota when trustworthy;
-- `nextEligibleAt` only when a reliable reset/retry time exists;
-- an explicit unknown-recovery state otherwise.
+Fabric must consume those capabilities instead of reimplementing their internal
+scheduler.
 
-The concrete CRD shape is implemented in a later slice. Secret material is never a
-CRD spec/status field.
+## Tenant isolation boundary
 
-## OAuth state storage
+CPA's ordinary incoming API-key authentication is not treated as a sufficient
+multi-tenant authorization boundary. In v0.1, credential pools are isolated by
+topology:
 
-ChatGPT OAuth state is mutable because LiteLLM refreshes and rewrites its auth file.
-It therefore cannot be modeled as immutable Git data and should not be treated as a
-normal one-way ExternalSecret.
+- one CPA Deployment per TenantBundle;
+- one tenant namespace per CPA;
+- one OAuth-state PVC per CPA;
+- one generated management credential per CPA;
+- one generated bootstrap/client credential per CPA;
+- no shared credential directory between tenants;
+- no global CPA process allowed to select from several tenants' provider
+  accounts.
 
-For the v0.1 proof:
+Therefore a hAIrem failover cannot select an Indiba credential unless the
+platform itself violates the Kubernetes/configuration boundary.
 
-- each credential receives a dedicated persistent volume in the Fabric management
-  namespace;
-- only that credential's authorization job and worker may mount it;
-- the worker receives `CHATGPT_TOKEN_DIR` pointing at that volume;
-- the auth file is never mounted into Hermes, Hindsight or another credential
-  worker;
-- deleting or retaining an AgentIdentity PVC has no effect on provider access;
-- disabling a credential removes its worker from routing immediately;
-- revocation invalidates selection first, then removes/invalidates the persisted
-  OAuth state according to the credential lifecycle policy.
+CPA credential/model prefixes and `routing.force-model-prefix=true` remain
+enabled as defense in depth, not as the primary tenant boundary.
 
-The storage implementation must be encrypted/protected by the platform storage
-boundary. A later hardening slice may move to a dedicated mutable credential service
-if required; the isolation contract does not depend on the backing implementation.
+## Fabric API contract
 
-## Device authorization
+`TenantBundle.spec.aiGateway` requests the tenant capability and references a
+platform-owned `AIGatewayProfile`.
 
-Interactive OAuth must be an administrative workflow, never a side effect of a
-tenant inference request.
+The profile owns implementation details such as:
 
-Target flow:
+- exact CPA image;
+- service port;
+- resources and scheduling class;
+- OAuth-state storage class/size;
+- bounded usage-queue retention.
 
-1. operator/admin requests connect or re-auth for one credential identity;
-2. a short-lived authorization workload mounts only that credential's state volume;
-3. it runs the v1.102.1 ChatGPT device flow and exposes the verification URL/user
-   code through an authenticated admin surface;
-4. LiteLLM writes the resulting auth state to the credential volume;
-5. the worker becomes eligible only after the state is valid;
-6. ordinary refresh happens inside the isolated worker and survives restart.
+The tenant CR never contains OAuth tokens, upstream account identifiers,
+provider API keys or management passwords.
 
-A worker with missing/invalid auth must be unready and absent from the frontend
-eligible set. It must not initiate an interactive device flow because a Hermes
-request happened to arrive.
-
-## Worker topology
-
-Each ChatGPT credential gets one isolated LiteLLM worker:
+The first standard profile pins:
 
 ```text
-txo-ai-gateway frontend
-        |
-        +--> tenant TEN00001 private group
-        |      +--> worker credential-a
-        |      +--> worker credential-b
-        |
-        +--> tenant TEN00002 private group
-               +--> worker credential-a
+eceasy/cli-proxy-api:v8.0.16
 ```
 
-Worker properties:
+The image/version must be upgraded deliberately and revalidated; `latest` is
+not an acceptable Fabric contract.
 
-- same explicitly pinned LiteLLM release until an upgrade is reviewed;
-- static ChatGPT provider configuration local to the worker;
-- one credential state volume;
-- ClusterIP-only service;
-- ingress allowed only from the Fabric-facing gateway;
-- no Fabric virtual-key database and no tenant-facing administration endpoint;
-- no credential sharing between worker pods.
+## Runtime resources
 
-The frontend registers each eligible worker as a deployment of exactly one
-tenant-private model group. Multiple eligible workers in that group let LiteLLM
-perform normal deployment selection, retry and cooldown without exposing account
-identity to the caller.
+For a tenant named `hairem`, the reconciler owns resources in
+`tenant-hairem`:
 
-## Routing and fail-closed rules
+```text
+Deployment/txo-ai-gateway
+Service/txo-ai-gateway
+Secret/txo-ai-gateway-runtime
+PersistentVolumeClaim/txo-ai-gateway-auth
+NetworkPolicy/txo-ai-gateway
+```
 
-For a tenant using a private pool:
+The auth PVC is **gateway/provider state**, not agent state. It is never mounted
+into an AgentIdentity runtime and is independent from retained Hermes workspaces.
 
-1. Hermes authenticates with its AgentIdentity Fabric key.
-2. It asks for `txo-default`.
-3. The operator-owned key alias resolves that public name to the tenant-private
-   group.
-4. Only workers owned by that tenant are registered in that group.
-5. Retry/failover remains inside that group.
-6. If the group has no eligible deployment, the request fails unless an explicit
-   tenant policy defines another authorized provider/model fallback.
+The runtime Secret contains only Fabric-to-CPA bootstrap/control material and
+the generated CPA configuration. Provider OAuth access/refresh tokens belong on
+the dedicated CPA auth volume.
 
-Never derive a fallback by searching all healthy credentials globally.
+## CPA baseline configuration
 
-The following are separate policy layers and must be tested independently:
+The generated baseline deliberately disables discovery, control-panel
+auto-update and plugins. It enables:
 
-1. another credential for the same provider/model in the same tenant;
-2. another authorized provider deployment for the same tenant logical model;
-3. an explicit fallback logical model.
+- round-robin routing;
+- retry/failover;
+- `force-model-prefix=true`;
+- usage statistics;
+- a bounded management usage queue;
+- OAuth state under the dedicated `/data/auth` volume.
 
-## OpenRouter rollout safety
+The Management API is protected by a generated `MANAGEMENT_PASSWORD`. Provider
+credentials are never copied into TenantBundle/AgentIdentity status, labels or
+annotations.
 
-The existing `txo-default -> OpenRouter` mapping remains the default until a
-tenant private pool is fully reconciled and physically validated. The first
-implementation slices must not rewrite existing AgentIdentity keys to a tenant-private
-group before that group has eligible deployments.
+The first substrate does **not** hand the bootstrap CPA key to Hermes and does
+not change `OPENAI_BASE_URL`. That cutover happens only after physical CPA
+acceptance.
 
-This preserves the current working route while #3868 is introduced incrementally.
+## OAuth lifecycle
 
-## Required isolation tests
+Interactive OAuth is an administrative operation, never a side effect of an
+inference request.
 
-Fast tests must prove at least:
+Target lifecycle:
 
-- current keys with no alias retain the existing OpenRouter behavior;
-- a Fabric-generated alias keeps the caller's public model contract unchanged;
-- hAIrem and Indiba aliases resolve to different internal group names;
-- tenant/user input cannot choose an arbitrary alias target;
-- missing or ambiguous tenant ownership fails closed;
-- disabled/revoked credentials are not eligible;
-- cooldown/fallback never selects a credential owned by another tenant;
-- no token/auth-file content appears in CRD status or log-safe structures.
+1. Fabric/admin chooses the tenant gateway and requests connect/re-auth for one
+   provider credential.
+2. The action is performed against only that tenant CPA.
+3. CPA persists the resulting mutable auth state on that tenant's gateway PVC.
+4. CPA owns ordinary refresh and credential eligibility.
+5. Fabric/collector observes only log-safe lifecycle/quota data.
+6. Disable/revoke removes the credential from eligibility before destructive
+   cleanup of its persisted token state.
 
-Physical acceptance must additionally prove two hAIrem OAuth credentials, a separate
-Indiba credential, restart persistence, forced failover, revoke/re-auth, and continued
-OpenRouter availability as required by #3868.
+### Codex device authorization caveat
+
+CLIProxyAPI exposes Codex OAuth and its CLI includes a Codex device-login path,
+but the exact **remote administrative device-flow contract required by TXO has
+not yet been physically proven** for v8.0.16. The inspected management/TUI flow
+for Codex is browser/callback oriented.
+
+Therefore #3868 must remain open until the chosen administrative flow is proven
+without shell access to the tenant runtime and without exposing tokens to
+Hermes.
+
+## Logical models
+
+Agents must continue to choose a logical model, never an account.
+
+The final mapping belongs to #3869, for example:
+
+```text
+txo-general
+txo-coding
+txo-fast
+txo-auto
+txo-embedding
+```
+
+Fabric projects those logical choices into the tenant CPA configuration. CPA
+then chooses an eligible credential/provider account inside that tenant.
+
+Provider account identity is not part of the agent-facing contract.
+
+## Accounting, budgets and collector contract
+
+LiteLLM is **not required merely for accounting**.
+
+CPA v8 exposes authenticated observability/management surfaces including:
+
+```text
+GET /v8/management/observability/usage/api-keys
+GET /v8/management/observability/usage/queue
+```
+
+Credential observations also expose success/failure counts, recent request
+buckets, quota/cooldown state and recovery timestamps when known.
+
+A TXO accounting collector may therefore:
+
+1. authenticate to each tenant CPA Management API with platform-owned
+   credentials;
+2. drain usage events inside the configured retention window;
+3. normalize tenant, agent/client key, logical/served model, tokens and provider
+   observations;
+4. enrich events with the platform pricing catalog;
+5. persist durable accounting outside CPA;
+6. derive dashboards, alerts and budget enforcement from that durable ledger.
+
+CPA's in-memory usage queue is an **observation transport, not the billing
+ledger**. Missing a polling window must be detectable, and durable budget
+enforcement must not depend solely on volatile CPA state.
+
+Because every tenant has its own CPA, tenant attribution is already fixed by the
+endpoint being collected. Per-agent attribution can later use distinct
+Fabric-generated CPA client keys and/or a Fabric-owned request identity
+projection once that contract is proven.
+
+## Network boundary
+
+The tenant CPA is ClusterIP-only and is selected by the tenant default-deny
+network posture.
+
+Required intent:
+
+- tenant workloads reach only their own CPA for model inference;
+- CPA reaches DNS and explicitly permitted HTTPS provider endpoints;
+- CPA Management API requires its separate generated management credential;
+- no tenant workload receives that management credential;
+- a future collector/control-plane path is explicitly allowed rather than
+  opening the Management API publicly;
+- hAIrem and Indiba CPA pods cannot mount or address each other's auth PVCs.
+
+NetworkPolicy is defense in depth; namespace/resource ownership is the primary
+credential-state isolation boundary.
+
+## Rollout and LiteLLM retirement
+
+During migration:
+
+```text
+existing path:
+Hermes -> shared LiteLLM -> OpenRouter
+
+target path:
+Hermes -> tenant CPA -> tenant provider pool
+```
+
+The existing LiteLLM route remains authoritative until CPA acceptance is green.
+There is no automatic fallback from a CPA-enabled tenant to another tenant or a
+global credential pool.
+
+LiteLLM can be removed only after all of the following are true:
+
+- AgentIdentity inference uses the tenant CPA contract;
+- Hindsight embedding routing has an accepted replacement path;
+- scoped credential revocation/rotation has an equivalent Fabric/CPA contract;
+- accounting/budget observation has moved to the collector path;
+- no active module depends on the shared LiteLLM gateway.
+
+Removal is a separate GitOps change, not part of the initial CPA substrate.
+
+## Required tests
+
+Fast controller tests must prove:
+
+- two tenants receive separate CPA Secrets and auth PVCs;
+- generated gateway credentials are different per tenant and stable across
+  idempotent reconciliation;
+- unsupported/shared CPA topology fails closed;
+- provider tokens do not appear in generated config, CR status or logs;
+- the CPA image is explicitly pinned;
+- deleting/removing the capability cannot delete resources not owned by that
+  TenantBundle;
+- current tenants that do not request `spec.aiGateway` keep their existing
+  inference path unchanged.
+
+Physical acceptance for #3868 must prove at least:
+
+1. one disposable tenant CPA starts from the pinned image under the generated
+   security/storage contract;
+2. two hAIrem Codex credentials can be authorized and survive CPA restart;
+3. selection/failover stays inside hAIrem;
+4. a separate Indiba CPA cannot use hAIrem credentials;
+5. forced quota exhaustion/cooldown makes the next eligible hAIrem credential
+   serve the request;
+6. revoke/disable/re-auth works without giving a provider token to Hermes;
+7. the collector can consume usage/quota observations without provider secret
+   leakage;
+8. the existing OpenRouter/LiteLLM path remains available until explicit
+   cutover.
