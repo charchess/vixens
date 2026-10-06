@@ -29,7 +29,7 @@ curl -L -k https://linkwarden.dev.truxonline.com | grep "Linkwarden"
 - **Namespace :** `tools`
 - **Dépendances :**
     - `PostgreSQL` (Cluster partagé)
-    - `Infisical` (Secrets DATABASE_URL, NEXTAUTH_SECRET)
+    - OpenBao + External Secrets Operator (`ExternalSecret/linkwarden-secrets-sync` → `Secret/linkwarden-secrets`)
 - **Particularités :** Gestionnaire de favoris collaboratif.
 - **Note Stockage (2025-12-31) :** Augmentation du stockage PostgreSQL partagé de 20Gi à 50Gi pour résoudre la saturation disque causant des CrashLoopBackOff.
 ---
