@@ -1,31 +1,21 @@
-# ArgoCD Image Updater
+# ArgoCD Image Updater — retired documentation
 
-## Informations de Déploiement
-| Environnement | Déployé | Configuré | Testé | Version |
-|---------------|---------|-----------|-------|---------|
-| Dev           | [x]     | [x]       | [x]   | v1.0.1  |
-| Prod          | [ ]     | [ ]       | [ ]   | -       |
+> **Status: historical compatibility stub.**
+>
+> There is currently no `argocd-image-updater` application desired state under
+> `apps/70-tools/`. This page described an older deployment and must not be used
+> as an operational runbook or as evidence that registry credentials still require
+> a dedicated secret integration.
+>
+> Historical content remains available in Git history.
 
-## Validation
-**URL :** https://image-updater.[env].truxonline.com
+Vixens currently relies on Renovate for dependency/image update discovery and
+automation. See:
 
-### Méthode Automatique (Curl)
-```bash
-# 1. Vérifier la redirection HTTP -> HTTPS
-curl -I http://image-updater.dev.truxonline.com
-# Attendu: HTTP 301/302/308
+- `renovate.json`
+- `docs/applications/70-tools/renovate.md`
+- `WORKFLOW.md`
 
-# 2. Vérifier le health check
-curl -k https://image-updater.dev.truxonline.com/healthz
-# Attendu: HTTP 200 (OK)
-```
-
-### Méthode Manuelle
-1. Vérifier les logs pour voir si les nouvelles images sont détectées (`kubectl logs -n tools -l app.kubernetes.io/name=argocd-image-updater`).
-
-## Notes Techniques
-- **Namespace :** `tools`
-- **Dépendances :**
-    - `ArgoCD`
-    - `Infisical` (Credentials Registries)
-- **Particularités :** Met à jour automatiquement les images des applications ArgoCD en fonction de règles (semver, latest, etc.) et commite les changements dans Git (Write-Back).
+If ArgoCD Image Updater is reintroduced, document its current manifests, secret
+source and write-back semantics from the executable Git state rather than reviving
+this retired page.
