@@ -2,39 +2,27 @@ package v1alpha1
 
 import (
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type AIGatewayAuthStorageSpec struct {
-	// Size is the persistent request for mutable OAuth credential state.
-	// +kubebuilder:default="1Gi"
-	Size resource.Quantity `json:"size,omitempty"`
-
-	// StorageClassName is explicit because Vixens intentionally has no default StorageClass.
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=253
-	StorageClassName string `json:"storageClassName"`
-}
-
 type AIGatewayProfileSpec struct {
-	// Topology is tenant-scoped for v0.1. Cross-tenant credential pools are deliberately unsupported.
+	// Topology is tenant-scoped for v0.1. Cross-tenant inference gateways are deliberately unsupported.
 	// +kubebuilder:validation:Enum=TenantScoped
 	// +kubebuilder:default=TenantScoped
 	Topology string `json:"topology,omitempty"`
 
-	// Implementation selects the platform-owned gateway implementation.
-	// +kubebuilder:validation:Enum=CLIProxyAPI
-	// +kubebuilder:default=CLIProxyAPI
+	// Implementation selects the platform-owned tenant-facing AI gateway.
+	// +kubebuilder:validation:Enum=LiteLLM
+	// +kubebuilder:default=LiteLLM
 	Implementation string `json:"implementation,omitempty"`
 
-	// Image is an immutable/versioned CLIProxyAPI image reference.
+	// Image is an immutable/versioned LiteLLM image reference.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=512
 	Image string `json:"image"`
 
-	// APIPort is the tenant-local OpenAI-compatible API and authenticated management port.
-	// +kubebuilder:default=8317
+	// APIPort is the tenant-local OpenAI-compatible API port.
+	// +kubebuilder:default=4000
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
 	APIPort int32 `json:"apiPort,omitempty"`
@@ -51,16 +39,6 @@ type AIGatewayProfileSpec struct {
 	// +kubebuilder:default=V-small
 	// +kubebuilder:validation:MaxLength=63
 	SizingLabel string `json:"sizingLabel,omitempty"`
-
-	// AuthStorage stores mutable OAuth access/refresh state outside every AgentIdentity PVC.
-	AuthStorage AIGatewayAuthStorageSpec `json:"authStorage"`
-
-	// UsageQueueRetentionSeconds controls CPA's in-memory management usage queue.
-	// TXO collectors must poll within this bounded window; durable accounting belongs outside CPA.
-	// +kubebuilder:default=900
-	// +kubebuilder:validation:Minimum=60
-	// +kubebuilder:validation:Maximum=3600
-	UsageQueueRetentionSeconds int32 `json:"usageQueueRetentionSeconds,omitempty"`
 }
 
 // +kubebuilder:object:root=true
