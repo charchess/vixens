@@ -15,5 +15,3 @@ spec:
     postgresql:
       mode: Shared
       profileRef: postgresql-shared
-  aiCredentialBroker:
-    profileRef: cliproxyapi-standard
