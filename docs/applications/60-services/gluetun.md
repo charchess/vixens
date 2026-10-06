@@ -24,7 +24,7 @@ kubectl exec -it deploy/gluetun -n services -- curl -s https://ifconfig.io
 ## Notes Techniques
 - **Namespace :** `services` (A vérifier)
 - **Dépendances :**
-    - `Infisical` (Secrets Wireguard)
+    - OpenBao + External Secrets Operator (`ExternalSecret/gluetun-wireguard-secrets-sync` → `Secret/gluetun-wireguard-secrets`)
 - **Particularités :** Client VPN (NordVPN/Wireguard). Sert de Gateway/Proxy pour les applications nécessitant l'anonymat (Prowlarr, *arr).
 ---
 > ⚠️ **HIBERNATION DEV**
