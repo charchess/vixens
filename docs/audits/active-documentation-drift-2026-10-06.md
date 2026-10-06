@@ -1,7 +1,7 @@
 # Active documentation drift audit — 2026-10-06
 
 **Issue:** #3546  
-**Status:** In progress — central workflow/architecture/reference and application-document cleanup completed; final post-merge search remains.
+**Status:** Completed — active-document cleanup and final post-merge drift classification completed.
 
 ## Goal
 
@@ -212,12 +212,33 @@ Previously deferred dependencies are also resolved:
 - #3709 backfilled the Fabric AgentIdentity/tenant/workspace ADR contracts and
   cleaned active technical Persona terminology.
 
-## Remaining closure work
+## Final post-merge drift classification
 
-Only the acceptance-required **final post-merge repository-wide drift search on
-current `main`** remains. It must classify any surviving matches as either:
-- explicitly historical/negative context; or
-- actionable active drift that requires another correction before #3546 closes.
+A final repository-wide search was run against current `main` after the application
+cleanup and follow-up drift fixes.
+
+Classified survivors:
+
+- `Infisical` in active application docs: only explicit negative/historical
+  statements such as "do not recreate the retired Infisical integration";
+- direct `git push origin main/dev` examples: only dated management/report
+  snapshots or this audit's search-pattern inventory;
+- manual `prod-stable` force-tag examples: only ADR-017 historical rollback text,
+  a dated post-mortem, or an explicit "never do this" warning in the active skill;
+- merge queue mentions in active guides: explicitly state that merge queue is not
+  currently active/enforced;
+- direct ArgoCD Application patch guidance in active guides: no surviving current
+  runbook matches;
+- retired priority labels `priority:p0/p1`: no active matches;
+- active maturity secret wording: ADR-023 now surfaces ADR-029 directly and uses the
+  implementation-independent externally-managed-secret criterion.
+
+One executable (non-documentation) drift was found during the sweep:
+`apps/40-network/adguard-home/base/deployment.yaml` still carries the old global
+`vixens.io/sizing: G-small` label. That is outside this documentation-audit scope
+and is tracked separately rather than being silently changed in a docs PR.
+
+No remaining active-document match requires another #3546 correction.
 
 ## Search classes used
 
@@ -238,7 +259,12 @@ were also fetched directly from the branch/main when validating a specific fix.
 
 ## Closure condition for #3546
 
-Application/current-guidance cleanup is complete on the audit branch. Do not close
-#3546 until the final post-merge drift search on current `main` is classified and
-confirms that surviving retired-pattern matches are historical/negative context
-rather than active instructions.
+Satisfied on 2026-10-06:
+
+1. active operational/documentation inventory reviewed;
+2. workflow/tool/application drift corrected or explicitly marked historical;
+3. final post-merge repository-wide drift search classified;
+4. surviving retired-pattern matches are historical/negative context rather than
+   current operational instructions.
+
+#3546 may close once this final audit amendment is merged.
