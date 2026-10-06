@@ -2,7 +2,7 @@
 # MINIMAL GitOps configuration for Home Assistant
 # This is a FALLBACK only - real config comes from S3 backup via rclone
 # Sensitive data (tokens, credentials) are managed via:
-#   1. Infisical secrets (homeassistant-secrets)
+#   1. OpenBao + External Secrets Operator (homeassistant-secrets)
 #   2. S3 backup restoration (rclone)
 #
 # DO NOT put secrets here - they will be exposed in git history!
@@ -19,7 +19,7 @@ data:
   configuration.yaml: |
     # Minimal fallback configuration
     # Full config is restored from S3 backup at pod startup
-    # Secrets are injected from Infisical via secrets.yaml
+    # Secrets are projected from the OpenBao-backed Kubernetes Secret via secrets.yaml
 
     # Load default integrations
     default_config:
@@ -44,5 +44,5 @@ data:
     media_player: !include mediaplayer.yaml
     python_script:
 
-    # Secrets are loaded from secrets.yaml (managed by Infisical)
+    # Secrets are loaded from secrets.yaml (managed through OpenBao + External Secrets)
     # notify, device_tracker, google_assistant etc. are in full config from S3
