@@ -35,6 +35,10 @@ func aiGatewayTestProfile() *fabricv1alpha1.AIGatewayProfile {
 					corev1.ResourceCPU:    resource.MustParse("250m"),
 					corev1.ResourceMemory: resource.MustParse("512Mi"),
 				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("2"),
+					corev1.ResourceMemory: resource.MustParse("8Gi"),
+				},
 			},
 			PriorityClassName: "vixens-medium",
 			SizingLabel:       "V-scout",
@@ -189,6 +193,12 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	if container.SecurityContext == nil || container.SecurityContext.AllowPrivilegeEscalation == nil || *container.SecurityContext.AllowPrivilegeEscalation {
 		t.Fatal("migration container must disable privilege escalation")
 	}
+	if got := migration.Spec.Template.Labels["vixens.io/sizing.prisma-migrations"]; got != gatewayProfile.Spec.SizingLabel {
+		t.Fatalf("migration sizing label=%q want %q", got, gatewayProfile.Spec.SizingLabel)
+	}
+	if got := container.Resources.Limits.Memory().String(); got != "8Gi" {
+		t.Fatalf("migration memory limit=%q want 8Gi from AIGatewayProfile", got)
+	}
 
 	var policy networkingv1.NetworkPolicy
 	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayMigrationPolicyName}, &policy); err != nil {
@@ -279,6 +289,25 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	}
 	if bytes.Contains(resultJSON, originalDatabasePassword) || bytes.Contains(resultJSON, originalMasterKey) {
 		t.Fatal("AI gateway status/result leaked database or LiteLLM secret material")
+	}
+}
+
+func TestAIGatewayMigrationNameChangesWithSizingContract(t *testing.T) {
+	profile := aiGatewayTestProfile()
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: types.UID("db-secret-uid")}}
+
+	base := aiGatewayMigrationName(profile, secret)
+
+	profileWithDifferentSizing := profile.DeepCopy()
+	profileWithDifferentSizing.Spec.SizingLabel = "V-xlarge"
+	if got := aiGatewayMigrationName(profileWithDifferentSizing, secret); got == base {
+		t.Fatal("migration Job name must change when sizing label changes")
+	}
+
+	profileWithDifferentResources := profile.DeepCopy()
+	profileWithDifferentResources.Spec.Resources.Limits[corev1.ResourceMemory] = resource.MustParse("16Gi")
+	if got := aiGatewayMigrationName(profileWithDifferentResources, secret); got == base {
+		t.Fatal("migration Job name must change when resource contract changes")
 	}
 }
 
