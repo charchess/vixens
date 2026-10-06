@@ -101,15 +101,25 @@ Avant d'interrompre un chantier significatif ou de le transmettre à un autre ag
 
 Synchroniser également `Status`, `Priority` et `Target` du Project lorsqu'ils ont réellement changé. Ne pas marquer `Done` uniquement parce que le code a mergé si les critères d'acceptation exigent encore une validation runtime/physique.
 
-## GitOps
+## Validation locale et GitOps
 
 Le chemin normal est :
 
 ```text
-Issue → branche → PR → CI → main → ArgoCD dev → validation → promotion workflow → ArgoCD prod
+Issue → branche → édition → validations locales adaptées → PR → CI → main → ArgoCD dev → validation → promotion workflow → ArgoCD prod
 ```
 
-Les actions runtime sont acceptables pour **observer et diagnostiquer** (`get`, `describe`, `logs`, requêtes API, tests réseau). Les changements persistants doivent être encodés dans Git.
+Avant de commit/push, lorsqu'il dispose de l'environnement nécessaire, un agent doit exécuter les validations proportionnées aux fichiers modifiés :
+
+- utiliser `pre-commit run` sur les fichiers stagés quand les hooks sont disponibles ;
+- exécuter les tests/lints/renders spécifiques au composant réellement touché ;
+- ne pas lancer des validations runtime lourdes et non pertinentes uniquement pour cocher une case ;
+- si l'impact ne peut pas être borné avec confiance, préférer une validation plus profonde ;
+- ne jamais prétendre qu'un test/check a été exécuté lorsqu'il ne l'a pas été.
+
+La CI reste le gate de merge autoritatif. Un environnement local sans `pre-commit` n'autorise pas à contourner les checks GitHub ; il faut simplement signaler honnêtement les validations locales non réalisées.
+
+Les actions runtime sont acceptables pour **observer et diagnostiquer** (`get`, `describe`, `logs`, requêtes API, tests réseau). Les changements persistants doivent être encodés dans Git. Les opérations ArgoCD ou infrastructure qui mutent l'état live ne sont pas automatiquement « GitOps-safe » : elles nécessitent un diagnostic, le runbook de sécurité applicable et une intention explicite.
 
 ## TXO Fabric — conventions opérationnelles
 
