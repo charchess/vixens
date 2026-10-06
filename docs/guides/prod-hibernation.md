@@ -25,7 +25,7 @@ KEDA controls are intentionally not modified in this temporary capacity-recovery
 - Prowlarr, pyLoad, qBittorrent, Sakapuss, Stirling PDF, Trivy, Vaultwarden, Vikunja, Whisparr
 - IT-Tools and Mylar
 
-`infisical-operator` is deprecated in favor of OpenBao/External Secrets, but is not stopped by this hibernation policy: active retained workloads still declare Infisical resources and need a separately validated migration before the operator can be retired.
+Infisical is retired from active application desired state. Hibernated workloads keep their current Kubernetes Secrets/ExternalSecret declarations; the canonical managed-secret path is OpenBao + External Secrets Operator. Do not reintroduce the old Infisical operator as a hibernation dependency.
 
 ## Retirement distinction
 
