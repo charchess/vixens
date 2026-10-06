@@ -24,5 +24,5 @@ kubectl get pods -n cert-manager
 ## Notes Techniques
 - **Namespace :** `cert-manager`
 - **Dépendances :**
-    - `Infisical` (Secrets pour DNS Challenge via `cert-manager-webhook-gandi`)
+    - OpenBao + External Secrets Operator pour les credentials DNS Gandi (`ExternalSecret/gandi-credentials-sync`)
 - **Particularités :** Déployé via Helm Chart. Utilise `cert-manager-webhook-gandi` pour la validation DNS.
