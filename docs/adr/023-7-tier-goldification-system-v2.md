@@ -1,10 +1,17 @@
 # ADR-023: 7-Tier Goldification System v2 (Maturité)
 
 **Date:** 2026-03-05
-**Status:** Active
+**Status:** Active — amended by [ADR-029](029-align-maturity-with-current-platform.md)
 **Deciders:** User, Coding Agent
 **Tags:** quality, goldification, maturity
 **Supersedes:** [ADR-022](022-7-tier-goldification-system.md)
+
+> **Current implementation note (2026-10-06):** ADR-029 amends two implementation
+> details of this active maturity model. The Silver secret criterion is now
+> implementation-independent ("externally managed; no secret value in Git"), with
+> OpenBao + External Secrets Operator as the current Vixens implementation. Sizing
+> labels complement explicit Kubernetes requests/limits; they do not replace them.
+> Read ADR-029 together with this ADR for current implementation guidance.
 
 ---
 
@@ -76,9 +83,9 @@ Adopter la **version 2** du système 7-tiers avec les corrections ci-dessous.
 | Readiness probe | Universel | Le trafic n'est envoyé qu'à une app prête |
 | Liveness probe | Universel | L'app redémarre automatiquement si elle se bloque |
 | TLS/HTTPS activé | Universel | cert-manager configuré |
-| Secrets via Infisical | Universel | Aucun secret hardcodé en clair |
+| Secrets gérés extérieurement | Universel | Aucun secret en clair dans Git ; implémentation courante : OpenBao + External Secrets Operator (ADR-029) |
 | PVC + update strategy cohérente | Contextuel | `strategy.type: Recreate` si iSCSI/Retain |
-|| Startup probe | Universel | Requis sur tous les containers. Bypass : `vixens.io/fast-start: "true"` si démarrage < 5s |
+| Startup probe | Universel | Requis sur tous les containers. Bypass : `vixens.io/fast-start: "true"` si démarrage < 5s |
 
 **Critère de passage** : L'application est prête pour la promotion en production.
 
