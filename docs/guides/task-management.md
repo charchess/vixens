@@ -25,8 +25,10 @@ security(traefik): protect dashboard access
 Commande :
 
 ```bash
-gh issue create --title "chore(repo): description" --label "priority:p2"
+gh issue create --title "chore(repo): description"
 ```
+
+Si l'issue appartient à la roadmap active, l'ajouter ensuite au GitHub Project `vixens roadmap` et renseigner ses champs de pilotage. Les commandes exactes `gh project` peuvent varier selon la version du CLI ; inspecter d'abord les champs/options réels avec `gh project field-list` plutôt que coder en dur des identifiants ou supposer une syntaxe.
 
 ## Description recommandée
 
@@ -50,23 +52,34 @@ Liens vers issues, PR, ADR ou dépendances externes.
 
 Une issue doit être compréhensible sans dépendre d'une conversation privée ou d'un état local.
 
-## Priorités
+## Planification : Status, Priority, Target
 
-Vixens utilise les labels GitHub de priorité :
+La planification active vit dans le GitHub Project personnel **`vixens roadmap`** (owner `charchess`).
 
-- `priority:p0` — incident critique / blocage majeur ;
-- `priority:p1` — important ;
-- `priority:p2` — normal ;
-- `priority:p3` — faible / opportuniste.
+Le champ `Priority` du Project utilise :
 
-Utiliser les labels existants du dépôt plutôt que créer des variantes synonymes.
+- `P0` — priorité absolue / blocage ou chantier produit à traiter immédiatement ;
+- `P1` — haute priorité ;
+- `P2` — priorité normale ;
+- `P3` — opportuniste / faible.
+
+La priorité n'est plus portée par des labels `priority:p*`. Ne pas recréer ce système parallèle.
+
+Les autres champs principaux sont :
+
+- `Status` : `Todo`, `In Progress`, `On hold`, `Done` ;
+- `Target` : cible produit/release (`v0`, `v0.1`, `v0.2`, `v1`, etc.), distincte d'une itération/sprint.
+
+L'issue reste la source du besoin et des critères d'acceptation ; le Project ne doit pas devenir une seconde spécification technique.
 
 ## Cycle de vie
 
 Le cycle normal est :
 
 ```text
-Issue ouverte
+Issue ouverte + Project Todo
+   ↓
+travail actif → Project In Progress
    ↓
 branche dédiée + PR
    ↓
@@ -74,14 +87,16 @@ CI verte
    ↓
 merge main
    ↓
-validation dev
+validation dev si nécessaire
    ↓
-promotion prod si nécessaire
+promotion prod explicite si nécessaire
    ↓
-validation prod
+validation prod si nécessaire
    ↓
-Issue fermée
+critères d'acceptation satisfaits → Issue fermée + Project Done
 ```
+
+Une issue peut rester `In Progress` après merge si une validation runtime/physique est encore requise. Utiliser `On hold` pour un blocage assumé plutôt que déplacer silencieusement la cible ou marquer le travail terminé.
 
 Une PR peut utiliser `Closes #123` lorsqu'elle clôt réellement l'intégralité de l'issue après merge. Pour les changements qui nécessitent une validation dev/prod après merge, préférer garder l'issue ouverte jusqu'à cette validation.
 
@@ -118,15 +133,17 @@ Cela garde les relations lisibles aussi bien pour un humain que pour un agent.
 # backlog
 gh issue list --state open
 
-# priorités
-gh issue list --state open --label "priority:p1"
-
 # détail
 gh issue view <number>
 
 # recherche textuelle
 gh issue list --search "openbao"
+
+# inspecter les champs disponibles du Project
+gh project field-list <project-number> --owner charchess --format json
 ```
+
+Pour trier par `Priority`, `Status` ou `Target`, utiliser la vue du Project ou `gh project item-list` selon les capacités de la version du CLI installée.
 
 ## Fermer une issue
 
