@@ -106,7 +106,7 @@ func aiCredentialBrokerLabels(bundle *fabricv1alpha1.TenantBundle) map[string]st
 	labels := tenantLabels(bundle)
 	labels[LabelName] = tenantAICredentialBrokerName
 	labels[LabelInstance] = strings.ToLower(bundle.Spec.TenantID)
-	labels["app.kubernetes.io/component"] = "tenant-ai-gateway"
+	labels["app.kubernetes.io/component"] = "tenant-ai-credential-broker"
 	return labels
 }
 
