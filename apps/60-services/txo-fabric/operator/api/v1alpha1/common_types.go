@@ -54,6 +54,14 @@ type TenantMemorySpec struct {
 	Hindsight *HindsightMemorySpec `json:"hindsight,omitempty"`
 }
 
+type TenantAIGatewaySpec struct {
+	// ProfileRef selects a platform-owned tenant gateway implementation profile.
+	// +optional
+	// +kubebuilder:default=cliproxyapi-standard
+	// +kubebuilder:validation:MaxLength=128
+	ProfileRef string `json:"profileRef,omitempty"`
+}
+
 type TenantModuleSpec struct {
 	// Name is the stable Fabric module key (for example paperclip or valkey).
 	// +kubebuilder:validation:MinLength=1
