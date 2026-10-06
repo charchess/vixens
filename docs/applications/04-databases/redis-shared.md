@@ -26,4 +26,4 @@ kubectl exec -it -n databases deploy/redis-shared -- redis-cli ping
 ## Notes Techniques
 - **Namespace :** `databases`
 - **Dépendances :** Aucune
-- **Particularités :** Instance Redis standalone mutualisée. Authentification activée via `REDIS_PASSWORD` (Infisical). Utilisée pour le cache et les files de messages (Celery, etc.) des applications. Priorité `vixens-critical` en production.
+- **Particularités :** Instance Redis standalone mutualisée. Authentification activée via `REDIS_PASSWORD`, projeté depuis OpenBao par `ExternalSecret/redis-shared-credentials` vers `Secret/redis-shared-credentials`. Utilisée pour le cache et les files de messages (Celery, etc.) des applications. Priorité `vixens-critical` en production.
