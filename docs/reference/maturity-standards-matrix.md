@@ -33,7 +33,7 @@ Ce document récapitule les exigences techniques pour chaque tier de maturité, 
 | Liveness probe | Universel | L'app redémarre automatiquement si elle se bloque | - |
 | Startup probe | Universel | Requis sur tous les containers | `vixens.io/fast-start: "true"` si démarrage < 5s |
 | TLS/HTTPS activé | Universel | cert-manager configuré | - |
-| Secrets via Infisical | Universel | Aucun secret hardcodé en clair | - |
+| Secrets via OpenBao + External Secrets | Universel | Aucun secret hardcodé ; utiliser le chemin secret actif ou un mécanisme explicitement documenté | - |
 | PVC + update strategy cohérente | Contextuel | `strategy.type: Recreate` si iSCSI/Retain | - |
 
 **Critère de passage:** L'application est prête pour la promotion en production.
@@ -160,5 +160,5 @@ Bronze → Silver → Gold → Platinum → Emerald → Diamond → Orichalcum
 
 ---
 
-**Dernière mise à jour:** 2026-03-13  
+**Dernière mise à jour:** 2026-10-06  
 **Version ADR-023:** v2.1 (2026-03-05)

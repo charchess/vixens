@@ -28,6 +28,7 @@ Cet espace documente l'architecture, les procédures et les décisions du dépô
 - [Troubleshooting](troubleshooting/)
 - [Procedures](procedures/)
 - [Reports](reports/)
+- [Audits](audits/)
 
 ## Où mettre l'information
 

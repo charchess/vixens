@@ -31,7 +31,7 @@ Planning projects are `vixens core`, `vixens roadmap`, and `vixens perso`.
 | [014](014-litestream-backup-profiles-and-recovery-patterns.md) | Litestream Backup Profiles & Recovery Patterns | Accepted | Core | vixens core |
 | [017](017-pure-trunk-based-single-branch.md) | Pure Trunk-Based Development | Accepted | Repository | vixens core |
 | [018](018-openbao-external-secrets-and-nas-fqdn.md) † | OpenBao / External Secrets and NAS FQDN | Accepted | Core | vixens core |
-| [019 file](019-renovate-discord-approval-workflow.md) ‡ | Renovate Discord Approval Workflow | Accepted | Repository | vixens core |
+| [019 file](019-renovate-discord-approval-workflow.md) ‡ | Renovate Discord Approval Workflow | Deprecated | Repository | vixens core |
 | [020](020-automated-housekeeping-sanitization.md) | Automated Housekeeping | Accepted | Repository | vixens core |
 | [021](021-netbird-native-manifests.md) | Netbird Native Manifests | Accepted | Core | vixens core |
 | [023](023-7-tier-goldification-system-v2.md) | 7-Tier Goldification System v2 | Accepted (`Active` in historical file) | Repository | vixens core |

@@ -1,221 +1,169 @@
-# <!-- Powered by BMAD™ Core -->
-# Vixens Infrastructure Brownfield Enhancement Architecture
+# Vixens architecture
 
-**Version:** 5.0  
-**Status:** Approved / Real-world Reference  
-**Project:** Vixens Cluster Stabilization & Goldification  
+**Status:** Current overview
+**Last reviewed:** 2026-10-06
 
-> **⚠️ Système de maturité:** Voir [ADR-023: 7-Tier Goldification System v2](adr/023-7-tier-goldification-system-v2.md)
+This document is the stable architectural entry point for the Vixens repository.
+It deliberately avoids volatile application counts, point-in-time cluster metrics and
+tool-specific workflow state. Follow the linked current manifests, guides and ADRs
+for implementation detail.
 
----
+## Repository boundary
 
-## 1. Introduction & Existing Project Analysis
+Vixens is the GitOps desired-state repository for the Kubernetes application layer.
 
-### 1.1 Introduction
-This document defines the architectural approach for standardizing the Vixens cluster through the **7-tier Goldification system** (ADR-023). Its primary goal is to resolve existing issues (restarts, policy violations) by industrializing application durability (via Litestream and Config-Syncer) and resource management.
+- Talos / machine / Terraform infrastructure is managed separately in TerraVixens.
+- Vixens owns Kubernetes/ArgoCD application desired state, platform services, policy
+  and product workloads represented in this repository.
+- Live cluster state is evidence for diagnosis and validation; it is not the desired
+  state source of truth.
 
-### 1.2 Existing Project Analysis
-- **Primary Purpose:** Multi-cluster Kubernetes homelab infrastructure (GitOps "State Repo").
-- **Current Tech Stack:** 
-    - **Platform:** Talos Linux v1.12.4 / K8s v1.34.0.
-    - **Network:** Cilium (CNI) + AdGuard Home (Internal DNS HA).
-    - **Storage:** legacy CSI (iSCSI/NFS).
-    - **Secrets:** Infisical Operator (Injector for storage & app secrets).
-    - **GitOps:** ArgoCD v3.3.3 using a Trunk-based workflow (main branch).
+See root `WORKFLOW.md` and `AGENTS.md` for the canonical change lifecycle and
+source-of-truth hierarchy.
 
-**Key Findings (2026-03-08):**
-- **Durability Gaps:** Many SQLite-based applications lack continuous replication → Blocage niveau Emerald (317 violations check-backup).
-- **Resource Drift:** Probes manquants, PDB absents → Blocage niveau Platinum (237 violations check-pdb).
-- **Security Gaps:** SecurityContext non durci → Blocage niveau Diamond (121 violations).
+## Delivery and reconciliation
 
----
-
-## 2. Enhancement Scope and Integration Strategy
-
-### 2.1 Enhancement Overview
-The "Goldification" campaign targets progressive compliance with the 7-tier system:
-
-| Tier Cible | Prérequis Clé | Apps Actuelles |
-|------------|---------------|----------------|
-| 🥉 Bronze | Déployée, requests définis | 3 |
-| 🥈 Silver | Limits, probes, TLS, secrets | 17 |
-| 🥇 Gold | Métriques, Goldilocks, sync-wave | 48 |
-| 💎 Platinum | PriorityClass, PDB, graceful shutdown | 17 |
-| 🟢 Emerald | Litestream, Config-Syncer, Velero | 0 |
-| 💠 Diamond | PSA, NetworkPolicies, SSO | 0 |
-| 🌟 Orichalcum | 7j stabilité, 0 CVE | 0 |
-
-### 2.2 Integration Strategy: The Emerald Pattern (Data Durability)
-
-Pour atteindre le niveau **Emerald** (niveau 5), les applications doivent implémenter:
-
-- **Recovery-First Pattern:** Applications must verify and restore their state via initContainers (`rclone` for static files, `litestream` for DBs) before the main process starts.
-- **Sidecar Durability:** Every Emerald pod includes a `litestream` sidecar for real-time DB replication and a `config-syncer` sidecar for inotify-driven file sync to MinIO.
-- **Kyverno Enforcement:** Use Kyverno policies to monitor compliance and automatically flag non-compliant deployments.
-
----
-
-## 3. Tech Stack
-
-| Category | Technology | Usage |
-| :--- | :--- | :--- |
-| **Backup (DB)** | Litestream v0.5.6 | Sidecar for real-time SQLite replication to MinIO. |
-| **Backup (Files)** | rclone + inotify | Sidecar (Config-Syncer) for static file sync. |
-| **Storage Backend** | MinIO | S3-compatible internal endpoint hosted on legacy NAS. |
-| **Secrets Management**| Infisical | Automatic injection of S3 credentials. |
-| **Validation** | Python / Beads | `evaluate_maturity.py` and Beads status tracking. |
-| **Policy Enforcement** | Kyverno | Maturity checks automatisés. |
-
----
-
-## 4. Component Architecture
-
-### 4.1 Pod Topology (Emerald Standard)
-Every Emerald Deployment is composed of:
-1.  **Main Application:** The core service.
-2.  **Litestream Sidecar:** Listens on port `9090` for metrics.
-3.  **Config-Syncer Sidecar:** Watches `/config` for changes (excluding DB files).
-4.  **Restore InitContainer:** Pulls the latest stable state from MinIO.
-
-### 4.2 Internal DNS HA (AdGuard)
-To resolve query bursts and failures:
-- **HA Replicas:** Maintain 2 replicas with Kyverno health-check triggers.
-- **Upstream Link:** Standardize CoreDNS forwarders to minimize latency between AdGuard and the upstream providers.
-
-### 4.3 Data Lifecycle Flow (Mermaid)
-This diagram illustrates the sequence from Pod initialization to continuous protection:
-
-```mermaid
-sequenceDiagram
-    participant S3 as MinIO (S3)
-    participant Init as Restore-Init
-    participant PVC as legacy NAS PVC
-    participant App as Main Application
-    participant LS as Litestream
-    participant CS as Config-Syncer
-
-    Note over Init, PVC: Phase 1: Restoration
-    Init->>S3: Download latest config/DB
-    S3-->>Init: Config + Snapshot
-    Init->>PVC: Populate /config
-    
-    Note over App, CS: Phase 2: Runtime
-    App->>PVC: Read/Write data
-    LS->>PVC: Watch SQLite WAL
-    LS->>S3: Stream WAL segments (Real-time)
-    CS->>PVC: Watch file changes (Inotify)
-    CS->>S3: Sync modified files (10s debounce)
+```text
+GitHub Issue + vixens roadmap
+        ↓
+short-lived branch
+        ↓
+local/adaptive validation
+        ↓
+Pull Request + authoritative CI gate
+        ↓
+main
+   ├── immutable dev-v* snapshot
+   └── ArgoCD dev reconciliation
+        ↓
+runtime validation when relevant
+        ↓
+explicit production authorization
+        ↓
+promote-prod.yaml
+        ↓
+prod-v* + prod-stable
+        ↓
+ArgoCD prod reconciliation
 ```
 
----
+Persistent application changes are encoded in Git. Direct `kubectl apply/edit/patch`
+or manual production-tag movement is not a normal deployment mechanism.
 
-## 5. Source Tree Integration
+## Core platform
 
-The architecture uses a modular **Kustomize Component** approach:
+The current platform stack includes:
 
-```plaintext
-apps/_shared/components/
-├── sync-wave/           # ArgoCD deployment ordering
-│   ├── wave-1/          # Infrastructure secrets (before databases)
-│   ├── wave-2/          # Databases (after secrets, before apps)
-│   ├── wave-5/          # Network services (after databases, before apps)
-│   └── wave-10/         # Standard applications (default layer)
-├── goldilocks/          # VPA resource recommendations
-│   └── enabled/         # Observation mode (no auto-apply)
-├── revision-history-limit/ # ReplicaSet history limit (etcd optimization)
-├── priority/            # PriorityClass (critical, high, medium, low)
-├── poddisruptionbudget/ # PDB configurations (0, 1, 50percent)
-├── probes/              # Health check templates (basic, advanced)
-├── metrics/             # Prometheus scraping annotations
-├── nometrics/           # Metrics exemption annotation
-├── tolerations/         # Node affinity and tolerations
-└── resources/           # Resource sizing templates
+- **ArgoCD** for reconciliation from Git;
+- **Cilium / Hubble** for CNI, network policy and network observability;
+- **Traefik** for ingress;
+- **cert-manager** for TLS certificate lifecycle;
+- **External Secrets Operator + OpenBao** for application secret projection;
+- **VictoriaMetrics / Loki / Grafana** for metrics, logs and visualization;
+- **Kyverno** for admission/policy and maturity-related controls;
+- **Renovate** for dependency-update discovery/automation;
+- **Trivy Operator** for Kubernetes/image security findings.
+
+The executable manifests under `apps/` and `argocd/` are authoritative for exact
+versions, topology and environment-specific settings.
+
+## Secrets
+
+The active application secret path is:
+
+```text
+OpenBao
+  → ClusterSecretStore/openbao
+  → ExternalSecret
+  → Kubernetes Secret
+  → workload
 ```
 
-**Implementation Rule:** Applications in `apps/` include these components in their `base/kustomization.yaml` to inherit standardized features without duplicating manifests.
+Do not introduce new `InfisicalSecret` resources. Older ADRs/reports may preserve
+Infisical history but are not current implementation guidance.
 
----
+See `docs/guides/secret-management.md` and `.opencode/skills/vixens-secrets/`.
 
-## 6. Coding Standards
+## Application packaging
 
-### 6.1 Resource Limits (Silver+)
-- **Memory:** `Request == Limit` recommandé pour éviter OOMKills (Guaranteed QoS).
-- **CPU:** `Request` set to 10-25% of `Limit` to allow bursts during startup/indexing.
+Applications normally use an environment-independent base plus dev/prod overlays.
+Upstream Helm charts may be consumed through ArgoCD multi-source where that reduces
+maintenance; Vixens-owned configuration remains declarative in Git.
 
-### 6.2 Probes (Silver)
-- **Startup Probes:** Universel (bypass `vixens.io/fast-start: "true"` si démarrage < 5s).
-- **Liveness Probes:** Standardized to 3 failures before restart.
-- **Readiness Probes:** Mandatory for traffic routing.
+Current reusable application standards live in:
 
-### 6.3 Sizing Standards
+- `docs/reference/app-golden-standard.md`;
+- `docs/reference/quality-standards.md`;
+- `docs/reference/RESOURCE_STANDARDS.md`;
+- current shared components/policies under `apps/_shared/` and `apps/00-infra/`.
 
-| Size | CPU (Req / Lim) | RAM (Req / Lim) | Usage Typique |
-| :--- | :--- | :--- | :--- |
-| **Micro** | `10m` / `100m` | `128Mi` / `128Mi` | Sidecars (Litestream, Syncer) |
-| **Small** | `50m` / `500m` | `512Mi` / `512Mi` | Apps Go/Rust, Outils statiques |
-| **Medium** | `200m` / `1000m` | `1Gi` / `1Gi` | Web Apps (Python/Node) |
-| **Large** | `1000m` / `2000m` | `4Gi` / `4Gi` | Databases, Heavy Apps (Jellyfin) |
+Do not reconstruct old universal sidecar, backup, sizing or component patterns from
+historical reports. Backup, persistence, probes, resources and network policy are
+selected according to each workload's current contract.
 
-### 6.4 Priority Classes (Platinum)
+## Maturity and resource governance
 
-| Priority Class | Value | Usage |
-|----------------|-------|-------|
-| `vixens-critical` | 100000 | Core Infrastructure (Ingress, CSI, ArgoCD) |
-| `vixens-high` | 50000 | Mission-Critical User Apps (Home Assistant, Vaultwarden) |
-| `vixens-medium` | 10000 | Standard applications |
-| `vixens-low` | 1000 | Non-critical, batch jobs |
+The maturity model is governed by ADR-023 as aligned by ADR-029.
 
----
+Resource policy is not the old 2026-02 single-label sizing model. Current workloads
+may use per-container `vixens.io/sizing.<container>` metadata together with explicit
+bootstrap-safe Kubernetes resource requests/limits as defined by current standards
+and comparable manifests.
 
-## 7. Testing & Validation Strategy
+Goldilocks/VPA observations inform tuning; they do not replace workload-specific
+reasoning or the declared Git contract.
 
-### 7.1 Post-Deployment Validation
-Every deployment must be followed by:
-1.  `just wait-argocd <app>`: Confirm Healthy/Synced state.
-2.  `python3 scripts/validation/validate.py <app> dev`: Real-world connectivity check.
-3.  `just reports`: Update the conformity dashboard in `docs/reports/`.
+## Storage and durability
 
-### 7.2 Maturity Evaluation
-```bash
-# Évaluer la maturité d'une app
-python3 scripts/evaluate_maturity.py <app> prod
+Persistence and backup are workload-specific. StorageClasses, reclaim semantics,
+backup components and restore procedures must be taken from current manifests and
+the application's active documentation/runbook.
 
-# Générer le rapport de conformité
-just reports
-```
+Do not assume every stateful application uses Litestream, Config-Syncer, one NAS,
+one filesystem, or one reclaim policy merely because an older goldification document
+described that pattern.
 
----
+## TXO Fabric
 
-## 8. Current State & Next Steps
+`apps/60-services/txo-fabric/` defines the tenant-neutral agent platform management
+plane and its current API contracts.
 
-### État Actuel (2026-03-08)
-- **Platinum atteint:** 17 apps
-- **Gold atteint:** 48 apps
-- **Blocage principal:** Backup (Emerald) - 0 apps
+Key boundaries include:
 
-### Next Steps
+- `TenantBundle` for tenant/cell intent;
+- `AgentIdentity` for stable logical agent identity/runtime binding;
+- `AgentRuntimeProfile` for platform-owned runtime implementation/policy;
+- tenant-scoped Hindsight memory with deterministic per-agent banks;
+- centralized model/embedding access through the TXO AI Gateway;
+- structural tenant IAM desired state generated by Fabric while Authentik owns live
+  users, passwords, MFA and group membership;
+- integration authorization modeled separately from agent-local writable state.
 
-1. **Implémenter Emerald pour apps critiques:**
-   - homeassistant (16 restarts, besoin backup SQLite)
-   - vaultwarden (données sensibles)
-   - firefly-iii (finance)
+`hAIrem` is Client 0 and must use the same generic contracts as external tenants.
+No generic controller path may special-case hAIrem.
 
-2. **Résoudre instabilités:**
-   - promtail (87 restarts) - investiguer OOM
-   - netbird (42 restarts) - SecurityContext
-   - vikunja (37 restarts) - root cause analysis
+See `apps/60-services/txo-fabric/README.md` and the active TXO Fabric ADRs/issues.
 
-3. **Progresser vers Diamond:**
-   - Implémenter NetworkPolicies Cilium
-   - Durcir SecurityContext (121 violations actuelles)
+## Architecture decisions and history
 
----
+- `docs/adr/` records architectural decisions; superseded ADRs remain historical.
+- `docs/guides/` contains current how-to guidance only; retired plans should be
+  marked historical or reduced to compatibility stubs.
+- `docs/reports/`, `docs/post-mortems/` and archived material are evidence/history,
+  not current workflow instructions.
 
-## References
+When current documentation and executable manifests disagree, verify the current
+code/workflows and fix the active documentation instead of silently following drift.
 
-- [ADR-023: 7-Tier Goldification System v2](adr/023-7-tier-goldification-system-v2.md) — Source de vérité
-- [STATUS.md](STATUS.md) — État actuel des applications
-- [Quality Standards](reference/quality-standards.md) — Résumé des standards
+## Primary references
 
----
-🏗️ *Updated 2026-03-08 based on ADR-023 v2 and cluster state.*
+- `WORKFLOW.md` — contribution, validation, release and promotion contract;
+- `AGENTS.md` — automated-agent safety/reprise contract;
+- `docs/README.md` — documentation map;
+- `docs/guides/gitops-workflow.md` — GitOps operational detail;
+- `docs/guides/secret-management.md` — secret architecture;
+- `docs/reference/app-golden-standard.md` — application pattern;
+- `docs/reference/RESOURCE_STANDARDS.md` — resource/sizing reference;
+- `docs/adr/023-7-tier-goldification-system-v2.md`;
+- `docs/adr/029-align-maturity-with-current-platform.md`;
+- `apps/60-services/txo-fabric/README.md` — TXO Fabric current contracts.

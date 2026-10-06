@@ -24,8 +24,13 @@ Ce pattern assure la sauvegarde temps-réel et la restauration au démarrage des
 
 ### 1. Pré-requis (Secrets)
 
-L'application doit avoir accès aux credentials S3 compatibles Rclone (souvent les mêmes que Litestream).
-Secret recommandé : `shared-s3-credentials` ou via Infisical.
+L'application doit avoir accès aux credentials S3 compatibles Rclone lorsque ce
+pattern est réellement retenu pour le workload. Les valeurs secrètes suivent le
+chemin actif OpenBao → External Secrets Operator → Kubernetes Secret ; ne pas
+recréer d'intégration Infisical.
+
+Le nom du Secret et le chemin OpenBao doivent être dérivés de la convention
+applicative courante plutôt que d'imposer un `shared-s3-credentials` global.
 
 Variables d'environnement requises :
 *   `RCLONE_CONFIG_S3_TYPE=s3`
