@@ -6,8 +6,10 @@ resources:
   - hermes-upgrade-canary.yaml
   - postgresql-shared.yaml
   - postgresql-litellm.yaml
+  - postgresql-litellm-smoke.yaml
   - hindsight-standard.yaml
   - hindsight-gateway.yaml
   - cliproxyapi-standard.yaml
   - litellm-standard.yaml
+  - litellm-smoke.yaml
   - workspace-shared.yaml
