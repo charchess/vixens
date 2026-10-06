@@ -63,7 +63,7 @@ func aiGatewayTestTenant(name, tenantID string) *fabricv1alpha1.TenantBundle {
 func TestReconcileAIGatewayRequiresDedicatedPostgreSQLProfile(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
-	tenant := aiGatewayTestTenant("fabric-smoke", "TEN90002")
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
 	profile := aiGatewayTestProfile()
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile).Build()
 
@@ -82,7 +82,7 @@ func TestReconcileAIGatewayRequiresDedicatedPostgreSQLProfile(t *testing.T) {
 func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
-	tenant := aiGatewayTestTenant("fabric-smoke", "TEN90002")
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
 	gatewayProfile := aiGatewayTestProfile()
 	postgresqlProfile := aiGatewayPostgreSQLTestProfile()
 	cluster := cnpgObject(cnpgClusterGVK, "databases", "postgresql-shared")
@@ -98,7 +98,7 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	}
 
 	names := resolveAIGatewayPostgreSQLNames(tenant, postgresqlProfile)
-	if names.Database != "txo_ten90002_ai_gateway" || names.Role != "txo_ten90002_ai_gateway" {
+	if names.Database != "txo_ten00001_ai_gateway" || names.Role != "txo_ten00001_ai_gateway" {
 		t.Fatalf("unexpected dedicated LiteLLM database identity: %#v", names)
 	}
 
@@ -117,7 +117,7 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	// The gateway has its own database binding. It must never silently reuse the
 	// generic tenant/Hindsight database identity.
 	var genericSecret corev1.Secret
-	if err := c.Get(ctx, types.NamespacedName{Namespace: "databases", Name: "txo-ten90002-postgresql"}, &genericSecret); !apierrors.IsNotFound(err) {
+	if err := c.Get(ctx, types.NamespacedName{Namespace: "databases", Name: "txo-ten00001-postgresql"}, &genericSecret); !apierrors.IsNotFound(err) {
 		t.Fatalf("gateway unexpectedly created/reused generic tenant PostgreSQL Secret: %v", err)
 	}
 
@@ -285,8 +285,8 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 func TestAIGatewayPostgreSQLIsIsolatedAcrossTenants(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
-	first := aiGatewayTestTenant("fabric-smoke-a", "TEN90002")
-	second := aiGatewayTestTenant("fabric-smoke-b", "TEN90003")
+	first := aiGatewayTestTenant("hairem", "TEN00001")
+	second := aiGatewayTestTenant("indiba", "TEN00002")
 	gatewayProfile := aiGatewayTestProfile()
 	postgresqlProfile := aiGatewayPostgreSQLTestProfile()
 	cluster := cnpgObject(cnpgClusterGVK, "databases", "postgresql-shared")
@@ -315,7 +315,7 @@ func TestAIGatewayPostgreSQLIsIsolatedAcrossTenants(t *testing.T) {
 func TestCleanupAIGatewayRetainsDatabaseCredentialWhenProfileIsRetain(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
-	tenant := aiGatewayTestTenant("fabric-smoke", "TEN90002")
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
 	gatewayProfile := aiGatewayTestProfile()
 	postgresqlProfile := aiGatewayPostgreSQLTestProfile()
 	names := resolveAIGatewayPostgreSQLNames(tenant, postgresqlProfile)
@@ -380,7 +380,7 @@ func TestCleanupAIGatewayRetainsDatabaseCredentialWhenProfileIsRetain(t *testing
 func TestReconcileAIGatewayRejectsCredentialBrokerImplementation(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
-	tenant := aiGatewayTestTenant("fabric-smoke", "TEN90002")
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
 	profile := aiGatewayTestProfile()
 	profile.Spec.Implementation = "CLIProxyAPI"
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile).Build()
@@ -418,7 +418,7 @@ func TestRenderTenantLiteLLMConfigRoutesCodingThroughCPAWithoutProviderTokens(t 
 func TestTenantLiteLLMNetworkPolicyHasNoDirectInternetEgress(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
-	tenant := aiGatewayTestTenant("ai-plane-smoke", "TEN90003")
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
 	profile := aiGatewayTestProfile()
 	postgresqlProfile := aiGatewayPostgreSQLTestProfile()
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant).Build()
