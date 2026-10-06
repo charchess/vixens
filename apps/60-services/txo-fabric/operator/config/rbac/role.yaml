@@ -111,6 +111,7 @@ rules:
   - fabric.truxonline.io
   resources:
   - agentruntimeprofiles
+  - aigatewayprofiles
   - hindsightprofiles
   - integrationbindings
   - integrationconnections
