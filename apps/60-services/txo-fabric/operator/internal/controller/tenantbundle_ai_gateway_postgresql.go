@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -42,7 +43,7 @@ type aiGatewayPostgreSQLResult struct {
 	Names        aiGatewayPostgreSQLNames
 	Reason       string
 	Message      string
-	RequeueAfter int64
+	RequeueAfter time.Duration
 }
 
 func resolveAIGatewayPostgreSQLNames(bundle *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.PostgreSQLProfile) aiGatewayPostgreSQLNames {
@@ -96,7 +97,7 @@ func (r *TenantBundleReconciler) reconcileAIGatewayPostgreSQL(
 	var profile fabricv1alpha1.PostgreSQLProfile
 	if err := r.Get(ctx, client.ObjectKey{Name: profileName}, &profile); err != nil {
 		if apierrors.IsNotFound(err) {
-			return aiGatewayPostgreSQLResult{Reason: "PostgreSQLProfileNotFound", Message: fmt.Sprintf("PostgreSQLProfile %q does not exist", profileName), RequeueAfter: 30}, nil
+			return aiGatewayPostgreSQLResult{Reason: "PostgreSQLProfileNotFound", Message: fmt.Sprintf("PostgreSQLProfile %q does not exist", profileName), RequeueAfter: 30 * time.Second}, nil
 		}
 		return aiGatewayPostgreSQLResult{}, err
 	}
@@ -145,7 +146,7 @@ func (r *TenantBundleReconciler) reconcileAIGatewayPostgreSQL(
 		if message == "" {
 			message = "waiting for CloudNativePG to apply the LiteLLM DatabaseRole"
 		}
-		return aiGatewayPostgreSQLResult{Names: names, Reason: "PostgreSQLRolePending", Message: message, RequeueAfter: 5}, nil
+		return aiGatewayPostgreSQLResult{Names: names, Reason: "PostgreSQLRolePending", Message: message, RequeueAfter: 5 * time.Second}, nil
 	}
 
 	database, blocked, err := r.ensureAIGatewayDatabase(ctx, bundle, &profile, names)
@@ -498,7 +499,7 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrations(
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"/bin/sh", "-ec"},
 						Args: []string{`
-export DATABASE_URL="$(python -c 'import os, urllib.parse; u=urllib.parse.quote(os.environ["DB_USERNAME"], safe=""); p=urllib.parse.quote(os.environ["DB_PASSWORD"], safe=""); print(f"postgresql://{u}:{p}@{os.environ[\\"DB_HOST\\"]}:{os.environ.get(\\"DB_PORT\\", \\"5432\\")}/{os.environ[\\"DB_NAME\\"]}")')"
+export DATABASE_URL="$(python -c 'import os, urllib.parse; u=urllib.parse.quote(os.environ["DB_USERNAME"], safe=""); p=urllib.parse.quote(os.environ["DB_PASSWORD"], safe=""); print(f"postgresql://{u}:{p}@{os.environ["DB_HOST"]}:{os.environ.get("DB_PORT", "5432")}/{os.environ["DB_NAME"]}")')"
 exec python litellm/proxy/prisma_migration.py
 `},
 						Env: []corev1.EnvVar{
