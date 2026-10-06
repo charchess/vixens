@@ -30,7 +30,7 @@ curl -L -k https://docspell.dev.truxonline.com | grep "Docspell"
 - **Dépendances :**
     - `PostgreSQL` (Shared Cluster)
     - `Solr` (Composant Joex interne)
-    - `Infisical` (Secrets)
+    - OpenBao + External Secrets Operator (`docspell-db-credentials-sync` / `docspell-secrets-sync`)
 - **Particularités :** Gestionnaire de documents (DMS). Architecture micro-services (RestServer + Joex). Standard **✅ Valid** (Priorité `vixens-medium`, Profil Medium, DB Postgres mutualisée).
 ---
 > ⚠️ **HIBERNATION DEV**
