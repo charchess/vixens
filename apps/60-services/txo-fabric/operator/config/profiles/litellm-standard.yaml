@@ -1,0 +1,22 @@
+---
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AIGatewayProfile
+metadata:
+  name: litellm-standard
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: ai-gateway-profile
+spec:
+  topology: TenantScoped
+  implementation: LiteLLM
+  image: ghcr.io/berriai/litellm-non_root:v1.102.1
+  apiPort: 4000
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 8Gi
+  priorityClassName: vixens-medium
+  sizingLabel: V-scout
