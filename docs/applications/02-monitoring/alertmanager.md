@@ -27,9 +27,11 @@ curl -L -k https://alertmanager.dev.truxonline.com | grep "Alertmanager"
 ## Notes Techniques
 - **Namespace :** `monitoring`
 - **Dépendances :**
-    - `Infisical` (Webhook URL)
+    - OpenBao + External Secrets Operator (webhook/receiver secrets)
     - `Prometheus` (Chart parent)
 - **Particularités :** Déployé en tant que **Subchart** via le chart `prometheus`. Configuration définie dans `apps/02-monitoring/prometheus/base/values.yaml`.
 - **Secrets :**
-    - Path Infisical : `/apps/02-monitoring/alertmanager`
-    - Variables requises : `DISCORD_WEBHOOK_URL`
+    - `ExternalSecret/alertmanager-secrets-sync` uses `ClusterSecretStore/openbao`.
+    - Base path: `vixens/dev/apps/02-monitoring/alertmanager` (prod overlay patches the environment path).
+    - Target: `Secret/alertmanager-secrets`.
+    - Required value includes `DISCORD_WEBHOOK_URL`.
