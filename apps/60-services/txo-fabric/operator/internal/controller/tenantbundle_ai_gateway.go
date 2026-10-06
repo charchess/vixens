@@ -293,17 +293,17 @@ func (r *TenantBundleReconciler) ensureTenantAIGatewayNetworkPolicy(ctx context.
 		policy.Spec.PolicyTypes = []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress}
 		policy.Spec.Ingress = []networkingv1.NetworkPolicyIngressRule{{
 			From: []networkingv1.NetworkPolicyPeer{{PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{LabelManaged: "true"}}}},
-			Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intstrPtr(intstr.FromInt32(aiGatewayPort(profile)))}},
+			Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(int(aiGatewayPort(profile)))}},
 		}}
 		policy.Spec.Egress = []networkingv1.NetworkPolicyEgressRule{
 			{
 				To: []networkingv1.NetworkPolicyPeer{{NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"}}}},
 				Ports: []networkingv1.NetworkPolicyPort{
-					{Protocol: protocolPtr(corev1.ProtocolUDP), Port: intstrPtr(intstr.FromInt32(53))},
-					{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intstrPtr(intstr.FromInt32(53))},
+					{Protocol: protocolPtr(corev1.ProtocolUDP), Port: intOrStringPtr(53)},
+					{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(53)},
 				},
 			},
-			{To: []networkingv1.NetworkPolicyPeer{{}}, Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intstrPtr(intstr.FromInt32(443))}}},
+			{To: []networkingv1.NetworkPolicyPeer{{}}, Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(443)}}},
 		}
 		return nil
 	})
