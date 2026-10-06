@@ -15,3 +15,5 @@ spec:
     postgresql:
       mode: Shared
       profileRef: postgresql-shared
+  aiGateway:
+    profileRef: cliproxyapi-standard
