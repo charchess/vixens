@@ -6,6 +6,11 @@ upstream provider credentials.
 
 ## Architecture
 
+The tenant-scoped multi-credential target contract for #3868 is documented in
+[`CREDENTIAL_POOLS.md`](CREDENTIAL_POOLS.md). It is an incremental target: the
+current OpenRouter routes remain authoritative until a tenant pool is explicitly
+reconciled and physically validated.
+
 TXO Fabric uses LiteLLM as an OpenAI-compatible gateway in `txo-fabric-system`:
 
 ```text
