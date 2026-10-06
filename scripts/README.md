@@ -51,7 +51,7 @@ Important repository checks belong in GitHub Actions. Local scripts are convenie
 ## 🧰 Utilities (`scripts/utils/`)
 
 - **`check`**: Quick status check utility.
-- **`gp`**: Git push helper.
+- **`gp`**: **RETIRED** guard stub; exits with instructions for the canonical branch/PR workflow.
 - **`k`**: Kubectl alias with context.
 - **`test-deployment-time.sh`**: Performance testing for deployments.
 
