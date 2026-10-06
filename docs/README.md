@@ -34,19 +34,22 @@ Cet espace documente l'architecture, les procédures et les décisions du dépô
 | Information | Emplacement canonique |
 |---|---|
 | Workflow de contribution / promotion | `WORKFLOW.md` |
-| Contraintes agents | `AGENTS.md` |
-| Architecture actuelle | `docs/architecture/` ou `docs/architecture.md` |
+| Contraintes agents / reprise à froid | `AGENTS.md` |
+| Besoin et critères d'acceptation | GitHub Issues |
+| Planification (`Status`, `Priority`, `Target`) | GitHub Project `vixens roadmap` |
+| Architecture actuelle | `docs/architecture.md` et documentation applicative active |
 | Décisions et historique | `docs/adr/` |
 | Procédures récurrentes | `docs/guides/` / `docs/procedures/` |
 | Incidents et runbooks | `docs/troubleshooting/` |
 | Particularités d'une application | `docs/applications/` |
 | État du backlog | GitHub Issues |
-| État désiré Kubernetes | manifests Git |
+| État désiré Kubernetes | manifests Git sur `main` |
+| État runtime observé | cluster, pour diagnostic/validation uniquement |
 
 ## Principes documentaires
 
 1. **Une source de vérité par sujet** : les autres documents font un lien au lieu de recopier.
-2. **Le code exécutable prime sur les vieux guides** : lorsqu'un document contredit les workflows/manifests courants, il doit être corrigé ou marqué historique.
+2. **Le comportement exécutable courant prime sur les vieux guides** : lorsqu'un document actif contredit les workflows/manifests courants, il doit être corrigé ou marqué historique ; une divergence live du cluster ne devient pas pour autant le desired state.
 3. **Les ADR restent historiques** : une décision remplacée est marquée `Superseded`, pas réécrite comme si elle n'avait jamais existé.
 4. **Les outils retirés ne doivent plus apparaître dans les guides actifs**.
 5. **Toute modification d'un contrat opérationnel inclut sa mise à jour documentaire dans la même PR**.
