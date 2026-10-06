@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -205,8 +206,52 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.Reason != "RuntimeNotImplemented" || result.Status == nil || result.Status.Phase != "Blocked" {
-		t.Fatalf("database slice should stop before unimplemented gateway runtime: %#v", result)
+	if result.Reason != "DeploymentProgressing" || result.Status == nil || result.Status.Phase != "Provisioning" {
+		t.Fatalf("gateway should wait for LiteLLM Deployment availability: %#v", result)
+	}
+
+	var gatewayDeployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayName}, &gatewayDeployment); err != nil {
+		t.Fatalf("tenant LiteLLM Deployment missing: %v", err)
+	}
+	gatewayContainer := gatewayDeployment.Spec.Template.Spec.Containers[0]
+	if gatewayContainer.Image != gatewayProfile.Spec.Image {
+		t.Fatalf("tenant LiteLLM image=%q want %q", gatewayContainer.Image, gatewayProfile.Spec.Image)
+	}
+	if gatewayDeployment.Spec.Template.Spec.AutomountServiceAccountToken == nil || *gatewayDeployment.Spec.Template.Spec.AutomountServiceAccountToken {
+		t.Fatal("tenant LiteLLM must not mount a Kubernetes service-account token")
+	}
+	if gatewayContainer.SecurityContext == nil || gatewayContainer.SecurityContext.AllowPrivilegeEscalation == nil || *gatewayContainer.SecurityContext.AllowPrivilegeEscalation {
+		t.Fatal("tenant LiteLLM must disable privilege escalation")
+	}
+
+	var gatewayConfig corev1.ConfigMap
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayConfigMapName}, &gatewayConfig); err != nil {
+		t.Fatalf("tenant LiteLLM config missing: %v", err)
+	}
+	if got := gatewayConfig.Data["config.yaml"]; !strings.Contains(got, "master_key: os.environ/LITELLM_MASTER_KEY") {
+		t.Fatalf("tenant LiteLLM config missing master-key contract: %s", got)
+	}
+
+	var gatewayPolicy networkingv1.NetworkPolicy
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayNetworkPolicy}, &gatewayPolicy); err != nil {
+		t.Fatalf("tenant LiteLLM NetworkPolicy missing: %v", err)
+	}
+	if len(gatewayPolicy.Spec.Egress) != 2 {
+		t.Fatalf("gateway without CPA must only have DNS + PostgreSQL egress, got %d rules", len(gatewayPolicy.Spec.Egress))
+	}
+
+	gatewayDeployment.Status.ObservedGeneration = gatewayDeployment.Generation
+	gatewayDeployment.Status.AvailableReplicas = 1
+	if err := c.Status().Update(ctx, &gatewayDeployment); err != nil {
+		t.Fatal(err)
+	}
+	result, err = r.reconcileAIGateway(ctx, tenant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.Ready || result.Reason != "DeploymentAvailable" || result.Status == nil || result.Status.Phase != "Ready" {
+		t.Fatalf("available LiteLLM gateway did not become Ready: %#v", result)
 	}
 
 	// A second reconcile must preserve both credential layers.
