@@ -393,3 +393,52 @@ func TestReconcileAIGatewayRejectsCredentialBrokerImplementation(t *testing.T) {
 		t.Fatalf("CPA must not be accepted as tenant-facing AI gateway: %#v", result)
 	}
 }
+
+
+func TestRenderTenantLiteLLMConfigRoutesCodingThroughCPAWithoutProviderTokens(t *testing.T) {
+	config := renderTenantLiteLLMConfig(aiGatewayBackendState{CPAEnabled: true, CPAPort: 8317})
+	for _, want := range []string{
+		"model_name: txo-coding",
+		"model: openai/gpt-5.6-sol",
+		"api_base: http://txo-ai-credential-broker:8317/v1",
+		"api_key: os.environ/CPA_API_KEY",
+		"master_key: os.environ/LITELLM_MASTER_KEY",
+	} {
+		if !strings.Contains(config, want) {
+			t.Fatalf("tenant LiteLLM config missing %q:\n%s", want, config)
+		}
+	}
+	for _, forbidden := range []string{"access_token", "refresh_token", "management-password", "sk-or-v1-"} {
+		if strings.Contains(config, forbidden) {
+			t.Fatalf("tenant LiteLLM config leaked provider/broker secret marker %q", forbidden)
+		}
+	}
+}
+
+func TestTenantLiteLLMNetworkPolicyHasNoDirectInternetEgress(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("ai-plane-smoke", "TEN90003")
+	profile := aiGatewayTestProfile()
+	postgresqlProfile := aiGatewayPostgreSQLTestProfile()
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	if err := r.ensureTenantAIGatewayNetworkPolicy(ctx, tenant, profile, postgresqlProfile, aiGatewayBackendState{CPAEnabled: true, CPAPort: 8317}); err != nil {
+		t.Fatal(err)
+	}
+	var policy networkingv1.NetworkPolicy
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayNetworkPolicy}, &policy); err != nil {
+		t.Fatal(err)
+	}
+	if len(policy.Spec.Egress) != 3 {
+		t.Fatalf("tenant LiteLLM egress rules=%d want DNS + PostgreSQL + CPA", len(policy.Spec.Egress))
+	}
+	for _, rule := range policy.Spec.Egress {
+		for _, peer := range rule.To {
+			if peer.IPBlock != nil {
+				t.Fatalf("tenant LiteLLM must not receive direct Internet IPBlock egress in this slice: %#v", peer.IPBlock)
+			}
+		}
+	}
+}
