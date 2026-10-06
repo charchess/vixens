@@ -22,9 +22,11 @@ policy/admission engine, not the Fabric lifecycle engine.
   The first supported topology is `SharedCluster`: TXO references a GitOps-owned
   CloudNativePG Cluster and owns only tenant `Database`, `DatabaseRole` and
   credential Secret resources.
-- `AIGatewayProfile` describes the platform-owned tenant inference gateway
-  implementation. The v0.1 target is one pinned CLIProxyAPI instance per
-  `TenantBundle`, with provider OAuth state isolated from every AgentIdentity PVC.
+- `AIGatewayProfile` describes the platform-owned tenant-facing inference gateway.
+  The v0.1 target is one tenant-local LiteLLM facade per `TenantBundle`.
+- `AICredentialBrokerProfile` describes an internal provider-credential broker.
+  The first implementation is a pinned CLIProxyAPI instance whose mutable OAuth
+  state is isolated from every AgentIdentity PVC.
 
 The operator rejects two live `AgentIdentity` resources that claim the same
 `tenantRef.name + agentKey` pair instead of letting them fight over the same
@@ -38,8 +40,11 @@ The current controller reconciles:
   `DatabaseRole` resources, with generated secret-backed credentials and required
   extensions declared by `PostgreSQLProfile`;
 - explicit reclaim semantics for tenant PostgreSQL resources;
-- opt-in tenant-scoped CLIProxyAPI gateway substrate, including isolated OAuth-state
-  storage, generated client/management credentials, Service and NetworkPolicy;
+- opt-in tenant-scoped CLIProxyAPI credential-broker substrate, including isolated
+  OAuth-state storage, generated internal/management credentials, Service and
+  NetworkPolicy;
+- a reserved tenant LiteLLM gateway API/profile contract; runtime reconciliation is
+  deliberately fail-closed until the next #3885 slice;
 - finalizers and standard Kubernetes status conditions;
 - a semantic runtime probe that verifies a real `hermes gateway run` process,
   avoiding the prior `s6 + sleep infinity` false-positive readiness state.
@@ -53,10 +58,12 @@ Optional Fabric modules remain represented in `TenantBundle` but are reported as
 pending until their reconcilers are implemented. They must not be added as more
 Kyverno generate rules.
 
-The tenant AI gateway is an incremental #3868 substrate. Existing tenants are not
-cut over from the shared LiteLLM/OpenRouter path until the pinned CLIProxyAPI runtime,
-OAuth lifecycle, cross-tenant isolation and accounting collector path pass physical
-acceptance.
+The target tenant AI plane is tracked by #3885: tenant-local LiteLLM is the
+consumer-facing policy/model/metering facade, while CLIProxyAPI is an internal
+OAuth/subscription credential broker behind it. Existing tenants remain on the
+shared LiteLLM/OpenRouter path until the tenant-local plane passes physical
+acceptance. The direct-CPA smoke topology must not be promoted as the final
+architecture.
 
 ## Development
 
