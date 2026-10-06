@@ -166,9 +166,18 @@ func (r *TenantBundleReconciler) ensureTenantAIGatewayNetworkPolicy(
 		policy.Spec.PodSelector = metav1.LabelSelector{MatchLabels: labels}
 		policy.Spec.PolicyTypes = []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress}
 		policy.Spec.Ingress = []networkingv1.NetworkPolicyIngressRule{{
-			From: []networkingv1.NetworkPolicyPeer{{
-				PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{LabelManaged: "true"}},
-			}},
+			From: []networkingv1.NetworkPolicyPeer{
+				{
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{LabelManaged: "true"}},
+				},
+				{
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						LabelPartOf:     "txo-fabric",
+						LabelName:       "hermes-agent",
+						LabelTenantName: bundle.Name,
+					}},
+				},
+			},
 			Ports: []networkingv1.NetworkPolicyPort{{
 				Protocol: protocolPtr(corev1.ProtocolTCP),
 				Port:     intOrStringPtr(int(aiGatewayPort(profile))),
