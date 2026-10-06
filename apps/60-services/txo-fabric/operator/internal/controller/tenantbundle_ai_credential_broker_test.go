@@ -139,6 +139,13 @@ func TestReconcileAICredentialBrokerCreatesTenantScopedCPAWithoutProviderSecrets
 	if len(policy.Spec.Egress) != 2 {
 		t.Fatalf("broker egress rules=%d want DNS + HTTPS", len(policy.Spec.Egress))
 	}
+	if len(policy.Spec.Ingress) != 1 || len(policy.Spec.Ingress[0].From) != 1 || policy.Spec.Ingress[0].From[0].PodSelector == nil {
+		t.Fatalf("broker ingress must be restricted to tenant LiteLLM: %#v", policy.Spec.Ingress)
+	}
+	allowed := policy.Spec.Ingress[0].From[0].PodSelector.MatchLabels
+	if allowed[LabelManaged] != "true" || allowed[LabelTenantName] != tenant.Name || allowed["app.kubernetes.io/component"] != "tenant-ai-gateway" {
+		t.Fatalf("broker ingress selector unexpectedly broad: %#v", allowed)
+	}
 
 	if _, err := r.reconcileAICredentialBroker(ctx, tenant); err != nil {
 		t.Fatal(err)

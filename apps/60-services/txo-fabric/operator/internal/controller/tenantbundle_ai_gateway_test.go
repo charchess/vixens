@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -62,7 +63,7 @@ func aiGatewayTestTenant(name, tenantID string) *fabricv1alpha1.TenantBundle {
 func TestReconcileAIGatewayRequiresDedicatedPostgreSQLProfile(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
-	tenant := aiGatewayTestTenant("fabric-smoke", "TEN90002")
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
 	profile := aiGatewayTestProfile()
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile).Build()
 
@@ -81,7 +82,7 @@ func TestReconcileAIGatewayRequiresDedicatedPostgreSQLProfile(t *testing.T) {
 func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
-	tenant := aiGatewayTestTenant("fabric-smoke", "TEN90002")
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
 	gatewayProfile := aiGatewayTestProfile()
 	postgresqlProfile := aiGatewayPostgreSQLTestProfile()
 	cluster := cnpgObject(cnpgClusterGVK, "databases", "postgresql-shared")
@@ -97,7 +98,7 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	}
 
 	names := resolveAIGatewayPostgreSQLNames(tenant, postgresqlProfile)
-	if names.Database != "txo_ten90002_ai_gateway" || names.Role != "txo_ten90002_ai_gateway" {
+	if names.Database != "txo_ten00001_ai_gateway" || names.Role != "txo_ten00001_ai_gateway" {
 		t.Fatalf("unexpected dedicated LiteLLM database identity: %#v", names)
 	}
 
@@ -116,7 +117,7 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	// The gateway has its own database binding. It must never silently reuse the
 	// generic tenant/Hindsight database identity.
 	var genericSecret corev1.Secret
-	if err := c.Get(ctx, types.NamespacedName{Namespace: "databases", Name: "txo-ten90002-postgresql"}, &genericSecret); !apierrors.IsNotFound(err) {
+	if err := c.Get(ctx, types.NamespacedName{Namespace: "databases", Name: "txo-ten00001-postgresql"}, &genericSecret); !apierrors.IsNotFound(err) {
 		t.Fatalf("gateway unexpectedly created/reused generic tenant PostgreSQL Secret: %v", err)
 	}
 
@@ -205,8 +206,52 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.Reason != "RuntimeNotImplemented" || result.Status == nil || result.Status.Phase != "Blocked" {
-		t.Fatalf("database slice should stop before unimplemented gateway runtime: %#v", result)
+	if result.Reason != "DeploymentProgressing" || result.Status == nil || result.Status.Phase != "Provisioning" {
+		t.Fatalf("gateway should wait for LiteLLM Deployment availability: %#v", result)
+	}
+
+	var gatewayDeployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayName}, &gatewayDeployment); err != nil {
+		t.Fatalf("tenant LiteLLM Deployment missing: %v", err)
+	}
+	gatewayContainer := gatewayDeployment.Spec.Template.Spec.Containers[0]
+	if gatewayContainer.Image != gatewayProfile.Spec.Image {
+		t.Fatalf("tenant LiteLLM image=%q want %q", gatewayContainer.Image, gatewayProfile.Spec.Image)
+	}
+	if gatewayDeployment.Spec.Template.Spec.AutomountServiceAccountToken == nil || *gatewayDeployment.Spec.Template.Spec.AutomountServiceAccountToken {
+		t.Fatal("tenant LiteLLM must not mount a Kubernetes service-account token")
+	}
+	if gatewayContainer.SecurityContext == nil || gatewayContainer.SecurityContext.AllowPrivilegeEscalation == nil || *gatewayContainer.SecurityContext.AllowPrivilegeEscalation {
+		t.Fatal("tenant LiteLLM must disable privilege escalation")
+	}
+
+	var gatewayConfig corev1.ConfigMap
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayConfigMapName}, &gatewayConfig); err != nil {
+		t.Fatalf("tenant LiteLLM config missing: %v", err)
+	}
+	if got := gatewayConfig.Data["config.yaml"]; !strings.Contains(got, "master_key: os.environ/LITELLM_MASTER_KEY") {
+		t.Fatalf("tenant LiteLLM config missing master-key contract: %s", got)
+	}
+
+	var gatewayPolicy networkingv1.NetworkPolicy
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayNetworkPolicy}, &gatewayPolicy); err != nil {
+		t.Fatalf("tenant LiteLLM NetworkPolicy missing: %v", err)
+	}
+	if len(gatewayPolicy.Spec.Egress) != 2 {
+		t.Fatalf("gateway without CPA must only have DNS + PostgreSQL egress, got %d rules", len(gatewayPolicy.Spec.Egress))
+	}
+
+	gatewayDeployment.Status.ObservedGeneration = gatewayDeployment.Generation
+	gatewayDeployment.Status.AvailableReplicas = 1
+	if err := c.Status().Update(ctx, &gatewayDeployment); err != nil {
+		t.Fatal(err)
+	}
+	result, err = r.reconcileAIGateway(ctx, tenant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.Ready || result.Reason != "DeploymentAvailable" || result.Status == nil || result.Status.Phase != "Ready" {
+		t.Fatalf("available LiteLLM gateway did not become Ready: %#v", result)
 	}
 
 	// A second reconcile must preserve both credential layers.
@@ -240,8 +285,8 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 func TestAIGatewayPostgreSQLIsIsolatedAcrossTenants(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
-	first := aiGatewayTestTenant("fabric-smoke-a", "TEN90002")
-	second := aiGatewayTestTenant("fabric-smoke-b", "TEN90003")
+	first := aiGatewayTestTenant("hairem", "TEN00001")
+	second := aiGatewayTestTenant("indiba", "TEN00002")
 	gatewayProfile := aiGatewayTestProfile()
 	postgresqlProfile := aiGatewayPostgreSQLTestProfile()
 	cluster := cnpgObject(cnpgClusterGVK, "databases", "postgresql-shared")
@@ -270,7 +315,7 @@ func TestAIGatewayPostgreSQLIsIsolatedAcrossTenants(t *testing.T) {
 func TestCleanupAIGatewayRetainsDatabaseCredentialWhenProfileIsRetain(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
-	tenant := aiGatewayTestTenant("fabric-smoke", "TEN90002")
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
 	gatewayProfile := aiGatewayTestProfile()
 	postgresqlProfile := aiGatewayPostgreSQLTestProfile()
 	names := resolveAIGatewayPostgreSQLNames(tenant, postgresqlProfile)
@@ -335,7 +380,7 @@ func TestCleanupAIGatewayRetainsDatabaseCredentialWhenProfileIsRetain(t *testing
 func TestReconcileAIGatewayRejectsCredentialBrokerImplementation(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
-	tenant := aiGatewayTestTenant("fabric-smoke", "TEN90002")
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
 	profile := aiGatewayTestProfile()
 	profile.Spec.Implementation = "CLIProxyAPI"
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile).Build()
@@ -346,5 +391,54 @@ func TestReconcileAIGatewayRejectsCredentialBrokerImplementation(t *testing.T) {
 	}
 	if result.Ready || result.Status == nil || result.Status.Phase != "Blocked" || result.Reason != "UnsupportedImplementation" {
 		t.Fatalf("CPA must not be accepted as tenant-facing AI gateway: %#v", result)
+	}
+}
+
+
+func TestRenderTenantLiteLLMConfigRoutesCodingThroughCPAWithoutProviderTokens(t *testing.T) {
+	config := renderTenantLiteLLMConfig(aiGatewayBackendState{CPAEnabled: true, CPAPort: 8317})
+	for _, want := range []string{
+		"model_name: txo-coding",
+		"model: openai/gpt-5.6-sol",
+		"api_base: http://txo-ai-credential-broker:8317/v1",
+		"api_key: os.environ/CPA_API_KEY",
+		"master_key: os.environ/LITELLM_MASTER_KEY",
+	} {
+		if !strings.Contains(config, want) {
+			t.Fatalf("tenant LiteLLM config missing %q:\n%s", want, config)
+		}
+	}
+	for _, forbidden := range []string{"access_token", "refresh_token", "management-password", "sk-or-v1-"} {
+		if strings.Contains(config, forbidden) {
+			t.Fatalf("tenant LiteLLM config leaked provider/broker secret marker %q", forbidden)
+		}
+	}
+}
+
+func TestTenantLiteLLMNetworkPolicyHasNoDirectInternetEgress(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	profile := aiGatewayTestProfile()
+	postgresqlProfile := aiGatewayPostgreSQLTestProfile()
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	if err := r.ensureTenantAIGatewayNetworkPolicy(ctx, tenant, profile, postgresqlProfile, aiGatewayBackendState{CPAEnabled: true, CPAPort: 8317}); err != nil {
+		t.Fatal(err)
+	}
+	var policy networkingv1.NetworkPolicy
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayNetworkPolicy}, &policy); err != nil {
+		t.Fatal(err)
+	}
+	if len(policy.Spec.Egress) != 3 {
+		t.Fatalf("tenant LiteLLM egress rules=%d want DNS + PostgreSQL + CPA", len(policy.Spec.Egress))
+	}
+	for _, rule := range policy.Spec.Egress {
+		for _, peer := range rule.To {
+			if peer.IPBlock != nil {
+				t.Fatalf("tenant LiteLLM must not receive direct Internet IPBlock egress in this slice: %#v", peer.IPBlock)
+			}
+		}
 	}
 }
