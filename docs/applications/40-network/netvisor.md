@@ -33,7 +33,7 @@ curl -L -k https://netvisor.dev.truxonline.com | grep "Netvisor"
 - **Dépendances :**
   - PostgreSQL (Cluster partagé via `postgresql-shared`)
   - Redis (Cluster partagé via `redis-shared.databases.svc.cluster.local`)
-  - Infisical (Secrets DATABASE_URL)
+  - OpenBao + External Secrets Operator (`ExternalSecret/netvisor-secrets-sync` → `Secret/netvisor-secrets`)
 - **Configuration par environnement :**
   - `SCANOPY_PUBLIC_URL` : URL publique varie par environnement (patchée via kustomize)
     - dev: `https://netvisor.dev.truxonline.com`
