@@ -198,7 +198,7 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	}
 
 	migration.Status.Succeeded = 1
-	if err := c.Update(ctx, &migration); err != nil {
+	if err := c.Status().Update(ctx, &migration); err != nil {
 		t.Fatal(err)
 	}
 	result, err = r.reconcileAIGateway(ctx, tenant)
