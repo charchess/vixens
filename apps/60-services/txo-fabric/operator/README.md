@@ -23,7 +23,10 @@ policy/admission engine, not the Fabric lifecycle engine.
   CloudNativePG Cluster and owns only tenant `Database`, `DatabaseRole` and
   credential Secret resources.
 - `AIGatewayProfile` describes the platform-owned tenant-facing inference gateway.
-  The v0.1 target is one tenant-local LiteLLM facade per `TenantBundle`.
+  The v0.1 target is one tenant-local LiteLLM facade per `TenantBundle`, backed by
+  its own CloudNativePG `Database`/`DatabaseRole` binding for virtual keys,
+  metering, budgets and proxy state. The gateway database is deliberately distinct
+  from tenant application/Hindsight persistence.
 - `AICredentialBrokerProfile` describes an internal provider-credential broker.
   The first implementation is a pinned CLIProxyAPI instance whose mutable OAuth
   state is isolated from every AgentIdentity PVC.
@@ -43,8 +46,11 @@ The current controller reconciles:
 - opt-in tenant-scoped CLIProxyAPI credential-broker substrate, including isolated
   OAuth-state storage, generated internal/management credentials, Service and
   NetworkPolicy;
-- a reserved tenant LiteLLM gateway API/profile contract; runtime reconciliation is
-  deliberately fail-closed until the next #3885 slice;
+- tenant LiteLLM PostgreSQL state reconciliation through a dedicated
+  `postgresql-litellm` profile, generated database credentials, tenant-local
+  runtime Secret, restricted migration egress and pinned-image Prisma migration Job;
+- the LiteLLM serving/routing runtime remains deliberately fail-closed until the
+  next #3885 slice;
 - finalizers and standard Kubernetes status conditions;
 - a semantic runtime probe that verifies a real `hermes gateway run` process,
   avoiding the prior `s6 + sleep infinity` false-positive readiness state.
