@@ -27,7 +27,7 @@ curl -L -k https://vaultwarden.dev.truxonline.com | grep "Vaultwarden"
 ## Notes Techniques
 - **Namespace :** `services`
 - **Dépendances :**
-    - `Infisical` (Admin Token)
+    - OpenBao + External Secrets Operator (`ExternalSecret/vaultwarden-secrets` → `Secret/vaultwarden-secrets`)
 - **Particularités :** Serveur Bitwarden léger (Rust). Utilise SQLite (sur PVC) par défaut. Standard **🏆 Elite** :
     - **Priorité :** `vixens-medium`.
     - **Profil :** Small (50m/256Mi).
