@@ -94,7 +94,11 @@ concurrency:
 - Old metrics are outdated
 - Prevents duplicate comments
 
-### 4. merge-queue.yaml
+### 4. merge-queue.yaml (future-ready / currently dormant)
+
+The repository contains a `merge_group` workflow, but GitHub Merge Queue is not
+currently enabled/enforced by the active repository ruleset. This concurrency
+block matters only if GitHub actually emits a `merge_group` event.
 
 ```yaml
 concurrency:
@@ -102,10 +106,12 @@ concurrency:
   cancel-in-progress: true
 ```
 
-**Why:**
-- Each merge queue entry is unique
-- Prevents duplicate queue validations
-- SHA-based ensures uniqueness
+**Why when enabled:**
+- each merge-group candidate is uniquely identified by its head SHA;
+- duplicate validation for the same candidate can be cancelled safely;
+- this workflow does **not** itself enable Merge Queue.
+
+See `merge-queue-configuration.md` for the current repository capability/state.
 
 ## Production workflow serialization
 
@@ -367,7 +373,7 @@ Concurrency group: "validate-refs/heads/feature-x"
 - [x] Add concurrency to validate.yaml
 - [ ] Add concurrency to pr-preview.yaml (when Phase 3 merges)
 - [ ] Add concurrency to pr-quality-checks.yaml (when Phase 5 merges)
-- [x] Add concurrency to merge-queue.yaml
+- [x] Add concurrency to the future-ready `merge-queue.yaml` workflow (queue itself not currently enabled)
 - [ ] Monitor cancelled runs for 1 week
 - [ ] Measure CI time savings
 - [ ] Update team documentation

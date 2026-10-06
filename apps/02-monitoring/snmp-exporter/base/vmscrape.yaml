@@ -1,6 +1,6 @@
 ---
 # VMStaticScrape — coquille gérée par ArgoCD, contenu injecté dynamiquement par init-vmscrape
-# Les IPs des équipements sont stockées dans Infisical et substituées au démarrage du pod.
+# Les IPs des équipements sont projetées depuis OpenBao via External Secrets Operator et substituées au démarrage du pod.
 # ignoreDifferences sur /spec/targetEndpoints dans l'ArgoCD Application empêche le revert.
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMStaticScrape
