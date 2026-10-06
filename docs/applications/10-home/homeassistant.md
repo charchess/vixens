@@ -38,5 +38,5 @@ curl -L -k https://homeassistant.dev.truxonline.com | grep "Home Assistant"
 - **Sizing prod :** le Core est `B-large` (100m/1 GiB demandés, burst 1 CPU/2 GiB). Le VPA généré reste en recommandation uniquement (`updateMode: Off`) : un profil `V-*` avait réduit le plafond effectif à 44mCPU et empêché le démarrage après restauration.
 ---
 > ⚠️ **HIBERNATION DEV**
-> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
-> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
+> L'environnement `dev` peut être hiberné pour économiser les ressources ; vérifiez l'overlay dev courant avant de conclure qu'il est actif ou inactif.
+> Pour réactiver durablement l'application, suivez `docs/procedures/dev-hibernation.md` via une branche/PR ; ne décommentez pas directement l'Application ArgoCD comme mécanisme de réveil.
