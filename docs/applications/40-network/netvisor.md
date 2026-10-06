@@ -33,7 +33,7 @@ curl -L -k https://netvisor.dev.truxonline.com | grep "Netvisor"
 - **Dépendances :**
   - PostgreSQL (Cluster partagé via `postgresql-shared`)
   - Redis (Cluster partagé via `redis-shared.databases.svc.cluster.local`)
-  - Infisical (Secrets DATABASE_URL)
+  - OpenBao + External Secrets Operator (`ExternalSecret/netvisor-secrets-sync` → `Secret/netvisor-secrets`)
 - **Configuration par environnement :**
   - `SCANOPY_PUBLIC_URL` : URL publique varie par environnement (patchée via kustomize)
     - dev: `https://netvisor.dev.truxonline.com`
@@ -45,7 +45,7 @@ curl -L -k https://netvisor.dev.truxonline.com | grep "Netvisor"
   - Toleration control-plane activée sur daemon et server
 ---
 > ⚠️ **HIBERNATION DEV**
-> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
-> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
+> L'environnement `dev` peut être hiberné pour économiser les ressources ; vérifiez l'overlay dev courant avant de conclure qu'il est actif ou inactif.
+> Pour réactiver durablement l'application, suivez `docs/procedures/dev-hibernation.md` via une branche/PR ; ne décommentez pas directement l'Application ArgoCD comme mécanisme de réveil.
 >
 > **Service binding :** Le Daemon DaemonSet n'a pas de Service associé — il fonctionne en mode Pull et contacte le server lui-même. Il ne reçoit aucun trafic entrant. Annoté avec `vixens.io/service-binding: "false"`.

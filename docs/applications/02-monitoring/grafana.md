@@ -243,7 +243,7 @@ Then wait for sync/self-heal and verify the new ConfigMaps.
 
 - **Namespace:** `monitoring`.
 - **Datasource:** VictoriaMetrics/Prometheus-compatible metrics are used by the security/version dashboards.
-- **Other dependencies:** Loki, Infisical admin secret.
+- **Other dependencies:** Loki; Grafana admin credentials are projected from OpenBao by `ExternalSecret/grafana-admin-sync` into `Secret/grafana-admin`.
 - **Deployment:** Helm chart managed by ArgoCD.
 - **Dashboard source of truth:** Git ConfigMaps, not UI edits.
 

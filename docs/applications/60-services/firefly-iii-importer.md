@@ -18,14 +18,14 @@ kubectl get pods -n finance -l app.kubernetes.io/name=firefly-iii-importer
 ### Manual Validation
 1. Open URL in browser.
 2. The UI should display the import options (CSV, Nordigen, etc.).
-3. Note: Requires `FIREFLY_III_ACCESS_TOKEN` in Infisical to work.
+3. Note: requires `FIREFLY_III_ACCESS_TOKEN` in the OpenBao-backed importer secret to work.
 
 ## Technical Notes
 - **Namespace:** `finance`
 - **Category:** `60-services`
 - **Dependencies:**
     - Firefly III (Internal URL: `http://firefly-iii.finance.svc.cluster.local`)
-    - Infisical (Secrets management)
+    - OpenBao + External Secrets Operator (`ExternalSecret/firefly-iii-importer-secrets-sync` → `Secret/firefly-iii-importer-secrets`)
 - **Specifics:** 
     - Uses `fireflyiii/data-importer:latest` image.
     - Configuration handled via environment variables and secrets.

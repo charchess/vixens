@@ -27,7 +27,7 @@ curl -L -k https://vaultwarden.dev.truxonline.com | grep "Vaultwarden"
 ## Notes Techniques
 - **Namespace :** `services`
 - **Dépendances :**
-    - `Infisical` (Admin Token)
+    - OpenBao + External Secrets Operator (`ExternalSecret/vaultwarden-secrets` → `Secret/vaultwarden-secrets`)
 - **Particularités :** Serveur Bitwarden léger (Rust). Utilise SQLite (sur PVC) par défaut. Standard **🏆 Elite** :
     - **Priorité :** `vixens-medium`.
     - **Profil :** Small (50m/256Mi).
@@ -36,5 +36,5 @@ curl -L -k https://vaultwarden.dev.truxonline.com | grep "Vaultwarden"
     - **Stabilité :** Liveness probe corrigée (path `/alive`, 60s delay) pour l'initialisation Litestream.
 ---
 > ⚠️ **HIBERNATION DEV**
-> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
-> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
+> L'environnement `dev` peut être hiberné pour économiser les ressources ; vérifiez l'overlay dev courant avant de conclure qu'il est actif ou inactif.
+> Pour réactiver durablement l'application, suivez `docs/procedures/dev-hibernation.md` via une branche/PR ; ne décommentez pas directement l'Application ArgoCD comme mécanisme de réveil.

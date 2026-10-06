@@ -26,7 +26,7 @@ nc -zv mqtt.dev.truxonline.com 1883
 
 ## Gestion des Utilisateurs
 
-Les mots de passe Mosquitto sont stockés sous forme de hash (PBKDF2/SHA512) dans le secret Infisical `MOSQUITTO_PASSWD_FILE`.
+Les mots de passe Mosquitto sont stockés sous forme de hash (PBKDF2/SHA512) dans OpenBao. `ExternalSecret/mosquitto-password-sync` lit `vixens/dev/apps/10-home/mosquitto` en dev (chemin prod dans l'overlay) via `ClusterSecretStore/openbao` et matérialise `Secret/mosquitto-password-file`.
 
 ### Générer un Hash de Mot de Passe
 Pour ajouter un nouvel utilisateur (ex: `frigate`), vous devez générer son hash en utilisant l'utilitaire `mosquitto_passwd`. Comme l'outil n'est pas installé localement, utilisez le pod Mosquitto existant :
@@ -43,20 +43,22 @@ frigate:$7$101$aQfmqdgO+FgaVjV/$nVsVrxaYQBCX5m9rrkFtTpKJu6ysn59HrpblYVk2QbwqGbpK
 
 ### Appliquer le Changement
 1. Copier la ligne complète générée.
-2. Ajouter cette ligne dans le secret Infisical `MOSQUITTO_PASSWD_FILE` (Projet `vixens`, Path `/apps/10-home/mosquitto`).
-3. Redémarrer le pod Mosquitto pour que l'InitContainer mette à jour le fichier monté :
-   ```bash
-   kubectl rollout restart statefulset mosquitto -n mosquitto
-   ```
+2. Mettre à jour la propriété `MOSQUITTO_PASSWD_FILE` dans le chemin OpenBao de
+   l'environnement (`vixens/dev/apps/10-home/mosquitto` en dev).
+3. Vérifier que `ExternalSecret/mosquitto-password-sync` est Ready et que
+   `Secret/mosquitto-password-file` a été resynchronisé.
+4. Le fichier est préparé par l'InitContainer au démarrage. Si un redémarrage
+   opérationnel immédiat est réellement requis, le faire explicitement comme action
+   runtime contrôlée ; ne pas modifier le Secret Kubernetes à la main.
 
 ## Notes Techniques
 - **Namespace :** `mosquitto`
 - **Dépendances :**
-    - `Infisical` (Secret `mosquitto-password-file`)
+    - OpenBao + External Secrets Operator (`ExternalSecret/mosquitto-password-sync` → `Secret/mosquitto-password-file`)
     - `Traefik` (Entrée TCP dédiée `mqtt`)
 - **Particularités :** Déployé via StatefulSet. Routage TCP (Layer 4) via `IngressRouteTCP`. Le fichier de mots de passe est géré par un InitContainer qui le copie depuis le Secret vers un volume `emptyDir` (car le Secret est ReadOnly).
 
 ---
 > ⚠️ **HIBERNATION DEV**
-> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
-> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
+> L'environnement `dev` peut être hiberné pour économiser les ressources ; vérifiez l'overlay dev courant avant de conclure qu'il est actif ou inactif.
+> Pour réactiver durablement l'application, suivez `docs/procedures/dev-hibernation.md` via une branche/PR ; ne décommentez pas directement l'Application ArgoCD comme mécanisme de réveil.

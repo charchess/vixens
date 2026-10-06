@@ -30,6 +30,6 @@ curl -L -k https://authentik.dev.truxonline.com/flows/-/default/authentication/ 
 - **Dépendances :**
     - `Redis` (Cluster partagé `redis-shared`)
     - `PostgreSQL` (Cluster partagé `postgresql-shared`)
-    - `Infisical` (Secrets)
+    - OpenBao + External Secrets Operator (`ExternalSecret/authentik-secrets-sync` → `Secret/authentik-secrets`)
 - **Particularités :** Identity Provider (IdP) pour le SSO. Gère les utilisateurs et les flows d'authentification. Les blueprints de plateforme statiques (par exemple Netbird) restent dans `apps/03-security/authentik/base/configmap.yaml`. Les objets IAM tenant de TXO Fabric sont dérivés des `TenantBundle` et publiés par l'operator dans `ConfigMap/auth/txo-fabric-authentik-blueprints`, monté sous `/blueprints/txo-fabric` dans le worker. Fabric gère les groupes structurels/providers/applications/policies, mais pas les utilisateurs, mots de passe, MFA ou memberships. Standard **🏆 Elite** (Priorité `vixens-critical`, Profil Medium, stratégie `Recreate` pour RWO).
 - **Service binding (worker) :** Le pod `authentik-worker` est un worker de queue asynchrone. Il ne reçoit aucun trafic réseau entrant et n'a pas de Service associé. Annoté avec `vixens.io/service-binding: "false"`.

@@ -1,7 +1,7 @@
 # Active documentation drift audit — 2026-10-06
 
 **Issue:** #3546  
-**Status:** In progress — central workflow/architecture/reference surfaces reviewed; application-document cleanup remains.
+**Status:** In progress — central workflow/architecture/reference and application-document cleanup completed; final post-merge search remains.
 
 ## Goal
 
@@ -183,40 +183,41 @@ The following categories may legitimately contain retired commands/names:
 
 Their existence is acceptable only when they are not linked/presented as current operational instructions.
 
-## Remaining active drift discovered
+## Application-document cleanup completed
 
-Repository-wide searches still identify application documentation that presents
-Infisical as a current dependency/secret backend. These require a separate
-application-document pass against each application's current manifests before
-#3546 can close.
+The follow-up application pass verified each stale current-secret reference against
+the executable manifests rather than replacing terminology blindly.
 
-Examples discovered include:
+Current application docs were aligned with OpenBao + External Secrets Operator for
+Penpot, Vikunja, Docspell, NetBox, Linkwarden, Gluetun, Mosquitto, cert-manager,
+Authentik, Vaultwarden, ExternalDNS/Gandi, Firefly III, Netvisor, Redis Shared,
+Alertmanager, MariaDB Shared, PostgreSQL Shared, Firefly III Importer, Home
+Assistant, cert-manager-webhook-gandi and Grafana.
 
-- `docs/applications/70-tools/penpot.md`
-- `docs/applications/70-tools/vikunja.md`
-- `docs/applications/70-tools/docspell.md`
-- `docs/applications/60-services/netbox.md`
-- `docs/applications/70-tools/linkwarden.md`
-- `docs/applications/60-services/gluetun.md`
-- `docs/applications/60-services/mosquitto.md`
-- `docs/applications/00-infra/cert-manager.md`
-- `docs/applications/03-security/authentik.md`
-- `docs/applications/40-network/external-dns.md`
-- `docs/applications/60-services/firefly-iii.md`
-- `docs/applications/40-network/netvisor.md`
-- `docs/applications/04-databases/redis-shared.md`
-- `docs/applications/60-services/vaultwarden.md`
-- `docs/applications/60-services/firefly-iii-importer.md`
-- `docs/applications/10-home/homeassistant.md`
-- `docs/applications/00-infra/cert-manager-webhook-gandi.md`
-- `docs/applications/02-monitoring/grafana.md`
-- `docs/applications/70-tools/argocd-image-updater.md`
-- `docs/applications/04-databases/postgresql-shared.md`
-- `docs/applications/04-databases/mariadb-shared.md`
-- `docs/applications/02-monitoring/alertmanager.md`
+`argocd-image-updater` has no current desired state under `apps/70-tools/`;
+its application page is now a historical compatibility stub rather than an
+invented OpenBao migration.
 
-Some application docs already explicitly state that Infisical is retired; those
-matches are intentional and need no rewrite.
+Remaining `Infisical` mentions in active application pages were checked on the
+branch and are explicit negative/historical statements such as "do not recreate
+the retired Infisical integration".
+
+The same pass also removed the widespread retired dev-hibernation instruction
+"uncomment the app from the ArgoCD kustomization". Application pages now tell
+operators to inspect the current dev overlay and use the canonical Git/PR
+hibernation/reactivation procedure.
+
+Previously deferred dependencies are also resolved:
+- #3707 reconciled ADR governance/catalog status, including ADR-011 as Superseded;
+- #3709 backfilled the Fabric AgentIdentity/tenant/workspace ADR contracts and
+  cleaned active technical Persona terminology.
+
+## Remaining closure work
+
+Only the acceptance-required **final post-merge repository-wide drift search on
+current `main`** remains. It must classify any surviving matches as either:
+- explicitly historical/negative context; or
+- actionable active drift that requires another correction before #3546 closes.
 
 ## Search classes used
 
@@ -237,9 +238,7 @@ were also fetched directly from the branch/main when validating a specific fix.
 
 ## Closure condition for #3546
 
-Do not close #3546 until:
-
-1. the remaining active application docs have been checked against current manifests;
-2. any surviving retired-tool references are either corrected or explicitly historical;
-3. a final post-merge drift search on current `main` is classified;
-4. active documentation navigation points only to current guidance or clearly marked historical compatibility stubs.
+Application/current-guidance cleanup is complete on the audit branch. Do not close
+#3546 until the final post-merge drift search on current `main` is classified and
+confirms that surviving retired-pattern matches are historical/negative context
+rather than active instructions.

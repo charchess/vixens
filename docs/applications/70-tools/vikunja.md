@@ -30,5 +30,5 @@ curl -L -k https://vikunja.dev.truxonline.com | grep "Vikunja"
 - **Dépendances :**
     - PostgreSQL Shared Cluster
     - Redis Shared Instance
-    - Infisical Secrets
+    - OpenBao + External Secrets Operator (`ExternalSecret/vikunja-secrets-sync` → `Secret/vikunja-secrets`)
 - **Particularités :** Outil de Kanban/gestion de tâches. Configuré avec Postgres et Redis pour la performance.

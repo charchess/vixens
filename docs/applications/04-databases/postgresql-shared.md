@@ -29,4 +29,4 @@ kubectl get svc postgresql-shared-rw -n databases
 - **Dépendances :**
     - `CloudNativePG` (Operator)
     - `Synology-CSI` (Stockage PVC `synelia-iscsi-retain`)
-- **Particularités :** Cluster PostgreSQL mutualisé. Gestion déclarative des utilisateurs et des rôles via le bloc `managed.roles` de CNPG. Chaque application dispose de sa propre base et de son propre utilisateur synchronisé depuis Infisical. Backup S3 configuré (MinIO/Synology).
+- **Particularités :** Cluster PostgreSQL mutualisé. Gestion déclarative des utilisateurs et des rôles via le bloc `managed.roles` de CNPG. Chaque application dispose de sa propre base et de son propre utilisateur ; les credentials gérés par Vixens sont projetés depuis OpenBao via des `ExternalSecret` dédiés (par exemple `postgresql-admin-credentials` et les secrets applicatifs sous `base/credentials/`). Backup S3 configuré (MinIO/Synology).

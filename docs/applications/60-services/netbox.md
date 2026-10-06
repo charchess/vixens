@@ -32,9 +32,9 @@ curl -L -k https://netbox.dev.truxonline.com | grep "NetBox"
 - **Dépendances :**
     - `PostgreSQL` (Cluster partagé)
     - `Redis` (Cluster partagé)
-    - `Infisical` (Secrets DB et Secret Key)
+    - OpenBao + External Secrets Operator (`ExternalSecret/netbox-secrets-sync`; DB/Redis credentials are also projected through ESO)
 - **Particularités :** IPAM et DCIM. Migrations de base de données exécutées au démarrage du conteneur (délai possible).
 ---
 > ⚠️ **HIBERNATION DEV**
-> Cette application est désactivée dans l'environnement `dev` pour économiser les ressources.
-> Pour tester des évolutions, décommentez-la dans `argocd/overlays/dev/kustomization.yaml` avant de déployer.
+> L'environnement `dev` peut être hiberné pour économiser les ressources ; vérifiez l'overlay dev courant avant de conclure qu'il est actif ou inactif.
+> Pour réactiver durablement l'application, suivez `docs/procedures/dev-hibernation.md` via une branche/PR ; ne décommentez pas directement l'Application ArgoCD comme mécanisme de réveil.
