@@ -27,6 +27,15 @@ type AIGatewayProfileSpec struct {
 	// +kubebuilder:validation:Maximum=65535
 	APIPort int32 `json:"apiPort,omitempty"`
 
+	// PostgreSQLProfileRef selects the CloudNativePG-backed persistence profile
+	// used for LiteLLM virtual keys, metering, budgets and proxy state. Fabric
+	// creates a dedicated database/role for the gateway; it never reuses the
+	// tenant application/Hindsight database.
+	// +kubebuilder:default=postgresql-litellm
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=128
+	PostgreSQLProfileRef string `json:"postgresqlProfileRef,omitempty"`
+
 	// Resources controls the generated tenant gateway container.
 	Resources corev1.ResourceRequirements `json:"resources"`
 
