@@ -11,7 +11,7 @@ persistence:
   size: 10Gi
   annotations:
     argocd.argoproj.io/sync-wave: "10"
-# Admin credentials via Infisical (configured separately)
+# Admin credentials via OpenBao + External Secrets Operator (configured separately)
 admin:
   existingSecret: grafana-admin
   userKey: admin-user
