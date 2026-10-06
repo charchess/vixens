@@ -5,12 +5,26 @@ Vixens suit un workflow GitOps centré sur GitHub. Ce document est la référenc
 ## Principes
 
 - **Git est la source de vérité** pour l'état désiré Kubernetes.
-- **GitHub Issues** est le backlog canonique.
+- **GitHub Issues** est le backlog canonique et porte le besoin ainsi que ses critères d'acceptation.
+- **GitHub Project `vixens roadmap`** porte la planification active (`Status`, `Priority`, `Target`) sans remplacer les issues.
 - **Pull Requests** est le seul chemin normal vers `main`.
 - **GitHub Actions** valide et orchestre les opérations de cycle de vie.
 - **ArgoCD** réconcilie les clusters depuis Git ; la CI ne déploie pas directement les manifests.
 - Les outils locaux et les assistants IA sont des clients du workflow, jamais des dépendances du workflow.
 - Les changements persistants via `kubectl apply`, `kubectl edit` ou `kubectl delete` sont interdits lorsqu'ils doivent être déclarés dans Git.
+
+## Sources de vérité
+
+| Sujet | Source de vérité |
+|---|---|
+| Processus de contribution / promotion | `WORKFLOW.md` |
+| Besoin, scope, critères d'acceptation | GitHub Issue |
+| Planification / priorité / release cible | GitHub Project `vixens roadmap` |
+| État désiré exécutable | `main`, workflows GitHub et manifests |
+| Architecture courante | documentation active + ADR applicables |
+| État runtime observé | cluster, en lecture seule pour diagnostic/validation |
+
+Une documentation active qui contredit le comportement exécutable courant doit être corrigée ou explicitement marquée historique. Un état live divergent ne devient pas pour autant le desired state : la correction persistante revient dans Git.
 
 ## Avant toute modification
 
@@ -19,8 +33,9 @@ Vixens suit un workflow GitOps centré sur GitHub. Ce document est la référenc
 3. Vérifier les PR ouvertes susceptibles de toucher les mêmes fichiers.
 4. Identifier le scope exact du changement et les dépendances.
 5. Lire la documentation et les ADR pertinents.
+6. Pour une issue planifiée, vérifier sa présence et ses champs `Status`, `Priority` et `Target` dans `vixens roadmap`.
 
-Ne jamais partir d'une copie locale supposée à jour sans vérifier l'état GitHub courant.
+Ne jamais partir d'une copie locale supposée à jour sans vérifier l'état GitHub courant. Pour une reprise sans contexte préalable, suivre également la checklist de reprise à froid définie dans `AGENTS.md`.
 
 ## Flux de changement
 
@@ -34,12 +49,13 @@ Pull Request
 CI / review
     ↓
 merge vers main
+    ├──→ auto-tag-dev.yaml → dev-vYYYY.MM.PR (snapshot immuable candidat)
     ↓
 ArgoCD dev auto-sync
     ↓
-validation dev
+validation dev du candidat
     ↓
-dev-vYYYY.MM.PR
+autorisation humaine explicite
     ↓
 workflow promote-prod.yaml
     ↓
@@ -99,7 +115,7 @@ Règles minimales :
 - un refactor ne doit pas réduire silencieusement la couverture des contrats existants ; toute suppression ou adaptation de test doit être justifiée par un changement explicite du contrat ;
 - viser le maximum de branches et d'invariants utiles en tests rapides et déterministes, sans écrire des tests tautologiques uniquement pour augmenter un pourcentage de couverture ;
 - la couverture Go est publiée comme artefact CI et sert à repérer les zones non testées ; un seuil global arbitraire n'est pas utilisé comme substitut à la couverture par scénario ;
-- les comportements impossibles à prouver correctement en TU (API server réel, CSI/TrueNAS, Cilium, ArgoCD, services externes réels) restent couverts par envtest/kind/validation physique selon le besoin.
+- les comportements impossibles à prouver correctement en TU utilisent envtest/kind lorsqu'une telle couche existe pour le scope ; CSI/TrueNAS, Cilium, ArgoCD et services externes réels restent couverts par la validation runtime/physique appropriée.
 
 La CI de l'operator refuse une PR qui modifie du code Go métier de l'operator sans modification/ajout de tests unitaires correspondants. Les fichiers générés et les PR de pin d'image ne déclenchent pas cette exigence.
 
@@ -125,6 +141,8 @@ Pour une application ciblée, attendre `Synced` et `Healthy` puis réaliser les 
 
 Le workflow `auto-tag-dev.yaml` crée automatiquement un snapshot dev immuable après chaque push sur `main`.
 
+**Un `dev-v*` prouve l'identité d'un snapshot, pas sa validation.** Le tag peut exister avant qu'ArgoCD ait fini de converger et avant tout test fonctionnel. La validation dev rend un snapshot acceptable comme candidat à une promotion ; elle ne crée pas le tag.
+
 Pour un commit issu d'une PR mergée, le workflow interroge GitHub pour retrouver la PR associée au commit et produit :
 
 ```text
@@ -147,11 +165,13 @@ Dans ce cas, le tag dev du changement source est **intermédiaire**. Il ne doit 
 
 ### 6. Promotion production
 
-La promotion production passe **uniquement** par GitHub Actions :
+La promotion production passe **uniquement** par GitHub Actions et constitue une décision humaine explicite sur le snapshot choisi :
 
 ```bash
 gh workflow run promote-prod.yaml -f version=vYYYY.MM.<PR>
 ```
+
+Exécuter cette commande signifie que l'opérateur autorise **ce `dev-v*` précis** pour la production après les validations pertinentes. Un agent automatisé ne doit jamais déduire cette autorisation d'une CI verte, d'un merge, d'un statut Project ou de l'existence du tag ; il peut préparer/recommander la promotion, mais ne l'exécute qu'après instruction explicite de l'utilisateur/opérateur.
 
 Pour un snapshot issu d'un push direct exceptionnel, utiliser sa version SHA telle qu'elle apparaît dans le tag `dev-v*`.
 
@@ -219,7 +239,7 @@ Tous les contributeurs suivent les mêmes règles, quel que soit l'éditeur ou l
 - `README.md` : présentation et démarrage rapide.
 - `WORKFLOW.md` : workflow de contribution et de promotion — **ce document**.
 - `AGENTS.md` : contraintes supplémentaires utiles aux agents, sans recopier le workflow.
-- `docs/architecture/` : architecture actuelle.
+- `docs/architecture.md` : architecture actuelle (et documents applicatifs actifs liés lorsque le scope l'exige).
 - `docs/adr/` : décisions et historique des choix.
 - `docs/guides/` : procédures de travail récurrentes.
 - `docs/troubleshooting/` : diagnostics et runbooks.
