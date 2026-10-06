@@ -5,6 +5,7 @@ resources:
   - hermes-default.yaml
   - hermes-upgrade-canary.yaml
   - postgresql-shared.yaml
+  - postgresql-litellm.yaml
   - hindsight-standard.yaml
   - hindsight-gateway.yaml
   - cliproxyapi-standard.yaml
