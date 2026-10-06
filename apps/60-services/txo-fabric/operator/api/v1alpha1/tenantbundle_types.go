@@ -98,6 +98,11 @@ type TenantBundleSpec struct {
 	// +optional
 	Workspace *TenantWorkspaceSpec `json:"workspace,omitempty"`
 
+	// AIGateway requests the tenant-local inference gateway. The profile owns
+	// implementation details; provider/OAuth credentials never appear in this CR.
+	// +optional
+	AIGateway *TenantAIGatewaySpec `json:"aiGateway,omitempty"`
+
 	// HumanAccess declares tenant-owned IAM/transport policy for authenticated
 	// human interaction with explicitly opted-in AgentIdentity resources.
 	// +optional
@@ -131,6 +136,9 @@ type TenantBundleStatus struct {
 
 	// +optional
 	Memory TenantMemoryStatus `json:"memory,omitempty"`
+
+	// +optional
+	AIGateway *ComponentStatus `json:"aiGateway,omitempty"`
 
 	// +optional
 	// +listType=map
