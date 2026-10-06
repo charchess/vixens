@@ -223,13 +223,24 @@ A dedicated additive Cilium policy permits the Renovate pod to reach this servic
 
 ## Configuration
 
-### Secrets Infisical
+### Secrets
 
-**Path:** `/apps/70-tools/renovate`
+Renovate uses the repository-standard OpenBao + External Secrets path:
 
-Required variable:
+```text
+OpenBao
+  → ClusterSecretStore/openbao
+  → ExternalSecret/renovate-secret-sync
+  → Secret/renovate-secret
+  → CronJob/renovate
+```
 
-- `RENOVATE_TOKEN`: GitHub token with repository/workflow permissions required by Renovate.
+The base `ExternalSecret` currently extracts
+`vixens/dev/apps/70-tools/renovate`; environment overlays may patch the remote
+path as needed.
+
+Required secret material includes `RENOVATE_TOKEN`, with the GitHub permissions
+required by the self-hosted Renovate job. Never commit the token to Git.
 
 ### Scheduling
 
