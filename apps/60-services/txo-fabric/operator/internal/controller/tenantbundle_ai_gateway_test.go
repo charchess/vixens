@@ -471,3 +471,55 @@ func TestTenantLiteLLMNetworkPolicyHasNoDirectInternetEgress(t *testing.T) {
 		}
 	}
 }
+
+func TestTenantLiteLLMNetworkPolicyAllowsSameTenantHermesIngress(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	profile := aiGatewayTestProfile()
+	postgresqlProfile := aiGatewayPostgreSQLTestProfile()
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	if err := r.ensureTenantAIGatewayNetworkPolicy(ctx, tenant, profile, postgresqlProfile, aiGatewayBackendState{CPAEnabled: true, CPAPort: 8317}); err != nil {
+		t.Fatal(err)
+	}
+
+	var policy networkingv1.NetworkPolicy
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayNetworkPolicy}, &policy); err != nil {
+		t.Fatal(err)
+	}
+	if len(policy.Spec.Ingress) != 1 {
+		t.Fatalf("tenant LiteLLM ingress rules=%d want 1", len(policy.Spec.Ingress))
+	}
+
+	managedWorkload := false
+	sameTenantHermes := false
+	for _, peer := range policy.Spec.Ingress[0].From {
+		if peer.PodSelector == nil || peer.NamespaceSelector != nil {
+			continue
+		}
+		labels := peer.PodSelector.MatchLabels
+		if labels[LabelManaged] == "true" {
+			managedWorkload = true
+		}
+		if labels[LabelPartOf] == "txo-fabric" &&
+			labels[LabelName] == "hermes-agent" &&
+			labels[LabelTenantName] == tenant.Name {
+			sameTenantHermes = true
+		}
+	}
+	if !managedWorkload {
+		t.Fatal("tenant LiteLLM must preserve ingress from Fabric-managed workloads")
+	}
+	if !sameTenantHermes {
+		t.Fatal("tenant LiteLLM ingress is missing the canonical same-tenant Hermes selector")
+	}
+
+	if len(policy.Spec.Ingress[0].Ports) != 1 ||
+		policy.Spec.Ingress[0].Ports[0].Port == nil ||
+		policy.Spec.Ingress[0].Ports[0].Port.IntValue() != int(profile.Spec.APIPort) {
+		t.Fatalf("tenant LiteLLM ingress must remain restricted to gateway port %d: %#v", profile.Spec.APIPort, policy.Spec.Ingress[0].Ports)
+	}
+}
+
