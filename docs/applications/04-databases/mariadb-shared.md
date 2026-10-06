@@ -27,4 +27,4 @@ kubectl exec -it -n databases statefulset/mariadb-shared -- mariadb-admin ping -
 - **Namespace :** `databases`
 - **Dépendances :**
     - `Synology-CSI` (Stockage PVC `synelia-iscsi-retain`)
-- **Particularités :** Instance MariaDB standalone mutualisée (StatefulSet). Mot de passe root géré via Infisical (`MARIADB_ROOT_PASSWORD`). Priorité `vixens-critical` en production.
+- **Particularités :** Instance MariaDB standalone mutualisée (StatefulSet). Mot de passe root géré via OpenBao + External Secrets Operator (`ExternalSecret/mariadb-shared-credentials` → `Secret/mariadb-shared-credentials`, propriété `MARIADB_ROOT_PASSWORD`). Priorité `vixens-critical` en production.
