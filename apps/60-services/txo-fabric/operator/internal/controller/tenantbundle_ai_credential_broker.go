@@ -34,15 +34,7 @@ type aiCredentialBrokerResult struct {
 }
 
 func (r *TenantBundleReconciler) reconcileAICredentialBroker(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (aiCredentialBrokerResult, error) {
-	request := bundle.Spec.AICredentialBroker
-	if request == nil {
-		return aiCredentialBrokerResult{Ready: true, Reason: "NotRequested", Message: "tenant does not request an AI credential broker"}, nil
-	}
-
-	profileName := strings.TrimSpace(request.ProfileRef)
-	if profileName == "" {
-		profileName = defaultAICredentialBrokerProfileName
-	}
+	profileName := tenantAICredentialBrokerProfileName(bundle)
 	var profile fabricv1alpha1.AICredentialBrokerProfile
 	if err := r.Get(ctx, types.NamespacedName{Name: profileName}, &profile); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -321,6 +313,26 @@ func (r *TenantBundleReconciler) ensureTenantAICredentialBrokerNetworkPolicy(ctx
 		return nil
 	})
 	return err
+}
+
+func (r *TenantBundleReconciler) parkAICredentialBrokerCompute(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (bool, error) {
+	namespace := tenantNamespace(bundle.Name)
+	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: tenantAICredentialBrokerName, Namespace: namespace}}
+	if err := r.Get(ctx, client.ObjectKeyFromObject(deployment), deployment); err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	if deployment.GetLabels()[LabelManaged] != "true" || deployment.GetLabels()[LabelTenantName] != bundle.Name {
+		return false, fmt.Errorf("AI credential broker Deployment %s/%s is not owned by tenant %q", namespace, deployment.Name, bundle.Name)
+	}
+	if deployment.GetDeletionTimestamp().IsZero() {
+		if err := r.Delete(ctx, deployment); err != nil && !apierrors.IsNotFound(err) {
+			return false, err
+		}
+	}
+	return true, nil
 }
 
 func (r *TenantBundleReconciler) cleanupAICredentialBroker(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (bool, error) {

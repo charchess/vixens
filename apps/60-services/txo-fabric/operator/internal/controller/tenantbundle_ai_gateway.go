@@ -28,15 +28,7 @@ type aiGatewayResult struct {
 }
 
 func (r *TenantBundleReconciler) reconcileAIGateway(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (aiGatewayResult, error) {
-	request := bundle.Spec.AIGateway
-	if request == nil {
-		return aiGatewayResult{Ready: true, Reason: "NotRequested", Message: "tenant does not request an AI gateway"}, nil
-	}
-
-	profileName := strings.TrimSpace(request.ProfileRef)
-	if profileName == "" {
-		profileName = defaultAIGatewayProfileName
-	}
+	profileName := tenantAIGatewayProfileName(bundle)
 	var profile fabricv1alpha1.AIGatewayProfile
 	if err := r.Get(ctx, types.NamespacedName{Name: profileName}, &profile); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -127,6 +119,46 @@ func (r *TenantBundleReconciler) reconcileAIGateway(ctx context.Context, bundle 
 	}
 	status := &fabricv1alpha1.ComponentStatus{Phase: "Ready", Endpoint: endpoint}
 	return aiGatewayResult{Ready: true, Status: status, Reason: "DeploymentAvailable", Message: "tenant LiteLLM AI gateway is available"}, nil
+}
+
+func (r *TenantBundleReconciler) parkAIGatewayCompute(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (bool, error) {
+	namespace := tenantNamespace(bundle.Name)
+	pending := false
+
+	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayName, Namespace: namespace}}
+	if err := r.Get(ctx, client.ObjectKeyFromObject(deployment), deployment); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return false, err
+		}
+	} else if aiGatewayRuntimeOwnedBy(deployment, bundle) {
+		pending = true
+		if deployment.GetDeletionTimestamp().IsZero() {
+			if err := r.Delete(ctx, deployment); err != nil && !apierrors.IsNotFound(err) {
+				return false, err
+			}
+		}
+	}
+
+	var jobs batchv1.JobList
+	if err := r.List(ctx, &jobs, client.InNamespace(namespace), client.MatchingLabels{
+		LabelManaged:    "true",
+		LabelTenantID:   bundle.Spec.TenantID,
+		LabelTenantName: bundle.Name,
+		"fabric.truxonline.io/ai-gateway-resource": "migration",
+	}); err != nil {
+		return false, err
+	}
+	for i := range jobs.Items {
+		pending = true
+		job := &jobs.Items[i]
+		if job.DeletionTimestamp == nil {
+			if err := r.Delete(ctx, job); err != nil && !apierrors.IsNotFound(err) {
+				return false, err
+			}
+		}
+	}
+
+	return pending, nil
 }
 
 func (r *TenantBundleReconciler) cleanupAIGateway(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (bool, error) {

@@ -1,14 +1,14 @@
 # Tenant-scoped AI plane and credential pools
 
-Status: **target implementation contract for #3868, #3869 and #3885**.
+Status: **canonical v0.1 contract for #3868, #3885 and #3918**.
 
-The currently deployed inference path still uses the shared LiteLLM gateway and
-OpenRouter. The target remains opt-in until the tenant-local AI plane passes
-physical acceptance.
+The tenant-local AI plane has passed physical hAIrem acceptance for
+Hermes -> tenant LiteLLM -> tenant CPA -> Codex OAuth. It is the canonical
+topology for every Active tenant; it is no longer an opt-in architecture.
 
 ## Decision
 
-The v0.1 target is a **tenant-local LiteLLM facade** plus an optional
+Every Active tenant receives a **tenant-local LiteLLM facade** plus a
 **tenant-local CLIProxyAPI (CPA) credential broker**.
 
 ```text
@@ -86,25 +86,25 @@ billing ledger.
 
 ## Fabric API contract
 
-`TenantBundle.spec.aiGateway` references `AIGatewayProfile`.
+`TenantBundle.spec.lifecycle.mode` is the topology/lifecycle switch:
+
+- absent or `Active`: reconcile the mandatory tenant LiteLLM + CPA AI plane;
+- `Parked`: stop LiteLLM/CPA compute while preserving durable recovery state.
+
+`TenantBundle.spec.aiGateway` and `spec.aiCredentialBroker` are retained only
+as v1alpha1 compatibility/profile-override fields. Their absence does **not**
+disable either component for an Active tenant.
 
 For v0.1:
 
+- default gateway profile = `litellm-standard`;
 - implementation = `LiteLLM`;
-- default profile = `litellm-standard`;
-- this is the consumer-facing inference endpoint.
+- default credential-broker profile = `cliproxyapi-standard`;
+- implementation = `CLIProxyAPI`.
 
-`TenantBundle.spec.aiCredentialBroker` references
-`AICredentialBrokerProfile`.
-
-For v0.1:
-
-- implementation = `CLIProxyAPI`;
-- default profile = `cliproxyapi-standard`;
-- this is internal provider-credential infrastructure.
-
-The API separation prevents CPA from accidentally becoming the consumer-facing
-security/metering plane.
+LiteLLM remains the only consumer-facing inference endpoint. CPA remains internal
+provider-credential infrastructure. The API separation prevents CPA from
+accidentally becoming the consumer-facing security/metering plane.
 
 ## Resource naming
 
@@ -244,31 +244,30 @@ management access.
 A future Fabric admin UI may wrap the same contract; it must not move OAuth
 tokens into Git, TenantBundle/AgentIdentity spec or status, or agent runtimes.
 
-The exact remote Codex authorization flow still requires physical proof against
-the production-pinned CPA version before #3868 can close.
+The remote Codex authorization flow is physically proven on hAIrem against the
+production-pinned CPA version: CPA persisted one root auth JSON, populated its
+model registry, and served a successful `txo-agent` request through LiteLLM.
 
 ## Migration
 
-Current path:
+The historical shared LiteLLM is no longer a normal AgentIdentity backend.
+#3911 provides the bounded legacy credential-cutover path: prepare the tenant
+destination, roll Hermes, then revoke the shared source only after runtime
+adoption.
+
+For Active tenants, the steady-state AgentIdentity path is:
 
 ```text
-Hermes/Hindsight -> shared LiteLLM -> OpenRouter
+Hermes -> tenant LiteLLM -> tenant CPA -> Codex OAuth pool
 ```
 
-Target path:
+Additional logical routes such as `txo-embedding` and ordinary API/OpenRouter
+backends are completed under #3885; they belong behind the same tenant LiteLLM
+facade and do not reintroduce tenant-selectable gateway topology.
 
-```text
-Hermes/Hindsight -> tenant LiteLLM -> CPA and/or ordinary model backends
-```
-
-The shared gateway remains authoritative until the tenant-local gateway has an
-accepted database/key/metering contract and the physical smoke tests pass.
-
-`fabric-smoke` is a parked recovery shell under #3815 and must remain free of
-steady-state runtime compute. The temporary direct-CPA activation introduced by
-#3884/#3886 is retired before promotion. Physical AI-plane acceptance uses the
-real beta tenants: hAIrem first for functional validation, then Indiba for parity
-and cross-tenant isolation.
+`fabric-smoke` is explicitly `lifecycle.mode: Parked` under #3815 and remains
+free of steady-state AI-plane compute while durable recovery state is preserved.
+hAIrem and Indiba are real Active beta tenants and use the same generic topology.
 
 ## Required tests
 
@@ -293,4 +292,4 @@ Physical acceptance will later prove:
 6. CPA OAuth state survives restart;
 7. credential failover stays inside a tenant;
 8. fallback/retry behavior does not multiply unexpectedly;
-9. the shared gateway remains available until explicit cutover.
+9. legacy shared-gateway cleanup is failure-safe and no AgentIdentity steady-state path depends on it.

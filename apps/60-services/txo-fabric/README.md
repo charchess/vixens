@@ -31,10 +31,16 @@ it is not a Fabric lifecycle engine.
 
 `TenantBundle` is cluster-scoped. `metadata.name` is the canonical tenant slug and
 `spec.tenantId` is the immutable business identifier. The operator reconciles the
-tenant namespace, its default-deny network baseline and the requested Shared
-PostgreSQL persistence capability.
+tenant namespace, its default-deny network baseline and the mandatory tenant AI
+plane for every Active tenant.
 
-PostgreSQL, Hindsight and optional modules are explicit API capabilities. A
+`spec.lifecycle.mode` defaults to `Active`. Active tenants automatically receive
+tenant LiteLLM + tenant CPA; `spec.aiGateway` and `spec.aiCredentialBroker`
+remain only as v1alpha1 profile overrides and are not enable/disable switches.
+`Parked` is the recovery-shell state: AI-plane compute is stopped while durable
+OAuth/database state is preserved for reactivation.
+
+PostgreSQL, Hindsight and optional modules remain explicit API capabilities. A
 TenantBundle selects platform-owned persistence and memory implementation profiles
 through `profileRef`; it does not contain database credentials, provider secrets,
 or provider-specific connection strings.
@@ -199,33 +205,36 @@ Hermes runs from the TXO-owned immutable runtime image derived from a reviewed
 upstream `nousresearch/hermes-agent` release. TXO Fabric does not copy upstream
 provider credentials or legacy OAuth state into generated runtimes.
 
-Model access is mediated by the shared TXO AI gateway. The operator provisions one
-LiteLLM virtual key per `AgentIdentity`, restricted to the local `txo-default`
-model alias and tagged with tenant/agent metadata. Only that scoped key is written
-to the tenant namespace.
+For every Active tenant, model access is mediated by that tenant's LiteLLM
+facade. The operator provisions one LiteLLM virtual key per `AgentIdentity`,
+restricted to the logical `txo-agent` model and tagged with tenant/agent
+metadata. Only that scoped key is written to the tenant namespace.
 
 The platform-owned Hermes managed scope pins the behavioral model route in
 `/etc/hermes/config.yaml`, so the pinned Hermes gateway runtime sees the same
 route on every surface and the user-owned `/opt/data/config.yaml` cannot replace
 it:
 
-- `model.default=txo-default`;
+- `model.default=txo-agent`;
 - `model.provider=custom`;
-- `model.base_url=http://txo-ai-gateway.txo-fabric-system.svc:4000/v1`.
+- `model.base_url=http://txo-ai-gateway.tenant-<tenant>.svc:4000/v1`.
 
 Hermes additionally receives the secret/runtime bridge:
 
 - `TXO_LLM_AUTH_MODE=gateway`;
-- `OPENAI_BASE_URL=http://txo-ai-gateway.txo-fabric-system.svc:4000/v1`;
+- `OPENAI_BASE_URL=http://txo-ai-gateway.tenant-<tenant>.svc:4000/v1`;
 - `OPENAI_API_KEY` from `Secret/hermes-<agentKey>-model-access`;
-- `HERMES_MODEL=txo-default` as a compatibility/process seed.
+- `HERMES_MODEL=txo-agent`.
 
-Upstream provider credentials remain in the gateway boundary. Hermes network
-egress permits DNS, the local AI gateway, and its tenant Hindsight service when
-configured; direct provider Internet egress is not granted for model access.
-`ModelAccessReady=True` records successful scoped credential reconciliation, and
-an available Hermes Deployment can then make the AgentIdentity `Ready` instead of
-the previous deliberate `AuthBlocked` state.
+Upstream provider/OAuth credentials remain behind LiteLLM/CPA. Hermes network
+egress permits DNS, its tenant-local LiteLLM, and its tenant Hindsight service
+when configured; it has no direct CPA path and no shared-LiteLLM steady-state
+route. The shared gateway is retained only as a bounded legacy credential source
+for failure-safe cutover cleanup.
+
+`ModelAccessReady=True` records successful scoped credential reconciliation.
+A Parked tenant cannot resolve a model backend for an AgentIdentity and therefore
+fails closed instead of falling back to shared or direct provider access.
 
 The operator starts the Hermes host gateway with `gateway run --replace` and uses
 semantic process probes. Each AgentIdentity uses its pod-level

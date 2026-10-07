@@ -18,9 +18,9 @@ const (
 )
 
 type TenantBrokerTarget struct {
-	TenantName         string
-	Namespace          string
-	BaseURL            string
+	TenantName           string
+	Namespace            string
+	BaseURL              string
 	ManagementCredential string
 }
 
@@ -34,13 +34,15 @@ func ResolveTenantBroker(ctx context.Context, c client.Client, tenantName string
 	if err := c.Get(ctx, types.NamespacedName{Name: tenantName}, &tenant); err != nil {
 		return TenantBrokerTarget{}, fmt.Errorf("get TenantBundle %q: %w", tenantName, err)
 	}
-	if tenant.Spec.AICredentialBroker == nil {
-		return TenantBrokerTarget{}, fmt.Errorf("TenantBundle %q has no aiCredentialBroker", tenantName)
+	if tenant.Spec.Lifecycle.Mode == "Parked" {
+		return TenantBrokerTarget{}, fmt.Errorf("TenantBundle %q is parked", tenantName)
 	}
 
-	profileName := strings.TrimSpace(tenant.Spec.AICredentialBroker.ProfileRef)
-	if profileName == "" {
-		profileName = defaultBrokerProfileName
+	profileName := defaultBrokerProfileName
+	if request := tenant.Spec.AICredentialBroker; request != nil {
+		if override := strings.TrimSpace(request.ProfileRef); override != "" {
+			profileName = override
+		}
 	}
 	var profile fabricv1alpha1.AICredentialBrokerProfile
 	if err := c.Get(ctx, types.NamespacedName{Name: profileName}, &profile); err != nil {
@@ -68,9 +70,9 @@ func ResolveTenantBroker(ctx context.Context, c client.Client, tenantName string
 	}
 
 	return TenantBrokerTarget{
-		TenantName:         tenantName,
-		Namespace:          namespace,
-		BaseURL:            fmt.Sprintf("http://%s.%s.svc:%d", brokerServiceName, namespace, port),
+		TenantName:           tenantName,
+		Namespace:            namespace,
+		BaseURL:              fmt.Sprintf("http://%s.%s.svc:%d", brokerServiceName, namespace, port),
 		ManagementCredential: managementCredential,
 	}, nil
 }

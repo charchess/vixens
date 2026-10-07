@@ -57,8 +57,6 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	previousStatus := bundle.DeepCopy().Status
 	hadPostgreSQL := previousStatus.Persistence.PostgreSQL != nil
 	hadHindsight := previousStatus.Memory.Hindsight != nil
-	hadAIGateway := previousStatus.AIGateway != nil
-	hadAICredentialBroker := previousStatus.AICredentialBroker != nil
 
 	if !controllerutil.ContainsFinalizer(&bundle, TenantFinalizer) {
 		controllerutil.AddFinalizer(&bundle, TenantFinalizer)
@@ -127,6 +125,39 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	waiting := false
 	degraded := false
 	requeueAfter := time.Duration(0)
+
+	runAIPlane := tenantRunsAIPlane(&bundle)
+	if runAIPlane {
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "LifecycleReady", metav1.ConditionTrue, "Active", "tenant lifecycle is Active")
+	} else {
+		var agents fabricv1alpha1.AgentIdentityList
+		if err := r.List(ctx, &agents); err != nil {
+			return ctrl.Result{}, err
+		}
+		remainingAgents := 0
+		for i := range agents.Items {
+			if agents.Items[i].Spec.TenantRef.Name == bundle.Name && agents.Items[i].DeletionTimestamp.IsZero() {
+				remainingAgents++
+			}
+		}
+		if remainingAgents > 0 {
+			// Never cut the tenant AI plane out from under live Hermes runtimes.
+			// Parking is reversible and must first drain/remove AgentIdentity intent.
+			runAIPlane = true
+			degraded = true
+			setCondition(
+				&bundle.Status.Conditions,
+				bundle.Generation,
+				"LifecycleReady",
+				metav1.ConditionFalse,
+				"ParkBlockedByAgents",
+				fmt.Sprintf("cannot park tenant AI plane while %d AgentIdentity resources remain", remainingAgents),
+			)
+			requeueAfter = 5 * time.Second
+		} else {
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "LifecycleReady", metav1.ConditionTrue, "Parked", "tenant lifecycle is Parked")
+		}
+	}
 	if bundle.Spec.Persistence.PostgreSQL != nil {
 		result, err := r.reconcilePostgreSQL(ctx, &bundle)
 		if err != nil {
@@ -230,7 +261,10 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 
-	if bundle.Spec.AICredentialBroker != nil {
+	if runAIPlane {
+		// The tenant-local credential broker is part of the mandatory Active
+		// tenant AI plane and must be reconciled before LiteLLM resolves it as
+		// the txo-agent backend.
 		result, err := r.reconcileAICredentialBroker(ctx, &bundle)
 		if err != nil {
 			bundle.Status.AICredentialBroker = &fabricv1alpha1.ComponentStatus{Phase: "Blocked", Message: err.Error()}
@@ -252,34 +286,8 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			}
 			setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionFalse, result.Reason, result.Message)
 		}
-	} else if hadAICredentialBroker {
-		pending, err := r.cleanupAICredentialBroker(ctx, &bundle)
-		if err != nil {
-			bundle.Status.AICredentialBroker = &fabricv1alpha1.ComponentStatus{Phase: "Blocked", Message: err.Error()}
-			setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionFalse, "ReclaimError", err.Error())
-			bundle.Status.Phase = "Degraded"
-			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AICredentialBrokerReclaimFailed", err.Error())
-			if !reflect.DeepEqual(previousStatus, bundle.Status) {
-				_ = r.Status().Update(ctx, &bundle)
-			}
-			return ctrl.Result{}, err
-		}
-		if pending {
-			waiting = true
-			bundle.Status.AICredentialBroker = &fabricv1alpha1.ComponentStatus{Phase: "Reclaiming", Message: "removing Fabric-owned tenant AI credential broker resources"}
-			setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionFalse, "Reclaiming", "tenant AI credential broker capability is being released")
-			if requeueAfter == 0 || 2*time.Second < requeueAfter {
-				requeueAfter = 2 * time.Second
-			}
-		} else {
-			setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionTrue, "NotRequested", "tenant does not request an AI credential broker")
-		}
-	} else {
-		setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionTrue, "NotRequested", "tenant does not request an AI credential broker")
-	}
 
-	if bundle.Spec.AIGateway != nil {
-		result, err := r.reconcileAIGateway(ctx, &bundle)
+		gatewayResult, err := r.reconcileAIGateway(ctx, &bundle)
 		if err != nil {
 			bundle.Status.AIGateway = &fabricv1alpha1.ComponentStatus{Phase: "Blocked", Message: err.Error()}
 			setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionFalse, "ReconcileError", err.Error())
@@ -290,43 +298,65 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			}
 			return ctrl.Result{}, err
 		}
-		bundle.Status.AIGateway = result.Status
-		if result.RequeueAfter > 0 && (requeueAfter == 0 || result.RequeueAfter < requeueAfter) {
-			requeueAfter = result.RequeueAfter
+		bundle.Status.AIGateway = gatewayResult.Status
+		if gatewayResult.RequeueAfter > 0 && (requeueAfter == 0 || gatewayResult.RequeueAfter < requeueAfter) {
+			requeueAfter = gatewayResult.RequeueAfter
 		}
-		if result.Ready {
-			setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionTrue, result.Reason, result.Message)
+		if gatewayResult.Ready {
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionTrue, gatewayResult.Reason, gatewayResult.Message)
 		} else {
 			waiting = true
-			if result.Status != nil && result.Status.Phase == "Blocked" {
+			if gatewayResult.Status != nil && gatewayResult.Status.Phase == "Blocked" {
 				degraded = true
 			}
-			setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionFalse, result.Reason, result.Message)
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionFalse, gatewayResult.Reason, gatewayResult.Message)
 		}
-	} else if hadAIGateway {
-		pending, err := r.cleanupAIGateway(ctx, &bundle)
+	} else {
+		// Park the stateless/runnable portion of the mandatory AI plane while
+		// preserving OAuth state, LiteLLM database state and runtime Secrets for
+		// a reversible recovery-shell transition.
+		gatewayPending, err := r.parkAIGatewayCompute(ctx, &bundle)
 		if err != nil {
 			bundle.Status.AIGateway = &fabricv1alpha1.ComponentStatus{Phase: "Blocked", Message: err.Error()}
-			setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionFalse, "ReclaimError", err.Error())
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionFalse, "ParkError", err.Error())
 			bundle.Status.Phase = "Degraded"
-			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AIGatewayReclaimFailed", err.Error())
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AIGatewayParkFailed", err.Error())
 			if !reflect.DeepEqual(previousStatus, bundle.Status) {
 				_ = r.Status().Update(ctx, &bundle)
 			}
 			return ctrl.Result{}, err
 		}
-		if pending {
-			waiting = true
-			bundle.Status.AIGateway = &fabricv1alpha1.ComponentStatus{Phase: "Reclaiming", Message: "removing Fabric-owned tenant AI gateway resources"}
-			setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionFalse, "Reclaiming", "tenant AI gateway capability is being released")
-			if requeueAfter == 0 || 2*time.Second < requeueAfter {
-				requeueAfter = 2 * time.Second
+		brokerPending, err := r.parkAICredentialBrokerCompute(ctx, &bundle)
+		if err != nil {
+			bundle.Status.AICredentialBroker = &fabricv1alpha1.ComponentStatus{Phase: "Blocked", Message: err.Error()}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionFalse, "ParkError", err.Error())
+			bundle.Status.Phase = "Degraded"
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AICredentialBrokerParkFailed", err.Error())
+			if !reflect.DeepEqual(previousStatus, bundle.Status) {
+				_ = r.Status().Update(ctx, &bundle)
 			}
-		} else {
-			setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionTrue, "NotRequested", "tenant does not request an AI gateway")
+			return ctrl.Result{}, err
 		}
-	} else {
-		setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionTrue, "NotRequested", "tenant does not request an AI gateway")
+
+		if gatewayPending {
+			waiting = true
+			bundle.Status.AIGateway = &fabricv1alpha1.ComponentStatus{Phase: "Parking", Message: "stopping tenant LiteLLM compute while preserving durable AI-plane state"}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionFalse, "Parking", "tenant LiteLLM compute is being stopped")
+		} else {
+			bundle.Status.AIGateway = &fabricv1alpha1.ComponentStatus{Phase: "Parked", Message: "tenant LiteLLM compute is parked; durable AI-plane state is preserved"}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionTrue, "Parked", "tenant LiteLLM compute is parked")
+		}
+		if brokerPending {
+			waiting = true
+			bundle.Status.AICredentialBroker = &fabricv1alpha1.ComponentStatus{Phase: "Parking", Message: "stopping tenant CPA compute while preserving OAuth state"}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionFalse, "Parking", "tenant CPA compute is being stopped")
+		} else {
+			bundle.Status.AICredentialBroker = &fabricv1alpha1.ComponentStatus{Phase: "Parked", Message: "tenant CPA compute is parked; OAuth state is preserved"}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "AICredentialBrokerReady", metav1.ConditionTrue, "Parked", "tenant CPA compute is parked")
+		}
+		if (gatewayPending || brokerPending) && (requeueAfter == 0 || 2*time.Second < requeueAfter) {
+			requeueAfter = 2 * time.Second
+		}
 	}
 
 	enabledModules := 0
@@ -354,10 +384,13 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "CapabilityBlocked", "one or more declared capabilities are blocked")
 	} else if waiting {
 		bundle.Status.Phase = "Provisioning"
-		setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "WaitingForCapabilities", "cell baseline is ready; declared persistence, memory, or modules are still pending")
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "WaitingForCapabilities", "cell baseline is ready; declared persistence, memory, modules, or lifecycle transitions are still pending")
+	} else if !tenantRunsAIPlane(&bundle) {
+		bundle.Status.Phase = "Parked"
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionTrue, "Parked", "tenant recovery shell is reconciled with the mandatory AI-plane compute stopped")
 	} else {
 		bundle.Status.Phase = "Ready"
-		setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionTrue, "Reconciled", "tenant cell baseline is ready")
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionTrue, "Reconciled", "tenant cell baseline and mandatory AI plane are ready")
 	}
 
 	if !reflect.DeepEqual(previousStatus, bundle.Status) {
@@ -556,15 +589,10 @@ func (r *TenantBundleReconciler) tenantBundleRequestsForPostgreSQLProfile(ctx co
 			seen[bundle.Name] = struct{}{}
 		}
 
-		gateway := bundle.Spec.AIGateway
-		if gateway == nil {
+		if !tenantRunsAIPlane(bundle) {
 			continue
 		}
-		gatewayProfileRef := strings.TrimSpace(gateway.ProfileRef)
-		if gatewayProfileRef == "" {
-			gatewayProfileRef = defaultAIGatewayProfileName
-		}
-		if _, matches := gatewayProfiles[gatewayProfileRef]; matches {
+		if _, matches := gatewayProfiles[tenantAIGatewayProfileName(bundle)]; matches {
 			if _, duplicate := seen[bundle.Name]; !duplicate {
 				requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{Name: bundle.Name}})
 				seen[bundle.Name] = struct{}{}
@@ -606,16 +634,12 @@ func (r *TenantBundleReconciler) tenantBundleRequestsForAICredentialBrokerProfil
 	}
 	requests := make([]reconcile.Request, 0)
 	for i := range bundles.Items {
-		broker := bundles.Items[i].Spec.AICredentialBroker
-		if broker == nil {
+		bundle := &bundles.Items[i]
+		if !tenantRunsAIPlane(bundle) {
 			continue
 		}
-		requested := strings.TrimSpace(broker.ProfileRef)
-		if requested == "" {
-			requested = defaultAICredentialBrokerProfileName
-		}
-		if requested == profileName {
-			requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{Name: bundles.Items[i].Name}})
+		if tenantAICredentialBrokerProfileName(bundle) == profileName {
+			requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{Name: bundle.Name}})
 		}
 	}
 	return requests
@@ -633,16 +657,12 @@ func (r *TenantBundleReconciler) tenantBundleRequestsForAIGatewayProfile(ctx con
 	}
 	requests := make([]reconcile.Request, 0)
 	for i := range bundles.Items {
-		gateway := bundles.Items[i].Spec.AIGateway
-		if gateway == nil {
+		bundle := &bundles.Items[i]
+		if !tenantRunsAIPlane(bundle) {
 			continue
 		}
-		requested := strings.TrimSpace(gateway.ProfileRef)
-		if requested == "" {
-			requested = defaultAIGatewayProfileName
-		}
-		if requested == profileName {
-			requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{Name: bundles.Items[i].Name}})
+		if tenantAIGatewayProfileName(bundle) == profileName {
+			requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{Name: bundle.Name}})
 		}
 	}
 	return requests

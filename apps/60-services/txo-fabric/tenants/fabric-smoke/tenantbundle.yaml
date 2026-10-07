@@ -9,6 +9,8 @@ metadata:
 spec:
   tenantId: TEN90002
   displayName: Fabric Smoke
+  lifecycle:
+    mode: Parked
   isolation:
     profile: Shared
   persistence:

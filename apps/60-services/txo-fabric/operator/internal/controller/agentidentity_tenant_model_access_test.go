@@ -19,7 +19,6 @@ func TestResolveModelAccessBackendUsesTenantLiteLLM(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
 	tenant := testTenant()
-	tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{ProfileRef: defaultAIGatewayProfileName}
 	profile := aiGatewayTestProfile()
 	runtimeSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -48,6 +47,21 @@ func TestResolveModelAccessBackendUsesTenantLiteLLM(t *testing.T) {
 	}
 	if backend.Model != tenantAIAgentModel {
 		t.Fatalf("backend model=%q want %q", backend.Model, tenantAIAgentModel)
+	}
+}
+
+func TestResolveModelAccessBackendRejectsParkedTenant(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := testTenant()
+	tenant.Spec.Lifecycle.Mode = TenantLifecycleParked
+	r := &AgentIdentityReconciler{
+		Client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant).Build(),
+		Scheme: scheme,
+	}
+
+	if _, err := r.resolveModelAccessBackend(ctx, tenant); err == nil {
+		t.Fatal("parked tenant must not receive agent model access")
 	}
 }
 
@@ -313,7 +327,6 @@ func TestTenantModelBindingFlowsIntoHermesPolicyAndRuntime(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
 	tenant := testTenant()
-	tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{ProfileRef: defaultAIGatewayProfileName}
 	agent := testAgentIdentity()
 	profile := testRuntimeProfile()
 	backend := modelAccessBackend{

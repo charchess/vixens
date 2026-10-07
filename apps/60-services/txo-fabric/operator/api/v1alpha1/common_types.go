@@ -9,6 +9,18 @@ type ObjectReference struct {
 	Name string `json:"name"`
 }
 
+type TenantLifecycleSpec struct {
+	// Mode controls the lifecycle of the mandatory tenant AI plane.
+	// Active is the default and receives the canonical tenant AI plane.
+	// Parked preserves the recovery shell and durable AI-plane state without
+	// running tenant LiteLLM/CPA compute. Optional capabilities keep their own
+	// declaration/lifecycle contracts.
+	// +optional
+	// +kubebuilder:default=Active
+	// +kubebuilder:validation:Enum=Active;Parked
+	Mode string `json:"mode,omitempty"`
+}
+
 type TenantIsolationSpec struct {
 	// Profile selects the isolation policy for the tenant cell.
 	// +kubebuilder:validation:Enum=Shared;Dedicated

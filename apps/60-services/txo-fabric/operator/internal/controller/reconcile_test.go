@@ -26,38 +26,6 @@ import (
 
 func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	ctx := context.Background()
-	var keyRequest map[string]any
-	deleteCalls := 0
-	gateway := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.Header.Get("Authorization") != "Bearer test-admin-token" {
-			t.Fatalf("unexpected gateway authorization header")
-		}
-		switch req.URL.Path {
-		case "/key/delete":
-			deleteCalls++
-			var payload map[string]any
-			if err := json.NewDecoder(req.Body).Decode(&payload); err != nil {
-				t.Fatal(err)
-			}
-			aliases, ok := payload["key_aliases"].([]any)
-			if !ok || len(aliases) != 1 || aliases[0] != "txo-fabric:hairem-sandbox:tina" {
-				t.Fatalf("initial stale-key cleanup payload = %#v", payload)
-			}
-			http.Error(w, "not found", http.StatusNotFound)
-		case "/key/generate":
-			if err := json.NewDecoder(req.Body).Decode(&keyRequest); err != nil {
-				t.Fatal(err)
-			}
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"key":"test-virtual-key"}`))
-		default:
-			t.Fatalf("unexpected gateway path %q", req.URL.Path)
-		}
-	}))
-	defer gateway.Close()
-	t.Setenv("TXO_AI_GATEWAY_URL", gateway.URL)
-	t.Setenv("TXO_AI_GATEWAY_ADMIN_TOKEN", "test-admin-token")
-
 	scheme := testScheme(t)
 	tenant := testTenant()
 	profile := testRuntimeProfile()
@@ -71,9 +39,31 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 		},
 	}
 
+	gatewayProfile := aiGatewayTestProfile()
+	gatewayRuntimeSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayRuntimeSecretName, Namespace: tenantNamespace(tenant.Name)},
+		Data:       map[string][]byte{"LITELLM_MASTER_KEY": []byte("tenant-master")},
+	}
+	modelBackendID := "tenant:" + tenant.Name + ":" + gatewayProfile.Name + ":4000"
+	modelRevision := modelAccessBackendRevision(modelBackendID, "")
+	modelSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      modelAccessSecretName(agent.Spec.AgentKey),
+			Namespace: tenantNamespace(tenant.Name),
+			UID:       types.UID("tenant-model-access-uid"),
+			Annotations: map[string]string{
+				AnnotationModelAccessBackend:    modelBackendID,
+				AnnotationModelAccessBackendURL: "http://txo-ai-gateway." + tenantNamespace(tenant.Name) + ".svc:4000",
+				AnnotationModelAccessRevision:   modelRevision,
+			},
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{modelAccessSecretKey: []byte("test-virtual-key")},
+	}
+
 	c := fake.NewClientBuilder().WithScheme(scheme).
 		WithStatusSubresource(&fabricv1alpha1.TenantBundle{}, &fabricv1alpha1.AgentIdentity{}).
-		WithObjects(tenant, profile, agent).
+		WithObjects(tenant, profile, agent, gatewayProfile, gatewayRuntimeSecret, modelSecret).
 		Build()
 
 	reconcileTenant(t, ctx, c, scheme, tenant.Name)
@@ -96,24 +86,7 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if deleteCalls != 1 {
-		t.Fatalf("initial stale-key cleanup calls=%d, want 1", deleteCalls)
-	}
-	for _, unset := range []string{"max_budget", "rpm_limit", "tpm_limit"} {
-		if _, exists := keyRequest[unset]; exists {
-			t.Fatalf("v0 key request unexpectedly sets platform quota %q: %#v", unset, keyRequest[unset])
-		}
-	}
-	if got := keyRequest["key_alias"]; got != "txo-fabric:hairem-sandbox:tina" {
-		t.Fatalf("gateway key alias = %#v", got)
-	}
-	models, ok := keyRequest["models"].([]any)
-	if !ok || len(models) != 1 || models[0] != "txo-default" {
-		t.Fatalf("gateway models = %#v", keyRequest["models"])
-	}
-
-	var modelSecret corev1.Secret
-	if err := c.Get(ctx, types.NamespacedName{Name: "hermes-tina-model-access", Namespace: ns.Name}, &modelSecret); err != nil {
+	if err := c.Get(ctx, types.NamespacedName{Name: "hermes-tina-model-access", Namespace: ns.Name}, modelSecret); err != nil {
 		t.Fatalf("model access Secret not reconciled: %v", err)
 	}
 	if string(modelSecret.Data["OPENAI_API_KEY"]) != "test-virtual-key" {
@@ -172,11 +145,11 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	if got := envValue(container.Env, "TXO_LLM_AUTH_MODE"); got != "gateway" {
 		t.Fatalf("TXO_LLM_AUTH_MODE = %q, want gateway", got)
 	}
-	if got := envValue(container.Env, "OPENAI_BASE_URL"); got != aiGatewayURL()+"/v1" {
-		t.Fatalf("OPENAI_BASE_URL = %q, want configured shared gateway %q", got, aiGatewayURL()+"/v1")
+	if got := envValue(container.Env, "OPENAI_BASE_URL"); got != "http://txo-ai-gateway.tenant-hairem-sandbox.svc:4000/v1" {
+		t.Fatalf("OPENAI_BASE_URL = %q, want tenant LiteLLM", got)
 	}
-	if got := envValue(container.Env, "HERMES_MODEL"); got != "txo-default" {
-		t.Fatalf("HERMES_MODEL = %q", got)
+	if got := envValue(container.Env, "HERMES_MODEL"); got != tenantAIAgentModel {
+		t.Fatalf("HERMES_MODEL = %q want %q", got, tenantAIAgentModel)
 	}
 	apiKey := envVar(container.Env, "OPENAI_API_KEY")
 	if apiKey == nil || apiKey.ValueFrom == nil || apiKey.ValueFrom.SecretKeyRef == nil || apiKey.ValueFrom.SecretKeyRef.Name != "hermes-tina-model-access" || apiKey.ValueFrom.SecretKeyRef.Key != "OPENAI_API_KEY" {
@@ -210,7 +183,7 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	for _, condition := range current.Status.Conditions {
 		if condition.Type == "ModelAccessReady" && condition.Status == metav1.ConditionTrue && condition.Reason == "GatewayCredentialReady" {
 			modelReady = true
-			if !strings.Contains(condition.Message, "model=txo-default") || !strings.Contains(condition.Message, "gateway=") || !strings.Contains(condition.Message, "rotation=baseline") {
+			if !strings.Contains(condition.Message, "model="+tenantAIAgentModel) || !strings.Contains(condition.Message, "gateway=http://txo-ai-gateway.tenant-hairem-sandbox.svc:4000") {
 				t.Fatalf("ModelAccessReady does not expose effective non-secret binding: %q", condition.Message)
 			}
 		}
@@ -235,22 +208,10 @@ func TestAgentModelAccessRotationRevokesOldKeyAndRollsRuntime(t *testing.T) {
 	agent := testAgentIdentity()
 	agent.Annotations = map[string]string{AnnotationModelAccessRotation: "rotate-agent-model-key"}
 
-	namespace := tenantNamespace(tenant.Name)
-	oldSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        modelAccessSecretName(agent.Spec.AgentKey),
-			Namespace:   namespace,
-			UID:         types.UID("model-access-secret-uid"),
-			Annotations: map[string]string{AnnotationModelAccessRevision: "previous"},
-		},
-		Type: corev1.SecretTypeOpaque,
-		Data: map[string][]byte{modelAccessSecretKey: []byte("old-agent-key")},
-	}
-
 	deleteCalls := 0
 	generateCalls := 0
 	gateway := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.Header.Get("Authorization") != "Bearer test-admin-token" {
+		if req.Header.Get("Authorization") != "Bearer tenant-master" {
 			t.Fatalf("unexpected gateway authorization header")
 		}
 		var payload map[string]any
@@ -269,7 +230,7 @@ func TestAgentModelAccessRotationRevokesOldKeyAndRollsRuntime(t *testing.T) {
 		case "/key/generate":
 			generateCalls++
 			models, ok := payload["models"].([]any)
-			if !ok || len(models) != 1 || models[0] != defaultAIGatewayModel {
+			if !ok || len(models) != 1 || models[0] != tenantAIAgentModel {
 				t.Fatalf("rotation models = %#v", payload["models"])
 			}
 			if payload["key_alias"] != modelAccessKeyAlias(agent, tenant) {
@@ -282,13 +243,33 @@ func TestAgentModelAccessRotationRevokesOldKeyAndRollsRuntime(t *testing.T) {
 		}
 	}))
 	defer gateway.Close()
-	t.Setenv("TXO_AI_GATEWAY_URL", gateway.URL)
-	t.Setenv("TXO_AI_GATEWAY_ADMIN_TOKEN", "test-admin-token")
+
+	namespace := tenantNamespace(tenant.Name)
+	backend := modelAccessBackend{
+		ID:         "tenant:hairem-sandbox:litellm-standard:4000",
+		URL:        gateway.URL,
+		AdminToken: "tenant-master",
+		Model:      tenantAIAgentModel,
+	}
+	oldSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      modelAccessSecretName(agent.Spec.AgentKey),
+			Namespace: namespace,
+			UID:       types.UID("model-access-secret-uid"),
+			Annotations: map[string]string{
+				AnnotationModelAccessRevision:   "previous",
+				AnnotationModelAccessBackend:    backend.ID,
+				AnnotationModelAccessBackendURL: backend.URL,
+			},
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{modelAccessSecretKey: []byte("old-agent-key")},
+	}
 
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent, oldSecret).Build()
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 
-	secretUID, appliedRevision, err := r.ensureModelAccess(ctx, agent, tenant, namespace)
+	secretUID, appliedRevision, err := r.ensureModelAccessWithBackend(ctx, agent, tenant, namespace, backend)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -306,12 +287,16 @@ func TestAgentModelAccessRotationRevokesOldKeyAndRollsRuntime(t *testing.T) {
 	if got := string(rotated.Data[modelAccessSecretKey]); got != "new-agent-key" {
 		t.Fatalf("rotated model key = %q", got)
 	}
-	wantRevision := modelAccessRotationRevision(agent)
+	wantRevision := modelAccessRevisionForBackend(backend, modelAccessRotationRevision(agent))
 	if got := rotated.Annotations[AnnotationModelAccessRevision]; got != wantRevision || got == "" {
 		t.Fatalf("rotation revision = %q, want %q", got, wantRevision)
 	}
 
-	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace, secretUID, appliedRevision); err != nil {
+	policy, err := resolveToolsetPolicy(agent, profile, backend.runtimeBinding())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace, secretUID, appliedRevision, policy); err != nil {
 		t.Fatal(err)
 	}
 	var deployment appsv1.Deployment
@@ -325,18 +310,15 @@ func TestAgentModelAccessRotationRevokesOldKeyAndRollsRuntime(t *testing.T) {
 		t.Fatalf("pod model-access Secret UID = %q, want %q", got, secretUID)
 	}
 
-	if _, _, err := r.ensureModelAccess(ctx, agent, tenant, namespace); err != nil {
+	if _, _, err := r.ensureModelAccessWithBackend(ctx, agent, tenant, namespace, backend); err != nil {
 		t.Fatal(err)
 	}
 	if deleteCalls != 1 || generateCalls != 1 {
 		t.Fatalf("idempotent reconcile repeated rotation: delete=%d generate=%d", deleteCalls, generateCalls)
 	}
 
-	// ArgoCD may later remove an imperative rotation request annotation because it
-	// is not part of the GitOps manifest. Absence means "no new rotation", not
-	// "rotate back to baseline".
 	agent.Annotations = nil
-	uidAfterRemoval, revisionAfterRemoval, err := r.ensureModelAccess(ctx, agent, tenant, namespace)
+	uidAfterRemoval, revisionAfterRemoval, err := r.ensureModelAccessWithBackend(ctx, agent, tenant, namespace, backend)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -45,10 +45,6 @@ func aiGatewayWorkloadLabels(bundle *fabricv1alpha1.TenantBundle) map[string]str
 }
 
 func (r *TenantBundleReconciler) resolveAIGatewayBackends(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (aiGatewayBackendState, string, error) {
-	if bundle.Spec.AICredentialBroker == nil {
-		return aiGatewayBackendState{}, "", nil
-	}
-
 	namespace := tenantNamespace(bundle.Name)
 	var service corev1.Service
 	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: tenantAICredentialBrokerName}, &service); err != nil {
