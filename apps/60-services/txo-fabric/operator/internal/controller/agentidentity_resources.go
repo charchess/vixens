@@ -109,11 +109,15 @@ func (r *AgentIdentityReconciler) ensureDeployment(ctx context.Context, agent *f
 	return r.ensureDeploymentRuntime(ctx, agent, tenant, profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrationResolution{})
 }
 
-func (r *AgentIdentityReconciler) ensureDeploymentWithIntegrations(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution) error {
-	return r.ensureDeploymentRuntime(ctx, agent, tenant, profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrations)
+func (r *AgentIdentityReconciler) ensureDeploymentWithIntegrations(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution, functional ...effectiveFunctionalProfile) error {
+	return r.ensureDeploymentRuntime(ctx, agent, tenant, profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrations, functional...)
 }
 
-func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution) error {
+func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution, functional ...effectiveFunctionalProfile) error {
+	var role effectiveFunctionalProfile
+	if len(functional) > 0 {
+		role = functional[0]
+	}
 	workspaceVolumes, workspaceMounts, err := resolvedWorkspaceVolumes(agent, tenant)
 	if err != nil {
 		return err
@@ -184,6 +188,9 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, a
 			AnnotationModelAccessSecretUID:      modelAccessSecretUID,
 			AnnotationToolsetPolicyRevision:     toolPolicy.Revision,
 			AnnotationIntegrationPolicyRevision: integrations.Revision,
+		}
+		if role.Enabled {
+			podAnnotations[AnnotationFunctionalProfileRevision] = role.Revision
 		}
 		if profile.Spec.Compatibility.S6Overlay {
 			podAnnotations["vixens.io/explicitly-allow-root"] = "true"
@@ -272,6 +279,12 @@ fi
 				}},
 				Volumes: volumes,
 			},
+		}
+		if role.Enabled {
+			// Hermes v2026.9.24 resolves this non-secret gateway overlay on every turn.
+			// SOUL.md and agent-local skills remain in private HERMES_HOME; no file is overwritten.
+			deployment.Spec.Template.Spec.Containers[0].Env = append(deployment.Spec.Template.Spec.Containers[0].Env,
+				corev1.EnvVar{Name: "HERMES_EPHEMERAL_SYSTEM_PROMPT", Value: role.Instructions})
 		}
 		if humanAccess.Enabled {
 			container := &deployment.Spec.Template.Spec.Containers[0]

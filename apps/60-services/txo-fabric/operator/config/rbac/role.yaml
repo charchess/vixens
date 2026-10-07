@@ -114,6 +114,7 @@ rules:
   - fabric.truxonline.io
   resources:
   - agentruntimeprofiles
+  - agentfunctionalprofiles
   - aicredentialbrokerprofiles
   - aigatewayprofiles
   - hindsightprofiles

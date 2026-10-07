@@ -45,6 +45,15 @@ type AgentRuntimeBinding struct {
 	Capabilities AgentRuntimeCapabilityBinding `json:"capabilities,omitempty"`
 }
 
+// AgentFunctionalBinding optionally selects a tenant-owned reusable business baseline.
+// It does not grant workspace, model, integration or executable-tool permissions.
+type AgentFunctionalBinding struct {
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	ProfileRef string `json:"profileRef,omitempty"`
+}
+
 type AgentMemoryBinding struct {
 	// BankID optionally pins a logical bank identifier. When omitted the operator resolves
 	// <tenant-name>-<agent-key> and records the result in status.memory.bankId.
@@ -86,6 +95,10 @@ type AgentIdentitySpec struct {
 	// Runtime selects how this identity is executed. Infrastructure details remain in the profile.
 	// +optional
 	Runtime AgentRuntimeBinding `json:"runtime,omitempty"`
+
+	// Functional selects a reusable business baseline without changing identity, private state or runtime ceiling.
+	// +optional
+	Functional AgentFunctionalBinding `json:"functional,omitempty"`
 
 	// Memory binds the identity to its logical tenant memory bank.
 	// +optional
