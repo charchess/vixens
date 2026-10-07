@@ -26,5 +26,15 @@ spec:
               app.kubernetes.io/name: txo-ai-gateway
       ports:
         - {protocol: TCP, port: 4000}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              fabric.truxonline.io/managed: "true"
+          podSelector:
+            matchLabels:
+              fabric.truxonline.io/managed: "true"
+              app.kubernetes.io/component: tenant-ai-gateway
+      ports:
+        - {protocol: TCP, port: 4000}
 # kube-apiserver egress is provided cluster-wide by Vixens Cilium policy
 # ccnp-allow-kube-apiserver; do not open generic Internet egress here.

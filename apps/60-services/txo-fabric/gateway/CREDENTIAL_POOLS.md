@@ -18,7 +18,7 @@ Tenant workloads
 tenant LiteLLM
   auth / logical models / routing / metering
       |
-      +-- txo-coding ----> tenant CPA ----> Codex OAuth account A/B/...
+      +-- txo-agent ----> tenant CPA ----> Codex OAuth account A/B/...
       +-- txo-general ---> OpenRouter / API / OSS backend
       +-- txo-reasoning -> OpenRouter / API / OSS backend
       +-- txo-embedding -> OpenRouter / local embedding backend
@@ -131,7 +131,7 @@ Consumers select logical capabilities, never provider credentials:
 ```text
 txo-auto
 txo-general
-txo-coding
+txo-agent
 txo-fast
 txo-reasoning
 txo-embedding
@@ -139,7 +139,7 @@ txo-embedding
 
 Examples:
 
-- Hermes may receive `txo-coding` and resolve through LiteLLM -> CPA -> Codex;
+- Hermes may receive `txo-agent` and resolve through LiteLLM -> CPA -> Codex;
 - Hindsight may receive only `txo-embedding` and resolve through LiteLLM ->
   OpenRouter/BGE-M3 or a future local embedding service;
 - another service may receive `txo-reasoning` without any access to CPA.
@@ -158,7 +158,7 @@ LiteLLM is responsible for fallback **between logical deployments/providers**.
 Example:
 
 ```text
-txo-coding
+txo-agent
    |
    +-> CPA
    |    +-> Codex A (cooldown)

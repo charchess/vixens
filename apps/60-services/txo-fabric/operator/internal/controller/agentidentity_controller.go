@@ -97,7 +97,13 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	}
 
-	toolPolicy, err := resolveToolsetPolicy(&agent, &profile)
+	modelBackend, err := r.resolveModelAccessBackend(ctx, &tenant)
+	if err != nil {
+		r.setStatus(ctx, &agent, "AuthBlocked", "ModelAccessReady", metav1.ConditionFalse, "GatewayBackendResolutionFailed", err.Error())
+		return ctrl.Result{}, err
+	}
+
+	toolPolicy, err := resolveToolsetPolicy(&agent, &profile, modelBackend.runtimeBinding())
 	if err != nil {
 		r.setStatus(ctx, &agent, "Failed", "CapabilityPolicyReady", metav1.ConditionFalse, "CapabilityPolicyInvalid", err.Error())
 		return ctrl.Result{}, nil
@@ -119,7 +125,7 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "PVCReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}
-	modelAccessSecretUID, modelAccessRevision, err := r.ensureModelAccess(ctx, &agent, &tenant, namespace)
+	modelAccessSecretUID, modelAccessRevision, err := r.ensureModelAccessWithBackend(ctx, &agent, &tenant, namespace, modelBackend)
 	if err != nil {
 		r.setStatus(ctx, &agent, "AuthBlocked", "ModelAccessReady", metav1.ConditionFalse, "GatewayCredentialReconcileFailed", err.Error())
 		return ctrl.Result{}, err
@@ -134,7 +140,7 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		"ModelAccessReady",
 		metav1.ConditionTrue,
 		"GatewayCredentialReady",
-		fmt.Sprintf("scoped TXO AI gateway credential is reconciled (gateway=%s model=%s rotation=%s)", aiGatewayURL(), defaultAIGatewayModel, rotation),
+		fmt.Sprintf("scoped TXO AI gateway credential is reconciled (gateway=%s model=%s rotation=%s)", modelBackend.URL, modelBackend.Model, rotation),
 	)
 
 	integrationAccess, err := r.resolveIntegrationAccess(ctx, &agent, &tenant, namespace)

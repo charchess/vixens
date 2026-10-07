@@ -27,9 +27,22 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 	namespace := tenantNamespace(agent.Spec.TenantRef.Name)
 
 	// Revocation is intentionally best-effort: a temporary gateway outage must not
-	// wedge tenant cleanup forever. The stable alias lets LiteLLM revoke any key
-	// associated with this identity without exposing the virtual key itself.
-	_ = revokeModelAccessKey(ctx, modelAccessKeyAliasForNames(agent.Spec.TenantRef.Name, agent.Spec.AgentKey))
+	// wedge tenant cleanup forever. Resolve the backend recorded on the model-access
+	// Secret so tenant-local keys are not accidentally revoked only on the legacy
+	// shared gateway.
+	backend := sharedModelAccessBackend()
+	var tenant fabricv1alpha1.TenantBundle
+	if err := r.Get(ctx, types.NamespacedName{Name: agent.Spec.TenantRef.Name}, &tenant); err == nil {
+		var modelSecret corev1.Secret
+		if err := r.Get(ctx, types.NamespacedName{Name: modelAccessSecretName(agent.Spec.AgentKey), Namespace: namespace}, &modelSecret); err == nil {
+			if resolved, err := r.previousModelAccessBackend(ctx, &tenant, &modelSecret); err == nil {
+				backend = resolved
+			}
+		} else if resolved, err := r.resolveModelAccessBackend(ctx, &tenant); err == nil {
+			backend = resolved
+		}
+	}
+	_ = revokeModelAccessKeyIfExistsWithBackend(ctx, backend, modelAccessKeyAliasForNames(agent.Spec.TenantRef.Name, agent.Spec.AgentKey))
 
 	if storageRetentionPolicy(agent) == StorageRetentionRetain {
 		if err := r.retainRuntimePVC(ctx, agent, namespace); err != nil {

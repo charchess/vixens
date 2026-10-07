@@ -39,8 +39,8 @@ func aiGatewayAdminToken() string {
 	return strings.TrimSpace(os.Getenv("TXO_AI_GATEWAY_ADMIN_TOKEN"))
 }
 
-func generateModelAccessKey(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) (string, error) {
-	return generateScopedModelAccessKey(ctx, modelAccessKeyAlias(agent, tenant), []string{defaultAIGatewayModel}, nil, map[string]string{
+func generateModelAccessKey(ctx context.Context, backend modelAccessBackend, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) (string, error) {
+	return generateScopedModelAccessKeyWithBackend(ctx, backend, modelAccessKeyAlias(agent, tenant), []string{backend.Model}, nil, map[string]string{
 		"tenant": tenant.Name, "tenant_id": tenant.Spec.TenantID,
 		"agent": agent.Spec.AgentKey, "agent_id": agent.Name,
 	})
@@ -54,6 +54,10 @@ func generateHindsightEmbeddingAccessKey(ctx context.Context, tenant *fabricv1al
 }
 
 func generateScopedModelAccessKey(ctx context.Context, alias string, models []string, modelAliases map[string]string, metadata map[string]string) (string, error) {
+	return generateScopedModelAccessKeyWithBackend(ctx, sharedModelAccessBackend(), alias, models, modelAliases, metadata)
+}
+
+func generateScopedModelAccessKeyWithBackend(ctx context.Context, backend modelAccessBackend, alias string, models []string, modelAliases map[string]string, metadata map[string]string) (string, error) {
 	payload := map[string]any{
 		"key_alias": alias,
 		"models":    models,
@@ -63,7 +67,7 @@ func generateScopedModelAccessKey(ctx context.Context, alias string, models []st
 		payload["aliases"] = modelAliases
 	}
 	var response generateKeyResponse
-	if err := aiGatewayJSON(ctx, "/key/generate", payload, &response); err != nil {
+	if err := aiGatewayJSONWithBackend(ctx, backend, "/key/generate", payload, &response); err != nil {
 		return "", err
 	}
 	if strings.TrimSpace(response.Key) == "" {
@@ -73,18 +77,30 @@ func generateScopedModelAccessKey(ctx context.Context, alias string, models []st
 }
 
 func revokeModelAccessKey(ctx context.Context, alias string) error {
-	return aiGatewayJSON(ctx, "/key/delete", map[string]any{"key_aliases": []string{alias}}, nil)
+	return revokeModelAccessKeyWithBackend(ctx, sharedModelAccessBackend(), alias)
+}
+
+func revokeModelAccessKeyWithBackend(ctx context.Context, backend modelAccessBackend, alias string) error {
+	return aiGatewayJSONWithBackend(ctx, backend, "/key/delete", map[string]any{"key_aliases": []string{alias}}, nil)
 }
 
 func revokeModelAccessKeyIfExists(ctx context.Context, alias string) error {
 	return ignoreAIGatewayNotFound(revokeModelAccessKey(ctx, alias))
 }
 
+func revokeModelAccessKeyIfExistsWithBackend(ctx context.Context, backend modelAccessBackend, alias string) error {
+	return ignoreAIGatewayNotFound(revokeModelAccessKeyWithBackend(ctx, backend, alias))
+}
+
 func revokeModelAccessKeyValueIfExists(ctx context.Context, key string) error {
+	return revokeModelAccessKeyValueIfExistsWithBackend(ctx, sharedModelAccessBackend(), key)
+}
+
+func revokeModelAccessKeyValueIfExistsWithBackend(ctx context.Context, backend modelAccessBackend, key string) error {
 	if strings.TrimSpace(key) == "" {
 		return nil
 	}
-	err := aiGatewayJSON(ctx, "/key/delete", map[string]any{"keys": []string{key}}, nil)
+	err := aiGatewayJSONWithBackend(ctx, backend, "/key/delete", map[string]any{"keys": []string{key}}, nil)
 	return ignoreAIGatewayNotFound(err)
 }
 
@@ -100,9 +116,13 @@ func ignoreAIGatewayNotFound(err error) error {
 }
 
 func aiGatewayJSON(ctx context.Context, path string, payload any, out any) error {
-	token := aiGatewayAdminToken()
+	return aiGatewayJSONWithBackend(ctx, sharedModelAccessBackend(), path, payload, out)
+}
+
+func aiGatewayJSONWithBackend(ctx context.Context, backend modelAccessBackend, path string, payload any, out any) error {
+	token := strings.TrimSpace(backend.AdminToken)
 	if token == "" {
-		return fmt.Errorf("TXO AI gateway admin credential is not configured")
+		return fmt.Errorf("TXO AI gateway admin credential is not configured for backend %q", backend.ID)
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -110,7 +130,7 @@ func aiGatewayJSON(ctx context.Context, path string, payload any, out any) error
 	}
 	reqCtx, cancel := context.WithTimeout(ctx, modelAccessRequestTimeout)
 	defer cancel()
-	req, err := http.NewRequestWithContext(reqCtx, http.MethodPost, aiGatewayURL()+path, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodPost, strings.TrimRight(backend.URL, "/")+path, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("build TXO AI gateway request: %w", err)
 	}
