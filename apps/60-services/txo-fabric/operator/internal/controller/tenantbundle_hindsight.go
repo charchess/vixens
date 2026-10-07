@@ -510,7 +510,13 @@ func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bund
 		return nil, nil
 	}
 
-	backend, pendingMessage, err := r.resolveHindsightEmbeddingBackend(ctx, bundle, appliedBackendID, secretExists && appliedBackendID == sharedModelAccessBackendID)
+	// The existence of an API-only Hindsight Secret is not proof that a tenant
+	// already relied on shared embeddings. Require an existing embedding key
+	// or an explicit shared-backend migration marker before retaining legacy.
+	legacySharedRuntime := secretExists && appliedBackendID == sharedModelAccessBackendID &&
+		(len(secret.Data[hindsightEmbeddingSecretKey]) > 0 ||
+			strings.TrimSpace(secret.Annotations[AnnotationHindsightEmbeddingBackend]) == sharedModelAccessBackendID)
+	backend, pendingMessage, err := r.resolveHindsightEmbeddingBackend(ctx, bundle, appliedBackendID, legacySharedRuntime)
 	if err != nil {
 		return nil, err
 	}

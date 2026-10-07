@@ -76,6 +76,7 @@ func TestHindsightPlatformGatewayReconcilesScopedEmbeddingAccess(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "hindsight-runtime", Namespace: tenantNamespace(tenant.Name),
 			Labels: hindsightLabels(tenant, hindsightProfile, "runtime-secret"),
+			Annotations: map[string]string{AnnotationHindsightEmbeddingBackend: sharedModelAccessBackendID},
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{"HINDSIGHT_API_TENANT_API_KEY": []byte("legacy-hindsight-api-key")},
@@ -543,6 +544,25 @@ func TestHindsightNewTenantNeverBootstrapsFromSharedGateway(t *testing.T) {
 		t.Fatal("new tenant unexpectedly received a Hindsight runtime Secret before provider enrollment")
 	}
 
+	// A pre-existing API-only runtime (for example from a non-gateway
+	// Hindsight profile) is not a legacy shared embedding runtime.
+	apiOnly := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: names.Secret, Namespace: namespace,
+			Labels: hindsightLabels(tenant, profile, "runtime-secret"),
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{"HINDSIGHT_API_TENANT_API_KEY": []byte("existing-api-only")},
+	}
+	if err := c.Create(ctx, apiOnly); err != nil {
+		t.Fatal(err)
+	}
+	pending, err = r.ensureHindsightSecret(ctx, tenant, profile, names, postgresqlSecret)
+	if err != nil || pending == nil || pending.Reason != "EmbeddingBackendPending" ||
+		!strings.Contains(pending.Message, "required to bootstrap Hindsight") {
+		t.Fatalf("API-only runtime must not count as a legacy shared embedding runtime: pending=%#v err=%v", pending, err)
+	}
+
 	// Even after enrolling OpenRouter, the tenant gateway route must become
 	// ready before Hindsight can bootstrap; shared must not be the shortcut.
 	provider := &corev1.Secret{
@@ -563,7 +583,10 @@ func TestHindsightNewTenantNeverBootstrapsFromSharedGateway(t *testing.T) {
 		!strings.Contains(pending.Message, "tenant LiteLLM embedding backend is unavailable") {
 		t.Fatalf("new tenant must wait for tenant LiteLLM readiness: %#v", pending)
 	}
-	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: names.Secret}, &runtime); err == nil {
-		t.Fatal("new tenant unexpectedly received a shared Hindsight runtime Secret")
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: names.Secret}, &runtime); err != nil {
+		t.Fatal(err)
+	}
+	if len(runtime.Data[hindsightEmbeddingSecretKey]) != 0 || len(runtime.Data["HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL"]) != 0 {
+		t.Fatal("new tenant unexpectedly acquired shared embedding credentials or endpoint")
 	}
 }
