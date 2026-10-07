@@ -164,8 +164,11 @@ Secret/tenant-<tenant>/txo-ai-gateway-runtime
 tenant LiteLLM
 ```
 
-The source Secret is expected to be projected from OpenBao through External
-Secrets Operator. No provider value belongs in Git, TenantBundle, AgentIdentity,
+In v0.1, a platform administrator enrolls the source Secret manually using
+the secure stdin-based `kubectl` procedure in
+[`gateway/README.md`](README.md#manual-openrouter-enrollment-v01).
+OpenBao/External Secrets are optional future management integrations, not a
+runtime dependency. No provider value belongs in Git, TenantBundle, AgentIdentity,
 Hindsight runtime configuration, or CR status.
 
 When the credential exists, Fabric adds `txo-embedding` to that tenant LiteLLM,

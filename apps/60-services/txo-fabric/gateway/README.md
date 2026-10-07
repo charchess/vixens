@@ -39,8 +39,9 @@ txo-fabric-system/txo-ai-provider-<tenant>
 The value is projected into the platform-owned
 `tenant-<tenant>/txo-ai-gateway-runtime` Secret consumed by LiteLLM. The value
 never enters Hermes, Hindsight, TenantBundle/AgentIdentity spec or status, Git, or
-logs. The source Secret should be supplied through OpenBao + External Secrets
-Operator.
+logs. For v0.1 the source Secret is enrolled manually by a platform admin.
+OpenBao/ESO may be introduced later, but is not required by this runtime
+contract.
 
 When the credential is absent, the tenant LiteLLM remains fully usable for
 `txo-agent` through CPA but does not advertise `txo-embedding`. When present,
@@ -53,6 +54,82 @@ model: openrouter/baai/bge-m3
 
 and receives outbound TCP/443. Tenant workloads themselves receive no generic
 provider egress.
+
+### Manual OpenRouter enrollment (v0.1)
+
+**Fabric does not need a dedicated OpenBao instance or an ExternalSecret to
+enroll provider credentials in v0.1.** Enrollment is an explicit administrative
+action, analogous to the manual Codex OAuth enrollment (but the OpenRouter
+credential is an API key, not an OAuth grant). The operator already watches the
+source `Secret/txo-fabric-system/txo-ai-provider-<tenant>` and copies its
+`OPENROUTER_API_KEY` only into the corresponding tenant LiteLLM runtime
+Secret.
+
+Create **distinct OpenRouter API keys** for `hairem` and `indiba`. Use
+provider-side spending limits/revocation per key where supported. The provider
+values are never stored in Git, commits, PR comments, or `TenantBundle` spec.
+
+```bash
+# Run interactively as a cluster administrator, from grenat.
+# Repeat with TENANT=indiba and a DIFFERENT OpenRouter API key.
+TENANT=hairem
+(
+  set -euo pipefail
+  read -r -s -p "OpenRouter API key for ${TENANT}: " provider_key
+  printf '\n'
+  test -n "$provider_key"
+  printf '%s' "$provider_key" |
+    kubectl -n txo-fabric-system create secret generic "txo-ai-provider-${TENANT}" \
+      --from-file=OPENROUTER_API_KEY=/dev/stdin --dry-run=client -o yaml |
+    kubectl -n txo-fabric-system apply --server-side \
+      --field-manager=txo-fabric-provider-enrollment -f -
+  unset provider_key
+)
+
+# Check presence without printing the value or its base64 encoding.
+kubectl -n txo-fabric-system get secret "txo-ai-provider-${TENANT}" -o json |
+  jq -r 'if (.data.OPENROUTER_API_KEY // "") != "" then "PROVIDER_KEY_PRESENT" else "PROVIDER_KEY_MISSING" end'
+```
+
+The same invocation performs first enrollment and rotation. It reads the key
+silently into a non-exported subshell variable; the key is supplied to
+`kubectl` over stdin, not a command-line argument, and is not printed.
+`--server-side` avoids the client-side apply `last-applied-configuration`
+annotation containing a second copy of the Secret data. The Kubernetes API
+still stores the provider key as a Secret (which requires appropriate etcd
+protection, access controls and backup); it is an **intentional credential
+bootstrap exception** to GitOps, not a license to patch tenant workloads.
+
+**Do not enroll until the reviewed #3925 code (and the #3928 fail-closed
+follow-up if merged) is in an explicitly approved, pinned operator image and
+the release has converged on the cluster.** The old shared Hindsight endpoint
+must remain available to existing tenants during the transition. Because the
+operator watches source Secret changes, importing or rotating the key should
+trigger its LiteLLM config/runtime reconciliation and rollout automatically.
+No manual edit of LiteLLM, Hindsight, Hermes, or NetworkPolicy is necessary.
+
+Then validate **hAIrem first, Indiba second**:
+
+1. Check the provider Secret key *exists* (never display its value); the
+   tenant LiteLLM has `txo-embedding` and is Ready.
+2. Confirm Hindsight's embedding URL targets
+   `http://txo-ai-gateway.tenant-<tenant>.svc:4000/v1`, with an embedding-only
+   LiteLLM key, no OpenRouter credential, and
+   `HINDSIGHT_API_LLM_PROVIDER=none`.
+3. Prove a real BGE-M3 embedding request, plus Hermes `txo-agent` regression.
+   Ensure Hermes -> CPA remains blocked.
+4. Check the cutover finalizes only after Hindsight readiness: historical
+   shared key revoked; shared-gateway Hindsight egress removed.
+5. Confirm LiteLLM embedding metering and cross-tenant credential isolation.
+
+On rotation, enroll a new OpenRouter key using the same command and confirm
+the gateway rollout and live embeddings **before revoking the old key** at
+OpenRouter. Deleting the Kubernetes Secret does not revoke an upstream
+credential; and once Hindsight is migrated, loss of the provider credential
+intentionally fails closed. Back up/enroll the provider key again during
+disaster recovery: it is not reconstructed from Git.
+
+Do not close #3885 or claim physical acceptance on CI alone.
 
 ## AgentIdentity model access
 
@@ -115,7 +192,7 @@ gateway boundary.
 
 The active TXO Fabric external-inference consumers are deliberately small:
 
-- Hermes uses the logical chat/model alias `txo-default` through a per-`AgentIdentity`
+- Hermes uses the logical chat/model alias `txo-agent` through a per-`AgentIdentity`
   LiteLLM virtual key;
 - tenant Hindsight uses only the logical embedding alias `txo-embedding` through
   a per-`TenantBundle` LiteLLM virtual key;
