@@ -172,8 +172,8 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	if got := envValue(container.Env, "TXO_LLM_AUTH_MODE"); got != "gateway" {
 		t.Fatalf("TXO_LLM_AUTH_MODE = %q, want gateway", got)
 	}
-	if got := envValue(container.Env, "OPENAI_BASE_URL"); got != defaultAIGatewayURL+"/v1" {
-		t.Fatalf("OPENAI_BASE_URL = %q", got)
+	if got := envValue(container.Env, "OPENAI_BASE_URL"); got != aiGatewayURL()+"/v1" {
+		t.Fatalf("OPENAI_BASE_URL = %q, want configured shared gateway %q", got, aiGatewayURL()+"/v1")
 	}
 	if got := envValue(container.Env, "HERMES_MODEL"); got != "txo-default" {
 		t.Fatalf("HERMES_MODEL = %q", got)
