@@ -495,18 +495,26 @@ func TestTenantLiteLLMNetworkPolicyAllowsSameTenantHermesIngress(t *testing.T) {
 
 	managedWorkload := false
 	sameTenantHermes := false
+	fabricOperator := false
 	for _, peer := range policy.Spec.Ingress[0].From {
-		if peer.PodSelector == nil || peer.NamespaceSelector != nil {
+		if peer.PodSelector == nil {
 			continue
 		}
 		labels := peer.PodSelector.MatchLabels
-		if labels[LabelManaged] == "true" {
-			managedWorkload = true
+		if peer.NamespaceSelector == nil {
+			if labels[LabelManaged] == "true" {
+				managedWorkload = true
+			}
+			if labels[LabelPartOf] == "txo-fabric" &&
+				labels[LabelName] == "hermes-agent" &&
+				labels[LabelTenantName] == tenant.Name {
+				sameTenantHermes = true
+			}
+			continue
 		}
-		if labels[LabelPartOf] == "txo-fabric" &&
-			labels[LabelName] == "hermes-agent" &&
-			labels[LabelTenantName] == tenant.Name {
-			sameTenantHermes = true
+		if peer.NamespaceSelector.MatchLabels["kubernetes.io/metadata.name"] == "txo-fabric-system" &&
+			labels[LabelName] == "txo-fabric-operator" {
+			fabricOperator = true
 		}
 	}
 	if !managedWorkload {
@@ -514,6 +522,9 @@ func TestTenantLiteLLMNetworkPolicyAllowsSameTenantHermesIngress(t *testing.T) {
 	}
 	if !sameTenantHermes {
 		t.Fatal("tenant LiteLLM ingress is missing the canonical same-tenant Hermes selector")
+	}
+	if !fabricOperator {
+		t.Fatal("tenant LiteLLM ingress is missing the Fabric operator management selector")
 	}
 
 	if len(policy.Spec.Ingress[0].Ports) != 1 ||
