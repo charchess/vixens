@@ -126,6 +126,8 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, a
 	if err != nil {
 		return err
 	}
+	modelBaseURL := defaultString(toolPolicy.ModelBaseURL, defaultAIGatewayURL+"/v1")
+	modelDefault := defaultString(toolPolicy.ModelDefault, defaultAIGatewayModel)
 	runtimeDataMount := corev1.VolumeMount{Name: "data", MountPath: "/opt/data"}
 	bootstrapDataMount := runtimeDataMount
 	bootstrapHome := "/opt/data"
@@ -252,8 +254,8 @@ fi
 						{Name: "TXO_MEMORY_BANK_ID", Value: resolvedBankID(agent)},
 						{Name: "TXO_LLM_AUTH_MODE", Value: "gateway"},
 						{Name: integrationManifestEnv, Value: integrationManifest},
-						{Name: "OPENAI_BASE_URL", Value: defaultAIGatewayURL + "/v1"},
-						{Name: "HERMES_MODEL", Value: defaultAIGatewayModel},
+						{Name: "OPENAI_BASE_URL", Value: modelBaseURL},
+						{Name: "HERMES_MODEL", Value: modelDefault},
 						{
 							Name: "OPENAI_API_KEY",
 							ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
