@@ -246,8 +246,13 @@ func (r *TenantBundleReconciler) cleanupHindsight(ctx context.Context, bundle *f
 	}
 	if !pending {
 		// Revocation is intentionally best-effort: gateway unavailability must not
-		// wedge TenantBundle deletion. The deterministic alias contains no secret.
-		_ = revokeModelAccessKey(ctx, hindsightEmbeddingKeyAlias(bundle))
+		// wedge TenantBundle deletion. Revoke both the historical migration source
+		// and the canonical tenant-local backend when they are reachable.
+		alias := hindsightEmbeddingKeyAlias(bundle)
+		_ = revokeModelAccessKeyIfExistsWithBackend(ctx, sharedModelAccessBackend(), alias)
+		if backend, err := tenantModelAccessBackend(ctx, r.Client, bundle, defaultAIEmbeddingModel); err == nil {
+			_ = revokeModelAccessKeyIfExistsWithBackend(ctx, backend, alias)
+		}
 	}
 	return pending, nil
 }
@@ -799,13 +804,37 @@ func (r *TenantBundleReconciler) ensureHindsightNetworkPolicy(ctx context.Contex
 			},
 		}
 		if hindsightUsesPlatformGateway(profile) {
-			egress = append(egress, networkingv1.NetworkPolicyEgressRule{
-				To: []networkingv1.NetworkPolicyPeer{{
-					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "txo-fabric-system"}},
-					PodSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "txo-ai-gateway"}},
-				}},
-				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(4000)}},
-			})
+			backendID := sharedModelAccessBackendID
+			legacyCleanupPending := false
+			var runtimeSecret corev1.Secret
+			if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: names.Secret}, &runtimeSecret); err == nil {
+				backendID = normalizedHindsightEmbeddingBackend(&runtimeSecret)
+				legacyCleanupPending = runtimeSecret.Annotations[AnnotationHindsightLegacyCleanupPending] == sharedModelAccessBackendID
+			} else if !apierrors.IsNotFound(err) {
+				return err
+			}
+
+			if backendID == sharedModelAccessBackendID || legacyCleanupPending {
+				egress = append(egress, networkingv1.NetworkPolicyEgressRule{
+					To: []networkingv1.NetworkPolicyPeer{{
+						NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "txo-fabric-system"}},
+						PodSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "txo-ai-gateway"}},
+					}},
+					Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(4000)}},
+				})
+			}
+			if strings.HasPrefix(backendID, "tenant:"+bundle.Name+":") {
+				egress = append(egress, networkingv1.NetworkPolicyEgressRule{
+					To: []networkingv1.NetworkPolicyPeer{{
+						PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+							LabelManaged:    "true",
+							LabelTenantName: bundle.Name,
+							"app.kubernetes.io/component": "tenant-ai-gateway",
+						}},
+					}},
+					Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(4000)}},
+				})
+			}
 		}
 		ingressPeers := []networkingv1.NetworkPolicyPeer{{
 			PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hermes-agent"}},
