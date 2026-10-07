@@ -30,9 +30,10 @@ const (
 )
 
 type aiGatewayBackendState struct {
-	CPAEnabled       bool
-	CPAPort          int32
-	OpenRouterEnabled bool
+	CPAEnabled                 bool
+	CPAPort                    int32
+	OpenRouterEnabled          bool
+	OpenRouterSecretRevision   string
 }
 
 func tenantAIProviderSecretName(tenantName string) string {
@@ -85,6 +86,16 @@ func (r *TenantBundleReconciler) resolveAIGatewayBackends(ctx context.Context, b
 		}
 	} else if len(providerSecret.Data[tenantAIOpenRouterSecretKey]) > 0 {
 		backends.OpenRouterEnabled = true
+		backends.OpenRouterSecretRevision = strings.TrimSpace(providerSecret.ResourceVersion)
+		if backends.OpenRouterSecretRevision == "" {
+			backends.OpenRouterSecretRevision = strings.TrimSpace(string(providerSecret.UID))
+		}
+		if backends.OpenRouterSecretRevision == "" {
+			// Real API objects always have a resourceVersion. This deterministic
+			// fallback keeps fake-client/unit contracts explicit without hashing
+			// provider secret material into metadata.
+			backends.OpenRouterSecretRevision = "present"
+		}
 	}
 
 	return backends, "", nil
@@ -284,6 +295,11 @@ func (r *TenantBundleReconciler) ensureTenantAIGatewayDeployment(
 			deployment.Spec.Template.ObjectMeta.Annotations = map[string]string{}
 		}
 		deployment.Spec.Template.ObjectMeta.Annotations["fabric.truxonline.io/config-hash"] = configHash
+		if backends.OpenRouterEnabled {
+			deployment.Spec.Template.ObjectMeta.Annotations["fabric.truxonline.io/openrouter-secret-revision"] = backends.OpenRouterSecretRevision
+		} else {
+			delete(deployment.Spec.Template.ObjectMeta.Annotations, "fabric.truxonline.io/openrouter-secret-revision")
+		}
 		if cpuRequest, ok := profile.Spec.Resources.Requests[corev1.ResourceCPU]; ok && !cpuRequest.IsZero() {
 			// LiteLLM cold start is CPU-bound. The V-scout label enables VPA with
 			// RequestsAndLimits control, so without an explicit floor VPA may shrink
