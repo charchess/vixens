@@ -36,8 +36,9 @@ func TestResolveModelAccessBackendUsesTenantLiteLLM(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if backend.ID != "tenant:hairem-sandbox:litellm-tenant:4000" {
-		t.Fatalf("backend ID=%q", backend.ID)
+	wantBackendID := "tenant:" + tenant.Name + ":" + profile.Name + ":4000"
+	if backend.ID != wantBackendID {
+		t.Fatalf("backend ID=%q want %q", backend.ID, wantBackendID)
 	}
 	if backend.URL != "http://txo-ai-gateway.tenant-hairem-sandbox.svc:4000" {
 		t.Fatalf("backend URL=%q", backend.URL)
