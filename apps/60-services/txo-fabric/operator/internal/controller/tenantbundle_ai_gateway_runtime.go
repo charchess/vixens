@@ -177,6 +177,14 @@ func (r *TenantBundleReconciler) ensureTenantAIGatewayNetworkPolicy(
 						LabelTenantName: bundle.Name,
 					}},
 				},
+				{
+					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"kubernetes.io/metadata.name": "txo-fabric-system",
+					}},
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						LabelName: "txo-fabric-operator",
+					}},
+				},
 			},
 			Ports: []networkingv1.NetworkPolicyPort{{
 				Protocol: protocolPtr(corev1.ProtocolTCP),
