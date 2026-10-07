@@ -4,4 +4,3 @@ kind: Kustomization
 resources:
   - tenantbundle.yaml
   - agents.yaml
-  - openrouter-external-secret.yaml
