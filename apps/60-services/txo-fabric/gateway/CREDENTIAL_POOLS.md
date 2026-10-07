@@ -180,8 +180,13 @@ Credential appearance/rotation is watched by the TenantBundle controller through
 the deterministic `txo-ai-provider-<tenant>` Secret name. A missing provider
 credential does not break `txo-agent`/CPA. For an existing tenant that has not
 yet migrated Hindsight, the historical shared embedding route remains a bounded
-migration source. Once Hindsight has adopted the tenant route, loss of the
-provider credential fails closed instead of falling back to shared inference.
+migration source **only when a pre-existing Hindsight runtime carries an embedding key or an explicit shared-backend migration marker**. An API-only Secret is not sufficient evidence of legacy use.
+A newly provisioned tenant without its own OpenRouter credential must wait,
+not bootstrap Hindsight against the shared gateway. Likewise, if OpenRouter
+is enrolled but the tenant LiteLLM embedding route is not ready yet, a new
+tenant waits for its destination instead of creating a shared key. Once
+Hindsight has adopted the tenant route, loss of the provider credential fails
+closed instead of falling back to shared inference.
 
 ## Retry and fallback layering
 
