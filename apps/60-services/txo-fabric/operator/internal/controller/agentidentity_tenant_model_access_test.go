@@ -51,7 +51,7 @@ func TestResolveModelAccessBackendUsesTenantLiteLLM(t *testing.T) {
 	}
 }
 
-func TestModelAccessBackendCutoverRotatesSharedKeyIntoTenantGateway(t *testing.T) {
+func TestModelAccessBackendCutoverRevokesSourceOnlyAfterRuntimeAdoption(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
 	tenant := testTenant()
@@ -139,30 +139,163 @@ func TestModelAccessBackendCutoverRotatesSharedKeyIntoTenantGateway(t *testing.T
 	if uid != "model-access-uid" || revision == "" {
 		t.Fatalf("cutover result uid=%q revision=%q", uid, revision)
 	}
-	if sharedDeletes != 1 || tenantDeletes != 1 || tenantGenerates != 1 {
-		t.Fatalf("gateway calls sharedDelete=%d tenantDelete=%d tenantGenerate=%d", sharedDeletes, tenantDeletes, tenantGenerates)
+	if sharedDeletes != 0 || tenantDeletes != 1 || tenantGenerates != 1 {
+		t.Fatalf("staging calls sharedDelete=%d tenantDelete=%d tenantGenerate=%d, want 0/1/1", sharedDeletes, tenantDeletes, tenantGenerates)
+	}
+
+	var staged corev1.Secret
+	if err := c.Get(ctx, types.NamespacedName{Name: oldSecret.Name, Namespace: namespace}, &staged); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(staged.Data[modelAccessSecretKey]); got != "tenant-virtual-key" {
+		t.Fatalf("staged key=%q", got)
+	}
+	if staged.Annotations[AnnotationModelAccessBackend] != backend.ID ||
+		staged.Annotations[AnnotationModelAccessBackendURL] != backend.URL ||
+		staged.Annotations[AnnotationModelAccessRevision] != revision ||
+		staged.Annotations[AnnotationModelAccessPendingRevokeBackend] != sharedModelAccessBackendID ||
+		staged.Annotations[AnnotationModelAccessPendingRevokeURL] != sharedGateway.URL {
+		t.Fatalf("staged annotations=%#v", staged.Annotations)
+	}
+
+	// Retrying reconciliation before the runtime adopts the destination must not
+	// remint a key or revoke the still-working source credential.
+	if _, secondRevision, err := r.ensureModelAccessWithBackend(ctx, agent, tenant, namespace, backend); err != nil {
+		t.Fatal(err)
+	} else if secondRevision != revision {
+		t.Fatalf("idempotent revision=%q want %q", secondRevision, revision)
+	}
+	if sharedDeletes != 0 || tenantDeletes != 1 || tenantGenerates != 1 {
+		t.Fatalf("pre-adoption retry changed credentials: sharedDelete=%d tenantDelete=%d tenantGenerate=%d", sharedDeletes, tenantDeletes, tenantGenerates)
+	}
+
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       runtimeName(agent.Spec.AgentKey),
+			Namespace:  namespace,
+			Generation: 2,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{ObjectMeta: metav1.ObjectMeta{Annotations: map[string]string{
+				AnnotationModelAccessRevision:  revision,
+				AnnotationModelAccessSecretUID: uid,
+			}}},
+		},
+		Status: appsv1.DeploymentStatus{
+			ObservedGeneration: 2,
+			AvailableReplicas:   1,
+		},
+	}
+	if err := c.Create(ctx, deployment); err != nil {
+		t.Fatal(err)
+	}
+
+	pending, err := r.finalizeModelAccessBackendCutover(ctx, agent, tenant, namespace, backend, deployment)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pending {
+		t.Fatal("cutover cleanup unexpectedly remained pending after runtime adoption")
+	}
+	if sharedDeletes != 1 {
+		t.Fatalf("source delete calls=%d want 1 after runtime adoption", sharedDeletes)
+	}
+
+	var finalized corev1.Secret
+	if err := c.Get(ctx, types.NamespacedName{Name: oldSecret.Name, Namespace: namespace}, &finalized); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := pendingModelAccessRevokeBackend(&finalized); got != "" {
+		t.Fatalf("pending source backend remained after finalization: %#v", finalized.Annotations)
+	}
+	if got := string(finalized.Data[modelAccessSecretKey]); got != "tenant-virtual-key" {
+		t.Fatalf("finalized key=%q", got)
+	}
+
+	pending, err = r.finalizeModelAccessBackendCutover(ctx, agent, tenant, namespace, backend, deployment)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pending || sharedDeletes != 1 {
+		t.Fatalf("finalization is not idempotent: pending=%v sharedDelete=%d", pending, sharedDeletes)
+	}
+}
+
+func TestModelAccessBackendCutoverDestinationFailureKeepsSourceCredential(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := testTenant()
+	agent := testAgentIdentity()
+	namespace := tenantNamespace(tenant.Name)
+
+	sharedDeletes := 0
+	sharedGateway := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		sharedDeletes++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"deleted_keys":["old-shared-key"]}`))
+	}))
+	defer sharedGateway.Close()
+	t.Setenv("TXO_AI_GATEWAY_URL", sharedGateway.URL)
+	t.Setenv("TXO_AI_GATEWAY_ADMIN_TOKEN", "shared-admin")
+
+	unreachable := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	unreachableURL := unreachable.URL
+	unreachable.Close()
+
+	oldSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      modelAccessSecretName(agent.Spec.AgentKey),
+			Namespace: namespace,
+			UID:       types.UID("model-access-uid"),
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{modelAccessSecretKey: []byte("old-shared-key")},
+	}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent, oldSecret).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	backend := modelAccessBackend{
+		ID:         "tenant:hairem-sandbox:litellm-tenant:4000",
+		URL:        unreachableURL,
+		AdminToken: "tenant-master",
+		Model:      tenantAIAgentModel,
+	}
+
+	if _, _, err := r.ensureModelAccessWithBackend(ctx, agent, tenant, namespace, backend); err == nil {
+		t.Fatal("expected unreachable destination to fail cutover preparation")
+	}
+	if sharedDeletes != 0 {
+		t.Fatalf("source credential was revoked before destination preparation: deletes=%d", sharedDeletes)
 	}
 
 	var current corev1.Secret
 	if err := c.Get(ctx, types.NamespacedName{Name: oldSecret.Name, Namespace: namespace}, &current); err != nil {
 		t.Fatal(err)
 	}
-	if got := string(current.Data[modelAccessSecretKey]); got != "tenant-virtual-key" {
-		t.Fatalf("cutover key=%q", got)
+	if got := string(current.Data[modelAccessSecretKey]); got != "old-shared-key" {
+		t.Fatalf("source key changed after destination failure: %q", got)
 	}
-	if current.Annotations[AnnotationModelAccessBackend] != backend.ID ||
-		current.Annotations[AnnotationModelAccessBackendURL] != backend.URL ||
-		current.Annotations[AnnotationModelAccessRevision] != revision {
-		t.Fatalf("cutover annotations=%#v", current.Annotations)
+	if normalizedAppliedModelAccessBackend(&current) != sharedModelAccessBackendID {
+		t.Fatalf("source backend changed after destination failure: %#v", current.Annotations)
 	}
+	if pending, _ := pendingModelAccessRevokeBackend(&current); pending != "" {
+		t.Fatalf("pending cutover metadata recorded despite destination failure: %#v", current.Annotations)
+	}
+}
 
-	if _, secondRevision, err := r.ensureModelAccessWithBackend(ctx, agent, tenant, namespace, backend); err != nil {
-		t.Fatal(err)
-	} else if secondRevision != revision {
-		t.Fatalf("idempotent revision=%q want %q", secondRevision, revision)
+func TestRecordedModelAccessBackendRejectsCrossTenantBackend(t *testing.T) {
+	scheme := testScheme(t)
+	tenant := testTenant()
+	r := &AgentIdentityReconciler{
+		Client: fake.NewClientBuilder().WithScheme(scheme).Build(),
+		Scheme: scheme,
 	}
-	if sharedDeletes != 1 || tenantDeletes != 1 || tenantGenerates != 1 {
-		t.Fatalf("idempotent reconcile repeated gateway calls: sharedDelete=%d tenantDelete=%d tenantGenerate=%d", sharedDeletes, tenantDeletes, tenantGenerates)
+	if _, err := r.recordedModelAccessBackend(
+		context.Background(),
+		tenant,
+		"tenant:indiba:litellm-standard:4000",
+		"http://txo-ai-gateway.tenant-indiba.svc:4000",
+	); err == nil {
+		t.Fatal("expected cross-tenant recorded backend to fail closed")
 	}
 }
 
