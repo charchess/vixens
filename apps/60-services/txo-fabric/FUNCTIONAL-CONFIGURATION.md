@@ -166,8 +166,8 @@ this proposal governs only what each created agent may **reference**.
 
 ## Related decisions and work
 
-- [ADR-031](../../docs/adr/031-agentidentity-is-the-fabric-runtime-identity.md)
-- [ADR-033](../../docs/adr/033-separate-agent-state-workspace-and-skills.md)
-- [ADR-037](../../docs/adr/037-skills-vs-platform-governed-executable-capabilities.md)
-- [ADR-038 proposed](../../docs/adr/038-reusable-agent-functional-configuration.md)
+- [ADR-031](../../../docs/adr/031-agentidentity-is-the-fabric-runtime-identity.md)
+- [ADR-033](../../../docs/adr/033-separate-agent-state-workspace-and-skills.md)
+- [ADR-037](../../../docs/adr/037-skills-vs-platform-governed-executable-capabilities.md)
+- [ADR-038 proposed](../../../docs/adr/038-reusable-agent-functional-configuration.md)
 - #3851, #3852, #3856, #3802, #3849, #3824, #3869
