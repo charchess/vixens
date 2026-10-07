@@ -79,7 +79,7 @@ func renderTenantLiteLLMConfig(backends aiGatewayBackendState) string {
 	var builder strings.Builder
 	builder.WriteString("model_list:\n")
 	if backends.CPAEnabled {
-		builder.WriteString(fmt.Sprintf(`  - model_name: txo-coding
+		builder.WriteString(fmt.Sprintf(`  - model_name: txo-agent
     litellm_params:
       model: openai/gpt-5.6-sol
       api_base: http://%s:%d/v1
