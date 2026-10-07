@@ -12,7 +12,7 @@ import (
 const (
 	defaultAIGatewayURL         = "http://txo-ai-gateway.txo-fabric-system.svc:4000"
 	defaultAIGatewayModel       = "txo-default"
-	tenantAICodingModel         = "txo-coding"
+	tenantAIAgentModel         = "txo-agent"
 	sharedModelAccessBackendID  = "shared"
 	defaultAIEmbeddingModel     = "txo-embedding"
 	defaultAIEmbeddingDimension = ""
