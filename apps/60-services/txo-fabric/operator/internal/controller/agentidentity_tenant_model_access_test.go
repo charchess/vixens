@@ -45,8 +45,8 @@ func TestResolveModelAccessBackendUsesTenantLiteLLM(t *testing.T) {
 	if backend.AdminToken != "tenant-master-key" {
 		t.Fatal("tenant LiteLLM master key was not resolved")
 	}
-	if backend.Model != tenantAICodingModel {
-		t.Fatalf("backend model=%q want %q", backend.Model, tenantAICodingModel)
+	if backend.Model != tenantAIAgentModel {
+		t.Fatalf("backend model=%q want %q", backend.Model, tenantAIAgentModel)
 	}
 }
 
@@ -102,7 +102,7 @@ func TestModelAccessBackendCutoverRotatesSharedKeyIntoTenantGateway(t *testing.T
 				t.Fatalf("tenant key alias=%#v", payload["key_alias"])
 			}
 			models, _ := payload["models"].([]any)
-			if len(models) != 1 || models[0] != tenantAICodingModel {
+			if len(models) != 1 || models[0] != tenantAIAgentModel {
 				t.Fatalf("tenant models=%#v", payload["models"])
 			}
 			w.Header().Set("Content-Type", "application/json")
@@ -128,7 +128,7 @@ func TestModelAccessBackendCutoverRotatesSharedKeyIntoTenantGateway(t *testing.T
 		ID:         "tenant:hairem-sandbox:litellm-tenant:4000",
 		URL:        tenantGateway.URL,
 		AdminToken: "tenant-master",
-		Model:      tenantAICodingModel,
+		Model:      tenantAIAgentModel,
 	}
 
 	uid, revision, err := r.ensureModelAccessWithBackend(ctx, agent, tenant, namespace, backend)
@@ -175,14 +175,14 @@ func TestTenantModelBindingFlowsIntoHermesPolicyAndRuntime(t *testing.T) {
 	backend := modelAccessBackend{
 		ID:    "tenant:hairem-sandbox:litellm-tenant:4000",
 		URL:   "http://txo-ai-gateway.tenant-hairem-sandbox.svc:4000",
-		Model: tenantAICodingModel,
+		Model: tenantAIAgentModel,
 	}
 
 	policy, err := resolveToolsetPolicy(agent, profile, backend.runtimeBinding())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if policy.ModelDefault != tenantAICodingModel ||
+	if policy.ModelDefault != tenantAIAgentModel ||
 		policy.ModelBaseURL != "http://txo-ai-gateway.tenant-hairem-sandbox.svc:4000/v1" {
 		t.Fatalf("resolved model binding=%#v", policy)
 	}
@@ -200,7 +200,7 @@ func TestTenantModelBindingFlowsIntoHermesPolicyAndRuntime(t *testing.T) {
 	if got := envValue(container.Env, "OPENAI_BASE_URL"); got != policy.ModelBaseURL {
 		t.Fatalf("OPENAI_BASE_URL=%q want %q", got, policy.ModelBaseURL)
 	}
-	if got := envValue(container.Env, "HERMES_MODEL"); got != tenantAICodingModel {
-		t.Fatalf("HERMES_MODEL=%q want %q", got, tenantAICodingModel)
+	if got := envValue(container.Env, "HERMES_MODEL"); got != tenantAIAgentModel {
+		t.Fatalf("HERMES_MODEL=%q want %q", got, tenantAIAgentModel)
 	}
 }
