@@ -29,9 +29,8 @@ func TestResolveTenantBrokerUsesTenantScopedRuntimeSecret(t *testing.T) {
 	tenant := &fabricv1alpha1.TenantBundle{
 		ObjectMeta: metav1.ObjectMeta{Name: "hairem"},
 		Spec: fabricv1alpha1.TenantBundleSpec{
-			TenantID: "TEN00001",
+			TenantID:    "TEN00001",
 			DisplayName: "hAIrem",
-			AICredentialBroker: &fabricv1alpha1.TenantAICredentialBrokerSpec{ProfileRef: "cliproxyapi-standard"},
 		},
 	}
 	profile := &fabricv1alpha1.AICredentialBrokerProfile{
@@ -60,15 +59,32 @@ func TestResolveTenantBrokerUsesTenantScopedRuntimeSecret(t *testing.T) {
 	}
 }
 
+func TestResolveTenantBrokerRejectsParkedTenant(t *testing.T) {
+	ctx := context.Background()
+	tenant := &fabricv1alpha1.TenantBundle{
+		ObjectMeta: metav1.ObjectMeta{Name: "fabric-smoke"},
+		Spec: fabricv1alpha1.TenantBundleSpec{
+			TenantID:    "TEN90002",
+			DisplayName: "Fabric Smoke",
+			Lifecycle:   fabricv1alpha1.TenantLifecycleSpec{Mode: "Parked"},
+		},
+	}
+	c := fake.NewClientBuilder().WithScheme(adminTestScheme(t)).WithObjects(tenant).Build()
+
+	if _, err := ResolveTenantBroker(ctx, c, "fabric-smoke"); err == nil {
+		t.Fatal("parked tenant must not expose CPA OAuth administration")
+	}
+}
+
 func TestResolveTenantBrokerNeverFallsBackToAnotherTenantSecret(t *testing.T) {
 	ctx := context.Background()
 	hairem := &fabricv1alpha1.TenantBundle{
 		ObjectMeta: metav1.ObjectMeta{Name: "hairem"},
-		Spec: fabricv1alpha1.TenantBundleSpec{TenantID: "TEN00001", DisplayName: "hAIrem", AICredentialBroker: &fabricv1alpha1.TenantAICredentialBrokerSpec{}},
+		Spec: fabricv1alpha1.TenantBundleSpec{TenantID: "TEN00001", DisplayName: "hAIrem"},
 	}
 	indiba := &fabricv1alpha1.TenantBundle{
 		ObjectMeta: metav1.ObjectMeta{Name: "indiba"},
-		Spec: fabricv1alpha1.TenantBundleSpec{TenantID: "TEN00002", DisplayName: "Indiba", AICredentialBroker: &fabricv1alpha1.TenantAICredentialBrokerSpec{}},
+		Spec: fabricv1alpha1.TenantBundleSpec{TenantID: "TEN00002", DisplayName: "Indiba"},
 	}
 	profile := &fabricv1alpha1.AICredentialBrokerProfile{
 		ObjectMeta: metav1.ObjectMeta{Name: defaultBrokerProfileName},

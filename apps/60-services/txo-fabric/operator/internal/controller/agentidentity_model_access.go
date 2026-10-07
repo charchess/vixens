@@ -15,14 +15,11 @@ import (
 )
 
 func (r *AgentIdentityReconciler) resolveModelAccessBackend(ctx context.Context, tenant *fabricv1alpha1.TenantBundle) (modelAccessBackend, error) {
-	if tenant.Spec.AIGateway == nil {
-		return sharedModelAccessBackend(), nil
+	if !tenantRunsAIPlane(tenant) {
+		return modelAccessBackend{}, fmt.Errorf("tenant %q is parked; agent model access is unavailable", tenant.Name)
 	}
 
-	profileName := strings.TrimSpace(tenant.Spec.AIGateway.ProfileRef)
-	if profileName == "" {
-		profileName = defaultAIGatewayProfileName
-	}
+	profileName := tenantAIGatewayProfileName(tenant)
 	var profile fabricv1alpha1.AIGatewayProfile
 	if err := r.Get(ctx, types.NamespacedName{Name: profileName}, &profile); err != nil {
 		return modelAccessBackend{}, fmt.Errorf("resolve tenant AI gateway profile %q: %w", profileName, err)

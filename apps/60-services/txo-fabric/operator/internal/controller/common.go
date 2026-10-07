@@ -16,6 +16,9 @@ const (
 	StorageRetentionRetain = "Retain"
 	StorageRetentionDelete = "Delete"
 
+	TenantLifecycleActive = "Active"
+	TenantLifecycleParked = "Parked"
+
 	LabelPartOf            = "app.kubernetes.io/part-of"
 	LabelName              = "app.kubernetes.io/name"
 	LabelInstance          = "app.kubernetes.io/instance"
@@ -29,6 +32,35 @@ const (
 
 func tenantNamespace(name string) string {
 	return "tenant-" + name
+}
+
+func tenantLifecycleMode(bundle *fabricv1alpha1.TenantBundle) string {
+	if bundle != nil && bundle.Spec.Lifecycle.Mode == TenantLifecycleParked {
+		return TenantLifecycleParked
+	}
+	return TenantLifecycleActive
+}
+
+func tenantRunsAIPlane(bundle *fabricv1alpha1.TenantBundle) bool {
+	return tenantLifecycleMode(bundle) == TenantLifecycleActive
+}
+
+func tenantAIGatewayProfileName(bundle *fabricv1alpha1.TenantBundle) string {
+	if bundle != nil && bundle.Spec.AIGateway != nil {
+		if name := strings.TrimSpace(bundle.Spec.AIGateway.ProfileRef); name != "" {
+			return name
+		}
+	}
+	return defaultAIGatewayProfileName
+}
+
+func tenantAICredentialBrokerProfileName(bundle *fabricv1alpha1.TenantBundle) string {
+	if bundle != nil && bundle.Spec.AICredentialBroker != nil {
+		if name := strings.TrimSpace(bundle.Spec.AICredentialBroker.ProfileRef); name != "" {
+			return name
+		}
+	}
+	return defaultAICredentialBrokerProfileName
 }
 
 func runtimeName(agentKey string) string {

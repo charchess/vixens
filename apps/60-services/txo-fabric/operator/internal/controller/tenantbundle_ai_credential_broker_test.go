@@ -43,7 +43,6 @@ func aiCredentialBrokerTestTenant(name, tenantID string) *fabricv1alpha1.TenantB
 		Spec: fabricv1alpha1.TenantBundleSpec{
 			TenantID:    tenantID,
 			DisplayName: name,
-			AICredentialBroker: &fabricv1alpha1.TenantAICredentialBrokerSpec{ProfileRef: defaultAICredentialBrokerProfileName},
 		},
 	}
 }
@@ -235,6 +234,50 @@ func TestReconcileAICredentialBrokerSeparatesTenantCredentialState(t *testing.T)
 	}
 	if hairemPVC.Namespace == indibaPVC.Namespace {
 		t.Fatal("tenant OAuth state PVCs are not namespace-isolated")
+	}
+}
+
+func TestParkAICredentialBrokerComputePreservesOAuthState(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := aiCredentialBrokerTestTenant("hairem", "TEN00001")
+	namespace := tenantNamespace(tenant.Name)
+	labels := aiCredentialBrokerLabels(tenant)
+	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: tenantAICredentialBrokerName, Namespace: namespace, Labels: labels}}
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: tenantAICredentialBrokerSecretName, Namespace: namespace, Labels: labels},
+		Data:       map[string][]byte{"bootstrap-api-key": []byte("preserved")},
+	}
+	pvc := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: tenantAICredentialBrokerAuthPVCName, Namespace: namespace, Labels: labels}}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, deployment, secret, pvc).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	pending, err := r.parkAICredentialBrokerCompute(ctx, tenant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !pending {
+		t.Fatal("parking existing CPA compute must report a pending transition")
+	}
+	var removed appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: tenantAICredentialBrokerName}, &removed); err == nil {
+		t.Fatal("CPA Deployment still exists after parking")
+	}
+	var preservedSecret corev1.Secret
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: tenantAICredentialBrokerSecretName}, &preservedSecret); err != nil {
+		t.Fatalf("parking deleted CPA runtime/auth Secret: %v", err)
+	}
+	var preservedPVC corev1.PersistentVolumeClaim
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: tenantAICredentialBrokerAuthPVCName}, &preservedPVC); err != nil {
+		t.Fatalf("parking deleted CPA OAuth PVC: %v", err)
+	}
+
+	pending, err = r.parkAICredentialBrokerCompute(ctx, tenant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pending {
+		t.Fatal("parking must become idempotent once CPA compute is absent")
 	}
 }
 

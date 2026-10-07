@@ -409,6 +409,7 @@ func TestTenantReconcileReportsIAMDesiredStateReady(t *testing.T) {
 	scheme := testScheme(t)
 	tenant := tenantWithIAM("indiba", "Indiba", "sales", false)
 	tenant.Spec.Memory.Hindsight = nil
+	tenant.Spec.Lifecycle.Mode = TenantLifecycleParked
 
 	c := fake.NewClientBuilder().WithScheme(scheme).
 		WithStatusSubresource(&fabricv1alpha1.TenantBundle{}).
@@ -424,8 +425,8 @@ func TestTenantReconcileReportsIAMDesiredStateReady(t *testing.T) {
 	if err := c.Get(ctx, types.NamespacedName{Name: tenant.Name}, &current); err != nil {
 		t.Fatal(err)
 	}
-	if current.Status.Phase != "Ready" {
-		t.Fatalf("tenant phase=%q, want Ready; conditions=%#v", current.Status.Phase, current.Status.Conditions)
+	if current.Status.Phase != "Parked" {
+		t.Fatalf("tenant phase=%q, want Parked; conditions=%#v", current.Status.Phase, current.Status.Conditions)
 	}
 	foundIAM := false
 	foundReady := false

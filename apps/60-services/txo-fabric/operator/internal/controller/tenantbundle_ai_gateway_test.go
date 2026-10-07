@@ -59,9 +59,19 @@ func aiGatewayTestTenant(name, tenantID string) *fabricv1alpha1.TenantBundle {
 		Spec: fabricv1alpha1.TenantBundleSpec{
 			TenantID:    tenantID,
 			DisplayName: name,
-			AIGateway:   &fabricv1alpha1.TenantAIGatewaySpec{ProfileRef: defaultAIGatewayProfileName},
 		},
 	}
+}
+
+func aiGatewayTestBrokerBackend(tenant *fabricv1alpha1.TenantBundle) (*corev1.Service, *corev1.Secret) {
+	namespace := tenantNamespace(tenant.Name)
+	return &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{Name: tenantAICredentialBrokerName, Namespace: namespace},
+			Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{Port: 8317}}},
+		}, &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{Name: tenantAICredentialBrokerSecretName, Namespace: namespace},
+			Data:       map[string][]byte{"bootstrap-api-key": []byte("test-cpa-bootstrap")},
+		}
 }
 
 func TestReconcileAIGatewayRequiresDedicatedPostgreSQLProfile(t *testing.T) {
@@ -90,7 +100,8 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	gatewayProfile := aiGatewayTestProfile()
 	postgresqlProfile := aiGatewayPostgreSQLTestProfile()
 	cluster := cnpgObject(cnpgClusterGVK, "databases", "postgresql-shared")
-	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, gatewayProfile, postgresqlProfile, cluster).Build()
+	brokerService, brokerSecret := aiGatewayTestBrokerBackend(tenant)
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, gatewayProfile, postgresqlProfile, cluster, brokerService, brokerSecret).Build()
 	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
 
 	result, err := r.reconcileAIGateway(ctx, tenant)
@@ -242,13 +253,17 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	if got := gatewayConfig.Data["config.yaml"]; !strings.Contains(got, "master_key: os.environ/LITELLM_MASTER_KEY") {
 		t.Fatalf("tenant LiteLLM config missing master-key contract: %s", got)
 	}
+	if got := gatewayConfig.Data["config.yaml"]; !strings.Contains(got, "model_name: txo-agent") ||
+		!strings.Contains(got, "api_base: http://txo-ai-credential-broker:8317/v1") {
+		t.Fatalf("active tenant LiteLLM config is not wired to tenant CPA: %s", got)
+	}
 
 	var gatewayPolicy networkingv1.NetworkPolicy
 	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayNetworkPolicy}, &gatewayPolicy); err != nil {
 		t.Fatalf("tenant LiteLLM NetworkPolicy missing: %v", err)
 	}
-	if len(gatewayPolicy.Spec.Egress) != 2 {
-		t.Fatalf("gateway without CPA must only have DNS + PostgreSQL egress, got %d rules", len(gatewayPolicy.Spec.Egress))
+	if len(gatewayPolicy.Spec.Egress) != 3 {
+		t.Fatalf("active tenant LiteLLM must have DNS + PostgreSQL + tenant CPA egress, got %d rules", len(gatewayPolicy.Spec.Egress))
 	}
 
 	gatewayDeployment.Status.ObservedGeneration = gatewayDeployment.Generation
@@ -360,6 +375,50 @@ func TestAIGatewayPostgreSQLIsIsolatedAcrossTenants(t *testing.T) {
 		if err := c.Get(ctx, types.NamespacedName{Namespace: "databases", Name: names.Secret}, &secret); err != nil {
 			t.Fatalf("isolated tenant database Secret %s missing: %v", names.Secret, err)
 		}
+	}
+}
+
+func TestParkAIGatewayComputePreservesDurableState(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	namespace := tenantNamespace(tenant.Name)
+	labels := aiGatewayWorkloadLabels(tenant)
+	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayName, Namespace: namespace, Labels: labels}}
+	runtimeSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayRuntimeSecretName, Namespace: namespace, Labels: aiGatewayRuntimeLabels(tenant)},
+		Data:       map[string][]byte{"LITELLM_MASTER_KEY": []byte("preserved")},
+	}
+	config := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayConfigMapName, Namespace: namespace, Labels: labels}}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, deployment, runtimeSecret, config).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	pending, err := r.parkAIGatewayCompute(ctx, tenant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !pending {
+		t.Fatal("parking existing LiteLLM compute must report a pending transition")
+	}
+	var removed appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: tenantAIGatewayName}, &removed); err == nil {
+		t.Fatal("LiteLLM Deployment still exists after parking")
+	}
+	var preservedSecret corev1.Secret
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: tenantAIGatewayRuntimeSecretName}, &preservedSecret); err != nil {
+		t.Fatalf("parking deleted LiteLLM runtime/database Secret: %v", err)
+	}
+	var preservedConfig corev1.ConfigMap
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: tenantAIGatewayConfigMapName}, &preservedConfig); err != nil {
+		t.Fatalf("parking deleted LiteLLM config: %v", err)
+	}
+
+	pending, err = r.parkAIGatewayCompute(ctx, tenant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pending {
+		t.Fatal("parking must become idempotent once LiteLLM compute is absent")
 	}
 }
 

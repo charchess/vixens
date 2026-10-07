@@ -4,17 +4,15 @@ import (
 	"context"
 	"testing"
 
-	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestEnsureEgressPolicyAddsTenantLocalGatewayForOptInTenant(t *testing.T) {
+func TestEnsureEgressPolicyUsesOnlyTenantLocalGateway(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
 	tenant := testTenant()
-	tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{ProfileRef: defaultAIGatewayProfileName}
 	agent := testAgentIdentity()
 	namespace := tenantNamespace(tenant.Name)
 
@@ -28,8 +26,8 @@ func TestEnsureEgressPolicyAddsTenantLocalGatewayForOptInTenant(t *testing.T) {
 	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey) + "-egress", Namespace: namespace}, &policy); err != nil {
 		t.Fatal(err)
 	}
-	if len(policy.Spec.Egress) != 4 {
-		t.Fatalf("expected DNS + shared gateway + tenant gateway + Hindsight egress rules, got %d", len(policy.Spec.Egress))
+	if len(policy.Spec.Egress) != 3 {
+		t.Fatalf("expected DNS + tenant gateway + Hindsight egress rules, got %d", len(policy.Spec.Egress))
 	}
 
 	sharedGateway := false
@@ -61,10 +59,10 @@ func TestEnsureEgressPolicyAddsTenantLocalGatewayForOptInTenant(t *testing.T) {
 			}
 		}
 	}
-	if !sharedGateway {
-		t.Fatal("shared AI gateway egress must remain available during staged migration")
+	if sharedGateway {
+		t.Fatal("shared AI gateway egress must not remain in the canonical tenant runtime policy")
 	}
 	if !tenantGateway {
-		t.Fatal("tenant-local AI gateway egress is missing for an aiGateway-enabled tenant")
+		t.Fatal("tenant-local AI gateway egress is missing for an active tenant")
 	}
 }

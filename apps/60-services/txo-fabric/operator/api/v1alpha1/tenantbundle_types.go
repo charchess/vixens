@@ -83,6 +83,12 @@ type TenantBundleSpec struct {
 	// +kubebuilder:validation:MaxLength=253
 	DisplayName string `json:"displayName"`
 
+	// Lifecycle controls whether the tenant runs steady-state Fabric compute.
+	// It does not select an AI-plane implementation: every Active tenant receives
+	// the same tenant-local LiteLLM + CPA topology.
+	// +optional
+	Lifecycle TenantLifecycleSpec `json:"lifecycle,omitempty"`
+
 	// +optional
 	Isolation TenantIsolationSpec `json:"isolation,omitempty"`
 
@@ -98,13 +104,16 @@ type TenantBundleSpec struct {
 	// +optional
 	Workspace *TenantWorkspaceSpec `json:"workspace,omitempty"`
 
-	// AIGateway requests the tenant-facing LiteLLM inference gateway. The profile
-	// owns runtime details; provider/OAuth credentials never appear in this CR.
+	// AIGateway is a deprecated v1alpha1 compatibility/profile-override field.
+	// Presence no longer enables the gateway: every Active tenant receives the
+	// tenant LiteLLM facade automatically. Nil selects the platform default profile.
+	// Provider/OAuth credentials never appear in this CR.
 	// +optional
 	AIGateway *TenantAIGatewaySpec `json:"aiGateway,omitempty"`
 
-	// AICredentialBroker requests the tenant-local OAuth/subscription credential
-	// broker used as an internal backend by the AI gateway.
+	// AICredentialBroker is a deprecated v1alpha1 compatibility/profile-override
+	// field. Presence no longer enables CPA: every Active tenant receives the
+	// tenant-local credential broker automatically. Nil selects the platform default.
 	// +optional
 	AICredentialBroker *TenantAICredentialBrokerSpec `json:"aiCredentialBroker,omitempty"`
 
@@ -127,7 +136,7 @@ type TenantBundleStatus struct {
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
-	// +kubebuilder:validation:Enum=Pending;Provisioning;Ready;Degraded;Failed;Deleting
+	// +kubebuilder:validation:Enum=Pending;Provisioning;Ready;Parked;Degraded;Failed;Deleting
 	// +optional
 	Phase string `json:"phase,omitempty"`
 
