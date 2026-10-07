@@ -23,6 +23,7 @@ const (
 	AnnotationModelAccessRotation         = "fabric.truxonline.io/model-access-rotation"
 	AnnotationModelAccessRevision         = "fabric.truxonline.io/model-access-revision"
 	AnnotationModelAccessBackend          = "fabric.truxonline.io/model-access-backend"
+	AnnotationModelAccessBackendURL       = "fabric.truxonline.io/model-access-backend-url"
 	AnnotationModelAccessRotationApplied  = "fabric.truxonline.io/model-access-rotation-applied"
 	AnnotationModelAccessSecretUID        = "fabric.truxonline.io/model-access-secret-uid"
 	AnnotationHindsightEmbeddingRotation  = "fabric.truxonline.io/hindsight-embedding-rotation"
