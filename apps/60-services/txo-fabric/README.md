@@ -118,10 +118,17 @@ itself.
 
 The initial `hindsight-standard` profile uses the upstream API image and requires
 API-key authentication. Hindsight generative/reflection LLM processing remains
-disabled with `HINDSIGHT_API_LLM_PROVIDER=none`. Embeddings are routed through
-the shared TXO AI Gateway using the logical `txo-embedding` model and a
-tenant-scoped LiteLLM virtual key; upstream embedding-provider credentials never
-enter the tenant Hindsight Pod.
+disabled with `HINDSIGHT_API_LLM_PROVIDER=none`. The canonical embedding path is
+the tenant-local LiteLLM facade using the logical `txo-embedding` model and a
+Hindsight-scoped virtual key. The OpenRouter provider credential exists only on
+the platform-owned tenant gateway runtime; it never enters the Hindsight Pod.
+
+Existing tenants may temporarily remain on the historical shared gateway while
+their tenant OpenRouter credential and `txo-embedding` route are prepared. The
+operator performs a failure-safe shared -> tenant cutover: it prepares the
+destination key first, rolls Hindsight onto the tenant gateway, and revokes the
+shared key only after the new runtime is Available. A tenant that has completed
+the cutover never silently falls back to the shared gateway.
 
 The operator consumes the tenant PostgreSQL binding, creates tenant-local runtime
 Secrets, and reconciles one Hindsight API Deployment and Service per tenant.
