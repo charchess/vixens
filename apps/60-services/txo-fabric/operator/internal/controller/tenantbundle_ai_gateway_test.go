@@ -292,6 +292,28 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	}
 }
 
+func TestTenantLiteLLMVPAMinCPUTracksProfileRequest(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	profile := aiGatewayTestProfile()
+	profile.Spec.Resources.Requests[corev1.ResourceCPU] = resource.MustParse("350m")
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	if _, err := r.ensureTenantAIGatewayDeployment(ctx, tenant, profile, aiGatewayBackendState{}, "test-config-hash"); err != nil {
+		t.Fatal(err)
+	}
+
+	var deployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayName}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	if got := deployment.Spec.Template.Annotations["vixens.io/vpa.min-cpu"]; got != "350m" {
+		t.Fatalf("tenant LiteLLM VPA CPU floor=%q want profile request 350m", got)
+	}
+}
+
 func TestAIGatewayMigrationNameChangesWithSizingContract(t *testing.T) {
 	profile := aiGatewayTestProfile()
 	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: types.UID("db-secret-uid")}}
