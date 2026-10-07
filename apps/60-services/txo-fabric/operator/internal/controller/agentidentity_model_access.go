@@ -81,6 +81,23 @@ func (r *AgentIdentityReconciler) recordedModelAccessBackend(
 	}, nil
 }
 
+func (r *AgentIdentityReconciler) previousModelAccessBackend(
+	ctx context.Context,
+	tenant *fabricv1alpha1.TenantBundle,
+	secret *corev1.Secret,
+) (modelAccessBackend, error) {
+	backendID := normalizedAppliedModelAccessBackend(secret)
+	backendURL := strings.TrimSpace(secret.Annotations[AnnotationModelAccessBackendURL])
+	if backendID == sharedModelAccessBackendID && backendURL == "" {
+		backendURL = sharedModelAccessBackend().URL
+	}
+	backend, err := r.recordedModelAccessBackend(ctx, tenant, backendID, backendURL)
+	if err != nil {
+		return modelAccessBackend{}, fmt.Errorf("model access Secret %s/%s: %w", secret.Namespace, secret.Name, err)
+	}
+	return backend, nil
+}
+
 func normalizedAppliedModelAccessBackend(secret *corev1.Secret) string {
 	backendID := strings.TrimSpace(secret.Annotations[AnnotationModelAccessBackend])
 	if backendID == "" {
