@@ -86,6 +86,22 @@ rules:
 - apiGroups:
   - fabric.truxonline.io
   resources:
+  - agentfunctionalprofiles
+  - agentruntimeprofiles
+  - aicredentialbrokerprofiles
+  - aigatewayprofiles
+  - hindsightprofiles
+  - integrationbindings
+  - integrationconnections
+  - postgresqlprofiles
+  - sharedworkspaceprofiles
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - fabric.truxonline.io
+  resources:
   - agentidentities
   - tenantbundles
   verbs:
@@ -110,22 +126,6 @@ rules:
   - get
   - patch
   - update
-- apiGroups:
-  - fabric.truxonline.io
-  resources:
-  - agentruntimeprofiles
-  - agentfunctionalprofiles
-  - aicredentialbrokerprofiles
-  - aigatewayprofiles
-  - hindsightprofiles
-  - integrationbindings
-  - integrationconnections
-  - postgresqlprofiles
-  - sharedworkspaceprofiles
-  verbs:
-  - get
-  - list
-  - watch
 - apiGroups:
   - networking.k8s.io
   resources:
