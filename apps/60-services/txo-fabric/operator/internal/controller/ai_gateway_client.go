@@ -47,7 +47,11 @@ func generateModelAccessKey(ctx context.Context, backend modelAccessBackend, age
 }
 
 func generateHindsightEmbeddingAccessKey(ctx context.Context, tenant *fabricv1alpha1.TenantBundle) (string, error) {
-	return generateScopedModelAccessKey(ctx, hindsightEmbeddingKeyAlias(tenant), []string{defaultAIEmbeddingModel}, nil, map[string]string{
+	return generateHindsightEmbeddingAccessKeyWithBackend(ctx, sharedModelAccessBackend(), tenant)
+}
+
+func generateHindsightEmbeddingAccessKeyWithBackend(ctx context.Context, backend modelAccessBackend, tenant *fabricv1alpha1.TenantBundle) (string, error) {
+	return generateScopedModelAccessKeyWithBackend(ctx, backend, hindsightEmbeddingKeyAlias(tenant), []string{defaultAIEmbeddingModel}, nil, map[string]string{
 		"tenant": tenant.Name, "tenant_id": tenant.Spec.TenantID,
 		"component": "hindsight", "capability": "embeddings",
 	})
