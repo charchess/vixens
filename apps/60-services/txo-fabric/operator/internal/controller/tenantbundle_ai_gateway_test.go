@@ -424,10 +424,10 @@ func TestReconcileAIGatewayRejectsCredentialBrokerImplementation(t *testing.T) {
 }
 
 
-func TestRenderTenantLiteLLMConfigRoutesCodingThroughCPAWithoutProviderTokens(t *testing.T) {
+func TestRenderTenantLiteLLMConfigRoutesAgentThroughCPAWithoutProviderTokens(t *testing.T) {
 	config := renderTenantLiteLLMConfig(aiGatewayBackendState{CPAEnabled: true, CPAPort: 8317})
 	for _, want := range []string{
-		"model_name: txo-coding",
+		"model_name: txo-agent",
 		"model: openai/gpt-5.6-sol",
 		"api_base: http://txo-ai-credential-broker:8317/v1",
 		"api_key: os.environ/CPA_API_KEY",
