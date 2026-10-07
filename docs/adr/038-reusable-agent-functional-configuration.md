@@ -15,18 +15,18 @@
 
 ## Context
 
-Fabric already separates immutable logical agents (\`AgentIdentity\`) from
-platform-owned engines and runtime security ceilings (\`AgentRuntimeProfile\`).
+Fabric already separates immutable logical agents (`AgentIdentity`) from
+platform-owned engines and runtime security ceilings (`AgentRuntimeProfile`).
 Existing distinct, durable tenant resources must remain stable if an agent's
 business role changes. The four Indiba identities are declared separately today:
-Sam, Alex, Clover and Jerry all use \`hermes-default\`.
+Sam, Alex, Clover and Jerry all use `hermes-default`.
 
 Reusable commercial/HR/support behavior is currently scattered across agent-local
 private state, authorized shared skill mounts, workspace access, integration grants,
-and capability requests. Making one \`hermes-sales\` runtime profile would mix
+and capability requests. Making one `hermes-sales` runtime profile would mix
 business intent with executable privileges and immutable images. Repeating the
 same prompts, required skills and expected integration classes in every
-\`AgentIdentity\` would prevent safe shared updates. Waiting for population
+`AgentIdentity` would prevent safe shared updates. Waiting for population
 templates (#3849) alone would also leave pre-existing independently declared
 agents without a reusable functional binding.
 
@@ -38,11 +38,11 @@ not introduce a second Persona identity or bypass tenant authorization.
 
 ### Three independent axes
 
-1. **Identity and ownership** — \`AgentIdentity\` is the only logical agent,
+1. **Identity and ownership** — `AgentIdentity` is the only logical agent,
    with immutable tenant/agent technical identifiers, independent bank and PVC,
    and mutable display name. Owner scope and workspace grants are separate;
    #3852/#3856/#3802 define the durable ownership/IAM model.
-2. **Execution** — \`AgentRuntimeProfile\` chooses the engine/image, storage
+2. **Execution** — `AgentRuntimeProfile` chooses the engine/image, storage
    policy, sizing and maximum executable capability admission. A functional
    profile cannot alter the image, pod policy, model-access credentials or
    executable ceiling.
@@ -54,8 +54,8 @@ not introduce a second Persona identity or bypass tenant authorization.
 ### Minimal first-class reference
 
 For the v0.1 implementation slice, favor a cluster-scoped
-\`AgentFunctionalProfile\` carrying an immutable \`spec.tenantRef.name\`, and
-an optional \`AgentIdentity.spec.functional.profileRef\`.
+`AgentFunctionalProfile` carrying an immutable `spec.tenantRef.name`, and
+an optional `AgentIdentity.spec.functional.profileRef`.
 
 * The profile is reusable by any number of agents **within its tenant**.
 * For v0.1 an agent selects **at most one** profile. An absent binding preserves
@@ -86,25 +86,25 @@ Keep the v0.1 profile minimal:
 * Names of **required** logical model capabilities; model selection and actual
   provider credentials remain with the gateway and #3869/#3868.
 * Names/types of **required** integration capabilities only; authorization
-  continues to require per-agent \`IntegrationBinding\`, never copied credentials.
+  continues to require per-agent `IntegrationBinding`, never copied credentials.
 * Optional **requested** toolsets are expectations, **not activation grants**:
-  \`AgentRuntimeProfile\` remains the admission ceiling, and a
-  \`AllowedOff\` toolset still requires explicit
-  \`AgentIdentity.spec.runtime.capabilities.enableToolsets\`. An \`Off\`,
+  `AgentRuntimeProfile` remains the admission ceiling, and a
+  `AllowedOff` toolset still requires explicit
+  `AgentIdentity.spec.runtime.capabilities.enableToolsets`. An `Off`,
   undeclared or inactive requirement makes the configuration incompatible.
 
 Precedence is *not* "merge and last writer wins". Security-admission and access
 constraints are intersected first; profile prerequisites must be met or the
 binding becomes not-ready without elevating rights. The tenant-approved role
 baseline remains read-only and reproducible. The agent's existing private
-\`/opt/data\` behavior and writable local skills may add personalization and
+`/opt/data` behavior and writable local skills may add personalization and
 narrow choices but cannot overwrite protected platform policy or acquire a
 permission through instructional content. For contradictory business
 instructions, choose an explicit source and precedence in the runtime adapter
 rather than concatenating arbitrary files or destructive rewrites.
 
 A missing/incompatible profile exposes a specific non-secret
-\`FunctionalConfigurationReady=False\` condition and **does not** roll out a
+`FunctionalConfigurationReady=False` condition and **does not** roll out a
 newly expanded runtime policy. An already-running agent must not be silently
 converted to an unrestricted default on profile disappearance; the
 implementation must define deterministic fail-closed withdrawal/recovery,
@@ -117,7 +117,7 @@ including a pod-replacement scenario.
   reconcile the affected agents with a controlled rollout when required.
 * A no-op reconcile must not trigger a rollout or key regeneration.
 * Updates apply to all agents referencing that tenant profile but do not rewrite
-  or delete private \`/opt/data\`, Hindsight banks, retained PVCs, cron state,
+  or delete private `/opt/data`, Hindsight banks, retained PVCs, cron state,
   local skills or per-agent display names.
 * Removing a binding returns the agent to its explicitly authorized baseline,
   without deleting local customization. Revoking a required skill/integration
@@ -127,8 +127,8 @@ including a pod-replacement scenario.
 
 ### Compatibility and migration
 
-Existing hAIrem and Indiba \`AgentIdentity\` resources without a functional
-binding remain valid. No automatic re-keying of \`agentKey\`, metadata.name,
+Existing hAIrem and Indiba `AgentIdentity` resources without a functional
+binding remain valid. No automatic re-keying of `agentKey`, metadata.name,
 bankId or runtime PVC is permitted. The already-provisioned technical key
 scheme from #3853 remains compatible; its mapping to long-term IAM/owner
 identities is explicitly open under #3852/#3856/#3802.
@@ -151,7 +151,7 @@ effects of this ADR.
 
 A first implementation should prove with Sam and Alex in Indiba:
 
-1. same \`hermes-default\` runtime and shared approved sales baseline, but
+1. same `hermes-default` runtime and shared approved sales baseline, but
    distinct technical identities, user-facing names, Hindsight banks and
    retained private state;
 2. same functional revision when the shared baseline is unchanged, updated

@@ -7,15 +7,15 @@
 
 ## Why the split matters
 
-Today an \`AgentIdentity\` selects \`hermes-default\` and retains its private
-state; \`AgentRuntimeProfile\` fixes the runtime and the maximum platform
+Today an `AgentIdentity` selects `hermes-default` and retains its private
+state; `AgentRuntimeProfile` fixes the runtime and the maximum platform
 toolset policy. Skills, workspace scopes and integration access are already
 separate and authorized. None of those resources is a reusable tenant-owned
 *business-function baseline* that two already-deployed agents can reference.
 
 Target composition:
 
-\`\`\`text
+```text
 TenantBundle/indiba
   ├── AgentFunctionalProfile/indiba-sales        # proposed, tenant-owned
   │      └── non-secret role instructions + requirements
@@ -29,7 +29,7 @@ TenantBundle/indiba
          ├── functional.profileRef: indiba-sales   # proposed
          ├── /opt/data + private/local skills (Alex)
          └── Hindsight bank ten00002-usr000001-agt00002
-\`\`\`
+```
 
 Sales, HR and prospecting are **roles**, not runtime engines. The same role
 need not imply the same agent identity, bank, user, credentials or access.
@@ -40,7 +40,7 @@ The names and fields below are **candidates**, not a new API contract yet.
 The source of approved baseline instructions and its read-only rendering
 surface must be validated against the pinned Hermes release before implementing.
 
-\`\`\`yaml
+```yaml
 # Illustrative shape only; API/CRD does NOT exist.
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentFunctionalProfile
@@ -90,12 +90,12 @@ spec:
     profileRef: hermes-default
   functional:
     profileRef: indiba-sales
-\`\`\`
+```
 
 The active Indiba manifests already bind their existing agents to user scope
-\`edfoley\`, group \`sales\`, and to separate Hindsight banks. The technical
+`edfoley`, group `sales`, and to separate Hindsight banks. The technical
 workspace user-to-owner-ID/IAM mapping remains open under #3802/#3852.
-**Do not** replace \`edfoley\` with \`usr000001\` in live workspace access
+**Do not** replace `edfoley` with `usr000001` in live workspace access
 or rename banks/PVCs to make this example true.
 
 ## Responsibilities and fail-closed resolution
@@ -116,25 +116,25 @@ an unavailable/unauthorized logical model, or a forbidden/inactive toolset
 produce a visible non-secret incompatible/not-ready state; **never** silently
 fall back to broader access.
 
-A functional role's required \`delegation\` cannot activate a runtime
-\`AllowedOff\` toolset without the explicit existing AgentIdentity activation.
-A requirement for \`computer_use\` with a runtime \`Off\` must fail. Platform
+A functional role's required `delegation` cannot activate a runtime
+`AllowedOff` toolset without the explicit existing AgentIdentity activation.
+A requirement for `computer_use` with a runtime `Off` must fail. Platform
 toolset policy and network/credential controls continue to apply regardless
 of role instructions or a user-writable private config file.
 
 The functional baseline is managed and read-only from the consumer's
-perspective. Local \`/opt/data\` skills and personal settings remain writable;
+perspective. Local `/opt/data` skills and personal settings remain writable;
 role reconciliation must not overwrite them, clear cron, replace the private
 PVC, or rename the Hindsight bank. A common role update produces a stable
 effective revision/controlled rollout; no-op reconciliation does not.
 
 ## Product walkthrough (acceptance slice)
 
-1. Declare one approved Indiba \`sales\` functional profile without changing
+1. Declare one approved Indiba `sales` functional profile without changing
    Sam/Alex IDs or existing runtime, bank, access grants or PVC.
 2. Bind both Sam and Alex to it. Their role baseline matches; each retains
    independent private settings/skills and Hindsight bank.
-3. Use the authorized shared group \`sales\` skill library. A required but
+3. Use the authorized shared group `sales` skill library. A required but
    inaccessible skill is not automatically mounted.
 4. Change one approved common sales instruction: both agents adopt the same
    revision without rewriting private content or reissuing provider secrets.
