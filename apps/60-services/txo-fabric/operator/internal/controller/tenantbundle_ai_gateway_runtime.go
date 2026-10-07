@@ -254,6 +254,15 @@ func (r *TenantBundleReconciler) ensureTenantAIGatewayDeployment(
 			deployment.Spec.Template.ObjectMeta.Annotations = map[string]string{}
 		}
 		deployment.Spec.Template.ObjectMeta.Annotations["fabric.truxonline.io/config-hash"] = configHash
+		if cpuRequest, ok := profile.Spec.Resources.Requests[corev1.ResourceCPU]; ok && !cpuRequest.IsZero() {
+			// LiteLLM cold start is CPU-bound. The V-scout label enables VPA with
+			// RequestsAndLimits control, so without an explicit floor VPA may shrink
+			// the serving container below the profile's proven startup baseline and
+			// make the startup probe kill it before Uvicorn begins listening.
+			deployment.Spec.Template.ObjectMeta.Annotations["vixens.io/vpa.min-cpu"] = cpuRequest.String()
+		} else {
+			delete(deployment.Spec.Template.ObjectMeta.Annotations, "vixens.io/vpa.min-cpu")
+		}
 		deployment.Spec.Template.Spec.AutomountServiceAccountToken = boolPtr(false)
 		deployment.Spec.Template.Spec.PriorityClassName = profile.Spec.PriorityClassName
 		deployment.Spec.Template.Spec.SecurityContext = &corev1.PodSecurityContext{
