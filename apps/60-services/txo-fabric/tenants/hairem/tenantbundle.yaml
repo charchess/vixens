@@ -10,12 +10,6 @@ spec:
   displayName: hAIrem
   isolation:
     profile: Shared
-  # Compatibility/profile overrides retained through the operator rollout.
-  # Presence no longer enables the AI plane once #3918 is active.
-  aiCredentialBroker:
-    profileRef: cliproxyapi-standard
-  aiGateway:
-    profileRef: litellm-standard
   persistence:
     postgresql:
       mode: Shared
