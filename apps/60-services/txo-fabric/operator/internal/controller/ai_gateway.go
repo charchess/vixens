@@ -32,9 +32,12 @@ const (
 	AnnotationModelAccessPendingRevokeURL     = "fabric.truxonline.io/model-access-pending-revoke-url"
 	AnnotationModelAccessRotationApplied      = "fabric.truxonline.io/model-access-rotation-applied"
 	AnnotationModelAccessSecretUID        = "fabric.truxonline.io/model-access-secret-uid"
-	AnnotationHindsightEmbeddingRotation  = "fabric.truxonline.io/hindsight-embedding-rotation"
-	AnnotationHindsightEmbeddingRevision  = "fabric.truxonline.io/hindsight-embedding-revision"
-	AnnotationHindsightEmbeddingSecretUID = "fabric.truxonline.io/hindsight-embedding-secret-uid"
+	AnnotationHindsightEmbeddingRotation       = "fabric.truxonline.io/hindsight-embedding-rotation"
+	AnnotationHindsightEmbeddingRevision       = "fabric.truxonline.io/hindsight-embedding-revision"
+	AnnotationHindsightEmbeddingSecretUID      = "fabric.truxonline.io/hindsight-embedding-secret-uid"
+	AnnotationHindsightEmbeddingBackend        = "fabric.truxonline.io/hindsight-embedding-backend"
+	AnnotationHindsightEmbeddingBackendURL     = "fabric.truxonline.io/hindsight-embedding-backend-url"
+	AnnotationHindsightLegacyCleanupPending    = "fabric.truxonline.io/hindsight-embedding-legacy-cleanup-pending"
 )
 
 
