@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,28 +47,31 @@ func (r *AgentIdentityReconciler) resolveModelAccessBackend(ctx context.Context,
 	}, nil
 }
 
-func (r *AgentIdentityReconciler) previousModelAccessBackend(
+func (r *AgentIdentityReconciler) recordedModelAccessBackend(
 	ctx context.Context,
 	tenant *fabricv1alpha1.TenantBundle,
-	secret *corev1.Secret,
+	backendID, backendURL string,
 ) (modelAccessBackend, error) {
-	backendID := strings.TrimSpace(secret.Annotations[AnnotationModelAccessBackend])
+	backendID = strings.TrimSpace(backendID)
 	if backendID == "" || backendID == sharedModelAccessBackendID {
 		return sharedModelAccessBackend(), nil
 	}
+	if !strings.HasPrefix(backendID, "tenant:"+tenant.Name+":") {
+		return modelAccessBackend{}, fmt.Errorf("recorded model access backend %q does not belong to tenant %q", backendID, tenant.Name)
+	}
 
-	backendURL := strings.TrimSpace(secret.Annotations[AnnotationModelAccessBackendURL])
+	backendURL = strings.TrimSpace(backendURL)
 	if backendURL == "" {
-		return modelAccessBackend{}, fmt.Errorf("model access Secret %s/%s records backend %q without an endpoint", secret.Namespace, secret.Name, backendID)
+		return modelAccessBackend{}, fmt.Errorf("recorded model access backend %q has no endpoint", backendID)
 	}
 	namespace := tenantNamespace(tenant.Name)
 	var runtimeSecret corev1.Secret
 	if err := r.Get(ctx, types.NamespacedName{Name: tenantAIGatewayRuntimeSecretName, Namespace: namespace}, &runtimeSecret); err != nil {
-		return modelAccessBackend{}, fmt.Errorf("read previous tenant AI gateway runtime Secret %s/%s: %w", namespace, tenantAIGatewayRuntimeSecretName, err)
+		return modelAccessBackend{}, fmt.Errorf("read tenant AI gateway runtime Secret %s/%s for recorded backend %q: %w", namespace, tenantAIGatewayRuntimeSecretName, backendID, err)
 	}
 	adminToken := strings.TrimSpace(string(runtimeSecret.Data["LITELLM_MASTER_KEY"]))
 	if adminToken == "" {
-		return modelAccessBackend{}, fmt.Errorf("previous tenant AI gateway runtime Secret %s/%s is missing LITELLM_MASTER_KEY", namespace, tenantAIGatewayRuntimeSecretName)
+		return modelAccessBackend{}, fmt.Errorf("tenant AI gateway runtime Secret %s/%s is missing LITELLM_MASTER_KEY for recorded backend %q", namespace, tenantAIGatewayRuntimeSecretName, backendID)
 	}
 	return modelAccessBackend{
 		ID:         backendID,
@@ -75,6 +79,23 @@ func (r *AgentIdentityReconciler) previousModelAccessBackend(
 		AdminToken: adminToken,
 		Model:      tenantAIAgentModel,
 	}, nil
+}
+
+func (r *AgentIdentityReconciler) previousModelAccessBackend(
+	ctx context.Context,
+	tenant *fabricv1alpha1.TenantBundle,
+	secret *corev1.Secret,
+) (modelAccessBackend, error) {
+	backendID := normalizedAppliedModelAccessBackend(secret)
+	backendURL := strings.TrimSpace(secret.Annotations[AnnotationModelAccessBackendURL])
+	if backendID == sharedModelAccessBackendID && backendURL == "" {
+		backendURL = sharedModelAccessBackend().URL
+	}
+	backend, err := r.recordedModelAccessBackend(ctx, tenant, backendID, backendURL)
+	if err != nil {
+		return modelAccessBackend{}, fmt.Errorf("model access Secret %s/%s: %w", secret.Namespace, secret.Name, err)
+	}
+	return backend, nil
 }
 
 func normalizedAppliedModelAccessBackend(secret *corev1.Secret) string {
@@ -87,6 +108,82 @@ func normalizedAppliedModelAccessBackend(secret *corev1.Secret) string {
 
 func modelAccessRevisionForBackend(backend modelAccessBackend, requestedRotation string) string {
 	return modelAccessBackendRevision(backend.ID, requestedRotation)
+}
+
+func pendingModelAccessRevokeBackend(secret *corev1.Secret) (string, string) {
+	if secret == nil {
+		return "", ""
+	}
+	return strings.TrimSpace(secret.Annotations[AnnotationModelAccessPendingRevokeBackend]),
+		strings.TrimSpace(secret.Annotations[AnnotationModelAccessPendingRevokeURL])
+}
+
+func deploymentAdoptedModelAccess(deployment *appsv1.Deployment, secret *corev1.Secret) bool {
+	if deployment == nil || secret == nil {
+		return false
+	}
+	revision := strings.TrimSpace(secret.Annotations[AnnotationModelAccessRevision])
+	if revision == "" {
+		return false
+	}
+	if deployment.Spec.Template.Annotations[AnnotationModelAccessRevision] != revision {
+		return false
+	}
+	if deployment.Spec.Template.Annotations[AnnotationModelAccessSecretUID] != string(secret.UID) {
+		return false
+	}
+	return deployment.Status.ObservedGeneration == deployment.Generation && deployment.Status.AvailableReplicas > 0
+}
+
+func (r *AgentIdentityReconciler) finalizeModelAccessBackendCutover(
+	ctx context.Context,
+	agent *fabricv1alpha1.AgentIdentity,
+	tenant *fabricv1alpha1.TenantBundle,
+	namespace string,
+	backend modelAccessBackend,
+	deployment *appsv1.Deployment,
+) (bool, error) {
+	name := modelAccessSecretName(agent.Spec.AgentKey)
+	var secret corev1.Secret
+	if err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &secret); err != nil {
+		return false, err
+	}
+
+	pendingBackendID, pendingBackendURL := pendingModelAccessRevokeBackend(&secret)
+	if pendingBackendID == "" {
+		return false, nil
+	}
+	if normalizedAppliedModelAccessBackend(&secret) != backend.ID {
+		return true, fmt.Errorf(
+			"model access Secret %s/%s has pending source backend %q while applied backend is %q and desired backend is %q",
+			namespace,
+			name,
+			pendingBackendID,
+			normalizedAppliedModelAccessBackend(&secret),
+			backend.ID,
+		)
+	}
+	if !deploymentAdoptedModelAccess(deployment, &secret) {
+		return true, nil
+	}
+
+	sourceBackend, err := r.recordedModelAccessBackend(ctx, tenant, pendingBackendID, pendingBackendURL)
+	if err != nil {
+		return true, fmt.Errorf("resolve pending source model access backend: %w", err)
+	}
+	if sourceBackend.ID == backend.ID {
+		return true, fmt.Errorf("pending source model access backend %q equals desired backend", sourceBackend.ID)
+	}
+	if err := revokeModelAccessKeyIfExistsWithBackend(ctx, sourceBackend, modelAccessKeyAlias(agent, tenant)); err != nil {
+		return true, fmt.Errorf("revoke superseded scoped model key alias from backend %q: %w", sourceBackend.ID, err)
+	}
+
+	delete(secret.Annotations, AnnotationModelAccessPendingRevokeBackend)
+	delete(secret.Annotations, AnnotationModelAccessPendingRevokeURL)
+	if err := r.Update(ctx, &secret); err != nil {
+		return true, fmt.Errorf("clear pending model access source backend: %w", err)
+	}
+	return false, nil
 }
 
 func (r *AgentIdentityReconciler) ensureModelAccess(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, namespace string) (string, string, error) {
@@ -132,24 +229,62 @@ func (r *AgentIdentityReconciler) ensureModelAccessWithBackend(
 		}
 
 		if backendChanged || rotationRequested {
-			revokeBackend := backend
 			if backendChanged {
-				revokeBackend, err = r.previousModelAccessBackend(ctx, tenant, &secret)
-				if err != nil {
-					return "", "", fmt.Errorf("resolve previous model access backend: %w", err)
+				if pendingBackendID, _ := pendingModelAccessRevokeBackend(&secret); pendingBackendID != "" {
+					return "", "", fmt.Errorf("model access backend cutover from %q is still pending cleanup; refusing to start another backend transition", pendingBackendID)
 				}
-			}
-			if err := revokeModelAccessKeyIfExistsWithBackend(ctx, revokeBackend, alias); err != nil {
-				return "", "", fmt.Errorf("revoke previous scoped model key alias %q from backend %q: %w", alias, revokeBackend.ID, err)
-			}
-			if backendChanged {
-				// A failed/aborted earlier cutover may have left the deterministic
-				// alias on the destination gateway. Clear it before minting again.
+
+				previousBackendID := appliedBackendID
+				previousBackendURL := strings.TrimSpace(secret.Annotations[AnnotationModelAccessBackendURL])
+				if previousBackendID == sharedModelAccessBackendID && previousBackendURL == "" {
+					previousBackendURL = sharedModelAccessBackend().URL
+				}
+
+				// Prepare the destination while the currently working source
+				// credential remains untouched. A failed destination cleanup or
+				// mint therefore cannot invalidate the running Hermes pod.
 				if err := revokeModelAccessKeyIfExistsWithBackend(ctx, backend, alias); err != nil {
 					return "", "", fmt.Errorf("clear destination scoped model key alias %q on backend %q: %w", alias, backend.ID, err)
 				}
+				replacementKey, err := generateModelAccessKey(ctx, backend, agent, tenant)
+				if err != nil {
+					return "", "", fmt.Errorf("generate destination scoped model key: %w", err)
+				}
+				revision := modelAccessRevisionForBackend(backend, requestedRotation)
+				secret.Data[modelAccessSecretKey] = []byte(replacementKey)
+				secret.Annotations = mergeStringMap(secret.Annotations, map[string]string{
+					AnnotationModelAccessBackend:              backend.ID,
+					AnnotationModelAccessBackendURL:           backend.URL,
+					AnnotationModelAccessPendingRevokeBackend: previousBackendID,
+					AnnotationModelAccessPendingRevokeURL:     previousBackendURL,
+				})
+				if revision != "" {
+					secret.Annotations[AnnotationModelAccessRevision] = revision
+				} else {
+					delete(secret.Annotations, AnnotationModelAccessRevision)
+				}
+				if requestedRotation != "" {
+					secret.Annotations[AnnotationModelAccessRotationApplied] = requestedRotation
+				}
+				secret.Labels = mergeStringMap(secret.Labels, agentLabels(agent, tenant))
+				secret.Type = corev1.SecretTypeOpaque
+				if err := controllerutil.SetControllerReference(agent, &secret, r.Scheme); err != nil {
+					_ = revokeModelAccessKeyValueIfExistsWithBackend(ctx, backend, replacementKey)
+					return "", "", err
+				}
+				if err := r.Update(ctx, &secret); err != nil {
+					_ = revokeModelAccessKeyValueIfExistsWithBackend(ctx, backend, replacementKey)
+					return "", "", err
+				}
+				return string(secret.UID), revision, nil
 			}
 
+			// Same-backend rotation still requires removing the deterministic
+			// alias before replacing it; backend cutovers use the staged path
+			// above so the source remains valid until runtime adoption.
+			if err := revokeModelAccessKeyIfExistsWithBackend(ctx, backend, alias); err != nil {
+				return "", "", fmt.Errorf("revoke previous scoped model key alias %q from backend %q: %w", alias, backend.ID, err)
+			}
 			replacementKey, err := generateModelAccessKey(ctx, backend, agent, tenant)
 			if err != nil {
 				return "", "", fmt.Errorf("generate replacement scoped model key: %w", err)
