@@ -104,6 +104,7 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			r.setStatus(ctx, &agent, "Degraded", "FunctionalConfigurationReady", metav1.ConditionFalse, "FunctionalWithdrawalFailed", err.Error())
 			return ctrl.Result{}, err
 		}
+		agent.Status.Runtime.HumanEndpoint = ""
 		r.setStatus(ctx, &agent, "Degraded", "FunctionalConfigurationReady", metav1.ConditionFalse, "FunctionalProfileInvalid", functionalErr.Error())
 		return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
 	}
