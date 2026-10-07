@@ -8,10 +8,12 @@ import (
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	apiMeta "k8s.io/apimachinery/pkg/api/meta"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -192,5 +194,40 @@ func TestFunctionalProfileHermesGatewayRenderingAndWithdrawal(t *testing.T) {
 	if err:=c.Get(ctx,types.NamespacedName{Name:retained.Name,Namespace:ns},&pvc);err!=nil ||
 		pvc.UID!=retained.UID {
 		t.Fatalf("profile withdrawal must preserve retained private PVC: err=%v UID=%s",err,pvc.UID)
+	}
+}
+
+func TestInvalidFunctionalProfileReconcileDeniesPreviouslyRunningAgent(t *testing.T) {
+	ctx := context.Background()
+	tenant := testTenant()
+	tenant.Name = "indiba"
+	profile := testRuntimeProfile()
+	agent := functionalTestAgent("indiba-sam", "indiba")
+	agent.Finalizers = []string{AgentFinalizer}
+	agent.Spec.Functional.ProfileRef = "missing-approved-sales"
+	agent.Status.Runtime.HumanEndpoint = "https://stale.invalid"
+	ns := &corev1.Namespace{ObjectMeta:metav1.ObjectMeta{Name:"tenant-indiba"}}
+	dep := &appsv1.Deployment{ObjectMeta:metav1.ObjectMeta{
+		Name:runtimeName(agent.Spec.AgentKey),Namespace:ns.Name,
+		Labels:map[string]string{LabelInstance:agent.Spec.AgentKey,LabelTenantName:"indiba"},
+	}}
+	scheme := testScheme(t)
+	c := fake.NewClientBuilder().WithScheme(scheme).
+		WithStatusSubresource(&fabricv1alpha1.AgentIdentity{}).
+		WithObjects(tenant, profile, agent, ns, dep).Build()
+	r := &AgentIdentityReconciler{Client:c,Scheme:scheme}
+	if _,err:=r.Reconcile(ctx, ctrl.Request{NamespacedName:types.NamespacedName{Name:agent.Name}});err!=nil {t.Fatal(err)}
+	var current fabricv1alpha1.AgentIdentity
+	if err:=c.Get(ctx,types.NamespacedName{Name:agent.Name},&current);err!=nil {t.Fatal(err)}
+	condition:=apiMeta.FindStatusCondition(current.Status.Conditions,"FunctionalConfigurationReady")
+	if condition==nil || condition.Status!=metav1.ConditionFalse || current.Status.Phase!="Degraded" {
+		t.Fatalf("missing functional profile must fail closed: phase=%s conditions=%#v", current.Status.Phase, current.Status.Conditions)
+	}
+	if current.Status.Runtime.HumanEndpoint!="" {
+		t.Fatalf("stale human endpoint remains advertised: %s",current.Status.Runtime.HumanEndpoint)
+	}
+	var stopped appsv1.Deployment
+	if err:=c.Get(ctx,types.NamespacedName{Name:dep.Name,Namespace:ns.Name},&stopped);!apierrors.IsNotFound(err) {
+		t.Fatalf("previous Hermes runtime still serving invalid role: %v",err)
 	}
 }
