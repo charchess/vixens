@@ -182,15 +182,25 @@ func TestModelAccessBackendCutoverRevokesSourceOnlyAfterRuntimeAdoption(t *testi
 			}}},
 		},
 		Status: appsv1.DeploymentStatus{
-			ObservedGeneration: 2,
+			ObservedGeneration: 1,
 			AvailableReplicas:   1,
 		},
 	}
+
+	pending, err := r.finalizeModelAccessBackendCutover(ctx, agent, tenant, namespace, backend, deployment)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !pending || sharedDeletes != 0 {
+		t.Fatalf("source revoked before Deployment adopted destination: pending=%v sharedDelete=%d", pending, sharedDeletes)
+	}
+
+	deployment.Status.ObservedGeneration = deployment.Generation
 	if err := c.Create(ctx, deployment); err != nil {
 		t.Fatal(err)
 	}
 
-	pending, err := r.finalizeModelAccessBackendCutover(ctx, agent, tenant, namespace, backend, deployment)
+	pending, err = r.finalizeModelAccessBackendCutover(ctx, agent, tenant, namespace, backend, deployment)
 	if err != nil {
 		t.Fatal(err)
 	}
