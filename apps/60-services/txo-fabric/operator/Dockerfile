@@ -9,10 +9,13 @@ RUN go mod tidy
 ARG TARGETOS=linux
 ARG TARGETARCH=amd64
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
-    go build -trimpath -ldflags='-s -w' -o /out/manager ./cmd
+    go build -trimpath -ldflags='-s -w' -o /out/manager ./cmd && \
+    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -trimpath -ldflags='-s -w' -o /out/txo-fabric-admin ./cmd/admin
 
 FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /out/manager /manager
+COPY --from=builder /out/txo-fabric-admin /txo-fabric-admin
 USER 65532:65532
 ENTRYPOINT ["/manager"]

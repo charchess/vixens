@@ -291,14 +291,23 @@ func (r *TenantBundleReconciler) ensureTenantAICredentialBrokerNetworkPolicy(ctx
 		}
 		policy.Spec.PodSelector = metav1.LabelSelector{MatchLabels: labels}
 		policy.Spec.PolicyTypes = []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress}
-		policy.Spec.Ingress = []networkingv1.NetworkPolicyIngressRule{{
-			From: []networkingv1.NetworkPolicyPeer{{PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
-				LabelManaged:    "true",
-				LabelTenantName: bundle.Name,
-				"app.kubernetes.io/component": "tenant-ai-gateway",
-			}}}},
-			Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(int(aiCredentialBrokerPort(profile)))}},
-		}}
+		policy.Spec.Ingress = []networkingv1.NetworkPolicyIngressRule{
+			{
+				From: []networkingv1.NetworkPolicyPeer{{PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+					LabelManaged:    "true",
+					LabelTenantName: bundle.Name,
+					"app.kubernetes.io/component": "tenant-ai-gateway",
+				}}}},
+				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(int(aiCredentialBrokerPort(profile)))}},
+			},
+			{
+				From: []networkingv1.NetworkPolicyPeer{{
+					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "txo-fabric-system"}},
+					PodSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "txo-fabric-operator"}},
+				}},
+				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(int(aiCredentialBrokerPort(profile)))}},
+			},
+		}
 		policy.Spec.Egress = []networkingv1.NetworkPolicyEgressRule{
 			{
 				To: []networkingv1.NetworkPolicyPeer{{NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"}}}},
