@@ -42,7 +42,7 @@ func (r *AgentIdentityReconciler) resolveModelAccessBackend(ctx context.Context,
 		ID:         fmt.Sprintf("tenant:%s:%s:%d", tenant.Name, profile.Name, port),
 		URL:        fmt.Sprintf("http://%s.%s.svc:%d", tenantAIGatewayName, namespace, port),
 		AdminToken: adminToken,
-		Model:      tenantAICodingModel,
+		Model:      tenantAIAgentModel,
 	}, nil
 }
 
@@ -73,7 +73,7 @@ func (r *AgentIdentityReconciler) previousModelAccessBackend(
 		ID:         backendID,
 		URL:        backendURL,
 		AdminToken: adminToken,
-		Model:      tenantAICodingModel,
+		Model:      tenantAIAgentModel,
 	}, nil
 }
 
