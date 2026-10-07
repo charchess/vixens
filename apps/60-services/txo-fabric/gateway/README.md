@@ -6,115 +6,110 @@ upstream provider credentials.
 
 ## Architecture
 
-The tenant-scoped target contract for #3868/#3869/#3885 is documented in
-[`CREDENTIAL_POOLS.md`](CREDENTIAL_POOLS.md). The target is **one tenant-local
-LiteLLM facade per TenantBundle**, with CLIProxyAPI used only as an internal
-OAuth/subscription credential broker where needed. The current shared
-LiteLLM/OpenRouter route remains authoritative until that tenant-local AI plane is
-explicitly enabled and physically validated.
-
-The following section documents the **currently active compatibility path**, not
-the #3885 target architecture.
-
-TXO Fabric currently uses LiteLLM as an OpenAI-compatible gateway in
-`txo-fabric-system`:
+The canonical #3885 topology is one tenant-local LiteLLM facade per Active
+TenantBundle. CLIProxyAPI (CPA) is an internal backend only for OAuth/subscription
+credentials such as Codex.
 
 ```text
-TXO Fabric operator
-    |
-    | LiteLLM admin credential
-    | /key/generate + /key/delete
-    v
-Service/txo-ai-gateway:4000
-    |
-    +--> PostgreSQL txo_ai_gateway (keys, spend, budgets/rate-limit state)
-    |
-    +--> OpenRouter (provider credential exists only here)
-
-Hermes
-    |
-    | per-AgentIdentity scoped LiteLLM virtual key
-    | model = txo-default
-    v
-Service/txo-ai-gateway:4000/v1
-
-Tenant Hindsight
-    |
-    | per-TenantBundle scoped LiteLLM virtual key
-    | model = txo-embedding
-    v
-Service/txo-ai-gateway:4000/v1/embeddings
+Hermes -----------------------+
+                              |
+Tenant Hindsight -------------+--> tenant LiteLLM
+                                   +-- txo-agent ----> tenant CPA ----> Codex OAuth
+                                   +-- txo-embedding -> OpenRouter/BGE-M3
 ```
 
-The gateway exposes stable local aliases instead of leaking provider/model identifiers
-to tenant workloads:
+Consumers see logical capabilities and scoped LiteLLM virtual keys. They never
+receive the CPA management credential or an upstream provider API key.
 
-- `txo-default` -> initially `openrouter/openai/gpt-5.6-luna`;
-- `txo-embedding` -> `openrouter/baai/bge-m3`.
+The historical `txo-fabric-system/txo-ai-gateway` remains only as a bounded
+migration source for Hindsight instances that have not yet received a
+tenant-specific OpenRouter credential. It is not the canonical AgentIdentity path
+and is not a fallback after a Hindsight instance has completed tenant-local
+cutover.
 
-Provider/model routing can therefore change centrally without rebuilding tenant
-workloads or rewriting tenant intent. Provider-specific pricing belongs to the same
-central model mapping: if LiteLLM's bundled cost map does not recognize the selected
-provider/model identifier, the deployment must declare the current per-token rates
-explicitly so persisted spend logs remain meaningful.
+### Provider credential boundary
+
+OpenRouter credentials are tenant-specific platform secrets. Fabric watches:
+
+```text
+txo-fabric-system/txo-ai-provider-<tenant>
+  key: OPENROUTER_API_KEY
+```
+
+The value is projected into the platform-owned
+`tenant-<tenant>/txo-ai-gateway-runtime` Secret consumed by LiteLLM. The value
+never enters Hermes, Hindsight, TenantBundle/AgentIdentity spec or status, Git, or
+logs. The source Secret should be supplied through OpenBao + External Secrets
+Operator.
+
+When the credential is absent, the tenant LiteLLM remains fully usable for
+`txo-agent` through CPA but does not advertise `txo-embedding`. When present,
+the tenant gateway adds:
+
+```yaml
+model_name: txo-embedding
+model: openrouter/baai/bge-m3
+```
+
+and receives outbound TCP/443. Tenant workloads themselves receive no generic
+provider egress.
 
 ## AgentIdentity model access
 
-Each `AgentIdentity` receives one LiteLLM virtual key restricted to model
-`txo-default`. The operator creates the key with a deterministic alias and metadata
-containing the tenant and agent identities, then stores only the returned virtual
-key in the tenant namespace as `Secret/hermes-<agentKey>-model-access`.
+Every Active-tenant AgentIdentity uses its tenant-local LiteLLM facade. Fabric
+creates a deterministic virtual key scoped to `txo-agent` and stores only that
+key in `Secret/hermes-<agentKey>-model-access`.
 
 Hermes receives:
 
-- `OPENAI_BASE_URL=http://txo-ai-gateway.txo-fabric-system.svc:4000/v1`;
-- `OPENAI_API_KEY` from the scoped tenant Secret;
-- `HERMES_MODEL=txo-default`;
+- `OPENAI_BASE_URL=http://txo-ai-gateway.tenant-<tenant>.svc:4000/v1`;
+- `OPENAI_API_KEY` from the scoped model-access Secret;
+- `HERMES_MODEL=txo-agent`;
 - `TXO_LLM_AUTH_MODE=gateway`.
 
-The tenant runtime never receives the LiteLLM administrative credential or the
-OpenRouter provider credential. Agent deletion attempts to revoke the LiteLLM key
-by its deterministic alias before deleting the scoped Secret. Revocation is
-best-effort so a temporary gateway outage cannot wedge the AgentIdentity finalizer.
-
-`ModelAccessReady=True` means the scoped gateway credential has been reconciled.
-Once the Hermes Deployment is also available, the AgentIdentity may transition to
-`Ready` instead of the previous deliberate `AuthBlocked` state.
+The `txo-agent` route resolves LiteLLM -> tenant CPA -> Codex OAuth. Direct
+Hermes -> CPA access remains denied by network policy.
 
 ## Hindsight embedding access
 
-`HindsightProfile.spec.llmAuthMode=PlatformGateway` activates the existing platform
-model-credential boundary for tenant Hindsight. This does not enable Hindsight LLM
-processing: `HINDSIGHT_API_LLM_PROVIDER` remains `none` so retain behavior does not
-silently change. The scoped credential is used only for remote embeddings.
+`HindsightProfile.spec.llmAuthMode=PlatformGateway` enables only governed
+embedding inference. Hindsight generative/reflection LLM processing remains
+disabled with `HINDSIGHT_API_LLM_PROVIDER=none`.
 
-The operator stores the tenant-scoped LiteLLM key inside the existing
-`Secret/hindsight-runtime` and configures Hindsight 0.10.1 with its supported
-OpenAI-compatible embedding contract:
+The canonical runtime contract is:
 
 - `HINDSIGHT_API_EMBEDDINGS_PROVIDER=openai`;
-- `HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL=http://txo-ai-gateway.txo-fabric-system.svc:4000/v1`;
+- `HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL=http://txo-ai-gateway.tenant-<tenant>.svc:4000/v1`;
 - `HINDSIGHT_API_EMBEDDINGS_OPENAI_MODEL=txo-embedding`;
-- `HINDSIGHT_API_EMBEDDINGS_OPENAI_API_KEY=<scoped LiteLLM virtual key>`;
-- `HINDSIGHT_API_EMBEDDINGS_OPENAI_DIMENSIONS=` (empty), which Hindsight 0.10.1 resolves to `None` and therefore auto-detects the provider width.
+- `HINDSIGHT_API_EMBEDDINGS_OPENAI_API_KEY=<Hindsight-scoped LiteLLM key>`;
+- `HINDSIGHT_API_EMBEDDINGS_OPENAI_DIMENSIONS=` so Hindsight auto-detects width.
 
 The virtual key is restricted to `txo-embedding` and carries tenant metadata plus
-`component=hindsight` and `capability=embeddings`. Hindsight therefore cannot use
-this credential to call `txo-default`.
+`component=hindsight` and `capability=embeddings`. It cannot authorize
+`txo-agent` or expose the provider credential.
 
-The steady-state embedding backend is `BAAI/bge-m3`, exposed through the stable
-`txo-embedding` alias. BGE-M3 returns native 1024-dimensional vectors and Hindsight
-is intentionally allowed to detect that width rather than pinning a platform
-constant. Existing banks created with the former 384-dimensional path cannot be
-switched in place: export/import must rebuild them against a fresh target bank so
-Hindsight regenerates embeddings with the active model.
+### Failure-safe migration from the historical shared gateway
 
-The local reranker remains in place and the baked-model offline flags remain
-enabled; only embedding inference moves behind the gateway.
+Existing Hindsight runtimes are migrated without revoking their working source
+credential first:
 
-Tenant deletion revokes the deterministic Hindsight embedding-key alias on a
-best-effort basis after Fabric-owned Hindsight resources have been removed. A
-gateway outage must not wedge tenant cleanup.
+1. wait until the tenant OpenRouter credential exists and the tenant LiteLLM
+   `txo-embedding` route is deployed and Available;
+2. mint the destination Hindsight virtual key on tenant LiteLLM;
+3. update `hindsight-runtime` to the tenant URL/key and roll the Deployment;
+4. only after the Deployment has adopted the new Secret revision and is Available,
+   revoke the historical shared alias;
+5. remove shared-gateway egress from the Hindsight NetworkPolicy.
+
+During the bounded transition, the Hindsight policy permits both old and new
+gateways. Before migration it permits shared only; after finalization it permits
+tenant LiteLLM only. If the tenant OpenRouter credential later disappears, Fabric
+fails closed and never silently migrates Hindsight back to the shared gateway.
+
+The embedding backend remains BAAI/BGE-M3 through the stable `txo-embedding`
+logical alias. Existing vector-width migration constraints remain a Hindsight
+data concern; provider credentials and concrete model identifiers stay behind the
+gateway boundary.
 
 ## Inference policy and credential lifecycle
 
