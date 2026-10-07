@@ -19,15 +19,24 @@ import (
 )
 
 const (
-	tenantAIGatewayName             = "txo-ai-gateway"
-	tenantAIGatewayConfigMapName    = "txo-ai-gateway-config"
-	tenantAIGatewayNetworkPolicy    = "txo-ai-gateway"
-	tenantAIGatewayDefaultPort int32 = 4000
+	tenantAIGatewayName                  = "txo-ai-gateway"
+	tenantAIGatewayConfigMapName         = "txo-ai-gateway-config"
+	tenantAIGatewayNetworkPolicy         = "txo-ai-gateway"
+	tenantAIGatewayDefaultPort      int32 = 4000
+	tenantAIProviderSecretNamespace      = "txo-fabric-system"
+	tenantAIProviderSecretPrefix         = "txo-ai-provider-"
+	tenantAIOpenRouterSecretKey          = "OPENROUTER_API_KEY"
+	tenantAIEmbeddingProviderModel       = "openrouter/baai/bge-m3"
 )
 
 type aiGatewayBackendState struct {
-	CPAEnabled bool
-	CPAPort    int32
+	CPAEnabled       bool
+	CPAPort          int32
+	OpenRouterEnabled bool
+}
+
+func tenantAIProviderSecretName(tenantName string) string {
+	return tenantAIProviderSecretPrefix + tenantName
 }
 
 func aiGatewayPort(profile *fabricv1alpha1.AIGatewayProfile) int32 {
@@ -68,7 +77,17 @@ func (r *TenantBundleReconciler) resolveAIGatewayBackends(ctx context.Context, b
 		return aiGatewayBackendState{}, "tenant AI credential broker runtime Secret has no bootstrap API key", nil
 	}
 
-	return aiGatewayBackendState{CPAEnabled: true, CPAPort: service.Spec.Ports[0].Port}, "", nil
+	backends := aiGatewayBackendState{CPAEnabled: true, CPAPort: service.Spec.Ports[0].Port}
+	var providerSecret corev1.Secret
+	if err := r.Get(ctx, client.ObjectKey{Namespace: tenantAIProviderSecretNamespace, Name: tenantAIProviderSecretName(bundle.Name)}, &providerSecret); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return aiGatewayBackendState{}, "", err
+		}
+	} else if len(providerSecret.Data[tenantAIOpenRouterSecretKey]) > 0 {
+		backends.OpenRouterEnabled = true
+	}
+
+	return backends, "", nil
 }
 
 func renderTenantLiteLLMConfig(backends aiGatewayBackendState) string {
@@ -81,7 +100,15 @@ func renderTenantLiteLLMConfig(backends aiGatewayBackendState) string {
       api_base: http://%s:%d/v1
       api_key: os.environ/CPA_API_KEY
 `, tenantAICredentialBrokerName, backends.CPAPort))
-	} else {
+	}
+	if backends.OpenRouterEnabled {
+		builder.WriteString(`  - model_name: txo-embedding
+    litellm_params:
+      model: openrouter/baai/bge-m3
+      api_key: os.environ/OPENROUTER_API_KEY
+`)
+	}
+	if !backends.CPAEnabled && !backends.OpenRouterEnabled {
 		builder.WriteString("  []\n")
 	}
 	builder.WriteString(`general_settings:
@@ -215,6 +242,13 @@ func (r *TenantBundleReconciler) ensureTenantAIGatewayNetworkPolicy(
 					}},
 				}},
 				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(int(backends.CPAPort))}},
+			})
+		}
+		if backends.OpenRouterEnabled {
+			// Provider egress exists only on the tenant gateway. Tenant workloads
+			// never receive the provider credential or a direct-provider route.
+			policy.Spec.Egress = append(policy.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(443)}},
 			})
 		}
 		return nil
