@@ -187,6 +187,38 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err := r.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}, &deployment); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	modelAccessCleanupPending, modelAccessCleanupErr := r.finalizeModelAccessBackendCutover(ctx, &agent, &tenant, namespace, modelBackend, &deployment)
+	switch {
+	case modelAccessCleanupErr != nil:
+		modelAccessCleanupPending = true
+		setCondition(
+			&agent.Status.Conditions,
+			agent.Generation,
+			"ModelAccessCleanupReady",
+			metav1.ConditionFalse,
+			"SourceCredentialCleanupFailed",
+			modelAccessCleanupErr.Error(),
+		)
+	case modelAccessCleanupPending:
+		setCondition(
+			&agent.Status.Conditions,
+			agent.Generation,
+			"ModelAccessCleanupReady",
+			metav1.ConditionFalse,
+			"WaitingForRuntimeAdoption",
+			"destination model credential is staged; waiting for the Hermes runtime to adopt it before revoking the previous backend credential",
+		)
+	default:
+		setCondition(
+			&agent.Status.Conditions,
+			agent.Generation,
+			"ModelAccessCleanupReady",
+			metav1.ConditionTrue,
+			"Reconciled",
+			"no superseded model credential remains pending revocation",
+		)
+	}
 	agent.Status.ObservedGeneration = agent.Generation
 	agent.Status.Namespace = namespace
 	agent.Status.Runtime.DeploymentName = deployment.Name
@@ -217,7 +249,16 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	setCondition(&agent.Status.Conditions, agent.Generation, "NetworkReady", metav1.ConditionTrue, "Reconciled", networkMessage)
 	if deployment.Status.AvailableReplicas > 0 && deployment.Status.ObservedGeneration == deployment.Generation {
 		setCondition(&agent.Status.Conditions, agent.Generation, "RuntimeReady", metav1.ConditionTrue, "DeploymentAvailable", "Hermes runtime Deployment is available")
-		if integrationAccess.Ready {
+		if modelAccessCleanupPending {
+			agent.Status.Phase = "Degraded"
+			reason := "ModelAccessCleanupPending"
+			message := "runtime has the destination model credential, but revocation of the superseded backend credential is still pending"
+			if modelAccessCleanupErr != nil {
+				reason = "ModelAccessCleanupFailed"
+				message = modelAccessCleanupErr.Error()
+			}
+			setCondition(&agent.Status.Conditions, agent.Generation, "Ready", metav1.ConditionFalse, reason, message)
+		} else if integrationAccess.Ready {
 			agent.Status.Phase = "Ready"
 			setCondition(&agent.Status.Conditions, agent.Generation, "Ready", metav1.ConditionTrue, "Ready", "runtime, capability policy, scoped model access and declared integration access are ready")
 		} else {
@@ -233,6 +274,9 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		if err := r.Status().Update(ctx, &agent); err != nil {
 			return ctrl.Result{}, err
 		}
+	}
+	if modelAccessCleanupPending {
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 	if integrationAccess.HasBindings || humanAccess.Enabled {
 		return ctrl.Result{RequeueAfter: integrationRefreshInterval}, nil
