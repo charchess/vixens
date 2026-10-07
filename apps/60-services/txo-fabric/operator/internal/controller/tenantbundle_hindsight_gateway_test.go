@@ -69,9 +69,20 @@ func TestHindsightPlatformGatewayReconcilesScopedEmbeddingAccess(t *testing.T) {
 	t.Setenv("TXO_AI_GATEWAY_URL", gateway.URL)
 	t.Setenv("TXO_AI_GATEWAY_ADMIN_TOKEN", "test-admin-token")
 
+	// This is an already-enrolled legacy Hindsight runtime with a missing
+	// embedding key, not a brand-new tenant. Only pre-existing runtimes may
+	// use the historical shared gateway while awaiting OpenRouter enrollment.
+	legacyRuntime := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "hindsight-runtime", Namespace: tenantNamespace(tenant.Name),
+			Labels: hindsightLabels(tenant, hindsightProfile, "runtime-secret"),
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{"HINDSIGHT_API_TENANT_API_KEY": []byte("legacy-hindsight-api-key")},
+	}
 	c := fake.NewClientBuilder().WithScheme(scheme).
 		WithStatusSubresource(&appsv1.Deployment{}).
-		WithObjects(tenant, hindsightProfile, postgresqlProfile, postgresqlSecret).
+		WithObjects(tenant, hindsightProfile, postgresqlProfile, postgresqlSecret, legacyRuntime).
 		Build()
 	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
 
@@ -497,5 +508,62 @@ func TestHindsightTenantEmbeddingRefusesFallbackWhenProviderCredentialDisappears
 	}
 	if !strings.Contains(blocked.Message, "refusing fallback") {
 		t.Fatalf("unexpected fail-closed message: %q", blocked.Message)
+	}
+}
+
+func TestHindsightNewTenantNeverBootstrapsFromSharedGateway(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := hindsightTestTenant()
+	profile := hindsightTestProfile()
+	profile.Spec.LLMAuthMode = "PlatformGateway"
+	postgresqlProfile := postgresqlTestProfile()
+	postgresqlSecret := hindsightPostgreSQLSecret(tenant, postgresqlProfile)
+	namespace := tenantNamespace(tenant.Name)
+	names := resolveHindsightNames(tenant, profile)
+
+	// Any attempt to mint a historical shared key would produce a network error.
+	t.Setenv("TXO_AI_GATEWAY_URL", "http://127.0.0.1:1")
+	t.Setenv("TXO_AI_GATEWAY_ADMIN_TOKEN", "legacy-admin")
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(
+		tenant, profile, postgresqlProfile, postgresqlSecret,
+	).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	pending, err := r.ensureHindsightSecret(ctx, tenant, profile, names, postgresqlSecret)
+	if err != nil {
+		t.Fatalf("new tenant must not try shared key generation: %v", err)
+	}
+	if pending == nil || pending.Reason != "EmbeddingBackendPending" ||
+		!strings.Contains(pending.Message, "required to bootstrap Hindsight") {
+		t.Fatalf("new tenant without provider must wait instead of using shared gateway: %#v", pending)
+	}
+	var runtime corev1.Secret
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: names.Secret}, &runtime); err == nil {
+		t.Fatal("new tenant unexpectedly received a Hindsight runtime Secret before provider enrollment")
+	}
+
+	// Even after enrolling OpenRouter, the tenant gateway route must become
+	// ready before Hindsight can bootstrap; shared must not be the shortcut.
+	provider := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tenantAIProviderSecretName(tenant.Name),
+			Namespace: tenantAIProviderSecretNamespace,
+		},
+		Data: map[string][]byte{tenantAIOpenRouterSecretKey: []byte("tenant-test-only")},
+	}
+	if err := c.Create(ctx, provider); err != nil {
+		t.Fatal(err)
+	}
+	pending, err = r.ensureHindsightSecret(ctx, tenant, profile, names, postgresqlSecret)
+	if err != nil {
+		t.Fatalf("new tenant must not try shared route while tenant LiteLLM starts: %v", err)
+	}
+	if pending == nil || pending.Reason != "EmbeddingBackendPending" ||
+		!strings.Contains(pending.Message, "tenant LiteLLM embedding backend is unavailable") {
+		t.Fatalf("new tenant must wait for tenant LiteLLM readiness: %#v", pending)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: names.Secret}, &runtime); err == nil {
+		t.Fatal("new tenant unexpectedly received a shared Hindsight runtime Secret")
 	}
 }
