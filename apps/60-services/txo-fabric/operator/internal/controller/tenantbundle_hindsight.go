@@ -316,6 +316,7 @@ func (r *TenantBundleReconciler) resolveHindsightEmbeddingBackend(
 	ctx context.Context,
 	bundle *fabricv1alpha1.TenantBundle,
 	appliedBackendID string,
+	legacyRuntimeExists bool,
 ) (modelAccessBackend, string, error) {
 	appliedBackendID = strings.TrimSpace(appliedBackendID)
 	if appliedBackendID == "" {
@@ -334,12 +335,15 @@ func (r *TenantBundleReconciler) resolveHindsightEmbeddingBackend(
 		if alreadyTenant {
 			return modelAccessBackend{}, "tenant OpenRouter credential is unavailable; refusing fallback to the historical shared gateway", nil
 		}
+		if !legacyRuntimeExists {
+			return modelAccessBackend{}, "tenant OpenRouter credential is required to bootstrap Hindsight; refusing the historical shared gateway for new tenants", nil
+		}
 		return sharedModelAccessBackend(), "", nil
 	}
 
 	tenantBackend, err := tenantModelAccessBackend(ctx, r.Client, bundle, defaultAIEmbeddingModel)
 	if err != nil {
-		if alreadyTenant {
+		if alreadyTenant || !legacyRuntimeExists {
 			return modelAccessBackend{}, "tenant LiteLLM embedding backend is unavailable: " + err.Error(), nil
 		}
 		return sharedModelAccessBackend(), "", nil
@@ -349,11 +353,11 @@ func (r *TenantBundleReconciler) resolveHindsightEmbeddingBackend(
 		return modelAccessBackend{}, "", err
 	}
 	if !routeReady {
-		if alreadyTenant {
+		if alreadyTenant || !legacyRuntimeExists {
 			return modelAccessBackend{}, "waiting for the tenant LiteLLM txo-embedding route to become available", nil
 		}
-		// Existing tenants remain on the known-good shared embedding route until
-		// the destination tenant LiteLLM route is fully available.
+		// Only existing legacy Hindsight runtimes may temporarily keep the
+		// shared embedding route while their tenant destination rolls out.
 		return sharedModelAccessBackend(), "", nil
 	}
 	return tenantBackend, "", nil
@@ -506,7 +510,13 @@ func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bund
 		return nil, nil
 	}
 
-	backend, pendingMessage, err := r.resolveHindsightEmbeddingBackend(ctx, bundle, appliedBackendID)
+	// The existence of an API-only Hindsight Secret is not proof that a tenant
+	// already relied on shared embeddings. Require an existing embedding key
+	// or an explicit shared-backend migration marker before retaining legacy.
+	legacySharedRuntime := secretExists && appliedBackendID == sharedModelAccessBackendID &&
+		(len(secret.Data[hindsightEmbeddingSecretKey]) > 0 ||
+			strings.TrimSpace(secret.Annotations[AnnotationHindsightEmbeddingBackend]) == sharedModelAccessBackendID)
+	backend, pendingMessage, err := r.resolveHindsightEmbeddingBackend(ctx, bundle, appliedBackendID, legacySharedRuntime)
 	if err != nil {
 		return nil, err
 	}
