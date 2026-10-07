@@ -50,17 +50,23 @@ var managedHermesPlatforms = []string{
 }
 
 type effectiveToolsetPolicy struct {
-	Revision string
-	Enabled  []string
-	Denied   []string
-	Config   string
+	Revision     string
+	Enabled      []string
+	Denied       []string
+	Config       string
+	ModelDefault string
+	ModelBaseURL string
 }
 
 func managedToolsetPolicyName(agentKey string) string {
 	return runtimeName(agentKey) + "-managed-policy"
 }
 
-func resolveToolsetPolicy(agent *fabricv1alpha1.AgentIdentity, profile *fabricv1alpha1.AgentRuntimeProfile) (effectiveToolsetPolicy, error) {
+func resolveToolsetPolicy(agent *fabricv1alpha1.AgentIdentity, profile *fabricv1alpha1.AgentRuntimeProfile, bindings ...modelRuntimeBinding) (effectiveToolsetPolicy, error) {
+	binding := modelRuntimeBinding{Model: defaultAIGatewayModel, BaseURL: defaultAIGatewayURL + "/v1"}
+	if len(bindings) > 0 {
+		binding = bindings[0]
+	}
 	entries := profile.Spec.Capabilities.Toolsets
 	if len(entries) == 0 {
 		return effectiveToolsetPolicy{}, fmt.Errorf("AgentRuntimeProfile %q does not declare capabilities.toolsets", profile.Name)
@@ -142,9 +148,9 @@ func resolveToolsetPolicy(agent *fabricv1alpha1.AgentIdentity, profile *fabricv1
 		"platform_toolsets":     platforms,
 		"known_plugin_toolsets": knownPluginToolsets,
 		"model": map[string]any{
-			"default":  defaultAIGatewayModel,
+			"default":  binding.Model,
 			"provider": "custom",
-			"base_url": defaultAIGatewayURL + "/v1",
+			"base_url": binding.BaseURL,
 		},
 		"agent": map[string]any{
 			"disabled_toolsets": denied,
@@ -175,9 +181,9 @@ func resolveToolsetPolicy(agent *fabricv1alpha1.AgentIdentity, profile *fabricv1
 		Image:         profile.Spec.Image,
 		Entries:       normalizedEntries,
 		Requested:     requested,
-		ModelDefault:  defaultAIGatewayModel,
+		ModelDefault:  binding.Model,
 		ModelProvider: "custom",
-		ModelBaseURL:  defaultAIGatewayURL + "/v1",
+		ModelBaseURL:  binding.BaseURL,
 	}
 	revisionJSON, err := json.Marshal(revisionInput)
 	if err != nil {
@@ -187,10 +193,12 @@ func resolveToolsetPolicy(agent *fabricv1alpha1.AgentIdentity, profile *fabricv1
 	revision := hex.EncodeToString(sum[:8])
 
 	return effectiveToolsetPolicy{
-		Revision: revision,
-		Enabled:  enabled,
-		Denied:   denied,
-		Config:   string(configJSON),
+		Revision:     revision,
+		Enabled:      enabled,
+		Denied:       denied,
+		Config:       string(configJSON),
+		ModelDefault: binding.Model,
+		ModelBaseURL: binding.BaseURL,
 	}, nil
 }
 
