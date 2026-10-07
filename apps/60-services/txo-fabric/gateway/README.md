@@ -54,6 +54,54 @@ model: openrouter/baai/bge-m3
 and receives outbound TCP/443. Tenant workloads themselves receive no generic
 provider egress.
 
+### GitOps OpenRouter enrollment (hAIrem and Indiba)
+
+Each tenant must have a **different** OpenRouter provider credential.
+The activation manifests live beside their TenantBundle in
+`tenants/<tenant>/openrouter-external-secret.yaml`; they create
+`ExternalSecret/txo-ai-provider-<tenant>` in `txo-fabric-system`.
+
+Before merging the activation manifests, provision these OpenBao KV v2
+records with a non-empty property `openrouter_api_key`:
+
+| Tenant | OpenBao key |
+|---|---|
+| `hairem` | `vixens/prod/apps/60-services/txo-fabric/tenants/hairem` |
+| `indiba` | `vixens/prod/apps/60-services/txo-fabric/tenants/indiba` |
+
+Never put the value in Git, PRs, issues, shell history, or logs. These
+provider credentials are not the LiteLLM virtual keys issued to workloads.
+The ExternalSecrets use `ClusterSecretStore/openbao`, refresh every 60s,
+and delete their materialized Kubernetes Secret if the upstream record is
+deleted (ESO `deletionPolicy: Delete`). Revoking an exposed provider
+credential **at OpenRouter** is still required; Kubernetes Secret deletion
+alone does not revoke the upstream credential.
+
+This is an **activation gate**, not a safe-to-promote signal: first ensure
+the #3925 operator source and its generated immutable image pin have
+been explicitly promoted and converged. When the two OpenBao records exist,
+merge the ExternalSecret PR and validate, tenant by tenant:
+
+1. `ExternalSecret/txo-ai-provider-<tenant>` is `Ready=True` in
+   `txo-fabric-system`, and its target Secret contains the key
+   `OPENROUTER_API_KEY` (check key *names*, never values).
+2. Tenant LiteLLM advertises `txo-embedding`, and the gateway Deployment
+   is available with the credential-revision rollout.
+3. Hindsight's runtime Secret URL moves to
+   `http://txo-ai-gateway.tenant-<tenant>.svc:4000/v1`, with a virtual key
+   restricted to `txo-embedding`, and no upstream OpenRouter credential.
+4. Hindsight is Available on the new runtime revision, then the old shared
+   embedding key is revoked and shared-gateway egress is removed from the
+   Hindsight NetworkPolicy.
+5. A real embedding call works, `txo-agent` still routes Hermes through
+   CPA, Hermes remains unable to reach CPA directly, and LiteLLM observes
+   embedding usage. Validate cross-tenant key isolation.
+
+Absence of the tenant credential keeps **existing** not-yet-migrated
+Hindsight on the historical shared route; once migrated, the operator
+fails closed if the provider credential disappears. Do not promote or
+declare #3885 physically accepted on CI alone.
+
 ## AgentIdentity model access
 
 Every Active-tenant AgentIdentity uses its tenant-local LiteLLM facade. Fabric
@@ -115,7 +163,7 @@ gateway boundary.
 
 The active TXO Fabric external-inference consumers are deliberately small:
 
-- Hermes uses the logical chat/model alias `txo-default` through a per-`AgentIdentity`
+- Hermes uses the logical chat/model alias `txo-agent` through a per-`AgentIdentity`
   LiteLLM virtual key;
 - tenant Hindsight uses only the logical embedding alias `txo-embedding` through
   a per-`TenantBundle` LiteLLM virtual key;
