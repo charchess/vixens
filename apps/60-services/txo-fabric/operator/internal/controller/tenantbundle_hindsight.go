@@ -197,11 +197,7 @@ func (r *TenantBundleReconciler) reconcileHindsight(ctx context.Context, bundle 
 		if err := reader.Get(ctx, client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: names.Secret}, &runtimeSecret); err != nil {
 			return hindsightResult{}, err
 		}
-		rotation := runtimeSecret.Annotations[AnnotationHindsightEmbeddingRevision]
-		if rotation == "" {
-			rotation = "baseline"
-		}
-		message += fmt.Sprintf("; embeddings use scoped TXO AI gateway access (gateway=%s model=%s rotation=%s)", aiGatewayURL(), defaultAIEmbeddingModel, rotation)
+		message += "; " + hindsightEmbeddingStatusMessage(&runtimeSecret)
 	}
 	return hindsightResult{
 		Ready:   true,
@@ -255,6 +251,18 @@ func (r *TenantBundleReconciler) cleanupHindsight(ctx context.Context, bundle *f
 		}
 	}
 	return pending, nil
+}
+
+// hindsightEmbeddingStatusMessage reflects the currently applied runtime binding,
+// not the historical shared AI gateway used only for legacy migration.
+func hindsightEmbeddingStatusMessage(secret *corev1.Secret) string {
+	gateway := strings.TrimSpace(string(secret.Data["HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL"]))
+	model := strings.TrimSpace(string(secret.Data["HINDSIGHT_API_EMBEDDINGS_OPENAI_MODEL"]))
+	rotation := strings.TrimSpace(secret.Annotations[AnnotationHindsightEmbeddingRevision])
+	if rotation == "" {
+		rotation = "baseline"
+	}
+	return fmt.Sprintf("embeddings use scoped TXO AI gateway access (gateway=%s model=%s rotation=%s)", gateway, model, rotation)
 }
 
 func normalizedHindsightEmbeddingBackend(secret *corev1.Secret) string {
