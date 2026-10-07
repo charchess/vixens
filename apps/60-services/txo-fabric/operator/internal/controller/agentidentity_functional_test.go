@@ -118,7 +118,11 @@ func TestFunctionalProfileHermesGatewayRenderingAndWithdrawal(t *testing.T) {
 	agent := functionalTestAgent("indiba-sam", tenant.Name)
 	profile := testRuntimeProfile()
 	scheme := testScheme(t)
-	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent).Build()
+	retained := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{
+		Name: "hermes-"+agent.Spec.AgentKey+"-data", Namespace: "tenant-indiba",
+		UID: types.UID("retained-pvc-uid"),
+	}}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent, retained).Build()
 	r := &AgentIdentityReconciler{Client:c,Scheme:scheme}
 	role := effectiveFunctionalProfile{
 		Enabled:true, ProfileName:"indiba-sales", Instructions:"Approved sales baseline",
@@ -185,7 +189,8 @@ func TestFunctionalProfileHermesGatewayRenderingAndWithdrawal(t *testing.T) {
 		t.Fatalf("invalid functional profile did not shut down previous runtime: %v",err)
 	}
 	var pvc corev1.PersistentVolumeClaim
-	if err:=c.Get(ctx,types.NamespacedName{Name:"hermes-"+agent.Spec.AgentKey+"-data",Namespace:ns},&pvc);err==nil {
-		t.Fatal("test did not create PVC; test must not claim PVC deletion")
+	if err:=c.Get(ctx,types.NamespacedName{Name:retained.Name,Namespace:ns},&pvc);err!=nil ||
+		pvc.UID!=retained.UID {
+		t.Fatalf("profile withdrawal must preserve retained private PVC: err=%v UID=%s",err,pvc.UID)
 	}
 }
