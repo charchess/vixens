@@ -148,12 +148,37 @@ func TestReconcileAICredentialBrokerCreatesTenantScopedCPAWithoutProviderSecrets
 	if len(httpsEgress.Ports) != 1 || httpsEgress.Ports[0].Port == nil || httpsEgress.Ports[0].Port.IntValue() != 443 {
 		t.Fatalf("broker HTTPS egress must allow only TCP/443: %#v", httpsEgress.Ports)
 	}
-	if len(policy.Spec.Ingress) != 1 || len(policy.Spec.Ingress[0].From) != 1 || policy.Spec.Ingress[0].From[0].PodSelector == nil {
-		t.Fatalf("broker ingress must be restricted to tenant LiteLLM: %#v", policy.Spec.Ingress)
+	if len(policy.Spec.Ingress) != 2 {
+		t.Fatalf("broker ingress rules=%d want tenant LiteLLM + Fabric operator management", len(policy.Spec.Ingress))
 	}
-	allowed := policy.Spec.Ingress[0].From[0].PodSelector.MatchLabels
-	if allowed[LabelManaged] != "true" || allowed[LabelTenantName] != tenant.Name || allowed["app.kubernetes.io/component"] != "tenant-ai-gateway" {
-		t.Fatalf("broker ingress selector unexpectedly broad: %#v", allowed)
+
+	var gatewayIngress, operatorIngress bool
+	for _, rule := range policy.Spec.Ingress {
+		if len(rule.From) != 1 || rule.From[0].PodSelector == nil {
+			continue
+		}
+		peer := rule.From[0]
+		labels := peer.PodSelector.MatchLabels
+		if peer.NamespaceSelector == nil &&
+			labels[LabelManaged] == "true" &&
+			labels[LabelTenantName] == tenant.Name &&
+			labels["app.kubernetes.io/component"] == "tenant-ai-gateway" {
+			gatewayIngress = true
+		}
+		if peer.NamespaceSelector != nil &&
+			peer.NamespaceSelector.MatchLabels["kubernetes.io/metadata.name"] == "txo-fabric-system" &&
+			labels[LabelName] == "txo-fabric-operator" {
+			operatorIngress = true
+		}
+		if len(rule.Ports) != 1 || rule.Ports[0].Port == nil || rule.Ports[0].Port.IntValue() != 8317 {
+			t.Fatalf("broker ingress rule is not restricted to CPA port: %#v", rule.Ports)
+		}
+	}
+	if !gatewayIngress {
+		t.Fatal("broker ingress is missing same-tenant LiteLLM")
+	}
+	if !operatorIngress {
+		t.Fatal("broker ingress is missing Fabric operator management path")
 	}
 
 	if _, err := r.reconcileAICredentialBroker(ctx, tenant); err != nil {

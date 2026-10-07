@@ -215,14 +215,37 @@ multiple tenants.
 Interactive OAuth remains an administrative operation.
 
 1. Admin/Fabric selects one tenant broker.
-2. CPA performs provider authorization.
-3. Mutable auth state is persisted only on that tenant broker PVC.
-4. CPA owns refresh and account eligibility.
-5. Fabric exposes only log-safe lifecycle/quota state.
-6. Disable/revoke removes an account from eligibility before destructive cleanup.
+2. The Fabric admin client reads that tenant's CPA management credential from
+   Kubernetes and starts CPA's remote Codex OAuth flow.
+3. The admin opens the returned OpenAI authorization URL.
+4. For the browser/PKCE flow used by pinned CPA v8.0.16, the admin copies the
+   final localhost callback URL from the browser and pastes it into the admin
+   client. The client forwards that callback to CPA's authenticated management
+   API.
+5. CPA exchanges the code and persists mutable access/refresh/account state only
+   on that tenant broker PVC under `/data/auth`.
+6. CPA owns refresh and account eligibility.
+7. Fabric exposes only log-safe lifecycle/quota state.
+8. Disable/revoke removes an account from eligibility before destructive cleanup.
 
-The exact remote Codex authorization flow still requires physical proof for the
-pinned CPA version before #3868 can close.
+The first v0.1 administrative surface is deliberately internal and ships inside
+the Fabric operator image:
+
+```bash
+kubectl -n txo-fabric-system exec -it deploy/txo-fabric-operator -- \
+  /txo-fabric-admin oauth-connect --tenant hairem --provider codex
+```
+
+The command never prints the CPA management password or provider tokens. Network
+policy permits this management path only from the Fabric operator pod to
+tenant-owned CPA pods. Hermes and other tenant workloads do not gain CPA
+management access.
+
+A future Fabric admin UI may wrap the same contract; it must not move OAuth
+tokens into Git, TenantBundle/AgentIdentity spec or status, or agent runtimes.
+
+The exact remote Codex authorization flow still requires physical proof against
+the production-pinned CPA version before #3868 can close.
 
 ## Migration
 
@@ -243,9 +266,9 @@ accepted database/key/metering contract and the physical smoke tests pass.
 
 `fabric-smoke` is a parked recovery shell under #3815 and must remain free of
 steady-state runtime compute. The temporary direct-CPA activation introduced by
-#3884/#3886 is retired before promotion. Physical AI-plane acceptance must use a
-purpose-built disposable test tenant created for the validation window, then
-removed again through GitOps.
+#3884/#3886 is retired before promotion. Physical AI-plane acceptance uses the
+real beta tenants: hAIrem first for functional validation, then Indiba for parity
+and cross-tenant isolation.
 
 ## Required tests
 
