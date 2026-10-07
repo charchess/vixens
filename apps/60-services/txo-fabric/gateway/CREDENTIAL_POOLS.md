@@ -118,8 +118,8 @@ PersistentVolumeClaim/txo-ai-credential-broker-auth
 NetworkPolicy/txo-ai-credential-broker
 ```
 
-The future LiteLLM facade owns the `txo-ai-gateway` resource family. The two
-components must coexist without resource-name collisions.
+The tenant LiteLLM facade owns the `txo-ai-gateway` resource family. The two
+components coexist without resource-name collisions.
 
 The CPA auth PVC is provider credential state, never agent state. It is not
 mounted into AgentIdentity or Hindsight workloads.
@@ -145,6 +145,40 @@ Examples:
 - another service may receive `txo-reasoning` without any access to CPA.
 
 Provider account identity remains invisible to consumers.
+
+### OpenRouter credential contract
+
+OpenRouter-backed logical routes are enabled per tenant, never by copying the
+historical shared provider key into every tenant.
+
+The platform secret contract is:
+
+```text
+Secret/txo-fabric-system/txo-ai-provider-<tenant>
+  OPENROUTER_API_KEY
+      |
+      v
+Secret/tenant-<tenant>/txo-ai-gateway-runtime
+      |
+      v
+tenant LiteLLM
+```
+
+The source Secret is expected to be projected from OpenBao through External
+Secrets Operator. No provider value belongs in Git, TenantBundle, AgentIdentity,
+Hindsight runtime configuration, or CR status.
+
+When the credential exists, Fabric adds `txo-embedding` to that tenant LiteLLM,
+currently backed by `openrouter/baai/bge-m3`, and permits HTTPS egress from the
+gateway. Hindsight itself receives only a LiteLLM virtual key scoped to
+`txo-embedding`; it has no direct provider egress.
+
+Credential appearance/rotation is watched by the TenantBundle controller through
+the deterministic `txo-ai-provider-<tenant>` Secret name. A missing provider
+credential does not break `txo-agent`/CPA. For an existing tenant that has not
+yet migrated Hindsight, the historical shared embedding route remains a bounded
+migration source. Once Hindsight has adopted the tenant route, loss of the
+provider credential fails closed instead of falling back to shared inference.
 
 ## Retry and fallback layering
 
