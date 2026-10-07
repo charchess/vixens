@@ -720,3 +720,40 @@ func TestAIProviderSecretWatchTargetsOnlyMatchingTenant(t *testing.T) {
 		t.Fatalf("provider Secret outside %s unexpectedly enqueued tenant: %#v", tenantAIProviderSecretNamespace, got)
 	}
 }
+
+
+func TestTenantLiteLLMRollsWhenOpenRouterCredentialRevisionChanges(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	profile := aiGatewayTestProfile()
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	first := aiGatewayBackendState{
+		OpenRouterEnabled:        true,
+		OpenRouterSecretRevision: "100",
+	}
+	if _, err := r.ensureTenantAIGatewayDeployment(ctx, tenant, profile, first, "stable-config"); err != nil {
+		t.Fatal(err)
+	}
+	var deployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayName}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	if got := deployment.Spec.Template.Annotations["fabric.truxonline.io/openrouter-secret-revision"]; got != "100" {
+		t.Fatalf("initial provider revision=%q", got)
+	}
+
+	second := first
+	second.OpenRouterSecretRevision = "101"
+	if _, err := r.ensureTenantAIGatewayDeployment(ctx, tenant, profile, second, "stable-config"); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayName}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	if got := deployment.Spec.Template.Annotations["fabric.truxonline.io/openrouter-secret-revision"]; got != "101" {
+		t.Fatalf("rotated provider revision=%q want 101", got)
+	}
+}
