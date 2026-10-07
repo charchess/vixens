@@ -246,142 +246,147 @@ func (r *TenantBundleReconciler) cleanupHindsight(ctx context.Context, bundle *f
 	}
 	if !pending {
 		// Revocation is intentionally best-effort: gateway unavailability must not
-		// wedge TenantBundle deletion. The deterministic alias contains no secret.
-		_ = revokeModelAccessKey(ctx, hindsightEmbeddingKeyAlias(bundle))
+		// wedge TenantBundle deletion. Revoke both the historical migration source
+		// and the canonical tenant-local backend when they are reachable.
+		alias := hindsightEmbeddingKeyAlias(bundle)
+		_ = revokeModelAccessKeyIfExistsWithBackend(ctx, sharedModelAccessBackend(), alias)
+		if backend, err := tenantModelAccessBackend(ctx, r.Client, bundle, defaultAIEmbeddingModel); err == nil {
+			_ = revokeModelAccessKeyIfExistsWithBackend(ctx, backend, alias)
+		}
 	}
 	return pending, nil
 }
 
-func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bundle *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.HindsightProfile, names hindsightNames, postgresqlSecret *corev1.Secret) (*hindsightResult, error) {
-	username := strings.TrimSpace(string(postgresqlSecret.Data[corev1.BasicAuthUsernameKey]))
-	password := string(postgresqlSecret.Data[corev1.BasicAuthPasswordKey])
-	host := strings.TrimSpace(string(postgresqlSecret.Data["host"]))
-	port := strings.TrimSpace(string(postgresqlSecret.Data["port"]))
-	database := strings.TrimSpace(string(postgresqlSecret.Data["dbname"]))
-	if username == "" || password == "" || host == "" || database == "" {
-		blocked := hindsightBlocked("InvalidPostgreSQLCredentials", "tenant PostgreSQL Secret is missing username, password, host, or dbname", 0)
-		return &blocked, nil
+func normalizedHindsightEmbeddingBackend(secret *corev1.Secret) string {
+	if secret == nil {
+		return sharedModelAccessBackendID
 	}
-	if port == "" {
-		port = "5432"
+	backendID := strings.TrimSpace(secret.Annotations[AnnotationHindsightEmbeddingBackend])
+	if backendID == "" {
+		return sharedModelAccessBackendID
 	}
-
-	databaseURL := &url.URL{
-		Scheme: "postgresql",
-		User:   url.UserPassword(username, password),
-		Host:   net.JoinHostPort(host, port),
-		Path:   "/" + database,
-	}
-
-	gatewayEnabled := hindsightUsesPlatformGateway(profile)
-	alias := hindsightEmbeddingKeyAlias(bundle)
-	requestedRevision := hindsightEmbeddingRotationRevision(bundle)
-	namespace := tenantNamespace(bundle.Name)
-	key := client.ObjectKey{Namespace: namespace, Name: names.Secret}
-	var secret corev1.Secret
-	if err := r.Get(ctx, key, &secret); err != nil {
-		if !apierrors.IsNotFound(err) {
-			return nil, err
-		}
-		apiKey, err := randomPassword()
-		if err != nil {
-			return nil, err
-		}
-		embeddingKey := ""
-		annotations := map[string]string{}
-		if gatewayEnabled {
-			if err := revokeModelAccessKeyIfExists(ctx, alias); err != nil {
-				return nil, fmt.Errorf("revoke stale Hindsight embedding key alias %q: %w", alias, err)
-			}
-			embeddingKey, err = generateHindsightEmbeddingAccessKey(ctx, bundle)
-			if err != nil {
-				return nil, fmt.Errorf("provision Hindsight embedding gateway credential: %w", err)
-			}
-			if requestedRevision != "" {
-				annotations[AnnotationHindsightEmbeddingRevision] = requestedRevision
-			}
-		}
-		secret = corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        names.Secret,
-				Namespace:   namespace,
-				Labels:      hindsightLabels(bundle, profile, "runtime-secret"),
-				Annotations: annotations,
-			},
-			Type: corev1.SecretTypeOpaque,
-			Data: desiredHindsightSecretData(databaseURL.String(), apiKey, hindsightAPIPort(profile), embeddingKey, gatewayEnabled),
-		}
-		if err := r.Create(ctx, &secret); err != nil {
-			if embeddingKey != "" {
-				_ = revokeModelAccessKeyValueIfExists(ctx, embeddingKey)
-			}
-			return nil, err
-		}
-		return nil, nil
-	}
-	if !hindsightOwnedBy(&secret, bundle) {
-		blocked := hindsightBlocked("OwnershipConflict", fmt.Sprintf("Secret %s/%s exists but is not owned by this Fabric tenant", namespace, names.Secret), 0)
-		return &blocked, nil
-	}
-
-	apiKey := string(secret.Data["HINDSIGHT_API_TENANT_API_KEY"])
-	if apiKey == "" {
-		var err error
-		apiKey, err = randomPassword()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	embeddingKey := string(secret.Data[hindsightEmbeddingSecretKey])
-	appliedRevision := secret.Annotations[AnnotationHindsightEmbeddingRevision]
-	generatedEmbeddingKey := false
-	if gatewayEnabled {
-		needsReplacement := embeddingKey == "" || (requestedRevision != "" && appliedRevision != requestedRevision)
-		if needsReplacement {
-			if err := revokeModelAccessKeyIfExists(ctx, alias); err != nil {
-				return nil, fmt.Errorf("revoke previous Hindsight embedding key alias %q: %w", alias, err)
-			}
-			var err error
-			embeddingKey, err = generateHindsightEmbeddingAccessKey(ctx, bundle)
-			if err != nil {
-				return nil, fmt.Errorf("provision Hindsight embedding gateway credential: %w", err)
-			}
-			generatedEmbeddingKey = true
-		}
-	} else if embeddingKey != "" {
-		if err := revokeModelAccessKeyIfExists(ctx, alias); err != nil {
-			return nil, fmt.Errorf("revoke disabled Hindsight embedding key alias %q: %w", alias, err)
-		}
-		embeddingKey = ""
-	}
-
-	desiredLabels := mergeStringMap(copyStringMap(secret.Labels), hindsightLabels(bundle, profile, "runtime-secret"))
-	desiredAnnotations := copyStringMap(secret.Annotations)
-	if gatewayEnabled {
-		if requestedRevision != "" {
-			desiredAnnotations[AnnotationHindsightEmbeddingRevision] = requestedRevision
-		}
-	} else {
-		delete(desiredAnnotations, AnnotationHindsightEmbeddingRevision)
-	}
-	desiredData := desiredHindsightSecretData(databaseURL.String(), apiKey, hindsightAPIPort(profile), embeddingKey, gatewayEnabled)
-	if secret.Type != corev1.SecretTypeOpaque || !reflect.DeepEqual(secret.Labels, desiredLabels) || !reflect.DeepEqual(secret.Annotations, desiredAnnotations) || !reflect.DeepEqual(secret.Data, desiredData) {
-		secret.Type = corev1.SecretTypeOpaque
-		secret.Labels = desiredLabels
-		secret.Annotations = desiredAnnotations
-		secret.Data = desiredData
-		if err := r.Update(ctx, &secret); err != nil {
-			if generatedEmbeddingKey {
-				_ = revokeModelAccessKeyValueIfExists(ctx, embeddingKey)
-			}
-			return nil, err
-		}
-	}
-	return nil, nil
+	return backendID
 }
 
-func desiredHindsightSecretData(databaseURL, apiKey string, port int32, embeddingKey string, gatewayEnabled bool) map[string][]byte {
+func (r *TenantBundleReconciler) tenantOpenRouterCredentialAvailable(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (bool, error) {
+	var secret corev1.Secret
+	if err := r.Get(ctx, client.ObjectKey{
+		Namespace: tenantAIProviderSecretNamespace,
+		Name:      tenantAIProviderSecretName(bundle.Name),
+	}, &secret); err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return len(secret.Data[tenantAIOpenRouterSecretKey]) > 0, nil
+}
+
+func (r *TenantBundleReconciler) tenantEmbeddingRouteReady(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (bool, error) {
+	namespace := tenantNamespace(bundle.Name)
+	var config corev1.ConfigMap
+	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: tenantAIGatewayConfigMapName}, &config); err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	if !strings.Contains(config.Data["config.yaml"], "model_name: "+defaultAIEmbeddingModel) {
+		return false, nil
+	}
+	configHash := strings.TrimSpace(config.Annotations["fabric.truxonline.io/config-hash"])
+	if configHash == "" {
+		return false, nil
+	}
+
+	var deployment appsv1.Deployment
+	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: tenantAIGatewayName}, &deployment); err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	if deployment.Spec.Template.Annotations["fabric.truxonline.io/config-hash"] != configHash {
+		return false, nil
+	}
+	return deployment.Status.ObservedGeneration == deployment.Generation && deployment.Status.AvailableReplicas > 0, nil
+}
+
+func (r *TenantBundleReconciler) resolveHindsightEmbeddingBackend(
+	ctx context.Context,
+	bundle *fabricv1alpha1.TenantBundle,
+	appliedBackendID string,
+) (modelAccessBackend, string, error) {
+	appliedBackendID = strings.TrimSpace(appliedBackendID)
+	if appliedBackendID == "" {
+		appliedBackendID = sharedModelAccessBackendID
+	}
+	alreadyTenant := strings.HasPrefix(appliedBackendID, "tenant:"+bundle.Name+":")
+	if appliedBackendID != sharedModelAccessBackendID && !alreadyTenant {
+		return modelAccessBackend{}, fmt.Sprintf("Hindsight embedding backend %q does not belong to tenant %q", appliedBackendID, bundle.Name), nil
+	}
+
+	hasProviderCredential, err := r.tenantOpenRouterCredentialAvailable(ctx, bundle)
+	if err != nil {
+		return modelAccessBackend{}, "", err
+	}
+	if !hasProviderCredential {
+		if alreadyTenant {
+			return modelAccessBackend{}, "tenant OpenRouter credential is unavailable; refusing fallback to the historical shared gateway", nil
+		}
+		return sharedModelAccessBackend(), "", nil
+	}
+
+	tenantBackend, err := tenantModelAccessBackend(ctx, r.Client, bundle, defaultAIEmbeddingModel)
+	if err != nil {
+		if alreadyTenant {
+			return modelAccessBackend{}, "tenant LiteLLM embedding backend is unavailable: " + err.Error(), nil
+		}
+		return sharedModelAccessBackend(), "", nil
+	}
+	routeReady, err := r.tenantEmbeddingRouteReady(ctx, bundle)
+	if err != nil {
+		return modelAccessBackend{}, "", err
+	}
+	if !routeReady {
+		if alreadyTenant {
+			return modelAccessBackend{}, "waiting for the tenant LiteLLM txo-embedding route to become available", nil
+		}
+		// Existing tenants remain on the known-good shared embedding route until
+		// the destination tenant LiteLLM route is fully available.
+		return sharedModelAccessBackend(), "", nil
+	}
+	return tenantBackend, "", nil
+}
+
+func hindsightDeploymentAdoptedEmbedding(deployment *appsv1.Deployment, secret *corev1.Secret) bool {
+	if deployment == nil || secret == nil {
+		return false
+	}
+	revision := strings.TrimSpace(secret.Annotations[AnnotationHindsightEmbeddingRevision])
+	if revision == "" {
+		return false
+	}
+	if deployment.Spec.Template.Annotations[AnnotationHindsightEmbeddingRevision] != revision {
+		return false
+	}
+	if deployment.Spec.Template.Annotations[AnnotationHindsightEmbeddingSecretUID] != string(secret.UID) {
+		return false
+	}
+	return deployment.Status.ObservedGeneration == deployment.Generation && deployment.Status.AvailableReplicas > 0
+}
+
+func hindsightEmbeddingRevision(backend modelAccessBackend, requestedRotation, appliedRevision string, backendChanged bool) string {
+	if requestedRotation != "" {
+		return modelAccessBackendRevision(backend.ID, requestedRotation)
+	}
+	if backendChanged && backend.ID != sharedModelAccessBackendID {
+		return modelAccessBackendRevision(backend.ID, "")
+	}
+	return appliedRevision
+}
+
+func desiredHindsightSecretData(databaseURL, apiKey string, port int32, embeddingKey string, embeddingBaseURL string, gatewayEnabled bool) map[string][]byte {
 	data := map[string][]byte{
 		"HINDSIGHT_API_DATABASE_URL":       []byte(databaseURL),
 		"HINDSIGHT_API_DATABASE_SCHEMA":    []byte("public"),
@@ -399,12 +404,260 @@ func desiredHindsightSecretData(databaseURL, apiKey string, port int32, embeddin
 	}
 	if gatewayEnabled {
 		data["HINDSIGHT_API_EMBEDDINGS_PROVIDER"] = []byte("openai")
-		data["HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL"] = []byte(aiGatewayURL() + "/v1")
+		data["HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL"] = []byte(embeddingBaseURL)
 		data["HINDSIGHT_API_EMBEDDINGS_OPENAI_MODEL"] = []byte(defaultAIEmbeddingModel)
 		data["HINDSIGHT_API_EMBEDDINGS_OPENAI_DIMENSIONS"] = []byte(defaultAIEmbeddingDimension)
 		data[hindsightEmbeddingSecretKey] = []byte(embeddingKey)
 	}
 	return data
+}
+
+func (r *TenantBundleReconciler) ensureHindsightSecret(ctx context.Context, bundle *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.HindsightProfile, names hindsightNames, postgresqlSecret *corev1.Secret) (*hindsightResult, error) {
+	username := strings.TrimSpace(string(postgresqlSecret.Data[corev1.BasicAuthUsernameKey]))
+	password := string(postgresqlSecret.Data[corev1.BasicAuthPasswordKey])
+	host := strings.TrimSpace(string(postgresqlSecret.Data["host"]))
+	port := strings.TrimSpace(string(postgresqlSecret.Data["port"]))
+	database := strings.TrimSpace(string(postgresqlSecret.Data["dbname"]))
+	if username == "" || password == "" || host == "" || database == "" {
+		blocked := hindsightBlocked("InvalidPostgreSQLCredentials", "tenant PostgreSQL Secret is missing username, password, host, or dbname", 0)
+		return &blocked, nil
+	}
+	if port == "" {
+		port = "5432"
+	}
+	databaseURL := (&url.URL{
+		Scheme: "postgresql",
+		User:   url.UserPassword(username, password),
+		Host:   net.JoinHostPort(host, port),
+		Path:   "/" + database,
+	}).String()
+
+	gatewayEnabled := hindsightUsesPlatformGateway(profile)
+	alias := hindsightEmbeddingKeyAlias(bundle)
+	requestedRotation := hindsightEmbeddingRotationRevision(bundle)
+	namespace := tenantNamespace(bundle.Name)
+	key := client.ObjectKey{Namespace: namespace, Name: names.Secret}
+
+	var secret corev1.Secret
+	secretExists := true
+	if err := r.Get(ctx, key, &secret); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return nil, err
+		}
+		secretExists = false
+	}
+	if secretExists && !hindsightOwnedBy(&secret, bundle) {
+		blocked := hindsightBlocked("OwnershipConflict", fmt.Sprintf("Secret %s/%s exists but is not owned by this Fabric tenant", namespace, names.Secret), 0)
+		return &blocked, nil
+	}
+
+	var existingSecret *corev1.Secret
+	if secretExists {
+		existingSecret = &secret
+	}
+	appliedBackendID := normalizedHindsightEmbeddingBackend(existingSecret)
+
+	if !gatewayEnabled {
+		apiKey := ""
+		if secretExists {
+			apiKey = string(secret.Data["HINDSIGHT_API_TENANT_API_KEY"])
+		}
+		if apiKey == "" {
+			var err error
+			apiKey, err = randomPassword()
+			if err != nil {
+				return nil, err
+			}
+		}
+		if secretExists && string(secret.Data[hindsightEmbeddingSecretKey]) != "" {
+			backend := sharedModelAccessBackend()
+			if strings.HasPrefix(appliedBackendID, "tenant:"+bundle.Name+":") {
+				if resolved, err := tenantModelAccessBackend(ctx, r.Client, bundle, defaultAIEmbeddingModel); err == nil {
+					backend = resolved
+				}
+			}
+			if err := revokeModelAccessKeyIfExistsWithBackend(ctx, backend, alias); err != nil {
+				return nil, fmt.Errorf("revoke disabled Hindsight embedding key alias %q: %w", alias, err)
+			}
+		}
+		desired := desiredHindsightSecretData(databaseURL, apiKey, hindsightAPIPort(profile), "", "", false)
+		if !secretExists {
+			secret = corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{Name: names.Secret, Namespace: namespace, Labels: hindsightLabels(bundle, profile, "runtime-secret")},
+				Type:       corev1.SecretTypeOpaque,
+				Data:       desired,
+			}
+			if err := r.Create(ctx, &secret); err != nil {
+				return nil, err
+			}
+			return nil, nil
+		}
+		secret.Type = corev1.SecretTypeOpaque
+		secret.Labels = mergeStringMap(copyStringMap(secret.Labels), hindsightLabels(bundle, profile, "runtime-secret"))
+		secret.Annotations = copyStringMap(secret.Annotations)
+		delete(secret.Annotations, AnnotationHindsightEmbeddingRevision)
+		delete(secret.Annotations, AnnotationHindsightEmbeddingBackend)
+		delete(secret.Annotations, AnnotationHindsightEmbeddingBackendURL)
+		delete(secret.Annotations, AnnotationHindsightLegacyCleanupPending)
+		secret.Data = desired
+		if err := r.Update(ctx, &secret); err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	backend, pendingMessage, err := r.resolveHindsightEmbeddingBackend(ctx, bundle, appliedBackendID)
+	if err != nil {
+		return nil, err
+	}
+	if pendingMessage != "" {
+		pending := hindsightPending("EmbeddingBackendPending", pendingMessage, names, 5*time.Second)
+		return &pending, nil
+	}
+
+	apiKey := ""
+	if secretExists {
+		apiKey = string(secret.Data["HINDSIGHT_API_TENANT_API_KEY"])
+	}
+	if apiKey == "" {
+		apiKey, err = randomPassword()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if !secretExists {
+		if err := revokeModelAccessKeyIfExistsWithBackend(ctx, backend, alias); err != nil {
+			return nil, fmt.Errorf("revoke stale Hindsight embedding key alias %q on backend %q: %w", alias, backend.ID, err)
+		}
+		embeddingKey, err := generateHindsightEmbeddingAccessKeyWithBackend(ctx, backend, bundle)
+		if err != nil {
+			return nil, fmt.Errorf("provision Hindsight embedding gateway credential on backend %q: %w", backend.ID, err)
+		}
+		revision := hindsightEmbeddingRevision(backend, requestedRotation, "", backend.ID != sharedModelAccessBackendID)
+		annotations := map[string]string{
+			AnnotationHindsightEmbeddingBackend:    backend.ID,
+			AnnotationHindsightEmbeddingBackendURL: backend.URL,
+		}
+		if revision != "" {
+			annotations[AnnotationHindsightEmbeddingRevision] = revision
+		}
+		secret = corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        names.Secret,
+				Namespace:   namespace,
+				Labels:      hindsightLabels(bundle, profile, "runtime-secret"),
+				Annotations: annotations,
+			},
+			Type: corev1.SecretTypeOpaque,
+			Data: desiredHindsightSecretData(
+				databaseURL, apiKey, hindsightAPIPort(profile), embeddingKey,
+				backend.runtimeBinding().BaseURL, true,
+			),
+		}
+		if err := r.Create(ctx, &secret); err != nil {
+			_ = revokeModelAccessKeyValueIfExistsWithBackend(ctx, backend, embeddingKey)
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	// A shared -> tenant cutover is staged: destination credential first, runtime
+	// adoption second, source revocation last. Never migrate back to shared.
+	backendChanged := appliedBackendID != backend.ID
+	if backendChanged {
+		if appliedBackendID != sharedModelAccessBackendID || !strings.HasPrefix(backend.ID, "tenant:"+bundle.Name+":") {
+			blocked := hindsightBlocked("EmbeddingBackendTransitionRefused", fmt.Sprintf("refusing Hindsight embedding backend transition %q -> %q", appliedBackendID, backend.ID), 0)
+			return &blocked, nil
+		}
+		if err := revokeModelAccessKeyIfExistsWithBackend(ctx, backend, alias); err != nil {
+			return nil, fmt.Errorf("cleanup destination Hindsight embedding alias %q on backend %q: %w", alias, backend.ID, err)
+		}
+		replacementKey, err := generateHindsightEmbeddingAccessKeyWithBackend(ctx, backend, bundle)
+		if err != nil {
+			return nil, fmt.Errorf("prepare destination Hindsight embedding credential on backend %q: %w", backend.ID, err)
+		}
+		revision := hindsightEmbeddingRevision(backend, requestedRotation, secret.Annotations[AnnotationHindsightEmbeddingRevision], true)
+		desiredAnnotations := copyStringMap(secret.Annotations)
+		desiredAnnotations[AnnotationHindsightEmbeddingBackend] = backend.ID
+		desiredAnnotations[AnnotationHindsightEmbeddingBackendURL] = backend.URL
+		desiredAnnotations[AnnotationHindsightEmbeddingRevision] = revision
+		desiredAnnotations[AnnotationHindsightLegacyCleanupPending] = sharedModelAccessBackendID
+		secret.Type = corev1.SecretTypeOpaque
+		secret.Labels = mergeStringMap(copyStringMap(secret.Labels), hindsightLabels(bundle, profile, "runtime-secret"))
+		secret.Annotations = desiredAnnotations
+		secret.Data = desiredHindsightSecretData(
+			databaseURL, apiKey, hindsightAPIPort(profile), replacementKey,
+			backend.runtimeBinding().BaseURL, true,
+		)
+		if err := r.Update(ctx, &secret); err != nil {
+			_ = revokeModelAccessKeyValueIfExistsWithBackend(ctx, backend, replacementKey)
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	if secret.Annotations[AnnotationHindsightLegacyCleanupPending] == sharedModelAccessBackendID {
+		var deployment appsv1.Deployment
+		if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: names.Deployment}, &deployment); err != nil {
+			if !apierrors.IsNotFound(err) {
+				return nil, err
+			}
+			return nil, nil
+		}
+		if !hindsightDeploymentAdoptedEmbedding(&deployment, &secret) {
+			return nil, nil
+		}
+		if err := revokeModelAccessKeyIfExistsWithBackend(ctx, sharedModelAccessBackend(), alias); err != nil {
+			return nil, fmt.Errorf("finalize Hindsight shared embedding credential cleanup: %w", err)
+		}
+		secret.Annotations = copyStringMap(secret.Annotations)
+		delete(secret.Annotations, AnnotationHindsightLegacyCleanupPending)
+		if err := r.Update(ctx, &secret); err != nil {
+			return nil, err
+		}
+	}
+
+	appliedRevision := strings.TrimSpace(secret.Annotations[AnnotationHindsightEmbeddingRevision])
+	wantedRevision := hindsightEmbeddingRevision(backend, requestedRotation, appliedRevision, false)
+	embeddingKey := string(secret.Data[hindsightEmbeddingSecretKey])
+	generatedEmbeddingKey := false
+	if embeddingKey == "" || (requestedRotation != "" && appliedRevision != wantedRevision) {
+		if err := revokeModelAccessKeyIfExistsWithBackend(ctx, backend, alias); err != nil {
+			return nil, fmt.Errorf("revoke previous Hindsight embedding key alias %q on backend %q: %w", alias, backend.ID, err)
+		}
+		embeddingKey, err = generateHindsightEmbeddingAccessKeyWithBackend(ctx, backend, bundle)
+		if err != nil {
+			return nil, fmt.Errorf("provision Hindsight embedding gateway credential on backend %q: %w", backend.ID, err)
+		}
+		generatedEmbeddingKey = true
+		appliedRevision = wantedRevision
+	}
+
+	desiredAnnotations := copyStringMap(secret.Annotations)
+	desiredAnnotations[AnnotationHindsightEmbeddingBackend] = backend.ID
+	desiredAnnotations[AnnotationHindsightEmbeddingBackendURL] = backend.URL
+	if appliedRevision != "" {
+		desiredAnnotations[AnnotationHindsightEmbeddingRevision] = appliedRevision
+	}
+	desiredData := desiredHindsightSecretData(
+		databaseURL, apiKey, hindsightAPIPort(profile), embeddingKey,
+		backend.runtimeBinding().BaseURL, true,
+	)
+	desiredLabels := mergeStringMap(copyStringMap(secret.Labels), hindsightLabels(bundle, profile, "runtime-secret"))
+	if secret.Type != corev1.SecretTypeOpaque || !reflect.DeepEqual(secret.Labels, desiredLabels) || !reflect.DeepEqual(secret.Annotations, desiredAnnotations) || !reflect.DeepEqual(secret.Data, desiredData) {
+		secret.Type = corev1.SecretTypeOpaque
+		secret.Labels = desiredLabels
+		secret.Annotations = desiredAnnotations
+		secret.Data = desiredData
+		if err := r.Update(ctx, &secret); err != nil {
+			if generatedEmbeddingKey {
+				_ = revokeModelAccessKeyValueIfExistsWithBackend(ctx, backend, embeddingKey)
+			}
+			return nil, err
+		}
+	}
+	return nil, nil
 }
 
 func desiredHindsightEnv(bundle *fabricv1alpha1.TenantBundle, names hindsightNames) []corev1.EnvVar {
@@ -551,13 +804,37 @@ func (r *TenantBundleReconciler) ensureHindsightNetworkPolicy(ctx context.Contex
 			},
 		}
 		if hindsightUsesPlatformGateway(profile) {
-			egress = append(egress, networkingv1.NetworkPolicyEgressRule{
-				To: []networkingv1.NetworkPolicyPeer{{
-					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "txo-fabric-system"}},
-					PodSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "txo-ai-gateway"}},
-				}},
-				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(4000)}},
-			})
+			backendID := sharedModelAccessBackendID
+			legacyCleanupPending := false
+			var runtimeSecret corev1.Secret
+			if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: names.Secret}, &runtimeSecret); err == nil {
+				backendID = normalizedHindsightEmbeddingBackend(&runtimeSecret)
+				legacyCleanupPending = runtimeSecret.Annotations[AnnotationHindsightLegacyCleanupPending] == sharedModelAccessBackendID
+			} else if !apierrors.IsNotFound(err) {
+				return err
+			}
+
+			if backendID == sharedModelAccessBackendID || legacyCleanupPending {
+				egress = append(egress, networkingv1.NetworkPolicyEgressRule{
+					To: []networkingv1.NetworkPolicyPeer{{
+						NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "txo-fabric-system"}},
+						PodSelector:       &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "txo-ai-gateway"}},
+					}},
+					Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(4000)}},
+				})
+			}
+			if strings.HasPrefix(backendID, "tenant:"+bundle.Name+":") {
+				egress = append(egress, networkingv1.NetworkPolicyEgressRule{
+					To: []networkingv1.NetworkPolicyPeer{{
+						PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+							LabelManaged:    "true",
+							LabelTenantName: bundle.Name,
+							"app.kubernetes.io/component": "tenant-ai-gateway",
+						}},
+					}},
+					Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(4000)}},
+				})
+			}
 		}
 		ingressPeers := []networkingv1.NetworkPolicyPeer{{
 			PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hermes-agent"}},

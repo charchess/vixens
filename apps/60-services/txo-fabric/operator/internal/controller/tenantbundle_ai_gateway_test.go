@@ -74,6 +74,16 @@ func aiGatewayTestBrokerBackend(tenant *fabricv1alpha1.TenantBundle) (*corev1.Se
 		}
 }
 
+func aiGatewayTestProviderSecret(tenantName string) *corev1.Secret {
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      tenantAIProviderSecretName(tenantName),
+			Namespace: tenantAIProviderSecretNamespace,
+		},
+		Data: map[string][]byte{tenantAIOpenRouterSecretKey: []byte("test-openrouter-key-" + tenantName)},
+	}
+}
+
 func TestReconcileAIGatewayRequiresDedicatedPostgreSQLProfile(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
@@ -101,7 +111,8 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	postgresqlProfile := aiGatewayPostgreSQLTestProfile()
 	cluster := cnpgObject(cnpgClusterGVK, "databases", "postgresql-shared")
 	brokerService, brokerSecret := aiGatewayTestBrokerBackend(tenant)
-	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, gatewayProfile, postgresqlProfile, cluster, brokerService, brokerSecret).Build()
+	providerSecret := aiGatewayTestProviderSecret(tenant.Name)
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, gatewayProfile, postgresqlProfile, cluster, brokerService, brokerSecret, providerSecret).Build()
 	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
 
 	result, err := r.reconcileAIGateway(ctx, tenant)
@@ -187,6 +198,9 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	if !bytes.Equal(runtimeSecret.Data["DB_PASSWORD"], originalDatabasePassword) {
 		t.Fatal("tenant-local runtime Secret does not mirror the dedicated database credential")
 	}
+	if got := string(runtimeSecret.Data[tenantAIOpenRouterSecretKey]); got != "test-openrouter-key-"+tenant.Name {
+		t.Fatalf("tenant LiteLLM OpenRouter credential=%q, want tenant-scoped provider value", got)
+	}
 	originalMasterKey := append([]byte(nil), runtimeSecret.Data["LITELLM_MASTER_KEY"]...)
 
 	migrationName := aiGatewayMigrationName(gatewayProfile, &sourceSecret)
@@ -257,13 +271,31 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 		!strings.Contains(got, "api_base: http://txo-ai-credential-broker:8317/v1") {
 		t.Fatalf("active tenant LiteLLM config is not wired to tenant CPA: %s", got)
 	}
+	if got := gatewayConfig.Data["config.yaml"]; !strings.Contains(got, "model_name: txo-embedding") ||
+		!strings.Contains(got, "model: "+tenantAIEmbeddingProviderModel) ||
+		!strings.Contains(got, "api_key: os.environ/OPENROUTER_API_KEY") {
+		t.Fatalf("tenant LiteLLM config is missing tenant OpenRouter embedding route: %s", got)
+	} else if strings.Contains(got, "test-openrouter-key-"+tenant.Name) {
+		t.Fatal("tenant LiteLLM config leaked the OpenRouter credential value")
+	}
 
 	var gatewayPolicy networkingv1.NetworkPolicy
 	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayNetworkPolicy}, &gatewayPolicy); err != nil {
 		t.Fatalf("tenant LiteLLM NetworkPolicy missing: %v", err)
 	}
-	if len(gatewayPolicy.Spec.Egress) != 3 {
-		t.Fatalf("active tenant LiteLLM must have DNS + PostgreSQL + tenant CPA egress, got %d rules", len(gatewayPolicy.Spec.Egress))
+	if len(gatewayPolicy.Spec.Egress) != 4 {
+		t.Fatalf("active tenant LiteLLM with OpenRouter must have DNS + PostgreSQL + tenant CPA + HTTPS egress, got %d rules", len(gatewayPolicy.Spec.Egress))
+	}
+	httpsEgress := false
+	for _, rule := range gatewayPolicy.Spec.Egress {
+		for _, port := range rule.Ports {
+			if port.Port != nil && port.Port.IntValue() == 443 {
+				httpsEgress = true
+			}
+		}
+	}
+	if !httpsEgress {
+		t.Fatal("tenant LiteLLM OpenRouter route is missing TCP/443 egress")
 	}
 
 	gatewayDeployment.Status.ObservedGeneration = gatewayDeployment.Generation
@@ -615,3 +647,113 @@ func TestTenantLiteLLMNetworkPolicyAllowsSameTenantHermesIngress(t *testing.T) {
 	}
 }
 
+
+
+func TestTenantLiteLLMProviderCredentialIsTenantIsolated(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	hairem := aiGatewayTestTenant("hairem", "TEN00001")
+	indiba := aiGatewayTestTenant("indiba", "TEN00002")
+	hairemProvider := aiGatewayTestProviderSecret(hairem.Name)
+
+	hairemDB := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "hairem-db", Namespace: "databases"}, Data: map[string][]byte{
+		corev1.BasicAuthUsernameKey: []byte("hairem"), corev1.BasicAuthPasswordKey: []byte("hairem-pass"),
+		"host": []byte("postgresql-rw.databases.svc"), "port": []byte("5432"), "dbname": []byte("hairem"),
+	}}
+	indibaDB := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "indiba-db", Namespace: "databases"}, Data: map[string][]byte{
+		corev1.BasicAuthUsernameKey: []byte("indiba"), corev1.BasicAuthPasswordKey: []byte("indiba-pass"),
+		"host": []byte("postgresql-rw.databases.svc"), "port": []byte("5432"), "dbname": []byte("indiba"),
+	}}
+
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(hairem, indiba, hairemProvider).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+	if _, err := r.ensureAIGatewayRuntimeSecret(ctx, hairem, hairemDB); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.ensureAIGatewayRuntimeSecret(ctx, indiba, indibaDB); err != nil {
+		t.Fatal(err)
+	}
+
+	var hairemRuntime, indibaRuntime corev1.Secret
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(hairem.Name), Name: tenantAIGatewayRuntimeSecretName}, &hairemRuntime); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(indiba.Name), Name: tenantAIGatewayRuntimeSecretName}, &indibaRuntime); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(hairemRuntime.Data[tenantAIOpenRouterSecretKey]); got != "test-openrouter-key-hairem" {
+		t.Fatalf("hAIrem provider credential=%q", got)
+	}
+	if _, exists := indibaRuntime.Data[tenantAIOpenRouterSecretKey]; exists {
+		t.Fatal("Indiba runtime received another tenant's OpenRouter credential")
+	}
+}
+
+func TestRenderTenantLiteLLMConfigAddsEmbeddingOnlyWithProviderCredential(t *testing.T) {
+	withoutProvider := renderTenantLiteLLMConfig(aiGatewayBackendState{CPAEnabled: true, CPAPort: 8317})
+	if strings.Contains(withoutProvider, "model_name: txo-embedding") {
+		t.Fatalf("embedding route must stay absent without a tenant provider credential:\n%s", withoutProvider)
+	}
+
+	withProvider := renderTenantLiteLLMConfig(aiGatewayBackendState{CPAEnabled: true, CPAPort: 8317, OpenRouterEnabled: true})
+	for _, want := range []string{
+		"model_name: txo-agent",
+		"model_name: txo-embedding",
+		"model: openrouter/baai/bge-m3",
+		"api_key: os.environ/OPENROUTER_API_KEY",
+	} {
+		if !strings.Contains(withProvider, want) {
+			t.Fatalf("tenant LiteLLM config missing %q:\n%s", want, withProvider)
+		}
+	}
+}
+
+func TestAIProviderSecretWatchTargetsOnlyMatchingTenant(t *testing.T) {
+	ctx := context.Background()
+	requests := tenantBundleRequestsForAIProviderSecret(ctx, aiGatewayTestProviderSecret("hairem"))
+	if len(requests) != 1 || requests[0].Name != "hairem" {
+		t.Fatalf("provider Secret watch requests=%#v, want hairem", requests)
+	}
+	foreign := aiGatewayTestProviderSecret("indiba")
+	foreign.Namespace = "tenant-indiba"
+	if got := tenantBundleRequestsForAIProviderSecret(ctx, foreign); len(got) != 0 {
+		t.Fatalf("provider Secret outside %s unexpectedly enqueued tenant: %#v", tenantAIProviderSecretNamespace, got)
+	}
+}
+
+
+func TestTenantLiteLLMRollsWhenOpenRouterCredentialRevisionChanges(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	profile := aiGatewayTestProfile()
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	first := aiGatewayBackendState{
+		OpenRouterEnabled:        true,
+		OpenRouterSecretRevision: "100",
+	}
+	if _, err := r.ensureTenantAIGatewayDeployment(ctx, tenant, profile, first, "stable-config"); err != nil {
+		t.Fatal(err)
+	}
+	var deployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayName}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	if got := deployment.Spec.Template.Annotations["fabric.truxonline.io/openrouter-secret-revision"]; got != "100" {
+		t.Fatalf("initial provider revision=%q", got)
+	}
+
+	second := first
+	second.OpenRouterSecretRevision = "101"
+	if _, err := r.ensureTenantAIGatewayDeployment(ctx, tenant, profile, second, "stable-config"); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayName}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	if got := deployment.Spec.Template.Annotations["fabric.truxonline.io/openrouter-secret-revision"]; got != "101" {
+		t.Fatalf("rotated provider revision=%q want 101", got)
+	}
+}

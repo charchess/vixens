@@ -552,6 +552,21 @@ func tenantBundleRequestsForManagedObject(_ context.Context, obj client.Object) 
 	return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: tenantName}}}
 }
 
+func tenantBundleRequestsForAIProviderSecret(_ context.Context, obj client.Object) []reconcile.Request {
+	if obj.GetNamespace() != tenantAIProviderSecretNamespace {
+		return nil
+	}
+	name := strings.TrimSpace(obj.GetName())
+	if !strings.HasPrefix(name, tenantAIProviderSecretPrefix) {
+		return nil
+	}
+	tenantName := strings.TrimSpace(strings.TrimPrefix(name, tenantAIProviderSecretPrefix))
+	if tenantName == "" {
+		return nil
+	}
+	return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: tenantName}}}
+}
+
 func (r *TenantBundleReconciler) tenantBundleRequestsForPostgreSQLProfile(ctx context.Context, obj client.Object) []reconcile.Request {
 	profileName := obj.GetName()
 	if profileName == "" {
@@ -682,6 +697,7 @@ func (r *TenantBundleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&corev1.Namespace{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&corev1.Secret{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
+		Watches(&corev1.Secret{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForAIProviderSecret)).
 		Watches(&corev1.ConfigMap{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForAuthentikBlueprint)).
 		Watches(&appsv1.Deployment{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&batchv1.Job{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).

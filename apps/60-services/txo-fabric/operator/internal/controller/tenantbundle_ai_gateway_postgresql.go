@@ -372,6 +372,20 @@ func (r *TenantBundleReconciler) ensureAIGatewayRuntimeSecret(
 	databaseSecret *corev1.Secret,
 ) (*corev1.Secret, error) {
 	namespace := tenantNamespace(bundle.Name)
+
+	var openRouterKey []byte
+	var providerSecret corev1.Secret
+	if err := r.Get(ctx, client.ObjectKey{
+		Namespace: tenantAIProviderSecretNamespace,
+		Name:      tenantAIProviderSecretName(bundle.Name),
+	}, &providerSecret); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return nil, err
+		}
+	} else if value := providerSecret.Data[tenantAIOpenRouterSecretKey]; len(value) > 0 {
+		openRouterKey = append([]byte(nil), value...)
+	}
+
 	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayRuntimeSecretName, Namespace: namespace}}
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
 		secret.Labels = mergeStringMap(secret.Labels, aiGatewayRuntimeLabels(bundle))
@@ -394,6 +408,11 @@ func (r *TenantBundleReconciler) ensureAIGatewayRuntimeSecret(
 		secret.Data["DB_HOST"] = append([]byte(nil), databaseSecret.Data["host"]...)
 		secret.Data["DB_PORT"] = append([]byte(nil), databaseSecret.Data["port"]...)
 		secret.Data["DB_NAME"] = append([]byte(nil), databaseSecret.Data["dbname"]...)
+		if len(openRouterKey) > 0 {
+			secret.Data[tenantAIOpenRouterSecretKey] = openRouterKey
+		} else {
+			delete(secret.Data, tenantAIOpenRouterSecretKey)
+		}
 		if secret.Annotations == nil {
 			secret.Annotations = map[string]string{}
 		}
