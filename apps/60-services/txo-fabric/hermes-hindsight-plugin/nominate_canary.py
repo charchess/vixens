@@ -34,6 +34,8 @@ def nominate(root: Path, engine_image: str, plugin_image: str) -> str:
         "kind: HermesRuntimeRelease\n"
         "metadata:\n"
         f"  name: {name}\n"
+        "  annotations:\n"
+        '    argocd.argoproj.io/sync-wave: "-15"\n'
         "  labels:\n"
         "    app.kubernetes.io/part-of: txo-fabric\n"
         "    app.kubernetes.io/component: runtime-release\n"
@@ -43,14 +45,12 @@ def nominate(root: Path, engine_image: str, plugin_image: str) -> str:
     )
     if release_path.exists() and release_path.read_text(encoding="utf-8") != release:
         raise ValueError(f"refusing to alter existing immutable release {release_path}")
-    release_path.write_text(release, encoding="utf-8")
 
     kustomize = directory / "kustomization.yaml"
-    lines = kustomize.read_text(encoding="utf-8").splitlines()
+    kustomize_lines = kustomize.read_text(encoding="utf-8").splitlines()
     entry = f"  - {release_path.name}"
-    if entry not in lines:
-        lines.append(entry)
-        kustomize.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    if entry not in kustomize_lines:
+        kustomize_lines.append(entry)
 
     profile = directory / "hermes-upgrade-canary.yaml"
     lines = profile.read_text(encoding="utf-8").splitlines()
@@ -75,6 +75,9 @@ def nominate(root: Path, engine_image: str, plugin_image: str) -> str:
         if len(payload) != 1 or not payload[0].startswith("    hindsightPluginImage: "):
             raise ValueError("canary bootstrap contains fields that cannot be migrated safely")
         del lines[start:end]
+    # Validate the entire proposed candidate before writing any Git file.
+    release_path.write_text(release, encoding="utf-8")
+    kustomize.write_text("\n".join(kustomize_lines) + "\n", encoding="utf-8")
     profile.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return name
 
