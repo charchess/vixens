@@ -481,7 +481,9 @@ func testRuntimeProfile() *fabricv1alpha1.AgentRuntimeProfile {
 		ObjectMeta: metav1.ObjectMeta{Name: "hermes-default"},
 		Spec: fabricv1alpha1.AgentRuntimeProfileSpec{
 			Engine:  "Hermes",
-			Image:   "nousresearch/hermes-agent:v2026.9.24",
+			// Existing deployed runtime is the legacy derived Hermes image; opt-in
+			// official-image bootstrap tests override this fixture explicitly.
+			Image:   "ghcr.io/charchess/txo-fabric-hermes:main-ab881f643cbc",
 			Storage: fabricv1alpha1.RuntimeStorageSpec{Size: resource.MustParse("2Gi"), StorageClassName: "truenas-iscsi-delete"},
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("100m"), corev1.ResourceMemory: resource.MustParse("256Mi")},
