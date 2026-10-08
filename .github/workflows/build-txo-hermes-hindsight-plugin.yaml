@@ -12,6 +12,12 @@ on:
       - apps/60-services/txo-fabric/hermes-hindsight-plugin/**
       - .github/workflows/build-txo-hermes-hindsight-plugin.yaml
   workflow_dispatch:
+    inputs:
+      hermes_tag:
+        description: 'Versioned official upstream Hermes tag to pin on edge (never :latest)'
+        required: true
+        type: string
+        default: 'v0.21.6'
 
 concurrency:
   group: txo-hermes-hindsight-plugin-${{ github.ref }}
@@ -21,6 +27,9 @@ jobs:
   verify:
     name: Build and verify pinned plugin bundle
     runs-on: ubuntu-latest
+    outputs:
+      hermes_image: ${{ steps.official.outputs.image }}
+      hermes_tag: ${{ steps.official.outputs.tag }}
     permissions:
       contents: read
     steps:
@@ -28,6 +37,19 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      - name: Resolve official upstream Hermes OCI manifest by versioned tag
+        id: official
+        env:
+          HERMES_TAG: ${{ inputs.hermes_tag || 'v0.21.6' }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$HERMES_TAG" =~ ^v[0-9]+(\.[0-9]+){1,3}$ ]]; then
+            echo "::error::Hermes must use a versioned upstream tag, not :latest or :main"
+            exit 1
+          fi
+          DIGEST="$(docker buildx imagetools inspect --format '{{json .Manifest.Digest}}' "nousresearch/hermes-agent:$HERMES_TAG" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.startswith("sha256:") and len(d)==71; print(d)')"
+          echo "image=nousresearch/hermes-agent@${DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "tag=$HERMES_TAG" >> "$GITHUB_OUTPUT"
       - name: Check immutable release nomination algorithm
         run: python3 -m unittest discover -s apps/60-services/txo-fabric/hermes-hindsight-plugin/tests -p 'test_*.py'
       - name: Build plugin payload
@@ -41,6 +63,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Smoke-test official Hermes plugin discovery and wheel isolation
+        env:
+          HERMES_IMAGE: ${{ steps.official.outputs.image }}
         run: |
           set -e
           PAYLOAD_DIR="$(mktemp -d)"
@@ -55,11 +79,11 @@ jobs:
             -v "$PAYLOAD_DIR/hindsight:/opt/data/plugins/hindsight:ro" \
             -v "$PAYLOAD_DIR/python:/opt/txo-hindsight/python:ro" \
             --entrypoint /opt/hermes/.venv/bin/python \
-            nousresearch/hermes-agent:v2026.9.24 \
+            "$HERMES_IMAGE" \
             -c 'from plugins.memory import find_provider_dir; from pathlib import Path; import hindsight_client, aiohttp_retry; p=find_provider_dir("hindsight"); assert p is not None and str(p)=="/opt/data/plugins/hindsight",p; assert Path(p,"plugin.yaml").is_file(); print("OFFICIAL_HERMES_HINDSIGHT_DISCOVERY_OK")'
 
   publish:
-    name: Publish payload and propose Hermes dev candidate
+    name: Publish payload and propose Hermes edge candidate
     if: github.event_name != 'pull_request'
     needs: verify
     runs-on: ubuntu-latest
@@ -110,22 +134,22 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Create review-only Hermes dev pin PR
+      - name: Create review-only Hermes edge pin PR
         env:
           GH_TOKEN: ${{ steps.release-token.outputs.token }}
           BUNDLE_DIGEST: ${{ steps.push.outputs.digest }}
+          HERMES_IMAGE: ${{ needs.verify.outputs.hermes_image }}
+          HERMES_TAG: ${{ needs.verify.outputs.hermes_tag }}
         run: |
           set -e
           PLUGIN_IMAGE="ghcr.io/${{ github.repository_owner }}/txo-hermes-hindsight-plugin@${BUNDLE_DIGEST}"
-          # Resolve the *registry-provided* manifest digest of the official
-          # upstream tag. Never hash formatted CLI output (which may add a newline).
-          HERMES_MANIFEST_SHA="$(docker buildx imagetools inspect --format '{{json .Manifest.Digest}}' nousresearch/hermes-agent:v2026.9.24 | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.startswith("sha256:"); print(d[7:])')"
-          test "${#HERMES_MANIFEST_SHA}" -eq 64
-          HERMES_IMAGE="nousresearch/hermes-agent@sha256:${HERMES_MANIFEST_SHA}"
-          BRANCH="chore/txo-hermes-dev-release-$(git rev-parse --short=12 HEAD)"
+          # The verify job tested the exact manifest resolved from this versioned tag.
+          test -n "$HERMES_IMAGE"
+          test -n "$HERMES_TAG"
+          BRANCH="chore/txo-hermes-edge-release-${GITHUB_RUN_ID}"
           git checkout -b "${BRANCH}"
-          RELEASE_NAME="$(python3 apps/60-services/txo-fabric/hermes-hindsight-plugin/nominate_dev.py "${HERMES_IMAGE}" "${PLUGIN_IMAGE}")"
-          echo "Hermes dev release candidate: ${RELEASE_NAME}"
+          RELEASE_NAME="$(python3 apps/60-services/txo-fabric/hermes-hindsight-plugin/nominate_edge.py "${HERMES_IMAGE}" "${PLUGIN_IMAGE}" "${HERMES_TAG}")"
+          echo "Official Hermes edge release candidate: ${RELEASE_NAME}"
           git add apps/60-services/txo-fabric/operator/config/profiles
           if git diff --cached --quiet; then
             echo "Candidate release and pointer already declared"
@@ -134,6 +158,6 @@ jobs:
           git commit -m "chore(txo-fabric): nominate immutable Hermes runtime release ${RELEASE_NAME}"
           git push -u origin "${BRANCH}"
           gh pr create \
-            --title "chore(txo-fabric): Hermes dev pointer to immutable release ${RELEASE_NAME}" \
-            --body "Candidate for #3947 and #3944. Creates a verified immutable HermesRuntimeRelease from upstream OCI digest plus pinned Hindsight bundle, and moves ONLY hermes-dev.releaseRef. It does not modify hermes-test, hermes-stable, hermes-default, hermes-upgrade-canary or any AgentIdentity. CI is not physical acceptance: separate manually reviewed test/stable PRs require recorded real Kubernetes, state-restore and rollback evidence under #3688. No automatic merge or production promotion." \
+            --title "chore(txo-fabric): Hermes edge pointer to immutable release ${RELEASE_NAME}" \
+            --body "Candidate for #3947 and #3944. Official Hermes release tag ${HERMES_TAG}, resolved to the exact OCI digest and tested in CI with the pinned plugin bundle. Moves ONLY hermes-edge.releaseRef; does not advance hermes-canary or hermes-stable or modify any AgentIdentity. CI is not real-cluster acceptance. Promotion to canary/stable is independently reviewed and stable requires physical evidence under #3688. No auto-merge or prod promotion." \
             --base main --head "${BRANCH}"

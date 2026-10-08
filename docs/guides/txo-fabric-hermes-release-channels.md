@@ -1,108 +1,106 @@
-# TXO Fabric — Hermes immutable releases and deployment channels
+# TXO Fabric — pinned official Hermes runtime channels
 
-Scope: #3944, #3947, #3939, #3688. WORKFLOW.md governs all merges, GitOps
-snapshots and production promotion. These runtime channels are **not** Git
-branches or full-platform dev-v/prod-v/prod-stable release tags.
+Scope: #3944, #3947, #3939, #3688. WORKFLOW.md continues to govern PRs,
+GitOps snapshots and *explicitly approved* production promotion.
 
-## Contract
+## Three permanent pointers, not three test infrastructures
 
-HermesRuntimeRelease is immutable: an upstream official Hermes OCI digest plus
-a separately pinned Hindsight plugin digest. A new combination means a NEW
-release resource, never an edit of an existing release. AgentRuntimeProfile
-contains a mutable spec.releaseRef and still owns storage, capabilities,
-resource limits and scheduling. The only way to change a running agent's
-channel is to select that profile in AgentIdentity.spec.runtime.profileRef.
+`HermesRuntimeRelease` is immutable: an official upstream Hermes image **digest**
+and a separately pinned Hindsight plugin-bundle **digest**. Releases are historical
+data objects, not deployed Pods. `AgentRuntimeProfile` selects one by
+`spec.releaseRef`; only a bound `AgentIdentity` creates an agent runtime.
+There is no tenant, namespace, bank, volume or pod per upstream version.
 
-Permanent channels are hermes-dev, hermes-test and hermes-stable, with **the
-same release object and exact digests** moving from one channel to another.
-None is an intrinsic state of the operator. Promotion only moves GitOps
-pointers. History must associate the release, pointer, Git commit and the
-precise platform snapshot tag.
+| Profile pointer | Ownership | Advancement |
+| --- | --- | --- |
+| `hermes-stable` | Selected official upstream baseline, intended for approved client use | Human review; prior canary history, actual physical state/recovery evidence, explicit owner approval and exact GitOps snapshot |
+| `hermes-canary` | Newer pinned upstream candidate under qualification | Human-reviewed pointer update; must have appeared in committed edge history; physical validation occurs **after** selection, before stable |
+| `hermes-edge` | Most recent **selected** official upstream release | Review-only CI-generated PR; versioned upstream tag resolved to a real OCI digest; never a floating `:latest` or `:main` |
 
-## Phased introduction
+The same immutable release can be referenced by multiple channels and can advance
+edge → canary → stable **without** rebuilding it. Canary and edge may legitimately
+reference the same release when the newest published upstream version is being tested.
+The target is **three channel objects permanently**, not an unbounded succession
+of named `hermes-official-v...` profiles.
 
-1. **Dev, current PR**: register a real immutable release and hermes-dev
-   profile. No AgentIdentity is changed. The Hindsight publisher may only
-   nominate dev in a new reviewed PR; it cannot change test, stable or legacy
-   channels. The release is a software candidate, NOT physical acceptance.
-   Dev is only for isolated/disposable identities, never customer PVCs.
-   Retain storage is intentional for a controlled old-state and restore
-   rehearsal; cleanup of test state must be explicit.
+## Initial selection — 2026-10-08, software-only (unbound)
 
-2. **Physical test preparation**: create a dedicated isolated AgentIdentity
-   via GitOps; currently fabric-smoke is Parked and has no agent. Use the
-   legacy retained-storage profile to create representative old-version
-   local state, then record identity, PVC UID/class, image and Hindsight bank.
-   Create a CSI VolumeSnapshot using truenas-snapshot-retain, and switch only
-   this isolated identity to hermes-dev in a reviewed, reversible PR. Prove
-   official s6 gateway, initContainer plugin loading, LiteLLM/CPA inference,
-   Hindsight isolated retain/recall, private SOUL.md, sessions, local/shared
-   skills, cron, restart, unchanged PVC UID and bank. Restore a checkpoint
-   to a DISTINCT disposable PVC; never attach two writable runtimes to the
-   same RWO PVC. Prove rollback runtime plus compatible data.
+- `hermes-stable`: official `v2026.9.24` engine digest
+  `sha256:fca358f12efd65bfaaca05884166f15c0e2788375ca30d77061ac1ebc96452b7`.
+- `hermes-canary` and `hermes-edge`: official `v0.21.6` engine digest
+  `sha256:9774f4f39a9bb8c2f68ce728ed5e99ddbad282163be56764afacf88ed952b784`,
+  verified in the annotated Git tag receipt
+  https://github.com/NousResearch/hermes-agent/releases/tag/v0.21.6.
+- Each points at the pinned platform Hindsight plugin digest
+  `sha256:33060387a98b661aee0ed39dcc6ad19d231a7dd3036dfe429818d8e74f3e6bb5`.
 
-3. **Test**: after real linked dev/canary and recovery evidence, create
-   hermes-test with the same exact releaseRef previously selected in the
-   committed hermes-dev history. Use the reviewed isolated retained-canary
-   resource/toolset policy. Bind only the dedicated physical canary and
-   explicitly authorized pilots. Every later change to hermes-test requires
-   a new reviewed PR and acceptance evidence.
+**These are upstream source selections, not proven Fabric-compatible deployments.**
+In particular, Hermes `v0.21.6` changed plugin hosting and requires actual
+discovery/s6/Hindsight tests. Merely registering `hermes-stable` does NOT certify
+it for binding to production agents. The initial three-channel PR must carry
+`Hermes-Channel-Bootstrap: true` and may not change any tenant/agent declarations.
 
-4. **Stable**: only after an accepted real hermes-test pilot, proven recovery
-   and exact release/snapshot owner approval, create or advance hermes-stable
-   to the releaseRef previously selected by hermes-test. An existing stable
-   pointer change may restart EVERY bound agent; authorize that blast radius
-   separately. No bot or workflow automatically advances test/stable.
-   Production GitOps promotion still requires separate, explicit operator
-   authorization of a precise dev-v snapshot via promote-prod.yaml.
+Existing 17 Indiba/hAIrem beta AgentIdentity resources continue to use legacy
+`hermes-default` with their existing custom image. They do not change as part
+of channel declaration. Retain `hermes-dev` and `hermes-upgrade-canary` as
+**temporary compatibility profiles**; do not nominate them further or silently
+delete them. Retire only after checking all consumers and an explicit safe
+migration. The initially configured stable profile preserves the legacy storage
+class; do not switch a retained agent without checking real PVC UID/class and
+the desired retention policy.
 
-## Merge gate and audit evidence
+## Selection and CI behavior
 
-Validation Summary incorporates the Hermes channel guard in its Production
-Configuration family. This blocks bot-authored test/stable pointer PRs,
-requires prior committed dev/test history and syntax-checks acceptance links.
-For a test/stable change, supply these lines in the PR description with
-ACTUAL GitHub issue comment URLs, after performing real tests:
+The pinned Hindsight plugin build checks the **selected versioned official
+Hermes tag** by resolving the registry manifest digest, smoke-tests that
+image with the plugin payload and publishes a review-only **edge** PR. The
+`nominate_edge.py` script may create a new immutable release and move **only**
+`hermes-edge.releaseRef`. It cannot touch the other pointers or agents.
 
-    Hermes-Physical-Evidence: https://github.com/charchess/vixens/issues/3688#issuecomment-ACTUAL_ID
-    Hermes-Recovery-Evidence: https://github.com/charchess/vixens/issues/3688#issuecomment-ACTUAL_ID
+To select a different official release, manually dispatch
+`.github/workflows/build-txo-hermes-hindsight-plugin.yaml` with
+`hermes_tag: vX.Y.Z` after confirming the release exists. The workflow's
+default is `v0.21.6` at bootstrap; it is a pinned *selection*, not a
+background subscription to a floating upstream `latest`.
 
-For stable also include:
+The required Validation Summary tests the channel guard:
 
-    Hermes-Owner-Approval: https://github.com/charchess/vixens/issues/3947#issuecomment-ACTUAL_ID
-    Hermes-GitOps-Snapshot: dev-vYYYY.MM.PR
+1. First declaration: register all three unbound channels, human-reviewed PR
+   with `Hermes-Channel-Bootstrap: true`; no tenant/agent manifest changes.
+2. Edge pointer: bot may propose exact digest in a PR; immutable releases
+   cannot be edited, only new ones created.
+3. Canary pointer: human review, same release must have appeared in an earlier
+   committed edge pointer. This selects a candidate *for* qualification.
+4. Stable pointer: human-only, must have appeared in earlier committed canary
+   history **and** supply all evidence links and operator approval:
 
-Those are templates, not accepted evidence. Automated validation verifies
-reference format and Git history, **not** whether a physical test passed or
-an owner truly approved it. Human reviewers must read each linked record,
-verify the exact full digests, dates, individual canary/PVC/bank identity,
-checkpoint, restore on a separate PVC and rollback. Never paste private
-SOUL.md, secrets, sessions or token contents. No physical acceptance has
-yet been recorded.
+       Hermes-Physical-Evidence: https://github.com/charchess/vixens/issues/3688#issuecomment-ACTUAL_ID
+       Hermes-Recovery-Evidence: https://github.com/charchess/vixens/issues/3688#issuecomment-ACTUAL_ID
+       Hermes-Owner-Approval: https://github.com/charchess/vixens/issues/3947#issuecomment-ACTUAL_ID
+       Hermes-GitOps-Snapshot: dev-vYYYY.MM.PR
 
-Example read-only audit commands (example snapshot is NOT a PASS claim):
+These are templates, not acceptance records. The guard validates Git history,
+OCI digest syntax and **evidence URL format**, not the substance of physical
+tests or whether a human actually approved. Reviewers must verify evidence
+and enforce authorization through workflow/branch protection.
 
-    git log --oneline -- apps/60-services/txo-fabric/operator/config/profiles/hermes-test.yaml
-    git show dev-v2026.10.3948:apps/60-services/txo-fabric/operator/config/profiles/kustomization.yaml
-    kubectl get agentruntimeprofiles,hermesruntimereleases
+## Bounded qualification and safe brownfield migration
 
-## Brownfield compatibility and rollback
+Reuse a fixed, small set of isolated qualification agents; optionally park
+their supporting tenant and clean temporary restored PVCs after proof.
+**Never create a tenant or pod for every release**, or attach customer PVCs
+to experimental pointers.
 
-The 17 durable beta agents in hAIrem and Indiba currently reference legacy
-hermes-default, sometimes by implicit default. They must NOT be switched
-or recreated to introduce channels. Retain the existing profile, PVC UID,
-StorageClass, Hindsight bank, SOUL.md, secrets and permissions.
-hermes-upgrade-canary remains temporarily for old-state test compatibility.
+Before advancing stable: prove actual official s6 gateway and initContainer
+plugin loading, scoped LiteLLM/CPA inference, Hindsight retain/recall,
+SOUL.md ownership, skills, cron, sessions, restarts and old-state migration.
+Take a retained-state checkpoint and restore it to a **different PVC**.
+Rollback means runtime **plus** compatible data state, not just changing
+`releaseRef`. Keep `hairem`/`indiba` production beta identities and banks
+unchanged until explicit per-agent migration. Changing a profile pointer
+will roll every identity *currently bound* to it.
 
-After physical pilot and verified restore, migrate specifically authorized
-AgentIdentity resources one by one through GitOps with pre-change snapshots,
-PVC comparison and real rollback tests. Do NOT make a fleet-wide change by
-editing hermes-default. Only once every consumer has moved to hermes-stable
-should the CRD's implicit default and old aliases be retired by a separate
-tested source/operator image pin and GitOps migration. Do not leave two
-drifting production aliases.
-
-Rollback is an accepted runtime plus compatible recovered data, not simply
-reverting releaseRef. #3688 and the retained-state recovery guide are the
-authoritative physical acceptance backlog; never infer a PASS from CI,
-Kubernetes Ready, a profile resource or an unbound canary.
+The runtime channels above are independent of GitOps `dev-v*`, `prod-v*`
+and `prod-stable`: production must still receive explicit authorization for
+the **exact immutable complete-platform snapshot**. No CI/pointer PR itself
+promotes production. `prod-working` remains a manual known-good bookmark.
