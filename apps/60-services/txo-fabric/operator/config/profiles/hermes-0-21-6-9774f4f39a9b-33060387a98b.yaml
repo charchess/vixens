@@ -1,0 +1,16 @@
+---
+# Official NousResearch v0.21.6 (2026-10-08), pinned to its upstream release
+# receipt OCI digest. Separate pinned Hindsight bundle is NOT yet physical acceptance.
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: HermesRuntimeRelease
+metadata:
+  name: hermes-0-21-6-9774f4f39a9b-33060387a98b
+  annotations:
+    argocd.argoproj.io/sync-wave: "-15"
+    fabric.truxonline.io/upstream-tag: "v0.21.6"
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: runtime-release
+spec:
+  image: nousresearch/hermes-agent@sha256:9774f4f39a9bb8c2f68ce728ed5e99ddbad282163be56764afacf88ed952b784
+  hindsightPluginImage: ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:33060387a98b661aee0ed39dcc6ad19d231a7dd3036dfe429818d8e74f3e6bb5

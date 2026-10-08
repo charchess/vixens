@@ -532,12 +532,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Historical dev/test pointers are a release gate.
+          fetch-depth: 0 # Historical edge/canary pointers are a release gate.
 
       - name: Unit-test Hermes channel gate
         run: python3 -m unittest discover -s scripts/validation/tests -p 'test_guard_hermes_release_channels.py'
 
-      - name: Guard Hermes test/stable channel advancement
+      - name: Guard Hermes edge/canary/stable channels
         if: github.event_name == 'pull_request'
         env:
           BASE_REF: ${{ github.base_ref }}
