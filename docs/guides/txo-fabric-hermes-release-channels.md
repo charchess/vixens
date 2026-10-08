@@ -61,9 +61,14 @@ That opt-in does not authorize other agents or an automatic platform promotion.
 
 ## Selection and CI behavior
 
-The pinned Hindsight plugin build checks the **selected versioned official
-Hermes tag** by resolving the registry manifest digest, smoke-tests that
-image with the plugin payload and publishes a review-only **edge** PR. The
+The pinned plugin build validates the selected versioned upstream Hermes tag
+against the *annotated Git release receipt*, which records the official multiarch
+Docker OCI manifest digest. The workflow smoke-tests that exact receipt-pinned
+image plus the separate Hindsight plugin. A versioned registry tag that differs
+from its upstream receipt blocks publication and edge nomination (see #3970).
+An ordinary pull-request test may still smoke-test the immutable receipt-pinned
+image with a drift warning, since PR builds never publish releases.
+Only a reviewed **edge** PR is proposed; canary/stable never auto-advance. The
 `nominate_edge.py` script may create a new immutable release and move **only**
 `hermes-edge.releaseRef`. It cannot touch the other pointers or agents.
 

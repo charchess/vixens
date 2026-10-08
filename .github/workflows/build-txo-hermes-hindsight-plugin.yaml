@@ -47,7 +47,34 @@ jobs:
             echo "::error::Hermes must use a versioned upstream tag, not :latest or :main"
             exit 1
           fi
-          DIGEST="$(docker buildx imagetools inspect --format '{{json .Manifest.Digest}}' "nousresearch/hermes-agent:$HERMES_TAG" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.startswith("sha256:") and len(d)==71; print(d)')"
+          TAG_REF="$RUNNER_TEMP/official-hermes-tag-ref.json"
+          TAG_OBJECT="$RUNNER_TEMP/official-hermes-annotated-tag.json"
+          curl --fail --silent --show-error --location --retry 3 \
+            "https://api.github.com/repos/NousResearch/hermes-agent/git/ref/tags/$HERMES_TAG" -o "$TAG_REF"
+          TAG_SHA="$(python3 - "$TAG_REF" <<'PY'
+          import json, sys
+          ref = json.load(open(sys.argv[1], encoding="utf-8"))
+          if ref.get("object", {}).get("type") != "tag":
+              raise SystemExit("Hermes release needs an annotated Git receipt tag")
+          print(ref["object"]["sha"])
+          PY
+          )"
+          curl --fail --silent --show-error --location --retry 3 \
+            "https://api.github.com/repos/NousResearch/hermes-agent/git/tags/$TAG_SHA" -o "$TAG_OBJECT"
+          DIGEST="$(python3 apps/60-services/txo-fabric/hermes-hindsight-plugin/verify_release_receipt.py \
+            "$HERMES_TAG" "$TAG_REF" "$TAG_OBJECT")"
+          docker buildx imagetools inspect "nousresearch/hermes-agent@$DIGEST" > /dev/null
+          LIVE_DIGEST="$(docker buildx imagetools inspect --format '{{json .Manifest.Digest}}' \
+            "nousresearch/hermes-agent:$HERMES_TAG" | python3 -c 'import json,sys; print(json.load(sys.stdin))')"
+          if [[ "$LIVE_DIGEST" != "$DIGEST" ]]; then
+            if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+              echo "::warning::Hermes version tag differs from its annotated release receipt; PR smoke uses immutable release digest, publication remains blocked"
+            else
+              echo "::error::Hermes tag currently resolves to $LIVE_DIGEST but official release receipt is $DIGEST; refuse edge nomination"
+              exit 1
+            fi
+          fi
+          echo "Verified upstream release $HERMES_TAG OCI index $DIGEST"
           echo "image=nousresearch/hermes-agent@${DIGEST}" >> "$GITHUB_OUTPUT"
           echo "tag=$HERMES_TAG" >> "$GITHUB_OUTPUT"
       - name: Check immutable release nomination algorithm
