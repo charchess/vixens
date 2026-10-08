@@ -8,10 +8,12 @@
 **Deciders:** Vixens maintainers  
 **Tags:** txo-fabric, agentidentity, functional-configuration, skills, policy, reusable-profiles
 
-> **Proposed, not implemented or authorized for production:** this ADR records a
-> concrete design for review under #3851. Examples below are not current CRD
-> fields. Adoption requires an explicit decision, an implementation PR and
-> acceptance on real agents.
+> **Partially implemented / not physically accepted:** the minimal tenant-owned
+> `AgentFunctionalProfile.spec.instructions` and optional per-agent reference now
+> exist. The first implementation deliberately uses a native read-only Hermes
+> skill, *not* a compulsory system prompt. The richer requirements and role
+> structure below remain proposed and are not current CRD fields. No live-agent
+> adoption or production promotion is authorized by this ADR.
 
 ## Context
 

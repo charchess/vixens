@@ -61,34 +61,37 @@ Different tenants may use the same tenant-local `agentKey` while globally scoped
 Fabric CR names and tenant ownership keep those identities distinct. Do not derive
 identity from mutable display names, Pod names or group membership.
 
-### AgentFunctionalProfile (v0.1 instructions-only)
+### AgentFunctionalProfile (v0.1 native Hermes role skill)
 
-`AgentFunctionalProfile` is a **tenant-owned, cluster-scoped, non-secret**
-business-instruction baseline independent of `AgentRuntimeProfile` and
-`AgentIdentity`. One agent may opt into one profile using
-`AgentIdentity.spec.functional.profileRef`. The profile's immutable
-`spec.tenantRef.name` must match the agent's tenant. A missing or foreign
-profile is rejected and the previous agent runtime/human route is withdrawn
-without deleting the agent's retained private state. An unbound agent retains
-the existing behavior.
+`AgentFunctionalProfile` is a cluster-scoped, tenant-owned **reference to business
+know-how**, independent of the `AgentRuntimeProfile` runtime security ceiling
+and each agent's private identity. Its current non-secret `spec.instructions`
+are rendered into an **agent-local Kubernetes ConfigMap holding a native
+`SKILL.md`** (distinct ConfigMaps for distinct agents, identical common content).
+The operator mounts the ConfigMap read-only under
+`/workspace/skills/functional/txo-role-<stable-id>/SKILL.md`, already visible
+to Hermes via the existing `skills.external_dirs: ["/workspace/skills"]`.
+The authorized skills toolset is required; no new toolset or workspace grant
+is ever issued by the profile.
 
-The first implementation slice intentionally supports **non-secret
-`spec.instructions` only**. It carries no credentials, IAM grants,
-workspace mounts, toolset approvals, model credentials or IntegrationBinding
-authorization. Approved instructions are passed to the pinned Hermes gateway
-via `TXO_FUNCTIONAL_SYSTEM_PROMPT` in the certified **TXO-patched pinned Hermes runtime**.
-The managed layer is composed separately from the user's `/personality` and
-channel overrides on every gateway turn. This requires
-`AgentRuntimeProfile.spec.compatibility.functionalPromptOverlay=true` on a
-verified compatible runtime image (default **false**, fail closed). The role
-overlay does not write the
-agent's private `SOUL.md` or skills. The effective revision is recorded on the
-Hermes pod template and changes roll only the relevant agents. Role instructions
-are readable in the profile and Pod environment, so **do not put secrets in
-the role text**.
+This reference skill is discoverable and loaded **on demand**, not forced into
+every LLM system prompt. It therefore does not claim a mandatory policy or a
+hard guarantee that an agent follows business guidance on every turn.
+**`SOUL.md` is entirely private**; Fabric never seeds, patches, overwrites
+or points it at a mutable business-role file. User `/personality`, private
+config, cwd, session state, personal skills, private PVC and Hindsight memory
+bank remain independent of the business role. Existing read-only group/org
+skill libraries remain separately mounted under `/workspace/skills`.
+
+A missing, foreign, invalid or unavailable role fails closed, withdrawing the
+old runtime/human entry without destroying private storage. Role changes update
+the ConfigMap and pod-template revision; no-op does not. Removing a valid binding
+unmounts and deletes only the managed role skill; it leaves the private PVC and
+group skills intact. Profile text is **not secret**, and must never grant tool,
+model, integration or workspace privileges.
 
 ```yaml
-# Example only; do not apply to production before acceptance of #3934.
+# Example only; do not bind real Indiba agents before physical acceptance.
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentFunctionalProfile
 metadata:
@@ -97,18 +100,22 @@ spec:
   tenantRef:
     name: indiba
   instructions: |
-    Apply the tenant-approved commercial playbook.
-    Personalize the interaction for each user's context.
-# Existing Sam and Alex would each opt in with:
-# spec.functional.profileRef: indiba-sales
+    Commercial methods and reference material for the Indiba sales role.
+    Use shared sales skills when appropriate and respect per-agent access.
+# AgentIdentity.spec.functional.profileRef: indiba-sales
 ```
 
-This opt-in is **not added** to the production Indiba manifests by #3934.
-The UX and existing-session prompt compatibility of the pinned Hermes runtime
-require a separate physical acceptance, especially on profile updates and
-withdrawal. The broader skills/integrations/model-precondition composition
-remains a proposed extension described in
-[FUNCTIONAL-CONFIGURATION.md](FUNCTIONAL-CONFIGURATION.md) and proposed ADR-038.
+This requires **no Hermes gateway patch**. The TXO-derived runtime image still
+uses unmodified `nousresearch/hermes-agent:v2026.9.24` as its base and bundles
+the pinned, necessary Hindsight plugin; no changes to Hermes Python source.
+The image build is now nominated to `hermes-upgrade-canary` only, never directly
+to `hermes-default`. Physical tests must prove actual native skill discovery,
+agent-specific independence, and role revision/withdrawal before adopting a
+tenant binding. Project/context files (`HERMES.md`, `AGENTS.md`) are deliberately
+**not mounted**: Hermes loads them according to cwd, their priority may shadow
+local files, and forcing an alternate cwd would change user workflows.
+The broader role prerequisite/required-policy model remains future work under
+#3934/ADR-038.
 
 ### AgentRuntimeProfile
 

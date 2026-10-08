@@ -113,7 +113,7 @@ func TestFunctionalProfileWatchDoesNotCrossTenant(t *testing.T) {
 	if !reflect.DeepEqual(got,want) {t.Fatalf("watch fan-out=%v want=%v",got,want)}
 }
 
-func TestFunctionalProfileHermesGatewayRenderingAndWithdrawal(t *testing.T) {
+func TestFunctionalProfileNativeSkillRenderingAndWithdrawal(t *testing.T) {
 	ctx := context.Background()
 	tenant := testTenant()
 	tenant.Name = "indiba"
@@ -121,79 +121,98 @@ func TestFunctionalProfileHermesGatewayRenderingAndWithdrawal(t *testing.T) {
 	profile := testRuntimeProfile()
 	scheme := testScheme(t)
 	retained := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{
-		Name: "hermes-"+agent.Spec.AgentKey+"-data", Namespace: "tenant-indiba",
+		Name: "hermes-" + agent.Spec.AgentKey + "-data", Namespace: "tenant-indiba",
 		UID: types.UID("retained-pvc-uid"),
 	}}
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent, retained).Build()
-	r := &AgentIdentityReconciler{Client:c,Scheme:scheme}
-	role := effectiveFunctionalProfile{
-		Enabled:true, ProfileName:"indiba-sales", Instructions:"Approved sales baseline",
-		Revision:"aabbcc001122",
-	}
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	role := effectiveFunctionalProfile{Enabled: true, ProfileName: "indiba-sales", Instructions: "Approved sales baseline", Revision: "aabbcc001122"}
 	ns := "tenant-indiba"
 	reconcile := func(f ...effectiveFunctionalProfile) {
 		t.Helper()
-		err := r.ensureDeploymentWithIntegrations(ctx,agent,tenant,profile,ns,
-			"same-key-uid","same-key-revision",effectiveToolsetPolicy{Revision:"tools-v1"},
-			integrationResolution{},f...)
-		if err != nil {t.Fatal(err)}
+		if len(f) > 0 && f[0].Enabled {
+			if err := r.ensureFunctionalSkillConfigMap(ctx, agent, tenant, ns, f[0]); err != nil { t.Fatal(err) }
+		}
+		if err := r.ensureDeploymentWithIntegrations(ctx, agent, tenant, profile, ns,
+			"same-key-uid", "same-key-revision", effectiveToolsetPolicy{Revision: "tools-v1", Enabled: []string{"skills"}},
+			integrationResolution{}, f...); err != nil { t.Fatal(err) }
+		if len(f) == 0 || !f[0].Enabled {
+			if err := r.deleteFunctionalSkillConfigMap(ctx, agent, ns); err != nil { t.Fatal(err) }
+		}
 	}
-	var deployment appsv1.Deployment
+	var dep appsv1.Deployment
 	read := func() {
 		t.Helper()
-		if err:=c.Get(ctx,types.NamespacedName{Name:"hermes-"+agent.Spec.AgentKey,Namespace:ns},&deployment);err!=nil {t.Fatal(err)}
+		if err := c.Get(ctx, types.NamespacedName{Name: "hermes-" + agent.Spec.AgentKey, Namespace: ns}, &dep); err != nil { t.Fatal(err) }
+	}
+	var cm corev1.ConfigMap
+	readCM := func() {
+		t.Helper()
+		if err := c.Get(ctx, types.NamespacedName{Name: functionalSkillConfigMapName(agent), Namespace: ns}, &cm); err != nil { t.Fatal(err) }
 	}
 	reconcile(role)
 	read()
-	v:=envVar(deployment.Spec.Template.Spec.Containers[0].Env,"TXO_FUNCTIONAL_SYSTEM_PROMPT")
-	if v==nil || v.Value!="Approved sales baseline" || v.ValueFrom!=nil {
-		t.Fatalf("Hermes role overlay not rendered: %#v",v)
+	readCM()
+	if cm.Data["SKILL.md"] != renderFunctionalSkill(role) || !strings.HasPrefix(cm.Data["SKILL.md"], "---\nname: txo-role-") {
+		t.Fatalf("native Hermes SKILL.md missing from configmap: %#v", cm.Data)
 	}
-	if deployment.Spec.Template.Annotations[AnnotationFunctionalProfileRevision] != role.Revision {
-		t.Fatal("functional revision missing from pod template")
+	if dep.Spec.Template.Annotations[AnnotationFunctionalProfileRevision] != role.Revision { t.Fatal("role revision missing from pod template") }
+	if dep.Spec.Template.Spec.Volumes[0].Name != "data" { t.Fatal("private PVC changed") }
+	main := dep.Spec.Template.Spec.Containers[0]
+	if envValue(main.Env, "HERMES_HOME") != "/opt/data" { t.Fatal("private SOUL.md home changed") }
+	if envVar(main.Env, "TXO_FUNCTIONAL_SYSTEM_PROMPT") != nil || envVar(main.Env, "HERMES_EPHEMERAL_SYSTEM_PROMPT") != nil {
+		t.Fatal("native reference must never inject a global prompt override")
 	}
-	if deployment.Spec.Template.Spec.Volumes[0].Name!="data" {
-		t.Fatal("private runtime PVC mount unexpectedly changed")
+	var roleMount *corev1.VolumeMount
+	for i := range main.VolumeMounts {
+		if main.VolumeMounts[i].Name == functionalSkillVolumeName { roleMount = &main.VolumeMounts[i] }
 	}
-	if envValue(deployment.Spec.Template.Spec.Containers[0].Env,"HERMES_HOME")!="/opt/data" {
-		t.Fatal("private HERMES_HOME changed")
+	if roleMount == nil || !roleMount.ReadOnly || roleMount.MountPath != "/workspace/skills/functional/" + functionalSkillName(role.ProfileName) {
+		t.Fatalf("functional skill not mounted read-only under native external root: %#v", roleMount)
 	}
-	firstRV:=deployment.ResourceVersion
+	var roleVolume *corev1.Volume
+	for i := range dep.Spec.Template.Spec.Volumes {
+		if dep.Spec.Template.Spec.Volumes[i].Name == functionalSkillVolumeName { roleVolume = &dep.Spec.Template.Spec.Volumes[i] }
+	}
+	if roleVolume == nil || roleVolume.ConfigMap == nil || roleVolume.ConfigMap.Name != functionalSkillConfigMapName(agent) {
+		t.Fatalf("role ConfigMap volume absent: %#v", roleVolume)
+	}
+	initialRV, initialCMRV := dep.ResourceVersion, cm.ResourceVersion
 	reconcile(role)
 	read()
-	if deployment.ResourceVersion!=firstRV {
-		t.Fatalf("no-op role reconcile caused runtime mutation: %s -> %s",firstRV,deployment.ResourceVersion)
+	readCM()
+	if dep.ResourceVersion != initialRV || cm.ResourceVersion != initialCMRV {
+		t.Fatalf("no-op role reconcile mutated runtime/configmap: dep %s->%s cm %s->%s", initialRV, dep.ResourceVersion, initialCMRV, cm.ResourceVersion)
 	}
-	role.Revision="ddeeff334455"
-	role.Instructions="Updated approved baseline"
+	role.Revision = "ddeeff334455"
+	role.Instructions = "Updated sales baseline"
 	reconcile(role)
 	read()
-	if deployment.Spec.Template.Annotations[AnnotationFunctionalProfileRevision]!="ddeeff334455" ||
-		envValue(deployment.Spec.Template.Spec.Containers[0].Env,"TXO_FUNCTIONAL_SYSTEM_PROMPT")!="Updated approved baseline" {
-		t.Fatal("role revision did not propagate to Hermes pod template")
+	readCM()
+	if !strings.Contains(cm.Data["SKILL.md"], "Updated sales baseline") || dep.Spec.Template.Annotations[AnnotationFunctionalProfileRevision] != role.Revision {
+		t.Fatal("role update failed to propagate native skill and revision")
 	}
-	if deployment.ResourceVersion==firstRV {
-		t.Fatal("approved role update failed to trigger pod template revision")
+	if cm.ResourceVersion == initialCMRV || dep.ResourceVersion == initialRV {
+		t.Fatal("role update must replace ConfigMap and rollout, but no-op must not")
 	}
-	// Removing the reference restores today's baseline without touching private data.
 	reconcile()
 	read()
-	if envVar(deployment.Spec.Template.Spec.Containers[0].Env,"TXO_FUNCTIONAL_SYSTEM_PROMPT")!=nil {
-		t.Fatal("unbound agent still has a managed functional overlay")
+	if dep.Spec.Template.Annotations[AnnotationFunctionalProfileRevision] != "" { t.Fatal("unbound agent retains role revision") }
+	for _, v := range dep.Spec.Template.Spec.Volumes {
+		if v.Name == functionalSkillVolumeName { t.Fatal("unbound agent still mounts managed role") }
 	}
-	if deployment.Spec.Template.Annotations[AnnotationFunctionalProfileRevision]!="" {
-		t.Fatal("unbound agent still has role revision annotation")
+	if err := c.Get(ctx, types.NamespacedName{Name: functionalSkillConfigMapName(agent), Namespace: ns}, &cm); !apierrors.IsNotFound(err) {
+		t.Fatalf("unbound agent retains stale role ConfigMap: %v", err)
 	}
 	reconcile(role)
 	read()
-	if err:=r.withdrawInvalidFunctionalRuntime(ctx,agent,tenant,ns);err!=nil {t.Fatal(err)}
-	if err:=c.Get(ctx,types.NamespacedName{Name:deployment.Name,Namespace:ns},&deployment);!apierrors.IsNotFound(err) {
-		t.Fatalf("invalid functional profile did not shut down previous runtime: %v",err)
+	if err := r.withdrawInvalidFunctionalRuntime(ctx, agent, tenant, ns); err != nil { t.Fatal(err) }
+	if err := c.Get(ctx, types.NamespacedName{Name: dep.Name, Namespace: ns}, &dep); !apierrors.IsNotFound(err) {
+		t.Fatalf("withdrawal did not stop obsolete runtime: %v", err)
 	}
 	var pvc corev1.PersistentVolumeClaim
-	if err:=c.Get(ctx,types.NamespacedName{Name:retained.Name,Namespace:ns},&pvc);err!=nil ||
-		pvc.UID!=retained.UID {
-		t.Fatalf("profile withdrawal must preserve retained private PVC: err=%v UID=%s",err,pvc.UID)
+	if err := c.Get(ctx, types.NamespacedName{Name: retained.Name, Namespace: ns}, &pvc); err != nil || pvc.UID != retained.UID {
+		t.Fatalf("withdrawal must preserve private PVC: err=%v UID=%s", err, pvc.UID)
 	}
 }
 
@@ -232,17 +251,43 @@ func TestInvalidFunctionalProfileReconcileDeniesPreviouslyRunningAgent(t *testin
 	}
 }
 
-func TestFunctionalPromptRequiresCertifiedRuntime(t *testing.T) {
+func TestFunctionalSkillAccessRequiresAuthorizedToolset(t *testing.T) {
 	role := effectiveFunctionalProfile{Enabled: true, ProfileName: "indiba-sales"}
-	profile := testRuntimeProfile()
-	if err := requireFunctionalPromptCompatibility(role, profile); err == nil {
-		t.Fatal("unverified Hermes image must fail closed on a bound functional role")
+	if err := requireFunctionalSkillsAccess(role, effectiveToolsetPolicy{}); err == nil {
+		t.Fatal("functional role must not be reported accessible when skills are disabled")
 	}
-	if err := requireFunctionalPromptCompatibility(effectiveFunctionalProfile{}, profile); err != nil {
-		t.Fatalf("unbound agents must remain backward compatible: %v", err)
+	if err := requireFunctionalSkillsAccess(effectiveFunctionalProfile{}, effectiveToolsetPolicy{}); err != nil {
+		t.Fatalf("unbound agent should be unchanged: %v", err)
 	}
-	profile.Spec.Compatibility.FunctionalPromptOverlay = true
-	if err := requireFunctionalPromptCompatibility(role, profile); err != nil {
-		t.Fatalf("certified TXO Hermes image should allow role: %v", err)
+	if err := requireFunctionalSkillsAccess(role, effectiveToolsetPolicy{Enabled: []string{"skills"}}); err != nil {
+		t.Fatalf("authorized skills toolset must support reference role: %v", err)
 	}
+}
+
+func TestFunctionalSkillIsPrivateToAgentAndCannotDeleteForeignConfigMap(t *testing.T) {
+	ctx := context.Background()
+	tenant := testTenant()
+	tenant.Name = "indiba"
+	scheme := testScheme(t)
+	agent := functionalTestAgent("indiba-sam", "indiba")
+	other := functionalTestAgent("indiba-alex", "indiba")
+	other.Spec.AgentKey = "usr000001-agt00002"
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent, other).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	role := effectiveFunctionalProfile{Enabled: true, ProfileName: "indiba-sales", Instructions: "Shared Indiba role", Revision: "rev"}
+	for _, agent := range []*fabricv1alpha1.AgentIdentity{agent, other} {
+		if err := r.ensureFunctionalSkillConfigMap(ctx, agent, tenant, "tenant-indiba", role); err != nil { t.Fatal(err) }
+	}
+	var a, b corev1.ConfigMap
+	if err := c.Get(ctx, types.NamespacedName{Name: functionalSkillConfigMapName(agent), Namespace: "tenant-indiba"}, &a); err != nil { t.Fatal(err) }
+	if err := c.Get(ctx, types.NamespacedName{Name: functionalSkillConfigMapName(other), Namespace: "tenant-indiba"}, &b); err != nil { t.Fatal(err) }
+	if a.Name == b.Name || a.Data["SKILL.md"] != b.Data["SKILL.md"] {
+		t.Fatal("same role must create distinct agent-owned ConfigMaps with identical approved content")
+	}
+	a.Labels[LabelInstance] = "someone-else"
+	if err := c.Update(ctx, &a); err != nil { t.Fatal(err) }
+	if err := r.deleteFunctionalSkillConfigMap(ctx, agent, "tenant-indiba"); err == nil {
+		t.Fatal("must refuse deletion of a hijacked or foreign ConfigMap")
+	}
+	if err := r.deleteFunctionalSkillConfigMap(ctx, other, "tenant-indiba"); err != nil { t.Fatal(err) }
 }

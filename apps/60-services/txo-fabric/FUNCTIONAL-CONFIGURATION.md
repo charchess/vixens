@@ -1,9 +1,13 @@
-# TXO Fabric — agent functional configuration (proposal for #3851)
+# TXO Fabric — agent functional configuration (native v0.1 slice and proposed extensions)
 
-> **Design only / NOT supported by the current CRDs or controller.**
-> This document accompanies proposed ADR-038. Do not apply these example
-> resources to a live cluster; no runtime/business-profile support is shipped
-> by this change. It does not authorize promotion or any tenant mutation.
+> **Implementation note (2026-10-08):** the minimal `AgentFunctionalProfile`
+> CRD and optional per-agent reference exist. The initial native Hermes
+> implementation renders `spec.instructions` as a tenant-owned read-only
+> **SKILL.md** reference. It does **not** inject or enforce a global system
+> prompt, and never edits `SOUL.md`. The larger `role/requirements`
+> structure illustrated below remains **Proposed / NON-DEPLOYABLE**.
+> Do not apply the example manifests to real tenants or promote without
+> explicit approval and physical acceptance.
 
 ## Why the split matters
 
