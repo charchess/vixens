@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
@@ -21,6 +22,36 @@ const (
 	hindsightExtensionInitMount = "/extensions"
 	hindsightExtensionDepsRoot = "/opt/txo-hindsight/python"
 	hindsightExtensionPluginRoot = "/opt/data/plugins/hindsight"
+)
+
+// Only an immutable registry digest is allowed; tags and mutable paths must
+// never get promoted through AgentRuntimeProfile.bootstrap.
+var hindsightBundleDigest = regexp.MustCompile(`^[a-z0-9][a-z0-9._:/-]*@sha256:[a-f0-9]{64}package controller
+
+import (
+	"fmt"
+	"regexp"
+	"strings"
+
+	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+)
+
+const (
+	hermesHindsightAPIURL      = "http://hindsight:8888"
+	hermesHindsightSecretName = "hindsight-runtime"
+	hermesHindsightSecretKey  = "HINDSIGHT_API_TENANT_API_KEY"
+)
+
+const (
+	hindsightExtensionVolume = "hindsight-extension"
+	hindsightExtensionImageRoot = "/bundle"
+	hindsightExtensionInitMount = "/extensions"
+	hindsightExtensionDepsRoot = "/opt/txo-hindsight/python"
+	hindsightExtensionPluginRoot = "/opt/data/plugins/hindsight"
+)
+
 )
 
 // The OCI bundle carries ONLY the pinned Hindsight plugin and Python deps.
@@ -129,8 +160,11 @@ PY`
 // already discovers and Python dependencies in a dedicated read-only path.
 // HERMES_HOME/SOUL.md remains untouched and user-owned.
 func configureOfficialHermesHindsightPlugin(image string, deployment *appsv1.Deployment) error {
-	if image == "" || len(deployment.Spec.Template.Spec.InitContainers) == 0 || len(deployment.Spec.Template.Spec.Containers) == 0 {
-		return fmt.Errorf("Hindsight plugin bundle image or Hermes containers missing")
+	if !hindsightBundleDigest.MatchString(image) {
+		return fmt.Errorf("Hindsight plugin bundle image must be pinned to immutable OCI sha256 digest")
+	}
+	if len(deployment.Spec.Template.Spec.InitContainers) == 0 || len(deployment.Spec.Template.Spec.Containers) == 0 {
+		return fmt.Errorf("Hermes containers are missing for Hindsight plugin bootstrap")
 	}
 	pod := &deployment.Spec.Template.Spec
 	pod.Volumes = append(pod.Volumes, corev1.Volume{

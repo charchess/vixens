@@ -298,7 +298,7 @@ func TestOfficialHermesHindsightPluginBootstrapIsIsolatedAndIdempotent(t *testin
 	agent := testAgentIdentity()
 	profile := testRuntimeProfile()
 	profile.Spec.Image = "nousresearch/hermes-agent:v2026.9.24"
-	profile.Spec.Bootstrap.HindsightPluginImage = "ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:abcdef123456"
+	profile.Spec.Bootstrap.HindsightPluginImage = "ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent).Build()
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 	ns := tenantNamespace(tenant.Name)
@@ -370,7 +370,7 @@ func TestHermesPluginBootstrapIsOptionalAndNeverGrantsUnconfiguredHindsight(t *t
 	tenant.Spec.Memory.Hindsight = nil
 	profile := testRuntimeProfile()
 	profile.Spec.Image = "nousresearch/hermes-agent:v2026.9.24"
-	profile.Spec.Bootstrap.HindsightPluginImage = "ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:abcdef123456"
+	profile.Spec.Bootstrap.HindsightPluginImage = "ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	agent := testAgentIdentity()
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent).Build()
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
@@ -393,7 +393,7 @@ func TestOfficialHermesPluginBootstrapKeepsLegacyProfileAdoption(t *testing.T) {
 	tenant := testTenant()
 	profile := testRuntimeProfile()
 	profile.Spec.Image = "nousresearch/hermes-agent:v2026.9.24"
-	profile.Spec.Bootstrap.HindsightPluginImage = "ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:abcdef123456"
+	profile.Spec.Bootstrap.HindsightPluginImage = "ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	agent := testAgentIdentity()
 	agent.Spec.Runtime.Storage.AdoptLegacyProfile = true
 	agent.Spec.Runtime.Storage.RetentionPolicy = StorageRetentionRetain
@@ -432,5 +432,27 @@ func TestOfficialHermesWithoutPluginBundleIsRejectedForHindsightTenant(t *testin
 	tenant.Spec.Memory.Hindsight = nil
 	if err := r.ensureDeployment(ctx, agent, tenant, profile, tenantNamespace(tenant.Name), "", ""); err != nil {
 		t.Fatalf("no-Hindsight tenant should not require a plugin bundle: %v", err)
+	}
+}
+
+func TestHindsightBundleRejectsMutableTagsAndInvalidDigests(t *testing.T) {
+	ctx := context.Background()
+	tenant := testTenant()
+	agent := testAgentIdentity()
+	for _, image := range []string{
+		"ghcr.io/charchess/txo-hermes-hindsight-plugin:main",
+		"ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:abc",
+		"ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:" + strings.Repeat("g", 64),
+	} {
+		profile := testRuntimeProfile()
+		profile.Spec.Image = "nousresearch/hermes-agent:v2026.9.24"
+		profile.Spec.Bootstrap.HindsightPluginImage = image
+		scheme := testScheme(t)
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent).Build()
+		r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+		err := r.ensureDeployment(ctx, agent, tenant, profile, tenantNamespace(tenant.Name), "", "")
+		if err == nil || !strings.Contains(err.Error(), "must be pinned to immutable OCI sha256 digest") {
+			t.Fatalf("invalid plugin image %q was admitted: %v", image, err)
+		}
 	}
 }

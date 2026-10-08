@@ -56,6 +56,64 @@ type RuntimeBootstrapSpec struct {
 	// the TenantBundle has Hindsight configured. Must be reviewed and pinned
 	// independently of the upstream Hermes image.
 	// +kubebuilder:validation:MaxLength=512
+	// +kubebuilder:validation:Pattern=`^[a-z0-9][a-z0-9._:/-]*@sha256:[a-f0-9]{64}package v1alpha1
+
+import (
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const (
+	ToolsetPolicyOn         = "On"
+	ToolsetPolicyOff        = "Off"
+	ToolsetPolicyAllowedOff = "AllowedOff"
+)
+
+type RuntimeStorageSpec struct {
+	// Size is the runtime workspace PVC request.
+	// +kubebuilder:default="2Gi"
+	Size resource.Quantity `json:"size,omitempty"`
+
+	// StorageClassName is explicit because Vixens intentionally has no default StorageClass.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	StorageClassName string `json:"storageClassName"`
+}
+
+type RuntimeCompatibilitySpec struct {
+	// FunctionalPromptOverlay certifies a reviewed TXO Hermes image with additive
+	// per-turn gateway role composition. Upstream-only images leave it false.
+	// +kubebuilder:default=false
+	FunctionalPromptOverlay bool `json:"functionalPromptOverlay,omitempty"`
+
+	// S6Overlay marks images that require the documented Vixens root/capability bypass for s6-overlay.
+	// +kubebuilder:default=false
+	S6Overlay bool `json:"s6Overlay,omitempty"`
+}
+
+type RuntimeToolsetPolicy struct {
+	// Name is the Hermes toolset name governed by this immutable runtime profile.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=128
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9._/-]*[a-z0-9])?$`
+	Name string `json:"name"`
+
+	// State defines platform ownership for this toolset.
+	// On is always enabled, Off is forbidden, AllowedOff requires an AgentIdentity opt-in.
+	// +kubebuilder:validation:Enum=On;Off;AllowedOff
+	State string `json:"state"`
+}
+
+// RuntimeBootstrapSpec specifies independently versioned provider payloads.
+// The regular Hermes image is always selected by spec.image; a plugin bundle
+// never replaces or mutates the upstream runtime image.
+// Optional: existing legacy baked-plugin images remain valid until canary cutover.
+type RuntimeBootstrapSpec struct {
+	// HindsightPluginImage is a versioned OCI plugin bundle used only when
+	// the TenantBundle has Hindsight configured. Must be reviewed and pinned
+	// independently of the upstream Hermes image.
+
 	HindsightPluginImage string `json:"hindsightPluginImage,omitempty"`
 }
 

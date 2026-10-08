@@ -386,3 +386,6 @@ required before changing `hermes-default`. During this migration,
 the draft functional-role PR #3938 must be rebased against #3939; it
 continues to supply native Hermes role skills, not a gateway patch.
 
+
+The optional `bootstrap.hindsightPluginImage` field strictly requires an OCI
+`@sha256:<64-hex>` digest. Floating tags are rejected at reconciliation time.
