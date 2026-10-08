@@ -379,15 +379,43 @@ spec:
   # compatibility sections in the actual profile.
 ```
 
-`hermes-default` and `hermes-upgrade-canary` keep their stable object names.
-They can reference different immutable releases while preserving their own
-security and storage policy. Each pointer transition is Git-reviewed and
-recorded in immutable `dev-v*` / `prod-v*` snapshots. A new release is
-added; existing release content is **never** edited. Changing a profile
-pointer updates **only agents referencing that profile**, not all agents
-or tenants. Since `hermes-default` may be shared by many clients, its
-pointer must **not** move without physical canary and retained-state
-acceptance (#3688).
+The target release-track model uses **three permanently named profile
+pointers**, sharing this same immutable release object type:
+
+- `hermes-dev`: candidate qualification by build, image digest, plugin import,
+  automated security/CI checks. Run only disposable isolated agents.
+- `hermes-test`: same *unchanged* release promoted after dev acceptance,
+  tested physically with the official s6 gateway, LiteLLM/Hindsight,
+  retained state, recovery evidence, and explicitly enrolled pilot agents.
+- `hermes-stable`: same *unchanged* release after physical test, pilot,
+  backup/restore and human acceptance. This is the normal client channel.
+
+Promote a release by GitOps-changing **only that profile's `releaseRef`**.
+Each track retains its own storage/resources/capability security ceiling;
+a release carries only immutable software artifacts. Rebuilding or editing
+the release during promotion would invalidate previous acceptance. Git
+history and immutable `dev-v*` / `prod-v*` snapshots identify the exact
+pointer targets at any point in time; those repository environment tags
+are **orthogonal** to the agent runtime channels. CI does not itself prove
+physical-cluster acceptance. Stage transitions require explicit PR evidence,
+and the stable transition requires an operator-authorized snapshot.
+
+**Rollout safety:** moving `hermes-stable` would roll all agents using it,
+not migrate one agent at a time. Qualify a separate pilot *on `hermes-test`*
+before any stable pointer advance. Preserve each PVC, `SOUL.md`, session,
+skill and Hindsight bank; snapshot and prove a compatible restore before
+allowing a retained agent to upgrade (#3688).
+
+**Legacy migration:** current `hermes-default` (the production-compatibility
+name) and `hermes-upgrade-canary` remain **unchanged** in the API/source PR
+#3945. The three permanent target profiles are introduced only in a later,
+reviewed GitOps migration once trusted OCI digests and a real isolated canary
+exist. Avoid operating independent `hermes-default` and `hermes-stable`
+production channels long term: first migrate agents/defaulting under an
+explicit PR, then retire the compatibility alias. `hermes-upgrade-canary`
+is likewise retired after the new test channel is physically accepted.
+The operator must remain generic: arbitrary profile names and pointers,
+no embedded dev/test/stable special cases.
 
 For compatibility, old profiles with inline `spec.image` and
 `spec.bootstrap.hindsightPluginImage` continue to work during transition.
