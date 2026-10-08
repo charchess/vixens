@@ -211,3 +211,25 @@ func TestRuntimeReleasePointerChangesOnlyExecutableImage(t *testing.T) {
 		}
 	}
 }
+
+// Release-backed agents must not silently get an unusable Hindsight provider
+// merely because their immutable release image comes from a registry mirror.
+func TestHermesReleaseWithoutHindsightPluginFailsForMemoryTenant(t *testing.T) {
+	ctx := context.Background()
+	tenant := testTenant()
+	profile := testRuntimeProfile()
+	profile.Spec.ReleaseRef = "hermes-mirror"
+	profile.Spec.Image = ""
+	release := testHermesRelease(profile.Spec.ReleaseRef, "a", "")
+	release.Spec.Image = "registry.example.com/hermes-mirror@sha256:" + strings.Repeat("a", 64)
+	agent := testAgentIdentity()
+	scheme := testScheme(t)
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent,release).Build()
+	r := &AgentIdentityReconciler{Client:c,Scheme:scheme}
+	effective,_,err := r.resolveRuntimeRelease(ctx,profile)
+	if err!=nil {t.Fatal(err)}
+	err = r.ensureDeployment(ctx,agent,tenant,effective,tenantNamespace(tenant.Name),"","")
+	if err==nil || !strings.Contains(err.Error(),"requires a pinned bootstrap.hindsightPluginImage") {
+		t.Fatalf("release with tenant Hindsight missing provider was accepted: %v",err)
+	}
+}
