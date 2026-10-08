@@ -47,6 +47,18 @@ type RuntimeToolsetPolicy struct {
 	State string `json:"state"`
 }
 
+// RuntimeBootstrapSpec specifies independently versioned provider payloads.
+// The regular Hermes image is always selected by spec.image; a plugin bundle
+// never replaces or mutates the upstream runtime image.
+// Optional: existing legacy baked-plugin images remain valid until canary cutover.
+type RuntimeBootstrapSpec struct {
+	// HindsightPluginImage is a versioned OCI plugin bundle used only when
+	// the TenantBundle has Hindsight configured. Must be reviewed and pinned
+	// independently of the upstream Hermes image.
+	// +kubebuilder:validation:MaxLength=512
+	HindsightPluginImage string `json:"hindsightPluginImage,omitempty"`
+}
+
 type RuntimeCapabilityPolicySpec struct {
 	// Toolsets freezes the Hermes executable-capability policy for this runtime profile.
 	// A Hermes profile without an explicit toolset policy is rejected fail-closed.
@@ -68,6 +80,11 @@ type AgentRuntimeProfileSpec struct {
 	Image string `json:"image"`
 
 	Storage RuntimeStorageSpec `json:"storage"`
+
+	// Bootstrap supplies independently pinned plugin payload images.
+	// An empty value preserves the currently deployed legacy runtime.
+	// +optional
+	Bootstrap RuntimeBootstrapSpec `json:"bootstrap,omitempty"`
 
 	// Resources controls the generated main runtime container.
 	Resources corev1.ResourceRequirements `json:"resources"`
