@@ -59,7 +59,7 @@ jobs:
             -c 'from plugins.memory import find_provider_dir; from pathlib import Path; import hindsight_client, aiohttp_retry; p=find_provider_dir("hindsight"); assert p is not None and str(p)=="/opt/data/plugins/hindsight",p; assert Path(p,"plugin.yaml").is_file(); print("OFFICIAL_HERMES_HINDSIGHT_DISCOVERY_OK")'
 
   publish:
-    name: Publish payload and nominate official Hermes canary
+    name: Publish payload and propose Hermes dev candidate
     if: github.event_name != 'pull_request'
     needs: verify
     runs-on: ubuntu-latest
@@ -110,7 +110,7 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Create review-only canary pin PR
+      - name: Create review-only Hermes dev pin PR
         env:
           GH_TOKEN: ${{ steps.release-token.outputs.token }}
           BUNDLE_DIGEST: ${{ steps.push.outputs.digest }}
@@ -122,10 +122,10 @@ jobs:
           HERMES_MANIFEST_SHA="$(docker buildx imagetools inspect --format '{{json .Manifest.Digest}}' nousresearch/hermes-agent:v2026.9.24 | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.startswith("sha256:"); print(d[7:])')"
           test "${#HERMES_MANIFEST_SHA}" -eq 64
           HERMES_IMAGE="nousresearch/hermes-agent@sha256:${HERMES_MANIFEST_SHA}"
-          BRANCH="chore/txo-hermes-runtime-release-$(git rev-parse --short=12 HEAD)"
+          BRANCH="chore/txo-hermes-dev-release-$(git rev-parse --short=12 HEAD)"
           git checkout -b "${BRANCH}"
-          RELEASE_NAME="$(python3 apps/60-services/txo-fabric/hermes-hindsight-plugin/nominate_canary.py "${HERMES_IMAGE}" "${PLUGIN_IMAGE}")"
-          echo "Canary release candidate: ${RELEASE_NAME}"
+          RELEASE_NAME="$(python3 apps/60-services/txo-fabric/hermes-hindsight-plugin/nominate_dev.py "${HERMES_IMAGE}" "${PLUGIN_IMAGE}")"
+          echo "Hermes dev release candidate: ${RELEASE_NAME}"
           git add apps/60-services/txo-fabric/operator/config/profiles
           if git diff --cached --quiet; then
             echo "Candidate release and pointer already declared"
@@ -134,6 +134,6 @@ jobs:
           git commit -m "chore(txo-fabric): nominate immutable Hermes runtime release ${RELEASE_NAME}"
           git push -u origin "${BRANCH}"
           gh pr create \
-            --title "chore(txo-fabric): canary pointer to immutable Hermes release ${RELEASE_NAME}" \
-            --body "Candidate for #3944, #3939, #3688. Creates a new immutable HermesRuntimeRelease from upstream engine OCI digest plus pinned Hindsight bundle, and moves ONLY hermes-upgrade-canary.releaseRef. No change to hermes-default, no automatic merge or production promotion. Requires real isolated canary Pod and retained-state/s6/Hindsight/rollback acceptance before approving." \
+            --title "chore(txo-fabric): Hermes dev pointer to immutable release ${RELEASE_NAME}" \
+            --body "Candidate for #3947 and #3944. Creates a verified immutable HermesRuntimeRelease from upstream OCI digest plus pinned Hindsight bundle, and moves ONLY hermes-dev.releaseRef. It does not modify hermes-test, hermes-stable, hermes-default, hermes-upgrade-canary or any AgentIdentity. CI is not physical acceptance: separate manually reviewed test/stable PRs require recorded real Kubernetes, state-restore and rollback evidence under #3688. No automatic merge or production promotion." \
             --base main --head "${BRANCH}"
