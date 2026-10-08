@@ -275,12 +275,37 @@ elif [ -d "${legacy_profile}" ]; then
   fi
 fi
 
-# The init container runs as root for retained-PVC migration checks, but the
-# Hermes gateway itself runs as the image's hermes user. Keep only the
-# Hermes-owned mutable config/backup surface writable by that runtime user.
+# The init container runs as root; the official Hermes s6 service runs
+# as hermes. Older private PVCs can contain 0600 root-owned install locks and
+# config backup files. Merely chowning directory entries leaves those files
+# inaccessible and can crash the gateway on every pod restart (see #3743).
+# Never change ownership of arbitrary /opt/data, SOUL.md, skills or shared mounts.
+# Refuse symlinked state roots: this privileged reconciliation must not escape
+# the private AgentIdentity PVC.
+for entry in "${HERMES_HOME}" "${HERMES_HOME}/backups" "${HERMES_HOME}/backups/config" "${HERMES_HOME}/installs"; do
+  if [ -L "$entry" ]; then
+    echo "refusing symlinked Hermes private state path: $entry" >&2
+    exit 78
+  fi
+done
+if [ "${TXO_LEGACY_PROFILE_ADOPTION}" = "true" ] && [ -L "/mnt/txo-data/profiles" ]; then
+  echo "refusing symlinked Hermes legacy profile root" >&2
+  exit 78
+fi
+
 install -d -o hermes -g hermes -m 0750 "${HERMES_HOME}/backups" "${HERMES_HOME}/backups/config"
+# These two trees are exclusively Hermes-owned mutable runtime state, unlike
+# the rest of the private workspace. find -P skips symlink entries entirely;
+# -xdev prevents traversing separately mounted filesystems.
+for managed_dir in "${HERMES_HOME}/backups" "${HERMES_HOME}/installs"; do
+  [ -d "$managed_dir" ] || continue
+  find -P "$managed_dir" -xdev \( -type d -o -type f \) \( ! -user hermes -o ! -group hermes \) \
+    -exec chown hermes:hermes -- {} + || exit 78
+  find -P "$managed_dir" -xdev -type d ! -perm -u+wx -exec chmod u+rwx -- {} + || exit 78
+  find -P "$managed_dir" -xdev -type f ! -perm -u+rw -exec chmod u+rw -- {} + || exit 78
+done
 if [ -e "${HERMES_HOME}/config.yaml" ]; then
-  chown hermes:hermes "${HERMES_HOME}/config.yaml"
+  chown hermes:hermes "${HERMES_HOME}/config.yaml" || exit 78
 fi
 /command/s6-setuidgid hermes /opt/hermes/.venv/bin/hermes config set skills.external_dirs '["/workspace/skills"]'`},
 					Env: []corev1.EnvVar{
