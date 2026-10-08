@@ -415,11 +415,12 @@ remain a separate change to be rebased/reviewed.
 
 ## Official Hermes + independent Hindsight OCI extension (candidate #3939)
 
-The target runtime uses **unmodified**
-`nousresearch/hermes-agent:v2026.9.24` as `AgentRuntimeProfile.spec.image`.
-The profile may *optionally* set
-`spec.bootstrap.hindsightPluginImage` to a separately built, reviewed
-`ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:...` digest.
+The supported legacy inline form uses **unmodified**
+`nousresearch/hermes-agent:v2026.9.24` in `AgentRuntimeProfile.spec.image`
+with optional `spec.bootstrap.hindsightPluginImage`. New pointer-based
+profiles instead select a `HermesRuntimeRelease` that pins **both** upstream
+Hermes and the independently built Hindsight plugin by exact OCI digests.
+The plugin artifact uses `ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:...`.
 
 When both the tenant has Hindsight configured and this image is set, Fabric
 renders two initContainers: `prepare-hindsight-extension` copies a pinned
@@ -445,8 +446,9 @@ state and independent Hindsight bank untouched.
 **Rollout safety:** this field is *opt-in*, and default/production profiles
 keep their existing derived Hermes image until an approved migration.
 A separate GitHub workflow builds the plugin artifact and generates a
-review-only PR changing **hermes-upgrade-canary** to the official image and
-pinning the plugin image by digest. The legacy derived-image pipeline no
+review-only PR creating a **new immutable HermesRuntimeRelease** (engine and
+Hindsight digests) and moving only `hermes-upgrade-canary.releaseRef`.
+It never updates `hermes-default` automatically. The legacy derived-image pipeline no
 longer publishes or auto-updates runtime pins. No prod promotion is implied
 by a generated PR; physical image/s6/import/memory/PVC tests under #3688 are
 required before changing `hermes-default`. During this migration,
