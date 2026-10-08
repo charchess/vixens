@@ -71,6 +71,7 @@ class ChannelGateTests(unittest.TestCase):
         channels = guard.CHANNELS
         with patch.object(guard, "git", side_effect=self.fake_git(channels, bootstrap=True)):
             self.assertEqual(guard.gate("origin/main", "Hermes-Channel-Bootstrap: true", "User"), list(channels))
+            self.assertEqual(guard.gate("origin/main", "- Hermes-Channel-Bootstrap: true", "User"), list(channels))
             with self.assertRaisesRegex(ValueError, "human-reviewed"):
                 guard.gate("origin/main", "Hermes-Channel-Bootstrap: true", "Bot")
             with self.assertRaisesRegex(ValueError, "Bootstrap"):
