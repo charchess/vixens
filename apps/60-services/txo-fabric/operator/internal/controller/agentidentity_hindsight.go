@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"strings"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -33,6 +34,14 @@ func configureHermesHindsight(agent *fabricv1alpha1.AgentIdentity, tenant *fabri
 	}
 
 	bankID := resolvedBankID(agent)
+	// Official upstream images do not ship the external Hindsight provider.
+	// Never silently start one on a tenant requiring Hindsight without its
+	// independently pinned payload. Legacy TXO-derived images stay compatible.
+	if profile.Spec.Bootstrap.HindsightPluginImage == "" &&
+		(strings.HasPrefix(profile.Spec.Image, "nousresearch/hermes-agent:") ||
+		 strings.HasPrefix(profile.Spec.Image, "nousresearch/hermes-agent@")) {
+		return fmt.Errorf("official Hermes image requires a pinned bootstrap.hindsightPluginImage for tenant Hindsight")
+	}
 	if profile.Spec.Bootstrap.HindsightPluginImage != "" {
 		if err := configureOfficialHermesHindsightPlugin(profile.Spec.Bootstrap.HindsightPluginImage, deployment); err != nil {
 			return err
@@ -142,12 +151,33 @@ test -s /extensions/hindsight/__init__.py
 	// Bootstrap runs after the plugin content exists and validates the real
 	// external dependencies via the same PYTHONPATH as the s6 gateway.
 	bootstrap := &pod.InitContainers[1]
-	bootstrap.VolumeMounts = append(bootstrap.VolumeMounts, corev1.VolumeMount{
-		Name: hindsightExtensionVolume, MountPath: "/txo-extension", ReadOnly: true,
+	// Mount the plugin at the bootstrap's own HERMES_HOME too: legacy
+	// profile adoption points bootstrap at the retained named-profile path.
+	bootstrapHome := ""
+	for _, env := range bootstrap.Env {
+		if env.Name == "HERMES_HOME" {
+			bootstrapHome = env.Value
+		}
+	}
+	if bootstrapHome == "" {
+		return fmt.Errorf("Hermes bootstrap HERMES_HOME is not configured")
+	}
+	bootstrap.VolumeMounts = append(bootstrap.VolumeMounts,
+		corev1.VolumeMount{
+			Name: hindsightExtensionVolume, MountPath: bootstrapHome + "/plugins/hindsight",
+			SubPath: "hindsight", ReadOnly: true,
+		},
+		corev1.VolumeMount{
+			Name: hindsightExtensionVolume, MountPath: hindsightExtensionDepsRoot,
+			SubPath: "python", ReadOnly: true,
+		},
+	)
+	bootstrap.Env = append(bootstrap.Env, corev1.EnvVar{
+		Name: "PYTHONPATH", Value: hindsightExtensionDepsRoot,
 	})
 	bootstrap.Command[2] += `
-test -s /txo-extension/hindsight/plugin.yaml
-PYTHONPATH="/txo-extension/python" /opt/hermes/.venv/bin/python -c 'import hindsight_client, aiohttp_retry'
+test -s "${HERMES_HOME}/plugins/hindsight/plugin.yaml"
+/opt/hermes/.venv/bin/python -c 'from plugins.memory import find_provider_dir; import hindsight_client, aiohttp_retry; assert find_provider_dir("hindsight")'
 `
 	runtime := &pod.Containers[0]
 	runtime.VolumeMounts = append(runtime.VolumeMounts,

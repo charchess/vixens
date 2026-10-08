@@ -414,3 +414,23 @@ func TestOfficialHermesPluginBootstrapKeepsLegacyProfileAdoption(t *testing.T) {
 		t.Fatal("legacy retained PVC subPath changed")
 	}
 }
+
+func TestOfficialHermesWithoutPluginBundleIsRejectedForHindsightTenant(t *testing.T) {
+	ctx := context.Background()
+	tenant := testTenant()
+	profile := testRuntimeProfile()
+	profile.Spec.Image = "nousresearch/hermes-agent:v2026.9.24"
+	profile.Spec.Bootstrap.HindsightPluginImage = ""
+	agent := testAgentIdentity()
+	scheme := testScheme(t)
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	err := r.ensureDeployment(ctx, agent, tenant, profile, tenantNamespace(tenant.Name), "", "")
+	if err == nil || !strings.Contains(err.Error(), "requires a pinned bootstrap.hindsightPluginImage") {
+		t.Fatalf("unprovisioned official Hermes must fail closed: %v", err)
+	}
+	tenant.Spec.Memory.Hindsight = nil
+	if err := r.ensureDeployment(ctx, agent, tenant, profile, tenantNamespace(tenant.Name), "", ""); err != nil {
+		t.Fatalf("no-Hindsight tenant should not require a plugin bundle: %v", err)
+	}
+}
