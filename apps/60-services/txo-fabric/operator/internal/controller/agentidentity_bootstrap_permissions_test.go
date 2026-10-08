@@ -61,9 +61,10 @@ func TestHermesRetainedPVCBootstrapPermissions(t *testing.T) {
  // Isolate exactly the repair block, replacing the image's hermes identity
  // with the CI runner identity so the test needs no privileged container.
  start := strings.Index(script, "# The init container runs as root;")
- end := strings.Index(script, "if [ -e \"${HERMES_HOME}/config.yaml\" ]; then", start)
- if start < 0 || end <= start { t.Fatal("permission block not found") }
- repair := script[start:end]
+ if start < 0 { t.Fatal("permission block start not found") }
+ relEnd := strings.Index(script[start:], "if [ -e \"${HERMES_HOME}/config.yaml\" ]; then")
+ if relEnd < 0 { t.Fatal("permission block end not found") }
+ repair := script[start:start+relEnd]
  me, err := user.Current()
  if err != nil { t.Fatal(err) }
  g, err := exec.Command("id", "-gn").Output()
