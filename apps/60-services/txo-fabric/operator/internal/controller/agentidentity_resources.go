@@ -17,10 +17,34 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+// desiredAgentPVCStorageClass is selected independently of the Hermes image,
+// runtime profile channel or releaseRef. The profile fallback serves only
+// legacy tenants that have not opted into tenant-owned storage.
+func desiredAgentPVCStorageClass(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile) (string, error) {
+	if tenant.Spec.AgentStorage == nil {
+		return profile.Spec.Storage.StorageClassName, nil
+	}
+	policy := tenant.Spec.AgentStorage
+	if policy.RetainedStorageClassName == "" || policy.DisposableStorageClassName == "" {
+		return "", fmt.Errorf("tenant %q requires both retained and disposable agent storage classes", tenant.Name)
+	}
+	if policy.RetainedStorageClassName == policy.DisposableStorageClassName {
+		return "", fmt.Errorf("tenant %q must use distinct retained and disposable agent storage classes", tenant.Name)
+	}
+	if storageRetentionPolicy(agent) == StorageRetentionDelete {
+		return policy.DisposableStorageClassName, nil
+	}
+	return policy.RetainedStorageClassName, nil
+}
+
 func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace string) error {
 	name := runtimePVCName(agent.Spec.AgentKey)
+	storageClass, err := desiredAgentPVCStorageClass(agent, tenant, profile)
+	if err != nil {
+		return err
+	}
 	var pvc corev1.PersistentVolumeClaim
-	err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &pvc)
+	err = r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &pvc)
 	if apierrors.IsNotFound(err) {
 		labels := agentLabels(agent, tenant)
 		labels[LabelStorageRetention] = storageRetentionPolicy(agent)
@@ -28,7 +52,7 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, Labels: labels},
 			Spec: corev1.PersistentVolumeClaimSpec{
 				AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-				StorageClassName: stringPtr(profile.Spec.Storage.StorageClassName),
+				StorageClassName: stringPtr(storageClass),
 				Resources:        corev1.VolumeResourceRequirements{Requests: corev1.ResourceList{corev1.ResourceStorage: profile.Spec.Storage.Size}},
 			},
 		}
@@ -42,8 +66,18 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	if err != nil {
 		return err
 	}
-	if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != profile.Spec.Storage.StorageClassName {
-		return fmt.Errorf("PVC %s/%s uses storageClass %q; profile %q requires %q (storageClassName is immutable)", namespace, name, valueOrEmpty(pvc.Spec.StorageClassName), profile.Name, profile.Spec.Storage.StorageClassName)
+	actualClass := valueOrEmpty(pvc.Spec.StorageClassName)
+	if actualClass != storageClass {
+		// Safe brownfield compatibility only: legacy retained PVCs were
+		// provisioned from their original runtime profile class. They must
+		// keep their UID/class and promote the concrete PV to Retain. A fresh
+		// PVC always uses tenant agentStorage; Delete PVC mismatches fail closed.
+		legacyRetained := tenant.Spec.AgentStorage != nil &&
+			storageRetentionPolicy(agent) == StorageRetentionRetain &&
+			actualClass == profile.Spec.Storage.StorageClassName
+		if !legacyRetained {
+			return fmt.Errorf("PVC %s/%s uses immutable storageClass %q; agent storage policy requires %q", namespace, name, actualClass, storageClass)
+		}
 	}
 	if tenantName := pvc.Labels[LabelTenantName]; tenantName != "" && tenantName != tenant.Name {
 		return fmt.Errorf("PVC %s/%s belongs to tenant %q, not %q", namespace, name, tenantName, tenant.Name)

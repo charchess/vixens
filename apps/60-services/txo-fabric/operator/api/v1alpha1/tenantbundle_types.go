@@ -70,6 +70,24 @@ type TenantHumanAccessSpec struct {
 	Web *HumanWebAccessSpec `json:"web,omitempty"`
 }
 
+// TenantAgentStorageSpec configures private agent PVC provisioning per tenant.
+// It belongs to the tenant persistence contract, not Hermes release channels.
+// Both classes are required when enabled. Legacy tenants may omit this entire
+// section until their storage contract is deliberately migrated.
+type TenantAgentStorageSpec struct {
+	// RetainedStorageClassName must provision PVs with reclaimPolicy Retain
+	// for newly created durable agent workspaces.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	RetainedStorageClassName string `json:"retainedStorageClassName"`
+
+	// DisposableStorageClassName is used only by identities explicitly
+	// opting into retentionPolicy Delete.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	DisposableStorageClassName string `json:"disposableStorageClassName"`
+}
+
 // TenantBundleSpec is the desired state of one Fabric Cell.
 type TenantBundleSpec struct {
 	// TenantID is the immutable business identifier. Kubernetes metadata.name is the canonical
@@ -94,6 +112,12 @@ type TenantBundleSpec struct {
 
 	// +optional
 	Persistence TenantPersistenceSpec `json:"persistence,omitempty"`
+
+	// AgentStorage selects durable/disposable agent private PVC storage classes.
+	// It is independent of AgentRuntimeProfile and therefore Hermes releases.
+	// Omitted only for backwards compatibility with legacy tenant declarations.
+	// +optional
+	AgentStorage *TenantAgentStorageSpec `json:"agentStorage,omitempty"`
 
 	// Memory declares the durable memory capability consumed by AgentIdentity resources.
 	// +optional
