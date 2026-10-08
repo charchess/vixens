@@ -1,0 +1,118 @@
+---
+name: Build TXO Hermes Hindsight Plugin Bundle
+
+on:
+  pull_request:
+    paths:
+      - apps/60-services/txo-fabric/hermes-hindsight-plugin/**
+      - .github/workflows/build-txo-hermes-hindsight-plugin.yaml
+  push:
+    branches: [main]
+    paths:
+      - apps/60-services/txo-fabric/hermes-hindsight-plugin/**
+      - .github/workflows/build-txo-hermes-hindsight-plugin.yaml
+  workflow_dispatch:
+
+concurrency:
+  group: txo-hermes-hindsight-plugin-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Build and verify pinned plugin bundle
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build plugin payload
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/60-services/txo-fabric/hermes-hindsight-plugin
+          push: false
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  publish:
+    name: Publish payload and nominate official Hermes canary
+    if: github.event_name != 'pull_request'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Generate release bot token
+        id: release-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.TXO_RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.TXO_RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.release-token.outputs.token }}
+          persist-credentials: false
+      - name: Release bot identity
+        env:
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
+          APP_SLUG: ${{ steps.release-token.outputs.app-slug }}
+        run: |
+          BOT_ID=$(gh api "/users/${APP_SLUG}%5Bbot%5D" --jq .id)
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${BOT_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
+          gh auth setup-git
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Push OCI payload
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/60-services/txo-fabric/hermes-hindsight-plugin
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/txo-hermes-hindsight-plugin:main-${{ github.sha }}
+          platforms: linux/amd64
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Create review-only canary pin PR
+        env:
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
+          BUNDLE_DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          set -e
+          PROFILE="apps/60-services/txo-fabric/operator/config/profiles/hermes-upgrade-canary.yaml"
+          PLUGIN_IMAGE="ghcr.io/${{ github.repository_owner }}/txo-hermes-hindsight-plugin@${BUNDLE_DIGEST}"
+          BRANCH="chore/txo-hermes-hindsight-candidate-$(git rev-parse --short=12 HEAD)"
+          git checkout -b "${BRANCH}"
+          sed -i 's|^  image: .*|  image: nousresearch/hermes-agent:v2026.9.24|' "${PROFILE}"
+          if grep -q '^    hindsightPluginImage:' "${PROFILE}"; then
+            sed -i "s|^    hindsightPluginImage: .*|    hindsightPluginImage: ${PLUGIN_IMAGE}|" "${PROFILE}"
+          else
+            sed -i "/^  image: /a\\  bootstrap:\n    hindsightPluginImage: ${PLUGIN_IMAGE}" "${PROFILE}"
+          fi
+          git add "${PROFILE}"
+          if git diff --cached --quiet; then
+            echo "Already pinned"
+            exit 0
+          fi
+          git commit -m "chore(txo-fabric): nominate official Hermes with Hindsight bundle candidate"
+          git push -u origin "${BRANCH}"
+          gh pr create \
+            --title "chore(txo-fabric): canary official Hermes + pinned Hindsight plugin" \
+            --body "Candidate for #3939 and #3688. Main runtime uses **unmodified** \`nousresearch/hermes-agent:v2026.9.24\`; Hindsight is supplied via initContainer using immutable OCI digest \`${PLUGIN_IMAGE}\`. Canary profile only, **do not auto-merge**. Requires physical plugin/s6/Hindsight/PVC acceptance; do not promote production." \
+            --base main --head "${BRANCH}"
