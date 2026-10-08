@@ -43,7 +43,8 @@ func configureHermesHindsight(agent *fabricv1alpha1.AgentIdentity, tenant *fabri
 	// Never silently start one on a tenant requiring Hindsight without its
 	// independently pinned payload. Legacy TXO-derived images stay compatible.
 	if profile.Spec.Bootstrap.HindsightPluginImage == "" &&
-		(strings.HasPrefix(profile.Spec.Image, "nousresearch/hermes-agent:") ||
+		(profile.Spec.ReleaseRef != "" ||
+		 strings.HasPrefix(profile.Spec.Image, "nousresearch/hermes-agent:") ||
 		 strings.HasPrefix(profile.Spec.Image, "nousresearch/hermes-agent@")) {
 		return fmt.Errorf("official Hermes image requires a pinned bootstrap.hindsightPluginImage for tenant Hindsight")
 	}

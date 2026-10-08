@@ -1,0 +1,105 @@
+---
+# Edge follows the newest *selected and pinned* upstream release via reviewed PRs.
+# This profile alone creates no pods. Never attach customer PVCs during experiments.
+# Retain supports deliberate state and recovery rehearsal, not per-version tenants.
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentRuntimeProfile
+metadata:
+  name: hermes-edge
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: runtime-profile
+    fabric.truxonline.io/purpose: edge-channel
+spec:
+  engine: Hermes
+
+  # Latest selected official release, always pinned; no floating :latest tag.
+  releaseRef: hermes-0-21-6-9774f4f39a9b-33060387a98b
+  storage:
+    # Existing beta PVC StorageClass is immutable. Reuse that class across
+    # release channels; each AgentIdentity's Retain policy protects the PV.
+    size: 2Gi
+    storageClassName: truenas-iscsi-delete
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  priorityClassName: vixens-medium
+  sizingLabel: V-small
+  compatibility:
+    s6Overlay: true
+  capabilities:
+    toolsets:
+      # Keep the v2026.9.24 POC core surface explicitly platform-owned.
+      - name: web
+        state: On
+      - name: vision
+        state: On
+      - name: image_gen
+        state: On
+      - name: terminal
+        state: On
+      - name: skills
+        state: On
+      - name: browser
+        state: On
+      - name: cronjob
+        state: On
+      - name: file
+        state: On
+      - name: tts
+        state: On
+      - name: todo
+        state: On
+      - name: memory
+        state: On
+      - name: session_search
+        state: On
+      - name: connections
+        state: On
+      - name: clarify
+        state: On
+      - name: code_execution
+        state: On
+
+      # Deliberate authorized opt-in: agents may not self-enable delegation.
+      - name: delegation
+        state: AllowedOff
+
+      # POC-denied executable surfaces. These remain unavailable even if
+      # /opt/data/config.yaml is edited locally.
+      - name: computer_use
+        state: Off
+      # Bundled platform plugin in the pinned runtime; Hermes otherwise treats
+      # it as a plugin toolset. Keep it explicitly denied in the POC profile.
+      - name: a2a
+        state: Off
+      - name: x_search
+        state: Off
+      - name: video
+        state: Off
+      - name: video_gen
+        state: Off
+      - name: homeassistant
+        state: Off
+      - name: kanban
+        state: Off
+      - name: discord
+        state: Off
+      - name: discord_admin
+        state: Off
+      - name: yuanbao
+        state: Off
+      - name: feishu_doc
+        state: Off
+      - name: feishu_drive
+        state: Off
+      - name: spotify
+        state: Off
+      - name: project
+        state: Off
+      - name: desktop_ui
+        state: Off

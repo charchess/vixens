@@ -28,7 +28,7 @@ spec:
         vixens.io/amavis-runtime-dirs: "user-patches-v2-uid998"
         # DMS v16 / Dovecot 2.4 consumes the normalized LDAP userdb mapping
         # from OpenBao; env-backed Secret updates require a pod rollout.
-        vixens.io/dovecot-ldap-mapping: "dovecot-2.4-v1"
+        vixens.io/dovecot-ldap-mapping: "dovecot-2.4-v2-patch"
       labels: {app.kubernetes.io/name: mailserver, app.kubernetes.io/part-of: truxonline-mail}
     spec:
       securityContext: {fsGroup: 5000, fsGroupChangePolicy: OnRootMismatch}

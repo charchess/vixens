@@ -3,6 +3,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - hermes-default.yaml
+  - hermes-dev.yaml
   - hermes-upgrade-canary.yaml
   - postgresql-shared.yaml
   - postgresql-litellm.yaml
@@ -11,3 +12,8 @@ resources:
   - cliproxyapi-standard.yaml
   - litellm-standard.yaml
   - workspace-shared.yaml
+  - hermes-2026-09-24-fca358f12efd-33060387a98b.yaml
+  - hermes-stable.yaml
+  - hermes-canary.yaml
+  - hermes-edge.yaml
+  - hermes-0-21-6-9774f4f39a9b-33060387a98b.yaml

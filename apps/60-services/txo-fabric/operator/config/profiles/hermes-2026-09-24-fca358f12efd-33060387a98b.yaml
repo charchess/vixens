@@ -1,0 +1,15 @@
+---
+# Immutable upstream Hermes engine + independently pinned Hindsight provider.
+# This candidate alone is NOT evidence of physical acceptance or prod promotion.
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: HermesRuntimeRelease
+metadata:
+  name: hermes-2026-09-24-fca358f12efd-33060387a98b
+  annotations:
+    argocd.argoproj.io/sync-wave: "-15"
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: runtime-release
+spec:
+  image: nousresearch/hermes-agent@sha256:fca358f12efd65bfaaca05884166f15c0e2788375ca30d77061ac1ebc96452b7
+  hindsightPluginImage: ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:33060387a98b661aee0ed39dcc6ad19d231a7dd3036dfe429818d8e74f3e6bb5

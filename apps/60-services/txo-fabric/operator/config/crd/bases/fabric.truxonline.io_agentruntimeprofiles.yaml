@@ -117,15 +117,23 @@ spec:
                 - Hermes
                 type: string
               image:
-                description: Image is an immutable, versioned runtime image reference.
+                description: |-
+                  Image is the deprecated inline runtime image kept for legacy profiles.
+                  New profiles select an immutable HermesRuntimeRelease using releaseRef.
                 maxLength: 512
-                minLength: 1
                 type: string
               priorityClassName:
                 default: vixens-medium
                 description: PriorityClassName maps the runtime to Vixens scheduling
                   policy.
                 maxLength: 253
+                type: string
+              releaseRef:
+                description: |-
+                  ReleaseRef selects an immutable HermesRuntimeRelease. The profile remains
+                  a mutable pointer; capabilities, storage and limits stay here.
+                maxLength: 253
+                minLength: 1
                 type: string
               resources:
                 description: Resources controls the generated main runtime container.
@@ -212,10 +220,13 @@ spec:
                 - storageClassName
                 type: object
             required:
-            - image
             - resources
             - storage
             type: object
+            x-kubernetes-validations:
+            - message: exactly one of releaseRef or legacy inline image must be set
+              rule: (has(self.releaseRef) && self.releaseRef != '') != (has(self.image)
+                && self.image != '')
         type: object
     served: true
     storage: true

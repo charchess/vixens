@@ -65,16 +65,25 @@ type RuntimeCapabilityPolicySpec struct {
 	Toolsets []RuntimeToolsetPolicy `json:"toolsets,omitempty"`
 }
 
+// +kubebuilder:validation:XValidation:rule="(has(self.releaseRef) && self.releaseRef != '') != (has(self.image) && self.image != '')",message="exactly one of releaseRef or legacy inline image must be set"
 type AgentRuntimeProfileSpec struct {
 	// Engine identifies the runtime implementation.
 	// +kubebuilder:validation:Enum=Hermes
 	// +kubebuilder:default=Hermes
 	Engine string `json:"engine,omitempty"`
 
-	// Image is an immutable, versioned runtime image reference.
-	// +kubebuilder:validation:MinLength=1
+	// Image is the deprecated inline runtime image kept for legacy profiles.
+	// New profiles select an immutable HermesRuntimeRelease using releaseRef.
+	// +optional
 	// +kubebuilder:validation:MaxLength=512
-	Image string `json:"image"`
+	Image string `json:"image,omitempty"`
+
+	// ReleaseRef selects an immutable HermesRuntimeRelease. The profile remains
+	// a mutable pointer; capabilities, storage and limits stay here.
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	ReleaseRef string `json:"releaseRef,omitempty"`
 
 	Storage RuntimeStorageSpec `json:"storage"`
 

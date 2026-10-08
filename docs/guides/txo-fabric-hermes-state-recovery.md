@@ -1,191 +1,109 @@
-# TXO Fabric Hermes retained-state upgrade and recovery
+# TXO Fabric — Hermes private-state upgrade and recovery
 
-Issue #3688 defines the safety contract for Hermes image changes when an
-`AgentIdentity` keeps valuable private `/opt/data`.
+Scope: #3688, #3944, #3947, #3964. The canonical release-channel model is
+[txo-fabric-hermes-release-channels.md](txo-fabric-hermes-release-channels.md).
+`WORKFLOW.md` controls explicit GitOps production promotion.
 
-## State boundaries
+## No infrastructure per Hermes version
 
-An Hermes runtime upgrade must treat these as separate lifecycle domains:
+There are **three permanent runtime pointers**:
+`hermes-stable`, `hermes-canary` and `hermes-edge`. Each selects a pinned
+immutable official `HermesRuntimeRelease` (Hermes image digest and Hindsight
+plugin digest). A pointer alone does not create a pod, tenant or PVC.
 
-- **private runtime state**: the AgentIdentity PVC mounted at `/opt/data`;
-- **durable external memory**: tenant Hindsight and the AgentIdentity bank;
-- **shared business workspace**: tenant/user/group workspace mounts;
-- **shared/curated skills**: platform workspace skill libraries;
-- **runtime image and platform policy**: `AgentRuntimeProfile`, toolset policy,
-  gateway/integration authorization and immutable image pins.
+Spark (hAIrem `ten00001-usr000001-agt00011`, #3964) is the nominated
+**existing** edge pilot. Its desired binding is merged into Git, but it must
+not be described as physically tested or deployed until the exact snapshot
+has been explicitly promoted and the cluster inspected. Other beta agents
+remain on the backward-compatible `hermes-default`.
 
-A rollback of the container image alone is not a state rollback.
+Legacy `hermes-dev` and `hermes-upgrade-canary` profiles are compatibility
+artifacts, **not** the destination for new version qualification.
+`fabric-smoke` is parked and currently declares no canary AgentIdentity;
+`fabric-smoke-upgrade-probe` must not be referenced as an existing resource.
 
-## Dedicated upgrade canary: what exists and what does not
+## Separate state and runtime concerns
 
-As of 2026-10-08, `AgentRuntimeProfile/hermes-upgrade-canary` exists in GitOps
-with `truenas-iscsi-retain`, but **there is no declared AgentIdentity bound
-to it**. The previously documented `fabric-smoke-upgrade-probe` does **not**
-exist in current Git. `TenantBundle/fabric-smoke` is `Parked` and declares
-no agents; `hairem-sandbox` is not a validated disposable test cell. Neither
-`hairem` nor `indiba` may be casually treated as disposable.
+- Private Hermes state: per-AgentIdentity PVC mounted at `/opt/data`,
+  including agent-owned SOUL.md, config, sessions, local skills and cron.
+- External Hindsight bank: tenant-backed service and bank identity, not a
+  replacement for a snapshot of local `/opt/data`.
+- Shared tenant/user/group workspace: not a private-agent migration target.
+- Credentials/model access: tenant LiteLLM/CPA, scoped broker, secrets and
+  authorization, not disposable just because an agent workspace is empty.
+- Runtime: official pinned OCI image, separately pinned Hindsight plugin,
+  platform toolset policy and release pointer.
 
-Consequently, merging a profile-image pin PR is **not** an executed runtime
-canary and supplies **zero** physical acceptance evidence. Provisioning a
-dedicated isolated throwaway canary agent with a configured Hindsight tenant,
-independent memory bank and retained test PVC requires its own authorized
-GitOps change. Do not reuse customer agent keys, banks or private PVCs.
+Changing a Hermes version or channel **must not implicitly recreate a PVC**.
+A runtime rollback alone does not undo an on-disk schema migration.
+Persistent storage policy is moving to tenant-owned `spec.agentStorage`
+(#3967), independent of runtime release pointers.
 
-The canary must run both a fresh instance and state originally written by the
-previous accepted runtime, using the same real s6 gateway, model path, toolset
-policy, plugin discovery and Hindsight mode as the candidate production path.
+## Initial beta rollout while agent workspaces are empty
 
-The shared `hermes-default` profile must not move ahead before this validation.
+On 2026-10-08 the owner confirmed current hAIrem/Indiba agent workspaces
+contain no valuable business data. **Only** the private agent workspaces
+explicitly inventoried as empty may be intentionally re-provisioned under
+a separately approved rollout; this is not permission to destroy tenant
+PostgreSQL, Hindsight bank data, shared files, CPA OAuth state or other PVCs.
 
+Before authorizing a production snapshot:
+1. Verify `main`, all operator source/image pin PRs, and the immutable
+   `dev-v*` snapshot; compare it with current `prod-stable`.
+2. Observe the exact live AgentIdentity, namespace, PVC name, UID,
+   StorageClass, bound PV, PV reclaim policy, consumers and ownerReferences.
+3. Confirm **per PVC** that it is disposable/empty and that no other service
+   or user-owned state is stored there; record a reversible procedure or
+   explicitly acknowledge re-provisioning cannot recover the old contents.
+4. Plan controlled detachment, exclusive RWO access, and **separately authorized**
+   replacement of only those private PVCs that need a new Retain StorageClass.
+   Kubernetes PVC `storageClassName` is immutable. Merely updating the tenant
+   storage policy must leave existing PVCs untouched.
+5. Promote the exact candidate only after the owner's explicit authorization,
+   then verify ArgoCD and the live operator image.
+6. Check Spark's official s6 startup, plugin discovery, Hindsight scoped
+   retain/recall, LiteLLM→CPA inference, personal SOUL.md/skills, sessions,
+   cron and authenticated human entry. Confirm other agents stayed unchanged.
 
-## Minimum upgrade gate
+This early empty-state exception is **not** the normal upgrade procedure
+once real customer data accumulates.
 
-Before promoting a new Hermes runtime image for durable Client 0 agents:
+## Populated-agent upgrade and recovery gate
 
-1. **first provision and prove** an isolated GitOps-managed disposable
-   test agent (not currently declared), with Hindsight enabled and a unique bank;
-2. on that canary, create representative non-secret retained state with
-   the currently accepted runtime: config, a local skill and cron/background
-   state that Fabric expects to preserve;
-3. record the source PVC UID and current runtime image;
-4. create a point-in-time CSI checkpoint using
-   `VolumeSnapshotClass/truenas-snapshot-retain`;
-5. move only `hermes-upgrade-canary` to the candidate image through Git/PR,
-   then ensure an actual AgentIdentity selects the profile;
-6. after ArgoCD convergence, prove the retained PVC UID is unchanged and the
-   representative state remains usable;
-7. prove the Hermes gateway, Hindsight, toolset policy and inference path still
-   operate through their Fabric-owned contracts;
-8. if the candidate migrates state incompatibly, restore into a **separate
-   disposable recovery PVC** from the checkpoint and prove the old accepted
-   runtime can consume that restored state;
-9. only then may the shared runtime profile be considered for a later PR.
+Before promoting an incompatible or uncertain Hermes version for an agent
+with valuable retained state:
 
-Do not test rollback by attaching two writable runtimes to the same RWO PVC.
+1. Identify exact agent, prior runtime release, PVC UID, linked PV and
+   Hindsight bank; create representative non-secret local state.
+2. Capture a checkpoint before the runtime changes, preferably using the
+   cluster's CSI `VolumeSnapshotClass/truenas-snapshot-retain`.
+3. Record snapshot ReadyToUse, source PVC UID, VolumeSnapshotContent and
+   recovery references without exposing secrets.
+4. Advance only the reviewed pinned edge/canary release pointer appropriate
+   for that cohort; test actual s6 gateway, plugin imports, Hindsight,
+   LiteLLM/CPA, toolsets, skills, cron, sessions and restarts.
+5. Prove representative state survives the image change and continued
+   operation of the same retained PVC, or document incompatibility.
+6. **Restore the snapshot to a different PVC** and test the old runtime with
+   that restored state. Never attach two writers to one RWO volume or
+   overwrite the live retained PVC merely to prove a restore.
+7. Record physical evidence under #3688/#3947. Only then consider human-reviewed
+   canary → stable promotion, followed by individually planned client rollout.
 
-## Checkpoint primitive
+Runtime-owned config backups are useful defense in depth but cannot replace
+a private-state checkpoint; #3743 tracks that ownership. #3742 covers runtime
+probe robustness.
 
-The cluster already provides CSI snapshots for the TrueNAS iSCSI driver:
+## Special case: legacy-profile adoption
 
-- `truenas-snapshot-retain`: retained recovery checkpoint;
-- `truenas-snapshot-delete`: disposable snapshot lifecycle.
+`runtime.storage.adoptLegacyProfile` changes the runtime's effective home
+to an existing `profiles/<agentKey>` directory via `subPath`. Even though
+the operator does not copy/flatten that state, startup can change config or
+Hindsight metadata. **If that old profile holds valuable data**, checkpoint
+it *before* promoting adoption. The first acceptance needs old state,
+upgrade, separately restored PVC and verified rollback per #3688.
 
-Upgrade checkpoints are operational recovery artifacts, not long-lived
-application desired state. Their names must identify the agent and source
-release, and acceptance evidence must record:
-
-- source PVC name and UID;
-- VolumeSnapshot name and ReadyToUse state;
-- bound VolumeSnapshotContent;
-- source/runtime release;
-- restore PVC name/UID when recovery is tested.
-
-Do not print file contents, tokens, cookies or secret values as checkpoint
-evidence.
-
-## Rollback semantics
-
-Supported rollback means **accepted runtime image + compatible data state**.
-
-If a candidate only changed executable code and the existing retained state is
-known compatible, reverting the image may be sufficient. If the candidate
-performed an irreversible or unknown state migration, use the pre-upgrade
-checkpoint instead of assuming the old image can read the mutated live PVC.
-
-The live retained PVC must not be destructively overwritten merely to prove a
-restore. Restore into a separate disposable PVC first.
-
-## Relation to runtime-local backups
-
-Hermes' own config backup path is useful defense in depth but is not the whole
-recovery contract. #3743 tracks correct runtime ownership for that backup path.
-A CSI checkpoint protects the broader private runtime state boundary.
-
-#3742 tracks probe robustness so transient node/runtime stalls are not mistaken
-for data/runtime incompatibility during upgrade acceptance.
-
-## Official Hermes cutover and GitOps release gates (2026-10-08)
-
-The official-runtime bootstrap source has merged as #3940. It keeps the
-current `hermes-default` pinned to the older TXO-derived Hermes image;
-`nousresearch/hermes-agent:v2026.9.24` is the **unmodified upstream**
-candidate and Hindsight dependencies come from a separately SHA256-pinned
-OCI plugin bundle, prepared by initContainer on each Pod creation. The
-agent's `SOUL.md` and private state remain owned by Hermes/the agent.
-
-**Generated PRs have deliberately different roles:**
-
-1. **#3942** pins the *operator* image built from #3940. Complete its CI
-   and merge first. The intermediate source-only dev snapshot
-   `dev-v2026.10.3940` is **not** an acceptable production promotion:
-   the repository promotion workflow requires the built operator image
-   to match the snapshot source. Verify the resulting operator-pin
-   `dev-v*` candidate, then explicitly promote it only with human
-   authorization and validate existing tenants/agents after ArgoCD sync.
-2. **#3941** changes only `hermes-upgrade-canary` to the official
-   runtime and pins the Hindsight plugin OCI by digest. Review its
-   CI after #3942; if merged and explicitly promoted, it only creates
-   a **candidate profile**. It does **not** run or validate Hermes
-   automatically without a bound canary AgentIdentity.
-3. A separately reviewed/approved GitOps test-agent declaration
-   is needed for genuine physical acceptance. Its first run must verify
-   s6 health, Hindsight `local_external` retain/recall, scoped bank,
-   credential isolation and routing via tenant LiteLLM, personal
-   `SOUL.md`, sessions, private/local skills, cron, group skills,
-   and expected human endpoint as applicable.
-4. Complete the retained-state checkpoint + separately restored PVC
-   test described above (#3688). An upstream **version-tag match**
-   is not sufficient to prove the migration of previously persisted
-   state, plugin imports or rollback compatibility.
-5. **Do not flip `hermes-default` for the whole fleet.** Instead,
-   after acceptance, introduce a distinct production candidate profile
-   (e.g. `hermes-official-v2026-09-24`) mirroring the accepted
-   `hermes-default` resources, security ceilings and storage policy,
-   differing only in runtime image and versioned Hindsight bootstrap.
-   Opt in **one** non-critical retained agent by changing its
-   `AgentIdentity.spec.runtime.profileRef` through GitOps after
-   checkpointing that specific PVC. Validate the agent and reverse
-   the binding on failure, restoring its data snapshot when needed.
-6. Migrate hAIrem/Indiba agents **individually** with proof of
-   per-agent PVC UID, `SOUL.md` integrity, session/skills, Hindsight
-   bank ID, credentials and access boundaries. Keep untouched agents
-   on legacy `hermes-default`. Only when the fleet is individually
-   accepted may a later explicit PR repoint `hermes-default`
-   for newly provisioned agents and retire the derived-image pipeline.
-
-**Storage caveat:** `hermes-upgrade-canary` uses
-`truenas-iscsi-retain`; existing agent PVCs may use different storage
-classes. Never attempt to rebind/recreate/migrate their PVC implicitly
-as a side effect of a runtime profile reference change. Record the
-existing PVC/storage class and preserve the bound object; a
-production opt-in profile must be designed to be compatible with the
-actual existing storage contract.
-
-**Release discipline:** promotions operate on complete immutable Git
-snapshots, not individual PR files. A green GitHub CI and the existence
-of `dev-v*` do not authorize a production rollout. Record the
-snapshot, post-sync observations and restore evidence for each stage.
-Update `prod-working` only after explicit operator approval.
-
-The functional-role implementation in draft #3938 is separate. Rebase
-it against the official-Hermes implementation and validate native
-reference skills without editing `SOUL.md` before enabling functional
-bindings for real agents.
-
-## Client 0 migration gate
-
-The legacy Client 0 profiles in #3673 remain authoritative until at least one
-copied representative profile has passed:
-
-`old accepted state -> checkpoint -> Fabric canary -> candidate runtime -> restore proof`.
-
-The first migration is copy/rehearsal only. Cutover happens only after functional
-parity and recovery evidence exist.
-
-For an AgentIdentity using the explicit legacy-profile adoption mode, take the
-checkpoint **before** promoting the Git change that enables
-`runtime.storage.adoptLegacyProfile`. The adoption itself does not copy or delete
-the legacy directory: `profiles/<agentKey>` is mounted as the runtime's
-`/opt/data` through `subPath`. Bootstrap may still update runtime-owned config,
-permissions and Hindsight provider metadata inside that retained profile, so the
-pre-cutover checkpoint remains mandatory.
+A retained PV's `Retain` reclaim policy means the backend should survive
+PVC deletion; it is **not itself a backup** and does not guarantee that the
+PVC object survives a controller garbage-collection race. #3824 covers the
+separate ownerReference fix.

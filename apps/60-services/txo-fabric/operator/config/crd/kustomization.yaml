@@ -8,6 +8,7 @@ resources:
   - bases/fabric.truxonline.io_integrationconnections.yaml
   - bases/fabric.truxonline.io_integrationbindings.yaml
   - bases/fabric.truxonline.io_agentruntimeprofiles.yaml
+  - bases/fabric.truxonline.io_hermesruntimereleases.yaml
   - bases/fabric.truxonline.io_postgresqlprofiles.yaml
   - bases/fabric.truxonline.io_hindsightprofiles.yaml
   - bases/fabric.truxonline.io_aigatewayprofiles.yaml
