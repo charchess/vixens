@@ -35,6 +35,20 @@ func (r *AgentIdentityReconciler) ensureFunctionalSkillConfigMap(ctx context.Con
 		return nil
 	}
 	cm := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: functionalSkillConfigMapName(agent), Namespace: namespace}}
+	var existing corev1.ConfigMap
+	if err := r.Get(ctx, types.NamespacedName{Name: cm.Name, Namespace: namespace}, &existing); err == nil {
+		// Never adopt an arbitrary tenant ConfigMap, even if its name collides.
+		if existing.Labels[LabelInstance] != agent.Spec.AgentKey || existing.Labels[LabelTenantName] != tenant.Name {
+			return fmt.Errorf("functional skill ConfigMap %s/%s is not owned by agent %s", namespace, cm.Name, agent.Name)
+		}
+		owned := false
+		for _, owner := range existing.OwnerReferences {
+			if owner.UID == agent.UID && owner.Kind == "AgentIdentity" { owned = true }
+		}
+		if !owned { return fmt.Errorf("functional skill ConfigMap %s/%s lacks expected AgentIdentity owner", namespace, cm.Name) }
+	} else if !apierrors.IsNotFound(err) {
+		return err
+	}
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, cm, func() error {
 		cm.Labels = mergeStringMap(cm.Labels, agentLabels(agent, tenant))
 		cm.Data = map[string]string{"SKILL.md": renderFunctionalSkill(role)}
