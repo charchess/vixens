@@ -258,9 +258,11 @@ func TestRetainedPVCIsReadoptedBySameTenantAgentKey(t *testing.T) {
 	if err := c.Get(ctx, types.NamespacedName{Name: pvc.Name, Namespace: pvc.Namespace}, &adopted); err != nil {
 		t.Fatal(err)
 	}
-	owner := metav1.GetControllerOf(&adopted)
-	if owner == nil || owner.UID != agent.UID {
-		t.Fatalf("retained PVC was not adopted by replacement identity: %#v", adopted.OwnerReferences)
+	if owner := metav1.GetControllerOf(&adopted); owner != nil {
+		t.Fatalf("retained PVC must not acquire a garbage-collection owner: %#v", owner)
+	}
+	if adopted.Labels[LabelStorageRetention] != StorageRetentionRetain {
+		t.Fatalf("retained PVC labels not reconciled: %#v", adopted.Labels)
 	}
 }
 

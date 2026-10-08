@@ -129,14 +129,9 @@ func (r *AgentIdentityReconciler) retainRuntimePVC(ctx context.Context, agent *f
 		LabelAgent:            agent.Spec.AgentKey,
 		LabelStorageRetention: StorageRetentionRetain,
 	})
-	ownerReferences := pvc.OwnerReferences[:0]
-	for _, owner := range pvc.OwnerReferences {
-		if owner.UID == agent.UID {
-			continue
-		}
-		ownerReferences = append(ownerReferences, owner)
+	if err := r.setRuntimePVCOwnership(agent, &pvc); err != nil {
+		return err
 	}
-	pvc.OwnerReferences = ownerReferences
 	return r.Update(ctx, &pvc)
 }
 
@@ -221,6 +216,31 @@ func (r *AgentIdentityReconciler) requestsForTenant(ctx context.Context, obj cli
 	return requests
 }
 
+// requestsForRuntimePVC requeues retained agents when their unowned PVC
+// binds to a PV. Without this watch, dropping the ownerReference would also
+// drop the only event that ensures the bound PV is promoted to Retain.
+func (r *AgentIdentityReconciler) requestsForRuntimePVC(ctx context.Context, obj client.Object) []reconcile.Request {
+	pvc, ok := obj.(*corev1.PersistentVolumeClaim)
+	if !ok || pvc.Labels[LabelPartOf] != "txo-fabric" {
+		return nil
+	}
+	tenant, key := pvc.Labels[LabelTenantName], pvc.Labels[LabelAgent]
+	if tenant == "" || key == "" || pvc.Namespace != tenantNamespace(tenant) || pvc.Name != runtimePVCName(key) {
+		return nil
+	}
+	var agents fabricv1alpha1.AgentIdentityList
+	if err := r.List(ctx, &agents); err != nil {
+		return nil
+	}
+	for i := range agents.Items {
+		agent := &agents.Items[i]
+		if agent.Spec.TenantRef.Name == tenant && agent.Spec.AgentKey == key {
+			return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: agent.Name}}}
+		}
+	}
+	return nil
+}
+
 func (r *AgentIdentityReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if r.APIReader == nil {
 		r.APIReader = mgr.GetAPIReader()
@@ -229,6 +249,7 @@ func (r *AgentIdentityReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&fabricv1alpha1.AgentIdentity{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.PersistentVolumeClaim{}).
+		Watches(&corev1.PersistentVolumeClaim{}, handler.EnqueueRequestsFromMapFunc(r.requestsForRuntimePVC)).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.Service{}).
 		Owns(&networkingv1.Ingress{}).
