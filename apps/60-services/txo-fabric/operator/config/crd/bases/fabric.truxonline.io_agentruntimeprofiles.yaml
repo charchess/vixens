@@ -51,6 +51,19 @@ spec:
             type: object
           spec:
             properties:
+              bootstrap:
+                description: |-
+                  Bootstrap supplies independently pinned plugin payload images.
+                  An empty value preserves the currently deployed legacy runtime.
+                properties:
+                  hindsightPluginImage:
+                    description: |-
+                      HindsightPluginImage is a versioned OCI plugin bundle used only when
+                      the TenantBundle has Hindsight configured. Must be reviewed and pinned
+                      independently of the upstream Hermes image.
+                    maxLength: 512
+                    type: string
+                type: object
               capabilities:
                 description: Capabilities declares platform-owned executable capability
                   policy for this runtime profile.
@@ -85,18 +98,6 @@ spec:
                     x-kubernetes-list-map-keys:
                     - name
                     x-kubernetes-list-type: map
-                type: object
-              bootstrap:
-                description: |-
-                  Bootstrap selects independently versioned OCI provider payloads.
-                  The Hermes runtime itself remains the image specified by spec.image.
-                properties:
-                  hindsightPluginImage:
-                    description: |-
-                      HindsightPluginImage selects a reviewed, pinned plugin/dependencies
-                      OCI payload copied by an initContainer when tenant Hindsight is enabled.
-                    maxLength: 512
-                    type: string
                 type: object
               compatibility:
                 properties:
