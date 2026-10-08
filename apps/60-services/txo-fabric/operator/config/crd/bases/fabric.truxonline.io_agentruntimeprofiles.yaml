@@ -52,16 +52,13 @@ spec:
           spec:
             properties:
               bootstrap:
-                description: |-
-                  Bootstrap supplies independently pinned plugin payload images.
-                  An empty value preserves the currently deployed legacy runtime.
+                description: Bootstrap selects independent plugin payloads.
                 properties:
                   hindsightPluginImage:
-                    description: |-
-                      HindsightPluginImage is a versioned OCI plugin bundle used only when
-                      the TenantBundle has Hindsight configured. Must be reviewed and pinned
-                      independently of the upstream Hermes image.
+                    description: HindsightPluginImage is an optional pinned OCI payload
+                      for a tenant using Hindsight.
                     maxLength: 512
+                    pattern: ^[a-z0-9][a-z0-9._:/-]*@sha256:[a-f0-9]{64}$
                     type: string
                 type: object
               capabilities:
