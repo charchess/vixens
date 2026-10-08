@@ -254,7 +254,7 @@ spec:
   agentKey: usr000001-agt00011
   displayName: Spark
   runtime:
-    profileRef: hermes-default
+    profileRef: hermes-edge
     storage:
       retentionPolicy: Retain
   access:

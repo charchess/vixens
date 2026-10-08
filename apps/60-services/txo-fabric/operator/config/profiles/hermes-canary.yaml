@@ -16,8 +16,10 @@ spec:
   # Newer upstream release; qualification candidate only, not automatically deployed.
   releaseRef: hermes-0-21-6-9774f4f39a9b-33060387a98b
   storage:
+    # Existing beta PVC StorageClass is immutable. Reuse that class across
+    # release channels; each AgentIdentity's Retain policy protects the PV.
     size: 2Gi
-    storageClassName: truenas-iscsi-retain
+    storageClassName: truenas-iscsi-delete
   resources:
     requests:
       cpu: 100m
