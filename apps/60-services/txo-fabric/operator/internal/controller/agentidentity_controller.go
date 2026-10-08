@@ -28,7 +28,7 @@ type AgentIdentityReconciler struct {
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities/finalizers,verbs=update
-// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles;agentruntimeprofiles;agentfunctionalprofiles;integrationconnections;integrationbindings,verbs=get;list;watch
+// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles;agentruntimeprofiles;hermesruntimereleases;agentfunctionalprofiles;integrationconnections;integrationbindings,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=namespaces;persistentvolumeclaims;configmaps;services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=persistentvolumes,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;create;update;patch;delete
@@ -96,6 +96,21 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		r.setStatus(ctx, &agent, "Failed", "RuntimeProfileResolved", metav1.ConditionFalse, "UnsupportedRuntimeEngine", err.Error())
 		return ctrl.Result{}, nil
 	}
+
+	// Resolve mutable pointer → immutable release BEFORE any PVC/Deployment
+	// reconciliation. Failure withdraws an old serving runtime while retaining
+	// its private PVC and scoped memory bank.
+	effectiveProfile, resolvedRelease, releaseErr := r.resolveRuntimeRelease(ctx, &profile)
+	if releaseErr != nil {
+		if err := r.withdrawInvalidFunctionalRuntime(ctx, &agent, &tenant, namespace); err != nil {
+			r.setStatus(ctx, &agent, "Degraded", "RuntimeProfileResolved", metav1.ConditionFalse, "ReleaseWithdrawalFailed", err.Error())
+			return ctrl.Result{}, err
+		}
+		agent.Status.Runtime.HumanEndpoint = ""
+		r.setStatus(ctx, &agent, "Degraded", "RuntimeProfileResolved", metav1.ConditionFalse, "RuntimeReleaseInvalid", releaseErr.Error())
+		return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+	profile = *effectiveProfile
 
 	functional, functionalErr := r.resolveFunctionalProfile(ctx, &agent, &tenant)
 	if functionalErr == nil {
@@ -261,7 +276,11 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		setCondition(&agent.Status.Conditions, agent.Generation, "MemoryReady", metav1.ConditionFalse, "MemoryProviderPending", "waiting for the tenant Hindsight service to become ready")
 	}
 	setCondition(&agent.Status.Conditions, agent.Generation, "TenantResolved", metav1.ConditionTrue, "Resolved", fmt.Sprintf("TenantBundle %q resolved", tenant.Name))
-	setCondition(&agent.Status.Conditions, agent.Generation, "RuntimeProfileResolved", metav1.ConditionTrue, "Resolved", fmt.Sprintf("AgentRuntimeProfile %q resolved", profile.Name))
+	runtimeMessage := fmt.Sprintf("AgentRuntimeProfile %q resolved (legacy inline image)", profile.Name)
+	if resolvedRelease != "" {
+		runtimeMessage = fmt.Sprintf("AgentRuntimeProfile %q resolved to immutable HermesRuntimeRelease %q", profile.Name, resolvedRelease)
+	}
+	setCondition(&agent.Status.Conditions, agent.Generation, "RuntimeProfileResolved", metav1.ConditionTrue, "Resolved", runtimeMessage)
 	networkMessage := "runtime egress policy is reconciled"
 	if len(integrationAccess.Effective) > 0 {
 		networkMessage = "runtime egress policy is reconciled; effective v0 integration binding admits temporary broad HTTP(S) POC egress"
