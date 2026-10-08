@@ -246,6 +246,23 @@ Because retained PVCs are unowned, the controller also watches labeled
 runtime PVC events directly: binding must trigger another reconciliation to
 promote a newly bound PV's reclaim policy to `Retain`.
 
+For new tenant cells, set `TenantBundle.spec.agentStorage` once, with
+`retainedStorageClassName` (a true `Retain` CSI StorageClass) and
+`disposableStorageClassName` (a `Delete` CSI StorageClass). The selection
+uses each AgentIdentity's immutable `runtime.storage.retentionPolicy`,
+**not** the selected Hermes `stable/canary/edge` runtime profile. All agents
+of a tenant share this two-class policy; new agent PVCs are provisioned on the
+right class from the start, without a post-provisioning protection gap.
+
+This policy does **not** silently replace existing PVCs: an existing durable
+PVC on its historical runtime-profile StorageClass is accepted and its
+concrete PV reclaim policy promoted to Retain as needed. Incompatible foreign
+classes fail closed; disposable PVCs are never quietly reassigned. Legacy
+tenants without `spec.agentStorage` preserve the old profile-based storage
+selection during migration. This legacy fallback is not the recommended model
+for newly onboarded tenants. Do not delete or recreate any existing PVC merely
+by moving the Hermes release pointer.
+
 For a bound `Retain` runtime PVC, the operator also promotes the concrete
 PersistentVolume reclaim policy to `Retain`. This is the backend-safety contract:
 it protects durable state even when a brownfield PVC was originally provisioned
