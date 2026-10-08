@@ -117,9 +117,9 @@ jobs:
         run: |
           set -e
           PLUGIN_IMAGE="ghcr.io/${{ github.repository_owner }}/txo-hermes-hindsight-plugin@${BUNDLE_DIGEST}"
-          # Resolve the OCI manifest bytes of the *official* upstream tag to
-          # a content-addressed digest; tags are not immutable releases.
-          HERMES_MANIFEST_SHA="$(docker buildx imagetools inspect --raw nousresearch/hermes-agent:v2026.9.24 | sha256sum | awk '{print $1}')"
+          # Resolve the *registry-provided* manifest digest of the official
+          # upstream tag. Never hash formatted CLI output (which may add a newline).
+          HERMES_MANIFEST_SHA="$(docker buildx imagetools inspect --format '{{json .Manifest.Digest}}' nousresearch/hermes-agent:v2026.9.24 | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.startswith("sha256:"); print(d[7:])')"
           test "${#HERMES_MANIFEST_SHA}" -eq 64
           HERMES_IMAGE="nousresearch/hermes-agent@sha256:${HERMES_MANIFEST_SHA}"
           BRANCH="chore/txo-hermes-runtime-release-$(git rev-parse --short=12 HEAD)"
