@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-"""Prevent accidental Hermes test/stable pointer advancement through the required PR gate.
+"""Gate pinned Hermes edge/canary/stable channel changes on GitOps PRs.
 
-This is a review/evidence prerequisite, NOT a substitute for physical validation.
-Only dev may be advanced by an OCI publishing bot. Existing legacy pointers are
-left to the separately authorized per-agent brownfield migration.
+This checks immutable configuration/history and evidence *references*, not real
+physical acceptance or approval. WORKFLOW.md and human review remain binding.
 """
-
 from __future__ import annotations
 
 import re
@@ -14,6 +12,8 @@ import sys
 from pathlib import Path
 
 PROFILES = Path("apps/60-services/txo-fabric/operator/config/profiles")
+CHANNELS = ("hermes-edge", "hermes-canary", "hermes-stable")
+LEGACY = ("hermes-default", "hermes-dev", "hermes-upgrade-canary")
 NAME = re.compile(r"^hermes-[a-z0-9-]+$")
 DIGEST = re.compile(r"^[a-z0-9][a-z0-9._:/-]*@sha256:[0-9a-f]{64}$")
 EVIDENCE_URL = re.compile(r"^https://github\.com/charchess/vixens/issues/\d+#issuecomment-\d+$")
@@ -21,10 +21,7 @@ SNAPSHOT = re.compile(r"^dev-v\d{4}\.\d{2}\.\d+$")
 
 
 def git(*args: str) -> str:
-    result = subprocess.run(
-        ["git", *args], check=True, capture_output=True, text=True
-    )
-    return result.stdout.strip()
+    return subprocess.run(["git", *args], check=True, capture_output=True, text=True).stdout.strip()
 
 
 def field(body: str, name: str) -> str:
@@ -35,7 +32,7 @@ def field(body: str, name: str) -> str:
 
 
 def validate_release(ref: str) -> None:
-    if not NAME.fullmatch(ref) or "/" in ref or ".." in ref:
+    if not NAME.fullmatch(ref):
         raise ValueError(f"invalid immutable Hermes release name: {ref}")
     path = PROFILES / f"{ref}.yaml"
     if not path.is_file():
@@ -43,18 +40,21 @@ def validate_release(ref: str) -> None:
     content = path.read_text(encoding="utf-8")
     if "kind: HermesRuntimeRelease\n" not in content or f"  name: {ref}\n" not in content:
         raise ValueError(f"unexpected release manifest: {path}")
-    for key in ("image", "hindsightPluginImage"):
+    for key, prefix in (
+        ("image", "nousresearch/hermes-agent@sha256:"),
+        ("hindsightPluginImage", "ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:"),
+    ):
         values = re.findall(rf"^  {key}:\s*(\S+)\s*$", content, re.MULTILINE)
-        if len(values) != 1 or not DIGEST.fullmatch(values[0]):
-            raise ValueError(f"{path}: {key} must use a real immutable OCI digest")
+        if len(values) != 1 or not DIGEST.fullmatch(values[0]) or not values[0].startswith(prefix):
+            raise ValueError(f"{path}: {key} must use the official source and immutable OCI digest")
 
 
-def read_profile(name: str) -> str:
-    path = PROFILES / f"{name}.yaml"
+def read_profile(channel: str) -> str:
+    path = PROFILES / f"{channel}.yaml"
     if not path.is_file():
         raise ValueError(f"missing channel profile: {path}")
     content = path.read_text(encoding="utf-8")
-    if "kind: AgentRuntimeProfile\n" not in content or f"  name: {name}\n" not in content:
+    if "kind: AgentRuntimeProfile\n" not in content or f"  name: {channel}\n" not in content:
         raise ValueError(f"invalid profile name in {path}")
     refs = re.findall(r"^  releaseRef:\s*(\S+)\s*$", content, re.MULTILINE)
     if len(refs) != 1 or re.search(r"^  image:", content, re.MULTILINE):
@@ -64,39 +64,63 @@ def read_profile(name: str) -> str:
 
 
 def previously_selected(base: str, channel: str, ref: str) -> bool:
+    # History is intentional: the earlier channel can have advanced after qualification.
     path = str(PROFILES / f"{channel}.yaml")
-    # Git history, not the current channel head: dev may have moved forward since
-    # the qualified candidate, while release objects remain immutable.
-    commits = git("log", "--format=%H", "-S", f"releaseRef: {ref}", base, "--", path)
-    return bool(commits)
+    return bool(git("log", "--format=%H", "-S", f"releaseRef: {ref}", base, "--", path))
+
+
+def already_exists(base: str, channel: str) -> bool:
+    return bool(git("ls-tree", "-r", "--name-only", base, "--", str(PROFILES / f"{channel}.yaml")))
+
+
+def ensure_release_immutable(base: str) -> None:
+    edited = git("diff", "--name-only", "--diff-filter=MD", f"{base}...HEAD", "--", str(PROFILES))
+    for item in edited.splitlines():
+        name = Path(item).stem
+        if NAME.fullmatch(name) and name not in (*CHANNELS, *LEGACY):
+            raise ValueError(f"immutable Hermes release changed or deleted: {item}")
 
 
 def gate(base: str, body: str, author_type: str) -> list[str]:
+    ensure_release_immutable(base)
     changed = set(git("diff", "--name-only", f"{base}...HEAD").splitlines())
-    gated = [
-        name for name in ("hermes-test", "hermes-stable")
-        if str(PROFILES / f"{name}.yaml") in changed
-    ]
+    gated = [channel for channel in CHANNELS if str(PROFILES / f"{channel}.yaml") in changed]
     if not gated:
         return []
-    if author_type.lower() == "bot":
-        raise ValueError("bot-authored PR may advance only hermes-dev; test/stable are manual")
 
-    physical = field(body, "Hermes-Physical-Evidence")
-    recovery = field(body, "Hermes-Recovery-Evidence")
-    if not EVIDENCE_URL.fullmatch(physical) or not EVIDENCE_URL.fullmatch(recovery):
-        raise ValueError("physical and recovery evidence must link actual GitHub issue comments")
+    refs = {channel: read_profile(channel) for channel in gated}
+    new = [channel for channel in gated if not already_exists(base, channel)]
+    if new:
+        # One-time channel registration is not evidence that upstream Hermes
+        # runs on Fabric. All three profiles MUST remain unbound by this PR.
+        if set(new) != set(CHANNELS) or set(gated) != set(CHANNELS):
+            raise ValueError("first channel registration must add all three channels together")
+        if author_type.lower() == "bot":
+            raise ValueError("initial channel registration requires human-reviewed PR")
+        if field(body, "Hermes-Channel-Bootstrap") != "true":
+            raise ValueError("channel bootstrap requires Hermes-Channel-Bootstrap: true")
+        if any("/tenants/" in path and path.startswith("apps/60-services/txo-fabric/") for path in changed):
+            raise ValueError("channel bootstrap may not modify tenant or AgentIdentity manifests")
+        return gated
 
-    for channel in gated:
-        ref = read_profile(channel)
-        prerequisite = "hermes-dev" if channel == "hermes-test" else "hermes-test"
-        if not previously_selected(base, prerequisite, ref):
-            raise ValueError(f"{channel} release {ref} was never selected by {prerequisite} on main")
-        if channel == "hermes-stable":
-            approval = field(body, "Hermes-Owner-Approval")
-            snapshot = field(body, "Hermes-GitOps-Snapshot")
-            if not EVIDENCE_URL.fullmatch(approval) or not SNAPSHOT.fullmatch(snapshot):
-                raise ValueError("stable requires owner approval comment and exact dev-v* snapshot")
+    if "hermes-canary" in gated or "hermes-stable" in gated:
+        if author_type.lower() == "bot":
+            raise ValueError("bot may nominate only hermes-edge, never canary/stable")
+
+    if "hermes-canary" in gated:
+        if not previously_selected(base, "hermes-edge", refs["hermes-canary"]):
+            raise ValueError("canary release must first have appeared in committed edge history")
+
+    if "hermes-stable" in gated:
+        if not previously_selected(base, "hermes-canary", refs["hermes-stable"]):
+            raise ValueError("stable release must first have appeared in committed canary history")
+        for evidence_field in ("Hermes-Physical-Evidence", "Hermes-Recovery-Evidence",
+                               "Hermes-Owner-Approval"):
+            if not EVIDENCE_URL.fullmatch(field(body, evidence_field)):
+                raise ValueError(f"{evidence_field} must link an actual GitHub issue comment")
+        if not SNAPSHOT.fullmatch(field(body, "Hermes-GitOps-Snapshot")):
+            raise ValueError("stable requires an exact dev-v* snapshot reference")
+
     return gated
 
 
@@ -105,6 +129,6 @@ if __name__ == "__main__":
         raise SystemExit("usage: guard-hermes-release-channels.py BASE_REF PR_BODY AUTHOR_TYPE")
     try:
         channels = gate(sys.argv[1], sys.argv[2], sys.argv[3])
-        print("Hermes release gate OK: " + (", ".join(channels) if channels else "no test/stable pointer changes"))
+        print("Hermes channel gate OK: " + (", ".join(channels) if channels else "no channel pointers moved"))
     except (ValueError, subprocess.CalledProcessError) as exc:
-        raise SystemExit(f"Hermes release gate FAILED: {exc}") from exc
+        raise SystemExit(f"Hermes channel gate FAILED: {exc}") from exc

@@ -1,6 +1,6 @@
 ---
-# Official NousResearch v0.21.6 (2026-10-08), pinned to its upstream release
-# receipt OCI digest. Separate pinned Hindsight bundle is NOT yet physical acceptance.
+# Official upstream Hermes release v0.21.6; immutable OCI digests.
+# Software candidate only; physical Fabric acceptance is separate.
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: HermesRuntimeRelease
 metadata:
