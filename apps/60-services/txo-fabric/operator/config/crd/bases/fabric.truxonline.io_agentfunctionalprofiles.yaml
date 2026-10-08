@@ -1,0 +1,83 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: agentfunctionalprofiles.fabric.truxonline.io
+spec:
+  group: fabric.truxonline.io
+  names:
+    categories:
+    - txo-fabric
+    kind: AgentFunctionalProfile
+    listKind: AgentFunctionalProfileList
+    plural: agentfunctionalprofiles
+    shortNames:
+    - afprofile
+    singular: agentfunctionalprofile
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.tenantRef.name
+      name: Tenant
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              AgentFunctionalProfileSpec holds approved, non-secret, reusable instructions.
+              This minimal v0.1 slice never grants runtime tools, models, workspace mounts or integrations.
+            properties:
+              instructions:
+                description: |-
+                  Instructions are a reviewed, non-secret gateway overlay. Not a replacement for
+                  each agent's private SOUL.md. Do not put provider credentials in this field.
+                maxLength: 8192
+                minLength: 1
+                type: string
+              tenantRef:
+                description: TenantRef pins this profile to one tenant; foreign-tenant
+                  use is forbidden.
+                properties:
+                  name:
+                    description: Name is the metadata.name of the referenced cluster-scoped
+                      Fabric object.
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                required:
+                - name
+                type: object
+                x-kubernetes-validations:
+                - message: tenantRef.name is immutable
+                  rule: self.name == oldSelf.name
+            required:
+            - instructions
+            - tenantRef
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources: {}

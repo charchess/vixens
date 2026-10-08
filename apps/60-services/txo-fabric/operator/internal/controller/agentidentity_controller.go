@@ -28,7 +28,7 @@ type AgentIdentityReconciler struct {
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities/finalizers,verbs=update
-// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles;agentruntimeprofiles;integrationconnections;integrationbindings,verbs=get;list;watch
+// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles;agentruntimeprofiles;agentfunctionalprofiles;integrationconnections;integrationbindings,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=namespaces;persistentvolumeclaims;configmaps;services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=persistentvolumes,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;create;update;patch;delete
@@ -95,6 +95,26 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		err := fmt.Errorf("runtime engine %q is not supported by this controller version", profile.Spec.Engine)
 		r.setStatus(ctx, &agent, "Failed", "RuntimeProfileResolved", metav1.ConditionFalse, "UnsupportedRuntimeEngine", err.Error())
 		return ctrl.Result{}, nil
+	}
+
+	functional, functionalErr := r.resolveFunctionalProfile(ctx, &agent, &tenant)
+	if functionalErr == nil {
+		functionalErr = requireFunctionalPromptCompatibility(functional, &profile)
+	}
+	if functionalErr != nil {
+		// The previous runtime must not keep serving a removed/foreign/incompatible role.
+		if err := r.withdrawInvalidFunctionalRuntime(ctx, &agent, &tenant, namespace); err != nil {
+			r.setStatus(ctx, &agent, "Degraded", "FunctionalConfigurationReady", metav1.ConditionFalse, "FunctionalWithdrawalFailed", err.Error())
+			return ctrl.Result{}, err
+		}
+		agent.Status.Runtime.HumanEndpoint = ""
+		r.setStatus(ctx, &agent, "Degraded", "FunctionalConfigurationReady", metav1.ConditionFalse, "FunctionalProfileInvalid", functionalErr.Error())
+		return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+	if functional.Enabled {
+		setCondition(&agent.Status.Conditions, agent.Generation, "FunctionalConfigurationReady", metav1.ConditionTrue, "Resolved", fmt.Sprintf("tenant functional profile %q revision=%s", functional.ProfileName, functional.Revision))
+	} else {
+		setCondition(&agent.Status.Conditions, agent.Generation, "FunctionalConfigurationReady", metav1.ConditionTrue, "NotRequested", "no functional profile requested")
 	}
 
 	modelBackend, err := r.resolveModelAccessBackend(ctx, &tenant)
@@ -165,7 +185,7 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	}
 
-	if err := r.ensureDeploymentWithIntegrations(ctx, &agent, &tenant, &profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrationAccess); err != nil {
+	if err := r.ensureDeploymentWithIntegrations(ctx, &agent, &tenant, &profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrationAccess, functional); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "DeploymentReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}

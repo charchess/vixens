@@ -96,6 +96,15 @@ spec:
                 maxLength: 128
                 minLength: 1
                 type: string
+              functional:
+                description: Functional selects a reusable business baseline without
+                  changing identity, private state or runtime ceiling.
+                properties:
+                  profileRef:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                type: object
               humanAccess:
                 description: |-
                   HumanAccess opts this identity into the tenant-scoped authenticated human

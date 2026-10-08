@@ -61,6 +61,55 @@ Different tenants may use the same tenant-local `agentKey` while globally scoped
 Fabric CR names and tenant ownership keep those identities distinct. Do not derive
 identity from mutable display names, Pod names or group membership.
 
+### AgentFunctionalProfile (v0.1 instructions-only)
+
+`AgentFunctionalProfile` is a **tenant-owned, cluster-scoped, non-secret**
+business-instruction baseline independent of `AgentRuntimeProfile` and
+`AgentIdentity`. One agent may opt into one profile using
+`AgentIdentity.spec.functional.profileRef`. The profile's immutable
+`spec.tenantRef.name` must match the agent's tenant. A missing or foreign
+profile is rejected and the previous agent runtime/human route is withdrawn
+without deleting the agent's retained private state. An unbound agent retains
+the existing behavior.
+
+The first implementation slice intentionally supports **non-secret
+`spec.instructions` only**. It carries no credentials, IAM grants,
+workspace mounts, toolset approvals, model credentials or IntegrationBinding
+authorization. Approved instructions are passed to the pinned Hermes gateway
+via `TXO_FUNCTIONAL_SYSTEM_PROMPT` in the certified **TXO-patched pinned Hermes runtime**.
+The managed layer is composed separately from the user's `/personality` and
+channel overrides on every gateway turn. This requires
+`AgentRuntimeProfile.spec.compatibility.functionalPromptOverlay=true` on a
+verified compatible runtime image (default **false**, fail closed). The role
+overlay does not write the
+agent's private `SOUL.md` or skills. The effective revision is recorded on the
+Hermes pod template and changes roll only the relevant agents. Role instructions
+are readable in the profile and Pod environment, so **do not put secrets in
+the role text**.
+
+```yaml
+# Example only; do not apply to production before acceptance of #3934.
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: AgentFunctionalProfile
+metadata:
+  name: indiba-sales
+spec:
+  tenantRef:
+    name: indiba
+  instructions: |
+    Apply the tenant-approved commercial playbook.
+    Personalize the interaction for each user's context.
+# Existing Sam and Alex would each opt in with:
+# spec.functional.profileRef: indiba-sales
+```
+
+This opt-in is **not added** to the production Indiba manifests by #3934.
+The UX and existing-session prompt compatibility of the pinned Hermes runtime
+require a separate physical acceptance, especially on profile updates and
+withdrawal. The broader skills/integrations/model-precondition composition
+remains a proposed extension described in
+[FUNCTIONAL-CONFIGURATION.md](FUNCTIONAL-CONFIGURATION.md) and proposed ADR-038.
+
 ### AgentRuntimeProfile
 
 `AgentRuntimeProfile` separates identity from infrastructure policy. The profile

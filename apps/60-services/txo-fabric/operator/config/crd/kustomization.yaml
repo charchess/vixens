@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - bases/fabric.truxonline.io_tenantbundles.yaml
   - bases/fabric.truxonline.io_agentidentities.yaml
+  - bases/fabric.truxonline.io_agentfunctionalprofiles.yaml
   - bases/fabric.truxonline.io_integrationconnections.yaml
   - bases/fabric.truxonline.io_integrationbindings.yaml
   - bases/fabric.truxonline.io_agentruntimeprofiles.yaml
