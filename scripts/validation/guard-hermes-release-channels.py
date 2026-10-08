@@ -25,7 +25,7 @@ def git(*args: str) -> str:
 
 
 def field(body: str, name: str) -> str:
-    values = re.findall(rf"^{re.escape(name)}:\s*(\S+)\s*$", body, re.MULTILINE)
+    values = re.findall(rf"^\s*(?:-\s+)?{re.escape(name)}:\s*(\S+)\s*$", body, re.MULTILINE)
     if len(values) != 1:
         raise ValueError(f"expected exactly one '{name}: <value>' in PR body")
     return values[0]
