@@ -47,7 +47,18 @@ func configureHermesHindsight(agent *fabricv1alpha1.AgentIdentity, tenant *fabri
 			return err
 		}
 	}
-	bootstrap := &deployment.Spec.Template.Spec.InitContainers[0]
+	// The Hindsight payload installer is prepended to the init list; always
+	// configure the actual bootstrap-profile by name, not by an array index.
+	var bootstrap *corev1.Container
+	for i := range deployment.Spec.Template.Spec.InitContainers {
+		if deployment.Spec.Template.Spec.InitContainers[i].Name == "bootstrap-profile" {
+			bootstrap = &deployment.Spec.Template.Spec.InitContainers[i]
+			break
+		}
+	}
+	if bootstrap == nil {
+		return fmt.Errorf("Hermes deployment template is missing bootstrap-profile")
+	}
 	if len(bootstrap.Command) < 3 {
 		return fmt.Errorf("Hermes bootstrap container command is incomplete")
 	}
