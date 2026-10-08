@@ -19,6 +19,12 @@ data:
     # Amavis runtime paths must exist after DMS setup and before daemons start.
     install -d -o 998 -g 998 -m 0750 /var/lib/amavis/tmp /var/lib/amavis/db
 
+    # DMS v16 defaults passdb user expansion to the AD attribute
+    # uniqueIdentifier. The bounded mail-user OU does not expose it, while
+    # the authenticated login is the canonical user identity.
+    sed -i -E 's|^    user = %\{ldap:uniqueIdentifier\}$|    user = %\{user\}|' \
+      /etc/dovecot/conf.d/auth-ldap.conf.ext
+
     # The importer login has a dedicated passwd-file entry and is mapped to
     # the sole charchess Maildir. It is not a Dovecot master-user.
     cat >/etc/dovecot/conf.d/auth-imapsync-import.conf.ext <<'EOF'
