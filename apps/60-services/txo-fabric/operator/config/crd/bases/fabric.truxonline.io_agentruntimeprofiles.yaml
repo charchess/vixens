@@ -88,12 +88,6 @@ spec:
                 type: object
               compatibility:
                 properties:
-                  functionalPromptOverlay:
-                    default: false
-                    description: |-
-                      FunctionalPromptOverlay certifies a reviewed TXO Hermes image with additive
-                      per-turn gateway role composition. Upstream-only images leave it false.
-                    type: boolean
                   s6Overlay:
                     default: false
                     description: S6Overlay marks images that require the documented
