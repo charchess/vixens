@@ -55,6 +55,30 @@ spec:
           spec:
             description: TenantBundleSpec is the desired state of one Fabric Cell.
             properties:
+              agentStorage:
+                description: |-
+                  AgentStorage selects durable/disposable agent private PVC storage classes.
+                  It is independent of AgentRuntimeProfile and therefore Hermes releases.
+                  Omitted only for backwards compatibility with legacy tenant declarations.
+                properties:
+                  disposableStorageClassName:
+                    description: |-
+                      DisposableStorageClassName is used only by identities explicitly
+                      opting into retentionPolicy Delete.
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  retainedStorageClassName:
+                    description: |-
+                      RetainedStorageClassName must provision PVs with reclaimPolicy Retain
+                      for newly created durable agent workspaces.
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                required:
+                - disposableStorageClassName
+                - retainedStorageClassName
+                type: object
               aiCredentialBroker:
                 description: |-
                   AICredentialBroker is a deprecated v1alpha1 compatibility/profile-override
