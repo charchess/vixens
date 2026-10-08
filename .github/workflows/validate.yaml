@@ -531,6 +531,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Historical dev/test pointers are a release gate.
+
+      - name: Unit-test Hermes channel gate
+        run: python3 -m unittest discover -s scripts/validation/tests -p 'test_guard_hermes_release_channels.py'
+
+      - name: Guard Hermes test/stable channel advancement
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_AUTHOR_TYPE: ${{ github.event.pull_request.user.type }}
+        run: python3 scripts/validation/guard-hermes-release-channels.py "origin/$BASE_REF" "$PR_BODY" "$PR_AUTHOR_TYPE"
 
       - name: Verify trunk-based workflow compliance
         run: |

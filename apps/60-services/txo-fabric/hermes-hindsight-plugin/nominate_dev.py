@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Create a review-only GitOps candidate: immutable runtime release + canary pointer.
+"""Create a review-only GitOps candidate: immutable runtime release + dev pointer.
 
 stdlib-only, no Kubernetes/API access. The caller must create a PR; this
-script never merges or promotes and must never update hermes-default.
+script never merges or promotes and must never update test/stable/legacy profiles.
 """
 
 from __future__ import annotations
@@ -52,12 +52,14 @@ def nominate(root: Path, engine_image: str, plugin_image: str) -> str:
     if entry not in kustomize_lines:
         kustomize_lines.append(entry)
 
-    profile = directory / "hermes-upgrade-canary.yaml"
+    profile = directory / "hermes-dev.yaml"
     lines = profile.read_text(encoding="utf-8").splitlines()
+    if lines.count("  name: hermes-dev") != 1 or lines.count("kind: AgentRuntimeProfile") != 1:
+        raise ValueError("refusing to edit an unexpected dev profile")
     image_positions = [i for i, line in enumerate(lines) if line.startswith("  image: ")]
     ref_positions = [i for i, line in enumerate(lines) if line.startswith("  releaseRef: ")]
     if len(image_positions) + len(ref_positions) != 1:
-        raise ValueError("canary must have exactly one image or releaseRef field")
+        raise ValueError("dev profile must have exactly one image or releaseRef field")
     position = (image_positions + ref_positions)[0]
     lines[position] = f"  releaseRef: {name}"
 
@@ -73,7 +75,7 @@ def nominate(root: Path, engine_image: str, plugin_image: str) -> str:
             end += 1
         payload = lines[start + 1:end]
         if len(payload) != 1 or not payload[0].startswith("    hindsightPluginImage: "):
-            raise ValueError("canary bootstrap contains fields that cannot be migrated safely")
+            raise ValueError("dev bootstrap contains fields that cannot be migrated safely")
         del lines[start:end]
     # Validate the entire proposed candidate before writing any Git file.
     release_path.write_text(release, encoding="utf-8")
@@ -84,7 +86,7 @@ def nominate(root: Path, engine_image: str, plugin_image: str) -> str:
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        raise SystemExit("usage: nominate_canary.py ENGINE_IMAGE@sha256:... PLUGIN_IMAGE@sha256:...")
+        raise SystemExit("usage: nominate_dev.py ENGINE_IMAGE@sha256:... PLUGIN_IMAGE@sha256:...")
     try:
         print(nominate(Path.cwd(), sys.argv[1], sys.argv[2]))
     except ValueError as exc:
