@@ -26,33 +26,7 @@ const (
 
 // Only an immutable registry digest is allowed; tags and mutable paths must
 // never get promoted through AgentRuntimeProfile.bootstrap.
-var hindsightBundleDigest = regexp.MustCompile(`^[a-z0-9][a-z0-9._:/-]*@sha256:[a-f0-9]{64}package controller
-
-import (
-	"fmt"
-	"regexp"
-	"strings"
-
-	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-)
-
-const (
-	hermesHindsightAPIURL      = "http://hindsight:8888"
-	hermesHindsightSecretName = "hindsight-runtime"
-	hermesHindsightSecretKey  = "HINDSIGHT_API_TENANT_API_KEY"
-)
-
-const (
-	hindsightExtensionVolume = "hindsight-extension"
-	hindsightExtensionImageRoot = "/bundle"
-	hindsightExtensionInitMount = "/extensions"
-	hindsightExtensionDepsRoot = "/opt/txo-hindsight/python"
-	hindsightExtensionPluginRoot = "/opt/data/plugins/hindsight"
-)
-
-)
+var hindsightBundleDigest = regexp.MustCompile("^[a-z0-9][a-z0-9._:/-]*@sha256:[a-f0-9]{64}$")
 
 // The OCI bundle carries ONLY the pinned Hindsight plugin and Python deps.
 // It is never a replacement for the immutable upstream Hermes application image.
