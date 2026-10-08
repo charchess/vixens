@@ -11,3 +11,4 @@ resources:
   - cliproxyapi-standard.yaml
   - litellm-standard.yaml
   - workspace-shared.yaml
+  - hermes-2026-09-24-fca358f12efd-33060387a98b.yaml

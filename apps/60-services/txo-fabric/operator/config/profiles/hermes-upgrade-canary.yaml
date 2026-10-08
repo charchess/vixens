@@ -13,7 +13,7 @@ metadata:
     fabric.truxonline.io/purpose: upgrade-canary
 spec:
   engine: Hermes
-  image: ghcr.io/charchess/txo-fabric-hermes:main-ab881f643cbc
+  releaseRef: hermes-2026-09-24-fca358f12efd-33060387a98b
   storage:
     size: 2Gi
     storageClassName: truenas-iscsi-retain
