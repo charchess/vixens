@@ -33,9 +33,28 @@ jobs:
         with:
           context: apps/60-services/txo-fabric/hermes-hindsight-plugin
           push: false
+          load: true
+          tags: txo-hindsight-payload:ci
           platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Smoke-test official Hermes plugin discovery and wheel isolation
+        run: |
+          set -e
+          PAYLOAD_DIR="$(mktemp -d)"
+          id="$(docker create txo-hindsight-payload:ci)"
+          trap 'docker rm -f "$id" >/dev/null 2>&1 || true; rm -rf "$PAYLOAD_DIR"' EXIT
+          docker cp "$id:/bundle/hindsight" "$PAYLOAD_DIR/hindsight"
+          docker cp "$id:/bundle/python" "$PAYLOAD_DIR/python"
+          docker run --rm \
+            -e HERMES_HOME=/opt/data \
+            -e PYTHONPATH=/opt/txo-hindsight/python \
+            -e HERMES_DISABLE_LAZY_INSTALLS=1 \
+            -v "$PAYLOAD_DIR/hindsight:/opt/data/plugins/hindsight:ro" \
+            -v "$PAYLOAD_DIR/python:/opt/txo-hindsight/python:ro" \
+            --entrypoint /opt/hermes/.venv/bin/python \
+            nousresearch/hermes-agent:v2026.9.24 \
+            -c 'from plugins.memory import find_provider_dir; from pathlib import Path; import hindsight_client, aiohttp_retry; p=find_provider_dir("hindsight"); assert p is not None and str(p)=="/opt/data/plugins/hindsight",p; assert Path(p,"plugin.yaml").is_file(); print("OFFICIAL_HERMES_HINDSIGHT_DISCOVERY_OK")'
 
   publish:
     name: Publish payload and nominate official Hermes canary
@@ -99,12 +118,23 @@ jobs:
           PLUGIN_IMAGE="ghcr.io/${{ github.repository_owner }}/txo-hermes-hindsight-plugin@${BUNDLE_DIGEST}"
           BRANCH="chore/txo-hermes-hindsight-candidate-$(git rev-parse --short=12 HEAD)"
           git checkout -b "${BRANCH}"
-          sed -i 's|^  image: .*|  image: nousresearch/hermes-agent:v2026.9.24|' "${PROFILE}"
-          if grep -q '^    hindsightPluginImage:' "${PROFILE}"; then
-            sed -i "s|^    hindsightPluginImage: .*|    hindsightPluginImage: ${PLUGIN_IMAGE}|" "${PROFILE}"
-          else
-            sed -i "/^  image: /a\\  bootstrap:\n    hindsightPluginImage: ${PLUGIN_IMAGE}" "${PROFILE}"
-          fi
+          export PLUGIN_IMAGE
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          path = Path("apps/60-services/txo-fabric/operator/config/profiles/hermes-upgrade-canary.yaml")
+          lines = path.read_text(encoding="utf-8").splitlines()
+          image_i = next(i for i, line in enumerate(lines) if line.startswith("  image: "))
+          lines[image_i] = "  image: nousresearch/hermes-agent:v2026.9.24"
+          plugin_line = f"    hindsightPluginImage: {os.environ['PLUGIN_IMAGE']}"
+          existing = next((i for i, line in enumerate(lines) if line.startswith("    hindsightPluginImage: ")), None)
+          if existing is None:
+              lines[image_i + 1:image_i + 1] = ["  bootstrap:", plugin_line]
+          else:
+              lines[existing] = plugin_line
+          path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
           git add "${PROFILE}"
           if git diff --cached --quiet; then
             echo "Already pinned"
