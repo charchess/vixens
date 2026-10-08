@@ -59,6 +59,7 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 		humanOIDCEgressPolicyObject(agent.Spec.AgentKey, namespace),
 		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: modelAccessSecretName(agent.Spec.AgentKey), Namespace: namespace}},
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: managedToolsetPolicyName(agent.Spec.AgentKey), Namespace: namespace}},
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: functionalSkillConfigMapName(agent), Namespace: namespace}},
 	}
 	if storageRetentionPolicy(agent) == StorageRetentionDelete {
 		objects = append(objects, &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimePVCName(agent.Spec.AgentKey), Namespace: namespace}})

@@ -153,6 +153,22 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, a
 		}}},
 	}
 	volumes = append(volumes, workspaceVolumes...)
+	if role.Enabled {
+		// Hermes natively discovers SKILL.md under skills.external_dirs.
+		// No mount is placed under the private PVC or over the agent's project cwd.
+		volumes = append(volumes, corev1.Volume{
+			Name: functionalSkillVolumeName,
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: functionalSkillConfigMapName(agent)},
+				Items: []corev1.KeyToPath{{Key: "SKILL.md", Path: "SKILL.md"}},
+			}},
+		})
+		hermesMounts = append(hermesMounts, corev1.VolumeMount{
+			Name: functionalSkillVolumeName,
+			MountPath: "/workspace/skills/functional/" + functionalSkillName(role.ProfileName),
+			ReadOnly: true,
+		})
+	}
 	for _, integration := range integrations.Effective {
 		volumes = append(volumes, corev1.Volume{
 			Name: integration.VolumeName,
@@ -279,13 +295,6 @@ fi
 				}},
 				Volumes: volumes,
 			},
-		}
-		if role.Enabled {
-			// The certified TXO Hermes runtime appends this approved role every gateway
-			// turn, independently of personal and per-channel prompts. The
-			// private SOUL.md and local skills are never overwritten.
-			deployment.Spec.Template.Spec.Containers[0].Env = append(deployment.Spec.Template.Spec.Containers[0].Env,
-				corev1.EnvVar{Name: "TXO_FUNCTIONAL_SYSTEM_PROMPT", Value: role.Instructions})
 		}
 		if humanAccess.Enabled {
 			container := &deployment.Spec.Template.Spec.Containers[0]

@@ -24,11 +24,6 @@ type RuntimeStorageSpec struct {
 }
 
 type RuntimeCompatibilitySpec struct {
-	// FunctionalPromptOverlay certifies a reviewed TXO Hermes image with additive
-	// per-turn gateway role composition. Upstream-only images leave it false.
-	// +kubebuilder:default=false
-	FunctionalPromptOverlay bool `json:"functionalPromptOverlay,omitempty"`
-
 	// S6Overlay marks images that require the documented Vixens root/capability bypass for s6-overlay.
 	// +kubebuilder:default=false
 	S6Overlay bool `json:"s6Overlay,omitempty"`

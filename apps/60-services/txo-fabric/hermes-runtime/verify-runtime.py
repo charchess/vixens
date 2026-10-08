@@ -37,55 +37,9 @@ def verify_distribution_requirements(distribution: str) -> None:
             )
 
 
-def verify_txo_functional_overlay() -> None:
-    """Exercise the actual patched gateway with independent per-turn preferences."""
-    from types import SimpleNamespace
-    from unittest.mock import patch
-
-    from gateway.run_turn_runner import TurnRunner
-    from txo_functional_overlay import append_role_instructions
-
-    turn = object.__new__(TurnRunner)
-    turn._ctx = SimpleNamespace(
-        context_prompt="Session-scoped context",
-        channel_prompt="Channel hint",
-        source=SimpleNamespace(
-            platform="telegram", chat_id="thread1", thread_id=None,
-            parent_chat_id=None,
-        ),
-    )
-    current_personality = ["Personal profile /personality"]
-    turn._runner = SimpleNamespace(
-        _get_system_prompt_for_channel=lambda *a, **kw: current_personality[0]
-    )
-    with patch.dict(os.environ, {"TXO_FUNCTIONAL_SYSTEM_PROMPT": "Approved sales role"}):
-        first = turn._combined_ephemeral_prompt()
-        for fragment in (
-            "Session-scoped context", "Channel hint",
-            "Personal profile /personality", "Approved sales role",
-        ):
-            if fragment not in first:
-                raise RuntimeError("missing prompt layer: " + fragment)
-        if first.index("Approved sales role") < first.index("Personal profile"):
-            raise RuntimeError("personal channel instructions overrode managed role")
-        current_personality[0] = "Updated personal preference"
-        second = turn._combined_ephemeral_prompt()
-        if "Updated personal preference" not in second or "Approved sales role" not in second:
-            raise RuntimeError("managed role does not compose with a changed /personality")
-        if "Personal profile" in second:
-            raise RuntimeError("stale channel personality survived next-turn recomposition")
-
-    with patch.dict(os.environ, {}, clear=True):
-        baseline = turn._combined_ephemeral_prompt()
-        if "Approved sales role" in baseline or "Updated personal preference" not in baseline:
-            raise RuntimeError("role-less Hermes gateway behavior changed")
-        if append_role_instructions("plain prompt") != "plain prompt":
-            raise RuntimeError("unbound role did not preserve baseline prompt")
-
 def main() -> None:
     # Prove the exact Hermes runtime line and executable are present.
     require_version("hermes-agent", HERMES_VERSION)
-    verify_txo_functional_overlay()
     subprocess.run(
         ["/opt/hermes/.venv/bin/hermes", "--version"],
         check=True,

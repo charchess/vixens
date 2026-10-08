@@ -114,7 +114,8 @@ jobs:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
           BRANCH="chore/txo-fabric-hermes-image-${TAG}"
-          PROFILE="apps/60-services/txo-fabric/operator/config/profiles/hermes-default.yaml"
+          # Only nominate candidate images for isolated canary testing.
+          PROFILE="apps/60-services/txo-fabric/operator/config/profiles/hermes-upgrade-canary.yaml"
 
           git checkout -b "$BRANCH"
 
@@ -130,14 +131,14 @@ jobs:
           git push -u origin "$BRANCH"
 
           PR_URL=$(gh pr create \
-            --title "chore(txo-fabric): pin Hermes runtime ${TAG}" \
+            --title "chore(txo-fabric): pin Hermes upgrade canary ${TAG}" \
             --body "$(cat <<EOF_BODY
-          Auto-generated after a successful TXO Fabric Hermes runtime build.
+          Auto-generated canary-only after a successful TXO Fabric Hermes runtime build.
 
           **Image:** \`${NEW_IMAGE}\`
           **Source commit:** \`${{ github.sha }}\`
 
-          This materializes the immutable runtime pin required by #3696 for the parent memory-provider work in #3685.
+          This materializes a candidate image for #3688 canary acceptance; it does not update the shared hermes-default runtime.
 
           It does **not** enable \`memory.provider: hindsight\`, inject Hindsight credentials, touch #3697, or promote production. #3696 remains open until the generated pin is merged and the physical dev smoke is accepted.
           EOF_BODY
@@ -145,4 +146,4 @@ jobs:
             --base main \
             --head "$BRANCH")
 
-          gh pr merge "$PR_URL" --squash --auto --delete-branch
+          echo "Canary pin PR requires review and retained-state acceptance; auto-merge disabled."

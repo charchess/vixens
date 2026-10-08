@@ -98,9 +98,6 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	functional, functionalErr := r.resolveFunctionalProfile(ctx, &agent, &tenant)
-	if functionalErr == nil {
-		functionalErr = requireFunctionalPromptCompatibility(functional, &profile)
-	}
 	if functionalErr != nil {
 		// The previous runtime must not keep serving a removed/foreign/incompatible role.
 		if err := r.withdrawInvalidFunctionalRuntime(ctx, &agent, &tenant, namespace); err != nil {
@@ -127,6 +124,15 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err != nil {
 		r.setStatus(ctx, &agent, "Failed", "CapabilityPolicyReady", metav1.ConditionFalse, "CapabilityPolicyInvalid", err.Error())
 		return ctrl.Result{}, nil
+	}
+	if err := requireFunctionalSkillsAccess(functional, toolPolicy); err != nil {
+		if withdrawErr := r.withdrawInvalidFunctionalRuntime(ctx, &agent, &tenant, namespace); withdrawErr != nil {
+			r.setStatus(ctx, &agent, "Degraded", "FunctionalConfigurationReady", metav1.ConditionFalse, "FunctionalWithdrawalFailed", withdrawErr.Error())
+			return ctrl.Result{}, withdrawErr
+		}
+		agent.Status.Runtime.HumanEndpoint = ""
+		r.setStatus(ctx, &agent, "Degraded", "FunctionalConfigurationReady", metav1.ConditionFalse, "FunctionalSkillUnavailable", err.Error())
+		return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
 	}
 	if err := r.ensureManagedToolsetPolicy(ctx, &agent, &tenant, namespace, toolPolicy); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "CapabilityPolicyReady", metav1.ConditionFalse, "ManagedPolicyReconcileFailed", err.Error())
@@ -185,9 +191,23 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	}
 
+	if functional.Enabled {
+		// Native read-only Hermes skill: no SOUL.md, gateway or private config edits.
+		if err := r.ensureFunctionalSkillConfigMap(ctx, &agent, &tenant, namespace, functional); err != nil {
+			r.setStatus(ctx, &agent, "Degraded", "FunctionalConfigurationReady", metav1.ConditionFalse, "FunctionalSkillReconcileFailed", err.Error())
+			return ctrl.Result{}, err
+		}
+	}
 	if err := r.ensureDeploymentWithIntegrations(ctx, &agent, &tenant, &profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrationAccess, functional); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "DeploymentReconcileFailed", err.Error())
 		return ctrl.Result{}, err
+	}
+	if !functional.Enabled {
+		// Remove stale reference only after the runtime stops mounting it.
+		if err := r.deleteFunctionalSkillConfigMap(ctx, &agent, namespace); err != nil {
+			r.setStatus(ctx, &agent, "Degraded", "FunctionalConfigurationReady", metav1.ConditionFalse, "FunctionalSkillCleanupFailed", err.Error())
+			return ctrl.Result{}, err
+		}
 	}
 	if err := r.ensureEgressPolicy(ctx, &agent, &tenant, namespace, integrationAccess); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "NetworkReady", metav1.ConditionFalse, "NetworkPolicyReconcileFailed", err.Error())

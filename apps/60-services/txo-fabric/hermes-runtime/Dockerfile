@@ -31,8 +31,6 @@ USER root
 COPY --from=hindsight-source /out/hindsight/ /opt/hermes/plugins/memory/hindsight/
 COPY requirements.lock /tmp/txo-hindsight-requirements.lock
 COPY verify-runtime.py /tmp/verify-runtime.py
-COPY txo_functional_overlay.py /opt/hermes/txo_functional_overlay.py
-COPY inject_functional_overlay.py /tmp/inject_functional_overlay.py
 
 # The target deployment uses Hindsight local_external.  The provider's catalog
 # manifest only requires hindsight-client for that mode; hindsight-all/embed is
@@ -44,6 +42,5 @@ RUN set -eux; \
       --python /opt/hermes/.venv/bin/python \
       --no-deps \
       --requirement /tmp/txo-hindsight-requirements.lock; \
-    /opt/hermes/.venv/bin/python /tmp/inject_functional_overlay.py; \
     /opt/hermes/.venv/bin/python /tmp/verify-runtime.py; \
-    rm -f /tmp/txo-hindsight-requirements.lock /tmp/verify-runtime.py /tmp/inject_functional_overlay.py
+    rm -f /tmp/txo-hindsight-requirements.lock /tmp/verify-runtime.py
