@@ -28,6 +28,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      - name: Check immutable release nomination algorithm
+        run: python3 -m unittest discover -s apps/60-services/txo-fabric/hermes-hindsight-plugin/tests -p 'test_*.py'
       - name: Build plugin payload
         uses: docker/build-push-action@v6
         with:
@@ -114,35 +116,24 @@ jobs:
           BUNDLE_DIGEST: ${{ steps.push.outputs.digest }}
         run: |
           set -e
-          PROFILE="apps/60-services/txo-fabric/operator/config/profiles/hermes-upgrade-canary.yaml"
           PLUGIN_IMAGE="ghcr.io/${{ github.repository_owner }}/txo-hermes-hindsight-plugin@${BUNDLE_DIGEST}"
-          BRANCH="chore/txo-hermes-hindsight-candidate-$(git rev-parse --short=12 HEAD)"
+          # Resolve the OCI manifest bytes of the *official* upstream tag to
+          # a content-addressed digest; tags are not immutable releases.
+          HERMES_MANIFEST_SHA="$(docker buildx imagetools inspect --raw nousresearch/hermes-agent:v2026.9.24 | sha256sum | awk '{print $1}')"
+          test "${#HERMES_MANIFEST_SHA}" -eq 64
+          HERMES_IMAGE="nousresearch/hermes-agent@sha256:${HERMES_MANIFEST_SHA}"
+          BRANCH="chore/txo-hermes-runtime-release-$(git rev-parse --short=12 HEAD)"
           git checkout -b "${BRANCH}"
-          export PLUGIN_IMAGE
-          python3 - <<'PY'
-          import os
-          from pathlib import Path
-
-          path = Path("apps/60-services/txo-fabric/operator/config/profiles/hermes-upgrade-canary.yaml")
-          lines = path.read_text(encoding="utf-8").splitlines()
-          image_i = next(i for i, line in enumerate(lines) if line.startswith("  image: "))
-          lines[image_i] = "  image: nousresearch/hermes-agent:v2026.9.24"
-          plugin_line = f"    hindsightPluginImage: {os.environ['PLUGIN_IMAGE']}"
-          existing = next((i for i, line in enumerate(lines) if line.startswith("    hindsightPluginImage: ")), None)
-          if existing is None:
-              lines[image_i + 1:image_i + 1] = ["  bootstrap:", plugin_line]
-          else:
-              lines[existing] = plugin_line
-          path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-          PY
-          git add "${PROFILE}"
+          RELEASE_NAME="$(python3 apps/60-services/txo-fabric/hermes-hindsight-plugin/nominate_canary.py "${HERMES_IMAGE}" "${PLUGIN_IMAGE}")"
+          echo "Canary release candidate: ${RELEASE_NAME}"
+          git add apps/60-services/txo-fabric/operator/config/profiles
           if git diff --cached --quiet; then
-            echo "Already pinned"
+            echo "Candidate release and pointer already declared"
             exit 0
           fi
-          git commit -m "chore(txo-fabric): nominate official Hermes with Hindsight bundle candidate"
+          git commit -m "chore(txo-fabric): nominate immutable Hermes runtime release ${RELEASE_NAME}"
           git push -u origin "${BRANCH}"
           gh pr create \
-            --title "chore(txo-fabric): canary official Hermes + pinned Hindsight plugin" \
-            --body "Candidate for #3939 and #3688. Main runtime uses **unmodified** \`nousresearch/hermes-agent:v2026.9.24\`; Hindsight is supplied via initContainer using immutable OCI digest \`${PLUGIN_IMAGE}\`. Canary profile only, **do not auto-merge**. Requires physical plugin/s6/Hindsight/PVC acceptance; do not promote production." \
+            --title "chore(txo-fabric): canary pointer to immutable Hermes release ${RELEASE_NAME}" \
+            --body "Candidate for #3944, #3939, #3688. Creates a new immutable HermesRuntimeRelease from upstream engine OCI digest plus pinned Hindsight bundle, and moves ONLY hermes-upgrade-canary.releaseRef. No change to hermes-default, no automatic merge or production promotion. Requires real isolated canary Pod and retained-state/s6/Hindsight/rollback acceptance before approving." \
             --base main --head "${BRANCH}"
