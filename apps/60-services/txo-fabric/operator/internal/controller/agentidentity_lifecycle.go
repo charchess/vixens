@@ -169,6 +169,40 @@ func (r *AgentIdentityReconciler) requestsForProfile(ctx context.Context, obj cl
 	return requests
 }
 
+// A changed release only queues agents attached to the profile pointers that
+// reference it. RuntimeRelease itself never owns agents or their PVCs.
+func (r *AgentIdentityReconciler) requestsForRuntimeRelease(ctx context.Context, obj client.Object) []reconcile.Request {
+	release, ok := obj.(*fabricv1alpha1.HermesRuntimeRelease)
+	if !ok {
+		return nil
+	}
+	var profiles fabricv1alpha1.AgentRuntimeProfileList
+	if err := r.List(ctx, &profiles); err != nil {
+		return nil
+	}
+	attachedProfiles := make(map[string]bool)
+	for i := range profiles.Items {
+		if profiles.Items[i].Spec.ReleaseRef == release.Name {
+			attachedProfiles[profiles.Items[i].Name] = true
+		}
+	}
+	if len(attachedProfiles) == 0 {
+		return nil
+	}
+	var agents fabricv1alpha1.AgentIdentityList
+	if err := r.List(ctx, &agents); err != nil {
+		return nil
+	}
+	requests := make([]reconcile.Request, 0)
+	for i := range agents.Items {
+		agent := &agents.Items[i]
+		if attachedProfiles[normalizedProfileRef(agent)] {
+			requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{Name: agent.Name}})
+		}
+	}
+	return requests
+}
+
 func (r *AgentIdentityReconciler) requestsForTenant(ctx context.Context, obj client.Object) []reconcile.Request {
 	tenant, ok := obj.(*fabricv1alpha1.TenantBundle)
 	if !ok {
@@ -200,6 +234,7 @@ func (r *AgentIdentityReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&networkingv1.Ingress{}).
 		Owns(&networkingv1.NetworkPolicy{}).
 		Watches(&fabricv1alpha1.AgentRuntimeProfile{}, handler.EnqueueRequestsFromMapFunc(r.requestsForProfile)).
+		Watches(&fabricv1alpha1.HermesRuntimeRelease{}, handler.EnqueueRequestsFromMapFunc(r.requestsForRuntimeRelease)).
 		Watches(&fabricv1alpha1.AgentFunctionalProfile{}, handler.EnqueueRequestsFromMapFunc(r.requestsForFunctionalProfile)).
 		Watches(&fabricv1alpha1.TenantBundle{}, handler.EnqueueRequestsFromMapFunc(r.requestsForTenant)).
 		Watches(&fabricv1alpha1.IntegrationBinding{}, handler.EnqueueRequestsFromMapFunc(r.requestsForIntegrationBinding)).
