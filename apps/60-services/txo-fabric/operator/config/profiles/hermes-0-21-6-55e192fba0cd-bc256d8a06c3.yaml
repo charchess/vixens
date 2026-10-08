@@ -1,0 +1,16 @@
+---
+# Official upstream Hermes release v0.21.6; immutable OCI digests.
+# Software candidate only; physical Fabric acceptance is separate.
+apiVersion: fabric.truxonline.io/v1alpha1
+kind: HermesRuntimeRelease
+metadata:
+  name: hermes-0-21-6-55e192fba0cd-bc256d8a06c3
+  annotations:
+    argocd.argoproj.io/sync-wave: "-15"
+    fabric.truxonline.io/upstream-tag: "v0.21.6"
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: runtime-release
+spec:
+  image: nousresearch/hermes-agent@sha256:55e192fba0cd4fde61142abbff5adeacff40efdb482ccd0ff877924bd274f909
+  hindsightPluginImage: ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:bc256d8a06c343923a2b9f8e623373049f8ee35ca061b56632ade5cf3d47f522

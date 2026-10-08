@@ -14,7 +14,7 @@ spec:
   engine: Hermes
 
   # Latest selected official release, always pinned; no floating :latest tag.
-  releaseRef: hermes-0-21-6-9774f4f39a9b-33060387a98b
+  releaseRef: hermes-0-21-6-55e192fba0cd-bc256d8a06c3
   storage:
     size: 2Gi
     storageClassName: truenas-iscsi-retain
