@@ -87,12 +87,8 @@ func TestAgentReconcileAdoptsExistingPVCWithoutRecreating(t *testing.T) {
 	if current.UID != legacyUID {
 		t.Fatalf("PVC was recreated: uid=%q, want %q", current.UID, legacyUID)
 	}
-	owner := metav1.GetControllerOf(&current)
-	if owner == nil {
-		t.Fatal("existing PVC was not adopted by AgentIdentity")
-	}
-	if owner.Name != agent.Name || owner.UID != agent.UID {
-		t.Fatalf("unexpected PVC controller owner: %#v", owner)
+	if owner := metav1.GetControllerOf(&current); owner != nil {
+		t.Fatalf("retained PVC must survive AgentIdentity deletion; got controller owner: %#v", owner)
 	}
 	if current.Labels[LabelInstance] != agent.Spec.AgentKey {
 		t.Fatalf("PVC instance label = %q, want %q", current.Labels[LabelInstance], agent.Spec.AgentKey)

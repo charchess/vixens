@@ -32,7 +32,9 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 				Resources:        corev1.VolumeResourceRequirements{Requests: corev1.ResourceList{corev1.ResourceStorage: profile.Spec.Storage.Size}},
 			},
 		}
-		if err := controllerutil.SetControllerReference(agent, &pvc, r.Scheme); err != nil {
+		// Retained storage must NEVER be garbage-collected with AgentIdentity.
+		// Keep an ownerReference only for deliberately disposable workspaces.
+		if err := r.setRuntimePVCOwnership(agent, &pvc); err != nil {
 			return err
 		}
 		return r.Create(ctx, &pvc)
@@ -55,12 +57,31 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, &pvc, func() error {
 		pvc.Labels = mergeStringMap(pvc.Labels, agentLabels(agent, tenant))
 		pvc.Labels[LabelStorageRetention] = storageRetentionPolicy(agent)
-		return controllerutil.SetControllerReference(agent, &pvc, r.Scheme)
+		return r.setRuntimePVCOwnership(agent, &pvc)
 	})
 	if err != nil {
 		return err
 	}
 	return r.ensureRetainedPersistentVolume(ctx, agent, &pvc)
+}
+
+// setRuntimePVCOwnership is called on creation AND while the agent is alive.
+// Removing a Retain PVC's controller reference only inside its deletion finalizer
+// races Kubernetes garbage collection. Keep these PVCs independent up-front.
+// Delete PVCs stay controller-owned and are reclaimed through the normal path.
+func (r *AgentIdentityReconciler) setRuntimePVCOwnership(agent *fabricv1alpha1.AgentIdentity, pvc *corev1.PersistentVolumeClaim) error {
+	if storageRetentionPolicy(agent) == StorageRetentionDelete {
+		return controllerutil.SetControllerReference(agent, pvc, r.Scheme)
+	}
+	kept := make([]metav1.OwnerReference, 0, len(pvc.OwnerReferences))
+	for _, owner := range pvc.OwnerReferences {
+		if owner.Kind == "AgentIdentity" && owner.Name == agent.Name && owner.UID == agent.UID {
+			continue
+		}
+		kept = append(kept, owner)
+	}
+	pvc.OwnerReferences = kept
+	return nil
 }
 
 func (r *AgentIdentityReconciler) ensureRetainedPersistentVolume(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, pvc *corev1.PersistentVolumeClaim) error {

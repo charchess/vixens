@@ -233,9 +233,18 @@ PVCs can be adopted without rewriting their storage contract, preserving their
 UID and data. Runtime workspace deletion is explicit through
 `spec.runtime.storage.retentionPolicy`, with values `Retain` or `Delete`. The safe
 default is `Retain`; `Delete` is an immutable opt-in for disposable identities.
-When an AgentIdentity using `Retain` is deleted, the operator removes the PVC's
-AgentIdentity ownerReference and leaves tenant/agent retention labels in place so
-a replacement identity with the same tenant and `agentKey` can re-adopt it.
+For `Retain`, the PVC is **not controller-owned by AgentIdentity from
+creation onward**. Brownfield retained PVCs lose their previous AgentIdentity
+ownerReference during ordinary reconciliation, **before** any deletion; the
+finalizer repeats this defensively. This avoids garbage collection racing
+a finalizer when an agent is deleted. Tenant/agent retention labels still
+identify the PVC for an explicitly authorized replacement identity with the
+same tenant and `agentKey`. For `Delete`, PVCs remain controller-owned and
+are deleted as part of the agent lifecycle.
+
+Because retained PVCs are unowned, the controller also watches labeled
+runtime PVC events directly: binding must trigger another reconciliation to
+promote a newly bound PV's reclaim policy to `Retain`.
 
 For a bound `Retain` runtime PVC, the operator also promotes the concrete
 PersistentVolume reclaim policy to `Retain`. This is the backend-safety contract:
