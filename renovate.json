@@ -154,6 +154,13 @@
         "renovate",
         "major-update"
       ]
+    },
+    {
+      "description": "Hermes runtime profiles and immutable release digests are managed by reviewed GitOps release channels, never by Renovate",
+      "matchFileNames": [
+        "apps/60-services/txo-fabric/operator/config/profiles/**"
+      ],
+      "enabled": false
     }
   ],
   "prConcurrentLimit": 10,
