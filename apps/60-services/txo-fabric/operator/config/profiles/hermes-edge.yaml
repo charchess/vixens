@@ -1,7 +1,7 @@
 ---
-# Isolated/disposable dev cohort only. No AgentIdentity is switched by this file.
-# Advancement is review-only GitOps; never attach customer PVCs here.
-# Retain supports a disposable old-state -> snapshot -> restore rehearsal; clean it deliberately.
+# Edge follows the newest *selected and pinned* upstream release via reviewed PRs.
+# This profile alone creates no pods. Never attach customer PVCs during experiments.
+# Retain supports deliberate state and recovery rehearsal, not per-version tenants.
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentRuntimeProfile
 metadata:

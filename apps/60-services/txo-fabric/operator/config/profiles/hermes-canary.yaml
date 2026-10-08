@@ -1,7 +1,7 @@
 ---
-# Isolated/disposable dev cohort only. No AgentIdentity is switched by this file.
-# Advancement is review-only GitOps; never attach customer PVCs here.
-# Retain supports a disposable old-state -> snapshot -> restore rehearsal; clean it deliberately.
+# Canary tracks a newer pinned official Hermes release for qualification.
+# No AgentIdentity changes by declaring this pointer. Reuse bounded canary agents.
+# Retain supports upgrade/rollback state verification without extra tenant copies.
 apiVersion: fabric.truxonline.io/v1alpha1
 kind: AgentRuntimeProfile
 metadata:
