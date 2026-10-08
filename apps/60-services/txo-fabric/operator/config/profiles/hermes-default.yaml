@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/component: runtime-profile
 spec:
   engine: Hermes
-  image: ghcr.io/charchess/txo-fabric-hermes:main-ab881f643cbc
+  image: ghcr.io/charchess/txo-fabric-hermes:main-4b0696530e5f
   storage:
     size: 2Gi
     storageClassName: truenas-iscsi-delete
