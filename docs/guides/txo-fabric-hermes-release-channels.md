@@ -45,9 +45,19 @@ Existing 17 Indiba/hAIrem beta AgentIdentity resources continue to use legacy
 of channel declaration. Retain `hermes-dev` and `hermes-upgrade-canary` as
 **temporary compatibility profiles**; do not nominate them further or silently
 delete them. Retire only after checking all consumers and an explicit safe
-migration. The initially configured stable profile preserves the legacy storage
-class; do not switch a retained agent without checking real PVC UID/class and
-the desired retention policy.
+migration. Stable, canary and edge share `truenas-iscsi-delete`, matching the existing
+beta default PVC **StorageClass**. This is a provisioning class, **not** the
+deletion rule for retained agents: `AgentIdentity.spec.runtime.storage.retentionPolicy:
+Retain` instructs the operator to promote the bound PV's reclaim policy to
+`Retain`. Never switch an existing agent without confirming the live PVC UID,
+bound PV, actual StorageClass, reclaim policy and a separately recoverable
+checkpoint. Profile/pointer changes must not trigger PVC re-creation.
+
+The first explicit pilot (#3964) selects only Spark, hAIrem
+`ten00001-usr000001-agt00011`, for `hermes-edge`, without changing her
+agentKey, Hindsight bank, workspace, human routing or private PVC. Future
+*reviewed, separately GitOps-promoted* edge pointer updates may restart Spark.
+That opt-in does not authorize other agents or an automatic platform promotion.
 
 ## Selection and CI behavior
 
