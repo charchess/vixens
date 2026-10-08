@@ -305,7 +305,7 @@ fi
 				corev1.EnvVar{Name: "HERMES_DASHBOARD_FILES_ROOT", Value: humanAccess.FilesRoot},
 			)
 		}
-		if err := configureHermesHindsight(agent, tenant, deployment); err != nil {
+		if err := configureHermesHindsight(agent, tenant, profile, deployment); err != nil {
 			return err
 		}
 		return controllerutil.SetControllerReference(agent, deployment, r.Scheme)

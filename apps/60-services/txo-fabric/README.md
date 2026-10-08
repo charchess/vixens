@@ -345,3 +345,47 @@ The following must also be true:
 
 `hAIrem` receives no special platform treatment. Test and production tenant cells
 use the same API contracts as future external customers.
+
+## Official Hermes + independent Hindsight OCI extension (candidate #3939)
+
+The target runtime uses **unmodified**
+`nousresearch/hermes-agent:v2026.9.24` as `AgentRuntimeProfile.spec.image`.
+The profile may *optionally* set
+`spec.bootstrap.hindsightPluginImage` to a separately built, reviewed
+`ghcr.io/charchess/txo-hermes-hindsight-plugin@sha256:...` digest.
+
+When both the tenant has Hindsight configured and this image is set, Fabric
+renders two initContainers: `prepare-hindsight-extension` copies a pinned
+provider and its hash-locked Python wheels from the artifact into a
+Pod-local `emptyDir`, and `bootstrap-profile` configures the private
+Hermes profile, Hindsight bank and managed settings after the artifact exists.
+The official Hermes gateway then reads the plugin at
+`$HERMES_HOME/plugins/hindsight` and gets the two additional Python wheels
+from `PYTHONPATH=/opt/txo-hindsight/python`. The plugin and dependency
+volume mounts are read-only, no vendor or app files under
+`/opt/hermes/.venv` are modified, and no GitHub/PyPI calls occur on
+tenant Pod startup.
+
+**Private identity:** `SOUL.md` is not touched by Fabric, even on first
+boot; Hermes' own first-run seed (only if missing) is authoritative.
+Managed Hindsight configuration is merged into
+`$HERMES_HOME/hindsight/config.json` without discarding unknown personal
+fields and rewritten atomically only when effective managed data changes.
+The per-agent `HINDSIGHT_API_KEY` remains secret-backed. Recreating a
+Pod re-copies only ephemeral dependency bytes and keeps the existing private
+state and independent Hindsight bank untouched.
+
+**Rollout safety:** this field is *opt-in*, and default/production profiles
+keep their existing derived Hermes image until an approved migration.
+A separate GitHub workflow builds the plugin artifact and generates a
+review-only PR changing **hermes-upgrade-canary** to the official image and
+pinning the plugin image by digest. The legacy derived-image pipeline no
+longer publishes or auto-updates runtime pins. No prod promotion is implied
+by a generated PR; physical image/s6/import/memory/PVC tests under #3688 are
+required before changing `hermes-default`. During this migration,
+the draft functional-role PR #3938 must be rebased against #3939; it
+continues to supply native Hermes role skills, not a gateway patch.
+
+
+The optional `bootstrap.hindsightPluginImage` field strictly requires an OCI
+`@sha256:<64-hex>` digest. Floating tags are rejected at reconciliation time.

@@ -51,6 +51,16 @@ spec:
             type: object
           spec:
             properties:
+              bootstrap:
+                description: Bootstrap selects independent plugin payloads.
+                properties:
+                  hindsightPluginImage:
+                    description: HindsightPluginImage is an optional pinned OCI payload
+                      for a tenant using Hindsight.
+                    maxLength: 512
+                    pattern: ^[a-z0-9][a-z0-9._:/-]*@sha256:[a-f0-9]{64}$
+                    type: string
+                type: object
               capabilities:
                 description: Capabilities declares platform-owned executable capability
                   policy for this runtime profile.
