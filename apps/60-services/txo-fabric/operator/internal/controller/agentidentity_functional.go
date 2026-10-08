@@ -49,6 +49,15 @@ func (r *AgentIdentityReconciler) resolveFunctionalProfile(ctx context.Context, 
 	}, nil
 }
 
+// No role can report Ready against an upstream or unverified Hermes image:
+// such an image would silently ignore TXO_FUNCTIONAL_SYSTEM_PROMPT.
+func requireFunctionalPromptCompatibility(role effectiveFunctionalProfile, runtime *fabricv1alpha1.AgentRuntimeProfile) error {
+	if role.Enabled && !runtime.Spec.Compatibility.FunctionalPromptOverlay {
+		return fmt.Errorf("AgentRuntimeProfile %q has no certified additive functional prompt support", runtime.Name)
+	}
+	return nil
+}
+
 // A previously authorized profile can disappear or be retargeted. Stop the
 // existing Hermes runtime and revoke its human route; never silently start
 // with broader default instructions or delete the retained private PVC.

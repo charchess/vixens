@@ -76,7 +76,12 @@ The first implementation slice intentionally supports **non-secret
 `spec.instructions` only**. It carries no credentials, IAM grants,
 workspace mounts, toolset approvals, model credentials or IntegrationBinding
 authorization. Approved instructions are passed to the pinned Hermes gateway
-via `HERMES_EPHEMERAL_SYSTEM_PROMPT`; that overlay does not write the
+via `TXO_FUNCTIONAL_SYSTEM_PROMPT` in the certified **TXO-patched pinned Hermes runtime**.
+The managed layer is composed separately from the user's `/personality` and
+channel overrides on every gateway turn. This requires
+`AgentRuntimeProfile.spec.compatibility.functionalPromptOverlay=true` on a
+verified compatible runtime image (default **false**, fail closed). The role
+overlay does not write the
 agent's private `SOUL.md` or skills. The effective revision is recorded on the
 Hermes pod template and changes roll only the relevant agents. Role instructions
 are readable in the profile and Pod environment, so **do not put secrets in

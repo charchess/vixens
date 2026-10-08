@@ -145,7 +145,7 @@ func TestFunctionalProfileHermesGatewayRenderingAndWithdrawal(t *testing.T) {
 	}
 	reconcile(role)
 	read()
-	v:=envVar(deployment.Spec.Template.Spec.Containers[0].Env,"HERMES_EPHEMERAL_SYSTEM_PROMPT")
+	v:=envVar(deployment.Spec.Template.Spec.Containers[0].Env,"TXO_FUNCTIONAL_SYSTEM_PROMPT")
 	if v==nil || v.Value!="Approved sales baseline" || v.ValueFrom!=nil {
 		t.Fatalf("Hermes role overlay not rendered: %#v",v)
 	}
@@ -169,7 +169,7 @@ func TestFunctionalProfileHermesGatewayRenderingAndWithdrawal(t *testing.T) {
 	reconcile(role)
 	read()
 	if deployment.Spec.Template.Annotations[AnnotationFunctionalProfileRevision]!="ddeeff334455" ||
-		envValue(deployment.Spec.Template.Spec.Containers[0].Env,"HERMES_EPHEMERAL_SYSTEM_PROMPT")!="Updated approved baseline" {
+		envValue(deployment.Spec.Template.Spec.Containers[0].Env,"TXO_FUNCTIONAL_SYSTEM_PROMPT")!="Updated approved baseline" {
 		t.Fatal("role revision did not propagate to Hermes pod template")
 	}
 	if deployment.ResourceVersion==firstRV {
@@ -178,7 +178,7 @@ func TestFunctionalProfileHermesGatewayRenderingAndWithdrawal(t *testing.T) {
 	// Removing the reference restores today's baseline without touching private data.
 	reconcile()
 	read()
-	if envVar(deployment.Spec.Template.Spec.Containers[0].Env,"HERMES_EPHEMERAL_SYSTEM_PROMPT")!=nil {
+	if envVar(deployment.Spec.Template.Spec.Containers[0].Env,"TXO_FUNCTIONAL_SYSTEM_PROMPT")!=nil {
 		t.Fatal("unbound agent still has a managed functional overlay")
 	}
 	if deployment.Spec.Template.Annotations[AnnotationFunctionalProfileRevision]!="" {
@@ -229,5 +229,20 @@ func TestInvalidFunctionalProfileReconcileDeniesPreviouslyRunningAgent(t *testin
 	var stopped appsv1.Deployment
 	if err:=c.Get(ctx,types.NamespacedName{Name:dep.Name,Namespace:ns.Name},&stopped);!apierrors.IsNotFound(err) {
 		t.Fatalf("previous Hermes runtime still serving invalid role: %v",err)
+	}
+}
+
+func TestFunctionalPromptRequiresCertifiedRuntime(t *testing.T) {
+	role := effectiveFunctionalProfile{Enabled: true, ProfileName: "indiba-sales"}
+	profile := testRuntimeProfile()
+	if err := requireFunctionalPromptCompatibility(role, profile); err == nil {
+		t.Fatal("unverified Hermes image must fail closed on a bound functional role")
+	}
+	if err := requireFunctionalPromptCompatibility(effectiveFunctionalProfile{}, profile); err != nil {
+		t.Fatalf("unbound agents must remain backward compatible: %v", err)
+	}
+	profile.Spec.Compatibility.FunctionalPromptOverlay = true
+	if err := requireFunctionalPromptCompatibility(role, profile); err != nil {
+		t.Fatalf("certified TXO Hermes image should allow role: %v", err)
 	}
 }

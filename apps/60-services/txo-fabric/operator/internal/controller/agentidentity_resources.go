@@ -281,10 +281,11 @@ fi
 			},
 		}
 		if role.Enabled {
-			// Hermes v2026.9.24 resolves this non-secret gateway overlay on every turn.
-			// SOUL.md and agent-local skills remain in private HERMES_HOME; no file is overwritten.
+			// The certified TXO Hermes runtime appends this approved role every gateway
+			// turn, independently of personal and per-channel prompts. The
+			// private SOUL.md and local skills are never overwritten.
 			deployment.Spec.Template.Spec.Containers[0].Env = append(deployment.Spec.Template.Spec.Containers[0].Env,
-				corev1.EnvVar{Name: "HERMES_EPHEMERAL_SYSTEM_PROMPT", Value: role.Instructions})
+				corev1.EnvVar{Name: "TXO_FUNCTIONAL_SYSTEM_PROMPT", Value: role.Instructions})
 		}
 		if humanAccess.Enabled {
 			container := &deployment.Spec.Template.Spec.Containers[0]

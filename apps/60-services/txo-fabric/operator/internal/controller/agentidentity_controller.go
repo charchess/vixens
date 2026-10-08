@@ -98,6 +98,9 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	functional, functionalErr := r.resolveFunctionalProfile(ctx, &agent, &tenant)
+	if functionalErr == nil {
+		functionalErr = requireFunctionalPromptCompatibility(functional, &profile)
+	}
 	if functionalErr != nil {
 		// The previous runtime must not keep serving a removed/foreign/incompatible role.
 		if err := r.withdrawInvalidFunctionalRuntime(ctx, &agent, &tenant, namespace); err != nil {
