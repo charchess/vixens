@@ -196,33 +196,21 @@ test -s /extensions/hindsight/__init__.py
 	// Bootstrap runs after the plugin content exists and validates the real
 	// external dependencies via the same PYTHONPATH as the s6 gateway.
 	bootstrap := &pod.InitContainers[1]
-	// Mount the plugin at the bootstrap's own HERMES_HOME too: legacy
-	// profile adoption points bootstrap at the retained named-profile path.
-	bootstrapHome := ""
-	for _, env := range bootstrap.Env {
-		if env.Name == "HERMES_HOME" {
-			bootstrapHome = env.Value
-		}
-	}
-	if bootstrapHome == "" {
-		return fmt.Errorf("Hermes bootstrap HERMES_HOME is not configured")
-	}
+	// Do not mount inside bootstrap HERMES_HOME: Kubernetes may create the
+	// mount destination and accidentally bypass the retained-legacy-profile
+	// existence guard. The runtime-only mount is added later to the main
+	// container; this initContainer checks payload imports outside the PVC.
 	bootstrap.VolumeMounts = append(bootstrap.VolumeMounts,
 		corev1.VolumeMount{
-			Name: hindsightExtensionVolume, MountPath: bootstrapHome + "/plugins/hindsight",
-			SubPath: "hindsight", ReadOnly: true,
-		},
-		corev1.VolumeMount{
-			Name: hindsightExtensionVolume, MountPath: hindsightExtensionDepsRoot,
-			SubPath: "python", ReadOnly: true,
+			Name: hindsightExtensionVolume, MountPath: "/txo-extension", ReadOnly: true,
 		},
 	)
 	bootstrap.Env = append(bootstrap.Env, corev1.EnvVar{
-		Name: "PYTHONPATH", Value: hindsightExtensionDepsRoot,
+		Name: "PYTHONPATH", Value: "/txo-extension/python",
 	})
 	bootstrap.Command[2] += `
-test -s "${HERMES_HOME}/plugins/hindsight/plugin.yaml"
-/opt/hermes/.venv/bin/python -c 'from plugins.memory import find_provider_dir; import hindsight_client, aiohttp_retry; assert find_provider_dir("hindsight")'
+test -s /txo-extension/hindsight/plugin.yaml
+/opt/hermes/.venv/bin/python -c 'import hindsight_client, aiohttp_retry'
 `
 	runtime := &pod.Containers[0]
 	runtime.VolumeMounts = append(runtime.VolumeMounts,

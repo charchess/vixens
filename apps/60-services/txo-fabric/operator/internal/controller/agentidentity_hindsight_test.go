@@ -410,6 +410,11 @@ func TestOfficialHermesPluginBootstrapKeepsLegacyProfileAdoption(t *testing.T) {
 	if !strings.Contains(bootstrap.Command[2], "requested legacy Hermes profile") {
 		t.Fatal("legacy retained profile guard disappeared")
 	}
+	for _, mount := range bootstrap.VolumeMounts {
+		if strings.HasPrefix(mount.MountPath, "/mnt/txo-data/profiles/tina/") {
+			t.Fatalf("bootstrap plugin mount creates absent retained profile before guard: %#v", mount)
+		}
+	}
 	if deployment.Spec.Template.Spec.Containers[0].VolumeMounts[0].SubPath != "profiles/tina" {
 		t.Fatal("legacy retained PVC subPath changed")
 	}
