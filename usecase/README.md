@@ -47,3 +47,7 @@ Statuts possibles pour une fiche : `Exploration`, `Besoin confirmé`, `Contrat �
 - **Politique effective** : résultat calculé côté serveur de la configuration et des restrictions applicables ; les préférences ne constituent pas des autorisations.
 
 Création initiale : 2026-10-09 · Traçabilité : [#3982](https://github.com/charchess/vixens/issues/3982).
+
+## Autorisation relationnelle Fabric
+
+Le propriétaire a validé **OpenFGA central (un service Fabric)** comme moteur d'autorisations relationnelles, distinct d'Authentik (identité) et du calcul de politiques hiérarchiques (locks, providers, budgets). Voir [ADR-039](../docs/adr/039-fabric-openfga-authorization-boundary.md) et [#3988](https://github.com/charchess/vixens/issues/3988). Cette décision ne prouve pas un service déployé : les tests de modèle et l'intégration live sont suivis séparément.

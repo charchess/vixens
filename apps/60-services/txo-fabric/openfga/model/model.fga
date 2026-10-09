@@ -1,0 +1,46 @@
+model
+  schema 1.1
+
+type user
+
+type platform
+  relations
+    define admin: [user]
+
+type tenant
+  relations
+    define platform: [platform]
+    define admin: [user] or admin from platform
+    define member: [user]
+    define can_manage: admin
+
+type group
+  relations
+    define tenant: [tenant]
+    define member: [user]
+
+type agent
+  relations
+    define tenant: [tenant]
+    define owner: [user, group, tenant]
+    define chatter: [user, group#member]
+    define manager: [user, group#member]
+    define can_chat: chatter or admin from tenant
+    define can_manage: manager or admin from tenant
+
+type workspace
+  relations
+    define tenant: [tenant]
+    define viewer: [user, group#member]
+    define editor: [user, group#member]
+    define can_read: viewer or editor or admin from tenant
+    define can_write: editor or admin from tenant
+
+type provider_account
+  relations
+    define tenant: [tenant]
+    define owner: [user, tenant, platform]
+    define consumer: [user, group#member]
+    define manager: [user, group#member]
+    define can_use: consumer
+    define can_manage: manager or admin from tenant
