@@ -71,6 +71,16 @@ shared LiteLLM/OpenRouter path until the tenant-local plane passes physical
 acceptance. The direct-CPA smoke topology must not be promoted as the final
 architecture.
 
+## OpenFGA tenant store lifecycle — first #3996 slice
+
+The private Fabric-wide OpenFGA service is deployed independently from the operator. **One service does not mean one store**: the target is one authorization store per `TenantBundle.spec.tenantId` plus a separate platform-control store. A store name is derived only from the **immutable business tenant ID** (`txo-fabric-tenant-ten00001`), never the mutable display name, AgentIdentity name, username or browser input.
+
+`internal/openfga/stores.go` currently implements the platform-private store discovery/create/adoption primitive (including conflict detection, paginated discovery, deny-on-outage and no deletion on retries). Its tests use a fake HTTP transport to verify A/B tenant isolation, non-duplication and fail-closed behavior.
+
+**Important: this first PR does NOT wire the client into `TenantBundleReconciler`, inject the OpenBao secret into the operator, write store mappings to Kubernetes, publish an authorization model or synchronize human membership tuples. It has no live provisioning behavior and requires no production promotion.** Those tasks remain in #3996 and must be implemented with status/recovery handling in the operator, with human memberships read from Authentik (the operator owns tenant groups/applications, not their human members).
+
+Do not run manual per-client `fga store create` as a substitute for the remaining operator reconciliation. OpenFGA store names are not a uniqueness constraint: if duplicates already exist, the client refuses to select one, rather than guessing or deleting data.
+
 ## Development
 
 The production cluster is Kubernetes 1.34, so this module pins controller-runtime
