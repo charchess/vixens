@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -27,6 +28,8 @@ type TenantBundleReconciler struct {
 	client.Client
 	APIReader client.Reader
 	Scheme    *runtime.Scheme
+	// Optional only in unit tests: runtime reads the service key from OpenBao-synced Secret.
+	OpenFGAStoreClient openFGAStoreProvisioner
 }
 
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles,verbs=get;list;watch;update;patch
@@ -120,6 +123,25 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "IAMDesiredStateReady", metav1.ConditionTrue, "BlueprintPublished", fmt.Sprintf("Authentik desired state published for application %q and groups %v", authentikApplicationName(bundle.Name), groups))
 	} else {
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "IAMDesiredStateReady", metav1.ConditionTrue, "NotRequested", "tenant does not request human IAM access")
+	}
+
+	// Rollout gate: do not silently activate a new security dependency for
+	// existing production tenants until model/tuple reconciliation is ready.
+	// A disabled gate never grants authorization or creates OpenFGA stores.
+	if os.Getenv("TXO_FABRIC_OPENFGA_STORES_ENABLED") == "true" {
+		_, err := r.reconcileOpenFGAStore(ctx, &bundle)
+		if err != nil {
+			bundle.Status.Phase = "Degraded"
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAStoreReady", metav1.ConditionFalse, "StoreReconcileFailed", err.Error())
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "OpenFGAStoreReconcileFailed", "private tenant authorization store is not reconciled")
+			if !reflect.DeepEqual(previousStatus, bundle.Status) {
+				_ = r.Status().Update(ctx, &bundle)
+			}
+			return ctrl.Result{}, err
+		}
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAStoreReady", metav1.ConditionTrue, "StoreBound", "private tenant authorization store is reconciled (model and grants managed separately)")
+	} else {
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAStoreReady", metav1.ConditionFalse, "RolloutDisabled", "private tenant authorization store reconciliation is not enabled")
 	}
 
 	waiting := false
