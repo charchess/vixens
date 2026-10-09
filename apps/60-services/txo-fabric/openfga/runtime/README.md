@@ -32,10 +32,15 @@ Example for an **already authenticated OpenBao CLI** (KV v2 mount `kv` as config
 export VAULT_ADDR=http://nas.truxonline.com:8200
 (
   set -euo pipefail
-  db_password="$(openssl rand -hex 32)"
-  api_key="$(openssl rand -hex 32)"
-  bao kv put -mount=kv vixens/prod/apps/60-services/txo-fabric/openfga \
-    username=txo_fabric_openfga password="$db_password" presharedKeys="$api_key" >/dev/null
+  python3 - <<'PY' | bao kv put -mount=kv vixens/prod/apps/60-services/txo-fabric/openfga - >/dev/null
+import json
+import secrets
+print(json.dumps({
+    "username": "txo_fabric_openfga",
+    "password": secrets.token_hex(32),
+    "presharedKeys": secrets.token_hex(32),
+}))
+PY
   echo "OpenBao OpenFGA bootstrap: written (values not printed)"
 )
 ```
