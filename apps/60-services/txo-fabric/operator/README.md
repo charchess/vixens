@@ -128,6 +128,15 @@ The primitive allows only a deliberately restricted `group` and `agent` relation
 
 **Not connected to `TenantBundleReconciler` yet:** this stage does not query Authentik, map OIDC subjects, materialize `AgentIdentity` grants, or activate any tuple writes in the cluster. Before connecting it, the controller must resolve immutable Fabric IDs from verified IAM subjects, distinguish authored grants from membership, detect partial/stale snapshots, set revocation/readiness conditions, handle deletion and concurrent generations, and validate real OpenFGA `Check` against representative tenant A/B identities. The existing feature gate remains off and production promotion remains prohibited without explicit owner approval.
 
+
+### Authentik human-membership snapshot client — staged #3996
+
+`internal/authentik/memberships.go` introduces a **read-only, operator-owned** Authentik 2026.8 API client pinned to the internal Service `authentik.auth.svc:9000`. It resolves the exact generated tenant IAM group (`txo-fabric-<tenant>-<group>`) by unique immutable Authentik group UUID, then enumerates members through `core/users/?groups_by_pk=...`. It verifies every page's count/cursor, checks that each user truly belongs to the selected UUID, excludes disabled users, rejects malformed or duplicate identity records, and repeats the complete snapshot before returning an apparently stable set. API credentials are never accepted from the browser, tenant payload or workspace declarations.
+
+**This is not yet a grant source connected to OpenFGA.** The returned UUIDs are Authentik identities, *not* the canonical Fabric user IDs expected in `user:...` tuples. A trusted Authentik subject → Fabric stable user mapping, explicit agent permissions and ownership verification, runtime-only credential from OpenBao/External Secrets, dedicated operator ↔ Authentik NetworkPolicies, retries and freshness ceilings must be implemented before its results may flow to `ReconcileTupleScope`. Double reading detects common changes across pages but is **not an atomic IAM transaction** and must not be treated as one. During an IAM outage, the operator must report authorization not ready, never treat missing/partial data as an authorized empty user list, and the BFF must deny checks until revalidation.
+
+The existing human workspace `access.userRef` and group paths/PVCs are deliberately unchanged. #3852 requires a separate identity/migration design decision before altering those durable resource names. There is no production IAM token, external secret or open network rule added by this source-only stage. The OpenFGA gate stays off and no production promotion is authorized.
+
 ## Development
 
 The production cluster is Kubernetes 1.34, so this module pins controller-runtime
