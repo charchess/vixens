@@ -34,3 +34,23 @@ Run `node --test` from this directory with Node >= 20. No npm install or secrets
 4. Test persisted session ownership, stop/cancel, agent replace, tools, reconnect, SSE compatibility and hAIrem multi-agent acceptance before considering #3981 done. Indiba remains blocked on voluntary CPA provider enrollment through #3979.
 
 Do **not** add a public Ingress for the Hermes API port or enable it globally before the BFF and policy enforcement exist. No prod promotion implied.
+
+## Second slice: conversation ownership and tenant chat HTTP API
+
+This branch adds `server/chat-sessions.mjs`, `server/chat-http.mjs` and
+`test/chat-sessions.test.mjs`:
+
+- Cryptographic opaque Fabric thread IDs mapped server-side to Hermes sessions.
+- Authorize tenant, authenticated user, and agent on every read and turn.
+- Require a durable conversation repository with atomic per-thread turn leases;
+  no permissive/in-memory repository is bundled as a production fallback.
+- Portable Web Request/Response routes for thread creation, list, lookup,
+  and streaming turns, with origin checks and redacted HTTP errors.
+- Unit tests for denied cross-user/tenant access, revocation, CSRF and SSE.
+
+These are integration primitives, **not** a deployed BFF: an actual
+Authentik/OIDC verifier, Fabric IAM grants, durable session repository and
+Secret-backed private Hermes API Service/NetworkPolicies are still required
+before mounting this handler at a public tenant host. The React assistant-ui
+frontend is not yet included. The static per-agent LiteLLM key must not be
+mistaken for the end-user identity used by future personal OAuth routing.
