@@ -81,7 +81,7 @@ func TestOpenFGARetainedBindingBlocksImplicitNewCustomerAdoption(t *testing.T) {
 	f:=&fakeOpenFGAProvisioner{stores:map[string]openfga.Store{
 		"TEN00001": {ID:"01H0H015178Y2V4CX10C2KGHF4",Name:"txo-fabric-tenant-ten00001"},
 	}}
-	r,c:=openFGATestReconciler(t,f,tenant)
+	r,_:=openFGATestReconciler(t,f,tenant)
 	if _,err:=r.reconcileOpenFGAStore(ctx,tenant);err!=nil {t.Fatal(err)}
 
 	// A removed/recreated TenantBundle must not silently inherit old store,
