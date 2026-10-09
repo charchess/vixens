@@ -8,6 +8,8 @@ metadata:
   namespace: txo-fabric-system
   annotations:
     argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
   labels:
     app.kubernetes.io/name: txo-fabric-openfga
     app.kubernetes.io/component: migration
@@ -32,7 +34,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: migrate
-          image: openfga/openfga:v1.22.0
+          image: docker.io/openfga/openfga@sha256:9cf9a20af32a40434cd3a788c429879439ee9ea9abf65c9c200ee17cd43f769e
           imagePullPolicy: IfNotPresent
           args: ["migrate"]
           env:
