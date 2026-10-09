@@ -97,6 +97,19 @@ The binding is intentionally retained on tenant deletion so customer authorizati
 
 **No production promotion is required for this source-only guarded slice.** Follow WORKFLOW.md: an operator code merge creates a source-only dev tag and a separate generated image pin PR; only the completed, physically validated immutable pin candidate may be promoted with explicit operator approval.
 
+### Source-controlled OpenFGA model publication — #3996
+
+`apps/60-services/txo-fabric/openfga/model/model.fga` remains the **canonical Fabric authorization model**. The compiled API JSON artifact is embedded inside the operator as `internal/openfga/model.json`; OpenFGA model CI runs the upstream `fga model transform` command and rejects drift from the DSL. The existing two-tenant FGA test suite continues to validate positive/negative access.
+
+`internal/openfga/model.go` introduces an isolated model publication primitive:
+- compares the *latest* store model against the exact approved compiled definition;
+- returns the existing immutable model ID without writing another copy on retries;
+- writes the approved model **only when no model exists**, then verifies it is visible and latest;
+- rejects a foreign/newer model, model ID drift, API rejection/outage, or unsupported store ID, rather than automatically downgrading or upgrading an unknown authorization policy;
+- exposes a deterministic content fingerprint for a future stable per-tenant store/model mapping.
+
+**This slice does not yet turn on the `TXO_FABRIC_OPENFGA_STORES_ENABLED` gate nor connect model publication to `TenantBundle`**. Next deliverable must bind `storeID + modelID + fingerprint` atomically, keep rollout fail-closed, then reconcile grants from Authentik/AgentIdentity. No user/group/agent tuple should be synthesized from merely creating a store or publishing the model.
+
 ## Development
 
 The production cluster is Kubernetes 1.34, so this module pins controller-runtime
