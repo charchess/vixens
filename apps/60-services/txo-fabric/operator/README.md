@@ -119,6 +119,15 @@ Conditions deliberately distinguish `OpenFGAStoreReady`, `OpenFGAModelReady`, an
 The binding ConfigMap and FGA service key are platform-private. The binding resolver is **not** a browser API and does not by itself prove permission to chat. Model freshness must still be checked by trusted Fabric authorization callers before any sensitive operation. This source-only slice is not a production promotion candidate.
 
 
+
+### Scoped OpenFGA tuple reconciliation primitive — staged #3996
+
+`internal/openfga/tuples.go` stages a **private, source-only** tuple reconciler for a single Fabric-owned `object + relation` at a time. It uses an immutable `storeID` and `modelID` supplied by trusted Fabric code, validates the approved model, lists the exact relation with bounded pagination, calculates the desired-minus-actual difference, revokes stale tuples **before** adding new tuples and verifies the exact resulting relation set and pinned model. OpenFGA's `on_duplicate=ignore` / `on_missing=ignore` options make retries tolerant of prior successful writes; no success is reported if a write or read-back fails.
+
+The primitive allows only a deliberately restricted `group` and `agent` relation vocabulary. It cannot select a whole store for deletion, take browser-supplied store/model IDs or infer permissions from an agent owner, IAM group name or workspace scope. Each call represents an **authoritatively complete snapshot for that one relation**; it MUST NOT be passed a partial Authentik response as an empty membership set. Tenant ownership and serialized ownership of writes are responsibilities of the forthcoming Fabric controller integration.
+
+**Not connected to `TenantBundleReconciler` yet:** this stage does not query Authentik, map OIDC subjects, materialize `AgentIdentity` grants, or activate any tuple writes in the cluster. Before connecting it, the controller must resolve immutable Fabric IDs from verified IAM subjects, distinguish authored grants from membership, detect partial/stale snapshots, set revocation/readiness conditions, handle deletion and concurrent generations, and validate real OpenFGA `Check` against representative tenant A/B identities. The existing feature gate remains off and production promotion remains prohibited without explicit owner approval.
+
 ## Development
 
 The production cluster is Kubernetes 1.34, so this module pins controller-runtime
