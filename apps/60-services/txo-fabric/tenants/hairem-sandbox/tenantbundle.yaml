@@ -9,6 +9,10 @@ metadata:
 spec:
   tenantId: TEN90001
   displayName: hAIrem Sandbox
+  # No AgentIdentity remains in this recovery cell. Park the mandatory tenant
+  # LiteLLM/CPA compute without deleting shared PostgreSQL or retained workspace.
+  lifecycle:
+    mode: Parked
   isolation:
     profile: Shared
   persistence:
