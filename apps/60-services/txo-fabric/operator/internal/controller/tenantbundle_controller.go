@@ -156,6 +156,17 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, err
 		}
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAModelReady", metav1.ConditionTrue, "ModelBound", "approved model ID and fingerprint are durably bound to tenant store")
+		// Only the operator initializes the empty, retained identity ledger.
+		// Live enrollment and tuple reconciliation remain separate gates.
+		if err := r.reconcileOpenFGAHumanIdentityRegistry(ctx, &bundle); err != nil {
+			bundle.Status.Phase = "Degraded"
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, "IdentityLedgerInvalid", "tenant canonical human identity ledger is missing, conflicting or invalid")
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "OpenFGAIdentityReconcileFailed", "tenant canonical human identity ledger is not reconciled")
+			if !reflect.DeepEqual(previousStatus, bundle.Status) {
+				_ = r.Status().Update(ctx, &bundle)
+			}
+			return ctrl.Result{}, err
+		}
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, "TupleSyncNotImplemented", "Authentik membership and Fabric grant reconciliation are not yet implemented")
 	} else {
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAStoreReady", metav1.ConditionFalse, "RolloutDisabled", "private tenant authorization store reconciliation is not enabled")
