@@ -1,5 +1,7 @@
-# syntax=docker/dockerfile:1.7
-FROM golang:1.26.0-alpine AS builder
+# Keep the Go builder at the same exact version, using Docker's official
+# image mirror on ECR Public to avoid anonymous Docker Hub pull throttling.
+# No external BuildKit frontend is required by this Dockerfile.
+FROM public.ecr.aws/docker/library/golang:1.26.0-alpine AS builder
 WORKDIR /workspace
 RUN apk add --no-cache ca-certificates
 COPY go.mod ./
