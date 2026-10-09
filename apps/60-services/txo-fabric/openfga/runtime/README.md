@@ -26,26 +26,26 @@ The two ExternalSecrets create:
 - `databases/txo-openfga-postgresql`: `username`, `password` for CNPG `DatabaseRole.passwordSecret`;
 - `txo-fabric-system/txo-openfga-runtime`: `username`, `password`, `presharedKeys` for migration + server.
 
-Example for an **already authenticated OpenBao CLI** (KV v2 mount `kv` as configured by `ClusterSecretStore/openbao`). Execute only in your trusted administration terminal; secrets remain out of Git and the chat. The sub-shell does not persist these variables after the command:
+### Bootstrap without an OpenBao CLI
 
-```bash
-export VAULT_ADDR=http://nas.truxonline.com:8200
-(
-  set -euo pipefail
-  python3 - <<'PY' | bao kv put -mount=kv vixens/prod/apps/60-services/txo-fabric/openfga - >/dev/null
-import json
-import secrets
-print(json.dumps({
-    "username": "txo_fabric_openfga",
-    "password": secrets.token_hex(32),
-    "presharedKeys": secrets.token_hex(32),
-}))
-PY
-  echo "OpenBao OpenFGA bootstrap: written (values not printed)"
-)
-```
+The OpenBao `bao` executable is **not installed by default** on `grenat`. Use the authenticated OpenBao **web UI** instead (the configured cluster-side OpenBao endpoint is `http://nas.truxonline.com:8200`; use a trusted network and an HTTPS endpoint if one is available):
 
-Authenticate `bao` using your approved OpenBao login method first; do not put its token on the command line or paste it into GitHub. Do **not** execute the script a second time after production starts: it would rotate both the DB password and API key, requiring an explicitly coordinated rotation.
+1. Open the OpenBao UI, authenticate as an operator allowed to **create** a KV-v2 secret.
+2. Select the `kv` secrets engine and create the path `vixens/prod/apps/60-services/txo-fabric/openfga` (the `kv` mount is separate from the path).
+3. On the trusted administrator machine, generate two independent keys (do not paste their values to chat or GitHub):
+
+   ```bash
+   python3 - <<'PY'
+   import secrets
+   print("password =", secrets.token_hex(32))
+   print("presharedKeys =", secrets.token_hex(32))
+   PY
+   ```
+
+4. Enter all **three** OpenBao fields, exactly: `username = txo_fabric_openfga`, `password = <first random value>`, `presharedKeys = <second random value>`. Save once.
+5. Verify only that the **secret path and field names** exist; do not copy their values into diagnostics.
+
+The ExternalSecrets still require an authorized OpenBao/ESO token and the `ClusterSecretStore/openbao` to be ready. If the OpenBao UI cannot be reached, install the official `bao` CLI following https://openbao.org/docs/install/ and log in with an appropriately scoped identity. **Do not use the ESO Kubernetes token as an administrator credential.**
 
 **Do not paste secret values in an issue, PR, shell history, logs or this document.**
 Make sure the CNPG database and role converge before expecting the migration Job to succeed. Database backup/recovery is provided by the shared CNPG infrastructure, but a restore must prove actual OpenFGA relation data recovery and rehydrate missing store/model mapping.
