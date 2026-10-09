@@ -24,9 +24,32 @@ runs:
         sudo apt-get update && sudo apt-get install -y yamllint
         yamllint --version
 
-    - name: Install yq
+    - name: Install yq v4.53.6 (verified upstream binary, no Docker Hub)
       if: inputs.install-yq == 'true'
-      uses: mikefarah/yq@v4.53.6
+      shell: bash
+      run: |
+        set -euo pipefail
+        version=v4.53.6
+        case "$(uname -m)" in
+          x86_64)
+            asset=yq_linux_amd64
+            sha256=c5f056448f973ae7d39b5401949648a78f2dc1947d6a8eb65be60d5c504b9385
+            ;;
+          aarch64|arm64)
+            asset=yq_linux_arm64
+            sha256=88a1016bc1d657375a35864e4f44b6f333df8ff97b559f51bba0adcb2169df09
+            ;;
+          *)
+            echo 'Unsupported architecture for pinned Fabric yq installer' >&2
+            exit 1
+            ;;
+        esac
+        binary="$RUNNER_TEMP/$asset"
+        curl --fail --location --silent --show-error --retry 3 --retry-delay 2 \
+          "https://github.com/mikefarah/yq/releases/download/$version/$asset" --output "$binary"
+        printf '%s  %s\n' "$sha256" "$binary" | sha256sum --check --status
+        sudo install -m 0755 "$binary" /usr/local/bin/yq
+        yq --version | grep -F "version $version"
 
     - name: Verify installations
       shell: bash
