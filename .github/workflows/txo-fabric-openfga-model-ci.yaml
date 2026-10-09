@@ -6,6 +6,7 @@ on:
     paths:
       - 'apps/60-services/txo-fabric/openfga/model/**'
       - '.github/workflows/txo-fabric-openfga-model-ci.yaml'
+      - 'apps/60-services/txo-fabric/operator/internal/openfga/model.json'
   push:
     branches: [main]
     paths:
@@ -28,3 +29,32 @@ jobs:
           test_path: apps/60-services/txo-fabric/openfga/model
           test_files_pattern: '*.fga.yaml'
           fga_cli_version: v0.8.0
+
+      - name: Verify embedded OpenFGA API model exactly follows canonical FGA DSL
+        shell: bash
+        run: |
+          set -euo pipefail
+          fga model transform \
+            --file apps/60-services/txo-fabric/openfga/model/model.fga \
+            --output-format json > /tmp/txo-fabric-model-compiled.json
+          python3 - <<'PY'
+          import json
+
+          compiled_path = "apps/60-services/txo-fabric/operator/internal/openfga/model.json"
+          with open("/tmp/txo-fabric-model-compiled.json", encoding="utf-8") as f:
+              from_dsl = json.load(f)
+          with open(compiled_path, encoding="utf-8") as f:
+              embedded = json.load(f)
+
+          def normalize(item):
+              if isinstance(item, list):
+                  return [normalize(x) for x in item]
+              if isinstance(item, dict):
+                  return {k: normalize(v) for k, v in item.items()
+                          if v is not None and v != ""}
+              return item
+
+          if normalize(from_dsl) != normalize(embedded):
+              raise SystemExit("Embedded Go OpenFGA API model does not match model.fga; regenerate it from the validated DSL")
+          print("OK: embedded model JSON and canonical model.fga are structurally equivalent")
+          PY
