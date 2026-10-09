@@ -38,7 +38,9 @@ func openFGATestReconciler(t *testing.T, f *fakeOpenFGAProvisioner, objs ...clie
 	t.Helper()
 	scheme:=postgresqlTestScheme(t)
 	c:=fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
-	return &TenantBundleReconciler{Client:c,Scheme:scheme,OpenFGAStoreClient:f},c
+	r:=&TenantBundleReconciler{Client:c,Scheme:scheme}
+	if f!=nil { r.OpenFGAStoreClient=f }
+	return r,c
 }
 
 func TestOpenFGATenantBindingIdempotentAndIsolated(t *testing.T) {
