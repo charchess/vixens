@@ -8,6 +8,8 @@ resources:
   - ../../operator/config/profiles
   - ../../operator/config/manager
   - ../../gateway
+  # Centralized Fabric relational authorization (one service for all tenants)
+  - ../../openfga/runtime
   - ../../tenants/indiba
   - ../../tenants/hairem
   - ../../tenants/hairem-sandbox
