@@ -71,17 +71,17 @@ shared LiteLLM/OpenRouter path until the tenant-local plane passes physical
 acceptance. The direct-CPA smoke topology must not be promoted as the final
 architecture.
 
-## OpenFGA tenant store lifecycle — first #3996 slice
+## OpenFGA tenant store lifecycle — staged #3996
 
 The private Fabric-wide OpenFGA service is deployed independently from the operator. **One service does not mean one store**: the target is one authorization store per `TenantBundle.spec.tenantId` plus a separate platform-control store. A store name is derived only from the **immutable business tenant ID** (`txo-fabric-tenant-ten00001`), never the mutable display name, AgentIdentity name, username or browser input.
 
 `internal/openfga/stores.go` currently implements the platform-private store discovery/create/adoption primitive (including conflict detection, paginated discovery, deny-on-outage and no deletion on retries). Its tests use a fake HTTP transport to verify A/B tenant isolation, non-duplication and fail-closed behavior.
 
-**Important: this first PR does NOT wire the client into `TenantBundleReconciler`, inject the OpenBao secret into the operator, write store mappings to Kubernetes, publish an authorization model or synchronize human membership tuples. It has no live provisioning behavior and requires no production promotion.** Those tasks remain in #3996 and must be implemented with status/recovery handling in the operator, with human memberships read from Authentik (the operator owns tenant groups/applications, not their human members).
+The store client was initially introduced by #3997 and connected to `TenantBundleReconciler` by #3998, **behind a disabled-by-default feature gate**. The operator reads its credential from the OpenBao-synced Secret and persists a private store binding; it does not manage human group membership in Authentik. Neither store creation nor model publication grants users any permissions. The full #3996 activation, tuple reconciliation and physical revocation tests remain pending.
 
 Do not run manual per-client `fga store create` as a substitute for the remaining operator reconciliation. OpenFGA store names are not a uniqueness constraint: if duplicates already exist, the client refuses to select one, rather than guessing or deleting data.
 
-### Guarded TenantBundle → OpenFGA store binding (next #3996 slice)
+### Guarded TenantBundle → OpenFGA store binding
 
 The TenantBundle reconciler now has an intentionally **disabled-by-default** `TXO_FABRIC_OPENFGA_STORES_ENABLED=true` feature gate. This gate MUST NOT be enabled in the production operator Deployment until the same model and membership tuple reconciliation has been reviewed and physically proven. While disabled, `OpenFGAStoreReady=False/RolloutDisabled` is diagnostic and does not block the existing tenant's Ready status or create stores.
 
@@ -108,7 +108,16 @@ The binding is intentionally retained on tenant deletion so customer authorizati
 - rejects a foreign/newer model, model ID drift, API rejection/outage, or unsupported store ID, rather than automatically downgrading or upgrading an unknown authorization policy;
 - exposes a deterministic content fingerprint for a future stable per-tenant store/model mapping.
 
-**This slice does not yet turn on the `TXO_FABRIC_OPENFGA_STORES_ENABLED` gate nor connect model publication to `TenantBundle`**. Next deliverable must bind `storeID + modelID + fingerprint` atomically, keep rollout fail-closed, then reconcile grants from Authentik/AgentIdentity. No user/group/agent tuple should be synthesized from merely creating a store or publishing the model.
+### TenantBundle model ID + fingerprint binding — guarded #3996 slice
+
+`TenantBundleReconciler` now uses the private model API after verifying the tenant's retained store binding. With `TXO_FABRIC_OPENFGA_STORES_ENABLED=true` **only**, it validates or publishes the exact approved model and records `modelID` and `modelFingerprint` **in one ConfigMap update**, alongside the existing verified `tenantID`, `tenantUID` and `storeID`. It never rewrites a different model ID or a changed content fingerprint silently.
+
+Repeated reconciliation confirms the published latest model without unnecessary Kubernetes writes. A missing service credential, partial binding, fingerprint mismatch, foreign store, concurrent conflict, API outage or unknown model revision causes a hard failure and `OpenFGAModelReady=False`. No model exists in Fabric auth state until its ID and fingerprint are both verified. A crash between server publication and binding persistence is recoverable through verified adoption.
+
+Conditions deliberately distinguish `OpenFGAStoreReady`, `OpenFGAModelReady`, and `OpenFGAAuthorizationReady`. Even with store and model ready, `OpenFGAAuthorizationReady=False/TupleSyncNotImplemented` and overall tenant `Ready=False/AuthorizationTupleSyncPending` while the flag is enabled: this stage provides **no actual grants or revocation**. With the flag disabled, existing tenant readiness semantics remain unchanged. Do not enable the flag yet; authoritative Authentik membership and Fabric/AgentIdentity tuple synchronization, deletion/revocation policy, runtime BFF checks and live two-tenant acceptance are still required.
+
+The binding ConfigMap and FGA service key are platform-private. The binding resolver is **not** a browser API and does not by itself prove permission to chat. Model freshness must still be checked by trusted Fabric authorization callers before any sensitive operation. This source-only slice is not a production promotion candidate.
+
 
 ## Development
 
