@@ -79,7 +79,8 @@
                 "type": "user"
               }
             ]
-          }
+          },
+          "can_manage": {}
         }
       }
     },
@@ -213,7 +214,9 @@
                 "relation": "member"
               }
             ]
-          }
+          },
+          "can_chat": {},
+          "can_manage": {}
         }
       }
     },
@@ -307,7 +310,9 @@
                 "relation": "member"
               }
             ]
-          }
+          },
+          "can_read": {},
+          "can_write": {}
         }
       }
     },
@@ -396,7 +401,9 @@
                 "relation": "member"
               }
             ]
-          }
+          },
+          "can_use": {},
+          "can_manage": {}
         }
       }
     }
