@@ -1,0 +1,46 @@
+---
+# Pod egress and ingress are otherwise denied by txo-fabric-system/default-deny.
+# No tenant Pod, browser or public Ingress may access this service directly.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: txo-fabric-openfga
+  namespace: txo-fabric-system
+  labels:
+    app.kubernetes.io/name: txo-fabric-openfga
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: txo-fabric-openfga
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: txo-fabric-operator
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: databases
+          podSelector:
+            matchLabels:
+              cnpg.io/cluster: postgresql-shared
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
