@@ -137,6 +137,14 @@ The primitive allows only a deliberately restricted `group` and `agent` relation
 
 The existing human workspace `access.userRef` and group paths/PVCs are deliberately unchanged. #3852 requires a separate identity/migration design decision before altering those durable resource names. There is no production IAM token, external secret or open network rule added by this source-only stage. The OpenFGA gate stays off and no production promotion is authorized.
 
+### Tenant-scoped canonical Authentik / OIDC / Fabric identity projection — staged #3996
+
+`internal/authentik/identity_registry.go` introduces a source-only, strictly tenant-scoped identity projection from **explicit, complete Fabric-owned bindings**: `(tenantID, trusted issuer, exact OIDC sub, Authentik user UUID, immutable fabricUserId)`. It never assumes that `sub == user UUID`, derives an identifier from a mutable login, or equates `workspace.users[].name` / `access.userRef` with an authorization subject. Repeated/ambiguous subject, UUID or Fabric ID bindings are rejected. The group translator accepts only `TenantBundle`-approved IAM group keys and fails closed on every unmapped or duplicated Authentik UUID instead of generating partial desired grants.
+
+**Important upstream contract:** generated tenant Authentik OAuth2 providers currently omit `sub_mode`; the Authentik provider model defaults to `hashed_user_id`, which is **not** the `core/users` UUID. The server-side verification layer must map the *actually issued* opaque `sub` to the Authentik UUID and Fabric user ID via an approved persisted binding. Silently switching existing providers to `sub_mode: user_uuid` would be an identity migration affecting sessions and is **not performed here**. This source-only registry does not verify OIDC signatures, allocate IDs, create or mutate durable identity bindings, read an IAM API or write OpenFGA tuples.
+
+**Not yet connected to TenantBundle or the web BFF.** The next implementation must define/prove the durable Fabric-owned binding lifecycle without per-tenant manual bootstrap, issuer/audience/server-session verification, Authentik group UUID continuity, freshness ceilings and revocation. Only a complete and verified IAM snapshot may feed the existing scoped tuple reconciler. This change adds no manifests, credentials, network access, PVC changes, user/workspace renames, grant defaults or production activation. `TXO_FABRIC_OPENFGA_STORES_ENABLED` stays disabled.
+
 ## Development
 
 The production cluster is Kubernetes 1.34, so this module pins controller-runtime
