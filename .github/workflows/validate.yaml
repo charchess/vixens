@@ -31,6 +31,7 @@ jobs:
               - 'apps/**'
               - 'argocd/**'
               - '.github/workflows/**'
+              - '.github/actions/setup-yaml-tools/**'
               - 'yamllint-config.yml'
               - '**/kustomization.yaml'
             security:
