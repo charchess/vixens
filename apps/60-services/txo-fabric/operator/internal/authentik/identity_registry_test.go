@@ -77,6 +77,7 @@ func TestIdentityRegistryCompleteGroupSnapshotOrDeny(t *testing.T) {
 	}
 
 	for _, malformed := range []GroupMembership{
+		{Name: "txo-fabric-indiba-sales", AuthentikGroupUUID: groupUUID, ActiveAuthentikUserUUIDs: nil},
 		{Name: "txo-fabric-hairem-client0", AuthentikGroupUUID: groupUUID, ActiveAuthentikUserUUIDs: []string{userOne}},
 		{Name: "txo-fabric-indiba-sales-admin", AuthentikGroupUUID: groupUUID, ActiveAuthentikUserUUIDs: []string{userOne}},
 		{Name: "txo-fabric-indiba-sales", AuthentikGroupUUID: "forged", ActiveAuthentikUserUUIDs: []string{userOne}},
@@ -128,6 +129,7 @@ func TestIdentityRegistryRejectsUntrustedTenantAndIAMGroups(t *testing.T) {
 		{"indiba", registryTenant, registryIssuer, []string{}},
 		{"indiba", registryTenant, registryIssuer, []string{"sales", "sales"}},
 		{"indiba", registryTenant, registryIssuer, []string{"sales", "../hairem"}},
+		{"indiba", registryTenant, registryIssuer, []string{strings.Repeat("a", 63)}},
 	} {
 		if _, err := NewIdentityRegistry(tc.tenantSlug, tc.tenantID, tc.issuer, tc.groups, identityFixtures()); err == nil {
 			t.Fatalf("accepted invalid tenant/group scope: %#v", tc)
