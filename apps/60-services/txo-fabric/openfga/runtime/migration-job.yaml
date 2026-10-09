@@ -8,6 +8,8 @@ metadata:
   namespace: txo-fabric-system
   annotations:
     argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
   labels:
     app.kubernetes.io/name: txo-fabric-openfga
     app.kubernetes.io/component: migration
