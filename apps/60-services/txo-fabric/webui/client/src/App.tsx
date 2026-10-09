@@ -48,10 +48,11 @@ function AgentPanel({ agent, active }: { agent: Agent; active: boolean }) {
       const input = last?.content.filter((p) => p.type === "text").map((p) => p.text).join("\n").trim();
       if (!input) throw new Error("Message vide");
       setToolStatus("");
-      if (!thread.current) thread.current = await createFabricThread(agent.agentKey, { signal: abortSignal });
+      const fabricThreadId = thread.current ??
+        (thread.current = await createFabricThread(agent.agentKey, { signal: abortSignal }));
       let text = "";
       try {
-        for await (const item of streamFabricTurn(thread.current, input, { signal: abortSignal })) {
+        for await (const item of streamFabricTurn(fabricThreadId, input, { signal: abortSignal })) {
           if (item.type === "text-delta") {
             text += item.text;
             yield { content: [{ type: "text", text }] };
