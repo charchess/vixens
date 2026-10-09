@@ -81,6 +81,22 @@ The private Fabric-wide OpenFGA service is deployed independently from the opera
 
 Do not run manual per-client `fga store create` as a substitute for the remaining operator reconciliation. OpenFGA store names are not a uniqueness constraint: if duplicates already exist, the client refuses to select one, rather than guessing or deleting data.
 
+### Guarded TenantBundle → OpenFGA store binding (next #3996 slice)
+
+The TenantBundle reconciler now has an intentionally **disabled-by-default** `TXO_FABRIC_OPENFGA_STORES_ENABLED=true` feature gate. This gate MUST NOT be enabled in the production operator Deployment until the same model and membership tuple reconciliation has been reviewed and physically proven. While disabled, `OpenFGAStoreReady=False/RolloutDisabled` is diagnostic and does not block the existing tenant's Ready status or create stores.
+
+Once deliberately enabled through GitOps, `TenantBundleReconciler`:
+- validates no two tenant objects share a `spec.tenantId`;
+- reads the private OpenBao-synced `txo-fabric-system/txo-openfga-runtime` service key without persisting/logging it;
+- adopts or provisions the uniquely named per-tenant OpenFGA store using `internal/openfga`;
+- persists the association in a **platform-only ConfigMap** `txo-fabric-system/txo-openfga-tenant-<tenantId>` with immutable tenant ID, name, original Kubernetes UID, and store ID (never API token);
+- verifies the association on repeated reconciliation; a deleted/recreated tenant UID, store change, or duplicate business ID is a **hard deny**, not an automatic cross-customer adoption;
+- sets `OpenFGAStoreReady` independently of the **still absent model/tuple grants**; outages/identity conflicts degrade only when the rollout gate is enabled.
+
+The binding is intentionally retained on tenant deletion so customer authorization history cannot be silently transferred to a new tenant. The final deletion/offboarding/revocation policy is tracked in #3996 and must be implemented *before* enabling the full integration. The operator NetworkPolicy admits only its outbound TCP 8080 path to the Fabric-owned OpenFGA pod; the existing OpenFGA ingress policy already only permits the operator.
+
+**No production promotion is required for this source-only guarded slice.** Follow WORKFLOW.md: an operator code merge creates a source-only dev tag and a separate generated image pin PR; only the completed, physically validated immutable pin candidate may be promoted with explicit operator approval.
+
 ## Development
 
 The production cluster is Kubernetes 1.34, so this module pins controller-runtime
