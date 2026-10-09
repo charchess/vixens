@@ -143,6 +143,7 @@ func (c *Client) EnsureAuthorizationModel(ctx context.Context, storeID string) (
 // ValidateModelBinding ensures that a previously stored ID remains the
 // *latest* approved version, not merely one historical model in a store.
 func (c *Client) ValidateModelBinding(ctx context.Context, storeID, modelID string) error {
+	if !storeIDPattern.MatchString(storeID) {return errors.New("invalid tenant OpenFGA store ID")}
 	if !storeIDPattern.MatchString(modelID) {return errors.New("invalid bound authorization model ID")}
 	found,err:=c.currentModels(ctx,storeID)
 	if err!=nil{return err}
