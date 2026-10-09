@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -17,7 +18,6 @@ import (
 const (
 	identityLedgerGroupUUID = "550e8400-e29b-41d4-a716-446655440000"
 	identityLedgerUserUUID = "550e8400-e29b-41d4-a716-446655440001"
-	identityLedgerModelID = "01H0H015178Y2V4CX10C2KGHF6"
 )
 
 func humanIdentityTenant(name, id, uid, group string) *fabricv1alpha1.TenantBundle {
@@ -38,15 +38,13 @@ func preparedHumanIdentityReconciler(t *testing.T, tenants ...*fabricv1alpha1.Te
 	t.Helper()
 	storeMap:=map[string]openfga.Store{}
 	modelMap:=map[string]string{}
-	objs:=make([]interface{},0,len(tenants))
-	_ = objs // Test helper works only with existing typed fake reconciler call.
 	for i, tenant := range tenants {
 		store := openfga.Store{
 			ID: "01H0H015178Y2V4CX10C2KGHF" + string(rune('4'+i)),
 			Name: "txo-fabric-tenant-"+strings.ToLower(tenant.Spec.TenantID),
 		}
 		storeMap[tenant.Spec.TenantID]=store
-		modelMap[store.ID]=identityLedgerModelID
+		modelMap[store.ID]= "01H0H015178Y2V4CX10C2KGHF" + string(rune('6'+i))
 	}
 	provisioner:=&fakeOpenFGAProvisioner{stores:storeMap}
 	switch len(tenants) {
@@ -85,7 +83,8 @@ func TestHumanIdentityLedgerBootstrapsFromTenantBundleAndRemainsStable(t *testin
 		ledger:=openFGAModelTestBinding(t,r,bundle.Spec.TenantID)
 		if ledger.Data[identityBindingsKey]!="[]" ||
 			ledger.Data[identityIssuerKey]!=bundle.Spec.HumanAccess.Web.OIDC.Issuer ||
-			ledger.Data["modelID"]!=identityLedgerModelID ||
+			len(ledger.Data["modelID"])!=26 ||
+			ledger.Data[identitySchemaKey]!="v1" ||
 			ledger.Data["tenantUID"]!=string(bundle.UID) {
 			t.Fatalf("ledger bootstrap corrupted retained store/model/identity: %v",ledger.Data)
 		}
@@ -160,6 +159,9 @@ func TestHumanIdentityLedgerRefusesPartialCrossTenantOrCorruptState(t *testing.T
 		{"issuer-changed",func(cm *corev1.ConfigMap){cm.Data[identityIssuerKey]=a.Spec.HumanAccess.Web.OIDC.Issuer}},
 		{"issuer-deleted",func(cm *corev1.ConfigMap){delete(cm.Data,identityIssuerKey)}},
 		{"bindings-deleted",func(cm *corev1.ConfigMap){delete(cm.Data,identityBindingsKey)}},
+		{"both-fields-deleted-but-schema-retained",func(cm *corev1.ConfigMap){delete(cm.Data,identityBindingsKey);delete(cm.Data,identityIssuerKey)}},
+		{"schema-deleted",func(cm *corev1.ConfigMap){delete(cm.Data,identitySchemaKey)}},
+		{"schema-upgraded-without-migration",func(cm *corev1.ConfigMap){cm.Data[identitySchemaKey]="v2"}},
 		{"broken-json",func(cm *corev1.ConfigMap){cm.Data[identityBindingsKey]="{"}},
 		{"json-null",func(cm *corev1.ConfigMap){cm.Data[identityBindingsKey]="null"}},
 		{"trailing-json",func(cm *corev1.ConfigMap){cm.Data[identityBindingsKey]="[] []"}},
@@ -190,6 +192,23 @@ func TestHumanIdentityLedgerRefusesPartialCrossTenantOrCorruptState(t *testing.T
 	// A deleted/recreated tenant object cannot adopt the original ledger.
 	recreated:=b.DeepCopy();recreated.UID=types.UID("uid-new")
 	if _,err:=r.readOpenFGAHumanIdentityRegistry(ctx,recreated);err==nil {t.Fatal("recreated tenant adopted retained ledger")}
+}
+
+func TestHumanIdentityLedgerDeniesOnModelVerificationOutage(t *testing.T) {
+	ctx:=context.Background()
+	b:=humanIdentityTenant("indiba","TEN00002","uid-b","sales")
+	r:=preparedHumanIdentityReconciler(t,b)
+	if err:=r.reconcileOpenFGAHumanIdentityRegistry(ctx,b);err!=nil {t.Fatal(err)}
+	service:=r.OpenFGAModelClient.(*fakeOpenFGAModelClient)
+	service.validateErr=fmt.Errorf("upstream unavailable")
+	if _,err:=r.readOpenFGAHumanIdentityRegistry(ctx,b);err==nil {
+		t.Fatal("accepted identity ledger while OpenFGA model verifier was unavailable")
+	}
+	if err:=r.reconcileOpenFGAHumanIdentityRegistry(ctx,b);err==nil {
+		t.Fatal("reconcile claimed healthy identity source during verifier outage")
+	}
+	service.validateErr=nil
+	if _,err:=r.readOpenFGAHumanIdentityRegistry(ctx,b);err!=nil {t.Fatal(err)}
 }
 
 func TestHumanIdentityLedgerBlocksImplicitIssuerMigrationAndDoesNotChangeWorkspaces(t *testing.T) {
