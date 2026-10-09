@@ -38,13 +38,18 @@ jobs:
           RUNTIME=apps/60-services/txo-fabric/openfga/runtime
           PROD=apps/60-services/txo-fabric/overlays/prod
           grep -q '^  - ../../openfga/runtime$' "$PROD/kustomization.yaml"
-          mapfile -t imgs < <(grep 'image: docker.io/openfga/openfga@sha256:' "$RUNTIME"/{deployment,migration-job}.yaml | sed -E 's/^[[:space:]]+image: //')
+          mapfile -t imgs < <(grep -h 'image: docker.io/openfga/openfga@sha256:' "$RUNTIME"/{deployment,migration-job}.yaml | sed -E 's/^[[:space:]]+image: //')
           if [ "${#imgs[@]}" -ne 2 ] || [ "${imgs[0]}" != "${imgs[1]}" ]; then
             echo "Migration and serving image must share the same immutable OCI digest" >&2
             exit 1
           fi
           if ! printf '%s\n' "${imgs[0]}" | grep -Eq '^docker.io/openfga/openfga@sha256:[0-9a-f]{64}$'; then
             echo "Invalid OpenFGA image digest" >&2
+            exit 1
+          fi
+          upstream_digest="$(docker buildx imagetools inspect docker.io/openfga/openfga:v1.22.0 | awk '/^Digest:/ {print $2; exit}')"
+          if [ "${imgs[0]##*@}" != "$upstream_digest" ]; then
+            echo "Pinned digest differs from official v1.22.0 release" >&2
             exit 1
           fi
           echo "Checking that pinned OCI digest exists in upstream registry:"
