@@ -7,15 +7,21 @@ upstream provider credentials.
 ## Architecture
 
 The canonical #3885 topology is one tenant-local LiteLLM facade per Active
-TenantBundle. CLIProxyAPI (CPA) is an internal backend only for OAuth/subscription
-credentials such as Codex.
+TenantBundle. CLIProxyAPI (CPA) is the **internal broker for all Hermes
+conversation providers** (Codex OAuth and other provider accounts/API keys
+only where supported by the pinned CPA version). It is not the consumer-facing
+inference endpoint.
 
 ```text
 Hermes -----------------------+
                               |
 Tenant Hindsight -------------+--> tenant LiteLLM
                                    +-- txo-agent ----> tenant CPA ----> Codex OAuth
-                                   +-- txo-embedding -> OpenRouter/BGE-M3
+                                   |                        +-> other approved chat provider*
+                                   +-- txo-embedding -> OpenRouter/BGE-M3 (Hindsight)
+
+* Other chat providers (including OpenRouter) must be connected via CPA and
+  tested against its pinned version; they are not direct LiteLLM chat routes.
 ```
 
 Consumers see logical capabilities and scoped LiteLLM virtual keys. They never
@@ -39,9 +45,13 @@ txo-fabric-system/txo-ai-provider-<tenant>
 The value is projected into the platform-owned
 `tenant-<tenant>/txo-ai-gateway-runtime` Secret consumed by LiteLLM. The value
 never enters Hermes, Hindsight, TenantBundle/AgentIdentity spec or status, Git, or
-logs. For v0.1 the source Secret is enrolled manually by a platform admin.
-OpenBao/ESO may be introduced later, but is not required by this runtime
-contract.
+logs. In the existing v0.1 implementation the source Secret has been
+enrolled manually by a platform admin as a **temporary bootstrap mechanism**,
+not a customer-facing credential management policy. Fabric WebUI #3979 must
+provide permissioned self-service for tenant/user credentials; #3980 defines
+the effective Fabric Admin -> Tenant Admin -> User policy and ownership model.
+OpenBao/ESO may be introduced later, but is not required by the *current*
+service-embedding runtime contract.
 
 When the credential is absent, the tenant LiteLLM remains fully usable for
 `txo-agent` through CPA but does not advertise `txo-embedding`. When present,
@@ -57,13 +67,19 @@ provider egress.
 
 ### Manual OpenRouter enrollment (v0.1)
 
-**Fabric does not need a dedicated OpenBao instance or an ExternalSecret to
-enroll provider credentials in v0.1.** Enrollment is an explicit administrative
-action, analogous to the manual Codex OAuth enrollment (but the OpenRouter
-credential is an API key, not an OAuth grant). The operator already watches the
-source `Secret/txo-fabric-system/txo-ai-provider-<tenant>` and copies its
+**Historical v0.1 bootstrap and break-glass runbook only.** The sequence below
+documents the current source Secret contract for trusted platform operators;
+it must **not** become the normal UX for tenant admins or users, nor an
+instruction to onboard Indiba without a voluntary account/provider decision.
+See #3979 (WebUI) and #3980 (hierarchical policy and payer/owner scoping).
+
+The current implementation does not need a dedicated OpenBao deployment or
+ExternalSecret to *consume* this source Secret. Its platform-managed onboarding
+procedure remains manual until the Fabric WebUI is implemented. The operator
+watches `Secret/txo-fabric-system/txo-ai-provider-<tenant>` and copies its
 `OPENROUTER_API_KEY` only into the corresponding tenant LiteLLM runtime
-Secret.
+Secret. This key is for **Hindsight service embedding**, never a backdoor for
+Hermes chat.
 
 Create **distinct OpenRouter API keys** for `hairem` and `indiba`. Use
 provider-side spending limits/revocation per key where supported. The provider
@@ -144,7 +160,7 @@ Hermes receives:
 - `HERMES_MODEL=txo-agent`;
 - `TXO_LLM_AUTH_MODE=gateway`.
 
-The `txo-agent` route resolves LiteLLM -> tenant CPA -> Codex OAuth. Direct
+The `txo-agent` route resolves LiteLLM -> tenant CPA -> an authorized chat provider (currently Codex OAuth proven on hAIrem). Direct
 Hermes -> CPA access remains denied by network policy.
 
 ## Hindsight embedding access
