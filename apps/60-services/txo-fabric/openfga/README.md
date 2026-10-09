@@ -1,6 +1,6 @@
 # Fabric OpenFGA — central authorization service
 
-**Approved architecture, implementation in progress. Not deployed.** #3988 and ADR-039.
+**Central OpenFGA service deployed in production; tenant authorization integration not yet active.** #3988, #3990, #3996 and ADR-039. The operator/store client introduced in #3997 is staged code only, not connected to live TenantBundle reconciliation.
 
 ## Selected boundary
 
@@ -20,13 +20,14 @@ One OpenFGA **platform service**, not a runtime per tenant. Authentik authentica
 
 These model fixtures use **synthetic**, non-live IDs. A green CI does not populate any OpenFGA store or synchronize Authentik accounts.
 
-## Next GitOps integration stages
+## Next integration stages
 
-1. Provision **one** private OpenFGA Deployment/Service as a Fabric infrastructure dependency, with dedicated CNPG PostgreSQL database/role, database schema migration Job, secret-backed service authentication and tight NetworkPolicies. Follow TXO Fabric's existing OpenBao/External Secrets bootstrap contract; never put a pre-shared API key or database password in Git.
-2. Make Fabric the only OpenFGA API caller. Design read/write service credential scope; note: standard OpenFGA pre-shared keys do **not** by themselves implement per-tenant store authorization.
-3. Implement versioned model/store provisioning and membership/ownership tuple reconciliation, including revocation from Authentik/Fabric authoritative data and safe tenant offboarding. Do **not** use a manual `fga store import` as an ongoing GitOps substitute.
-4. Connect `webui/server/authorized-turn.mjs`, `chat-sessions.mjs` and authorized agent discovery to a real fail-closed Fabric authorization adapter. Check sessions on every access; restore after container restart must not bypass Check.
-5. Prove hAIrem and Indiba isolation and permission revocation on live service. Do not silently share a user OAuth credential through a tenant pool.
+1. **Done (infrastructure):** one Fabric-wide private OpenFGA service, dedicated CNPG database/role, OpenBao ExternalSecrets and GitOps runtime. The production deployment was reported Synced/Healthy, with DB/role Applied and server 1/1 available (PR #3994). These signals **do not prove that a tenant store, authorization model or grant exists**.
+2. **#3996 in progress:** operator-owned per-tenant store reconciliation, durable mapping of immutable `TenantBundle.spec.tenantId` to private store/model IDs, versioned model publishing, and human group membership tuple reconciliation sourced from Authentik. The store HTTP client + tests from #3997 are the first **non-activated** slice. Do not run `fga store create` manually per tenant as a substitute for operator reconciliation.
+3. **#3992 / #3981:** connect real Authentik OIDC verifier, Fabric principal mapping, `webui/server/authorized-turn.mjs`, `chat-sessions.mjs` and agent discovery to fail-closed OpenFGA `Check` through Fabric BFF; store ownership and revocation are rechecked on every operation.
+4. **Acceptance:** prove hAIrem and Indiba isolation, group/agent grant revocation, OpenFGA outage deny, and no accidental use of another user's OAuth credentials. Add a Fabric-native read-only administration UI later (#3995), not as a prerequisite for this P0.
+
+The OpenFGA preshared key is a **Fabric platform credential**, not a per-store tenant authorization mechanism. No browser, Hermes AgentIdentity, tenant Pod or client controls the store ID, model ID or raw API.
 
 ### Promotion gate
 
