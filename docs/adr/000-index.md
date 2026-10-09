@@ -1,6 +1,6 @@
 # Architecture Decision Records — authoritative index
 
-**Last Updated:** 2026-10-08  
+**Last Updated:** 2026-10-09  
 **Governance:** [ADR-030](030-project-scoped-adr-governance.md)  
 **Usage guide:** [README.md](README.md)
 
@@ -49,6 +49,7 @@ Planning projects are `vixens core`, `vixens roadmap`, and `vixens perso`.
 | [035](035-centralized-fabric-inference-boundary.md) | Centralize Fabric external inference behind the TXO AI Gateway | Accepted | AIaaS | vixens roadmap |
 | [036](036-hindsight-external-durable-memory-boundary.md) | Keep durable agent memory behind the tenant Hindsight service boundary | Accepted | AIaaS | vixens roadmap |
 | [037](037-skills-vs-platform-governed-executable-capabilities.md) | Separate agent-extensible skills from platform-governed executable capabilities | Accepted | AIaaS | vixens roadmap |
+| [039](039-fabric-openfga-authorization-boundary.md) | One Fabric-wide OpenFGA authorization service, Authentik identity and distinct hierarchical policy | Accepted (deployment pending) | AIaaS | vixens roadmap |
 
 ## Proposed decisions (not yet authoritative)
 

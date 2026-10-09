@@ -1,0 +1,30 @@
+---
+name: TXO Fabric OpenFGA Model CI
+
+on:
+  pull_request:
+    paths:
+      - 'apps/60-services/txo-fabric/openfga/model/**'
+      - '.github/workflows/txo-fabric-openfga-model-ci.yaml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/60-services/txo-fabric/openfga/model/**'
+      - '.github/workflows/txo-fabric-openfga-model-ci.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  openfga-model:
+    name: Fabric OpenFGA model contract tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test authorization model offline (no credentials or cluster)
+        uses: openfga/action-openfga-test@v0.1.2
+        with:
+          test_path: apps/60-services/txo-fabric/openfga/model
+          test_files_pattern: '*.fga.yaml'
+          fga_cli_version: v0.8.0

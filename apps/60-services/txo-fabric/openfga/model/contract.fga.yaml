@@ -1,0 +1,169 @@
+name: Fabric authorization model — synthetic two-tenant acceptance
+model_file: ./model.fga
+tuples:
+  # Synthetic Fabric-assigned stable subject IDs. Never use mutable login names.
+  - user: user:usr-admin-fabric
+    relation: admin
+    object: platform:txo
+  - user: platform:txo
+    relation: platform
+    object: tenant:ten-hairem
+  - user: platform:txo
+    relation: platform
+    object: tenant:ten-indiba
+
+  # Synthetic hAIrem admin and a group-owned conversational assistant.
+  - user: user:usr-hairem-admin
+    relation: admin
+    object: tenant:ten-hairem
+  - user: group:hairem-admin
+    relation: owner
+    object: agent:hairem-electra
+  - user: tenant:ten-hairem
+    relation: tenant
+    object: agent:hairem-electra
+  - user: user:usr-hairem
+    relation: member
+    object: group:hairem-admin
+  - user: group:hairem-admin#member
+    relation: chatter
+    object: agent:hairem-electra
+
+  # Indiba Ed belongs to Sales but has NO tenant administration rights.
+  - user: user:usr-ed
+    relation: member
+    object: group:indiba-sales
+  - user: tenant:ten-indiba
+    relation: tenant
+    object: group:indiba-sales
+  - user: tenant:ten-indiba
+    relation: tenant
+    object: agent:indiba-sam
+  - user: group:indiba-sales
+    relation: owner
+    object: agent:indiba-sam
+  - user: group:indiba-sales#member
+    relation: chatter
+    object: agent:indiba-sam
+  - user: user:usr-indiba-admin
+    relation: admin
+    object: tenant:ten-indiba
+
+  # A private user-owned agent is NOT chatable solely because of ownership.
+  - user: tenant:ten-indiba
+    relation: tenant
+    object: agent:indiba-private
+  - user: user:usr-ed
+    relation: owner
+    object: agent:indiba-private
+
+  # Provider administration and usage are separate.
+  - user: tenant:ten-indiba
+    relation: tenant
+    object: provider_account:indiba-provider
+  - user: user:usr-ed
+    relation: consumer
+    object: provider_account:indiba-provider
+  - user: tenant:ten-hairem
+    relation: tenant
+    object: provider_account:hairem-provider
+  - user: user:usr-hairem
+    relation: consumer
+    object: provider_account:hairem-provider
+  - user: tenant:ten-indiba
+    relation: owner
+    object: provider_account:indiba-provider
+
+  - user: tenant:ten-indiba
+    relation: tenant
+    object: workspace:indiba-sales
+  - user: group:indiba-sales#member
+    relation: viewer
+    object: workspace:indiba-sales
+
+tests:
+  - name: tenant scoped chat and admin grants
+    check:
+      - user: user:usr-ed
+        object: agent:indiba-sam
+        assertions:
+          can_chat: true
+          can_manage: false
+      - user: user:usr-ed
+        object: tenant:ten-indiba
+        assertions:
+          can_manage: false
+      - user: user:usr-indiba-admin
+        object: tenant:ten-indiba
+        assertions:
+          can_manage: true
+      - user: user:usr-indiba-admin
+        object: agent:indiba-sam
+        assertions:
+          can_chat: true
+          can_manage: true
+      - user: user:usr-hairem
+        object: agent:hairem-electra
+        assertions:
+          can_chat: true
+      - user: user:usr-ed
+        object: agent:hairem-electra
+        assertions:
+          can_chat: false
+      - user: user:usr-hairem-admin
+        object: agent:indiba-sam
+        assertions:
+          can_chat: false
+          can_manage: false
+      - user: user:usr-admin-fabric
+        object: agent:indiba-sam
+        assertions:
+          can_chat: true
+          can_manage: true
+  - name: owner does not grant access without a relation
+    check:
+      - user: user:usr-ed
+        object: agent:indiba-private
+        assertions:
+          can_chat: false
+          can_manage: false
+      - user: user:usr-ed
+        object: provider_account:indiba-provider
+        assertions:
+          can_use: true
+          can_manage: false
+      - user: user:usr-indiba-admin
+        object: provider_account:indiba-provider
+        assertions:
+          can_manage: true
+          can_use: false
+      - user: user:usr-ed
+        object: provider_account:hairem-provider
+        assertions:
+          can_use: false
+          can_manage: false
+      - user: user:usr-ed
+        object: workspace:indiba-sales
+        assertions:
+          can_read: true
+          can_write: false
+  - name: revoked membership removes inherited grants
+    # The test-local tuple *set* is modeled as a fresh authorized source of truth.
+    # Model test files' top-level tuples are global, so use a different
+    # synthetic group and target to prove no accidental inherited allow.
+    tuples:
+      - user: tenant:ten-indiba
+        relation: tenant
+        object: agent:indiba-revoked-sales
+      - user: group:indiba-former-sales#member
+        relation: chatter
+        object: agent:indiba-revoked-sales
+    check:
+      - user: user:usr-ed
+        object: agent:indiba-revoked-sales
+        assertions:
+          can_chat: false
+      - user: user:usr-indiba-admin
+        object: agent:indiba-revoked-sales
+        assertions:
+          can_chat: true
