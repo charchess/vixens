@@ -54,3 +54,25 @@ Secret-backed private Hermes API Service/NetworkPolicies are still required
 before mounting this handler at a public tenant host. The React assistant-ui
 frontend is not yet included. The static per-agent LiteLLM key must not be
 mistaken for the end-user identity used by future personal OAuth routing.
+
+## Central OpenFGA authorization adapter (#3992)
+
+The optional server-only module `server/openfga-authorize.mjs` implements
+the pre-existing `authorize({principal,tenantKey,agentKey,action})` callback:
+
+- `agent.chat -> can_chat`; `agent.manage -> can_manage`.
+- Sends only stable Fabric user/agent identifiers and a **backend-resolved**
+  tenant store + pinned authorization model ID to the **private** centralized
+  OpenFGA service. No consumer-controlled URL, store ID or token.
+- Requires `principal.verified` set by an **authentic** server-side Authentik
+  verifier and a stable Fabric subject mapping. A forged `verified: true`
+  client input is **not** authentication.
+- Cross-tenant resolver mismatches, missing model/store, FGA failure, malformed
+  response and all upstream errors deny access.
+- Unit tests cover accepted and rejected checks without contacting cluster.
+
+This is an **integration seam only**: the actual Authentik verifier,
+`resolveTenantStore`, `resolveCanonicalAgent`, store/model provisioner,
+tuple reconciliation, and API key injection from OpenBao are not wired to a
+running Fabric BFF yet. Do not expose the handler publicly based on a successful
+unit test. See #3988, #3990, #3992 and ADR-039.
