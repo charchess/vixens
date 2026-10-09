@@ -120,7 +120,7 @@ func (c *Client) collect(ctx context.Context, path string, filter url.Values) ([
 		if meta.Current!=page || meta.Next<0 || meta.Count<0 ||
 			meta.TotalPages<0 || meta.TotalPages>maxPages ||
 			(meta.Count>0 && meta.TotalPages==0) ||
-			(meta.Count==0 && meta.TotalPages>0) {
+			(meta.Count==0 && meta.TotalPages>1) {
 			return nil,errors.New("inconsistent Fabric Authentik pagination metadata")
 		}
 		if page==1 {
