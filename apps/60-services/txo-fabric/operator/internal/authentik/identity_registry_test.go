@@ -1,6 +1,7 @@
 package authentik
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -129,11 +130,18 @@ func TestIdentityRegistryRejectsUntrustedTenantAndIAMGroups(t *testing.T) {
 		{"indiba", registryTenant, registryIssuer, []string{}},
 		{"indiba", registryTenant, registryIssuer, []string{"sales", "sales"}},
 		{"indiba", registryTenant, registryIssuer, []string{"sales", "../hairem"}},
-		{"indiba", registryTenant, registryIssuer, []string{strings.Repeat("a", 63)}},
 	} {
 		if _, err := NewIdentityRegistry(tc.tenantSlug, tc.tenantID, tc.issuer, tc.groups, identityFixtures()); err == nil {
 			t.Fatalf("accepted invalid tenant/group scope: %#v", tc)
 		}
+	}
+}
+
+func TestIdentityRegistryRejectsGroupNamesBeyondAPIReadLimit(t *testing.T) {
+	tenant := strings.Repeat("a", 63)
+	issuer := fmt.Sprintf("https://authentik.truxonline.com/application/o/txo-fabric-%s/", tenant)
+	if _, err := NewIdentityRegistry(tenant, registryTenant, issuer, []string{strings.Repeat("b", 63)}, nil); err == nil {
+		t.Fatal("accepted a group name the Authentik client refuses to query")
 	}
 }
 
