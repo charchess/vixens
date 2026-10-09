@@ -17,6 +17,10 @@ type Tuple struct {
 	User string `json:"user"`
 	Relation string `json:"relation"`
 	Object string `json:"object"`
+	// OpenFGA conditional relationships are unsupported by this v0.1 sync.
+	// A pointer keeps Tuple comparable for exact-set reconciliation while
+	// ensuring an unexpected JSON condition is observable and rejected.
+	Condition *json.RawMessage `json:"condition,omitempty"`
 }
 
 // TupleScope identifies exactly one Fabric-controlled object/relation.
@@ -106,7 +110,7 @@ func validateTupleUser(scope TupleScope, user string) bool {
 }
 
 func validateScopedTuple(scope TupleScope, tuple Tuple) error {
-	if tuple.Object != scope.Object || tuple.Relation != scope.Relation ||
+	if tuple.Condition != nil || tuple.Object != scope.Object || tuple.Relation != scope.Relation ||
 		!validateTupleUser(scope, tuple.User) {
 		return errors.New("invalid, out-of-scope or untrusted Fabric authorization tuple")
 	}
