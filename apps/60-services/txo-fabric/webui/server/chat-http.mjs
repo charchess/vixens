@@ -4,7 +4,7 @@
  * backend; user-supplied headers or JSON must never establish a principal.
  * Origin + custom header checks protect browser-cookie deployments from CSRF.
  */
-export function createChatHttpHandler({ authenticate, service, expectedOrigin }) {
+export function createChatHttpHandler({ authenticate, service, expectedOrigin, listTenantAgents }) {
   if (typeof authenticate !== "function" || !service ||
       ["create", "list", "get", "turn"].some((name) => typeof service[name] !== "function") ||
       typeof expectedOrigin !== "string" || !/^https:\/\/[^/]+$/.test(expectedOrigin)) {
@@ -32,6 +32,25 @@ export function createChatHttpHandler({ authenticate, service, expectedOrigin })
         req.headers.get("x-txo-request") !== "chat" ||
         !req.headers.get("content-type")?.startsWith("application/json"))) return fail(403);
     try {
+      if (route.pathname === "/api/chat/agents" && req.method === "GET") {
+        if (typeof listTenantAgents !== "function" ||
+            typeof service.canAccess !== "function") return fail(503);
+        const candidates = await listTenantAgents({ principal });
+        if (!Array.isArray(candidates) || candidates.length > 500) return fail(503);
+        const agents = [];
+        for (const candidate of candidates) {
+          const agentKey = candidate?.agentKey;
+          if (typeof agentKey !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/.test(agentKey)) continue;
+          try {
+            if (await service.canAccess({ principal, agentKey }) === true) {
+              const label = typeof candidate.label === "string" && candidate.label.length <= 100
+                ? candidate.label : agentKey;
+              agents.push({ agentKey, label });
+            }
+          } catch { /* No permission: never advertise this AgentIdentity. */ }
+        }
+        return json({ agents });
+      }
       if (route.pathname === "/api/chat/threads" && req.method === "GET") {
         return json({ threads: await service.list({ principal }) });
       }

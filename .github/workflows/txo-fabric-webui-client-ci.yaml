@@ -1,0 +1,36 @@
+---
+name: TXO Fabric WebUI Client CI
+
+on:
+  pull_request:
+    paths:
+      - 'apps/60-services/txo-fabric/webui/client/**'
+      - '.github/workflows/txo-fabric-webui-client-ci.yaml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/60-services/txo-fabric/webui/client/**'
+      - '.github/workflows/txo-fabric-webui-client-ci.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  webui-client:
+    name: WebUI assistant-ui typecheck and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install prototype dependencies
+        working-directory: apps/60-services/txo-fabric/webui/client
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Run client tests
+        working-directory: apps/60-services/txo-fabric/webui/client
+        run: node --test
+      - name: Typecheck and build
+        working-directory: apps/60-services/txo-fabric/webui/client
+        run: npm run build
