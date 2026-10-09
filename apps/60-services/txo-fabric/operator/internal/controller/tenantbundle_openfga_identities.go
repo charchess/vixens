@@ -19,6 +19,7 @@ const (
 	// binding, not on the TenantBundle spec/status or a tenant-owned Secret.
 	identityIssuerKey = "identityIssuer"
 	identityBindingsKey = "identityBindings"
+	identitySchemaKey = "identitySchema"
 	maxIdentityBindingJSONBytes = 1024 * 1024
 )
 
@@ -53,11 +54,12 @@ func (r *TenantBundleReconciler) reconcileOpenFGAHumanIdentityRegistry(ctx conte
 	// Either the complete pair is present or neither was ever initialized.
 	// A partially written/damaged ledger is never accepted or repaired.
 	pinnedIssuer, issuerExists := binding.Data[identityIssuerKey]
-	raw, bindingsExist := binding.Data[identityBindingsKey]
-	if issuerExists != bindingsExist {
-		return errors.New("partial retained Fabric human identity ledger")
-	}
-	if issuerExists {
+	_, bindingsExist := binding.Data[identityBindingsKey]
+	schema, schemaExists := binding.Data[identitySchemaKey]
+	if issuerExists || bindingsExist || schemaExists {
+		if !issuerExists || !bindingsExist || !schemaExists || schema != "v1" {
+			return errors.New("partial or unapproved retained Fabric human identity ledger")
+		}
 		if pinnedIssuer != issuer {
 			return errors.New("retained Fabric OIDC issuer drift: explicit identity migration required")
 		}
@@ -75,6 +77,7 @@ func (r *TenantBundleReconciler) reconcileOpenFGAHumanIdentityRegistry(ctx conte
 	if binding.Data == nil { return errors.New("untrusted empty Fabric authorization binding") }
 	binding.Data[identityIssuerKey] = issuer
 	binding.Data[identityBindingsKey] = "[]"
+	binding.Data[identitySchemaKey] = "v1"
 	if err := r.Update(ctx, &binding); err != nil {
 		return fmt.Errorf("cannot initialize retained Fabric identity ledger: %w", err)
 	}
@@ -115,8 +118,8 @@ func (r *TenantBundleReconciler) readOpenFGAHumanIdentityRegistry(ctx context.Co
 		return nil, err
 	}
 	issuer := bundle.Spec.HumanAccess.Web.OIDC.Issuer
-	if binding.Data[identityIssuerKey] != issuer {
-		return nil, errors.New("missing or drifting Fabric identity issuer")
+	if binding.Data[identitySchemaKey] != "v1" || binding.Data[identityIssuerKey] != issuer {
+		return nil, errors.New("missing, partial or drifting Fabric identity issuer/schema")
 	}
 	raw, exists := binding.Data[identityBindingsKey]
 	if !exists || len(raw) == 0 || len(raw) > maxIdentityBindingJSONBytes {
