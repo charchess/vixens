@@ -15,6 +15,9 @@ export async function listAvailableAgents(fetchImpl = fetch) {
     typeof a.label === "string" && a.label.length <= 100);
 }
 
+/** @param {string} agentKey
+ * @param {{fetchImpl?: typeof fetch, signal?: AbortSignal}} [options]
+ */
 export async function createFabricThread(agentKey, { fetchImpl = fetch, signal } = {}) {
   if (typeof agentKey !== "string" || !AGENT.test(agentKey)) throw new Error("Agent invalide");
   const response = await fetchImpl("/api/chat/threads", {
@@ -29,6 +32,10 @@ export async function createFabricThread(agentKey, { fetchImpl = fetch, signal }
 }
 
 /** Read server-projected SSE only. Never accept provider credentials in replies. */
+/** @param {string} threadId
+ * @param {string} input
+ * @param {{fetchImpl?: typeof fetch, signal?: AbortSignal}} [options]
+ */
 export async function* streamFabricTurn(threadId, input, { fetchImpl = fetch, signal } = {}) {
   if (typeof threadId !== "string" || !THREAD.test(threadId) ||
       typeof input !== "string" || !input.trim()) throw new Error("Requête invalide");
