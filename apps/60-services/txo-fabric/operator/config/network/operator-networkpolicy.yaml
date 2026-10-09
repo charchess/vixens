@@ -20,6 +20,15 @@ spec:
       ports:
         - {protocol: UDP, port: 53}
         - {protocol: TCP, port: 53}
+    # Only the Fabric operator may reconcile per-tenant stores in the
+    # centralized, private OpenFGA service (no cross-tenant pod access).
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: txo-fabric-openfga
+              app.kubernetes.io/component: authorization
+      ports:
+        - {protocol: TCP, port: 8080}
     - to:
         - podSelector:
             matchLabels:
