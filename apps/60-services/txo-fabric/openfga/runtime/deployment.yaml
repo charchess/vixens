@@ -1,0 +1,115 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: txo-fabric-openfga
+  namespace: txo-fabric-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+  labels:
+    app.kubernetes.io/name: txo-fabric-openfga
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: authorization
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: txo-fabric-openfga
+      app.kubernetes.io/component: authorization
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: txo-fabric-openfga
+        app.kubernetes.io/component: authorization
+        app.kubernetes.io/part-of: txo-fabric
+        vixens.io/backup-profile: critical
+      annotations:
+        reloader.stakater.com/auto: "true"
+    spec:
+      priorityClassName: vixens-high
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 20
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: openfga
+          image: openfga/openfga:v1.22.0
+          imagePullPolicy: IfNotPresent
+          args: ["run"]
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: grpc
+              containerPort: 8081
+              protocol: TCP
+          env:
+            - name: OPENFGA_DATASTORE_ENGINE
+              value: postgres
+            - name: OPENFGA_DATASTORE_URI
+              value: postgres://postgresql-shared-rw.databases.svc.cluster.local:5432/txo_fabric_openfga?sslmode=require
+            - name: OPENFGA_DATASTORE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: txo-openfga-runtime
+                  key: username
+            - name: OPENFGA_DATASTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: txo-openfga-runtime
+                  key: password
+            - name: OPENFGA_AUTHN_METHOD
+              value: preshared
+            - name: OPENFGA_AUTHN_PRESHARED_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: txo-openfga-runtime
+                  key: presharedKeys
+            - name: OPENFGA_PLAYGROUND_ENABLED
+              value: "false"
+            - name: OPENFGA_LOG_FORMAT
+              value: json
+            - name: OPENFGA_DATASTORE_MAX_OPEN_CONNS
+              value: "10"
+            - name: OPENFGA_CHECK_QUERY_CACHE_ENABLED
+              value: "false"
+          startupProbe:
+            grpc:
+              port: 8081
+            periodSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            grpc:
+              port: 8081
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            grpc:
+              port: 8081
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 96Mi
+            limits:
+              cpu: 350m
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

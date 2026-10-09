@@ -1,0 +1,46 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: DatabaseRole
+metadata:
+  name: txo-fabric-openfga
+  namespace: databases
+  annotations:
+    argocd.argoproj.io/sync-wave: "-8"
+  labels:
+    app.kubernetes.io/name: txo-fabric-openfga
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  cluster:
+    name: postgresql-shared
+  name: txo_fabric_openfga
+  comment: OpenFGA shared Fabric authorization datastore role
+  login: true
+  inherit: true
+  superuser: false
+  createdb: false
+  createrole: false
+  replication: false
+  bypassrls: false
+  connectionLimit: 20
+  ensure: present
+  passwordSecret:
+    name: txo-openfga-postgresql
+  databaseRoleReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: txo-fabric-openfga
+  namespace: databases
+  annotations:
+    argocd.argoproj.io/sync-wave: "-6"
+  labels:
+    app.kubernetes.io/name: txo-fabric-openfga
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  cluster:
+    name: postgresql-shared
+  name: txo_fabric_openfga
+  owner: txo_fabric_openfga
+  ensure: present
+  databaseReclaimPolicy: retain
