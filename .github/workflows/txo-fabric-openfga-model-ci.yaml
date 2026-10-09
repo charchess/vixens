@@ -55,6 +55,11 @@ jobs:
               return item
 
           if normalize(from_dsl) != normalize(embedded):
+              import difflib
+              expected = json.dumps(normalize(from_dsl), sort_keys=True, indent=2).splitlines()
+              actual = json.dumps(normalize(embedded), sort_keys=True, indent=2).splitlines()
+              for line in list(difflib.unified_diff(expected, actual, fromfile="upstream FGA DSL", tofile="embedded Go JSON"))[:160]:
+                  print(line)
               raise SystemExit("Embedded Go OpenFGA API model does not match model.fga; regenerate it from the validated DSL")
           print("OK: embedded model JSON and canonical model.fga are structurally equivalent")
           PY
