@@ -84,10 +84,11 @@ func NewIdentityRegistry(tenantSlug, tenantID, issuer string, approvedGroupKeys 
 		approvedGroups: make(map[string]bool, len(approvedGroupKeys)),
 	}
 	for _, key := range approvedGroupKeys {
-		if !canonicalGroupKey.MatchString(key) || registry.approvedGroups["txo-fabric-"+tenantSlug+"-"+key] {
+		groupName := "txo-fabric-" + tenantSlug + "-" + key
+		if !canonicalGroupKey.MatchString(key) || len(groupName) > 128 || registry.approvedGroups[groupName] {
 			return nil, errors.New("invalid or repeated Fabric IAM group")
 		}
-		registry.approvedGroups["txo-fabric-"+tenantSlug+"-"+key] = true
+		registry.approvedGroups[groupName] = true
 	}
 	for _, binding := range bindings {
 		if binding.TenantID != tenantID || binding.Issuer != issuer ||
@@ -132,7 +133,8 @@ func (r *IdentityRegistry) ResolveOIDCSubject(issuer, subject string) (string, e
 // The caller must still verify Authentik freshness and group UUID continuity.
 func (r *IdentityRegistry) ResolveGroupMembership(membership GroupMembership) ([]string, error) {
 	if r == nil || !r.approvedGroups[membership.Name] ||
-		!uuidPattern.MatchString(membership.AuthentikGroupUUID) {
+		!uuidPattern.MatchString(membership.AuthentikGroupUUID) ||
+		membership.ActiveAuthentikUserUUIDs == nil {
 		return nil, errors.New("untrusted or unapproved Fabric IAM group snapshot")
 	}
 	users := make([]string, 0, len(membership.ActiveAuthentikUserUUIDs))
