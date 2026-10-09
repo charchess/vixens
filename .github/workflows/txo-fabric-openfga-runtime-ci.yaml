@@ -49,5 +49,5 @@ jobs:
           fi
           grep -q 'value: postgres' /tmp/fabric-openfga.yaml
           grep -q 'value: preshared' /tmp/fabric-openfga.yaml
-          grep -q 'openfga/openfga:v1.22.0' /tmp/fabric-openfga.yaml
+          grep -Eq 'docker.io/openfga/openfga@sha256:[0-9a-f]{64}' /tmp/fabric-openfga.yaml
           echo "Standalone private OpenFGA runtime manifests render successfully"
