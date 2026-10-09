@@ -9,8 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"reflect"
-	"strings"
 )
 
 // compiledAuthorizationModel is generated from the model.fga contract
@@ -89,7 +89,7 @@ func (c *Client) currentModels(ctx context.Context, storeID string) ([]json.RawM
 	var models []json.RawMessage
 	for page := 0; page < maxPages; page++ {
 		path := "/stores/"+storeID+"/authorization-models?page_size=100"
-		if token!="" { path+="&continuation_token="+urlQueryEscape(token) }
+		if token!="" { path+="&continuation_token="+url.QueryEscape(token) }
 		resp, err := c.request(ctx,http.MethodGet,path,nil)
 		if err!=nil { return nil,err }
 		var data authorizationModelResponse
@@ -156,6 +156,3 @@ func (c *Client) ValidateModelBinding(ctx context.Context, storeID, modelID stri
 	return nil
 }
 
-func urlQueryEscape(s string) string {
-	return strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(s, "%", "%25"), "+", "%2B"), "&", "%26")
-}
