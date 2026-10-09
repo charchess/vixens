@@ -83,6 +83,11 @@ export function createChatSessionService({ tenantKey, authorize, resolveAgent, r
     return thread;
   }
   return {
+    async canAccess({ principal, agentKey }) {
+      requirePrincipal(principal, tenantKey);
+      await requireGrant({ principal, tenantKey, agentKey, action: "agent.chat", authorize });
+      return true;
+    },
     async create({ principal, agentKey }) {
       requirePrincipal(principal, tenantKey);
       await requireGrant({ principal, tenantKey, agentKey, action: "agent.chat", authorize });
