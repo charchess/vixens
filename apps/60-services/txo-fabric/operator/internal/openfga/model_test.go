@@ -112,6 +112,12 @@ func TestUnauthorizedAndUnreachableModelServiceAreFailClosed(t *testing.T) {
 	if _,err:=c.EnsureAuthorizationModel(context.Background(),testStoreA);err==nil {t.Fatal("network outage ignored")}
 	for _,bad:=range []string{"TEN00001","not-a-store","",testStoreA+"?foo=bar"} {
 		if _,err:=c.EnsureAuthorizationModel(context.Background(),bad);err==nil {t.Fatalf("accepted store ID %q",bad)}
+		if err:=c.ValidateModelBinding(context.Background(),bad,sampleModelID);err==nil {
+			t.Fatalf("accepted untrusted bound store ID %q",bad)
+		}
+	}
+	if err:=c.ValidateModelBinding(context.Background(),testStoreA,"wrong-model-id");err==nil {
+		t.Fatal("accepted invalid pinned model ID")
 	}
 }
 
