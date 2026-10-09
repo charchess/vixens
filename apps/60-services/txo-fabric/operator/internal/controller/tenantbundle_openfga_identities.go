@@ -96,8 +96,17 @@ func (r *TenantBundleReconciler) readOpenFGAHumanIdentityRegistry(ctx context.Co
 		return nil, errors.New("Fabric human identity registry is not available")
 	}
 	if err := validateTenantIAM(bundle); err != nil { return nil, err }
-	if _, err := r.readOpenFGAAuthorizationBinding(ctx, bundle); err != nil {
+	approved, err := r.readOpenFGAAuthorizationBinding(ctx, bundle)
+	if err != nil {
 		return nil, fmt.Errorf("invalid Fabric identity registry tenant/store/model ownership: %w", err)
+	}
+	// A tampered local ConfigMap store/model association must not be enough
+	// to authorize a human mapping. Re-check the model against the service:
+	// a foreign tenant store or OpenFGA outage denies the entire read.
+	service, err := r.modelProvisioner(ctx)
+	if err != nil { return nil, errors.New("Fabric human identity model verifier unavailable") }
+	if err := service.ValidateModelBinding(ctx, approved.Store.ID, approved.ModelID); err != nil {
+		return nil, fmt.Errorf("Fabric human identity ledger model binding not verified: %w", err)
 	}
 	name, err := openFGABindingName(bundle.Spec.TenantID)
 	if err != nil { return nil, err }
