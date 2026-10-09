@@ -55,6 +55,9 @@ jobs:
           echo "Checking that pinned OCI digest exists in upstream registry:"
           docker buildx imagetools inspect "${imgs[0]}" >/dev/null
           kustomize build "$RUNTIME" > /tmp/openfga-runtime.yaml
+          # DatabaseRole.passwordSecret requires a basic-auth Secret (not Opaque).
+          grep -q 'type: kubernetes.io/basic-auth' /tmp/openfga-runtime.yaml
+          grep -q 'cnpg.io/reload: "true"' /tmp/openfga-runtime.yaml
           kustomize build "$PROD" > /tmp/openfga-prod.yaml
           test "$(grep -c '^kind: Deployment$' /tmp/openfga-runtime.yaml)" -eq 1
           test "$(grep -c '^kind: Service$' /tmp/openfga-runtime.yaml)" -eq 1
