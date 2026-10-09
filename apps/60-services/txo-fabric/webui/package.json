@@ -1,0 +1,8 @@
+{
+  "name": "@txo-fabric/webui-chat-transport",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test" }
+}

@@ -1,0 +1,32 @@
+---
+name: TXO Fabric WebUI Chat Transport CI
+
+on:
+  pull_request:
+    paths:
+      - 'apps/60-services/txo-fabric/webui/**'
+      - '.github/workflows/txo-fabric-webui-chat-ci.yaml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/60-services/txo-fabric/webui/**'
+      - '.github/workflows/txo-fabric-webui-chat-ci.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: WebUI transport unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: ''
+      - name: Test Hermes transport and authorization boundaries
+        working-directory: apps/60-services/txo-fabric/webui
+        run: node --test
