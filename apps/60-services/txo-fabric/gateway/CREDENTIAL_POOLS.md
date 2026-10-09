@@ -18,14 +18,26 @@ Tenant workloads
 tenant LiteLLM
   auth / logical models / routing / metering
       |
-      +-- txo-agent ----> tenant CPA ----> Codex OAuth account A/B/...
-      +-- txo-general ---> OpenRouter / API / OSS backend
-      +-- txo-reasoning -> OpenRouter / API / OSS backend
-      +-- txo-embedding -> OpenRouter / local embedding backend
+      +-- txo-agent ----> tenant CPA ----> Codex OAuth chat account(s)
+      |                        +------> other supported chat providers*
+      +-- txo-embedding -> OpenRouter / BGE-M3 (Hindsight only)
+      +-- txo-reasoning -> governed service backend (not yet enabled)
+
+* A chat provider such as Claude or OpenRouter is connected behind tenant CPA
+  only after the pinned CPA version, credentials and policies support it.
 ```
 
 Fabric is the control plane. LiteLLM is the tenant-facing AI gateway. CPA is an
-internal backend specialized in OAuth/subscription credential lifecycle.
+internal backend for **all Hermes conversation-provider credentials** (OAuth
+accounts and supported provider API-key accounts), not the inference facade.
+
+**Product decision (2026-10-09):** a new provider for Hermes chat is connected
+through tenant CPA, **never** by creating a direct LiteLLM-to-OpenRouter chat
+deployment. Direct provider deployments in LiteLLM are dedicated to governed
+non-chat workloads such as Hindsight embedding, and future Hindsight reasoning
+only after the required policy and physical acceptance. See [UC-006](../../../../usecase/UC-006-inference-purpose-boundaries.md),
+[#3980](https://github.com/charchess/vixens/issues/3980) and
+[#3979](https://github.com/charchess/vixens/issues/3979).
 
 This supersedes the temporary #3882 interpretation where CPA itself was called
 the tenant AI gateway. The CPA substrate remains useful; only its responsibility
@@ -72,14 +84,22 @@ runtime may become Ready.
 
 ### Tenant CPA
 
-CPA owns only the subscription/OAuth provider-account pool:
+CPA owns the tenant conversation-provider account/credential pool (OAuth and
+provider API-key integrations supported by the pinned CPA build):
 
 - interactive OAuth connect/re-auth;
 - persisted refresh/access state;
 - selection between equivalent credentials;
 - quota/cooldown and retry state;
 - disable/revoke lifecycle;
-- provider-account health observations.
+- provider-account health observations;
+- isolation of provider credentials and their eligibility for chat.
+
+A requested **user-owned** credential additionally requires an authenticated
+initiating-user identity and an enforced account selection binding. The current
+per-AgentIdentity LiteLLM virtual key does not establish that human identity;
+user BYOK is **not yet supported** by the current tenant-wide CPA pool without
+additional authorization and selection work (#3980).
 
 CPA is not the tenant authorization source of truth and is not the primary
 billing ledger.
@@ -128,21 +148,20 @@ mounted into AgentIdentity or Hindsight workloads.
 
 Consumers select logical capabilities, never provider credentials:
 
-```text
-txo-auto
-txo-general
-txo-agent
-txo-fast
-txo-reasoning
-txo-embedding
-```
+The **currently proven** runtime exposes `txo-agent` to Hermes and
+`txo-embedding` to Hindsight when the tenant OpenRouter credential exists.
 
-Examples:
+The **future logical catalog** being designed under #3869 may include
+`txo-auto`, `txo-general`, `txo-fast` and `txo-reasoning`.
+Those names are not evidence that the models are configured or usable.
 
-- Hermes may receive `txo-agent` and resolve through LiteLLM -> CPA -> Codex;
-- Hindsight may receive only `txo-embedding` and resolve through LiteLLM ->
-  OpenRouter/BGE-M3 or a future local embedding service;
-- another service may receive `txo-reasoning` without any access to CPA.
+- Hermes `txo-agent` resolves through LiteLLM -> CPA -> an eligible,
+  tenant-authorized **conversation** provider.
+- Hindsight `txo-embedding` resolves through LiteLLM -> OpenRouter/BGE-M3,
+  with an embedding-only scoped key.
+- Hindsight generative/reasoning inference is **disabled by default** under
+  ADR-035 until explicitly governed, implemented and physically tested.
+  Its future LiteLLM service route is distinct from Hermes chat.
 
 Provider account identity remains invisible to consumers.
 
@@ -164,12 +183,14 @@ Secret/tenant-<tenant>/txo-ai-gateway-runtime
 tenant LiteLLM
 ```
 
-In v0.1, a platform administrator enrolls the source Secret manually using
-the secure stdin-based `kubectl` procedure in
-[`gateway/README.md`](README.md#manual-openrouter-enrollment-v01).
-OpenBao/External Secrets are optional future management integrations, not a
-runtime dependency. No provider value belongs in Git, TenantBundle, AgentIdentity,
-Hindsight runtime configuration, or CR status.
+The existing v0.1 source Secret uses a temporary, securely documented operator
+bootstrap procedure in [`gateway/README.md`](README.md#manual-openrouter-enrollment-v01).
+**This is not acceptable as the normal customer onboarding product flow.**
+The Fabric WebUI settings/admin module #3979 must mediate tenant/user
+credentials under the effective hierarchical policy #3980, with no
+`kubectl` needed by customers. OpenBao/External Secrets are not a runtime
+prerequisite of the current service embedding route. No provider value belongs
+in Git, TenantBundle, AgentIdentity, Hindsight runtime configuration, or CR status.
 
 When the credential exists, Fabric adds `txo-embedding` to that tenant LiteLLM,
 currently backed by `openrouter/baai/bge-m3`, and permits HTTPS egress from the
@@ -195,19 +216,24 @@ Retries must not multiply across layers.
 CPA is responsible for retry/failover **between credentials serving the same
 provider/model pool**.
 
-LiteLLM is responsible for fallback **between logical deployments/providers**.
+LiteLLM enforces the logical model, consumer allowlist and metering. Any
+**conversation-provider/account selection or fallback** stays behind **tenant
+CPA** and its Fabric-defined policy; LiteLLM must not bypass CPA toward a
+direct provider API for Hermes chat.
 
 Example:
 
 ```text
 txo-agent
    |
-   +-> CPA
-   |    +-> Codex A (cooldown)
-   |    +-> Codex B (healthy)
-   |
-   +-> explicitly-authorized alternate provider only if the CPA pool is unavailable
+   +-> tenant CPA
+        +-> Codex account A (cooldown)
+        +-> Codex account B (eligible)
+        +-> another *authorized* chat provider, if CPA supports it
 ```
+
+Non-chat service routing (embedding; future governed Hindsight reasoning)
+remains a separate LiteLLM capability domain.
 
 No retry or fallback may cross the tenant boundary or widen a consumer/model
 allowlist.
@@ -254,7 +280,12 @@ multiple tenants.
 
 ## OAuth lifecycle
 
-Interactive OAuth remains an administrative operation.
+Interactive OAuth is currently possible through an **internal administrative
+CLI**, but the accepted **target product** is an authenticated **Fabric
+WebUI** with platform/tenant/user-level policies. The legacy CLI flow is
+retained only for bootstrap, break-glass and migration until #3979 is accepted.
+
+Current proven, transitional OAuth sequence:
 
 1. Admin/Fabric selects one tenant broker.
 2. The Fabric admin client reads that tenant's CPA management credential from
@@ -270,8 +301,8 @@ Interactive OAuth remains an administrative operation.
 7. Fabric exposes only log-safe lifecycle/quota state.
 8. Disable/revoke removes an account from eligibility before destructive cleanup.
 
-The first v0.1 administrative surface is deliberately internal and ships inside
-the Fabric operator image:
+The first v0.1 **temporary POC** administrative surface ships inside
+the Fabric operator image; it is **not** the intended onboarding interface:
 
 ```bash
 kubectl -n txo-fabric-system exec -it deploy/txo-fabric-operator -- \
@@ -283,8 +314,12 @@ policy permits this management path only from the Fabric operator pod to
 tenant-owned CPA pods. Hermes and other tenant workloads do not gain CPA
 management access.
 
-A future Fabric admin UI may wrap the same contract; it must not move OAuth
-tokens into Git, TenantBundle/AgentIdentity spec or status, or agent runtimes.
+The Fabric WebUI required by #3979 must wrap a private, authorized Fabric
+management backend and the tenant CPA Management API. It must allow permitted
+admins/users to connect, inspect non-secret status, disable, revoke and re-auth
+without shell access or manually editing Kubernetes Secrets; it must not move
+OAuth tokens into Git, TenantBundle/AgentIdentity spec or status, browsers or
+agent runtimes.
 
 The remote Codex authorization flow is physically proven on hAIrem against the
 production-pinned CPA version: CPA persisted one root auth JSON, populated its
@@ -303,9 +338,11 @@ For Active tenants, the steady-state AgentIdentity path is:
 Hermes -> tenant LiteLLM -> tenant CPA -> Codex OAuth pool
 ```
 
-Additional logical routes such as `txo-embedding` and ordinary API/OpenRouter
-backends are completed under #3885; they belong behind the same tenant LiteLLM
-facade and do not reintroduce tenant-selectable gateway topology.
+The service `txo-embedding` and any later governed Hindsight
+reasoning/generative route belong behind the same LiteLLM facade, using
+separate non-chat scopes. Ordinary provider API keys for **Hermes chat**
+belong behind CPA, not in a second direct-chat LiteLLM route. This routing
+distinction must be maintained by #3869 and #3979.
 
 `fabric-smoke` is explicitly `lifecycle.mode: Parked` under #3815 and remains
 free of steady-state AI-plane compute while durable recovery state is preserved.
