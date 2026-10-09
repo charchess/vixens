@@ -176,6 +176,10 @@ func TestTupleReconciliationFailsClosedOnUntrustedReadAndOutage(t *testing.T) {
 		{"foreign-tuple",func(*http.Request)(*http.Response,error){
 			return response(200,readTuplesResponse{Tuples:[]readTuple{{Key:Tuple{Object:"group:other",Relation:"member",User:good.User}}}}),nil
 		}},
+		{"conditioned-tuple",func(*http.Request)(*http.Response,error){
+			condition:=json.RawMessage(`{"name":"bad_condition"}`)
+			return response(200,readTuplesResponse{Tuples:[]readTuple{{Key:Tuple{Object:scope.Object,Relation:"member",User:good.User,Condition:&condition}}}}),nil
+		}},
 		{"pagination-loop",func(*http.Request)(*http.Response,error){
 			return response(200,readTuplesResponse{ContinuationToken:"same"}),nil
 		}},
