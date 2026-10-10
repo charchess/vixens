@@ -90,10 +90,9 @@ running OIDC login flow or an enrolled human. A privileged Fabric BFF must:
    token** and the transaction's server-stored expected nonce to the verifier.
 3. Require the Authentik provider to publish a dedicated, signed
    `txo_fabric_user_uuid` ID-token claim from Authentik's immutable
-   `request.user.uuid` (via a reviewed OAuth2 scope mapping). Current
-   generated providers configure only the built-in `openid profile email`
-   mappings. **Until this mapping is deployed and validated, verification
-   deliberately fails closed.** Do not infer an Authentik UUID from hashed
+   `request.user.uuid` (via a reviewed OAuth2 scope mapping). The operator now generates the custom
+   `txo_fabric_identity` scope mapping (#4025); its live publishing and
+   exact signed-token behavior must still be validated before activation. Do not infer an Authentik UUID from hashed
    `sub`, username, email, groups or workspace `userRef`.
 4. Use the returned immutable proof (exact issuer, opaque OIDC subject and
    Authentik UUID) only inside an authenticated Fabric-owned enrollment
@@ -115,3 +114,48 @@ This code has **no runtime wiring, GitOps rollout flag change or production
 promotion**. Runtime callback, scope mapping, durable identity enrollment,
 account lifecycle, freshness/revocation and physical A/B/C checks remain open
 under #3996 and ADR-039.
+
+## Single-use Authentik OIDC login coordinator (staged #3996)
+
+`server/oidc-login.mjs` now composes the existing signed-ID-token verifier
+with the **real Authentik authorization-code endpoint** and a server-owned
+OAuth2 PKCE S256 transaction. It always requests exactly
+`openid profile email txo_fabric_identity` and uses Authentik's shared
+`/application/o/authorize/` and `/application/o/token/` endpoints, not
+the per-provider issuer as a token URL. Both issuer and redirect callback
+are derived from the **trusted TenantBundle** configuration; the callback
+host must match its Authentik-generated pattern
+`https://<app>-<tenant>.<domainSuffix>/auth/callback`.
+
+The coordinator returns an HTTPS authorization URL plus the parameters for
+a **Secure, HttpOnly, SameSite=Lax, Path=/, host-only `__Host-` binding
+cookie**. It requires a separate **durable cross-replica** transaction
+repository with atomic insert and *atomic consume before any exchange*,
+not an in-process Map. A five-minute transaction holds hashed browser
+binding, 32-byte state/nonce, and PKCE verifier. Browser state and code
+cannot select an issuer, client, store, tenant, user, token endpoint or
+redirect. Failed cookie/nonce/account/ledger/enrollment and reused
+transactions deny without granting permission. The ID token is checked
+with same-issuer JWKS and the original nonce; only the resulting signed,
+immutable Authentik identity fields reach the privileged enrollment callback,
+never the code, cookie, PKCE verifier, access token or arbitrary headers.
+
+**Still a source-only integration seam, not a deployed authentication
+service:** the mountable HTTP BFF and its strict host+callback+cookie
+handling are absent. The transaction store and session store are not
+provisioned. The `enrollVerifiedHuman` callback is intentionally
+unimplemented at runtime: its future Fabric-only transport must authenticate
+the BFF workload, bind the tenant to the service identity, and call the
+operator-owned CAS writer with a live Authentik account check. A forged
+`enrollVerifiedHuman` implementation would compromise the boundary;
+the current module is not safe to mount with arbitrary callbacks. Successful
+login returns an identity **without** setting `authenticated` or
+`verified`; every chat, integration and agent operation still requires
+fresh account/IAM state and an OpenFGA Check.
+
+Tests: `node --test` includes PKCE challenge vs verifier, original nonce,
+exact scoped endpoints, tenant-specific host validation, cookie binding,
+single-use/replay and concurrent callback, expired/mismatched transactions,
+invalid tokens, upstream outages, refusal and cross-tenant isolation.
+Do not enable the OpenFGA rollout flag, create a public BFF ingress or
+promote production on the strength of these synthetic source tests.
