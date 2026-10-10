@@ -207,3 +207,36 @@ This source change alone does not deploy an OIDC BFF, persist human identities,
 create grants or turn on the OpenFGA rollout flag. Verify the real Authentik
 blueprint application and signed claim in a controlled runtime recipe before
 considering enrollment safe; no production promotion is implied.
+
+### Private verified-human enrollment and immutable account preflight (staged #3996)
+
+Two new **source-only, uncalled** components extend the tenant-owned identity
+registry: `internal/authentik/accounts.go` reads the immutable Authentik user
+UUID using the private read-only API, with complete paginated responses and a
+double-read of `is_active`. The operator's private
+`enrollHumanFromVerifiedIdentity` method accepts an issuer, opaque OIDC
+`sub` and immutable UUID **only after** those values have been cryptographically
+verified by the future privileged Fabric BFF's login transaction. It checks
+the live Authentik account, reads the trusted retained tenant UID + store +
+model, and CAS-writes a newly allocated random `usr...` identity or
+idempotently returns the existing Fabric user ID. The method refuses
+rebinding a UUID to a different sub (or vice versa), foreign tenant/issuer,
+deleted tenant, disabled/ambiguous user and altered model or ledger. A
+Kubernetes `Conflict` is returned for caller-controlled revalidation and
+retry; another writer is never overwritten.
+
+This is deliberately **not** a publicly callable enrollment API or an
+authorization decision. The future BFF must finish authorization-code/PKCE,
+state/nonce single-use validation, signed Authentik token verification,
+service authentication for BFF→Fabric, account lifecycle/deactivation
+and fresh OpenFGA `Check` before using the result to authenticate a human.
+A disabled user discovered after a CAS write leaves a historical binding
+but the operation fails and **cannot grant rights**. Persistent revocation
+and synchronization are separate, still unfinished P0 work.
+
+In particular, a raw Go `trustedHumanOIDCProof` is only a **privileged
+internal input**; it is not by itself cryptographic evidence. No browser,
+tenant pod, REST request or `TenantBundle` field may create one. Until a
+securely authenticated transport is built, this method remains uncalled.
+`TXO_FABRIC_OPENFGA_STORES_ENABLED` is still disabled in GitOps; no
+production promotion or live account/authorization smoke is implied.
