@@ -92,6 +92,13 @@ spec:
             - name: blueprints
               mountPath: /blueprints/vixens-netbird.yaml
               subPath: vixens-netbird.yaml
+            # A single platform-wide OIDC application and callback.
+            # The ConfigMap is platform-owned (NOT per-tenant), and the
+            # worker spec change rolls the pod on a reviewed GitOps promotion.
+            - name: blueprints
+              mountPath: /blueprints/vixens-fabric-webui.yaml
+              subPath: txo-fabric-webui.yaml
+              readOnly: true
             - name: fabric-blueprints
               mountPath: /blueprints/txo-fabric
               readOnly: true
