@@ -20,6 +20,7 @@ import (
 // to adopt a deleted/recreated Authentik group, even if Fabric generated it.
 const (
 	iamGroupPinsSchemaKey = "iamGroupPinsSchema"
+	iamGroupPinsOwnerUIDKey = "iamGroupPinsOwnerUID"
 	iamGroupPinsDataKey   = "iamGroupPins"
 	iamGroupPinsSchemaV1  = "v1"
 	maxIAMGroupPinsBytes  = 65536
@@ -132,7 +133,9 @@ func (r *TenantBundleReconciler) readOpenFGAIAMGroupPins(
 	}, &binding); err != nil { return nil, err }
 	schema, schemaExists := binding.Data[iamGroupPinsSchemaKey]
 	raw, pinsExist := binding.Data[iamGroupPinsDataKey]
-	if !schemaExists || !pinsExist || schema != iamGroupPinsSchemaV1 {
+	pinOwnerUID, ownerExists := binding.Data[iamGroupPinsOwnerUIDKey]
+	if !schemaExists || !pinsExist || !ownerExists || schema != iamGroupPinsSchemaV1 ||
+		pinOwnerUID != string(bundle.UID) {
 		return nil, errors.New("incomplete or unapproved retained Fabric IAM group pin ledger")
 	}
 	pins, err := decodeIAMGroupPins(raw)
@@ -180,13 +183,14 @@ func (r *TenantBundleReconciler) reconcileOpenFGAIAMGroupPins(
 
 	schema, schemaExists := binding.Data[iamGroupPinsSchemaKey]
 	raw, pinsExist := binding.Data[iamGroupPinsDataKey]
+	pinOwnerUID, ownerExists := binding.Data[iamGroupPinsOwnerUIDKey]
 	var current map[string]string
 	switch {
-	case schemaExists != pinsExist:
+	case schemaExists != pinsExist || schemaExists != ownerExists:
 		return errors.New("partial retained Fabric IAM group pins")
 	case schemaExists:
-		if schema != iamGroupPinsSchemaV1 {
-			return errors.New("unsupported retained Fabric IAM group pin schema")
+		if schema != iamGroupPinsSchemaV1 || pinOwnerUID != string(bundle.UID) {
+			return errors.New("unsupported or foreign retained Fabric IAM group pin ownership")
 		}
 		current, err = decodeIAMGroupPins(raw)
 		if err != nil { return err }
@@ -248,6 +252,7 @@ func (r *TenantBundleReconciler) reconcileOpenFGAIAMGroupPins(
 	if err != nil { return err }
 	if binding.Data == nil { return errors.New("missing protected Fabric authorization binding data") }
 	binding.Data[iamGroupPinsSchemaKey] = iamGroupPinsSchemaV1
+	binding.Data[iamGroupPinsOwnerUIDKey] = string(bundle.UID)
 	binding.Data[iamGroupPinsDataKey] = encoded
 	if err := r.Update(ctx, &binding); err != nil {
 		return fmt.Errorf("cannot persist trusted Fabric Authentik group pins: %w", err)
