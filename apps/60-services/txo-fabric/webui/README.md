@@ -1,5 +1,45 @@
 # Fabric WebUI — global browser/BFF decision (ADR-040)
 
+## Platform-global Authentik OIDC provider (staged, not activated)
+
+The **global** browser client is now declared in the existing Authentik
+platform `ConfigMap/authentik-config` as `txo-fabric-webui.yaml`, and
+mounted into the Authentik worker at
+`/blueprints/vixens-fabric-webui.yaml` by GitOps. It is independent from
+the operator-generated `txo-fabric-tenants.yaml` and exists even if there
+are no tenants. Application slug/client ID are `txo-fabric-webui`.
+The recommended per-application OIDC issuer is
+`https://authentik.truxonline.com/application/o/txo-fabric-webui/`.
+The provider is a **public authorization-code-only** client with
+one `strict` redirect URI:
+`https://webui.truxonline.com/auth/callback`. It includes the
+signed `txo_fabric_identity` scope with immutable
+`txo_fabric_user_uuid`. It creates **no human users, group membership,
+tenant grants or Fabric identities**.
+
+The **Fabric BFF** must use server-owned authorization-code + PKCE S256,
+single-use state, nonce, exact issuer/audience, bounded token exchange,
+strict callback host/cookie and account/tenant authorization checks.
+Authentik's public OAuth provider may support PKCE without *requiring*
+it for all third-party code requests; do not assume provider-side PKCE
+enforcement. The Fabric server must reject callbacks not bound to a
+BFF-created state/PKCE transaction regardless of provider behavior.
+
+**Runtime gate:** a merged blueprint source and successful Kustomize
+checks do NOT prove that the global provider exists in live Authentik.
+The new blueprint will only be applied when the exact desired-state
+revision is promoted under the existing GitOps process. Before login
+activation, validate live issuer/discovery/JWKS, the strict redirect,
+`txo_fabric_user_uuid` signed ID-token claim, and absence of token
+or unauthorized metadata leaks. The existing tenant-specific issuer
+ledgers MUST NOT be silently migrated or replaced. There is **no
+global HTTP BFF session or ingress** in this PR, so an end-user cannot
+log in to the product yet.
+
+---
+
+
+
 **Status:** source-only prototype, not deployed; `webui.truxonline.com` does not yet serve this application.
 
 One **global** React/assistant-ui frontend has now been adapted for server-scoped
