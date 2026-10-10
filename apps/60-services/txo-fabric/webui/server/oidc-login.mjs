@@ -12,9 +12,11 @@ const deny = () => { throw new Error("Fabric OIDC login denied"); };
 const random = () => randomBytes(32).toString("base64url");
 const digest = (value) => createHash("sha256").update(value).digest("base64url");
 
-function config({ tenantKey, issuer, clientId, redirectURI }) {
+function config({ tenantKey, issuer, clientId, redirectURI, domainSuffix }) {
   if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(tenantKey || "") ||
-      clientId !== `txo-fabric-${tenantKey}`) deny();
+      clientId !== `txo-fabric-${tenantKey}` ||
+      typeof domainSuffix !== "string" ||
+      !/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(domainSuffix)) deny();
   let provider, callback;
   try { provider = new URL(issuer); callback = new URL(redirectURI); } catch { deny(); }
   if (provider.protocol !== "https:" || provider.port || provider.username || provider.password ||
@@ -23,8 +25,37 @@ function config({ tenantKey, issuer, clientId, redirectURI }) {
       callback.protocol !== "https:" || callback.port || callback.username || callback.password ||
       callback.search || callback.hash || callback.href !== redirectURI ||
       callback.pathname !== "/auth/callback" ||
-      !callback.hostname.startsWith(tenantKey + "-") ||
-      callback.hostname.slice(tenantKey.length + 1).split(".").length < 2) deny();
+      // Must agree with TenantBundle-generated Authentik regex:
+      // ^https://[a-z0-9-]+-<tenant>\\.<domainSuffix>/auth/callback$
+      !new RegExp(`^[a-z0-9-]+-${tenantKey}\\\\.${domainSuffix.replaceAll(".", "\\\\.")}import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { createAuthentikIdentityVerifier } from "./oidc-identity.mjs";
+
+const BASE64URL43 = /^[A-Za-z0-9_-]{43}$/;
+const CODE = /^[\x21-\x7e]{1,4096}$/;
+const FABRIC_USER_ID = /^usr[0-9a-f]{32}$/;
+const MAX_AGE_MS = 5 * 60 * 1000;
+const MAX_TOKEN_RESPONSE = 32768;
+const SCOPE = "openid profile email txo_fabric_identity";
+const COOKIE_NAME = "__Host-txo-fabric-oidc";
+const deny = () => { throw new Error("Fabric OIDC login denied"); };
+const random = () => randomBytes(32).toString("base64url");
+const digest = (value) => createHash("sha256").update(value).digest("base64url");
+
+function config({ tenantKey, issuer, clientId, redirectURI, domainSuffix }) {
+  if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(tenantKey || "") ||
+      clientId !== `txo-fabric-${tenantKey}` ||
+      typeof domainSuffix !== "string" ||
+      !/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(domainSuffix)) deny();
+  let provider, callback;
+  try { provider = new URL(issuer); callback = new URL(redirectURI); } catch { deny(); }
+  if (provider.protocol !== "https:" || provider.port || provider.username || provider.password ||
+      provider.search || provider.hash || provider.href !== issuer ||
+      provider.pathname !== `/application/o/txo-fabric-${tenantKey}/` ||
+      callback.protocol !== "https:" || callback.port || callback.username || callback.password ||
+      callback.search || callback.hash || callback.href !== redirectURI ||
+      callback.pathname !== "/auth/callback" ||
+)
+        .test(callback.hostname)) deny();
   const authorizationEndpoint = new URL("/application/o/authorize/", provider.origin);
   const tokenEndpoint = new URL("/application/o/token/", provider.origin);
   return { authorizationEndpoint, tokenEndpoint };
@@ -40,7 +71,7 @@ function secretEqual(a, b) {
 /**
  * Staged, unmounted Fabric BFF OIDC authorization-code login coordinator.
  *
- * tenantKey, issuer, clientId, redirectURI MUST be resolved from trusted
+ * tenantKey, issuer, clientId, domainSuffix, redirectURI MUST be resolved from trusted
  * server-side TenantBundle config; they are NOT parameters on begin/complete.
  * transactions MUST be a durable, tenant-keyed store with atomic insert and
  * atomic consume (delete-before-return), shared across BFF replicas, bounded
@@ -59,10 +90,10 @@ function secretEqual(a, b) {
  * sets principal.verified or grants an OpenFGA permission.
  */
 export function createFabricOIDCLogin({
-  tenantKey, issuer, clientId, redirectURI, transactions,
+  tenantKey, issuer, clientId, domainSuffix, redirectURI, transactions,
   enrollVerifiedHuman, fetchImpl = fetch, now = () => Date.now(),
 }) {
-  const endpoints = config({ tenantKey, issuer, clientId, redirectURI });
+  const endpoints = config({ tenantKey, issuer, clientId, domainSuffix, redirectURI });
   if (!transactions || typeof transactions.insert !== "function" ||
       typeof transactions.consume !== "function" ||
       typeof enrollVerifiedHuman !== "function" ||
