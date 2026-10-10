@@ -6,6 +6,7 @@ import { createFabricOIDCLogin } from "../server/oidc-login.mjs";
 const tenantKey = "hairem";
 const issuer = "https://authentik.truxonline.com/application/o/txo-fabric-hairem/";
 const clientId = "txo-fabric-hairem";
+const authentikOrigin = "https://authentik.truxonline.com";
 const redirectURI = "https://chat-hairem.truxonline.com/auth/callback";
 const domainSuffix = "truxonline.com";
 const accountUUID = "12345678-1234-4123-8123-1234567890ab";
@@ -82,7 +83,7 @@ function setup(options = {}) {
     return fabricUserId;
   });
   const login = createFabricOIDCLogin({
-    tenantKey, issuer, clientId, domainSuffix, redirectURI, transactions: store,
+    tenantKey, issuer, clientId, domainSuffix, redirectURI, authentikOrigin, transactions: store,
     now: () => currentTime, fetchImpl, enrollVerifiedHuman,
   });
   async function started() {
@@ -209,7 +210,7 @@ test("cross-tenant state cannot be spent in another tenant coordinator", async (
   const start = await a.started();
   const b = createFabricOIDCLogin({
     tenantKey: "indiba", issuer: "https://authentik.truxonline.com/application/o/txo-fabric-indiba/",
-    clientId: "txo-fabric-indiba", domainSuffix, redirectURI: "https://chat-indiba.truxonline.com/auth/callback",
+    clientId: "txo-fabric-indiba", domainSuffix, authentikOrigin, redirectURI: "https://chat-indiba.truxonline.com/auth/callback",
     transactions: store, fetchImpl: async () => { throw Error("must not call"); },
     enrollVerifiedHuman: async () => { throw Error("must not call"); },
     now: () => millis,
@@ -260,12 +261,15 @@ test("malformed callbacks, missing security collaborators and untrusted redirect
   ]) await assert.rejects(() => f.login.complete(input), /Fabric OIDC login denied/);
   assert.equal(f.network.length, 0);
   const shared = {
-    tenantKey, issuer, clientId, domainSuffix, redirectURI,
+    tenantKey, issuer, clientId, domainSuffix, redirectURI, authentikOrigin,
     transactions: f.store, enrollVerifiedHuman: () => fabricUserId,
   };
   for (const override of [
     { tenantKey: "indiba" },
     { issuer: "https://evil.example/application/o/txo-fabric-hairem/" },
+    { authentikOrigin: "https://evil.example" },
+    { authentikOrigin: "http://authentik.truxonline.com" },
+    { authentikOrigin: "https://authentik.truxonline.com/evil" },
     { issuer: "http://authentik.truxonline.com/application/o/txo-fabric-hairem/" },
     { clientId: "txo-fabric-indiba" },
     { redirectURI: "https://chat-indiba.truxonline.com/auth/callback" },
@@ -277,5 +281,5 @@ test("malformed callbacks, missing security collaborators and untrusted redirect
     { transactions: null }, { enrollVerifiedHuman: null },
     { domainSuffix: "evil.example" },
   ]) assert.throws(() => createFabricOIDCLogin({ ...shared, ...override }),
-    /Fabric OIDC login denied/);
+    /Fabric OIDC login denied/, JSON.stringify(override));
 });
