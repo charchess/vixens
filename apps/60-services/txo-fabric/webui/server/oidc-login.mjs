@@ -12,13 +12,21 @@ const deny = () => { throw new Error("Fabric OIDC login denied"); };
 const random = () => randomBytes(32).toString("base64url");
 const digest = (value) => createHash("sha256").update(value).digest("base64url");
 
-function config({ tenantKey, issuer, clientId, redirectURI, domainSuffix }) {
+function config({ tenantKey, issuer, clientId, redirectURI, domainSuffix, authentikOrigin }) {
   if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(tenantKey || "") ||
       clientId !== `txo-fabric-${tenantKey}` || typeof domainSuffix !== "string" ||
       !/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(domainSuffix)) deny();
-  let provider, callback;
-  try { provider = new URL(issuer); callback = new URL(redirectURI); } catch { deny(); }
-  if (provider.protocol !== "https:" || provider.port || provider.username || provider.password ||
+  let provider, callback, platformIdP;
+  try {
+    provider = new URL(issuer); callback = new URL(redirectURI);
+    platformIdP = new URL(authentikOrigin);
+  } catch { deny(); }
+  if (platformIdP.protocol !== "https:" || platformIdP.port ||
+      platformIdP.pathname !== "/" || platformIdP.search || platformIdP.hash ||
+      platformIdP.username || platformIdP.password ||
+      platformIdP.origin + "/" !== authentikOrigin + "/" ||
+      provider.origin !== platformIdP.origin ||
+      provider.protocol !== "https:" || provider.port || provider.username || provider.password ||
       provider.search || provider.hash || provider.href !== issuer ||
       provider.pathname !== `/application/o/txo-fabric-${tenantKey}/` ||
       callback.protocol !== "https:" || callback.port || callback.username || callback.password ||
@@ -46,7 +54,8 @@ function secretEqual(a, b) {
 /**
  * Staged, unmounted Fabric BFF OIDC authorization-code login coordinator.
  *
- * tenantKey, issuer, clientId, domainSuffix, redirectURI MUST be resolved from trusted
+ * tenantKey, issuer, clientId, domainSuffix, redirectURI, authentikOrigin
+ * MUST be resolved from trusted
  * server-side TenantBundle config; they are NOT parameters on begin/complete.
  * transactions MUST be a durable, tenant-keyed store with atomic insert and
  * atomic consume (delete-before-return), shared across BFF replicas, bounded
@@ -65,10 +74,10 @@ function secretEqual(a, b) {
  * sets principal.verified or grants an OpenFGA permission.
  */
 export function createFabricOIDCLogin({
-  tenantKey, issuer, clientId, domainSuffix, redirectURI, transactions,
+  tenantKey, issuer, clientId, domainSuffix, redirectURI, authentikOrigin, transactions,
   enrollVerifiedHuman, fetchImpl = fetch, now = () => Date.now(),
 }) {
-  const endpoints = config({ tenantKey, issuer, clientId, domainSuffix, redirectURI });
+  const endpoints = config({ tenantKey, issuer, clientId, domainSuffix, redirectURI, authentikOrigin });
   if (!transactions || typeof transactions.insert !== "function" ||
       typeof transactions.consume !== "function" ||
       typeof enrollVerifiedHuman !== "function" ||
