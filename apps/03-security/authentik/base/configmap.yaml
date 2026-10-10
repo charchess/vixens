@@ -63,3 +63,57 @@ data:
         attrs:
           name: Netbird
           provider: !KeyOf netbird-provider-v2
+  # Platform-owned global Fabric browser OIDC provider. Independent of any
+  # tenant TenantBundle and separate from generated per-tenant dashboards.
+  # All users may authenticate; Fabric BFF and OpenFGA grant workspace
+  # access separately, after live active-account/membership verification.
+  # Public client + EXACT HTTPS callback; BFF always uses PKCE S256, state,
+  # nonce and a single-use server-side authorization transaction. Do not
+  # infer tenant rights from this provider nor use its OIDC sub as Fabric ID.
+  txo-fabric-webui.yaml: |
+    version: 1
+    metadata:
+      name: txo-fabric-global-webui
+    entries:
+      - model: authentik_providers_oauth2.scopemapping
+        id: txo-fabric-webui-immutable-human-uuid-scope
+        identifiers:
+          name: TXO Fabric global immutable human identity
+        attrs:
+          scope_name: txo_fabric_identity
+          description: Fabric global signed immutable Authentik user UUID
+          expression: |
+            return {"txo_fabric_user_uuid": str(request.user.uuid)}
+
+      - model: authentik_providers_oauth2.oauth2provider
+        id: txo-fabric-webui-provider
+        identifiers:
+          name: txo-fabric-webui
+        attrs:
+          client_id: txo-fabric-webui
+          client_type: public
+          include_claims_in_id_token: true
+          authentication_flow: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+          signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+          grant_types:
+            - authorization_code
+          property_mappings:
+            - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
+            - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-email]]
+            - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-profile]]
+            - !KeyOf txo-fabric-webui-immutable-human-uuid-scope
+          redirect_uris:
+            - matching_mode: strict
+              url: https://webui.truxonline.com/auth/callback
+              redirect_uri_type: authorization
+
+      - model: authentik_core.application
+        id: txo-fabric-webui-app
+        identifiers:
+          slug: txo-fabric-webui
+        attrs:
+          name: TXO Fabric — WebUI globale
+          policy_engine_mode: any
+          provider: !KeyOf txo-fabric-webui-provider
