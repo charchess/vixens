@@ -1,6 +1,47 @@
-# Fabric WebUI — Hermes chat transport (initial implementation slice)
+# Fabric WebUI — global browser/BFF decision (ADR-040)
 
-Status: **internal prototype; not deployed; not a usable WebUI yet.** Related #3981, #3832, #3807 and UC-005 in `/usecase/`.
+**Status:** source-only prototype, not deployed; `webui.truxonline.com` does not yet serve this application.
+
+One **global** React/assistant-ui frontend has now been adapted for server-scoped
+multi-tenant navigation. A **single logical Fabric BFF** routes between separately
+authorized tenant chat services; runtime Hermes/LiteLLM/CPA and sensitive
+credentials remain tenant-scoped.
+
+```text
+Browser -> webui.truxonline.com (global SPA + same-origin BFF)
+           -> Authentik global OIDC (TO PROVISION)
+           -> Fabric secure session / tenant resolution (TO IMPLEMENT)
+           -> GET /api/me [only authorized tenant contexts]
+           -> /api/tenants/<tenantKey>/chat/*
+                -> Fabric global route middleware (source only)
+                -> existing tenant-scoped chat-http and session service
+                -> freshly checked agent grant / OpenFGA
+                -> private Hermes -> tenant LiteLLM -> tenant CPA
+```
+
+**Existing per-tenant issuers remain in Authentik** for v0 Hermes dashboards.
+A global OIDC issuer cannot simply be substituted into existing per-tenant
+immutable subject/issuer ledgers. Authentik group memberships are sourced
+from Authentik, not from a browser/group claim or fabricated grant.
+
+`server/global-webui-http.mjs` includes strict global issuer, tenant
+catalog, role, active account and freshness validation around the existing
+chat handler. The required privileged authenticated callbacks are **not
+implemented/deployed**, and MUST never accept a user-supplied tenant
+principal or silently grant `verified`. The global handler itself is
+not a production-ready authentication server.
+
+**Still missing:** global Authentik app/client, real login/session and BFF
+server deployment, secure service-to-service IAM enrollment, tenant FGA
+grants/refresh, durable chat thread and transaction stores, secret
+and NetworkPolicy boundaries, private Hermes API enablement, deployment
+and physical acceptance. Admin and settings are NOT live.
+`TXO_FABRIC_OPENFGA_STORES_ENABLED` remains disabled. No production
+promotion is implied.
+
+---
+
+## Existing internal Hermes chat/OIDC components
 
 The first implementation provides a **small, dependency-free, server-side transport contract** that forwards only whitelisted user-safe Hermes API Server events. It deliberately does not implement an HTTP server, browser authentication, a provider key store, React UI or Kubernetes manifests.
 
