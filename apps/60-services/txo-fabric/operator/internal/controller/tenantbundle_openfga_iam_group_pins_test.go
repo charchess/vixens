@@ -185,3 +185,37 @@ func TestIAMGroupUUIDPinningNeedsApprovedStoreAndModel(t *testing.T) {
 		t.Fatal("group UUID pinning accepted absent private FGA binding")
 	}
 }
+
+func TestIAMGroupTupleProjectionUsesOnlyPersistedImmutableGroupPins(t *testing.T) {
+	ctx:=context.Background()
+	b:=humanIdentityTenant("indiba","TEN00002","uid-b","sales")
+	r:=preparedHumanIdentityReconciler(t,b)
+	if err:=r.reconcileOpenFGAHumanIdentityRegistry(ctx,b);err!=nil {t.Fatal(err)}
+	issuer:=b.Spec.HumanAccess.Web.OIDC.Issuer
+	installIAMIdentityBindings(t,r,b.Spec.TenantID,
+		authentik.IdentityBinding{TenantID:b.Spec.TenantID,Issuer:issuer,OIDCSubject:"signed-hashed-sub",
+			AuthentikUserUUID:identityLedgerUserUUID,FabricUserID:"usr000002"})
+	group:=authentikGroupName(b.Name,"sales")
+	source:=pinnedTestSource(group,identityLedgerGroupUUID,identityLedgerUserUUID)
+	writer:=newIAMWriter()
+	if err:=r.reconcileIAMGroupMembersFromPersistedPins(ctx,b,source,writer);err==nil ||
+		len(writer.calls)!=0 {
+		t.Fatal("member sync accepted missing durable group pins")
+	}
+	if err:=r.reconcileOpenFGAIAMGroupPins(ctx,b,source);err!=nil {t.Fatal(err)}
+	if err:=r.reconcileIAMGroupMembersFromPersistedPins(ctx,b,source,writer);err!=nil {t.Fatal(err)}
+	binding,err:=r.readOpenFGAAuthorizationBinding(ctx,b)
+	if err!=nil {t.Fatal(err)}
+	want:=[]openfga.Tuple{{User:"user:usr000002",Relation:"member",Object:"group:"+group}}
+	if !reflect.DeepEqual(writer.at(binding.Store.ID,group),want) {
+		t.Fatalf("trusted pins did not drive tenant-isolated tuple scope: %v",writer.current)
+	}
+	// Group deletion, even with same generated name, must be denied after
+	// replacing its Authentik UUID while retaining previous Fabric pin.
+	source.groups[group]=makeIAMGroup(group,"550e8400-e29b-41d4-a716-446655440044",identityLedgerUserUUID)
+	n:=len(writer.calls)
+	if err:=r.reconcileIAMGroupMembersFromPersistedPins(ctx,b,source,writer);err==nil {
+		t.Fatal("recreated Authentik group authorized a grant")
+	}
+	if len(writer.calls)!=n {t.Fatal("an unapproved group UUID reached the OpenFGA writer")}
+}
