@@ -120,6 +120,9 @@ spec:
                 echo "Home Assistant runtime Python requirements already satisfied."
               else
                 echo "Installing/upgrading Home Assistant runtime Python requirements..."
+                # pip --target leaves older dist-info behind.  Remove only the
+                # Roomba+ Prime package being upgraded so metadata is unambiguous.
+                rm -rf "$TARGET"/roombapy_prime "$TARGET"/roombapy_prime-*.dist-info
                 python -m pip install \
                   --no-cache-dir \
                   --upgrade \
