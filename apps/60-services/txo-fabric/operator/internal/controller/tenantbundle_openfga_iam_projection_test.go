@@ -178,8 +178,8 @@ func TestVerifiedIAMGroupPreflightIsAllOrNothingAndRereadsSource(t *testing.T) {
 	// Input for the second group is malformed. Even the valid first group
 	// must NOT be sent to OpenFGA before every snapshot is verified.
 	bad:=&stagedIAMSource{groups:map[string]authentik.GroupMembership{
-		sales:makeIAMGroup(sales,identityLedgerGroupUUID,identityLedgerUserUUID),
-		admin:makeIAMGroup(admin,adminUUID,"550e8400-e29b-41d4-a716-446655440018"),
+		sales:makeIAMGroup(sales,identityLedgerGroupUUID,"550e8400-e29b-41d4-a716-446655440018"),
+		admin:makeIAMGroup(admin,adminUUID,identityLedgerUserUUID),
 	},calls:map[string]int{},fail:map[string]error{}}
 	if err:=r.reconcileVerifiedIAMGroupMemberships(ctx,b,pins,bad,writer);err==nil {t.Fatal("accepted partial tenant IAM inventory")}
 	if len(writer.calls)!=0 {t.Fatal("wrote partial IAM inventory")}
