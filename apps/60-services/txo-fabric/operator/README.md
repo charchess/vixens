@@ -184,3 +184,26 @@ make test
 The operator image is built to GHCR after merge; a separate GitOps change enables
 the manager only after an immutable image tag exists. This prevents a source PR
 from deploying a non-existent image into `txo-fabric-system`.
+
+### Authentik signed immutable user UUID scope (staged #3996)
+
+The generated tenant OIDC blueprint includes exactly one reusable Authentik
+OAuth2 scope mapping `txo_fabric_identity`. Its server-side Authentik
+expression returns `txo_fabric_user_uuid` from `request.user.uuid`;
+each tenant's OAuth provider references the mapping with
+`include_claims_in_id_token: true`. The scope is **not** an authorization
+relation or a Fabric user ID and does not manage user/group membership.
+
+The future Fabric BFF must request `openid profile email txo_fabric_identity`
+from the tenant's declared issuer and verify the signed ID token with
+`webui/server/oidc-identity.mjs` (issuer, audience, nonce, signature, expiry)
+before handing the resulting immutable Authentik UUID + opaque OIDC `sub`
+to a privileged enrollment backend. Existing Authentik `sub_mode` is **not
+changed** (it may be `hashed_user_id`); no implicit migration or username
+lookup is permitted. The existing agent dashboard OIDC scope settings are
+left untouched because they are **not** the future authenticated Fabric BFF.
+
+This source change alone does not deploy an OIDC BFF, persist human identities,
+create grants or turn on the OpenFGA rollout flag. Verify the real Authentik
+blueprint application and signed claim in a controlled runtime recipe before
+considering enrollment safe; no production promotion is implied.
