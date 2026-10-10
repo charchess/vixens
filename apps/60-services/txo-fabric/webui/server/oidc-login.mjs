@@ -14,8 +14,7 @@ const digest = (value) => createHash("sha256").update(value).digest("base64url")
 
 function config({ tenantKey, issuer, clientId, redirectURI, domainSuffix }) {
   if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(tenantKey || "") ||
-      clientId !== `txo-fabric-${tenantKey}` ||
-      typeof domainSuffix !== "string" ||
+      clientId !== `txo-fabric-${tenantKey}` || typeof domainSuffix !== "string" ||
       !/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(domainSuffix)) deny();
   let provider, callback;
   try { provider = new URL(issuer); callback = new URL(redirectURI); } catch { deny(); }
@@ -25,37 +24,13 @@ function config({ tenantKey, issuer, clientId, redirectURI, domainSuffix }) {
       callback.protocol !== "https:" || callback.port || callback.username || callback.password ||
       callback.search || callback.hash || callback.href !== redirectURI ||
       callback.pathname !== "/auth/callback" ||
-      // Must agree with TenantBundle-generated Authentik regex:
-      // ^https://[a-z0-9-]+-<tenant>\\.<domainSuffix>/auth/callback$
-      !new RegExp(`^[a-z0-9-]+-${tenantKey}\\\\.${domainSuffix.replaceAll(".", "\\\\.")}import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
-import { createAuthentikIdentityVerifier } from "./oidc-identity.mjs";
-
-const BASE64URL43 = /^[A-Za-z0-9_-]{43}$/;
-const CODE = /^[\x21-\x7e]{1,4096}$/;
-const FABRIC_USER_ID = /^usr[0-9a-f]{32}$/;
-const MAX_AGE_MS = 5 * 60 * 1000;
-const MAX_TOKEN_RESPONSE = 32768;
-const SCOPE = "openid profile email txo_fabric_identity";
-const COOKIE_NAME = "__Host-txo-fabric-oidc";
-const deny = () => { throw new Error("Fabric OIDC login denied"); };
-const random = () => randomBytes(32).toString("base64url");
-const digest = (value) => createHash("sha256").update(value).digest("base64url");
-
-function config({ tenantKey, issuer, clientId, redirectURI, domainSuffix }) {
-  if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(tenantKey || "") ||
-      clientId !== `txo-fabric-${tenantKey}` ||
-      typeof domainSuffix !== "string" ||
-      !/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(domainSuffix)) deny();
-  let provider, callback;
-  try { provider = new URL(issuer); callback = new URL(redirectURI); } catch { deny(); }
-  if (provider.protocol !== "https:" || provider.port || provider.username || provider.password ||
-      provider.search || provider.hash || provider.href !== issuer ||
-      provider.pathname !== `/application/o/txo-fabric-${tenantKey}/` ||
-      callback.protocol !== "https:" || callback.port || callback.username || callback.password ||
-      callback.search || callback.hash || callback.href !== redirectURI ||
-      callback.pathname !== "/auth/callback" ||
-)
-        .test(callback.hostname)) deny();
+      !callback.hostname.includes("-" + tenantKey + ".") ) deny();
+  // TenantBundle-generated redirect regex is:
+  // ^https://[a-z0-9-]+-<tenant>\\.<domainSuffix>/auth/callback$
+  const suffix = "-" + tenantKey + "." + domainSuffix;
+  const appLabel = callback.hostname.endsWith(suffix)
+    ? callback.hostname.slice(0, -suffix.length) : "";
+  if (!/^[a-z0-9-]+$/.test(appLabel)) deny();
   const authorizationEndpoint = new URL("/application/o/authorize/", provider.origin);
   const tokenEndpoint = new URL("/application/o/token/", provider.origin);
   return { authorizationEndpoint, tokenEndpoint };
