@@ -265,3 +265,23 @@ func (r *TenantBundleReconciler) reconcileOpenFGAIAMGroupPins(
 	}
 	return nil
 }
+
+// reconcileIAMGroupMembersFromPersistedPins is the only intended activation
+// entrypoint for the staged #4019 group membership projection. The caller
+// supplies trusted Authentik and private OpenFGA clients, NOT a group UUID,
+// store ID or model ID. All group UUIDs are loaded from the retained,
+// tenant-UID-bound Fabric ledger before any write, and the projection
+// validates source continuity before writing scoped member tuples.
+//
+// This remains deliberately UNCALLED until verified OIDC enrollment,
+// IAM credentials/NP, freshness/lease and fail-closed runtime BFF exist.
+func (r *TenantBundleReconciler) reconcileIAMGroupMembersFromPersistedPins(
+	ctx context.Context, bundle *fabricv1alpha1.TenantBundle,
+	source authoritativeIAMGroupReader, writer scopedIAMTupleWriter,
+) error {
+	pins, err := r.readOpenFGAIAMGroupPins(ctx, bundle)
+	if err != nil {
+		return fmt.Errorf("trusted Fabric group UUID pins unavailable: %w", err)
+	}
+	return r.reconcileVerifiedIAMGroupMemberships(ctx, bundle, pins, source, writer)
+}
