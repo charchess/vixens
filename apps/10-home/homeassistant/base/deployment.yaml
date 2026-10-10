@@ -29,6 +29,7 @@ spec:
         vixens.io/backup-profile: "standard"
       annotations:
         reloader.stakater.com/auto: "true"
+        checksum/homeassistant-python-requirements: "80f50c3aaca85a71a09974dc18cb1cf585dcaff9661f8b1572951e925aa1c03e"
         vixens.io/fast-start: "true"
         dataangel.io/metrics-port: "9090"
         dataangel.io/restore-timeout: "90m"
