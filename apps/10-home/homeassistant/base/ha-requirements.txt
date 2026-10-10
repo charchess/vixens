@@ -4,7 +4,7 @@
 # Roomba+ requires both the classic local-MQTT library and the Prime/cloud library.
 hass-web-proxy-lib==0.0.8
 roombapy==2.0.2
-roombapy-prime[map]==0.3.4
+roombapy-prime[map]==0.5.0
 
 # BPS / scientific stack
 aiofiles>=23.1.0
