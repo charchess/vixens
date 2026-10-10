@@ -32,6 +32,9 @@ type TenantBundleReconciler struct {
 	OpenFGAStoreClient openFGAStoreProvisioner
 	// Optional test seam; runtime model calls use the same OpenBao-synced key.
 	OpenFGAModelClient openFGAModelProvisioner
+	// Optional test seam. Runtime uses the platform-owned OpenBao-synced
+	// Authentik service token; never tenant or browser credentials.
+	AuthentikMembershipClient authoritativeIAMGroupReader
 }
 
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles,verbs=get;list;watch;update;patch
@@ -166,6 +169,24 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 				_ = r.Status().Update(ctx, &bundle)
 			}
 			return ctrl.Result{}, err
+		}
+		// The operator is the sole issuer of durable tenant IAM group pins.
+		// No tuple sync runs here: verified human enrollment, revocation,
+		// freshness and agent permissions still require explicit activation.
+		if bundle.Spec.HumanAccess != nil && bundle.Spec.HumanAccess.Web != nil {
+			source, err := r.authentikMembershipSource(ctx)
+			if err == nil {
+				err = r.reconcileOpenFGAIAMGroupPins(ctx, &bundle, source)
+			}
+			if err != nil {
+				bundle.Status.Phase = "Degraded"
+				setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, "IAMGroupPinReconcileFailed", "private Authentik group UUID continuity could not be verified")
+				setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "OpenFGAIAMGroupPinFailed", "tenant human IAM group UUID pins are not reconciled")
+				if !reflect.DeepEqual(previousStatus, bundle.Status) {
+					_ = r.Status().Update(ctx, &bundle)
+				}
+				return ctrl.Result{}, err
+			}
 		}
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, "TupleSyncNotImplemented", "Authentik membership and Fabric grant reconciliation are not yet implemented")
 	} else {
