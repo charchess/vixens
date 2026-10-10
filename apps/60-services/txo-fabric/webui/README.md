@@ -122,8 +122,9 @@ with the **real Authentik authorization-code endpoint** and a server-owned
 OAuth2 PKCE S256 transaction. It always requests exactly
 `openid profile email txo_fabric_identity` and uses Authentik's shared
 `/application/o/authorize/` and `/application/o/token/` endpoints, not
-the per-provider issuer as a token URL. Both issuer and redirect callback
-are derived from the **trusted TenantBundle** configuration; the callback
+the per-provider issuer as a token URL. The issuer, audience and redirect callback are derived from **trusted
+TenantBundle** configuration and the shared Authentik origin is pinned by
+Fabric platform configuration (not the browser). The callback
 host must match its Authentik-generated pattern
 `https://<app>-<tenant>.<domainSuffix>/auth/callback`.
 
