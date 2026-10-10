@@ -184,6 +184,7 @@ export function App() {
         </button>)}
         {loading && <p className="hint">Chargement de vos espaces…</p>}
         {error && <p className="error" role="alert">{error}</p>}
+        {error && <a className="login-link" href="/auth/start">Se connecter avec Authentik</a>}
         {!loading && !error && tenants.length === 0 &&
           <p className="hint">Aucun espace autorisé pour ce compte.</p>}
       </nav>

@@ -1,5 +1,63 @@
 # Fabric WebUI — global browser/BFF decision (ADR-040)
 
+## Global browser login + durable session implementation (#3807, staged)
+
+`server/global-oidc-login.mjs`, `server/global-postgres-sessions.mjs`
+and `server/global-auth-http.mjs` now form one **real source-level**
+AuthentiK browser login flow for the global app (ADR-040):
+
+- `GET /auth/start`: redirects to the **pinned global Authentik**
+  `/application/o/authorize/`, generating cryptographically random
+  PKCE S256/state/nonce and a Secure+HttpOnly+SameSite=Lax+host-only
+  temporary cookie. The transaction persists through the existing
+  PostgreSQL adapter (#4032) with private `tenantKey=webui` namespace.
+  `webui` is not a customer TenantBundle or Fabric grant.
+- `GET /auth/callback`: requires that original browser binding,
+  atomically consumes transaction, exchanges public-client authorization
+  code with its PKCE verifier, validates the actual RS256 Authentik
+  ID-token signature/audience/global issuer/nonce and the signed immutable
+  Authentik UUID via the existing verifier. A REQUIRED *privileged*
+  Authentik active-account read must additionally confirm identity
+  and freshness. Only then can a persistent browser session be issued.
+- `db/migrations/002_global_browser_sessions.sql`: stores a SHA256
+  **digest of a random 256-bit cookie**, issuer, immutable Authentik UUID,
+  opaque global `sub`, and fixed 8h expiry in a private Fabric BFF
+  PostgreSQL DB. No raw cookie, access token, client API key, tenant
+  `fabricUserId`, group or permission is stored. `authenticate()`,
+  `revoke()`, bounded expiry cleanup use parameterized SQL and deny
+  on outages; two BFF replicas use the same durable session state.
+- After callback, redirect to `/` with **no code/state** in the URL.
+  `__Host-txo-fabric-session` is Secure/HttpOnly/SameSite=Lax/Path=/.
+  `POST /auth/logout` checks exact Origin and custom CSRF header
+  before deleting the session digest and expiring the cookie.
+- `createGlobalWebUIApp` composes this session verifier with the
+  existing global `GET /api/me` tenant discovery and per-operation
+  tenant-scoped chat router. An OIDC login by itself **never** grants
+  any Fabric group, tenant, agent, admin or OpenFGA permission.
+  Existing issuer-pinned tenant identity ledgers are NOT mutated.
+- The global React shell has a login link to `/auth/start` when
+  session-based workspace discovery fails.
+
+Tests exercise real RSA-signed JWT OIDC claims with fake IdP HTTP,
+invalid nonce/issuer/audience/UUID/expiry, bad cookie, callback replay,
+CSRF logout, session isolation and SQL adapter expiry/outages.
+**A mocked Authentik and SQL-contract simulator in CI are not proof of
+physical Authentik/CNPG readiness.**
+
+**NOT DEPLOYED / NOT OPEN TO THE INTERNET:** Production still needs
+an authenticated trusted active-account resolver and issuer-safe
+per-tenant canonical user lookup/enrollment (operator-led),
+`TenantBundle` catalog, fresh Authentik pinned-group + OpenFGA checks,
+dedicated CNPG DB/role/migrations and credential lifecycle, real
+Node HTTP app image/Ingress/TLS/NetworkPolicy, durable chat sessions
+and private Hermes API. The global OIDC provider staged in #4035 is
+not confirmed live and no prod promotion is authorized. Do not wire
+these modules with fake callbacks. Infrastructure OpenBao may supply
+*only platform bootstrap technical secrets* and is never a tenant
+credential vault.
+
+---
+
 ## Platform-global Authentik OIDC provider (staged, not activated)
 
 The **global** browser client is now declared in the existing Authentik
