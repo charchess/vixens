@@ -160,3 +160,48 @@ single-use/replay and concurrent callback, expired/mismatched transactions,
 invalid tokens, upstream outages, refusal and cross-tenant isolation.
 Do not enable the OpenFGA rollout flag, create a public BFF ingress or
 promote production on the strength of these synthetic source tests.
+
+## PostgreSQL-backed replay-proof OAuth transaction store (staged #3996)
+
+`server/oidc-postgres-transactions.mjs` now provides the actual
+`transactions.insert/consume` dependency for the existing
+`createFabricOIDCLogin` coordinator, using a **platform-owned PostgreSQL**
+connection pool instead of a node-local Map:
+
+- A 32-byte browser state is **SHA-256 digested** before persisting; table
+  primary key is `(tenant_key, state_digest)`, with **no upsert**.
+- `DELETE ... WHERE tenant_key = $1 AND state_digest = $2 RETURNING ...`
+  atomically burns the transaction on **exactly one** replica, including
+  if cookie validation, token exchange or enrollment subsequently fails.
+  PostgreSQL's atomic row deletion, not a simulated browser test, is the
+  concurrency primitive. Query parameters prevent SQL injection; failures
+  are redacted and fail closed.
+- The database holds only short-lived state (nonce, PKCE verifier, cookie
+  binding **digest**, approved issuer/client/redirect, creation/expiry),
+  never the original state, access tokens, sessions, Fabric identities or
+  OpenFGA grants. A fixed five-minute TTL is enforced by a SQL CHECK and
+  BFF coordinator. `pruneExpired()` removes **at most 100** expired
+  transactions per call; schedule it through the future Fabric-owned BFF
+  maintenance loop or another reviewed platform component. DB clocks must
+  be synchronized with BFF clocks.
+- SQL migration: `db/migrations/001_oidc_login_transactions.sql`;
+  apply from a reviewed GitOps database migrator with exclusive schema
+  rights, **not** during a browser request. Require a *dedicated Fabric BFF*
+  database, encrypted PostgreSQL backups, least-privileged BFF role with
+  only `SELECT/INSERT/DELETE` on this table, and private NetworkPolicy.
+  Do not reuse OpenFGA CNPG credentials or provision a second independent
+  Authentik/OpenFGA source of truth.
+- Node tests cover a SQL-contract simulator with two independent pool
+  adapters, consume-once vs replay, tenant separation, digest storage,
+  malformed/forged state, TTL and bounded pruning, corrupt DB rows and
+  outages. **These are not physical PostgreSQL tests** and do not prove
+  real migrations, runtime NetworkPolicy or cluster readiness.
+
+This is an implementation of the **durable storage adapter and its schema**,
+not yet its Kubernetes rollout. No PostgreSQL database/role, BFF Deployment,
+migration Job, secret, ingress, real authenticated BFF→operator enrollment
+transport, session service or authorizer has been created. The Fabric BFF
+must instantiate this adapter using platform-owned service credentials
+supplied by OpenBao/ESO and ensure the migration/DB/network preconditions
+exist **before** exposing `/auth/start` or `/auth/callback`. Until that
+is done, **no end-user OIDC login is active**; #3996 stays open.
