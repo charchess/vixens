@@ -145,6 +145,9 @@ func TestIAMGroupUUIDPinsRejectMalformedDurableLedger(t *testing.T) {
 	initial:=openFGAModelTestBinding(t,r,b.Spec.TenantID)
 	for _,tc:=range []struct{name string;mutate func(map[string]string)}{
 		{"missing-schema",func(m map[string]string){delete(m,iamGroupPinsSchemaKey)}},
+		{"missing-uid-marker",func(m map[string]string){delete(m,iamGroupPinsOwnerUIDKey)}},
+		{"foreign-uid",func(m map[string]string){m[iamGroupPinsOwnerUIDKey]="old-tenant"}},
+		{"pin-fields-erased-but-owner-remains",func(m map[string]string){delete(m,iamGroupPinsDataKey);delete(m,iamGroupPinsSchemaKey)}},
 		{"missing-data",func(m map[string]string){delete(m,iamGroupPinsDataKey)}},
 		{"schema-drift",func(m map[string]string){m[iamGroupPinsSchemaKey]="v2"}},
 		{"malformed",func(m map[string]string){m[iamGroupPinsDataKey]="{"}},
