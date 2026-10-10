@@ -50,6 +50,7 @@ Planning projects are `vixens core`, `vixens roadmap`, and `vixens perso`.
 | [036](036-hindsight-external-durable-memory-boundary.md) | Keep durable agent memory behind the tenant Hindsight service boundary | Accepted | AIaaS | vixens roadmap |
 | [037](037-skills-vs-platform-governed-executable-capabilities.md) | Separate agent-extensible skills from platform-governed executable capabilities | Accepted | AIaaS | vixens roadmap |
 | [039](039-fabric-openfga-authorization-boundary.md) | One Fabric-wide OpenFGA authorization service, Authentik identity and distinct hierarchical policy | Accepted (deployment pending) | AIaaS | vixens roadmap |
+| [040](040-global-fabric-webui-entrypoint.md) | One global Fabric WebUI and trusted multi-tenant BFF routing | Accepted (runtime pending) | AIaaS | vixens roadmap |
 
 ## Proposed decisions (not yet authoritative)
 
@@ -83,7 +84,7 @@ These anomalies predate ADR-030 and are preserved so existing links/history rema
 - **‡ Renovate Discord header collision:** `019-renovate-discord-approval-workflow.md` is the repository file identity, but its historical document header says `ADR-013`. The separate `013-layered-configuration-disaster-recovery.md` also exists. The file is cataloged here by its stable path and is not renumbered retroactively.
 - **§ Infisical restored-file mismatch:** `011-infisical-secrets-management.md` is the stable repository path, while its restored historical header says `ADR 007`. It is superseded and retained only as history.
 
-No new ADR may reuse an allocated number. The next ADR after this catalog is **039** unless another PR allocates it first.
+No new ADR may reuse an allocated number. The next ADR after this catalog is **041** unless another PR allocates it first.
 
 ## Project view
 
