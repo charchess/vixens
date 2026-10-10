@@ -93,8 +93,8 @@ func renderAuthentikBlueprint(bundles []fabricv1alpha1.TenantBundle) string {
 	var out strings.Builder
 	out.WriteString("version: 1\nmetadata:\n  name: txo-fabric-tenants-generated\nentries:\n")
 	// One shared source mapping is linked to every tenant provider. The claim
-	// comes from Authentik\x27s immutable user UUID, never a mutable username or sub.
-	// It is only emitted for explicit txo_fabric_identity OAuth2 scope requests.
+	// comes from Authentik's immutable user UUID, never a mutable username or sub.
+	// The Fabric BFF must explicitly request txo_fabric_identity on login.
 	out.WriteString("  - model: authentik_providers_oauth2.scopemapping\n    id: txo-fabric-human-uuid-scope\n    identifiers:\n      name: TXO Fabric verified human identity\n    attrs:\n      scope_name: txo_fabric_identity\n      description: Fabric signed immutable Authentik user UUID\n      expression: |\n        return {\"txo_fabric_user_uuid\": str(request.user.uuid)}\n\n")
 
 	proxyProviderIDs := make([]string, 0)
