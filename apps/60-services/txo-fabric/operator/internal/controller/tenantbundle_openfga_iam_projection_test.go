@@ -8,6 +8,7 @@ import (
 	"sort"
 	"testing"
 
+	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	"github.com/charchess/vixens/apps/60-services/txo-fabric/operator/internal/authentik"
 	"github.com/charchess/vixens/apps/60-services/txo-fabric/operator/internal/openfga"
 )
@@ -55,22 +56,10 @@ func newIAMWriter() *recordingIAMWriter {
 		current:map[string][]openfga.Tuple{},stores:map[string]bool{},models:map[string]bool{},
 	}
 }
-func enrolledIAMTenant(t *testing.T,r *TenantBundleReconciler,tenantName,tenantID string, users ...struct{sub,uuid,id string}) {
-	t.Helper()
-	ctx:=context.Background()
-	bundle:=humanIdentityTenant(tenantName,tenantID,"ignored","sales")
-	// read/reconcile ownership is tested against the actual fixture UID,
-	// not the ignored fixture copy.
-	var aBinding struct{}
-	_ = aBinding
-	_ = bundle
-	_ = ctx
-}
-
 // installIAMIdentityBindings deliberately represents a trusted Fabric-only
 // verified enrollment fixture: production has NO automatic subject/UUID
 // enrollment mechanism yet. In particular, no username is converted to sub.
-func installIAMIdentityBindings(t *testing.T,r *TenantBundleReconciler,tenantName,tenantID,issuer string, identities ...authentik.IdentityBinding) {
+func installIAMIdentityBindings(t *testing.T,r *TenantBundleReconciler,tenantID string, identities ...authentik.IdentityBinding) {
 	t.Helper()
 	ctx:=context.Background()
 	binding:=openFGAModelTestBinding(t,r,tenantID)
@@ -92,7 +81,7 @@ func TestVerifiedIAMMembershipConvergesThenRevokesRemovedUser(t *testing.T) {
 	r:=preparedHumanIdentityReconciler(t,b)
 	if err:=r.reconcileOpenFGAHumanIdentityRegistry(ctx,b);err!=nil {t.Fatal(err)}
 	issuer:=b.Spec.HumanAccess.Web.OIDC.Issuer
-	installIAMIdentityBindings(t,r,b.Name,b.Spec.TenantID,issuer,
+	installIAMIdentityBindings(t,r,b.Spec.TenantID,
 		authentik.IdentityBinding{TenantID:b.Spec.TenantID,Issuer:issuer,OIDCSubject:"hashed-sub-one",AuthentikUserUUID:identityLedgerUserUUID,FabricUserID:"usr000002"},
 		authentik.IdentityBinding{TenantID:b.Spec.TenantID,Issuer:issuer,OIDCSubject:"hashed-sub-two",AuthentikUserUUID:"550e8400-e29b-41d4-a716-446655440002",FabricUserID:"usr000003"},
 	)
@@ -133,7 +122,7 @@ func TestVerifiedIAMMembershipNeverWritesFromPartialUnmappedOrForgedInput(t *tes
 	r:=preparedHumanIdentityReconciler(t,b)
 	if err:=r.reconcileOpenFGAHumanIdentityRegistry(ctx,b);err!=nil {t.Fatal(err)}
 	issuer:=b.Spec.HumanAccess.Web.OIDC.Issuer
-	installIAMIdentityBindings(t,r,b.Name,b.Spec.TenantID,issuer,
+	installIAMIdentityBindings(t,r,b.Spec.TenantID,
 		authentik.IdentityBinding{TenantID:b.Spec.TenantID,Issuer:issuer,OIDCSubject:"verified-hash",AuthentikUserUUID:identityLedgerUserUUID,FabricUserID:"usr000002"})
 	name:=authentikGroupName(b.Name,"sales")
 	good:=makeIAMGroup(name,identityLedgerGroupUUID,identityLedgerUserUUID)
@@ -179,7 +168,7 @@ func TestVerifiedIAMGroupPreflightIsAllOrNothingAndRereadsSource(t *testing.T) {
 	r:=preparedHumanIdentityReconciler(t,b)
 	if err:=r.reconcileOpenFGAHumanIdentityRegistry(ctx,b);err!=nil {t.Fatal(err)}
 	issuer:=b.Spec.HumanAccess.Web.OIDC.Issuer
-	installIAMIdentityBindings(t,r,b.Name,b.Spec.TenantID,issuer,
+	installIAMIdentityBindings(t,r,b.Spec.TenantID,
 		authentik.IdentityBinding{TenantID:b.Spec.TenantID,Issuer:issuer,OIDCSubject:"verified-hash",AuthentikUserUUID:identityLedgerUserUUID,FabricUserID:"usr000002"})
 	sales:=authentikGroupName(b.Name,"sales")
 	admin:=authentikGroupName(b.Name,"admin")
@@ -219,7 +208,7 @@ func TestVerifiedIAMGroupWriterOutageFailsAndForeignTenantCannotCrossStore(t *te
 	for _,bundle:=range []*fabricv1alpha1.TenantBundle{a,b} {
 		if err:=r.reconcileOpenFGAHumanIdentityRegistry(ctx,bundle);err!=nil {t.Fatal(err)}
 		issuer:=bundle.Spec.HumanAccess.Web.OIDC.Issuer
-		installIAMIdentityBindings(t,r,bundle.Name,bundle.Spec.TenantID,issuer,
+		installIAMIdentityBindings(t,r,bundle.Spec.TenantID,
 			authentik.IdentityBinding{TenantID:bundle.Spec.TenantID,Issuer:issuer,OIDCSubject:"signed-sub-"+bundle.Name,
 				AuthentikUserUUID:identityLedgerUserUUID,FabricUserID:"usr000002"})
 	}
