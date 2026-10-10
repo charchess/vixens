@@ -64,3 +64,61 @@ nav > strong { font-size: 11px; padding: 0 14px 10px; text-transform: uppercase;
   .message { max-width: 96%; }
   .composer-footer { padding: 10px 14px 20px; }
 }
+
+/* One global Fabric navigation shell, with a separately keyed tenant space. */
+.tenant-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+.agents-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 25px 12px;
+  background: #151e31;
+  border-right: 1px solid #253049;
+  min-width: 0;
+  min-height: 0;
+}
+.section-heading {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: #a4afc9;
+  padding: 0 12px;
+}
+.agents-column nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+.tenant-layout .workspace { min-width: 0; min-height: 0; }
+@media (max-width: 720px) {
+  .tenant-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .agents-column {
+    flex-direction: row;
+    align-items: center;
+    padding: 7px 12px;
+    gap: 8px;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid #253049;
+  }
+  .agents-column .section-heading { display: none; }
+  .agents-column nav {
+    flex-direction: row;
+    gap: 6px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .agents-column .sidebar-bottom { display: none; }
+}
