@@ -201,7 +201,48 @@ This is an implementation of the **durable storage adapter and its schema**,
 not yet its Kubernetes rollout. No PostgreSQL database/role, BFF Deployment,
 migration Job, secret, ingress, real authenticated BFF→operator enrollment
 transport, session service or authorizer has been created. The Fabric BFF
-must instantiate this adapter using platform-owned service credentials
-supplied by OpenBao/ESO and ensure the migration/DB/network preconditions
-exist **before** exposing `/auth/start` or `/auth/callback`. Until that
-is done, **no end-user OIDC login is active**; #3996 stays open.
+must instantiate this adapter with **Fabric-platform-only PostgreSQL
+credentials**, delivered through a reviewed Kubernetes secret lifecycle,
+and verify the migration/DB/network preconditions **before** exposing
+`/auth/start` or `/auth/callback`. The storage backend for BFF platform
+credentials is a deployment choice: do **not** make the infrastructure
+OpenBao/ESO path a mandatory tenant-facing runtime dependency. Until the
+platform backend and BFF are deployed, **no end-user OIDC login is active**;
+#3996 stays open.
+
+## OpenBao trust-domain boundary (non-negotiable)
+
+**Vixens Core OpenBao is the infrastructure/platform secret store. It is
+not the TXO Fabric tenant/customer/user credential vault.** Its existing
+OpenFGA/PostgreSQL and Authentik platform service credentials are
+control-plane bootstrap material; a Fabric BFF technical database
+password, if stored there, is likewise a platform credential, never a
+customer credential. Tenant Hermes runtimes, tenant-admin users and
+Fabric customer interfaces must not receive Core OpenBao API access,
+root tokens, secret paths, or a Kubernetes `ClusterSecretStore/openbao`
+reference allowing client data to enter that trust domain.
+
+The accepted target in [#3728](https://github.com/charchess/vixens/issues/3728)
+is a **separate IAaaS OpenBao deployment** with its own lifecycle,
+storage, policies and backups, used behind the non-revealing Fabric
+Credential Broker [#3729](https://github.com/charchess/vixens/issues/3729)
+for tenant/user/integration credential data. This is a separate
+**v0.2** workstream and must not be smuggled into #3996 (v0.1)
+as a requirement for BFF user authentication.
+
+The OAuth transaction table introduced here is **short-lived BFF
+control-plane session state**, not tenant provider secret storage.
+Its server-side tenant keys are isolation metadata, not an OpenBao
+namespace nor an entitlement for tenants to administer the shared
+database. The BFF must remain a trusted Fabric boundary and may never
+copy a customer's upstream OAuth provider credentials into Vixens Core
+OpenBao. Existing tenant CPA provider credentials retain their
+tenant-local lifecycle; #3979 governs their future self-service UI.
+
+Before deploying the BFF: choose a scoped **platform-only** CNPG role and
+secret-generation/rotation mechanism, bind it solely to the trusted BFF
+workload through service identity/RBAC/NetworkPolicy, and keep tenant
+runtime access denied. A CNPG role/Secret created through a secure
+platform-local generator may satisfy this without any new OpenBao
+application record. **Do not create a credential in Core OpenBao merely
+because the BFF stores a tenant key in a PostgreSQL row.**
