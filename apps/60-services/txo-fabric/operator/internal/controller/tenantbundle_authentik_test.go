@@ -599,3 +599,49 @@ func TestReconcileAuthentikBlueprintDoesNotRequireAuthForNoHumanAccess(t *testin
 		t.Fatalf("tenant without human access unexpectedly depends on Authentik: %v", err)
 	}
 }
+
+
+func TestRenderAuthentikBlueprintSignedHumanUUIDScopeIsSharedAndExplicit(t *testing.T) {
+	hairem := tenantWithIAM("hairem", "hAIrem", "client0", true)
+	indiba := tenantWithIAM("indiba", "Indiba", "sales", false)
+	blueprint := renderAuthentikBlueprint([]fabricv1alpha1.TenantBundle{*indiba, *hairem})
+
+	for _, want := range []string{
+		"model: authentik_providers_oauth2.scopemapping",
+		"id: txo-fabric-human-uuid-scope",
+		"scope_name: txo_fabric_identity",
+		"return {\"txo_fabric_user_uuid\": str(request.user.uuid)}",
+		"include_claims_in_id_token: true",
+	} {
+		if !strings.Contains(blueprint, want) {
+			t.Fatalf("missing signed immutable identity scope %q from blueprint", want)
+		}
+	}
+	if got := strings.Count(blueprint, "id: txo-fabric-human-uuid-scope"); got != 1 {
+		t.Fatalf("Fabric global identity scope should be created once, got %d", got)
+	}
+	if got := strings.Count(blueprint, "- !KeyOf txo-fabric-human-uuid-scope"); got != 2 {
+		t.Fatalf("expected one signed UUID property mapping per tenant OAuth2 provider, got %d", got)
+	}
+	for _, forbidden := range []string{
+		"request.user.username", "request.user.email", "sub_mode:", "authentik_core.user",
+	} {
+		if strings.Contains(blueprint, forbidden) {
+			t.Fatalf("blueprint used a mutable identifier, changed sub_mode, or created users: %s", forbidden)
+		}
+	}
+	// The Authentik provider still does not control human membership or
+	// create a canonical Fabric ID: the scope only exposes signed IAM evidence.
+}
+
+func TestRenderAuthentikBlueprintDoesNotPublishIdentityScopeWithoutActiveHumanTenants(t *testing.T) {
+	if got := renderAuthentikBlueprint(nil); strings.Contains(got, "txo-fabric-human-uuid-scope") {
+		t.Fatalf("retired tenants left behind a global identity scope: %s", got)
+	}
+	tenant := tenantWithIAM("indiba", "Indiba", "sales", false)
+	now := metav1.Now()
+	tenant.DeletionTimestamp = &now
+	if got := renderAuthentikBlueprint([]fabricv1alpha1.TenantBundle{*tenant}); strings.Contains(got, "txo-fabric-human-uuid-scope") {
+		t.Fatalf("deleted tenant continued publishing identity scope: %s", got)
+	}
+}
