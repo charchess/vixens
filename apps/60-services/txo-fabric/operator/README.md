@@ -153,7 +153,7 @@ Each subsequent guarded reconcile checks the actual **immutable Authentik group 
 
 This guarded branch resolves an operator-owned Authentik token only from the platform-private `txo-fabric-system/txo-authentik-runtime` Secret key `token`; a controller test seam can inject the read-only client. **The required OpenBao ExternalSecret and operator→Authentik NetworkPolicy are not provisioned in this PR.** Until they are reviewed and GitOps-deployed, the guarded reconciliation reports `OpenFGAAuthorizationReady=False/IAMGroupPinReconcileFailed` when the token is absent. The production OpenFGA feature flag remains OFF, so current hAIrem and Indiba readiness is unchanged. No browser-supplied credentials, group UUIDs or arbitrary FGA stores are accepted.
 
-This does NOT automatically enroll hashed OIDC subjects or synchronize member tuples in the main loop. The existing source-only group projection must consume these persisted pins, and verified subject/UUID enrollment, freshness/revocation policy, agent grants, BFF and physical A/B/C `Check` tests remain blockers for enabling authorization or promoting to production.
+This does NOT automatically enroll hashed OIDC subjects or synchronize member tuples in the main loop. A staged `reconcileIAMGroupMembersFromPersistedPins` wrapper already loads these Fabric-retained pins before invoking the #4019 group tuple projection, so the activation path never accepts caller-supplied UUID maps; **the wrapper is still uncalled**. Verified subject/UUID enrollment, freshness/revocation policy, agent grants, BFF and physical A/B/C `Check` tests remain blockers for enabling authorization or promoting to production.
 
 ### Verified Authentik group membership → scoped OpenFGA tuple convergence (staged #3996)
 
