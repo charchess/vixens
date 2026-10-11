@@ -159,3 +159,10 @@ rules:
   - patch
   - update
   - watch
+# Only the operator service account may call Kubernetes TokenReview.
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
