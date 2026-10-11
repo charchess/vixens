@@ -16,6 +16,8 @@ import (
 type freshAccountSource struct {
 	*stagedIAMSource
 	inactive bool
+	inactiveUUIDs map[string]bool
+	badAccountUUID string
 	inactiveAfter int
 	failAccount error
 	accountCalls int
@@ -24,7 +26,8 @@ type freshAccountSource struct {
 func (s *freshAccountSource) SnapshotUserAccount(_ context.Context, uuid string) (authentik.UserAccountSnapshot, error) {
 	s.accountCalls++
 	if s.failAccount != nil { return authentik.UserAccountSnapshot{}, s.failAccount }
-	return authentik.UserAccountSnapshot{UUID:uuid, Active:!s.inactive && (s.inactiveAfter==0 || s.accountCalls<s.inactiveAfter)}, nil
+	if s.badAccountUUID!="" {return authentik.UserAccountSnapshot{UUID:s.badAccountUUID,Active:false},nil}
+	return authentik.UserAccountSnapshot{UUID:uuid, Active:!s.inactive && !s.inactiveUUIDs[uuid] && (s.inactiveAfter==0 || s.accountCalls<s.inactiveAfter)}, nil
 }
 
 func readyFreshFixture(t *testing.T) (*TenantBundleReconciler, *fabricv1alpha1.TenantBundle, *freshAccountSource, *recordingIAMWriter) {
@@ -94,6 +97,7 @@ func TestFreshTenantMembershipPreflightFailsClosed(t *testing.T) {
 	}{
 		{"account-inactive",func(s *freshAccountSource,_ *fabricv1alpha1.TenantBundle){s.inactive=true},"AccountInactive"},
 		{"account-source-unavailable",func(s *freshAccountSource,_ *fabricv1alpha1.TenantBundle){s.failAccount=errors.New("offline")},"IAMSourceUnavailable"},
+		{"account-identity-mismatch",func(s *freshAccountSource,_ *fabricv1alpha1.TenantBundle){s.badAccountUUID="550e8400-e29b-41d4-a716-446655440050"},"IAMSourceUnavailable"},
 		{"group-source-unavailable",func(s *freshAccountSource,b *fabricv1alpha1.TenantBundle){s.fail[authentikGroupName(b.Name,"sales")]=errors.New("offline")},"IAMSourceUnavailable"},
 		{"wrong-group-uuid",func(s *freshAccountSource,b *fabricv1alpha1.TenantBundle){n:=authentikGroupName(b.Name,"sales");s.groups[n]=makeIAMGroup(n,"550e8400-e29b-41d4-a716-446655440011",identityLedgerUserUUID)},"GroupPinInvalid"},
 		{"unmapped-user",func(s *freshAccountSource,b *fabricv1alpha1.TenantBundle){n:=authentikGroupName(b.Name,"sales");s.groups[n]=makeIAMGroup(n,identityLedgerGroupUUID,"550e8400-e29b-41d4-a716-446655440011")},"IdentityLedgerInvalid"},
@@ -104,7 +108,7 @@ func TestFreshTenantMembershipPreflightFailsClosed(t *testing.T) {
 			r,b,s,w:=readyFreshFixture(t)
 			tc.alter(s,b)
 			until,reason:=r.reconcileFreshTenantMembers(context.Background(),b,s,w)
-			if until!="" || reason!=tc.want || len(w.calls)!=0 {
+			if until!="" || reason!=tc.want || len(w.calls)!=0 || len(w.revocations)!=0 {
 				t.Fatalf("unsafe preflight %q: until=%s reason=%s calls=%v",tc.name,until,reason,w.calls)
 			}
 		})
@@ -212,5 +216,84 @@ func TestFreshTenantMembershipTwoTenantsSameAuthentikUUIDDifferentFabricUsers(t 
 		len(tenantMemberTuples(writer,stores[0],cases[1].b.Spec.TenantID))!=0 ||
 		len(tenantMemberTuples(writer,stores[1],cases[0].b.Spec.TenantID))!=0 {
 		t.Fatal("tenant membership contaminated a foreign store")
+	}
+}
+
+func TestConfirmedInactiveAccountRevokesExactTwoScopesWithoutCollateral(t *testing.T) {
+	ctx:=context.Background()
+	r,b,s,w:=readyFreshFixture(t)
+	otherUUID:="550e8400-e29b-41d4-a716-446655440002"
+	otherID:="usr000003"
+	affectedID:="usr000002"
+	group:=authentikGroupName(b.Name,"sales")
+	s.groups[group]=makeIAMGroup(group,identityLedgerGroupUUID,identityLedgerUserUUID,otherUUID)
+	installIAMIdentityBindings(t,r,b.Spec.TenantID,
+		authentik.IdentityBinding{TenantID:b.Spec.TenantID,Issuer:b.Spec.HumanAccess.Web.OIDC.Issuer,
+			OIDCSubject:"legacy-sub-inactive",AuthentikUserUUID:identityLedgerUserUUID,FabricUserID:affectedID},
+		authentik.IdentityBinding{TenantID:b.Spec.TenantID,Issuer:b.Spec.HumanAccess.Web.OIDC.Issuer,
+			OIDCSubject:"legacy-sub-other",AuthentikUserUUID:otherUUID,FabricUserID:otherID},
+	)
+	ledgerBefore:=openFGAModelTestBinding(t,r,b.Spec.TenantID)
+	approved,err:=r.readOpenFGAAuthorizationBinding(ctx,b)
+	if err!=nil {t.Fatal(err)}
+	store:=approved.Store.ID
+	groupKey:=store+"/group:"+group+"/member"
+	tenantKey:=store+"/tenant:"+b.Spec.TenantID+"/member"
+	groupAffected:=openfga.Tuple{Object:"group:"+group,Relation:"member",User:"user:"+affectedID}
+	groupOther:=openfga.Tuple{Object:"group:"+group,Relation:"member",User:"user:"+otherID}
+	tenantAffected:=openfga.Tuple{Object:"tenant:"+b.Spec.TenantID,Relation:"member",User:"user:"+affectedID}
+	tenantOther:=openfga.Tuple{Object:"tenant:"+b.Spec.TenantID,Relation:"member",User:"user:"+otherID}
+	w.current[groupKey]=[]openfga.Tuple{groupAffected,groupOther}
+	w.current[tenantKey]=[]openfga.Tuple{tenantAffected,tenantOther}
+	foreignStore:="01H0H015178Y2V4CX10C2KGHF9"
+	foreignKey:=foreignStore+"/tenant:TEN00001/member"
+	foreign:=openfga.Tuple{Object:"tenant:TEN00001",Relation:"member",User:"user:"+affectedID}
+	w.current[foreignKey]=[]openfga.Tuple{foreign}
+	anotherGroupKey:=store+"/group:txo-fabric-foreign-sales/member"
+	w.current[anotherGroupKey]=[]openfga.Tuple{{Object:"group:txo-fabric-foreign-sales",Relation:"member",User:"user:"+affectedID}}
+	s.inactiveUUIDs=map[string]bool{identityLedgerUserUUID:true}
+	for pass:=0;pass<2;pass++ {
+		until,reason:=r.reconcileFreshTenantMembers(ctx,b,s,w)
+		if until!="" || reason!="AccountInactive" {
+			t.Fatalf("pass %d granted lease despite confirmed inactivation: until=%q reason=%q",pass,until,reason)
+		}
+		if !reflect.DeepEqual(w.current[groupKey],[]openfga.Tuple{groupOther}) ||
+			!reflect.DeepEqual(w.current[tenantKey],[]openfga.Tuple{tenantOther}) {
+			t.Fatalf("pass %d failed precise group and tenant revocation: %+v",pass,w.current)
+		}
+		if !reflect.DeepEqual(w.current[foreignKey],[]openfga.Tuple{foreign}) ||
+			len(w.current[anotherGroupKey])!=1 {
+			t.Fatal("revocation leaked into another tenant or unrelated group")
+		}
+		if len(w.revocations)!=2 {
+			t.Fatalf("idempotent revocation made extra writes, pass=%d count=%d",pass,len(w.revocations))
+		}
+		if len(w.calls)!=0 {t.Fatal("full-scope reconciler should never grant on inactive snapshot")}
+	}
+	ledgerAfter:=openFGAModelTestBinding(t,r,b.Spec.TenantID)
+	if ledgerBefore.ResourceVersion!=ledgerAfter.ResourceVersion ||
+		ledgerBefore.Data[identityBindingsKey]!=ledgerAfter.Data[identityBindingsKey] ||
+		ledgerBefore.Data[identityIssuerKey]!=ledgerAfter.Data[identityIssuerKey] {
+		t.Fatal("account revocation rewrote immutable tenant identity provenance")
+	}
+}
+
+func TestInactiveAccountSourceOutageNeverSpeculativelyDeletes(t *testing.T) {
+	r,b,s,w:=readyFreshFixture(t)
+	approved,err:=r.readOpenFGAAuthorizationBinding(context.Background(),b)
+	if err!=nil {t.Fatal(err)}
+	group:=authentikGroupName(b.Name,"sales")
+	groupKey:=approved.Store.ID+"/group:"+group+"/member"
+	tenantKey:=approved.Store.ID+"/tenant:"+b.Spec.TenantID+"/member"
+	existingGroup:=openfga.Tuple{Object:"group:"+group,Relation:"member",User:"user:usr000002"}
+	existingTenant:=openfga.Tuple{Object:"tenant:"+b.Spec.TenantID,Relation:"member",User:"user:usr000002"}
+	w.current[groupKey]=[]openfga.Tuple{existingGroup}
+	w.current[tenantKey]=[]openfga.Tuple{existingTenant}
+	s.failAccount=errors.New("read timeout")
+	until,reason:=r.reconcileFreshTenantMembers(context.Background(),b,s,w)
+	if until!="" || reason!="IAMSourceUnavailable" || len(w.revocations)!=0 ||
+		!reflect.DeepEqual(w.current[groupKey],[]openfga.Tuple{existingGroup}) ||
+		!reflect.DeepEqual(w.current[tenantKey],[]openfga.Tuple{existingTenant}) {
+		t.Fatalf("IAM outage caused speculative deletion or positive lease: %q %q %+v",until,reason,w.current)
 	}
 }
