@@ -233,3 +233,25 @@ func TestTupleWriteFailureOrMissingReadBackNeverConfirmsRevocation(t *testing.T)
 		})
 	}
 }
+
+func TestTenantMembershipTupleScopeIsExactAndNoForeignWrites(t *testing.T) {
+	valid := TupleScope{Object:"tenant:TEN00002",Relation:"member"}
+	if err:=validateTupleScope(valid);err!=nil {t.Fatal(err)}
+	if err:=validateScopedTuple(valid,Tuple{Object:valid.Object,Relation:"member",User:"user:usr000002"});err!=nil {t.Fatal(err)}
+	for _,bad:=range []TupleScope{
+		{Object:"tenant:TEN00002",Relation:"admin"},
+		{Object:"tenant:unknown",Relation:"member"},
+		{Object:"tenant:TEN00002/foreign",Relation:"member"},
+		{Object:"tenant:TEN00002",Relation:"owner"},
+	} {
+		if err:=validateTupleScope(bad);err==nil {t.Fatalf("unreviewed tenant authorization scope: %#v",bad)}
+	}
+	for _,bad:=range []Tuple{
+		{Object:"tenant:TEN00003",Relation:"member",User:"user:usr000002"},
+		{Object:"tenant:TEN00002",Relation:"admin",User:"user:usr000002"},
+		{Object:"tenant:TEN00002",Relation:"member",User:"tenant:TEN00003"},
+		{Object:"tenant:TEN00002",Relation:"member",User:"group:foreign#member"},
+	} {
+		if err:=validateScopedTuple(valid,bad);err==nil {t.Fatalf("cross-tenant/untrusted tuple allowed: %#v",bad)}
+	}
+}
