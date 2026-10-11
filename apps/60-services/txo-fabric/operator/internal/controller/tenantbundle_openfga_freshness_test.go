@@ -16,6 +16,7 @@ import (
 type freshAccountSource struct {
 	*stagedIAMSource
 	inactive bool
+	inactiveAfter int
 	failAccount error
 	accountCalls int
 }
@@ -23,7 +24,7 @@ type freshAccountSource struct {
 func (s *freshAccountSource) SnapshotUserAccount(_ context.Context, uuid string) (authentik.UserAccountSnapshot, error) {
 	s.accountCalls++
 	if s.failAccount != nil { return authentik.UserAccountSnapshot{}, s.failAccount }
-	return authentik.UserAccountSnapshot{UUID:uuid, Active:!s.inactive}, nil
+	return authentik.UserAccountSnapshot{UUID:uuid, Active:!s.inactive && (s.inactiveAfter==0 || s.accountCalls<s.inactiveAfter)}, nil
 }
 
 func readyFreshFixture(t *testing.T) (*TenantBundleReconciler, *fabricv1alpha1.TenantBundle, *freshAccountSource, *recordingIAMWriter) {
@@ -152,4 +153,64 @@ func TestFreshTenantMembershipIsolationAndLeaseExpiry(t *testing.T) {
 		t.Fatal("authorization lease accepted expired, invented or malformed freshness evidence")
 	}
 	if strings.Contains(until,identityLedgerUserUUID) {t.Fatal("membership evidence leaked identity")}
+}
+
+func TestFreshTenantMembershipAccountDisabledDuringFGAWriteDeniesLease(t *testing.T) {
+	r,b,s,w:=readyFreshFixture(t)
+	s.inactiveAfter=2 // one active source read, then disabled on revalidation
+	until,reason:=r.reconcileFreshTenantMembers(context.Background(),b,s,w)
+	if until!="" || reason!="AccountInactive" {
+		t.Fatalf("account revoked during FGA sync retained positive readiness: until=%q reason=%q",until,reason)
+	}
+}
+
+func TestFreshTenantMembershipTwoTenantsSameAuthentikUUIDDifferentFabricUsers(t *testing.T) {
+	ctx:=context.Background()
+	a:=humanIdentityTenant("hairem","TEN00001","uid-hairem","client0")
+	b:=humanIdentityTenant("indiba","TEN00002","uid-indiba","sales")
+	r:=preparedHumanIdentityReconciler(t,a,b)
+	shared:=identityLedgerUserUUID
+	type tenantFixture struct {
+		b *fabricv1alpha1.TenantBundle
+		pin string
+		user string
+		source *freshAccountSource
+	}
+	cases:=[]tenantFixture{
+		{b:a,pin:identityLedgerGroupUUID,user:"usr000001"},
+		{b:b,pin:"550e8400-e29b-41d4-a716-446655440019",user:"usr000002"},
+	}
+	for i:=range cases {
+		tc:=&cases[i]
+		if err:=r.reconcileOpenFGAHumanIdentityRegistry(ctx,tc.b);err!=nil {t.Fatal(err)}
+		installIAMIdentityBindings(t,r,tc.b.Spec.TenantID,authentik.IdentityBinding{
+			TenantID:tc.b.Spec.TenantID,Issuer:tc.b.Spec.HumanAccess.Web.OIDC.Issuer,
+			OIDCSubject:"opaque-local-legacy-sub",AuthentikUserUUID:shared,FabricUserID:tc.user,
+		})
+		name:=authentikGroupName(tc.b.Name,tc.b.Spec.HumanAccess.Web.IAMGroups[0])
+		tc.source=&freshAccountSource{stagedIAMSource:&stagedIAMSource{
+			groups:map[string]authentik.GroupMembership{name:makeIAMGroup(name,tc.pin,shared)},
+			calls:map[string]int{},fail:map[string]error{},
+		}}
+		if err:=r.reconcileOpenFGAIAMGroupPins(ctx,tc.b,tc.source);err!=nil {t.Fatal(err)}
+	}
+	writer:=newIAMWriter()
+	var stores []string
+	for _,tc:=range cases {
+		validUntil,reason:=r.reconcileFreshTenantMembers(ctx,tc.b,tc.source,writer)
+		if reason!="" || !AuthorizationLeaseFresh(validUntil,time.Now()) {
+			t.Fatalf("tenant %s cannot reconcile its own membership: %s",tc.b.Name,reason)
+		}
+		binding,err:=r.readOpenFGAAuthorizationBinding(ctx,tc.b)
+		if err!=nil {t.Fatal(err)}
+		stores=append(stores,binding.Store.ID)
+		got:=tenantMemberTuples(writer,binding.Store.ID,tc.b.Spec.TenantID)
+		want:=[]openfga.Tuple{{Object:"tenant:"+tc.b.Spec.TenantID,Relation:"member",User:"user:"+tc.user}}
+		if !reflect.DeepEqual(got,want) {t.Fatalf("tenant %s wrong membership: %v",tc.b.Name,got)}
+	}
+	if stores[0]==stores[1] ||
+		len(tenantMemberTuples(writer,stores[0],cases[1].b.Spec.TenantID))!=0 ||
+		len(tenantMemberTuples(writer,stores[1],cases[0].b.Spec.TenantID))!=0 {
+		t.Fatal("tenant membership contaminated a foreign store")
+	}
 }
