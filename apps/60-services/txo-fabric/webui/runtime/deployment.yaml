@@ -37,9 +37,9 @@ spec:
           type: RuntimeDefault
       containers:
         - name: bff
-          # Built/published by txo-fabric-webui-bff-image-ci.yaml from source
-          # d65cdb30...; replace with verified digest before review.
-          image: ghcr.io/charchess/txo-fabric-webui-bff:src-d65cdb30f81f
+          # GHCR digest verified in BFF Image CI run 38176145062.
+          # Source commit d65cdb30f81f2d6934f4a07a733560820751516e.
+          image: ghcr.io/charchess/txo-fabric-webui-bff@sha256:11b2f4975d4c80a71102af87b7f45bfee10efef56da643a23085fdf676e88f54
           imagePullPolicy: IfNotPresent
           env:
             # Runtime refuses to start unless the literal value is "false".
@@ -109,7 +109,7 @@ spec:
       volumes:
         - name: bff-identity
           projected:
-            defaultMode: 0400
+            defaultMode: 256
             sources:
               - serviceAccountToken:
                   path: token
@@ -119,7 +119,7 @@ spec:
           secret:
             secretName: txo-fabric-private-bridge-assertion
             optional: true
-            defaultMode: 0400
+            defaultMode: 256
             items:
               - key: hmac-key
                 path: hmac-key
