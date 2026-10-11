@@ -54,6 +54,7 @@ type TenantBundleReconciler struct {
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=authentication.k8s.io,resources=tokenreviews,verbs=create
 // +kubebuilder:rbac:groups=postgresql.cnpg.io,resources=clusters,verbs=get
 // +kubebuilder:rbac:groups=postgresql.cnpg.io,resources=databases;databaseroles,verbs=get;list;watch;create;update;patch;delete
 
