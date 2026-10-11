@@ -41,6 +41,23 @@ jobs:
           node --check server/private-bff-server.mjs
           node --check server/private-bff-main.mjs
           node --check server/private-bridge-client.mjs
+      - name: Setup Kustomize tools for private runtime/bootstrap verification
+        uses: ./.github/actions/setup-k8s-tools
+      - name: Render source, staged DB bootstrap and full production overlay
+        run: |
+          kustomize build apps/60-services/txo-fabric/webui
+          kustomize build apps/60-services/txo-fabric/webui/bootstrap
+          kustomize build apps/60-services/txo-fabric/overlays/prod > /tmp/txo-fabric-webui-prod.yaml
+          grep -q 'name: txo-fabric-webui-bff' /tmp/txo-fabric-webui-prod.yaml
+          grep -q 'TXO_WEBUI_BFF_BROWSER_ENABLED' /tmp/txo-fabric-webui-prod.yaml
+          if grep -q 'kind: ExternalSecret' /tmp/txo-fabric-webui-prod.yaml; then
+            # Other existing platform ExternalSecrets are expected; verify
+            # specifically the staged BFF credentials did not leak to prod.
+            if grep -q 'name: txo-fabric-webui-bff-runtime-credentials' /tmp/txo-fabric-webui-prod.yaml; then
+              echo 'Private BFF credential bootstrap unexpectedly activated'
+              exit 1
+            fi
+          fi
       - name: Verify patch whitespace
         if: github.event_name == 'pull_request'
         env:
