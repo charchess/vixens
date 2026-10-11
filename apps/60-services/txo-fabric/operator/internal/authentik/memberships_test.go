@@ -45,7 +45,7 @@ func clientWith(t *testing.T, fn roundTripFunc)*Client {
 func TestSnapshotGroupMembershipCompleteActiveMembersOnly(t *testing.T) {
 	var groups,users []int
 	client:=clientWith(t,func(req *http.Request)(*http.Response,error) {
-		if req.URL.Host!="authentik.auth.svc:9000" || req.URL.Scheme!="http" ||
+		if req.URL.Host!="authentik.truxonline.com" || req.URL.Scheme!="https" ||
 			req.Header.Get("Authorization")!="Bearer fake-authentik-api-credential" ||
 			req.Method!="GET" {
 			t.Fatal("untrusted Authentik HTTP request")
