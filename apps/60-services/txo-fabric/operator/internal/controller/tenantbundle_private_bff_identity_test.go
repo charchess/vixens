@@ -119,6 +119,17 @@ func TestPrivateBFFIdentityUsesExistingTenantIssuerPinnedUUIDOnly(t *testing.T) 
 	source.groups[aGroup]=makeIAMGroup(aGroup,identityLedgerGroupUUID) // user removed from group
 	if id,err:=r.ResolvePrivateBFFIdentity(ctx,a.Name,uuid,now);err==nil || id!="" {t.Fatal("revoked tenant membership resolved")}
 	source.groups[aGroup]=makeIAMGroup(aGroup,identityLedgerGroupUUID,uuid)
+	// First group inventory is complete, but IAM revokes the user while
+	// the resolver is re-checking it. A torn snapshot MUST NOT resolve.
+	source.after=map[string]authentik.GroupMembership{
+		aGroup:makeIAMGroup(aGroup,identityLedgerGroupUUID),
+	}
+	source.calls[aGroup]=0
+	if id,err:=r.ResolvePrivateBFFIdentity(ctx,a.Name,uuid,now);err==nil || id!="" {
+		t.Fatal("group membership revoked during resolution still granted identity")
+	}
+	source.after=nil
+	source.calls[aGroup]=0
 
 	for _,tc:=range []struct{reason string;mutate func(*fabricv1alpha1.TenantBundle)}{
 		{"condition-false",func(b *fabricv1alpha1.TenantBundle){b.Status.Conditions[0].Status=metav1.ConditionFalse}},
