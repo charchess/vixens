@@ -27,6 +27,11 @@ const (
 	authentikTokenSecret  = "txo-authentik-runtime"
 )
 
+var (
+	errIAMCredentialMissing = errors.New("platform Authentik IAM credential unavailable")
+	errIAMCredentialInvalid = errors.New("platform Authentik IAM credential invalid")
+)
+
 var immutableAuthentikUUID = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`)
 
 type iamGroupPin struct {
@@ -45,11 +50,11 @@ func (r *TenantBundleReconciler) authentikMembershipSource(ctx context.Context) 
 	if err := r.Get(ctx, types.NamespacedName{
 		Namespace: openFGAPlatformNamespace, Name: authentikTokenSecret,
 	}, &secret); err != nil {
-		return nil, errors.New("Fabric Authentik membership credential unavailable")
+		return nil, errIAMCredentialMissing
 	}
 	source, err := authentik.NewClient(string(secret.Data["token"]), nil)
 	if err != nil {
-		return nil, errors.New("Fabric Authentik membership credential invalid")
+		return nil, errIAMCredentialInvalid
 	}
 	return source, nil
 }
