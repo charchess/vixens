@@ -175,3 +175,14 @@ func TestAuthentikCredentialAndGroupNameAreNeverClientControlled(t *testing.T) {
 	}
 	if calls!=0 {t.Fatal("untrusted group name triggered privileged Authentik API request")}
 }
+
+func TestPlatformIAMReaderDefaultTransportRejectsUnapprovedDestination(t *testing.T) {
+	reader,err:=NewClient("non-sensitive-unit-test-credential",nil)
+	if err!=nil {t.Fatal(err)}
+	transport,ok:=reader.httpClient.Transport.(*http.Transport)
+	if !ok || transport.Proxy!=nil || transport.TLSClientConfig==nil {
+		t.Fatal("default transport must use pinned TLS without egress proxy")
+	}
+	_,err=transport.DialContext(context.Background(),"tcp","arbitrary.external.example:443")
+	if err==nil {t.Fatal("IAM reader allowed arbitrary HTTP destination")}
+}
