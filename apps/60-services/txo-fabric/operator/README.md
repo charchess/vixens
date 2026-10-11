@@ -303,6 +303,33 @@ inventory and deletes revoked members before adding new ones.
   This boundary is not end-to-end TLS; review that risk and validate
   certificate, routing and Cilium/NetworkPolicy in a controlled environment.
 
+### Explicit inactive-account revocation (Electra review #4039 / Prompt 03a)
+
+A verified `Active=false` returned by the read-only Authentik account
+adapter is authoritative revocation evidence, not merely a reason to refuse
+a new readiness lease. After verifying the **entire** pinned group membership
+snapshot and all accounts twice, an explicitly inactive UUID is resolved
+only through the existing tenant's immutable Authentik UUID → Fabric user ID
+ledger binding. The operator removes **that one direct `user:<FabricID>`
+`member` tuple** from each server-owned pinned `group#member` scope and
+the tenant's `tenant#member` scope, in the immutable tenant store/model.
+
+This operation is deliberately **not** a replace-the-group API: it never
+drops an unrelated user, group, agent grant or another tenant's store tuples.
+OpenFGA must confirm both the deletion (when present) and the following
+complete, exact read-back (including model ID verification). Already-absent
+members require no write, so repeats are idempotent. On success readiness
+is still `False/AccountInactive`, with **no** `validUntil`; on FGA
+write/read-back failure it remains `False/TupleMismatch`. A partially
+completed two-scope revocation is retried idempotently; it is never reported
+ready.
+
+A missing/expired token, ambiguous UUID, changed group pin, invalid
+account response, IAM outage, stale group snapshot or incomplete inventory
+**never triggers speculative deletion**. Neither this path nor the normal
+membership sync alters retained ledger issuer, subject, Fabric user IDs or
+grants outside member scopes. Feature gate remains OFF by default.
+
 ### Readiness and freshness contract
 
 The gate-off state has the stable `RolloutDisabled` reason and performs no
