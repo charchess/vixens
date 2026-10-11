@@ -4,11 +4,13 @@ package authentik
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net"
 	"net/url"
 	"reflect"
 	"regexp"
@@ -19,7 +21,7 @@ import (
 )
 
 const (
-	privateOrigin = "http://authentik.auth.svc:9000"
+	privateOrigin = "https://authentik.truxonline.com"
 	apiPrefix = "/api/v3"
 	pageSize = 100
 	maxPages = 100
@@ -41,7 +43,24 @@ func NewClient(token string, transport http.RoundTripper) (*Client, error) {
 	if len(token)<16 || strings.TrimSpace(token)!=token || strings.ContainsAny(token,"\r\n") {
 		return nil,errors.New("Fabric Authentik service credential is missing or malformed")
 	}
-	if transport==nil {transport=http.DefaultTransport}
+	if transport==nil {
+		// Authentik's ClusterIP only serves cleartext HTTP: never transmit
+		// this privileged API token to port 9000. Instead verify the exact
+		// public TLS hostname/certificate while routing TCP inside the
+		// cluster through the existing Traefik websecure service. No proxy,
+		// arbitrary URL, redirect or plaintext fallback is permitted.
+		dialer := &net.Dialer{Timeout: 3*time.Second}
+		transport = &http.Transport{
+			Proxy: nil,
+			TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12},
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				if network != "tcp" || addr != "authentik.truxonline.com:443" {
+					return nil, errors.New("unapproved Fabric IAM destination")
+				}
+				return dialer.DialContext(ctx, network, "traefik.traefik.svc.cluster.local:443")
+			},
+		}
+	}
 	return &Client{token:token,httpClient:&http.Client{
 		Transport:transport,Timeout:4*time.Second,
 		CheckRedirect:func(*http.Request,[]*http.Request)error{return http.ErrUseLastResponse},
@@ -89,6 +108,7 @@ func (c *Client) get(ctx context.Context, path string, values url.Values) ([]byt
 	if err!=nil{return nil,errors.New("cannot prepare Fabric Authentik request")}
 	req.Header.Set("Authorization","Bearer "+c.token)
 	req.Header.Set("Accept","application/json")
+	req.Header.Set("Cache-Control","no-store")
 	resp,err:=c.httpClient.Do(req)
 	if err!=nil {return nil,fmt.Errorf("Fabric Authentik API unavailable: %w",err)}
 	defer resp.Body.Close()
