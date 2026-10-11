@@ -410,7 +410,10 @@ response. This endpoint does **not** grant chat/agent access.
    `system:serviceaccount:txo-fabric-system:txo-fabric-webui-bff` with
    **exact** audience `txo-fabric-private-identity`. Following a positive
    review, the bound JWT's `iss`, `sub` and sole `aud` must match the
-   configured cluster issuer, expected ServiceAccount and audience. A
+   configured cluster issuer, expected ServiceAccount and audience. It must
+   carry a valid `iat`/`exp` within **one hour** (and satisfy optional
+   `nbf`); request a dedicated short-lived projected SA token, never use a
+   legacy extension token with unbounded effective validity. A
    browser OIDC token, arbitrary username header or another SA cannot
    pass. K8s RBAC grants only the operator the TokenReview create action.
 2. `X-Fabric-Assertion: base64url(UTF8 JSON).base64url(HMAC-SHA256(...))`
