@@ -21,6 +21,7 @@ const (
 	Path = "/internal/v1/identity/resolve"
 	MaxAssertionAge = 30 * time.Second
 	ClockSkew = 5 * time.Second
+	MaxWorkloadTokenAge = time.Hour
 )
 
 // Contract is fixed by the platform, never supplied by the browser.
@@ -134,7 +135,7 @@ func exactlyOne(value []string, expected string) bool {
 // TokenReview authenticates the signed JWT, but does not return its issuer
 // in UserInfo. Inspect its bound issuer/subject/audience claims ONLY AFTER
 // a successful TokenReview, never as a substitute for that API verdict.
-func tokenClaimsMatch(jwt, issuer, audience, subject string) bool {
+func tokenClaimsMatch(jwt, issuer, audience, subject string, now time.Time) bool {
 	p:=strings.Split(jwt, ".")
 	if len(p)!=3 || len(jwt)>16384 { return false }
 	raw,err:=base64.RawURLEncoding.DecodeString(p[1])
@@ -143,8 +144,19 @@ func tokenClaimsMatch(jwt, issuer, audience, subject string) bool {
 		Issuer string `json:"iss"`
 		Subject string `json:"sub"`
 		Audience json.RawMessage `json:"aud"`
+		IssuedAt int64 `json:"iat"`
+		ExpiresAt int64 `json:"exp"`
+		NotBefore int64 `json:"nbf"`
 	}
 	if json.Unmarshal(raw,&claims)!=nil || claims.Issuer!=issuer || claims.Subject!=subject {return false}
+	issued:=time.Unix(claims.IssuedAt,0)
+	expires:=time.Unix(claims.ExpiresAt,0)
+	if claims.IssuedAt<=0 || claims.ExpiresAt<=0 || !expires.After(issued) ||
+		expires.Sub(issued)>MaxWorkloadTokenAge ||
+		now.Before(issued.Add(-ClockSkew)) || !now.Before(expires) ||
+		(claims.NotBefore!=0 && now.Before(time.Unix(claims.NotBefore,0).Add(-ClockSkew))) {
+		return false
+	}
 	var single string
 	if json.Unmarshal(claims.Audience,&single)==nil {return single==audience}
 	var many []string
@@ -197,7 +209,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err!=nil || !review.Authenticated || review.Username!=h.Contract.BFFServiceAccount ||
 		!exactlyOne(review.Audiences,h.Contract.Audience) ||
 		!tokenClaimsMatch(rawToken[7:],h.Contract.KubernetesIssuer,
-			h.Contract.Audience,h.Contract.BFFServiceAccount) { deny();return }
+			h.Contract.Audience,h.Contract.BFFServiceAccount,now) { deny();return }
 	// CAS create in shared Kubernetes storage: a concurrent replica or a
 	// repeated request cannot return identity a second time. Consumed even
 	// when downstream readiness fails; clients must mint a NEW assertion.
