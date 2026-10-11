@@ -1,0 +1,36 @@
+---
+# Kubernetes NetworkPolicy is additive: this ingress isolation applies to
+# the operator's private BFF port AND preserves existing metrics/probes access.
+# A network identity label is not sufficient auth; the handler additionally
+# verifies TokenReview issuer, audience, exact SA and one-time assertion.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: txo-fabric-operator-private-bff-ingress
+  namespace: txo-fabric-system
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    app.kubernetes.io/component: private-bff-identity
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: txo-fabric-operator
+      app.kubernetes.io/component: operator
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: txo-fabric-webui-bff
+              app.kubernetes.io/component: bff
+      ports:
+        - protocol: TCP
+          port: 8090
+    # Preserve monitoring and existing kubelet probes, never expose 8090.
+    - from:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8081
