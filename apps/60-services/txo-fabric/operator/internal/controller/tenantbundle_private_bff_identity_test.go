@@ -130,6 +130,17 @@ func TestPrivateBFFIdentityUsesExistingTenantIssuerPinnedUUIDOnly(t *testing.T) 
 	}
 	source.after=nil
 	source.calls[aGroup]=0
+	source.groups[aGroup]=makeIAMGroup(aGroup,"550e8400-e29b-41d4-a716-446655440099",uuid)
+	if id,err:=r.ResolvePrivateBFFIdentity(ctx,a.Name,uuid,now);err==nil || id!="" {
+		t.Fatal("foreign Authentik group pin authorized tenant identity")
+	}
+	source.groups[aGroup]=makeIAMGroup(aGroup,identityLedgerGroupUUID,uuid)
+	model:=r.OpenFGAModelClient
+	r.OpenFGAModelClient=nil // missing platform FGA verifier credential
+	if id,err:=r.ResolvePrivateBFFIdentity(ctx,a.Name,uuid,now);err==nil || id!="" {
+		t.Fatal("unavailable OpenFGA model verifier authorized identity")
+	}
+	r.OpenFGAModelClient=model
 
 	for _,tc:=range []struct{reason string;mutate func(*fabricv1alpha1.TenantBundle)}{
 		{"condition-false",func(b *fabricv1alpha1.TenantBundle){b.Status.Conditions[0].Status=metav1.ConditionFalse}},
