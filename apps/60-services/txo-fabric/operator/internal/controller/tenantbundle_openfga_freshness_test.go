@@ -125,6 +125,7 @@ func TestFreshTenantMembershipRejectsStaleSnapshotOrPartialWrite(t *testing.T) {
 	if until!="" || reason!="TupleMismatch" {t.Fatalf("partial FGA write accepted: %q %q",until,reason)}
 	name:=authentikGroupName(b.Name,"sales")
 	s.after=map[string]authentik.GroupMembership{name:makeIAMGroup(name,identityLedgerGroupUUID)}
+	s.calls[name]=0 // first preflight read old snapshot, subsequent reads observe revocation
 	until,reason=r.reconcileFreshTenantMembers(context.Background(),b,s,newIAMWriter())
 	if until!="" || (reason!="StaleSnapshot" && reason!="TupleMismatch") {
 		t.Fatalf("mid-reconcile membership revocation went unobserved: %q %q",until,reason)
