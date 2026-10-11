@@ -20,6 +20,18 @@ spec:
       ports:
         - {protocol: UDP, port: 53}
         - {protocol: TCP, port: 53}
+    # Platform Authentik API reader: TLS to the existing Traefik websecure
+    # pod only. The Go client pins authentik.truxonline.com SNI/certificate
+    # and routes internally; never permit direct Authentik HTTP:9000.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - {protocol: TCP, port: 443}
     # Only the Fabric operator may reconcile per-tenant stores in the
     # centralized, private OpenFGA service (no cross-tenant pod access).
     - to:
