@@ -20,12 +20,14 @@ type freshAccountSource struct {
 	badAccountUUID string
 	inactiveAfter int
 	failAccount error
+	failAccountAfter int
 	accountCalls int
 }
 
 func (s *freshAccountSource) SnapshotUserAccount(_ context.Context, uuid string) (authentik.UserAccountSnapshot, error) {
 	s.accountCalls++
 	if s.failAccount != nil { return authentik.UserAccountSnapshot{}, s.failAccount }
+	if s.failAccountAfter > 0 && s.accountCalls >= s.failAccountAfter {return authentik.UserAccountSnapshot{}, errors.New("live IAM account read failed")}
 	if s.badAccountUUID!="" {return authentik.UserAccountSnapshot{UUID:s.badAccountUUID,Active:false},nil}
 	return authentik.UserAccountSnapshot{UUID:uuid, Active:!s.inactive && !s.inactiveUUIDs[uuid] && (s.inactiveAfter==0 || s.accountCalls<s.inactiveAfter)}, nil
 }
@@ -295,5 +297,26 @@ func TestInactiveAccountSourceOutageNeverSpeculativelyDeletes(t *testing.T) {
 		!reflect.DeepEqual(w.current[groupKey],[]openfga.Tuple{existingGroup}) ||
 		!reflect.DeepEqual(w.current[tenantKey],[]openfga.Tuple{existingTenant}) {
 		t.Fatalf("IAM outage caused speculative deletion or positive lease: %q %q %+v",until,reason,w.current)
+	}
+}
+
+func TestInactiveAccountRevocationRequiresSecondAuthoritativeAccountRead(t *testing.T) {
+	r,b,s,w:=readyFreshFixture(t)
+	approved,err:=r.readOpenFGAAuthorizationBinding(context.Background(),b)
+	if err!=nil {t.Fatal(err)}
+	group:=authentikGroupName(b.Name,"sales")
+	groupKey:=approved.Store.ID+"/group:"+group+"/member"
+	tenantKey:=approved.Store.ID+"/tenant:"+b.Spec.TenantID+"/member"
+	groupMember:=openfga.Tuple{Object:"group:"+group,Relation:"member",User:"user:usr000002"}
+	tenantMember:=openfga.Tuple{Object:"tenant:"+b.Spec.TenantID,Relation:"member",User:"user:usr000002"}
+	w.current[groupKey]=[]openfga.Tuple{groupMember}
+	w.current[tenantKey]=[]openfga.Tuple{tenantMember}
+	s.inactive=true
+	s.failAccountAfter=2 // first inactive result succeeds, confirmation fails
+	until,reason:=r.reconcileFreshTenantMembers(context.Background(),b,s,w)
+	if until!="" || reason!="IAMSourceUnavailable" || len(w.revocations)!=0 ||
+		!reflect.DeepEqual(w.current[groupKey],[]openfga.Tuple{groupMember}) ||
+		!reflect.DeepEqual(w.current[tenantKey],[]openfga.Tuple{tenantMember}) {
+		t.Fatalf("partial Authentik confirmation deleted member tuples: until=%s reason=%s",until,reason)
 	}
 }
