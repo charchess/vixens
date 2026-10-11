@@ -33,6 +33,12 @@ type authoritativeIAMSource interface {
 	authoritativeIAMAccountReader
 }
 
+// Narrow single-user deletion; never overwrite the entire group from a
+// potentially stale human membership snapshot just to revoke one user.
+type scopedIAMTupleRevoker interface {
+	RevokeMemberTuple(context.Context, string, string, openfga.TupleScope, string) error
+}
+
 func (r *TenantBundleReconciler) authorizationClock() time.Time {
 	if r.AuthorizationNow != nil {
 		return r.AuthorizationNow()
@@ -119,17 +125,26 @@ func (r *TenantBundleReconciler) reconcileFreshTenantMembers(
 		orderedUsers = append(orderedUsers, uuid)
 	}
 	sort.Strings(orderedUsers)
+	inactive := make(map[string]string)
 	for _, uuid := range orderedUsers {
 		user, readErr := account.SnapshotUserAccount(ctx, uuid)
-		if readErr != nil {
+		if readErr != nil || user.UUID != uuid {
+			// A missing/mismatched account is NOT explicit proof of
+			// deactivation. No speculative revocation on IAM faults.
 			return "", "IAMSourceUnavailable"
 		}
-		if user.UUID != uuid || !user.Active {
-			return "", "AccountInactive"
+		if !user.Active {
+			id, lookupErr := registry.ResolveAuthentikUserUUID(uuid)
+			if lookupErr != nil { return "", "IdentityLedgerInvalid" }
+			inactive[uuid] = id
 		}
 	}
 	if !withinSnapshotWindow(start, r.authorizationClock()) {
 		return "", "StaleSnapshot"
+	}
+	if len(inactive) > 0 {
+		return "", r.revokeConfirmedInactiveMembers(ctx, bundle, source, account,
+			writer, pins, snapshots, orderedUsers, inactive, approved, start)
 	}
 
 	// Existing group#member reconciliation preflights all groups, revokes
@@ -172,14 +187,21 @@ func (r *TenantBundleReconciler) reconcileFreshTenantMembers(
 			return "", "StaleSnapshot"
 		}
 	}
+	postInactive := make(map[string]string)
 	for _, uuid := range orderedUsers {
 		user, readErr := account.SnapshotUserAccount(ctx, uuid)
-		if readErr != nil {
+		if readErr != nil || user.UUID != uuid {
 			return "", "IAMSourceUnavailable"
 		}
-		if user.UUID != uuid || !user.Active {
-			return "", "AccountInactive"
+		if !user.Active {
+			id, lookupErr := registry.ResolveAuthentikUserUUID(uuid)
+			if lookupErr != nil { return "", "IdentityLedgerInvalid" }
+			postInactive[uuid] = id
 		}
+	}
+	if len(postInactive) > 0 {
+		return "", r.revokeConfirmedInactiveMembers(ctx, bundle, source, account,
+			writer, pins, snapshots, orderedUsers, postInactive, approved, start)
 	}
 	confirmedPins, err := r.readOpenFGAIAMGroupPins(ctx, bundle)
 	if err != nil || !reflect.DeepEqual(confirmedPins, pins) {
@@ -197,6 +219,82 @@ func (r *TenantBundleReconciler) reconcileFreshTenantMembers(
 		return "", "StaleSnapshot"
 	}
 	return finish.Add(authorizationLease).UTC().Format(time.RFC3339Nano), ""
+}
+
+// revokeConfirmedInactiveMembers removes only confirmed inactive Fabric
+// users from every pinned tenant-owned group membership and the direct tenant
+// membership. We first repeat all authoritative IAM reads and compare with
+// the complete validated snapshot, then confirm retained pins/store/model.
+// On *any* unavailable/changed source, no revocation is attempted. A single
+// tuple write failure is NotReady; retry can safely finish partial revocation.
+func (r *TenantBundleReconciler) revokeConfirmedInactiveMembers(
+	ctx context.Context, bundle *fabricv1alpha1.TenantBundle,
+	source authoritativeIAMGroupReader, accounts authoritativeIAMAccountReader,
+	writer scopedIAMTupleWriter, pins map[string]string,
+	snapshots map[string]authentik.GroupMembership,
+	orderedUsers []string, inactive map[string]string,
+	approved openFGAAuthorizationBinding, started time.Time,
+) string {
+	revoker, ok := writer.(scopedIAMTupleRevoker)
+	if !ok || revoker == nil { return "TupleMismatch" }
+	names, err := checkedIAMGroupNames(bundle)
+	if err != nil || len(names) != len(pins) || len(inactive) == 0 {
+		return "GroupPinInvalid"
+	}
+	for _, name := range names {
+		if pins[name] == "" { return "GroupPinInvalid" }
+		current, readErr := source.SnapshotGroupMembership(ctx, name)
+		if readErr != nil { return "IAMSourceUnavailable" }
+		if !reflect.DeepEqual(current, snapshots[name]) ||
+			current.AuthentikGroupUUID != pins[name] {
+			return "StaleSnapshot"
+		}
+	}
+	// Verify all accounts, not just the inactive one: no deletion after an
+	// incomplete or inconsistent authoritative inventory.
+	for _, uuid := range orderedUsers {
+		user, readErr := accounts.SnapshotUserAccount(ctx, uuid)
+		if readErr != nil || user.UUID != uuid { return "IAMSourceUnavailable" }
+		_, wasInactive := inactive[uuid]
+		if wasInactive == user.Active { return "StaleSnapshot" }
+	}
+	currentPins, err := r.readOpenFGAIAMGroupPins(ctx, bundle)
+	if err != nil || !reflect.DeepEqual(currentPins, pins) {
+		return "GroupPinInvalid"
+	}
+	current, err := r.readOpenFGAAuthorizationBinding(ctx, bundle)
+	if err != nil || current != approved { return "OpenFGAUnavailable" }
+	if !withinSnapshotWindow(started, r.authorizationClock()) {
+		return "StaleSnapshot"
+	}
+
+	// Deterministic scope ordering; all are derived from pinned tenant data.
+	scopes := make([]openfga.TupleScope, 0, len(names)+1)
+	for _, name := range names {
+		scopes = append(scopes, openfga.TupleScope{
+			Object: "group:" + name, Relation: "member",
+		})
+	}
+	scopes = append(scopes, openfga.TupleScope{
+		Object: "tenant:" + bundle.Spec.TenantID, Relation: "member",
+	})
+	uuids := make([]string, 0, len(inactive))
+	for uuid := range inactive { uuids = append(uuids, uuid) }
+	sort.Strings(uuids)
+	for _, scope := range scopes {
+		for _, uuid := range uuids {
+			if !withinSnapshotWindow(started, r.authorizationClock()) {
+				return "StaleSnapshot"
+			}
+			if err := revoker.RevokeMemberTuple(ctx, approved.Store.ID,
+				approved.ModelID, scope, inactive[uuid]); err != nil {
+				return "TupleMismatch"
+			}
+		}
+	}
+	// The revoker checks exact OpenFGA read-back for each scope. Even if
+	// successful, explicit inactivity never creates a True freshness lease.
+	return "AccountInactive"
 }
 
 // AuthorizationLeaseFresh is the mandatory additional check for future
