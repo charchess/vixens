@@ -170,3 +170,21 @@ func TestIdentityRegistryNoImplicitEnrollmentAndTenantIsolation(t *testing.T) {
 		t.Fatal("foreign issuer crossed tenant")
 	}
 }
+
+func TestResolveAuthentikUUIDPreservesIssuerPinnedLedger(t *testing.T) {
+	registry:=mustIdentityRegistry(t)
+	got,err:=registry.ResolveAuthentikUserUUID(userOne)
+	if err!=nil || got!="usr000001" {t.Fatalf("lost existing immutable mapping: %q %v",got,err)}
+	for _,uuid:=range []string{"",registrySub1,"edfoley","550e8400-e29b-41d4-a716-446655440099"} {
+		if got,err:=registry.ResolveAuthentikUserUUID(uuid);err==nil || got!="" {
+			t.Fatalf("unknown/mutable UUID mapped to Fabric user: %q => %q",uuid,got)
+		}
+	}
+	if got,err:=registry.ResolveOIDCSubject(registryIssuer,registrySub1);err!=nil || got!="usr000001" {
+		t.Fatal("UUID lookup changed pinned issuer or historical OIDC subject")
+	}
+	var missing *IdentityRegistry
+	if got,err:=missing.ResolveAuthentikUserUUID(userOne);err==nil || got!="" {
+		t.Fatal("nil registry authorized an identity")
+	}
+}
