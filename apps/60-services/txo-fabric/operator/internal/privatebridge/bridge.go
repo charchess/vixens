@@ -7,6 +7,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
@@ -169,7 +170,7 @@ func scopedNonceKey(c Contract, a Assertion) string {
 	scope:=c.KubernetesIssuer+"\x00"+c.Audience+"\x00"+c.BFFServiceAccount+
 		"\x00"+a.TenantKey+"\x00"+a.JTI
 	sum:=sha256.Sum256([]byte(scope))
-	return "bff-jti-"+base64.RawURLEncoding.EncodeToString(sum[:])
+	return "bff-jti-"+hex.EncodeToString(sum[:24])
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
