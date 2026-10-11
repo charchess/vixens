@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"reflect"
 	"strings"
 	"time"
 
@@ -62,6 +63,7 @@ func (r *TenantBundleReconciler) ResolvePrivateBFFIdentity(
 	user,err:=accounts.SnapshotUserAccount(ctx,uuid)
 	if err!=nil || user.UUID!=uuid || !user.Active {return "",errPrivateIdentityUnavailable}
 	authorized:=false
+	snapshots:=make(map[string]authentik.GroupMembership,len(names))
 	for _,name:=range names {
 		membership,readErr:=iam.SnapshotGroupMembership(ctx,name)
 		if readErr!=nil || membership.Name!=name ||
@@ -71,6 +73,7 @@ func (r *TenantBundleReconciler) ResolvePrivateBFFIdentity(
 		ids,resolveErr:=registry.ResolveGroupMembership(membership)
 		if resolveErr!=nil {return "",errPrivateIdentityUnavailable}
 		for _,id:=range ids {if id==fabricID {authorized=true}}
+		snapshots[name]=membership
 	}
 	if !authorized {return "",errPrivateIdentityUnavailable}
 	// Re-check account, ledger and current readiness before returning: a
@@ -78,6 +81,14 @@ func (r *TenantBundleReconciler) ResolvePrivateBFFIdentity(
 	after,err:=accounts.SnapshotUserAccount(ctx,uuid)
 	if err!=nil || after.UUID!=uuid || !after.Active {
 		return "",errPrivateIdentityUnavailable
+	}
+	// A group was removed or IAM went offline after the first read:
+	// never return a tenant identity based on a torn membership snapshot.
+	for _,name:=range names {
+		latest,readErr:=iam.SnapshotGroupMembership(ctx,name)
+		if readErr!=nil || !reflect.DeepEqual(latest,snapshots[name]) {
+			return "",errPrivateIdentityUnavailable
+		}
 	}
 	again,err:=r.readOpenFGAHumanIdentityRegistry(ctx,&bundle)
 	if err!=nil {return "",errPrivateIdentityUnavailable}
