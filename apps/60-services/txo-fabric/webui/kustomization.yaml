@@ -1,0 +1,19 @@
+---
+# Active production slice: private BFF health-only workload + immutable SQL
+# source snapshot. DB/secret bootstrap in bootstrap/ is deliberately NOT
+# included; it must be reviewed/activated separately with credentials.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - runtime
+configMapGenerator:
+  - name: txo-fabric-webui-sql-migrations
+    namespace: txo-fabric-system
+    files:
+      - 001_oidc_login_transactions.sql=db/migrations/001_oidc_login_transactions.sql
+      - 002_global_browser_sessions.sql=db/migrations/002_global_browser_sessions.sql
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    app.kubernetes.io/name: txo-fabric-webui-bff
+    app.kubernetes.io/part-of: txo-fabric

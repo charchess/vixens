@@ -1,0 +1,125 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: txo-fabric-webui-bff
+  namespace: txo-fabric-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+  labels:
+    app.kubernetes.io/name: txo-fabric-webui-bff
+    app.kubernetes.io/component: bff
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: txo-fabric-webui-bff
+      app.kubernetes.io/component: bff
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: txo-fabric-webui-bff
+        app.kubernetes.io/component: bff
+        app.kubernetes.io/part-of: txo-fabric
+        vixens.io/sizing.txo-fabric-webui-bff: V-small
+    spec:
+      serviceAccountName: txo-fabric-webui-bff
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 20
+      priorityClassName: vixens-high
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: bff
+          # GHCR digest verified in BFF Image CI run 38176145062.
+          # Source commit d65cdb30f81f2d6934f4a07a733560820751516e.
+          image: ghcr.io/charchess/txo-fabric-webui-bff@sha256:11b2f4975d4c80a71102af87b7f45bfee10efef56da643a23085fdf676e88f54
+          imagePullPolicy: IfNotPresent
+          env:
+            # Runtime refuses to start unless the literal value is "false".
+            - name: TXO_WEBUI_BFF_BROWSER_ENABLED
+              value: "false"
+            - name: PORT
+              value: "3000"
+            - name: PGHOST
+              value: postgresql-shared-rw.databases.svc.cluster.local
+            - name: PGPORT
+              value: "5432"
+            - name: PGDATABASE
+              value: txo_fabric_webui
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: txo-fabric-webui-bff-runtime
+                  key: username
+                  optional: true
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: txo-fabric-webui-bff-runtime
+                  key: password
+                  optional: true
+          ports:
+            - name: http-private
+              containerPort: 3000
+              protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http-private
+            failureThreshold: 12
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http-private
+            periodSeconds: 20
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http-private
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 192Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: bff-identity
+              mountPath: /var/run/secrets/txo-fabric-bff
+              readOnly: true
+            - name: bff-assertion-key
+              mountPath: /var/run/secrets/txo-fabric-bridge
+              readOnly: true
+      volumes:
+        - name: bff-identity
+          projected:
+            defaultMode: 256
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  audience: txo-fabric-private-identity
+                  expirationSeconds: 3600
+        - name: bff-assertion-key
+          secret:
+            secretName: txo-fabric-private-bridge-assertion
+            optional: true
+            defaultMode: 256
+            items:
+              - key: hmac-key
+                path: hmac-key

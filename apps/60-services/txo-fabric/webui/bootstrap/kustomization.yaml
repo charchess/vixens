@@ -1,0 +1,11 @@
+---
+# Deliberately not included in overlays/prod. Human bootstrap must provide
+# reviewed platform-only SQL credentials, then enable a separate GitOps
+# activation with credentials and migration success verified in nonprod.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - database.yaml
+  - credentials.yaml
+  - migrate-job.yaml
+  - migrate-networkpolicy.yaml

@@ -1,0 +1,101 @@
+---
+name: TXO Fabric Private WebUI BFF Image CI
+
+on:
+  pull_request:
+    paths:
+      - 'apps/60-services/txo-fabric/webui/**'
+      - '.github/workflows/txo-fabric-webui-bff-image-ci.yaml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/60-services/txo-fabric/webui/**'
+      - '.github/workflows/txo-fabric-webui-bff-image-ci.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  bff-image:
+    name: Validate and publish immutable-source BFF OCI image
+    # Do not run untrusted fork PR code using a write-capable package token.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Unit and boundary tests
+        working-directory: apps/60-services/txo-fabric/webui
+        run: |
+          node --test
+          node --check server/private-bff-server.mjs
+          node --check server/private-bff-main.mjs
+          node --check server/private-bridge-client.mjs
+      - name: Setup Kustomize tools for private runtime/bootstrap verification
+        uses: ./.github/actions/setup-k8s-tools
+      - name: Render source, staged DB bootstrap and full production overlay
+        run: |
+          kustomize build apps/60-services/txo-fabric/webui
+          kustomize build apps/60-services/txo-fabric/webui/bootstrap
+          kustomize build apps/60-services/txo-fabric/overlays/prod > /tmp/txo-fabric-webui-prod.yaml
+          grep -q 'name: txo-fabric-webui-bff' /tmp/txo-fabric-webui-prod.yaml
+          grep -q 'TXO_WEBUI_BFF_BROWSER_ENABLED' /tmp/txo-fabric-webui-prod.yaml
+          if grep -q 'kind: ExternalSecret' /tmp/txo-fabric-webui-prod.yaml; then
+            # Other existing platform ExternalSecrets are expected; verify
+            # specifically the staged BFF credentials did not leak to prod.
+            if grep -q 'name: txo-fabric-webui-bff-runtime-credentials' /tmp/txo-fabric-webui-prod.yaml; then
+              echo 'Private BFF credential bootstrap unexpectedly activated'
+              exit 1
+            fi
+          fi
+      - name: Verify patch whitespace
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch --no-tags origin "$BASE_SHA"
+          git diff --check "$BASE_SHA"...HEAD
+      - name: Compute source image tag
+        id: source
+        shell: bash
+        run: |
+          source_sha="$(git log -1 --format=%H --             apps/60-services/txo-fabric/webui/server             apps/60-services/txo-fabric/webui/Dockerfile             apps/60-services/txo-fabric/webui/package.json)"
+          test -n "$source_sha"
+          echo "tag=src-${source_sha:0:12}" >> "$GITHUB_OUTPUT"
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push private BFF image
+        id: image
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/60-services/txo-fabric/webui
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/charchess/txo-fabric-webui-bff:${{ steps.source.outputs.tag }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ steps.source.outputs.source_sha }}
+      - name: Publish exact image digest for GitOps pin review
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+          SOURCE_TAG: ${{ steps.source.outputs.tag }}
+        run: |
+          echo "BFF image: ghcr.io/charchess/txo-fabric-webui-bff@${IMAGE_DIGEST}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Source tag: ${SOURCE_TAG}" >> "$GITHUB_STEP_SUMMARY"
+          # A workflow never auto-merges or promotes. A reviewer must pin
+          # the digest to GitOps in a normal PR.

@@ -1,3 +1,124 @@
+# Prompt 05 / #3807 — PRIVATE BFF substrate (source + GitOps, gated OFF)
+
+**This is NOT a live browser WebUI.** The new Node image serves health only.
+No Ingress/Gateway/HTTPRoute, global callback, chat route, login session,
+active Authentik credential, OpenFGA activation or BFF→operator identity
+resolution is reachable after merge. Both
+`TXO_WEBUI_BFF_BROWSER_ENABLED=false` and
+`TXO_FABRIC_PRIVATE_BRIDGE_ENABLED=false` remain OFF. The OpenFGA rollout
+gate stays OFF as well. The source modules from #4036 and #4037 are composed
+only by explicit code with real injected privileged dependencies, NEVER by
+a fallback test/mock principal or browser-controlled ID.
+
+## Private runtime and deployment safety
+
+- **One platform workload**, `Deployment/txo-fabric-webui-bff`,
+  `ServiceAccount/txo-fabric-webui-bff` and
+  `Service/txo-fabric-webui-bff.txo-fabric-system.svc:3000`
+  (`ClusterIP` only). The JavaScript HTTP process in
+  `server/private-bff-main.mjs` serves `GET/HEAD /healthz` and
+  `GET/HEAD /readyz` without inspecting credentials or sessions. ALL
+  other `/auth/*`, `/api/*`, chat/settings/admin and unknown paths
+  return `404 Unavailable` and `Cache-Control: no-store`. Even an
+  accidental feature gate `true` prevents startup until a separate
+  reviewed integration is written. No request/header/cookie logging.
+- Nonroot UID 10001, read-only rootfs, no Linux capabilities or ambient
+  ServiceAccount token, explicit resource budgets and probes, bounded
+  header/body/timeouts and SIGTERM graceful shutdown.
+- Dedicated projected **short-lived** SA token
+  `txo-fabric-private-identity` (3600 seconds) at
+  `/var/run/secrets/txo-fabric-bff/token`, without a generic
+  `/var/run/secrets/kubernetes.io/serviceaccount` mount. Operator
+  TokenReview from #4037 expects exactly
+  `system:serviceaccount:txo-fabric-system:txo-fabric-webui-bff`
+  plus its configured Kubernetes issuer and audience. Shared HMAC key
+  is optional volume `txo-fabric-private-bridge-assertion/hmac-key`
+  at `/var/run/secrets/txo-fabric-bridge/hmac-key`; absent by default.
+- `server/private-bridge-client.mjs` is the ONLY client for mapping an
+  **verified global immutable Authentik UUID** to a historical per-tenant
+  `fabricUserId`. It pins operator
+  `http://txo-fabric-operator-private-bff.txo-fabric-system.svc:8090/internal/v1/identity/resolve`,
+  reads the projected SA token and shared HMAC key ONLY when explicitly
+  enabled, signs exactly method/path/tenant/UUID/SA/audience/`iat`/`exp`
+  (20 seconds)/fresh random 256-bit `jti`, and denies on missing
+  configuration, malformed HTTP/JSON, redirect, timeout or 403. All
+  errors are generic. Neither global OIDC `sub`, tenant issuer,
+  client-chosen Fabric ID, user header nor OpenFGA store appears in the
+  signed request. The operator's durable atomic Lease nonce CAS guards
+  replay; the BFF never retries the same assertion.
+- `runtime/networkpolicy.yaml` has **no BFF ingress** and only DNS 53,
+  CNPG `postgresql-shared` 5432 and the exact operator workload 8090
+  as BFF egress. Shared CNPG pods are isolated **by role/database**
+  credentials, not by TCP port (the PostgreSQL cluster itself is shared).
+  Existing operator ingress policy accepts the BFF pod's exact
+  `app.kubernetes.io/name` + `app.kubernetes.io/component` labels.
+  No BFF Internet, direct Authentik, OpenFGA, Hermes, CPA or broker path.
+  Kubelet health probes are not exposed via ingress.
+- `webui/kustomization.yaml` is included in `overlays/prod`
+  and renders the private runtime plus an immutable representation
+  of the **original** SQL 001/002 as a generated ConfigMap. The SQL
+  ConfigMap contains schema, not passwords. No public routes are added.
+
+## Database ownership and deferred bootstrap
+
+`webui/bootstrap/` is a **separate, UNREFERENCED Kustomization** and
+does not appear in `overlays/prod`. It stages the CNPG
+`DatabaseRole/txo-fabric-webui-migrator` (DB owner / DDL role),
+`DatabaseRole/txo-fabric-webui-runtime` (session runtime **DML-only**),
+`Database/txo-fabric-webui` on `postgresql-shared`, four separate
+platform-only ExternalSecret references, and a **suspended** job
+`txo-fabric-webui-schema-v1`. This is intentional: no real technical
+credentials are provisioned and the migration MUST NOT accidentally
+execute after source merge. The job needs a separate migrator credential
+(`txo-fabric-webui-migrator-runtime`); the BFF runtime would use only
+`txo-fabric-webui-bff-runtime`, both from a separately reviewed
+OpenBao platform record. No shared database superuser credential or
+tenant OpenBao dependency.
+
+Only after human-reviewed bootstrap, apply the two existing idempotent SQL
+files **in order**, then `REVOKE PUBLIC` and `GRANT CONNECT`, `USAGE`,
+`SELECT, INSERT, DELETE` on **only** the two BFF tables to the
+runtime role. The migration is never done by the serving process.
+Job `suspend: true` must be replaced by an approved activation change
+and its actual success verified; using a migration credential for runtime
+would violate the security contract. Persisted OAuth transactions and
+session-cookie hashes remain platform-only. This is *not* tenant
+credential storage; OpenBao is the **infrastructure** technical
+bootstrap service, not a tenant vault.
+
+## Image provenance / validation / next gate
+
+`Dockerfile` stages Node 22 in a minimal nonroot runtime, no app secret
+or client frontend. `.github/workflows/txo-fabric-webui-bff-image-ci.yaml`
+runs `node --test`, source checks, `git diff --check` and builds +
+publishes GHCR image with a source-commit `src-<sha12>` tag and an
+observable OCI digest. **Reviewer must pin the verified SHA256 image
+digest in GitOps**; CI does not merge, tag Git, promote or deploy a
+candidate. The image is health-only even when a Kubernetes Service exists.
+
+Future activation (separate reviewed change, never this PR):
+1. Register/reconcile CNPG roles/DB only after an approved private
+   technical secret exists, run/verify suspended migration and ensure
+   PostgreSQL ingress NetworkPolicy allows **only BFF/migrator** from
+   `txo-fabric-system` (currently not proven).
+2. Verify actual Authentik account source, global OIDC issuer/callback,
+   current TenantBundle catalogue, pinned per-tenant identity ledgers,
+   model/membership readiness leases, operator TokenReview issuer,
+   HMAC distribution and private NetworkPolicy behaviour. No browser
+   route until all integrations are real, audited and fail-closed.
+3. Only a separate authorization grants/chat increment #3981 may
+   enable per-AgentIdentity operations and physical hAIrem/Indiba/A/B/C
+   acceptance. Ask for human approval of an **exact dev-v*** candidate
+   before any production promotion.
+
+Rollback: revert the private runtime inclusion in the production
+overlay or scale down via *GitOps*, keeping both gates OFF. Do not
+delete CNPG databases, PVCs, Fabric retained identity ledgers, or
+secret sources in order to roll back an unactivated BFF. No direct
+cluster mutation or Argo forced synchronization is authorized.
+
+---
+
 # Fabric WebUI — global browser/BFF decision (ADR-040)
 
 ## Global browser login + durable session implementation (#3807, staged)

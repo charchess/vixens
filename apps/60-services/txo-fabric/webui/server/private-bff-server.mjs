@@ -1,0 +1,141 @@
+import { createServer } from "node:http";
+import { createGlobalWebUIApp } from "./global-auth-http.mjs";
+import { createPostgresOIDCTransactions } from "./oidc-postgres-transactions.mjs";
+import { createPostgresGlobalSessions } from "./global-postgres-sessions.mjs";
+
+const NO_STORE = Object.freeze({
+  "Cache-Control": "no-store",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "no-referrer",
+});
+const deny = (status = 404) => new Response("Unavailable", { status, headers: NO_STORE });
+const OFF_ROUTES = new Set(["/healthz", "/readyz"]);
+
+/**
+ * The imported Authentik OIDC, durable sessions and multi-tenant routing
+ * contracts are composed only with ACTUAL privileged providers. No fallback
+ * test/mocked user verification, tenant catalog, chat adapter or platform
+ * authorization callback is permitted in the runnable feature-OFF process.
+ */
+export function composeGlobalBFF({
+  expectedOrigin, authentikOrigin, pool, verifyActiveHuman,
+  listTenantCatalog, resolveTenantAccess, getTenantChat,
+  resolvePlatformAccess, fetchImpl,
+} = {}) {
+  if (typeof pool?.query !== "function" ||
+      typeof verifyActiveHuman !== "function" ||
+      typeof listTenantCatalog !== "function" ||
+      typeof resolveTenantAccess !== "function" ||
+      typeof getTenantChat !== "function") {
+    throw new Error("Global Fabric BFF privileged dependencies unavailable");
+  }
+  const transactions = createPostgresOIDCTransactions({ pool });
+  const sessions = createPostgresGlobalSessions({ pool });
+  return createGlobalWebUIApp({
+    expectedOrigin, authentikOrigin, transactions, sessions,
+    verifyActiveHuman, listTenantCatalog, resolveTenantAccess,
+    getTenantChat, resolvePlatformAccess, fetchImpl,
+  });
+}
+
+/**
+ * Feature-off has NO route that reads cookies, sends OIDC redirects, issues
+ * sessions or dispatches to a privileged adapter. Health requires no DB,
+ * IAM, FGA or bridge access, so a missing secret never creates a session.
+ * Feature-on composition is deliberately impossible without a real
+ * separately reviewed app handler and all its server-side dependencies.
+ */
+export function createPrivateBFFHandler({ enabled = false, app, ready } = {}) {
+  if (typeof enabled !== "boolean") throw new Error("Invalid WebUI BFF feature gate");
+  if (enabled && (typeof app !== "function" || typeof ready !== "function")) {
+    throw new Error("Unverified WebUI BFF activation");
+  }
+  return async function handle(request) {
+    let url;
+    try { url = new URL(request.url); }
+    catch { return deny(); }
+    if (url.username || url.password || url.hash || url.search ||
+        !["GET", "HEAD", "POST"].includes(request.method)) return deny();
+    if (OFF_ROUTES.has(url.pathname)) {
+      if (request.method !== "GET" && request.method !== "HEAD") return deny(405);
+      const ok = url.pathname === "/healthz" || !enabled || await ready().catch(() => false);
+      return new Response(request.method === "HEAD" ? null : (ok ? "ok" : "unavailable"), {
+        status: ok ? 200 : 503, headers: NO_STORE,
+      });
+    }
+    if (!enabled) return deny();
+    try {
+      if (await ready() !== true) return deny(503);
+      const response = await app(request);
+      return response instanceof Response ? response : deny(503);
+    } catch { return deny(503); }
+  };
+}
+
+// HTTP adapter is a real Node server, not an in-memory WHATWG simulation.
+// Strictly bounded request bodies; never dump headers, cookies or tokens.
+export function createPrivateBFFServer({ handle, maxBodyBytes = 1024 * 1024 } = {}) {
+  if (typeof handle !== "function" || !Number.isSafeInteger(maxBodyBytes) ||
+      maxBodyBytes < 1 || maxBodyBytes > 1024 * 1024) {
+    throw new Error("Private BFF server configuration invalid");
+  }
+  const server = createServer(async (req, res) => {
+    try {
+      const chunks = [];
+      let size = 0;
+      // Even while gated OFF, do not buffer an arbitrarily large body.
+      if (req.method !== "GET" && req.method !== "HEAD") {
+        for await (const chunk of req) {
+          size += chunk.length;
+          if (size > maxBodyBytes) {
+            res.writeHead(413, NO_STORE);
+            res.end("Unavailable");
+            return;
+          }
+          chunks.push(chunk);
+        }
+      }
+      const path = req.url || "/";
+      if (path.length > 4096 || !path.startsWith("/") ||
+          path.startsWith("//") || path.includes("\\") ||
+          /[\u0000-\u001f]/.test(path)) {
+        res.writeHead(404, NO_STORE);
+        res.end("Unavailable");
+        return;
+      }
+      const request = new Request("https://webui.truxonline.com" + path, {
+        method: req.method, headers: req.headers,
+        ...((req.method === "GET" || req.method === "HEAD") ? {} : { body: Buffer.concat(chunks) }),
+      });
+      const response = await handle(request);
+      const headers = Object.fromEntries(response.headers);
+      headers["cache-control"] = "no-store";
+      res.writeHead(response.status, headers);
+      if (req.method === "HEAD") {
+        res.end();
+        return;
+      }
+      const data = Buffer.from(await response.arrayBuffer());
+      if (data.length > maxBodyBytes) throw new Error("Response exceeds bounded limit");
+      res.end(data);
+    } catch {
+      if (!res.headersSent) res.writeHead(503, NO_STORE);
+      res.end("Unavailable");
+    }
+  });
+  server.requestTimeout = 8000;
+  server.headersTimeout = 5000;
+  server.keepAliveTimeout = 5000;
+  server.maxHeadersCount = 32;
+  return server;
+}
+
+export function resolveRuntimeGate(env = process.env) {
+  if (env.TXO_WEBUI_BFF_BROWSER_ENABLED !== "false") {
+    // Activation requires the *separate* reviewed integration of real
+    // Authentik/tenant/FGA providers. Never infer readiness from environment
+    // secrets alone; even an accidental 'true' is a hard startup failure.
+    throw new Error("WebUI browser activation not wired or approved");
+  }
+  return false;
+}
