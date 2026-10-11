@@ -9,8 +9,8 @@ import (
 
 	authv1 "k8s.io/api/authentication/v1"
 	coordinationv1 "k8s.io/api/coordination/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ktesting "k8s.io/client-go/testing"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
