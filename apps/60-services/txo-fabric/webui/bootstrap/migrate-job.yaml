@@ -1,0 +1,92 @@
+---
+# Suspend by default. It must not run before reviewed platform secrets,
+# CNPG DatabaseRoles/Database, the SQL ConfigMap and an approved activation.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: txo-fabric-webui-schema-v1
+  namespace: txo-fabric-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+  labels:
+    app.kubernetes.io/name: txo-fabric-webui-bff
+    app.kubernetes.io/component: bff-migration
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  suspend: true
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: txo-fabric-webui-bff
+        app.kubernetes.io/component: bff-migration
+        app.kubernetes.io/part-of: txo-fabric
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: schema
+          image: docker.io/library/postgres:16.6-alpine3.20
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              export PGSSLMODE=require
+              export PGCONNECT_TIMEOUT=5
+              psql -X -v ON_ERROR_STOP=1 -f /migrations/001_oidc_login_transactions.sql
+              psql -X -v ON_ERROR_STOP=1 -f /migrations/002_global_browser_sessions.sql
+              # Idempotent grants applied only by the dedicated schema owner.
+              psql -X -v ON_ERROR_STOP=1 -c "REVOKE ALL ON DATABASE txo_fabric_webui FROM PUBLIC"
+              psql -X -v ON_ERROR_STOP=1 -c "GRANT CONNECT ON DATABASE txo_fabric_webui TO txo_fabric_webui_runtime"
+              psql -X -v ON_ERROR_STOP=1 -c "GRANT USAGE ON SCHEMA public TO txo_fabric_webui_runtime"
+              psql -X -v ON_ERROR_STOP=1 -c "GRANT SELECT, INSERT, DELETE ON txo_fabric_oidc_login_transactions, txo_fabric_webui_sessions TO txo_fabric_webui_runtime"
+          env:
+            - name: PGHOST
+              value: postgresql-shared-rw.databases.svc.cluster.local
+            - name: PGPORT
+              value: "5432"
+            - name: PGDATABASE
+              value: txo_fabric_webui
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: txo-fabric-webui-migrator-runtime
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: txo-fabric-webui-migrator-runtime
+                  key: password
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 192Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: sql
+              mountPath: /migrations
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: sql
+          configMap:
+            name: txo-fabric-webui-sql-migrations
+        - name: tmp
+          emptyDir:
+            sizeLimit: 16Mi
