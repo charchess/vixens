@@ -14,14 +14,17 @@ import (
 
 func markPrivateMembershipReady(t *testing.T,r *TenantBundleReconciler,b *fabricv1alpha1.TenantBundle,now time.Time) {
 	t.Helper()
-	b.Status.ObservedGeneration=b.Generation
-	b.Status.Conditions=[]metav1.Condition{{
+	var saved fabricv1alpha1.TenantBundle
+	if err:=r.Get(context.Background(),types.NamespacedName{Name:b.Name},&saved);err!=nil {t.Fatal(err)}
+	saved.Status.ObservedGeneration=saved.Generation
+	saved.Status.Conditions=[]metav1.Condition{{
 		Type:"OpenFGAAuthorizationReady", Status:metav1.ConditionTrue,
-		Reason:"TenantMembershipReconciled",ObservedGeneration:b.Generation,
+		Reason:"TenantMembershipReconciled",ObservedGeneration:saved.Generation,
 		LastTransitionTime:metav1.NewTime(now),
 		Message:"validUntil="+now.Add(45*time.Second).UTC().Format(time.RFC3339Nano)+"; tenant membership only; agent grants not included",
 	}}
-	if err:=r.Status().Update(context.Background(),b);err!=nil {t.Fatal(err)}
+	if err:=r.Update(context.Background(),&saved);err!=nil {t.Fatal(err)}
+	*b=*saved.DeepCopy()
 }
 
 func TestPrivateAuthorizationConditionFreshFailsClosed(t *testing.T) {
@@ -126,7 +129,7 @@ func TestPrivateBFFIdentityUsesExistingTenantIssuerPinnedUUIDOnly(t *testing.T) 
 			var stored fabricv1alpha1.TenantBundle
 			if err:=r.Get(ctx,typesNamespacedName(a.Name),&stored);err!=nil {t.Fatal(err)}
 			tc.mutate(&stored)
-			if err:=r.Status().Update(ctx,&stored);err!=nil {t.Fatal(err)}
+			if err:=r.Update(ctx,&stored);err!=nil {t.Fatal(err)}
 			if id,err:=r.ResolvePrivateBFFIdentity(ctx,a.Name,uuid,now);err==nil || id!="" {
 				t.Fatal("bypassed stale/unavailable authorization condition")
 			}
