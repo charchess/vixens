@@ -202,7 +202,11 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 		if err := r.reconcileOpenFGAIAMGroupPins(ctx, &bundle, source); err != nil {
 			bundle.Status.Phase = "Degraded"
-			setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, "GroupPinInvalid", "tenant Authentik group UUID pins are unavailable or inconsistent")
+			reason := "GroupPinInvalid"
+			if errors.Is(err, errIAMSourceUnavailable) {
+				reason = "IAMSourceUnavailable"
+			}
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, reason, "tenant Authentik group UUID pins or source are unavailable or inconsistent")
 			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AuthorizationMembershipNotReady", "tenant membership source is not ready")
 			if !reflect.DeepEqual(previousStatus, bundle.Status) {
 				_ = r.Status().Update(ctx, &bundle)
