@@ -1,0 +1,44 @@
+---
+# txo-fabric-system/default-deny already selects all pods. This BFF-specific
+# policy documents the enforced *additional* permitted egress; ingress stays
+# denied. Direct Authentik/Internet/OpenFGA/Hermes/CPA egress is not allowed.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: txo-fabric-webui-bff-private
+  namespace: txo-fabric-system
+  labels:
+    app.kubernetes.io/name: txo-fabric-webui-bff
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: txo-fabric-webui-bff
+      app.kubernetes.io/component: bff
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - {protocol: UDP, port: 53}
+        - {protocol: TCP, port: 53}
+    # CNPG is a shared cluster, but role/database are BFF-exclusive.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: databases
+          podSelector:
+            matchLabels:
+              cnpg.io/cluster: postgresql-shared
+      ports:
+        - {protocol: TCP, port: 5432}
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: txo-fabric-operator
+              app.kubernetes.io/component: operator
+      ports:
+        - {protocol: TCP, port: 8090}
