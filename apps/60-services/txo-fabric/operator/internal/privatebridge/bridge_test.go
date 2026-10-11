@@ -49,7 +49,8 @@ func (n *memoryNonceStore) Consume(_ context.Context,key string,_ time.Time) err
 
 func jwtFor(issuer,subject,audience string) string {
 	head:=base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256"}`))
-	p,_:=json.Marshal(map[string]any{"iss":issuer,"sub":subject,"aud":audience})
+	p,_:=json.Marshal(map[string]any{"iss":issuer,"sub":subject,"aud":audience,
+		"iat":testNow.Unix(),"exp":testNow.Add(30*time.Minute).Unix(),"nbf":testNow.Unix()})
 	return head+"."+base64.RawURLEncoding.EncodeToString(p)+".signature"
 }
 
