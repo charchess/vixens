@@ -233,3 +233,31 @@ func TestNonceScopeSeparatesIssuerAudienceTenantAndNeverStoresUUID(t *testing.T)
 	c=h.Contract;c.Audience="other"
 	if scopedNonceKey(c,a)==base {t.Fatal("audience nonce collision")}
 }
+
+func TestBoundWorkloadTokenMustHaveShortValidExpiration(t *testing.T) {
+	jwtWith:=func(claims map[string]any)string{
+		raw,_:=json.Marshal(claims)
+		return "header."+base64.RawURLEncoding.EncodeToString(raw)+".signature"
+	}
+	base:=map[string]any{"iss":testIssuer,"sub":testSA,"aud":testAudience,
+		"iat":testNow.Unix(),"exp":testNow.Add(10*time.Minute).Unix()}
+	if !tokenClaimsMatch(jwtWith(base),testIssuer,testAudience,testSA,testNow) {
+		t.Fatal("fresh projected ServiceAccount token rejected")
+	}
+	for _,tc:=range []struct{name string;update func(map[string]any)}{
+		{"missing-exp",func(m map[string]any){delete(m,"exp")}},
+		{"expired",func(m map[string]any){m["exp"]=testNow.Add(-time.Second).Unix()}},
+		{"year-token",func(m map[string]any){m["exp"]=testNow.Add(365*24*time.Hour).Unix()}},
+		{"future-iat",func(m map[string]any){m["iat"]=testNow.Add(10*time.Minute).Unix()}},
+		{"not-before",func(m map[string]any){m["nbf"]=testNow.Add(10*time.Minute).Unix()}},
+	}{
+		t.Run(tc.name,func(t *testing.T){
+			claims:=map[string]any{}
+			for k,v:=range base{claims[k]=v}
+			tc.update(claims)
+			if tokenClaimsMatch(jwtWith(claims),testIssuer,testAudience,testSA,testNow) {
+				t.Fatal("unbounded/expired service account token accepted")
+			}
+		})
+	}
+}
