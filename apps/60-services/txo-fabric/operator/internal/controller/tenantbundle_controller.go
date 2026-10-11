@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -35,6 +36,10 @@ type TenantBundleReconciler struct {
 	// Optional test seam. Runtime uses the platform-owned OpenBao-synced
 	// Authentik service token; never tenant or browser credentials.
 	AuthentikMembershipClient authoritativeIAMGroupReader
+	// Optional test seam; runtime uses the private OpenFGA service credential.
+	OpenFGATupleClient scopedIAMTupleWriter
+	// Optional deterministic clock in tests; no tenant/browser supplied time.
+	AuthorizationNow func() time.Time
 }
 
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles,verbs=get;list;watch;update;patch
@@ -170,25 +175,59 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			}
 			return ctrl.Result{}, err
 		}
-		// The operator is the sole issuer of durable tenant IAM group pins.
-		// No tuple sync runs here: verified human enrollment, revocation,
-		// freshness and agent permissions still require explicit activation.
-		if bundle.Spec.HumanAccess != nil && bundle.Spec.HumanAccess.Web != nil {
-			source, err := r.authentikMembershipSource(ctx)
-			if err == nil {
-				err = r.reconcileOpenFGAIAMGroupPins(ctx, &bundle, source)
+		// A tenant with no declared human IAM surface must not acquire a
+		// positive authorization condition merely because store/model exist.
+		if bundle.Spec.HumanAccess == nil || bundle.Spec.HumanAccess.Web == nil {
+			bundle.Status.Phase = "Degraded"
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, "IdentityLedgerInvalid", "tenant has no authoritative human membership scope")
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AuthorizationMembershipNotReady", "tenant membership source is not ready")
+			if !reflect.DeepEqual(previousStatus, bundle.Status) {
+				_ = r.Status().Update(ctx, &bundle)
 			}
-			if err != nil {
-				bundle.Status.Phase = "Degraded"
-				setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, "IAMGroupPinReconcileFailed", "private Authentik group UUID continuity could not be verified")
-				setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "OpenFGAIAMGroupPinFailed", "tenant human IAM group UUID pins are not reconciled")
-				if !reflect.DeepEqual(previousStatus, bundle.Status) {
-					_ = r.Status().Update(ctx, &bundle)
-				}
-				return ctrl.Result{}, err
-			}
+			return ctrl.Result{RequeueAfter: authorizationRefresh}, nil
 		}
-		setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, "TupleSyncNotImplemented", "Authentik membership and Fabric grant reconciliation are not yet implemented")
+		source, err := r.authentikMembershipSource(ctx)
+		if err != nil {
+			reason := "IAMCredentialMissing"
+			if errors.Is(err, errIAMCredentialInvalid) {
+				reason = "IAMCredentialInvalid"
+			}
+			bundle.Status.Phase = "Degraded"
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, reason, "platform Authentik read-only service credential is not ready")
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AuthorizationMembershipNotReady", "tenant membership source is not ready")
+			if !reflect.DeepEqual(previousStatus, bundle.Status) {
+				_ = r.Status().Update(ctx, &bundle)
+			}
+			return ctrl.Result{RequeueAfter: authorizationRefresh}, nil
+		}
+		if err := r.reconcileOpenFGAIAMGroupPins(ctx, &bundle, source); err != nil {
+			bundle.Status.Phase = "Degraded"
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, "GroupPinInvalid", "tenant Authentik group UUID pins are unavailable or inconsistent")
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AuthorizationMembershipNotReady", "tenant membership source is not ready")
+			if !reflect.DeepEqual(previousStatus, bundle.Status) {
+				_ = r.Status().Update(ctx, &bundle)
+			}
+			return ctrl.Result{RequeueAfter: authorizationRefresh}, nil
+		}
+		writer, writerErr := r.authorizationTupleWriter(ctx)
+		validUntil, reason := "", ""
+		if writerErr != nil {
+			reason = "OpenFGAUnavailable"
+		} else {
+			validUntil, reason = r.reconcileFreshTenantMembers(ctx, &bundle, source, writer)
+		}
+		if reason != "" {
+			bundle.Status.Phase = "Degraded"
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, reason, "authoritative tenant membership authorization is not fresh and verified")
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AuthorizationMembershipNotReady", "tenant membership authorization is unavailable")
+			if !reflect.DeepEqual(previousStatus, bundle.Status) {
+				_ = r.Status().Update(ctx, &bundle)
+			}
+			return ctrl.Result{RequeueAfter: authorizationRefresh}, nil
+		}
+		// The expiry is non-secret: persisted True without a future
+		// validUntil and matching observedGeneration MUST be rejected.
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionTrue, "TenantMembershipReconciled", "validUntil="+validUntil+"; tenant membership only; agent grants not included")
 	} else {
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAStoreReady", metav1.ConditionFalse, "RolloutDisabled", "private tenant authorization store reconciliation is not enabled")
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAModelReady", metav1.ConditionFalse, "RolloutDisabled", "private tenant authorization model reconciliation is not enabled")
@@ -198,6 +237,9 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	waiting := false
 	degraded := false
 	requeueAfter := time.Duration(0)
+	if openFGARolloutEnabled {
+		requeueAfter = authorizationRefresh
+	}
 
 	runAIPlane := tenantRunsAIPlane(&bundle)
 	if runAIPlane {
@@ -453,10 +495,10 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	if openFGARolloutEnabled {
-		// Staging store/model publication cannot advertise business readiness
-		// without authoritative tuple convergence and revocation.
+		// Membership convergence alone does not create agent grants or prove
+		// policy checks required for browser/chat authorization.
 		bundle.Status.Phase = "Degraded"
-		setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AuthorizationTupleSyncPending", "tenant OpenFGA tuple and revocation reconciliation is not implemented")
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AgentGrantSyncPending", "tenant membership is checked but agent/action grants and effective policy are not activated")
 	} else if degraded {
 		bundle.Status.Phase = "Degraded"
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "CapabilityBlocked", "one or more declared capabilities are blocked")
