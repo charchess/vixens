@@ -377,3 +377,99 @@ change. **Rollback:** revert new code/ESO/NP in GitOps and/or disable
 `TXO_FABRIC_OPENFGA_STORES_ENABLED` (already off); never delete retained
 tenant ConfigMaps, user identity ledgers, OpenFGA stores or grants as a
 rollback shortcut.
+
+## #4037 — private global BFF identity bridge (source-only, **OFF**)
+
+This contract does not expose or run the global WebUI. The global Authentik
+OIDC issuer (`/application/o/txo-fabric-webui/`) is NOT the historical
+per-tenant issuer. No subject migration/enrollment is performed.
+
+**Endpoint:** `POST /internal/v1/identity/resolve` on a separate private
+port 8090 (not metrics 8080 or health 8081). The Service
+`txo-fabric-operator-private-bff.txo-fabric-system.svc:8090` is
+**ClusterIP only** and has no Ingress, LoadBalancer, NodePort, or public
+HTTP route. The ingress NetworkPolicy allows only BFF-labelled pods in
+`txo-fabric-system` to port 8090; existing metrics/probes remain available
+as before. Network labels are NOT sufficient authentication.
+
+**Request** (JSON, no optional client authority):
+```json
+{"tenantKey":"indiba","authentikUserUUID":"550e8400-e29b-41d4-a716-446655440001"}
+```
+**Success:** `{"tenantKey":"indiba","fabricUserId":"usr..."}`.
+All denial branches (missing tenant, unregistered UUID, FGA/IAM unavailable,
+stale lease, invalid TokenReview, malformed proof, already-used nonce)
+return the same generic `403 identity unavailable`, `Cache-Control: no-store`;
+never include issuer, legacy subject, group, OpenFGA store or model in the
+response. This endpoint does **not** grant chat/agent access.
+
+**Required two independent workload proofs:**
+
+1. `Authorization: Bearer <projected-BFF-Kubernetes-ServiceAccount-token>`.
+   Kubernetes **TokenReview** MUST authenticate
+   `system:serviceaccount:txo-fabric-system:txo-fabric-webui-bff` with
+   **exact** audience `txo-fabric-private-identity`. Following a positive
+   review, the bound JWT's `iss`, `sub` and sole `aud` must match the
+   configured cluster issuer, expected ServiceAccount and audience. A
+   browser OIDC token, arbitrary username header or another SA cannot
+   pass. K8s RBAC grants only the operator the TokenReview create action.
+2. `X-Fabric-Assertion: base64url(UTF8 JSON).base64url(HMAC-SHA256(...))`
+   signed with a separate platform HMAC key of **at least 32 bytes**.
+   JSON fields must be exactly `method`, `path`, `tenantKey`,
+   `authentikUserUUID`, `serviceAccount`, `audience`, `iat`,
+   `exp`, `jti`. Signature covers the base64url payload bytes and
+   the server checks each claim against the actual method/endpoint,
+   request body and configured trusted authority. Validity maximum
+   **30 seconds**, forward skew max **5 seconds**. `jti` must be a
+   non-guessable CSPRNG-generated unique base64url value (>= 128 bits).
+   No signature/TokenReview/UUID appears in app logs or Kubernetes Lease.
+
+On a valid proof, the operator computes a SHA-256 opaque key from configured
+K8s issuer + audience + SA + tenantKey + jti, and atomically **Creates**
+a Kubernetes `coordination.k8s.io/Lease` in `txo-fabric-system` via the
+API server. Name `bff-jti-<48 lowercase hex chars>` contains no raw UUID,
+human subject or token. An already-existing key (including one with an old
+timestamp) or API outage **always denies**. There is NO local-memory nonce
+fallback and no successful response without an acknowledged CAS create.
+Callers must use a fresh assertion on every attempt; even denied requests
+may consume it. Nonces are durable across BFF/operator replica restarts.
+No request-time lease cleanup: **never** delete an in-use/recent nonce.
+Retention/periodic GC policy needs explicit later review; until then records
+remain (storage growth operational risk).
+
+**Tenant resolution:** the requested `tenantKey` identifies a
+cluster-scoped, active `TenantBundle` owned by Fabric. It never conveys
+permission. The resolver requires matching `observedGeneration`,
+`OpenFGAAuthorizationReady=True` with reason
+`TenantMembershipReconciled` and a properly bounded unexpired
+`validUntil` lease. All lookups read the existing immutable
+tenant UID-bound, per-tenant issuer/subject/UUID/FabricUserID ledger,
+and validate retained store/model against the private OpenFGA API.
+Only exact `AuthentikUserUUID` resolves the Fabric ID. It re-reads the
+live Authentik account (must be active), every pinned group UUID/membership
+and the ledger/readiness before returning. The same Authentik UUID can map to
+different existing Fabric users **in different tenants**. No new identity,
+rebind, user directory, grant, tuple or issuer is minted.
+
+**Activation deliberately disabled:** the manager listens on 8090 **only**
+if `TXO_FABRIC_PRIVATE_BRIDGE_ENABLED=true`. GitOps pins it to
+`"false"` and pins `TXO_FABRIC_PRIVATE_BRIDGE_K8S_ISSUER=""`.
+The optional secretKeyRef `txo-fabric-private-bridge-assertion/hmac-key`
+is a reserved platform-secret contract, NOT created here. A future, separately
+reviewed BFF deployment must provision the exact SA, a projected token with
+the dedicated audience, the matching signing key via platform-approved
+secret distribution (never Git), and verify the actual cluster TokenReview
+issuer and private service/NetworkPolicy connectivity in nonprod before
+activating. No mTLS infrastructure is currently assumed; if introduced,
+enforce the authenticated BFF workload certificate in addition to
+TokenReview and one-time assertion, never instead of them. The current
+`TXO_FABRIC_OPENFGA_STORES_ENABLED` remains OFF. Do not advertise
+this as a functioning public login or a permission to call Hermes.
+
+**Validation/rollback:** Go unit/race tests cover forged workload JWT
+issuer/audience/SA, requests/assertions/signatures, replay with concurrency,
+CAS persistence failure, zero identity disclosures and cross-tenant UUID
+mapping, plus stale IAM and FGA readiness. A production-overlay render and
+real TokenReview/Auth/FGA connectivity remain separate. Rollback requires
+a GitOps revert, or leave both gates OFF; do not modify cluster resources
+directly or delete retained tenant identity ledgers.
