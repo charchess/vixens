@@ -34,6 +34,7 @@ type recordingIAMWriter struct {
 	stores map[string]bool
 	models map[string]bool
 	calls []openfga.TupleScope
+	revocations []openfga.Tuple
 	failFor string
 }
 func (w *recordingIAMWriter) ReconcileTupleScope(_ context.Context, storeID,modelID string, scope openfga.TupleScope, desired []openfga.Tuple) error {
@@ -45,6 +46,29 @@ func (w *recordingIAMWriter) ReconcileTupleScope(_ context.Context, storeID,mode
 	// Simulate exact-set reconciliation: anything missing from the new
 	// authoritative source snapshot is revoked, not accumulated.
 	w.current[key]=append([]openfga.Tuple(nil),desired...)
+	return nil
+}
+// Simulates the production single-tuple read/diff/delete/read-back path:
+// absent target is idempotent, other users and stores are never overwritten.
+func (w *recordingIAMWriter) RevokeMemberTuple(_ context.Context, storeID,modelID string, scope openfga.TupleScope, fabricUserID string) error {
+	if w.failFor==scope.Object {return errors.New("OpenFGA unavailable")}
+	key:=storeID+"/"+scope.Object+"/"+scope.Relation
+	target:=openfga.Tuple{Object:scope.Object,Relation:scope.Relation,User:"user:"+fabricUserID}
+	var remaining []openfga.Tuple
+	found:=false
+	for _, tuple := range w.current[key] {
+		if tuple==target {found=true;continue}
+		remaining=append(remaining,tuple)
+	}
+	if found {
+		w.revocations=append(w.revocations,target)
+		w.current[key]=remaining
+	}
+	w.stores[storeID]=true
+	w.models[modelID]=true
+	for _, tuple := range w.current[key] {
+		if tuple==target {return errors.New("read-back still contains revoked member")}
+	}
 	return nil
 }
 func (w *recordingIAMWriter) at(storeID,groupName string) []openfga.Tuple {
