@@ -1,0 +1,72 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: DatabaseRole
+metadata:
+  name: txo-fabric-webui-migrator
+  namespace: databases
+  annotations:
+    argocd.argoproj.io/sync-wave: "-12"
+  labels:
+    app.kubernetes.io/name: txo-fabric-webui-bff
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  cluster:
+    name: postgresql-shared
+  name: txo_fabric_webui_migrator
+  login: true
+  inherit: false
+  superuser: false
+  createdb: false
+  createrole: false
+  replication: false
+  bypassrls: false
+  connectionLimit: 3
+  ensure: present
+  passwordSecret:
+    name: txo-fabric-webui-migrator-postgresql
+  databaseRoleReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: DatabaseRole
+metadata:
+  name: txo-fabric-webui-runtime
+  namespace: databases
+  annotations:
+    argocd.argoproj.io/sync-wave: "-12"
+  labels:
+    app.kubernetes.io/name: txo-fabric-webui-bff
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  cluster:
+    name: postgresql-shared
+  name: txo_fabric_webui_runtime
+  login: true
+  inherit: false
+  superuser: false
+  createdb: false
+  createrole: false
+  replication: false
+  bypassrls: false
+  connectionLimit: 20
+  ensure: present
+  passwordSecret:
+    name: txo-fabric-webui-runtime-postgresql
+  databaseRoleReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: txo-fabric-webui
+  namespace: databases
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+  labels:
+    app.kubernetes.io/name: txo-fabric-webui-bff
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  cluster:
+    name: postgresql-shared
+  name: txo_fabric_webui
+  owner: txo_fabric_webui_migrator
+  ensure: present
+  databaseReclaimPolicy: retain
