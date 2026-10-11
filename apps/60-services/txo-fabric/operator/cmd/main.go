@@ -108,9 +108,9 @@ func main() {
 			},
 			Tokens:privatebridge.KubernetesTokenReviewer{Client:kube},
 			Nonces:privatebridge.KubernetesNonceStore{Client:mgr.GetClient()},
-			Identities:&controller.TenantBundleReconciler{
+			Identities:privateBFFResolver{controller:&controller.TenantBundleReconciler{
 				Client:mgr.GetClient(),APIReader:mgr.GetAPIReader(),Scheme:mgr.GetScheme(),
-			},
+			}},
 		}
 		if err:=mgr.Add(manager.RunnableFunc(func(ctx context.Context) error {
 			listener,err:=net.Listen("tcp",":8090")
@@ -141,4 +141,11 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+// privateBFFResolver keeps the security-sensitive operator lookup name
+// explicit without widening the privatebridge.Resolver interface.
+type privateBFFResolver struct { controller *controller.TenantBundleReconciler }
+func (r privateBFFResolver) Resolve(ctx context.Context,tenant,uuid string,now time.Time)(string,error) {
+	return r.controller.ResolvePrivateBFFIdentity(ctx,tenant,uuid,now)
 }
