@@ -255,3 +255,99 @@ func TestTenantMembershipTupleScopeIsExactAndNoForeignWrites(t *testing.T) {
 		if err:=validateScopedTuple(valid,bad);err==nil {t.Fatalf("cross-tenant/untrusted tuple allowed: %#v",bad)}
 	}
 }
+
+func TestRevokeMemberTupleDeletesOnlyTargetWithReadbackAndNoReplayWrites(t *testing.T) {
+	group:=TupleScope{Object:"group:txo-fabric-indiba-sales",Relation:"member"}
+	tenant:=TupleScope{Object:"tenant:TEN00002",Relation:"member"}
+	affected:="usr000002"
+	other:="usr000003"
+	scopes:=[]TupleScope{group,tenant}
+	state:=map[string]map[Tuple]bool{}
+	for _,scope:=range scopes {
+		state[scope.Object]=map[Tuple]bool{
+			{Object:scope.Object,Relation:"member",User:"user:"+affected}:true,
+			{Object:scope.Object,Relation:"member",User:"user:"+other}:true,
+		}
+	}
+	writes:=0
+	reads:=0
+	client:=testClient(t,func(req *http.Request)(*http.Response,error) {
+		if req.URL.Path=="/stores/"+testStoreA+"/authorization-models" && req.Method=="GET" {
+			blob,_:=json.Marshal(modelWithID(t,sampleModelID))
+			return response(200,authorizationModelResponse{AuthorizationModels:[]json.RawMessage{blob}}),nil
+		}
+		if req.URL.Path=="/stores/"+testStoreA+"/read" && req.Method=="POST" {
+			reads++
+			var query tupleReadRequest
+			if err:=json.NewDecoder(req.Body).Decode(&query);err!=nil {t.Fatal(err)}
+			scope:=query.TupleKey["object"]
+			if _,ok:=state[scope];!ok || query.TupleKey["relation"]!="member" {t.Fatal("foreign tuple scope read")}
+			rows:=[]readTuple{}
+			for tuple:=range state[scope] {rows=append(rows,readTuple{Key:tuple})}
+			return response(200,readTuplesResponse{Tuples:rows}),nil
+		}
+		if req.URL.Path=="/stores/"+testStoreA+"/write" && req.Method=="POST" {
+			writes++
+			var payload tupleWriteRequest
+			if err:=json.NewDecoder(req.Body).Decode(&payload);err!=nil {t.Fatal(err)}
+			if payload.AuthorizationModelID!=sampleModelID || payload.Deletes==nil ||
+				payload.Writes!=nil || payload.Deletes.OnMissing!="ignore" ||
+				len(payload.Deletes.TupleKeys)!=1 {
+				t.Fatal("revocation attempted unscoped or additive tuple write")
+			}
+			target:=payload.Deletes.TupleKeys[0]
+			if target.User!="user:"+affected || !state[target.Object][target] {t.Fatal("unexpected revoked tuple")}
+			delete(state[target.Object],target)
+			return response(200,map[string]any{}),nil
+		}
+		t.Fatalf("unexpected OpenFGA request %s %s",req.Method,req.URL.Path)
+		return nil,errors.New("untrusted upstream")
+	})
+	for pass:=0;pass<2;pass++ {
+		for _,scope:=range scopes {
+			if err:=client.RevokeMemberTuple(context.Background(),testStoreA,sampleModelID,scope,affected);err!=nil {t.Fatal(err)}
+			if state[scope.Object][Tuple{Object:scope.Object,Relation:"member",User:"user:"+affected}] ||
+				!state[scope.Object][Tuple{Object:scope.Object,Relation:"member",User:"user:"+other}] {
+				t.Fatalf("unsafe revocation %s pass=%d",scope.Object,pass)
+			}
+		}
+	}
+	if writes!=2 || reads!=8 {t.Fatalf("expected single precise deletion per scope with readback and idempotent retry: writes=%d reads=%d",writes,reads)}
+	for _,tc:=range []struct{scope TupleScope;id string}{
+		{TupleScope{Object:"agent:agent-01",Relation:"chatter"},affected},
+		{TupleScope{Object:"tenant:TEN00002",Relation:"admin"},affected},
+		{group,"not-canonical"},
+	} {
+		if err:=client.RevokeMemberTuple(context.Background(),testStoreA,sampleModelID,tc.scope,tc.id);err==nil {
+			t.Fatalf("accepted arbitrary tuple deletion: %#v",tc)
+		}
+	}
+}
+
+func TestRevokeMemberTupleRefusesFalseReadbackOrSourceFailure(t *testing.T) {
+	scope:=TupleScope{Object:"tenant:TEN00002",Relation:"member"}
+	target:=Tuple{Object:scope.Object,Relation:"member",User:"user:usr000002"}
+	for _,mode:=range []string{"read-unavailable","unchanged-after-delete","invalid-model"} {
+		t.Run(mode,func(t *testing.T){
+			writes:=0
+			client:=testClient(t,func(req *http.Request)(*http.Response,error) {
+				switch req.URL.Path {
+				case "/stores/"+testStoreA+"/authorization-models":
+					blob,_:=json.Marshal(modelWithID(t,sampleModelID))
+					if mode=="invalid-model" {return response(500,map[string]any{}),nil}
+					return response(200,authorizationModelResponse{AuthorizationModels:[]json.RawMessage{blob}}),nil
+				case "/stores/"+testStoreA+"/read":
+					if mode=="read-unavailable" {return nil,errors.New("network unavailable")}
+					return response(200,readTuplesResponse{Tuples:[]readTuple{{Key:target}}}),nil
+				case "/stores/"+testStoreA+"/write":
+					writes++
+					return response(200,map[string]any{}),nil
+				}
+				return nil,errors.New("unexpected endpoint")
+			})
+			err:=client.RevokeMemberTuple(context.Background(),testStoreA,sampleModelID,scope,"usr000002")
+			if err==nil {t.Fatal("accepted failed revocation without authoritative read-back")}
+			if mode!="unchanged-after-delete" && writes!=0 {t.Fatal("speculative delete on untrusted OpenFGA state")}
+		})
+	}
+}
