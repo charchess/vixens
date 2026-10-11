@@ -3,14 +3,22 @@ package main
 import (
 	"flag"
 	"os"
+	"context"
+	"errors"
+	"net"
+	"net/http"
+	"time"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	"github.com/charchess/vixens/apps/60-services/txo-fabric/operator/internal/controller"
+	"github.com/charchess/vixens/apps/60-services/txo-fabric/operator/internal/privatebridge"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
@@ -76,6 +84,58 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Source-only contract: this listener is NOT reachable or started by
+	// default. Activation requires a separate, reviewed platform-secret
+	// bootstrap, BFF ServiceAccount deployment and GitOps gate change.
+	if os.Getenv("TXO_FABRIC_PRIVATE_BRIDGE_ENABLED") == "true" {
+		key:=[]byte(os.Getenv("TXO_FABRIC_PRIVATE_BRIDGE_HMAC_KEY"))
+		issuer:=os.Getenv("TXO_FABRIC_PRIVATE_BRIDGE_K8S_ISSUER")
+		const audience="txo-fabric-private-identity"
+		const subject="system:serviceaccount:txo-fabric-system:txo-fabric-webui-bff"
+		if len(key)<32 || issuer=="" {
+			setupLog.Error(errors.New("private bridge configuration incomplete"),"refusing unauthenticated identity API")
+			os.Exit(1)
+		}
+		kube,err:=kubernetes.NewForConfig(mgr.GetConfig())
+		if err!=nil {
+			setupLog.Error(err,"cannot initialize private TokenReview client")
+			os.Exit(1)
+		}
+		handler:=&privatebridge.Handler{
+			Contract:privatebridge.Contract{
+				Audience:audience,KubernetesIssuer:issuer,
+				BFFServiceAccount:subject,AssertionKey:key,
+			},
+			Tokens:privatebridge.KubernetesTokenReviewer{Client:kube},
+			Nonces:privatebridge.KubernetesNonceStore{Client:mgr.GetClient()},
+			Identities:&controller.TenantBundleReconciler{
+				Client:mgr.GetClient(),APIReader:mgr.GetAPIReader(),Scheme:mgr.GetScheme(),
+			},
+		}
+		if err:=mgr.Add(manager.RunnableFunc(func(ctx context.Context) error {
+			listener,err:=net.Listen("tcp",":8090")
+			if err!=nil {return err}
+			mux:=http.NewServeMux()
+			mux.Handle(privatebridge.Path,handler)
+			server:=&http.Server{
+				Handler:mux,ReadHeaderTimeout:5*time.Second,
+				ReadTimeout:8*time.Second,WriteTimeout:8*time.Second,
+				IdleTimeout:15*time.Second,MaxHeaderBytes:20*1024,
+			}
+			go func() {
+				<-ctx.Done()
+				closeCtx,cancel:=context.WithTimeout(context.Background(),3*time.Second)
+				defer cancel()
+				_ = server.Shutdown(closeCtx)
+			}()
+			err=server.Serve(listener)
+			if errors.Is(err,http.ErrServerClosed) {return nil}
+			return err
+		}));err!=nil {
+			setupLog.Error(err,"cannot register private BFF identity listener")
+			os.Exit(1)
+		}
+	}
 	setupLog.Info("starting TXO Fabric operator")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
