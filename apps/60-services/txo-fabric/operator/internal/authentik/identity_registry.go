@@ -127,6 +127,22 @@ func (r *IdentityRegistry) ResolveOIDCSubject(issuer, subject string) (string, e
 	return binding.FabricUserID, nil
 }
 
+// ResolveAuthentikUserUUID looks up an ALREADY enrolled canonical user in
+// this tenant's retained issuer-pinned ledger. It is not an enrollment or an
+// authorization check; callers must separately verify the authoritative
+// account and exact tenant group membership before any FGA mutation.
+func (r *IdentityRegistry) ResolveAuthentikUserUUID(uuid string) (string, error) {
+	if r == nil || !uuidPattern.MatchString(uuid) {
+		return "", errors.New("untrusted Fabric Authentik identity")
+	}
+	binding, exists := r.byAuthentikID[uuid]
+	if !exists || binding.TenantID != r.tenantID || binding.Issuer != r.issuer ||
+		binding.AuthentikUserUUID != uuid {
+		return "", errors.New("unmapped Fabric Authentik identity")
+	}
+	return binding.FabricUserID, nil
+}
+
 // ResolveGroupMembership translates one COMPLETE Authentik membership snapshot
 // to canonical Fabric user IDs; a missing binding is an ERROR, never a skipped
 // user or an empty desired snapshot. It grants nothing and does not write FGA.
