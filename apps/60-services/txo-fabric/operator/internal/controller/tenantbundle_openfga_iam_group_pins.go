@@ -27,6 +27,12 @@ const (
 	authentikTokenSecret  = "txo-authentik-runtime"
 )
 
+var (
+	errIAMCredentialMissing = errors.New("platform Authentik IAM credential unavailable")
+	errIAMCredentialInvalid = errors.New("platform Authentik IAM credential invalid")
+	errIAMSourceUnavailable = errors.New("platform Authentik IAM source unavailable")
+)
+
 var immutableAuthentikUUID = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`)
 
 type iamGroupPin struct {
@@ -45,11 +51,11 @@ func (r *TenantBundleReconciler) authentikMembershipSource(ctx context.Context) 
 	if err := r.Get(ctx, types.NamespacedName{
 		Namespace: openFGAPlatformNamespace, Name: authentikTokenSecret,
 	}, &secret); err != nil {
-		return nil, errors.New("Fabric Authentik membership credential unavailable")
+		return nil, errIAMCredentialMissing
 	}
 	source, err := authentik.NewClient(string(secret.Data["token"]), nil)
 	if err != nil {
-		return nil, errors.New("Fabric Authentik membership credential invalid")
+		return nil, errIAMCredentialInvalid
 	}
 	return source, nil
 }
@@ -212,7 +218,7 @@ func (r *TenantBundleReconciler) reconcileOpenFGAIAMGroupPins(
 		// double-reads active membership. No user UUID is turned into a grant.
 		snapshot, err := source.SnapshotGroupMembership(ctx, groupName)
 		if err != nil {
-			return fmt.Errorf("Fabric Authentik group inventory unavailable for %s: %w", groupName, err)
+			return errIAMSourceUnavailable
 		}
 		if snapshot.Name != groupName || !immutableAuthentikUUID.MatchString(snapshot.AuthentikGroupUUID) ||
 			snapshot.ActiveAuthentikUserUUIDs == nil || seenUUID[snapshot.AuthentikGroupUUID] {
@@ -242,7 +248,8 @@ func (r *TenantBundleReconciler) reconcileOpenFGAIAMGroupPins(
 	// deletion/recreation between initial validation and persistence.
 	for _, groupName := range names {
 		snapshot, err := source.SnapshotGroupMembership(ctx, groupName)
-		if err != nil || snapshot.Name != groupName ||
+		if err != nil { return errIAMSourceUnavailable }
+		if snapshot.Name != groupName ||
 			snapshot.AuthentikGroupUUID != next[groupName] ||
 			snapshot.ActiveAuthentikUserUUIDs == nil {
 			return errors.New("Fabric Authentik group identity changed during UUID pinning")

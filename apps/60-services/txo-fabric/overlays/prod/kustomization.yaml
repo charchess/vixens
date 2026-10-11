@@ -5,6 +5,8 @@ resources:
   - ../../base
   - ../../operator/config/rbac
   - ../../operator/config/network
+  # Platform-only read credential; no tenant secrets and no rollout flag change.
+  - ../../operator/config/iam
   - ../../operator/config/profiles
   - ../../operator/config/manager
   - ../../gateway

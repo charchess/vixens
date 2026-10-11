@@ -45,7 +45,7 @@ func clientWith(t *testing.T, fn roundTripFunc)*Client {
 func TestSnapshotGroupMembershipCompleteActiveMembersOnly(t *testing.T) {
 	var groups,users []int
 	client:=clientWith(t,func(req *http.Request)(*http.Response,error) {
-		if req.URL.Host!="authentik.auth.svc:9000" || req.URL.Scheme!="http" ||
+		if req.URL.Host!="authentik.truxonline.com" || req.URL.Scheme!="https" ||
 			req.Header.Get("Authorization")!="Bearer fake-authentik-api-credential" ||
 			req.Method!="GET" {
 			t.Fatal("untrusted Authentik HTTP request")
@@ -174,4 +174,15 @@ func TestAuthentikCredentialAndGroupNameAreNeverClientControlled(t *testing.T) {
 		}
 	}
 	if calls!=0 {t.Fatal("untrusted group name triggered privileged Authentik API request")}
+}
+
+func TestPlatformIAMReaderDefaultTransportRejectsUnapprovedDestination(t *testing.T) {
+	reader,err:=NewClient("non-sensitive-unit-test-credential",nil)
+	if err!=nil {t.Fatal(err)}
+	transport,ok:=reader.httpClient.Transport.(*http.Transport)
+	if !ok || transport.Proxy!=nil || transport.TLSClientConfig==nil {
+		t.Fatal("default transport must use pinned TLS without egress proxy")
+	}
+	_,err=transport.DialContext(context.Background(),"tcp","arbitrary.external.example:443")
+	if err==nil {t.Fatal("IAM reader allowed arbitrary HTTP destination")}
 }

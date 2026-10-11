@@ -64,7 +64,7 @@ const maxTupleBatch = 100
 var tupleIdentityPattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$`)
 
 func parseTupleObject(value string) (string, string, bool) {
-	for _, objectType := range []string{"group", "agent"} {
+	for _, objectType := range []string{"group", "agent", "tenant"} {
 		prefix := objectType+":"
 		if len(value)>len(prefix) && value[:len(prefix)]==prefix &&
 			tupleIdentityPattern.MatchString(value[len(prefix):]) {
@@ -82,6 +82,8 @@ func validateTupleScope(scope TupleScope) error {
 	switch objectType {
 	case "group":
 		if scope.Relation == "member" || scope.Relation == "tenant" { return nil }
+	case "tenant":
+		if scope.Relation == "member" && regexp.MustCompile(`^TEN[0-9]{5,}$`).MatchString(scope.Object[len("tenant:"):]) { return nil }
 	case "agent":
 		if scope.Relation == "chatter" || scope.Relation == "manager" ||
 			scope.Relation == "owner" || scope.Relation == "tenant" { return nil }
@@ -233,6 +235,67 @@ func (c *Client) ReconcileTupleScope(ctx context.Context, storeID, modelID strin
 	if err:=scopedTuplesMatch(scope,actual,expected);err!=nil{return err}
 	if err:=c.ValidateModelBinding(ctx,storeID,modelID);err!=nil{return err}
 	return nil
+}
+
+// RevokeMemberTuple removes exactly ONE existing direct human membership,
+// never replacing an entire scope from a stale snapshot. Only tenant-scoped
+// group#member or tenant#member relations are permitted. Invalid identity,
+// scope/model, unreadable inventory, write failure or failed read-back denies.
+// Already-absent tuples are verified without an extra write.
+func (c *Client) RevokeMemberTuple(ctx context.Context, storeID, modelID string, scope TupleScope, fabricUserID string) error {
+	if !storeIDPattern.MatchString(storeID) || !storeIDPattern.MatchString(modelID) {
+		return errors.New("invalid Fabric store or pinned model for membership revocation")
+	}
+	if scope.Relation != "member" || (len(scope.Object) < 6 ||
+		(scope.Object[:6] != "group:" && (len(scope.Object) < 7 || scope.Object[:7] != "tenant:"))) {
+		return errors.New("unapproved Fabric membership revocation scope")
+	}
+	if err := validateTupleScope(scope); err != nil {
+		return err
+	}
+	if !regexp.MustCompile(`^usr[a-z0-9-]{1,63}$`).MatchString(fabricUserID) {
+		return errors.New("invalid Fabric user identity for revocation")
+	}
+	target := Tuple{User: "user:" + fabricUserID, Object: scope.Object, Relation: scope.Relation}
+	if err := validateScopedTuple(scope, target); err != nil {
+		return err
+	}
+	if err := c.ValidateModelBinding(ctx, storeID, modelID); err != nil {
+		return fmt.Errorf("untrusted Fabric model for revocation: %w", err)
+	}
+	current, err := c.readTupleScope(ctx, storeID, scope)
+	if err != nil {
+		return fmt.Errorf("untrusted Fabric membership inventory: %w", err)
+	}
+	seen := make(map[Tuple]bool, len(current))
+	present := false
+	for _, tuple := range current {
+		if seen[tuple] {
+			return errors.New("duplicate Fabric membership inventory tuple")
+		}
+		seen[tuple] = true
+		if tuple == target { present = true }
+	}
+	if present {
+		if err := c.writeTupleBatch(ctx, storeID, tupleWriteRequest{
+			AuthorizationModelID: modelID,
+			Deletes: &tupleWriteBatch{TupleKeys: []Tuple{target}, OnMissing: "ignore"},
+		}); err != nil {
+			return err
+		}
+	}
+	// Read-back even if already absent, and verify the same pinned model.
+	after, err := c.readTupleScope(ctx, storeID, scope)
+	if err != nil { return err }
+	afterSeen := make(map[Tuple]bool, len(after))
+	for _, tuple := range after {
+		if afterSeen[tuple] { return errors.New("duplicate Fabric membership read-back tuple") }
+		afterSeen[tuple] = true
+		if tuple == target {
+			return errors.New("inactive Fabric user remains in membership scope")
+		}
+	}
+	return c.ValidateModelBinding(ctx, storeID, modelID)
 }
 
 func (c *Client) writeTupleBatch(ctx context.Context, storeID string, req tupleWriteRequest) error {
