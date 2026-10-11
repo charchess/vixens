@@ -2,7 +2,7 @@ package controller
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"reflect"
 	"sort"
 	"time"
@@ -10,6 +10,8 @@ import (
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	"github.com/charchess/vixens/apps/60-services/txo-fabric/operator/internal/authentik"
 	"github.com/charchess/vixens/apps/60-services/txo-fabric/operator/internal/openfga"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // A condition True is a short lease on a verified *tenant membership*
@@ -206,6 +208,21 @@ func AuthorizationLeaseFresh(validUntil string, now time.Time) bool {
 		!now.Before(expiry.Add(-authorizationLease))
 }
 
-// Compile-time contract: credentials and network outages are errors rather
-// than alternative paths to empty/approved membership snapshots.
-var _ = errors.New
+// The writer only receives the platform-owned preshared key from an existing
+// Secret or a controller test seam; no browser/user can choose the store/model.
+func (r *TenantBundleReconciler) authorizationTupleWriter(ctx context.Context) (scopedIAMTupleWriter, error) {
+	if r.OpenFGATupleClient != nil {
+		return r.OpenFGATupleClient, nil
+	}
+	var secret corev1.Secret
+	if err := r.Get(ctx, types.NamespacedName{
+		Namespace: openFGAPlatformNamespace, Name: openFGACredentialSecret,
+	}, &secret); err != nil {
+		return nil, fmt.Errorf("private OpenFGA credential unavailable: %w", err)
+	}
+	writer, err := openfga.NewClient(string(secret.Data["presharedKeys"]), nil)
+	if err != nil {
+		return nil, fmt.Errorf("private OpenFGA credential invalid")
+	}
+	return writer, nil
+}
