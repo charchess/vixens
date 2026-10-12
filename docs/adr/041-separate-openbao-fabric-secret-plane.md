@@ -1,11 +1,11 @@
 # ADR-041: Separate OpenBao Fabric runtime authority from OpenBao Infra
 
-**Date:** 2026-10-12  
-**Status:** Accepted — architectural boundary; **implementation and physical acceptance pending**  
-**Scope:** AIaaS  
-**Related Project:** vixens roadmap  
-**Related Issues:** #4046, #4043, #3807, #3996, #4037, #3981  
-**Deciders:** TXO Fabric product owner  
+**Date:** 2026-10-12
+**Status:** Accepted — architectural boundary; **implementation and physical acceptance pending**
+**Scope:** AIaaS
+**Related Project:** vixens roadmap
+**Related Issues:** #4046, #4043, #3807, #3996, #4037, #3981
+**Deciders:** TXO Fabric product owner
 **Tags:** secrets, OpenBao, ESO, tenant isolation, disaster recovery
 
 ## Context
