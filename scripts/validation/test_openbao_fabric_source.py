@@ -50,7 +50,7 @@ class FoundationGuardTests(unittest.TestCase):
         self.assertTrue(guard.assert_file_safe(f, "root_" + "token: " + ("sample" * 3)))
         self.assertTrue(guard.assert_file_safe(f, "pass" + "word=" + ("sample" * 3)))
         self.assertTrue(guard.assert_file_safe(
-            f, "-----BEGIN OPENSSH PRIVATE KEY-----",
+            f, "-----BEGIN " + "OPENSSH PRIVATE " + "KEY-----",
         ))
 
     def test_negative_render_marker(self):
