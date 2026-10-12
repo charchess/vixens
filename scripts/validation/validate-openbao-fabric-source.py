@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""#4046: source-only OpenBao Fabric invariant guard (does not touch a cluster).
+
+Usage in CI: git fetch origin main; python3 scripts/validation/validate-openbao-fabric-source.py
+         --base origin/main --head HEAD --prod-render /tmp/txo-fabric-prod.yaml
+"""
+
+from __future__ import annotations
+
+import argparse
+import pathlib
+import re
+import subprocess
+import sys
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+FABRIC_PREFIX = "apps/60-services/txo-fabric/openbao-fabric/"
+ALLOWED_FILES = (".md", ".example")
+# Sensitive material MUST never appear in new source, even commented examples.
+ASSIGNMENT = re.compile(
+    r"""(?ix)
+    \b(?:root[_-]?token|unseal[_-]?key|recovery[_-]?key|private[_-]?key|
+         vault[_-]?token|bao[_-]?token|password|client[_-]?secret)
+    \s*[:=]\s*["']?[A-Za-z0-9+/=_-]{8,}
+    """,
+)
+JWT_LIKE = re.compile(r"\beyJ[A-Za-z0-9_-]{16,}\.eyJ[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{12,}\b")
+PEM_LIKE = re.compile(r"-----BEGIN (?:[A-Z ]*PRIVATE KEY|OPENSSH PRIVATE KEY)-----")
+BASE64_MATERIAL = re.compile(r"\b[A-Za-z0-9+/]{100,}={0,2}\b")
+FORBIDDEN_DOCS = ("kind: Secret\n", "stringData:", "data:\n  password:")
+FORBIDDEN_RESOURCES = re.compile(
+    r"(?m)^kind:\s*(?:Deployment|StatefulSet|Service|Secret|"
+    r"ExternalSecret|SecretStore|ClusterSecretStore|PersistentVolumeClaim|"
+    r"PersistentVolume|Namespace|Application)\s*$"
+)
+PRODUCTION_MARKER = re.compile(r"(?i)openbao-fabric(?:-store)?")
+# No newly added TXO ExternalSecret is allowed to inherit the Infra role.
+INFRA_STORE_ADDITION = re.compile(r"(?m)^\+\s*name:\s*openbao\s*$")
+
+
+def git(*args: str) -> str:
+    return subprocess.check_output(["git", *args], cwd=ROOT, text=True)
+
+
+def changed_paths(base: str, head: str) -> list[str]:
+    return [
+        p for p in git("diff", "--name-only", "--diff-filter=ACMRT", f"{base}...{head}").splitlines()
+        if p.strip()
+    ]
+
+
+def assert_file_safe(path: str, content: str) -> list[str]:
+    errors: list[str] = []
+    is_contract = path.startswith(FABRIC_PREFIX)
+    if is_contract and not path.endswith(ALLOWED_FILES):
+        errors.append("OpenBao Fabric source directory contains a runnable or unexpected file")
+    if ASSIGNMENT.search(content) or JWT_LIKE.search(content) or PEM_LIKE.search(content):
+        errors.append("credential-like value detected in source content")
+    if BASE64_MATERIAL.search(content):
+        errors.append("unexpected long encoded payload in source content")
+    if is_contract:
+        if FORBIDDEN_RESOURCES.search(content):
+            errors.append("OpenBao Fabric source contains Kubernetes resource syntax")
+        if path.endswith(".example"):
+            if 'capabilities = ["read"]' not in content:
+                errors.append("example policy not strictly read-only")
+            if re.search(r"(?m)^\s*path\s+\"(?:sys/|auth/|identity/|fabric/metadata/)", content):
+                errors.append("example policy contains admin, auth or metadata path")
+            if 'fabric/data/tenants/*' in content:
+                errors.append("all-tenant wildcard policy prohibited")
+    return errors
+
+
+def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
+    problems: list[str] = []
+    changed = changed_paths(base, head)
+    expected_adr = "docs/adr/041-separate-openbao-fabric-secret-plane.md"
+    if expected_adr not in changed:
+        problems.append("ADR-041 missing from change set")
+    if not any(p.startswith(FABRIC_PREFIX) for p in changed):
+        problems.append("OpenBao Fabric contract directory missing")
+    protected = [
+        "apps/00-infra/openbao/",
+        "argocd/overlays/prod/",
+        "apps/60-services/txo-fabric/overlays/prod/",
+        "apps/60-services/txo-fabric/operator/",
+        "apps/60-services/txo-fabric/webui/",
+    ]
+    for path in changed:
+        if path.startswith(tuple(protected)):
+            problems.append(f"protected live GitOps/consumer path changed: {path}")
+        full = ROOT / path
+        if not full.is_file():
+            continue
+        content = full.read_text(encoding="utf-8")
+        for violation in assert_file_safe(path, content):
+            problems.append(f"{path}: {violation}")
+    # Additional delta scan catches a newly introduced Infra store binding.
+    patch = git("diff", "--unified=0", f"{base}...{head}", "--", "apps/60-services/txo-fabric/")
+    if INFRA_STORE_ADDITION.search(patch):
+        problems.append("new TXO Infra ClusterSecretStore/openbao reference is forbidden")
+    if re.search(r"(?m)^\+\s*(?:kind:\s*Secret|secretStoreRef:\s*openbao)", patch):
+        problems.append("new Secret or Infra store reference in TXO source changes")
+    # Prove no hidden activation in the rendered desired-state output, not
+    # just in a Kustomization path string.
+    if not prod_render.is_file():
+        problems.append("production Kustomize render evidence missing")
+    else:
+        body = prod_render.read_text(encoding="utf-8")
+        if PRODUCTION_MARKER.search(body):
+            problems.append("Fabric OpenBao detected in production TXO render")
+    if problems:
+        return problems
+    print(f"PASS: {len(changed)} changed source files checked; no Fabric OpenBao prod activation")
+    print("INFO: historic TXO OpenFGA uses Infra ESO; migration is deferred, not silently asserted clean")
+    return []
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--base", default="origin/main")
+    ap.add_argument("--head", default="HEAD")
+    ap.add_argument("--prod-render", required=True, type=pathlib.Path)
+    args = ap.parse_args()
+    problems = validate(args.base, args.head, args.prod_render)
+    for msg in problems:
+        print("FAIL: " + msg, file=sys.stderr)
+    return 1 if problems else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
