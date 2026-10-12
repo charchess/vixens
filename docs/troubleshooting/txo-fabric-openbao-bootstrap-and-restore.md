@@ -1,5 +1,33 @@
 # TXO Fabric — OpenBao Fabric bootstrap, restore and acceptance (FUTURE, NOT AUTHORIZED)
 
+## Talos-only placement decision / Prompt 07
+
+OpenBao Fabric is the private **global TXO Fabric component on Talos
+Kubernetes**, to be managed by GitOps. It is **not** an experimental
+K3s workload and not an externally hosted substitute. The #4046
+read-only preflight was corrected from K3s to Talos v1.14.1 /
+Kubernetes v1.36.0; this PR performs **no live verification**.
+High memory requests and the reported Velero
+`BackupStorageLocation/default=Unavailable` block stateful
+activation until non-secret capacity-placement evidence and a
+**working backup destination plus actual isolated restore drill**
+are verified. A present Retain StorageClass or Ready snapshot is
+insufficient. No default-to-Delete storage, no public endpoint, no
+Internet catch-all or speculative backup route.
+
+The operator cannot install OpenBao policies. Future tenant
+`TenantBundle` reconciliation sends only idempotent immutable-ID
+intent to an independently authenticated, audited and template-bound
+provisioner; see
+[tenant-provisioning-boundary.md](../../apps/60-services/txo-fabric/openbao-fabric/contracts/tenant-provisioning-boundary.md).
+Group/user IAM is an OpenFGA/ADR-039 concern and cannot grant an
+OpenBao path. Revocation denies *new* access before preserving
+retained data/audit and before any separately authorized disposal.
+A future physical acceptance must explicitly test replay,
+sibling-ID rejection, arbitrarily supplied HCL, wrong workload
+subject/audience, existing short-lived lease revocation and
+secret-store unavailable/sealed behavior without fallback.
+
 **Status: source-only operational contract for #4046.** This is
 **not** an execution authorization. No OpenBao Fabric process,
 namespace, PersistentVolumeClaim, Secret, auth backend or ESO store was
