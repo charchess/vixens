@@ -241,6 +241,23 @@ class CanonicalTenantProvisioningContractTests(unittest.TestCase):
             ["IdempotencyMismatch"],
         )
 
+    def test_unhashable_action_and_unknown_payloads_fail_closed(self):
+        request, canonical = self.fixture()
+        request["action"] = ["Ensure"]
+        self.assertEqual(
+            guard.validate_provisioning_request(request, canonical),
+            ["InvalidAction"],
+        )
+        request["action"] = {"unexpected": "Ensure"}
+        self.assertEqual(
+            guard.validate_provisioning_request(request, canonical),
+            ["InvalidAction"],
+        )
+        self.assertEqual(
+            guard.validate_provisioning_request("browser-input", canonical),
+            ["InvalidContract"],
+        )
+
     def test_new_infra_eso_binding_is_still_prohibited(self):
         self.assertTrue(guard.INFRA_STORE_ADDITION.search(
             "+        name: openbao\n",
