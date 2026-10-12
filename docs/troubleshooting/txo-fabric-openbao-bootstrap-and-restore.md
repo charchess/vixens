@@ -1,0 +1,208 @@
+# TXO Fabric — OpenBao Fabric bootstrap, restore and acceptance (FUTURE, NOT AUTHORIZED)
+
+**Status: source-only operational contract for #4046.** This is
+**not** an execution authorization. No OpenBao Fabric process,
+namespace, PersistentVolumeClaim, Secret, auth backend or ESO store was
+created by this issue. Run these steps **only** after a separate,
+explicit human approval identifying the exact GitOps candidate,
+environment, data retention policy and operator. Never run commands
+from this document as an informal manual cluster fix.
+
+**Separation:** existing `ClusterSecretStore/openbao` is **Infra**
+(`apps/00-infra/openbao/base/cluster-secret-store.yaml`) and
+keeps its exact URL/tokenSecretRef as-is. The proposed new authority
+is `openbao-fabric`; its ESO integration is named
+`openbao-fabric-store`. Infra retains custody of Fabric bootstrap,
+break-glass, backup and restore. Fabric holds only runtime TXO
+credentials and future tenant-scoped records. The split is an audit
+and blast-radius boundary, **not** immunity to an Infra break-glass
+administrator.
+
+## Hard safety rules for ALL stages
+
+- Never copy or emit an actual credential, bearer token, password,
+  recovery/unseal material, root/admin authority, private key,
+  `Secret.data`, encoded secret, SQL URI or source DB parameter into
+  Git, issues, PRs, CI/test logs, terminal transcripts delivered to an
+  agent or the handoff. Reports contain only **existence, readiness,
+  success/failure, timestamps and non-secret object names**.
+- Human approval must explicitly authorize any physical bootstrap,
+  stateful storage creation, init/unseal, backup/export, auth policy
+  installation, ESO activation, rotation/revocation or restore. A PR
+  merge or valid `dev-v*` alone is insufficient.
+- No direct persistent cluster mutation by the implementation agent;
+  manifests must use normal GitOps PR/review and a **separately
+  approved** release. Do not issue `kubectl apply/edit/delete`,
+  Argo forced sync, PV/PVC deletion, or production promotion.
+- OpenBao Fabric may not silently fall back to the Infra server.
+  Fail closed if the new server, service identity, policy, certificate,
+  secret or authoritative tenant binding is unavailable.
+- No public Ingress/Gateway/HTTPRoute/NodePort/LoadBalancer or
+  permissive network policy. No admin/break-glass token mounted in
+  any workload ServiceAccount/Pod. No shared tenant-wide wildcard
+  credentials.
+
+## Gate 0 — approval + implementation design
+
+**Owner:** Electra + infrastructure authority + charchess for the
+specific activation candidate.
+
+Before writing **any executable manifests**, establish and review:
+chosen supported OpenBao image/chart and immutable digest, intended
+namespace and Kubernetes Pod Security, exact HA/storage topology
+(e.g. verified Raft implementation if chosen), approved private TLS
+identity/CA, cluster issuer and TokenReview audience, dedicated
+ServiceAccounts, namespace/pod selectors, deterministic bootstrap/
+migration ordering and exact network destinations. None is assumed by
+#4046. Capture missing choices as blockers, **not wildcard rules**.
+
+Revalidate that the selected storage class and its physical reclaim
+policy are **Retain** for PVC/PV; refuse any `Delete` reclaim
+fallback. Choose RPO/RTO, snapshot consistency procedure, backup
+object-store identity/ownership/encryption and disaster-restore
+authority. Proof can contain class names/policy and existence status,
+not material or private endpoints that identify secrets.
+
+## Gate 1 — stateful provision and backup plan
+
+In a **dedicated subsequent PR**, stage the private OpenBao Fabric
+namespace, workload identity and explicitly retained state, hardened
+nonroot image, ClusterIP service and default-deny NetworkPolicy.
+The initial GitOps overlay must be non-prod, non-referenced until
+review, and **not** connected to existing Infra ESO or TXO consumers.
+Pin exact workload digest; there must be no unreviewed auto-upgrade.
+
+Before any startup/unseal, prove in a separate physical acceptance
+window: actual bound retained storage; restore-compatible version and
+schema; protected snapshot destination and independent read-only
+backup verification. A snapshot job configured but never restored is
+**not** proof of recoverability.
+
+## Gate 2 — initialization, unseal and break-glass custody
+
+A separately approved trusted human infra custodian executes
+initialization/unseal **outside Git, CI and agent chat**, using the
+authorized interactive/secure custody system. Recovery shares and
+unseal/root material remain in that system; enforce distinct custody,
+multi-party review, short-lived break-glass access and audited use.
+Do not put recovery data in ConfigMaps, git-crypt fixtures,
+`ExternalSecret` properties, Terraform outputs/logs or operator
+environment variables.
+
+After seal/unseal, record only the non-secret initialized/sealed
+readiness flags and relevant audited event identifiers. Disable/revoke
+bootstrap authority from normal workload identities. A restart should
+not create a fresh empty state or expose bootstrap material.
+
+## Gate 3 — Kubernetes workload authentication and policies
+
+Verify the **real** Kubernetes issuer/audience and exact
+ServiceAccount/namespace subject for each consumer; TokenReview must
+fail for a different audience or namespace. Install read-only,
+versioned, narrowly named policy roles according to
+`openbao-fabric/contracts/workload-authz-matrix.md`. The
+`*.hcl.example` snippets are **not** installable policies; any
+tenant ID marker must be replaced by a separately validated
+immutable `fabricTenantId`, never a path wildcard/tenant slug.
+
+Examples of intended **logical** read scopes:
+`fabric/platform/txo-fabric/webui-bff`,
+`fabric/platform/txo-fabric/authentik-reader`,
+`fabric/platform/txo-fabric/openfga-reader`,
+`fabric/tenants/<one-immutable-tenant-id>/*`.
+A Fabric workload cannot issue auth tokens, manage policies or
+mounts, read audit logs or initialize/unseal the service.
+
+Prove a positive read of its own **test fixture only**, and refusal of
+wrong identity, wrong audience, sibling tenant, global tenant
+metadata list and any policy/token/admin API. Do not emit fixture
+contents. Auth role/provisioning credentials themselves are held
+outside workload Kubernetes auth.
+
+## Gate 4 — Fabric-only ESO wiring
+
+A separate GitOps PR introduces a new
+`openbao-fabric-store` (prefer namespace-scoped `SecretStore`
+for tenant namespaces) using short-lived, workload-bound Kubernetes
+auth, an approved private URL/CA, audited authentication and exact
+path policy. Neither copy nor reuse the existing
+`ClusterSecretStore/openbao` token. Ensure ESO's control-plane
+identity cannot read sibling tenant data even if it reconciles
+several namespaces. Do **not** grant a blanket `fabric/tenants/*`
+policy.
+
+Only after the Fabric store is actually Ready and negative controls
+pass may the appropriate newly reviewed `ExternalSecret` be wired
+to that store. Existing OpenFGA references to Infra and the staged
+WebUI bootstrap Infra references are migration debt; changing them
+requires a **separate**, reversible cutover with no unknown outage or
+silent fallback.
+
+## Gate 5 — existence-only injection and fail-closed negatives
+
+Verify via metadata/status **only**, never printing keys or values:
+
+1. The new Fabric store authenticates only its named workload
+   principals and the exact intended secret path exists.
+2. A future allowed test `ExternalSecret` reports Ready and its
+   target exists with expected type/key **names** only; the workload
+   starts after values are available but no value is included in
+   any logs. Validate rotation/revocation on a distinct test object.
+3. **Negative A: wrong workload identity** (wrong SA, namespace,
+   TokenReview audience or issuer) cannot authenticate/read.
+4. **Negative B: sibling tenant path** cannot read or list another
+   tenant's secret; tenant `C` never inherits `A` grants.
+5. **Negative C: OpenBao Fabric unavailable/sealed** causes
+   injection/consumer authorization to fail closed, with no
+   fallback to Infra `openbao` and no stale sensitive operations.
+
+A `Ready=True` CR alone is not proof if the actual workload
+identity or object never existed. Test re-availability explicitly.
+
+## Gate 6 — backup, restore and revocation acceptance
+
+Create an encrypted verified snapshot with integrity/readability
+evidence and protected retention. In a deliberately isolated
+nonproduction recovery environment, execute a **restore drill**
+using authorized human custodians; verify KV content only by
+expected record/key **existence and cryptographic comparison held
+within the approved secure environment**, not printed values.
+Reapply/check policies, issuer/audiences, audit stream and revoked
+identities after restore. A restored stale token or sibling path
+must not become valid. Record nonsecret timestamps, restore duration,
+object counts and negative-test PASS/FAIL.
+
+Rehearse a credential/key rotation with simultaneous ESO refresh,
+actual workload restart/reload semantics and a strictly denied
+old credential. Distinguish recoverable infrastructure recovery
+authority from runtime workload read authority.
+
+## Gate 7 — controlled rollback / acceptance
+
+If any stage fails, **deny** new Fabric secret reads and roll back
+**only the separately approved activation overlay/gates through
+GitOps**. Keep retained OpenBao data, backups, PVC/PV and historical
+tenant identity ledgers. Never erase/replace persistent state or
+redirect a denied Fabric caller to OpenBao Infra. Capture causes,
+nonsecret status and a follow-up issue; re-approval is required.
+
+The #4046 **source-only** increment can be reviewed/merged
+independently but **must remain OPEN** until its own physical
+init/unseal, backup/restore, auth policy, ESO and negative tests
+are separately executed and accepted. Do not claim a tenant can
+read a secret or a browser login is operational merely because
+this document or an ADR exists.
+
+## Current prerequisites still unresolved
+
+- Supported pinned OpenBao Fabric Helm/image and private TLS transport.
+- Stateful CSI StorageClass with verified **Retain** semantics,
+  backup destination and restore drill.
+- Actual issuer/audience, exact workload identities and auth backend.
+- Exact ingress/egress allowlist endpoints, ESO controller/tenant
+  scoped role binding and production activation approval.
+- Physical negative tests, failure recovery and reversible migration
+  of existing TXO Infra-secret dependencies.
+
+**Record each as issue-linked evidence in a future authorized
+increment, without any secret value or privileged transcript.**
