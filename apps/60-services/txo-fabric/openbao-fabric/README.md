@@ -41,7 +41,7 @@ defines separately approved physical work.
   `bao policy write` on these files or script substitution of tenant
   IDs without a separately authorized provisioner and review. No
   root/unseal/recovery/administration capability is expressed.
-- `scripts/validation/validate_openbao_fabric_source.py` at repo root
+- `scripts/validation/validate-openbao-fabric-source.py` at repo root
   — negative assertion guarding this source-only boundary.
 
 ## Invariants
