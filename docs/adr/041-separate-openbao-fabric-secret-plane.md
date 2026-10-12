@@ -196,6 +196,14 @@ recoverability. No stateful GitOps target becomes activation-eligible
 until these gates and the prior storage/auth/TLS/network gates pass.
 No public route and no broad egress are permitted.
 
+**Day-to-day privilege separation remains mandatory:** routine OpenBao
+Infra and its ESO token have **no authority to read Fabric runtime
+records**. Infra holds Fabric bootstrap/unseal/recovery/backup
+authority only through an independently approved, audited
+break-glass ceremony; this is not a normal workload read identity.
+Each Fabric runtime consumer reads exactly its named platform leaf
+or its one tenant subtree, never an all-tenant token.
+
 The TXO Fabric operator may translate current **canonical** cluster
 TenantBundle state into an **idempotent provisioning intent**, not
 a direct authorization to administer OpenBao. In the implemented
