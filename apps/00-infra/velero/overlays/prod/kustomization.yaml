@@ -14,4 +14,12 @@ patches:
     target:
       kind: Deployment
       name: velero
+  # #4050: retain the Helm release and recovery records, but stop the server.
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 0
+    target:
+      kind: Deployment
+      name: velero
 
