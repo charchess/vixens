@@ -114,7 +114,7 @@ def validate_provisioning_request(request: object, canonical: object) -> list[st
             workload != verified_workload):
         return ["InvalidWorkloadBinding"]
     action = request.get("action")
-    if request.get("contractVersion") != "v1" or action not in {"Ensure", "Revoke"}:
+    if request.get("contractVersion") != "v1" or not isinstance(action, str) or action not in {"Ensure", "Revoke"}:
         return ["InvalidAction"]
     if request.get("pathTemplate") != "tenant-runtime-v1":
         return ["UnapprovedTemplate"]
