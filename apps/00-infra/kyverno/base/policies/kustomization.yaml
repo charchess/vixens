@@ -31,7 +31,6 @@ resources:
   - check-sync-wave.yaml
   - check-topology-spread.yaml
   - check-trivy-cve.yaml
-  - check-velero-schedule.yaml
   - check-vpa-recommendations.yaml
   - check-vulnerability-scan.yaml
   - cleanup-policies.yaml
