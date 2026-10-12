@@ -93,7 +93,7 @@ def main() -> None:
             f"non-read capability in {name}"
         )
         check("fabric/data/tenants/*" not in text, f"wildcard tenant policy in {name}")
-        check("fabric/metadata/" not in text, f"metadata list path in {name}")
+        check(not any(path.startswith("fabric/metadata/") for path in paths),\n              f"metadata list path in {name}")
         check(not re.search(r"(?m)^path\s+\"(?:sys/|auth/)", text),
               f"administrative OpenBao privilege in {name}")
     tenant = policy_files["tenant-one-id.hcl.example"].read_text(encoding="utf-8")
