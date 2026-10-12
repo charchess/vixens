@@ -1,5 +1,21 @@
 # OpenBao Fabric — SOURCE-ONLY foundation (#4046)
 
+**Prompt 07 target:** global Fabric `openbao-fabric` **on Talos
+Kubernetes**, not K3s or an external Fabric secret service.
+Private GitOps deployment is a future separately approved step, gated
+on confirmed Talos capacity/placement, **Retain** storage and an
+available backup destination **with successful restore drill**. The
+read-only preflight in issue #4046 reported insufficient headroom and
+an unavailable Velero location; current state was not rechecked here.
+
+**Provisioning authority:** the operator may only submit canonical,
+idempotent tenant/workload intent to a separately authorized and
+audited boundary. It cannot upload HCL/policies, manage mounts/tokens,
+hold unseal/root authority or read every tenant. Group/user changes
+remain ADR-039/OpenFGA authorization updates; revocation is deny
+first, retaining data/audit. See
+[tenant-provisioning-boundary.md](contracts/tenant-provisioning-boundary.md).
+
 **Status: CONTRACT ONLY / NOT DEPLOYABLE.** This directory has **no**
 `kustomization.yaml`, Kubernetes manifest or ArgoCD Application. It is
 deliberately **not referenced** by any production/dev overlay. It must
