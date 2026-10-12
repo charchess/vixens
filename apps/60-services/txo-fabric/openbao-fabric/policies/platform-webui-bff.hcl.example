@@ -1,0 +1,6 @@
+# SOURCE-ONLY / NOT INSTALLED. Future KV v2 mount fabric/.
+# Bind only to exact txo-fabric-webui-bff workload auth role.
+# No metadata/list, token, policy or mount capabilities.
+path "fabric/data/platform/txo-fabric/webui-bff" {
+  capabilities = ["read"]
+}

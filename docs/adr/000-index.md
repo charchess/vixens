@@ -1,7 +1,7 @@
 # Architecture Decision Records — authoritative index
 
-**Last Updated:** 2026-10-09  
-**Governance:** [ADR-030](030-project-scoped-adr-governance.md)  
+**Last Updated:** 2026-10-12
+**Governance:** [ADR-030](030-project-scoped-adr-governance.md)
 **Usage guide:** [README.md](README.md)
 
 This catalog is the authoritative inventory of ADR files in the repository. It normalizes status and assigns architectural scope/planning ownership without rewriting historical records merely to add metadata.
@@ -51,6 +51,7 @@ Planning projects are `vixens core`, `vixens roadmap`, and `vixens perso`.
 | [037](037-skills-vs-platform-governed-executable-capabilities.md) | Separate agent-extensible skills from platform-governed executable capabilities | Accepted | AIaaS | vixens roadmap |
 | [039](039-fabric-openfga-authorization-boundary.md) | One Fabric-wide OpenFGA authorization service, Authentik identity and distinct hierarchical policy | Accepted (deployment pending) | AIaaS | vixens roadmap |
 | [040](040-global-fabric-webui-entrypoint.md) | One global Fabric WebUI and trusted multi-tenant BFF routing | Accepted (runtime pending) | AIaaS | vixens roadmap |
+| [041](041-separate-openbao-fabric-secret-plane.md) | Distinct OpenBao Infra recovery authority and OpenBao Fabric runtime secret plane | Accepted (source contracts only; rollout pending) | AIaaS | vixens roadmap |
 
 ## Proposed decisions (not yet authoritative)
 
@@ -84,7 +85,7 @@ These anomalies predate ADR-030 and are preserved so existing links/history rema
 - **‡ Renovate Discord header collision:** `019-renovate-discord-approval-workflow.md` is the repository file identity, but its historical document header says `ADR-013`. The separate `013-layered-configuration-disaster-recovery.md` also exists. The file is cataloged here by its stable path and is not renumbered retroactively.
 - **§ Infisical restored-file mismatch:** `011-infisical-secrets-management.md` is the stable repository path, while its restored historical header says `ADR 007`. It is superseded and retained only as history.
 
-No new ADR may reuse an allocated number. The next ADR after this catalog is **041** unless another PR allocates it first.
+No new ADR may reuse an allocated number. The next ADR after this catalog is **042** unless another PR allocates it first.
 
 ## Project view
 

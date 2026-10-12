@@ -1,0 +1,5 @@
+# SOURCE-ONLY / NOT INSTALLED. Dedicated OpenFGA technical reader.
+# Do not grant lookup of platform sibling records.
+path "fabric/data/platform/txo-fabric/openfga-reader" {
+  capabilities = ["read"]
+}

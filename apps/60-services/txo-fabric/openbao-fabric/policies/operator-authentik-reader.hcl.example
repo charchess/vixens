@@ -1,0 +1,5 @@
+# SOURCE-ONLY / NOT INSTALLED. Dedicated Authentik technical reader.
+# Never bind to a generic all-platform operator admin role.
+path "fabric/data/platform/txo-fabric/authentik-reader" {
+  capabilities = ["read"]
+}

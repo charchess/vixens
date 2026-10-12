@@ -1,0 +1,9 @@
+# SOURCE-ONLY / NOT INSTALLABLE.
+# <validated-immutable-fabric-tenant-id> is NOT a valid literal role ID:
+# a separate, approved operator must validate an exact canonical TenantID.
+# Never replace with a wildcard, slug, browser input or namespace label.
+# An installer MUST refuse this unspecialized template.
+path "fabric/data/tenants/<validated-immutable-fabric-tenant-id>/*" {
+  capabilities = ["read"]
+}
+# No list on fabric/metadata/tenants/, no sibling path, no auth/token/sys.
