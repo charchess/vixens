@@ -6,8 +6,6 @@ resources:
   - apps/shared-namespaces.yaml
   - apps/external-secrets.yaml
   - apps/openbao-secrets.yaml
-  - apps/velero-secrets.yaml
-  - apps/velero.yaml
   - apps/cilium-lb.yaml
   # Disabled by owner: apps/crowdsec.yaml
   - apps/traefik.yaml
@@ -207,7 +205,7 @@ patches:
       group: argoproj.io
       version: v1alpha1
       kind: Application
-      name: '^(velero-secrets|velero|vpa|goldilocks|reloader)$'
+      name: '^(vpa|goldilocks|reloader)$'
     patch: |-
       apiVersion: argoproj.io/v1alpha1
       kind: Application
