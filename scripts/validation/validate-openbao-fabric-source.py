@@ -119,6 +119,8 @@ def validate_provisioning_request(request: object, canonical: object) -> list[st
     if request.get("pathTemplate") != "tenant-runtime-v1":
         return ["UnapprovedTemplate"]
     lifecycle = canonical.get("lifecycle")
+    if not isinstance(lifecycle, str):
+        return ["LifecycleDenied"]
     if (action == "Ensure" and lifecycle != "Active") or (
         action == "Revoke" and lifecycle not in {"Active", "Parked", "Deleting"}
     ):
