@@ -1,7 +1,7 @@
 # Architecture Decision Records — authoritative index
 
-**Last Updated:** 2026-10-12  
-**Governance:** [ADR-030](030-project-scoped-adr-governance.md)  
+**Last Updated:** 2026-10-12
+**Governance:** [ADR-030](030-project-scoped-adr-governance.md)
 **Usage guide:** [README.md](README.md)
 
 This catalog is the authoritative inventory of ADR files in the repository. It normalizes status and assigns architectural scope/planning ownership without rewriting historical records merely to add metadata.
