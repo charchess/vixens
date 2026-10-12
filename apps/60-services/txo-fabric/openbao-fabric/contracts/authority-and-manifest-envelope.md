@@ -1,5 +1,22 @@
 # OpenBao Fabric — non-runnable manifest envelope / approval checklist
 
+**Placement decision (Prompt 07):** the future global OpenBao Fabric instance
+belongs **inside the Talos Kubernetes cluster**, as a private GitOps-owned
+Fabric control-plane service. **Not K3s, not external hosting.** A preflight
+comment on #4046 corrected the earlier K3s identification to Talos
+v1.14.1/Kubernetes v1.36.0. The actual target/namespace/manifest is
+**not activation-approved** until verified Talos node capacity and placement
+reservation, a backed-up `Retain` state volume, an **available** backup
+destination, and a **successful isolated restore drill** are evidenced.
+The preflight reported high memory reservations and a Velero backup
+location in unavailable state; these remain **gates to verify**, not
+facts a source-only PR has independently re-observed.
+
+The operator is not the secrets administrator. See
+[controlled tenant provisioning](tenant-provisioning-boundary.md)
+for a canonical TenantBundle → intent → independent boundary → limited
+role/ESO sequence. This source-only contract cannot create a real role.
+
 This document defines **names and validation criteria**, not a Helm chart,
 Kubernetes manifest, Argo Application or ready-to-run install. The repository
 only defines a working Infra OpenBao **external** ESO integration, not a

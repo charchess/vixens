@@ -172,3 +172,69 @@ and [operator runbook](../troubleshooting/txo-fabric-openbao-bootstrap-and-resto
 - [ADR-030](030-project-scoped-adr-governance.md)
 - [ADR-039](039-fabric-openfga-authorization-boundary.md)
 - [ADR-040](040-global-fabric-webui-entrypoint.md)
+
+## Addendum (2026-10-12): Talos placement and controlled reconciliation intent
+
+The approved **hosting target** for `openbao-fabric` is now the
+**global TXO Fabric control plane on the Talos Kubernetes cluster**,
+managed through GitOps. It is not a K3s development service and not an
+independent externally hosted replacement. This **clarifies placement**;
+it does not activate a server, create an Argo application, authorize
+init/unseal, or supersede the separation of Infra recovery authority
+from Fabric runtime credential authority.
+
+The read-only preflight recorded in issue #4046 first mislabelled the
+observed control plane as K3s, then corrected it to **Talos v1.14.1 /
+Kubernetes v1.36.0**. Those values are *reported observations*, not
+live validation performed by this source-only PR. The preflight also
+reported high node memory-request saturation and an **Unavailable**
+Velero backup location. These are explicit blockers to verify/resolve:
+placement and capacity reservations **on Talos**, a physically
+available backup destination, and an isolated successful restore drill.
+An observed `Retain` CSI class/snapshot API alone does not prove data
+recoverability. No stateful GitOps target becomes activation-eligible
+until these gates and the prior storage/auth/TLS/network gates pass.
+No public route and no broad egress are permitted.
+
+**Day-to-day privilege separation remains mandatory:** routine OpenBao
+Infra and its ESO token have **no authority to read Fabric runtime
+records**. Infra holds Fabric bootstrap/unseal/recovery/backup
+authority only through an independently approved, audited
+break-glass ceremony; this is not a normal workload read identity.
+Each Fabric runtime consumer reads exactly its named platform leaf
+or its one tenant subtree, never an all-tenant token.
+
+The TXO Fabric operator may translate current **canonical** cluster
+TenantBundle state into an **idempotent provisioning intent**, not
+a direct authorization to administer OpenBao. In the implemented
+TenantBundle API `spec.tenantId` is immutable
+(`TEN[0-9]{5,}`), and `metadata.uid` identifies the exact
+object incarnation. The separate approved provisioning boundary
+must re-read and validate both, the reconciliation generation, the
+workload ownership and an exact ServiceAccount namespace/audience
+binding. It generates only immutable, reviewed policy templates
+from a closed catalogue; the caller cannot send ACL/HCL, free-form
+paths, policy names, administrator roles or tenant-wildcard grants.
+Group and user changes remain application-authorization state under
+ADR-039/OpenFGA, never secret-path authority.
+
+A policy-name prefix is **not** a safe delegation boundary:
+permission to upload arbitrary policy bodies would let the operator
+install a named policy containing tenant-sibling or administrator ACLs.
+Even if the OpenBao management API later permits naming restrictions,
+this ADR does not assume it verifies ACL *content*. The normal
+operator must never hold direct `sys/policies` write, root,
+unseal/recovery material, arbitrary mount/token/audit authority or
+all-tenant read. The future installer operates with a separately
+bootstrapped, narrowly scoped, audited identity and **must** fail
+closed if its actual constraints cannot be proven. A reviewed
+offline/manual policy-install path is preferable to unsafe automatic
+delegation.
+
+Tenant lifecycle may reserve immutable tenant metadata/paths and
+approved workload bindings; deletion or revocation **denies access
+first**, retains audit and persistent data, and requires a distinct
+human-approved destruction procedure. A user, group, namespace label,
+browser parameter or OIDC subject cannot trigger role creation.
+The complete non-executable transition/request/negative-test contract
+is [tenant-provisioning-boundary.md](../../apps/60-services/txo-fabric/openbao-fabric/contracts/tenant-provisioning-boundary.md).

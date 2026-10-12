@@ -38,6 +38,101 @@ PRODUCTION_MARKER = re.compile(r"(?i)openbao-fabric(?:-store)?")
 INFRA_STORE_ADDITION = re.compile(r"(?m)^\+\s*name:\s*openbao\s*$")
 
 
+# Prompt 07 source-only interface oracle. This is NOT a controller, network
+# endpoint, OpenBao client or authorized policy installer. The trusted
+# 'canonical' argument represents a VERIFIED reread by a future independent
+# boundary, never caller JSON. Reject-all is the default for absent facts.
+def provisioning_idempotency_key(canonical: dict, action: str) -> str:
+    """Deterministic non-secret comparison key, NOT authentication."""
+    import hashlib
+    import json
+
+    source = canonical.get("source", {})
+    workload = canonical.get("workload", {})
+    fingerprint = {
+        "action": action,
+        "sourceUID": source.get("uid"),
+        "sourceGeneration": source.get("generation"),
+        "fabricTenantId": canonical.get("fabricTenantId"),
+        "namespace": workload.get("namespace"),
+        "serviceAccount": workload.get("serviceAccount"),
+        "audience": workload.get("audience"),
+        "template": "tenant-runtime-v1",
+        "contract": "v1",
+    }
+    encoded = json.dumps(fingerprint, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def validate_provisioning_request(request: object, canonical: object) -> list[str]:
+    """Pure contract validator, without OpenBao or Kubernetes side effects.
+
+    Future implementation MUST independently authenticate its operator caller,
+    reread source and workload bindings, and enforce the same closed template
+    in a separate provisioner. This oracle alone cannot authorize a role.
+    """
+    if not isinstance(request, dict) or not isinstance(canonical, dict):
+        return ["InvalidContract"]
+    required = {
+        "contractVersion", "action", "source", "fabricTenantId",
+        "workload", "pathTemplate", "idempotencyKey",
+    }
+    if set(request) != required:
+        return ["ForbiddenFields"]
+    source_keys = {"kind", "apiVersion", "name", "uid", "generation"}
+    workload_keys = {"namespace", "serviceAccount", "audience"}
+    source = request.get("source")
+    workload = request.get("workload")
+    verified_source = canonical.get("source")
+    verified_workload = canonical.get("workload")
+    if not isinstance(source, dict) or set(source) != source_keys:
+        return ["InvalidSource"]
+    if not isinstance(workload, dict) or set(workload) != workload_keys:
+        return ["InvalidWorkloadBinding"]
+    if (not isinstance(verified_source, dict) or
+            not isinstance(verified_workload, dict) or
+            not canonical.get("operatorAuthenticated", False)):
+        return ["UntrustedReconciler"]
+    if (source.get("kind") != "TenantBundle" or
+            source.get("apiVersion") != "fabric.truxonline.io/v1alpha1" or
+            not isinstance(source.get("name"), str) or
+            not re.fullmatch(r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?", source["name"]) or
+            not isinstance(source.get("uid"), str) or
+            not re.fullmatch(r"[a-zA-Z0-9-]{8,64}", source["uid"]) or
+            type(source.get("generation")) is not int or
+            source["generation"] < 1):
+        return ["InvalidSource"]
+    tenant_id = request.get("fabricTenantId")
+    if not isinstance(tenant_id, str) or not re.fullmatch(r"TEN[0-9]{5,}", tenant_id):
+        return ["InvalidTenantID"]
+    if (source != verified_source or
+            tenant_id != canonical.get("fabricTenantId")):
+        return ["UnknownOrStaleTenant"]
+    if (any(not isinstance(workload.get(k), str) or
+            not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.-]{0,126}", workload[k])
+            for k in workload_keys) or
+            workload != verified_workload):
+        return ["InvalidWorkloadBinding"]
+    action = request.get("action")
+    if request.get("contractVersion") != "v1" or not isinstance(action, str) or action not in {"Ensure", "Revoke"}:
+        return ["InvalidAction"]
+    if request.get("pathTemplate") != "tenant-runtime-v1":
+        return ["UnapprovedTemplate"]
+    lifecycle = canonical.get("lifecycle")
+    if not isinstance(lifecycle, str):
+        return ["LifecycleDenied"]
+    if (action == "Ensure" and lifecycle != "Active") or (
+        action == "Revoke" and lifecycle not in {"Active", "Parked", "Deleting"}
+    ):
+        return ["LifecycleDenied"]
+    if canonical.get("fabricAvailable") is not True:
+        return ["FabricUnavailable"]
+    if (not isinstance(request.get("idempotencyKey"), str) or
+            request["idempotencyKey"] != provisioning_idempotency_key(canonical, action)):
+        return ["IdempotencyMismatch"]
+    return []
+
+
 def git(*args: str) -> str:
     return subprocess.check_output(["git", *args], cwd=ROOT, text=True)
 

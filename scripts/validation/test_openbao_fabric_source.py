@@ -70,5 +70,202 @@ class FoundationGuardTests(unittest.TestCase):
         ))
 
 
+class CanonicalTenantProvisioningContractTests(unittest.TestCase):
+    """Proof of rejection in the SOURCE oracle, not live OpenBao enforcement."""
+
+    @staticmethod
+    def fixture(action="Ensure"):
+        canonical = {
+            "source": {
+                "apiVersion": "fabric.truxonline.io/v1alpha1",
+                "kind": "TenantBundle",
+                "name": "example-tenant",
+                "uid": "fcba1212-1234-4123-8456-543210987654",
+                "generation": 3,
+            },
+            "fabricTenantId": "TEN00001",
+            "workload": {
+                "namespace": "tenant-example-tenant",
+                "serviceAccount": "example-agent",
+                "audience": "reviewed-workload-audience",
+            },
+            "lifecycle": "Active",
+            "operatorAuthenticated": True,
+            "fabricAvailable": True,
+        }
+        request = {
+            "contractVersion": "v1",
+            "action": action,
+            "source": dict(canonical["source"]),
+            "fabricTenantId": canonical["fabricTenantId"],
+            "workload": dict(canonical["workload"]),
+            "pathTemplate": "tenant-runtime-v1",
+            "idempotencyKey": guard.provisioning_idempotency_key(canonical, action),
+        }
+        return request, canonical
+
+    def test_idempotent_canonical_tenant_request_only(self):
+        request, canonical = self.fixture()
+        self.assertEqual(guard.validate_provisioning_request(request, canonical), [])
+        self.assertEqual(guard.validate_provisioning_request(request, canonical), [])
+        self.assertEqual(
+            request["idempotencyKey"],
+            guard.provisioning_idempotency_key(canonical, "Ensure"),
+        )
+
+    def test_forged_policy_body_name_prefix_and_admin_scope_refused(self):
+        for field, value in [
+            ("hcl", 'path "sys/policies/*" { capabilities = ["create"] }'),
+            ("policy", 'path "fabric/data/tenants/*" { capabilities = ["read"] }'),
+            ("policyName", "tenant-TEN00001"),
+            ("role", "all-tenants"),
+            ("paths", ["fabric/tenants/TEN00001/runtime"]),
+        ]:
+            request, canonical = self.fixture()
+            request[field] = value
+            self.assertEqual(
+                guard.validate_provisioning_request(request, canonical),
+                ["ForbiddenFields"], field,
+            )
+
+    def test_wildcard_or_sibling_path_denied_without_installer(self):
+        for path in [
+            "fabric/tenants/*",
+            "fabric/tenants/TEN00002/runtime",
+            "fabric/tenants/TEN00001/../TEN00002",
+        ]:
+            request, canonical = self.fixture()
+            request["paths"] = [path]
+            self.assertEqual(
+                guard.validate_provisioning_request(request, canonical),
+                ["ForbiddenFields"],
+            )
+            request.pop("paths")
+            request["pathTemplate"] = path
+            self.assertEqual(
+                guard.validate_provisioning_request(request, canonical),
+                ["UnapprovedTemplate"],
+            )
+        request, canonical = self.fixture()
+        request["fabricTenantId"] = "TEN00002"
+        self.assertEqual(
+            guard.validate_provisioning_request(request, canonical),
+            ["UnknownOrStaleTenant"],
+        )
+
+    def test_group_user_browser_labels_never_act_as_secret_authority(self):
+        for forged in [
+            {"group": "fabric-admin"},
+            {"user": "person"},
+            {"oidcSub": "user-in-identity-provider"},
+            {"tenantSlug": "someone-else"},
+            {"browser": True},
+            {"namespaceLabels": {"tenant": "example-tenant"}},
+        ]:
+            request, canonical = self.fixture()
+            request.update(forged)
+            self.assertEqual(
+                guard.validate_provisioning_request(request, canonical),
+                ["ForbiddenFields"],
+            )
+        request, canonical = self.fixture()
+        request["source"]["kind"] = "Group"
+        self.assertEqual(
+            guard.validate_provisioning_request(request, canonical),
+            ["InvalidSource"],
+        )
+        request, canonical = self.fixture()
+        request["source"]["kind"] = "User"
+        self.assertEqual(
+            guard.validate_provisioning_request(request, canonical),
+            ["InvalidSource"],
+        )
+
+    def test_exact_verified_workload_uid_and_generation_required(self):
+        for key, value in [
+            ("namespace", "tenant-other"),
+            ("serviceAccount", "shared-admin"),
+            ("audience", "wrong-audience"),
+        ]:
+            request, canonical = self.fixture()
+            request["workload"][key] = value
+            self.assertEqual(
+                guard.validate_provisioning_request(request, canonical),
+                ["InvalidWorkloadBinding"],
+            )
+        for key, value in [
+            ("uid", "00000000-1111-4111-8111-111111111111"),
+            ("generation", 2),
+            ("name", "foreign-name"),
+        ]:
+            request, canonical = self.fixture()
+            request["source"][key] = value
+            self.assertEqual(
+                guard.validate_provisioning_request(request, canonical),
+                ["UnknownOrStaleTenant"],
+            )
+        request, canonical = self.fixture()
+        canonical["operatorAuthenticated"] = False
+        self.assertEqual(
+            guard.validate_provisioning_request(request, canonical),
+            ["UntrustedReconciler"],
+        )
+
+    def test_fail_closed_unknown_tenant_unavailable_and_revocation(self):
+        request, canonical = self.fixture()
+        canonical["fabricTenantId"] = "TEN99999"
+        self.assertEqual(
+            guard.validate_provisioning_request(request, canonical),
+            ["UnknownOrStaleTenant"],
+        )
+        request, canonical = self.fixture()
+        canonical["fabricAvailable"] = False
+        self.assertEqual(
+            guard.validate_provisioning_request(request, canonical),
+            ["FabricUnavailable"],
+        )
+        request, canonical = self.fixture()
+        canonical["lifecycle"] = "Deleting"
+        self.assertEqual(
+            guard.validate_provisioning_request(request, canonical),
+            ["LifecycleDenied"],
+        )
+        request, canonical = self.fixture("Revoke")
+        canonical["lifecycle"] = "Deleting"
+        self.assertEqual(
+            guard.validate_provisioning_request(request, canonical), [],
+        )
+        request["idempotencyKey"] = "forged-key"
+        self.assertEqual(
+            guard.validate_provisioning_request(request, canonical),
+            ["IdempotencyMismatch"],
+        )
+
+    def test_unhashable_action_and_unknown_payloads_fail_closed(self):
+        request, canonical = self.fixture()
+        request["action"] = ["Ensure"]
+        self.assertEqual(
+            guard.validate_provisioning_request(request, canonical),
+            ["InvalidAction"],
+        )
+        request["action"] = {"unexpected": "Ensure"}
+        self.assertEqual(
+            guard.validate_provisioning_request(request, canonical),
+            ["InvalidAction"],
+        )
+        self.assertEqual(
+            guard.validate_provisioning_request("browser-input", canonical),
+            ["InvalidContract"],
+        )
+
+    def test_new_infra_eso_binding_is_still_prohibited(self):
+        self.assertTrue(guard.INFRA_STORE_ADDITION.search(
+            "+        name: openbao\n",
+        ))
+        self.assertFalse(guard.INFRA_STORE_ADDITION.search(
+            "+        name: openbao-fabric-store\n",
+        ))
+
+
 if __name__ == "__main__":
     unittest.main()
