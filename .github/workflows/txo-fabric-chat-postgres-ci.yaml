@@ -75,17 +75,14 @@ jobs:
           kustomize build apps/60-services/txo-fabric/overlays/prod > /tmp/txo-fabric-chat-prod.yaml
           # The CRD schema includes future-only API field vocabulary; it
           # is NOT a selected AgentIdentity, Service or workload listener.
-          awk 'BEGIN { RS = "---"; ORS = "\\n---\\n" } !/kind: CustomResourceDefinition/ { print }' \\
-            /tmp/txo-fabric-chat-prod.yaml > /tmp/txo-fabric-chat-selected.yaml
-          if grep -En 'API_SERVER_ENABLED|API_SERVER_KEY|hermes-api-|(^|[^0-9])8642([^0-9]|$)|privateAPI:' \\
-            /tmp/txo-fabric-chat-selected.yaml; then
+          awk 'BEGIN { RS = "---"; ORS = "\\n---\\n" } !/kind: CustomResourceDefinition/ { print }' /tmp/txo-fabric-chat-prod.yaml > /tmp/txo-fabric-chat-selected.yaml
+          if grep -En 'API_SERVER_ENABLED|API_SERVER_KEY|hermes-api-|(^|[^0-9])8642([^0-9]|$)|privateAPI:' /tmp/txo-fabric-chat-selected.yaml; then
             echo 'Unexpected Hermes API Server activation in selected production'
             exit 1
           fi
           # Search for Hermes-specific API exposure, not pre-existing
           # platform Ingress resources unrelated to private Hermes.
-          if grep -En 'name: hermes-api-server|name: hermes-private-api' \\
-            /tmp/txo-fabric-chat-selected.yaml; then
+          if grep -En 'name: hermes-api-server|name: hermes-private-api' /tmp/txo-fabric-chat-selected.yaml; then
             echo 'Unexpected private Hermes Service/exposure'
             exit 1
           fi
