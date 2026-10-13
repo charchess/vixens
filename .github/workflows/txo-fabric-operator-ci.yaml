@@ -193,13 +193,18 @@ jobs:
         run: |
           set -euo pipefail
           kustomize build apps/60-services/txo-fabric/overlays/prod > /tmp/txo-fabric-prod-hermes-private-api.yaml
-          if grep -En 'API_SERVER_ENABLED|API_SERVER_KEY|hermes-api-|(^|[^0-9])8642([^0-9]|$)' /tmp/txo-fabric-prod-hermes-private-api.yaml; then
+          # A CRD schema describes the future non-secret reference name, but
+          # is not an opted-in AgentIdentity or a selected API listener.
+          # Check actual selected objects rather than CRD schema examples.
+          awk 'BEGIN { RS = "\\n---\\n"; ORS = "\\n---\\n" } !/kind: CustomResourceDefinition/ { print }' \\
+            /tmp/txo-fabric-prod-hermes-private-api.yaml > /tmp/txo-fabric-prod-hermes-selected.yaml
+          if grep -En 'API_SERVER_ENABLED|API_SERVER_KEY|hermes-api-|(^|[^0-9])8642([^0-9]|$)' /tmp/txo-fabric-prod-hermes-selected.yaml; then
             echo "::error::Hermes private API configuration or port was selected in prod"
             exit 1
           fi
           # Existing per-agent dashboard ingress is NOT the private API.
           # Refuse any newly exposed API hostname/name in generated state.
-          if grep -En 'hermes-private-api|hermes-api-server|hermes-api-credential' /tmp/txo-fabric-prod-hermes-private-api.yaml; then
+          if grep -En 'hermes-private-api|hermes-api-server|hermes-api-credential' /tmp/txo-fabric-prod-hermes-selected.yaml; then
             echo "::error::Unexpected selected private/public Hermes API artifact"
             exit 1
           fi
