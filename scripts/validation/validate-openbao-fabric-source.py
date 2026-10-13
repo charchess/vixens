@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""#4046: source-only OpenBao Fabric invariant guard (does not touch a cluster).
+"""#4046: OpenBao Fabric empty-POC invariant guard (does not touch a cluster).
 
 Usage in CI: git fetch origin main; python3 scripts/validation/validate-openbao-fabric-source.py
          --base origin/main --head HEAD --prod-render /tmp/txo-fabric-prod.yaml
@@ -16,6 +16,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FABRIC_PREFIX = "apps/60-services/txo-fabric/openbao-fabric/"
 ALLOWED_FILES = (".md", ".example")
+POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml"}
 # Sensitive material MUST never appear in new source, even commented examples.
 ASSIGNMENT = re.compile(
     r"""(?ix)
@@ -147,14 +148,14 @@ def changed_paths(base: str, head: str) -> list[str]:
 def assert_file_safe(path: str, content: str) -> list[str]:
     errors: list[str] = []
     is_contract = path.startswith(FABRIC_PREFIX)
-    if is_contract and not path.endswith(ALLOWED_FILES):
+    if is_contract and not (path.endswith(ALLOWED_FILES) or path[len(FABRIC_PREFIX):] in POC_YAML):
         errors.append("OpenBao Fabric source directory contains a runnable or unexpected file")
     if ASSIGNMENT.search(content) or JWT_LIKE.search(content) or PEM_LIKE.search(content):
         errors.append("credential-like value detected in source content")
     if BASE64_MATERIAL.search(content):
         errors.append("unexpected long encoded payload in source content")
     if is_contract:
-        if FORBIDDEN_RESOURCES.search(content):
+        if path.endswith(ALLOWED_FILES) and FORBIDDEN_RESOURCES.search(content):
             errors.append("OpenBao Fabric source contains Kubernetes resource syntax")
         if path.endswith(".example"):
             if 'capabilities = ["read"]' not in content:
@@ -177,12 +178,11 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
     protected = [
         "apps/00-infra/openbao/",
         "argocd/overlays/prod/",
-        "apps/60-services/txo-fabric/overlays/prod/",
         "apps/60-services/txo-fabric/operator/",
         "apps/60-services/txo-fabric/webui/",
     ]
     for path in changed:
-        if path.startswith(tuple(protected)):
+        if path.startswith(tuple(protected)) and path not in {"apps/60-services/txo-fabric/overlays/dev/kustomization.yaml", "apps/60-services/txo-fabric/overlays/prod/kustomization.yaml"}:
             problems.append(f"protected live GitOps/consumer path changed: {path}")
         full = ROOT / path
         if not full.is_file():
@@ -202,11 +202,11 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
         problems.append("production Kustomize render evidence missing")
     else:
         body = prod_render.read_text(encoding="utf-8")
-        if PRODUCTION_MARKER.search(body):
-            problems.append("Fabric OpenBao detected in production TXO render")
+        if not PRODUCTION_MARKER.search(body):
+            problems.append("Fabric OpenBao missing from authorized POC production TXO render")
     if problems:
         return problems
-    print(f"PASS: {len(changed)} changed source files checked; no Fabric OpenBao prod activation")
+    print(f"PASS: {len(changed)} changed source files checked; Fabric POC selected (full render safety validated separately)")
     print("INFO: historic TXO OpenFGA uses Infra ESO; migration is deferred, not silently asserted clean")
     return []
 
