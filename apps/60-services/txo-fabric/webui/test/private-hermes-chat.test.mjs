@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createPrivateHermesChatService } from "../server/private-hermes-chat.mjs";
 import { createChatHttpHandler } from "../server/chat-http.mjs";
-import { createPrivateBFFHandler } from "../server/private-bff-server.mjs";
+import { createPrivateBFFHandler, createPrivateBFFServer } from "../server/private-bff-server.mjs";
 
 const tenantKey = "indiba";
 const fabricTenantId = "TEN00002";
@@ -277,4 +277,47 @@ test("HTTP mutation origin validation strips browser headers and returns no priv
   assert.match(exposed, /text-delta/);
   assert.doesNotMatch(exposed, /browser-cookie|forged-browser-assertion|authorization|private result|tenant-indiba\.svc|hermes-alex/);
   assert.equal(h.rpc.length, 2);
+});
+
+test("private Node BFF streams SSE before upstream completion and aborts on client disconnect", async () => {
+  let push;
+  let signalObserved;
+  const aborted = new Promise(resolve => { signalObserved = resolve; });
+  const handler = createPrivateBFFHandler({
+    enabled: true, ready: async () => true,
+    app: async request => {
+      const stream = new ReadableStream({
+        start(controller) {
+          push = controller;
+          controller.enqueue(new TextEncoder().encode('data: {"type":"text-delta","text":"first"}\\n\\n'));
+          request.signal.addEventListener("abort", () => {
+            signalObserved(true);
+            try { controller.close(); } catch { /* client disconnected */ }
+          }, { once: true });
+        },
+      });
+      return new Response(stream, { headers: { "Content-Type": "text/event-stream" } });
+    },
+  });
+  const server = createPrivateBFFServer({ handle: handler });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const controller = new AbortController();
+    const response = await fetch("http://127.0.0.1:" + server.address().port + "/api/tenants/indiba/chat/threads", {
+      signal: controller.signal,
+    });
+    assert.equal(response.status, 200);
+    const reader = response.body.getReader();
+    const first = await reader.read();
+    assert.equal(first.done, false);
+    assert.match(new TextDecoder().decode(first.value), /first/);
+    // A second event was not enqueued yet. The first event must NOT wait for
+    // the upstream stream to close (old Node BFF buffered via arrayBuffer).
+    assert.equal(typeof push.enqueue, "function");
+    controller.abort();
+    await aborted;
+  } finally {
+    server.closeAllConnections();
+    await new Promise(resolve => server.close(resolve));
+  }
 });
