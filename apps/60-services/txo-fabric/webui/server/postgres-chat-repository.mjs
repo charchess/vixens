@@ -14,7 +14,6 @@ const REMOTE_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const OUTCOMES = new Set(["completed", "failed", "cancelled"]);
 const MAX_MS = 8_640_000_000_000_000;
 const fail = () => { throw new Error("Fabric chat repository unavailable"); };
-const invalid = value => typeof value !== "string" || !value.length;
 const safeTime = value => Number.isSafeInteger(value) && value >= 0 && value <= MAX_MS;
 
 // Always include the COMPLETE immutable server-verifiable scope in SQL,
@@ -215,7 +214,7 @@ export function createPostgresFabricChatRepository({
         if (thread.remote_session_id === null) return Object.freeze({ kind: "denied" });
         if (!REMOTE_ID.test(thread.remote_session_id)) fail();
         if (thread.lease_token !== null) {
-          if (!THREAD_ID.test(thread.lease_token + "00000000")) fail();
+          if (!TURN_ID.test(thread.lease_token || "")) fail();
           if (thread.lease_uncertain) return Object.freeze({ kind: "uncertain" });
           if (time(thread.lease_expires_at_ms) <= time(thread.db_now_ms)) {
             await tx(`UPDATE txo_fabric_chat_threads
