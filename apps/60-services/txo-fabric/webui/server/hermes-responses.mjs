@@ -36,8 +36,9 @@ function decode(event) {
 
 function textDelta(payload, commentary) {
   if (payload.phase === "commentary" || payload.phase === "reasoning") return null;
-  if (payload.output_index !== undefined &&
-      (!Number.isSafeInteger(payload.output_index) || payload.output_index < 0)) fail();
+  // Without a canonical output index we cannot distinguish final answer
+  // deltas from an in-progress commentary message. Deny rather than leak.
+  if (!Number.isSafeInteger(payload.output_index) || payload.output_index < 0) fail();
   if (commentary.has(payload.output_index)) return null;
   if (typeof payload.delta !== "string" || payload.delta.length < 1 ||
       payload.delta.length > SAFE_TEXT_LIMIT || payload.delta.includes("\0")) fail();
@@ -55,9 +56,9 @@ export function projectHermesResponsesEvent(event, commentary = new Set()) {
   if (event.event === "response.output_item.added" &&
       payload.item?.type === "message" &&
       (payload.item.phase === "commentary" || payload.item.phase === "reasoning")) {
-    if (Number.isSafeInteger(payload.output_index) && payload.output_index >= 0) {
-      commentary.add(payload.output_index);
-    }
+    if (!Number.isSafeInteger(payload.output_index) ||
+        payload.output_index < 0 || commentary.size >= 256) fail();
+    commentary.add(payload.output_index);
     return null;
   }
   if (event.event === "response.output_text.delta") return textDelta(payload, commentary);
