@@ -1,3 +1,9 @@
+// Preferred first POC path: Hermes Responses owns the conversation on its PVC.
+// This source-only export does not construct a BFF repository or live route.
+export { createPrivateHermesResponsesService } from "./private-hermes-responses.mjs";
+
+// Legacy native sessions are retained solely to preserve existing source
+// transport tests and future governance research. Do not activate this path.
 import { createChatSessionService } from "./chat-sessions.mjs";
 
 const TENANT = /^[a-z0-9](?:[a-z0-9-]{0,54}[a-z0-9])?$/;
