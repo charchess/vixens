@@ -330,10 +330,10 @@ test("selected GitOps manifests keep all gates off and lack Hermes API Service/c
   const generator = read("../../operator/internal/controller/agentidentity_resources.go");
   const egress = read("../runtime/networkpolicy.yaml");
   const overlay = read("../../overlays/prod/kustomization.yaml");
-  assert.match(bff, /name: TXO_WEBUI_BFF_BROWSER_ENABLED\\s+value: "false"/);
-  assert.match(manager, /name: TXO_FABRIC_PRIVATE_BRIDGE_ENABLED\\s+value: "false"/);
+  assert.match(bff, /name: TXO_WEBUI_BFF_BROWSER_ENABLED\s+value: "false"/);
+  assert.match(manager, /name: TXO_FABRIC_PRIVATE_BRIDGE_ENABLED\s+value: "false"/);
   assert.doesNotMatch(generator, /API_SERVER_ENABLED|API_SERVER_KEY|8642/);
-  assert.doesNotMatch(egress, /port: 8642|0\\.0\\.0\\.0\\/0/);
+  assert.doesNotMatch(egress, /port: 8642|0\.0\.0\.0\/0/);
   assert.doesNotMatch(overlay, /hermes-api-server|hermes-api-credential/);
   assert.doesNotMatch(bff, /API_SERVER_ENABLED|8642|LoadBalancer|NodePort|Ingress/);
 });
