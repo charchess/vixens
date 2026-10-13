@@ -51,6 +51,12 @@ test("real PostgreSQL: migrations, two independent pools and atomic cross-replic
     assert.match(created.id, /^[a-f0-9]{40}$/);
     assert.deepEqual(await r2.getThread({ scope, threadId: created.id }), created);
     assert.deepEqual(await r2.listThreads({ scope }), [created]);
+    // PostgreSQL CHECK uses three-valued logic: terminal NULL metadata must
+    // be explicitly rejected (UNKNOWN is not a failed CHECK without IS NOT NULL).
+    await assert.rejects(a.query(`INSERT INTO txo_fabric_chat_turns
+      (thread_id,turn_id,state,lease_token,started_at_ms,finished_at_ms,result_code)
+      VALUES ($1,$2,'completed',$3,0,1,NULL)`,
+    [created.id, turnId(), turnId()]), /chat_turn_result_valid/);
     assert.equal(JSON.stringify(created).includes("remote"), false);
     assert.equal(JSON.stringify(created).includes("lease"), false);
 
