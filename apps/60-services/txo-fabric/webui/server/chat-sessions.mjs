@@ -5,6 +5,7 @@ import { streamAuthorizedTurn } from "./authorized-turn.mjs";
 const AGENT_KEY = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/;
 const REMOTE_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const THREAD_ID = /^[a-f0-9]{40}$/;
+const TURN_ID = /^[a-f0-9]{32}$/;
 
 const deny = () => { throw new Error("Forbidden"); };
 const validPrincipal = (p) => p?.authenticated === true &&
@@ -76,7 +77,8 @@ export function createChatSessionService({ tenantKey, authorize, resolveAgent, r
       typeof authorize !== "function" || typeof resolveAgent !== "function" ||
       !repo || ["insert", "get", "list", "claim"].some((k) => typeof repo[k] !== "function") ||
       typeof openRemoteSession !== "function" || typeof fetchImpl !== "function" ||
-      typeof strictBinding !== "boolean") {
+      typeof strictBinding !== "boolean" ||
+      (strictBinding && typeof repo.claimTurn !== "function")) {
     throw new Error("Chat security dependencies are required");
   }
   function strictPrincipal(principal) {
@@ -161,14 +163,22 @@ export function createChatSessionService({ tenantKey, authorize, resolveAgent, r
       }
       return visible;
     },
-    async *turn({ principal, threadId, input, signal }) {
+    async *turn({ principal, threadId, turnId, input, signal }) {
+      if (strictBinding && (typeof turnId !== "string" || !TURN_ID.test(turnId))) deny();
       const thread = await boundThread({ principal, threadId, action: "agent.chat" });
       const release = await repo.claim(thread.id);
       try {
         // Recheck after acquiring the atomic lease: ownership and grants may
         // have changed while waiting for another replica.
         await requireGrant({ principal, tenantKey, agentKey: thread.agentKey, action: "agent.chat", authorize });
-        if (strictBinding) await requirePinnedAgent(thread);
+        if (strictBinding) {
+          await requirePinnedAgent(thread);
+          // Atomic persistent uniqueness across replicas: a cancelled / lost
+          // HTTP response cannot result in a second upstream Hermes turn.
+          // There is deliberately no replay/resume fallback on duplicates.
+          if (await repo.claimTurn({ threadId: thread.id, tenantKey,
+            subject: principal.subject, turnId }) !== true) deny();
+        }
         yield* streamAuthorizedTurn({
           principal, tenantKey, agentKey: thread.agentKey, sessionId: thread.sessionId,
           input, authorize, resolveAgent, fetchImpl, signal,
