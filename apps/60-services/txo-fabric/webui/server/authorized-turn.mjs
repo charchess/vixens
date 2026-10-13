@@ -10,7 +10,8 @@ import { streamHermesChat } from "./hermes-client.mjs";
 export async function* streamAuthorizedTurn({
   principal, tenantKey, agentKey, sessionId, input, authorize, resolveAgent,
   fetchImpl, signal, expectedAgentUID, expectedTenantBundleUID,
-  expectedFabricTenantId, strictTransport = false,
+  expectedFabricTenantId, expectedAgentObservedGeneration,
+  strictTransport = false,
 }) {
   if (!principal || principal.authenticated !== true || !principal.subject ||
       !tenantKey || !agentKey || typeof authorize !== "function" ||
@@ -24,6 +25,7 @@ export async function* streamAuthorizedTurn({
       (strictTransport && (expectedAgentUID !== target.agentUID ||
         expectedTenantBundleUID !== target.tenantBundleUID ||
         expectedFabricTenantId !== target.fabricTenantId ||
+        expectedAgentObservedGeneration !== target.agentObservedGeneration ||
         target.apiServerEnabled !== true || target.endpointVerified !== true))) {
     throw new Error("Agent is unavailable");
   }
