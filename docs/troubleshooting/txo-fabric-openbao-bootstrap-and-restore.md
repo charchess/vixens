@@ -31,11 +31,10 @@ Kubernetes**, to be managed by GitOps. It is **not** an experimental
 K3s workload and not an externally hosted substitute. The #4046
 read-only preflight was corrected from K3s to Talos v1.14.1 /
 Kubernetes v1.36.0; this PR performs **no live verification**.
-High memory requests and the reported Velero
-`BackupStorageLocation/default=Unavailable` block stateful
-activation until non-secret capacity-placement evidence and a
-**working backup destination plus actual isolated restore drill**
-are verified. A present Retain StorageClass or Ready snapshot is
+The historical preflight noted high node-memory requests and
+`BackupStorageLocation/default=Unavailable`. These no longer prevent
+**empty phase-1 source deployment** based on the newly verified POC
+facts, but #4049 isolated restore proof still gates valuable secrets. A present Retain StorageClass or Ready snapshot is
 insufficient. No default-to-Delete storage, no public endpoint, no
 Internet catch-all or speculative backup route.
 
@@ -77,8 +76,10 @@ administrator.
   Git, issues, PRs, CI/test logs, terminal transcripts delivered to an
   agent or the handoff. Reports contain only **existence, readiness,
   success/failure, timestamps and non-secret object names**.
-- Human approval must explicitly authorize any physical bootstrap,
-  stateful storage creation, init/unseal, backup/export, auth policy
+- The product owner has already approved the empty phase-1 GitOps desired
+  state and PVC creation through the normal reviewed merge path (#3728).
+  Separate human approval is still required for manual bootstrap,
+  init/unseal, backup/export, auth policy
   installation, ESO activation, rotation/revocation or restore. A PR
   merge or valid `dev-v*` alone is insufficient.
 - No direct persistent cluster mutation by the implementation agent;

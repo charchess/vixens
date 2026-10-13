@@ -92,8 +92,8 @@ role or through a shared catch-all runtime ESO identity. The bare
 
 OpenBao Fabric's state is durable and **Retain** under the actual
 approved storage class and PV reclaim policy; no `Delete` fallback and
-no automatic state destruction on uninstall. Before any stateful
-deployment, validate the actual StorageClass/CSI reclaim semantics,
+no automatic state destruction on uninstall. Before any **credential-bearing** stateful
+activation, validate the actual StorageClass/CSI reclaim semantics,
 backup target ownership/isolation/encryption, snapshot consistency,
 off-site copy and a restore drill. Infra is the authorized custodian of
 bootstrap/recovery material; Fabric application credentials never need
@@ -192,8 +192,8 @@ Velero backup location. These are explicit blockers to verify/resolve:
 placement and capacity reservations **on Talos**, a physically
 available backup destination, and an isolated successful restore drill.
 An observed `Retain` CSI class/snapshot API alone does not prove data
-recoverability. No stateful GitOps target becomes activation-eligible
-until these gates and the prior storage/auth/TLS/network gates pass.
+recoverability. No **credential-bearing** GitOps activation becomes eligible until
+these gates and the prior storage/auth/TLS/network gates pass.
 No public route and no broad egress are permitted.
 
 **Day-to-day privilege separation remains mandatory:** routine OpenBao

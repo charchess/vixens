@@ -14,15 +14,15 @@ to govern **future privileged credential consumers**, not this empty POC.
 
 | Boundary | Contract | Activation blocker |
 |---|---|---|
-| Workload / namespace | Name future instance `openbao-fabric`, in a distinct Fabric-controlled management namespace; platform and tenant read clients are not bootstrap administrators | Namespace owner, Pod Security, SCC/Kyverno and versioned chart/image unknown |
-| Server identity | Dedicated minimal ServiceAccount, `automountServiceAccountToken: false` by default; any auth helper token is separately projected with exact verified audience | Real issuer/audience/token reviewer, bound SA and precise auth method unverified |
-| Stateful data | Dedicated PVC/PV selected by inspected StorageClass with **Retain** reclaim policy, immutable snapshot/restore/backup contract; **no delete reclaim fallback** | Physical CSI class, backup target, capacity, RPO/RTO and successful restore drill absent |
-| Process topology | Private ClusterIP-only HTTP/TLS listener; locked init/unseal, audited admin boundary, securityContext nonroot/read-only where image supports it | OpenBao version/Helm configuration, exact TLS, HA/raft storage and initialization method undecided |
-| Network ingress | Namespace/workload default-deny; platform-approved AuthN clients/ESO per namespace and explicit health/metrics sources only | Actual ingress labels, pods, ports, CA chain and endpoints require observation |
-| Network egress | Default-deny: only **exact** DNS (if needed), storage/backup/Kubernetes TokenReview/telemetry endpoints separately justified; no broad Internet, Authentik, tenant-to-tenant network or admin ingress | Exact bootstrap versus runtime links not yet established; **do not allow 0.0.0.0/0** |
+| Workload / namespace | Existing restricted `txo-fabric-system` and the named `openbao-fabric` pod; no tenant clients | Future precise platform/tenant ServiceAccount bindings require separate review |
+| Server identity | Official image non-root user, `automountServiceAccountToken: false`, no K8s auth client in phase 1 | Exact future issuer/audience/reviewer binding deferred |
+| Stateful data | 5Gi `truenas-iscsi-retain` RWO claim template, Retain/Retain lifecycle, Raft on volume; no Delete fallback | Bind/provisioning observations and #4049 native snapshot/restore still pending |
+| Process topology | One OpenBao 2.6.2 server, Raft single-node, ClusterIP 8200, HTTP only while zero network clients, health readiness sealed-aware | TLS, audit, bootstrap and any HA remain separate |
+| Network ingress | Exact-selector zero-client policy plus namespace default-deny, no public routing | Future TLS client allowlist separately reviewed |
+| Network egress | Zero egress for local Raft one-node POC; no DNS/Internet allow | Future TokenReview/backup/telemetry allowlist based on verified identities only |
 | ESO | New **`openbao-fabric-store`** separate from `openbao`; prefer namespace-scoped `SecretStore` identities for tenant consumers; explicit `remoteRef` ACL per immutable tenant ID | ESO auth backend/token reviewer path, name/issuer/audience/CA, role binding and cross-namespace policy |
 | Secret content | Never commit Secret values, password, root/unseal/recovery material or example base64 blobs; use explicitly approved external bootstrap channel | Real platform custody/rotation mechanism not yet approved |
-| Argo | Separate `openbao-fabric` non-prod activation app/overlay **only after** these choices; later human-approved prod composition | No production Argo target changes in #4046 |
+| Argo | Selected in existing TXO dev/prod Kustomize desired-state; dev tracks main, prod tracks prod-stable | Physical dev acceptance and explicit prod candidate approval separate |
 | Failure / rollback | Startup fails closed without quorum/unseal/credential; remove newly activated overlay with GitOps and retain physical data | Prove storage retention and no data/secret loss on controlled rollback |
 
 ### Physical preconditions for trusting real credentials
