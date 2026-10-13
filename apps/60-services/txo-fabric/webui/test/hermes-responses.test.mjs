@@ -270,6 +270,8 @@ test("redirect, non-SSE, missing body, malformed/oversized frame and incomplete 
     new Response(frames("event: response.output_text.delta\ndata: not-json\n\n"), {headers:{"content-type":"text/event-stream"}}),
     new Response(frames("event: response.output_text.delta\ndata: " + "x".repeat(20000) + "\n\n"),
       {headers:{"content-type":"text/event-stream"}}),
+    new Response(frames(sse("response.output_text.delta",{delta:"unindexed commentary"})),
+      {headers:{"content-type":"text/event-stream"}}),
     new Response(frames(sse("response.output_text.delta",{delta:"partial"})),
       {headers:{"content-type":"text/event-stream"}}),
   ];
