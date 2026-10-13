@@ -309,6 +309,9 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		setCondition(&agent.Status.Conditions, agent.Generation, "RuntimeReady", metav1.ConditionFalse, "DeploymentProgressing", "waiting for the Hermes Deployment to become available")
 		setCondition(&agent.Status.Conditions, agent.Generation, "Ready", metav1.ConditionFalse, "RuntimeProgressing", "runtime is still provisioning")
 	}
+	// A valid opt-in is still source-only: never advertise API readiness.
+	// This condition changes no gateway Deployment, Service, Secret or policy.
+	setPrivateHermesAPICondition(&agent, &tenant)
 	if !reflect.DeepEqual(previousStatus, agent.Status) {
 		if err := r.Status().Update(ctx, &agent); err != nil {
 			return ctrl.Result{}, err
