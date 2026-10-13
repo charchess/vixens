@@ -31,7 +31,7 @@ type AgentRuntimeCapabilityBinding struct {
 
 // AgentPrivateAPIBinding expresses non-secret future intent only.
 // A valid opt-in NEVER starts an API Server in this operator version.
-// +kubebuilder:validation:XValidation:rule="!self.enabled || (has(self.tenantId) && size(self.tenantId) > 0 && has(self.credentialRef) && size(self.credentialRef) > 0)",message="enabled private API requires canonical tenantId and credentialRef"
+// +kubebuilder:validation:XValidation:rule="!has(self.enabled) || !self.enabled || (has(self.tenantId) && size(self.tenantId) > 0 && has(self.credentialRef) && size(self.credentialRef) > 0)",message="enabled private API requires canonical tenantId and credentialRef"
 type AgentPrivateAPIBinding struct {
 	// Enabled is desired future intent, NOT activation. Omitted/false is safe.
 	// +optional
