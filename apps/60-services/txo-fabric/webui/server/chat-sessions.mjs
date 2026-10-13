@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { requireInternalHermesURL } from "./hermes-client.mjs";
 import { streamAuthorizedTurn } from "./authorized-turn.mjs";
+import { createStrictChatSessionService } from "./strict-chat-sessions.mjs";
 
 const AGENT_KEY = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/;
 const REMOTE_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
@@ -72,7 +73,12 @@ export async function openHermesSession({ target, tenantKey, agentKey, fetchImpl
  * claim(id) returns an async release() callback; throws if already in use.
  */
 export function createChatSessionService({ tenantKey, authorize, resolveAgent, repo,
-  openRemoteSession = openHermesSession, fetchImpl = fetch, strictBinding = false }) {
+  openRemoteSession = openHermesSession, fetchImpl = fetch, strictBinding = false,
+  listAgentKeys }) {
+  if (strictBinding === true) return createStrictChatSessionService({
+    tenantKey, authorize, resolveAgent, listAgentKeys, repo,
+    openRemoteSession, fetchImpl,
+  });
   if (typeof tenantKey !== "string" || !tenantKey ||
       typeof authorize !== "function" || typeof resolveAgent !== "function" ||
       !repo || ["insert", "get", "list", "claim"].some((k) => typeof repo[k] !== "function") ||
