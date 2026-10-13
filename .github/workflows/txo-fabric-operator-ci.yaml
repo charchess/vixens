@@ -196,7 +196,7 @@ jobs:
           # A CRD schema describes the future non-secret reference name, but
           # is not an opted-in AgentIdentity or a selected API listener.
           # Check actual selected objects rather than CRD schema examples.
-          awk 'BEGIN { RS = "\\n---\\n"; ORS = "\\n---\\n" } !/kind: CustomResourceDefinition/ { print }' \\
+          awk 'BEGIN { RS = "---"; ORS = "\n---\n" } !/kind: CustomResourceDefinition/ { print }' \
             /tmp/txo-fabric-prod-hermes-private-api.yaml > /tmp/txo-fabric-prod-hermes-selected.yaml
           if grep -En 'API_SERVER_ENABLED|API_SERVER_KEY|hermes-api-|(^|[^0-9])8642([^0-9]|$)' /tmp/txo-fabric-prod-hermes-selected.yaml; then
             echo "::error::Hermes private API configuration or port was selected in prod"
