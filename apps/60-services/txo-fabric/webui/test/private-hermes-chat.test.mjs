@@ -33,25 +33,59 @@ const collect = async iterable => {
   return result;
 };
 function storage() {
-  const records = new Map(), claimed = new Set(), consumedTurns = new Set();
+  // Deterministic contract double, not a production/retry-capable repository.
+  const records = new Map(), turns = new Map();
+  const matches = (record, scope) => record &&
+    Object.keys(scope).every(key => record.scope[key] === scope[key]);
+  const project = record => ({
+    id: record.id, agentKey: record.scope.agentKey, createdAt: record.createdAt,
+  });
   return {
-    insert: async record => {
-      if (records.has(record.id)) throw Error("collision");
-      records.set(record.id, record);
+    async createThread({ scope }) {
+      const id = randomBytes(20).toString("hex");
+      const record = { id, scope: { ...scope }, createdAt: new Date().toISOString(),
+        remoteSessionId: null, lease: null };
+      records.set(id, record);
+      return project(record);
     },
-    get: async id => records.get(id),
-    list: async ({tenantKey, subject}) => [...records.values()].filter(r =>
-      r.tenantKey === tenantKey && r.subject === subject),
-    claimTurn: async ({ threadId, tenantKey, subject, turnId }) => {
-      const composite = [threadId, tenantKey, subject, turnId].join(":");
-      if (consumedTurns.has(composite)) return false;
-      consumedTurns.add(composite);
-      return true;
+    async getThread({ scope, threadId }) {
+      const record = records.get(threadId);
+      return matches(record, scope) ? project(record) : null;
     },
-    claim: async id => {
-      if (claimed.has(id)) throw Error("lease unavailable");
-      claimed.add(id);
-      return async () => { claimed.delete(id); };
+    async listThreads({ scope }) {
+      return [...records.values()].filter(record => matches(record, scope)).map(project);
+    },
+    async getServerThread({ scope, threadId }) {
+      const record = records.get(threadId);
+      return matches(record, scope) ? { remoteSessionId: record.remoteSessionId } : null;
+    },
+    async bindHermesSession({ scope, threadId, remoteSessionId }) {
+      const record = records.get(threadId);
+      if (!matches(record, scope)) return { kind: "denied" };
+      if (record.remoteSessionId !== null) return { kind: "conflict" };
+      record.remoteSessionId = remoteSessionId;
+      return { kind: "bound" };
+    },
+    async claimTurn({ scope, threadId, turnId }) {
+      const record = records.get(threadId);
+      if (!matches(record, scope) || !record.remoteSessionId) return { kind: "denied" };
+      const key = threadId + ":" + turnId;
+      const prior = turns.get(key);
+      if (prior) return prior.kind === "terminal"
+        ? { kind: "terminal", outcome: prior.outcome } : { kind: "conflict" };
+      if (record.lease) return { kind: "conflict" };
+      const leaseToken = randomBytes(16).toString("hex");
+      record.lease = leaseToken;
+      turns.set(key, { kind: "claimed", leaseToken });
+      return { kind: "claimed", leaseToken };
+    },
+    async finalizeTurn({ scope, threadId, turnId, leaseToken, outcome }) {
+      const record = records.get(threadId), state = turns.get(threadId + ":" + turnId);
+      if (!matches(record, scope) || !state || state.leaseToken !== leaseToken ||
+          record.lease !== leaseToken) return { kind: "denied" };
+      record.lease = null;
+      turns.set(threadId + ":" + turnId, { kind: "terminal", outcome });
+      return { kind: "terminal", outcome };
     },
   };
 }
@@ -106,6 +140,7 @@ function harness(overrides = {}) {
   const options = {
     tenantKey, fabricTenantId, repo: storage(), authorize,
     resolveCanonicalTenant, resolveCanonicalAgent,
+    listCanonicalAgentKeys: async () => ["alex"],
     verifyEndpoint, readScopedCredential, fetchImpl,
     browserEnabled: overrides.browserEnabled ?? enabled,
     bridgeEnabled: overrides.bridgeEnabled ?? bridge,
@@ -256,7 +291,8 @@ test("same per-thread turn ID is consumed forever; no duplicate upstream POST", 
   const id = nonce();
   await collect(h.service.turn({ principal, threadId: thread.id, turnId: id, input: "once" }));
   const calls = h.rpc.length;
-  await assert.rejects(collect(h.service.turn({ principal, threadId: thread.id, turnId: id, input: "replay" })));
+  assert.deepEqual(await collect(h.service.turn({ principal, threadId: thread.id,
+    turnId: id, input: "replay" })), [{ type: "done", status: "completed" }]);
   assert.equal(h.rpc.length, calls, "duplicate turn created an upstream request");
   await assert.rejects(collect(h.service.turn({ principal, threadId: thread.id, input: "missing nonce" })));
   assert.equal(h.rpc.length, calls);
