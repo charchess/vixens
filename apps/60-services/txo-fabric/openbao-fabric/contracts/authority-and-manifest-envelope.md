@@ -1,29 +1,16 @@
-# OpenBao Fabric — non-runnable manifest envelope / approval checklist
-
-**Placement decision (Prompt 07):** the future global OpenBao Fabric instance
-belongs **inside the Talos Kubernetes cluster**, as a private GitOps-owned
-Fabric control-plane service. **Not K3s, not external hosting.** A preflight
-comment on #4046 corrected the earlier K3s identification to Talos
-v1.14.1/Kubernetes v1.36.0. The actual target/namespace/manifest is
-**not activation-approved** until verified Talos node capacity and placement
-reservation, a backed-up `Retain` state volume, an **available** backup
-destination, and a **successful isolated restore drill** are evidenced.
-The preflight reported high memory reservations and a Velero backup
-location in unavailable state; these remain **gates to verify**, not
-facts a source-only PR has independently re-observed.
+# OpenBao Fabric — POC phase 1 and future privilege envelope
 
 The operator is not the secrets administrator. See
 [controlled tenant provisioning](tenant-provisioning-boundary.md)
 for a canonical TenantBundle → intent → independent boundary → limited
 role/ESO sequence. This source-only contract cannot create a real role.
 
-This document defines **names and validation criteria**, not a Helm chart,
-Kubernetes manifest, Argo Application or ready-to-run install. The repository
-only defines a working Infra OpenBao **external** ESO integration, not a
-versioned OpenBao Fabric deployment with known StatefulSet/PVC, unseal or
-backup semantics. Creating that deployment by guessing would be unsafe.
+Phase 1 is now explicitly approved and executable: one empty tagged OpenBao
+2.6.2 StatefulSet, retained 5Gi Raft PVC, private ClusterIP and deny-all
+NetworkPolicy, selected by TXO dev/prod Kustomize. This document continues
+to govern **future privileged credential consumers**, not this empty POC.
 
-## Proposed object envelope (source contract, NOT created)
+## Future privileged/runtime object envelope (POC exists)
 
 | Boundary | Contract | Activation blocker |
 |---|---|---|
@@ -38,7 +25,7 @@ backup semantics. Creating that deployment by guessing would be unsafe.
 | Argo | Separate `openbao-fabric` non-prod activation app/overlay **only after** these choices; later human-approved prod composition | No production Argo target changes in #4046 |
 | Failure / rollback | Startup fails closed without quorum/unseal/credential; remove newly activated overlay with GitOps and retain physical data | Prove storage retention and no data/secret loss on controlled rollback |
 
-### Physical preconditions for writing manifests
+### Physical preconditions for trusting real credentials
 
 An authorized operator must supply evidence **without credential
 values**: chosen chart/image release and digest; actual CSI StorageClass
@@ -50,10 +37,10 @@ semantics. Re-review ADR-041 and
 [runbook](../../../../../docs/troubleshooting/txo-fabric-openbao-bootstrap-and-restore.md)
 before making any file renderable.
 
-A dedicated **activation** PR will be required. Until then, there must
-be **no** `kustomization.yaml` inside this directory, no generated
-`SecretStore`, no `ExternalSecret`, no StatefulSet/PVC/Service and
-no inclusion from an existing `overlays/prod`.
+The empty POC may converge in dev through normal GitOps; a human-authorized
+prod-stable promotion is separate. A dedicated reviewed **credential
+activation** PR is still required for TLS, audit, auth, ESO and consumers.
+Backup/isolated-restore acceptance in #4049 blocks real durable credentials.
 
 ### GitOps precedence
 

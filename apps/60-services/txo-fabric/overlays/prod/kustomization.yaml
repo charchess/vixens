@@ -3,6 +3,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../base
+  # Private sealed POC; prod-stable promotion remains human approved.
+  - ../../openbao-fabric/overlays/prod
   - ../../operator/config/rbac
   - ../../operator/config/network
   # Platform-only read credential; no tenant secrets and no rollout flag change.

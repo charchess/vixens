@@ -238,3 +238,22 @@ human-approved destruction procedure. A user, group, namespace label,
 browser parameter or OIDC subject cannot trigger role creation.
 The complete non-executable transition/request/negative-test contract
 is [tenant-provisioning-boundary.md](../../apps/60-services/txo-fabric/openbao-fabric/contracts/tenant-provisioning-boundary.md).
+
+## Addendum (2026-10-13): explicitly bounded phase-1 empty POC
+
+The product owner separately authorized the **single-replica empty GitOps
+substrate** under #3728. This narrows the earlier backup-before-any-stateful
+gate **for an uninitialized, sealed server with no credentials or tenant data
+only**. The approved target is the existing restricted Talos Fabric namespace,
+official OpenBao 2.6.2 image, retained 5Gi TrueNAS iSCSI Raft volume, private
+ClusterIP port 8200 and zero-client deny-all NetworkPolicy. TLS and audit
+are intentionally absent, so no Fabric workload is allowed API access.
+A human bootstrap window requires separate authorization.
+
+The earlier source-only description applied to #4046, not this later
+explicit #3728 POC. #4049 native snapshot/isolated restore acceptance still
+strictly blocks storage of real HMAC/Hermes credentials or tenant data.
+After GitOps convergence, an uninitialized/sealed pod may remain NotReady.
+No manual init/unseal, ESO, Secret, workload auth, audit, tenant provisioning,
+Infra migration, BFF/private bridge activation or production promotion is
+authorized by this PR. Full #3728 acceptance remains open.

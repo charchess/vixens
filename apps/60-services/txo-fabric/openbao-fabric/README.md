@@ -1,99 +1,70 @@
-# OpenBao Fabric — SOURCE-ONLY foundation (#4046)
+# OpenBao Fabric — empty private GitOps POC (#3728)
 
-**Prompt 07 target:** global Fabric `openbao-fabric` **on Talos
-Kubernetes**, not K3s or an external Fabric secret service.
-Private GitOps deployment is a future separately approved step, gated
-on confirmed Talos capacity/placement, **Retain** storage and an
-available backup destination **with successful restore drill**. The
-read-only preflight in issue #4046 reported insufficient headroom and
-an unavailable Velero location; current state was not rechecked here.
+**Phase 1 (this PR):** a single, empty OpenBao 2.6.2 server using integrated
+Raft storage on a dedicated retained TrueNAS iSCSI volume. Both TXO dev/prod
+Kustomize compositions select this component. Argo dev follows main; prod
+follows prod-stable and requires a separate human-approved promotion.
 
-**Provisioning authority:** the operator may only submit canonical,
-idempotent tenant/workload intent to a separately authorized and
-audited boundary. It cannot upload HCL/policies, manage mounts/tokens,
-hold unseal/root authority or read every tenant. Group/user changes
-remain ADR-039/OpenFGA authorization updates; revocation is deny
-first, retaining data/audit. See
-[tenant-provisioning-boundary.md](contracts/tenant-provisioning-boundary.md).
+- One StatefulSet `openbao-fabric` in existing restricted namespace
+  `txo-fabric-system`. Exactly one replica, no HA or auto-unseal. The official
+  image is version-tagged `quay.io/openbao/openbao:2.6.2`; digest pinning can
+  be hardened in a separate change.
+- One `data` PVC template of 5Gi RWO with `truenas-iscsi-retain` and
+  Retain/Retain StatefulSet claim retention policy. The generated PVC is
+  `data-openbao-fabric-0`. Never automatically prune/delete the claim or PV.
+  CSI storage/class/PV runtime binding still needs post-merge confirmation.
+- Raft stores data only at `/openbao/data` on the claim. Non-secret HCL
+  configuration comes from a ConfigMap; `/tmp` is ephemeral scratch.
+- `openbao-fabric` is a private ClusterIP Service, TCP/8200 only. No
+  Ingress, NodePort, LoadBalancer, external DNS, network client or TLS yet.
+- Exact-selector NetworkPolicy has **zero allowed ingress and egress**,
+  alongside the existing namespace default-deny. No direct Hermes, browser,
+  BFF or tenant client. OpenBao API is HTTP without TLS: **do not add any
+  runtime network clients until the separately reviewed TLS phase**. A
+  human-only, locally scoped port-forward to the *pod* during a separately
+  authorized bootstrap ceremony is the only proposed access path.
+- No Kubernetes API token mounts, root credential, Secret, ExternalSecret,
+  ESO store, init/unseal Job, admin policy, audit sink or workload auth.
+- Non-root, dropped capabilities, seccomp RuntimeDefault, read-only root FS.
+  `fsGroup: 1000` is used for retained RWO volume writes, subject to real CSI
+  verification. Requests 100m CPU/128Mi RAM; limits 500m CPU/512Mi RAM.
+  Ordinary scheduler placement, no hard node pinning or Peach operation.
 
-**Status: CONTRACT ONLY / NOT DEPLOYABLE.** This directory has **no**
-`kustomization.yaml`, Kubernetes manifest or ArgoCD Application. It is
-deliberately **not referenced** by any production/dev overlay. It must
-not be rendered, installed, applied or interpreted as an initialized
-OpenBao service.
+## Expected state after Argo convergence
+
+An **uninitialized/sealed** OpenBao responds to `/v1/sys/health` with a
+non-200 status. The readiness probe therefore intentionally leaves the pod
+`Running/NotReady` and the Service without ready endpoints until a later
+human-authorized init/unseal. This is **not** a deployment failure. A
+CrashLoop, unbound PVC or image pull failure **is** a deployment failure
+and must be diagnosed without printing credentials. There is no liveness
+probe restarting a legitimately sealed process.
+
+## Four phases
+
+1. **Delivered in source:** empty private GitOps substrate only. Argo
+   convergence and actual PVC/NetworkPolicy observation remain unverified.
+2. **Separate approved human bootstrap:** manual init/unseal and internal
+   health proof; root/unseal/recovery material stays out of Git, chat, CI,
+   logs, Kubernetes Secrets and workloads.
+3. **Separate reviewed credential activation:** TLS, audit, Fabric-only
+   `openbao-fabric-store`, exact short-lived workload/tenant policies and
+   first POC Fabric credentials. Browser and private bridge gates stay false
+   until their separately accepted POC path.
+4. **Parallel #4049 recovery:** native Raft snapshot, independently
+   protected encrypted backup/replica, successful isolated restore.
+   **No actual Fabric HMAC, Hermes API credential or tenant data is trusted
+   to this substrate before restore acceptance.**
 
 [ADR-041](../../../../docs/adr/041-separate-openbao-fabric-secret-plane.md)
-records the approved architectural separation. The
-[operator runbook](../../../../docs/troubleshooting/txo-fabric-openbao-bootstrap-and-restore.md)
-defines separately approved physical work.
+defines Infra/Fabric authority. Existing Infra `ClusterSecretStore/openbao`,
+NAS backend, token and historic TXO OpenFGA/WebUI consumers remain unchanged.
+No new consumer falls back to Infra. Tenant IDs remain immutable and
+single-tenant scoped, not authorization from user/group changes.
 
-## Authority and canonical naming
-
-- **Infra OpenBao:** `ClusterSecretStore/openbao` under
-  `apps/00-infra/openbao`; preserved exactly, including existing
-  endpoint and ESO token-secret reference. It owns infrastructure
-  provisioning/repair/administration/backup/restore. It retains
-  **external** authority over Fabric break-glass bootstrap and recovery.
-- **Fabric OpenBao:** future instance **`openbao-fabric`**; future
-  dedicated ESO store **`openbao-fabric-store`**; only credentials
-  consumed by Fabric runtime workloads (platform/tenant).
-- **No existing automatic migration.** Active OpenFGA ESO
-  `openfga/runtime/external-secrets.yaml` still uses Infra
-  `ClusterSecretStore/openbao`; staged WebUI
-  `webui/bootstrap/credentials.yaml` does too. Do NOT flip references
-  before a physically verified Fabric replacement and a reviewed
-  operational migration. New Fabric consumers must **never** use the
-  Infra store.
-
-## Source layout
-
-- `contracts/authority-and-manifest-envelope.md` — proposed
-  object/namespace/ServiceAccount/private network/storage/ESO shape,
-  each unresolved decision explicitly marked **BLOCKED**.
-- `contracts/workload-authz-matrix.md` — read-only workload path
-  matrix, policy ownership, denied capabilities and tenant isolation.
-- `policies/*.hcl.example` — **reference-only** KV v2 capability
-  snippets. They are **not** installable policy artifacts: do not run
-  `bao policy write` on these files or script substitution of tenant
-  IDs without a separately authorized provisioner and review. No
-  root/unseal/recovery/administration capability is expressed.
-- `scripts/validation/validate-openbao-fabric-source.py` at repo root
-  — negative assertion guarding this source-only boundary.
-
-## Invariants
-
-1. No Fabric OpenBao `StatefulSet`, `Deployment`, `Service`,
-   `Secret`, `ExternalSecret`, `SecretStore`,
-   `ClusterSecretStore`, namespace/PVC/PV or Argo Application is
-   declared or wired by this directory.
-2. No stored credential value or encoded/materialized secret is in
-   Git, GitHub Issue/PR or CI logs. Kubernetes authenticator, policies,
-   issuer and audience remain configuration **decisions**, not
-   values guessed by an agent.
-3. Every tenant workload receives only its **immutable one-tenant**
-   path `fabric/tenants/<tenant-id>/*`; no sibling enumeration or
-   wildcard scope `fabric/tenants/*`.
-4. Fabric application identities cannot create tokens/policies/mounts,
-   read audit logs, administer Fabric OpenBao, or initialize/unseal.
-5. Default deny for both ingress and egress; permit only reviewed,
-   exact endpoints after actual cluster verification. No Internet
-   catch-all or public OpenBao route.
-6. Stateful data must use actual storage with **Retain** reclaim
-   semantics and verified backup/restore before activation.
-7. No TXO operator/BFF/OpenFGA rollout gate or public browser route
-   changes from this source foundation.
-
-## Future staged activation gates (not approved here)
-
-A new, dedicated approval increment must choose the actual versioned
-OpenBao image/Helm schema, retained storage class, namespace, exact
-ServiceAccount identities/issuer/audience and private network targets,
-then create a separately named, non-production activation overlay.
-It must remain unreferenced from
-`apps/60-services/txo-fabric/overlays/prod` and
-`argocd/overlays/prod` until a **second** explicit production
-approval. Future ESO consumers must use only
-`openbao-fabric-store`, with separate namespace-scoped access for
-tenants and no all-tenant credential. The current source-only PR
-provides **no service, no backup proof, no live injection and no
-runtime acceptance**.
+[Bootstrap and restore runbook](../../../../docs/troubleshooting/txo-fabric-openbao-bootstrap-and-restore.md)
+and [tenant provisioning contract](contracts/tenant-provisioning-boundary.md)
+are prerequisites for later credential-bearing phases.
+The policies in `policies/*.hcl.example` are strictly reference-only,
+not automatically installed. #3728 remains open until its full physical,
+tenant-security, audit and backup acceptance is demonstrated.
