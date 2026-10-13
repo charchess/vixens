@@ -64,12 +64,9 @@ CREATE TABLE IF NOT EXISTS txo_fabric_chat_turns (
     (state IN ('claimed', 'completed', 'failed', 'cancelled')),
   CONSTRAINT chat_turn_result_valid CHECK (
     (state = 'claimed' AND finished_at_ms IS NULL AND result_code IS NULL)
-    OR (state = 'completed' AND result_code = 'completed'
-      AND finished_at_ms IS NOT NULL AND finished_at_ms >= started_at_ms)
-    OR (state = 'failed' AND result_code = 'failed'
-      AND finished_at_ms IS NOT NULL AND finished_at_ms >= started_at_ms)
-    OR (state = 'cancelled' AND result_code = 'cancelled'
-      AND finished_at_ms IS NOT NULL AND finished_at_ms >= started_at_ms)
+    OR (state <> 'claimed' AND result_code IS NOT NULL
+      AND result_code = state AND finished_at_ms IS NOT NULL
+      AND finished_at_ms >= started_at_ms)
   )
 );
 
