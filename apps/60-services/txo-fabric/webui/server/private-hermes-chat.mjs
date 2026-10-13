@@ -15,15 +15,18 @@ const DENY = () => new Error("Agent is unavailable");
  */
 export function createPrivateHermesChatService({
   tenantKey, fabricTenantId, repo, authorize,
-  resolveCanonicalTenant, resolveCanonicalAgent, verifyEndpoint,
+  resolveCanonicalTenant, resolveCanonicalAgent, listCanonicalAgentKeys, verifyEndpoint,
   readScopedCredential, fetchImpl = fetch,
   browserEnabled = false, bridgeEnabled = false,
 } = {}) {
   if (!TENANT.test(tenantKey || "") || !TENANT_ID.test(fabricTenantId || "") ||
-      typeof repo?.insert !== "function" || typeof repo?.get !== "function" ||
-      typeof repo?.list !== "function" || typeof repo?.claim !== "function" ||
+      ["createThread", "getThread", "listThreads", "getServerThread",
+        "bindHermesSession", "claimTurn", "finalizeTurn"].some(k =>
+        typeof repo?.[k] !== "function") ||
       typeof authorize !== "function" || typeof resolveCanonicalTenant !== "function" ||
-      typeof resolveCanonicalAgent !== "function" || typeof verifyEndpoint !== "function" ||
+      typeof resolveCanonicalAgent !== "function" ||
+      typeof listCanonicalAgentKeys !== "function" ||
+      typeof verifyEndpoint !== "function" ||
       typeof readScopedCredential !== "function" || typeof fetchImpl !== "function" ||
       typeof browserEnabled !== "boolean" || typeof bridgeEnabled !== "boolean") throw DENY();
 
@@ -89,7 +92,8 @@ export function createPrivateHermesChatService({
 
       return Object.freeze({
         tenantKey, fabricTenantId, agentKey, agentUID: agent.uid,
-        tenantBundleUID: tenant.uid, apiServerEnabled: true,
+        tenantBundleUID: tenant.uid,
+        agentObservedGeneration: agent.observedGeneration, apiServerEnabled: true,
         endpointVerified: true,
         baseURL: `http://${serviceName}.${namespace}.svc:8642`,
         apiKey,
@@ -100,9 +104,16 @@ export function createPrivateHermesChatService({
   // The existing chat service owns opaque Fabric threads, leases and server-
   // assigned Hermes sessions. strictBinding pins the exact AgentIdentity UID
   // and revalidates it, never accepting a browser Hermes session identifier.
+  const listAgentKeys = async ({ principal }) => {
+    requireGate(principal);
+    // Trusted tenant catalog; never a browser-provided list of agent keys.
+    try { return await listCanonicalAgentKeys({ principal, tenantKey, fabricTenantId }); }
+    catch { throw DENY(); }
+  };
+
   const service = createChatSessionService({
     tenantKey, authorize: safeAuthorize, resolveAgent,
-    repo, fetchImpl, strictBinding: true,
+    repo, fetchImpl, listAgentKeys, strictBinding: true,
   });
   // No privileged operation can bypass the two runtime feature gates.
   return Object.freeze(service);
