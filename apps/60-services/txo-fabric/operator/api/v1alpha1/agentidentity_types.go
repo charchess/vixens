@@ -29,6 +29,93 @@ type AgentRuntimeCapabilityBinding struct {
 	EnableToolsets []string `json:"enableToolsets,omitempty"`
 }
 
+// AgentPrivateAPIBinding expresses non-secret future intent only.
+// A valid opt-in NEVER starts an API Server in this operator version.
+// +kubebuilder:validation:XValidation:rule="!self.enabled || (has(self.tenantId) && size(self.tenantId) > 0 && has(self.credentialRef) && size(self.credentialRef) > 0)",message="enabled private API requires canonical tenantId and credentialRef"
+type AgentPrivateAPIBinding struct {
+	// Enabled is desired future intent, NOT activation. Omitted/false is safe.
+	// +optional
+	// +kubebuilder:default=false
+	Enabled bool `json:"enabled,omitempty"`
+
+	// TenantID is the immutable TenantBundle.spec.tenantId, not its slug.
+	// +optional
+	// +kubebuilder:validation:Pattern=`^TEN[0-9]{5,}package v1alpha1
+
+import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+// +kubebuilder:validation:XValidation:rule="!has(self.adoptLegacyProfile) || !self.adoptLegacyProfile || self.retentionPolicy == 'Retain'",message="adoptLegacyProfile requires retentionPolicy Retain"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.adoptLegacyProfile) || (has(self.adoptLegacyProfile) && self.adoptLegacyProfile == oldSelf.adoptLegacyProfile)",message="adoptLegacyProfile cannot be changed once declared"
+type AgentRuntimeStorageBinding struct {
+	// RetentionPolicy controls what happens to the Hermes runtime PVC when the
+	// AgentIdentity is deleted. Retain is the safe default for durable customer
+	// workspaces; Delete is an explicit opt-in for disposable identities.
+	// +kubebuilder:default=Retain
+	// +kubebuilder:validation:Enum=Retain;Delete
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="retentionPolicy is immutable"
+	RetentionPolicy string `json:"retentionPolicy,omitempty"`
+
+	// AdoptLegacyProfile non-destructively presents an existing retained
+	// profiles/<agentKey> directory as the runtime's single /opt/data home.
+	// It is a brownfield cutover switch: no profile copy or flattening occurs.
+	// +optional
+	AdoptLegacyProfile bool `json:"adoptLegacyProfile,omitempty"`
+}
+
+type AgentRuntimeCapabilityBinding struct {
+	// EnableToolsets activates profile entries whose state is AllowedOff.
+	// On entries require no opt-in; Off or undeclared entries cannot be requested.
+	// +optional
+	// +kubebuilder:validation:MaxItems=64
+	// +listType=set
+	EnableToolsets []string `json:"enableToolsets,omitempty"`
+}
+
+
+	// +kubebuilder:validation:MaxLength=64
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="tenantId is immutable"
+	TenantID string `json:"tenantId,omitempty"`
+
+	// CredentialRef is a NON-SECRET reference name, not a secret or token.
+	// It must equal hermes-api-<canonical agentKey>. Never read/mounted here.
+	// +optional
+	// +kubebuilder:validation:Pattern=`^hermes-api-[a-z0-9]([a-z0-9-]*[a-z0-9])?package v1alpha1
+
+import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+// +kubebuilder:validation:XValidation:rule="!has(self.adoptLegacyProfile) || !self.adoptLegacyProfile || self.retentionPolicy == 'Retain'",message="adoptLegacyProfile requires retentionPolicy Retain"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.adoptLegacyProfile) || (has(self.adoptLegacyProfile) && self.adoptLegacyProfile == oldSelf.adoptLegacyProfile)",message="adoptLegacyProfile cannot be changed once declared"
+type AgentRuntimeStorageBinding struct {
+	// RetentionPolicy controls what happens to the Hermes runtime PVC when the
+	// AgentIdentity is deleted. Retain is the safe default for durable customer
+	// workspaces; Delete is an explicit opt-in for disposable identities.
+	// +kubebuilder:default=Retain
+	// +kubebuilder:validation:Enum=Retain;Delete
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="retentionPolicy is immutable"
+	RetentionPolicy string `json:"retentionPolicy,omitempty"`
+
+	// AdoptLegacyProfile non-destructively presents an existing retained
+	// profiles/<agentKey> directory as the runtime's single /opt/data home.
+	// It is a brownfield cutover switch: no profile copy or flattening occurs.
+	// +optional
+	AdoptLegacyProfile bool `json:"adoptLegacyProfile,omitempty"`
+}
+
+type AgentRuntimeCapabilityBinding struct {
+	// EnableToolsets activates profile entries whose state is AllowedOff.
+	// On entries require no opt-in; Off or undeclared entries cannot be requested.
+	// +optional
+	// +kubebuilder:validation:MaxItems=64
+	// +listType=set
+	EnableToolsets []string `json:"enableToolsets,omitempty"`
+}
+
+
+	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="credentialRef is immutable"
+	CredentialRef string `json:"credentialRef,omitempty"`
+}
+
 type AgentRuntimeBinding struct {
 	// ProfileRef references an AgentRuntimeProfile by metadata.name.
 	// +kubebuilder:default=hermes-default
@@ -43,6 +130,11 @@ type AgentRuntimeBinding struct {
 	// Capabilities selects only profile-declared AllowedOff capabilities.
 	// +optional
 	Capabilities AgentRuntimeCapabilityBinding `json:"capabilities,omitempty"`
+
+	// PrivateAPI is a source-only typed contract, NOT a runtime gate.
+	// Omission preserves legacy Hermes Deployment behavior.
+	// +optional
+	PrivateAPI *AgentPrivateAPIBinding `json:"privateAPI,omitempty"`
 }
 
 // AgentFunctionalBinding optionally selects a tenant-owned reusable business baseline.
