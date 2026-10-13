@@ -165,8 +165,8 @@ spec:
                           rule: self == oldSelf
                       enabled:
                         default: false
-                        description: Enabled is desired future intent, NOT activation. Omitted/false
-                          is safe.
+                        description: Enabled is desired future intent, NOT activation.
+                          Omitted/false is safe.
                         type: boolean
                       tenantId:
                         description: TenantID is the immutable TenantBundle.spec.tenantId,
@@ -179,10 +179,11 @@ spec:
                           rule: self == oldSelf
                     type: object
                     x-kubernetes-validations:
-                    - message: enabled private API requires canonical tenantId and credentialRef
+                    - message: enabled private API requires canonical tenantId and
+                        credentialRef
                       rule: '!has(self.enabled) || !self.enabled || (has(self.tenantId)
-                        && size(self.tenantId) > 0 && has(self.credentialRef)
-                        && size(self.credentialRef) > 0)'
+                        && size(self.tenantId) > 0 && has(self.credentialRef) && size(self.credentialRef)
+                        > 0)'
                   profileRef:
                     default: hermes-default
                     description: ProfileRef references an AgentRuntimeProfile by metadata.name.
