@@ -63,4 +63,3 @@ func setPrivateHermesAPICondition(agent *fabricv1alpha1.AgentIdentity, tenant *f
 	setCondition(&agent.Status.Conditions, agent.Generation, privateHermesAPICondition,
 		metav1.ConditionFalse, reason, message)
 }
-
