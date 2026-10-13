@@ -199,3 +199,78 @@ test("source migration is additive, credential-free and not selected by current 
   assert.doesNotMatch(bootstrap, /003_fabric_chat_threads/);
   assert.doesNotMatch(prod, /003_fabric_chat_threads|openbao-fabric-store/);
 });
+
+
+test("real PostgreSQL + strict session service: 40 cross-pool contenders start Hermes once", {
+  skip: !realPostgres && "requires dedicated disposable PostgreSQL runner",
+}, async () => {
+  const { default: pg } = await import("pg");
+  const { createChatSessionService } = await import("../server/chat-sessions.mjs");
+  const config = {
+    host: "127.0.0.1", port: 5432, database: "postgres", user: "postgres",
+    max: 8, connectionTimeoutMillis: 1500, idleTimeoutMillis: 2000,
+  };
+  const a = new pg.Pool(config), b = new pg.Pool(config);
+  try {
+    await a.query(readFileSync(new URL("../db/migrations/003_fabric_chat_threads.sql",
+      import.meta.url), "utf8"));
+    const repos = [createPostgresFabricChatRepository({ pool: a }),
+      createPostgresFabricChatRepository({ pool: b })];
+    const principal = Object.freeze({
+      authenticated: true, verified: true, tenantKey: scope.tenantKey,
+      fabricTenantId: scope.fabricTenantId,
+      fabricUserId: scope.fabricUserId, subject: scope.fabricUserId,
+    });
+    const target = Object.freeze({
+      ...scope, apiServerEnabled: true, endpointVerified: true,
+      baseURL: "http://hermes-alex.tenant-indiba.svc:8642",
+      apiKey: "fixture-only-credential",
+    });
+    const trace = [];
+    const remoteId = "pg-fixture-" + randomBytes(8).toString("hex");
+    const services = repos.map(repo => createChatSessionService({
+      tenantKey: scope.tenantKey, strictBinding: true, repo,
+      authorize: async () => true,
+      resolveAgent: async () => target,
+      listAgentKeys: async () => ["alex"],
+      openRemoteSession: async () => { trace.push("open"); return remoteId; },
+      fetchImpl: async (_url, _options) => {
+        trace.push("upstream");
+        return new Response('event: run.completed\ndata: {}\n\n', {
+          headers: { "content-type": "text/event-stream" },
+        });
+      },
+    }));
+    const thread = await services[0].create({ principal, agentKey: "alex" });
+    assert.deepEqual(trace, ["open"]);
+    assert.deepEqual(await services[1].get({ principal, threadId: thread.id }), thread);
+    const key = turnId();
+    const contenders = await Promise.allSettled(Array.from({ length: 40 }, (_, i) =>
+      (async () => {
+        const output = [];
+        for await (const part of services[i % 2].turn({
+          principal, threadId: thread.id, turnId: key, input: "one upstream",
+        })) output.push(part);
+        return output;
+      })()));
+    assert.equal(trace.filter(e => e === "upstream").length, 1,
+      "a PostgreSQL fenced claim is the only permission to start upstream");
+    assert.ok(contenders.some(x => x.status === "fulfilled"));
+    for (const x of contenders) {
+      if (x.status === "fulfilled") {
+        assert.deepEqual(x.value, [{ type: "done", status: "completed" }]);
+      } else {
+        assert.match(x.reason.message, /conflict|unavailable/);
+      }
+    }
+    const retry = [];
+    for await (const event of services[1].turn({
+      principal, threadId: thread.id, turnId: key, input: "different",
+    })) retry.push(event);
+    assert.deepEqual(retry, [{ type: "done", status: "completed" }]);
+    assert.equal(trace.filter(e => e === "upstream").length, 1,
+      "terminal status cannot reissue the Hermes POST");
+  } finally {
+    await Promise.all([a.end(), b.end()]);
+  }
+});
