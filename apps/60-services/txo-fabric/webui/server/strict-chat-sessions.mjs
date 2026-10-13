@@ -130,11 +130,11 @@ export function createStrictChatSessionService({
       // Persist an opaque thread *before* creating the remote session.
       const thread = publicThread(await repository("createThread", { scope }), scope);
       // Revalidate before privileged upstream work; never adopt stale targets.
-      await freshScope(principal, agentKey, scope);
+      const latest = await freshScope(principal, agentKey, scope);
       let remoteSessionId;
       try {
         remoteSessionId = await openRemoteSession({
-          target, tenantKey, agentKey, fetchImpl, strictBinding: true,
+          target: latest.target, tenantKey, agentKey, fetchImpl, strictBinding: true,
         });
       } catch { unavailable(); }
       if (typeof remoteSessionId !== "string" || !REMOTE.test(remoteSessionId)) unavailable();
