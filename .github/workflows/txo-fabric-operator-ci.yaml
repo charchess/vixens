@@ -89,6 +89,22 @@ jobs:
           go mod tidy
           git diff --exit-code -- go.mod go.sum
 
+      - name: Verify gofmt for Hermes private API contract and regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            apps/60-services/txo-fabric/operator/api/v1alpha1/agentidentity_types.go
+            apps/60-services/txo-fabric/operator/api/v1alpha1/zz_generated.deepcopy.go
+            apps/60-services/txo-fabric/operator/internal/controller/agentidentity_private_api.go
+            apps/60-services/txo-fabric/operator/internal/controller/agentidentity_private_api_test.go
+            apps/60-services/txo-fabric/operator/internal/controller/agentidentity_controller.go
+          )
+          if [ -n "$(gofmt -l "${files[@]}")" ]; then
+            gofmt -d "${files[@]}"
+            exit 1
+          fi
+
       - name: Require regression tests for operator behavior changes
         if: ${{ github.event_name == 'pull_request' }}
         env:
