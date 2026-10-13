@@ -20,7 +20,7 @@ export function requireInternalHermesURL(baseURL) {
   return url.origin;
 }
 
-export async function* streamHermesChat({ baseURL, apiKey, sessionId, input, fetchImpl = fetch, signal }) {
+export async function* streamHermesChat({ baseURL, apiKey, sessionId, input, fetchImpl = fetch, signal, strictTransport = false }) {
   const origin = requireInternalHermesURL(baseURL);
   if (typeof apiKey !== "string" || !apiKey || /[\r\n]/.test(apiKey)) {
     throw new Error("Hermes service credential unavailable");
@@ -40,10 +40,13 @@ export async function* streamHermesChat({ baseURL, apiKey, sessionId, input, fet
       Accept: "text/event-stream",
     },
     body: JSON.stringify({ input }),
+    redirect: "error", cache: "no-store",
     signal,
   });
   // Never return the CPA/Hermes/provider raw error body to a browser.
-  if (!response.ok || !response.body) {
+  if (!response.ok || !response.body || (strictTransport &&
+      (response.redirected ||
+       !response.headers?.get?.("content-type")?.toLowerCase().startsWith("text/event-stream")))) {
     throw new Error("Agent is unavailable");
   }
   for await (const event of parseSSE(response.body)) {
