@@ -1,3 +1,102 @@
+# Strict durable BFF source integration — #3981 / Prompt 13
+
+**SOURCE ONLY, NOT ACTIVATED.** The strict service now uses the #4059
+PostgreSQL contract through `server/strict-chat-sessions.mjs`. Deployed
+BFF remains health-only; browser and bridge gates remain false. There is
+no selected SQL 003 migration, pool, credential, Hermes API listener or
+8642 Service/NetworkPolicy exception.
+
+`strictBinding:true` **requires** all durable repository methods:
+`createThread/getThread/listThreads/getServerThread/bindHermesSession/claimTurn/finalizeTurn`.
+The old `insert/get/list/claim` adapter is isolated in the historical
+non-strict source tests. There is no shim, process mutex or fallback.
+
+## Exact state machine
+
+The caller supplies a verified Fabric principal, fresh `agent.chat`
+authorization, current canonical TenantBundle/AgentIdentity and UID,
+observed generation, independent endpoint attestation and server-only
+credential. Scope is immutable and complete:
+
+`{tenantKey, fabricTenantId, tenantBundleUID, fabricUserId, agentKey, agentUID, agentObservedGeneration}`
+
+Creation order (strict path only):
+
+~~~text
+fresh verified user/grant/canonical agent/endpoint
+  -> createThread({scope}) [durable opaque Fabric thread]
+  -> repeat fresh grant/identity/endpoint before privileged upstream
+  -> openHermesSession() once, using trusted revalidated endpoint
+  -> bindHermesSession({scope,threadId,remoteSessionId}) once
+  -> return {id,agentKey,createdAt} only
+~~~
+
+If upstream fails, the thread remains unbound. If the remote session was
+really created but binding fails or conflicts, the durable thread remains
+unbound and the remote may be an **orphan requiring manual reconciliation**.
+Return generic unavailable. Never retry/replace/adopt an upstream session
+or compensate with a remote deletion without an independently proven
+physical contract. Unbound threads do not appear in strict get/list.
+
+Strict get/list must not query by tenant/user alone or by opaque thread
+ID without its complete scope. The injected *server-only*
+`listCanonicalAgentKeys` enumerates candidate keys; each candidate
+requires fresh grant, canonical identity/endpoint pinning and complete
+scope before `getThread/listThreads`. Recheck grant and pinned UID,
+observed generation and endpoint before the internal
+`getServerThread` read for each returned thread. Hide changed, revoked,
+unbound and foreign rows, even for a same-named agent.
+
+Turn flow:
+
+~~~text
+fresh complete scoped lookup + fresh grant/pinning
+  -> claimTurn({scope,threadId,turnId}) [durable cross-replica fence]
+  -> claimed: retain leaseToken privately, reauthorize + repin,
+              stream trusted Hermes only once,
+              finalizeTurn(completed|failed|cancelled) with fence,
+              emit terminal status only after confirmed durable finalize
+  -> terminal: emit bounded prior {type:"done",status:outcome} only
+               (never replay SSE/upstream POST)
+  -> conflict|uncertain: safe conflict, never call Hermes
+  -> denied|malformed|unavailable: generic fail closed, no Hermes
+~~~
+
+A stream ending without a trustworthy terminal event is a failure.
+Controlled cancellation/abort finalizes cancelled; upstream errors
+finalize failed if possible. If database/process failure prevents safe
+finalization, do not fake an outcome, release/reassign a lease, or
+automatically replay. Expired/uncertain ownership requires separately
+reviewed privileged physical recovery. The same turn ID never authorizes
+an upstream retry. The final stream resolver also pins
+`agentObservedGeneration`.
+
+The browser may provide only a bounded opaque `turnId` as a
+deduplication value; headers/query/body cannot supply canonical
+scope, endpoint, remote session, lease token, key, grant or outcome.
+Public thread projection is restricted to Fabric
+`id/agentKey/createdAt`. No remote session, private Kubernetes topology,
+token, credential, error body or internal event data is exposed.
+
+## Source evidence and remaining physical gates
+
+Tests cover observable create/bind ordering, orphan failure, changed
+identity/grants, 40 competing turn claims from two **real ephemeral
+PostgreSQL pools** wired to the strict session contract, terminal status,
+no upstream replay, cancellation/failure and browser metadata injection.
+The real PostgreSQL CI remains a dedicated isolated trust-auth test
+service, not a live CNPG migration or Hermes call.
+
+Physical prerequisites are unchanged: separately approved SQL 003
+migration and least-privilege DML role; selected platform BFF pool;
+real Authentik bridge/OpenFGA; independent Pod/EndpointSlice attestation;
+Fabric OpenBao scoped credential; operator API 8642 process/service
+and narrowly scoped networking; pinned Hermes API/cancellation/session
+compatibility and two-agent A/B/A physical acceptance.
+**No deployment, cluster mutation, gate changes, merge or promotion**.
+
+---
+
 
 ## Durable Fabric chat state seam — Prompt 12 (#3981)
 
@@ -83,20 +182,10 @@ messages, tool inputs/outputs, SSE contents, HTTP headers, arbitrary
 error text, Pod IPs/private topology, issuer subject or audit secrets.
 Database query parameters and results are never logged by this module.
 
-This repository is a **new future-only seam**. The historical
-`chat-sessions.mjs` `insert/get/list/claim/claimTurn` test abstraction
-still opens Hermes sessions before inserting a thread and therefore
-**must not be directly substituted with this durable repo**: that
-would permit orphan remote sessions on a BFF crash and weaken
-transactional ownership. A future **separate integration/activation
-lot** must change strict BFF thread creation to
-`createThread -> trusted Hermes API session -> bindHermesSession`,
-recheck scope/grant at each get/list/claim/finalize, and reconcile
-`claimed|terminal|uncertain` results without any automatic upstream
-replay. The current BFF stays health-only; this PR intentionally does
-not compose either interface at runtime or silently adapt an insecure
-legacy interface. Source tests use real ephemeral PostgreSQL via two
-independent pools; they prove SQL atomicity, not the live Hermes API.
+The repository remains future-only for **production runtime**. The
+strict BFF source integration is now described above. The historic
+non-strict adapter is for source tests only. No production entrypoint
+constructs a chat pool or private runtime route.
 
 Remaining physical gates: scoped Fabric OpenBao credential; operator
 private API Server Service/NetworkPolicy; real EndpointSlice/Pod UID
@@ -258,39 +347,12 @@ OpenBao plane** (#4046), not add another consumer to Infra
 must mean the API stays OFF and Pods/ExternalSecrets are not generated
 from the unactivated source. Do not use a fake key to pass readiness.
 
-## Thread isolation and streaming
+## Thread isolation and streaming (Prompt 13 update)
 
-`createChatSessionService(...strictBinding:true)` retains the existing
-server-assigned remote session design, now additionally persisting
-`fabricTenantId`, canonical `agentUID` and `tenantBundleUID`
-on its **server-side-only** repo record. The global Fabric principal
-holds the canonical tenant-specific Fabric user ID, not an OIDC subject.
-Creation, list, get, turn, post-lease revalidation and the *last*
-pre-stream target resolve all enforce this binding and a fresh
-OpenFGA/per-agent grant. Old non-strict usage remains available for
-existing source tests but is **not** an acceptable production BFF path.
-A replaced/deleted/moved AgentIdentity is not auto-adopted into a
-historical thread. Missing/ambiguous identity or unavailable key or
-attestation denies. There is no client-controlled `sessionId`
-endpoint in the Fabric chat handler.
-
-The repo dependency `insert/get/list/claim/claimTurn` MUST be implemented with
-**durable atomic, cross-replica** thread storage, turn-idempotency journal and leases before
-any browser activation; today's test fixture is an in-memory fake,
-not an installable backend. Cancellation uses downstream abort
-propagated to Hermes; cancellation of an *already-running server-side*
-Hermes tool/run needs physical API behavior verification. **Reconnect
-means retrieving the SAME opaque Fabric thread after fresh grant
-verification, not replaying POST /turns and never inventing a second
-remote Hermes session.** A future explicit idempotency key and stored
-turn outcome is required before automatic POST replay or resumable
-SSE cursor semantics; automatic replay is currently **forbidden**.
-Upstream response type, redirect policy, bounded JSON (session
-creation), bounded SSE event size and allowlist (assistant.delta,
-tool.started/completed names, run lifecycle) are tested against a
-fake endpoint. No cookies, browser tokens, tool bodies, upstream
-errors, Authentik/FGA keys, projected Kubernetes tokens, bridge HMAC,
-LiteLLM/CPA metadata or internal topology leave the browser BFF.
+Strict chat now uses the complete scoped durable repository and fenced
+turn journal as documented above. Historic insert/get/list/claim
+belongs only to the non-strict source tests. The Hermes transport and
+SSE allowlist remain source-only and require physical verification.
 
 ## Physical acceptance left to the next approved increment
 
