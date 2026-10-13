@@ -6,7 +6,7 @@ const TENANT = /^[a-z0-9](?:[a-z0-9-]{0,54}[a-z0-9])?$/;
 const AGENT = /^[a-z0-9](?:[a-z0-9-]{0,54}[a-z0-9])?$/;
 const TENANT_ID = /^TEN[0-9]{5,}$/;
 const USER_ID = /^usr[0-9a-f]{32}$/;
-const UID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+const UID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const deny = () => { throw new Error("Agent is unavailable"); };
 
 /**
