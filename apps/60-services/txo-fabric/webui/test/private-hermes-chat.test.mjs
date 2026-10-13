@@ -2,9 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createPrivateHermesChatService } from "../server/private-hermes-chat.mjs";
 import { readFileSync } from "node:fs";
+import { randomBytes } from "node:crypto";
 import { createChatHttpHandler } from "../server/chat-http.mjs";
 import { createPrivateBFFHandler, createPrivateBFFServer } from "../server/private-bff-server.mjs";
 
+const nonce = () => randomBytes(16).toString("hex");
 const tenantKey = "indiba";
 const fabricTenantId = "TEN00002";
 const user = "usr" + "a".repeat(32);
@@ -31,7 +33,7 @@ const collect = async iterable => {
   return result;
 };
 function storage() {
-  const records = new Map(), claimed = new Set();
+  const records = new Map(), claimed = new Set(), consumedTurns = new Set();
   return {
     insert: async record => {
       if (records.has(record.id)) throw Error("collision");
@@ -40,6 +42,12 @@ function storage() {
     get: async id => records.get(id),
     list: async ({tenantKey, subject}) => [...records.values()].filter(r =>
       r.tenantKey === tenantKey && r.subject === subject),
+    claimTurn: async ({ threadId, tenantKey, subject, turnId }) => {
+      const composite = [threadId, tenantKey, subject, turnId].join(":");
+      if (consumedTurns.has(composite)) return false;
+      consumedTurns.add(composite);
+      return true;
+    },
     claim: async id => {
       if (claimed.has(id)) throw Error("lease unavailable");
       claimed.add(id);
@@ -115,7 +123,7 @@ test("private POC turn binds one canonical Fabric user, tenant and AgentIdentity
   assert.match(thread.id, /^[a-f0-9]{40}$/);
   assert.equal(h.rpc.length, 1);
   assert.equal(h.rpc[0].url, upstream + "/api/sessions");
-  const result = await collect(h.service.turn({ principal, threadId: thread.id, input: "hello" }));
+  const result = await collect(h.service.turn({ turnId: nonce(), principal, threadId: thread.id, input: "hello" }));
   assert.deepEqual(result, [
     { type: "tool-started", tool: "terminal" },
     { type: "text-delta", text: "Hello" },
@@ -199,13 +207,13 @@ test("revoked/stale grant denies every thread action before Hermes; same-named k
   const thread = await h.service.create({ principal, agentKey: "alex" });
   h.revoke();
   const calls = h.rpc.length;
-  await assert.rejects(collect(h.service.turn({ principal, threadId: thread.id, input: "again" })));
+  await assert.rejects(collect(h.service.turn({ turnId: nonce(), principal, threadId: thread.id, input: "again" })));
   await assert.rejects(h.service.get({ principal, threadId: thread.id }));
   assert.deepEqual(await h.service.list({ principal }), []);
   assert.equal(h.rpc.length, calls);
   const b = { ...principal, tenantKey: "hairem", fabricTenantId: "TEN00001" };
-  await assert.rejects(collect(h.service.turn({ principal: b, threadId: thread.id, input: "again" })));
-  await assert.rejects(collect(h.service.turn({ principal, threadId: "f".repeat(40), input: "again" })));
+  await assert.rejects(collect(h.service.turn({ turnId: nonce(), principal: b, threadId: thread.id, input: "again" })));
+  await assert.rejects(collect(h.service.turn({ turnId: nonce(), principal, threadId: "f".repeat(40), input: "again" })));
   assert.equal(h.rpc.length, calls);
 });
 
@@ -220,7 +228,7 @@ test("AgentIdentity replacement or missing endpoint attestation revokes existing
     const thread = await h.service.create({ principal, agentKey: "alex" });
     change(h);
     const before = h.rpc.length;
-    await assert.rejects(collect(h.service.turn({ principal, threadId: thread.id, input: "again" })));
+    await assert.rejects(collect(h.service.turn({ turnId: nonce(), principal, threadId: thread.id, input: "again" })));
     await assert.rejects(h.service.get({ principal, threadId: thread.id }));
     assert.equal(h.rpc.length, before, "must deny without any new Hermes I/O");
   }
@@ -242,12 +250,24 @@ test("missing key or network wrong-type response denies generically, without fal
   assert.throws(() => createPrivateHermesChatService({}), /unavailable/);
 });
 
+test("same per-thread turn ID is consumed forever; no duplicate upstream POST", async () => {
+  const h = harness();
+  const thread = await h.service.create({ principal, agentKey: "alex" });
+  const id = nonce();
+  await collect(h.service.turn({ principal, threadId: thread.id, turnId: id, input: "once" }));
+  const calls = h.rpc.length;
+  await assert.rejects(collect(h.service.turn({ principal, threadId: thread.id, turnId: id, input: "replay" })));
+  assert.equal(h.rpc.length, calls, "duplicate turn created an upstream request");
+  await assert.rejects(collect(h.service.turn({ principal, threadId: thread.id, input: "missing nonce" })));
+  assert.equal(h.rpc.length, calls);
+});
+
 test("turn lease rejects concurrent replay, retry/reconnect never creates another session", async () => {
   const h = harness();
   const thread = await h.service.create({ principal, agentKey: "alex" });
   const before = h.rpc.length;
-  await collect(h.service.turn({ principal, threadId: thread.id, input: "first" }));
-  await collect(h.service.turn({ principal, threadId: thread.id, input: "second" }));
+  await collect(h.service.turn({ turnId: nonce(), principal, threadId: thread.id, input: "first" }));
+  await collect(h.service.turn({ turnId: nonce(), principal, threadId: thread.id, input: "second" }));
   assert.equal(h.rpc.filter(x => x.url.endsWith("/api/sessions")).length, 1);
   assert.equal(h.rpc.length, before + 2);
   assert.equal((await h.service.get({ principal, threadId: thread.id })).id, thread.id);
@@ -272,7 +292,7 @@ test("HTTP mutation origin validation strips browser headers and returns no priv
   const create = await handler(request("/api/chat/threads", { agentKey: "alex" }));
   assert.equal(create.status, 201);
   const thread = await create.json();
-  const result = await handler(request(`/api/chat/threads/${thread.id}/turns`, { input: "hello" }));
+  const result = await handler(request(`/api/chat/threads/${thread.id}/turns`, { input: "hello", turnId: nonce() }));
   assert.equal(result.status, 200);
   const exposed = await result.text();
   assert.match(exposed, /text-delta/);
