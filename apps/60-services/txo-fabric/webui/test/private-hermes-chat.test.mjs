@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createPrivateHermesChatService } from "../server/private-hermes-chat.mjs";
+import { readFileSync } from "node:fs";
 import { createChatHttpHandler } from "../server/chat-http.mjs";
 import { createPrivateBFFHandler, createPrivateBFFServer } from "../server/private-bff-server.mjs";
 
@@ -320,4 +321,19 @@ test("private Node BFF streams SSE before upstream completion and aborts on clie
     server.closeAllConnections();
     await new Promise(resolve => server.close(resolve));
   }
+});
+
+test("selected GitOps manifests keep all gates off and lack Hermes API Service/credential wiring", () => {
+  const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
+  const bff = read("../runtime/deployment.yaml");
+  const manager = read("../../operator/config/manager/manager.yaml");
+  const generator = read("../../operator/internal/controller/agentidentity_resources.go");
+  const egress = read("../runtime/networkpolicy.yaml");
+  const overlay = read("../../overlays/prod/kustomization.yaml");
+  assert.match(bff, /name: TXO_WEBUI_BFF_BROWSER_ENABLED\\s+value: "false"/);
+  assert.match(manager, /name: TXO_FABRIC_PRIVATE_BRIDGE_ENABLED\\s+value: "false"/);
+  assert.doesNotMatch(generator, /API_SERVER_ENABLED|API_SERVER_KEY|8642/);
+  assert.doesNotMatch(egress, /port: 8642|0\\.0\\.0\\.0\\/0/);
+  assert.doesNotMatch(overlay, /hermes-api-server|hermes-api-credential/);
+  assert.doesNotMatch(bff, /API_SERVER_ENABLED|8642|LoadBalancer|NodePort|Ingress/);
 });
