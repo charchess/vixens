@@ -75,6 +75,63 @@ The BFF factory pins the operator's existing naming contract:
   properties are the future privileged resolver's observed output,
   not client-controlled CR fields.
 
+## Go AgentIdentity typed desired-state preflight (#3981, source-only)
+
+The operator now accepts an **optional** typed
+`spec.runtime.privateAPI` as an intent declaration:
+
+```yaml
+# Contract example ONLY — not included in any tenant manifest or prod overlay.
+# This does not start the Hermes API process.
+runtime:
+  privateAPI:
+    enabled: false
+```
+
+For an *unselected future intent* with `enabled: true`, the API requires
+a canonical `tenantId` matching the actual immutable
+`TenantBundle.spec.tenantId` and a non-secret `credentialRef` equal to
+`hermes-api-<AgentIdentity.spec.agentKey>`. The controller validates
+those against the owning TenantBundle, AgentIdentity immutable UID,
+generation, deletion state and normal Kubernetes source relationship.
+**Neither displayName nor browser-provided tenant slug, Host header,
+group, OIDC `sub`, URL, namespace, arbitrary port, Pod/Service name,
+credential bytes or wildcard becomes authority.** No optional arbitrary
+endpoint or policy is modelled; the future namespace and port remain
+platform-owned and externally attested.
+
+The condition `PrivateHermesAPIReady` has `status=False` in **all**
+states in this version: `Disabled` when absent/false, `InvalidConfiguration`
+for conflicting/incomplete/mismatched declarations and `NotReady` even
+for *valid* opt-in intent. Its `observedGeneration` records the source
+generation and its message carries no secret or user-provided value.
+There is **no path that sets True or starts the API**. The generated
+Hermes Pod/Deployment, dashboard, model credential, PVC, services and
+NetworkPolicies remain byte-for-byte unchanged whether the field is
+omitted, false, malformed in a fake object or enabled in a *nonselected*
+source contract. No API credential lookup or projected volume runs.
+
+Unknown fields are not authorised by this typed API: a strict JSON
+input validator rejects them, and the Kubernetes CRD structural schema
+defines only `enabled`, `tenantId` and `credentialRef` (with CEL
+conditional requirements and immutable field validation). **Kubernetes
+may prune unknown fields in non-strict field-validation mode rather than
+reject them at admission**; clients/provisioners must use
+`fieldValidation=Strict`, and future activation must prove their
+strict server-side validation. Never interpret a pruned field as
+an approved authority request.
+
+The BFF [private resolver contract](server/private-hermes-chat.mjs)
+still requires `apiServerEnabled=true` **plus** independent Kubernetes
+EndpointSlice/Pod UID attestation, a ready scoped credential, real fresh
+OpenFGA authorisation and both global feature gates. The current Go
+`PrivateHermesAPIReady=False` means that assertion cannot be made by
+this operator. Before changing that, a distinct reviewed Go/physical
+increment must verify pinned Hermes entrypoint/API key parser/SSE
+semantics, Fabric-plane secret lifecycle, explicit BFF 8642 policies,
+service ownership/selector, revoke/fail-closed behavior and two-agent
+A/B/A acceptance.
+
 Future Go operator increment (SEPARATE, requires Go regression and
 `go test -race`) must **default API_SERVER_ENABLED=false**, start no
 additional process until an **existing, scoped per-AgentIdentity**
