@@ -1,4 +1,28 @@
-# TXO Fabric — OpenBao Fabric bootstrap, restore and acceptance (FUTURE, NOT AUTHORIZED)
+# TXO Fabric — OpenBao Fabric POC bootstrap and restore acceptance
+
+
+## Phase 1 POC — explicitly authorized source deployment (#3728)
+
+The product owner has authorized **an empty, sealed, single-replica GitOps
+deployment only**, superseding the older source-only/backup-before-empty-server
+restriction. Dev Argo may create the objects after review/merge; prod-stable
+promotion remains separately gated. The server uses `truenas-iscsi-retain`
+5Gi PVC and no clients. Initial state is **Running/NotReady** (sealed and
+uninitialized), so a non-ready Service is intentional; a failed container
+or unbound claim is not. Read-only acceptance checks must inspect namespace
+policy, retained PVC/PV, Service type and health status without values.
+A human-approved local pod port-forward is the future bootstrap transport,
+not permission to initialize or disclose root/unseal material here.
+
+**Phase 2:** separately authorized init/unseal, state and internal health.
+**Phase 3:** TLS, audit, exact Fabric-only ESO/workload roles, then credentials.
+**Phase 4 (parallel #4049):** native Raft snapshot, independent encrypted
+recovery and isolated successful restore **before real Fabric HMAC, Hermes
+API credentials or tenant data are stored**. Velero was decommissioned
+(#4050); historical BSL references below are not a backup plan.
+
+All later gates in this runbook apply to **privileged operation**, not to
+the already approved empty phase-1 GitOps source objects.
 
 ## Talos-only placement decision / Prompt 07
 
@@ -7,11 +31,10 @@ Kubernetes**, to be managed by GitOps. It is **not** an experimental
 K3s workload and not an externally hosted substitute. The #4046
 read-only preflight was corrected from K3s to Talos v1.14.1 /
 Kubernetes v1.36.0; this PR performs **no live verification**.
-High memory requests and the reported Velero
-`BackupStorageLocation/default=Unavailable` block stateful
-activation until non-secret capacity-placement evidence and a
-**working backup destination plus actual isolated restore drill**
-are verified. A present Retain StorageClass or Ready snapshot is
+The historical preflight noted high node-memory requests and
+`BackupStorageLocation/default=Unavailable`. These no longer prevent
+**empty phase-1 source deployment** based on the newly verified POC
+facts, but #4049 isolated restore proof still gates valuable secrets. A present Retain StorageClass or Ready snapshot is
 insufficient. No default-to-Delete storage, no public endpoint, no
 Internet catch-all or speculative backup route.
 
@@ -28,10 +51,9 @@ sibling-ID rejection, arbitrarily supplied HCL, wrong workload
 subject/audience, existing short-lived lease revocation and
 secret-store unavailable/sealed behavior without fallback.
 
-**Status: source-only operational contract for #4046.** This is
-**not** an execution authorization. No OpenBao Fabric process,
-namespace, PersistentVolumeClaim, Secret, auth backend or ESO store was
-created by this issue. Run these steps **only** after a separate,
+**Status: phase-1 POC GitOps source authorized by #3728, but no manual
+bootstrap, credentials or operational acceptance authorized.** No Secret,
+auth backend or ESO store is introduced by this increment. Run these steps **only** after a separate,
 explicit human approval identifying the exact GitOps candidate,
 environment, data retention policy and operator. Never run commands
 from this document as an informal manual cluster fix.
@@ -54,8 +76,10 @@ administrator.
   Git, issues, PRs, CI/test logs, terminal transcripts delivered to an
   agent or the handoff. Reports contain only **existence, readiness,
   success/failure, timestamps and non-secret object names**.
-- Human approval must explicitly authorize any physical bootstrap,
-  stateful storage creation, init/unseal, backup/export, auth policy
+- The product owner has already approved the empty phase-1 GitOps desired
+  state and PVC creation through the normal reviewed merge path (#3728).
+  Separate human approval is still required for manual bootstrap,
+  init/unseal, backup/export, auth policy
   installation, ESO activation, rotation/revocation or restore. A PR
   merge or valid `dev-v*` alone is insufficient.
 - No direct persistent cluster mutation by the implementation agent;
@@ -75,7 +99,7 @@ administrator.
 **Owner:** Electra + infrastructure authority + charchess for the
 specific activation candidate.
 
-Before writing **any executable manifests**, establish and review:
+Before enabling **credential-bearing operation**, establish and review:
 chosen supported OpenBao image/chart and immutable digest, intended
 namespace and Kubernetes Pod Security, exact HA/storage topology
 (e.g. verified Raft implementation if chosen), approved private TLS
@@ -93,14 +117,12 @@ not material or private endpoints that identify secrets.
 
 ## Gate 1 — stateful provision and backup plan
 
-In a **dedicated subsequent PR**, stage the private OpenBao Fabric
-namespace, workload identity and explicitly retained state, hardened
-nonroot image, ClusterIP service and default-deny NetworkPolicy.
-The initial GitOps overlay must be non-prod, non-referenced until
-review, and **not** connected to existing Infra ESO or TXO consumers.
-Pin exact workload digest; there must be no unreviewed auto-upgrade.
+The #3728 POC has a real private StatefulSet/PVC/ClusterIP/deny-all source
+selected by the TXO dev/prod overlays; production still requires human
+promotion. It has no credential clients or ESO bindings. The owner explicitly
+selected the official version-tagged image 2.6.2 for this POC.
 
-Before any startup/unseal, prove in a separate physical acceptance
+Before **real credential/data use**, prove in a separate physical acceptance
 window: actual bound retained storage; restore-compatible version and
 schema; protected snapshot destination and independent read-only
 backup verification. A snapshot job configured but never restored is

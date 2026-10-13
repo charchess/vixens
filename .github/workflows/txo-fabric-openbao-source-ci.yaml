@@ -1,15 +1,16 @@
 ---
-name: TXO Fabric OpenBao Source Contract CI
+name: TXO Fabric OpenBao Private POC Contract CI
 
 on:
   pull_request:
     paths:
       - 'docs/adr/041-separate-openbao-fabric-secret-plane.md'
-      - 'docs/adr/000-index.md'
-      - 'docs/adr/README.md'
       - 'docs/troubleshooting/txo-fabric-openbao-bootstrap-and-restore.md'
       - 'apps/60-services/txo-fabric/openbao-fabric/**'
+      - 'apps/60-services/txo-fabric/overlays/dev/kustomization.yaml'
+      - 'apps/60-services/txo-fabric/overlays/prod/kustomization.yaml'
       - 'scripts/validation/validate-openbao-fabric-source.py'
+      - 'scripts/validation/validate-openbao-fabric-poc.py'
       - 'scripts/validation/test_openbao_fabric_source.py'
       - '.github/workflows/txo-fabric-openbao-source-ci.yaml'
 
@@ -17,10 +18,10 @@ permissions:
   contents: read
 
 jobs:
-  source-only:
-    name: Source contract / no-production-activation evidence
+  private-poc:
+    name: Private empty substrate / no-consumer evidence
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Check out exact PR source HEAD
         uses: actions/checkout@v4
@@ -32,18 +33,26 @@ jobs:
         run: git fetch --no-tags origin main:refs/remotes/origin/main
       - name: git diff --check origin/main...HEAD
         run: git diff --check origin/main...HEAD
-      - name: Pure standard-library policy/secret validation unit tests
+      - name: Setup manifest parser
+        run: python3 -m pip install --disable-pip-version-check pyyaml==6.0.2
+      - name: Policy and POC regression unit tests
         run: python3 -m unittest discover -s scripts/validation -p test_openbao_fabric_source.py -v
-      - name: Setup Kustomize tools
+      - name: Setup Kustomize
         uses: ./.github/actions/setup-k8s-tools
-      - name: Render old Infra store and unchanged Fabric prod overlay
+      - name: Render five POC and selected TXO compositions
         run: |
-          kustomize build apps/00-infra/openbao/overlays/dev > /tmp/openbao-infra-dev.yaml
-          kustomize build apps/00-infra/openbao/overlays/prod > /tmp/openbao-infra-prod.yaml
-          kustomize build apps/60-services/txo-fabric/overlays/prod > /tmp/txo-fabric-prod.yaml
-          grep -q 'name: openbao' /tmp/openbao-infra-prod.yaml
-          ! grep -q 'openbao-fabric' /tmp/txo-fabric-prod.yaml
-      - name: Assert changed source contains no values, runtime objects or new Infra ESO consumers
+          kustomize build apps/60-services/txo-fabric/openbao-fabric/base > /tmp/bao-base.yaml
+          kustomize build apps/60-services/txo-fabric/openbao-fabric/overlays/dev > /tmp/bao-dev.yaml
+          kustomize build apps/60-services/txo-fabric/openbao-fabric/overlays/prod > /tmp/bao-prod.yaml
+          kustomize build apps/60-services/txo-fabric/overlays/dev > /tmp/txo-dev.yaml
+          kustomize build apps/60-services/txo-fabric/overlays/prod > /tmp/txo-prod.yaml
+      - name: Source/Infra reference and changed-file guard
         run: |
           python3 scripts/validation/validate-openbao-fabric-source.py \
-            --base origin/main --head HEAD --prod-render /tmp/txo-fabric-prod.yaml
+            --base origin/main --head HEAD --prod-render /tmp/txo-prod.yaml
+      - name: Assert scoped objects, private network, Retain and inactive gates
+        run: |
+          python3 scripts/validation/validate-openbao-fabric-poc.py \
+            --base /tmp/bao-base.yaml --dev /tmp/bao-dev.yaml \
+            --prod /tmp/bao-prod.yaml --txo-dev /tmp/txo-dev.yaml \
+            --txo-prod /tmp/txo-prod.yaml
