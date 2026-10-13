@@ -57,7 +57,13 @@ export function createStrictChatSessionService({
           typeof target.apiKey !== "string" || !target.apiKey ||
           /[\r\n]/.test(target.apiKey)) deny();
       requireInternalHermesURL(target.baseURL);
-    } catch { deny(); }
+    } catch (error) {
+      // Missing trusted backend/credential is a generic availability error;
+      // authorization and invalid identity remain forbidden. Never expose
+      // the underlying collaborator message or transport details.
+      if (error?.message === "Agent is unavailable") unavailable();
+      deny();
+    }
     const scope = Object.freeze({
       tenantKey, fabricTenantId: principal.fabricTenantId,
       tenantBundleUID: target.tenantBundleUID,
