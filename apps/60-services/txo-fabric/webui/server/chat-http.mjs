@@ -68,17 +68,32 @@ export function createChatHttpHandler({ authenticate, service, expectedOrigin, l
         if (typeof body?.input !== "string" || !body.input.trim() || body.input.length > 100000) return fail(400);
         await service.get({ principal, threadId });
         const encoder = new TextEncoder();
+        const abort = new AbortController();
+        const onAbort = () => abort.abort();
+        if (req.signal.aborted) abort.abort();
+        else req.signal.addEventListener("abort", onAbort, { once: true });
+        let closed = false;
         const stream = new ReadableStream({
           async start(controller) {
             try {
-              for await (const item of service.turn({ principal, threadId, input: body.input, signal: req.signal })) {
+              for await (const item of service.turn({ principal, threadId, turnId: body.turnId, input: body.input, signal: abort.signal })) {
+                if (abort.signal.aborted) break;
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify(item)}\n\n`));
               }
             } catch {
-              controller.enqueue(encoder.encode('event: error\ndata: {"error":"Agent unavailable or forbidden"}\n\n'));
-            } finally { controller.close(); }
+              if (!abort.signal.aborted && !closed) {
+                controller.enqueue(encoder.encode('event: error\ndata: {"error":"Agent unavailable or forbidden"}\n\n'));
+              }
+            } finally {
+              req.signal.removeEventListener("abort", onAbort);
+              if (!closed) { closed = true; controller.close(); }
+            }
           },
-          cancel() { /* Request.signal is forwarded to Hermes; the host must abort it. */ },
+          cancel() {
+            closed = true;
+            abort.abort();
+            req.signal.removeEventListener("abort", onAbort);
+          },
         });
         return new Response(stream, { status: 200, headers: {
           "Content-Type": "text/event-stream", "Cache-Control": "no-store",

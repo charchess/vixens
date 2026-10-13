@@ -9,7 +9,8 @@ import { streamHermesChat } from "./hermes-client.mjs";
  */
 export async function* streamAuthorizedTurn({
   principal, tenantKey, agentKey, sessionId, input, authorize, resolveAgent,
-  fetchImpl, signal,
+  fetchImpl, signal, expectedAgentUID, expectedTenantBundleUID,
+  expectedFabricTenantId, strictTransport = false,
 }) {
   if (!principal || principal.authenticated !== true || !principal.subject ||
       !tenantKey || !agentKey || typeof authorize !== "function" ||
@@ -19,12 +20,16 @@ export async function* streamAuthorizedTurn({
   const allowed = await authorize({ principal, tenantKey, agentKey, action: "agent.chat" });
   if (allowed !== true) throw new Error("Forbidden");
   const target = await resolveAgent({ tenantKey, agentKey });
-  if (!target || target.tenantKey !== tenantKey || target.agentKey !== agentKey) {
+  if (!target || target.tenantKey !== tenantKey || target.agentKey !== agentKey ||
+      (strictTransport && (expectedAgentUID !== target.agentUID ||
+        expectedTenantBundleUID !== target.tenantBundleUID ||
+        expectedFabricTenantId !== target.fabricTenantId ||
+        target.apiServerEnabled !== true || target.endpointVerified !== true))) {
     throw new Error("Agent is unavailable");
   }
   yield* streamHermesChat({
     baseURL: target.baseURL,
     apiKey: target.apiKey,
-    sessionId, input, fetchImpl, signal,
+    sessionId, input, fetchImpl, signal, strictTransport,
   });
 }
