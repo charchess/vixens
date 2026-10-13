@@ -263,9 +263,15 @@ test("cancelled/failed upstream and finalize outage never cause a second POST", 
       mode === "upstream" ? "failed" : "completed")));
     if (mode === "finalize") {
       h.state.forceClaim = { kind: "uncertain" };
+      await assert.rejects(collect(h.service.turn({ principal, threadId: thread.id,
+        turnId, input: "do not replay" })));
+    } else {
+      // The same turn is idempotent. A new explicit turn after a clean
+      // failed/cancelled finalization is a separate permitted request.
+      assert.deepEqual(await collect(h.service.turn({ principal, threadId: thread.id,
+        turnId, input: "do not replay" })), [{ type: "done",
+        status: mode === "cancel" ? "cancelled" : "failed" }]);
     }
-    await assert.rejects(collect(h.service.turn({ principal, threadId: thread.id,
-      turnId: id(), input: "do not replay" })));
     assert.equal(h.trace.filter(t => t === "upstreamStart").length, 1);
   }
 });
