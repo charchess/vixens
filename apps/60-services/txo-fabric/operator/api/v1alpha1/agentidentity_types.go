@@ -29,6 +29,31 @@ type AgentRuntimeCapabilityBinding struct {
 	EnableToolsets []string `json:"enableToolsets,omitempty"`
 }
 
+// AgentPrivateAPIBinding expresses non-secret future intent only.
+// A valid opt-in NEVER starts an API Server in this operator version.
+// +kubebuilder:validation:XValidation:rule="!has(self.enabled) || !self.enabled || (has(self.tenantId) && size(self.tenantId) > 0 && has(self.credentialRef) && size(self.credentialRef) > 0)",message="enabled private API requires canonical tenantId and credentialRef"
+type AgentPrivateAPIBinding struct {
+	// Enabled is desired future intent, NOT activation. Omitted/false is safe.
+	// +optional
+	// +kubebuilder:default=false
+	Enabled bool `json:"enabled,omitempty"`
+
+	// TenantID is the immutable TenantBundle.spec.tenantId, not its slug.
+	// +optional
+	// +kubebuilder:validation:Pattern=`^TEN[0-9]{5,}$`
+	// +kubebuilder:validation:MaxLength=64
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="tenantId is immutable"
+	TenantID string `json:"tenantId,omitempty"`
+
+	// CredentialRef is a NON-SECRET reference name, not a secret or token.
+	// It must equal hermes-api-<canonical agentKey>. Never read/mounted here.
+	// +optional
+	// +kubebuilder:validation:Pattern=`^hermes-api-[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
+	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="credentialRef is immutable"
+	CredentialRef string `json:"credentialRef,omitempty"`
+}
+
 type AgentRuntimeBinding struct {
 	// ProfileRef references an AgentRuntimeProfile by metadata.name.
 	// +kubebuilder:default=hermes-default
@@ -43,6 +68,11 @@ type AgentRuntimeBinding struct {
 	// Capabilities selects only profile-declared AllowedOff capabilities.
 	// +optional
 	Capabilities AgentRuntimeCapabilityBinding `json:"capabilities,omitempty"`
+
+	// PrivateAPI is a source-only typed contract, NOT a runtime gate.
+	// Omission preserves legacy Hermes Deployment behavior.
+	// +optional
+	PrivateAPI *AgentPrivateAPIBinding `json:"privateAPI,omitempty"`
 }
 
 // AgentFunctionalBinding optionally selects a tenant-owned reusable business baseline.

@@ -148,6 +148,42 @@ spec:
                         type: array
                         x-kubernetes-list-type: set
                     type: object
+                  privateAPI:
+                    description: |-
+                      PrivateAPI is a source-only typed contract, NOT a runtime gate.
+                      Omission preserves legacy Hermes Deployment behavior.
+                    properties:
+                      credentialRef:
+                        description: |-
+                          CredentialRef is a NON-SECRET reference name, not a secret or token.
+                          It must equal hermes-api-<canonical agentKey>. Never read/mounted here.
+                        maxLength: 63
+                        pattern: ^hermes-api-[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                        type: string
+                        x-kubernetes-validations:
+                        - message: credentialRef is immutable
+                          rule: self == oldSelf
+                      enabled:
+                        default: false
+                        description: Enabled is desired future intent, NOT activation.
+                          Omitted/false is safe.
+                        type: boolean
+                      tenantId:
+                        description: TenantID is the immutable TenantBundle.spec.tenantId,
+                          not its slug.
+                        maxLength: 64
+                        pattern: ^TEN[0-9]{5,}$
+                        type: string
+                        x-kubernetes-validations:
+                        - message: tenantId is immutable
+                          rule: self == oldSelf
+                    type: object
+                    x-kubernetes-validations:
+                    - message: enabled private API requires canonical tenantId and
+                        credentialRef
+                      rule: '!has(self.enabled) || !self.enabled || (has(self.tenantId)
+                        && size(self.tenantId) > 0 && has(self.credentialRef) && size(self.credentialRef)
+                        > 0)'
                   profileRef:
                     default: hermes-default
                     description: ProfileRef references an AgentRuntimeProfile by metadata.name.

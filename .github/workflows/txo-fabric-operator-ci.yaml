@@ -89,6 +89,22 @@ jobs:
           go mod tidy
           git diff --exit-code -- go.mod go.sum
 
+      - name: Verify gofmt for Hermes private API contract and regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            apps/60-services/txo-fabric/operator/api/v1alpha1/agentidentity_types.go
+            apps/60-services/txo-fabric/operator/api/v1alpha1/zz_generated.deepcopy.go
+            apps/60-services/txo-fabric/operator/internal/controller/agentidentity_private_api.go
+            apps/60-services/txo-fabric/operator/internal/controller/agentidentity_private_api_test.go
+            apps/60-services/txo-fabric/operator/internal/controller/agentidentity_controller.go
+          )
+          if [ -n "$(gofmt -l "${files[@]}")" ]; then
+            gofmt -d "${files[@]}"
+            exit 1
+          fi
+
       - name: Require regression tests for operator behavior changes
         if: ${{ github.event_name == 'pull_request' }}
         env:
@@ -182,6 +198,33 @@ jobs:
           fi
 
           echo "✅ All generated CRDs are referenced by Kustomize"
+
+      - name: Assert Hermes private API stays absent from selected production render
+        # The opt-in contract is source-only; never select any API process,
+        # private/public API Service, credential dependency or listener.
+        uses: ./.github/actions/setup-k8s-tools
+
+      - name: Verify selected production has no Hermes API activation
+        shell: bash
+        run: |
+          set -euo pipefail
+          kustomize build apps/60-services/txo-fabric/overlays/prod > /tmp/txo-fabric-prod-hermes-private-api.yaml
+          # A CRD schema describes the future non-secret reference name, but
+          # is not an opted-in AgentIdentity or a selected API listener.
+          # Check actual selected objects rather than CRD schema examples.
+          awk 'BEGIN { RS = "---"; ORS = "\n---\n" } !/kind: CustomResourceDefinition/ { print }' \
+            /tmp/txo-fabric-prod-hermes-private-api.yaml > /tmp/txo-fabric-prod-hermes-selected.yaml
+          if grep -En 'privateAPI:|API_SERVER_ENABLED|API_SERVER_KEY|hermes-api-|(^|[^0-9])8642([^0-9]|$)' /tmp/txo-fabric-prod-hermes-selected.yaml; then
+            echo "::error::Hermes private API configuration or port was selected in prod"
+            exit 1
+          fi
+          # Existing per-agent dashboard ingress is NOT the private API.
+          # Refuse any newly exposed API hostname/name in generated state.
+          if grep -En 'hermes-private-api|hermes-api-server|hermes-api-credential' /tmp/txo-fabric-prod-hermes-selected.yaml; then
+            echo "::error::Unexpected selected private/public Hermes API artifact"
+            exit 1
+          fi
+          echo "PASS: production overlay has no Hermes API listener, credential or service"
 
       - name: Build operator image
         run: docker build -t txo-fabric-operator:ci apps/60-services/txo-fabric/operator
