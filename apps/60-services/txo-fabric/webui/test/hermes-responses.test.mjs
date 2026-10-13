@@ -78,13 +78,18 @@ function harness(overrides = {}) {
 
 test("first and next authorized turns use ONLY Responses and same server-derived opaque session key", async () => {
   const h = harness();
-  const first = await collect(h.service.turn({
-    principal, agentKey: "alex", input: "first",
-    conversation: "browser-continuity", sessionId: "browser-session",
-    apiKey: "browser-key", provider: "provider-override",
-    previous_response_id: "browser-response", history: ["browser context"],
-    headers: { Authorization: "browser bearer", Cookie: "sensitive browser cookie" },
-  }));
+  let first;
+  try {
+    first = await collect(h.service.turn({
+      principal, agentKey: "alex", input: "first",
+      conversation: "browser-continuity", sessionId: "browser-session",
+      apiKey: "browser-key", provider: "provider-override",
+      previous_response_id: "browser-response", history: ["browser context"],
+      headers: { Authorization: "browser bearer", Cookie: "sensitive browser cookie" },
+    }));
+  } catch {
+    assert.fail(`source-stage counts only: grant=${h.authorizations.length} attest=${h.attestations.length} derive=${h.scopes.length} credential=${h.credentials.length} upstream=${h.calls.length}`);
+  }
   const second = await collect(h.service.turn({ principal, agentKey: "alex", input: "second" }));
   const projected = [
     { type: "tool-started", tool: "terminal" },
