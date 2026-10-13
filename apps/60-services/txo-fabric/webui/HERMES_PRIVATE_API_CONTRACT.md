@@ -108,8 +108,8 @@ historical thread. Missing/ambiguous identity or unavailable key or
 attestation denies. There is no client-controlled `sessionId`
 endpoint in the Fabric chat handler.
 
-The repo dependency `insert/get/list/claim` MUST be implemented with
-**durable atomic, cross-replica** thread storage and leases before
+The repo dependency `insert/get/list/claim/claimTurn` MUST be implemented with
+**durable atomic, cross-replica** thread storage, turn-idempotency journal and leases before
 any browser activation; today's test fixture is an in-memory fake,
 not an installable backend. Cancellation uses downstream abort
 propagated to Hermes; cancellation of an *already-running server-side*
