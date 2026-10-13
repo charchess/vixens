@@ -1,3 +1,112 @@
+
+## Durable Fabric chat state seam — Prompt 12 (#3981)
+
+`server/postgres-chat-repository.mjs` supplies a **source-only**
+PostgreSQL repository, using the **existing platform-only BFF CNPG
+database** as its future home (not a tenant database and not a new
+stateful plane). The additive
+`db/migrations/003_fabric_chat_threads.sql` creates two dedicated
+tables and indexes, with `IF NOT EXISTS` and `REVOKE ... FROM PUBLIC`.
+**003 is not referenced by the currently selected SQL ConfigMap or
+suspended migration Job**, intentionally: this source PR cannot migrate
+a database or introduce a live credential dependency. Never edit
+applied 001/002. A future separately reviewed GitOps migration must
+run 003 and grant only `SELECT, INSERT, UPDATE` on these two tables
+to the dedicated BFF role, not DDL, DELETE, TRUNCATE, tenant access or
+shared superuser rights. Run migrations only with the platform
+migrator, never on BFF startup. Verify backups and data retention.
+
+### Authority and repository API
+
+A real verified BFF resolver, not browser JSON, must supply **all** of:
+
+```text
+{tenantKey, fabricTenantId (immutable TEN...), tenantBundleUID,
+ fabricUserId (immutable usr...), agentKey, agentUID,
+ agentObservedGeneration}
+```
+
+This exact binding is validated and included in *every SQL lookup and
+state transition*. It is **not** independently an IAM grant: the BFF
+must still verify OIDC session, issuer-safe bridge, fresh OpenFGA
+`agent.chat` and endpoint/AgentIdentity ownership **before every
+repository action**. The repo intentionally rejects absent/unknown
+scope and never trusts a browser-provided group, tenant slug, session
+ID, secret reference or endpoint. Input must come from the privileged,
+independently attested canonical resolver.
+
+The exported `createPostgresFabricChatRepository({pool})` requires a
+real parameterized PostgreSQL `pool.query` + `pool.connect` interface.
+No credential/pool construction, process Map/mutex or network fallback
+exists in the module. Its methods and only their server-side callers:
+
+| Method | Non-secret result / invariant |
+| --- | --- |
+| `createThread({scope})` | Generate 160-bit opaque Fabric thread ID, persist immutable scope and times before attempting any remote session creation |
+| `getThread({scope,threadId})`, `listThreads({scope,limit})` | Project **only** Fabric thread ID, canonical agent key and created time; remote Hermes session/lease are never public |
+| `getServerThread({scope,threadId})` | Internal adapter-only remote session metadata; return no record on foreign scope |
+| `bindHermesSession({scope,threadId,remoteSessionId})` | One-time conditional `UPDATE` and unique `agentUID+remoteSessionId`; remote session provided **only by a trusted upstream adapter after successful creation**, never from an HTTP parameter |
+| `claimTurn({scope,threadId,turnId})` | Row-locked atomic journal + per-thread fencing token, `claimed`, `conflict`, `terminal`, `uncertain` or `denied` |
+| `finalizeTurn({scope,threadId,turnId,leaseToken,outcome})` | Only original holder may complete/failed/cancelled; terminal result immutable/idempotent; releases lease transactionally |
+| `inspectTurn({scope,threadId,turnId})` | Persisted scoped terminal metadata only, not message content |
+| `expireStaleLease({scope,threadId})` | Mark expired work **uncertain**, never silently elect a new owner |
+
+The browser-provided `turnId` is a **bounded 128-bit hex deduplication
+value only**, scoped by the server's verified binding and opaque Fabric
+thread ID. It cannot grant access or select a tenant/agent. One
+PostgreSQL row lock `FOR UPDATE` serializes claims from distinct BFF
+replicas; PK `(thread_id,turn_id)` and transactional BEGIN/COMMIT
+prevent a SELECT/INSERT gap. A later identical retry returns the
+same bounded terminal outcome metadata or `conflict`, and **must never
+re-POST upstream or fake/resume prior SSE content**. A claimed lease
+not yet finished returns conflict for all other turns on that thread.
+
+**Expiry is not permission to replay.** If a BFF crashes, the
+PostgreSQL lease expires but Hermes may still be running. The
+repository latches `lease_uncertain=true`, denies every new
+claim and keeps the journal/audit state. The still-owning holder can
+finalize with its original opaque fencing token. Any forced recovery
+and explicit verification that Hermes actually stopped is a **future
+separately reviewed privileged recovery API and physical runbook**.
+There is no TTL-based auto-release or background cleanup in this PR.
+This preserves safety, at the price of manual intervention after a
+lost-owner crash. The thread and all turn records stay retained.
+
+### Safe state and production integration boundary
+
+Persisted: immutable tenant/user/agent IDs and UIDs, observed generation,
+server-created opaque Fabric thread and remote session IDs, opaque
+turn/lease tokens (inside the platform DB), bounded terminal enum
+`completed|failed|cancelled`, and timestamps. **Not persisted**:
+browser cookies, OIDC/FGA/Hermes/CPA bearer/API credentials, raw user
+messages, tool inputs/outputs, SSE contents, HTTP headers, arbitrary
+error text, Pod IPs/private topology, issuer subject or audit secrets.
+Database query parameters and results are never logged by this module.
+
+This repository is a **new future-only seam**. The historical
+`chat-sessions.mjs` `insert/get/list/claim/claimTurn` test abstraction
+still opens Hermes sessions before inserting a thread and therefore
+**must not be directly substituted with this durable repo**: that
+would permit orphan remote sessions on a BFF crash and weaken
+transactional ownership. A future **separate integration/activation
+lot** must change strict BFF thread creation to
+`createThread -> trusted Hermes API session -> bindHermesSession`,
+recheck scope/grant at each get/list/claim/finalize, and reconcile
+`claimed|terminal|uncertain` results without any automatic upstream
+replay. The current BFF stays health-only; this PR intentionally does
+not compose either interface at runtime or silently adapt an insecure
+legacy interface. Source tests use real ephemeral PostgreSQL via two
+independent pools; they prove SQL atomicity, not the live Hermes API.
+
+Remaining physical gates: scoped Fabric OpenBao credential; operator
+private API Server Service/NetworkPolicy; real EndpointSlice/Pod UID
+attestation; issuer-safe workload bridge; fresh OpenFGA and durable
+BFF principal; Agent A/B/A conversation, SSE abort/restart, revocation
+and sibling denial after exact candidate approval. No public route,
+Kubernetes Secret, ExternalSecret, feature gate or runtime activation
+is included.
+
+---
 # Issue #3981 — private Hermes API chat vertical slice (SOURCE ONLY)
 
 ## Scope and non-activation
