@@ -5,6 +5,12 @@ on:
   pull_request:
     paths:
       - 'apps/60-services/txo-fabric/webui/server/postgres-chat-repository.mjs'
+      - 'apps/60-services/txo-fabric/webui/server/strict-chat-sessions.mjs'
+      - 'apps/60-services/txo-fabric/webui/server/chat-sessions.mjs'
+      - 'apps/60-services/txo-fabric/webui/server/authorized-turn.mjs'
+      - 'apps/60-services/txo-fabric/webui/server/private-hermes-chat.mjs'
+      - 'apps/60-services/txo-fabric/webui/test/strict-chat-sessions.test.mjs'
+      - 'apps/60-services/txo-fabric/webui/test/private-hermes-chat.test.mjs'
       - 'apps/60-services/txo-fabric/webui/db/migrations/003_fabric_chat_threads.sql'
       - 'apps/60-services/txo-fabric/webui/test/postgres-chat-repository.test.mjs'
       - '.github/workflows/txo-fabric-chat-postgres-ci.yaml'
@@ -55,6 +61,8 @@ jobs:
           git diff --check "$BASE_SHA"...HEAD
           node --check apps/60-services/txo-fabric/webui/server/postgres-chat-repository.mjs
           node --check apps/60-services/txo-fabric/webui/test/postgres-chat-repository.test.mjs
+          node --check apps/60-services/txo-fabric/webui/server/strict-chat-sessions.mjs
+          node --check apps/60-services/txo-fabric/webui/test/strict-chat-sessions.test.mjs
       - name: Install ephemeral test-only PostgreSQL client
         working-directory: apps/60-services/txo-fabric/webui
         run: npm install --no-save --no-package-lock --ignore-scripts --no-audit pg@8
@@ -62,7 +70,7 @@ jobs:
         working-directory: apps/60-services/txo-fabric/webui
         env:
           TEST_FABRIC_CHAT_PG: '1'
-        run: node --test test/postgres-chat-repository.test.mjs
+        run: node --test test/postgres-chat-repository.test.mjs test/strict-chat-sessions.test.mjs test/private-hermes-chat.test.mjs
       - name: Existing WebUI regression tests
         working-directory: apps/60-services/txo-fabric/webui
         run: node --test
