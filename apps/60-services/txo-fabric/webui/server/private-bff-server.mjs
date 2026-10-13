@@ -1,4 +1,6 @@
 import { createServer } from "node:http";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import { createGlobalWebUIApp } from "./global-auth-http.mjs";
 import { createPostgresOIDCTransactions } from "./oidc-postgres-transactions.mjs";
 import { createPostgresGlobalSessions } from "./global-postgres-sessions.mjs";
@@ -80,6 +82,9 @@ export function createPrivateBFFServer({ handle, maxBodyBytes = 1024 * 1024 } = 
     throw new Error("Private BFF server configuration invalid");
   }
   const server = createServer(async (req, res) => {
+    const disconnect = new AbortController();
+    const onDisconnect = () => { if (!res.writableFinished) disconnect.abort(); };
+    res.once("close", onDisconnect);
     try {
       const chunks = [];
       let size = 0;
@@ -104,7 +109,7 @@ export function createPrivateBFFServer({ handle, maxBodyBytes = 1024 * 1024 } = 
         return;
       }
       const request = new Request("https://webui.truxonline.com" + path, {
-        method: req.method, headers: req.headers,
+        method: req.method, headers: req.headers, signal: disconnect.signal,
         ...((req.method === "GET" || req.method === "HEAD") ? {} : { body: Buffer.concat(chunks) }),
       });
       const response = await handle(request);
@@ -115,12 +120,24 @@ export function createPrivateBFFServer({ handle, maxBodyBytes = 1024 * 1024 } = 
         res.end();
         return;
       }
+      if (response.headers.get("content-type")?.toLowerCase().startsWith("text/event-stream")) {
+        // Browser SSE must be incremental; buffering until completion breaks
+        // tool progress and cancellation. pipeline propagates backpressure and
+        // disconnects through the Request.signal to the Hermes adapter.
+        if (!response.body) throw new Error("Missing SSE body");
+        await pipeline(Readable.fromWeb(response.body), res, { signal: disconnect.signal });
+        return;
+      }
       const data = Buffer.from(await response.arrayBuffer());
       if (data.length > maxBodyBytes) throw new Error("Response exceeds bounded limit");
       res.end(data);
     } catch {
-      if (!res.headersSent) res.writeHead(503, NO_STORE);
-      res.end("Unavailable");
+      if (!res.destroyed) {
+        if (!res.headersSent) res.writeHead(503, NO_STORE);
+        res.end("Unavailable");
+      }
+    } finally {
+      res.off("close", onDisconnect);
     }
   });
   server.requestTimeout = 8000;
