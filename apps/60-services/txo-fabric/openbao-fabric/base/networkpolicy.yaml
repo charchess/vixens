@@ -1,0 +1,19 @@
+---
+# Existing namespace default deny. This exact-selector policy adds no clients.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: openbao-fabric-private
+  namespace: txo-fabric-system
+  labels:
+    app.kubernetes.io/name: openbao-fabric
+    app.kubernetes.io/component: secret-plane
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: openbao-fabric
+      app.kubernetes.io/component: secret-plane
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress: []

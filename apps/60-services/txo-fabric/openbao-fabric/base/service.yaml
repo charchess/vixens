@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openbao-fabric
+  namespace: txo-fabric-system
+  labels:
+    app.kubernetes.io/name: openbao-fabric
+    app.kubernetes.io/component: secret-plane
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: openbao-fabric
+    app.kubernetes.io/component: secret-plane
+  ports:
+    - name: api
+      port: 8200
+      targetPort: api
+      protocol: TCP
