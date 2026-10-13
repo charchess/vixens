@@ -30,3 +30,25 @@ jobs:
       - name: Test Hermes transport and authorization boundaries
         working-directory: apps/60-services/txo-fabric/webui
         run: node --test
+      - name: Setup tools for source-only Hermes Responses negative render
+        uses: ./.github/actions/setup-k8s-tools
+      - name: Assert selected production leaves Hermes API and new chat DB inert
+        shell: bash
+        run: |
+          set -euo pipefail
+          kustomize build apps/60-services/txo-fabric/overlays/prod > /tmp/txo-responses-prod.yaml
+          # CRD schema vocabulary describes future intent, not selected runtime.
+          awk 'BEGIN { RS = "---"; ORS = "\\n---\\n" } !/kind: CustomResourceDefinition/ { print }' /tmp/txo-responses-prod.yaml > /tmp/txo-responses-selected.yaml
+          if grep -En 'API_SERVER_ENABLED|API_SERVER_KEY|hermes-api-|privateAPI:|(^|[^0-9])8642([^0-9]|$)|003_fabric_chat_threads|txo_fabric_chat_threads|txo_fabric_chat_turns' /tmp/txo-responses-selected.yaml; then
+            echo "::error::selected production unexpectedly enabled Hermes API/chat persistence"
+            exit 1
+          fi
+          # No new runtime secret/ESO or exposure for private Hermes Responses.
+          if grep -En 'name: hermes-private-api|name: hermes-api-server|name: txo-fabric-chat-runtime-credentials' /tmp/txo-responses-selected.yaml; then
+            echo "::error::unexpected Hermes private endpoint or credential"
+            exit 1
+          fi
+          grep -A2 'name: TXO_WEBUI_BFF_BROWSER_ENABLED' apps/60-services/txo-fabric/webui/runtime/deployment.yaml | grep -q 'false'
+          grep -A2 'name: TXO_FABRIC_PRIVATE_BRIDGE_ENABLED' apps/60-services/txo-fabric/operator/config/manager/manager.yaml | grep -q 'false'
+          ! grep -q '003_fabric_chat_threads' apps/60-services/txo-fabric/webui/bootstrap/migrate-job.yaml
+          echo 'PASS: source-only Hermes Responses not selected for production'
