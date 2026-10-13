@@ -8,12 +8,12 @@ import (
 )
 
 const (
-	privateHermesAPICondition = "PrivateHermesAPIReady"
+	privateHermesAPICondition        = "PrivateHermesAPIReady"
 	privateHermesAPICredentialPrefix = "hermes-api-"
 )
 
 var (
-	privateHermesAPITenantID = regexp.MustCompile(`^TEN[0-9]{5,}$`)
+	privateHermesAPITenantID   = regexp.MustCompile(`^TEN[0-9]{5,}$`)
 	privateHermesAPIObjectName = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`)
 )
 
