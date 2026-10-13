@@ -76,7 +76,7 @@ export function createChatHttpHandler({ authenticate, service, expectedOrigin, l
         const stream = new ReadableStream({
           async start(controller) {
             try {
-              for await (const item of service.turn({ principal, threadId, input: body.input, signal: abort.signal })) {
+              for await (const item of service.turn({ principal, threadId, turnId: body.turnId, input: body.input, signal: abort.signal })) {
                 if (abort.signal.aborted) break;
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify(item)}\n\n`));
               }
