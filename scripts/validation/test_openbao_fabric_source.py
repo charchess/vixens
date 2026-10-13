@@ -1,11 +1,14 @@
-"""Tests for #4046 source-only OpenBao Fabric safety guard (no secrets)."""
+"""Tests for #4046 empty private OpenBao Fabric POC guard (no secrets)."""
 
 from __future__ import annotations
 
+import copy
 import importlib.util
 from pathlib import Path
 import tempfile
 import unittest
+
+import yaml
 
 
 MODULE = Path(__file__).with_name("validate-openbao-fabric-source.py")
@@ -53,7 +56,7 @@ class FoundationGuardTests(unittest.TestCase):
             f, "-----BEGIN " + "OPENSSH PRIVATE " + "KEY-----",
         ))
 
-    def test_negative_render_marker(self):
+    def test_positive_poc_selection_marker(self):
         self.assertTrue(guard.PRODUCTION_MARKER.search(
             "kind: StatefulSet\nmetadata:\n  name: openbao-fabric",
         ))
@@ -265,6 +268,73 @@ class CanonicalTenantProvisioningContractTests(unittest.TestCase):
         self.assertFalse(guard.INFRA_STORE_ADDITION.search(
             "+        name: openbao-fabric-store\n",
         ))
+
+
+
+POC_FILE = Path(__file__).with_name("validate-openbao-fabric-poc.py")
+POC_SPEC = importlib.util.spec_from_file_location("openbao_fabric_poc", POC_FILE)
+assert POC_SPEC and POC_SPEC.loader
+poc = importlib.util.module_from_spec(POC_SPEC)
+POC_SPEC.loader.exec_module(poc)
+
+
+class PrivatePOCTests(unittest.TestCase):
+    @staticmethod
+    def fixture():
+        base = POC_FILE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/base"
+        files = ("configmap.yaml", "statefulset.yaml", "service.yaml", "networkpolicy.yaml")
+        return [yaml.safe_load((base / file).read_text(encoding="utf-8")) for file in files]
+
+    def test_exact_private_poc(self):
+        self.assertEqual(poc.check_render(self.fixture()), [])
+
+    def test_wrong_service_type_and_client_ingress_denied(self):
+        for public in ("NodePort", "LoadBalancer"):
+            manifests = copy.deepcopy(self.fixture())
+            next(d for d in manifests if d["kind"] == "Service")["spec"]["type"] = public
+            self.assertTrue(poc.check_render(manifests))
+        manifests = copy.deepcopy(self.fixture())
+        next(d for d in manifests if d["kind"] == "NetworkPolicy")["spec"]["ingress"] = [
+            {"from": [{"podSelector": {}}]}
+        ]
+        self.assertTrue(poc.check_render(manifests))
+
+    def test_delete_storage_or_multiple_replicas_denied(self):
+        manifests = copy.deepcopy(self.fixture())
+        sts = next(d for d in manifests if d["kind"] == "StatefulSet")
+        sts["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"] = "truenas-iscsi-delete"
+        self.assertTrue(poc.check_render(manifests))
+        manifests = copy.deepcopy(self.fixture())
+        sts = next(d for d in manifests if d["kind"] == "StatefulSet")
+        sts["spec"]["replicas"] = 2
+        self.assertTrue(poc.check_render(manifests))
+
+    def test_bootstrap_and_infra_credentials_denied(self):
+        manifests = copy.deepcopy(self.fixture())
+        sts = next(d for d in manifests if d["kind"] == "StatefulSet")
+        sts["spec"]["template"]["spec"]["initContainers"] = [{"name": "bootstrap"}]
+        self.assertTrue(poc.check_render(manifests))
+        manifests = copy.deepcopy(self.fixture())
+        sts = next(d for d in manifests if d["kind"] == "StatefulSet")
+        sts["spec"]["template"]["spec"]["automountServiceAccountToken"] = True
+        self.assertTrue(poc.check_render(manifests))
+        manifests = copy.deepcopy(self.fixture())
+        cm = next(d for d in manifests if d["kind"] == "ConfigMap")
+        cm["data"]["server.hcl"] += "\nroot_" + "token = fake-example-value\n"
+        self.assertTrue(poc.check_render(manifests))
+        manifests = copy.deepcopy(self.fixture())
+        manifests.append({"kind": "ExternalSecret", "metadata": {
+            "name": "openbao-fabric-store", "namespace": "txo-fabric-system",
+            "labels": {"app.kubernetes.io/name": "openbao-fabric"}}})
+        self.assertTrue(poc.check_render(manifests))
+
+    def test_txo_selected_requires_default_deny(self):
+        self.assertTrue(poc.check_render(self.fixture(), selected=True))
+        manifests = copy.deepcopy(self.fixture())
+        manifests.append({"kind": "NetworkPolicy", "metadata": {
+            "name": "default-deny", "namespace": "txo-fabric-system"},
+            "spec": {"podSelector": {}, "policyTypes": ["Ingress", "Egress"]}})
+        self.assertEqual(poc.check_render(manifests, selected=True), [])
 
 
 if __name__ == "__main__":

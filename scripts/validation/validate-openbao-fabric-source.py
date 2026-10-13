@@ -178,6 +178,7 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
     protected = [
         "apps/00-infra/openbao/",
         "argocd/overlays/prod/",
+        "apps/60-services/txo-fabric/overlays/prod/",
         "apps/60-services/txo-fabric/operator/",
         "apps/60-services/txo-fabric/webui/",
     ]
