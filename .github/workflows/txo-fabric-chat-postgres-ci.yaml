@@ -1,0 +1,95 @@
+---
+name: TXO Fabric Durable Chat PostgreSQL CI
+
+on:
+  pull_request:
+    paths:
+      - 'apps/60-services/txo-fabric/webui/server/postgres-chat-repository.mjs'
+      - 'apps/60-services/txo-fabric/webui/db/migrations/003_fabric_chat_threads.sql'
+      - 'apps/60-services/txo-fabric/webui/test/postgres-chat-repository.test.mjs'
+      - '.github/workflows/txo-fabric-chat-postgres-ci.yaml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/60-services/txo-fabric/webui/server/postgres-chat-repository.mjs'
+      - 'apps/60-services/txo-fabric/webui/db/migrations/003_fabric_chat_threads.sql'
+      - 'apps/60-services/txo-fabric/webui/test/postgres-chat-repository.test.mjs'
+      - '.github/workflows/txo-fabric-chat-postgres-ci.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-repository:
+    name: Real PostgreSQL atomic turn claim and tenant isolation
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    # Isolated disposable test service with LOCAL trust authentication.
+    # No real credential, password, live BFF database or cluster connection.
+    services:
+      postgres:
+        image: postgres:16.6-alpine3.20
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify patch and portable syntax
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch --no-tags origin "$BASE_SHA"
+          git diff --check "$BASE_SHA"...HEAD
+          node --check apps/60-services/txo-fabric/webui/server/postgres-chat-repository.mjs
+          node --check apps/60-services/txo-fabric/webui/test/postgres-chat-repository.test.mjs
+      - name: Install ephemeral test-only PostgreSQL client
+        working-directory: apps/60-services/txo-fabric/webui
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit pg@8
+      - name: Execute real PostgreSQL concurrency and isolation assertions
+        working-directory: apps/60-services/txo-fabric/webui
+        env:
+          TEST_FABRIC_CHAT_PG: '1'
+        run: node --test test/postgres-chat-repository.test.mjs
+      - name: Existing WebUI regression tests
+        working-directory: apps/60-services/txo-fabric/webui
+        run: node --test
+      - name: Install validated Kustomize tool
+        uses: ./.github/actions/setup-k8s-tools
+      - name: Prove selected production remains inert
+        shell: bash
+        run: |
+          set -euo pipefail
+          kustomize build apps/60-services/txo-fabric/overlays/prod > /tmp/txo-fabric-chat-prod.yaml
+          # The CRD schema includes future-only API field vocabulary; it
+          # is NOT a selected AgentIdentity, Service or workload listener.
+          awk 'BEGIN { RS = "---"; ORS = "\\n---\\n" } !/kind: CustomResourceDefinition/ { print }' /tmp/txo-fabric-chat-prod.yaml > /tmp/txo-fabric-chat-selected.yaml
+          if grep -En 'API_SERVER_ENABLED|API_SERVER_KEY|hermes-api-|(^|[^0-9])8642([^0-9]|$)|privateAPI:' /tmp/txo-fabric-chat-selected.yaml; then
+            echo 'Unexpected Hermes API Server activation in selected production'
+            exit 1
+          fi
+          # Search for Hermes-specific API exposure, not pre-existing
+          # platform Ingress resources unrelated to private Hermes.
+          if grep -En 'name: hermes-api-server|name: hermes-private-api' /tmp/txo-fabric-chat-selected.yaml; then
+            echo 'Unexpected private Hermes Service/exposure'
+            exit 1
+          fi
+          test ! -f apps/60-services/txo-fabric/webui/runtime/chat-repository.yaml
+          test ! -f apps/60-services/txo-fabric/webui/runtime/migrate-chat.yaml
+          # Inert source migration must not become part of the active bootstrap.
+          ! grep -q '003_fabric_chat_threads' apps/60-services/txo-fabric/webui/bootstrap/migrate-job.yaml
+          ! grep -q '003_fabric_chat_threads' apps/60-services/txo-fabric/webui/kustomization.yaml
+          grep -A2 'name: TXO_WEBUI_BFF_BROWSER_ENABLED' apps/60-services/txo-fabric/webui/runtime/deployment.yaml | grep -q 'false'
+          grep -A2 'name: TXO_FABRIC_PRIVATE_BRIDGE_ENABLED' apps/60-services/txo-fabric/operator/config/manager/manager.yaml | grep -q 'false'
