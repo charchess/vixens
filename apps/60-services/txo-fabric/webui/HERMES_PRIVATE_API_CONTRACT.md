@@ -1,3 +1,120 @@
+# #3981 — Current POC choice: stateless Fabric BFF → Hermes Responses
+
+**This section supersedes the historical native-session and durable-BFF-thread
+integration proposals further down.** Electra's read-only pinned-canary
+inspection (#3981 comments #6151494831 / #6151593897 / #6152609781)
+found Hermes' existing PVC-backed `/opt/data/state.db`, a persisted
+`X-Hermes-Session-Key` gateway-session mapping, and a server-owned
+Responses named `conversation` chain. The native
+`/api/sessions/{session_id}/chat/stream` route **still requires a
+session_id**; a header alone does not select that native session. The
+**first POC path** is therefore **`POST /v1/responses`**, authenticated
+by the per-agent API bearer and using both `X-Hermes-Session-Key` and
+`conversation` with the same server-derived opaque key.
+
+```text
+browser message, canonical agent selection only
+  → signed global OIDC session / issuer-safe identity bridge (OFF)
+  → server-verified immutable Fabric user+tenant / fresh FGA agent.chat (OFF)
+  → canonical TenantBundle + AgentIdentity UID/generation/status
+  → independent private EndpointSlice/Pod ownership attestation
+  → pure scoped conversation-key derivation callback
+  → read ONLY approved per-AgentIdentity credential
+  → POST http://hermes-<agentKey>.tenant-<tenantKey>.svc:8642/v1/responses
+      Authorization: Bearer [from trusted BFF reader]
+      X-Hermes-Session-Key: [opaque derived HMAC value]
+      body: {input, conversation:[same opaque value], stream:true, store:true}
+  → Hermes PVC state.db owns conversation/session/history/chaining
+  → allowlisted Fabric SSE event projection, no internal IDs or tool payload
+```
+
+`server/hermes-responses.mjs` is an independent Responses-only
+transport/projection. `createPrivateHermesResponsesService` is the
+**future-only stateless** exported factory from
+`server/private-hermes-chat.mjs`. It has **no repo, SQL, thread,
+lease, remote session ID, remote history cache, `previous_response_id`,
+DB connection, automatic retry, or fallback route**. The existing
+`createPrivateHermesChatService`, `chat-sessions.mjs`,
+`hermes-client.mjs` native-session paths, and #4059's
+`postgres-chat-repository.mjs`/SQL 003 remain **dormant historical
+source seams**, NOT the first POC transport and NOT selected in prod.
+Retained native tests continue to cover their own event protocol;
+Responses events use a separate strict projector.
+
+### Conversation identity / authorization boundary
+
+Every call receives **only** the server-verified canonical
+`{fabricTenantId, fabricUserId, agentUID, agentGeneration}` to
+`deriveConversationKey(scope)`, invoked after fresh issuer-safe
+principal validation, grant `agent.chat`, tenant/AgentIdentity
+ownership/readiness/observedGeneration and EndpointSlice/Pod attestation.
+The callback is **required** and **injected**: no HMAC signing secret,
+credential resolver, environment variable, OpenBao auth, Secret or
+Kubernetes object is added in this source lot. In production, only a
+separately reviewed Fabric-plane **versioned HMAC-SHA256/base64url**
+construction with a scoped secret and tested version rotation can
+provide a cryptographically unguessable key. Test-only deterministic
+digest fixtures **are not a credential derivation scheme**.
+
+Accepted key is an opaque versioned, 43+ base64url-character token,
+printable without NUL/control characters, bounded at 256 characters,
+different from any canonical raw tenant/user/agent/Kubernetes ID,
+API credential or URL. The key is NEVER returned to the browser or
+logged. Changing user, tenant, AgentIdentity UID or generation yields
+different Hermes continuation history. The first POC has one named
+conversation per canonical user+tenant+exact agent incarnation, not a
+browser-selectable thread/history index; product-level multiple threads,
+history listing and settings are deferred.
+
+New `turn({principal,agentKey,input,signal})` ignores extraneous
+untrusted browser `conversation`, `sessionId`, `responseId`, `url`,
+`provider`, `model`, history and request headers. Only the canonical
+server-side agent key is looked up and independently checked against
+TenantBundle, AgentIdentity and exact `hermes-<key>` endpoint. No
+fresh grant, missing issuer/bridge, stale AgentIdentity, deleted
+identity, failed endpoint attestation, invalid HMAC or absent scoped
+credential → **deny before any Hermes I/O**. Invalid HMAC also denies
+**before credential read**.
+
+Only `response.output_text.delta`, valid `function_call` item
+started/done, and `response.completed|response.failed` are projected
+to safe Fabric text/tool-name/status events. Commentary, reasoning,
+tool arguments, raw tool output, model/provider details, usage and
+upstream response/session IDs are ignored. The client rejects redirect,
+non-SSE responses, absent stream body, malformed/big frames, incomplete
+streams and missing trusted dependencies generically without logging
+tokens or leaking topology.
+
+**Transport abort is not Hermes run Stop**. Browser disconnect
+propagates `AbortSignal`; it does NOT prove a Hermes tool/run was
+cancelled. `DELETE /v1/responses/{id}` deletes stored Responses
+content and MUST NOT be called as a substitute for Stop. No automatic
+retry or response replay after an ambiguous streamed POST, no cursor
+or `GET/DELETE` Responses behavior in this first slice. Explicit
+Stop/reconnect/idempotency semantics require a separately tested
+Hermes Runs or equivalent contract and owner approval.
+
+### Deployment and evidence boundary
+
+This PR changes only Node source/tests/docs. The real BFF entrypoint
+does **not** construct the Responses factory and still serves
+health-only with `TXO_WEBUI_BFF_BROWSER_ENABLED=false`; operator
+`TXO_FABRIC_PRIVATE_BRIDGE_ENABLED=false`, FGA store rollout OFF,
+Hermes API Server OFF. No private Hermes Service/NetworkPolicy
+exception/8642 listener, BFF egress, Secret/ExternalSecret, Fabric
+OpenBao credential, browser route, SQL 003 migration or DB pool is
+selected. Fake fetch tests prove *source* boundaries, not real
+Hermes SSE/state persistence or physical A/B/A conversations.
+
+Activation depends on separately reviewed and physically verified
+Fabric-plane HMAC+Hermes API credentials, private cluster Service and
+BFF-only NetworkPolicies, endpoint attestation, signed identity bridge,
+fresh OpenFGA grants and two-agent A/B/A/revocation/stream continuity
+tests on a precisely approved candidate; no public route or production
+promotion is authorized by a source merge.
+
+---
+
 
 ## Durable Fabric chat state seam — Prompt 12 (#3981)
 
