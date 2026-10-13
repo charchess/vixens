@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"regexp"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
@@ -65,8 +64,3 @@ func setPrivateHermesAPICondition(agent *fabricv1alpha1.AgentIdentity, tenant *f
 		metav1.ConditionFalse, reason, message)
 }
 
-// PrivateHermesAPIContract explains why no API process is ever rendered.
-// It is not a resolver and must not be used as a source of runtime readiness.
-func privateHermesAPIServiceName(agentKey string) string {
-	return fmt.Sprintf("hermes-%s", agentKey)
-}
