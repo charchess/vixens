@@ -1,3 +1,16 @@
+## #3981 private Hermes API adapter (source-only, NOT activated)
+
+The tested strict BFF composition for canonical tenant/user/AgentIdentity,
+private future-only API port 8642, scoped credential **reference**,
+mandatory independent endpoint identity attestation and durable
+thread/lease contract is documented in
+[HERMES_PRIVATE_API_CONTRACT.md](HERMES_PRIVATE_API_CONTRACT.md).
+No Hermes API Server, `ExternalSecret`, Service, NetworkPolicy
+exception or browser route is added; BFF/bridge/FGA gates stay OFF.
+Tests use only fake private upstream; **no physical chat POC** is claimed.
+
+---
+
 # Prompt 05 / #3807 — PRIVATE BFF substrate (source + GitOps, gated OFF)
 
 **This is NOT a live browser WebUI.** The new Node image serves health only.
