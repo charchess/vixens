@@ -22,7 +22,7 @@ ASSIGNMENT = re.compile(
     r"""(?ix)
     \b(?:root[_-]?token|unseal[_-]?key|recovery[_-]?key|private[_-]?key|
          vault[_-]?token|bao[_-]?token|password|client[_-]?secret)
-    \s*[:=]\s*["']?[A-Za-z0-9+/=_-]{8,}
+    \s*[:=][ \t]*["']?[A-Za-z0-9+/=_-]{8,}
     """,
 )
 JWT_LIKE = re.compile(r"\beyJ[A-Za-z0-9_-]{16,}\.eyJ[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{12,}\b")

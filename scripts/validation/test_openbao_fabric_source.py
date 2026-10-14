@@ -56,6 +56,16 @@ class FoundationGuardTests(unittest.TestCase):
             f, "-----BEGIN " + "OPENSSH PRIVATE " + "KEY-----",
         ))
 
+    def test_cert_manager_private_key_schema_not_secret_value(self):
+        path = "apps/60-services/txo-fabric/openbao-fabric/base/certificate.yaml"
+        self.assertEqual(guard.assert_file_safe(
+            path, "privateKey:\\n  algorithm: ECDSA\\n  size: 256\\n",
+        ), [])
+        # Same-line credential-like assignments remain prohibited.
+        self.assertTrue(guard.ASSIGNMENT.search(
+            "private_" + "key: " + ("unsafe" * 3)
+        ))
+
     def test_positive_poc_selection_marker(self):
         self.assertTrue(guard.PRODUCTION_MARKER.search(
             "kind: StatefulSet\nmetadata:\n  name: openbao-fabric",
@@ -374,7 +384,7 @@ class PrivatePOCTests(unittest.TestCase):
         for extra in ("tls_disable = 1", "disable_mlock = true",
                       'api_addr = "http://127.0.0.1:8200"',
                       "-----BEGIN CERTIFICATE-----",
-                      "private_key = inline-not-allowed"):
+                      "private_key ="):
             manifests = copy.deepcopy(self.fixture())
             cm = next(d for d in manifests if d["kind"] == "ConfigMap")
             cm["data"]["server.hcl"] += "\n    " + extra
