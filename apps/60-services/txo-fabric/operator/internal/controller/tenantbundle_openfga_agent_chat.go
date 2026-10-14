@@ -109,6 +109,7 @@ func (r *TenantBundleReconciler) reconcileAgentChatGrants(
 		agent := &objects.Items[i]
 		if agent.Spec.TenantRef.Name != bundle.Name { continue }
 		if agent.Name == "" || agent.UID == "" || agent.Spec.AgentKey == "" ||
+			len(agent.Name) > 122 || strings.ContainsAny(agent.Name,"/: ") ||
 			seenAgentKeys[agent.Spec.AgentKey] {
 			return errors.New("ambiguous current Fabric agent identity")
 		}
@@ -139,6 +140,21 @@ func (r *TenantBundleReconciler) reconcileAgentChatGrants(
 	for name := range desired { scopes[name] = true }
 	for name := range scopes { names = append(names, name) }
 	sort.Strings(names)
+	// Record the union BEFORE any FGA write. If a later write, read-back
+	// or CAS fails, subsequent reconciles still know the exact scopes to
+	// revoke even when an AgentIdentity has since disappeared.
+	pending := make([]retainedChatAgent, 0, len(names))
+	for _, agentName := range names {
+		item := prev[agentName]
+		if item.UID == "" { item = desired[agentName].identity }
+		pending = append(pending, item)
+	}
+	pendingJSON, err := json.Marshal(pending)
+	if err != nil { return err }
+	if cm.Data[agentChatBindingsKey] != string(pendingJSON) {
+		cm.Data[agentChatBindingsKey] = string(pendingJSON)
+		if err := r.Update(ctx,&cm); err != nil { return err }
+	}
 	uidDrift := false
 	for _, agentName := range names {
 		next := desired[agentName]
@@ -146,16 +162,14 @@ func (r *TenantBundleReconciler) reconcileAgentChatGrants(
 		// Never rebind a persisted agent name to a recreated UID.
 		// Withdraw old grants, but require a reviewed lifecycle transition
 		// (absence and successful cleanup) before admitting its new identity.
-		if before.UID != "" && next.identity.UID != "" &&
-			before.UID != next.identity.UID {
-			uidDrift = true
-			next.groups = nil
-		}
+		changedUID := before.UID != "" && next.identity.UID != "" &&
+			before.UID != next.identity.UID
+		if changedUID { uidDrift = true; next.groups = nil }
 		object := "agent:" + agentName
 		tenantScope := openfga.TupleScope{Object:object, Relation:"tenant"}
 		chatterScope := openfga.TupleScope{Object:object, Relation:"chatter"}
 		var tenantTuples, chatterTuples []openfga.Tuple
-		if len(next.groups) > 0 && !uidDrift {
+		if len(next.groups) > 0 && !changedUID {
 			tenantTuples = []openfga.Tuple{{
 				User:"tenant:"+bundle.Spec.TenantID, Relation:"tenant", Object:object,
 			}}
