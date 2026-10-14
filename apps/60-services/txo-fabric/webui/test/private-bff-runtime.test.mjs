@@ -38,6 +38,8 @@ function fixture({ enabled = true, response, failRead = false, failFetch = false
 
 
 const canonicalHuman = Object.freeze({
+  authenticated: true,
+  verified: true,
   issuer: GLOBAL_OIDC_ISSUER,
   oidcSubject: "opaque-global-sub",
   authentikUserUUID: uuid,
@@ -67,7 +69,7 @@ function privilegedBridgeFixture({ browserEnabled = true, bridgeEnabled = true,
   return { access, counts, verifyActiveHuman, bridgeClient };
 }
 
-test("verified global session + server-owned tenant catalogue compose exact bridge membership only", async () => {
+test("exact durable global session + server-owned tenant catalogue compose bridge membership only", async () => {
   const f = privilegedBridgeFixture();
   const first = await f.access({
     identity: canonicalHuman, tenantKey: "indiba", fabricTenantId: canonicalTenantId,
@@ -106,7 +108,8 @@ test("global issuer UUID and requested tenant cannot smuggle Fabric authority", 
   const forged = [
     { identity: { ...canonicalHuman, issuer: "https://other.example.invalid/application/o/txo-fabric-webui/" } },
     { identity: { ...canonicalHuman, authentikUserUUID: "global-sub" } },
-    { identity: { ...canonicalHuman, verified: true } },
+    { identity: { ...canonicalHuman, verified: false } },
+    { identity: { ...canonicalHuman, authenticated: false } },
     { identity: { ...canonicalHuman, fabricUserId: "usraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" } },
     { identity: { ...canonicalHuman, oidcSubject: "" } },
     { tenantKey: "../indiba" },

@@ -135,10 +135,15 @@ export function createVerifiedTenantBridgeAccess({
     // No auth-provider call, secret read, token or network when either gate is
     // OFF. This function is never a direct browser-facing API.
     if (!browserEnabled || !bridgeEnabled) throw denied();
+    // This is the exact server-owned durable-session projection from
+    // createPostgresGlobalSessions.authenticate(). Keep an exact allowlist:
+    // accepting a browser-shaped object or silently stripping extra fields
+    // would turn the bridge boundary into an authority normalizer.
     if (!identity || typeof identity !== "object" || Array.isArray(identity) ||
-        Object.keys(identity).length !== 3 ||
-        !["issuer", "oidcSubject", "authentikUserUUID"].every(k =>
+        Object.keys(identity).length !== 5 ||
+        !["authenticated", "verified", "issuer", "oidcSubject", "authentikUserUUID"].every(k =>
           Object.prototype.hasOwnProperty.call(identity, k)) ||
+        identity.authenticated !== true || identity.verified !== true ||
         identity.issuer !== GLOBAL_OIDC_ISSUER ||
         typeof identity.oidcSubject !== "string" || !SUBJECT.test(identity.oidcSubject) ||
         !UUID.test(identity.authentikUserUUID || "") ||
