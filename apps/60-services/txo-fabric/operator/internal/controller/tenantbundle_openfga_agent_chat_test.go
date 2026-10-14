@@ -17,7 +17,7 @@ import (
 	"github.com/charchess/vixens/apps/60-services/txo-fabric/operator/internal/openfga"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"gopkg.in/yaml.v3"
+	kyaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 const hairemChatAgentName = "ten00001-usr000001-agt00002"
@@ -258,21 +258,21 @@ func TestAgentUIDChangeCannotSilentlyAdoptLegacyGrant(t *testing.T) {
 func TestExistingHAIremGitOpsAgentsAreTheOnlyExplicitChatIntent(t *testing.T) {
 	raw,err:=os.ReadFile("../../../tenants/hairem/agents.yaml")
 	if err!=nil {t.Fatal(err)}
-	decoder:=yaml.NewDecoder(bytes.NewReader(raw))
+	decoder:=kyaml.NewYAMLOrJSONDecoder(bytes.NewReader(raw),4096)
 	seen:=map[string]bool{}
 	for {
 		var doc struct {
-			Kind string `yaml:"kind"`
-			Metadata struct {Name string `yaml:"name"`} `yaml:"metadata"`
+			Kind string `json:"kind"`
+			Metadata struct {Name string `json:"name"`} `json:"metadata"`
 			Spec struct {
-				TenantRef struct {Name string `yaml:"name"`} `yaml:"tenantRef"`
-				AgentKey string `yaml:"agentKey"`
+				TenantRef struct {Name string `json:"name"`} `json:"tenantRef"`
+				AgentKey string `json:"agentKey"`
 				Access struct {
-					UserRef string `yaml:"userRef"`
-					Groups []string `yaml:"groups"`
-					ChatIAMGroups []string `yaml:"chatIAMGroups"`
-				} `yaml:"access"`
-			} `yaml:"spec"`
+					UserRef string `json:"userRef"`
+					Groups []string `json:"groups"`
+					ChatIAMGroups []string `json:"chatIAMGroups"`
+				} `json:"access"`
+			} `json:"spec"`
 		}
 		err:=decoder.Decode(&doc)
 		if err==io.EOF {break}
