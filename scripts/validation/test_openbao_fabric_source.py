@@ -380,6 +380,32 @@ class PrivatePOCTests(unittest.TestCase):
         issuer["spec"] = {"acme": {"server": "https://public.example.invalid"}}
         self.assertTrue(poc.check_render(manifests))
 
+    def test_runtime_auth_env_sa_privileges_and_bypass_annotations_denied(self):
+        for mutation in ("env", "envFrom", "privileged", "root", "seccomp",
+                         "pod-annotation", "host-network", "service-links"):
+            docs = copy.deepcopy(self.fixture())
+            sts = next(d for d in docs if d["kind"] == "StatefulSet")
+            pod = sts["spec"]["template"]["spec"]
+            container = pod["containers"][0]
+            if mutation == "env":
+                container["env"] = [{"name": "WORKLOAD_JWT", "value": "unused"}]
+            elif mutation == "envFrom":
+                container["envFrom"] = [{"secretRef": {"name": "unapproved"}}]
+            elif mutation == "privileged":
+                container["securityContext"]["privileged"] = True
+            elif mutation == "root":
+                pod["securityContext"]["runAsUser"] = 0
+            elif mutation == "seccomp":
+                pod["securityContext"]["seccompProfile"]["type"] = "Unconfined"
+            elif mutation == "pod-annotation":
+                sts["spec"]["template"]["metadata"]["annotations"] = {"bypass": "true"}
+            elif mutation == "host-network":
+                pod["hostNetwork"] = True
+            else:
+                pod["enableServiceLinks"] = True
+            with self.subTest(mutation=mutation):
+                self.assertTrue(poc.check_render(docs))
+
     def test_http_disabled_tls_and_inline_config_rejected(self):
         for extra in ("tls_disable = 1", "disable_mlock = true",
                       'api_addr = "http://127.0.0.1:8200"',

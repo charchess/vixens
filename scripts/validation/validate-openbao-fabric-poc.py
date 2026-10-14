@@ -136,8 +136,13 @@ def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
         errors.append("StatefulSet pod selector mismatch")
     if pod.get("automountServiceAccountToken") is not False or "serviceAccountName" in pod:
         errors.append("Kubernetes SA token/binding forbidden")
-    if any(k in pod for k in ("initContainers", "nodeName", "nodeSelector", "affinity")):
-        errors.append("bootstrap or forced scheduling forbidden")
+    if pod.get("enableServiceLinks") is not False or any(
+        k in pod for k in ("initContainers", "nodeName", "nodeSelector",
+                          "affinity", "hostNetwork", "hostPID", "hostIPC")
+    ):
+        errors.append("bootstrap, host network or forced scheduling forbidden")
+    if spec["template"]["metadata"].get("annotations"):
+        errors.append("Pod template bypass annotations forbidden")
     pod_security = pod.get("securityContext", {})
     if pod_security.get("runAsNonRoot") is not True:
         errors.append("nonroot required")
@@ -150,6 +155,13 @@ def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
             or type(pod_security.get("fsGroup")) is not int
             or pod_security["fsGroup"] != 1000):
         errors.append("OpenBao 2.6.2 requires image-proven numeric UID 100, GID 1000 and fsGroup 1000")
+    if (pod_security.get("fsGroupChangePolicy") != "OnRootMismatch"
+            or pod_security.get("seccompProfile") != {"type": "RuntimeDefault"}
+            or set(pod_security) != {
+                "runAsNonRoot", "runAsUser", "runAsGroup", "fsGroup",
+                "fsGroupChangePolicy", "seccompProfile",
+            }):
+        errors.append("exact rootless Pod security context required")
     containers = pod.get("containers", [])
     if len(containers) != 1:
         errors.append("exactly one runtime container required")
@@ -168,10 +180,15 @@ def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
             "path": "/v1/sys/health", "port": "api", "scheme": "HTTPS"
         } or "livenessProbe" in c or "startupProbe" in c):
             errors.append("unsealed-only readiness and no liveness required")
-        if (c.get("securityContext", {}).get("allowPrivilegeEscalation") is not False or
-            c.get("securityContext", {}).get("readOnlyRootFilesystem") is not True or
-            c.get("securityContext", {}).get("capabilities", {}).get("drop") != ["ALL"]):
+        if c.get("securityContext") != {
+            "allowPrivilegeEscalation": False,
+            "readOnlyRootFilesystem": True,
+            "capabilities": {"drop": ["ALL"]},
+        }:
             errors.append("server hardening missing")
+        if any(k in c for k in ("env", "envFrom", "lifecycle", "workingDir",
+                                "stdin", "stdinOnce", "tty")):
+            errors.append("unapproved container runtime injection/behavior forbidden")
         if [(p.get("containerPort"), p.get("protocol")) for p in c.get("ports", [])] != [(8200, "TCP")]:
             errors.append("OpenBao container port must be API 8200 only")
         mounts = {m["name"]: m["mountPath"] for m in c.get("volumeMounts", [])}
