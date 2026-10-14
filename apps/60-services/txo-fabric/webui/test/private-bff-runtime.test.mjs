@@ -145,7 +145,7 @@ test("account revoke, freshness loss, bridge outage and foreign Fabric ID always
     assert.equal(f.counts.account, 1);
     assert.equal(f.counts.bridge, settings.humanResult || settings.activeThrows ? 0 : 1);
   }
-}
+});
 
 test("feature OFF serves private health only and never invokes any app dependency", async () => {
   let privilegedCalls = 0;
