@@ -152,10 +152,11 @@ func TestHAIremAgentChatCannotInferPermissionOrCrossTenant(t *testing.T) {
 	foreign:=chatAgent("indiba-existing-agent","indiba","uid-indiba","existing-agent",[]string{"client0"})
 	if err:=r.Create(ctx,a);err!=nil {t.Fatal(err)}
 	if err:=r.Create(ctx,foreign);err!=nil {t.Fatal(err)}
+	beforeCalls := len(w.calls) // already contains the two fresh IAM membership scopes
 	if err:=r.reconcileAgentChatGrants(ctx,b,w,lease);err!=nil {t.Fatal(err)}
 	binding,err:=r.readOpenFGAAuthorizationBinding(ctx,b)
 	if err!=nil {t.Fatal(err)}
-	if len(w.calls)!=0 {t.Fatalf("an unselected agent received chat tuples: %v",w.calls)}
+	if len(w.calls)!=beforeCalls {t.Fatalf("an unselected agent received chat tuples: %v",w.calls)}
 	if len(agentTuples(w,binding.Store.ID,a.Name,"chatter"))!=0 ||
 		len(agentTuples(w,binding.Store.ID,foreign.Name,"chatter"))!=0 {
 		t.Fatal("workspace userRef or foreign agent became a grant")
