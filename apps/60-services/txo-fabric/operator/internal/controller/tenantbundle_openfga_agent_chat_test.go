@@ -9,6 +9,8 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -254,6 +256,78 @@ func TestAgentUIDChangeCannotSilentlyAdoptLegacyGrant(t *testing.T) {
 	}
 	if len(agentTuples(w,approved.Store.ID,a.Name,"chatter"))!=0 {
 		t.Fatal("old agent chat grant not withdrawn during UID drift")
+	}
+}
+
+type syncChatWriter struct {
+	mu sync.Mutex
+	target *recordingIAMWriter
+}
+func (w *syncChatWriter) ReconcileTupleScope(ctx context.Context, store, model string, scope openfga.TupleScope, tuples []openfga.Tuple) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.target.ReconcileTupleScope(ctx,store,model,scope,tuples)
+}
+
+type syncModelClient struct {
+	mu sync.Mutex
+	target *fakeOpenFGAModelClient
+}
+func (m *syncModelClient) EnsureAuthorizationModel(ctx context.Context, store string) (string,error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.target.EnsureAuthorizationModel(ctx,store)
+}
+func (m *syncModelClient) ValidateModelBinding(ctx context.Context, store, model string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.target.ValidateModelBinding(ctx,store,model)
+}
+
+func TestConcurrentHAIremAgentChatReconcilesDoNotDuplicateGrants(t *testing.T) {
+	ctx:=context.Background()
+	r,b,_,w,lease:=readyHAIremChat(t)
+	a:=chatAgent(hairemChatAgentName,"hairem","uid-chat","usr000001-agt00002",[]string{"client0"})
+	if err:=r.Create(ctx,a);err!=nil {t.Fatal(err)}
+	r.OpenFGAModelClient=&syncModelClient{target:r.OpenFGAModelClient.(*fakeOpenFGAModelClient)}
+	writer:=&syncChatWriter{target:w}
+	start:=make(chan struct{})
+	var wg sync.WaitGroup
+	var succeeded atomic.Int32
+	var failed atomic.Int32
+	for i:=0;i<8;i++ {
+		wg.Add(1)
+		go func(){
+			defer wg.Done()
+			<-start
+			if err:=r.reconcileAgentChatGrants(ctx,b,writer,lease);err==nil {
+				succeeded.Add(1)
+			} else {
+				// The only safe concurrent error is an optimistic CAS
+				// conflict: a later retry must converge from retained state.
+				failed.Add(1)
+			}
+		}()
+	}
+	close(start)
+	wg.Wait()
+	if succeeded.Load()==0 || succeeded.Load()+failed.Load()!=8 {
+		t.Fatal("no confirmed concurrent agent grant convergence")
+	}
+	if err:=r.reconcileAgentChatGrants(ctx,b,writer,lease);err!=nil {
+		t.Fatalf("CAS/restart retry did not converge: %v",err)
+	}
+	approved,err:=r.readOpenFGAAuthorizationBinding(ctx,b)
+	if err!=nil {t.Fatal(err)}
+	if got:=agentTuples(w,approved.Store.ID,a.Name,"chatter");len(got)!=1 ||
+		got[0].User!="group:txo-fabric-hairem-client0#member" {
+		t.Fatalf("concurrent reconcile duplicated or misplaced chat grant: %v",got)
+	}
+	record:=openFGAModelTestBinding(t,r,b.Spec.TenantID)
+	var agents []retainedChatAgent
+	if err:=json.Unmarshal([]byte(record.Data[agentChatBindingsKey]),&agents);err!=nil ||
+		len(agents)!=1 || agents[0].UID!=string(a.UID) {
+		t.Fatal("concurrent CAS lost immutable agent cleanup record")
 	}
 }
 
