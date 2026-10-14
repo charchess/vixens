@@ -16,7 +16,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FABRIC_PREFIX = "apps/60-services/txo-fabric/openbao-fabric/"
 ALLOWED_FILES = (".md", ".example")
-POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml"}
+POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "base/certificate.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml"}
 # Sensitive material MUST never appear in new source, even commented examples.
 ASSIGNMENT = re.compile(
     r"""(?ix)
