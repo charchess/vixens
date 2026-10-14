@@ -31,6 +31,10 @@ spec:
       terminationGracePeriodSeconds: 30
       securityContext:
         runAsNonRoot: true
+        # Image 2.6.2: OCI User=openbao, actual UID=100 and GID=1000.
+        # Kubelet requires a numeric identity to verify runAsNonRoot.
+        runAsUser: 100
+        runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:

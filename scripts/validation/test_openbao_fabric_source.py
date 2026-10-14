@@ -288,6 +288,50 @@ class PrivatePOCTests(unittest.TestCase):
     def test_exact_private_poc(self):
         self.assertEqual(poc.check_render(self.fixture()), [])
 
+    def test_image_proven_nonroot_identity_and_immutable_hardening(self):
+        manifests = self.fixture()
+        sts = next(d for d in manifests if d["kind"] == "StatefulSet")
+        pod = sts["spec"]["template"]["spec"]
+        self.assertEqual(pod["securityContext"]["runAsNonRoot"], True)
+        self.assertEqual(pod["securityContext"]["runAsUser"], 100)
+        self.assertEqual(pod["securityContext"]["runAsGroup"], 1000)
+        self.assertEqual(pod["securityContext"]["fsGroup"], 1000)
+        self.assertEqual(pod["securityContext"]["fsGroupChangePolicy"], "OnRootMismatch")
+        self.assertEqual(pod["securityContext"]["seccompProfile"], {"type": "RuntimeDefault"})
+        container = pod["containers"][0]
+        self.assertFalse(container["securityContext"]["allowPrivilegeEscalation"])
+        self.assertTrue(container["securityContext"]["readOnlyRootFilesystem"])
+        self.assertEqual(container["securityContext"]["capabilities"]["drop"], ["ALL"])
+        self.assertIn({"name": "scratch", "mountPath": "/tmp"}, container["volumeMounts"])
+        self.assertEqual(poc.check_render(manifests), [])
+
+    def test_missing_non_numeric_or_wrong_image_identity_fails_closed(self):
+        for key, invalid in (
+            ("runAsUser", None),
+            ("runAsUser", "openbao"),
+            ("runAsUser", "100"),
+            ("runAsUser", 0),
+            ("runAsUser", 101),
+            ("runAsUser", True),
+            ("runAsGroup", None),
+            ("runAsGroup", "1000"),
+            ("runAsGroup", 0),
+            ("runAsGroup", 1001),
+            ("fsGroup", None),
+            ("fsGroup", "1000"),
+            ("fsGroup", 0),
+        ):
+            with self.subTest(field=key, value=invalid):
+                manifests = copy.deepcopy(self.fixture())
+                sts = next(d for d in manifests if d["kind"] == "StatefulSet")
+                context = sts["spec"]["template"]["spec"]["securityContext"]
+                if invalid is None:
+                    del context[key]
+                else:
+                    context[key] = invalid
+                errors = poc.check_render(manifests)
+                self.assertTrue(any("numeric UID 100" in msg for msg in errors), errors)
+
     def test_wrong_service_type_and_client_ingress_denied(self):
         for public in ("NodePort", "LoadBalancer"):
             manifests = copy.deepcopy(self.fixture())
