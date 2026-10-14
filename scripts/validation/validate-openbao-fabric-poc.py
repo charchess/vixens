@@ -84,8 +84,18 @@ def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
         errors.append("Kubernetes SA token/binding forbidden")
     if any(k in pod for k in ("initContainers", "nodeName", "nodeSelector", "affinity")):
         errors.append("bootstrap or forced scheduling forbidden")
-    if pod.get("securityContext", {}).get("runAsNonRoot") is not True:
+    pod_security = pod.get("securityContext", {})
+    if pod_security.get("runAsNonRoot") is not True:
         errors.append("nonroot required")
+    # OCI User=openbao is non-numeric. Kubelet fails closed even with
+    # runAsNonRoot=true unless we specify the image-proven numeric UID/GID.
+    if (type(pod_security.get("runAsUser")) is not int
+            or pod_security["runAsUser"] != 100
+            or type(pod_security.get("runAsGroup")) is not int
+            or pod_security["runAsGroup"] != 1000
+            or type(pod_security.get("fsGroup")) is not int
+            or pod_security["fsGroup"] != 1000):
+        errors.append("OpenBao 2.6.2 requires image-proven numeric UID 100, GID 1000 and fsGroup 1000")
     containers = pod.get("containers", [])
     if len(containers) != 1:
         errors.append("exactly one runtime container required")
