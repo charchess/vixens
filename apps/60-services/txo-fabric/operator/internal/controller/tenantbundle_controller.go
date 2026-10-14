@@ -230,9 +230,21 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			}
 			return ctrl.Result{RequeueAfter: authorizationRefresh}, nil
 		}
-		// The expiry is non-secret: persisted True without a future
-		// validUntil and matching observedGeneration MUST be rejected.
-		setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionTrue, "TenantMembershipReconciled", "validUntil="+validUntil+"; tenant membership only; agent grants not included")
+		// Agent grants are derived ONLY from explicit AgentIdentity chatIAMGroups
+		// and the already-verified authoritative group/tenant membership.
+		// No grant is inferred from workspace userRef or a browser subject.
+		if err := r.reconcileAgentChatGrants(ctx, &bundle, writer, validUntil); err != nil {
+			bundle.Status.Phase = "Degraded"
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, "AgentGrantSyncFailed", "declared agent chat authorization is not converged")
+			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "AgentGrantSyncFailed", "agent chat authorization is unavailable")
+			if !reflect.DeepEqual(previousStatus, bundle.Status) {
+				_ = r.Status().Update(ctx, &bundle)
+			}
+			return ctrl.Result{RequeueAfter: authorizationRefresh}, nil
+		}
+		// Tenant membership AND declared agent grants are now verified,
+		// but downstream BFF still checks each action, policy and lifecycle.
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionTrue, "TenantMembershipReconciled", "validUntil="+validUntil+"; declared agent chat tuples reconciled; effective policy not included")
 	} else {
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAStoreReady", metav1.ConditionFalse, "RolloutDisabled", "private tenant authorization store reconciliation is not enabled")
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAModelReady", metav1.ConditionFalse, "RolloutDisabled", "private tenant authorization model reconciliation is not enabled")

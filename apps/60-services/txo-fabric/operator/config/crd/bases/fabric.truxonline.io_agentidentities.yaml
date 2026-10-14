@@ -64,6 +64,18 @@ spec:
                 description: Access selects tenant-declared user/group shared workspace
                   scopes.
                 properties:
+                  chatIAMGroups:
+                    description: |-
+                      ChatIAMGroups is an explicit agent.chat access intent referencing only
+                      TenantBundle.humanAccess.web.iamGroups keys, NOT workspace group keys.
+                      Authentik live membership, immutable UUID→Fabric ledger, and tenant
+                      group-UUID pins are separately verified before any tuple is written.
+                      Omitted/empty never implies an agent.chat permission.
+                    items:
+                      type: string
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-type: set
                   groups:
                     description: Groups selects declared tenant group workspace scopes.
                     items:
