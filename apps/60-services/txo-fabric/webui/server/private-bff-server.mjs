@@ -4,6 +4,7 @@ import { pipeline } from "node:stream/promises";
 import { createGlobalWebUIApp } from "./global-auth-http.mjs";
 import { createPostgresOIDCTransactions } from "./oidc-postgres-transactions.mjs";
 import { createPostgresGlobalSessions } from "./global-postgres-sessions.mjs";
+import { createVerifiedTenantBridgeAccess } from "./private-bridge-client.mjs";
 
 const NO_STORE = Object.freeze({
   "Cache-Control": "no-store",
@@ -21,16 +22,24 @@ const OFF_ROUTES = new Set(["/healthz", "/readyz"]);
  */
 export function composeGlobalBFF({
   expectedOrigin, authentikOrigin, pool, verifyActiveHuman,
-  listTenantCatalog, resolveTenantAccess, getTenantChat,
+  listTenantCatalog, bridgeClient, getTenantChat,
+  browserEnabled = false, bridgeEnabled = false,
   resolvePlatformAccess, fetchImpl,
 } = {}) {
-  if (typeof pool?.query !== "function" ||
+  // Never compose a browser-visible BFF using a caller-supplied permissive
+  // resolveTenantAccess callback. The source-only bridge path is mandatory
+  // and both gates must be explicitly approved. Runtime remains health-only.
+  if (browserEnabled !== true || bridgeEnabled !== true ||
+      typeof pool?.query !== "function" ||
       typeof verifyActiveHuman !== "function" ||
       typeof listTenantCatalog !== "function" ||
-      typeof resolveTenantAccess !== "function" ||
+      typeof bridgeClient?.resolve !== "function" ||
       typeof getTenantChat !== "function") {
     throw new Error("Global Fabric BFF privileged dependencies unavailable");
   }
+  const resolveTenantAccess = createVerifiedTenantBridgeAccess({
+    browserEnabled, bridgeEnabled, verifyActiveHuman, bridgeClient,
+  });
   const transactions = createPostgresOIDCTransactions({ pool });
   const sessions = createPostgresGlobalSessions({ pool });
   return createGlobalWebUIApp({

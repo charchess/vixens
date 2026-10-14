@@ -3,15 +3,16 @@ import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import { createPrivateBFFHandler, createPrivateBFFServer, composeGlobalBFF, resolveRuntimeGate } from "../server/private-bff-server.mjs";
 import {
-  createPrivateBridgeClient, PRIVATE_BRIDGE_URL, PRIVATE_BRIDGE_PATH,
-  PRIVATE_BRIDGE_AUDIENCE, PRIVATE_BFF_SUBJECT,
+  createPrivateBridgeClient, createVerifiedTenantBridgeAccess,
+  PRIVATE_BRIDGE_URL, PRIVATE_BRIDGE_PATH, PRIVATE_BRIDGE_AUDIENCE,
+  PRIVATE_BFF_SUBJECT, GLOBAL_OIDC_ISSUER,
 } from "../server/private-bridge-client.mjs";
 
 const uuid = "550e8400-e29b-41d4-a716-446655440001";
 const now = 1_760_214_000_000;
 const key = Buffer.alloc(32, 107);
 const token = Buffer.from("eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ0ZXN0In0.sig");
-const expected = { tenantKey: "indiba", fabricUserId: "usr000002" };
+const expected = { tenantKey: "indiba", fabricUserId: "usraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" };
 
 function fixture({ enabled = true, response, failRead = false, failFetch = false } = {}) {
   const calls = [];
@@ -33,6 +34,117 @@ function fixture({ enabled = true, response, failRead = false, failFetch = false
     },
   });
   return { client, calls, readPaths };
+}
+
+
+const canonicalHuman = Object.freeze({
+  issuer: GLOBAL_OIDC_ISSUER,
+  oidcSubject: "opaque-global-sub",
+  authentikUserUUID: uuid,
+});
+const canonicalTenantId = "TEN00001";
+
+function privilegedBridgeFixture({ browserEnabled = true, bridgeEnabled = true,
+  humanResult, bridgeResult, activeThrows = false, bridgeThrows = false } = {}) {
+  const counts = { account: 0, bridge: 0 };
+  const verifyActiveHuman = async (identity) => {
+    counts.account++;
+    if (activeThrows) throw Error("provider unavailable");
+    return humanResult === undefined
+      ? { ...identity, accountActive: true, fresh: true } : humanResult;
+  };
+  const bridgeClient = {
+    async resolve() {
+      counts.bridge++;
+      if (bridgeThrows) throw Error("operator bridge unavailable");
+      return bridgeResult === undefined
+        ? { tenantKey: "indiba", fabricUserId: "usraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" } : bridgeResult;
+    },
+  };
+  const access = createVerifiedTenantBridgeAccess({
+    browserEnabled, bridgeEnabled, verifyActiveHuman, bridgeClient,
+  });
+  return { access, counts, verifyActiveHuman, bridgeClient };
+}
+
+test("verified global session + server-owned tenant catalogue compose exact bridge membership only", async () => {
+  const f = privilegedBridgeFixture();
+  const first = await f.access({
+    identity: canonicalHuman, tenantKey: "indiba", fabricTenantId: canonicalTenantId,
+  });
+  const second = await f.access({
+    identity: canonicalHuman, tenantKey: "indiba", fabricTenantId: canonicalTenantId,
+  });
+  assert.deepEqual(first, {
+    tenantKey: "indiba", fabricTenantId: canonicalTenantId,
+    fabricUserId: "usraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    accountActive: true, fresh: true, canEnter: true, canManageTenant: false,
+  });
+  assert.deepEqual(second, first);
+  assert.deepEqual(f.counts, { account: 2, bridge: 2 },
+    "new live human verification + unique bridge assertion required per operation");
+  assert.ok(Object.isFrozen(first));
+  // Both gates must be explicitly true even in a source-only composition.
+  assert.throws(() => composeGlobalBFF({
+    pool: { query() {} }, verifyActiveHuman: f.verifyActiveHuman,
+    listTenantCatalog: () => [], bridgeClient: f.bridgeClient, getTenantChat: () => {},
+  }), /dependencies/);
+});
+
+test("browser/bridge gate OFF performs zero privileged reads or calls", async () => {
+  for (const setting of [{browserEnabled: false}, {bridgeEnabled: false},
+    {browserEnabled: false, bridgeEnabled: false}]) {
+    const f = privilegedBridgeFixture(setting);
+    await assert.rejects(f.access({
+      identity: canonicalHuman, tenantKey: "indiba", fabricTenantId: canonicalTenantId,
+    }), /unavailable/);
+    assert.deepEqual(f.counts, { account: 0, bridge: 0 });
+  }
+});
+
+test("global issuer UUID and requested tenant cannot smuggle Fabric authority", async () => {
+  const forged = [
+    { identity: { ...canonicalHuman, issuer: "https://other.example.invalid/application/o/txo-fabric-webui/" } },
+    { identity: { ...canonicalHuman, authentikUserUUID: "global-sub" } },
+    { identity: { ...canonicalHuman, verified: true } },
+    { identity: { ...canonicalHuman, fabricUserId: "usraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" } },
+    { identity: { ...canonicalHuman, oidcSubject: "" } },
+    { tenantKey: "../indiba" },
+    { fabricTenantId: "TEN00002_FROM_BROWSER" },
+    { fabricTenantId: "indiba" },
+    { fabricTenantId: undefined },
+  ];
+  for (const override of forged) {
+    const f = privilegedBridgeFixture();
+    await assert.rejects(f.access({
+      identity: canonicalHuman, tenantKey: "indiba",
+      fabricTenantId: canonicalTenantId, ...override,
+    }), /unavailable/);
+    assert.deepEqual(f.counts, {account: 0, bridge: 0});
+  }
+});
+
+test("account revoke, freshness loss, bridge outage and foreign Fabric ID always deny", async () => {
+  for (const settings of [
+    { humanResult: { ...canonicalHuman, accountActive: false, fresh: true } },
+    { humanResult: { ...canonicalHuman, accountActive: true, fresh: false } },
+    { humanResult: { ...canonicalHuman, authentikUserUUID: "550e8400-e29b-41d4-a716-446655440002",
+      accountActive: true, fresh: true } },
+    { activeThrows: true },
+    { bridgeThrows: true },
+    { bridgeResult: { tenantKey: "sibling", fabricUserId: "usraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" } },
+    { bridgeResult: { tenantKey: "indiba", fabricUserId: "global-sub" } },
+    { bridgeResult: { tenantKey: "indiba", fabricUserId: "usr000002" } },
+    { bridgeResult: { tenantKey: "indiba", fabricUserId: "usraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      storeId: "client-supplied" } },
+  ]) {
+    const f = privilegedBridgeFixture(settings);
+    await assert.rejects(f.access({
+      identity: canonicalHuman, tenantKey: "indiba", fabricTenantId: canonicalTenantId,
+    }), /^Error: Private Fabric identity unavailable$/);
+    assert.equal(f.counts.account, 1);
+    assert.equal(f.counts.bridge, settings.humanResult || settings.activeThrows ? 0 : 1);
+  }
 }
 
 test("feature OFF serves private health only and never invokes any app dependency", async () => {
@@ -147,10 +259,10 @@ test("bridge rejects timeout, forbidden, malformed, foreign tenant/user and redi
     new Response("not found", { status: 404 }),
     new Response("bad request", { status: 503 }),
     new Response("corrupt", { status: 200 }),
-    new Response(JSON.stringify({ tenantKey: "hairem", fabricUserId: "usr000002" })),
+    new Response(JSON.stringify({ tenantKey: "hairem", fabricUserId: "usraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" })),
     new Response(JSON.stringify({ tenantKey: "indiba", fabricUserId: "global-sub" })),
     new Response(JSON.stringify({ ...expected, issuer: "forged" })),
-    new Response(JSON.stringify({ tenantKey: "indiba", fabricUserId: "usr000002", extra: true })),
+    new Response(JSON.stringify({ tenantKey: "indiba", fabricUserId: "usraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", extra: true })),
     new Response(JSON.stringify(expected), { status: 302, headers: { Location: "https://evil.test" } }),
   ]) {
     const f = fixture({ response });

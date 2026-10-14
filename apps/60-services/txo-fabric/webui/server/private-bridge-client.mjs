@@ -9,7 +9,11 @@ export const PRIVATE_BFF_SUBJECT =
   "system:serviceaccount:txo-fabric-system:txo-fabric-webui-bff";
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const TENANT = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
-const USER_ID = /^usr[a-z0-9-]{1,63}$/;
+const USER_ID = /^usr[0-9a-f]{32}$/;
+const TENANT_ID = /^TEN[0-9]{5,}$/;
+export const GLOBAL_OIDC_ISSUER =
+  "https://authentik.truxonline.com/application/o/txo-fabric-webui/";
+const SUBJECT = /^[!-~]{1,255}$/;
 const JWT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 const denied = () => new Error("Private Fabric identity unavailable");
 
@@ -80,6 +84,7 @@ export function createPrivateBridgeClient({
           signal: AbortSignal.timeout(2000),
         });
         if (response.status !== 200 || response.redirected ||
+            !/^application\/json(?:\s*;|$)/i.test(response.headers?.get?.("content-type") || "") ||
             Number(response.headers?.get?.("content-length") || 0) > 2048) throw denied();
         const text = await response.text();
         if (text.length > 2048) throw denied();
@@ -97,4 +102,74 @@ export function createPrivateBridgeClient({
       }
     },
   });
+}
+
+/**
+ * Source-only BFF composition seam, NOT an authentication endpoint.
+ *
+ * The ONLY production caller is expected to be createGlobalWebUIHandler:
+ * it obtains identity from a verified, server-owned durable GLOBAL OIDC
+ * session and tenantKey/fabricTenantId from the canonical server catalogue.
+ * No raw browser request, group claim, issuer-substitution, Fabric user ID,
+ * store/model, backend URL or AgentIdentity is accepted here.
+ *
+ * The live Authentik recheck prevents stale/inactive global sessions.
+ * The operator's separately authenticated bridge proves fresh tenant-group
+ * membership, issuer-pinned legacy ledger and FGA reconciliation lease;
+ * a Fabric user ID is NEVER assigned from the global OIDC subject. An agent
+ * grant (agent.chat) and effective policy are STILL a separate operation-
+ * level authorization check, not implied by this tenant membership.
+ *
+ * The double opt-in is source-only. Runtime BFF never instantiates it,
+ * even if someone flips an environment variable.
+ */
+export function createVerifiedTenantBridgeAccess({
+  browserEnabled = false, bridgeEnabled = false,
+  verifyActiveHuman, bridgeClient,
+} = {}) {
+  if (typeof browserEnabled !== "boolean" || typeof bridgeEnabled !== "boolean" ||
+      typeof verifyActiveHuman !== "function" ||
+      typeof bridgeClient?.resolve !== "function") throw denied();
+
+  return async function resolveTenantAccess({ identity, tenantKey, fabricTenantId } = {}) {
+    // No auth-provider call, secret read, token or network when either gate is
+    // OFF. This function is never a direct browser-facing API.
+    if (!browserEnabled || !bridgeEnabled) throw denied();
+    if (!identity || typeof identity !== "object" || Array.isArray(identity) ||
+        Object.keys(identity).length !== 3 ||
+        !["issuer", "oidcSubject", "authentikUserUUID"].every(k =>
+          Object.prototype.hasOwnProperty.call(identity, k)) ||
+        identity.issuer !== GLOBAL_OIDC_ISSUER ||
+        typeof identity.oidcSubject !== "string" || !SUBJECT.test(identity.oidcSubject) ||
+        !UUID.test(identity.authentikUserUUID || "") ||
+        typeof tenantKey !== "string" || !TENANT.test(tenantKey) ||
+        typeof fabricTenantId !== "string" || !TENANT_ID.test(fabricTenantId)) throw denied();
+    try {
+      const probe = Object.freeze({
+        issuer: identity.issuer, oidcSubject: identity.oidcSubject,
+        authentikUserUUID: identity.authentikUserUUID,
+      });
+      const active = await verifyActiveHuman(probe);
+      if (!active || active.accountActive !== true || active.fresh !== true ||
+          active.issuer !== probe.issuer ||
+          active.oidcSubject !== probe.oidcSubject ||
+          active.authentikUserUUID !== probe.authentikUserUUID) throw denied();
+      const result = await bridgeClient.resolve(Object.freeze({
+        tenantKey, authentikUserUUID: probe.authentikUserUUID,
+      }));
+      if (!result || typeof result !== "object" || Array.isArray(result) ||
+          Object.keys(result).length !== 2 ||
+          result.tenantKey !== tenantKey ||
+          typeof result.fabricUserId !== "string" ||
+          !USER_ID.test(result.fabricUserId)) throw denied();
+
+      // canEnter is ONLY a current tenant-membership result from the real
+      // operator resolver. Never invent an admin/agent.chat permission.
+      return Object.freeze({
+        tenantKey, fabricTenantId, fabricUserId: result.fabricUserId,
+        accountActive: true, fresh: true, canEnter: true,
+        canManageTenant: false,
+      });
+    } catch { throw denied(); }
+  };
 }
