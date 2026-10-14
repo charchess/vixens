@@ -25,7 +25,7 @@ TLS_NAMES = {
     ("Issuer", "openbao-fabric-selfsigned"),
     ("Certificate", "openbao-fabric-ca"),
     ("Issuer", "openbao-fabric-ca-issuer"),
-    ("Certificate", "openbao-fabric-server"),
+    ("Certificate", "openbao-fabric-tls"),
 }
 SERVICE_DNS = [
     "openbao-fabric",
@@ -92,7 +92,7 @@ def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
         ("Issuer", "openbao-fabric-ca-issuer"): {
             "ca": {"secretName": "openbao-fabric-ca"},
         },
-        ("Certificate", "openbao-fabric-server"): {
+        ("Certificate", "openbao-fabric-tls"): {
             "secretName": "openbao-fabric-tls",
             "duration": "2160h",
             "renewBefore": "360h",

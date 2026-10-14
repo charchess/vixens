@@ -349,7 +349,7 @@ class PrivatePOCTests(unittest.TestCase):
         self.assertEqual(len(manifests), 8)
         self.assertEqual(poc.check_render(manifests), [])
         chain = {(d["kind"], d["metadata"]["name"]): d for d in manifests}
-        leaf = chain[("Certificate", "openbao-fabric-server")]
+        leaf = chain[("Certificate", "openbao-fabric-tls")]
         self.assertEqual(leaf["spec"]["dnsNames"], poc.SERVICE_DNS)
         self.assertEqual(leaf["spec"]["secretName"], "openbao-fabric-tls")
         sts = chain[("StatefulSet", "openbao-fabric")]
@@ -371,7 +371,7 @@ class PrivatePOCTests(unittest.TestCase):
             manifests = copy.deepcopy(self.fixture())
             leaf = next(d for d in manifests
                         if (d["kind"], d["metadata"]["name"]) ==
-                        ("Certificate", "openbao-fabric-server"))
+                        ("Certificate", "openbao-fabric-tls"))
             mutate(leaf)
             self.assertTrue(poc.check_render(manifests))
         manifests = copy.deepcopy(self.fixture())

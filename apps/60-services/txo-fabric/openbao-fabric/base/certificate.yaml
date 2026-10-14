@@ -54,7 +54,7 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: openbao-fabric-server
+  name: openbao-fabric-tls
   namespace: txo-fabric-system
   labels:
     app.kubernetes.io/name: openbao-fabric

@@ -14,7 +14,7 @@ live observation performed by this change.
   `Issuer/openbao-fabric-selfsigned` bootstraps
   `Certificate/openbao-fabric-ca` (a self-signed CA stored by cert-manager
   as a namespace Secret); `Issuer/openbao-fabric-ca-issuer` signs
-  `Certificate/openbao-fabric-server`. Only cert-manager creates the
+  `Certificate/openbao-fabric-tls`. Only cert-manager creates the
   corresponding CA and leaf TLS Secrets. **Neither certificate nor key
   material is committed in Git**. No ACME/public DNS issuer is used.
 - The leaf `secretName: openbao-fabric-tls` has precisely four Service DNS
