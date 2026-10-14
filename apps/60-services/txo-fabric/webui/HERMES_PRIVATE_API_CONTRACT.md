@@ -1,3 +1,45 @@
+
+## #4037 source-only BFF → private bridge composition (2026-10-14)
+
+The operator already implements the **separate private 8090 listener** gated by
+`TXO_FABRIC_PRIVATE_BRIDGE_ENABLED=false`, exact BFF SA subject
+`system:serviceaccount:txo-fabric-system:txo-fabric-webui-bff`, Kubernetes
+TokenReview with audience `txo-fabric-private-identity`, pinned Kubernetes
+issuer/short-lived projected token validation, short HMAC assertion and a
+cross-replica create-only JTI Lease. Its read-only resolver consults active
+Authentik UUID/group pins, immutable per-tenant *legacy issuer-pinned* Fabric
+identity ledger, current generation/store/model and bounded
+`OpenFGAAuthorizationReady` reconciliation condition. Denial is generic;
+a replay or TokenReview outage fails closed. **No source rewrite of the
+ledger or creation of a FabricUserID is allowed.**
+
+The missing BFF **composition seam** is now an explicit
+`createVerifiedTenantBridgeAccess` used by `composeGlobalBFF`: the global
+WebUI request handler first validates the durable OIDC browser session and
+server-owned tenant catalogue, then the adapter demands the exact global
+Authentik issuer and user UUID, independently re-checks the Authentik account
+for `accountActive=true` and `fresh=true`, and invokes the HMAC/JTI-signed
+private bridge client for that canonical tenant scope. Only the operator's
+tenant-scoped, already-persisted `usr<32hex>` identity is accepted. A result
+is projected as `accountActive/fresh/canEnter=true` solely after both fresh
+checks; `canManageTenant=false` by default. **This is a tenant membership,
+not an `agent.chat` grant**: the separately reviewed chat action-level
+OpenFGA/effective-policy and AgentIdentity ownership check is still required.
+
+`composeGlobalBFF` no longer accepts a generic ad-hoc
+`resolveTenantAccess` provider; the bridge-backed seam and explicit
+`browserEnabled=true` plus `bridgeEnabled=true` would both be required
+before a future server could compose it. **The deployed BFF does not
+instantiate this factory.** Actual `private-bff-main.mjs` stays
+health-only with `TXO_WEBUI_BFF_BROWSER_ENABLED=false`; operator private
+bridge and OpenFGA rollout gates remain false. No Identity HTTP browser
+route, URL, Secret, store/model, raw token, credential, key, nonce or
+upstream service is exposed by this source change. Physical BFF
+session/canary, bridge-to-operator workload identity and Hermes grants
+remain separate authorization gates; no real conversation is enabled.
+
+---
+
 # #3981 — Current POC choice: stateless Fabric BFF → Hermes Responses
 
 **This section supersedes the historical native-session and durable-BFF-thread
