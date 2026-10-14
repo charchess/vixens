@@ -21,6 +21,21 @@ FABRIC_NAMES = {
     ("Service", "openbao-fabric"),
     ("NetworkPolicy", "openbao-fabric-private"),
 }
+TLS_NAMES = {
+    ("Issuer", "openbao-fabric-selfsigned"),
+    ("Certificate", "openbao-fabric-ca"),
+    ("Issuer", "openbao-fabric-ca-issuer"),
+    ("Certificate", "openbao-fabric-server"),
+}
+SERVICE_DNS = [
+    "openbao-fabric",
+    "openbao-fabric.txo-fabric-system",
+    "openbao-fabric.txo-fabric-system.svc",
+    "openbao-fabric.txo-fabric-system.svc.cluster.local",
+]
+ISSUER_GROUP = "cert-manager.io"
+KEY_PROFILE = {"algorithm": "ECDSA", "size": 256, "rotationPolicy": "Always"}
+
 LABELS = {"app.kubernetes.io/name": "openbao-fabric", "app.kubernetes.io/component": "secret-plane"}
 FORBIDDEN_KINDS = {"Secret", "ExternalSecret", "SecretStore", "ClusterSecretStore",
                    "Ingress", "Gateway", "HTTPRoute", "Job", "CronJob", "Deployment"}
@@ -38,20 +53,59 @@ def parse_yaml(path: pathlib.Path) -> list[dict]:
 
 def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
     errors: list[str] = []
+    # The base component must contain only these eight sources. A historic
+    # Infra ExternalSecret elsewhere in TXO compositions is not a new
+    # Fabric consumer; source-only diff guard separately forbids new Infra use.
+    expected = FABRIC_NAMES | TLS_NAMES
     fabric = [
         d for d in docs if (
             d.get("metadata", {}).get("labels", {}).get("app.kubernetes.io/name") == "openbao-fabric"
-            or d.get("metadata", {}).get("name") in {n for _, n in FABRIC_NAMES}
+            or (d.get("kind"), d.get("metadata", {}).get("name")) in expected
         )
     ]
     pairs = [(d.get("kind"), d.get("metadata", {}).get("name")) for d in fabric]
-    if len(pairs) != 4 or set(pairs) != FABRIC_NAMES:
-        return [f"required exact four Fabric POC objects, got {pairs}"]
+    if len(pairs) != len(expected) or set(pairs) != expected:
+        return [f"required exact eight Fabric/TLS resources, got {pairs}"]
+    if not selected and len(docs) != len(expected):
+        return ["unexpected additional client/Secret/resource in private base/overlay"]
+
     if any(d["metadata"].get("namespace") != "txo-fabric-system" for d in fabric):
         errors.append("wrong Fabric namespace")
     if any(not all(d["metadata"].get("labels", {}).get(k) == v for k, v in LABELS.items()) for d in fabric):
         errors.append("missing Fabric name/component labels")
-    by_kind = {d["kind"]: d for d in fabric}
+    by_kind = {d["kind"]: d for d in fabric if (d["kind"], d["metadata"]["name"]) in FABRIC_NAMES}
+    tls_resources = {(d["kind"], d["metadata"]["name"]): d for d in fabric
+                     if (d["kind"], d["metadata"]["name"]) in TLS_NAMES}
+    issuer_ref = lambda name: {"name": name, "kind": "Issuer", "group": ISSUER_GROUP}
+    expected_tls = {
+        ("Issuer", "openbao-fabric-selfsigned"): {"selfSigned": {}},
+        ("Certificate", "openbao-fabric-ca"): {
+            "secretName": "openbao-fabric-ca",
+            "isCA": True,
+            "commonName": "openbao-fabric-ca",
+            "duration": "8760h",
+            "renewBefore": "720h",
+            "privateKey": KEY_PROFILE,
+            "usages": ["cert sign", "crl sign"],
+            "issuerRef": issuer_ref("openbao-fabric-selfsigned"),
+        },
+        ("Issuer", "openbao-fabric-ca-issuer"): {
+            "ca": {"secretName": "openbao-fabric-ca"},
+        },
+        ("Certificate", "openbao-fabric-server"): {
+            "secretName": "openbao-fabric-tls",
+            "duration": "2160h",
+            "renewBefore": "360h",
+            "privateKey": KEY_PROFILE,
+            "usages": ["digital signature", "server auth"],
+            "dnsNames": SERVICE_DNS,
+            "issuerRef": issuer_ref("openbao-fabric-ca-issuer"),
+        },
+    }
+    for identity, wanted in expected_tls.items():
+        obj = tls_resources[identity]
+        if obj.get("apiVersion") != ISSUER_GROUP + "/v1" or obj.get("spec") != wanted:
+            errors.append(f"invalid internal cert-manager chain/SANs for {identity}")
     if any(d["kind"] in FORBIDDEN_KINDS for d in fabric):
         errors.append("forbidden Fabric resource")
     if any(x in str(fabric) for x in BAD_STRINGS):
@@ -110,8 +164,9 @@ def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
             "limits": {"cpu": "500m", "memory": "512Mi"},
         }:
             errors.append("resource budget mismatch")
-        if (c.get("readinessProbe", {}).get("httpGet", {}).get("path") != "/v1/sys/health" or
-            "livenessProbe" in c or "startupProbe" in c):
+        if (c.get("readinessProbe", {}).get("httpGet") != {
+            "path": "/v1/sys/health", "port": "api", "scheme": "HTTPS"
+        } or "livenessProbe" in c or "startupProbe" in c):
             errors.append("unsealed-only readiness and no liveness required")
         if (c.get("securityContext", {}).get("allowPrivilegeEscalation") is not False or
             c.get("securityContext", {}).get("readOnlyRootFilesystem") is not True or
@@ -120,10 +175,22 @@ def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
         if [(p.get("containerPort"), p.get("protocol")) for p in c.get("ports", [])] != [(8200, "TCP")]:
             errors.append("OpenBao container port must be API 8200 only")
         mounts = {m["name"]: m["mountPath"] for m in c.get("volumeMounts", [])}
-        if mounts.get("data") != "/openbao/data" or mounts.get("config") != "/openbao/config":
-            errors.append("wrong raft/config volume mounts")
-    if any("hostPath" in v or "secret" in v or "projected" in v for v in pod.get("volumes", [])):
-        errors.append("hostPath, token or secret volume forbidden")
+        if mounts != {
+            "data": "/openbao/data",
+            "config": "/openbao/config",
+            "scratch": "/tmp",
+            "tls": "/openbao/tls",
+        } or not all(m.get("readOnly") is True for m in c.get("volumeMounts", [])
+                     if m.get("name") in {"config", "tls"}):
+            errors.append("wrong Raft/config/scratch/TLS volume mounts or not read-only")
+    volumes = {vol.get("name"): vol for vol in pod.get("volumes", [])}
+    if volumes != {
+        "config": {"name": "config", "configMap": {"name": "openbao-fabric-config"}},
+        "scratch": {"name": "scratch", "emptyDir": {"sizeLimit": "32Mi"}},
+        "tls": {"name": "tls", "secret": {"secretName": "openbao-fabric-tls", "defaultMode": 0o440}},
+    }:
+        errors.append("only the exact read-only cert-manager TLS Secret reference is allowed")
+
     service = by_kind["Service"]["spec"]
     if (service.get("type") != "ClusterIP" or service.get("externalIPs") or
         service.get("externalName") or service.get("loadBalancerIP") or
@@ -139,12 +206,18 @@ def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
     hcl = config.get("server.hcl", "")
     if set(config) != {"server.hcl"} or not all(x in hcl for x in (
         'storage "raft"', 'path = "/openbao/data"', 'node_id = "openbao-fabric-0"',
-        'listener "tcp"', 'address = "0.0.0.0:8200"', 'tls_disable = 1',
-        'disable_mlock = true', 'api_addr = "http://127.0.0.1:8200"'
+        'listener "tcp"', 'address = "0.0.0.0:8200"',
+        'api_addr = "https://openbao-fabric.txo-fabric-system.svc:8200"',
+        'tls_cert_file = "/openbao/tls/tls.crt"',
+        'tls_key_file = "/openbao/tls/tls.key"',
     )):
-        errors.append("non-dev local persistent Raft config required")
-    if re.search(r"(?im)^\s*(?:seal|auto_unseal|token|root_token|password)\s*[={]", hcl):
-        errors.append("secret or auto-unseal found in HCL")
+        errors.append("non-dev private Raft HTTPS HCL required")
+    if re.search(r"(?im)^\s*(?:tls_disable|disable_mlock)\s*=", hcl) or (
+        "http://" in hcl or "-----BEGIN" in hcl or
+        re.search(r"(?im)^\s*(?:seal|auto_unseal|token|root_token|password|private_key|"
+                  r"tls_cert|tls_key|certificate|ca_cert)\s*[={]", hcl)
+    ):
+        errors.append("HTTP/disabled TLS/obsolete mlock/inline key or secret forbidden in HCL")
     if selected:
         default_denies = [d for d in docs if d.get("kind") == "NetworkPolicy"
                           and d.get("metadata", {}).get("name") == "default-deny"
@@ -189,8 +262,9 @@ def main() -> int:
     for error in errors:
         print("FAIL: " + error, file=sys.stderr)
     if not errors:
-        print("PASS: five Kustomize renders: exact four private Fabric objects, Retain, no clients, no credentials")
-        print("PASS: TXO default-deny present; BFF/bridge gates false in selected prod composition")
+        print("PASS: five Kustomize renders: four private Fabric + four namespace-local cert-manager objects")
+        print("PASS: exact Service SANs, HTTPS listener and probe, TLS Secret reference-only, Raft Retain")
+        print("PASS: deny-all, no consumers/credential inline; BFF/bridge gates false")
     return 1 if errors else 0
 
 

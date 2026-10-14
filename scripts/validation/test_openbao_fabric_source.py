@@ -282,8 +282,10 @@ class PrivatePOCTests(unittest.TestCase):
     @staticmethod
     def fixture():
         base = POC_FILE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/base"
-        files = ("configmap.yaml", "statefulset.yaml", "service.yaml", "networkpolicy.yaml")
-        return [yaml.safe_load((base / file).read_text(encoding="utf-8")) for file in files]
+        files = ("configmap.yaml", "statefulset.yaml", "service.yaml", "networkpolicy.yaml",
+                 "certificate.yaml")
+        return [resource for file in files
+                for resource in yaml.safe_load_all((base / file).read_text(encoding="utf-8"))]
 
     def test_exact_private_poc(self):
         self.assertEqual(poc.check_render(self.fixture()), [])
@@ -331,6 +333,80 @@ class PrivatePOCTests(unittest.TestCase):
                     context[key] = invalid
                 errors = poc.check_render(manifests)
                 self.assertTrue(any("numeric UID 100" in msg for msg in errors), errors)
+
+    def test_internal_certificate_chain_and_https_tls_mount(self):
+        manifests = self.fixture()
+        self.assertEqual(len(manifests), 8)
+        self.assertEqual(poc.check_render(manifests), [])
+        chain = {(d["kind"], d["metadata"]["name"]): d for d in manifests}
+        leaf = chain[("Certificate", "openbao-fabric-server")]
+        self.assertEqual(leaf["spec"]["dnsNames"], poc.SERVICE_DNS)
+        self.assertEqual(leaf["spec"]["secretName"], "openbao-fabric-tls")
+        sts = chain[("StatefulSet", "openbao-fabric")]
+        pod = sts["spec"]["template"]["spec"]
+        self.assertEqual(pod["containers"][0]["readinessProbe"]["httpGet"]["scheme"], "HTTPS")
+        self.assertEqual(
+            next(v for v in pod["volumes"] if v["name"] == "tls")["secret"]["secretName"],
+            "openbao-fabric-tls",
+        )
+
+    def test_invalid_certificate_sans_issuer_and_inline_material_fail_closed(self):
+        for mutate in (
+            lambda c: c["spec"]["dnsNames"].append("external.example.invalid"),
+            lambda c: c["spec"]["dnsNames"].pop(),
+            lambda c: c["spec"]["issuerRef"].update(name="letsencrypt-prod"),
+            lambda c: c["spec"].update({"data": {"tls.crt": "inline-not-allowed"}}),
+            lambda c: c["spec"].update(secretName="wrong-secret"),
+        ):
+            manifests = copy.deepcopy(self.fixture())
+            leaf = next(d for d in manifests
+                        if (d["kind"], d["metadata"]["name"]) ==
+                        ("Certificate", "openbao-fabric-server"))
+            mutate(leaf)
+            self.assertTrue(poc.check_render(manifests))
+        manifests = copy.deepcopy(self.fixture())
+        issuer = next(d for d in manifests if d["metadata"]["name"] ==
+                      "openbao-fabric-selfsigned")
+        issuer["spec"] = {"acme": {"server": "https://public.example.invalid"}}
+        self.assertTrue(poc.check_render(manifests))
+
+    def test_http_disabled_tls_and_inline_config_rejected(self):
+        for extra in ("tls_disable = 1", "disable_mlock = true",
+                      'api_addr = "http://127.0.0.1:8200"',
+                      "-----BEGIN CERTIFICATE-----",
+                      "private_key = inline-not-allowed"):
+            manifests = copy.deepcopy(self.fixture())
+            cm = next(d for d in manifests if d["kind"] == "ConfigMap")
+            cm["data"]["server.hcl"] += "\n    " + extra
+            self.assertTrue(poc.check_render(manifests), extra)
+        manifests = copy.deepcopy(self.fixture())
+        sts = next(d for d in manifests if d["kind"] == "StatefulSet")
+        sts["spec"]["template"]["spec"]["containers"][0]["readinessProbe"]["httpGet"]["scheme"] = "HTTP"
+        self.assertTrue(poc.check_render(manifests))
+
+    def test_tls_secret_volume_restrictions_and_no_new_client(self):
+        for change in ("writable", "wrong-secret", "hostpath", "sa", "new-secret", "job"):
+            manifests = copy.deepcopy(self.fixture())
+            sts = next(d for d in manifests if d["kind"] == "StatefulSet")
+            pod = sts["spec"]["template"]["spec"]
+            if change == "writable":
+                next(v for v in pod["containers"][0]["volumeMounts"]
+                     if v["name"] == "tls")["readOnly"] = False
+            elif change == "wrong-secret":
+                next(v for v in pod["volumes"]
+                     if v["name"] == "tls")["secret"]["secretName"] = "openbao-infra"
+            elif change == "hostpath":
+                pod["volumes"].append({"name": "insecure", "hostPath": {"path": "/tmp"}})
+            elif change == "sa":
+                pod["serviceAccountName"] = "workload-auth"
+            elif change == "new-secret":
+                manifests.append({"apiVersion": "v1", "kind": "Secret",
+                                  "metadata": {"name": "forbidden", "namespace": "txo-fabric-system"}})
+            else:
+                manifests.append({"apiVersion": "batch/v1", "kind": "Job",
+                                  "metadata": {"name": "bootstrap", "namespace": "txo-fabric-system"}})
+            with self.subTest(change=change):
+                self.assertTrue(poc.check_render(manifests))
 
     def test_wrong_service_type_and_client_ingress_denied(self):
         for public in ("NodePort", "LoadBalancer"):
