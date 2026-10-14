@@ -1,5 +1,52 @@
 # TXO Fabric — OpenBao Fabric POC bootstrap and restore acceptance
 
+## Current source-only TLS increment — distinct from prior bootstrap acceptance (2026-10-14)
+
+Issue #3728 records **separately observed** physical OpenBao Fabric bootstrap:
+`initialized=true`, `sealed=false`, Raft and Pod Ready on the retained
+PVC, as of the preceding release. This PR does not reobserve or modify it.
+The historical sealed/uninitialized phase-1 state described below is now
+**historical**, not a current-live expectation.
+
+The namespace-local cert-manager self-signed bootstrap `Issuer` creates a
+CA `Certificate`/Secret, a CA `Issuer` creates the server
+`Certificate`/Secret `openbao-fabric-tls`. Only Service DNS SANs are
+authorized. Neither private key nor certificate is embedded in Git.
+The server mounts the generated TLS Secret read-only and serves HTTPS
+on ClusterIP:8200; the Kubernetes readiness probe uses HTTPS
+`/v1/sys/health`. No client, ESO, auth role, network allowlist or
+public listener is introduced. If cert-manager or generated Secrets are
+missing, **fail closed**, do not restore HTTP as a workaround.
+
+**Preflight for a separately authorized GitOps rollout (read-only):**
+verify cert-manager CRDs/controller, `Issuer` and CA/leaf `Certificate`
+readiness, generated Secret **existence** and mount permissions for
+UID 100/GID 1000 (never print Secret data), Argo desired revision, the
+Raft Retain PVC identity and exact NetworkPolicy deny-all. Plan for the
+single-pod restart and wait for the HTTPS health probe; no runtime client
+may be allowed during the transition. Inspect errors and certificate
+metadata/status only, not PEM or private keys. Separately review internal
+CA trust distribution, renewal/rotation and safe recoverability before
+allowing any Fabric credential consumer.
+
+**Audit contract (not applied in this PR):** future human custody ceremony
+outside Git/CI must activate OpenBao audit with `log_raw=false` and
+HMAC of sensitive data, with access to logs denied to ordinary Fabric
+workloads. Before acceptance, deploy a *separate* Retain PVC audit sink
+through a new approved PR (not on the Raft data PVC); validate log write,
+permissions, redaction, rotation daily or at 100 MiB, 30-day retention,
+warning at 80%, critical at 90%, and fail-closed issuance at 95% capacity
+or write failure. Validate that audit saturation/rotation **never silently
+discards events**. Custody must document offsite retention, read-back,
+rotation and rollback without including any log values in evidence.
+No audit device, PVC, sidecar or external sink is installed here.
+
+**Recovery dependency:** #4049 remains mandatory before storing real
+Fabric HMAC/Hermes/tenant credentials. No ESO Store or historic Infra
+ExternalSecret migration; no BFF/bridge gate change. TLS readiness alone
+does **not** satisfy audit, recovery or full #3728 acceptance.
+
+
 
 ## Phase 1 POC — explicitly authorized source deployment (#3728)
 

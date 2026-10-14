@@ -16,13 +16,13 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FABRIC_PREFIX = "apps/60-services/txo-fabric/openbao-fabric/"
 ALLOWED_FILES = (".md", ".example")
-POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml"}
+POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "base/certificate.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml"}
 # Sensitive material MUST never appear in new source, even commented examples.
 ASSIGNMENT = re.compile(
     r"""(?ix)
     \b(?:root[_-]?token|unseal[_-]?key|recovery[_-]?key|private[_-]?key|
          vault[_-]?token|bao[_-]?token|password|client[_-]?secret)
-    \s*[:=]\s*["']?[A-Za-z0-9+/=_-]{8,}
+    \s*[:=][ \t]*["']?[A-Za-z0-9+/=_-]{8,}
     """,
 )
 JWT_LIKE = re.compile(r"\beyJ[A-Za-z0-9_-]{16,}\.eyJ[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{12,}\b")

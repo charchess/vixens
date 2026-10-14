@@ -1,0 +1,82 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: openbao-fabric-selfsigned
+  namespace: txo-fabric-system
+  labels:
+    app.kubernetes.io/name: openbao-fabric
+    app.kubernetes.io/component: secret-plane
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: openbao-fabric-ca
+  namespace: txo-fabric-system
+  labels:
+    app.kubernetes.io/name: openbao-fabric
+    app.kubernetes.io/component: secret-plane
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  secretName: openbao-fabric-ca
+  isCA: true
+  commonName: openbao-fabric-ca
+  duration: 8760h
+  renewBefore: 720h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages:
+    - cert sign
+    - crl sign
+  issuerRef:
+    name: openbao-fabric-selfsigned
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: openbao-fabric-ca-issuer
+  namespace: txo-fabric-system
+  labels:
+    app.kubernetes.io/name: openbao-fabric
+    app.kubernetes.io/component: secret-plane
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  ca:
+    secretName: openbao-fabric-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: openbao-fabric-tls
+  namespace: txo-fabric-system
+  labels:
+    app.kubernetes.io/name: openbao-fabric
+    app.kubernetes.io/component: secret-plane
+    app.kubernetes.io/part-of: txo-fabric
+spec:
+  secretName: openbao-fabric-tls
+  duration: 2160h
+  renewBefore: 360h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages:
+    - digital signature
+    - server auth
+  dnsNames:
+    - openbao-fabric
+    - openbao-fabric.txo-fabric-system
+    - openbao-fabric.txo-fabric-system.svc
+    - openbao-fabric.txo-fabric-system.svc.cluster.local
+  issuerRef:
+    name: openbao-fabric-ca-issuer
+    kind: Issuer
+    group: cert-manager.io

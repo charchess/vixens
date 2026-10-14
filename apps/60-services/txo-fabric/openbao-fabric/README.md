@@ -1,70 +1,101 @@
-# OpenBao Fabric — empty private GitOps POC (#3728)
+# OpenBao Fabric — private GitOps substrate and internal TLS (#3728)
 
-**Phase 1 (this PR):** a single, empty OpenBao 2.6.2 server using integrated
-Raft storage on a dedicated retained TrueNAS iSCSI volume. Both TXO dev/prod
-Kustomize compositions select this component. Argo dev follows main; prod
-follows prod-stable and requires a separate human-approved promotion.
+**Current source-only increment:** internal TLS via namespace-scoped cert-manager
+issuance, with **no runtime client, ESO store, new Secret manifest or Fabric
+credential activation**. The source changes the existing server listener from
+HTTP to HTTPS **on the same private ClusterIP:8200**. Nothing is deployed or
+promoted by this PR. The physical instance is already initialized and unsealed
+according to issue #3728's separately recorded acceptance; that is **not** a
+live observation performed by this change.
 
-- One StatefulSet `openbao-fabric` in existing restricted namespace
-  `txo-fabric-system`. Exactly one replica, no HA or auto-unseal. The official
-  image is version-tagged `quay.io/openbao/openbao:2.6.2`; digest pinning can
-  be hardened in a separate change.
-- One `data` PVC template of 5Gi RWO with `truenas-iscsi-retain` and
-  Retain/Retain StatefulSet claim retention policy. The generated PVC is
-  `data-openbao-fabric-0`. Never automatically prune/delete the claim or PV.
-  CSI storage/class/PV runtime binding still needs post-merge confirmation.
-- Raft stores data only at `/openbao/data` on the claim. Non-secret HCL
-  configuration comes from a ConfigMap; `/tmp` is ephemeral scratch.
-- `openbao-fabric` is a private ClusterIP Service, TCP/8200 only. No
-  Ingress, NodePort, LoadBalancer, external DNS, network client or TLS yet.
-- Exact-selector NetworkPolicy has **zero allowed ingress and egress**,
-  alongside the existing namespace default-deny. No direct Hermes, browser,
-  BFF or tenant client. OpenBao API is HTTP without TLS: **do not add any
-  runtime network clients until the separately reviewed TLS phase**. A
-  human-only, locally scoped port-forward to the *pod* during a separately
-  authorized bootstrap ceremony is the only proposed access path.
-- No Kubernetes API token mounts, root credential, Secret, ExternalSecret,
-  ESO store, init/unseal Job, admin policy, audit sink or workload auth.
-- Non-root, dropped capabilities, seccomp RuntimeDefault, read-only root FS.
-  `fsGroup: 1000` is used for retained RWO volume writes, subject to real CSI
-  verification. Requests 100m CPU/128Mi RAM; limits 500m CPU/512Mi RAM.
-  Ordinary scheduler placement, no hard node pinning or Peach operation.
+## Namespace-local trust chain and rollout boundaries
 
-## Expected state after Argo convergence
+- Four cert-manager objects live **only in `txo-fabric-system`**:
+  `Issuer/openbao-fabric-selfsigned` bootstraps
+  `Certificate/openbao-fabric-ca` (a self-signed CA stored by cert-manager
+  as a namespace Secret); `Issuer/openbao-fabric-ca-issuer` signs
+  `Certificate/openbao-fabric-tls`. Only cert-manager creates the
+  corresponding CA and leaf TLS Secrets. **Neither certificate nor key
+  material is committed in Git**. No ACME/public DNS issuer is used.
+- The leaf `secretName: openbao-fabric-tls` has precisely four Service DNS
+  SANs: `openbao-fabric`, `openbao-fabric.txo-fabric-system`,
+  `openbao-fabric.txo-fabric-system.svc`, and
+  `openbao-fabric.txo-fabric-system.svc.cluster.local`. The configured API
+  identity is `https://openbao-fabric.txo-fabric-system.svc:8200`.
+  Future consumers must receive and validate the **internal CA trust
+  bundle in their own separately approved workstream**; no bypass of TLS
+  verification is authorized here.
+- Pod uses `openbao-fabric-tls` exclusively as a **read-only mounted
+  Secret volume** at `/openbao/tls`, with rootless UID 100/GID 1000/fsGroup
+  1000 and restrictive volume modes. The HCL references the mounted
+  `tls.crt`/`tls.key` paths; neither appears as inline content.
+  HTTPS readiness remains `/v1/sys/health` on port 8200; no liveness
+  restart loop or alternate public listener is introduced.
+- **Precondition for future approved GitOps rollout:** cert-manager and its
+  CRDs/controllers operational, CA Issuer Ready, leaf Certificate Ready,
+  generated `openbao-fabric-tls` present and readable by UID 100/GID 1000.
+  Issuance is asynchronous. If the TLS Secret does not exist, the
+  StatefulSet **fails closed** at mount/start rather than exposing HTTP.
+  Promotion of this source would roll an already unsealed Raft server:
+  the operator must plan a reversible single-pod maintenance window and
+  physical HTTPS/permissions/health checks. No rollout is requested here.
+  CA renewal/rotation, trust distribution and disaster restoration of
+  cert-manager-generated CA custody require an explicitly reviewed
+  operational procedure before clients are enabled.
 
-An **uninitialized/sealed** OpenBao responds to `/v1/sys/health` with a
-non-200 status. The readiness probe therefore intentionally leaves the pod
-`Running/NotReady` and the Service without ready endpoints until a later
-human-authorized init/unseal. This is **not** a deployment failure. A
-CrashLoop, unbound PVC or image pull failure **is** a deployment failure
-and must be diagnosed without printing credentials. There is no liveness
-probe restarting a legitimately sealed process.
+## Retained private substrate and non-goals
 
-## Four phases
+- One `quay.io/openbao/openbao:2.6.2` StatefulSet and single-node Raft on
+  `data-openbao-fabric-0`, 5Gi RWO `truenas-iscsi-retain`,
+  claim retention policy Retain/Retain. **Never delete/prune PVC/PV.**
+  No init/unseal automation, HA or forced scheduling.
+- Private `Service/openbao-fabric` ClusterIP TCP/8200, exact-selector
+  NetworkPolicy with `ingress: []` and `egress: []`, plus namespace
+  default-deny. This PR grants **zero network clients** including cert-manager
+  (which uses the Kubernetes API to issue Secrets, not a connection to
+  the OpenBao listener). No Hermes/BFF/browser/bridge connectivity.
+- `runAsNonRoot=true`, numeric UID 100, GID 1000, fsGroup 1000,
+  seccomp RuntimeDefault, drop ALL, no privilege escalation, read-only
+  rootfs and writable `emptyDir` scratch at `/tmp`. No workload token
+  automount, new ServiceAccount or additional privilege.
+- Existing Infra `ClusterSecretStore/openbao` and four historical TXO
+  ExternalSecrets remain **unaltered**. Neither this TLS Secret nor the CA
+  is an OpenBao runtime credential or an ESO Fabric store. No Infra fallback.
+  `TXO_FABRIC_PRIVATE_BRIDGE_ENABLED=false` and
+  `TXO_WEBUI_BFF_BROWSER_ENABLED=false` remain in force.
 
-1. **Delivered in source:** empty private GitOps substrate only. Argo
-   convergence and actual PVC/NetworkPolicy observation remain unverified.
-2. **Separate approved human bootstrap:** manual init/unseal and internal
-   health proof; root/unseal/recovery material stays out of Git, chat, CI,
-   logs, Kubernetes Secrets and workloads.
-3. **Separate reviewed credential activation:** TLS, audit, Fabric-only
-   `openbao-fabric-store`, exact short-lived workload/tenant policies and
-   first POC Fabric credentials. Browser and private bridge gates stay false
-   until their separately accepted POC path.
-4. **Parallel #4049 recovery:** native Raft snapshot, independently
-   protected encrypted backup/replica, successful isolated restore.
-   **No actual Fabric HMAC, Hermes API credential or tenant data is trusted
-   to this substrate before restore acceptance.**
+## Audit acceptance contract — documented, not installed
 
-[ADR-041](../../../../docs/adr/041-separate-openbao-fabric-secret-plane.md)
-defines Infra/Fabric authority. Existing Infra `ClusterSecretStore/openbao`,
-NAS backend, token and historic TXO OpenFGA/WebUI consumers remain unchanged.
-No new consumer falls back to Infra. Tenant IDs remain immutable and
-single-tenant scoped, not authorization from user/group changes.
+Before a future credential-bearing activation, a **separately approved
+custody ceremony outside Git/CI** must activate a secret-safe OpenBao audit
+device with `log_raw=false` (default; enforce explicitly) so sensitive
+request/response fields are HMAC-obfuscated. An audit PVC **separate from
+Raft data**, backed by `Retain`, must be installed and capacity-tested
+before the audit gate can be accepted. Audit access is forbidden to all
+ordinary Fabric workloads; only separately authorized custody operators
+may manage/review the sink.
 
-[Bootstrap and restore runbook](../../../../docs/troubleshooting/txo-fabric-openbao-bootstrap-and-restore.md)
-and [tenant provisioning contract](contracts/tenant-provisioning-boundary.md)
-are prerequisites for later credential-bearing phases.
-The policies in `policies/*.hcl.example` are strictly reference-only,
-not automatically installed. #3728 remains open until its full physical,
-tenant-security, audit and backup acceptance is demonstrated.
+Proposed, **not implemented** acceptance thresholds: rotation daily or
+100 MiB per file (whichever first); 30-day retention with securely managed
+offsite copies and access audit; warning above 80% capacity, critical at
+90%, stop new credential issuance/fail closed at 95% or write failure
+rather than silently discard audit. Define and exercise a saturation,
+rotation, recovery and read-back runbook before storing any real
+credentials. No audit device, mount, PVC, sidecar, sink, egress or
+credential is created by this source increment.
+
+## Future gates
+
+- Internal CA trust and HTTPS behavior must be physically verified after
+  an explicitly authorized GitOps release, with no client activation.
+- Credential-bearing Fabric ESO, workload authentication, per-tenant roles,
+  audit device and the browser/Hermes/BFF bridge remain separate reviewed
+  tasks. See [ADR-041](../../../../docs/adr/041-separate-openbao-fabric-secret-plane.md).
+- [#4049](https://github.com/charchess/vixens/issues/4049) requires
+  independent native Raft snapshot, encrypted replication and successful
+  isolated restore **before any real Fabric runtime/tenant credential**.
+- [Bootstrap and restore runbook](../../../../docs/troubleshooting/txo-fabric-openbao-bootstrap-and-restore.md)
+  and [tenant provisioning contract](contracts/tenant-provisioning-boundary.md)
+  remain authoritative for later phases. Reference-only
+  `policies/*.hcl.example` are not installed. #3728 stays open until
+  its full runtime/tenant/audit/recovery acceptance.
