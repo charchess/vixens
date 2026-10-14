@@ -180,12 +180,23 @@ func (r *TenantBundleReconciler) reconcileAgentChatGrants(
 				})
 			}
 		}
-		// Delete existing chat grants before (re-)adding tenant affiliation.
-		// Exact-set reconciliation includes FGA read-back and model verification.
-		if err := writer.ReconcileTupleScope(ctx, approved.Store.ID, approved.ModelID,
-			chatterScope, chatterTuples); err != nil { return err }
-		if err := writer.ReconcileTupleScope(ctx, approved.Store.ID, approved.ModelID,
-			tenantScope, tenantTuples); err != nil { return err }
+		// OpenFGA writes are not a transaction across two relations.
+		// For a new grant, bind the tenant FIRST, then the chatter permission:
+		// a failure between writes must not leave a positive can_chat check.
+		// For removal, revoke chatter FIRST, then tenant association.
+		// Consumers must additionally require a current True Fabric
+		// authorization lease: a partial write never publishes that lease.
+		reconcile := func(scope openfga.TupleScope, tuples []openfga.Tuple) error {
+			return writer.ReconcileTupleScope(ctx, approved.Store.ID, approved.ModelID,
+				scope, tuples)
+		}
+		if len(chatterTuples) != 0 {
+			if err := reconcile(tenantScope, tenantTuples); err != nil { return err }
+			if err := reconcile(chatterScope, chatterTuples); err != nil { return err }
+		} else {
+			if err := reconcile(chatterScope, nil); err != nil { return err }
+			if err := reconcile(tenantScope, nil); err != nil { return err }
+		}
 	}
 	if uidDrift { return errors.New("retained Fabric agent UID changed without revoked adoption") }
 

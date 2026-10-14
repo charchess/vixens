@@ -203,9 +203,9 @@ func TestHAIremAgentChatFailuresNeverIssuePositiveLease(t *testing.T) {
 	}
 }
 
-type failTenantWrite struct { original *recordingIAMWriter; fail bool }
-func (f *failTenantWrite) ReconcileTupleScope(ctx context.Context, store,model string, scope openfga.TupleScope, tuples []openfga.Tuple) error {
-	if f.fail && scope.Relation=="tenant" && strings.HasPrefix(scope.Object,"agent:") {
+type failChatterWrite struct { original *recordingIAMWriter; fail bool }
+func (f *failChatterWrite) ReconcileTupleScope(ctx context.Context, store,model string, scope openfga.TupleScope, tuples []openfga.Tuple) error {
+	if f.fail && scope.Relation=="chatter" && strings.HasPrefix(scope.Object,"agent:") {
 		return errors.New("partial FGA backend failure")
 	}
 	return f.original.ReconcileTupleScope(ctx,store,model,scope,tuples)
@@ -215,7 +215,7 @@ func TestPartialFGAAgentWritePreservesRevocationInventoryAcrossRestart(t *testin
 	r,b,_,w,lease:=readyHAIremChat(t)
 	a:=chatAgent(hairemChatAgentName,"hairem","uid-chat", "usr000001-agt00002",[]string{"client0"})
 	if err:=r.Create(ctx,a);err!=nil {t.Fatal(err)}
-	flaky:=&failTenantWrite{original:w,fail:true}
+	flaky:=&failChatterWrite{original:w,fail:true}
 	if err:=r.reconcileAgentChatGrants(ctx,b,flaky,lease);err==nil {
 		t.Fatal("partial FGA write presented as success")
 	}
@@ -224,8 +224,9 @@ func TestPartialFGAAgentWritePreservesRevocationInventoryAcrossRestart(t *testin
 		t.Fatal("missing durable cleanup scope after partial write")
 	}
 	approved,err:=r.readOpenFGAAuthorizationBinding(ctx,b);if err!=nil {t.Fatal(err)}
-	if len(agentTuples(w,approved.Store.ID,a.Name,"chatter"))!=1 {
-		t.Fatal("test did not produce actual partial write")
+	if len(agentTuples(w,approved.Store.ID,a.Name,"tenant"))!=1 ||
+		len(agentTuples(w,approved.Store.ID,a.Name,"chatter"))!=0 {
+		t.Fatal("partial write cannot leave a positive chatter permission")
 	}
 	if err:=r.Delete(ctx,a);err!=nil {t.Fatal(err)}
 	// A new controller instance uses the same retained Kubernetes objects
