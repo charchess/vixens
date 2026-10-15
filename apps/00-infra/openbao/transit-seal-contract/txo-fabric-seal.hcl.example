@@ -1,0 +1,10 @@
+# Non-executable source-only policy example for Issue #4071.
+# It is not selected, installed, or an authorization record.
+
+path "transit/encrypt/txo-fabric-seal" {
+  capabilities = ["update"]
+}
+
+path "transit/decrypt/txo-fabric-seal" {
+  capabilities = ["update"]
+}

@@ -15,6 +15,11 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FABRIC_PREFIX = "apps/60-services/txo-fabric/openbao-fabric/"
+INFRA_CONTRACT_PREFIX = "apps/00-infra/openbao/transit-seal-contract/"
+INFRA_POLICY = INFRA_CONTRACT_PREFIX + "txo-fabric-seal.hcl.example"
+INFRA_README = INFRA_CONTRACT_PREFIX + "README.md"
+INFRA_EVIDENCE_RUNBOOK = "docs/runbooks/00-infra/openbao-transit-seal-evidence.md"
+LEGACY_INFRA_STORE = "apps/00-infra/openbao/base/cluster-secret-store.yaml"
 ALLOWED_FILES = (".md", ".example")
 POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "base/certificate.yaml", "transit-staged/kustomization.yaml", "transit-staged/serviceaccount.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml"}
 # Sensitive material MUST never appear in new source, even commented examples.
@@ -37,6 +42,16 @@ FORBIDDEN_RESOURCES = re.compile(
 PRODUCTION_MARKER = re.compile(r"(?i)openbao-fabric(?:-store)?")
 # No newly added TXO ExternalSecret is allowed to inherit the Infra role.
 INFRA_STORE_ADDITION = re.compile(r"(?m)^\+\s*name:\s*openbao\s*$")
+FORBIDDEN_INFRA_CONTRACT = re.compile(
+    r"(?imx)tls_skip_verify|http://|\b(?:0\.0\.0\.0/0|::/0)\b|"
+    r"\b(?:loadbalancer|nodeport|ingress|externalname)\b|"
+    r"\b(?:static[_ -]?token|bearer[_ -]?token)\s*[:=]|"
+    r"^\s*(?:token|client_token)\s*[:=]"
+)
+INFRA_POLICY_PATH = re.compile(
+    r'(?ms)^\s*path\s+"([^"]+)"\s*\{\s*'
+    r'capabilities\s*=\s*\[\s*"([^"]+)"\s*\]\s*\}\s*$'
+)
 
 
 # Prompt 07 source-only interface oracle. This is NOT a controller, network
@@ -160,6 +175,54 @@ def validate_staged_seal_identity(objects: object) -> list[str]:
     return []
 
 
+def validate_infra_transit_policy(content: str) -> list[str]:
+    """Validate the non-executable #4071 policy example exactly, never install it."""
+    matches = INFRA_POLICY_PATH.findall(content)
+    expected = [
+        ("transit/encrypt/txo-fabric-seal", "update"),
+        ("transit/decrypt/txo-fabric-seal", "update"),
+    ]
+    if matches != expected:
+        return ["Infra policy example must grant only exact Transit encrypt/decrypt update"]
+    stripped = INFRA_POLICY_PATH.sub("", content)
+    stripped = re.sub(r"(?m)^\s*#.*$", "", stripped)
+    if stripped.strip():
+        return ["Infra policy example contains material outside the two exact rules"]
+    return []
+
+
+def assert_infra_evidence_safe(content: str) -> list[str]:
+    """Reject material that would turn the evidence runbook into configuration."""
+    errors: list[str] = []
+    if ASSIGNMENT.search(content) or JWT_LIKE.search(content) or PEM_LIKE.search(content):
+        errors.append("credential-like value detected in Infra Transit evidence")
+    if BASE64_MATERIAL.search(content):
+        errors.append("unexpected long encoded payload in Infra Transit evidence")
+    if FORBIDDEN_INFRA_CONTRACT.search(content):
+        errors.append("forbidden transport, token, public route, or broad egress in Infra Transit evidence")
+    if FORBIDDEN_RESOURCES.search(content) or re.search(r"(?m)^\s*apiVersion:\s*", content):
+        errors.append("Infra Transit evidence contains runnable Kubernetes resource syntax")
+    return errors
+
+
+def assert_infra_contract_safe(path: str, content: str) -> list[str]:
+    """Source-only #4071 envelope: no installable object or transport bypass."""
+    errors: list[str] = []
+    if path not in {INFRA_POLICY, INFRA_README}:
+        errors.append("unexpected file in Infra Transit source contract")
+    if ASSIGNMENT.search(content) or JWT_LIKE.search(content) or PEM_LIKE.search(content):
+        errors.append("credential-like value detected in Infra Transit source contract")
+    if BASE64_MATERIAL.search(content):
+        errors.append("unexpected long encoded payload in Infra Transit source contract")
+    if FORBIDDEN_INFRA_CONTRACT.search(content):
+        errors.append("forbidden transport, token, public route, or broad egress in Infra Transit contract")
+    if FORBIDDEN_RESOURCES.search(content) or re.search(r"(?m)^\s*apiVersion:\s*", content):
+        errors.append("Infra Transit source contract contains runnable Kubernetes resource syntax")
+    if path == INFRA_POLICY:
+        errors.extend(validate_infra_transit_policy(content))
+    return errors
+
+
 def require_seal_migration_preflight(facts: object) -> list[str]:
     """Pure fail-closed preflight: no trust facts are sourced from Git."""
     required = {
@@ -217,8 +280,15 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
     expected_adr = "docs/adr/041-separate-openbao-fabric-secret-plane.md"
     if not (ROOT / expected_adr).is_file():
         problems.append("ADR-041 missing from repository")
-    if not any(p.startswith(FABRIC_PREFIX) for p in changed):
-        problems.append("OpenBao Fabric contract directory missing")
+    if not any(p.startswith(FABRIC_PREFIX) or p.startswith(INFRA_CONTRACT_PREFIX) for p in changed):
+        problems.append("OpenBao Fabric or Infra Transit source contract directory missing")
+    if not any(p.startswith(INFRA_CONTRACT_PREFIX) for p in changed):
+        problems.append("Infra Transit source contract directory missing")
+    for required in (INFRA_POLICY, INFRA_README, INFRA_EVIDENCE_RUNBOOK):
+        if not (ROOT / required).is_file():
+            problems.append(f"required #4071 source contract file missing: {required}")
+    if LEGACY_INFRA_STORE in changed:
+        problems.append("legacy Infra ESO ClusterSecretStore must remain unchanged")
     protected = [
         "apps/00-infra/openbao/",
         "argocd/overlays/prod/",
@@ -227,7 +297,9 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
         "apps/60-services/txo-fabric/webui/",
     ]
     for path in changed:
-        if path.startswith(tuple(protected)) and path not in {"apps/60-services/txo-fabric/overlays/dev/kustomization.yaml", "apps/60-services/txo-fabric/overlays/prod/kustomization.yaml"}:
+        allowed_infra_contract = path.startswith(INFRA_CONTRACT_PREFIX)
+        if (path.startswith(tuple(protected)) and not allowed_infra_contract and
+                path not in {"apps/60-services/txo-fabric/overlays/dev/kustomization.yaml", "apps/60-services/txo-fabric/overlays/prod/kustomization.yaml"}):
             problems.append(f"protected live GitOps/consumer path changed: {path}")
         full = ROOT / path
         if not full.is_file():
@@ -235,6 +307,12 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
         content = full.read_text(encoding="utf-8")
         for violation in assert_file_safe(path, content):
             problems.append(f"{path}: {violation}")
+        if allowed_infra_contract:
+            for violation in assert_infra_contract_safe(path, content):
+                problems.append(f"{path}: {violation}")
+        if path == INFRA_EVIDENCE_RUNBOOK:
+            for violation in assert_infra_evidence_safe(content):
+                problems.append(f"{path}: {violation}")
     for path in (
         "apps/60-services/txo-fabric/openbao-fabric/base/kustomization.yaml",
         "apps/60-services/txo-fabric/openbao-fabric/overlays/dev/kustomization.yaml",
@@ -255,6 +333,16 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
             "README.md", "serviceaccount.yaml", "kustomization.yaml"
         }):
             problems.append("unauthorized executable Transit stage file")
+    infra_contract = ROOT / INFRA_CONTRACT_PREFIX
+    if infra_contract.is_dir():
+        names = {p.name for p in infra_contract.iterdir() if p.is_file()}
+        if names != {"README.md", "txo-fabric-seal.hcl.example"}:
+            problems.append("Infra Transit contract must contain only its README and policy example")
+    else:
+        problems.append("Infra Transit contract directory missing")
+    for kustomization in (ROOT / "apps/00-infra/openbao").rglob("kustomization.yaml"):
+        if "transit-seal-contract" in kustomization.read_text(encoding="utf-8"):
+            problems.append("non-executable Infra Transit example must never be selected")
     # Additional delta scan catches a newly introduced Infra store binding.
     patch = git("diff", "--unified=0", f"{base}...{head}", "--", "apps/60-services/txo-fabric/")
     if INFRA_STORE_ADDITION.search(patch):

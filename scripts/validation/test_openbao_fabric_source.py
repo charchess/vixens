@@ -167,6 +167,56 @@ class TransitSealPreflightTests(unittest.TestCase):
         self.assertNotIn("../../base", stage)
 
 
+class InfraTransitSourceContractTests(unittest.TestCase):
+    @staticmethod
+    def policy_text():
+        path = Path(__file__).resolve().parents[2] / guard.INFRA_POLICY
+        return path.read_text(encoding="utf-8")
+
+    def test_exact_narrow_non_executable_policy_example(self):
+        self.assertEqual(guard.validate_infra_transit_policy(self.policy_text()), [])
+        self.assertEqual(guard.SEAL_SA, "openbao-fabric-seal-bootstrap")
+        self.assertEqual(guard.SEAL_NAMESPACE, "txo-fabric-system")
+        self.assertEqual(guard.SEAL_AUDIENCE, "txo-fabric-infra-seal")
+        self.assertEqual(guard.SEAL_TOKEN_TTL, 600)
+        self.assertEqual(guard.SEAL_KEY, "txo-fabric-seal")
+
+    def test_broad_or_wrong_transit_policy_is_denied(self):
+        for mutation in (
+            ('capabilities = ["update"]', 'capabilities = ["read"]', 1),
+            ('transit/decrypt/txo-fabric-seal', 'transit/decrypt/other-key', 1),
+            ('\n', '\npath "sys/policies" {\n  capabilities = ["update"]\n}\n', 1),
+        ):
+            text = self.policy_text()
+            old, new, count = mutation
+            if old == '\n':
+                text += new
+            else:
+                text = text.replace(old, new, count)
+            self.assertTrue(guard.validate_infra_transit_policy(text))
+
+    def test_evidence_and_example_reject_material_bypass_and_resources(self):
+        examples = (
+            'token = "not-allowed"',
+            'tls_skip_verify = true',
+            'endpoint = "http://fallback.invalid"',
+            'cidr = "0.0.0.0/0"',
+            'kind: Deployment\napiVersion: apps/v1',
+        )
+        for content in examples:
+            with self.subTest(content=content.splitlines()[0]):
+                self.assertTrue(guard.assert_infra_evidence_safe(content))
+        self.assertTrue(guard.assert_infra_contract_safe(
+            guard.INFRA_POLICY, 'path "transit/*" {\n capabilities = ["update"]\n}\n'
+        ))
+
+    def test_legacy_eso_binding_has_a_dedicated_unchanged_target(self):
+        self.assertEqual(
+            guard.LEGACY_INFRA_STORE,
+            "apps/00-infra/openbao/base/cluster-secret-store.yaml",
+        )
+
+
 class CanonicalTenantProvisioningContractTests(unittest.TestCase):
     """Proof of rejection in the SOURCE oracle, not live OpenBao enforcement."""
 
