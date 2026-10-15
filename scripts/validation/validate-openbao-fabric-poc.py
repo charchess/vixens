@@ -235,6 +235,12 @@ def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
                   r"tls_cert|tls_key|certificate|ca_cert)\s*[={]", hcl)
     ):
         errors.append("HTTP/disabled TLS/obsolete mlock/inline key or secret forbidden in HCL")
+    if selected and any(
+        d.get("kind") == "ServiceAccount" and
+        d.get("metadata", {}).get("name") == "openbao-fabric-seal-bootstrap"
+        for d in docs
+    ):
+        errors.append("unapproved staged Transit identity in selected TXO render")
     if selected:
         default_denies = [d for d in docs if d.get("kind") == "NetworkPolicy"
                           and d.get("metadata", {}).get("name") == "default-deny"

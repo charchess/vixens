@@ -46,6 +46,22 @@ jobs:
           kustomize build apps/60-services/txo-fabric/openbao-fabric/overlays/prod > /tmp/bao-prod.yaml
           kustomize build apps/60-services/txo-fabric/overlays/dev > /tmp/txo-dev.yaml
           kustomize build apps/60-services/txo-fabric/overlays/prod > /tmp/txo-prod.yaml
+      - name: Render unselected Transit preflight SA only
+        run: |
+          kustomize build apps/60-services/txo-fabric/openbao-fabric/transit-staged > /tmp/bao-seal-staged.yaml
+          python3 - <<'PY'
+          import importlib.util
+          from pathlib import Path
+          import yaml
+          path = Path("scripts/validation/validate-openbao-fabric-source.py")
+          spec = importlib.util.spec_from_file_location("seal_guard", path)
+          guard = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(guard)
+          docs = list(yaml.safe_load_all(Path("/tmp/bao-seal-staged.yaml").read_text()))
+          if guard.validate_staged_seal_identity(docs):
+              raise SystemExit("FAIL: unsafe staged seal identity")
+          print("PASS: exact unselected SA; NO Transit Pod/egress/config/role")
+          PY
       - name: Source/Infra reference and changed-file guard
         run: |
           python3 scripts/validation/validate-openbao-fabric-source.py \

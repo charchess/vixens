@@ -83,6 +83,90 @@ class FoundationGuardTests(unittest.TestCase):
         ))
 
 
+class TransitSealPreflightTests(unittest.TestCase):
+    """Tests only an unselected identity; NO fake TLS or Transit authority."""
+
+    @staticmethod
+    def staged():
+        base = Path(__file__).resolve().parents[2] / (
+            "apps/60-services/txo-fabric/openbao-fabric/transit-staged"
+        )
+        return list(yaml.safe_load_all(
+            (base / "serviceaccount.yaml").read_text(encoding="utf-8")
+        ))
+
+    def test_exact_dedicated_sa_never_automounts(self):
+        docs = self.staged()
+        self.assertEqual(guard.validate_staged_seal_identity(docs), [])
+        self.assertEqual(guard.SEAL_NAMESPACE, "txo-fabric-system")
+        self.assertEqual(guard.SEAL_SA, "openbao-fabric-seal-bootstrap")
+        self.assertEqual(guard.SEAL_AUDIENCE, "txo-fabric-infra-seal")
+        self.assertEqual(guard.SEAL_TOKEN_TTL, 600)
+        self.assertEqual(guard.SEAL_KEY, "txo-fabric-seal")
+
+    def test_extra_secret_token_esa_or_runtime_object_denied(self):
+        docs = self.staged()
+        for mutation in (
+            lambda obj: obj["metadata"].update(name="default"),
+            lambda obj: obj["metadata"].update(namespace="tenant-hairem"),
+            lambda obj: obj.update(automountServiceAccountToken=True),
+            lambda obj: obj.update(secrets=[{"name": "privileged-token"}]),
+            lambda obj: obj["metadata"].update(annotations={"allow":"privileged"}),
+        ):
+            altered = copy.deepcopy(docs)
+            mutation(altered[0])
+            self.assertTrue(guard.validate_staged_seal_identity(altered))
+        self.assertTrue(guard.validate_staged_seal_identity(docs + docs))
+        self.assertTrue(guard.validate_staged_seal_identity(
+            docs + [{"kind":"ExternalSecret"}],
+        ))
+
+    def test_preflight_incomplete_false_or_bogus_claim_never_authorizes(self):
+        facts = {
+            "infraTLS": True,
+            "infraCA": True,
+            "infraSNI": True,
+            "tokenReview": True,
+            "saAudience": True,
+            "transitKeyPolicy": True,
+            "periodicTokenRenewal": True,
+            "exactPrivateEgress": True,
+            "raftSnapshotRestore": True,
+            "originalShamirCustody": True,
+            "explicitPhysicalApproval": True,
+        }
+        # This is a schema test only, NEVER evidence those facts exist.
+        self.assertEqual(guard.require_seal_migration_preflight(facts), [])
+        for key in facts:
+            modified = dict(facts)
+            modified[key] = False
+            self.assertTrue(guard.require_seal_migration_preflight(modified))
+            modified[key] = "true"
+            self.assertTrue(guard.require_seal_migration_preflight(modified))
+            modified.pop(key)
+            self.assertTrue(guard.require_seal_migration_preflight(modified))
+        self.assertTrue(guard.require_seal_migration_preflight({}))
+
+    def test_staged_sa_not_selected_by_any_base_or_txo_overlay(self):
+        root = Path(__file__).resolve().parents[2] / (
+            "apps/60-services/txo-fabric"
+        )
+        for f in (
+            "openbao-fabric/base/kustomization.yaml",
+            "openbao-fabric/overlays/dev/kustomization.yaml",
+            "openbao-fabric/overlays/prod/kustomization.yaml",
+            "overlays/dev/kustomization.yaml",
+            "overlays/prod/kustomization.yaml",
+        ):
+            contents = (root / f).read_text(encoding="utf-8")
+            self.assertNotIn("transit-staged", contents)
+        stage = (root / "openbao-fabric/transit-staged/kustomization.yaml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("serviceaccount.yaml", stage)
+        self.assertNotIn("../../base", stage)
+
+
 class CanonicalTenantProvisioningContractTests(unittest.TestCase):
     """Proof of rejection in the SOURCE oracle, not live OpenBao enforcement."""
 

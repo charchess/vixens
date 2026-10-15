@@ -244,6 +244,17 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
     ):
         if (ROOT / path).is_file() and "transit-staged" in (ROOT / path).read_text(encoding="utf-8"):
             problems.append("Transit preflight selected without approved migration")
+    # Existing production Infra points to HTTP: this MUST NOT be
+    # mistaken for a verified TLS anchor or a ready Transit seal.
+    staged = ROOT / "apps/60-services/txo-fabric/openbao-fabric/transit-staged"
+    if staged.is_dir():
+        k = staged / "kustomization.yaml"
+        if not k.is_file() or "serviceaccount.yaml" not in k.read_text(encoding="utf-8"):
+            problems.append("seal identity stage missing or not isolated")
+        if any(f.is_file() for f in staged.glob("*") if f.name not in {
+            "README.md", "serviceaccount.yaml", "kustomization.yaml"
+        }):
+            problems.append("unauthorized executable Transit stage file")
     # Additional delta scan catches a newly introduced Infra store binding.
     patch = git("diff", "--unified=0", f"{base}...{head}", "--", "apps/60-services/txo-fabric/")
     if INFRA_STORE_ADDITION.search(patch):
