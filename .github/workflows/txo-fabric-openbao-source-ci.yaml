@@ -4,6 +4,8 @@ name: TXO Fabric OpenBao Private POC Contract CI
 on:
   pull_request:
     paths:
+      - 'apps/00-infra/openbao/transit-seal-contract/**'
+      - 'docs/runbooks/00-infra/openbao-transit-seal-evidence.md'
       - 'docs/adr/041-separate-openbao-fabric-secret-plane.md'
       - 'docs/troubleshooting/txo-fabric-openbao-bootstrap-and-restore.md'
       - 'apps/60-services/txo-fabric/openbao-fabric/**'
@@ -46,6 +48,18 @@ jobs:
           kustomize build apps/60-services/txo-fabric/openbao-fabric/overlays/prod > /tmp/bao-prod.yaml
           kustomize build apps/60-services/txo-fabric/overlays/dev > /tmp/txo-dev.yaml
           kustomize build apps/60-services/txo-fabric/overlays/prod > /tmp/txo-prod.yaml
+      - name: Render legacy Infra OpenBao dev and prod without selecting the contract
+        run: |
+          kustomize build apps/00-infra/openbao/overlays/dev > /tmp/infra-openbao-dev.yaml
+          kustomize build apps/00-infra/openbao/overlays/prod > /tmp/infra-openbao-prod.yaml
+          python3 - <<'PY'
+          from pathlib import Path
+          for path in ("/tmp/infra-openbao-dev.yaml", "/tmp/infra-openbao-prod.yaml"):
+              body = Path(path).read_text(encoding="utf-8")
+              if "transit-seal-contract" in body or "openbao-fabric-seal-bootstrap" in body:
+                  raise SystemExit(f"FAIL: non-executable Transit contract selected by {path}")
+          print("PASS: legacy Infra OpenBao dev/prod render without Transit contract selection")
+          PY
       - name: Render unselected Transit preflight SA only
         run: |
           kustomize build apps/60-services/txo-fabric/openbao-fabric/transit-staged > /tmp/bao-seal-staged.yaml
