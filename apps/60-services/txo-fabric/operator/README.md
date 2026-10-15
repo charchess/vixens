@@ -71,6 +71,63 @@ shared LiteLLM/OpenRouter path until the tenant-local plane passes physical
 acceptance. The direct-CPA smoke topology must not be promoted as the final
 architecture.
 
+## Explicit agent.chat grants from pinned IAM memberships — source-only #3996
+
+The only new explicit intent is `AgentIdentity.spec.access.chatIAMGroups`,
+a **set of keys** from the owning tenant's
+`TenantBundle.spec.humanAccess.web.iamGroups`. An absent/empty set **never
+grants chat**, even when `AgentIdentity.spec.humanAccess.enabled=true`, a
+workspace `access.userRef` exists or a workspace `access.groups` lists a
+collaboration area. Workspace keys are NOT IAM groups and usernames are NOT
+Fabric identities.
+
+The TenantBundle reconciler's existing gated path first verifies the pinned
+store/model, retained issuer-pinned UUID→Fabric ledger, authoritative Authentik
+group UUID and complete active-account membership, and converges
+`group#member` and `tenant#member` with a bounded lease. Only **then**
+it reads current AgentIdentity objects from the canonical Kubernetes control
+plane. A Ready, current-generation, non-deleting, UID-bearing agent with an
+explicit chatIAMGroups key may receive the relations:
+
+- `agent:<AgentIdentity.metadata.name>#tenant@tenant:<TenantBundle.spec.tenantId>`
+- `agent:<AgentIdentity.metadata.name>#chatter@group:txo-fabric-<tenant>-<key>#member`
+
+The authorizer must independently resolve the exact canonical AgentIdentity
+name/UID and current AgentIdentity readiness, tenant identity, group/source
+freshness and `agent.can_chat` Check in that tenant's **retained store/model**,
+plus effective policy. Only memberships in those Authentik groups can traverse
+the group-based relationship. The global OIDC `sub` and workspace
+`userRef` do **not** allocate a FabricUserID or grant rights.
+
+Each tenant's retained platform-only store/model binding also records the
+non-secret `agentChatBindings` inventory of AgentIdentity name and UID;
+a full desired-state reconcile of that inventory revokes departed or disabled
+agent relations, including after an AgentIdentity deletion or operator
+restart. The inventory is resourceVersion/CAS guarded; no status holds
+credentials, no tenant workload receives it. A mismatch of pinned AgentIdentity
+UID fails closed, never adopts a recreated agent implicitly. Partial failure
+keeps `OpenFGAAuthorizationReady=False` and retries; no positive lease.
+The existing 20-second refresh and 60-second membership lease bound
+staleness. OpenFGA write/read-back remains scoped to the tenant's pinned store
+and immutable model. A group with no enrolled immutable UUID does not
+create a chat grant.
+
+For the **existing hAIrem POC**, the 13 *already declared* AgentIdentity
+documents explicitly opt into the existing `client0` IAM group. The
+`charchess` workspace userRef and `admin` workspace group remain
+untouched. This is declarative intent only: **the real number of members
+and their UUID→Fabric bindings must be verified from Authentik and the
+retained ledger**, not inferred from Git. Adding a second member to
+`client0` would grant that member the explicitly group-scoped chat
+rights after reconciliation; limiting access permanently to a single
+human needs a further immutable-user binding/policy review.
+
+All feature gates remain OFF (`TXO_FABRIC_OPENFGA_STORES_ENABLED=false`,
+`TXO_FABRIC_PRIVATE_BRIDGE_ENABLED=false`,
+`TXO_WEBUI_BFF_BROWSER_ENABLED=false`). No FGA stores/tuples, Secret,
+ExternalSecret, API endpoint or credential is created by source publication;
+no Hermes API, browser routes, IAM enrollment or PVC is affected.
+
 ## OpenFGA tenant store lifecycle — staged #3996
 
 The private Fabric-wide OpenFGA service is deployed independently from the operator. **One service does not mean one store**: the target is one authorization store per `TenantBundle.spec.tenantId` plus a separate platform-control store. A store name is derived only from the **immutable business tenant ID** (`txo-fabric-tenant-ten00001`), never the mutable display name, AgentIdentity name, username or browser input.

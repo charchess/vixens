@@ -124,6 +124,16 @@ type TenantWorkspaceSpec struct {
 // AgentAccessSpec binds an agent to tenant workspace populations. A future IAM
 // integration may manage these bindings; Fabric does not become the employee directory.
 type AgentAccessSpec struct {
+	// ChatIAMGroups is an explicit agent.chat access intent referencing only
+	// TenantBundle.humanAccess.web.iamGroups keys, NOT workspace group keys.
+	// Authentik live membership, immutable UUID→Fabric ledger, and tenant
+	// group-UUID pins are separately verified before any tuple is written.
+	// Omitted/empty never implies an agent.chat permission.
+	// +optional
+	// +kubebuilder:validation:MaxItems=32
+	// +listType=set
+	ChatIAMGroups []string `json:"chatIAMGroups,omitempty"`
+
 	// UserRef selects one declared tenant user workspace scope.
 	// +optional
 	// +kubebuilder:validation:MaxLength=32
