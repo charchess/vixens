@@ -1,5 +1,62 @@
 # TXO Fabric — OpenBao Fabric POC bootstrap and restore acceptance
 
+## Planned Shamir → Infra Transit auto-unseal: NO-GO until preflight
+
+This section supersedes any assumption that Fabric can be automatically
+unsealed today. An ordinary restart reseals the current Shamir instance.
+The **unselected** [identity preflight](../../apps/60-services/txo-fabric/openbao-fabric/transit-staged/README.md)
+contains the exact SA/audience/TTL/Transit path/policy contract but does
+not alter the live Pod, ClusterSecretStore, seal, egress or credential
+state. The legacy Infra source advertises `http://nas.truxonline.com:8200`:
+that is NOT a validated trusted HTTPS seal endpoint.
+
+**Before an explicit go/no-go**, an authorized Infra custodian must prove
+(only metadata, never values): exact trusted HTTPS Infra endpoint and SNI,
+CA trust, internal route/port, valid Kubernetes TokenReview for only
+`system:serviceaccount:txo-fabric-system:openbao-fabric-seal-bootstrap`
+with audience `txo-fabric-infra-seal` and a 600-second projected token,
+dedicated role/policy, a single retained key `transit/txo-fabric-seal`,
+`update` on only its encrypt/decrypt actions, negative checks for all
+other Infra paths, renewable periodic/orphan seal token across TTL
+and actual Infra outages (OpenBao 2.6.2), and exact Pod-only egress.
+No ESO token or static Kubernetes Secret can satisfy bootstrap.
+
+**Stateful safety:** confirm same 5Gi Bound Retain PVC/PV/UID and
+`initialized=true`, Raft health, current seal state, working native
+encrypted snapshot with isolated restore acceptance (#4049). Preserve
+old Shamir custody only in Infra. Prepare a fully tested Pod/init
+bootstrap implementation that obtains the Transit token via
+Kubernetes-auth TLS, shares it via restricted memory-only file,
+proves `disable_renewal=false` and *real* periodic renewal (not
+hypothetical file re-read). Allow no runtime secret fallback to Infra.
+
+**Separate authorized maintenance only:** follow the OpenBao
+[seal-migration documentation](https://openbao.org/docs/concepts/seal/#seal-migration)
+to stop the current single-node server, start with the new Transit
+seal and migrate using the **existing Shamir threshold shares** via
+the `unseal -migrate` procedure outside Git/CI/logs/chat.
+**Never run `sys/init`, delete/recreate a PVC, or generate a new
+root key.** Rehearse on disposable restored Raft data first.
+Success requires the migrated seal type, no Shamir intervention
+after controlled Pod restart, verified Fabric/Infra TLS hostname
+handshakes, Raft continuity, strict policy denials and unchanged
+Fabric runtime-to-Infra isolation.
+
+**Recovery / rollback:** Auto-Unseal recovery shares authorize
+sensitive operations but **cannot decrypt the root key** if the
+external Transit seal or key is permanently lost. Infra must
+preserve historic key versions and recoverability. Before migration
+commits, abort and restore prior Shamir service only under the
+approved maintenance plan, with its original PV/PVC retained.
+After migration, reverting HCL alone is UNSAFE: reverse migration
+requires both seals and explicit custody/approval; never
+blind-reinitialize or delete state. Any token renewal failure
+requires an incident and controlled re-authentication, not
+an Infra runtime KV fallback.
+
+No physical seal migration, Pod restart, PVC/secret mutation or
+privileged gate activation is authorized by this document.
+
 ## Current source-only TLS increment — distinct from prior bootstrap acceptance (2026-10-14)
 
 Issue #3728 records **separately observed** physical OpenBao Fabric bootstrap:
