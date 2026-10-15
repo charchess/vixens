@@ -56,8 +56,8 @@ Transit ACL; no BFF/tenant egress and no Internet catch-all.
 
 ## Seal migration is not initialization
 
-See [the bootstrap/restore runbook](../../../../../docs/troubleshooting/txo-fabric-openbao-bootstrap-and-restore.md)
-for the separate approved migration ceremony, Raft snapshot/retention,
+See [the OpenBao Fabric operational runbook](../../../../../docs/troubleshooting/txo-fabric-openbao-bootstrap-and-restore.md)
+for the separate approved migration ceremony, Raft/PVC retention,
 downtime, old Shamir shares with `unseal -migrate`, automatic unseal
 post-restart acceptance, recovery-key limitation and rollback stop points.
 

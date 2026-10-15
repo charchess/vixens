@@ -21,10 +21,9 @@ other Infra paths, renewable periodic/orphan seal token across TTL
 and actual Infra outages (OpenBao 2.6.2), and exact Pod-only egress.
 No ESO token or static Kubernetes Secret can satisfy bootstrap.
 
-**Stateful safety:** confirm same 5Gi Bound Retain PVC/PV/UID and
-`initialized=true`, Raft health, current seal state, working native
-encrypted snapshot with isolated restore acceptance (#4049). Preserve
-old Shamir custody only in Infra. Prepare a fully tested Pod/init
+**Stateful safety:** confirm the same 5Gi Bound Retain PVC/PV/UID,
+`initialized=true`, Raft health and current seal state. Preserve old
+Shamir custody only in Infra. Prepare a fully tested Pod/init
 bootstrap implementation that obtains the Transit token via
 Kubernetes-auth TLS, shares it via restricted memory-only file,
 proves `disable_renewal=false` and *real* periodic renewal (not
@@ -36,7 +35,8 @@ to stop the current single-node server, start with the new Transit
 seal and migrate using the **existing Shamir threshold shares** via
 the `unseal -migrate` procedure outside Git/CI/logs/chat.
 **Never run `sys/init`, delete/recreate a PVC, or generate a new
-root key.** Rehearse on disposable restored Raft data first.
+root key.** Rehearse the seal bootstrap on a disposable empty OpenBao
+instance first; this is not a backup/restore workstream.
 Success requires the migrated seal type, no Shamir intervention
 after controlled Pod restart, verified Fabric/Infra TLS hostname
 handshakes, Raft continuity, strict policy denials and unchanged
@@ -46,8 +46,8 @@ Fabric runtime-to-Infra isolation.
 sensitive operations but **cannot decrypt the root key** if the
 external Transit seal or key is permanently lost. Infra must
 preserve historic key versions and recoverability. Before migration
-commits, abort and restore prior Shamir service only under the
-approved maintenance plan, with its original PV/PVC retained.
+commits, abort under the approved maintenance plan while the original
+Shamir configuration and retained PV/PVC remain intact.
 After migration, reverting HCL alone is UNSAFE: reverse migration
 requires both seals and explicit custody/approval; never
 blind-reinitialize or delete state. Any token renewal failure

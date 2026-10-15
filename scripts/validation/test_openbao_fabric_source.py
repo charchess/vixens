@@ -131,7 +131,7 @@ class TransitSealPreflightTests(unittest.TestCase):
             "transitKeyPolicy": True,
             "periodicTokenRenewal": True,
             "exactPrivateEgress": True,
-            "raftSnapshotRestore": True,
+            "raftStorageContinuity": True,
             "originalShamirCustody": True,
             "explicitPhysicalApproval": True,
         }

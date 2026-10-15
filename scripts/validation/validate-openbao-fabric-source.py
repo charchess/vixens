@@ -165,7 +165,7 @@ def require_seal_migration_preflight(facts: object) -> list[str]:
     required = {
         "infraTLS", "infraCA", "infraSNI", "tokenReview",
         "saAudience", "transitKeyPolicy", "periodicTokenRenewal",
-        "exactPrivateEgress", "raftSnapshotRestore",
+        "exactPrivateEgress", "raftStorageContinuity",
         "originalShamirCustody", "explicitPhysicalApproval",
     }
     if not isinstance(facts, dict) or set(facts) != required:
