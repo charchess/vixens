@@ -16,7 +16,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FABRIC_PREFIX = "apps/60-services/txo-fabric/openbao-fabric/"
 ALLOWED_FILES = (".md", ".example")
-POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "base/certificate.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml"}
+POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "base/certificate.yaml", "transit-staged/kustomization.yaml", "transit-staged/serviceaccount.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml"}
 # Sensitive material MUST never appear in new source, even commented examples.
 ASSIGNMENT = re.compile(
     r"""(?ix)
@@ -134,6 +134,47 @@ def validate_provisioning_request(request: object, canonical: object) -> list[st
     return []
 
 
+SEAL_SA = "openbao-fabric-seal-bootstrap"
+SEAL_NAMESPACE = "txo-fabric-system"
+SEAL_AUDIENCE = "txo-fabric-infra-seal"
+SEAL_TOKEN_TTL = 600
+SEAL_KEY = "txo-fabric-seal"
+
+def validate_staged_seal_identity(objects: object) -> list[str]:
+    """Closed unselected YAML envelope, not runtime seal acceptance."""
+    if not isinstance(objects, list) or len(objects) != 1:
+        return ["stage must contain exactly one dedicated SA"]
+    if objects[0] != {
+        "apiVersion": "v1", "kind": "ServiceAccount",
+        "metadata": {
+            "name": SEAL_SA, "namespace": SEAL_NAMESPACE,
+            "labels": {
+                "app.kubernetes.io/name": SEAL_SA,
+                "app.kubernetes.io/component": "seal-bootstrap",
+                "app.kubernetes.io/part-of": "txo-fabric",
+            },
+        },
+        "automountServiceAccountToken": False,
+    }:
+        return ["wrong staged SA namespace, identity or authority"]
+    return []
+
+
+def require_seal_migration_preflight(facts: object) -> list[str]:
+    """Pure fail-closed preflight: no trust facts are sourced from Git."""
+    required = {
+        "infraTLS", "infraCA", "infraSNI", "tokenReview",
+        "saAudience", "transitKeyPolicy", "periodicTokenRenewal",
+        "exactPrivateEgress", "raftStorageContinuity",
+        "originalShamirCustody", "explicitPhysicalApproval",
+    }
+    if not isinstance(facts, dict) or set(facts) != required:
+        return ["incomplete independently verified seal preflight"]
+    if any(type(facts[k]) is not bool or facts[k] is not True for k in required):
+        return ["seal migration denied: missing verified prerequisite"]
+    return []
+
+
 def git(*args: str) -> str:
     return subprocess.check_output(["git", *args], cwd=ROOT, text=True)
 
@@ -194,6 +235,26 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
         content = full.read_text(encoding="utf-8")
         for violation in assert_file_safe(path, content):
             problems.append(f"{path}: {violation}")
+    for path in (
+        "apps/60-services/txo-fabric/openbao-fabric/base/kustomization.yaml",
+        "apps/60-services/txo-fabric/openbao-fabric/overlays/dev/kustomization.yaml",
+        "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/kustomization.yaml",
+        "apps/60-services/txo-fabric/overlays/dev/kustomization.yaml",
+        "apps/60-services/txo-fabric/overlays/prod/kustomization.yaml",
+    ):
+        if (ROOT / path).is_file() and "transit-staged" in (ROOT / path).read_text(encoding="utf-8"):
+            problems.append("Transit preflight selected without approved migration")
+    # Existing production Infra points to HTTP: this MUST NOT be
+    # mistaken for a verified TLS anchor or a ready Transit seal.
+    staged = ROOT / "apps/60-services/txo-fabric/openbao-fabric/transit-staged"
+    if staged.is_dir():
+        k = staged / "kustomization.yaml"
+        if not k.is_file() or "serviceaccount.yaml" not in k.read_text(encoding="utf-8"):
+            problems.append("seal identity stage missing or not isolated")
+        if any(f.is_file() for f in staged.glob("*") if f.name not in {
+            "README.md", "serviceaccount.yaml", "kustomization.yaml"
+        }):
+            problems.append("unauthorized executable Transit stage file")
     # Additional delta scan catches a newly introduced Infra store binding.
     patch = git("diff", "--unified=0", f"{base}...{head}", "--", "apps/60-services/txo-fabric/")
     if INFRA_STORE_ADDITION.search(patch):

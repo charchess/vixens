@@ -8,6 +8,19 @@ promoted by this PR. The physical instance is already initialized and unsealed
 according to issue #3728's separately recorded acceptance; that is **not** a
 live observation performed by this change.
 
+## Infra Transit seal preflight (unselected, blocker active)
+
+OpenBao Fabric continues on **Shamir**. A separate
+[`transit-staged`](transit-staged/README.md) Kustomization contains
+only the future dedicated, non-human bootstrap ServiceAccount. No
+normal dev/prod overlay references it; no Pod, token, role, policy,
+NetworkPolicy egress or seal configuration changes here.
+**Source readiness remains blocked**: Infra's currently declared
+endpoint is HTTP, not a verified TLS endpoint with known CA/SNI and
+private IP. The existing Fabric server must not be restarted into
+a speculative Transit seal. The distinct future Shamir→Transit
+ceremony needs explicit human approval and a verified Raft restore.
+
 ## Namespace-local trust chain and rollout boundaries
 
 - Four cert-manager objects live **only in `txo-fabric-system`**:
