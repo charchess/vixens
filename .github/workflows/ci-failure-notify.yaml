@@ -120,8 +120,8 @@ jobs:
             fields=$(echo "$fields" | jq '. + [{"name": "Pull Request", "value": "[#${{ steps.metadata.outputs.pr_number }}](${{ steps.metadata.outputs.pr_url }})", "inline": true}]')
           fi
 
-          # Send notification
-          curl -X POST "$DISCORD_WEBHOOK" \
+          # Delivery is best-effort: observability must not gate GitOps promotion.
+          if ! curl --fail-with-body --silent --show-error --max-time 15 -X POST "$DISCORD_WEBHOOK" \
             -H "Content-Type: application/json" \
             -d '{
               "embeds": [{
@@ -146,4 +146,10 @@ jobs:
                   }
                 ]
               }]
-            }'
+            }'; then
+            {
+              echo "## Discord CI failure notification"
+              echo "Delivery failed; the originating CI failure remains visible above."
+              echo "Notification delivery is intentionally non-blocking."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
