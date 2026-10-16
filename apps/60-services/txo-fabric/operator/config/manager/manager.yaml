@@ -53,6 +53,10 @@ spec:
             - --metrics-bind-address=:8080
             - --health-probe-bind-address=:8081
           env:
+            # Explicitly enabled only for the reviewed hAIrem OpenFGA
+            # reconciliation path. Browser and private-bridge gates remain OFF.
+            - name: TXO_FABRIC_OPENFGA_STORES_ENABLED
+              value: "true"
             # Explicitly OFF: only a later approved GitOps change may
             # enable the workload-authenticated private identity listener.
             - name: TXO_FABRIC_PRIVATE_BRIDGE_ENABLED
