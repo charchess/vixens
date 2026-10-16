@@ -109,6 +109,20 @@ spec:
                       maxLength: 128
                       minLength: 1
                       type: string
+                    existingIdentityName:
+                      description: |-
+                        ExistingIdentityName explicitly references a pre-existing brownfield
+                        AgentIdentity. When set, reconciliation validates it read-only instead
+                        of creating or adopting it. This reference is immutable once declared.
+                      maxLength: 253
+                      type: string
+                    expectedMemoryBankId:
+                      description: |-
+                        ExpectedMemoryBankID is the observed bank binding required for a
+                        brownfield identity. It prevents silently connecting a different memory.
+                        Required when existingIdentityName is set.
+                      maxLength: 128
+                      type: string
                     humanAccess:
                       properties:
                         enabled:

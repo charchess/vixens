@@ -103,6 +103,20 @@ type TenantAgentPopulationEntry struct {
 	// +kubebuilder:validation:MaxLength=128
 	DisplayName string `json:"displayName"`
 
+	// ExistingIdentityName explicitly references a pre-existing brownfield
+	// AgentIdentity. When set, reconciliation validates it read-only instead
+	// of creating or adopting it. This reference is immutable once declared.
+	// +optional
+	// +kubebuilder:validation:MaxLength=253
+	ExistingIdentityName string `json:"existingIdentityName,omitempty"`
+
+	// ExpectedMemoryBankID is the observed bank binding required for a
+	// brownfield identity. It prevents silently connecting a different memory.
+	// Required when existingIdentityName is set.
+	// +optional
+	// +kubebuilder:validation:MaxLength=128
+	ExpectedMemoryBankID string `json:"expectedMemoryBankId,omitempty"`
+
 	// +optional
 	Runtime AgentRuntimeBinding `json:"runtime,omitempty"`
 	// +optional
