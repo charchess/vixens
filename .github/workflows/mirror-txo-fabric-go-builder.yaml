@@ -1,0 +1,60 @@
+---
+name: Mirror TXO Fabric Go Builder
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: mirror-txo-fabric-go-builder
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    name: Copy reviewed Go builder into authenticated GHCR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Use the native builder. A docker-container Buildx driver would create a
+      # second anonymous image pull for moby/buildkit.
+      - name: Verify runner-native Docker Buildx
+        run: |
+          set -euo pipefail
+          docker buildx version
+          docker buildx inspect default --bootstrap
+
+      - name: Build and publish immutable-source mirror
+        id: mirror
+        uses: docker/build-push-action@v6
+        with:
+          file: .github/docker/txo-fabric-go-builder.Dockerfile
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/txo-fabric-go-builder:golang-1.26.0-alpine-ecr-d4c4845f5d60
+          platforms: linux/amd64
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Record immutable result
+        env:
+          DIGEST: ${{ steps.mirror.outputs.digest }}
+        run: |
+          set -euo pipefail
+          test -n "$DIGEST"
+          echo "## TXO Fabric Go builder mirror" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Source: \`public.ecr.aws/docker/library/golang@sha256:d4c4845f5d60c6a974c6000ce58ae079328d03ab7f721a0734277e69905473e5\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Mirror: \`ghcr.io/${{ github.repository_owner }}/txo-fabric-go-builder@${DIGEST}\`" >> "$GITHUB_STEP_SUMMARY"
