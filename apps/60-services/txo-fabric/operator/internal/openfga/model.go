@@ -137,6 +137,11 @@ func isBoundedLegacyModel(raw json.RawMessage) bool {
 	if !ok || !storeIDPattern.MatchString(id) || model["schema_version"]!="1.1" {return false}
 	if defs,ok:=model["type_definitions"].([]any);!ok || len(defs)==0{return false}
 	delete(model,"id"); delete(model,"created_at")
+	if conditions, present := model["conditions"]; present {
+		empty, ok := conditions.(map[string]any)
+		if !ok || len(empty) != 0 { return false }
+		delete(model, "conditions")
+	}
 	return len(model)==2
 }
 
