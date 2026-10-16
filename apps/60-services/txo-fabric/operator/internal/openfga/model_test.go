@@ -97,6 +97,23 @@ func TestUnknownModelNeverReplacedOrRolledBack(t *testing.T) {
 	if posts!=0 {t.Fatal("silently wrote an authorization-model migration")}
 }
 
+func TestMigrateAuthorizationModelAppendsOnlyOneBoundedLegacyRevision(t *testing.T) {
+	legacy:=modelWithID(t,testStoreB); legacy["type_definitions"]=legacy["type_definitions"].([]any)[:6]
+	legacyRaw,_:=json.Marshal(legacy); canonicalRaw,_:=json.Marshal(modelWithID(t,sampleModelID))
+	models:=[]json.RawMessage{legacyRaw}; posts:=0
+	c:=testClient(t,func(r *http.Request)(*http.Response,error){
+		if r.Method==http.MethodGet{return response(200,authorizationModelResponse{AuthorizationModels:models}),nil}
+		posts++; models=[]json.RawMessage{canonicalRaw,legacyRaw}; return response(201,authorizationModelWriteResponse{AuthorizationModelID:sampleModelID}),nil
+	})
+	if id,err:=c.MigrateAuthorizationModel(context.Background(),testStoreA);err!=nil || id!=sampleModelID || posts!=1 {t.Fatalf("migration id=%q err=%v posts=%d",id,err,posts)}
+	for name,items:=range map[string][]json.RawMessage{"empty":nil,"multiple":{legacyRaw,legacyRaw},"canonical-latest":{canonicalRaw},"canonical-not-latest":{legacyRaw,canonicalRaw}} {
+		t.Run(name,func(t *testing.T){
+			c:=testClient(t,func(r *http.Request)(*http.Response,error){if r.Method==http.MethodPost{t.Fatal("unsafe migration write")};return response(200,authorizationModelResponse{AuthorizationModels:items}),nil})
+			if _,err:=c.MigrateAuthorizationModel(context.Background(),testStoreA);err==nil{t.Fatal("unsafe migration state accepted")}
+		})
+	}
+}
+
 func TestUnauthorizedAndUnreachableModelServiceAreFailClosed(t *testing.T) {
 	for _,code:=range []int{401,403,429,503} {
 		c:=testClient(t,func(*http.Request)(*http.Response,error){

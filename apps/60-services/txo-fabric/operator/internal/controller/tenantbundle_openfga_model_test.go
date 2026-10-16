@@ -14,14 +14,22 @@ import (
 type fakeOpenFGAModelClient struct {
 	ids map[string]string
 	ensureCalls []string
+	migrateCalls []string
 	validateCalls []string
 	ensureErr error
+	migrateErr error
 	validateErr error
 }
 
 func (f *fakeOpenFGAModelClient) EnsureAuthorizationModel(_ context.Context, storeID string) (string, error) {
 	f.ensureCalls = append(f.ensureCalls, storeID)
 	if f.ensureErr != nil { return "", f.ensureErr }
+	return f.ids[storeID], nil
+}
+
+func (f *fakeOpenFGAModelClient) MigrateAuthorizationModel(_ context.Context, storeID string) (string, error) {
+	f.migrateCalls = append(f.migrateCalls, storeID)
+	if f.migrateErr != nil { return "", f.migrateErr }
 	return f.ids[storeID], nil
 }
 
@@ -154,4 +162,23 @@ func TestOpenFGAModelMissingServiceCredentialDenies(t *testing.T) {
 	if _,err:=r.reconcileOpenFGAModel(ctx,tenant,store);err==nil {
 		t.Fatal("authorization model accepted without the Fabric-owned service credential")
 	}
+}
+
+func TestOpenFGAModelMigrationRequiresExplicitTenantAnnotation(t *testing.T) {
+	ctx := context.Background()
+	tenant := openFGATestTenant("hairem", "TEN00001", "uid-hairem")
+	store := openfga.Store{ID:"01H0H015178Y2V4CX10C2KGHF4",Name:"txo-fabric-tenant-ten00001"}
+	stores := &fakeOpenFGAProvisioner{stores:map[string]openfga.Store{"TEN00001":store}}
+	models := &fakeOpenFGAModelClient{
+		ids: map[string]string{store.ID:"01H0H015178Y2V4CX10C2KGHF6"},
+		ensureErr: openfga.ErrUnknownAuthorizationModel,
+	}
+	r,_ := openFGATestReconciler(t, stores, tenant)
+	r.OpenFGAModelClient = models
+	if _,err := r.reconcileOpenFGAStore(ctx, tenant); err != nil { t.Fatal(err) }
+	if _,err := r.reconcileOpenFGAModel(ctx, tenant, store); err == nil { t.Fatal("unknown model migrated without explicit annotation") }
+	if len(models.migrateCalls) != 0 { t.Fatal("migration attempted without explicit annotation") }
+	tenant.Annotations = map[string]string{openFGAModelMigrationAnnotation: openFGAModelMigrationAppendV1}
+	if _,err := r.reconcileOpenFGAModel(ctx, tenant, store); err != nil { t.Fatalf("approved migration failed: %v", err) }
+	if len(models.migrateCalls) != 1 || models.migrateCalls[0] != store.ID { t.Fatalf("unexpected migration calls: %v", models.migrateCalls) }
 }

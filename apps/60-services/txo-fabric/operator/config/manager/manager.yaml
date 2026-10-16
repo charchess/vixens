@@ -57,6 +57,10 @@ spec:
             # reconciliation path. Browser and private-bridge gates remain OFF.
             - name: TXO_FABRIC_OPENFGA_STORES_ENABLED
               value: "true"
+            # Only listed TenantBundles enter the active OpenFGA flow; an
+            # unlisted tenant stays fail-closed even while the global gate is on.
+            - name: TXO_FABRIC_OPENFGA_TENANT_ALLOWLIST
+              value: "hairem"
             # Explicitly OFF: only a later approved GitOps change may
             # enable the workload-authenticated private identity listener.
             - name: TXO_FABRIC_PRIVATE_BRIDGE_ENABLED

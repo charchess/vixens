@@ -18,6 +18,15 @@ type openFGAModelProvisioner interface {
 	ValidateModelBinding(context.Context, string, string) error
 }
 
+type openFGAModelMigrator interface {
+	MigrateAuthorizationModel(context.Context, string) (string, error)
+}
+
+const (
+	openFGAModelMigrationAnnotation = "fabric.truxonline.io/openfga-model-migration"
+	openFGAModelMigrationAppendV1   = "append-canonical-v1"
+)
+
 // openFGAAuthorizationBinding is resolved solely from durable Fabric-owned
 // state. An incomplete binding never denotes an operational authorization
 // graph: tuple reconciliation and authorization readiness remain separate.
@@ -92,6 +101,13 @@ func (r *TenantBundleReconciler) reconcileOpenFGAModel(ctx context.Context, bund
 	}
 
 	modelID, err := service.EnsureAuthorizationModel(ctx, store.ID)
+	if errors.Is(err, openfga.ErrUnknownAuthorizationModel) && bundle.Annotations[openFGAModelMigrationAnnotation] == openFGAModelMigrationAppendV1 {
+		migrator, ok := service.(openFGAModelMigrator)
+		if !ok {
+			return "", errors.New("Fabric OpenFGA model migration is unavailable for the approved tenant")
+		}
+		modelID, err = migrator.MigrateAuthorizationModel(ctx, store.ID)
+	}
 	if err != nil {
 		return "", fmt.Errorf("Fabric OpenFGA authorization model publication failed: %w", err)
 	}
