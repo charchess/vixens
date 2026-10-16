@@ -54,6 +54,20 @@ func decodeRetainedIdentityBindings(raw string) ([]authentik.IdentityBinding,err
     return bindings,nil
 }
 
+// enrollmentIntentAllows accepts precisely one reviewed immutable identity
+// pin. A username, group membership, email, browser input, or UUID alone is
+// never sufficient to enroll a human in Fabric.
+func enrollmentIntentAllows(intents []fabricv1alpha1.HumanEnrollmentIntent, proof trustedHumanOIDCProof) bool {
+    if proof.authentikUUID=="" || proof.subject=="" {return false}
+    matches:=0
+    for _,intent:=range intents {
+        if intent.AuthentikUserUUID==proof.authentikUUID && intent.OIDCSubject==proof.subject {
+            matches++
+        }
+    }
+    return matches==1
+}
+
 // enrollHumanFromVerifiedIdentity is a STAGED privileged write primitive;
 // it is not wired into an HTTP endpoint or the TenantBundle reconcile loop.
 //
@@ -92,6 +106,9 @@ func (r *TenantBundleReconciler) enrollHumanFromVerifiedIdentity(
     if _,err:=authentik.NewIdentityRegistry(bundle.Name,bundle.Spec.TenantID,issuer,
         bundle.Spec.HumanAccess.Web.IAMGroups,[]authentik.IdentityBinding{claim});err!=nil {
         return "",errors.New("invalid signed Authentik identity claim")
+    }
+    if !enrollmentIntentAllows(bundle.Spec.HumanAccess.EnrollmentIntents,proof) {
+        return "",errors.New("verified identity has no explicit Fabric enrollment intent")
     }
 
     account,err:=source.SnapshotUserAccount(ctx,proof.authentikUUID)
