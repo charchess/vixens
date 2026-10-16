@@ -83,6 +83,7 @@ A retrospective ADR records the accepted implementation. It must not make an unr
 - [ADR-036: Keep durable agent memory behind the tenant Hindsight service boundary](036-hindsight-external-durable-memory-boundary.md)
 - [ADR-037: Separate agent-extensible skills from platform-governed executable capabilities](037-skills-vs-platform-governed-executable-capabilities.md)
 - [ADR-041: Separate OpenBao Fabric runtime authority from Infra](041-separate-openbao-fabric-secret-plane.md) — accepted architectural split; source-only contracts, no production instance yet.
+- [ADR-042: Declare tenant agent populations in TenantBundle](042-tenant-declarative-agent-population.md) — tenant-level desired population, strict no-implicit-adoption lifecycle.
 
 Future Fabric decisions are added only after their owning implementation/acceptance establishes a durable contract. Unsettled candidates remain in their owning issues rather than appearing here as premature Accepted architecture.
 
