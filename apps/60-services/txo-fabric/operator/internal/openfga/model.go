@@ -61,6 +61,15 @@ func normalizedModelValue(v any) any {
 	case map[string]any:
 		out := make(map[string]any,len(current))
 		for k, value := range current {
+			// OpenFGA serializes non-executable tooling metadata on reads;
+			// source-controlled policy equivalence must not depend on it.
+			if k == "metadata" { continue }
+			// The API also materializes an empty conditions map even when
+			// the source model declares no conditions. Preserve non-empty
+			// conditions because they change authorization semantics.
+			if k == "conditions" {
+				if conditions, ok := value.(map[string]any); ok && len(conditions) == 0 { continue }
+			}
 			// OpenFGA JSON/protobuf default serialization differs for
 			// omitted zero fields; never normalize away a meaningful
 			// userset node such as {"this":{}}.

@@ -80,6 +80,29 @@ func modelMatchesWithoutID(a,b map[string]any) bool {
 	return ok && id==sampleModelID
 }
 
+func TestModelMatchesDesiredIgnoresOpenFGARuntimeDefaultMetadata(t *testing.T) {
+	desired, err := desiredModel()
+	if err != nil { t.Fatal(err) }
+	actual := modelWithID(t, sampleModelID)
+	actual["conditions"] = map[string]any{}
+	types := actual["type_definitions"].([]any)
+	types[1].(map[string]any)["metadata"] = map[string]any{
+		"module": "",
+		"source_info": map[string]any{},
+		"relations": map[string]any{
+			"admin": map[string]any{
+				"module": "",
+				"source_info": map[string]any{},
+				"directly_related_user_types": []any{map[string]any{"condition": ""}},
+			},
+		},
+	}
+	raw, _ := json.Marshal(actual)
+	if id, matches := modelMatchesDesired(raw, desired); !matches || id != sampleModelID {
+		t.Fatalf("runtime serialization defaults rejected: id=%q matches=%t", id, matches)
+	}
+}
+
 func TestUnknownModelNeverReplacedOrRolledBack(t *testing.T) {
 	ctx:=context.Background()
 	known:=modelWithID(t,sampleModelID)
