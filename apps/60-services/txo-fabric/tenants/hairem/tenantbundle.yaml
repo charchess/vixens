@@ -3,6 +3,10 @@ apiVersion: fabric.truxonline.io/v1alpha1
 kind: TenantBundle
 metadata:
   name: hairem
+  annotations:
+    # One-time reviewed approval: append the immutable canonical model only
+    # when the bound store has exactly one valid noncanonical legacy revision.
+    fabric.truxonline.io/openfga-model-migration: append-canonical-v1
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:

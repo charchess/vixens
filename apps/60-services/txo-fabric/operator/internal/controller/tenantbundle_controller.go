@@ -42,6 +42,12 @@ type TenantBundleReconciler struct {
 	AuthorizationNow func() time.Time
 }
 
+func openFGARolloutEnabledFor(bundle *fabricv1alpha1.TenantBundle) bool {
+	if bundle==nil || os.Getenv("TXO_FABRIC_OPENFGA_STORES_ENABLED")!="true" {return false}
+	for _,name:=range strings.Split(os.Getenv("TXO_FABRIC_OPENFGA_TENANT_ALLOWLIST"),",") {if strings.TrimSpace(name)==bundle.Name{return true}}
+	return false
+}
+
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles/finalizers,verbs=update
@@ -139,7 +145,7 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// This gate remains OFF in the GitOps Deployment until tuple sourcing,
 	// revocation and live cross-tenant checks pass acceptance. Store/model
 	// readiness alone must never imply a usable authorization graph.
-	openFGARolloutEnabled := os.Getenv("TXO_FABRIC_OPENFGA_STORES_ENABLED") == "true"
+	openFGARolloutEnabled := openFGARolloutEnabledFor(&bundle)
 	if openFGARolloutEnabled {
 		store, err := r.reconcileOpenFGAStore(ctx, &bundle)
 		if err != nil {

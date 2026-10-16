@@ -29,6 +29,10 @@ type authorizationModelWriteResponse struct {
 	AuthorizationModelID string `json:"authorization_model_id"`
 }
 
+// ErrUnknownAuthorizationModel means the newest retained model is not the
+// source-controlled Fabric model. Callers must not replace it implicitly.
+var ErrUnknownAuthorizationModel = errors.New("tenant has an unknown or changed OpenFGA authorization model")
+
 // ModelFingerprint is the content digest of the compiled, ordered Fabric
 // authorization model. Do not use a mutable "latest" model for a Check.
 func ModelFingerprint() (string, error) {
@@ -108,35 +112,44 @@ func (c *Client) currentModels(ctx context.Context, storeID string) ([]json.RawM
 // existing model is NOT upgraded, rolled back or overwritten automatically;
 // migrations require a separate reviewed mechanism and explicit policy.
 func (c *Client) EnsureAuthorizationModel(ctx context.Context, storeID string) (string,error) {
-	if !storeIDPattern.MatchString(storeID) {
-		return "",errors.New("invalid tenant OpenFGA store ID")
-	}
-	desired,err:=desiredModel()
-	if err!=nil{return "",err}
-	found,err:=c.currentModels(ctx,storeID)
-	if err!=nil{return "",err}
-	if len(found)>0 {
-		id,match:=modelMatchesDesired(found[0],desired)
-		if !match {return "",errors.New("tenant has an unknown or changed OpenFGA authorization model")}
-		return id,nil
-	}
-	payload,err:=json.Marshal(desired)
-	if err!=nil{return "",errors.New("invalid Fabric authorization model JSON")}
-	resp,err:=c.request(ctx,http.MethodPost,"/stores/"+storeID+"/authorization-models",payload)
-	if err!=nil{return "",err}
+	if !storeIDPattern.MatchString(storeID) { return "",errors.New("invalid tenant OpenFGA store ID") }
+	desired,err:=desiredModel(); if err!=nil{return "",err}
+	found,err:=c.currentModels(ctx,storeID); if err!=nil{return "",err}
+	if len(found)>0 { id,match:=modelMatchesDesired(found[0],desired); if !match{return "",ErrUnknownAuthorizationModel}; return id,nil }
+	return c.publishAuthorizationModel(ctx,storeID,desired,nil)
+}
+
+// MigrateAuthorizationModel appends only to exactly one valid schema-1.1,
+// noncanonical legacy revision. It never deletes or overwrites a revision.
+func (c *Client) MigrateAuthorizationModel(ctx context.Context, storeID string) (string,error) {
+	if !storeIDPattern.MatchString(storeID) { return "",errors.New("invalid tenant OpenFGA store ID") }
+	desired,err:=desiredModel(); if err!=nil{return "",err}
+	found,err:=c.currentModels(ctx,storeID); if err!=nil{return "",err}
+	if len(found)!=1 || !isBoundedLegacyModel(found[0]) { return "",errors.New("tenant OpenFGA model is not an approved bounded legacy migration state") }
+	if _,match:=modelMatchesDesired(found[0],desired);match { return "",errors.New("tenant OpenFGA model migration is not required") }
+	return c.publishAuthorizationModel(ctx,storeID,desired,found[0])
+}
+
+func isBoundedLegacyModel(raw json.RawMessage) bool {
+	var model map[string]any
+	if err:=json.Unmarshal(raw,&model);err!=nil{return false}
+	id,ok:=model["id"].(string)
+	if !ok || !storeIDPattern.MatchString(id) || model["schema_version"]!="1.1" {return false}
+	if defs,ok:=model["type_definitions"].([]any);!ok || len(defs)==0{return false}
+	delete(model,"id"); delete(model,"created_at")
+	return len(model)==2
+}
+
+func (c *Client) publishAuthorizationModel(ctx context.Context, storeID string, desired map[string]any, legacy json.RawMessage) (string,error) {
+	payload,err:=json.Marshal(desired); if err!=nil{return "",errors.New("invalid Fabric authorization model JSON")}
+	resp,err:=c.request(ctx,http.MethodPost,"/stores/"+storeID+"/authorization-models",payload); if err!=nil{return "",err}
 	var written authorizationModelWriteResponse
-	if err:=json.Unmarshal(resp,&written);err!=nil || !storeIDPattern.MatchString(written.AuthorizationModelID) {
-		return "",errors.New("OpenFGA returned an invalid authorization model identity")
-	}
-	// A successful POST does not prove that the server made this model
-	// visible or that concurrent writes have not superseded it.
-	found,err=c.currentModels(ctx,storeID)
-	if err!=nil{return "",err}
+	if err:=json.Unmarshal(resp,&written);err!=nil || !storeIDPattern.MatchString(written.AuthorizationModelID) { return "",errors.New("OpenFGA returned an invalid authorization model identity") }
+	found,err:=c.currentModels(ctx,storeID); if err!=nil{return "",err}
 	if len(found)==0 {return "",errors.New("new model is not observable after publication")}
 	id,match:=modelMatchesDesired(found[0],desired)
-	if !match || id!=written.AuthorizationModelID {
-		return "",errors.New("OpenFGA model publication is not uniquely confirmed")
-	}
+	if !match || id!=written.AuthorizationModelID { return "",errors.New("OpenFGA model publication is not uniquely confirmed") }
+	if legacy!=nil && (len(found)!=2 || !reflect.DeepEqual(found[1],legacy)) { return "",errors.New("OpenFGA model migration is not uniquely confirmed") }
 	return id,nil
 }
 
