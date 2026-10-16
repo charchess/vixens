@@ -86,6 +86,7 @@ func TestModelMatchesDesiredIgnoresOpenFGARuntimeDefaultMetadata(t *testing.T) {
 	actual := modelWithID(t, sampleModelID)
 	actual["conditions"] = map[string]any{}
 	types := actual["type_definitions"].([]any)
+	types[0].(map[string]any)["relations"] = map[string]any{}
 	types[1].(map[string]any)["metadata"] = map[string]any{
 		"module": "",
 		"source_info": map[string]any{},
