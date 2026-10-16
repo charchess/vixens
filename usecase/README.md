@@ -36,6 +36,7 @@ Statuts possibles pour une fiche : `Exploration`, `Besoin confirmé`, `Contrat �
 | [UC-004 — Comptes personnels utilisateur](UC-004-user-owned-accounts.md) | OAuth, device auth ou API personnelles sans mutualisation implicite | Besoin confirmé, isolation par principal à concevoir |
 | [UC-005 — WebUI conversationnelle multi-agent](UC-005-agent-chat-webui.md) | Parler à ses agents via une interface unique | Besoin confirmé, implémentation à livrer |
 | [UC-006 — Séparation chat / services Hindsight](UC-006-inference-purpose-boundaries.md) | Éviter le mélange des routes, identités, droits et coûts | Contrat produit confirmé, sous-capacités à éprouver |
+| [UC-007 — POC 1 : tenant déclaratif, identité humaine et agents](UC-007-poc1-declarative-tenant-identity-agents.md) | Rendre hAIrem utilisable par une chaîne déclarative tenant → Authentik → OpenFGA → agents → chat privé | Besoin confirmé, livraison suivie dans [#4087](https://github.com/charchess/vixens/issues/4087) |
 
 ## Glossaire de travail
 
