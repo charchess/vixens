@@ -304,6 +304,39 @@ spec:
                   HumanAccess declares tenant-owned IAM/transport policy for authenticated
                   human interaction with explicitly opted-in AgentIdentity resources.
                 properties:
+                  enrollmentIntents:
+                    description: |-
+                      EnrollmentIntents is the explicit, reviewed, one-time allowlist for
+                      verified human enrollment. Removing an entry never removes a retained
+                      ledger identity or an Authentik account; it only prevents new enrollment.
+                    items:
+                      description: |-
+                        HumanEnrollmentIntent pins one pre-existing Authentik identity that may be
+                        enrolled after a server-side, signed OIDC proof. It is not an account,
+                        password, group membership, authorization grant, or browser-supplied value.
+                        The immutable UUID and opaque OIDC subject must both match exactly.
+                      properties:
+                        authentikUserUUID:
+                          description: AuthentikUserUUID is the immutable UUID of
+                            an existing Authentik account.
+                          pattern: ^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$
+                          type: string
+                        oidcSubject:
+                          description: |-
+                            OIDCSubject is the opaque signed sub expected for the Authentik account.
+                            It is never derived from a username, email, group, or browser request.
+                          maxLength: 2048
+                          minLength: 1
+                          type: string
+                      required:
+                      - authentikUserUUID
+                      - oidcSubject
+                      type: object
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - authentikUserUUID
+                    x-kubernetes-list-type: map
                   web:
                     description: |-
                       Web configures the first v0 human transport. Additional channels belong

@@ -1,7 +1,7 @@
-# Keep the Go builder at the same exact version, using Docker's official
-# image mirror on ECR Public to avoid anonymous Docker Hub pull throttling.
+# Consume the reviewed first-party GHCR builder mirror by immutable digest.
+# CI authenticates to GHCR before this pull; no registry credential is in Git.
 # No external BuildKit frontend is required by this Dockerfile.
-FROM public.ecr.aws/docker/library/golang:1.26.0-alpine AS builder
+FROM ghcr.io/charchess/txo-fabric-go-builder@sha256:7b234d8ecfd110d787d4dd83ac42bfaa933a5fe3d6cde139cac92b3245141e31 AS builder
 WORKDIR /workspace
 RUN apk add --no-cache ca-certificates
 COPY go.mod ./

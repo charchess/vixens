@@ -112,11 +112,20 @@ func main() {
 				Client:mgr.GetClient(),APIReader:mgr.GetAPIReader(),Scheme:mgr.GetScheme(),
 			}},
 		}
+		enrollmentHandler:=&privatebridge.EnrollmentHandler{
+			Contract:handler.Contract,
+			Tokens:handler.Tokens,
+			Nonces:handler.Nonces,
+			Enrollments:privateBFFEnrollment{controller:&controller.TenantBundleReconciler{
+				Client:mgr.GetClient(),APIReader:mgr.GetAPIReader(),Scheme:mgr.GetScheme(),
+			}},
+		}
 		if err:=mgr.Add(manager.RunnableFunc(func(ctx context.Context) error {
 			listener,err:=net.Listen("tcp",":8090")
 			if err!=nil {return err}
 			mux:=http.NewServeMux()
 			mux.Handle(privatebridge.Path,handler)
+			mux.Handle(privatebridge.EnrollmentPath,enrollmentHandler)
 			server:=&http.Server{
 				Handler:mux,ReadHeaderTimeout:5*time.Second,
 				ReadTimeout:8*time.Second,WriteTimeout:8*time.Second,
@@ -148,4 +157,11 @@ func main() {
 type privateBFFResolver struct { controller *controller.TenantBundleReconciler }
 func (r privateBFFResolver) Resolve(ctx context.Context,tenant,uuid string,now time.Time)(string,error) {
 	return r.controller.ResolvePrivateBFFIdentity(ctx,tenant,uuid,now)
+}
+
+// privateBFFEnrollment keeps enrollment separate from resolution so the latter
+// remains read-only and cannot accidentally become an implicit enrollment API.
+type privateBFFEnrollment struct { controller *controller.TenantBundleReconciler }
+func (r privateBFFEnrollment) Enroll(ctx context.Context,tenant,issuer,subject,uuid string,now time.Time)(string,error) {
+	return r.controller.EnrollPrivateBFFIdentity(ctx,tenant,issuer,subject,uuid,now)
 }

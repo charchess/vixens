@@ -63,11 +63,36 @@ type HumanWebAccessSpec struct {
 	OIDC HumanAccessOIDCSpec `json:"oidc"`
 }
 
+// HumanEnrollmentIntent pins one pre-existing Authentik identity that may be
+// enrolled after a server-side, signed OIDC proof. It is not an account,
+// password, group membership, authorization grant, or browser-supplied value.
+// The immutable UUID and opaque OIDC subject must both match exactly.
+type HumanEnrollmentIntent struct {
+	// AuthentikUserUUID is the immutable UUID of an existing Authentik account.
+	// +kubebuilder:validation:Pattern=`^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$`
+	AuthentikUserUUID string `json:"authentikUserUUID"`
+
+	// OIDCSubject is the opaque signed sub expected for the Authentik account.
+	// It is never derived from a username, email, group, or browser request.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=2048
+	OIDCSubject string `json:"oidcSubject"`
+}
+
 type TenantHumanAccessSpec struct {
 	// Web configures the first v0 human transport. Additional channels belong
 	// beside Web rather than inside AgentIdentity.
 	// +optional
 	Web *HumanWebAccessSpec `json:"web,omitempty"`
+
+	// EnrollmentIntents is the explicit, reviewed, one-time allowlist for
+	// verified human enrollment. Removing an entry never removes a retained
+	// ledger identity or an Authentik account; it only prevents new enrollment.
+	// +optional
+	// +kubebuilder:validation:MaxItems=32
+	// +listType=map
+	// +listMapKey=authentikUserUUID
+	EnrollmentIntents []HumanEnrollmentIntent `json:"enrollmentIntents,omitempty"`
 }
 
 // TenantAgentStorageSpec configures private agent PVC provisioning per tenant.
