@@ -39,7 +39,8 @@ jobs:
         id: mirror
         uses: docker/build-push-action@v6
         with:
-          context: apps/60-services/txo-fabric/operator/ci-base
+          file: .github/docker/txo-fabric-go-builder.Dockerfile
+          context: .
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/txo-fabric-go-builder:golang-1.26.0-alpine-ecr-d4c4845f5d60
           platforms: linux/amd64
