@@ -88,6 +88,31 @@ type TenantAgentStorageSpec struct {
 	DisposableStorageClassName string `json:"disposableStorageClassName"`
 }
 
+// TenantAgentPopulationEntry declares one stable generated AgentIdentity.
+// It intentionally excludes tenantRef and metadata: the parent TenantBundle
+// supplies the tenant boundary and generated identity name.
+type TenantAgentPopulationEntry struct {
+	// AgentKey is the immutable tenant-local machine identifier.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
+	AgentKey string `json:"agentKey"`
+
+	// DisplayName is the user-facing identity name.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=128
+	DisplayName string `json:"displayName"`
+
+	// +optional
+	Runtime AgentRuntimeBinding `json:"runtime,omitempty"`
+	// +optional
+	Memory AgentMemoryBinding `json:"memory,omitempty"`
+	// +optional
+	Access AgentAccessSpec `json:"access,omitempty"`
+	// +optional
+	HumanAccess AgentHumanAccessBinding `json:"humanAccess,omitempty"`
+}
+
 // TenantBundleSpec is the desired state of one Fabric Cell.
 type TenantBundleSpec struct {
 	// TenantID is the immutable business identifier. Kubernetes metadata.name is the canonical
@@ -145,6 +170,14 @@ type TenantBundleSpec struct {
 	// human interaction with explicitly opted-in AgentIdentity resources.
 	// +optional
 	HumanAccess *TenantHumanAccessSpec `json:"humanAccess,omitempty"`
+
+	// AgentPopulation declares creation-only generated AgentIdentity resources.
+	// Existing identities are never adopted, updated or deleted by this field.
+	// +optional
+	// +kubebuilder:validation:MaxItems=64
+	// +listType=map
+	// +listMapKey=agentKey
+	AgentPopulation []TenantAgentPopulationEntry `json:"agentPopulation,omitempty"`
 
 	// Modules contains optional tenant capabilities. Core runtime, persistence and memory are
 	// explicit fields because other resources depend on their resolved status.

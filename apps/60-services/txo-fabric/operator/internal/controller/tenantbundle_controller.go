@@ -43,15 +43,21 @@ type TenantBundleReconciler struct {
 }
 
 func openFGARolloutEnabledFor(bundle *fabricv1alpha1.TenantBundle) bool {
-	if bundle==nil || os.Getenv("TXO_FABRIC_OPENFGA_STORES_ENABLED")!="true" {return false}
-	for _,name:=range strings.Split(os.Getenv("TXO_FABRIC_OPENFGA_TENANT_ALLOWLIST"),",") {if strings.TrimSpace(name)==bundle.Name{return true}}
+	if bundle == nil || os.Getenv("TXO_FABRIC_OPENFGA_STORES_ENABLED") != "true" {
+		return false
+	}
+	for _, name := range strings.Split(os.Getenv("TXO_FABRIC_OPENFGA_TENANT_ALLOWLIST"), ",") {
+		if strings.TrimSpace(name) == bundle.Name {
+			return true
+		}
+	}
 	return false
 }
 
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles/finalizers,verbs=update
-// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities,verbs=get;list;watch
+// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities,verbs=get;list;watch;create
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=postgresqlprofiles;hindsightprofiles;aigatewayprofiles;aicredentialbrokerprofiles,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
@@ -93,6 +99,11 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 	if err := r.ensureDefaultDeny(ctx, &bundle, namespaceName); err != nil {
 		r.setFailedStatus(ctx, &bundle, "NetworkReconcileFailed", err.Error())
+		return ctrl.Result{}, err
+	}
+
+	if err := r.reconcileAgentPopulation(ctx, &bundle); err != nil {
+		r.setFailedStatus(ctx, &bundle, "AgentPopulationReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -397,7 +408,6 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	} else {
 		setCondition(&bundle.Status.Conditions, bundle.Generation, "MemoryReady", metav1.ConditionTrue, "NotRequested", "tenant does not request Hindsight memory")
 	}
-
 
 	if runAIPlane {
 		// The tenant-local credential broker is part of the mandatory Active

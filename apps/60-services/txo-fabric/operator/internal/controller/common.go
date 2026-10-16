@@ -19,15 +19,17 @@ const (
 	TenantLifecycleActive = "Active"
 	TenantLifecycleParked = "Parked"
 
-	LabelPartOf            = "app.kubernetes.io/part-of"
-	LabelName              = "app.kubernetes.io/name"
-	LabelInstance          = "app.kubernetes.io/instance"
-	LabelManaged           = "fabric.truxonline.io/managed"
-	LabelTenantID          = "fabric.truxonline.io/tenant-id"
-	LabelTenantName        = "fabric.truxonline.io/tenant-name"
-	LabelAgent             = "fabric.truxonline.io/agent"
-	LabelStorageRetention  = "fabric.truxonline.io/storage-retention"
-	AnnotationRuntimeState = "fabric.truxonline.io/runtime-state"
+	LabelPartOf                   = "app.kubernetes.io/part-of"
+	LabelName                     = "app.kubernetes.io/name"
+	LabelInstance                 = "app.kubernetes.io/instance"
+	LabelManaged                  = "fabric.truxonline.io/managed"
+	LabelTenantID                 = "fabric.truxonline.io/tenant-id"
+	LabelTenantName               = "fabric.truxonline.io/tenant-name"
+	LabelAgent                    = "fabric.truxonline.io/agent"
+	LabelAgentPopulation          = "fabric.truxonline.io/agent-population"
+	AnnotationPopulationTenantUID = "fabric.truxonline.io/agent-population-tenant-uid"
+	LabelStorageRetention         = "fabric.truxonline.io/storage-retention"
+	AnnotationRuntimeState        = "fabric.truxonline.io/runtime-state"
 )
 
 func tenantNamespace(name string) string {

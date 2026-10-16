@@ -110,8 +110,8 @@ rules:
   - fabric.truxonline.io
   resources:
   - agentidentities
-  - tenantbundles
   verbs:
+  - create
   - get
   - list
   - patch
@@ -133,6 +133,16 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - fabric.truxonline.io
+  resources:
+  - tenantbundles
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - networking.k8s.io
   resources:
