@@ -74,7 +74,9 @@ func normalizedModelValue(v any) any {
 			// omitted zero fields; never normalize away a meaningful
 			// userset node such as {"this":{}}.
 			if value == nil || value == "" { continue }
-			out[k] = normalizedModelValue(value)
+			normalized := normalizedModelValue(value)
+			if empty, ok := normalized.(map[string]any); ok && len(empty) == 0 && k != "this" { continue }
+			out[k] = normalized
 		}
 		return out
 	case []any:
