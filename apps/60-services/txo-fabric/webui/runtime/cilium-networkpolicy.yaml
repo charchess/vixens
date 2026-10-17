@@ -1,0 +1,21 @@
+---
+# Kubernetes NetworkPolicy controls pod-to-pod ingress. This Cilium policy is
+# the narrow FQDN exception required by the future OIDC implementation; it
+# does not enable a browser route or create any credential provider.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: txo-fabric-webui-bff-oidc-egress
+  namespace: txo-fabric-system
+spec:
+  endpointSelector:
+    matchLabels:
+      k8s:app.kubernetes.io/name: txo-fabric-webui-bff
+      k8s:app.kubernetes.io/component: bff
+  egress:
+    - toFQDNs:
+        - matchName: authentik.truxonline.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

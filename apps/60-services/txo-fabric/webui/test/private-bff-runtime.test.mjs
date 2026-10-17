@@ -171,9 +171,20 @@ test("feature OFF serves private health only and never invokes any app dependenc
     assert.doesNotMatch(await r.text(), /secret|indiba|thread/i);
   }
   assert.equal(privilegedCalls, 0);
-  assert.throws(() => resolveRuntimeGate({}), /not wired/);
-  assert.throws(() => resolveRuntimeGate({ TXO_WEBUI_BFF_BROWSER_ENABLED: "true" }), /not wired/);
-  assert.equal(resolveRuntimeGate({ TXO_WEBUI_BFF_BROWSER_ENABLED: "false" }), false);
+  assert.throws(() => resolveRuntimeGate({}), /jointly enabled/);
+  assert.throws(() => resolveRuntimeGate({ TXO_WEBUI_BFF_BROWSER_ENABLED: "true" }), /jointly enabled/);
+  assert.equal(resolveRuntimeGate({
+    TXO_WEBUI_BFF_BROWSER_ENABLED: "false",
+    TXO_FABRIC_PRIVATE_BRIDGE_ENABLED: "false",
+  }), false);
+  for (const env of [
+    { TXO_WEBUI_BFF_BROWSER_ENABLED: "false", TXO_FABRIC_PRIVATE_BRIDGE_ENABLED: "true" },
+    { TXO_WEBUI_BFF_BROWSER_ENABLED: "true", TXO_FABRIC_PRIVATE_BRIDGE_ENABLED: "false" },
+  ]) assert.throws(() => resolveRuntimeGate(env), /jointly enabled/);
+  assert.throws(() => resolveRuntimeGate({
+    TXO_WEBUI_BFF_BROWSER_ENABLED: "true",
+    TXO_FABRIC_PRIVATE_BRIDGE_ENABLED: "true",
+  }), /not wired/);
   assert.throws(() => createPrivateBFFHandler({ enabled: true }), /activation/);
   assert.throws(() => composeGlobalBFF({}), /dependencies/);
   assert.throws(() => createPrivateBFFHandler({ enabled: "false" }), /gate/);
@@ -199,6 +210,27 @@ test("actual private Node HTTP process denies browser auth/API while health answ
   } finally {
     await new Promise(resolve => server.close(resolve));
   }
+});
+
+test("private HTTP adapter fixes requests to the canonical Fabric origin", async () => {
+  let seen;
+  const server = createPrivateBFFServer({
+    handle: async request => {
+      seen = request.url;
+      return new Response("ok");
+    },
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const { port } = server.address();
+    assert.equal((await fetch("http://127.0.0.1:" + port + "/healthz")).status, 200);
+    assert.equal(seen, "https://fabric.truxonline.com/healthz");
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+  assert.throws(() => createPrivateBFFServer({
+    handle: async () => new Response("ok"), expectedOrigin: "https://evil.example",
+  }), /configuration invalid/);
 });
 
 test("bridge HMAC matches exact Go method/path/tenant/UUID/SA/audience/iAt/exp/JTI contract", async () => {

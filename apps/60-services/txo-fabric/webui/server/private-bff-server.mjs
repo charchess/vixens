@@ -85,9 +85,12 @@ export function createPrivateBFFHandler({ enabled = false, app, ready } = {}) {
 
 // HTTP adapter is a real Node server, not an in-memory WHATWG simulation.
 // Strictly bounded request bodies; never dump headers, cookies or tokens.
-export function createPrivateBFFServer({ handle, maxBodyBytes = 1024 * 1024 } = {}) {
+export function createPrivateBFFServer({
+  handle, expectedOrigin = "https://fabric.truxonline.com", maxBodyBytes = 1024 * 1024,
+} = {}) {
   if (typeof handle !== "function" || !Number.isSafeInteger(maxBodyBytes) ||
-      maxBodyBytes < 1 || maxBodyBytes > 1024 * 1024) {
+      maxBodyBytes < 1 || maxBodyBytes > 1024 * 1024 ||
+      expectedOrigin !== "https://fabric.truxonline.com") {
     throw new Error("Private BFF server configuration invalid");
   }
   const server = createServer(async (req, res) => {
@@ -117,7 +120,7 @@ export function createPrivateBFFServer({ handle, maxBodyBytes = 1024 * 1024 } = 
         res.end("Unavailable");
         return;
       }
-      const request = new Request("https://webui.truxonline.com" + path, {
+      const request = new Request(expectedOrigin + path, {
         method: req.method, headers: req.headers, signal: disconnect.signal,
         ...((req.method === "GET" || req.method === "HEAD") ? {} : { body: Buffer.concat(chunks) }),
       });
@@ -157,11 +160,14 @@ export function createPrivateBFFServer({ handle, maxBodyBytes = 1024 * 1024 } = 
 }
 
 export function resolveRuntimeGate(env = process.env) {
-  if (env.TXO_WEBUI_BFF_BROWSER_ENABLED !== "false") {
+  const browserEnabled = env.TXO_WEBUI_BFF_BROWSER_ENABLED;
+  const bridgeEnabled = env.TXO_FABRIC_PRIVATE_BRIDGE_ENABLED;
+  if (browserEnabled === "false" && bridgeEnabled === "false") return false;
+  if (browserEnabled === "true" && bridgeEnabled === "true") {
     // Activation requires the *separate* reviewed integration of real
     // Authentik/tenant/FGA providers. Never infer readiness from environment
     // secrets alone; even an accidental 'true' is a hard startup failure.
     throw new Error("WebUI browser activation not wired or approved");
   }
-  return false;
+  throw new Error("WebUI browser and private bridge gates must be jointly enabled");
 }

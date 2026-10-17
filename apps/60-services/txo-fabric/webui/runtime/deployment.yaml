@@ -45,6 +45,10 @@ spec:
             # Runtime refuses to start unless the literal value is "false".
             - name: TXO_WEBUI_BFF_BROWSER_ENABLED
               value: "false"
+            # Browser and private Fabric bridge are an atomic, separately
+            # reviewed activation. Do not set one without the other.
+            - name: TXO_FABRIC_PRIVATE_BRIDGE_ENABLED
+              value: "false"
             - name: PORT
               value: "3000"
             - name: PGHOST
