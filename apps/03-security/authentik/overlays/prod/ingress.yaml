@@ -7,6 +7,9 @@ metadata:
   labels:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Public DNS resolves to the existing public root, never Traefik's private LB.
+    external-dns.alpha.kubernetes.io/public: "true"
+    external-dns.alpha.kubernetes.io/target: truxonline.com
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
     traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-https@kubernetescrd, auth-authentik-cors@kubernetescrd
     vixens.io/nossoneeded: "true"
