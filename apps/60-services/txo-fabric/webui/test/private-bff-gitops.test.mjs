@@ -14,15 +14,18 @@ test("production overlay renders BFF private workload, never credential/bootstra
   assert.match(root, /^  - runtime$/m);
   assert.match(root, /db\/migrations\/001_oidc_login_transactions.sql/);
   assert.match(root, /db\/migrations\/002_global_browser_sessions.sql/);
-  assert.doesNotMatch(runtime, /bootstrap|ingress|http-route|gateway/i);
+  assert.match(runtime, /^  - ingress\.yaml$/m);
+  assert.match(runtime, /^  - cilium-networkpolicy\.yaml$/m);
   assert.doesNotMatch(root, /^  - bootstrap$/m);
 });
 
-test("private BFF network/ServiceAccount contracts match operator #4037 exactly", () => {
+test("private BFF network, TLS ingress and gate contracts match operator #4037 exactly", () => {
   const sa = read("runtime/serviceaccount.yaml");
   const deployment = read("runtime/deployment.yaml");
   const service = read("runtime/service.yaml");
   const policy = read("runtime/networkpolicy.yaml");
+  const ingress = read("runtime/ingress.yaml");
+  const ciliumPolicy = read("runtime/cilium-networkpolicy.yaml");
   const operator = read("../operator/config/network/private-bridge-ingress.yaml");
   assert.match(sa, /name: txo-fabric-webui-bff/);
   assert.match(sa, /automountServiceAccountToken: false/);
@@ -31,6 +34,7 @@ test("private BFF network/ServiceAccount contracts match operator #4037 exactly"
   assert.match(deployment, /audience: txo-fabric-private-identity/);
   assert.match(deployment, /expirationSeconds: 3600/);
   assert.match(deployment, /name: TXO_WEBUI_BFF_BROWSER_ENABLED\s+value: "false"/);
+  assert.match(deployment, /name: TXO_FABRIC_PRIVATE_BRIDGE_ENABLED\s+value: "false"/);
   assert.match(deployment, /runAsNonRoot: true/);
   assert.match(deployment, /readOnlyRootFilesystem: true/);
   assert.match(deployment, /allowPrivilegeEscalation: false/);
@@ -46,11 +50,19 @@ test("private BFF network/ServiceAccount contracts match operator #4037 exactly"
   assert.match(deployment, /image: ghcr\.io\/charchess\/txo-fabric-webui-bff:(?:src-[a-f0-9]{12}|sha256:[a-f0-9]{64})|image: ghcr\.io\/charchess\/txo-fabric-webui-bff@sha256:[a-f0-9]{64}/);
   assert.match(service, /type: ClusterIP/);
   assert.doesNotMatch(service, /Ingress|Gateway|HTTPRoute|LoadBalancer|NodePort/);
-  assert.match(policy, /ingress: \[\]/);
+  assert.match(policy, /kubernetes\.io\/metadata\.name: traefik/);
+  assert.match(policy, /app\.kubernetes\.io\/name: traefik/);
   assert.match(policy, /port: 53/);
   assert.match(policy, /port: 5432/);
   assert.match(policy, /port: 8090/);
   assert.doesNotMatch(policy, /port: 443|port: 8080|port: 4000|port: 8317|0\.0\.0\.0\/0/);
+  assert.match(ingress, /ingressClassName: traefik/);
+  assert.match(ingress, /host: fabric\.truxonline\.com/);
+  assert.match(ingress, /cert-manager\.io\/cluster-issuer: letsencrypt-prod/);
+  assert.match(ingress, /external-dns\.alpha\.kubernetes\.io\/public: "true"/);
+  assert.match(ingress, /external-dns\.alpha\.kubernetes\.io\/target: truxonline\.com/);
+  assert.match(ciliumPolicy, /matchName: authentik\.truxonline\.com/);
+  assert.match(ciliumPolicy, /port: "443"/);
   assert.match(operator, /app\.kubernetes\.io\/name: txo-fabric-webui-bff/);
   assert.match(operator, /app\.kubernetes\.io\/component: bff/);
   assert.match(operator, /port: 8090/);
