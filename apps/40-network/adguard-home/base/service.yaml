@@ -26,6 +26,9 @@ metadata:
     app: adguard-home
 spec:
   type: ClusterIP
+  # CoreDNS uses this stable in-cluster DNS endpoint directly. Preserve the
+  # existing production allocation rather than relying on a Service FQDN.
+  clusterIP: 10.110.196.136
   selector:
     app: adguard-home
   ports:
