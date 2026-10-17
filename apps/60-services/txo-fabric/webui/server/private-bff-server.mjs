@@ -13,6 +13,17 @@ const NO_STORE = Object.freeze({
 });
 const deny = (status = 404) => new Response("Unavailable", { status, headers: NO_STORE });
 const OFF_ROUTES = new Set(["/healthz", "/readyz"]);
+const ENTRY_HEADERS = Object.freeze({
+  ...NO_STORE,
+  "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+  "Content-Type": "text/html; charset=utf-8",
+  "X-Frame-Options": "DENY",
+});
+const ENTRY_PAGE = "<!doctype html><html lang=\"fr\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Fabric</title></head><body><main><h1>Fabric</h1><p>Le service est en préparation.</p></main></body></html>";
+
+function entryPage(method) {
+  return new Response(method === "HEAD" ? null : ENTRY_PAGE, { status: 200, headers: ENTRY_HEADERS });
+}
 
 /**
  * The imported Authentik OIDC, durable sessions and multi-tenant routing
@@ -73,6 +84,9 @@ export function createPrivateBFFHandler({ enabled = false, app, ready } = {}) {
       return new Response(request.method === "HEAD" ? null : (ok ? "ok" : "unavailable"), {
         status: ok ? 200 : 503, headers: NO_STORE,
       });
+    }
+    if (!enabled && url.pathname === "/" && (request.method === "GET" || request.method === "HEAD")) {
+      return entryPage(request.method);
     }
     if (!enabled) return deny();
     try {

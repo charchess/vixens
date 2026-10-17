@@ -150,16 +150,22 @@ test("account revoke, freshness loss, bridge outage and foreign Fabric ID always
   }
 });
 
-test("feature OFF serves private health only and never invokes any app dependency", async () => {
+test("feature OFF serves a static Fabric entry page without privileged dependencies", async () => {
   let privilegedCalls = 0;
   const handler = createPrivateBFFHandler();
+  const home = await handler(new Request("https://fabric.truxonline.com/"));
+  assert.equal(home.status, 200);
+  assert.equal(home.headers.get("content-type"), "text/html; charset=utf-8");
+  assert.equal(home.headers.get("cache-control"), "no-store");
+  assert.match(await home.text(), /Fabric/i);
+  assert.doesNotMatch(await (await handler(new Request("https://fabric.truxonline.com/"))).text(), /secret|cookie|tenant|agent|chat/i);
   for (const path of ["/healthz", "/readyz"]) {
     const r = await handler(new Request("https://webui.truxonline.com" + path));
     assert.equal(r.status, 200);
     assert.equal(r.headers.get("cache-control"), "no-store");
   }
   for (const path of [
-    "/", "/auth/start", "/auth/callback?code=secret&state=secret",
+    "/auth/start", "/auth/callback?code=secret&state=secret",
     "/auth/logout", "/api/me", "/api/tenants/indiba/chat/threads",
     "/api/tenants/indiba/chat/agents", "/settings", "/admin",
   ]) {
@@ -195,6 +201,10 @@ test("actual private Node HTTP process denies browser auth/API while health answ
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   try {
     const { port } = server.address();
+    const home = await fetch("http://127.0.0.1:" + port + "/");
+    assert.equal(home.status, 200);
+    assert.equal(home.headers.get("content-type"), "text/html; charset=utf-8");
+    assert.match(await home.text(), /Fabric/i);
     for (const path of ["/healthz", "/readyz"]) {
       const r = await fetch("http://127.0.0.1:" + port + path);
       assert.equal(r.status, 200);
