@@ -37,9 +37,9 @@ spec:
           type: RuntimeDefault
       containers:
         - name: bff
-          # GHCR digest verified in BFF Image CI run 38176145062.
-          # Source commit d65cdb30f81f2d6934f4a07a733560820751516e.
-          image: ghcr.io/charchess/txo-fabric-webui-bff@sha256:11b2f4975d4c80a71102af87b7f45bfee10efef56da643a23085fdf676e88f54
+          # GHCR digest verified in BFF Image CI run 39074727941.
+          # Source commit 0808baf8feb160b8ff324b4859f14b5d48c3594f.
+          image: ghcr.io/charchess/txo-fabric-webui-bff@sha256:3f6a7e77616ddcb6e7223580f29bddb7542a88aba7a3f916eea54d32633b4b18
           imagePullPolicy: IfNotPresent
           env:
             # Runtime refuses to start unless the literal value is "false".
