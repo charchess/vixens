@@ -41,8 +41,11 @@ data:
             fallthrough in-addr.arpa ip6.arpa
             ttl 30
         }
-        forward . adguard-home.networking.svc.cluster.local {
-            resolver 10.96.0.10
+        # The CoreDNS forward plugin accepts addresses, not a Service FQDN.
+        # Keep AdGuard as the normal filtered resolver and use the UDM only
+        # when the recoverable AdGuard workload has no ready endpoint.
+        forward . 10.110.196.136 192.168.201.1 {
+            policy sequential
             max_concurrent 1000
         }
         cache 30 {

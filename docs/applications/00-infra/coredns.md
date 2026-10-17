@@ -6,7 +6,13 @@ CoreDNS is the Kubernetes DNS control plane in `kube-system`. Terraform may crea
 
 - `internal.truxonline.com` → domain controllers `192.168.200.21` and `192.168.200.22`, sequentially.
 - `truxonline.com` → UDM `192.168.201.1`.
-- All other names → `adguard-home.networking.svc.cluster.local`, resolved through the cluster DNS Service.
+- All other names → AdGuard Home at the declared `10.110.196.136` ClusterIP, then UDM `192.168.201.1` sequentially when AdGuard has no ready endpoint.
+
+CoreDNS must not use the AdGuard Service FQDN as an upstream: `forward` accepts
+an address or a file, and resolving that FQDN through CoreDNS would create a
+bootstrap dependency. AdGuard remains the normal filtered resolver; the UDM
+fallback preserves CoreDNS, ArgoCD and External Secrets recovery when the
+recoverable AdGuard workload is unavailable.
 
 AdGuard Home must be Ready before this Application is reconciled. The app-of-apps applies it at sync wave 6, after AdGuard Home at wave 5.
 
