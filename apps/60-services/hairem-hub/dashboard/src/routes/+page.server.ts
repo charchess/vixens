@@ -200,7 +200,7 @@ async function runtime() {
   const hindsightLed: Led = !hHealth.ok || hHealth.data?.status !== 'healthy' ? 'down' : (failed > 0 || stuck > 0 || llmErrors1h > 0 ? 'warn' : 'ok');
   const openRouterLines = [
     'Source         Hindsight LLM request telemetry',
-    'Transport      OpenRouter (configured in Hindsight GitOps)',
+    'Transport      TXO AI Gateway / CPA (provider routing is platform-owned)',
     `Requests       7d ${llmErrors + bankDetails.reduce((n, b) => n + b.llm.success, 0)} · 24h ${llmErrors24h + bankDetails.reduce((n, b) => n + b.llm.success24h, 0)}`,
     `Errors         1h ${llmErrors1h} · 24h ${llmErrors24h} · 7d ${llmErrors}`,
     `Last error     ${lastErrorAge}`,
@@ -208,7 +208,7 @@ async function runtime() {
   ];
   const components: Component[] = [
     { id: 'hindsight', label: hindsightLabel({ pending, failed, processing, stuck, recentErrors: llmErrors1h }), led: hindsightLed, detail: hindsightLines.join('\\n'), detailLines: hindsightLines, aria: `Hindsight: ${stuck} stuck, ${failed} failed, ${llmErrors1h} error per hour`, primaryIssue, tableRows: bankRows },
-    { id: 'openrouter-hindsight', label: `openrouter/hindsight ${llmErrors1h > 0 ? `${llmErrors1h} err/h` : 'ok'}`, led: hindsightLed, detail: openRouterLines.join('\\n'), detailLines: openRouterLines, aria: `OpenRouter through Hindsight: ${llmErrors1h} errors per hour` },
+    { id: 'openrouter-hindsight', label: `cpa/hindsight ${llmErrors1h > 0 ? `${llmErrors1h} err/h` : 'ok'}`, led: hindsightLed, detail: openRouterLines.join('\\n'), detailLines: openRouterLines, aria: `CPA-routed Hindsight: ${llmErrors1h} errors per hour` },
     { id: 'llmwiki', label: `llmwiki ${llmwikiHttp.status || ''}`, led: llmwikiHttp.ok ? 'ok' : 'down', href: `${LAN}:4567/Home`, aria: 'Open LLMWiki in a new tab', detail: llmwikiHttp.ok ? `Gollum 4567\\n${LLMWIKI_URL}` : llmwikiHttp.text.slice(0, 120), detailLines: llmwikiHttp.ok ? ['Gollum         4567', `URL            ${LLMWIKI_URL}`] : [llmwikiHttp.text.slice(0, 120)] },
     { id: 'gtdwiki', label: `gtdwiki ${gtdwikiHttp.status || ''}`, led: gtdwikiHttp.ok ? 'ok' : 'down', href: `${LAN}:4568/Home`, aria: 'Open GTDWiki in a new tab', detail: gtdwikiHttp.ok ? `Gollum 4568\\n${GTDWIKI_URL}` : gtdwikiHttp.text.slice(0, 120), detailLines: gtdwikiHttp.ok ? ['Gollum         4568', `URL            ${GTDWIKI_URL}`] : [gtdwikiHttp.text.slice(0, 120)] },
     { id: 'hindsight-ui', label: `hindsight-ui ${hUi.status || ''}`, led: hUi.ok ? 'ok' : 'down', href: `${LAN}:3000/`, aria: 'Open Hindsight UI in a new tab', detail: hUi.ok ? `Control plane\\n${HINDSIGHT_UI}` : hUi.text.slice(0, 120), detailLines: hUi.ok ? ['Control plane', `URL            ${HINDSIGHT_UI}`] : [hUi.text.slice(0, 120)] },
