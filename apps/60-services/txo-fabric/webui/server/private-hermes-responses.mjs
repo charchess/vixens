@@ -39,6 +39,14 @@ export function createPrivateHermesResponsesService({
         principal.subject !== principal.fabricUserId) deny();
   };
 
+  const canAccess = async ({ principal, agentKey } = {}) => {
+    try {
+      requirePrincipal(principal);
+      if (!AGENT.test(agentKey || "")) return false;
+      return await authorize({ principal, tenantKey, fabricTenantId, agentKey, action: "agent.chat" }) === true;
+    } catch { return false; }
+  };
+
   async function* turn({ principal, agentKey, input, signal } = {}) {
     // This is an explicit server-side API. The browser never supplies the
     // tenant, UID, generation, session key, endpoint, provider or credential.
@@ -46,8 +54,7 @@ export function createPrivateHermesResponsesService({
       requirePrincipal(principal);
       if (!AGENT.test(agentKey || "")) deny();
       requireHermesResponsesInput(input);
-      if (await authorize({ principal, tenantKey, fabricTenantId,
-        agentKey, action: "agent.chat" }) !== true) deny();
+      if (!await canAccess({ principal, agentKey })) deny();
 
       const [tenant, agent] = await Promise.all([
         resolveCanonicalTenant({ tenantKey, fabricTenantId }),
@@ -103,5 +110,5 @@ export function createPrivateHermesResponsesService({
     } catch { deny(); } // do not disclose denied identity/grant/endpoint or upstream data
   }
 
-  return Object.freeze({ turn });
+  return Object.freeze({ canAccess, turn });
 }

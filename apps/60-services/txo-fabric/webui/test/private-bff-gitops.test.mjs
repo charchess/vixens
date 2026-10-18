@@ -5,6 +5,22 @@ import { readFileSync } from "node:fs";
 function read(path) {
   return readFileSync(new URL("../" + path, import.meta.url), "utf8");
 }
+test("BFF image build includes the locked Fabric client artifact", () => {
+  const dockerfile = read("Dockerfile");
+  const rootPackage = JSON.parse(read("package.json"));
+  const clientPackage = JSON.parse(read("client/package.json"));
+  assert.match(dockerfile, /COPY package\.json package-lock\.json \.\//);
+  assert.match(dockerfile, /RUN npm ci --omit=dev/);
+  assert.match(dockerfile, /COPY client\/package\.json client\/package-lock\.json \.\/client\//);
+  assert.match(dockerfile, /RUN npm ci --prefix client/);
+  assert.match(dockerfile, /RUN npm run build --prefix client/);
+  assert.match(dockerfile, /COPY --from=build-client \/app\/client\/dist \/app\/client/);
+  assert.equal(rootPackage.dependencies?.pg, "8.13.1");
+  assert.ok(clientPackage.dependencies?.["@assistant-ui/react"]);
+  assert.match(read("package-lock.json"), /"lockfileVersion"/);
+  assert.match(read("client/package-lock.json"), /"lockfileVersion"/);
+});
+
 test("production overlay renders BFF private workload, never credential/bootstrap activation", () => {
   const overlay = read("../overlays/prod/kustomization.yaml");
   const root = read("kustomization.yaml");

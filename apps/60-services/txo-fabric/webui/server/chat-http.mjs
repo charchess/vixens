@@ -6,7 +6,7 @@
  */
 export function createChatHttpHandler({ authenticate, service, expectedOrigin, listTenantAgents }) {
   if (typeof authenticate !== "function" || !service ||
-      ["create", "list", "get", "turn"].some((name) => typeof service[name] !== "function") ||
+      typeof service.canAccess !== "function" || typeof service.turn !== "function" ||
       typeof expectedOrigin !== "string" || !/^https:\/\/[^/]+$/.test(expectedOrigin)) {
     throw new Error("Chat HTTP security dependencies are required");
   }
@@ -32,6 +32,45 @@ export function createChatHttpHandler({ authenticate, service, expectedOrigin, l
         req.headers.get("x-txo-request") !== "chat" ||
         !req.headers.get("content-type")?.startsWith("application/json"))) return fail(403);
     try {
+      const direct = /^\/api\/chat\/agents\/([A-Za-z0-9][A-Za-z0-9._-]{0,127})\/turn$/.exec(route.pathname);
+      if (direct) {
+        if (req.method !== "POST") return fail(405);
+        const body = await readBody(req);
+        if (typeof body?.input !== "string" || !body.input.trim() || body.input.length > 100000 ||
+            await service.canAccess({ principal, agentKey: direct[1] }) !== true) return fail(403);
+        const encoder = new TextEncoder();
+        const abort = new AbortController();
+        const onAbort = () => abort.abort();
+        if (req.signal.aborted) abort.abort();
+        else req.signal.addEventListener("abort", onAbort, { once: true });
+        let closed = false;
+        const stream = new ReadableStream({
+          async start(controller) {
+            try {
+              for await (const item of service.turn({ principal, agentKey: direct[1], input: body.input, signal: abort.signal })) {
+                if (abort.signal.aborted) break;
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(item)}\n\n`));
+              }
+            } catch {
+              if (!abort.signal.aborted && !closed) {
+                controller.enqueue(encoder.encode('event: error\ndata: {"error":"Agent unavailable or forbidden"}\n\n'));
+              }
+            } finally {
+              req.signal.removeEventListener("abort", onAbort);
+              if (!closed) { closed = true; controller.close(); }
+            }
+          },
+          cancel() {
+            closed = true;
+            abort.abort();
+            req.signal.removeEventListener("abort", onAbort);
+          },
+        });
+        return new Response(stream, { status: 200, headers: {
+          "Content-Type": "text/event-stream", "Cache-Control": "no-store",
+          "X-Content-Type-Options": "nosniff", "X-Accel-Buffering": "no",
+        } });
+      }
       if (route.pathname === "/api/chat/agents" && req.method === "GET") {
         if (typeof listTenantAgents !== "function" ||
             typeof service.canAccess !== "function") return fail(503);

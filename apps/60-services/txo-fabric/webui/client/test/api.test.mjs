@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  listAccessibleTenants, listAvailableAgents, createFabricThread, streamFabricTurn,
+  listAccessibleTenants, listAvailableAgents, createFabricThread, streamFabricTurn, streamFabricAgentTurn,
 } from "../src/api.mjs";
 
 const id = "a".repeat(40);
@@ -68,6 +68,25 @@ test("thread creation carries only tenant scope in path and agent key in JSON", 
   assert.equal(await createFabricThread("indiba", "alex", { fetchImpl }),id);
   await assert.rejects(createFabricThread("indiba", "../other", { fetchImpl }), /Agent invalide/);
   await assert.rejects(createFabricThread("other/../../hairem", "alex", { fetchImpl }), /Tenant invalide/);
+});
+
+test("direct agent turn carries only selected tenant, agent key and input", async () => {
+  const payload = [
+    'data: {"type":"text-delta","text":"Hi"}',
+    'data: {"type":"done","status":"completed"}',
+  ].join("\n\n") + "\n\n";
+  const fetchImpl = async (url, opts) => {
+    assert.equal(url, "/api/tenants/hairem/chat/agents/electra/turn");
+    assert.equal(opts.method, "POST");
+    assert.equal(opts.credentials, "same-origin");
+    assert.deepEqual(JSON.parse(opts.body), { input: "hello" });
+    return new Response(new ReadableStream({ start(c) {
+      c.enqueue(new TextEncoder().encode(payload)); c.close();
+    }}), { status: 200 });
+  };
+  assert.deepEqual(await collect(streamFabricAgentTurn("hairem", "electra", "hello", { fetchImpl })), [
+    { type: "text-delta", text: "Hi" }, { type: "done", status: "completed" },
+  ]);
 });
 
 test("browser consumes projected SSE in the requested tenant scope", async () => {

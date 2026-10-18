@@ -106,6 +106,42 @@ test("same agent key routes to the selected authorized tenant, never guessed int
   assert.ok(routed.every(x => !("issuer" in x.principal)));
 });
 
+test("a direct Responses turn is scoped to the selected tenant and authorized agent", async () => {
+  const turns = [];
+  const service = {
+    canAccess: async ({ principal, agentKey }) => principal.tenantKey === "hairem" && agentKey === "alex",
+    turn: async function* ({ principal, agentKey, input }) {
+      turns.push({ principal, agentKey, input });
+      yield { type: "text-delta", text: "Bonjour" };
+      yield { type: "done", status: "completed" };
+    },
+  };
+  const handler = createGlobalWebUIHandler({
+    expectedOrigin: origin, expectedIssuer: issuer,
+    authenticate: async () => identity,
+    listTenantCatalog: async () => [tenants[0]],
+    resolveTenantAccess: async ({ tenantKey, fabricTenantId }) => ({
+      tenantKey, fabricTenantId, fabricUserId: user,
+      accountActive: true, fresh: true, canEnter: true, canManageTenant: false,
+    }),
+    getTenantChat: async ({ tenantKey, fabricTenantId }) => ({
+      tenantKey, fabricTenantId, service,
+      listTenantAgents: async () => [{ agentKey: "alex", label: "Alex" }],
+    }),
+  });
+  const response = await handler(new Request(origin + "/api/tenants/hairem/chat/agents/alex/turn", {
+    method: "POST",
+    headers: { Origin: origin, "Content-Type": "application/json", "X-TXO-Request": "chat" },
+    body: JSON.stringify({ input: "Bonjour Alex" }),
+  }));
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /Bonjour/);
+  assert.equal(turns.length, 1);
+  assert.equal(turns[0].agentKey, "alex");
+  assert.equal(turns[0].input, "Bonjour Alex");
+  assert.equal(turns[0].principal.fabricTenantId, "TEN00001");
+});
+
 test("every request rechecks tenant membership, account deactivation and stale IAM state", async () => {
   const { handler, request, audit, allowed, setFresh, setActive } = harness();
   assert.equal((await handler(request("/api/tenants/hairem/chat/agents"))).status, 200);

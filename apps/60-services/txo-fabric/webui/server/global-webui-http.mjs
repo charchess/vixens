@@ -159,7 +159,7 @@ export function createGlobalWebUIHandler({
     // No client-controlled generic proxy. Only the chat route family is
     // currently exposed. Settings/admin must have separate operation-level
     // authorization, not reuse canEnter/canManageTenant blindly.
-    const match = /^\/api\/tenants\/([a-z0-9-]+)(\/chat\/(?:agents|threads(?:\/[a-f0-9]{40}(?:\/turns)?)?))$/.exec(route.pathname);
+    const match = /^\/api\/tenants\/([a-z0-9-]+)(\/chat\/(?:agents(?:\/[A-Za-z0-9._-]+\/turn)?|threads(?:\/[a-f0-9]{40}(?:\/turns)?)?))$/.exec(route.pathname);
     if (!match || !TENANT_KEY.test(match[1])) return denied(404);
     try {
       const entry = (await catalog()).find(e => e.tenantKey === match[1]);
