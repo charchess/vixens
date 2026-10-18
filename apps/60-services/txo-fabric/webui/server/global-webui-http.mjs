@@ -56,7 +56,7 @@ const validTenant = (entry) => entry && typeof entry.tenantKey === "string" &&
  */
 export function createGlobalWebUIHandler({
   expectedOrigin, expectedIssuer, authenticate, listTenantCatalog,
-  resolveTenantAccess, getTenantChat, resolvePlatformAccess,
+  resolveTenantAccess, getTenantChat, resolvePlatformAccess, browserArtifacts,
 }) {
   let origin, issuer;
   try { origin = new URL(expectedOrigin); issuer = new URL(expectedIssuer); }
@@ -132,6 +132,22 @@ export function createGlobalWebUIHandler({
     let identity;
     try { identity = await identityFor(request); }
     catch { return denied(); }
+
+    if ((request.method === "GET" || request.method === "HEAD") &&
+        typeof browserArtifacts?.get === "function") {
+      try {
+        const artifact = await browserArtifacts.get(route.pathname);
+        if (artifact) {
+          return new Response(request.method === "HEAD" ? null : artifact.body, { headers: {
+            "Content-Type": artifact.contentType,
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+            "Referrer-Policy": "no-referrer",
+            "Content-Security-Policy": "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'",
+          } });
+        }
+      } catch { return denied(503); }
+    }
 
     if (route.pathname === "/api/me" && request.method === "GET") {
       try {

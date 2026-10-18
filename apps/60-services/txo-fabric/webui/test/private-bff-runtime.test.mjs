@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { createPrivateBFFHandler, createPrivateBFFServer, composeGlobalBFF, resolveRuntimeGate } from "../server/private-bff-server.mjs";
+import { createPrivateBFFHandler, createPrivateBFFServer, composeGlobalBFF, createProductionBFFApp, resolveRuntimeGate } from "../server/private-bff-server.mjs";
+import { createDeclaredBrowserArtifacts } from "../server/browser-artifacts.mjs";
 import {
   createPrivateBridgeClient, createVerifiedTenantBridgeAccess,
   PRIVATE_BRIDGE_URL, PRIVATE_BRIDGE_PATH, PRIVATE_BRIDGE_AUDIENCE,
@@ -187,10 +188,10 @@ test("feature OFF serves a static Fabric entry page without privileged dependenc
     { TXO_WEBUI_BFF_BROWSER_ENABLED: "false", TXO_FABRIC_PRIVATE_BRIDGE_ENABLED: "true" },
     { TXO_WEBUI_BFF_BROWSER_ENABLED: "true", TXO_FABRIC_PRIVATE_BRIDGE_ENABLED: "false" },
   ]) assert.throws(() => resolveRuntimeGate(env), /jointly enabled/);
-  assert.throws(() => resolveRuntimeGate({
+  assert.equal(resolveRuntimeGate({
     TXO_WEBUI_BFF_BROWSER_ENABLED: "true",
     TXO_FABRIC_PRIVATE_BRIDGE_ENABLED: "true",
-  }), /not wired/);
+  }), true);
   assert.throws(() => createPrivateBFFHandler({ enabled: true }), /activation/);
   assert.throws(() => composeGlobalBFF({}), /dependencies/);
   assert.throws(() => createPrivateBFFHandler({ enabled: "false" }), /gate/);
@@ -234,7 +235,7 @@ test("private HTTP adapter fixes requests to the canonical Fabric origin", async
   try {
     const { port } = server.address();
     assert.equal((await fetch("http://127.0.0.1:" + port + "/healthz")).status, 200);
-    assert.equal(seen, "https://fabric.truxonline.com/healthz");
+    assert.equal(seen, "https://webui.truxonline.com/healthz");
   } finally {
     await new Promise(resolve => server.close(resolve));
   }
@@ -338,5 +339,59 @@ test("BFF denial does not log signing key, UUID, bearer or opaque browser cookie
     assert.deepEqual(writes, []);
   } finally {
     console.error = old;
+  }
+});
+
+test("enabled gates require complete production providers before an app is composed", async () => {
+  const env = {
+    TXO_WEBUI_BFF_BROWSER_ENABLED: "true",
+    TXO_FABRIC_PRIVATE_BRIDGE_ENABLED: "true",
+  };
+  assert.equal(resolveRuntimeGate(env), true);
+  await assert.rejects(createProductionBFFApp({ env }), /providers unavailable/);
+  await assert.rejects(createProductionBFFApp({ env, providers: {
+    ready: async () => true, browserArtifacts: { get: async () => null },
+  } }), /dependencies unavailable/);
+  const providers = {
+    ready: async () => true,
+    pool: { query: async () => ({ rows: [] }) },
+    verifyActiveHuman: async identity => ({ ...identity, accountActive: true, fresh: true }),
+    listTenantCatalog: async () => [],
+    bridgeClient: { resolve: async () => ({ tenantKey: "indiba", fabricUserId: "usraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }) },
+    getTenantChat: async () => null,
+    browserArtifacts: { get: async () => null },
+  };
+  const composition = await createProductionBFFApp({ env, providers });
+  assert.equal(composition.enabled, true);
+  assert.equal(typeof composition.app, "function");
+  assert.equal(await composition.ready(), true);
+  const handler = createPrivateBFFHandler(composition);
+  assert.equal((await handler(new Request("https://fabric.truxonline.com/"))).status, 403,
+    "the server fixes requests to the canonical origin before the app sees them");
+});
+
+test("browser artifacts are manifest-allowlisted and reject traversal, source maps and source files", async () => {
+  const files = new Map([
+    ["/dist/asset-manifest.json", JSON.stringify({
+      "index.html": { file: "assets/app-123.js", css: ["assets/app-123.css"] },
+    })],
+    ["/dist/index.html", "<!doctype html><script src=\"/assets/app-123.js\"></script>"],
+    ["/dist/assets/app-123.js", "console.log('browser')"],
+    ["/dist/assets/app-123.css", "body{}"],
+    ["/dist/server/private-bff-server.mjs", "secret source"],
+  ]);
+  const artifacts = await createDeclaredBrowserArtifacts({
+    assetDir: "/dist", manifestPath: "/dist/asset-manifest.json",
+    readFile: async (path, encoding) => {
+      const value = files.get(path);
+      if (value === undefined) throw new Error("missing");
+      return encoding ? value : Buffer.from(value);
+    },
+  });
+  assert.equal((await artifacts.get("/")).contentType, "text/html; charset=utf-8");
+  assert.equal((await artifacts.get("/assets/app-123.js")).contentType, "text/javascript; charset=utf-8");
+  for (const path of ["/asset-manifest.json", "/assets/app-123.js.map", "/../server/private-bff-server.mjs",
+    "/%2e%2e/server/private-bff-server.mjs", "/client/src/App.tsx", "/assets/undeclared.js"]) {
+    assert.equal(await artifacts.get(path), null, path);
   }
 });
