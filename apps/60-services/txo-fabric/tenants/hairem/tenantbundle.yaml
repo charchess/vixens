@@ -7,6 +7,9 @@ metadata:
     # One-time reviewed approval: append the immutable canonical model only
     # when the bound store has exactly one valid noncanonical legacy revision.
     fabric.truxonline.io/openfga-model-migration: append-canonical-v1
+    # One-time GitOps reconciliation after PostgreSQL recovery: recreate the
+    # absent LiteLLM Prisma migration Job and retain its result for review.
+    fabric.truxonline.io/reconcile-request: ai-gateway-migration-retry-20261018
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
