@@ -1,8 +1,8 @@
 # Hindsight
 
-> **Scope note:** this page describes the standalone/laboratory Hindsight application under
-> `apps/60-services/hindsight/`. It is not the tenant-local Hindsight service reconciled by
-> TXO Fabric. In Fabric, the logical runtime identity is `AgentIdentity`; see
+> **Scope note:** the former standalone/laboratory Hindsight values have been retired.
+> Hindsight is tenant-local and reconciled by TXO Fabric. In Fabric, the logical
+> runtime identity is `AgentIdentity`; see
 > [ADR-031](../../adr/031-agentidentity-is-the-fabric-runtime-identity.md). The durable
 > memory-provider contract remains tracked by #3685 until its implementation/physical
 > acceptance is complete.
@@ -12,44 +12,22 @@
 Hindsight provides long-term memory services for Hermes agents: retain, recall,
 consolidation, graph/entity resolution, and reflect synthesis.
 
-## Runtime configuration
+## Runtime and inference boundary
 
-The laboratory Helm values are in:
+Each tenant Hindsight API receives embeddings only through the tenant TXO AI
+Gateway / llmproxy, using a Hindsight-scoped virtual credential. Provider
+selection, OpenRouter credentials, metering, policy and failover remain owned by
+the CPA/gateway; no direct provider endpoint or provider credential is permitted
+in Hindsight configuration.
 
-```text
-apps/60-services/hindsight/values-umi.yaml
-```
+Generative and reflection processing stays disabled with
+`HINDSIGHT_API_LLM_PROVIDER=none` until it can use the same CPA boundary. Hermes
+uses Hindsight as an external durable-memory service; PostgreSQL credentials stay
+inside Hindsight and are never injected into Hermes.
 
-The API runtime uses OpenRouter with deliberately separated operations:
+## Validation
 
-- **retain:** `openai/gpt-oss-20b`, structured extraction, low reasoning,
-  temperature `0.1`, maximum one concurrent operation;
-- **consolidation:** `openai/gpt-oss-20b`, low reasoning, temperature `0.0`,
-  maximum one concurrent operation;
-- **reflect:** `openai/gpt-oss-120b`, high reasoning, temperature `0.2`,
-  maximum one concurrent operation;
-- **embeddings:** `baai/bge-m3` through OpenRouter, native 1024-dimensional
-  vectors, 8,000-token input cap and no E5 prefixes.
-
-The shared LLM concurrency ceiling is three. Per-operation limits reserve
-capacity and prevent background retain/consolidation from starving reflect.
-
-## Secret handling
-
-`hindsight-runtime` supplies `HINDSIGHT_API_LLM_API_KEY` at runtime. OpenRouter
-credentials must be stored in OpenBao and materialized into the Kubernetes
-runtime secret only through the approved secret-delivery path. They must never
-be committed to Git values or documentation.
-
-## Deployment and migration gate
-
-Changing an embeddings backend can invalidate an existing vector index even
-when its nominal dimensions match. Before enabling this configuration against an
-existing bank, confirm the previous endpoint served the same BGE-M3 checkpoint
-and returns compatible 1024-dimensional vectors. Otherwise export/re-embed the
-bank before switching traffic.
-
-Deployment validation is currently blocked until the Vixens cluster control
-plane and Hindsight workload are restored. After restoration, verify the Hindsight
-health endpoint, one retain/recall cycle, a reflect request, and BGE-M3 vector
-dimension before declaring the change operational.
+Validate a change through GitOps: render the Fabric configuration, wait for the
+tenant workload to become healthy, then confirm a retain/recall cycle and
+cross-bank isolation. A provider credential or direct Internet egress in a
+Hindsight Pod is a blocking architecture defect.
