@@ -343,7 +343,7 @@ The BFF factory pins the operator's existing naming contract:
   properties are the future privileged resolver's observed output,
   not client-controlled CR fields.
 
-## Go AgentIdentity typed desired-state preflight (#3981, source-only)
+## Go AgentIdentity typed desired-state preflight (#4087, source-only)
 
 The operator now accepts an **optional** typed
 `spec.runtime.privateAPI` as an intent declaration:
@@ -373,7 +373,11 @@ states in this version: `Disabled` when absent/false, `InvalidConfiguration`
 for conflicting/incomplete/mismatched declarations and `NotReady` even
 for *valid* opt-in intent. Its `observedGeneration` records the source
 generation and its message carries no secret or user-provided value.
-There is **no path that sets True or starts the API**. The generated
+There is **no path that sets True or starts the API**. Although upstream Hermes
+documentation describes an API server alongside `gateway run`, this operator has
+not verified that contract against its pinned image, generated entrypoint, or a
+private endpoint identity. Environment intent and Deployment availability are
+not listener or endpoint attestation. The generated
 Hermes Pod/Deployment, dashboard, model credential, PVC, services and
 NetworkPolicies remain byte-for-byte unchanged whether the field is
 omitted, false, malformed in a fake object or enabled in a *nonselected*

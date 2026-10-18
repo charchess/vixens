@@ -45,8 +45,9 @@ func TestPrivateHermesAPIIntentFailClosedAndSourceOnly(t *testing.T) {
 		t.Fatalf("disabled private API reason=%s", reason)
 	}
 	a.Spec.Runtime.PrivateAPI = validFuturePrivateAPI(a, tenant)
-	if reason, _ := privateHermesAPIIntent(a, tenant); reason != "NotReady" {
-		t.Fatalf("future-only opt-in must never report Ready: %s", reason)
+	if reason, message := privateHermesAPIIntent(a, tenant); reason != "NotReady" ||
+		message != "private Hermes API runtime launch contract and endpoint attestation are not implemented" {
+		t.Fatalf("future-only opt-in must remain truthful and not report Ready: reason=%s message=%q", reason, message)
 	}
 	setPrivateHermesAPICondition(a, tenant)
 	condition := apiMeta.FindStatusCondition(a.Status.Conditions, privateHermesAPICondition)
