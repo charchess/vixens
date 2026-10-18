@@ -72,17 +72,8 @@ export async function createFabricThread(tenantKey, agentKey, { fetchImpl = fetc
   return body.id;
 }
 
-/** Read server-projected SSE only. Never accept provider credentials in replies.
- * @param {string} tenantKey
- * @param {string} threadId
- * @param {string} input
- * @param {{fetchImpl?: typeof fetch, signal?: AbortSignal}} [options]
- */
-export async function* streamFabricTurn(tenantKey, threadId, input, { fetchImpl = fetch, signal } = {}) {
-  const base = tenantURL(tenantKey);
-  if (typeof threadId !== "string" || !THREAD.test(threadId) ||
-      typeof input !== "string" || !input.trim()) throw new Error("Requête invalide");
-  const response = await fetchImpl(`${base}/threads/${threadId}/turns`, {
+async function* streamFabricSSE(url, input, { fetchImpl = fetch, signal } = {}) {
+  const response = await fetchImpl(url, {
     method: "POST", credentials: "same-origin", cache: "no-store", headers,
     body: JSON.stringify({ input }), signal,
   });
@@ -122,4 +113,24 @@ export async function* streamFabricTurn(tenantKey, threadId, input, { fetchImpl 
     await reader.cancel().catch(() => {});
     reader.releaseLock();
   }
+}
+
+export async function* streamFabricAgentTurn(tenantKey, agentKey, input, options = {}) {
+  const base = tenantURL(tenantKey);
+  if (typeof agentKey !== "string" || !AGENT.test(agentKey) ||
+      typeof input !== "string" || !input.trim()) throw new Error("Requête invalide");
+  yield* streamFabricSSE(`${base}/agents/${agentKey}/turn`, input, options);
+}
+
+/** Read server-projected SSE only. Never accept provider credentials in replies.
+ * @param {string} tenantKey
+ * @param {string} threadId
+ * @param {string} input
+ * @param {{fetchImpl?: typeof fetch, signal?: AbortSignal}} [options]
+ */
+export async function* streamFabricTurn(tenantKey, threadId, input, options = {}) {
+  const base = tenantURL(tenantKey);
+  if (typeof threadId !== "string" || !THREAD.test(threadId) ||
+      typeof input !== "string" || !input.trim()) throw new Error("Requête invalide");
+  yield* streamFabricSSE(`${base}/threads/${threadId}/turns`, input, options);
 }

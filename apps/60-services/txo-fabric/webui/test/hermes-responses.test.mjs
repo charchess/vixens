@@ -76,6 +76,16 @@ function harness(overrides = {}) {
   return { service, tenant, agent, calls, attestations, credentials, scopes, authorizations, options };
 }
 
+test("agent listing rechecks agent.chat without a credential read or Hermes I/O", async () => {
+  const h = harness();
+  assert.equal(await h.service.canAccess({ principal, agentKey: "alex" }), true);
+  assert.deepEqual(h.authorizations, [{
+    principal, tenantKey, fabricTenantId, agentKey: "alex", action: "agent.chat",
+  }]);
+  assert.deepEqual(h.credentials, []);
+  assert.deepEqual(h.calls, []);
+});
+
 test("first and next authorized turns use ONLY Responses and same server-derived opaque session key", async () => {
   const h = harness();
   let first;

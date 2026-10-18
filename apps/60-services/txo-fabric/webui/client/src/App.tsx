@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AssistantRuntimeProvider, AuiIf, ComposerPrimitive, MessagePrimitive,
   ThreadPrimitive, useAui, useAuiState, useLocalRuntime,
   type ChatModelAdapter,
 } from "@assistant-ui/react";
-import { createFabricThread, listAvailableAgents, listAccessibleTenants, streamFabricTurn } from "./api.mjs";
+import { listAvailableAgents, listAccessibleTenants, streamFabricAgentTurn } from "./api.mjs";
 
 type Agent = { agentKey: string; label: string };
 type Tenant = {
@@ -41,10 +41,9 @@ function ChatThread({ agent, toolStatus }: { agent: Agent; toolStatus: string })
 }
 
 /* One mounted runtime per agent: switching agent A -> B -> A does not mix
-   their local transcripts. Long-term history will later use Fabric-owned
-   persisted thread/message APIs, not browser localStorage. */
+   their local transcripts. Hermes owns the durable first-POC conversation;
+   Fabric-owned thread/history APIs remain a later product capability. */
 function AgentPanel({ tenantKey, agent, active }: { tenantKey: string; agent: Agent; active: boolean }) {
-  const thread = useRef<string | null>(null);
   const [toolStatus, setToolStatus] = useState("");
   const adapter = useMemo<ChatModelAdapter>(() => ({
     async *run({ messages, abortSignal }) {
@@ -52,11 +51,9 @@ function AgentPanel({ tenantKey, agent, active }: { tenantKey: string; agent: Ag
       const input = last?.content.filter((p) => p.type === "text").map((p) => p.text).join("\n").trim();
       if (!input) throw new Error("Message vide");
       setToolStatus("");
-      const fabricThreadId = thread.current ??
-        (thread.current = await createFabricThread(tenantKey, agent.agentKey, { signal: abortSignal }));
       let text = "";
       try {
-        for await (const item of streamFabricTurn(tenantKey, fabricThreadId, input, { signal: abortSignal })) {
+        for await (const item of streamFabricAgentTurn(tenantKey, agent.agentKey, input, { signal: abortSignal })) {
           if (item.type === "text-delta") {
             text += item.text;
             yield { content: [{ type: "text", text }] };

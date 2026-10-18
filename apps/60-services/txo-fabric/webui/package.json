@@ -9,5 +9,8 @@
   "scripts": {
     "test": "node --test",
     "start:private": "node server/private-bff-main.mjs"
+  },
+  "dependencies": {
+    "pg": "8.13.1"
   }
 }
