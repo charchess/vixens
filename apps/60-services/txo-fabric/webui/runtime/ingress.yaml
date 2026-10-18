@@ -12,10 +12,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - fabric.truxonline.com
+        - webui.truxonline.com
       secretName: txo-fabric-webui-bff-tls
   rules:
-    - host: fabric.truxonline.com
+    - host: webui.truxonline.com
       http:
         paths:
           - path: /

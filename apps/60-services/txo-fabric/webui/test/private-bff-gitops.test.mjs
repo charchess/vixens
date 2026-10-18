@@ -21,6 +21,18 @@ test("BFF image build includes the locked Fabric client artifact", () => {
   assert.match(read("client/package-lock.json"), /"lockfileVersion"/);
 });
 
+test("BFF, ingress and global OIDC use the one canonical public origin", () => {
+  const runtime = read("server/private-bff-server.mjs");
+  const login = read("server/global-oidc-login.mjs");
+  const ingress = read("runtime/ingress.yaml");
+  const vite = read("client/vite.config.ts");
+  for (const source of [runtime, ingress]) assert.match(source, /webui\.truxonline\.com/);
+  assert.match(login, /expectedOrigin \+ "\/auth\/callback"/);
+  assert.doesNotMatch([runtime, login, ingress].join("\n"), /fabric\.truxonline\.com/);
+  assert.match(vite, /manifest: "asset-manifest\.json"/);
+  assert.match(vite, /sourcemap: false/);
+});
+
 test("production overlay renders BFF private workload, never credential/bootstrap activation", () => {
   const overlay = read("../overlays/prod/kustomization.yaml");
   const root = read("kustomization.yaml");
@@ -73,7 +85,9 @@ test("private BFF network, TLS ingress and gate contracts match operator #4037 e
   assert.match(policy, /port: 8090/);
   assert.doesNotMatch(policy, /port: 443|port: 8080|port: 4000|port: 8317|0\.0\.0\.0\/0/);
   assert.match(ingress, /ingressClassName: traefik/);
-  assert.match(ingress, /host: fabric\.truxonline\.com/);
+  assert.match(ingress, /host: webui\.truxonline\.com/);
+  assert.match(ingress, /- webui\.truxonline\.com/);
+  assert.doesNotMatch(ingress, /fabric\.truxonline\.com/);
   assert.match(ingress, /cert-manager\.io\/cluster-issuer: letsencrypt-prod/);
   assert.match(ingress, /external-dns\.alpha\.kubernetes\.io\/public: "true"/);
   assert.match(ingress, /external-dns\.alpha\.kubernetes\.io\/target: truxonline\.com/);

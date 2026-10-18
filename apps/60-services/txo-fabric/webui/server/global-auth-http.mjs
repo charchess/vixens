@@ -162,7 +162,7 @@ export function createGlobalAuthHttp({
 export function createGlobalWebUIApp({
   expectedOrigin, authentikOrigin, transactions, sessions,
   verifyActiveHuman, listTenantCatalog, resolveTenantAccess,
-  getTenantChat, resolvePlatformAccess,
+  getTenantChat, browserArtifacts, resolvePlatformAccess,
   fetchImpl = fetch, now = () => Date.now(),
 }) {
   const login = createGlobalOIDCLogin({
@@ -175,7 +175,7 @@ export function createGlobalWebUIApp({
     expectedOrigin,
     expectedIssuer: authentikOrigin + "/application/o/txo-fabric-webui/",
     authenticate: auth.authenticate,
-    listTenantCatalog, resolveTenantAccess, getTenantChat,
+    listTenantCatalog, resolveTenantAccess, getTenantChat, browserArtifacts,
     resolvePlatformAccess,
   });
   return async function handle(request) {

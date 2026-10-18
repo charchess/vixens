@@ -5,6 +5,10 @@ import { createGlobalWebUIApp } from "./global-auth-http.mjs";
 import { createPostgresOIDCTransactions } from "./oidc-postgres-transactions.mjs";
 import { createPostgresGlobalSessions } from "./global-postgres-sessions.mjs";
 import { createVerifiedTenantBridgeAccess } from "./private-bridge-client.mjs";
+import { createDeclaredBrowserArtifacts } from "./browser-artifacts.mjs";
+
+export const WEBUI_PUBLIC_ORIGIN = "https://webui.truxonline.com";
+export const AUTHENTIK_PUBLIC_ORIGIN = "https://authentik.truxonline.com";
 
 const NO_STORE = Object.freeze({
   "Cache-Control": "no-store",
@@ -33,7 +37,7 @@ function entryPage(method) {
  */
 export function composeGlobalBFF({
   expectedOrigin, authentikOrigin, pool, verifyActiveHuman,
-  listTenantCatalog, bridgeClient, getTenantChat,
+  listTenantCatalog, bridgeClient, getTenantChat, browserArtifacts,
   browserEnabled = false, bridgeEnabled = false,
   resolvePlatformAccess, fetchImpl,
 } = {}) {
@@ -45,7 +49,7 @@ export function composeGlobalBFF({
       typeof verifyActiveHuman !== "function" ||
       typeof listTenantCatalog !== "function" ||
       typeof bridgeClient?.resolve !== "function" ||
-      typeof getTenantChat !== "function") {
+      typeof getTenantChat !== "function" || typeof browserArtifacts?.get !== "function") {
     throw new Error("Global Fabric BFF privileged dependencies unavailable");
   }
   const resolveTenantAccess = createVerifiedTenantBridgeAccess({
@@ -56,8 +60,41 @@ export function composeGlobalBFF({
   return createGlobalWebUIApp({
     expectedOrigin, authentikOrigin, transactions, sessions,
     verifyActiveHuman, listTenantCatalog, resolveTenantAccess,
-    getTenantChat, resolvePlatformAccess, fetchImpl,
+    getTenantChat, browserArtifacts, resolvePlatformAccess, fetchImpl,
   });
+}
+
+/**
+ * Production composition boundary. Gate-on accepts no inferred/default
+ * identity, catalog, bridge, chat or browser provider. Deployments must wire
+ * every privileged provider explicitly; otherwise startup fails before listen.
+ */
+export async function createProductionBFFApp({ env = process.env, providers } = {}) {
+  const enabled = resolveRuntimeGate(env);
+  if (!enabled) return Object.freeze({ enabled: false, app: null });
+  if (!providers || typeof providers !== "object" || Array.isArray(providers) ||
+      typeof providers.ready !== "function") {
+    throw new Error("Global Fabric BFF production providers unavailable");
+  }
+  const browserArtifacts = providers.browserArtifacts || await createDeclaredBrowserArtifacts({
+    assetDir: providers.browserAssetDir,
+    manifestPath: providers.browserManifestPath,
+  });
+  const app = composeGlobalBFF({
+    expectedOrigin: WEBUI_PUBLIC_ORIGIN,
+    authentikOrigin: AUTHENTIK_PUBLIC_ORIGIN,
+    pool: providers.pool,
+    verifyActiveHuman: providers.verifyActiveHuman,
+    listTenantCatalog: providers.listTenantCatalog,
+    bridgeClient: providers.bridgeClient,
+    getTenantChat: providers.getTenantChat,
+    browserArtifacts,
+    resolvePlatformAccess: providers.resolvePlatformAccess,
+    fetchImpl: providers.fetchImpl,
+    browserEnabled: true,
+    bridgeEnabled: true,
+  });
+  return Object.freeze({ enabled: true, app, ready: providers.ready });
 }
 
 /**
@@ -100,11 +137,11 @@ export function createPrivateBFFHandler({ enabled = false, app, ready } = {}) {
 // HTTP adapter is a real Node server, not an in-memory WHATWG simulation.
 // Strictly bounded request bodies; never dump headers, cookies or tokens.
 export function createPrivateBFFServer({
-  handle, expectedOrigin = "https://fabric.truxonline.com", maxBodyBytes = 1024 * 1024,
+  handle, expectedOrigin = WEBUI_PUBLIC_ORIGIN, maxBodyBytes = 1024 * 1024,
 } = {}) {
   if (typeof handle !== "function" || !Number.isSafeInteger(maxBodyBytes) ||
       maxBodyBytes < 1 || maxBodyBytes > 1024 * 1024 ||
-      expectedOrigin !== "https://fabric.truxonline.com") {
+      expectedOrigin !== WEBUI_PUBLIC_ORIGIN) {
     throw new Error("Private BFF server configuration invalid");
   }
   const server = createServer(async (req, res) => {
@@ -177,11 +214,6 @@ export function resolveRuntimeGate(env = process.env) {
   const browserEnabled = env.TXO_WEBUI_BFF_BROWSER_ENABLED;
   const bridgeEnabled = env.TXO_FABRIC_PRIVATE_BRIDGE_ENABLED;
   if (browserEnabled === "false" && bridgeEnabled === "false") return false;
-  if (browserEnabled === "true" && bridgeEnabled === "true") {
-    // Activation requires the *separate* reviewed integration of real
-    // Authentik/tenant/FGA providers. Never infer readiness from environment
-    // secrets alone; even an accidental 'true' is a hard startup failure.
-    throw new Error("WebUI browser activation not wired or approved");
-  }
+  if (browserEnabled === "true" && bridgeEnabled === "true") return true;
   throw new Error("WebUI browser and private bridge gates must be jointly enabled");
 }

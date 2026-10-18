@@ -1,14 +1,14 @@
-import { createPrivateBFFHandler, createPrivateBFFServer, resolveRuntimeGate } from "./private-bff-server.mjs";
+import { createPrivateBFFHandler, createPrivateBFFServer, createProductionBFFApp } from "./private-bff-server.mjs";
 
-export async function startPrivateBFF(env = process.env) {
-  // Strict feature gate checked BEFORE loading any database credential,
-  // HTTP client or OIDC session adapter.
-  const enabled = resolveRuntimeGate(env);
+export async function startPrivateBFF(env = process.env, providers) {
+  // Gate-off remains health-only and does not load credentialed providers.
+  const composition = await createProductionBFFApp({ env, providers });
   const port = Number(env.PORT || "3000");
   if (!Number.isSafeInteger(port) || port < 1024 || port > 65535) {
     throw new Error("Invalid private BFF port");
   }
-  const handler = createPrivateBFFHandler({ enabled });
+  const handler = createPrivateBFFHandler({ enabled: composition.enabled, app: composition.app,
+    ready: composition.enabled ? composition.ready : async () => true });
   const server = createPrivateBFFServer({ handle: handler });
   await new Promise((resolve, reject) => {
     server.once("error", reject);
