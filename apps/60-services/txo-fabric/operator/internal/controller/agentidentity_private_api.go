@@ -21,7 +21,8 @@ var (
 // operation in this version launches the API server or creates/mounts an API
 // credential, Service, NetworkPolicy, ExternalSecret or port. "NotReady" is
 // mandatory even for a completely valid request until separately approved
-// physical credential, endpoint and least-privilege network checks exist.
+// pinned-runtime launch, endpoint attestation and least-privilege network
+// checks exist.
 func privateHermesAPIIntent(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) (string, string) {
 	if agent == nil || tenant == nil {
 		return "InvalidConfiguration", "canonical AgentIdentity and TenantBundle are required"
@@ -55,7 +56,7 @@ func privateHermesAPIIntent(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv
 		!privateHermesAPIObjectName.MatchString(api.CredentialRef) {
 		return "InvalidConfiguration", "private API credential reference must use the canonical agent key"
 	}
-	return "NotReady", "private Hermes API activation and endpoint attestation are not implemented"
+	return "NotReady", "private Hermes API runtime launch contract and endpoint attestation are not implemented"
 }
 
 func setPrivateHermesAPICondition(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) {
