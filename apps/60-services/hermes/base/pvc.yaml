@@ -12,4 +12,4 @@ spec:
     requests:
       # Persona profiles, durable memories, and staged migrations share this RWO volume.
       # Keep headroom for copy-first migrations; legacy session databases stay outside it.
-      storage: 40Gi
+      storage: 80Gi
