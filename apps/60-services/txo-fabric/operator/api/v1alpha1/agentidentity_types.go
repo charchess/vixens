@@ -29,8 +29,9 @@ type AgentRuntimeCapabilityBinding struct {
 	EnableToolsets []string `json:"enableToolsets,omitempty"`
 }
 
-// AgentPrivateAPIBinding expresses non-secret future intent only.
-// A valid opt-in NEVER starts an API Server in this operator version.
+// AgentPrivateAPIBinding expresses non-secret private Responses network intent.
+// A valid opt-in provisions only operator-owned Service/NetworkPolicy substrate;
+// it NEVER starts an API Server or reads/mounts a credential in this version.
 // +kubebuilder:validation:XValidation:rule="!has(self.enabled) || !self.enabled || (has(self.tenantId) && size(self.tenantId) > 0 && has(self.credentialRef) && size(self.credentialRef) > 0)",message="enabled private API requires canonical tenantId and credentialRef"
 type AgentPrivateAPIBinding struct {
 	// Enabled is desired future intent, NOT activation. Omitted/false is safe.
@@ -69,8 +70,9 @@ type AgentRuntimeBinding struct {
 	// +optional
 	Capabilities AgentRuntimeCapabilityBinding `json:"capabilities,omitempty"`
 
-	// PrivateAPI is a source-only typed contract, NOT a runtime gate.
-	// Omission preserves legacy Hermes Deployment behavior.
+	// PrivateAPI is an opt-in for an operator-owned private Responses Service and
+	// BFF-only ingress NetworkPolicy. It does not launch a listener, expose a
+	// credential, or mark endpoint readiness; omission preserves legacy behavior.
 	// +optional
 	PrivateAPI *AgentPrivateAPIBinding `json:"privateAPI,omitempty"`
 }

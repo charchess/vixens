@@ -208,6 +208,10 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		r.setStatus(ctx, &agent, "Degraded", "NetworkReady", metav1.ConditionFalse, "NetworkPolicyReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}
+	if err := r.ensurePrivateHermesAPIResources(ctx, &agent, &tenant, namespace); err != nil {
+		r.setStatus(ctx, &agent, "Degraded", "PrivateHermesAPIReady", metav1.ConditionFalse, "PrivateAPINetworkReconcileFailed", err.Error())
+		return ctrl.Result{}, err
+	}
 	if err := r.ensureHumanAccessResources(ctx, &agent, &tenant, namespace, humanAccess); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "HumanAccessReady", metav1.ConditionFalse, "HumanAccessReconcileFailed", err.Error())
 		return ctrl.Result{}, err
