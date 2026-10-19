@@ -161,8 +161,9 @@ spec:
                           type: object
                         privateAPI:
                           description: |-
-                            PrivateAPI is a source-only typed contract, NOT a runtime gate.
-                            Omission preserves legacy Hermes Deployment behavior.
+                            PrivateAPI is an opt-in for an operator-owned private Responses Service and
+                            BFF-only ingress NetworkPolicy. It does not launch a listener, expose a
+                            credential, or mark endpoint readiness; omission preserves legacy behavior.
                           properties:
                             credentialRef:
                               description: |-

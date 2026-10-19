@@ -11,9 +11,11 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apiMeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -46,7 +48,7 @@ func TestPrivateHermesAPIIntentFailClosedAndSourceOnly(t *testing.T) {
 	}
 	a.Spec.Runtime.PrivateAPI = validFuturePrivateAPI(a, tenant)
 	if reason, message := privateHermesAPIIntent(a, tenant); reason != "NotReady" ||
-		message != "private Hermes API runtime launch contract and endpoint attestation are not implemented" {
+		message != "private Hermes API network substrate is reconciled; runtime launch and endpoint attestation are not implemented" {
 		t.Fatalf("future-only opt-in must remain truthful and not report Ready: reason=%s message=%q", reason, message)
 	}
 	setPrivateHermesAPICondition(a, tenant)
@@ -149,76 +151,99 @@ func TestPrivateHermesAPIContractRejectsUnknownBrowserAndSecretFields(t *testing
 	// The API contract must never authorize any unrecognized field.
 }
 
-func TestPrivateHermesAPIGeneratorInertAndLegacySpecIdentical(t *testing.T) {
-	a, tenant := privateAPIFixture()
-	profile := testRuntimeProfile()
+func TestPrivateHermesAPIDisabledOptInDoesNotDeleteForeignResources(t *testing.T) {
+	agent, tenant := privateAPIFixture()
+	namespace := tenantNamespace(tenant.Name)
+	name := runtimeName(agent.Spec.AgentKey)
+	foreignOwner := metav1.OwnerReference{APIVersion: "v1", Kind: "ConfigMap", Name: "foreign", UID: types.UID("foreign-owner"), Controller: boolPtr(true)}
+	service := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, OwnerReferences: []metav1.OwnerReference{foreignOwner}}}
+	policy := &networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: name + "-responses-ingress", Namespace: namespace, OwnerReferences: []metav1.OwnerReference{foreignOwner}}}
+	c := fake.NewClientBuilder().WithScheme(testScheme(t)).WithObjects(agent, service, policy).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: c.Scheme()}
+
+	if err := r.ensurePrivateHermesAPIResources(context.Background(), agent, tenant, namespace); err == nil {
+		t.Fatal("disabled private API must fail closed on a foreign canonical Service")
+	}
+	if err := c.Get(context.Background(), client.ObjectKeyFromObject(service), &corev1.Service{}); err != nil {
+		t.Fatalf("foreign Service was deleted: %v", err)
+	}
+	if err := c.Get(context.Background(), client.ObjectKeyFromObject(policy), &networkingv1.NetworkPolicy{}); err != nil {
+		t.Fatalf("foreign NetworkPolicy was deleted: %v", err)
+	}
+}
+
+func TestPrivateHermesAPIOptInReconcilesCanonicalPrivateSubstrate(t *testing.T) {
+	agent, tenant := privateAPIFixture()
+	agent.Spec.Runtime.PrivateAPI = validFuturePrivateAPI(agent, tenant)
 	ctx := context.Background()
-	type snapshot struct {
-		spec     appsv1.DeploymentSpec
-		services corev1.ServiceList
-		policies networkingv1.NetworkPolicyList
+	c := fake.NewClientBuilder().WithScheme(testScheme(t)).WithObjects(agent).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: c.Scheme()}
+	namespace := tenantNamespace(tenant.Name)
+
+	if err := r.ensureDeployment(ctx, agent, tenant, testRuntimeProfile(), namespace, "model-secret-uid", "baseline"); err != nil {
+		t.Fatal(err)
 	}
-	collect := func(api *fabricv1alpha1.AgentPrivateAPIBinding) snapshot {
-		t.Helper()
-		agent := a.DeepCopy()
-		agent.Spec.Runtime.PrivateAPI = api
-		c := fake.NewClientBuilder().WithScheme(testScheme(t)).WithObjects(agent).Build()
-		r := &AgentIdentityReconciler{Client: c, Scheme: testScheme(t)}
-		// Use one scheme for both fake client and reconciler.
-		r.Scheme = c.Scheme()
-		namespace := tenantNamespace(tenant.Name)
-		if err := r.ensureDeployment(ctx, agent, tenant, profile, namespace, "model-secret-uid", "baseline"); err != nil {
-			t.Fatal(err)
-		}
-		if err := r.ensureEgressPolicy(ctx, agent, tenant, namespace); err != nil {
-			t.Fatal(err)
-		}
-		var deployment appsv1.Deployment
-		if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}, &deployment); err != nil {
-			t.Fatal(err)
-		}
-		var services corev1.ServiceList
-		if err := c.List(ctx, &services); err != nil {
-			t.Fatal(err)
-		}
-		var policies networkingv1.NetworkPolicyList
-		if err := c.List(ctx, &policies); err != nil {
-			t.Fatal(err)
-		}
-		if reason, _ := privateHermesAPIIntent(agent, tenant); reason == "Ready" {
-			t.Fatal("source-only API incorrectly marked ready")
-		}
-		for _, c := range deployment.Spec.Template.Spec.Containers {
-			for _, v := range c.Env {
-				if strings.HasPrefix(v.Name, "API_SERVER_") {
-					t.Fatalf("new API env %s", v.Name)
-				}
-			}
-			for _, p := range c.Ports {
-				if p.ContainerPort == 8642 {
-					t.Fatalf("new Hermes API listener port")
-				}
-			}
-		}
-		if len(services.Items) != 0 {
-			t.Fatalf("unexpected private API service: %#v", services.Items)
-		}
-		return snapshot{spec: deployment.Spec, services: services, policies: policies}
+	if err := r.ensurePrivateHermesAPIResources(ctx, agent, tenant, namespace); err != nil {
+		t.Fatal(err)
 	}
-	baseline := collect(nil)
-	for name, api := range map[string]*fabricv1alpha1.AgentPrivateAPIBinding{
-		"explicit disabled":                     {},
-		"enabled and complete but not runnable": validFuturePrivateAPI(a, tenant),
-		"enabled missing credential":            {Enabled: true, TenantID: tenant.Spec.TenantID},
-		"foreign tenant":                        {Enabled: true, TenantID: "TEN99999", CredentialRef: "hermes-api-" + a.Spec.AgentKey},
-	} {
-		t.Run(name, func(t *testing.T) {
-			next := collect(api)
-			if !reflect.DeepEqual(baseline.spec, next.spec) ||
-				!reflect.DeepEqual(baseline.services, next.services) ||
-				!reflect.DeepEqual(baseline.policies, next.policies) {
-				t.Fatal("private API source intent changed legacy gateway or generated resource")
+	var deployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	for _, container := range deployment.Spec.Template.Spec.Containers {
+		for _, port := range container.Ports {
+			if port.ContainerPort == privateHermesAPIPort {
+				t.Fatal("network substrate must not enable a Responses listener")
 			}
-		})
+		}
+		for _, env := range container.Env {
+			if strings.HasPrefix(env.Name, "API_SERVER_") {
+				t.Fatalf("network substrate must not add API feature env %q", env.Name)
+			}
+		}
+	}
+
+	var service corev1.Service
+	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}, &service); err != nil {
+		t.Fatal(err)
+	}
+	if service.Spec.Type != corev1.ServiceTypeClusterIP || len(service.Spec.Ports) != 1 ||
+		service.Spec.Ports[0].Name != "responses" || service.Spec.Ports[0].Port != 8642 ||
+		service.Spec.Ports[0].TargetPort.IntVal != 8642 {
+		t.Fatalf("private Hermes Service is not canonical: %#v", service.Spec)
+	}
+	if !reflect.DeepEqual(service.Spec.Selector, map[string]string{LabelName: "hermes-agent", LabelInstance: agent.Spec.AgentKey}) {
+		t.Fatalf("service selector=%#v", service.Spec.Selector)
+	}
+
+	var ingress networkingv1.NetworkPolicy
+	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey) + "-responses-ingress", Namespace: namespace}, &ingress); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(ingress.Spec.PodSelector.MatchLabels, service.Spec.Selector) ||
+		!reflect.DeepEqual(ingress.Spec.PolicyTypes, []networkingv1.PolicyType{networkingv1.PolicyTypeIngress}) || len(ingress.Spec.Ingress) != 1 {
+		t.Fatalf("private Hermes ingress policy=%#v", ingress.Spec)
+	}
+	rule := ingress.Spec.Ingress[0]
+	if len(rule.Ports) != 1 || rule.Ports[0].Protocol == nil || *rule.Ports[0].Protocol != corev1.ProtocolTCP || rule.Ports[0].Port.IntVal != 8642 || len(rule.From) != 1 {
+		t.Fatalf("private Hermes ingress rule=%#v", rule)
+	}
+	peer := rule.From[0]
+	if peer.NamespaceSelector == nil || peer.NamespaceSelector.MatchLabels["kubernetes.io/metadata.name"] != "txo-fabric-system" ||
+		peer.PodSelector == nil || !reflect.DeepEqual(peer.PodSelector.MatchLabels, map[string]string{
+		LabelName: "txo-fabric-webui-bff", "app.kubernetes.io/component": "bff",
+	}) {
+		t.Fatalf("private Hermes ingress peer=%#v", peer)
+	}
+
+	agent.Spec.Runtime.PrivateAPI = nil
+	if err := r.ensurePrivateHermesAPIResources(ctx, agent, tenant, namespace); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Name: service.Name, Namespace: namespace}, &corev1.Service{}); !apierrors.IsNotFound(err) {
+		t.Fatalf("disabled opt-in left Service behind: %v", err)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Name: ingress.Name, Namespace: namespace}, &networkingv1.NetworkPolicy{}); !apierrors.IsNotFound(err) {
+		t.Fatalf("disabled opt-in left ingress policy behind: %v", err)
 	}
 }
