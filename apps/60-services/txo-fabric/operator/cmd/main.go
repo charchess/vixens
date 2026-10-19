@@ -120,12 +120,21 @@ func main() {
 				Client:mgr.GetClient(),APIReader:mgr.GetAPIReader(),Scheme:mgr.GetScheme(),
 			}},
 		}
+		browserAuthorityHandler:=&privatebridge.BrowserAuthorityHandler{
+			Contract:handler.Contract,
+			Tokens:handler.Tokens,
+			Nonces:handler.Nonces,
+			Authorities:privateBrowserAuthorityResolver{controller:&controller.TenantBundleReconciler{
+				Client:mgr.GetClient(),APIReader:mgr.GetAPIReader(),Scheme:mgr.GetScheme(),
+			}},
+		}
 		if err:=mgr.Add(manager.RunnableFunc(func(ctx context.Context) error {
 			listener,err:=net.Listen("tcp",":8090")
 			if err!=nil {return err}
 			mux:=http.NewServeMux()
 			mux.Handle(privatebridge.Path,handler)
 			mux.Handle(privatebridge.EnrollmentPath,enrollmentHandler)
+			mux.Handle(privatebridge.BrowserAuthorityPath,browserAuthorityHandler)
 			server:=&http.Server{
 				Handler:mux,ReadHeaderTimeout:5*time.Second,
 				ReadTimeout:8*time.Second,WriteTimeout:8*time.Second,
@@ -157,6 +166,12 @@ func main() {
 type privateBFFResolver struct { controller *controller.TenantBundleReconciler }
 func (r privateBFFResolver) Resolve(ctx context.Context,tenant,uuid string,now time.Time)(string,error) {
 	return r.controller.ResolvePrivateBFFIdentity(ctx,tenant,uuid,now)
+}
+
+type privateBrowserAuthorityResolver struct { controller *controller.TenantBundleReconciler }
+func (r privateBrowserAuthorityResolver) ResolveBrowserAuthority(ctx context.Context,q privatebridge.BrowserAuthorityRequest,now time.Time)(privatebridge.BrowserAuthorityResponse,error) {
+	if r.controller==nil { return privatebridge.BrowserAuthorityResponse{},errors.New("private browser authority unavailable") }
+	return r.controller.ResolvePrivateBrowserAuthority(ctx,q,now)
 }
 
 // privateBFFEnrollment keeps enrollment separate from resolution so the latter
