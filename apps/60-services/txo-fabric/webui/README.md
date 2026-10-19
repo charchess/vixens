@@ -444,17 +444,21 @@ immutable Authentik identity fields reach the privileged enrollment callback,
 never the code, cookie, PKCE verifier, access token or arbitrary headers.
 
 **Still a source-only integration seam, not a deployed authentication
-service:** the mountable HTTP BFF and its strict host+callback+cookie
-handling are absent. The transaction store and session store are not
-provisioned. The `enrollVerifiedHuman` callback is intentionally
-unimplemented at runtime: its future Fabric-only transport must authenticate
-the BFF workload, bind the tenant to the service identity, and call the
-operator-owned CAS writer with a live Authentik account check. A forged
-`enrollVerifiedHuman` implementation would compromise the boundary;
-the current module is not safe to mount with arbitrary callbacks. Successful
-login returns an identity **without** setting `authenticated` or
-`verified`; every chat, integration and agent operation still requires
-fresh account/IAM state and an OpenFGA Check.
+service:** the production BFF assembly remains unavailable by design. The
+private enrollment transport now has a fixed workload-only client:
+`server/private-enrollment-client.mjs` sends exactly the signed global OIDC
+identity fields to the fixed operator-only enrollment URL, with a projected
+ServiceAccount token, a short-lived HMAC assertion/JTI, strict reply schema
+and no browser-provided endpoint, Fabric ID, store/model or credential. The
+WebUI exposes the corresponding `POST /api/tenants/{tenantKey}/enroll` route
+only after a verified global session plus same-origin CSRF header; the tenant
+path is a requested scope, and the operator remains the authority that checks
+active account, pinned group membership and ledger CAS. Gate-off performs no
+credential read or private I/O. The runtime assembly does not instantiate this
+client yet, so no login or enrollment is active and no gate/manifest changes
+are implied. Successful enrollment alone still does not set `authenticated` or
+`verified` tenant authority; every chat, integration and agent operation
+requires fresh account/IAM state and an OpenFGA Check.
 
 Tests: `node --test` includes PKCE challenge vs verifier, original nonce,
 exact scoped endpoints, tenant-specific host validation, cookie binding,
