@@ -58,7 +58,7 @@ const validTenant = (entry) => entry && typeof entry.tenantKey === "string" &&
  */
 export function createGlobalWebUIHandler({
   expectedOrigin, expectedIssuer, authenticate, listTenantCatalog,
-  resolveTenantAccess, getTenantChat, resolvePlatformAccess, browserArtifacts,
+  resolveTenantAccess, getTenantChat, resolvePlatformAccess, browserArtifacts, enrollTenant,
 }) {
   let origin, issuer;
   try { origin = new URL(expectedOrigin); issuer = new URL(expectedIssuer); }
@@ -71,7 +71,8 @@ export function createGlobalWebUIHandler({
       typeof listTenantCatalog !== "function" ||
       typeof resolveTenantAccess !== "function" ||
       typeof getTenantChat !== "function" ||
-      (resolvePlatformAccess !== undefined && typeof resolvePlatformAccess !== "function")) {
+      (resolvePlatformAccess !== undefined && typeof resolvePlatformAccess !== "function") ||
+      (enrollTenant !== undefined && typeof enrollTenant !== "function")) {
     throw new Error("Global Fabric WebUI security configuration missing");
   }
 
@@ -136,6 +137,28 @@ export function createGlobalWebUIHandler({
     let identity;
     try { identity = await identityFor(request); }
     catch { return denied(); }
+
+    // First enrollment is an explicit requested tenant scope, not a catalogue
+    // grant. The private operator rechecks the active account, immutable
+    // issuer/subject/UUID, pinned group membership and CAS-protected ledger.
+    const enrollment = /^\/api\/tenants\/([a-z0-9-]+)\/enroll$/.exec(route.pathname);
+    if (enrollment) {
+      if (request.method !== "POST" || request.headers.get("origin") !== expectedOrigin ||
+          request.headers.get("x-txo-request") !== "enroll" || !TENANT_KEY.test(enrollment[1]) ||
+          typeof enrollTenant !== "function") return denied();
+      try {
+        const result = await enrollTenant(Object.freeze({
+          tenantKey: enrollment[1], issuer: identity.issuer,
+          oidcSubject: identity.oidcSubject, authentikUserUUID: identity.authentikUserUUID,
+        }));
+        if (!result || typeof result !== "object" || Array.isArray(result) ||
+            Object.keys(result).length !== 2 || result.tenantKey !== enrollment[1] ||
+            !FABRIC_USER_ID.test(result.fabricUserId)) return denied(503);
+        return new Response(null, { status: 204, headers: {
+          "Cache-Control": "no-store", "Vary": "Cookie", "X-Content-Type-Options": "nosniff",
+        } });
+      } catch { return denied(503); }
+    }
 
     if ((request.method === "GET" || request.method === "HEAD") &&
         typeof browserArtifacts?.get === "function") {
