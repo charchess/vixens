@@ -77,6 +77,27 @@ test("one global origin lists authorized tenants, not every TenantBundle, withou
   });
 });
 
+test("catalog receives only the verified immutable Authentik UUID", async () => {
+  let catalogInput;
+  const handler = createGlobalWebUIHandler({
+    expectedOrigin: origin, expectedIssuer: issuer,
+    authenticate: async () => identity,
+    listTenantCatalog: async (input) => {
+      catalogInput = input;
+      return [tenants[0]];
+    },
+    resolveTenantAccess: async ({ tenantKey, fabricTenantId }) => ({
+      tenantKey, fabricTenantId, fabricUserId: user,
+      accountActive: true, fresh: true, canEnter: true, canManageTenant: false,
+    }),
+    getTenantChat: async () => { throw Error("not reached"); },
+  });
+  const response = await handler(new Request(origin + "/api/me"));
+  assert.equal(response.status, 200);
+  assert.deepEqual(catalogInput, { authentikUserUUID: uuid });
+  assert.ok(Object.isFrozen(catalogInput));
+});
+
 test("global platform admin requires its own independent backend grant", async () => {
   const { handler, request } = harness({ platformAdmin: true });
   const r = await handler(request("/api/me"));

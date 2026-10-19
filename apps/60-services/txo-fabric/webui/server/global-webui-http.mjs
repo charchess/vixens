@@ -30,8 +30,10 @@ const validTenant = (entry) => entry && typeof entry.tenantKey === "string" &&
  *
  * authenticate(request): server-side, session-bound Authentik GLOBAL
  *   OIDC client proof. NEVER trust browser headers, query or JSON.
- * listTenantCatalog(): immutable TenantBundle-backed server registry
- *   of {tenantKey, fabricTenantId, displayName}; may include many tenants.
+ * listTenantCatalog({authentikUserUUID}): immutable TenantBundle-backed,
+ *   server-side filtered registry of {tenantKey, fabricTenantId, displayName};
+ *   may include many tenants. The input is only the verified immutable UUID,
+ *   never an OIDC subject, browser claim or requested tenant.
  * resolveTenantAccess({identity, tenantKey, fabricTenantId}):
  *   PRIVATE trusted Fabric backend: validate active Authentik account,
  *   tenant-group membership from pinned Authentik UUIDs, per-tenant
@@ -89,8 +91,10 @@ export function createGlobalWebUIHandler({
     });
   }
 
-  async function catalog() {
-    const entries = await listTenantCatalog();
+  async function catalog(identity) {
+    const entries = await listTenantCatalog(Object.freeze({
+      authentikUserUUID: identity.authentikUserUUID,
+    }));
     if (!Array.isArray(entries) || entries.length > MAX_TENANTS ||
         entries.some(e => !validTenant(e))) throw Error("Invalid catalog");
     const keys = new Set(), ids = new Set();
@@ -151,7 +155,7 @@ export function createGlobalWebUIHandler({
 
     if (route.pathname === "/api/me" && request.method === "GET") {
       try {
-        const entries = await catalog(), tenants = [];
+        const entries = await catalog(identity), tenants = [];
         for (const entry of entries) {
           const principal = await scopedPrincipal(identity, entry);
           if (principal) tenants.push({
@@ -178,7 +182,7 @@ export function createGlobalWebUIHandler({
     const match = /^\/api\/tenants\/([a-z0-9-]+)(\/chat\/(?:agents(?:\/[A-Za-z0-9._-]+\/turn)?|threads(?:\/[a-f0-9]{40}(?:\/turns)?)?))$/.exec(route.pathname);
     if (!match || !TENANT_KEY.test(match[1])) return denied(404);
     try {
-      const entry = (await catalog()).find(e => e.tenantKey === match[1]);
+      const entry = (await catalog(identity)).find(e => e.tenantKey === match[1]);
       if (!entry) return denied(); // Do not disclose tenant existence.
       const principal = await scopedPrincipal(identity, entry);
       if (!principal) return denied(); // Check fresh membership on EACH route.
