@@ -9,6 +9,35 @@ No Hermes API Server, `ExternalSecret`, Service, NetworkPolicy
 exception or browser route is added; BFF/bridge/FGA gates stay OFF.
 Tests use only fake private upstream; **no physical chat POC** is claimed.
 
+## #4087 reviewed browser-to-Responses composition (still source-only)
+
+`server/production-responses-composition.mjs` is now the exclusive source
+assembly for the first browser turn. Once **both** runtime gates are `true`,
+`createProductionBFFApp` accepts a reviewed server-owned Responses composition
+rather than an arbitrary `getTenantChat` callback. Per tenant it creates only
+`createPrivateHermesResponsesService`: fresh `agent.chat` authorization,
+canonical TenantBundle/AgentIdentity lookup, endpoint attestation, scoped
+credential read and opaque HMAC conversation derivation happen server-side
+before the single `POST /v1/responses` request. It does not select SQL003,
+a BFF thread repository, a legacy Hermes session adapter, a browser endpoint,
+or a browser-supplied conversation key.
+
+There is deliberately no runtime provider assembly yet. The desired Git source
+contains no authoritative active-human resolver, tenant/agent catalog, fresh
+OpenFGA authorization provider, endpoint attester, scoped Hermes credential
+broker, or approved conversation-HMAC source. Therefore the normal BFF entry
+point invokes a non-secret unavailable factory when both gates are enabled and
+fails startup before listening with `Reviewed Fabric Responses providers
+unavailable`. With either gate false it does not invoke that factory, read DB
+or bridge/Hermes credentials, or establish a privileged client.
+
+A separately reviewed activation source increment must implement those real
+providers and prove their issuer-safe, revocation-aware contracts; it must not
+load a module selected by environment, use a mock/callback bypass, or infer
+identity from username/email/admin API results. This change does not authorize
+feature gates, credential provisioning, API_SERVER, port 8642, Hermes Service
+or NetworkPolicy, ExternalSecret, ingress change, promotion, or live mutation.
+
 ---
 
 # Prompt 05 / #3807 — PRIVATE BFF substrate (source + GitOps, gated OFF)

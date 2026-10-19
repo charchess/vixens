@@ -8,6 +8,7 @@ import {
   PRIVATE_BRIDGE_URL, PRIVATE_BRIDGE_PATH, PRIVATE_BRIDGE_AUDIENCE,
   PRIVATE_BFF_SUBJECT, GLOBAL_OIDC_ISSUER,
 } from "../server/private-bridge-client.mjs";
+import { createReviewedResponsesComposition } from "../server/production-responses-composition.mjs";
 
 const uuid = "550e8400-e29b-41d4-a716-446655440001";
 const now = 1_760_214_000_000;
@@ -342,32 +343,51 @@ test("BFF denial does not log signing key, UUID, bearer or opaque browser cookie
   }
 });
 
-test("enabled gates require complete production providers before an app is composed", async () => {
+test("production gate-on rejects all injectable providers before artifact, DB, bridge or Hermes assembly", async () => {
   const env = {
     TXO_WEBUI_BFF_BROWSER_ENABLED: "true",
     TXO_FABRIC_PRIVATE_BRIDGE_ENABLED: "true",
   };
   assert.equal(resolveRuntimeGate(env), true);
-  await assert.rejects(createProductionBFFApp({ env }), /providers unavailable/);
-  await assert.rejects(createProductionBFFApp({ env, providers: {
-    ready: async () => true, browserArtifacts: { get: async () => null },
-  } }), /dependencies unavailable/);
-  const providers = {
-    ready: async () => true,
-    pool: { query: async () => ({ rows: [] }) },
-    verifyActiveHuman: async identity => ({ ...identity, accountActive: true, fresh: true }),
-    listTenantCatalog: async () => [],
-    bridgeClient: { resolve: async () => ({ tenantKey: "indiba", fabricUserId: "usraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }) },
-    getTenantChat: async () => null,
-    browserArtifacts: { get: async () => null },
+  const sentinels = {
+    responses: { getTenantChat: async () => { throw new Error("must not use"); } },
+    browserArtifacts: { get: async () => { throw new Error("must not use"); } },
+    pool: { query: async () => { throw new Error("must not use"); } },
+    ready: async () => { throw new Error("must not use"); },
   };
-  const composition = await createProductionBFFApp({ env, providers });
-  assert.equal(composition.enabled, true);
-  assert.equal(typeof composition.app, "function");
-  assert.equal(await composition.ready(), true);
-  const handler = createPrivateBFFHandler(composition);
-  assert.equal((await handler(new Request("https://fabric.truxonline.com/"))).status, 403,
-    "the server fixes requests to the canonical origin before the app sees them");
+  const off = await createProductionBFFApp({ env: {
+    TXO_WEBUI_BFF_BROWSER_ENABLED: "false", TXO_FABRIC_PRIVATE_BRIDGE_ENABLED: "false",
+  }, providers: sentinels });
+  assert.equal(off.enabled, false);
+  await assert.rejects(createProductionBFFApp({ env, providers: sentinels }), /Responses providers unavailable/);
+});
+
+test("reviewed Responses composition permits only server-owned canonical contracts", async () => {
+  const calls = { authorize: 0, list: 0 };
+  const responses = createReviewedResponsesComposition({
+    authorize: async () => { calls.authorize++; return true; },
+    resolveCanonicalTenant: async () => null,
+    resolveCanonicalAgent: async () => null,
+    verifyEndpoint: async () => false,
+    readScopedCredential: async () => { throw new Error("must not read"); },
+    deriveConversationKey: async () => "v1_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    listTenantAgents: async ({ principal, tenantKey, fabricTenantId }) => {
+      calls.list++;
+      assert.equal(principal.fabricUserId, "usraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+      assert.equal(tenantKey, "hairem");
+      assert.equal(fabricTenantId, "TEN00001");
+      return [{ agentKey: "alpha", label: "Alpha" }];
+    },
+  });
+  await assert.rejects(responses.getTenantChat({ tenantKey: "../hairem", fabricTenantId: "TEN00001" }), /unavailable/);
+  const selected = await responses.getTenantChat({ tenantKey: "hairem", fabricTenantId: "TEN00001" });
+  assert.equal(selected.tenantKey, "hairem");
+  assert.equal(selected.fabricTenantId, "TEN00001");
+  assert.equal(typeof selected.service.canAccess, "function");
+  assert.deepEqual(await selected.listTenantAgents({ principal: {
+    fabricUserId: "usraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  } }), [{ agentKey: "alpha", label: "Alpha" }]);
+  assert.deepEqual(calls, { authorize: 0, list: 1 });
 });
 
 test("browser artifacts are manifest-allowlisted and reject traversal, source maps and source files", async () => {
