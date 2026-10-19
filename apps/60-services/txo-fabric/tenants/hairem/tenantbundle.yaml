@@ -17,6 +17,10 @@ spec:
   displayName: hAIrem
   isolation:
     profile: Shared
+  # Explicitly select the existing default profile to trigger the reviewed
+  # one-time reconciliation of the absent migration Job after DB recovery.
+  aiGateway:
+    profileRef: litellm-standard
   # Private Hermes agent storage is tenant-owned, not release-channel-owned.
   # Existing PVCs are not recreated when this policy is introduced.
   agentStorage:
