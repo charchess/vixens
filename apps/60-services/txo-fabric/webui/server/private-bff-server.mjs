@@ -6,6 +6,7 @@ import { createPostgresOIDCTransactions } from "./oidc-postgres-transactions.mjs
 import { createPostgresGlobalSessions } from "./global-postgres-sessions.mjs";
 import { createVerifiedTenantBridgeAccess } from "./private-bridge-client.mjs";
 import { createDeclaredBrowserArtifacts } from "./browser-artifacts.mjs";
+import { createUnavailableProductionResponsesComposition } from "./production-responses-composition.mjs";
 
 export const WEBUI_PUBLIC_ORIGIN = "https://webui.truxonline.com";
 export const AUTHENTIK_PUBLIC_ORIGIN = "https://authentik.truxonline.com";
@@ -69,32 +70,18 @@ export function composeGlobalBFF({
  * identity, catalog, bridge, chat or browser provider. Deployments must wire
  * every privileged provider explicitly; otherwise startup fails before listen.
  */
-export async function createProductionBFFApp({ env = process.env, providers } = {}) {
+export async function createProductionBFFApp({ env = process.env } = {}) {
   const enabled = resolveRuntimeGate(env);
+  // Gate-off is an isolation boundary: do not inspect caller-provided factories
+  // or provider objects, which could read credentials or create privileged clients.
   if (!enabled) return Object.freeze({ enabled: false, app: null });
-  if (!providers || typeof providers !== "object" || Array.isArray(providers) ||
-      typeof providers.ready !== "function") {
-    throw new Error("Global Fabric BFF production providers unavailable");
-  }
-  const browserArtifacts = providers.browserArtifacts || await createDeclaredBrowserArtifacts({
-    assetDir: providers.browserAssetDir,
-    manifestPath: providers.browserManifestPath,
-  });
-  const app = composeGlobalBFF({
-    expectedOrigin: WEBUI_PUBLIC_ORIGIN,
-    authentikOrigin: AUTHENTIK_PUBLIC_ORIGIN,
-    pool: providers.pool,
-    verifyActiveHuman: providers.verifyActiveHuman,
-    listTenantCatalog: providers.listTenantCatalog,
-    bridgeClient: providers.bridgeClient,
-    getTenantChat: providers.getTenantChat,
-    browserArtifacts,
-    resolvePlatformAccess: providers.resolvePlatformAccess,
-    fetchImpl: providers.fetchImpl,
-    browserEnabled: true,
-    bridgeEnabled: true,
-  });
-  return Object.freeze({ enabled: true, app, ready: providers.ready });
+
+  // There is no reviewed, authoritative production assembly yet for the active
+  // human verifier, canonical catalog, fresh FGA, endpoint attestation, scoped
+  // Hermes credential and HMAC derivation. Fail before artifacts, DB, bridge or
+  // Hermes clients are constructed. In particular, never accept arbitrary
+  // getTenantChat/browser-artifact objects through this production boundary.
+  createUnavailableProductionResponsesComposition();
 }
 
 /**
