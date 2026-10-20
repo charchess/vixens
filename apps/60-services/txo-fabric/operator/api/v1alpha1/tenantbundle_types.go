@@ -264,6 +264,14 @@ type TenantBundleStatus struct {
 	// +optional
 	AIGateway *ComponentStatus `json:"aiGateway,omitempty"`
 
+	// AIGatewayMigration retains UID-bound evidence for every LiteLLM schema
+	// migration attempt. Entries are appended by attempt ordinal and retained
+	// across active reconciliation, parking and cleanup.
+	// +optional
+	// +listType=map
+	// +listMapKey=attempt
+	AIGatewayMigration []AIGatewayMigrationStatus `json:"aiGatewayMigration,omitempty"`
+
 	// +optional
 	AICredentialBroker *ComponentStatus `json:"aiCredentialBroker,omitempty"`
 

@@ -8,7 +8,6 @@ import (
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -139,25 +138,6 @@ func (r *TenantBundleReconciler) parkAIGatewayCompute(ctx context.Context, bundl
 		}
 	}
 
-	var jobs batchv1.JobList
-	if err := r.List(ctx, &jobs, client.InNamespace(namespace), client.MatchingLabels{
-		LabelManaged:    "true",
-		LabelTenantID:   bundle.Spec.TenantID,
-		LabelTenantName: bundle.Name,
-		"fabric.truxonline.io/ai-gateway-resource": "migration",
-	}); err != nil {
-		return false, err
-	}
-	for i := range jobs.Items {
-		pending = true
-		job := &jobs.Items[i]
-		if job.DeletionTimestamp == nil {
-			if err := r.Delete(ctx, job); err != nil && !apierrors.IsNotFound(err) {
-				return false, err
-			}
-		}
-	}
-
 	return pending, nil
 }
 
@@ -186,25 +166,6 @@ func (r *TenantBundleReconciler) cleanupAIGateway(ctx context.Context, bundle *f
 		pending = true
 		if object.GetDeletionTimestamp() == nil {
 			if err := r.Delete(ctx, object); err != nil && !apierrors.IsNotFound(err) {
-				return false, err
-			}
-		}
-	}
-
-	var jobs batchv1.JobList
-	if err := r.List(ctx, &jobs, client.InNamespace(namespace), client.MatchingLabels{
-		LabelManaged:    "true",
-		LabelTenantID:   bundle.Spec.TenantID,
-		LabelTenantName: bundle.Name,
-		"fabric.truxonline.io/ai-gateway-resource": "migration",
-	}); err != nil {
-		return false, err
-	}
-	for i := range jobs.Items {
-		pending = true
-		job := &jobs.Items[i]
-		if job.DeletionTimestamp == nil {
-			if err := r.Delete(ctx, job); err != nil && !apierrors.IsNotFound(err) {
 				return false, err
 			}
 		}

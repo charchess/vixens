@@ -72,6 +72,45 @@ type TenantAIGatewaySpec struct {
 	// +kubebuilder:default=litellm-standard
 	// +kubebuilder:validation:MaxLength=128
 	ProfileRef string `json:"profileRef,omitempty"`
+
+	// MigrationRetry is the reviewed migration attempt ordinal. Attempt zero is
+	// created for a new tenant. A later value is accepted only as the next
+	// ordinal after a retained failed attempt; profile or configuration changes
+	// never create another migration Job.
+	// +optional
+	// +kubebuilder:default=0
+	// +kubebuilder:validation:Minimum=0
+	MigrationRetry int32 `json:"migrationRetry,omitempty"`
+}
+
+// AIGatewayMigrationPhase is the evidence-derived phase of one retained
+// LiteLLM migration Job. A terminal phase is derived only from the JobComplete
+// or JobFailed Job conditions.
+// +kubebuilder:validation:Enum=Pending;Succeeded;Failed;EvidenceMissing
+type AIGatewayMigrationPhase string
+
+const (
+	AIGatewayMigrationPending         AIGatewayMigrationPhase = "Pending"
+	AIGatewayMigrationSucceeded       AIGatewayMigrationPhase = "Succeeded"
+	AIGatewayMigrationFailed          AIGatewayMigrationPhase = "Failed"
+	AIGatewayMigrationEvidenceMissing AIGatewayMigrationPhase = "EvidenceMissing"
+)
+
+// AIGatewayMigrationStatus is durable, UID-bound evidence for one migration
+// attempt. Records are appended for new attempts and never replaced by a
+// different Job identity.
+type AIGatewayMigrationStatus struct {
+	// Attempt is the monotonically increasing migration attempt ordinal.
+	Attempt int32 `json:"attempt"`
+
+	// JobName is the immutable name of the Job created for this attempt.
+	JobName string `json:"jobName"`
+
+	// JobUID binds the evidence to one Kubernetes Job instance.
+	JobUID string `json:"jobUID"`
+
+	// Phase is observed from the bound Job's terminal conditions only.
+	Phase AIGatewayMigrationPhase `json:"phase"`
 }
 
 type TenantAICredentialBrokerSpec struct {
