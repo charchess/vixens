@@ -6,7 +6,6 @@ import { createPostgresOIDCTransactions } from "./oidc-postgres-transactions.mjs
 import { createPostgresGlobalSessions } from "./global-postgres-sessions.mjs";
 import { createVerifiedTenantBridgeAccess } from "./private-bridge-client.mjs";
 import { createDeclaredBrowserArtifacts } from "./browser-artifacts.mjs";
-import { createUnavailableProductionResponsesComposition } from "./production-responses-composition.mjs";
 
 export const WEBUI_PUBLIC_ORIGIN = "https://webui.truxonline.com";
 export const AUTHENTIK_PUBLIC_ORIGIN = "https://authentik.truxonline.com";
@@ -76,12 +75,10 @@ export async function createProductionBFFApp({ env = process.env } = {}) {
   // or provider objects, which could read credentials or create privileged clients.
   if (!enabled) return Object.freeze({ enabled: false, app: null });
 
-  // There is no reviewed, authoritative production assembly yet for the active
-  // human verifier, canonical catalog, fresh FGA, endpoint attestation, scoped
-  // Hermes credential and HMAC derivation. Fail before artifacts, DB, bridge or
-  // Hermes clients are constructed. In particular, never accept arbitrary
-  // getTenantChat/browser-artifact objects through this production boundary.
-  createUnavailableProductionResponsesComposition();
+  // The gate precedes the production-only import. A disabled process cannot
+  // load, select or construct a privileged Responses provider.
+  const { createProductionResponsesComposition } = await import("./production-responses-composition.mjs");
+  return createProductionResponsesComposition();
 }
 
 /**
