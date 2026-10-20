@@ -56,13 +56,42 @@ export function createReviewedResponsesComposition({
   });
 }
 
+// These are the complete, server-owned capabilities required by the fixed
+// production assembly. They are intentionally neither environment-selected nor
+// accepted as arguments from the BFF entrypoint.
+const AUTHORITATIVE_RESPONSE_CAPABILITIES = Object.freeze([
+  "authorize",
+  "resolveCanonicalTenant",
+  "resolveCanonicalAgent",
+  "verifyEndpoint",
+  "readScopedCredential",
+  "deriveConversationKey",
+  "listTenantAgents",
+]);
+
+function unavailableAuthoritativeProviders() {
+  // Do not name a backend, endpoint, secret location or topology in this error.
+  throw new Error("Authoritative Fabric Responses providers unavailable");
+}
+
+function loadFixedAuthoritativeResponsesProviders() {
+  // The real physical providers do not exist in this source slice. This fixed
+  // seam is deliberately parameterless: it must only be completed by reviewed
+  // server-owned identity/FGA, AgentIdentity, endpoint, credential and HMAC
+  // implementations satisfying every capability above.
+  void AUTHORITATIVE_RESPONSE_CAPABILITIES;
+  unavailableAuthoritativeProviders();
+}
+
+function createAuthoritativeProductionResponsesComposition() {
+  return createReviewedResponsesComposition(loadFixedAuthoritativeResponsesProviders());
+}
+
 /**
- * Explicit runtime boundary. No currently reviewed deployment configuration
- * provides the authoritative identity/FGA/AgentIdentity/endpoint/credential
- * and HMAC providers, therefore gates-on startup must stop before listening.
- * This factory must be replaced only by a separately reviewed real provider
- * assembly; it may not be replaced by environment-selected modules or mocks.
+ * Production-only entrypoint used after both runtime gates are true. It is not
+ * a dependency-injection hook: callers cannot supply providers or select a
+ * backend. Missing physical dependencies fail before the HTTP listener starts.
  */
-export function createUnavailableProductionResponsesComposition() {
-  unavailable();
+export function createProductionResponsesComposition() {
+  return createAuthoritativeProductionResponsesComposition();
 }

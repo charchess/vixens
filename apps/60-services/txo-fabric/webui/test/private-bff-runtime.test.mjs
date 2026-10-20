@@ -343,23 +343,27 @@ test("BFF denial does not log signing key, UUID, bearer or opaque browser cookie
   }
 });
 
-test("production gate-on rejects all injectable providers before artifact, DB, bridge or Hermes assembly", async () => {
+test("production assembly is fixed, non-injectable and gate-off performs no privileged I/O", async () => {
   const env = {
     TXO_WEBUI_BFF_BROWSER_ENABLED: "true",
     TXO_FABRIC_PRIVATE_BRIDGE_ENABLED: "true",
   };
   assert.equal(resolveRuntimeGate(env), true);
+  let calls = 0;
   const sentinels = {
-    responses: { getTenantChat: async () => { throw new Error("must not use"); } },
-    browserArtifacts: { get: async () => { throw new Error("must not use"); } },
-    pool: { query: async () => { throw new Error("must not use"); } },
-    ready: async () => { throw new Error("must not use"); },
+    responses: { getTenantChat: async () => { calls++; throw new Error("must not use"); } },
+    browserArtifacts: { get: async () => { calls++; throw new Error("must not use"); } },
+    pool: { query: async () => { calls++; throw new Error("must not use"); } },
+    ready: async () => { calls++; throw new Error("must not use"); },
   };
   const off = await createProductionBFFApp({ env: {
     TXO_WEBUI_BFF_BROWSER_ENABLED: "false", TXO_FABRIC_PRIVATE_BRIDGE_ENABLED: "false",
   }, providers: sentinels });
   assert.equal(off.enabled, false);
-  await assert.rejects(createProductionBFFApp({ env, providers: sentinels }), /Responses providers unavailable/);
+  assert.equal(calls, 0);
+  await assert.rejects(createProductionBFFApp({ env, providers: sentinels }),
+    /Authoritative Fabric Responses providers unavailable/);
+  assert.equal(calls, 0, "production must not accept injected provider substitutes");
 });
 
 test("reviewed Responses composition permits only server-owned canonical contracts", async () => {
