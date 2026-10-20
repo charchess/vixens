@@ -44,7 +44,7 @@ func (r *TenantBundleReconciler) EnrollPrivateBFFIdentity(
 		return "", errPrivateIdentityUnavailable
 	}
 	id, err := r.enrollHumanFromVerifiedIdentity(ctx, &bundle, trustedHumanOIDCProof{
-		issuer: issuer, subject: subject, authentikUUID: uuid,
+		globalIssuer: issuer, globalSubject: subject, authentikUUID: uuid,
 	}, accounts)
 	if err != nil || id == "" {
 		return "", errPrivateIdentityUnavailable

@@ -251,14 +251,17 @@ each tenant's OAuth provider references the mapping with
 `include_claims_in_id_token: true`. The scope is **not** an authorization
 relation or a Fabric user ID and does not manage user/group membership.
 
-The future Fabric BFF must request `openid profile email txo_fabric_identity`
-from the tenant's declared issuer and verify the signed ID token with
-`webui/server/oidc-identity.mjs` (issuer, audience, nonce, signature, expiry)
-before handing the resulting immutable Authentik UUID + opaque OIDC `sub`
-to a privileged enrollment backend. Existing Authentik `sub_mode` is **not
-changed** (it may be `hashed_user_id`); no implicit migration or username
-lookup is permitted. The existing agent dashboard OIDC scope settings are
-left untouched because they are **not** the future authenticated Fabric BFF.
+The future Fabric BFF verifies a signed proof from the platform-global
+WebUI issuer (issuer, audience, nonce, signature and expiry) and uses it only
+to select exactly one reviewed `HumanEnrollmentIntent`. That intent binds the
+immutable Authentik UUID, the global opaque subject, and the existing tenant
+issuer-pinned opaque subject. The global issuer and subject are proof-only;
+the ledger persists only the declared tenant issuer and tenant subject.
+Legacy intents that lack the global tuple remain API-compatible but fail closed
+and cannot enroll anyone. Existing Authentik `sub_mode` is **not changed** (it
+may be `hashed_user_id`); no implicit migration or username lookup is
+permitted. The existing agent dashboard OIDC scope settings are left untouched
+because they are **not** the future authenticated Fabric BFF.
 
 This source change alone does not deploy an OIDC BFF, persist human identities,
 create grants or turn on the OpenFGA rollout flag. Verify the real Authentik
