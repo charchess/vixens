@@ -55,7 +55,7 @@ func aiGatewayPostgreSQLTestProfile() *fabricv1alpha1.PostgreSQLProfile {
 
 func aiGatewayTestTenant(name, tenantID string) *fabricv1alpha1.TenantBundle {
 	return &fabricv1alpha1.TenantBundle{
-		ObjectMeta: metav1.ObjectMeta{Name: name},
+		ObjectMeta: metav1.ObjectMeta{Name: name, UID: types.UID("tenant-uid-" + name)},
 		Spec: fabricv1alpha1.TenantBundleSpec{
 			TenantID:    tenantID,
 			DisplayName: name,
@@ -67,7 +67,7 @@ func aiGatewayTestBrokerBackend(tenant *fabricv1alpha1.TenantBundle) (*corev1.Se
 	namespace := tenantNamespace(tenant.Name)
 	return &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{Name: tenantAICredentialBrokerName, Namespace: namespace},
-			Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{Port: 8317}}},
+			Spec:       corev1.ServiceSpec{Ports: []corev1.ServicePort{{Port: 8317}}},
 		}, &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{Name: tenantAICredentialBrokerSecretName, Namespace: namespace},
 			Data:       map[string][]byte{"bootstrap-api-key": []byte("test-cpa-bootstrap")},
@@ -112,7 +112,7 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	cluster := cnpgObject(cnpgClusterGVK, "databases", "postgresql-shared")
 	brokerService, brokerSecret := aiGatewayTestBrokerBackend(tenant)
 	providerSecret := aiGatewayTestProviderSecret(tenant.Name)
-	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, gatewayProfile, postgresqlProfile, cluster, brokerService, brokerSecret, providerSecret).Build()
+	c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(tenant).WithObjects(tenant, gatewayProfile, postgresqlProfile, cluster, brokerService, brokerSecret, providerSecret).Build()
 	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
 
 	result, err := r.reconcileAIGateway(ctx, tenant)
@@ -203,11 +203,18 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 	}
 	originalMasterKey := append([]byte(nil), runtimeSecret.Data["LITELLM_MASTER_KEY"]...)
 
-	migrationName := aiGatewayMigrationName(gatewayProfile, &sourceSecret)
+	migrationName := aiGatewayMigrationName(gatewayProfile, &sourceSecret, 0)
 	var migration batchv1.Job
 	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: migrationName}, &migration); err != nil {
 		t.Fatalf("LiteLLM migration Job missing: %v", err)
 	}
+	// The controller-runtime fake client does not emulate API-server UID allocation.
+	// Bind this fixture explicitly before observing its durable evidence.
+	migration.UID = "migration-uid-0"
+	if err := c.Update(ctx, &migration); err != nil {
+		t.Fatal(err)
+	}
+	tenant.Status.AIGatewayMigration[0].JobUID = string(migration.UID)
 	container := migration.Spec.Template.Spec.Containers[0]
 	if container.Image != gatewayProfile.Spec.Image || !strings.Contains(container.Args[0], "litellm/proxy/prisma_migration.py") {
 		t.Fatalf("unexpected migration container: %#v", container)
@@ -233,7 +240,8 @@ func TestReconcileAIGatewayCreatesDedicatedCNPGStateAndMigrations(t *testing.T) 
 		t.Fatalf("migration egress must be DNS + PostgreSQL only, got %d rules", len(policy.Spec.Egress))
 	}
 
-	migration.Status.Succeeded = 1
+	migration.Status.Succeeded = 1 // Counters are retained diagnostics, not terminal evidence.
+	migration.Status.Conditions = []batchv1.JobCondition{{Type: batchv1.JobComplete, Status: corev1.ConditionTrue}}
 	if err := c.Status().Update(ctx, &migration); err != nil {
 		t.Fatal(err)
 	}
@@ -365,17 +373,17 @@ func TestAIGatewayMigrationNameChangesWithSizingContract(t *testing.T) {
 	profile := aiGatewayTestProfile()
 	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: types.UID("db-secret-uid")}}
 
-	base := aiGatewayMigrationName(profile, secret)
+	base := aiGatewayMigrationName(profile, secret, 0)
 
 	profileWithDifferentSizing := profile.DeepCopy()
 	profileWithDifferentSizing.Spec.SizingLabel = "V-xlarge"
-	if got := aiGatewayMigrationName(profileWithDifferentSizing, secret); got == base {
+	if got := aiGatewayMigrationName(profileWithDifferentSizing, secret, 0); got == base {
 		t.Fatal("migration Job name must change when sizing label changes")
 	}
 
 	profileWithDifferentResources := profile.DeepCopy()
 	profileWithDifferentResources.Spec.Resources.Limits[corev1.ResourceMemory] = resource.MustParse("16Gi")
-	if got := aiGatewayMigrationName(profileWithDifferentResources, secret); got == base {
+	if got := aiGatewayMigrationName(profileWithDifferentResources, secret, 0); got == base {
 		t.Fatal("migration Job name must change when resource contract changes")
 	}
 }
@@ -422,7 +430,8 @@ func TestParkAIGatewayComputePreservesDurableState(t *testing.T) {
 		Data:       map[string][]byte{"LITELLM_MASTER_KEY": []byte("preserved")},
 	}
 	config := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayConfigMapName, Namespace: namespace, Labels: labels}}
-	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, deployment, runtimeSecret, config).Build()
+	migration := migrationEvidenceJob(tenant, "retained-migration", "migration-uid")
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, deployment, runtimeSecret, config, migration).Build()
 	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
 
 	pending, err := r.parkAIGatewayCompute(ctx, tenant)
@@ -443,6 +452,10 @@ func TestParkAIGatewayComputePreservesDurableState(t *testing.T) {
 	var preservedConfig corev1.ConfigMap
 	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: tenantAIGatewayConfigMapName}, &preservedConfig); err != nil {
 		t.Fatalf("parking deleted LiteLLM config: %v", err)
+	}
+	var retainedMigration batchv1.Job
+	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: migration.Name}, &retainedMigration); err != nil {
+		t.Fatalf("parking deleted migration evidence Job: %v", err)
 	}
 
 	pending, err = r.parkAIGatewayCompute(ctx, tenant)
@@ -492,7 +505,8 @@ func TestCleanupAIGatewayRetainsDatabaseCredentialWhenProfileIsRetain(t *testing
 	policy := &networkingv1.NetworkPolicy{
 		ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayMigrationPolicyName, Namespace: tenantNamespace(tenant.Name), Labels: aiGatewayRuntimeLabels(tenant)},
 	}
-	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, gatewayProfile, postgresqlProfile, database, role, sourceSecret, runtimeSecret, policy).Build()
+	migration := migrationEvidenceJob(tenant, "retained-cleanup-migration", "migration-uid")
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, gatewayProfile, postgresqlProfile, database, role, sourceSecret, runtimeSecret, policy, migration).Build()
 	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
 
 	pending, err := r.cleanupAIGateway(ctx, tenant)
@@ -512,6 +526,10 @@ func TestCleanupAIGatewayRetainsDatabaseCredentialWhenProfileIsRetain(t *testing
 	var retained corev1.Secret
 	if err := c.Get(ctx, client.ObjectKeyFromObject(sourceSecret), &retained); err != nil {
 		t.Fatalf("Retain cleanup must preserve database credential Secret: %v", err)
+	}
+	var retainedMigration batchv1.Job
+	if err := c.Get(ctx, client.ObjectKeyFromObject(migration), &retainedMigration); err != nil {
+		t.Fatalf("cleanup deleted migration evidence Job: %v", err)
 	}
 	var removedRuntime corev1.Secret
 	if err := c.Get(ctx, client.ObjectKeyFromObject(runtimeSecret), &removedRuntime); !apierrors.IsNotFound(err) {
@@ -535,7 +553,6 @@ func TestReconcileAIGatewayRejectsCredentialBrokerImplementation(t *testing.T) {
 		t.Fatalf("CPA must not be accepted as tenant-facing AI gateway: %#v", result)
 	}
 }
-
 
 func TestRenderTenantLiteLLMConfigRoutesAgentThroughCPAWithoutProviderTokens(t *testing.T) {
 	config := renderTenantLiteLLMConfig(aiGatewayBackendState{CPAEnabled: true, CPAPort: 8317})
@@ -647,8 +664,6 @@ func TestTenantLiteLLMNetworkPolicyAllowsSameTenantHermesIngress(t *testing.T) {
 	}
 }
 
-
-
 func TestTenantLiteLLMProviderCredentialIsTenantIsolated(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
@@ -721,7 +736,6 @@ func TestAIProviderSecretWatchTargetsOnlyMatchingTenant(t *testing.T) {
 	}
 }
 
-
 func TestTenantLiteLLMRollsWhenOpenRouterCredentialRevisionChanges(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)
@@ -755,5 +769,242 @@ func TestTenantLiteLLMRollsWhenOpenRouterCredentialRevisionChanges(t *testing.T)
 	}
 	if got := deployment.Spec.Template.Annotations["fabric.truxonline.io/openrouter-secret-revision"]; got != "101" {
 		t.Fatalf("rotated provider revision=%q want 101", got)
+	}
+}
+
+func migrationEvidenceJob(tenant *fabricv1alpha1.TenantBundle, name, uid string, conditions ...batchv1.JobCondition) *batchv1.Job {
+	labels := aiGatewayRuntimeLabels(tenant)
+	labels["fabric.truxonline.io/ai-gateway-resource"] = "migration"
+	controller := true
+	return &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: tenantNamespace(tenant.Name),
+			UID:       types.UID(uid),
+			Labels:    labels,
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: fabricv1alpha1.GroupVersion.String(),
+				Kind:       "TenantBundle",
+				Name:       tenant.Name,
+				UID:        tenant.UID,
+				Controller: &controller,
+			}},
+		},
+		Status: batchv1.JobStatus{Conditions: conditions},
+	}
+}
+
+func TestAIGatewayMigrationMissingHistoricalEvidenceFailsClosed(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	tenant.Status.Conditions = []metav1.Condition{{Type: "AIGatewayReady", Reason: "MigrationFailed"}}
+	profile := aiGatewayTestProfile()
+	postgresql := aiGatewayPostgreSQLTestProfile()
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	if err != nil || ready || reason != "MigrationEvidenceMissing" {
+		t.Fatalf("historical migration without evidence must fail closed, got ready=%v reason=%q err=%v", ready, reason, err)
+	}
+	var jobs batchv1.JobList
+	if err := c.List(ctx, &jobs, client.InNamespace(tenantNamespace(tenant.Name))); err != nil {
+		t.Fatal(err)
+	}
+	if len(jobs.Items) != 0 {
+		t.Fatalf("missing historical evidence must not create a migration Job: %#v", jobs.Items)
+	}
+	var policy networkingv1.NetworkPolicy
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayMigrationPolicyName}, &policy); !apierrors.IsNotFound(err) {
+		t.Fatalf("missing historical evidence must not create migration policy: %v", err)
+	}
+}
+
+func TestAIGatewayMigrationTerminalStateUsesOnlyJobConditions(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	profile := aiGatewayTestProfile()
+	postgresql := aiGatewayPostgreSQLTestProfile()
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+	name := aiGatewayMigrationName(profile, secret, 0)
+	job := migrationEvidenceJob(tenant, name, "migration-uid")
+	job.Status.Failed = 1
+	tenant.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 0, JobName: name, JobUID: "migration-uid", Phase: fabricv1alpha1.AIGatewayMigrationPending}}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, job).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	if err != nil || ready || reason != "MigrationPending" || tenant.Status.AIGatewayMigration[0].Phase != fabricv1alpha1.AIGatewayMigrationPending {
+		t.Fatalf("failure counters without JobFailed=True must stay pending: ready=%v reason=%q phase=%q err=%v", ready, reason, tenant.Status.AIGatewayMigration[0].Phase, err)
+	}
+	job.Status.Conditions = []batchv1.JobCondition{{Type: batchv1.JobFailed, Status: corev1.ConditionTrue}}
+	if err := c.Status().Update(ctx, job); err != nil {
+		t.Fatal(err)
+	}
+	ready, reason, _, err = r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	if err != nil || ready || reason != "MigrationFailed" || tenant.Status.AIGatewayMigration[0].Phase != fabricv1alpha1.AIGatewayMigrationFailed {
+		t.Fatalf("JobFailed=True must be retained as failed evidence: ready=%v reason=%q phase=%q err=%v", ready, reason, tenant.Status.AIGatewayMigration[0].Phase, err)
+	}
+}
+
+func TestAIGatewayMigrationRetryAppendsDistinctJobAndPreservesHistory(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{MigrationRetry: 1}
+	profile := aiGatewayTestProfile()
+	postgresql := aiGatewayPostgreSQLTestProfile()
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+	firstName := aiGatewayMigrationName(profile, secret, 0)
+	first := migrationEvidenceJob(tenant, firstName, "migration-uid-0", batchv1.JobCondition{Type: batchv1.JobFailed, Status: corev1.ConditionTrue})
+	tenant.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 0, JobName: firstName, JobUID: "migration-uid-0", Phase: fabricv1alpha1.AIGatewayMigrationPending}}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(tenant).WithObjects(tenant, first).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	if err != nil || ready || reason != "MigrationPending" {
+		t.Fatalf("exactly-next failed-attempt retry must create pending successor: ready=%v reason=%q err=%v", ready, reason, err)
+	}
+	if len(tenant.Status.AIGatewayMigration) != 2 {
+		t.Fatalf("retry must append, not replace, evidence: %#v", tenant.Status.AIGatewayMigration)
+	}
+	second := tenant.Status.AIGatewayMigration[1]
+	if second.Attempt != 1 || second.JobName == firstName || second.Phase != fabricv1alpha1.AIGatewayMigrationPending {
+		t.Fatalf("retry evidence is not a distinct ordinal/job: %#v", second)
+	}
+	if tenant.Status.AIGatewayMigration[0].JobUID != "migration-uid-0" || tenant.Status.AIGatewayMigration[0].Phase != fabricv1alpha1.AIGatewayMigrationFailed {
+		t.Fatalf("retry rewrote failed history: %#v", tenant.Status.AIGatewayMigration[0])
+	}
+	var retained batchv1.Job
+	if err := c.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: firstName}, &retained); err != nil {
+		t.Fatalf("retry deleted prior migration Job: %v", err)
+	}
+}
+
+func TestAIGatewayMigrationEvidenceUIDMismatchFailsClosed(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	profile := aiGatewayTestProfile()
+	postgresql := aiGatewayPostgreSQLTestProfile()
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+	name := aiGatewayMigrationName(profile, secret, 0)
+	tenant.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 0, JobName: name, JobUID: "expected-uid", Phase: fabricv1alpha1.AIGatewayMigrationPending}}
+	job := migrationEvidenceJob(tenant, name, "replacement-uid")
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, job).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	if err != nil || ready || reason != "MigrationEvidenceMissing" || tenant.Status.AIGatewayMigration[0].Phase != fabricv1alpha1.AIGatewayMigrationEvidenceMissing {
+		t.Fatalf("UID mismatch must fail closed without retry: ready=%v reason=%q phase=%q err=%v", ready, reason, tenant.Status.AIGatewayMigration[0].Phase, err)
+	}
+}
+
+type migrationUIDAssigningClient struct {
+	client.Client
+}
+
+func (c *migrationUIDAssigningClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+	if job, ok := obj.(*batchv1.Job); ok && job.UID == "" {
+		job.UID = types.UID("migration-uid-created-by-api")
+	}
+	return c.Client.Create(ctx, obj, opts...)
+}
+
+func TestAIGatewayMigrationCreationPersistsUIDBoundEvidenceBeforeReturning(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	profile := aiGatewayTestProfile()
+	postgresql := aiGatewayPostgreSQLTestProfile()
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+	base := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(tenant).WithObjects(tenant).Build()
+	r := &TenantBundleReconciler{Client: &migrationUIDAssigningClient{Client: base}, Scheme: scheme}
+
+	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	if err != nil || ready || reason != "MigrationPending" {
+		t.Fatalf("migration creation result ready=%v reason=%q err=%v", ready, reason, err)
+	}
+
+	var reloaded fabricv1alpha1.TenantBundle
+	if err := base.Get(ctx, types.NamespacedName{Name: tenant.Name}, &reloaded); err != nil {
+		t.Fatal(err)
+	}
+	if len(reloaded.Status.AIGatewayMigration) != 1 {
+		t.Fatalf("created Job has no durable migration evidence after fresh read: %#v", reloaded.Status.AIGatewayMigration)
+	}
+	evidence := reloaded.Status.AIGatewayMigration[0]
+	if evidence.Attempt != 0 || evidence.JobUID != "migration-uid-created-by-api" || evidence.Phase != fabricv1alpha1.AIGatewayMigrationPending {
+		t.Fatalf("unexpected durable evidence: %#v", evidence)
+	}
+}
+
+func TestAIGatewayMigrationCrashRecoveryAcceptsExactControllerOwner(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	profile := aiGatewayTestProfile()
+	postgresql := aiGatewayPostgreSQLTestProfile()
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+	name := aiGatewayMigrationName(profile, secret, 0)
+	created := migrationEvidenceJob(tenant, name, "migration-uid-from-prior-create")
+	c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(tenant).WithObjects(tenant, created).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	if err != nil || ready || reason != "MigrationPending" {
+		t.Fatalf("expected only the exact controller Job to recover pending evidence: ready=%v reason=%q err=%v", ready, reason, err)
+	}
+	var reloaded fabricv1alpha1.TenantBundle
+	if err := c.Get(ctx, types.NamespacedName{Name: tenant.Name}, &reloaded); err != nil {
+		t.Fatal(err)
+	}
+	if got := reloaded.Status.AIGatewayMigration; len(got) != 1 || got[0].JobName != name || got[0].JobUID != "migration-uid-from-prior-create" {
+		t.Fatalf("recovered evidence=%#v", got)
+	}
+}
+
+func TestAIGatewayMigrationCrashRecoveryRejectsUnownedMatchingJob(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	profile := aiGatewayTestProfile()
+	postgresql := aiGatewayPostgreSQLTestProfile()
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+	name := aiGatewayMigrationName(profile, secret, 0)
+	job := migrationEvidenceJob(tenant, name, "migration-uid-from-prior-create")
+	job.OwnerReferences = nil
+	c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(tenant).WithObjects(tenant, job).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	if err != nil || ready || reason != "MigrationEvidenceMissing" {
+		t.Fatalf("unowned matching Job must not recover evidence: ready=%v reason=%q err=%v", ready, reason, err)
+	}
+	if len(tenant.Status.AIGatewayMigration) != 0 {
+		t.Fatalf("unowned Job recovered migration evidence: %#v", tenant.Status.AIGatewayMigration)
+	}
+}
+
+func TestAIGatewayMigrationObservationRejectsRecreatedTenantOwner(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	profile := aiGatewayTestProfile()
+	postgresql := aiGatewayPostgreSQLTestProfile()
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+	name := aiGatewayMigrationName(profile, secret, 0)
+	tenant.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 0, JobName: name, JobUID: "migration-uid", Phase: fabricv1alpha1.AIGatewayMigrationPending}}
+	job := migrationEvidenceJob(tenant, name, "migration-uid")
+	job.OwnerReferences[0].UID = types.UID("recreated-tenant-prior-uid")
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, job).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	if err != nil || ready || reason != "MigrationEvidenceMissing" || tenant.Status.AIGatewayMigration[0].Phase != fabricv1alpha1.AIGatewayMigrationEvidenceMissing {
+		t.Fatalf("Job owned by a recreated TenantBundle must fail closed: ready=%v reason=%q phase=%q err=%v", ready, reason, tenant.Status.AIGatewayMigration[0].Phase, err)
 	}
 }

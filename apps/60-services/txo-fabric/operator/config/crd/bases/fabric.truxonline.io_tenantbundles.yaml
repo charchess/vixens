@@ -288,6 +288,16 @@ spec:
                   tenant LiteLLM facade automatically. Nil selects the platform default profile.
                   Provider/OAuth credentials never appear in this CR.
                 properties:
+                  migrationRetry:
+                    default: 0
+                    description: |-
+                      MigrationRetry is the reviewed migration attempt ordinal. Attempt zero is
+                      created for a new tenant. A later value is accepted only as the next
+                      ordinal after a retained failed attempt; profile or configuration changes
+                      never create another migration Job.
+                    format: int32
+                    minimum: 0
+                    type: integer
                   profileRef:
                     default: litellm-standard
                     description: ProfileRef selects the tenant-facing LiteLLM gateway
@@ -708,6 +718,49 @@ spec:
                     description: Phase is a concise machine-readable lifecycle state.
                     type: string
                 type: object
+              aiGatewayMigration:
+                description: |-
+                  AIGatewayMigration retains UID-bound evidence for every LiteLLM schema
+                  migration attempt. Entries are appended by attempt ordinal and retained
+                  across active reconciliation, parking and cleanup.
+                items:
+                  description: |-
+                    AIGatewayMigrationStatus is durable, UID-bound evidence for one migration
+                    attempt. Records are appended for new attempts and never replaced by a
+                    different Job identity.
+                  properties:
+                    attempt:
+                      description: Attempt is the monotonically increasing migration
+                        attempt ordinal.
+                      format: int32
+                      type: integer
+                    jobName:
+                      description: JobName is the immutable name of the Job created
+                        for this attempt.
+                      type: string
+                    jobUID:
+                      description: JobUID binds the evidence to one Kubernetes Job
+                        instance.
+                      type: string
+                    phase:
+                      description: Phase is observed from the bound Job's terminal
+                        conditions only.
+                      enum:
+                      - Pending
+                      - Succeeded
+                      - Failed
+                      - EvidenceMissing
+                      type: string
+                  required:
+                  - attempt
+                  - jobName
+                  - jobUID
+                  - phase
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - attempt
+                x-kubernetes-list-type: map
               conditions:
                 description: Conditions use the standard Kubernetes condition shape.
                 items:

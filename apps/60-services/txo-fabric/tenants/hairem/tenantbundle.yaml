@@ -7,9 +7,7 @@ metadata:
     # One-time reviewed approval: append the immutable canonical model only
     # when the bound store has exactly one valid noncanonical legacy revision.
     fabric.truxonline.io/openfga-model-migration: append-canonical-v1
-    # One-time GitOps reconciliation after PostgreSQL recovery: recreate the
-    # absent LiteLLM Prisma migration Job and retain its result for review.
-    fabric.truxonline.io/reconcile-request: ai-gateway-migration-retry-20261018
+
   labels:
     app.kubernetes.io/part-of: txo-fabric
 spec:
@@ -17,10 +15,12 @@ spec:
   displayName: hAIrem
   isolation:
     profile: Shared
-  # Explicitly select the existing default profile to trigger the reviewed
-  # one-time reconciliation of the absent migration Job after DB recovery.
+  # Reviewed retry request. It is inert until retained UID-bound attempt 0
+  # evidence exists and records a terminal failed Job; it never recreates an
+  # absent historical Job.
   aiGateway:
     profileRef: litellm-standard
+    migrationRetry: 1
   # Private Hermes agent storage is tenant-owned, not release-channel-owned.
   # Existing PVCs are not recreated when this policy is introduced.
   agentStorage:

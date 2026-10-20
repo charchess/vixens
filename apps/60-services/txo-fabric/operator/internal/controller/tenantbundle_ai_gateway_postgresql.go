@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,7 +24,7 @@ import (
 )
 
 const (
-	defaultAIGatewayPostgreSQLProfileName = "postgresql-litellm"
+	defaultAIGatewayPostgreSQLProfileName  = "postgresql-litellm"
 	tenantAIGatewayRuntimeSecretName       = "txo-ai-gateway-runtime"
 	tenantAIGatewayMigrationPolicyName     = "txo-ai-gateway-migration-egress"
 	labelAIGatewayPostgreSQLResource       = "fabric.truxonline.io/ai-gateway-postgresql-resource"
@@ -207,9 +208,9 @@ func (r *TenantBundleReconciler) ensureAIGatewayPostgreSQLSecret(
 			Data: map[string][]byte{
 				corev1.BasicAuthUsernameKey: []byte(names.Role),
 				corev1.BasicAuthPasswordKey: []byte(password),
-				"host":                    []byte(profile.Spec.Shared.ClusterRef.Name + "-rw." + namespace + ".svc"),
-				"port":                    []byte("5432"),
-				"dbname":                  []byte(names.Database),
+				"host":                      []byte(profile.Spec.Shared.ClusterRef.Name + "-rw." + namespace + ".svc"),
+				"port":                      []byte("5432"),
+				"dbname":                    []byte(names.Database),
 			},
 		}
 		secret.Labels[cnpgReloadLabel] = "true"
@@ -236,9 +237,9 @@ func (r *TenantBundleReconciler) ensureAIGatewayPostgreSQLSecret(
 	desiredData := map[string][]byte{
 		corev1.BasicAuthUsernameKey: secret.Data[corev1.BasicAuthUsernameKey],
 		corev1.BasicAuthPasswordKey: secret.Data[corev1.BasicAuthPasswordKey],
-		"host":                    []byte(profile.Spec.Shared.ClusterRef.Name + "-rw." + namespace + ".svc"),
-		"port":                    []byte("5432"),
-		"dbname":                  []byte(names.Database),
+		"host":                      []byte(profile.Spec.Shared.ClusterRef.Name + "-rw." + namespace + ".svc"),
+		"port":                      []byte("5432"),
+		"dbname":                    []byte(names.Database),
 	}
 	if !reflect.DeepEqual(secret.Labels, desiredLabels) || !reflect.DeepEqual(secret.Data, desiredData) {
 		secret.Labels = desiredLabels
@@ -422,7 +423,7 @@ func (r *TenantBundleReconciler) ensureAIGatewayRuntimeSecret(
 	return secret, err
 }
 
-func aiGatewayMigrationName(profile *fabricv1alpha1.AIGatewayProfile, databaseSecret *corev1.Secret) string {
+func aiGatewayMigrationName(profile *fabricv1alpha1.AIGatewayProfile, databaseSecret *corev1.Secret, attempt int32) string {
 	contract, _ := json.Marshal(struct {
 		Image             string                      `json:"image"`
 		DatabaseSecretUID string                      `json:"databaseSecretUID"`
@@ -437,7 +438,7 @@ func aiGatewayMigrationName(profile *fabricv1alpha1.AIGatewayProfile, databaseSe
 		SizingLabel:       profile.Spec.SizingLabel,
 	})
 	sum := sha256.Sum256(contract)
-	return boundedDNSName("txo-ai-gateway-migrations-" + hex.EncodeToString(sum[:4]))
+	return boundedDNSName("txo-ai-gateway-migrations-" + hex.EncodeToString(sum[:4]) + "-" + strconv.FormatInt(int64(attempt), 10))
 }
 
 func (r *TenantBundleReconciler) ensureAIGatewayMigrationNetworkPolicy(
@@ -464,7 +465,7 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrationNetworkPolicy(
 					},
 				},
 				{
-					To: []networkingv1.NetworkPolicyPeer{{NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": postgresqlProfile.Spec.Shared.ClusterRef.Namespace}}}},
+					To:    []networkingv1.NetworkPolicyPeer{{NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"kubernetes.io/metadata.name": postgresqlProfile.Spec.Shared.ClusterRef.Namespace}}}},
 					Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(5432)}},
 				},
 			},
@@ -481,26 +482,159 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrations(
 	postgresqlProfile *fabricv1alpha1.PostgreSQLProfile,
 	databaseSecret *corev1.Secret,
 ) (bool, string, string, error) {
+	namespace := tenantNamespace(bundle.Name)
+	retry := int32(0)
+	if bundle.Spec.AIGateway != nil {
+		retry = bundle.Spec.AIGateway.MigrationRetry
+	}
+
+	if len(bundle.Status.AIGatewayMigration) == 0 {
+		if retry != 0 || migrationHistoryExists(bundle) {
+			return false, "MigrationEvidenceMissing", "retained migration evidence is required before a historical LiteLLM migration can be retried", nil
+		}
+		var jobs batchv1.JobList
+		if err := r.List(ctx, &jobs, client.InNamespace(namespace), migrationJobSelector(bundle)); err != nil {
+			return false, "ReconcileError", "", err
+		}
+		if len(jobs.Items) != 0 {
+			expectedName := aiGatewayMigrationName(gatewayProfile, databaseSecret, 0)
+			job := &jobs.Items[0]
+			if len(jobs.Items) != 1 || job.Name != expectedName || !aiGatewayMigrationEvidenceJobOwnedBy(job, bundle) || job.UID == "" {
+				return false, "MigrationEvidenceMissing", "a historical LiteLLM migration Job exists without recoverable UID-bound evidence", nil
+			}
+			// The only allowed evidence reconstruction is the deterministic initial
+			// Job created by this controller. This closes the Job-create/status-write
+			// crash window without adopting an arbitrary historical Job.
+			bundle.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{{
+				Attempt: 0,
+				JobName: job.Name,
+				JobUID:  string(job.UID),
+				Phase:   migrationJobPhase(job),
+			}}
+			if err := r.Status().Update(ctx, bundle); err != nil {
+				return false, "ReconcileError", "", fmt.Errorf("recover migration evidence after status write failure: %w", err)
+			}
+			switch bundle.Status.AIGatewayMigration[0].Phase {
+			case fabricv1alpha1.AIGatewayMigrationSucceeded:
+				return true, "MigrationReady", "LiteLLM schema migrations are applied", nil
+			case fabricv1alpha1.AIGatewayMigrationFailed:
+				return false, "MigrationFailed", "LiteLLM schema migration Job failed", nil
+			default:
+				return false, "MigrationPending", "recovered retained LiteLLM migration evidence", nil
+			}
+		}
+		return r.createAIGatewayMigration(ctx, bundle, gatewayProfile, postgresqlProfile, databaseSecret, 0)
+	}
+
+	latest, evidenceMissing, err := r.observeAIGatewayMigrationEvidence(ctx, bundle)
+	if err != nil {
+		return false, "ReconcileError", "", err
+	}
+	if evidenceMissing {
+		return false, "MigrationEvidenceMissing", "retained LiteLLM migration evidence does not match a live Job", nil
+	}
+	if retry < latest.Attempt || retry > latest.Attempt+1 {
+		return false, "MigrationRetryInvalid", "migrationRetry must retain the current attempt ordinal or request exactly its next ordinal", nil
+	}
+	if retry == latest.Attempt+1 {
+		if latest.Phase != fabricv1alpha1.AIGatewayMigrationFailed {
+			return false, "MigrationRetryInvalid", "migrationRetry may advance only after the retained prior Job has JobFailed=True", nil
+		}
+		return r.createAIGatewayMigration(ctx, bundle, gatewayProfile, postgresqlProfile, databaseSecret, retry)
+	}
+	switch latest.Phase {
+	case fabricv1alpha1.AIGatewayMigrationSucceeded:
+		return true, "MigrationReady", "LiteLLM schema migrations are applied", nil
+	case fabricv1alpha1.AIGatewayMigrationFailed:
+		return false, "MigrationFailed", "LiteLLM schema migration Job failed", nil
+	default:
+		return false, "MigrationPending", "waiting for LiteLLM schema migration Job to complete", nil
+	}
+}
+
+func migrationJobSelector(bundle *fabricv1alpha1.TenantBundle) client.MatchingLabels {
+	return client.MatchingLabels{
+		LabelManaged:    "true",
+		LabelTenantID:   bundle.Spec.TenantID,
+		LabelTenantName: bundle.Name,
+		"fabric.truxonline.io/ai-gateway-resource": "migration",
+	}
+}
+
+func migrationHistoryExists(bundle *fabricv1alpha1.TenantBundle) bool {
+	for _, condition := range bundle.Status.Conditions {
+		if condition.Type == "AIGatewayReady" && strings.HasPrefix(condition.Reason, "Migration") {
+			return true
+		}
+	}
+	return false
+}
+
+func migrationJobPhase(job *batchv1.Job) fabricv1alpha1.AIGatewayMigrationPhase {
+	for _, condition := range job.Status.Conditions {
+		if condition.Type == batchv1.JobComplete && condition.Status == corev1.ConditionTrue {
+			return fabricv1alpha1.AIGatewayMigrationSucceeded
+		}
+		if condition.Type == batchv1.JobFailed && condition.Status == corev1.ConditionTrue {
+			return fabricv1alpha1.AIGatewayMigrationFailed
+		}
+	}
+	return fabricv1alpha1.AIGatewayMigrationPending
+}
+
+func (r *TenantBundleReconciler) observeAIGatewayMigrationEvidence(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (fabricv1alpha1.AIGatewayMigrationStatus, bool, error) {
+	var latest fabricv1alpha1.AIGatewayMigrationStatus
+	seen := make(map[int32]struct{}, len(bundle.Status.AIGatewayMigration))
+	for i := range bundle.Status.AIGatewayMigration {
+		evidence := &bundle.Status.AIGatewayMigration[i]
+		if evidence.Attempt < 0 || evidence.JobName == "" || evidence.JobUID == "" {
+			evidence.Phase = fabricv1alpha1.AIGatewayMigrationEvidenceMissing
+			return latest, true, nil
+		}
+		if _, duplicate := seen[evidence.Attempt]; duplicate {
+			return latest, true, nil
+		}
+		seen[evidence.Attempt] = struct{}{}
+		var job batchv1.Job
+		err := r.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(bundle.Name), Name: evidence.JobName}, &job)
+		if apierrors.IsNotFound(err) || (err == nil && (!aiGatewayMigrationEvidenceJobOwnedBy(&job, bundle) || string(job.UID) != evidence.JobUID)) {
+			evidence.Phase = fabricv1alpha1.AIGatewayMigrationEvidenceMissing
+			return latest, true, nil
+		}
+		if err != nil {
+			return latest, false, err
+		}
+		evidence.Phase = migrationJobPhase(&job)
+		if evidence.Attempt > latest.Attempt || (len(seen) == 1 && evidence.Attempt == 0) {
+			latest = *evidence
+		}
+	}
+	for attempt := int32(0); attempt <= latest.Attempt; attempt++ {
+		if _, ok := seen[attempt]; !ok {
+			return latest, true, nil
+		}
+	}
+	return latest, false, nil
+}
+
+func (r *TenantBundleReconciler) createAIGatewayMigration(
+	ctx context.Context,
+	bundle *fabricv1alpha1.TenantBundle,
+	gatewayProfile *fabricv1alpha1.AIGatewayProfile,
+	postgresqlProfile *fabricv1alpha1.PostgreSQLProfile,
+	databaseSecret *corev1.Secret,
+	attempt int32,
+) (bool, string, string, error) {
 	if err := r.ensureAIGatewayMigrationNetworkPolicy(ctx, bundle, postgresqlProfile); err != nil {
 		return false, "ReconcileError", "", err
 	}
 
 	namespace := tenantNamespace(bundle.Name)
-	name := aiGatewayMigrationName(gatewayProfile, databaseSecret)
+	name := aiGatewayMigrationName(gatewayProfile, databaseSecret, attempt)
 	key := types.NamespacedName{Namespace: namespace, Name: name}
 	var existing batchv1.Job
 	if err := r.Get(ctx, key, &existing); err == nil {
-		if !aiGatewayRuntimeOwnedBy(&existing, bundle) {
-			return false, "MigrationOwnershipConflict", "migration Job exists but is not owned by this tenant AI gateway", nil
-		}
-		if existing.Status.Failed > 0 {
-			return false, "MigrationFailed", "LiteLLM schema migration Job failed", nil
-		}
-		if existing.Status.Succeeded > 0 {
-			_ = r.cleanupObsoleteAIGatewayMigrationJobs(ctx, bundle, name)
-			return true, "MigrationReady", "LiteLLM schema migrations are applied", nil
-		}
-		return false, "MigrationPending", "waiting for LiteLLM schema migration Job to complete", nil
+		return false, "MigrationEvidenceMissing", "migration Job exists without a matching retained UID-bound evidence record", nil
 	} else if !apierrors.IsNotFound(err) {
 		return false, "ReconcileError", "", err
 	}
@@ -524,8 +658,8 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrations(
 				ObjectMeta: metav1.ObjectMeta{Labels: labels},
 				Spec: corev1.PodSpec{
 					AutomountServiceAccountToken: boolPtr(false),
-					RestartPolicy:                 corev1.RestartPolicyNever,
-					PriorityClassName:             defaultString(gatewayProfile.Spec.PriorityClassName, "vixens-medium"),
+					RestartPolicy:                corev1.RestartPolicyNever,
+					PriorityClassName:            defaultString(gatewayProfile.Spec.PriorityClassName, "vixens-medium"),
 					SecurityContext: &corev1.PodSecurityContext{
 						RunAsNonRoot: &runAsNonRoot,
 						RunAsUser:    &runAsUser,
@@ -568,6 +702,15 @@ exec python litellm/proxy/prisma_migration.py
 	if err := r.Create(ctx, job); err != nil {
 		return false, "ReconcileError", "", err
 	}
+	bundle.Status.AIGatewayMigration = append(bundle.Status.AIGatewayMigration, fabricv1alpha1.AIGatewayMigrationStatus{
+		Attempt: attempt,
+		JobName: name,
+		JobUID:  string(job.UID),
+		Phase:   fabricv1alpha1.AIGatewayMigrationPending,
+	})
+	if err := r.Status().Update(ctx, bundle); err != nil {
+		return false, "ReconcileError", "", fmt.Errorf("persist migration evidence after Job create: %w", err)
+	}
 	return false, "MigrationPending", "LiteLLM schema migration Job created", nil
 }
 
@@ -583,26 +726,20 @@ func aiGatewayRuntimeOwnedBy(obj metav1.Object, bundle *fabricv1alpha1.TenantBun
 	return labels[LabelManaged] == "true" && labels[LabelTenantID] == bundle.Spec.TenantID && labels[LabelTenantName] == bundle.Name
 }
 
-func (r *TenantBundleReconciler) cleanupObsoleteAIGatewayMigrationJobs(ctx context.Context, bundle *fabricv1alpha1.TenantBundle, keepName string) error {
-	var jobs batchv1.JobList
-	if err := r.List(ctx, &jobs, client.InNamespace(tenantNamespace(bundle.Name)), client.MatchingLabels{
-		LabelManaged:    "true",
-		LabelTenantID:   bundle.Spec.TenantID,
-		LabelTenantName: bundle.Name,
-		"fabric.truxonline.io/ai-gateway-resource": "migration",
-	}); err != nil {
-		return err
+func aiGatewayMigrationEvidenceJobOwnedBy(job *batchv1.Job, bundle *fabricv1alpha1.TenantBundle) bool {
+	if !aiGatewayRuntimeOwnedBy(job, bundle) {
+		return false
 	}
-	for i := range jobs.Items {
-		job := &jobs.Items[i]
-		if job.Name == keepName {
-			continue
-		}
-		if err := r.Delete(ctx, job); err != nil && !apierrors.IsNotFound(err) {
-			return err
+	for _, owner := range job.OwnerReferences {
+		if owner.APIVersion == fabricv1alpha1.GroupVersion.String() &&
+			owner.Kind == "TenantBundle" &&
+			owner.Name == bundle.Name &&
+			owner.UID == bundle.UID &&
+			owner.Controller != nil && *owner.Controller {
+			return true
 		}
 	}
-	return nil
+	return false
 }
 
 func (r *TenantBundleReconciler) cleanupAIGatewayPostgreSQL(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (bool, error) {
