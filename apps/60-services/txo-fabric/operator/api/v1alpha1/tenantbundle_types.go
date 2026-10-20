@@ -72,11 +72,25 @@ type HumanEnrollmentIntent struct {
 	// +kubebuilder:validation:Pattern=`^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$`
 	AuthentikUserUUID string `json:"authentikUserUUID"`
 
-	// OIDCSubject is the opaque signed sub expected for the Authentik account.
+	// OIDCSubject is the opaque signed sub expected from the tenant's existing
+	// issuer. It is the only subject persisted in the tenant identity ledger.
 	// It is never derived from a username, email, group, or browser request.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=2048
 	OIDCSubject string `json:"oidcSubject"`
+
+	// GlobalOIDCIssuer is the exact issuer of the separate platform-global OIDC
+	// client whose signed proof may select this reviewed tenant mapping. It is
+	// proof-only and is never persisted as the tenant ledger issuer.
+	// +kubebuilder:validation:MinLength=8
+	// +kubebuilder:validation:MaxLength=2048
+	GlobalOIDCIssuer string `json:"globalOidcIssuer,omitempty"`
+
+	// GlobalOIDCSubject is the opaque signed sub from GlobalOIDCIssuer. It is
+	// proof-only and is never used as the tenant ledger subject.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=2048
+	GlobalOIDCSubject string `json:"globalOidcSubject,omitempty"`
 }
 
 type TenantHumanAccessSpec struct {

@@ -322,9 +322,25 @@ spec:
                             an existing Authentik account.
                           pattern: ^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$
                           type: string
+                        globalOidcIssuer:
+                          description: |-
+                            GlobalOIDCIssuer is the exact issuer of the separate platform-global OIDC
+                            client whose signed proof may select this reviewed tenant mapping. It is
+                            proof-only and is never persisted as the tenant ledger issuer.
+                          maxLength: 2048
+                          minLength: 8
+                          type: string
+                        globalOidcSubject:
+                          description: |-
+                            GlobalOIDCSubject is the opaque signed sub from GlobalOIDCIssuer. It is
+                            proof-only and is never used as the tenant ledger subject.
+                          maxLength: 2048
+                          minLength: 1
+                          type: string
                         oidcSubject:
                           description: |-
-                            OIDCSubject is the opaque signed sub expected for the Authentik account.
+                            OIDCSubject is the opaque signed sub expected from the tenant's existing
+                            issuer. It is the only subject persisted in the tenant identity ledger.
                             It is never derived from a username, email, group, or browser request.
                           maxLength: 2048
                           minLength: 1
