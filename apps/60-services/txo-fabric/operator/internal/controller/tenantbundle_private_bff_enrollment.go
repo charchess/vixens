@@ -51,3 +51,34 @@ func (r *TenantBundleReconciler) EnrollPrivateBFFIdentity(
 	}
 	return id, nil
 }
+
+// VerifyPrivateBFFActiveHuman is an authenticated BFF preflight only. It
+// confirms the immutable Authentik account is active at two reads. It does not
+// infer tenant membership, access a ledger, create a binding, or grant chat.
+// The caller has verified the signed OIDC identity and bound those fields in a
+// one-shot BFF assertion; issuer and subject are deliberately not converted
+// into a Fabric identity here.
+func (r *TenantBundleReconciler) VerifyPrivateBFFActiveHuman(
+	ctx context.Context, issuer, subject, uuid string, now time.Time,
+) error {
+	if r == nil || r.Client == nil || now.IsZero() || issuer == "" || subject == "" || uuid == "" {
+		return errPrivateIdentityUnavailable
+	}
+	source, err := r.authentikMembershipSource(ctx)
+	if err != nil {
+		return errPrivateIdentityUnavailable
+	}
+	accounts, ok := source.(authoritativeHumanAccountReader)
+	if !ok {
+		return errPrivateIdentityUnavailable
+	}
+	before, err := accounts.SnapshotUserAccount(ctx, uuid)
+	if err != nil || before.UUID != uuid || !before.Active {
+		return errPrivateIdentityUnavailable
+	}
+	after, err := accounts.SnapshotUserAccount(ctx, uuid)
+	if err != nil || after.UUID != uuid || !after.Active {
+		return errPrivateIdentityUnavailable
+	}
+	return nil
+}
