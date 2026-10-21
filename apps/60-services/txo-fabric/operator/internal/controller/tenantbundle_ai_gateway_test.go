@@ -1008,3 +1008,82 @@ func TestAIGatewayMigrationObservationRejectsRecreatedTenantOwner(t *testing.T) 
 		t.Fatalf("Job owned by a recreated TenantBundle must fail closed: ready=%v reason=%q phase=%q err=%v", ready, reason, tenant.Status.AIGatewayMigration[0].Phase, err)
 	}
 }
+
+func TestAIGatewayMigrationExplicitRecoveryReplacesLostLegacyEvidence(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	tenant.Generation = 12
+	tenant.Status.Conditions = []metav1.Condition{{Type: "AIGatewayReady", Status: metav1.ConditionFalse, Reason: "MigrationFailed", ObservedGeneration: 11}}
+	tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{}
+	tenant.Spec.AIGateway.MigrationRetry = 1
+	tenant.Spec.AIGateway.MigrationRecovery = "legacy-evidence-20261016"
+	tenant.Spec.AIGateway.MigrationRecoveryFailedGeneration = 11
+	profile := aiGatewayTestProfile()
+	postgresql := aiGatewayPostgreSQLTestProfile()
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(tenant).WithObjects(tenant).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	if err != nil || ready || reason != "MigrationPending" {
+		t.Fatalf("explicit reviewed recovery must create exactly one new migration attempt: ready=%v reason=%q err=%v", ready, reason, err)
+	}
+	var jobs batchv1.JobList
+	if err := c.List(ctx, &jobs, client.InNamespace(tenantNamespace(tenant.Name))); err != nil {
+		t.Fatal(err)
+	}
+	if len(jobs.Items) != 1 || !aiGatewayMigrationEvidenceJobOwnedBy(&jobs.Items[0], tenant) {
+		t.Fatalf("expected one owner-bound recovery job, got %#v", jobs.Items)
+	}
+	if got := tenant.Status.AIGatewayMigration; len(got) != 1 || got[0].Attempt != 1 || got[0].Phase != fabricv1alpha1.AIGatewayMigrationPending {
+		t.Fatalf("expected durable recovery evidence for attempt 1, got %#v", got)
+	}
+}
+
+func TestAIGatewayMigrationRecoveryRejectsReuseAfterItsGenerationWasObserved(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	// Simulate a failed recovery whose Job/status evidence was lost, followed
+	// by an unrelated spec update that increments the TenantBundle generation.
+	tenant.Generation = 13
+	tenant.Status.Conditions = []metav1.Condition{{Type: "AIGatewayReady", Reason: "MigrationFailed", ObservedGeneration: 12}}
+	tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{MigrationRetry: 1, MigrationRecovery: "legacy-evidence-20261016", MigrationRecoveryFailedGeneration: 11}
+	profile := aiGatewayTestProfile()
+	postgresql := aiGatewayPostgreSQLTestProfile()
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	if err != nil || ready || reason != "MigrationEvidenceMissing" {
+		t.Fatalf("a consumed recovery identifier must never create another attempt: ready=%v reason=%q err=%v", ready, reason, err)
+	}
+	var jobs batchv1.JobList
+	if err := c.List(ctx, &jobs, client.InNamespace(tenantNamespace(tenant.Name))); err != nil {
+		t.Fatal(err)
+	}
+	if len(jobs.Items) != 0 {
+		t.Fatalf("consumed recovery created jobs: %#v", jobs.Items)
+	}
+}
+
+func TestAIGatewayMigrationRecoveryRequiresFalseHistoricalFailureCondition(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	tenant.Generation = 12
+	tenant.Status.Conditions = []metav1.Condition{{Type: "AIGatewayReady", Status: metav1.ConditionTrue, Reason: "MigrationFailed", ObservedGeneration: 11}}
+	tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{MigrationRetry: 1, MigrationRecovery: "legacy-evidence-20261016", MigrationRecoveryFailedGeneration: 11}
+	profile := aiGatewayTestProfile()
+	postgresql := aiGatewayPostgreSQLTestProfile()
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	if err != nil || ready || reason != "MigrationEvidenceMissing" {
+		t.Fatalf("only a False historical MigrationFailed condition may recover: ready=%v reason=%q err=%v", ready, reason, err)
+	}
+}

@@ -489,6 +489,13 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrations(
 	}
 
 	if len(bundle.Status.AIGatewayMigration) == 0 {
+		// Legacy clusters may retain a terminal MigrationFailed condition after
+		// their one-shot Job was garbage-collected by an earlier controller.
+		// Recovery is never inferred: a reviewed identifier and the exact first
+		// retry ordinal are both required before creating fresh UID-bound evidence.
+		if legacyMigrationRecoveryEligible(bundle, retry) {
+			return r.createAIGatewayMigration(ctx, bundle, gatewayProfile, postgresqlProfile, databaseSecret, retry)
+		}
 		if retry != 0 || migrationHistoryExists(bundle) {
 			return false, "MigrationEvidenceMissing", "retained migration evidence is required before a historical LiteLLM migration can be retried", nil
 		}
@@ -559,6 +566,22 @@ func migrationJobSelector(bundle *fabricv1alpha1.TenantBundle) client.MatchingLa
 		LabelTenantName: bundle.Name,
 		"fabric.truxonline.io/ai-gateway-resource": "migration",
 	}
+}
+
+// legacyMigrationRecoveryEligible permits a single explicitly declared recovery
+// only when the retained MigrationFailed condition predates the spec generation
+// which introduced the immutable recovery identifier. Once reconciliation has
+// observed that generation, loss of Job/status evidence remains fail-closed.
+func legacyMigrationRecoveryEligible(bundle *fabricv1alpha1.TenantBundle, retry int32) bool {
+	if retry != 1 || bundle.Spec.AIGateway == nil || bundle.Spec.AIGateway.MigrationRecovery == "" || bundle.Spec.AIGateway.MigrationRecoveryFailedGeneration < 1 {
+		return false
+	}
+	for _, condition := range bundle.Status.Conditions {
+		if condition.Type == "AIGatewayReady" && condition.Status == metav1.ConditionFalse && condition.Reason == "MigrationFailed" && condition.ObservedGeneration == bundle.Spec.AIGateway.MigrationRecoveryFailedGeneration && condition.ObservedGeneration < bundle.Generation {
+			return true
+		}
+	}
+	return false
 }
 
 func migrationHistoryExists(bundle *fabricv1alpha1.TenantBundle) bool {
