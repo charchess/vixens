@@ -22,6 +22,8 @@ type EnrollmentRequest struct {
 	OIDCIssuer        string `json:"oidcIssuer"`
 	OIDCSubject       string `json:"oidcSubject"`
 	AuthentikUserUUID string `json:"authentikUserUUID"`
+	GlobalOIDCIssuer  string `json:"globalOidcIssuer"`
+	GlobalOIDCSubject string `json:"globalOidcSubject"`
 }
 
 type EnrollmentAssertion struct {
@@ -31,6 +33,8 @@ type EnrollmentAssertion struct {
 	OIDCIssuer        string `json:"oidcIssuer"`
 	OIDCSubject       string `json:"oidcSubject"`
 	AuthentikUserUUID string `json:"authentikUserUUID"`
+	GlobalOIDCIssuer  string `json:"globalOidcIssuer"`
+	GlobalOIDCSubject string `json:"globalOidcSubject"`
 	ServiceAccount    string `json:"serviceAccount"`
 	Audience          string `json:"audience"`
 	IssuedAt          int64  `json:"iat"`
@@ -42,7 +46,7 @@ type EnrollmentAssertion struct {
 // this handler has authenticated the exact BFF ServiceAccount and checked the
 // HMAC-bound, one-shot assertion.
 type Enroller interface {
-	Enroll(context.Context, string, string, string, string, time.Time) (string, error)
+	Enroll(context.Context, string, string, string, string, string, string, time.Time) (string, error)
 }
 
 type EnrollmentHandler struct {
@@ -100,10 +104,13 @@ func validEnrollmentAssertion(a EnrollmentAssertion, q EnrollmentRequest, c Cont
 	if a.Method != http.MethodPost || a.Path != EnrollmentPath ||
 		a.TenantKey != q.TenantKey || a.OIDCIssuer != q.OIDCIssuer ||
 		a.OIDCSubject != q.OIDCSubject || a.AuthentikUserUUID != q.AuthentikUserUUID ||
+		a.GlobalOIDCIssuer != q.GlobalOIDCIssuer || a.GlobalOIDCSubject != q.GlobalOIDCSubject ||
 		a.ServiceAccount != c.BFFServiceAccount || a.Audience != c.Audience ||
 		!tenantKeyPattern.MatchString(a.TenantKey) || !uuidPattern.MatchString(a.AuthentikUserUUID) ||
 		!strings.HasPrefix(a.OIDCIssuer, "https://") || len(a.OIDCIssuer) > 2048 ||
-		a.OIDCSubject == "" || len(a.OIDCSubject) > 2048 || !jtiPattern.MatchString(a.JTI) {
+		!strings.HasPrefix(a.GlobalOIDCIssuer, "https://") || len(a.GlobalOIDCIssuer) > 2048 ||
+		a.OIDCSubject == "" || len(a.OIDCSubject) > 2048 ||
+		a.GlobalOIDCSubject == "" || len(a.GlobalOIDCSubject) > 2048 || !jtiPattern.MatchString(a.JTI) {
 		return false
 	}
 	issued, expires := time.Unix(a.IssuedAt, 0), time.Unix(a.ExpiresAt, 0)
@@ -141,7 +148,9 @@ func (h *EnrollmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if decoder.Decode(&q) != nil || decoder.Decode(new(any)) != io.EOF ||
 		!tenantKeyPattern.MatchString(q.TenantKey) || !uuidPattern.MatchString(q.AuthentikUserUUID) ||
 		!strings.HasPrefix(q.OIDCIssuer, "https://") || len(q.OIDCIssuer) > 2048 ||
-		q.OIDCSubject == "" || len(q.OIDCSubject) > 2048 {
+		!strings.HasPrefix(q.GlobalOIDCIssuer, "https://") || len(q.GlobalOIDCIssuer) > 2048 ||
+		q.OIDCSubject == "" || len(q.OIDCSubject) > 2048 ||
+		q.GlobalOIDCSubject == "" || len(q.GlobalOIDCSubject) > 2048 {
 		deny()
 		return
 	}
@@ -165,7 +174,7 @@ func (h *EnrollmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		deny()
 		return
 	}
-	userID, err := h.Enrollments.Enroll(r.Context(), q.TenantKey, q.OIDCIssuer, q.OIDCSubject, q.AuthentikUserUUID, now)
+	userID, err := h.Enrollments.Enroll(r.Context(), q.TenantKey, q.OIDCIssuer, q.OIDCSubject, q.AuthentikUserUUID, q.GlobalOIDCIssuer, q.GlobalOIDCSubject, now)
 	if err != nil || userID == "" {
 		deny()
 		return

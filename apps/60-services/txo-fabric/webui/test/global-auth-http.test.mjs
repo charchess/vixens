@@ -24,7 +24,7 @@ const jwt = (claims) => {
   return data + "." + signature;
 };
 
-function setup({ tokenOverrides = {}, active = true, tokenStatus = 200 } = {}) {
+function setup({ tokenOverrides = {}, active = true, tokenStatus = 200, tenantProofs } = {}) {
   const records = new Map(), sessions = new Map(), calls = [];
   let live = active, clock = now, counter = 0;
   const transactions = {
@@ -94,6 +94,7 @@ function setup({ tokenOverrides = {}, active = true, tokenStatus = 200 } = {}) {
     verifyActiveHuman: async proof => ({
       ...proof, accountActive: live, fresh: true,
     }),
+    ...(tenantProofs ? { tenantProofs } : {}),
   });
   return {
     transactions, calls, records, sessions, login, auth, store,
@@ -233,7 +234,7 @@ test("logout checks CSRF origin, revokes server-side and clears host-only cookie
 
 test("composed global BFF authenticates once and rechecks all tenant memberships on each request", async () => {
   const h = setup();
-  let allowed = true, checks = 0;
+  let allowed = true, checks = 0, enrollments = 0;
   const app = createGlobalWebUIApp({
     expectedOrigin: origin, authentikOrigin: idp,
     transactions: h.transactions, sessions: h.store,
@@ -246,6 +247,7 @@ test("composed global BFF authenticates once and rechecks all tenant memberships
         accountActive: true, fresh: true, canEnter: true, canManageTenant: false,
       } : null;
     },
+    enrollTenant: async () => { enrollments++; return { tenantKey: "hairem", fabricUserId: "usr" + "c".repeat(32) }; },
     getTenantChat: async ({ tenantKey, fabricTenantId }) => ({
       tenantKey, fabricTenantId,
       service: {
@@ -272,9 +274,64 @@ test("composed global BFF authenticates once and rechecks all tenant memberships
   const req = () => new Request(origin + "/api/tenants/hairem/chat/agents", {
     headers: { cookie: "__Host-txo-fabric-session=" + token },
   });
+  const enrollmentStart = await app(new Request(origin + "/api/tenants/hairem/enroll", {
+    method: "POST", headers: { Origin: origin, "X-TXO-Request": "enroll", Cookie: "__Host-txo-fabric-session=" + token },
+  }));
+  assert.equal(enrollmentStart.status, 303);
+  assert.equal(new URL(enrollmentStart.headers.get("location")).origin, idp);
+  assert.equal(enrollments, 0);
   assert.equal((await app(req())).status, 200);
   allowed = false;
   assert.equal((await app(req())).status, 403);
   assert.equal(checks, 2);
   assert.equal((await app(new Request(origin + "/api/me"))).status, 403);
+});
+
+test("tenant enrollment initiation requires the global session and starts only the fixed hAIrem proof", async () => {
+  const calls = [];
+  const tenantProof = {
+    async begin(input) {
+      calls.push(input);
+      return {
+        authorizationURL: "https://authentik.truxonline.com/application/o/authorize/?state=tenant-state",
+        browserCookie: { name: "__Host-txo-fabric-oidc", value: "B".repeat(43), httpOnly: true, secure: true, sameSite: "Lax", path: "/", maxAge: 300 },
+      };
+    },
+    async complete() { throw Error("callback not part of initiation"); },
+  };
+  const f = setup({ tenantProofs: { hairem: tenantProof } });
+  const session = await f.store.issue({ issuer, oidcSubject: sub, authentikUserUUID: userUUID });
+  const response = await f.auth.handle(new Request(origin + "/api/tenants/hairem/enroll", {
+    method: "POST", headers: { Origin: origin, "X-TXO-Request": "enroll", Cookie: "__Host-txo-fabric-session=" + session.token },
+  }));
+  assert.equal(response.status, 303);
+  assert.equal(response.headers.get("location"), "https://authentik.truxonline.com/application/o/authorize/?state=tenant-state");
+  assert.equal(response.headers.get("set-cookie"), "__Host-txo-fabric-oidc=" + "B".repeat(43) + "; Path=/; Max-Age=300; HttpOnly; Secure; SameSite=Lax");
+  assert.deepEqual(calls, [{ globalSessionBinding: session.token }]);
+  for (const bad of [
+    new Request(origin + "/api/tenants/hairem/enroll", { method: "GET" }),
+    new Request(origin + "/api/tenants/hairem/enroll", { method: "POST", headers: { Origin: origin, "X-TXO-Request": "enroll" } }),
+    new Request(origin + "/api/tenants/other/enroll", { method: "POST", headers: { Origin: origin, "X-TXO-Request": "enroll", Cookie: "__Host-txo-fabric-session=" + session.token } }),
+  ]) assert.equal((await f.auth.handle(bad)).status, 403);
+  assert.equal(calls.length, 1);
+});
+
+test("tenant proof callback uses the global session cookie server-side and never a browser identity", async () => {
+  const completions = [];
+  const tenantProof = {
+    async begin() { throw Error("begin not expected"); },
+    async complete(input) {
+      completions.push(input);
+      return { tenantKey: "hairem", issuer: "https://authentik.truxonline.com/application/o/txo-fabric-hairem/", oidcSubject: "opaque-tenant-sub", fabricUserId: "usr" + "b".repeat(32) };
+    },
+  };
+  const f = setup({ tenantProofs: { hairem: tenantProof } });
+  const session = await f.store.issue({ issuer, oidcSubject: sub, authentikUserUUID: userUUID });
+  const response = await f.auth.handle(new Request(origin + "/auth/tenants/hairem/callback?state=" + "S".repeat(43) + "&code=server-code", {
+    headers: { Cookie: "__Host-txo-fabric-session=" + session.token + "; __Host-txo-fabric-oidc=" + "C".repeat(43) },
+  }));
+  assert.equal(response.status, 303);
+  assert.equal(response.headers.get("location"), origin + "/");
+  assert.equal(response.headers.get("set-cookie"), "__Host-txo-fabric-oidc=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax");
+  assert.deepEqual(completions, [{ state: "S".repeat(43), code: "server-code", browserCookieValue: "C".repeat(43), globalSessionBinding: session.token }]);
 });

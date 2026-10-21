@@ -437,13 +437,22 @@ test("browser artifacts are manifest-allowlisted and reject traversal, source ma
 });
 
 
-test("private enrollment client submits only an explicit server-verified global proof", async () => {
+test("private enrollment client atomically binds verified global and tenant proofs", async () => {
   const enrolled = { tenantKey: "hairem", fabricUserId: expected.fabricUserId };
   const { client, calls, readPaths } = fixture({ response: new Response(JSON.stringify(enrolled), { status: 200, headers: { "Content-Type": "application/json" } }) });
   const result = await client.enroll({
-    tenantKey: "hairem", oidcIssuer: GLOBAL_OIDC_ISSUER, oidcSubject: "opaque-global-sub", authentikUserUUID: uuid,
+    tenantKey: "hairem", oidcIssuer: "https://authentik.truxonline.com/application/o/txo-fabric-hairem/", oidcSubject: "opaque-tenant-sub", authentikUserUUID: uuid,
+    globalOidcIssuer: GLOBAL_OIDC_ISSUER, globalOidcSubject: "opaque-global-sub",
   });
   assert.deepEqual(result, enrolled);
   assert.equal(calls.length, 1);
   assert.equal(readPaths.length, 2);
+  assert.deepEqual(JSON.parse(calls[0].options.body), {
+    tenantKey: "hairem", oidcIssuer: "https://authentik.truxonline.com/application/o/txo-fabric-hairem/", oidcSubject: "opaque-tenant-sub", authentikUserUUID: uuid,
+    globalOidcIssuer: GLOBAL_OIDC_ISSUER, globalOidcSubject: "opaque-global-sub",
+  });
+  const [payload] = calls[0].options.headers["X-Fabric-Assertion"].split(".");
+  const assertion = JSON.parse(Buffer.from(payload, "base64url").toString());
+  assert.equal(assertion.globalOidcIssuer, GLOBAL_OIDC_ISSUER);
+  assert.equal(assertion.globalOidcSubject, "opaque-global-sub");
 });

@@ -106,10 +106,12 @@ export function createPrivateBridgeClient({
       }
     },
 
-    async enroll({ tenantKey, oidcIssuer, oidcSubject, authentikUserUUID } = {}) {
+    async enroll({ tenantKey, oidcIssuer, oidcSubject, authentikUserUUID, globalOidcIssuer, globalOidcSubject } = {}) {
       if (!enabled || !TENANT.test(tenantKey || "") || !UUID.test(authentikUserUUID || "") ||
           typeof oidcIssuer !== "string" || !oidcIssuer.startsWith("https://") || oidcIssuer.length > 2048 ||
-          typeof oidcSubject !== "string" || oidcSubject.length < 1 || oidcSubject.length > 2048) throw denied();
+          typeof oidcSubject !== "string" || oidcSubject.length < 1 || oidcSubject.length > 2048 ||
+          globalOidcIssuer !== GLOBAL_OIDC_ISSUER ||
+          typeof globalOidcSubject !== "string" || !SUBJECT.test(globalOidcSubject)) throw denied();
       try {
         const time = now(); if (!Number.isSafeInteger(time) || time < 0) throw denied();
         const iat = Math.floor(time / 1000), exp = iat + 20;
@@ -118,8 +120,8 @@ export function createPrivateBridgeClient({
         const [key, tokenRaw] = await Promise.all([readFile(keyPath), readFile(tokenPath)]);
         if (!Buffer.isBuffer(key) || key.length < 32 || key.length > 1024 || !Buffer.isBuffer(tokenRaw) || tokenRaw.length > 16384) throw denied();
         const bearer = tokenRaw.toString("utf8").trim(); if (!JWT.test(bearer)) throw denied();
-        const body = JSON.stringify({ tenantKey, oidcIssuer, oidcSubject, authentikUserUUID });
-        const assertion = { method: "POST", path: PRIVATE_ENROLLMENT_PATH, tenantKey, oidcIssuer, oidcSubject, authentikUserUUID, serviceAccount: PRIVATE_BFF_SUBJECT, audience: PRIVATE_BRIDGE_AUDIENCE, iat, exp, jti };
+        const body = JSON.stringify({ tenantKey, oidcIssuer, oidcSubject, authentikUserUUID, globalOidcIssuer, globalOidcSubject });
+        const assertion = { method: "POST", path: PRIVATE_ENROLLMENT_PATH, tenantKey, oidcIssuer, oidcSubject, authentikUserUUID, globalOidcIssuer, globalOidcSubject, serviceAccount: PRIVATE_BFF_SUBJECT, audience: PRIVATE_BRIDGE_AUDIENCE, iat, exp, jti };
         const payload = Buffer.from(JSON.stringify(assertion)).toString("base64url");
         const signature = createHmac("sha256", key).update(payload).digest("base64url");
         const response = await fetchImpl(PRIVATE_ENROLLMENT_URL, { method: "POST", redirect: "error", cache: "no-store", headers: { "Content-Type": "application/json", Authorization: "Bearer " + bearer, "X-Fabric-Assertion": payload + "." + signature }, body, signal: AbortSignal.timeout(2000) });

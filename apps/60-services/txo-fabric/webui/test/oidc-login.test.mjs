@@ -52,6 +52,7 @@ function memoryStore() {
 
 function setup(options = {}) {
   const store = options.store || memoryStore();
+  const effectiveRedirectURI = options.redirectURI || redirectURI;
   const exchanges = [], enrollments = [], network = [];
   let currentTime = millis;
   const fetchImpl = options.fetchImpl || (async (url, args) => {
@@ -83,11 +84,12 @@ function setup(options = {}) {
     return fabricUserId;
   });
   const login = createFabricOIDCLogin({
-    tenantKey, issuer, clientId, domainSuffix, redirectURI, authentikOrigin, transactions: store,
+    tenantKey, issuer, clientId, domainSuffix, redirectURI: effectiveRedirectURI, authentikOrigin, transactions: store,
     now: () => currentTime, fetchImpl, enrollVerifiedHuman,
+    ...(options.resolveGlobalSession ? { resolveGlobalSession: options.resolveGlobalSession } : {}),
   });
-  async function started() {
-    const start = await login.begin();
+  async function started(beginInput) {
+    const start = await login.begin(beginInput);
     const url = new URL(start.authorizationURL);
     const state = url.searchParams.get("state");
     // Capture the atomic, server-owned pending record before callback consumption.
@@ -95,7 +97,8 @@ function setup(options = {}) {
     return {
       start, url, state, consumedValue,
       input: { state, code: "server-issued-authorization-code",
-        browserCookieValue: start.browserCookie.value },
+        browserCookieValue: start.browserCookie.value,
+        ...(beginInput?.globalSessionBinding ? { globalSessionBinding: beginInput.globalSessionBinding } : {}), },
     };
   }
   return { login, started, store, exchanges, enrollments, network,
@@ -155,6 +158,49 @@ test("single-use browser-bound OIDC code+S256 PKCE produces only a verified priv
   await assert.rejects(() => f.login.complete(input), /Fabric OIDC login denied/);
   assert.equal(f.enrollments.length, 1);
   assert.equal(f.exchanges.length, 1);
+});
+
+test("Fabric-origin tenant proof binds to an exact server-only global identity", async () => {
+  const globalSessionBinding = "Q".repeat(43);
+  const globalSessionIdentity = Object.freeze({
+    issuer: "https://authentik.truxonline.com/application/o/txo-fabric-webui/",
+    oidcSubject: "opaque-global-sub", authentikUserUUID: accountUUID,
+  });
+  const resolveGlobalSession = async (binding) =>
+    binding === globalSessionBinding ? globalSessionIdentity : null;
+  const f = setup({
+    redirectURI: "https://fabric.truxonline.com/auth/tenants/hairem/callback", resolveGlobalSession,
+  });
+  const begin = await f.started({ globalSessionBinding });
+  assert.equal(begin.url.searchParams.get("redirect_uri"),
+    "https://fabric.truxonline.com/auth/tenants/hairem/callback");
+  assert.equal(begin.consumedValue.globalSessionDigest, digest(globalSessionBinding));
+  const missing = setup({
+    redirectURI: "https://fabric.truxonline.com/auth/tenants/hairem/callback",
+    resolveGlobalSession: async () => null,
+  });
+  const missingBegin = await missing.started({ globalSessionBinding });
+  await assert.rejects(() => completeFixture(missing, missingBegin), /Fabric OIDC login denied/);
+  assert.equal(missing.exchanges.length, 0);
+  assert.equal(missing.enrollments.length, 0);
+  const wrong = setup({
+    redirectURI: "https://fabric.truxonline.com/auth/tenants/hairem/callback", resolveGlobalSession,
+  });
+  const wrongBegin = await wrong.started({ globalSessionBinding });
+  await assert.rejects(() => completeFixture(wrong, {
+    ...wrongBegin,
+    input: { ...wrongBegin.input, globalSessionBinding: "A".repeat(43), globalSessionIdentity: Object.freeze({ issuer: "https://evil.example/", oidcSubject: "forged", authentikUserUUID: accountUUID }) },
+  }), /Fabric OIDC login denied/);
+  assert.equal(wrong.enrollments.length, 0);
+  const result = await completeFixture(f, {
+    ...begin, input: { ...begin.input, globalSessionIdentity: Object.freeze({ issuer: "https://evil.example/", oidcSubject: "forged", authentikUserUUID: accountUUID }) },
+  });
+  assert.equal(f.enrollments.length, 1);
+  assert.deepEqual(f.enrollments[0], {
+    tenantKey, issuer, oidcSubject: sub, authentikUserUUID: accountUUID,
+    globalOidcIssuer: globalSessionIdentity.issuer, globalOidcSubject: globalSessionIdentity.oidcSubject,
+  });
+  assert.equal(result.fabricUserId, fabricUserId);
 });
 
 test("concurrent callbacks can consume a given login transaction only once", async () => {

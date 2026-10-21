@@ -19,10 +19,10 @@ import (
 // Authentik account reader. Group/OpenFGA chat authorization remains the normal
 // reconciliation path after enrollment.
 func (r *TenantBundleReconciler) EnrollPrivateBFFIdentity(
-	ctx context.Context, tenantKey, issuer, subject, uuid string, now time.Time,
+	ctx context.Context, tenantKey, tenantIssuer, tenantSubject, uuid, globalIssuer, globalSubject string, now time.Time,
 ) (string, error) {
 	if r == nil || r.Client == nil || now.IsZero() || len(tenantKey) > 63 ||
-		issuer == "" || subject == "" || uuid == "" {
+		tenantIssuer == "" || tenantSubject == "" || globalIssuer == "" || globalSubject == "" || uuid == "" {
 		return "", errPrivateIdentityUnavailable
 	}
 	reader := r.APIReader
@@ -44,7 +44,8 @@ func (r *TenantBundleReconciler) EnrollPrivateBFFIdentity(
 		return "", errPrivateIdentityUnavailable
 	}
 	id, err := r.enrollHumanFromVerifiedIdentity(ctx, &bundle, trustedHumanOIDCProof{
-		globalIssuer: issuer, globalSubject: subject, authentikUUID: uuid,
+		globalIssuer: globalIssuer, globalSubject: globalSubject,
+		tenantIssuer: tenantIssuer, tenantSubject: tenantSubject, authentikUUID: uuid,
 	}, accounts)
 	if err != nil || id == "" {
 		return "", errPrivateIdentityUnavailable

@@ -33,7 +33,7 @@ func (s *enrollmentAccountSource) SnapshotUserAccount(_ context.Context, uuid st
 }
 
 func proofForHuman(globalIssuer, globalSubject, uuid string) trustedHumanOIDCProof {
-	return trustedHumanOIDCProof{globalIssuer: globalIssuer, globalSubject: globalSubject, authentikUUID: uuid}
+	return trustedHumanOIDCProof{globalIssuer: globalIssuer, globalSubject: globalSubject, tenantIssuer: "https://authentik.truxonline.com/application/o/txo-fabric-indiba/", tenantSubject: "opaque-hashed-sub-not-uuid", authentikUUID: uuid}
 }
 
 func setupEnrollment(t *testing.T) (*TenantBundleReconciler, *enrollmentAccountSource, trustedHumanOIDCProof) {
@@ -194,7 +194,7 @@ func TestVerifiedEnrollmentPersistsOnlyDeclaredTenantTupleAndIsByteIdempotent(t 
 	}
 	binding := bindings[0]
 	if binding.FabricUserID != id || binding.Issuer != b.Spec.HumanAccess.Web.OIDC.Issuer ||
-		binding.OIDCSubject != b.Spec.HumanAccess.EnrollmentIntents[0].OIDCSubject ||
+		binding.OIDCSubject != proof.tenantSubject ||
 		binding.OIDCSubject == proof.globalSubject || binding.Issuer == proof.globalIssuer {
 		t.Fatal("global OIDC proof leaked into the tenant issuer-pinned ledger")
 	}
@@ -207,16 +207,13 @@ func TestVerifiedEnrollmentPersistsOnlyDeclaredTenantTupleAndIsByteIdempotent(t 
 	}
 }
 
-func TestVerifiedEnrollmentRejectsTenantMappingOrLedgerIssuerMismatch(t *testing.T) {
+func TestVerifiedEnrollmentRejectsLedgerIssuerMismatch(t *testing.T) {
 	ctx := context.Background()
 	for _, tc := range []struct {
 		name    string
 		prefill bool
 		mutate  func(*fabricv1alpha1.TenantBundle, *TenantBundleReconciler)
 	}{
-		{"wrong-declared-tenant-subject", true, func(b *fabricv1alpha1.TenantBundle, _ *TenantBundleReconciler) {
-			b.Spec.HumanAccess.EnrollmentIntents[0].OIDCSubject = "different-tenant-subject"
-		}},
 		{"wrong-retained-tenant-issuer", false, func(b *fabricv1alpha1.TenantBundle, r *TenantBundleReconciler) {
 			cm := openFGAModelTestBinding(t, r, b.Spec.TenantID)
 			cm.Data[identityIssuerKey] = "https://authentik.truxonline.com/application/o/foreign-tenant/"
@@ -235,7 +232,7 @@ func TestVerifiedEnrollmentRejectsTenantMappingOrLedgerIssuerMismatch(t *testing
 			}
 			tc.mutate(b, r)
 			if _, err := r.enrollHumanFromVerifiedIdentity(ctx, b, proof, source); err == nil {
-				t.Fatal("mismatched tenant mapping or issuer enrolled a global proof")
+				t.Fatal("mismatched retained tenant issuer enrolled a proof")
 			}
 		})
 	}
@@ -283,5 +280,31 @@ func TestVerifiedEnrollmentReportsRecheckFailureAfterWriteWithoutGranting(t *tes
 	cm := openFGAModelTestBinding(t, r, b.Spec.TenantID)
 	if cm.Data[identityBindingsKey] == "[]" {
 		t.Fatal("test did not exercise post-write account recheck")
+	}
+}
+
+func TestVerifiedEnrollmentUsesSignedTenantProofInsteadOfStaticTenantSubject(t *testing.T) {
+	ctx := context.Background()
+	r, source, proof := setupEnrollment(t)
+	proof.tenantIssuer = "https://authentik.truxonline.com/application/o/txo-fabric-indiba/"
+	proof.tenantSubject = "tenant-proof-subject-not-manual"
+	var bundle fabricv1alpha1.TenantBundle
+	if err := r.Get(ctx, types.NamespacedName{Name: "indiba"}, &bundle); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.Update(ctx, &bundle); err != nil {
+		t.Fatal(err)
+	}
+	id, err := r.enrollHumanFromVerifiedIdentity(ctx, &bundle, proof, source)
+	if err != nil {
+		t.Fatalf("verified tenant proof was rejected: %v", err)
+	}
+	ledger, err := r.readOpenFGAHumanIdentityRegistry(ctx, &bundle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := ledger.ResolveOIDCSubject(proof.tenantIssuer, proof.tenantSubject)
+	if err != nil || got != id {
+		t.Fatalf("signed tenant subject was not the sole ledger binding: %q %v", got, err)
 	}
 }

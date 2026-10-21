@@ -8,12 +8,12 @@ const TABLE = "txo_fabric_oidc_login_transactions";
 
 const INSERT = `INSERT INTO ${TABLE}
   (tenant_key, state_digest, issuer, client_id, redirect_uri,
-   nonce, pkce_verifier, binding_digest, issued_at_ms, expires_at_ms)
-  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`;
+   nonce, pkce_verifier, binding_digest, global_session_digest, issued_at_ms, expires_at_ms)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`;
 const CONSUME = `DELETE FROM ${TABLE}
   WHERE tenant_key = $1 AND state_digest = $2
   RETURNING issuer, client_id, redirect_uri, nonce, pkce_verifier,
-            binding_digest, issued_at_ms, expires_at_ms`;
+            binding_digest, global_session_digest, issued_at_ms, expires_at_ms`;
 // PostgreSQL does not have DELETE LIMIT. Bounded pruning avoids scanning
 // arbitrarily many expired rows during a login, with the expiry index.
 const PRUNE = `DELETE FROM ${TABLE}
@@ -93,7 +93,7 @@ export function createPostgresOIDCTransactions({ pool, now = () => Date.now() } 
       const result = await query(INSERT, [
         tenantKey, digest, issuer, clientId, redirectURI,
         value.nonce, value.pkceVerifier, value.bindingDigest,
-        value.issuedAt, expiresAt,
+        value.globalSessionDigest || null, value.issuedAt, expiresAt,
       ]);
       if (result.rowCount !== 1) fail();
     },
@@ -105,7 +105,9 @@ export function createPostgresOIDCTransactions({ pool, now = () => Date.now() } 
       if (result.rowCount !== 1 || result.rows.length !== 1) fail();
       const row = result.rows[0];
       if (!row || !validKey(row.nonce) || !validKey(row.pkce_verifier) ||
-          !validKey(row.binding_digest)) fail();
+          !validKey(row.binding_digest) ||
+          (row.global_session_digest !== null && row.global_session_digest !== undefined &&
+            !validKey(row.global_session_digest))) fail();
       const issuedAt = timestamp(row.issued_at_ms);
       const expiresAt = timestamp(row.expires_at_ms);
       if (expiresAt !== issuedAt + MAX_TRANSACTION_AGE_MS) fail();
@@ -114,7 +116,10 @@ export function createPostgresOIDCTransactions({ pool, now = () => Date.now() } 
         clientId: requiredString(row.client_id),
         redirectURI: requiredString(row.redirect_uri),
         nonce: row.nonce, pkceVerifier: row.pkce_verifier,
-        bindingDigest: row.binding_digest, issuedAt,
+        bindingDigest: row.binding_digest,
+        ...(typeof row.global_session_digest === "string" ?
+          { globalSessionDigest: row.global_session_digest } : {}),
+        issuedAt,
       });
     },
 
