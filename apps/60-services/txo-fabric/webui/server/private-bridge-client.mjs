@@ -16,6 +16,10 @@ export const GLOBAL_OIDC_ISSUER =
 const SUBJECT = /^[!-~]{1,255}$/;
 const JWT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 const denied = () => new Error("Private Fabric identity unavailable");
+export const PRIVATE_ENROLLMENT_PATH = "/internal/v1/identity/enroll";
+export const PRIVATE_ENROLLMENT_URL =
+  "http://txo-fabric-operator-private-bff.txo-fabric-system.svc:8090" + PRIVATE_ENROLLMENT_PATH;
+
 
 /**
  * Workload-only helper. The tenant and UUID come from a verified, durable
@@ -100,6 +104,31 @@ export function createPrivateBridgeClient({
         // Never leak raw HTTP error bodies, tokens, UUID, HMAC, session or JTI.
         throw denied();
       }
+    },
+
+    async enroll({ tenantKey, oidcIssuer, oidcSubject, authentikUserUUID } = {}) {
+      if (!enabled || !TENANT.test(tenantKey || "") || !UUID.test(authentikUserUUID || "") ||
+          typeof oidcIssuer !== "string" || !oidcIssuer.startsWith("https://") || oidcIssuer.length > 2048 ||
+          typeof oidcSubject !== "string" || oidcSubject.length < 1 || oidcSubject.length > 2048) throw denied();
+      try {
+        const time = now(); if (!Number.isSafeInteger(time) || time < 0) throw denied();
+        const iat = Math.floor(time / 1000), exp = iat + 20;
+        const nonce = randomBytes(32); if (!Buffer.isBuffer(nonce) || nonce.length !== 32) throw denied();
+        const jti = nonce.toString("base64url");
+        const [key, tokenRaw] = await Promise.all([readFile(keyPath), readFile(tokenPath)]);
+        if (!Buffer.isBuffer(key) || key.length < 32 || key.length > 1024 || !Buffer.isBuffer(tokenRaw) || tokenRaw.length > 16384) throw denied();
+        const bearer = tokenRaw.toString("utf8").trim(); if (!JWT.test(bearer)) throw denied();
+        const body = JSON.stringify({ tenantKey, oidcIssuer, oidcSubject, authentikUserUUID });
+        const assertion = { method: "POST", path: PRIVATE_ENROLLMENT_PATH, tenantKey, oidcIssuer, oidcSubject, authentikUserUUID, serviceAccount: PRIVATE_BFF_SUBJECT, audience: PRIVATE_BRIDGE_AUDIENCE, iat, exp, jti };
+        const payload = Buffer.from(JSON.stringify(assertion)).toString("base64url");
+        const signature = createHmac("sha256", key).update(payload).digest("base64url");
+        const response = await fetchImpl(PRIVATE_ENROLLMENT_URL, { method: "POST", redirect: "error", cache: "no-store", headers: { "Content-Type": "application/json", Authorization: "Bearer " + bearer, "X-Fabric-Assertion": payload + "." + signature }, body, signal: AbortSignal.timeout(2000) });
+        if (response.status !== 200 || response.redirected || !/^application\/json(?:\s*;|$)/i.test(response.headers?.get?.("content-type") || "") || Number(response.headers?.get?.("content-length") || 0) > 2048) throw denied();
+        const text = await response.text(); if (text.length > 2048) throw denied();
+        const result = JSON.parse(text);
+        if (!result || typeof result !== "object" || Array.isArray(result) || Object.keys(result).length !== 2 || result.tenantKey !== tenantKey || typeof result.fabricUserId !== "string" || !USER_ID.test(result.fabricUserId)) throw denied();
+        return Object.freeze({ tenantKey, fabricUserId: result.fabricUserId });
+      } catch { throw denied(); }
     },
   });
 }

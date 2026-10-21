@@ -95,6 +95,22 @@ test("exact durable global session + server-owned tenant catalogue compose bridg
   }), /dependencies/);
 });
 
+test("composition refuses a bridge that cannot perform private enrollment", () => {
+  const bridgeClient = { async resolve() { return expected; } };
+  assert.throws(() => composeGlobalBFF({
+    expectedOrigin: "https://fabric.truxonline.com",
+    authentikOrigin: "https://authentik.truxonline.com",
+    pool: { async query() { return { rows: [] }; } },
+    verifyActiveHuman: async () => ({ ...canonicalHuman, accountActive: true, fresh: true }),
+    listTenantCatalog: async () => [],
+    bridgeClient,
+    getTenantChat: async () => { throw new Error("chat is outside enrollment scope"); },
+    browserArtifacts: { async get() { return null; } },
+    browserEnabled: true,
+    bridgeEnabled: true,
+  }), /privileged dependencies unavailable/);
+});
+
 test("browser/bridge gate OFF performs zero privileged reads or calls", async () => {
   for (const setting of [{browserEnabled: false}, {bridgeEnabled: false},
     {browserEnabled: false, bridgeEnabled: false}]) {
@@ -162,7 +178,7 @@ test("feature OFF serves a static Fabric entry page without privileged dependenc
   assert.match(await home.text(), /Fabric/i);
   assert.doesNotMatch(await (await handler(new Request("https://fabric.truxonline.com/"))).text(), /secret|cookie|tenant|agent|chat/i);
   for (const path of ["/healthz", "/readyz"]) {
-    const r = await handler(new Request("https://webui.truxonline.com" + path));
+    const r = await handler(new Request("https://fabric.truxonline.com" + path));
     assert.equal(r.status, 200);
     assert.equal(r.headers.get("cache-control"), "no-store");
   }
@@ -171,7 +187,7 @@ test("feature OFF serves a static Fabric entry page without privileged dependenc
     "/auth/logout", "/api/me", "/api/tenants/indiba/chat/threads",
     "/api/tenants/indiba/chat/agents", "/settings", "/admin",
   ]) {
-    const r = await handler(new Request("https://webui.truxonline.com" + path, {
+    const r = await handler(new Request("https://fabric.truxonline.com" + path, {
       headers: { cookie: "__Host-txo-fabric-session=secret", authorization: "Bearer forged" },
     }));
     assert.equal(r.status, 404);
@@ -236,7 +252,7 @@ test("private HTTP adapter fixes requests to the canonical Fabric origin", async
   try {
     const { port } = server.address();
     assert.equal((await fetch("http://127.0.0.1:" + port + "/healthz")).status, 200);
-    assert.equal(seen, "https://webui.truxonline.com/healthz");
+    assert.equal(seen, "https://fabric.truxonline.com/healthz");
   } finally {
     await new Promise(resolve => server.close(resolve));
   }
@@ -418,4 +434,16 @@ test("browser artifacts are manifest-allowlisted and reject traversal, source ma
     "/%2e%2e/server/private-bff-server.mjs", "/client/src/App.tsx", "/assets/undeclared.js"]) {
     assert.equal(await artifacts.get(path), null, path);
   }
+});
+
+
+test("private enrollment client submits only an explicit server-verified global proof", async () => {
+  const enrolled = { tenantKey: "hairem", fabricUserId: expected.fabricUserId };
+  const { client, calls, readPaths } = fixture({ response: new Response(JSON.stringify(enrolled), { status: 200, headers: { "Content-Type": "application/json" } }) });
+  const result = await client.enroll({
+    tenantKey: "hairem", oidcIssuer: GLOBAL_OIDC_ISSUER, oidcSubject: "opaque-global-sub", authentikUserUUID: uuid,
+  });
+  assert.deepEqual(result, enrolled);
+  assert.equal(calls.length, 1);
+  assert.equal(readPaths.length, 2);
 });

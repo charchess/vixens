@@ -7,7 +7,7 @@ import { createPostgresGlobalSessions } from "./global-postgres-sessions.mjs";
 import { createVerifiedTenantBridgeAccess } from "./private-bridge-client.mjs";
 import { createDeclaredBrowserArtifacts } from "./browser-artifacts.mjs";
 
-export const WEBUI_PUBLIC_ORIGIN = "https://webui.truxonline.com";
+export const WEBUI_PUBLIC_ORIGIN = "https://fabric.truxonline.com";
 export const AUTHENTIK_PUBLIC_ORIGIN = "https://authentik.truxonline.com";
 
 const NO_STORE = Object.freeze({
@@ -48,7 +48,7 @@ export function composeGlobalBFF({
       typeof pool?.query !== "function" ||
       typeof verifyActiveHuman !== "function" ||
       typeof listTenantCatalog !== "function" ||
-      typeof bridgeClient?.resolve !== "function" ||
+      typeof bridgeClient?.resolve !== "function" || typeof bridgeClient?.enroll !== "function" ||
       typeof getTenantChat !== "function" || typeof browserArtifacts?.get !== "function") {
     throw new Error("Global Fabric BFF privileged dependencies unavailable");
   }
@@ -60,7 +60,12 @@ export function composeGlobalBFF({
   return createGlobalWebUIApp({
     expectedOrigin, authentikOrigin, transactions, sessions,
     verifyActiveHuman, listTenantCatalog, resolveTenantAccess,
-    getTenantChat, browserArtifacts, resolvePlatformAccess, fetchImpl,
+    getTenantChat, browserArtifacts, resolvePlatformAccess,
+    enrollTenant: async ({ tenantKey, issuer, oidcSubject, authentikUserUUID } = {}) =>
+      bridgeClient.enroll(Object.freeze({
+        tenantKey, oidcIssuer: issuer, oidcSubject, authentikUserUUID,
+      })),
+    fetchImpl,
   });
 }
 

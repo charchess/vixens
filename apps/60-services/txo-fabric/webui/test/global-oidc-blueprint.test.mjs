@@ -35,8 +35,9 @@ test("global OIDC claim is signed, immutable Authentik UUID, not a group grant",
 
 test("only an exact HTTPS callback is registered, no regex, wildcard or tenant user redirect", () => {
   const global = blueprint.split("txo-fabric-webui.yaml: |")[1];
-  assert.match(global, /redirect_uris:\n\s+- matching_mode: strict\n\s+url: https:\/\/webui\.truxonline\.com\/auth\/callback/);
+  assert.match(global, /redirect_uris:\n\s+- matching_mode: strict\n\s+url: https:\/\/fabric\.truxonline\.com\/auth\/callback/);
   assert.equal((global.match(/redirect_uri_type: authorization/g) ?? []).length, 1);
+  assert.doesNotMatch(global, /webui\.truxonline\.com/);
   assert.doesNotMatch(global, /matching_mode: regex/);
   assert.doesNotMatch(global, /http:\/\/|\/auth\/callback\$/);
 });

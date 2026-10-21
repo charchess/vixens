@@ -6,7 +6,7 @@ import {
 import { createGlobalOIDCLogin } from "../server/global-oidc-login.mjs";
 import { createGlobalAuthHttp, createGlobalWebUIApp } from "../server/global-auth-http.mjs";
 
-const origin = "https://webui.truxonline.com";
+const origin = "https://fabric.truxonline.com";
 const idp = "https://authentik.truxonline.com";
 const issuer = idp + "/application/o/txo-fabric-webui/";
 const userUUID = "c38f3cc7-5b33-4266-bd85-40ce9a100061";

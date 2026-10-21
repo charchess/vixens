@@ -13,7 +13,7 @@ const tenantURL = (tenantKey) => {
 };
 
 /**
- * Global Fabric WebUI shell. The only public origin is webui.truxonline.com.
+ * Global Fabric WebUI shell. The only public origin is fabric.truxonline.com.
  * The backend resolves permitted tenants from a SIGNED session, live
  * Authentik memberships, canonical Fabric user mapping and fresh IAM/FGA.
  * A tenant name in a URL is only a requested scope, NEVER a grant.

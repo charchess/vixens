@@ -106,7 +106,7 @@ data:
             - !KeyOf txo-fabric-webui-immutable-human-uuid-scope
           redirect_uris:
             - matching_mode: strict
-              url: https://webui.truxonline.com/auth/callback
+              url: https://fabric.truxonline.com/auth/callback
               redirect_uri_type: authorization
 
       - model: authentik_core.application
