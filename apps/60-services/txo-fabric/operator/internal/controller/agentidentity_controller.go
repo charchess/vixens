@@ -200,17 +200,57 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	}
 
+	// Issuance is metadata-validated through the direct API reader before the
+	// Deployment can receive the API env/port. The credential data is never
+	// read back by this reconciler.
+	privateAPICredentialReady, privateAPICredentialErr := r.ensurePrivateHermesAPICredential(ctx, &agent, &tenant, namespace)
+
 	if err := r.ensureDeploymentWithIntegrations(ctx, &agent, &tenant, &profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrationAccess, functional); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "DeploymentReconcileFailed", err.Error())
 		return ctrl.Result{}, err
+	}
+	if err := r.ensurePrivateHermesAPIRuntime(ctx, &agent, &tenant, namespace, privateAPICredentialReady); err != nil {
+		r.setStatus(ctx, &agent, "Degraded", privateHermesAPICondition, metav1.ConditionFalse, "PrivateAPIRuntimeReconcileFailed", err.Error())
+		return ctrl.Result{}, err
+	}
+	if privateAPICredentialErr != nil {
+		r.setStatus(ctx, &agent, "Degraded", privateHermesAPICondition, metav1.ConditionFalse, "PrivateAPICredentialIssuanceFailed", privateAPICredentialErr.Error())
+		return ctrl.Result{RequeueAfter: 15 * time.Second}, privateAPICredentialErr
+	}
+	if !privateAPICredentialReady {
+		withdrawalRequired, err := r.privateHermesAPICredentialExists(ctx, &agent, namespace)
+		if err != nil {
+			r.setStatus(ctx, &agent, "Degraded", privateHermesAPICondition, metav1.ConditionFalse, "PrivateAPIWithdrawalFailed", err.Error())
+			return ctrl.Result{}, err
+		}
+		if withdrawalRequired {
+			withdrawn, err := r.privateHermesAPIWithdrawalComplete(ctx, &agent, namespace)
+			if err != nil {
+				r.setStatus(ctx, &agent, "Degraded", privateHermesAPICondition, metav1.ConditionFalse, "PrivateAPIWithdrawalFailed", err.Error())
+				return ctrl.Result{}, err
+			}
+			if !withdrawn {
+				setCondition(&agent.Status.Conditions, agent.Generation, privateHermesAPICondition, metav1.ConditionFalse, "WithdrawalInProgress", "private Hermes API runtime withdrawal is awaiting Deployment rollout")
+				if !reflect.DeepEqual(previousStatus, agent.Status) {
+					_ = r.Status().Update(ctx, &agent)
+				}
+				return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+			}
+		}
 	}
 	if err := r.ensureEgressPolicy(ctx, &agent, &tenant, namespace, integrationAccess); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "NetworkReady", metav1.ConditionFalse, "NetworkPolicyReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}
-	if err := r.ensurePrivateHermesAPIResources(ctx, &agent, &tenant, namespace); err != nil {
+	if err := r.ensurePrivateHermesAPIResources(ctx, &agent, &tenant, namespace, privateAPICredentialReady); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "PrivateHermesAPIReady", metav1.ConditionFalse, "PrivateAPINetworkReconcileFailed", err.Error())
 		return ctrl.Result{}, err
+	}
+	if !privateAPICredentialReady {
+		if err := r.deletePrivateHermesAPICredential(ctx, &agent, namespace); err != nil {
+			r.setStatus(ctx, &agent, "Degraded", privateHermesAPICondition, metav1.ConditionFalse, "PrivateAPICredentialWithdrawalFailed", err.Error())
+			return ctrl.Result{}, err
+		}
 	}
 	if err := r.ensureHumanAccessResources(ctx, &agent, &tenant, namespace, humanAccess); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "HumanAccessReady", metav1.ConditionFalse, "HumanAccessReconcileFailed", err.Error())
