@@ -19,6 +19,31 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+type privateHermesAPIMetadataReader struct {
+	client.Reader
+	metadata map[types.NamespacedName]*metav1.PartialObjectMetadata
+}
+
+func (r privateHermesAPIMetadataReader) Get(_ context.Context, key client.ObjectKey, obj client.Object, _ ...client.GetOption) error {
+	metadata, ok := r.metadata[key]
+	if !ok {
+		return apierrors.NewNotFound(corev1.Resource("secrets"), key.Name)
+	}
+	target, ok := obj.(*metav1.PartialObjectMetadata)
+	if !ok {
+		return apierrors.NewBadRequest("metadata reader requires PartialObjectMetadata")
+	}
+	metadata.DeepCopyInto(target)
+	return nil
+}
+
+func secretMetadata(secret *corev1.Secret) *metav1.PartialObjectMetadata {
+	return &metav1.PartialObjectMetadata{
+		TypeMeta:   metav1.TypeMeta{APIVersion: corev1.SchemeGroupVersion.String(), Kind: "Secret"},
+		ObjectMeta: *secret.ObjectMeta.DeepCopy(),
+	}
+}
+
 func privateAPIFixture() (*fabricv1alpha1.AgentIdentity, *fabricv1alpha1.TenantBundle) {
 	tenant := humanAccessTestTenant()
 	tenant.UID = types.UID("e0e0e0e0-0000-4000-8000-000000000001")
@@ -161,7 +186,7 @@ func TestPrivateHermesAPIDisabledOptInDoesNotDeleteForeignResources(t *testing.T
 	c := fake.NewClientBuilder().WithScheme(testScheme(t)).WithObjects(agent, service, policy).Build()
 	r := &AgentIdentityReconciler{Client: c, Scheme: c.Scheme()}
 
-	if err := r.ensurePrivateHermesAPIResources(context.Background(), agent, tenant, namespace); err == nil {
+	if err := r.ensurePrivateHermesAPIResources(context.Background(), agent, tenant, namespace, true); err == nil {
 		t.Fatal("disabled private API must fail closed on a foreign canonical Service")
 	}
 	if err := c.Get(context.Background(), client.ObjectKeyFromObject(service), &corev1.Service{}); err != nil {
@@ -183,7 +208,7 @@ func TestPrivateHermesAPIOptInReconcilesCanonicalPrivateSubstrate(t *testing.T) 
 	if err := r.ensureDeployment(ctx, agent, tenant, testRuntimeProfile(), namespace, "model-secret-uid", "baseline"); err != nil {
 		t.Fatal(err)
 	}
-	if err := r.ensurePrivateHermesAPIResources(ctx, agent, tenant, namespace); err != nil {
+	if err := r.ensurePrivateHermesAPIResources(ctx, agent, tenant, namespace, true); err != nil {
 		t.Fatal(err)
 	}
 	var deployment appsv1.Deployment
@@ -237,7 +262,7 @@ func TestPrivateHermesAPIOptInReconcilesCanonicalPrivateSubstrate(t *testing.T) 
 	}
 
 	agent.Spec.Runtime.PrivateAPI = nil
-	if err := r.ensurePrivateHermesAPIResources(ctx, agent, tenant, namespace); err != nil {
+	if err := r.ensurePrivateHermesAPIResources(ctx, agent, tenant, namespace, true); err != nil {
 		t.Fatal(err)
 	}
 	if err := c.Get(ctx, types.NamespacedName{Name: service.Name, Namespace: namespace}, &corev1.Service{}); !apierrors.IsNotFound(err) {
@@ -245,5 +270,131 @@ func TestPrivateHermesAPIOptInReconcilesCanonicalPrivateSubstrate(t *testing.T) 
 	}
 	if err := c.Get(ctx, types.NamespacedName{Name: ingress.Name, Namespace: namespace}, &networkingv1.NetworkPolicy{}); !apierrors.IsNotFound(err) {
 		t.Fatalf("disabled opt-in left ingress policy behind: %v", err)
+	}
+}
+
+func TestPrivateHermesAPICredentialIssuesOnlyCanonicalAgentOwnedSecret(t *testing.T) {
+	agent, tenant := privateAPIFixture()
+	agent.Spec.Runtime.PrivateAPI = validFuturePrivateAPI(agent, tenant)
+	ctx := context.Background()
+	c := fake.NewClientBuilder().WithScheme(testScheme(t)).WithObjects(agent).Build()
+	r := &AgentIdentityReconciler{Client: c, APIReader: c, Scheme: c.Scheme()}
+
+	ready, err := r.ensurePrivateHermesAPICredential(ctx, agent, tenant, tenantNamespace(tenant.Name))
+	if err != nil || !ready {
+		t.Fatalf("canonical opt-in credential was not issued: ready=%t err=%v", ready, err)
+	}
+	var credential corev1.Secret
+	if err := c.Get(ctx, types.NamespacedName{Name: "hermes-api-" + agent.Spec.AgentKey, Namespace: tenantNamespace(tenant.Name)}, &credential); err != nil {
+		t.Fatal(err)
+	}
+	if credential.Type != corev1.SecretTypeOpaque || len(credential.Data) != 1 || len(credential.Data["api-key"]) < 32 {
+		t.Fatalf("credential must be an opaque single random api-key secret: %#v", credential)
+	}
+	owner := metav1.GetControllerOf(&credential)
+	if owner == nil || owner.APIVersion != fabricv1alpha1.GroupVersion.String() || owner.Kind != "AgentIdentity" || owner.Name != agent.Name || owner.UID != agent.UID {
+		t.Fatalf("credential owner=%#v, want exact AgentIdentity controller owner", owner)
+	}
+	if credential.Annotations[privateHermesAPIIssuanceIDAnnotation] == "" || credential.Annotations[privateHermesAPIIssuanceRevisionAnnotation] != "3" {
+		t.Fatalf("credential lacks opaque issuance provenance: %#v", credential.Annotations)
+	}
+}
+
+func TestPrivateHermesAPIRuntimeEnvAndPortRequireIssuedCredential(t *testing.T) {
+	agent, tenant := privateAPIFixture()
+	agent.Spec.Runtime.PrivateAPI = validFuturePrivateAPI(agent, tenant)
+	ctx := context.Background()
+	c := fake.NewClientBuilder().WithScheme(testScheme(t)).WithObjects(agent).Build()
+	r := &AgentIdentityReconciler{Client: c, APIReader: c, Scheme: c.Scheme()}
+	namespace := tenantNamespace(tenant.Name)
+	if err := r.ensureDeployment(ctx, agent, tenant, testRuntimeProfile(), namespace, "model-secret-uid", "baseline"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ensurePrivateHermesAPIRuntime(ctx, agent, tenant, namespace, false); err != nil {
+		t.Fatal(err)
+	}
+	var deployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range deployment.Spec.Template.Spec.Containers[0].Env {
+		if strings.HasPrefix(item.Name, "API_SERVER_") {
+			t.Fatalf("unissued credential enabled API env: %s", item.Name)
+		}
+	}
+	if err := r.ensurePrivateHermesAPIRuntime(ctx, agent, tenant, namespace, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	container := deployment.Spec.Template.Spec.Containers[0]
+	hasAPIPort := false
+	for _, port := range container.Ports {
+		hasAPIPort = hasAPIPort || (port.Name == "responses" && port.ContainerPort == privateHermesAPIPort && port.Protocol == corev1.ProtocolTCP)
+	}
+	if !hasAPIPort {
+		t.Fatalf("issued credential must expose canonical API port: %#v", container.Ports)
+	}
+	var apiKey *corev1.EnvVar
+	for i := range container.Env {
+		if container.Env[i].Name == "API_SERVER_KEY" {
+			apiKey = &container.Env[i]
+		}
+	}
+	if apiKey == nil || apiKey.ValueFrom == nil || apiKey.ValueFrom.SecretKeyRef == nil || apiKey.ValueFrom.SecretKeyRef.Name != "hermes-api-"+agent.Spec.AgentKey || apiKey.ValueFrom.SecretKeyRef.Key != "api-key" {
+		t.Fatalf("API key env is not canonical SecretKeyRef: %#v", apiKey)
+	}
+}
+
+func TestPrivateHermesAPIRuntimeDoesNotUpdateUnchangedDeployment(t *testing.T) {
+	agent, tenant := privateAPIFixture()
+	agent.Spec.Runtime.PrivateAPI = validFuturePrivateAPI(agent, tenant)
+	ctx := context.Background()
+	namespace := tenantNamespace(tenant.Name)
+	c := fake.NewClientBuilder().WithScheme(testScheme(t)).WithObjects(agent).Build()
+	r := &AgentIdentityReconciler{Client: c, APIReader: c, Scheme: c.Scheme()}
+	if err := r.ensureDeployment(ctx, agent, tenant, testRuntimeProfile(), namespace, "model-secret-uid", "baseline"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ensurePrivateHermesAPIRuntime(ctx, agent, tenant, namespace, true); err != nil {
+		t.Fatal(err)
+	}
+	var first appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}, &first); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ensurePrivateHermesAPIRuntime(ctx, agent, tenant, namespace, true); err != nil {
+		t.Fatal(err)
+	}
+	var second appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}, &second); err != nil {
+		t.Fatal(err)
+	}
+	if second.ResourceVersion != first.ResourceVersion {
+		t.Fatalf("unchanged private Hermes API runtime rewrote Deployment: first=%s second=%s", first.ResourceVersion, second.ResourceVersion)
+	}
+}
+
+func TestPrivateHermesAPICredentialRejectsForgedLabelsAndMissingIssuance(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		secret *corev1.Secret
+	}{
+		{"forged labels", &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "hermes-api-tesla", Namespace: "tenant-acme", Labels: map[string]string{LabelName: "hermes-agent", LabelInstance: "tesla"}}}},
+		{"missing issuance", &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "hermes-api-tesla", Namespace: "tenant-acme", OwnerReferences: []metav1.OwnerReference{{APIVersion: fabricv1alpha1.GroupVersion.String(), Kind: "AgentIdentity", Name: "acme-tesla", UID: types.UID("f0f0f0f0-0000-4000-8000-000000000001"), Controller: boolPtr(true)}}}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			agent, tenant := privateAPIFixture()
+			agent.Spec.Runtime.PrivateAPI = validFuturePrivateAPI(agent, tenant)
+			tc.secret.Name = privateHermesAPICredentialPrefix + agent.Spec.AgentKey
+			tc.secret.Namespace = tenantNamespace(tenant.Name)
+			c := fake.NewClientBuilder().WithScheme(testScheme(t)).WithObjects(agent, tc.secret).Build()
+			r := &AgentIdentityReconciler{Client: c, APIReader: privateHermesAPIMetadataReader{Reader: c, metadata: map[types.NamespacedName]*metav1.PartialObjectMetadata{client.ObjectKeyFromObject(tc.secret): secretMetadata(tc.secret)}}, Scheme: c.Scheme()}
+			ready, err := r.ensurePrivateHermesAPICredential(context.Background(), agent, tenant, tenantNamespace(tenant.Name))
+			if err == nil || ready {
+				t.Fatalf("forged or issuer-less credential must fail closed: ready=%t err=%v", ready, err)
+			}
+		})
 	}
 }
