@@ -186,7 +186,7 @@ export function App() {
           <p className="hint">Aucun espace autorisé pour ce compte.</p>}
       </nav>
       <div className="sidebar-bottom">
-        <span>webui.truxonline.com</span>
+        <span>fabric.truxonline.com</span>
         {platformAdmin && <span>Administration Fabric — en préparation</span>}
       </div>
     </aside>

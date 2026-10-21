@@ -233,7 +233,7 @@ The recommended per-application OIDC issuer is
 `https://authentik.truxonline.com/application/o/txo-fabric-webui/`.
 The provider is a **public authorization-code-only** client with
 one `strict` redirect URI:
-`https://webui.truxonline.com/auth/callback`. It includes the
+`https://fabric.truxonline.com/auth/callback`. It includes the
 signed `txo_fabric_identity` scope with immutable
 `txo_fabric_user_uuid`. It creates **no human users, group membership,
 tenant grants or Fabric identities**.
@@ -261,7 +261,7 @@ log in to the product yet.
 
 
 
-**Status:** source-only prototype, not deployed; `webui.truxonline.com` does not yet serve this application.
+**Status:** source-only prototype, not deployed; `fabric.truxonline.com` does not yet serve this application.
 
 One **global** React/assistant-ui frontend has now been adapted for server-scoped
 multi-tenant navigation. A **single logical Fabric BFF** routes between separately
@@ -269,7 +269,7 @@ authorized tenant chat services; runtime Hermes/LiteLLM/CPA and sensitive
 credentials remain tenant-scoped.
 
 ```text
-Browser -> webui.truxonline.com (global SPA + same-origin BFF)
+Browser -> fabric.truxonline.com (global SPA + same-origin BFF)
            -> Authentik global OIDC (TO PROVISION)
            -> Fabric secure session / tenant resolution (TO IMPLEMENT)
            -> GET /api/me [only authorized tenant contexts]

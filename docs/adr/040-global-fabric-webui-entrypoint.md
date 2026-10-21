@@ -10,7 +10,7 @@
 The product owner chooses **one global human product entrypoint**:
 
 ```text
-https://webui.truxonline.com
+https://fabric.truxonline.com
   -> authenticate ONE human against Authentik
   -> server returns the accessible tenants/organizations
   -> human selects one permitted workspace
@@ -32,7 +32,7 @@ transport; it does not become the stable Fabric product interface.
 
 ## Decision
 
-- **One global frontend deployment/codebase** on `webui.truxonline.com`.
+- **One global frontend deployment/codebase** on `fabric.truxonline.com`.
   `/api/me` provides an authorized tenant/workspace list and independent
   platform-admin capability. The selected tenant is a **requested scope**,
   not a grant.
@@ -41,7 +41,7 @@ transport; it does not become the stable Fabric product interface.
   behind it, but **no per-agent or per-tenant browser BFF is necessary**.
 - **One Authentik GLOBAL OIDC application/client** for browser sign-in, using
   public PKCE authorization-code flow and exact canonical callback
-  `https://webui.truxonline.com/auth/callback`. A future centrally owned
+  `https://fabric.truxonline.com/auth/callback`. A future centrally owned
   provider uses issuer
   `https://<trusted-authentik-host>/application/o/txo-fabric-webui/`
   and requests the signed `txo_fabric_identity` UUID claim.
@@ -85,7 +85,7 @@ transport; it does not become the stable Fabric product interface.
 ## Architecture
 
 ```text
-Browser -> webui.truxonline.com (one origin, HTTPS)
+Browser -> fabric.truxonline.com (one origin, HTTPS)
         -> SPA static assets
         -> global Fabric BFF (private server-side session + CSRF)
            -> Authentik GLOBAL OIDC sign-in

@@ -1,6 +1,6 @@
 # TXO Fabric WebUI — global multi-tenant assistant-ui prototype
 
-**Canonical product origin:** `https://webui.truxonline.com` (ADR-040 / #3807). One global React frontend and one logical Fabric BFF, independently scalable. **Source only: NOT DEPLOYED and NOT yet accessible by end users.**
+**Canonical product origin:** `https://fabric.truxonline.com` (ADR-040 / #3807). One global React frontend and one logical Fabric BFF, independently scalable. **Source only: NOT DEPLOYED and NOT yet accessible by end users.**
 
 ## Source functionality
 
@@ -23,7 +23,7 @@ CI: `.github/workflows/txo-fabric-webui-client-ci.yaml`. Dependency lockfile, re
 
 ## Remaining security and deployment gates
 
-1. Deploy **one Authentik global OIDC client** with exact `https://webui.truxonline.com/auth/callback` and a signed immutable Authentik user UUID claim, plus safe migration/lookup of existing **per-tenant issuer-pinned Fabric identity ledgers**. Legacy per-tenant OIDC/dashboard apps must not break.
+1. Deploy **one Authentik global OIDC client** with exact `https://fabric.truxonline.com/auth/callback` and a signed immutable Authentik user UUID claim, plus safe migration/lookup of existing **per-tenant issuer-pinned Fabric identity ledgers**. Legacy per-tenant OIDC/dashboard apps must not break.
 2. Real BFF same-origin HTTP server, HttpOnly Secure sessions/CSRF/state/nonce, durable transactions, dedicated Fabric-private PostgreSQL credentials and migration, private service-authenticated enrollment writer.
 3. TenantBundle-backed canonical registry; active Authentik user/group UUID membership verification; fail-closed per-tenant FGA freshness, effective policy, independent tenant-admin and platform-admin checks.
 4. Private Hermes API Server enablement, durable BFF chat thread repository and per-operation authorized agent resolver, tenant isolation NetworkPolicy, global HTTPS/TLS ingress.

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createGlobalWebUIHandler } from "../server/global-webui-http.mjs";
 
-const origin = "https://webui.truxonline.com";
+const origin = "https://fabric.truxonline.com";
 const issuer = "https://authentik.truxonline.com/application/o/txo-fabric-webui/";
 const uuid = "c38f3cc7-5b33-4266-bd85-40ce9a100061";
 const user = "usr" + "e".repeat(32);

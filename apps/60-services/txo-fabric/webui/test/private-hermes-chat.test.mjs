@@ -150,7 +150,7 @@ test("disabled browser or bridge gate refuses without IAM, key or Hermes I/O", a
   }
   const bff = createPrivateBFFHandler();
   for (const path of ["/auth/start", "/api/me", "/api/tenants/indiba/chat/threads"]) {
-    const res = await bff(new Request("https://webui.truxonline.com" + path));
+    const res = await bff(new Request("https://fabric.truxonline.com" + path));
     assert.equal(res.status, 404);
   }
 });
@@ -275,7 +275,7 @@ test("turn lease rejects concurrent replay, retry/reconnect never creates anothe
 
 test("HTTP mutation origin validation strips browser headers and returns no private upstream topology", async () => {
   const h = harness();
-  const expectedOrigin = "https://webui.truxonline.com";
+  const expectedOrigin = "https://fabric.truxonline.com";
   const handler = createChatHttpHandler({
     authenticate: async () => principal, service: h.service, expectedOrigin,
   });
