@@ -489,6 +489,20 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrations(
 	}
 
 	if len(bundle.Status.AIGatewayMigration) == 0 {
+		// Legacy clusters may retain a terminal MigrationFailed condition after
+		// their one-shot Job was garbage-collected by an earlier controller.
+		// Recovery is never inferred: a reviewed identifier and the exact first
+		// retry ordinal are both required before creating fresh UID-bound evidence.
+		if legacyMigrationRecoveryEligible(bundle, retry) {
+			consumed, err := r.consumeLegacyAIGatewayMigrationRecovery(ctx, bundle)
+			if err != nil {
+				return false, "ReconcileError", "", err
+			}
+			if !consumed {
+				return false, "MigrationEvidenceMissing", "legacy recovery authorization was already consumed", nil
+			}
+			return r.createAIGatewayMigration(ctx, bundle, gatewayProfile, postgresqlProfile, databaseSecret, retry)
+		}
 		if retry != 0 || migrationHistoryExists(bundle) {
 			return false, "MigrationEvidenceMissing", "retained migration evidence is required before a historical LiteLLM migration can be retried", nil
 		}
@@ -559,6 +573,70 @@ func migrationJobSelector(bundle *fabricv1alpha1.TenantBundle) client.MatchingLa
 		LabelTenantName: bundle.Name,
 		"fabric.truxonline.io/ai-gateway-resource": "migration",
 	}
+}
+
+// legacyMigrationRecoveryEligible permits a single explicitly declared recovery
+// only when the retained MigrationFailed condition predates the spec generation
+// which introduced the immutable recovery identifier. Once reconciliation has
+// observed that generation, loss of Job/status evidence remains fail-closed.
+func legacyMigrationRecoveryEligible(bundle *fabricv1alpha1.TenantBundle, retry int32) bool {
+	if retry != 1 || bundle.Spec.AIGateway == nil || bundle.Spec.AIGateway.MigrationRecovery == "" || bundle.Spec.AIGateway.MigrationRecoveryFailedGeneration < 1 {
+		return false
+	}
+	for _, condition := range bundle.Status.Conditions {
+		if condition.Type == "AIGatewayReady" && condition.Status == metav1.ConditionFalse && condition.Reason == "MigrationFailed" && condition.ObservedGeneration == bundle.Spec.AIGateway.MigrationRecoveryFailedGeneration && condition.ObservedGeneration < bundle.Generation {
+			return true
+		}
+	}
+	return false
+}
+
+func aiGatewayMigrationRecoveryMarkerName(bundle *fabricv1alpha1.TenantBundle) string {
+	if bundle.Spec.AIGateway == nil {
+		return ""
+	}
+	material := bundle.Spec.AIGateway.MigrationRecovery + ":" + strconv.FormatInt(bundle.Spec.AIGateway.MigrationRecoveryFailedGeneration, 10)
+	sum := sha256.Sum256([]byte(material))
+	return boundedDNSName("txo-ai-gateway-recovery-" + hex.EncodeToString(sum[:4]))
+}
+
+func aiGatewayMigrationRecoveryMarkerOwnedBy(marker *corev1.ConfigMap, bundle *fabricv1alpha1.TenantBundle) bool {
+	if !aiGatewayRuntimeOwnedBy(marker, bundle) {
+		return false
+	}
+	for _, owner := range marker.OwnerReferences {
+		if owner.APIVersion == fabricv1alpha1.GroupVersion.String() && owner.Kind == "TenantBundle" && owner.Name == bundle.Name && owner.UID == bundle.UID && owner.Controller != nil && *owner.Controller {
+			return true
+		}
+	}
+	return false
+}
+
+// consumeLegacyAIGatewayMigrationRecovery records irreversible controller-owned
+// consumption before a Job can be created. A crash after this record is a
+// fail-closed state, not permission to recreate a one-time transition.
+func (r *TenantBundleReconciler) consumeLegacyAIGatewayMigrationRecovery(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (bool, error) {
+	name := aiGatewayMigrationRecoveryMarkerName(bundle)
+	key := types.NamespacedName{Namespace: tenantNamespace(bundle.Name), Name: name}
+	var existing corev1.ConfigMap
+	if err := r.Get(ctx, key, &existing); err == nil {
+		return false, nil
+	} else if !apierrors.IsNotFound(err) {
+		return false, err
+	}
+	labels := aiGatewayRuntimeLabels(bundle)
+	labels["fabric.truxonline.io/ai-gateway-resource"] = "migration-recovery"
+	marker := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: key.Namespace, Labels: labels}, Data: map[string]string{"recovery": bundle.Spec.AIGateway.MigrationRecovery, "failedGeneration": strconv.FormatInt(bundle.Spec.AIGateway.MigrationRecoveryFailedGeneration, 10)}}
+	if err := controllerutil.SetControllerReference(bundle, marker, r.Scheme); err != nil {
+		return false, err
+	}
+	if err := r.Create(ctx, marker); err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 func migrationHistoryExists(bundle *fabricv1alpha1.TenantBundle) bool {

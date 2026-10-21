@@ -20,7 +20,12 @@ spec:
   # absent historical Job.
   aiGateway:
     profileRef: litellm-standard
+    # One reviewed recovery transition for a pre-evidence historical failure.
+    # It creates a fresh owner-bound attempt 1; it is not a recurring job.
     migrationRetry: 1
+    migrationRecovery: legacy-evidence-20261016
+    # Exact historical generation that recorded MigrationFailed; immutable.
+    migrationRecoveryFailedGeneration: 9
   # Private Hermes agent storage is tenant-owned, not release-channel-owned.
   # Existing PVCs are not recreated when this policy is introduced.
   agentStorage:
