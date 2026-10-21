@@ -288,6 +288,23 @@ spec:
                   tenant LiteLLM facade automatically. Nil selects the platform default profile.
                   Provider/OAuth credentials never appear in this CR.
                 properties:
+                  migrationRecovery:
+                    description: |-
+                      MigrationRecovery is a reviewed, immutable recovery identifier for a
+                      legacy failed migration whose retained Job evidence was lost before the
+                      UID-bound status contract existed. It permits exactly attempt 1, never
+                      resets an existing attempt history, and is not a recurring operation.
+                    maxLength: 63
+                    pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                    type: string
+                  migrationRecoveryFailedGeneration:
+                    description: |-
+                      MigrationRecoveryFailedGeneration binds MigrationRecovery to the exact
+                      historical TenantBundle generation which recorded MigrationFailed. It is
+                      immutable, so later unrelated spec changes cannot replay the transition.
+                    format: int64
+                    minimum: 1
+                    type: integer
                   migrationRetry:
                     default: 0
                     description: |-
@@ -305,6 +322,17 @@ spec:
                     maxLength: 128
                     type: string
                 type: object
+                x-kubernetes-validations:
+                - message: migrationRecovery cannot be changed or removed once declared
+                  rule: '!has(oldSelf.migrationRecovery) || (has(self.migrationRecovery)
+                    && self.migrationRecovery == oldSelf.migrationRecovery)'
+                - message: migrationRecoveryFailedGeneration cannot be changed or
+                    removed once declared
+                  rule: '!has(oldSelf.migrationRecoveryFailedGeneration) || (has(self.migrationRecoveryFailedGeneration)
+                    && self.migrationRecoveryFailedGeneration == oldSelf.migrationRecoveryFailedGeneration)'
+                - message: migrationRecovery and migrationRecoveryFailedGeneration
+                    must be declared together
+                  rule: has(self.migrationRecovery) == has(self.migrationRecoveryFailedGeneration)
               displayName:
                 description: DisplayName is the human-readable tenant name.
                 maxLength: 253

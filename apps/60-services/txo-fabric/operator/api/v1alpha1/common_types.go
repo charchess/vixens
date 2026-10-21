@@ -66,6 +66,9 @@ type TenantMemorySpec struct {
 	Hindsight *HindsightMemorySpec `json:"hindsight,omitempty"`
 }
 
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.migrationRecovery) || (has(self.migrationRecovery) && self.migrationRecovery == oldSelf.migrationRecovery)",message="migrationRecovery cannot be changed or removed once declared"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.migrationRecoveryFailedGeneration) || (has(self.migrationRecoveryFailedGeneration) && self.migrationRecoveryFailedGeneration == oldSelf.migrationRecoveryFailedGeneration)",message="migrationRecoveryFailedGeneration cannot be changed or removed once declared"
+// +kubebuilder:validation:XValidation:rule="has(self.migrationRecovery) == has(self.migrationRecoveryFailedGeneration)",message="migrationRecovery and migrationRecoveryFailedGeneration must be declared together"
 type TenantAIGatewaySpec struct {
 	// ProfileRef selects the tenant-facing LiteLLM gateway profile.
 	// +optional
@@ -81,6 +84,22 @@ type TenantAIGatewaySpec struct {
 	// +kubebuilder:default=0
 	// +kubebuilder:validation:Minimum=0
 	MigrationRetry int32 `json:"migrationRetry,omitempty"`
+
+	// MigrationRecovery is a reviewed, immutable recovery identifier for a
+	// legacy failed migration whose retained Job evidence was lost before the
+	// UID-bound status contract existed. It permits exactly attempt 1, never
+	// resets an existing attempt history, and is not a recurring operation.
+	// +optional
+	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
+	MigrationRecovery string `json:"migrationRecovery,omitempty"`
+
+	// MigrationRecoveryFailedGeneration binds MigrationRecovery to the exact
+	// historical TenantBundle generation which recorded MigrationFailed. It is
+	// immutable, so later unrelated spec changes cannot replay the transition.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	MigrationRecoveryFailedGeneration int64 `json:"migrationRecoveryFailedGeneration,omitempty"`
 }
 
 // AIGatewayMigrationPhase is the evidence-derived phase of one retained
