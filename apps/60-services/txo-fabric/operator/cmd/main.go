@@ -120,6 +120,14 @@ func main() {
 				Client:mgr.GetClient(),APIReader:mgr.GetAPIReader(),Scheme:mgr.GetScheme(),
 			}},
 		}
+		activeHumanHandler:=&privatebridge.ActiveHumanHandler{
+			Contract:handler.Contract,
+			Tokens:handler.Tokens,
+			Nonces:handler.Nonces,
+			Accounts:privateBFFActiveHuman{controller:&controller.TenantBundleReconciler{
+				Client:mgr.GetClient(),APIReader:mgr.GetAPIReader(),Scheme:mgr.GetScheme(),
+			}},
+		}
 		browserAuthorityHandler:=&privatebridge.BrowserAuthorityHandler{
 			Contract:handler.Contract,
 			Tokens:handler.Tokens,
@@ -133,6 +141,7 @@ func main() {
 			if err!=nil {return err}
 			mux:=http.NewServeMux()
 			mux.Handle(privatebridge.Path,handler)
+			mux.Handle(privatebridge.ActiveHumanPath,activeHumanHandler)
 			mux.Handle(privatebridge.EnrollmentPath,enrollmentHandler)
 			mux.Handle(privatebridge.BrowserAuthorityPath,browserAuthorityHandler)
 			server:=&http.Server{
@@ -172,6 +181,12 @@ type privateBrowserAuthorityResolver struct { controller *controller.TenantBundl
 func (r privateBrowserAuthorityResolver) ResolveBrowserAuthority(ctx context.Context,q privatebridge.BrowserAuthorityRequest,now time.Time)(privatebridge.BrowserAuthorityResponse,error) {
 	if r.controller==nil { return privatebridge.BrowserAuthorityResponse{},errors.New("private browser authority unavailable") }
 	return r.controller.ResolvePrivateBrowserAuthority(ctx,q,now)
+}
+
+type privateBFFActiveHuman struct { controller *controller.TenantBundleReconciler }
+func (r privateBFFActiveHuman) VerifyActiveHuman(ctx context.Context,issuer,subject,uuid string,now time.Time) error {
+	if r.controller==nil { return errors.New("private active-human verifier unavailable") }
+	return r.controller.VerifyPrivateBFFActiveHuman(ctx,issuer,subject,uuid,now)
 }
 
 // privateBFFEnrollment keeps enrollment separate from resolution so the latter
