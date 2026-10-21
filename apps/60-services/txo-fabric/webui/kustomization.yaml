@@ -12,6 +12,7 @@ configMapGenerator:
     files:
       - 001_oidc_login_transactions.sql=db/migrations/001_oidc_login_transactions.sql
       - 002_global_browser_sessions.sql=db/migrations/002_global_browser_sessions.sql
+      - 003_oidc_global_session_binding.sql=db/migrations/003_oidc_global_session_binding.sql
 generatorOptions:
   disableNameSuffixHash: true
   labels:

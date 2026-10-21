@@ -12,7 +12,6 @@ import (
 func TestGlobalEnrollmentIntentRequiresOneExactReviewedProof(t *testing.T) {
 	intents := []fabricv1alpha1.HumanEnrollmentIntent{{
 		AuthentikUserUUID: "550e8400-e29b-41d4-a716-446655440000",
-		OIDCSubject:       "opaque-tenant-subject",
 		GlobalOIDCIssuer:  "https://authentik.example/application/o/txo-fabric-webui/",
 		GlobalOIDCSubject: "opaque-global-subject",
 	}}
@@ -21,8 +20,8 @@ func TestGlobalEnrollmentIntentRequiresOneExactReviewedProof(t *testing.T) {
 		globalSubject: "opaque-global-subject",
 		authentikUUID: "550e8400-e29b-41d4-a716-446655440000",
 	}
-	intent, ok := globalEnrollmentIntent(intents, valid)
-	if !ok || intent.OIDCSubject != "opaque-tenant-subject" {
+	_, ok := globalEnrollmentIntent(intents, valid)
+	if !ok {
 		t.Fatal("exact reviewed global enrollment proof denied")
 	}
 	for _, proof := range []trustedHumanOIDCProof{
@@ -42,13 +41,13 @@ func TestGlobalEnrollmentIntentRejectsMissingOrAmbiguousMapping(t *testing.T) {
 		globalSubject: "opaque-global-subject", authentikUUID: "550e8400-e29b-41d4-a716-446655440000",
 	}
 	if _, ok := globalEnrollmentIntent([]fabricv1alpha1.HumanEnrollmentIntent{{
-		AuthentikUserUUID: proof.authentikUUID, OIDCSubject: "opaque-tenant-subject",
+		AuthentikUserUUID: proof.authentikUUID,
 	}}, proof); ok {
 		t.Fatal("legacy intent without an explicit global tuple authorized enrollment")
 	}
 	intent := fabricv1alpha1.HumanEnrollmentIntent{
-		AuthentikUserUUID: proof.authentikUUID, OIDCSubject: "opaque-tenant-subject",
-		GlobalOIDCIssuer: proof.globalIssuer, GlobalOIDCSubject: proof.globalSubject,
+		AuthentikUserUUID: proof.authentikUUID,
+		GlobalOIDCIssuer:  proof.globalIssuer, GlobalOIDCSubject: proof.globalSubject,
 	}
 	if _, ok := globalEnrollmentIntent([]fabricv1alpha1.HumanEnrollmentIntent{intent, intent}, proof); ok {
 		t.Fatal("ambiguous global enrollment mappings were accepted")
@@ -64,8 +63,7 @@ func TestGeneratedEnrollmentIntentSchemaKeepsGlobalTupleOptionalForLegacyObjects
 	if err != nil {
 		t.Fatal(err)
 	}
-	const legacyRequired = "- authentikUserUUID\n                      - globalOidcIssuer\n                      - globalOidcSubject\n                      - oidcSubject"
-	if strings.Contains(string(crd), legacyRequired) {
-		t.Fatal("generated CRD rejects legacy enrollment intents before fail-closed runtime validation")
+	if strings.Contains(string(crd), "oidcSubject:") {
+		t.Fatal("generated CRD still permits manual tenant OIDC subject injection")
 	}
 }

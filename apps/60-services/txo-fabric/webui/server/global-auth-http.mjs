@@ -1,9 +1,12 @@
 import { createGlobalOIDCLogin, GLOBAL_OIDC_BINDING_COOKIE } from "./global-oidc-login.mjs";
+import { createFabricOIDCLogin } from "./oidc-login.mjs";
 import { createGlobalWebUIHandler } from "./global-webui-http.mjs";
 
 const SESSION_COOKIE = "__Host-txo-fabric-session";
 const AUTH_REQUEST = "auth";
 const BASE64URL43 = /^[A-Za-z0-9_-]{43}$/;
+const TENANT_KEY = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+const TENANT_OIDC_COOKIE = "__Host-txo-fabric-oidc";
 const OIDC_SUB = /^[!-~]{1,255}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const fail = () => { throw new Error("Global Fabric authentication unavailable"); };
@@ -48,14 +51,17 @@ const denied = (status = 403) => new Response("Access denied", { status, headers
  * TLS ingress, CNPG migrations and NetworkPolicy are installed.
  */
 export function createGlobalAuthHttp({
-  expectedOrigin, login, sessions, verifyActiveHuman,
+  expectedOrigin, login, sessions, verifyActiveHuman, tenantProofs,
 }) {
   if (typeof expectedOrigin !== "string" || !/^https:\/\/[^/?#]+$/.test(expectedOrigin) ||
       typeof login?.begin !== "function" || typeof login?.complete !== "function" ||
       typeof sessions?.issue !== "function" ||
       typeof sessions?.authenticate !== "function" ||
       typeof sessions?.revoke !== "function" ||
-      typeof verifyActiveHuman !== "function") fail();
+      typeof verifyActiveHuman !== "function" ||
+      (tenantProofs !== undefined && (!tenantProofs || typeof tenantProofs !== "object" || Array.isArray(tenantProofs) ||
+        Object.keys(tenantProofs).some((key) => key !== "hairem") ||
+        Object.values(tenantProofs).some((proof) => typeof proof?.begin !== "function" || typeof proof?.complete !== "function")))) fail();
 
   async function authenticate(request) {
     const token = cookieValue(request, SESSION_COOKIE);
@@ -136,6 +142,51 @@ export function createGlobalAuthHttp({
         return new Response(null, { status: 303, headers: h });
       } catch { return new Response("Access denied", { status: 403, headers: h }); }
     }
+    const enrollment = /^\/api\/tenants\/([a-z0-9-]+)\/enroll$/.exec(url.pathname);
+    if (enrollment) {
+      if (request.method !== "POST" || url.search || request.headers.get("origin") !== expectedOrigin ||
+          request.headers.get("x-txo-request") !== "enroll" || !TENANT_KEY.test(enrollment[1]) ||
+          enrollment[1] !== "hairem" || !tenantProofs?.hairem) return denied();
+      try {
+        const binding = cookieValue(request, SESSION_COOKIE);
+        if (!binding) return denied();
+        const identity = await sessions.authenticate(binding);
+        if (!identity || identity.authenticated !== true || identity.verified !== true ||
+            !OIDC_SUB.test(identity.oidcSubject || "") || !UUID.test(identity.authentikUserUUID || "")) return denied();
+        const started = await tenantProofs.hairem.begin({ globalSessionBinding: binding });
+        const authorizationURL = new URL(started?.authorizationURL);
+        const cookie = started?.browserCookie;
+        if (authorizationURL.protocol !== "https:" || authorizationURL.username || authorizationURL.password ||
+            authorizationURL.hash || !cookie || cookie.name !== TENANT_OIDC_COOKIE ||
+            !BASE64URL43.test(cookie.value || "") || cookie.httpOnly !== true || cookie.secure !== true ||
+            cookie.sameSite !== "Lax" || cookie.path !== "/" || cookie.maxAge !== 300) fail();
+        const h = headers(); h.set("Location", authorizationURL.href);
+        h.append("Set-Cookie", setCookie(cookie.name, cookie.value, cookie.maxAge));
+        return new Response(null, { status: 303, headers: h });
+      } catch { return denied(503); }
+    }
+    const tenantCallback = /^\/auth\/tenants\/([a-z0-9-]+)\/callback$/.exec(url.pathname);
+    if (tenantCallback) {
+      const h = headers(); h.append("Set-Cookie", clearCookie(TENANT_OIDC_COOKIE));
+      if (request.method !== "GET" || tenantCallback[1] !== "hairem" || !tenantProofs?.hairem) {
+        return new Response("Access denied", { status: 403, headers: h });
+      }
+      try {
+        const params = [...url.searchParams.entries()];
+        if (params.length !== 2 || new Set(params.map(([key]) => key)).size !== 2 ||
+            !params.every(([key]) => key === "state" || key === "code")) fail();
+        const state = url.searchParams.get("state"), code = url.searchParams.get("code");
+        const binding = cookieValue(request, TENANT_OIDC_COOKIE);
+        const globalSessionBinding = cookieValue(request, SESSION_COOKIE);
+        if (!BASE64URL43.test(state || "") || typeof code !== "string" || code.length < 1 || code.length > 4096 ||
+            !binding || !globalSessionBinding) fail();
+        const result = await tenantProofs.hairem.complete({ state, code, browserCookieValue: binding, globalSessionBinding });
+        if (!result || result.tenantKey !== "hairem" || typeof result.fabricUserId !== "string" ||
+            !/^usr[0-9a-f]{32}$/.test(result.fabricUserId)) fail();
+        h.set("Location", expectedOrigin + "/");
+        return new Response(null, { status: 303, headers: h });
+      } catch { return new Response("Access denied", { status: 403, headers: h }); }
+    }
     if (url.pathname === "/auth/logout") {
       if (request.method !== "POST" || url.search ||
           request.headers.get("origin") !== expectedOrigin ||
@@ -168,8 +219,21 @@ export function createGlobalWebUIApp({
   const login = createGlobalOIDCLogin({
     expectedOrigin, authentikOrigin, transactions, fetchImpl, now,
   });
+  const tenantProofs = typeof enrollTenant === "function" ? Object.freeze({
+    hairem: createFabricOIDCLogin({
+      tenantKey: "hairem",
+      issuer: authentikOrigin + "/application/o/txo-fabric-hairem/",
+      clientId: "txo-fabric-hairem",
+      domainSuffix: "truxonline.com",
+      redirectURI: expectedOrigin + "/auth/tenants/hairem/callback",
+      authentikOrigin, transactions,
+      resolveGlobalSession: sessions.authenticate.bind(sessions),
+      enrollVerifiedHuman: enrollTenant,
+      fetchImpl, now,
+    }),
+  }) : undefined;
   const auth = createGlobalAuthHttp({
-    expectedOrigin, login, sessions, verifyActiveHuman,
+    expectedOrigin, login, sessions, verifyActiveHuman, tenantProofs,
   });
   const app = createGlobalWebUIHandler({
     expectedOrigin,
@@ -181,7 +245,7 @@ export function createGlobalWebUIApp({
   return async function handle(request) {
     let url;
     try { url = new URL(request.url); } catch { return denied(); }
-    if (url.pathname.startsWith("/auth/")) return auth.handle(request);
+    if (url.pathname.startsWith("/auth/") || url.pathname === "/api/tenants/hairem/enroll") return auth.handle(request);
     return app(request);
   };
 }

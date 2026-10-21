@@ -61,9 +61,10 @@ export function composeGlobalBFF({
     expectedOrigin, authentikOrigin, transactions, sessions,
     verifyActiveHuman, listTenantCatalog, resolveTenantAccess,
     getTenantChat, browserArtifacts, resolvePlatformAccess,
-    enrollTenant: async ({ tenantKey, issuer, oidcSubject, authentikUserUUID } = {}) =>
+    enrollTenant: async ({ tenantKey, issuer, oidcSubject, authentikUserUUID, globalOidcIssuer, globalOidcSubject } = {}) =>
       bridgeClient.enroll(Object.freeze({
         tenantKey, oidcIssuer: issuer, oidcSubject, authentikUserUUID,
+        globalOidcIssuer, globalOidcSubject,
       })),
     fetchImpl,
   });

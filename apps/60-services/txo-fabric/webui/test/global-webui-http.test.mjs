@@ -255,34 +255,20 @@ test("settings, admin and identity writes are NOT routed through tenant chat acc
   assert.equal(audit.filter(x => x.action === "create").length, 0);
 });
 
-test("verified global session may request a bounded private enrollment without catalog disclosure", async () => {
-  const requests = [];
+test("global WebUI cannot directly enroll a tenant from a global identity", async () => {
+  let enrollCalls = 0;
   const handler = createGlobalWebUIHandler({
     expectedOrigin: origin, expectedIssuer: issuer,
     authenticate: async () => identity,
     listTenantCatalog: async () => { throw Error("catalog must not gate first enrollment"); },
     resolveTenantAccess: async () => { throw Error("membership must not be synthesized"); },
     getTenantChat: async () => { throw Error("chat must not be reached"); },
-    enrollTenant: async input => {
-      requests.push(input);
-      return { tenantKey: "hairem", fabricUserId: user };
-    },
+    enrollTenant: async () => { enrollCalls++; throw Error("direct enrollment bypass"); },
   });
-  const accepted = await handler(new Request(origin + "/api/tenants/hairem/enroll", {
-    method: "POST", headers: { Origin: origin, "X-TXO-Request": "enroll" },
-  }));
-  assert.equal(accepted.status, 204);
-  assert.deepEqual(requests, [{
-    tenantKey: "hairem", issuer, oidcSubject: identity.oidcSubject,
-    authentikUserUUID: uuid,
-  }]);
   for (const request of [
+    new Request(origin + "/api/tenants/hairem/enroll", { method: "POST", headers: { Origin: origin, "X-TXO-Request": "enroll" } }),
     new Request(origin + "/api/tenants/hairem/enroll", { method: "GET" }),
-    new Request(origin + "/api/tenants/hairem/enroll", { method: "POST" }),
-    new Request(origin + "/api/tenants/hairem/enroll", { method: "POST", headers: { Origin: origin, "X-TXO-Request": "chat" } }),
-  ]) assert.equal((await handler(request)).status, 403);
-  assert.equal((await handler(new Request(origin + "/api/tenants/HAIrem/enroll", {
-    method: "POST", headers: { Origin: origin, "X-TXO-Request": "enroll" },
-  }))).status, 404);
-  assert.equal(requests.length, 1);
+    new Request(origin + "/api/tenants/HAIrem/enroll", { method: "POST", headers: { Origin: origin, "X-TXO-Request": "enroll" } }),
+  ]) assert.equal((await handler(request)).status, 404);
+  assert.equal(enrollCalls, 0);
 });

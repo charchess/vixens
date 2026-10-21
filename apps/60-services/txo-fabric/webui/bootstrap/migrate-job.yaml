@@ -43,6 +43,7 @@ spec:
               export PGCONNECT_TIMEOUT=5
               psql -X -v ON_ERROR_STOP=1 -f /migrations/001_oidc_login_transactions.sql
               psql -X -v ON_ERROR_STOP=1 -f /migrations/002_global_browser_sessions.sql
+              psql -X -v ON_ERROR_STOP=1 -f /migrations/003_oidc_global_session_binding.sql
               # Idempotent grants applied only by the dedicated schema owner.
               psql -X -v ON_ERROR_STOP=1 -c "REVOKE ALL ON DATABASE txo_fabric_webui FROM PUBLIC"
               psql -X -v ON_ERROR_STOP=1 -c "GRANT CONNECT ON DATABASE txo_fabric_webui TO txo_fabric_webui_runtime"

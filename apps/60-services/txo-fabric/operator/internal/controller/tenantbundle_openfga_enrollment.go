@@ -24,6 +24,8 @@ import (
 type trustedHumanOIDCProof struct {
 	globalIssuer  string
 	globalSubject string
+	tenantIssuer  string
+	tenantSubject string
 	authentikUUID string
 }
 
@@ -104,16 +106,15 @@ func (r *TenantBundleReconciler) enrollHumanFromVerifiedIdentity(
 		return "", err
 	}
 	tenantIssuer := bundle.Spec.HumanAccess.Web.OIDC.Issuer
-	intent, allowed := globalEnrollmentIntent(bundle.Spec.HumanAccess.EnrollmentIntents, proof)
-	if !allowed {
-		return "", errors.New("verified global identity has no explicit Fabric enrollment intent")
+	_, allowed := globalEnrollmentIntent(bundle.Spec.HumanAccess.EnrollmentIntents, proof)
+	if !allowed || proof.tenantIssuer != tenantIssuer || proof.tenantSubject == "" {
+		return "", errors.New("verified global and tenant identities have no explicit Fabric enrollment intent")
 	}
-	// The global proof selects a reviewed mapping. It is deliberately never used
-	// as a tenant issuer or subject: only the declared legacy tenant tuple can
-	// enter the retained issuer-pinned identity ledger.
+	// The global proof selects a reviewed intent only. The tenant tuple comes
+	// exclusively from the separately verified tenant issuer proof.
 	claim := authentik.IdentityBinding{
-		TenantID: bundle.Spec.TenantID, Issuer: tenantIssuer,
-		OIDCSubject: intent.OIDCSubject, AuthentikUserUUID: proof.authentikUUID,
+		TenantID: bundle.Spec.TenantID, Issuer: proof.tenantIssuer,
+		OIDCSubject: proof.tenantSubject, AuthentikUserUUID: proof.authentikUUID,
 		FabricUserID: "usr-validation-only",
 	}
 	if _, err := authentik.NewIdentityRegistry(bundle.Name, bundle.Spec.TenantID, tenantIssuer,

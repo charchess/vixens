@@ -8,6 +8,18 @@ const MAX_AGE_MS = 5 * 60 * 1000;
 const MAX_TOKEN_RESPONSE = 32768;
 const SCOPE = "openid profile email txo_fabric_identity";
 const COOKIE_NAME = "__Host-txo-fabric-oidc";
+const GLOBAL_OIDC_ISSUER = "https://authentik.truxonline.com/application/o/txo-fabric-webui/";
+const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
+const SUBJECT = /^[!-~]{1,255}$/;
+
+function validGlobalSessionIdentity(identity) {
+  return !!identity && typeof identity === "object" && !Array.isArray(identity) &&
+    Object.keys(identity).length === 3 &&
+    ["issuer", "oidcSubject", "authentikUserUUID"].every((key) =>
+      Object.prototype.hasOwnProperty.call(identity, key)) &&
+    identity.issuer === GLOBAL_OIDC_ISSUER && SUBJECT.test(identity.oidcSubject) &&
+    UUID.test(identity.authentikUserUUID);
+}
 const deny = () => { throw new Error("Fabric OIDC login denied"); };
 const random = () => randomBytes(32).toString("base64url");
 const digest = (value) => createHash("sha256").update(value).digest("base64url");
@@ -30,18 +42,20 @@ function config({ tenantKey, issuer, clientId, redirectURI, domainSuffix, authen
       provider.search || provider.hash || provider.href !== issuer ||
       provider.pathname !== `/application/o/txo-fabric-${tenantKey}/` ||
       callback.protocol !== "https:" || callback.port || callback.username || callback.password ||
-      callback.search || callback.hash || callback.href !== redirectURI ||
-      callback.pathname !== "/auth/callback" ||
-      !callback.hostname.includes("-" + tenantKey + ".") ) deny();
-  // TenantBundle-generated redirect regex is:
+      callback.search || callback.hash || callback.href !== redirectURI ) deny();
+  // TenantBundle-generated legacy callback regex is:
   // ^https://[a-z0-9-]+-<tenant>\\.<domainSuffix>/auth/callback$
   const suffix = "-" + tenantKey + "." + domainSuffix;
   const appLabel = callback.hostname.endsWith(suffix)
     ? callback.hostname.slice(0, -suffix.length) : "";
-  if (!/^[a-z0-9-]+$/.test(appLabel)) deny();
+  const tenantCallback = callback.pathname === "/auth/callback" &&
+    /^[a-z0-9-]+$/.test(appLabel);
+  const fabricCallback = callback.origin === "https://fabric.truxonline.com" &&
+    callback.pathname === "/auth/tenants/" + tenantKey + "/callback";
+  if (!tenantCallback && !fabricCallback) deny();
   const authorizationEndpoint = new URL("/application/o/authorize/", provider.origin);
   const tokenEndpoint = new URL("/application/o/token/", provider.origin);
-  return { authorizationEndpoint, tokenEndpoint };
+  return { authorizationEndpoint, tokenEndpoint, fabricCallback };
 }
 
 function secretEqual(a, b) {
@@ -75,20 +89,22 @@ function secretEqual(a, b) {
  */
 export function createFabricOIDCLogin({
   tenantKey, issuer, clientId, domainSuffix, redirectURI, authentikOrigin, transactions,
-  enrollVerifiedHuman, fetchImpl = fetch, now = () => Date.now(),
+  enrollVerifiedHuman, resolveGlobalSession, fetchImpl = fetch, now = () => Date.now(),
 }) {
   const endpoints = config({ tenantKey, issuer, clientId, domainSuffix, redirectURI, authentikOrigin });
   if (!transactions || typeof transactions.insert !== "function" ||
       typeof transactions.consume !== "function" ||
       typeof enrollVerifiedHuman !== "function" ||
+      (endpoints.fabricCallback && typeof resolveGlobalSession !== "function") ||
       typeof fetchImpl !== "function" || typeof now !== "function") deny();
   const verifyLoginIDToken = createAuthentikIdentityVerifier({
     tenantKey, issuer, clientId, fetchImpl, now,
   });
 
   return Object.freeze({
-    async begin() {
+    async begin({ globalSessionBinding } = {}) {
       try {
+        if (endpoints.fabricCallback && !BASE64URL43.test(globalSessionBinding || "")) deny();
         const issuedAt = now();
         if (!Number.isSafeInteger(issuedAt) || issuedAt < 0) deny();
         const state = random(), nonce = random(), pkceVerifier = random();
@@ -99,6 +115,7 @@ export function createFabricOIDCLogin({
           tenantKey, state,
           value: {
             nonce, pkceVerifier, bindingDigest: digest(browserBinding),
+            ...(endpoints.fabricCallback ? { globalSessionDigest: digest(globalSessionBinding) } : {}),
             issuedAt, issuer, clientId, redirectURI,
           },
           expiresAt: issuedAt + MAX_AGE_MS,
@@ -120,9 +137,10 @@ export function createFabricOIDCLogin({
       } catch { deny(); }
     },
 
-    async complete({ state, code, browserCookieValue } = {}) {
+    async complete({ state, code, browserCookieValue, globalSessionBinding } = {}) {
       if (!BASE64URL43.test(state || "") || typeof code !== "string" ||
-          !CODE.test(code) || !BASE64URL43.test(browserCookieValue || "")) deny();
+          !CODE.test(code) || !BASE64URL43.test(browserCookieValue || "") ||
+          (endpoints.fabricCallback && !BASE64URL43.test(globalSessionBinding || ""))) deny();
       let transaction;
       try {
         // A failed callback burns the state. Must be atomic across BFF pods.
@@ -134,12 +152,21 @@ export function createFabricOIDCLogin({
           !BASE64URL43.test(transaction.nonce || "") ||
           !BASE64URL43.test(transaction.pkceVerifier || "") ||
           !BASE64URL43.test(transaction.bindingDigest || "") ||
+          (endpoints.fabricCallback && !BASE64URL43.test(transaction.globalSessionDigest || "")) ||
           !Number.isSafeInteger(transaction.issuedAt)) deny();
       let t;
       try { t = now(); } catch { deny(); }
       if (!Number.isSafeInteger(t) || t < transaction.issuedAt ||
           t - transaction.issuedAt > MAX_AGE_MS ||
-          !secretEqual(transaction.bindingDigest, digest(browserCookieValue))) deny();
+          !secretEqual(transaction.bindingDigest, digest(browserCookieValue)) ||
+          (endpoints.fabricCallback && !secretEqual(transaction.globalSessionDigest, digest(globalSessionBinding)))) deny();
+
+      let globalIdentity;
+      if (endpoints.fabricCallback) {
+        try { globalIdentity = await resolveGlobalSession(globalSessionBinding); }
+        catch { deny(); }
+        if (!validGlobalSessionIdentity(globalIdentity)) deny();
+      }
 
       try {
         const form = new URLSearchParams({
@@ -164,10 +191,15 @@ export function createFabricOIDCLogin({
         const proof = await verifyLoginIDToken({
           idToken: tokens.id_token, expectedNonce: transaction.nonce,
         });
+        if (endpoints.fabricCallback && globalIdentity.authentikUserUUID !== proof.authentikUserUUID) deny();
         const fabricUserId = await enrollVerifiedHuman(Object.freeze({
           tenantKey: proof.tenantKey, issuer: proof.issuer,
           oidcSubject: proof.oidcSubject,
           authentikUserUUID: proof.authentikUserUUID,
+          ...(endpoints.fabricCallback ? {
+            globalOidcIssuer: globalIdentity.issuer,
+            globalOidcSubject: globalIdentity.oidcSubject,
+          } : {}),
         }));
         if (typeof fabricUserId !== "string" || !FABRIC_USER_ID.test(fabricUserId)) deny();
         return Object.freeze({

@@ -66,18 +66,11 @@ type HumanWebAccessSpec struct {
 // HumanEnrollmentIntent pins one pre-existing Authentik identity that may be
 // enrolled after a server-side, signed OIDC proof. It is not an account,
 // password, group membership, authorization grant, or browser-supplied value.
-// The immutable UUID and opaque OIDC subject must both match exactly.
+// The immutable UUID and global OIDC tuple must match exactly; the tenant subject is supplied only by a separately verified tenant OIDC proof.
 type HumanEnrollmentIntent struct {
 	// AuthentikUserUUID is the immutable UUID of an existing Authentik account.
 	// +kubebuilder:validation:Pattern=`^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$`
 	AuthentikUserUUID string `json:"authentikUserUUID"`
-
-	// OIDCSubject is the opaque signed sub expected from the tenant's existing
-	// issuer. It is the only subject persisted in the tenant identity ledger.
-	// It is never derived from a username, email, group, or browser request.
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=2048
-	OIDCSubject string `json:"oidcSubject"`
 
 	// GlobalOIDCIssuer is the exact issuer of the separate platform-global OIDC
 	// client whose signed proof may select this reviewed tenant mapping. It is

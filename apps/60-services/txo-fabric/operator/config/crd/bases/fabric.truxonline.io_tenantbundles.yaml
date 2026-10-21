@@ -325,7 +325,7 @@ spec:
                         HumanEnrollmentIntent pins one pre-existing Authentik identity that may be
                         enrolled after a server-side, signed OIDC proof. It is not an account,
                         password, group membership, authorization grant, or browser-supplied value.
-                        The immutable UUID and opaque OIDC subject must both match exactly.
+                        The immutable UUID and global OIDC tuple must match exactly; the tenant subject is supplied only by a separately verified tenant OIDC proof.
                       properties:
                         authentikUserUUID:
                           description: AuthentikUserUUID is the immutable UUID of
@@ -347,17 +347,8 @@ spec:
                           maxLength: 2048
                           minLength: 1
                           type: string
-                        oidcSubject:
-                          description: |-
-                            OIDCSubject is the opaque signed sub expected from the tenant's existing
-                            issuer. It is the only subject persisted in the tenant identity ledger.
-                            It is never derived from a username, email, group, or browser request.
-                          maxLength: 2048
-                          minLength: 1
-                          type: string
                       required:
                       - authentikUserUUID
-                      - oidcSubject
                       type: object
                     maxItems: 32
                     type: array

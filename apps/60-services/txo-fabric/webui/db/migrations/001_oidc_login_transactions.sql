@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS txo_fabric_oidc_login_transactions (
     nonce            varchar(43) NOT NULL,
     pkce_verifier    varchar(43) NOT NULL,
     binding_digest   varchar(43) NOT NULL,
+    global_session_digest varchar(43),
     issued_at_ms     bigint NOT NULL,
     expires_at_ms    bigint NOT NULL,
 
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS txo_fabric_oidc_login_transactions (
         AND nonce ~ '^[A-Za-z0-9_-]{43}$'
         AND pkce_verifier ~ '^[A-Za-z0-9_-]{43}$'
         AND binding_digest ~ '^[A-Za-z0-9_-]{43}$'
+        AND (global_session_digest IS NULL OR global_session_digest ~ '^[A-Za-z0-9_-]{43}$')
     ),
     CONSTRAINT txo_oidc_expiry_valid CHECK (
         issued_at_ms >= 0

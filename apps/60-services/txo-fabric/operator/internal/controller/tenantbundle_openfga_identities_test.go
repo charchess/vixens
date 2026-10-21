@@ -32,7 +32,6 @@ func humanIdentityTenant(name, id, uid, group string) *fabricv1alpha1.TenantBund
 		},
 		EnrollmentIntents: []fabricv1alpha1.HumanEnrollmentIntent{{
 			AuthentikUserUUID: identityLedgerUserUUID,
-			OIDCSubject:       "opaque-hashed-sub-not-uuid",
 			GlobalOIDCIssuer:  "https://authentik.truxonline.com/application/o/txo-fabric-webui/",
 			GlobalOIDCSubject: "opaque-global-sub-not-uuid",
 		}},

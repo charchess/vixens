@@ -38,12 +38,12 @@ function postgresSimulation() {
       calls.push({ sql, args });
       if (sql.startsWith("INSERT INTO txo_fabric_oidc_login_transactions")) {
         const [tenant_key, state_digest, issuer, client_id, redirect_uri,
-          nonce_, pkce_verifier, binding_digest, issued_at_ms, expires_at_ms] = args;
+          nonce_, pkce_verifier, binding_digest, global_session_digest, issued_at_ms, expires_at_ms] = args;
         const key = tenant_key + ":" + state_digest;
         if (rows.has(key)) throw Error("duplicate key exposes internals");
         rows.set(key, {
           tenant_key, state_digest, issuer, client_id, redirect_uri,
-          nonce: nonce_, pkce_verifier, binding_digest,
+          nonce: nonce_, pkce_verifier, binding_digest, global_session_digest,
           issued_at_ms: String(issued_at_ms), expires_at_ms: String(expires_at_ms),
         });
         return { rowCount: 1, rows: [] };
@@ -75,6 +75,14 @@ test("migrated schema uses immutable tenant-scoped digest key and bounded expiry
   assert.doesNotMatch(migration, /(?:PASSWORD|Bearer)\s+['"][^'"]{10}/i);
 });
 
+test("existing BFF transaction tables gain the session-binding digest additively", () => {
+  const migration = readFileSync(new URL("../db/migrations/003_oidc_global_session_binding.sql", import.meta.url), "utf8");
+  assert.match(migration, /ALTER TABLE txo_fabric_oidc_login_transactions\s+ADD COLUMN IF NOT EXISTS global_session_digest varchar\(43\)/);
+  assert.match(migration, /global_session_digest IS NULL OR global_session_digest ~ '\^\[A-Za-z0-9_-\]\{43\}\$'/);
+  const job = readFileSync(new URL("../bootstrap/migrate-job.yaml", import.meta.url), "utf8");
+  assert.match(job, /-f \/migrations\/003_oidc_global_session_binding\.sql/);
+});
+
 test("two replicas atomically consume one hashed state once, without storing original bearer state", async () => {
   const db = postgresSimulation();
   const a = createPostgresOIDCTransactions({ pool: db });
@@ -100,6 +108,19 @@ test("two replicas atomically consume one hashed state once, without storing ori
   assert.match(db.calls[1].sql, /WHERE tenant_key = \$1 AND state_digest = \$2/);
   assert.equal(db.calls[1].args[0], scope);
   assert.equal(db.calls[1].args[1], sha256(uuid));
+});
+
+test("Fabric callback transaction retains only the global-session digest", async () => {
+  const db = postgresSimulation();
+  const store = createPostgresOIDCTransactions({ pool: db });
+  const globalSessionBinding = randomBytes(32).toString("base64url");
+  const input = record();
+  input.value.globalSessionDigest = sha256(globalSessionBinding);
+  await store.insert(input);
+  const [stored] = db.rows.values();
+  assert.equal(stored.global_session_digest, sha256(globalSessionBinding));
+  assert.equal(JSON.stringify(stored).includes(globalSessionBinding), false);
+  assert.deepEqual(await store.consume({ tenantKey: scope, state: uuid }), input.value);
 });
 
 test("cross-tenant state cannot consume or replace an existing transaction", async () => {
