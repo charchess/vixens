@@ -19,6 +19,13 @@ data:
     # Amavis runtime paths must exist after DMS setup and before daemons start.
     install -d -o 998 -g 998 -m 0750 /var/lib/amavis/tmp /var/lib/amavis/db
 
+    # Shorten operational feedback for deferred outbound mail. The queue keeps
+    # retrying normally, but senders receive a delayed-delivery warning after
+    # four hours and a final DSN after 24 hours instead of five days.
+    postconf -e 'delay_warning_time = 4h'
+    postconf -e 'maximal_queue_lifetime = 24h'
+    postconf -e 'bounce_queue_lifetime = 24h'
+
     # DMS v16 defaults passdb user expansion to the AD attribute
     # uniqueIdentifier. The bounded mail-user OU does not expose it, while
     # the authenticated login is the canonical user identity.
