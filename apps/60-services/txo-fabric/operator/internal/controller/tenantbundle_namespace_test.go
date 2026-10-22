@@ -59,3 +59,15 @@ func TestUnmanagedObjectDoesNotEnqueueTenantBundle(t *testing.T) {
 		t.Fatalf("unmanaged object unexpectedly enqueued TenantBundle: %#v", requests)
 	}
 }
+
+func TestManagedConfigMapRequeuesOnlyItsTenantBundle(t *testing.T) {
+	ctx := context.Background()
+	tenant := testTenant()
+	c := fake.NewClientBuilder().WithScheme(testScheme(t)).WithObjects(tenant).Build()
+	r := &TenantBundleReconciler{Client: c}
+	marker := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Namespace: tenantNamespace(tenant.Name), Name: "recovery-marker", Labels: map[string]string{LabelManaged: "true", LabelTenantName: tenant.Name}}}
+	requests := r.tenantBundleRequestsForConfigMap(ctx, marker)
+	if len(requests) != 1 || requests[0].Name != tenant.Name {
+		t.Fatalf("ConfigMap watch mapped to %#v, want only %q", requests, tenant.Name)
+	}
+}
