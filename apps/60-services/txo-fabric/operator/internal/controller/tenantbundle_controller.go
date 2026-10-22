@@ -693,6 +693,20 @@ func (r *TenantBundleReconciler) setFailedStatus(ctx context.Context, bundle *fa
 	}
 }
 
+func (r *TenantBundleReconciler) tenantBundleRequestsForConfigMap(ctx context.Context, obj client.Object) []reconcile.Request {
+	requests := r.tenantBundleRequestsForAuthentikBlueprint(ctx, obj)
+	seen := make(map[types.NamespacedName]struct{}, len(requests))
+	for _, request := range requests {
+		seen[request.NamespacedName] = struct{}{}
+	}
+	for _, request := range tenantBundleRequestsForManagedObject(ctx, obj) {
+		if _, exists := seen[request.NamespacedName]; !exists {
+			requests = append(requests, request)
+		}
+	}
+	return requests
+}
+
 func tenantBundleRequestsForManagedObject(_ context.Context, obj client.Object) []reconcile.Request {
 	labels := obj.GetLabels()
 	if labels[LabelManaged] != "true" {
@@ -851,7 +865,7 @@ func (r *TenantBundleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&corev1.Secret{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&corev1.Secret{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForAIProviderSecret)).
-		Watches(&corev1.ConfigMap{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForAuthentikBlueprint)).
+		Watches(&corev1.ConfigMap{}, handler.EnqueueRequestsFromMapFunc(r.tenantBundleRequestsForConfigMap)).
 		Watches(&appsv1.Deployment{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&batchv1.Job{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
 		Watches(&networkingv1.Ingress{}, handler.EnqueueRequestsFromMapFunc(tenantBundleRequestsForManagedObject)).
