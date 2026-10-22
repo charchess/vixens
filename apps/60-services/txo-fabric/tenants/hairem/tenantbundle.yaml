@@ -7,6 +7,9 @@ metadata:
     # One-time reviewed approval: append the immutable canonical model only
     # when the bound store has exactly one valid noncanonical legacy revision.
     fabric.truxonline.io/openfga-model-migration: append-canonical-v1
+    # Declaratively request reconciliation of the already-reviewed, one-time
+    # recovery transition; it does not alter identity, grants, or runtime gates.
+    fabric.truxonline.io/reconcile-request: hairem-recovery-v1
 
   labels:
     app.kubernetes.io/part-of: txo-fabric
