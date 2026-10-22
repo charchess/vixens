@@ -201,6 +201,28 @@ func TestClientRetriesOneTransientTransportFailure(t *testing.T) {
 	if attempts!=2 { t.Fatalf("attempts=%d, want exactly 2",attempts) }
 }
 
+func TestClientDoesNotRetryAfterCancellationDuringTimeoutClassification(t *testing.T) {
+	ctx,cancel:=context.WithCancel(context.Background())
+	defer cancel()
+	attempts:=0
+	c:=clientWith(t,func(*http.Request)(*http.Response,error) {
+		attempts++
+		// Timeout is evaluated after transientTransportFailure verified the
+		// context was live. It deterministically covers cancellation in that
+		// classification-to-retry interval.
+		return nil,cancelOnTimeoutError{cancel:cancel}
+	})
+	if _,err:=c.get(ctx,"/core/groups/",url.Values{"page":{"1"}});err==nil {
+		t.Fatal("cancelled Authentik request was accepted")
+	}
+	if attempts!=1 { t.Fatalf("cancelled request retried %d times",attempts) }
+}
+
+type cancelOnTimeoutError struct { cancel context.CancelFunc }
+
+func (e cancelOnTimeoutError) Error() string { return "timed out" }
+func (e cancelOnTimeoutError) Timeout() bool { e.cancel(); return true }
+
 func TestClientDoesNotRetryAuthorizationFailure(t *testing.T) {
 	attempts:=0
 	c:=clientWith(t,func(*http.Request)(*http.Response,error) {

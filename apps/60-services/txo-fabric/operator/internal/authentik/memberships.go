@@ -117,6 +117,10 @@ func (c *Client) get(ctx context.Context, path string, values url.Values) ([]byt
 	// transport failed before any response; authorization and response
 	// validation failures remain fail-closed and are never retried.
 	for attempt:=0;attempt<2;attempt++ {
+		// Revalidate before every attempt. The context can be cancelled in the
+		// narrow interval after a timed transport failure is classified and
+		// before the retry request is constructed.
+		if err:=ctx.Err();err!=nil {return nil,fmt.Errorf("Fabric Authentik API unavailable: %w",err)}
 		req,err:=http.NewRequestWithContext(ctx,http.MethodGet,privateOrigin+apiPrefix+path+"?"+values.Encode(),nil)
 		if err!=nil{return nil,errors.New("cannot prepare Fabric Authentik request")}
 		req.Header.Set("Authorization","Bearer "+c.token)
