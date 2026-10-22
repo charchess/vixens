@@ -9,7 +9,7 @@ metadata:
     fabric.truxonline.io/openfga-model-migration: append-canonical-v1
     # Declaratively request reconciliation of the already-reviewed, one-time
     # recovery transition; it does not alter identity, grants, or runtime gates.
-    fabric.truxonline.io/reconcile-request: hairem-recovery-v1
+    fabric.truxonline.io/reconcile-request: hairem-recovery-v2
 
   labels:
     app.kubernetes.io/part-of: txo-fabric
