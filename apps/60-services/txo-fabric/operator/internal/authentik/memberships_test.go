@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strings"
 	"testing"
@@ -185,4 +186,43 @@ func TestPlatformIAMReaderDefaultTransportRejectsUnapprovedDestination(t *testin
 	}
 	_,err=transport.DialContext(context.Background(),"tcp","arbitrary.external.example:443")
 	if err==nil {t.Fatal("IAM reader allowed arbitrary HTTP destination")}
+}
+
+func TestClientRetriesOneTransientTransportFailure(t *testing.T) {
+	attempts:=0
+	c:=clientWith(t,func(*http.Request)(*http.Response,error) {
+		attempts++
+		if attempts==1 { return nil,context.DeadlineExceeded }
+		return apiResponse(200,apiPage(1,1,0,0)),nil
+	})
+	if _,err:=c.get(context.Background(),"/core/groups/",url.Values{"page":{"1"}});err!=nil {
+		t.Fatalf("transient Authentik transport failure was not retried: %v",err)
+	}
+	if attempts!=2 { t.Fatalf("attempts=%d, want exactly 2",attempts) }
+}
+
+func TestClientDoesNotRetryAuthorizationFailure(t *testing.T) {
+	attempts:=0
+	c:=clientWith(t,func(*http.Request)(*http.Response,error) {
+		attempts++
+		return apiResponse(http.StatusForbidden,map[string]any{"error":"denied"}),nil
+	})
+	if _,err:=c.get(context.Background(),"/core/groups/",url.Values{"page":{"1"}});err==nil {
+		t.Fatal("authorization failure was accepted")
+	}
+	if attempts!=1 { t.Fatalf("authorization failure retried %d times",attempts) }
+}
+
+
+func TestClientDoesNotRetryPermanentTransportFailure(t *testing.T) {
+	attempts:=0
+	c:=clientWith(t,func(*http.Request)(*http.Response,error) {
+		attempts++
+		if attempts==1 { return nil,errors.New("permanent TLS certificate failure") }
+		return apiResponse(http.StatusOK,apiPage(1,1,0,0)),nil
+	})
+	if _,err:=c.get(context.Background(),"/core/groups/",url.Values{"page":{"1"}});err==nil {
+		t.Fatal("permanent transport failure was accepted")
+	}
+	if attempts!=1 { t.Fatalf("permanent transport failure retried %d times",attempts) }
 }

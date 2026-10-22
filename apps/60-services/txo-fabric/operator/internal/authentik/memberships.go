@@ -39,6 +39,15 @@ type Client struct {
 	httpClient *http.Client
 }
 
+// transientTransportFailure admits only a bounded retry for a timed-out
+// transport while the caller's own context remains live. Authentication,
+// TLS/protocol and response-validation errors remain terminal.
+func transientTransportFailure(ctx context.Context, err error) bool {
+	if err==nil || ctx.Err()!=nil {return false}
+	var transportErr net.Error
+	return errors.As(err,&transportErr) && transportErr.Timeout()
+}
+
 func NewClient(token string, transport http.RoundTripper) (*Client, error) {
 	if len(token)<16 || strings.TrimSpace(token)!=token || strings.ContainsAny(token,"\r\n") {
 		return nil,errors.New("Fabric Authentik service credential is missing or malformed")
@@ -104,20 +113,29 @@ func (c *Client) get(ctx context.Context, path string, values url.Values) ([]byt
 	if c==nil || c.httpClient==nil || len(c.token)<16 {
 		return nil,errors.New("Fabric Authentik client is not initialized")
 	}
-	req,err:=http.NewRequestWithContext(ctx,http.MethodGet,privateOrigin+apiPrefix+path+"?"+values.Encode(),nil)
-	if err!=nil{return nil,errors.New("cannot prepare Fabric Authentik request")}
-	req.Header.Set("Authorization","Bearer "+c.token)
-	req.Header.Set("Accept","application/json")
-	req.Header.Set("Cache-Control","no-store")
-	resp,err:=c.httpClient.Do(req)
-	if err!=nil {return nil,fmt.Errorf("Fabric Authentik API unavailable: %w",err)}
-	defer resp.Body.Close()
-	if resp.StatusCode!=http.StatusOK {
-		return nil,fmt.Errorf("Fabric Authentik API returned HTTP %d",resp.StatusCode)
+	// Authentik reads are idempotent. Retry exactly once only when the
+	// transport failed before any response; authorization and response
+	// validation failures remain fail-closed and are never retried.
+	for attempt:=0;attempt<2;attempt++ {
+		req,err:=http.NewRequestWithContext(ctx,http.MethodGet,privateOrigin+apiPrefix+path+"?"+values.Encode(),nil)
+		if err!=nil{return nil,errors.New("cannot prepare Fabric Authentik request")}
+		req.Header.Set("Authorization","Bearer "+c.token)
+		req.Header.Set("Accept","application/json")
+		req.Header.Set("Cache-Control","no-store")
+		resp,requestErr:=c.httpClient.Do(req)
+		if requestErr!=nil {
+			if attempt==1 || !transientTransportFailure(ctx,requestErr) {return nil,fmt.Errorf("Fabric Authentik API unavailable: %w",requestErr)}
+			continue
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode!=http.StatusOK {
+			return nil,fmt.Errorf("Fabric Authentik API returned HTTP %d",resp.StatusCode)
+		}
+		raw,readErr:=io.ReadAll(io.LimitReader(resp.Body,maxBodyBytes+1))
+		if readErr!=nil || len(raw)>maxBodyBytes {return nil,errors.New("Fabric Authentik API response invalid or oversized")}
+		return raw,nil
 	}
-	raw,err:=io.ReadAll(io.LimitReader(resp.Body,maxBodyBytes+1))
-	if err!=nil || len(raw)>maxBodyBytes {return nil,errors.New("Fabric Authentik API response invalid or oversized")}
-	return raw,nil
+	return nil,errors.New("Fabric Authentik API unavailable")
 }
 
 // collect enumerates and verifies EVERY page of a filtered result set. It
