@@ -1141,3 +1141,27 @@ func TestAIGatewayMigrationLegacyRecoveryNeverReusesConsumptionMarker(t *testing
 		t.Fatalf("consumed marker created a second job: %#v", jobs.Items)
 	}
 }
+
+func TestLegacyAIGatewayRecoveryMayProceedWhileAuthorizationDenied(t *testing.T) {
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	tenant.Generation = 12
+	tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{
+		MigrationRetry:                    1,
+		MigrationRecovery:                 "legacy-evidence-20261016",
+		MigrationRecoveryFailedGeneration: 9,
+	}
+	tenant.Status.Conditions = []metav1.Condition{{
+		Type:               "AIGatewayReady",
+		Status:             metav1.ConditionFalse,
+		Reason:             "MigrationFailed",
+		ObservedGeneration: 9,
+	}}
+	if !legacyAIGatewayRecoveryMayProceedWhileAuthorizationDenied(tenant) {
+		t.Fatal("approved historical recovery must proceed while authorization stays denied")
+	}
+
+	tenant.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 1}}
+	if legacyAIGatewayRecoveryMayProceedWhileAuthorizationDenied(tenant) {
+		t.Fatal("retained migration evidence must prevent recovery-only authorization bypass")
+	}
+}

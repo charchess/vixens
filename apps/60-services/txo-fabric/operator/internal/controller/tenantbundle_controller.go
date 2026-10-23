@@ -42,6 +42,18 @@ type TenantBundleReconciler struct {
 	AuthorizationNow func() time.Time
 }
 
+// legacyAIGatewayRecoveryMayProceedWhileAuthorizationDenied is deliberately
+// narrower than authorization readiness: it permits only the reviewed,
+// immutable, no-history legacy schema recovery to reach its existing
+// owner-bound migration path. It never makes an identity, membership, tuple,
+// grant, BFF, or browser surface available.
+func legacyAIGatewayRecoveryMayProceedWhileAuthorizationDenied(bundle *fabricv1alpha1.TenantBundle) bool {
+	if bundle == nil || len(bundle.Status.AIGatewayMigration) != 0 || bundle.Spec.AIGateway == nil {
+		return false
+	}
+	return legacyMigrationRecoveryEligible(bundle, bundle.Spec.AIGateway.MigrationRetry)
+}
+
 func openFGARolloutEnabledFor(bundle *fabricv1alpha1.TenantBundle) bool {
 	if bundle == nil || os.Getenv("TXO_FABRIC_OPENFGA_STORES_ENABLED") != "true" {
 		return false
@@ -188,10 +200,33 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			bundle.Status.Phase = "Degraded"
 			setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, "IdentityLedgerInvalid", "tenant canonical human identity ledger is missing, conflicting or invalid")
 			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "OpenFGAIdentityReconcileFailed", "tenant canonical human identity ledger is not reconciled")
+			if !legacyAIGatewayRecoveryMayProceedWhileAuthorizationDenied(&bundle) {
+				if !reflect.DeepEqual(previousStatus, bundle.Status) {
+					_ = r.Status().Update(ctx, &bundle)
+				}
+				return ctrl.Result{}, err
+			}
+
+			// A single reviewed legacy schema recovery may progress through its
+			// existing owner-bound AI migration path while authorization remains
+			// explicitly denied. Do not create the credential broker here: the
+			// gateway requires its already-reconciled private Service and Secret.
+			recovery, recoveryErr := r.reconcileAIGateway(ctx, &bundle)
+			bundle.Status.AIGateway = recovery.Status
+			if recoveryErr != nil {
+				setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionFalse, "ReconcileError", recoveryErr.Error())
+			} else if recovery.Ready {
+				setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionTrue, recovery.Reason, recovery.Message)
+			} else {
+				setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", metav1.ConditionFalse, recovery.Reason, recovery.Message)
+			}
 			if !reflect.DeepEqual(previousStatus, bundle.Status) {
 				_ = r.Status().Update(ctx, &bundle)
 			}
-			return ctrl.Result{}, err
+			if recoveryErr != nil {
+				return ctrl.Result{}, recoveryErr
+			}
+			return ctrl.Result{RequeueAfter: recovery.RequeueAfter}, nil
 		}
 		// A tenant with no declared human IAM surface must not acquire a
 		// positive authorization condition merely because store/model exist.
