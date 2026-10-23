@@ -1179,7 +1179,7 @@ func TestImmutableHairemLegacyRecoveryEligibilityIsExact(t *testing.T) {
 		Type:               "AIGatewayReady",
 		Status:             metav1.ConditionFalse,
 		Reason:             "MigrationFailed",
-		ObservedGeneration: 12,
+		ObservedGeneration: 9,
 	}}
 	if !immutableHairemLegacyRecoveryEligible(tenant) {
 		t.Fatal("the exact reviewed immutable hAIrem tuple must be eligible")
@@ -1203,7 +1203,7 @@ func TestImmutableHairemLegacyRecoveryRejectsExistingEvidence(t *testing.T) {
 		Type:               "AIGatewayReady",
 		Status:             metav1.ConditionFalse,
 		Reason:             "MigrationFailed",
-		ObservedGeneration: 12,
+		ObservedGeneration: 9,
 	}}
 	tenant.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{{
 		Attempt: 1, JobName: "already-recorded", JobUID: "already-recorded", Phase: fabricv1alpha1.AIGatewayMigrationPending,
@@ -1227,7 +1227,7 @@ func TestAIGatewayMigrationRunsOnlyExactImmutableHairemRecovery(t *testing.T) {
 		Type:               "AIGatewayReady",
 		Status:             metav1.ConditionFalse,
 		Reason:             "MigrationFailed",
-		ObservedGeneration: 12,
+		ObservedGeneration: 9,
 	}}
 	profile := aiGatewayTestProfile()
 	postgresql := aiGatewayPostgreSQLTestProfile()
@@ -1259,7 +1259,7 @@ func TestReconcileImmutableHairemRecoverySkipsIdentityAndRuntimeSurfaces(t *test
 	tenant.Generation = 12
 	tenant.Finalizers = []string{TenantFinalizer}
 	tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{MigrationRetry: 1, MigrationRecovery: "legacy-evidence-20261016", MigrationRecoveryFailedGeneration: 9}
-	tenant.Status.Conditions = []metav1.Condition{{Type: "AIGatewayReady", Status: metav1.ConditionFalse, Reason: "MigrationFailed", ObservedGeneration: 12}}
+	tenant.Status.Conditions = []metav1.Condition{{Type: "AIGatewayReady", Status: metav1.ConditionFalse, Reason: "MigrationFailed", ObservedGeneration: 9}}
 	gateway := aiGatewayTestProfile()
 	postgresql := aiGatewayPostgreSQLTestProfile()
 	names := resolveAIGatewayPostgreSQLNames(tenant, postgresql)
