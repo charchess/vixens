@@ -475,6 +475,38 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrationNetworkPolicy(
 	return err
 }
 
+// reconcileImmutableHairemLegacyMigration runs the one historical recovery without
+// reconciling AI gateway runtime, identity, IAM, or browser resources. Every
+// prerequisite must already exist; this path creates only the existing
+// migration NetworkPolicy, recovery marker, Job, and UID-backed status evidence.
+func (r *TenantBundleReconciler) reconcileImmutableHairemLegacyMigration(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (bool, string, string, error) {
+	if !immutableHairemLegacyRecoveryEligible(bundle) {
+		return false, "MigrationEvidenceMissing", "immutable legacy recovery is not eligible", nil
+	}
+	var gatewayProfile fabricv1alpha1.AIGatewayProfile
+	if err := r.Get(ctx, types.NamespacedName{Name: tenantAIGatewayProfileName(bundle)}, &gatewayProfile); err != nil {
+		return false, "MigrationPrerequisiteMissing", "AI gateway profile is unavailable", client.IgnoreNotFound(err)
+	}
+	postgresqlProfileName := strings.TrimSpace(gatewayProfile.Spec.PostgreSQLProfileRef)
+	if postgresqlProfileName == "" {
+		postgresqlProfileName = defaultAIGatewayPostgreSQLProfileName
+	}
+	var postgresqlProfile fabricv1alpha1.PostgreSQLProfile
+	if err := r.Get(ctx, types.NamespacedName{Name: postgresqlProfileName}, &postgresqlProfile); err != nil {
+		return false, "MigrationPrerequisiteMissing", "AI gateway PostgreSQL profile is unavailable", client.IgnoreNotFound(err)
+	}
+	names := resolveAIGatewayPostgreSQLNames(bundle, &postgresqlProfile)
+	var databaseSecret corev1.Secret
+	if err := r.Get(ctx, types.NamespacedName{Namespace: postgresqlProfile.Spec.Shared.ClusterRef.Namespace, Name: names.Secret}, &databaseSecret); err != nil {
+		return false, "MigrationPrerequisiteMissing", "AI gateway PostgreSQL credential is unavailable", client.IgnoreNotFound(err)
+	}
+	var runtimeSecret corev1.Secret
+	if err := r.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(bundle.Name), Name: tenantAIGatewayRuntimeSecretName}, &runtimeSecret); err != nil {
+		return false, "MigrationPrerequisiteMissing", "AI gateway runtime credential is unavailable", client.IgnoreNotFound(err)
+	}
+	return r.ensureAIGatewayMigrations(ctx, bundle, &gatewayProfile, &postgresqlProfile, &databaseSecret)
+}
+
 func (r *TenantBundleReconciler) ensureAIGatewayMigrations(
 	ctx context.Context,
 	bundle *fabricv1alpha1.TenantBundle,
@@ -575,11 +607,35 @@ func migrationJobSelector(bundle *fabricv1alpha1.TenantBundle) client.MatchingLa
 	}
 }
 
+// immutableHairemLegacyRecoveryEligible recognizes only the one retained
+// legacy failure whose immutable recovery tuple was admitted before the
+// controller recorded the condition at the current generation. It is not a
+// general retry mechanism: any changed tenant, tuple, generation, condition,
+// or retained evidence stays fail-closed.
+func immutableHairemLegacyRecoveryEligible(bundle *fabricv1alpha1.TenantBundle) bool {
+	if bundle == nil || bundle.Name != "hairem" || bundle.Spec.TenantID != "TEN00001" || bundle.Generation != 12 || bundle.Spec.AIGateway == nil || len(bundle.Status.AIGatewayMigration) != 0 {
+		return false
+	}
+	gateway := bundle.Spec.AIGateway
+	if gateway.MigrationRetry != 1 || gateway.MigrationRecovery != "legacy-evidence-20261016" || gateway.MigrationRecoveryFailedGeneration != 9 {
+		return false
+	}
+	for _, condition := range bundle.Status.Conditions {
+		if condition.Type == "AIGatewayReady" && condition.Status == metav1.ConditionFalse && condition.Reason == "MigrationFailed" && condition.ObservedGeneration == 12 {
+			return true
+		}
+	}
+	return false
+}
+
 // legacyMigrationRecoveryEligible permits a single explicitly declared recovery
 // only when the retained MigrationFailed condition predates the spec generation
 // which introduced the immutable recovery identifier. Once reconciliation has
 // observed that generation, loss of Job/status evidence remains fail-closed.
 func legacyMigrationRecoveryEligible(bundle *fabricv1alpha1.TenantBundle, retry int32) bool {
+	if retry == 1 && immutableHairemLegacyRecoveryEligible(bundle) {
+		return true
+	}
 	if retry != 1 || bundle.Spec.AIGateway == nil || bundle.Spec.AIGateway.MigrationRecovery == "" || bundle.Spec.AIGateway.MigrationRecoveryFailedGeneration < 1 {
 		return false
 	}

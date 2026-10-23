@@ -96,6 +96,23 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	hadPostgreSQL := previousStatus.Persistence.PostgreSQL != nil
 	hadHindsight := previousStatus.Memory.Hindsight != nil
 
+	if immutableHairemLegacyRecoveryEligible(&bundle) {
+		ready, reason, message, err := r.reconcileImmutableHairemLegacyMigration(ctx, &bundle)
+		bundle.Status.Phase = "Degraded"
+		status := metav1.ConditionFalse
+		if ready {
+			status = metav1.ConditionTrue
+		}
+		setCondition(&bundle.Status.Conditions, bundle.Generation, "AIGatewayReady", status, reason, message)
+		if !reflect.DeepEqual(previousStatus, bundle.Status) {
+			_ = r.Status().Update(ctx, &bundle)
+		}
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
 	if !controllerutil.ContainsFinalizer(&bundle, TenantFinalizer) {
 		controllerutil.AddFinalizer(&bundle, TenantFinalizer)
 		if err := r.Update(ctx, &bundle); err != nil {
