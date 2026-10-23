@@ -621,7 +621,7 @@ func immutableHairemLegacyRecoveryEligible(bundle *fabricv1alpha1.TenantBundle) 
 		return false
 	}
 	for _, condition := range bundle.Status.Conditions {
-		if condition.Type == "AIGatewayReady" && condition.Status == metav1.ConditionFalse && condition.Reason == "MigrationFailed" && condition.ObservedGeneration == 12 {
+		if condition.Type == "AIGatewayReady" && condition.Status == metav1.ConditionFalse && condition.Reason == "MigrationFailed" && condition.ObservedGeneration == 9 {
 			return true
 		}
 	}
