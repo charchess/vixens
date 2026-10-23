@@ -14,3 +14,6 @@ shapely>=2.0.2
 
 # Versatile Thermostat
 vtherm_api>=0.6.2
+
+# TrueNAS SCALE integration
+aiotruenas>=1.6.1
