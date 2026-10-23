@@ -9,7 +9,7 @@ metadata:
     fabric.truxonline.io/openfga-model-migration: append-canonical-v1
     # Declaratively request reconciliation of the already-reviewed, one-time
     # recovery transition; it does not alter identity, grants, or runtime gates.
-    fabric.truxonline.io/reconcile-request: hairem-recovery-v2
+    fabric.truxonline.io/reconcile-request: hairem-recovery-v3
 
   labels:
     app.kubernetes.io/part-of: txo-fabric
@@ -26,9 +26,9 @@ spec:
     # One reviewed recovery transition for a pre-evidence historical failure.
     # It creates a fresh owner-bound attempt 1; it is not a recurring job.
     migrationRetry: 1
-    migrationRecovery: legacy-evidence-20261016
+    migrationRecovery: legacy-evidence-20261023
     # Exact historical generation that recorded MigrationFailed; immutable.
-    migrationRecoveryFailedGeneration: 9
+    migrationRecoveryFailedGeneration: 12
   # Private Hermes agent storage is tenant-owned, not release-channel-owned.
   # Existing PVCs are not recreated when this policy is introduced.
   agentStorage:
