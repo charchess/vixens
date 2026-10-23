@@ -96,7 +96,7 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	hadPostgreSQL := previousStatus.Persistence.PostgreSQL != nil
 	hadHindsight := previousStatus.Memory.Hindsight != nil
 
-	if immutableHairemLegacyRecoveryEligible(&bundle) {
+	if immutableHairemLegacyRecoveryEligible(&bundle) || immutableHairemLegacyRecoveryInFlight(&bundle) {
 		ready, reason, message, err := r.reconcileImmutableHairemLegacyMigration(ctx, &bundle)
 		bundle.Status.Phase = "Degraded"
 		status := metav1.ConditionFalse
