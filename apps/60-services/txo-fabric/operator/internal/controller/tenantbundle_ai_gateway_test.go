@@ -1213,21 +1213,21 @@ func TestImmutableHairemLegacyRecoveryRejectsExistingEvidence(t *testing.T) {
 	}
 }
 
-func TestImmutableHairemLegacyRecoveryInFlightIsExact(t *testing.T) {
+func TestImmutableHairemLegacyRecoveryEvidenceIsExact(t *testing.T) {
 	tenant := aiGatewayTestTenant("hairem", "TEN00001")
 	tenant.Generation = 12
 	tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{MigrationRetry: 1, MigrationRecovery: "legacy-evidence-20261016", MigrationRecoveryFailedGeneration: 9}
 	tenant.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 1, JobName: "bound-job", JobUID: "bound-uid", Phase: fabricv1alpha1.AIGatewayMigrationPending}}
-	if !immutableHairemLegacyRecoveryInFlight(tenant) {
+	if !immutableHairemLegacyRecoveryEvidence(tenant) {
 		t.Fatal("the exact UID-bound pending attempt must remain on the pre-IAM recovery path")
 	}
 	tenant.Status.AIGatewayMigration[0].Phase = fabricv1alpha1.AIGatewayMigrationSucceeded
-	if immutableHairemLegacyRecoveryInFlight(tenant) {
-		t.Fatal("a terminal attempt must leave the compatibility path")
+	if !immutableHairemLegacyRecoveryEvidence(tenant) {
+		t.Fatal("the exact terminal attempt must remain on the pre-IAM observation path")
 	}
 	tenant.Status.AIGatewayMigration[0].Phase = fabricv1alpha1.AIGatewayMigrationPending
 	tenant.Status.AIGatewayMigration[0].JobUID = ""
-	if immutableHairemLegacyRecoveryInFlight(tenant) {
+	if immutableHairemLegacyRecoveryEvidence(tenant) {
 		t.Fatal("unbound evidence must remain fail-closed")
 	}
 }
