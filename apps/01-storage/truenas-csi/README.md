@@ -29,7 +29,19 @@ The production ArgoCD overlay must use the production applications (`truenas-csi
 
 ### UMI development
 
-UMI keeps its own development values and OpenBao paths. The `truenas-csi-secrets-umi` Application points at the UMI OpenBao store and rewrites the secret paths to `vixens/dev/...`.
+UMI keeps its own development values and OpenBao paths. The
+`truenas-csi-secrets-umi` Application uses the existing canonical
+`ClusterSecretStore/openbao` (not the retired `openbao-umi`) and rewrites
+**only** the secret paths to `vixens/dev/...`. Its source follows `main`;
+production uses a separate bootstrap overlay pinned to `prod-stable`.
+
+External Secrets periodically refreshes the Kubernetes driver Secret when its
+store is `Ready` and credential authorization succeeds. A refreshed driver
+Secret does **not** rewrite the iSCSI portal persisted in previously
+provisioned PV `spec.csi.volumeAttributes.portal`, change active node
+sessions, or repair an ext4 filesystem in `emergency_ro`. For a NAS re-IP,
+inventory existing PVs/LUNs and preserve snapshots before separately reviewing
+any storage-path recovery; never delete/recreate Retain PVs as a shortcut.
 
 Read-only scan on 2026-09-01 showed:
 
