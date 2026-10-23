@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -1163,5 +1164,128 @@ func TestLegacyAIGatewayRecoveryMayProceedWhileAuthorizationDenied(t *testing.T)
 	tenant.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 1}}
 	if legacyAIGatewayRecoveryMayProceedWhileAuthorizationDenied(tenant) {
 		t.Fatal("retained migration evidence must prevent recovery-only authorization bypass")
+	}
+}
+
+func TestImmutableHairemLegacyRecoveryEligibilityIsExact(t *testing.T) {
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	tenant.Generation = 12
+	tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{
+		MigrationRetry:                    1,
+		MigrationRecovery:                 "legacy-evidence-20261016",
+		MigrationRecoveryFailedGeneration: 9,
+	}
+	tenant.Status.Conditions = []metav1.Condition{{
+		Type:               "AIGatewayReady",
+		Status:             metav1.ConditionFalse,
+		Reason:             "MigrationFailed",
+		ObservedGeneration: 12,
+	}}
+	if !immutableHairemLegacyRecoveryEligible(tenant) {
+		t.Fatal("the exact reviewed immutable hAIrem tuple must be eligible")
+	}
+
+	tenant.Spec.AIGateway.MigrationRecovery = "anything-else"
+	if immutableHairemLegacyRecoveryEligible(tenant) {
+		t.Fatal("a changed recovery identifier must remain fail-closed")
+	}
+}
+
+func TestImmutableHairemLegacyRecoveryRejectsExistingEvidence(t *testing.T) {
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	tenant.Generation = 12
+	tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{
+		MigrationRetry:                    1,
+		MigrationRecovery:                 "legacy-evidence-20261016",
+		MigrationRecoveryFailedGeneration: 9,
+	}
+	tenant.Status.Conditions = []metav1.Condition{{
+		Type:               "AIGatewayReady",
+		Status:             metav1.ConditionFalse,
+		Reason:             "MigrationFailed",
+		ObservedGeneration: 12,
+	}}
+	tenant.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{{
+		Attempt: 1, JobName: "already-recorded", JobUID: "already-recorded", Phase: fabricv1alpha1.AIGatewayMigrationPending,
+	}}
+	if immutableHairemLegacyRecoveryEligible(tenant) {
+		t.Fatal("retained migration evidence must prevent the compatibility recovery")
+	}
+}
+
+func TestAIGatewayMigrationRunsOnlyExactImmutableHairemRecovery(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	tenant.Generation = 12
+	tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{
+		MigrationRetry:                    1,
+		MigrationRecovery:                 "legacy-evidence-20261016",
+		MigrationRecoveryFailedGeneration: 9,
+	}
+	tenant.Status.Conditions = []metav1.Condition{{
+		Type:               "AIGatewayReady",
+		Status:             metav1.ConditionFalse,
+		Reason:             "MigrationFailed",
+		ObservedGeneration: 12,
+	}}
+	profile := aiGatewayTestProfile()
+	postgresql := aiGatewayPostgreSQLTestProfile()
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+	base := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(tenant).WithObjects(tenant).Build()
+	c := &migrationUIDAssigningClient{Client: base}
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	if err != nil || ready || reason != "MigrationPending" {
+		t.Fatalf("exact immutable recovery must create its only pending attempt: ready=%v reason=%q err=%v", ready, reason, err)
+	}
+	if len(tenant.Status.AIGatewayMigration) != 1 || tenant.Status.AIGatewayMigration[0].Attempt != 1 || tenant.Status.AIGatewayMigration[0].JobUID == "" {
+		t.Fatalf("attempt-1 UID evidence was not persisted: %#v", tenant.Status.AIGatewayMigration)
+	}
+	var jobs batchv1.JobList
+	if err := c.List(ctx, &jobs, client.InNamespace(tenantNamespace(tenant.Name)), migrationJobSelector(tenant)); err != nil {
+		t.Fatal(err)
+	}
+	if len(jobs.Items) != 1 || !aiGatewayMigrationEvidenceJobOwnedBy(&jobs.Items[0], tenant) {
+		t.Fatalf("recovery must create exactly one owner-bound Job: %#v", jobs.Items)
+	}
+}
+
+func TestReconcileImmutableHairemRecoverySkipsIdentityAndRuntimeSurfaces(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	tenant.Generation = 12
+	tenant.Finalizers = []string{TenantFinalizer}
+	tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{MigrationRetry: 1, MigrationRecovery: "legacy-evidence-20261016", MigrationRecoveryFailedGeneration: 9}
+	tenant.Status.Conditions = []metav1.Condition{{Type: "AIGatewayReady", Status: metav1.ConditionFalse, Reason: "MigrationFailed", ObservedGeneration: 12}}
+	gateway := aiGatewayTestProfile()
+	postgresql := aiGatewayPostgreSQLTestProfile()
+	names := resolveAIGatewayPostgreSQLNames(tenant, postgresql)
+	databaseSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: names.Secret, Namespace: postgresql.Spec.Shared.ClusterRef.Namespace, UID: "database-uid"}}
+	runtimeSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayRuntimeSecretName, Namespace: tenantNamespace(tenant.Name)}}
+	base := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(tenant).WithObjects(tenant, gateway, postgresql, databaseSecret, runtimeSecret).Build()
+	r := &TenantBundleReconciler{Client: &migrationUIDAssigningClient{Client: base}, Scheme: scheme}
+	if _, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: tenant.Name}}); err != nil {
+		t.Fatal(err)
+	}
+	var jobs batchv1.JobList
+	if err := base.List(ctx, &jobs, client.InNamespace(tenantNamespace(tenant.Name)), migrationJobSelector(tenant)); err != nil {
+		t.Fatal(err)
+	}
+	if len(jobs.Items) != 1 || !aiGatewayMigrationEvidenceJobOwnedBy(&jobs.Items[0], tenant) {
+		t.Fatalf("exact recovery Job=%#v", jobs.Items)
+	}
+	var identities fabricv1alpha1.AgentIdentityList
+	if err := base.List(ctx, &identities); err != nil {
+		t.Fatal(err)
+	}
+	if len(identities.Items) != 0 {
+		t.Fatalf("recovery must not reconcile agents: %#v", identities.Items)
+	}
+	var deployment appsv1.Deployment
+	if err := base.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(tenant.Name), Name: tenantAIGatewayName}, &deployment); !apierrors.IsNotFound(err) {
+		t.Fatalf("recovery must not create LiteLLM Deployment: %v", err)
 	}
 }
