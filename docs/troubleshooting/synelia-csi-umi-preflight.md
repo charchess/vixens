@@ -8,7 +8,46 @@
 - Chart: `truenas/truenas-csi` **1.4.0**, driver `ghcr.io/truenas/truenas-csi:v1.4.0`. Chart index SHA256: `3a1b9f326447d54beb3fec20e3b026a4a07f68cb7f3685c7a71f7e9d70589367` (verify downloaded chart against this digest in release preparation). The chart pins provisioner v6.1.1, attacher v4.11.0, snapshotter v8.5.0, resizer v2.1.0, registrar v2.16.0, livenessprobe v2.18.0. Source: https://github.com/truenas/truenas-csi/tree/v1.4.0/charts/truenas-csi
 - New CSIDriver `synelia.csi.truenas.io`, namespace/release `synelia-csi`. Existing democratic-csi instances, storage classes and volumes are **not changed**.
 - Separate **non-default** classes `synelia-nfs-retain`, `synelia-nfs-delete`, `synelia-iscsi-retain`, `synelia-iscsi-delete`. `Delete` classes are for **new disposable test PVCs only**. Nothing points an existing workload to these names.
-- New ZFS test parents: `tank/k8s/vixens/synelia-umi-test/nfs` and `tank/k8s/vixens/synelia-umi-test/iscsi`, distinct from democratic-csi's `tank/k8s/vixens/{nfs,iscsi}/vols`. Confirm they do not already exist with production data. Pool `tank` is derived from historical example configs, **not validated live**. Create/authorize parent datasets safely before testing if driver requires them.
+- New ZFS test parents: `tank/k8s/vixens/synelia-test/nfs` and `tank/k8s/vixens/synelia-test/iscsi`, distinct from democratic-csi's `tank/k8s/vixens/{nfs,iscsi}/vols`. Confirm they do not already exist with production data. Pool `tank` is derived from historical example configs, **not validated live**. Create/authorize parent datasets safely before testing if driver requires them.
+
+## GitOps App-of-Apps wiring (desired state, not live evidence)
+
+The root `vixens-app-of-apps` template in `argocd/base/root-app.yaml.tpl`
+renders Applications from an externally supplied `overlay_path`. The **UMI**
+preflight must confirm that the live root `spec.source.path` really resolves
+to `argocd/overlays/dev` at the expected Git revision; checking that files exist
+in Git or that CI renders them does not prove UMI's root consumes that path.
+
+Expected desired-state chain:
+
+```text
+vixens-app-of-apps (root, overlay_path = argocd/overlays/dev)
+  -> argocd/overlays/dev/kustomization.yaml
+    -> apps/synelia-csi-umi.yaml (child Application, manual sync)
+      -> apps/01-storage/synelia-csi/overlays/dev/kustomization.yaml
+        -> apps/01-storage/synelia-csi/umi (ESO + Cilium)
+      -> pinned upstream Helm 1.4.0 + umi/values.yaml (non-default StorageClasses)
+```
+
+**Storage identity is `synelia`, not `umi`:** `umi` appears only in GitOps
+deployment location/Application identity. None of the StorageClass names or ZFS
+test dataset parent paths contains `umi`. If an earlier Synelia volume was
+already provisioned under the previous `synelia-umi-test` parent, **stop**:
+the path change needs an explicit per-volume data/integrity assessment and must
+not silently move or recreate a PV or zvol.
+
+Read-only root/child inspection before deployment:
+
+```sh
+kubectl -n argocd get application vixens-app-of-apps -o jsonpath='{.spec.source.path}{"\\n"}{.spec.source.targetRevision}{"\\n"}'
+kubectl -n argocd get application synelia-csi-umi -o jsonpath='{.spec.sources[2].path}{"\\n"}'
+kubectl get pv -o custom-columns=NAME:.metadata.name,SC:.spec.storageClassName,CSI:.spec.csi.driver,HANDLE:.spec.csi.volumeHandle
+```
+
+The parent App-of-Apps may create/update the **child Application** automatically,
+but it does not authorize a manual sync of Synelia's CSI resources. Keep the
+child's `spec.syncPolicy.automated` absent; if the live root points elsewhere,
+resolve root ownership in a separately reviewed GitOps change before rollout.
 
 ## Hard physical gate before ANY Argo manual sync
 
@@ -51,4 +90,4 @@ Before physical cutover (this PR's intended scope), stop using new test PVCs, di
 
 ### Evidence status
 
-2026-10-24: repository-only preflight against `main` and `truenas/truenas-csi v1.4.0`, **no UMI runtime access or chart template execution**. TrueNAS 27 WSS/API, TLS SAN, host iSCSI, OpenBao token and any checksum tests are still **pending**.
+2026-10-24: source-only preflight against `main` and `truenas/truenas-csi v1.4.0`; the #4194 GitHub CI rendered the pinned Helm chart and Kustomize manifests and passed source safety tests. That is **not** physical evidence: the live UMI App-of-Apps path, Synelia PVC inventory, TrueNAS 27 WSS/API, TLS SAN, host iSCSI, OpenBao token and filesystem checksum tests remain **pending**. Re-run the equivalent CI jobs for each new revision before review.
