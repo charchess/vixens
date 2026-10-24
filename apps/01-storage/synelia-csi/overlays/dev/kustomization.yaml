@@ -1,0 +1,7 @@
+---
+# CI renders the exact same UMI resources used by synelia-csi-umi's
+# ArgoCD multi-source Kustomize path. Do not enable this in prod.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../umi
