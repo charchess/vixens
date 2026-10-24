@@ -238,10 +238,58 @@ class SyneliaCSISourceTests(unittest.TestCase):
             },
         )
 
+    def test_umi_namespace_bootstrap_before_namespaced_resources(self):
+        """UMI Argo + ServerSideApply cannot rely on implicit CreateNamespace."""
+        namespace = read_one(f"{BASE}/namespace.yaml")
+        self.assertEqual(namespace["apiVersion"], "v1")
+        self.assertEqual(namespace["kind"], "Namespace")
+        self.assertEqual(namespace["metadata"]["name"], "synelia-csi")
+        self.assertNotIn("namespace", namespace["metadata"])
+        self.assertEqual(
+            namespace["metadata"]["annotations"],
+            {
+                "argocd.argoproj.io/sync-wave": "-1",
+                "argocd.argoproj.io/sync-options": "Prune=false",
+            },
+        )
+        self.assertEqual(
+            namespace["metadata"]["labels"]["app.kubernetes.io/part-of"],
+            "synelia-csi",
+        )
+        resources = read_one(f"{BASE}/kustomization.yaml")["resources"]
+        self.assertEqual(resources[0], "namespace.yaml")
+        self.assertEqual(resources.count("namespace.yaml"), 1)
+        self.assertEqual(
+            self.app["spec"]["destination"]["namespace"], "synelia-csi"
+        )
+        self.assertIn("CreateNamespace=true", self.app["spec"]["syncPolicy"]["syncOptions"])
+        self.assertIn("ServerSideApply=true", self.app["spec"]["syncPolicy"]["syncOptions"])
+
+    def test_umi_namespace_bootstrap_negative_regressions(self):
+        namespace = read_one(f"{BASE}/namespace.yaml")
+        for field, value in (
+            ("name", "hindsight"),
+            ("sync-wave", "0"),
+            ("sync-options", "Prune=true"),
+        ):
+            mutated = deepcopy(namespace)
+            if field == "name":
+                mutated["metadata"]["name"] = value
+            else:
+                mutated["metadata"]["annotations"][f"argocd.argoproj.io/{field}"] = value
+            with self.subTest(field=field):
+                expected = "synelia-csi" if field == "name" else (
+                    "-1" if field == "sync-wave" else "Prune=false"
+                )
+                actual = (mutated["metadata"]["name"] if field == "name"
+                          else mutated["metadata"]["annotations"][f"argocd.argoproj.io/{field}"])
+                self.assertNotEqual(expected, actual)
+
     def test_umi_k3s_network_policy_supported_and_scoped(self):
         kustomization = read_one(f"{BASE}/kustomization.yaml")
         self.assertEqual(
-            kustomization["resources"], ["externalsecret.yaml", "networkpolicy.yaml"]
+            kustomization["resources"],
+            ["namespace.yaml", "externalsecret.yaml", "networkpolicy.yaml"]
         )
         policies = [
             policy for policy in yaml.safe_load_all(
