@@ -372,6 +372,9 @@ jobs:
       - name: Regression — UMI CSI canonical OpenBao store
         run: python3 -m unittest discover -s scripts/validation/tests -p 'test_truenas_csi_umi_openbao.py' -v
 
+      - name: Regression — UMI PV re-IP cutover preflight
+        run: python3 -m unittest discover -s scripts/validation/tests -p 'test_umi_iscsi_pv_cutover.py' -v
+
   # 4️⃣ Secret Scanning (gitleaks)
   secret-scan:
     name: Secret Scanning
