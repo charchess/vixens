@@ -1,0 +1,104 @@
+---
+# #4193: UMI is single-node k3s with Flannel, not Cilium.
+# Use Kubernetes NetworkPolicy enforced by the K3s network-policy controller
+# (kube-router), if enabled. Flannel alone does not enforce NetworkPolicy.
+# Host API endpoint 172.30.208.64 is specific to the CURRENT WSL2 boot;
+# verify/update after changes to the host address (Service IP 10.43.0.1
+# is also allowed). This scoped dev-only rule must not be copied to prod.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: synelia-csi-controller-egress
+  namespace: synelia-csi
+spec:
+  podSelector:
+    matchLabels:
+      app: synelia-csi-controller
+  policyTypes:
+    - Egress
+  egress:
+    # CoreDNS verified in kube-system with k8s-app=kube-dns on UMI.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Kubernetes API Service address (ClusterIP on UMI).
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.1/32
+      ports:
+        - protocol: TCP
+          port: 443
+    # Actual Kubernetes API endpoint (K3s hostNetwork on current WSL2 boot).
+    # ClusterIP DNAT may occur before policy evaluation; both are needed.
+    - to:
+        - ipBlock:
+            cidr: 172.30.208.64/32
+      ports:
+        - protocol: TCP
+          port: 6443
+    # TrueNAS 27 verified WSS endpoint, with certificate verification.
+    - to:
+        - ipBlock:
+            cidr: 192.168.111.69/32
+      ports:
+        - protocol: TCP
+          port: 443
+---
+# Defense-in-depth only for network-policy-managed Pods. The current CSI node
+# DaemonSet is hostNetwork/privileged; host firewall and iSCSI/NFS access MUST
+# be checked separately. This policy does not secure node host traffic.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: synelia-csi-node-egress
+  namespace: synelia-csi
+spec:
+  podSelector:
+    matchLabels:
+      app: synelia-csi-node
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.1/32
+      ports:
+        - protocol: TCP
+          port: 443
+    - to:
+        - ipBlock:
+            cidr: 172.30.208.64/32
+      ports:
+        - protocol: TCP
+          port: 6443
+    - to:
+        - ipBlock:
+            cidr: 192.168.111.69/32
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 2049
+        - protocol: TCP
+          port: 3260

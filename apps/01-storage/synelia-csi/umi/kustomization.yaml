@@ -4,4 +4,4 @@ kind: Kustomization
 namespace: synelia-csi
 resources:
   - externalsecret.yaml
-  - cilium-networkpolicy.yaml
+  - networkpolicy.yaml
