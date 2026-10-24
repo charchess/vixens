@@ -49,13 +49,15 @@ jobs:
           }
           for sc in classes:
               name = sc["metadata"]["name"]
+              assert "umi" not in name.lower(), name
+              assert "umi" not in sc["parameters"]["datasetPath"].lower(), name
               assert sc["provisioner"] == "synelia.csi.truenas.io", name
               assert sc["metadata"]["annotations"][
                   "storageclass.kubernetes.io/is-default-class"
               ] == "false", name
               assert sc["reclaimPolicy"] == name.rsplit("-", 1)[-1].capitalize()
               assert sc["parameters"]["datasetPath"].startswith(
-                  "k8s/vixens/synelia-umi-test/"
+                  "k8s/vixens/synelia-test/"
               )
           assert not [x for x in docs if x["kind"] == "Secret"], (
               "the chart must not materialize a plaintext credential Secret"

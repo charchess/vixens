@@ -94,7 +94,7 @@ storageClasses:
     parameters:
       protocol: nfs
       pool: tank
-      datasetPath: k8s/vixens/synelia-umi-test/nfs
+      datasetPath: k8s/vixens/synelia-test/nfs
       compression: LZ4
   - name: synelia-nfs-delete
     isDefault: false
@@ -106,7 +106,7 @@ storageClasses:
     parameters:
       protocol: nfs
       pool: tank
-      datasetPath: k8s/vixens/synelia-umi-test/nfs
+      datasetPath: k8s/vixens/synelia-test/nfs
       compression: LZ4
   - name: synelia-iscsi-retain
     isDefault: false
@@ -116,7 +116,7 @@ storageClasses:
     parameters:
       protocol: iscsi
       pool: tank
-      datasetPath: k8s/vixens/synelia-umi-test/iscsi
+      datasetPath: k8s/vixens/synelia-test/iscsi
       fsType: ext4
       compression: LZ4
   - name: synelia-iscsi-delete
@@ -127,6 +127,6 @@ storageClasses:
     parameters:
       protocol: iscsi
       pool: tank
-      datasetPath: k8s/vixens/synelia-umi-test/iscsi
+      datasetPath: k8s/vixens/synelia-test/iscsi
       fsType: ext4
       compression: LZ4
