@@ -120,6 +120,22 @@ def verify_umi_network_policies(policies: list[dict]) -> None:
             raise AssertionError(f"Egress policy drift for {name}: {actual}")
 
 
+def verify_namespace_bootstrap(namespace: dict) -> None:
+    """Keep Synelia namespace scoped, ordered before CSI and safe from prune."""
+    if namespace.get("apiVersion") != "v1" or namespace.get("kind") != "Namespace":
+        raise AssertionError("Expected one core-v1 Namespace")
+    metadata = namespace["metadata"]
+    if metadata.get("name") != "synelia-csi" or "namespace" in metadata:
+        raise AssertionError("Namespace identity must be Synelia only")
+    if metadata.get("labels", {}).get("app.kubernetes.io/part-of") != "synelia-csi":
+        raise AssertionError("Namespace must remain scoped to Synelia")
+    if metadata.get("annotations") != {
+        "argocd.argoproj.io/sync-wave": "-1",
+        "argocd.argoproj.io/sync-options": "Prune=false",
+    }:
+        raise AssertionError("Namespace must precede CSI and reject prune")
+
+
 class SyneliaCSISourceTests(unittest.TestCase):
     def setUp(self):
         self.values = read_one(f"{BASE}/values.yaml")
@@ -238,10 +254,36 @@ class SyneliaCSISourceTests(unittest.TestCase):
             },
         )
 
+    def test_umi_namespace_bootstrap_before_namespaced_resources(self):
+        """Argo+SSA should have a first-wave explicit Namespace manifest."""
+        namespace = read_one(f"{BASE}/namespace.yaml")
+        verify_namespace_bootstrap(namespace)
+        resources = read_one(f"{BASE}/kustomization.yaml")["resources"]
+        self.assertEqual(resources[0], "namespace.yaml")
+        self.assertEqual(resources.count("namespace.yaml"), 1)
+        self.assertEqual(self.app["spec"]["destination"]["namespace"], "synelia-csi")
+        self.assertNotIn("automated", self.app["spec"]["syncPolicy"])
+
+    def test_umi_namespace_bootstrap_negative_regressions(self):
+        namespace = read_one(f"{BASE}/namespace.yaml")
+        for mutation in ("wrong-name", "wrong-kind", "wrong-wave", "allow-prune"):
+            altered = deepcopy(namespace)
+            if mutation == "wrong-name":
+                altered["metadata"]["name"] = "hindsight"
+            elif mutation == "wrong-kind":
+                altered["kind"] = "ConfigMap"
+            elif mutation == "wrong-wave":
+                altered["metadata"]["annotations"]["argocd.argoproj.io/sync-wave"] = "0"
+            elif mutation == "allow-prune":
+                altered["metadata"]["annotations"]["argocd.argoproj.io/sync-options"] = "Prune=true"
+            with self.subTest(mutation=mutation), self.assertRaises(AssertionError):
+                verify_namespace_bootstrap(altered)
+
     def test_umi_k3s_network_policy_supported_and_scoped(self):
         kustomization = read_one(f"{BASE}/kustomization.yaml")
         self.assertEqual(
-            kustomization["resources"], ["externalsecret.yaml", "networkpolicy.yaml"]
+            kustomization["resources"],
+            ["namespace.yaml", "externalsecret.yaml", "networkpolicy.yaml"]
         )
         policies = [
             policy for policy in yaml.safe_load_all(

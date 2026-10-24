@@ -1,0 +1,14 @@
+---
+# #4193: explicit namespace prevents Argo's CreateNamespace+SSA ordering
+# failure on the first sync. UMI only; no historic CSI/tenant namespaces.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: synelia-csi
+  labels:
+    app.kubernetes.io/part-of: synelia-csi
+  annotations:
+    # The namespace must exist before any Helm/ESO/network-policy resources.
+    argocd.argoproj.io/sync-wave: "-1"
+    # Protect the whole namespace (and any future retained volumes) from prune.
+    argocd.argoproj.io/sync-options: Prune=false
