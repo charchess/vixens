@@ -49,7 +49,7 @@ Objectifs :
 | 2 / Infra | Services mutualisés, endpoints et politiques de consommation | Topologie et mise en œuvre interne des services partagés |
 | 3 / Applications | Workloads, usages et données spécifiques | Déploiement/maintenance du CSI ou de l'operator transverse |
 
-La frontière des **operators** est à instruire : p. ex. operator CNPG et CRDs en Core (ou couche d'operators fondamentaux), puis instances PostgreSQL en Infra. Le critère est **l'ownership et l'ordre réel des dépendances**, non l'emplacement historique du manifest.
+La frontière des **operators** dépend du rôle réel du composant, et non de son emplacement historique. **Arbitrage actuel : l'operator CNPG et ses CRDs restent en couche Infra**, comme les instances PostgreSQL partagées ; cette affectation est **à réexaminer lors de la conception détaillée**, sans présumer de leur déplacement en Core. Kyverno reste également **Infra** par décision explicite, même s'il intervient dans l'admission du cluster.
 
 Ces couches sont **logiques**, pas nécessairement quatre dépôts ni quatre applications ArgoCD. Le découpage physique en repositories demeure une décision distincte de #3959.
 
@@ -184,8 +184,69 @@ Avant toute future bascule : inventaire de l'ownership ArgoCD, comparaison des r
 2. Décider du **modèle de nommage** des contrats : préfixes, traits d'union, sémantique exacte de RWO/RWX, rétention, qualité de service, dépréciation.
 3. Décider **après étude** de l'exposition des partages NFS statiques : PVC/PV, montage natif avec composition, autre ; arbitrer ownership, partage multi-namespace, ACL, accès concurrents et récupération.
 4. Repenser la composition des overlays avec seulement les **deux entrées globales** `cluster.name` / `environment`, sans casser les particularités techniques légitimes.
-5. Préciser la frontière **Core/Infra** pour les operators et les services mutualisés (cas CNPG).
+5. Réévaluer seulement si nécessaire la frontière **Core/Infra** des operators et services mutualisés, **sans reclasser CNPG ou Kyverno par défaut** (CNPG actuellement Infra, qualification à approfondir ; Kyverno confirmé Infra).
 6. Certifier l'**indépendance du bootstrap et de la restauration**, les health gates entre couches et la cohérence des snapshots GitOps.
 7. Décider **seulement ensuite** des chemins de migration et des éventuels nouveaux dépôts selon #3959/#3960.
 
 **Contexte de gouvernance :** #3959 est explicitement **PARK / DEFER** jusqu'à une nouvelle décision du propriétaire ; cette note est une trace de conception, non une instruction pour entreprendre des travaux.
+
+
+## 9. Inventaire ArgoCD : décisions de classification et axes `layer` / `domain`
+
+**Arbitrages de l'opérateur — 2026-10-24.** Les choix ci-dessous complètent la piste d'architecture, **sans déclencher de migration**. Les labels ArgoCD actuellement appliqués sont ceux de [#3805](https://github.com/charchess/vixens/issues/3805) : `vixens.io/domain: core|infra|fabric|personal`. Ils servent à **classer et filtrer** les Applications ; ils ne sont ni des `AppProject` ArgoCD ni des règles RBAC.
+
+### 9.1 Affectations retenues et points laissés ouverts
+
+| Composant | Domaine `vixens.io/domain` visé | Couche `vixens.io/layer` envisagée | Décision ou réserve |
+|---|---|---|---|
+| TrueNAS CSI, stockage, fondations GitOps | `core` | `core` | Cohérent avec la cible ; la compatibilité des contrats reste à démontrer |
+| CNPG operator et CRDs | `infra` | `infra` | **Conserver en Infra pour le moment** ; la question de sa qualification est **à étudier**, sans transfert automatique vers Core |
+| PostgreSQL partagé | `infra` | `infra` | Service transverse Infra confirmé |
+| Kyverno | `infra` | `infra` | **Décision ferme : reste en Infra**, sans reclassement Core par sa seule fonction d'admission |
+| Mosquitto | **`personal`** | `applications` | **À reclasser** : application/service personnel, pas service transversal global |
+| `media-shared-secrets` | **`personal`** | `applications` | **À reclasser** : les consommateurs sont des applications personnelles ; « partagé » ne signifie pas « Infra » |
+| AdGuard Home | **`infra`** | `infra` | **Conserver pour le moment** ; son **retrait éventuel** est à réfléchir séparément, sans décision immédiate |
+| `whoami` | `infra` actuellement | Sans objet après retrait | **À retirer** du catalogue/déploiement ; prévoir une suppression GitOps contrôlée, pas une suppression immédiate des objets live |
+| TXO Fabric / Hermes Fabric | `fabric` | `applications` par défaut | Domaine produit indépendant ; une exception de couche devra être motivée par une responsabilité réellement transverse |
+| Home Assistant, Frigate, Trilium, etc. | `personal` | `applications` | Cohérent ; ne pas créer de nouvelle couche pour chaque usage |
+
+**Différence essentielle :** une application *utilisée par plusieurs applications d'un même domaine* (par ex. `media-shared-secrets`) ne devient pas automatiquement une **infrastructure de plateforme**. On classe par **responsabilité et raison d'être**, pas simplement par présence du mot `shared` dans le nom.
+
+Pour `whoami`, l'intention est de **retirer** le composant, pas de le rebaptiser. Son éventuelle désinstallation doit tenir compte de l'ownership ArgoCD, du `prune`, des finalizers et des conséquences réelles ; aucune action n'est exécutée par ce document.
+
+### 9.2 Séparer deux axes de classification, sans imposer de refonte immédiate
+
+La direction **`layer` + `domain`** est retenue **au niveau conception** : elle répond à deux questions distinctes.
+
+- **`vixens.io/layer`** : *à quel niveau technique de la plateforme le composant appartient-il ?* Valeurs **candidates** : `core`, `infra`, `applications`. Terraform / couche 0 se situe hors des Applications Kubernetes et n'a pas à être artificiellement labellisé.
+- **`vixens.io/domain`** : *pour quelle responsabilité ou finalité opérationnelle le composant existe-t-il ?* On conserve **provisoirement** le vocabulaire existant `core|infra|fabric|personal` pour ne pas casser le filtrage et la validation CI. Il mélange aujourd'hui technique et finalité, et sa normalisation à terme (`platform`, `fabric`, `personal` ou autre) **reste à concevoir**.
+
+Exemple **illustratif**, non appliqué :
+
+```yaml
+metadata:
+  labels:
+    vixens.io/layer: applications
+    vixens.io/domain: personal
+```
+
+**Ne pas transformer automatiquement** `domain=infra` en `layer=infra` ni `domain=fabric` en `layer=applications` sans inventorier les responsabilités concrètes : les axes doivent devenir véritablement indépendants. Le tableau précédent décrit les **affectations envisagées** pour les cas discutés, pas un algorithme universel de traduction.
+
+Ne pas créer d'`AppProject` ArgoCD ni modifier les GitHub Projects à cette occasion. La question des **GitHub Projects et de leur organisation est explicitement hors périmètre** ; elle sera reprise lors d'un **point d'organisation distinct**.
+
+### 9.3 Constat sur l'implémentation actuelle et conditions d'une future évolution
+
+La classification actuelle est principalement ajoutée par les patches de `argocd/overlays/dev/kustomization.yaml` et `argocd/overlays/prod/kustomization.yaml`. La CI de `.github/workflows/validate.yaml` valide déjà les **quatre domaines actuels** ; changer les labels sans mettre à jour cette garde reviendrait à casser le contrat de validation.
+
+Le diagnostic statique a relevé une **duplication de patches en dev** (certaines classifications sont répétées) et une **question distincte d'ownership de l'Application racine** `vixens-app-of-apps` déjà suivie dans [#3823](https://github.com/charchess/vixens/issues/3823).
+
+Lors d'un futur chantier explicitement autorisé :
+
+1. Valider le **vocabulaire exact et la sémantique** de `layer` et `domain`, ainsi que le système qui en possède la vérité.
+2. Reclasser `mosquitto` et `media-shared-secrets` en `personal`, en préservant les ressources runtime ; laisser `CNPG`, `Kyverno` et `AdGuard Home` en `infra` tant qu'aucune autre décision n'est prise.
+3. Préparer le retrait **contrôlé** de `whoami`, après inventaire de ses usages et évaluation du risque ArgoCD.
+4. Éliminer les règles Kustomize dupliquées sans modifier la classification effective ; privilégier un propriétaire/générateur unique plutôt qu'une seconde copie divergente.
+5. Étendre les tests de rendu et la CI au nouvel axe `layer`, lorsque son schéma sera validé. Ne **pas** convertir des labels de classification en mécanismes de sécurité sans décision et analyse dédiées.
+6. Traiter l'Application racine avec #3823 et distinguer source Git, labels et ownership bootstrap.
+
+**Non-objectifs immédiats :** modification des labels/manifests réels, suppression de `whoami`, changement de `AppProject`, changement des GitHub Projects, migration d'overlays ou de dépôts. #3959 reste **PARK / DEFER** jusqu'à décision explicite du propriétaire.
