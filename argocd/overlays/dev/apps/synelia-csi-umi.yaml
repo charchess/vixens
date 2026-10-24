@@ -24,7 +24,7 @@ spec:
       ref: values
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: main
-      path: apps/01-storage/synelia-csi/umi
+      path: apps/01-storage/synelia-csi/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: synelia-csi

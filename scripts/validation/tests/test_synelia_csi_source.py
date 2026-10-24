@@ -17,6 +17,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[3]
 BASE = "apps/01-storage/synelia-csi/umi"
 APP = "argocd/overlays/dev/apps/synelia-csi-umi.yaml"
+OVERLAY = "apps/01-storage/synelia-csi/overlays/dev"
 
 
 def read_one(path: str) -> dict:
@@ -37,6 +38,8 @@ def verify_classes(values: dict) -> None:
         raise AssertionError(f"Unexpected classes or class collision: {names}")
     for sc in classes:
         name = sc["name"]
+        if "umi" in name.lower():
+            raise AssertionError(f"Environment suffix forbidden in StorageClass: {name}")
         if sc.get("isDefault") is not False:
             raise AssertionError(f"Default class not permitted: {name}")
         if sc["reclaimPolicy"] != name.rsplit("-", 1)[-1].capitalize():
@@ -46,8 +49,10 @@ def verify_classes(values: dict) -> None:
         if sc["parameters"]["pool"] != "tank":
             raise AssertionError(f"Unexpected pool: {name}")
         parent = sc["parameters"]["datasetPath"]
-        if not parent.startswith("k8s/vixens/synelia-umi-test/"):
+        if not parent.startswith("k8s/vixens/synelia-test/"):
             raise AssertionError(f"Unsafe parent: {parent}")
+        if "umi" in parent.lower():
+            raise AssertionError(f"Environment suffix forbidden in Synelia dataset path: {parent}")
         if any(old in parent for old in ("nfs/vols", "iscsi/vols")):
             raise AssertionError(f"Legacy dataset collision: {parent}")
         if parent.endswith("/" + sc["parameters"]["protocol"]) is False:
@@ -71,7 +76,11 @@ class SyneliaCSISourceTests(unittest.TestCase):
             sources[0]["helm"]["valueFiles"], [f"$values/{BASE}/values.yaml"]
         )
         self.assertEqual(sources[1]["ref"], "values")
-        self.assertEqual(sources[2]["path"], BASE)
+        self.assertEqual(sources[2]["path"], OVERLAY)
+        self.assertEqual(
+            read_one(f"{OVERLAY}/kustomization.yaml")["resources"],
+            ["../../umi"],
+        )
         self.assertEqual(self.values["driverName"], "synelia.csi.truenas.io")
         self.assertEqual(self.values["image"]["driver"]["tag"], "v1.4.0")
         self.assertEqual(self.values["kubeletDir"], "/var/lib/kubelet")
@@ -84,6 +93,23 @@ class SyneliaCSISourceTests(unittest.TestCase):
             "apps/synelia-csi-umi.yaml",
             read_one("argocd/overlays/dev/kustomization.yaml")["resources"],
         )
+
+    def test_app_of_apps_discovers_child_via_dev_overlay(self):
+        """Root -> dev App-of-Apps -> Synelia child -> dev Kustomize layer.
+
+        Tests Git desired-state wiring only, never live ArgoCD registration.
+        """
+        root = (ROOT / "argocd/base/root-app.yaml.tpl").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("name: vixens-app-of-apps", root)
+        self.assertIn("path: ${overlay_path}", root)
+        dev = read_one("argocd/overlays/dev/kustomization.yaml")
+        prod = read_one("argocd/overlays/prod/kustomization.yaml")
+        child = "apps/synelia-csi-umi.yaml"
+        self.assertEqual(dev["resources"].count(child), 1)
+        self.assertNotIn(child, prod["resources"])
+        self.assertEqual(self.app["spec"]["sources"][2]["path"], OVERLAY)
 
     def test_classes_isolated_not_default_and_reclaim_compatible(self):
         verify_classes(self.values)
@@ -100,6 +126,16 @@ class SyneliaCSISourceTests(unittest.TestCase):
         )
 
     def test_safety_regressions_fail_closed(self):
+        mutated = deepcopy(self.values)
+        mutated["storageClasses"][0]["name"] = "synelia-iscsi-umi-delete"
+        with self.assertRaises(AssertionError):
+            verify_classes(mutated)
+        mutated = deepcopy(self.values)
+        mutated["storageClasses"][0]["parameters"]["datasetPath"] = (
+            "k8s/vixens/synelia-umi-test/nfs"
+        )
+        with self.assertRaises(AssertionError):
+            verify_classes(mutated)
         mutated = deepcopy(self.values)
         mutated["storageClasses"][0]["isDefault"] = True
         with self.assertRaises(AssertionError):
