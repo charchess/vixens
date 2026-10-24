@@ -3,3 +3,14 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../base
+patches:
+  # UMI has a dedicated out-of-band bootstrap identity, independent of prod.
+  # The Secret must exist in the UMI external-secrets namespace before activation.
+  # Never place token bytes in Git or reuse the prod/Infra administrative token.
+  - target:
+      kind: ClusterSecretStore
+      name: openbao
+    patch: |-
+      - op: replace
+        path: /spec/provider/vault/auth/tokenSecretRef/name
+        value: openbao-token-umi
