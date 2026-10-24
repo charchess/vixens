@@ -136,6 +136,6 @@ logout, node restart, forced mount or `fsck`. Do not merge an executable
 cutover into auto-synced GitOps trees without a separately reviewed physical
 go/no-go. Prod remains pinned to `prod-stable`.
 
-Related: [TrueNAS CSI README](../../../apps/01-storage/truenas-csi/README.md),
+Related: [TrueNAS CSI README](../../apps/01-storage/truenas-csi/README.md),
 [#4185](https://github.com/charchess/vixens/issues/4185), historical
 iSCSI ext4 incidents in `docs/post-mortems/`.
