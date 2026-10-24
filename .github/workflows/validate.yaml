@@ -372,6 +372,9 @@ jobs:
       - name: Regression — UMI CSI canonical OpenBao store
         run: python3 -m unittest discover -s scripts/validation/tests -p 'test_truenas_csi_umi_openbao.py' -v
 
+      - name: Regression — official Synelia CSI safety gates
+        run: python3 -m unittest discover -s scripts/validation/tests -p 'test_synelia_csi_source.py' -v
+
   # 4️⃣ Secret Scanning (gitleaks)
   secret-scan:
     name: Secret Scanning

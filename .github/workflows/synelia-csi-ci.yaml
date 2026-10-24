@@ -1,0 +1,80 @@
+---
+name: Synelia CSI Upstream Helm Contract
+
+on:
+  pull_request:
+    paths:
+      - 'apps/01-storage/synelia-csi/**'
+      - 'argocd/overlays/dev/apps/synelia-csi-umi.yaml'
+      - '.github/workflows/synelia-csi-ci.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  helm-render:
+    name: Pinned Helm Template & Safety Invariants
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Kubernetes render tools
+        uses: ./.github/actions/setup-k8s-tools
+
+      - name: Verify immutable upstream chart and render
+        run: |
+          curl -fsSL \
+            https://raw.githubusercontent.com/truenas/truenas-csi/master/charts/truenas-csi-1.4.0.tgz \
+            -o /tmp/synelia-csi-1.4.0.tgz
+          echo '3a1b9f326447d54beb3fec20e3b026a4a07f68cb7f3685c7a71f7e9d70589367  /tmp/synelia-csi-1.4.0.tgz' | sha256sum -c -
+          helm template synelia-csi /tmp/synelia-csi-1.4.0.tgz \
+            --namespace synelia-csi \
+            -f apps/01-storage/synelia-csi/umi/values.yaml \
+            > /tmp/synelia-csi-render.yaml
+          kubeconform -strict -ignore-missing-schemas -summary /tmp/synelia-csi-render.yaml
+
+      - name: Assert rendered CSI/SC isolation and no credential Secret
+        run: |
+          python3 - <<'PY'
+          import yaml
+
+          with open("/tmp/synelia-csi-render.yaml", encoding="utf-8") as stream:
+              docs = [doc for doc in yaml.safe_load_all(stream) if doc]
+          classes = [doc for doc in docs if doc["kind"] == "StorageClass"]
+          drivers = [doc for doc in docs if doc["kind"] == "CSIDriver"]
+          assert len(drivers) == 1
+          assert drivers[0]["metadata"]["name"] == "synelia.csi.truenas.io"
+          assert {x["metadata"]["name"] for x in classes} == {
+              "synelia-nfs-retain", "synelia-nfs-delete",
+              "synelia-iscsi-retain", "synelia-iscsi-delete",
+          }
+          for sc in classes:
+              name = sc["metadata"]["name"]
+              assert sc["provisioner"] == "synelia.csi.truenas.io", name
+              assert sc["metadata"]["annotations"][
+                  "storageclass.kubernetes.io/is-default-class"
+              ] == "false", name
+              assert sc["reclaimPolicy"] == name.rsplit("-", 1)[-1].capitalize()
+              assert sc["parameters"]["datasetPath"].startswith(
+                  "k8s/vixens/synelia-umi-test/"
+              )
+          assert not [x for x in docs if x["kind"] == "Secret"], (
+              "the chart must not materialize a plaintext credential Secret"
+          )
+          deployments = [x for x in docs if x["kind"] == "Deployment"]
+          nodes = [x for x in docs if x["kind"] == "DaemonSet"]
+          assert len(deployments) == len(nodes) == 1
+          assert nodes[0]["spec"]["template"]["spec"]["hostNetwork"] is True
+          for workload in deployments + nodes:
+              containers = workload["spec"]["template"]["spec"]["containers"]
+              assert any(
+                  c["image"] == "ghcr.io/truenas/truenas-csi:v1.4.0"
+                  for c in containers
+              )
+          print("PASS: pinned Helm render, non-default Synelia SC, CSI identity, no credential Secret")
+          PY
+
+      - name: Render companion ESO and Cilium policies
+        run: |
+          kustomize build apps/01-storage/synelia-csi/overlays/dev \
+            > /tmp/synelia-csi-policy.yaml
+          kubeconform -strict -ignore-missing-schemas -summary /tmp/synelia-csi-policy.yaml

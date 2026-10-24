@@ -1,0 +1,35 @@
+---
+# #4193 manual UMI validation gate. NOT in prod; no automated sync/selfHeal.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: synelia-csi-umi
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    vixens.io/domain: core
+spec:
+  project: default
+  sources:
+    - repoURL: https://raw.githubusercontent.com/truenas/truenas-csi/master/charts
+      chart: truenas-csi
+      targetRevision: 1.4.0
+      helm:
+        releaseName: synelia-csi
+        valueFiles:
+          - $values/apps/01-storage/synelia-csi/umi/values.yaml
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: main
+      path: apps/01-storage/synelia-csi/umi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: synelia-csi
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - FailOnSharedResource=true
