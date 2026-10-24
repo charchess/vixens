@@ -59,6 +59,67 @@ def verify_classes(values: dict) -> None:
             raise AssertionError(f"Protocol path mismatch: {name}")
 
 
+
+def verify_umi_network_policies(policies: list[dict]) -> None:
+    """Fail closed if an unsupported kind, wildcard or required egress disappears."""
+    expected = {
+        "synelia-csi-controller-egress": {
+            "app": "synelia-csi-controller",
+            "nas_ports": {443},
+        },
+        "synelia-csi-node-egress": {
+            "app": "synelia-csi-node",
+            "nas_ports": {443, 2049, 3260},
+        },
+    }
+    if len(policies) != 2 or {p["metadata"]["name"] for p in policies} != set(expected):
+        raise AssertionError("Expected exactly two dedicated Synelia policies")
+    for policy in policies:
+        if policy["apiVersion"] != "networking.k8s.io/v1" or policy["kind"] != "NetworkPolicy":
+            raise AssertionError("UMI Flannel cannot apply CiliumNetworkPolicy")
+        if policy["metadata"].get("namespace") != "synelia-csi":
+            raise AssertionError("NetworkPolicy escaped Synelia namespace")
+        spec = policy["spec"]
+        if spec.get("policyTypes") != ["Egress"] or "ingress" in spec:
+            raise AssertionError("Do not accidentally change inbound CSI traffic")
+        name = policy["metadata"]["name"]
+        if spec.get("podSelector") != {"matchLabels": {"app": expected[name]["app"]}}:
+            raise AssertionError("NetworkPolicy Pod scope must be CSI-specific")
+
+        actual = {}
+        for rule in spec["egress"]:
+            if len(rule.get("to", [])) != 1:
+                raise AssertionError("Each egress must target one narrow destination")
+            target = rule["to"][0]
+            ports = {(p["protocol"], p["port"]) for p in rule["ports"]}
+            if "ipBlock" in target:
+                if set(target) != {"ipBlock"}:
+                    raise AssertionError("Unexpected IP target fields")
+                cidr = target["ipBlock"]["cidr"]
+                if cidr in actual:
+                    raise AssertionError("Duplicate destination")
+                actual[cidr] = ports
+            else:
+                if target != {
+                    "namespaceSelector": {"matchLabels": {
+                        "kubernetes.io/metadata.name": "kube-system"
+                    }},
+                    "podSelector": {"matchLabels": {"k8s-app": "kube-dns"}},
+                }:
+                    raise AssertionError("DNS destination must be the observed CoreDNS")
+                actual["CoreDNS"] = ports
+        want = {
+            "CoreDNS": {("UDP", 53), ("TCP", 53)},
+            "10.43.0.1/32": {("TCP", 443)},
+            "172.30.208.64/32": {("TCP", 6443)},
+            "192.168.111.69/32": {
+                ("TCP", port) for port in expected[name]["nas_ports"]
+            },
+        }
+        if actual != want:
+            raise AssertionError(f"Egress policy drift for {name}: {actual}")
+
+
 class SyneliaCSISourceTests(unittest.TestCase):
     def setUp(self):
         self.values = read_one(f"{BASE}/values.yaml")
@@ -177,33 +238,34 @@ class SyneliaCSISourceTests(unittest.TestCase):
             },
         )
 
-    def test_cilium_policy_is_narrow_and_hostnetwork_limit_documented(self):
-        docs = [
-            x for x in yaml.safe_load_all(
-                (ROOT / BASE / "cilium-networkpolicy.yaml").read_text(encoding="utf-8")
-            ) if x
-        ]
-        self.assertEqual(len(docs), 2)
-        self.assertTrue(all(x["kind"] == "CiliumNetworkPolicy" for x in docs))
-        self.assertTrue(
-            all(x["metadata"]["namespace"] == "synelia-csi" for x in docs)
-        )
+    def test_umi_k3s_network_policy_supported_and_scoped(self):
+        kustomization = read_one(f"{BASE}/kustomization.yaml")
         self.assertEqual(
-            docs[0]["spec"]["endpointSelector"]["matchLabels"]["app"],
-            "synelia-csi-controller",
+            kustomization["resources"], ["externalsecret.yaml", "networkpolicy.yaml"]
         )
-        egresses = docs[0]["spec"]["egress"] + docs[1]["spec"]["egress"]
-        cidrs = [
-            cidr for rule in egresses for cidr in rule.get("toCIDR", [])
+        policies = [
+            policy for policy in yaml.safe_load_all(
+                (ROOT / BASE / "networkpolicy.yaml").read_text(encoding="utf-8")
+            ) if policy
         ]
-        self.assertEqual(set(cidrs), {"192.168.111.69/32"})
-        ports = {
-            item["port"]
-            for rule in egresses
-            for group in rule.get("toPorts", [])
-            for item in group["ports"]
-        }
-        self.assertTrue({"443", "2049", "3260", "53"}.issubset(ports))
+        verify_umi_network_policies(policies)
+
+    def test_umi_k3s_network_policy_negative_regressions(self):
+        policies = list(yaml.safe_load_all(
+            (ROOT / BASE / "networkpolicy.yaml").read_text(encoding="utf-8")
+        ))
+        for change in ("cilium-kind", "broad-nas", "remove-api", "wrong-pods"):
+            mutated = deepcopy(policies)
+            if change == "cilium-kind":
+                mutated[0]["kind"] = "CiliumNetworkPolicy"
+            elif change == "broad-nas":
+                mutated[0]["spec"]["egress"][-1]["to"][0]["ipBlock"]["cidr"] = "0.0.0.0/0"
+            elif change == "remove-api":
+                mutated[0]["spec"]["egress"].pop(1)
+            elif change == "wrong-pods":
+                mutated[0]["spec"]["podSelector"] = {}
+            with self.subTest(change=change), self.assertRaises(AssertionError):
+                verify_umi_network_policies(mutated)
 
 
 if __name__ == "__main__":
