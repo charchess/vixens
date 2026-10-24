@@ -31,7 +31,10 @@ on_error() {
   exit "$rc"
 }
 trap on_error ERR
-k() { kubectl --request-timeout=15s "$@"; }
+# UMI is a k3s host. Do not inherit root's unrelated/default kubectl context.
+KUBECONFIG_FILE="${UMI_REBIND_KUBECONFIG:-/etc/rancher/k3s/k3s.yaml}"
+[[ -r "$KUBECONFIG_FILE" ]] || fail "missing or unreadable UMI K3s kubeconfig: $KUBECONFIG_FILE"
+k() { kubectl --kubeconfig="$KUBECONFIG_FILE" --request-timeout=15s "$@"; }
 
 verify_live() {
   PHASE='VERIFY ORIGINAL PV/PVC'
