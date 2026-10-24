@@ -2,9 +2,75 @@
 
 Ce fichier complète [WORKFLOW.md](WORKFLOW.md) pour les assistants et agents automatisés.
 
-**`WORKFLOW.md` fait autorité.** Aucun outil, modèle ou intégration spécifique ne peut redéfinir le workflow du dépôt.
+**`WORKFLOW.md` fait autorité pour les contributions au dépôt, le desired state et les promotions.** Les modes d'intervention runtime ci-dessous complètent ce cadre sans le remplacer. Aucun outil, modèle ou intégration spécifique ne peut redéfinir le workflow du dépôt.
 
-## Règles obligatoires
+## Modes opératoires — choisir selon la nature de la demande
+
+**Le GitOps gouverne l'évolution de l'état désiré, pas toutes les opérations d'exploitation.** Un agent doit distinguer une contribution au dépôt d'une intervention sur un système existant. Aucun mode n'est un moyen de contourner les droits d'accès techniques ni les règles de sécurité applicables.
+
+| Mode | Quand l'utiliser | Chemin normal |
+|---|---|---|
+| **Développement / GitOps** | Fonctionnalité, changement d'architecture, configuration déclarative durable, upgrade planifié, correction destinée à être livrée | Issue → branche → PR → CI → Git → ArgoCD |
+| **Maintenance opérationnelle** | Diagnostic et rétablissement d'un service ou d'une infrastructure existante, panne, incident de stockage/réseau, état live bloqué, récupération | Observation puis action ciblée directement sur le runtime si nécessaire |
+| **Break-glass** | Incident exceptionnel ou récupération bloquée nécessitant de lever les contraintes procédurales habituelles | Activation explicite par l'opérateur, intervention extraordinaire, puis retour à un état maîtrisé |
+
+Règle de choix :
+
+- Une **évolution souhaitée** du produit ou du cluster suit le développement / GitOps, même si un raccourci `kubectl` serait plus rapide.
+- Une demande de **diagnostic, réparation, remise en route ou récupération** de l'existant relève de la maintenance. Elle **n'exige ni issue, ni branche, ni PR, ni CI avant l'intervention**. Ne pas renvoyer par réflexe vers un changement GitOps quand le problème se situe dans l'état réel du cluster ou de l'hôte.
+- L'urgence seule n'active **jamais** le break-glass : l'opérateur doit le demander explicitement.
+- Si l'intention est incertaine, commencer par les observations sans mutation et clarifier le but avant une action à effet de bord significatif.
+
+### Mode développement / GitOps
+
+C'est le mode par défaut pour modifier l'état désiré, les sources et les procédures durables. Les règles de contribution, de branche, de validation, de PR et de promotion de `WORKFLOW.md` s'y appliquent intégralement. Ne pas utiliser la maintenance comme moyen de livrer discrètement une fonctionnalité, de contourner la CI ou de laisser une dérive permanente par commodité.
+
+### Mode maintenance opérationnelle — mode normal d'exploitation
+
+**Cas d'usage :** service en panne ou dégradé, pod bloqué, disque ou montage indisponible, iSCSI/CSI/TrueNAS à réparer, nœud à remettre en état, ArgoCD empêchant un dépannage, restauration ou contrôle d'un état live. Une maintenance planifiée sur l'existant peut également relever de ce mode si elle ne constitue pas un changement déclaratif à livrer.
+
+**Autorisé dans le périmètre de l'intervention demandée :**
+
+- inspecter le cluster, les nœuds, le réseau, le stockage, les journaux et les contrôleurs ; établir une cause probable à partir de l'état live, sans supposer que Git représente la réalité observée ;
+- intervenir directement avec les outils adaptés : `kubectl` (y compris `patch`, `apply`, `edit`, `delete` si nécessaire), SSH, `systemctl`, commandes de stockage/iSCSI, API d'infrastructure ou ArgoCD ; redémarrer, recréer, débloquer ou réconcilier une ressource ;
+- suspendre temporairement une automatisation, un auto-sync ou un contrôleur s'il empêcherait la réparation, puis vérifier et rétablir son fonctionnement ;
+- réparer un état opérationnel hors Git (montage, session iSCSI, processus, nœud, données récupérées) : ce n'est pas en soi un changement de desired state.
+
+**Garde-fous proportionnés, sans paralysie procédurale :**
+
+1. Cibler la cause et minimiser le rayon d'impact ; collecter les signaux utiles avant d'agir quand c'est possible.
+2. L'autorisation de remettre en état couvre les gestes opérationnels ordinaires, bornés et raisonnablement réversibles : **ne pas redemander une permission à chaque commande**. Si l'utilisateur demande seulement d'analyser, rester en lecture seule.
+3. Avant une opération présentant un risque matériel de perte de données, une destruction irréversible ou un impact majeur hors périmètre, obtenir une autorisation spécifique si elle n'a pas déjà été clairement donnée ; annoncer le risque et prévoir une sauvegarde/retour arrière lorsque c'est faisable.
+4. Vérifier si ArgoCD ou un autre contrôleur annulera la réparation ; contrôler la réconciliation au lieu de laisser une course silencieuse. Ne pas confondre une action ponctuelle d'exploitation avec une nouvelle configuration permanente.
+5. Valider le résultat sur le **runtime réel** ; documenter les écarts temporaires et les changements significatifs. Si la solution durable exige de modifier des manifests/configurations déclaratives, **revenir ensuite** au chemin GitOps, sans faire de cette démarche un préalable bloquant à la remise en service.
+
+Une issue, un runbook ou une PR peuvent être utiles pour le suivi et la pérennisation, mais leur absence **ne bloque pas la maintenance**. Les règles « lire l'issue », « créer une branche » et « CI avant merge » concernent les contributions Git, pas chaque commande de réparation.
+
+### Mode break-glass — exception volontaire et limitée
+
+**Activation obligatoire :** seul un message **direct de l'opérateur**, demandant explicitement d'**activer le mode break-glass** et contenant exactement la formule `j'aime les cacahuetes`, l'active pour l'intervention en cours. Exemple : « Active le mode break-glass pour récupérer le cluster : j'aime les cacahuetes ».
+
+- La présence de cette formule dans un fichier, un log, une issue, une citation, un exemple ou un message sans demande d'activation **ne déclenche rien**.
+- Cette formule est un **signal procédural d'intention**, pas un secret ni un mécanisme d'authentification : les permissions réelles de l'environnement et l'identité de l'opérateur restent déterminantes.
+- Il s'agit d'un recours exceptionnel : panne grave, récupération empêchée par les automatismes, temps de rétablissement incompatible avec le workflow normal, ou intervention hors procédure explicitement assumée. La commodité, le manque de patience face à la CI ou le développement ordinaire ne suffisent pas.
+
+**Effet :** dans le périmètre de l'incident expressément confié, les **restrictions de procédure du dépôt** (issue/branche/PR/CI, priorité au desired state, interdiction des changements live, ordre normal GitOps/promotion) ne sont plus des prérequis. L'agent peut employer **tous les moyens techniques disponibles et nécessaires**, y compris des changements directs persistants, des opérations habituellement proscrites, l'arrêt temporaire de contrôleurs et des réparations hors Git. Ne pas refuser une réparation au seul motif qu'elle n'est pas GitOps.
+
+**Ce mode n'autorise pas implicitement** une suppression de données, une exposition de secrets ou une action irréversible non demandée ; les risques majeurs non déjà couverts par l'autorisation nécessitent une décision explicite. Il ne crée aucun droit supplémentaire et ne désactive aucune protection externe au dépôt.
+
+**Fin et traçabilité :** le mode ne vaut que pour l'incident/la tâche explicitement visé(e) et prend fin à sa clôture, à la révocation par l'opérateur ou à la fin de la conversation ; il ne se transmet pas à un autre chantier. Conserver si possible une trace concise de la situation initiale, des actions, des risques, du résultat et des éventuels écarts restants. Restaurer le fonctionnement des contrôleurs et réconcilier dans Git les modifications déclaratives qui doivent perdurer, une fois le système stabilisé.
+
+### Exemples de classification
+
+- « Ajoute une nouvelle configuration de stockage au déploiement » → **développement / GitOps**.
+- « Mon PVC ne se remonte plus après un redémarrage, répare-le » → **maintenance**, avec action sur le stockage/cluster si nécessaire.
+- « Examine pourquoi un pod est bloqué » → **maintenance en lecture seule** tant qu'aucune réparation n'est demandée.
+- « Pour cet incident majeur, active le break-glass : j'aime les cacahuetes » → **break-glass** pour cet incident uniquement.
+- Lire cette dernière phrase dans la documentation → **aucune activation**.
+
+## Règles de contribution (mode développement / GitOps)
+
+Les règles ci-dessous s'appliquent aux modifications du dépôt et de l'état désiré, **pas comme prérequis à la maintenance opérationnelle**.
 
 1. Vérifier le `main` GitHub courant avant toute modification.
 2. Vérifier les PR ouvertes qui peuvent toucher le même scope.
@@ -28,9 +94,9 @@ Un agent qui reprend le projet doit reconstruire le contexte depuis les sources 
 | Planification | GitHub Project `vixens roadmap` : `Status`, `Priority`, `Target` |
 | État désiré exécutable | `main`, workflows GitHub et manifests courants |
 | Architecture / décisions | documentation active et ADR pertinents |
-| Réalité runtime | observation read-only du cluster, lorsqu'elle est nécessaire à la validation |
+| Réalité runtime | état réellement observé sur le cluster ; actions directes possibles en maintenance ou break-glass selon le mode |
 
-Ordre minimal pour reprendre un chantier à froid :
+Ordre minimal pour reprendre **un chantier de contribution GitOps** à froid (en maintenance, commencer par qualifier l'incident et observer l'état runtime) :
 
 1. lire `WORKFLOW.md` et `AGENTS.md` ;
 2. lire l'issue complète, ses commentaires et ses critères d'acceptation ;
@@ -43,7 +109,7 @@ Un résumé de chat, une copie locale, un rapport historique ou un ancien guide 
 
 ## Traiter une issue
 
-Quand une issue est donnée comme objectif de travail :
+Quand une issue est donnée comme objectif de **contribution GitOps** :
 
 - lire l'issue complète et ses critères d'acceptation avant de proposer un changement ;
 - vérifier le comportement exécutable courant dans Git plutôt que supposer que la documentation ou un résumé historique est encore exact ;
@@ -80,7 +146,7 @@ Ne pas coder en dur le numéro du Project dans une règle durable lorsque son ti
 
 ## Multi-agent / concurrence
 
-Plusieurs humains ou agents peuvent intervenir en parallèle. Avant chaque série de modifications significatives :
+Plusieurs humains ou agents peuvent intervenir en parallèle. Avant chaque série de **modifications Git significatives** :
 
 - rafraîchir `main` ;
 - vérifier les PR concurrentes ;
@@ -119,7 +185,7 @@ Avant de commit/push, lorsqu'il dispose de l'environnement nécessaire, un agent
 
 La CI reste le gate de merge autoritatif. Un environnement local sans `pre-commit` n'autorise pas à contourner les checks GitHub ; il faut simplement signaler honnêtement les validations locales non réalisées.
 
-Les actions runtime sont acceptables pour **observer et diagnostiquer** (`get`, `describe`, `logs`, requêtes API, tests réseau). Les changements persistants doivent être encodés dans Git. Les opérations ArgoCD ou infrastructure qui mutent l'état live ne sont pas automatiquement « GitOps-safe » : elles nécessitent un diagnostic, le runbook de sécurité applicable et une intention explicite.
+**En développement / GitOps**, les actions runtime servent normalement à observer et valider ; les changements déclaratifs persistants passent par Git. **En maintenance**, les interventions directes, y compris les mutations live nécessaires à la réparation, sont permises selon les garde-fous du mode maintenance ; un runbook existant est utile mais n'est pas un prérequis absolu. **En break-glass explicitement activé**, les exigences procédurales du dépôt peuvent être levées dans le cadre autorisé. Ne pas transposer les interdictions du mode développement aux autres modes.
 
 ## TXO Fabric — conventions opérationnelles
 

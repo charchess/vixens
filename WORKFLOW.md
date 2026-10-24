@@ -1,6 +1,6 @@
 # Vixens workflow
 
-Vixens suit un workflow GitOps centré sur GitHub. Ce document est la référence canonique pour modifier le dépôt.
+Vixens suit un workflow GitOps centré sur GitHub. Ce document est la référence canonique pour modifier le dépôt, faire évoluer l'état désiré et promouvoir les versions. **Il ne constitue pas une interdiction générale d'exploiter ou de réparer directement le runtime.** Les trois modes d'intervention sont définis dans [AGENTS.md](AGENTS.md).
 
 ## Principes
 
@@ -11,7 +11,7 @@ Vixens suit un workflow GitOps centré sur GitHub. Ce document est la référenc
 - **GitHub Actions** valide et orchestre les opérations de cycle de vie.
 - **ArgoCD** réconcilie les clusters depuis Git ; la CI ne déploie pas directement les manifests.
 - Les outils locaux et les assistants IA sont des clients du workflow, jamais des dépendances du workflow.
-- Les changements persistants via `kubectl apply`, `kubectl edit` ou `kubectl delete` sont interdits lorsqu'ils doivent être déclarés dans Git.
+- En **développement / GitOps**, les changements déclaratifs persistants via `kubectl apply`, `kubectl edit` ou `kubectl delete` sont interdits lorsqu'ils doivent être déclarés dans Git. Cette règle ne bloque pas les opérations de **maintenance** ni le **break-glass** explicitement activé, décrits dans `AGENTS.md`.
 
 ## Sources de vérité
 
@@ -22,13 +22,23 @@ Vixens suit un workflow GitOps centré sur GitHub. Ce document est la référenc
 | Planification / priorité / release cible | GitHub Project `vixens roadmap` |
 | État désiré exécutable | `main`, workflows GitHub et manifests |
 | Architecture courante | documentation active + ADR applicables |
-| État runtime observé | cluster, en lecture seule pour diagnostic/validation |
+| État runtime observé | cluster ; lecture pour diagnostic/validation et interventions directes autorisées selon le mode opératoire |
 
 Une documentation active qui contredit le comportement exécutable courant doit être corrigée ou explicitement marquée historique. Un état live divergent ne devient pas pour autant le desired state : la correction persistante revient dans Git.
 
-## Avant toute modification
+## Frontière GitOps / maintenance / break-glass
 
-1. Lire l'issue GitHub concernée ou en créer une.
+Ce document est le chemin normal des **contributions** et des **promotions**, pas une procédure universelle pour toute intervention sur une machine ou un cluster. Le choix du mode suit l'objectif de l'opérateur :
+
+- **Développement / GitOps** : modifier le desired state, les sources ou l'architecture → issue, branche, PR, CI, ArgoCD, validations et autorisations de promotion normales.
+- **Maintenance opérationnelle** : diagnostiquer, réparer ou récupérer un système existant → accès et actions directes sur le runtime autorisés dans le périmètre demandé, sans exiger une issue/PR/CI avant de restaurer le service. Les mutations de `kubectl`, ArgoCD ou des hôtes ne sont pas systématiquement interdites ; respecter les risques, les contrôleurs et la réversibilité. Une modification déclarative destinée à perdurer sera intégrée dans Git **après stabilisation**.
+- **Break-glass** : si l'opérateur l'active explicitement selon la formule et les conditions décrites dans `AGENTS.md`, les restrictions procédurales du présent workflow ne bloquent plus les actions nécessaires à cette intervention exceptionnelle. Ce n'est ni le mode par défaut ni une élévation des permissions techniques.
+
+Voir `AGENTS.md` pour les **critères d'entrée**, les **actions autorisées**, les **garde-fous** et les **conditions de sortie**. Une simple panne ne déclenche pas automatiquement le break-glass ; elle relève normalement de la maintenance.
+
+## Avant toute modification du dépôt / de l'état désiré
+
+1. Pour une **contribution GitOps**, lire l'issue GitHub concernée ou en créer une. Cette étape ne conditionne pas un dépannage runtime en mode maintenance.
 2. Relire le `main` courant : plusieurs humains/agents peuvent travailler en parallèle.
 3. Vérifier les PR ouvertes susceptibles de toucher les mêmes fichiers.
 4. Identifier le scope exact du changement et les dépendances.
@@ -258,11 +268,11 @@ Références utiles :
 - `prod-working` pour le dernier état explicitement déclaré connu-bon ;
 - les tags immuables `prod-v*` pour une release précise.
 
-Toute mutation d'urgence du cluster doit être temporaire, documentée et réconciliée rapidement dans Git.
+En maintenance, une réparation runtime peut être immédiate, y compris hors Git ; elle doit être documentée selon son impact. La remise en conformité Git concerne **les changements de configuration déclarative à conserver**, et non toute opération technique (redémarrage, fsck, restauration de montage, session iSCSI, etc.). En break-glass, les exigences procédurales peuvent être levées pour l'incident explicitement autorisé, puis rétablies après stabilisation.
 
-## Règles pour humains et agents
+## Règles pour humains et agents — contributions GitOps
 
-Tous les contributeurs suivent les mêmes règles, quel que soit l'éditeur ou l'assistant utilisé :
+Tous les contributeurs au **dépôt et à l'état désiré** suivent les mêmes règles, quel que soit l'éditeur ou l'assistant utilisé. Pour les actions opérationnelles, appliquer le mode maintenance ou break-glass décrit dans `AGENTS.md` :
 
 1. vérifier le `main` courant avant de modifier ;
 2. vérifier les PR concurrentes ;
