@@ -1,0 +1,132 @@
+---
+# Official truenas/truenas-csi v1.4.0, UMI ONLY. No existing PV migration.
+# UMI TrueNAS 27 endpoints: keep API TLS verified, storage on dedicated .111 link.
+fullnameOverride: synelia-csi
+driverName: synelia.csi.truenas.io
+kubeletDir: /var/lib/kubelet
+logLevel: 2
+
+truenas:
+  url: wss://nas.truxonline.com/api/current
+  defaultPool: tank
+  nfsServer: nas.truxonline.com
+  iscsiPortal: "192.168.111.69:3260"
+  existingSecret: synelia-csi-credentials
+  existingSecretKey: api-key
+  insecureSkipTLS: false
+  # Only use a trusted server certificate for nas.truxonline.com.
+  # If the server has a private CA, add the public CA via a reviewed ConfigMap
+  # and set existingCABundleConfigMap; never disable TLS verification.
+
+image:
+  driver:
+    repository: ghcr.io/truenas/truenas-csi
+    tag: v1.4.0
+    pullPolicy: IfNotPresent
+  csiProvisioner:
+    tag: v6.1.1
+  csiAttacher:
+    tag: v4.11.0
+  csiSnapshotter:
+    tag: v8.5.0
+  csiResizer:
+    tag: v2.1.0
+  nodeDriverRegistrar:
+    tag: v2.16.0
+  livenessProbe:
+    tag: v2.18.0
+
+controller:
+  replicas: 1
+  timeout: 60s
+  defaultFSType: ext4
+  priorityClassName: system-cluster-critical
+  podLabels:
+    vixens.io/backup-profile: relaxed
+    vixens.io/single-replica: "true"
+  podAnnotations:
+    vixens.io/explicitly-allow-root: "true"
+    vixens.io/no-long-connections: "true"
+    vixens.io/nometrics: "true"
+    vixens.io/service-binding: "false"
+    vixens.io/sizing-rationale: "UMI test CSI controller; constrained memory, six containers"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 384Mi
+
+node:
+  priorityClassName: system-node-critical
+  podLabels:
+    vixens.io/single-replica: "true"
+  podAnnotations:
+    vixens.io/explicitly-allow-root: "true"
+    vixens.io/no-long-connections: "true"
+    vixens.io/nometrics: "true"
+    vixens.io/service-binding: "false"
+    vixens.io/sizing-rationale: "Privileged hostNetwork CSI node; UMI only"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 384Mi
+
+# Snapshot CRDs/controller have their own ArgoCD Application. No new snapshot
+# class or capability activation until validated against real TrueNAS 27.
+volumeSnapshotClass:
+  enabled: false
+
+# Unique names + isolated test parents: never overlap democratic-csi datasets.
+# Retain for stateful/manual investigation; Delete only for disposable PVCs.
+storageClasses:
+  - name: synelia-nfs-retain
+    isDefault: false
+    reclaimPolicy: Retain
+    volumeBindingMode: Immediate
+    allowVolumeExpansion: true
+    mountOptions:
+      - nfsvers=4.1
+    parameters:
+      protocol: nfs
+      pool: tank
+      datasetPath: k8s/vixens/synelia-umi-test/nfs
+      compression: LZ4
+  - name: synelia-nfs-delete
+    isDefault: false
+    reclaimPolicy: Delete
+    volumeBindingMode: Immediate
+    allowVolumeExpansion: true
+    mountOptions:
+      - nfsvers=4.1
+    parameters:
+      protocol: nfs
+      pool: tank
+      datasetPath: k8s/vixens/synelia-umi-test/nfs
+      compression: LZ4
+  - name: synelia-iscsi-retain
+    isDefault: false
+    reclaimPolicy: Retain
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      protocol: iscsi
+      pool: tank
+      datasetPath: k8s/vixens/synelia-umi-test/iscsi
+      fsType: ext4
+      compression: LZ4
+  - name: synelia-iscsi-delete
+    isDefault: false
+    reclaimPolicy: Delete
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      protocol: iscsi
+      pool: tank
+      datasetPath: k8s/vixens/synelia-umi-test/iscsi
+      fsType: ext4
+      compression: LZ4
