@@ -1,6 +1,6 @@
 # #4193 — Synelia official TrueNAS CSI (UMI, preflight + rollback)
 
-**Status:** reviewed source staged but live UMI physical validation remains incomplete. The first manual Argo sync **failed before apply** due to `cilium.io/v2` unavailable on UMI. Native Kubernetes NetworkPolicy is the proposed correction; do not repeat the Sync until the correction is merged, its desired-state diff is verified, and the operator authorizes the retried Sync. No TrueNAS volume adoption is established.
+**Status:** live UMI physical validation remains incomplete. The first manual Argo Sync failed due to missing Cilium API, corrected by merged PR #4199. The subsequent manual Sync partially created the new cluster-scoped CSI driver and four StorageClasses, but failed because namespace `synelia-csi` was not found. This increment explicitly declares a first-wave Synelia namespace. Review, merge, refresh Argo and verify the desired resources **before** another separately initiated manual Sync. No TrueNAS volume provisioning or legacy PV adoption is established.
 
 ## Contract and pinned upstream
 
@@ -110,6 +110,59 @@ refreshed to the new `main` revision and the desired resource list has two
 Use a one-shot **Argo operation.sync** request scoped to this Application
 (no prune/force/replace) as documented in the issue; inspect
 `.status.operationState.phase` and ESO readiness before any PVC test.
+
+## Explicit namespace bootstrap after second failed UMI Sync (#4193; 2026-10-25)
+
+**Actual partial first-install result:** after #4199 cleared the missing
+`cilium.io/v2` API, the next manual Argo operation reported
+`phase=Failed`, message `namespaces "synelia-csi" not found`.
+The cluster-scoped `CSIDriver/synelia.csi.truenas.io` and all four **new**
+Synelia StorageClasses were successfully installed, but CSI controller/node
+resources and the OpenBao-backed ExternalSecret were not reported installed.
+This is **partial sync**, not a Healthy/ready CSI: the Application health
+field may still say `Healthy` despite the failed operation. Historical
+Hindsight VolumeAttachments remained `ATTACHED=true`, and Hermes remained
+`ATTACHED=false` as before.
+
+The existing Application requested `CreateNamespace=true` together with
+`ServerSideApply=true`; some Argo CD versions have a documented interaction
+causing namespace creation failures. This is a plausible explanation, not
+a proven Argo bug/version diagnosis for UMI. See upstream
+https://github.com/argoproj/argo-cd/issues/16829 and
+https://argo-cd.readthedocs.io/en/latest/user-guide/sync-options/.
+
+**GitOps remediation:** `apps/01-storage/synelia-csi/umi/namespace.yaml`
+declares only `Namespace/synelia-csi` with Argo sync wave `-1`, before
+the chart, ESO and NetworkPolicies at default wave 0. Namespace local
+sync option `Prune=false` protects it against a future prune. The
+UMI-only Kustomize layer includes this file; it is not deployed to prod.
+The existing four StorageClasses and CSIDriver retain their identities.
+**No** generic `kubectl create namespace` bootstrap, no root App-of-Apps
+sync, no cluster-wide CSI adoption or existing PVC mutation.
+
+**Before retry:** inspect exact live namespace presence and operation tasks:
+
+```sh
+kubectl get namespace synelia-csi --ignore-not-found -o name
+kubectl -n argocd get application synelia-csi-umi -o json | jq '{
+  options: .spec.syncPolicy.syncOptions,
+  phase: .status.operationState.phase,
+  message: .status.operationState.message,
+  tasks: [.status.operationState.syncResult.resources[]? |
+    {kind, namespace, name, status, message}]
+}'
+```
+
+After the reviewed fix is merged, refresh only `synelia-csi-umi`
+and verify its desired Argo resources include exactly one
+`Namespace/synelia-csi`, plus two native `NetworkPolicy`, and
+**zero** CiliumNetworkPolicy. Confirm no unrelated namespace with the
+same name is already owned by another application; stop and inspect if
+one exists. Recheck the WSL2 API endpoint against the native egress policy.
+Only then request a normal manual Argo `operation.sync`, `prune=false`,
+no force/replace. Observe the per-resource sync result, namespace, ESO
+Ready condition, pods/DaemonSet and existing iSCSI attachments; do not
+provision any PVC until the CSI is actually ready and independently tested.
 
 ## Deployment + read-only diagnostics (AFTER signoff and Argo manual sync)
 
