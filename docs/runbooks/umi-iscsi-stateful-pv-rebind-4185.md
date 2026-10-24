@@ -24,6 +24,12 @@
 
 Each PV's immutable CSI source still records the retired portal. Modifying only the CSI configuration Secret is insufficient.
 
+## Post-cutover CSI credentials/configuration evidence (read-only)
+
+On 2026-10-24 owner verified `truenas-csi-iscsi-driver-config` ExternalSecret `Ready=True` / `SecretSynced` and read only the **non-secret endpoint lines** from the active driver Secret: API/SSH hosts `nas.truxonline.com` and `targetPortal=nas.truxonline.com:3260`. All three restored PVCs were `Bound` with the original PV names. Thus the former retired portal is no longer present in the **observed PV and CSI endpoint configuration fields**. Do not infer that the CSI node-plugin has staged the real disks or that any application data is sound.
+
+Argo applications `hermes-umi` and `hindsight-umi` remain explicitly `automated.enabled=false`. `hindsight-umi.spec.source` was null in an owner projection, but **`spec.sources` was not inspected**: it may be multi-source. Before any automatic sync, inspect the source(s), Helm desired PVCs and name/UID semantics without printing Helm values or secret contents.
+
 ## GitOps resumption guard (unverified)
 
 The current `main` at `ac4d76cc933eae3a052c703bad722e8beb2a555c` declares `apps/60-services/hermes/base/pvc.yaml` as a normal RWO 80Gi `truenas-iscsi-retain` PVC **without** an explicit `spec.volumeName`. The live re-created PVC has an explicit `volumeName` (and a new UID). Before resuming `hermes-umi` selfHeal, compare Argo rendered/desired PVC against the live spec and ensure the restore binding will **not** be removed or trigger deletion/reprovisioning. Do not hardcode UMI's PV name in the shared Hermes base (it is not portable).
