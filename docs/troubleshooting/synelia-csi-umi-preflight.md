@@ -90,4 +90,4 @@ Before physical cutover (this PR's intended scope), stop using new test PVCs, di
 
 ### Evidence status
 
-2026-10-24: repository-only preflight against `main` and `truenas/truenas-csi v1.4.0`, **no UMI runtime access or chart template execution**. TrueNAS 27 WSS/API, TLS SAN, host iSCSI, OpenBao token and any checksum tests are still **pending**.
+2026-10-24: source-only preflight against `main` and `truenas/truenas-csi v1.4.0`; the #4194 GitHub CI rendered the pinned Helm chart and Kustomize manifests and passed source safety tests. That is **not** physical evidence: the live UMI App-of-Apps path, Synelia PVC inventory, TrueNAS 27 WSS/API, TLS SAN, host iSCSI, OpenBao token and filesystem checksum tests remain **pending**. Re-run the equivalent CI jobs for each new revision before review.
