@@ -9,6 +9,11 @@
 - Hermes `pvc-5cb237dc-4a12-49ec-80c9-29477d89fa77`, ext4 UUID `79009fd9-9dad-4817-a252-2939205715ac`, and Hindsight PostgreSQL `pvc-71395a3d-7d40-4303-bff3-0f3c23849fbf`, ext4 UUID `2d6b531d-d11d-4535-a136-447c33997c06`, were repaired offline. Both final `e2fsck -f -n` checks had five passes without remaining errors and exit code 0. This **does not verify application data, PostgreSQL WAL, or successful writable mounts**.
 - `services/hermes`, `hindsight/hindsight-api` and `hindsight/hindsight-postgresql` were scaled to zero. Argo `hermes-umi` and `hindsight-umi` auto-sync were disabled for maintenance. Their original desired states MUST be restored later.
 - **HomeAssistant is deprecated on UMI** per owner; its Released/Retain PV and TrueNAS zvol are intentionally left unchanged.
+- After the owner performed the Hermes and PostgreSQL API-object cutovers (date: 2026-10-24), a read-only Kubernetes PV listing reported all **three** in-scope PVs **Bound / Retain**, with unchanged original PV names and `spec.csi.volumeAttributes.portal=nas.truxonline.com:3260`:
+  - `pvc-5cb237dc-4a12-49ec-80c9-29477d89fa77` → `services/hermes-data-truenas`
+  - `pvc-71395a3d-7d40-4303-bff3-0f3c23849fbf` → `hindsight/data-hindsight-postgresql-0`
+  - `pvc-c5b1130c-d400-4f45-9cc8-bd1a25cf8e43` → `hindsight/hindsight-api-model-cache`
+  This verifies API binding/portal **only**. Post-cutover CSI mount, writable volume state, PostgreSQL WAL/database and Hermes profile/bootstrap checks remain unverified. No storage deletion was reported.
 
 ## Remaining two original Bound/Retain PVs
 
@@ -18,6 +23,24 @@
 | `hindsight/data-hindsight-postgresql-0` | `pvc-71395a3d-7d40-4303-bff3-0f3c23849fbf` | 8Gi | `truenas-iscsi-retain` | IQN `iqn.2005-10.org.freenas.ctl:csi-pvc-71395a3d-7d40-4303-bff3-0f3c23849fbf-umi`, 0 |
 
 Each PV's immutable CSI source still records the retired portal. Modifying only the CSI configuration Secret is insufficient.
+
+## GitOps resumption guard (unverified)
+
+The current `main` at `ac4d76cc933eae3a052c703bad722e8beb2a555c` declares `apps/60-services/hermes/base/pvc.yaml` as a normal RWO 80Gi `truenas-iscsi-retain` PVC **without** an explicit `spec.volumeName`. The live re-created PVC has an explicit `volumeName` (and a new UID). Before resuming `hermes-umi` selfHeal, compare Argo rendered/desired PVC against the live spec and ensure the restore binding will **not** be removed or trigger deletion/reprovisioning. Do not hardcode UMI's PV name in the shared Hermes base (it is not portable).
+
+The running `hindsight-umi` Application used a Helm-tracked model-cache PVC, while `main` documents retirement of the standalone chart. Inspect the live Argo `hindsight-umi` source(s), Helm chart values and all desired PVC templates before any sync or automatic self-heal. A valid PVC `Bound` status does not prove the controller CSI configuration points at the new TrueNAS portal; confirm the non-secret API/SSH/iSCSI endpoints from the active CSI Secret, with the remaining auth material redacted.
+
+Read-only owner check, use K3s kubeconfig explicitly (bare root `kubectl` on UMI returned `NotFound`):
+```bash
+K=/etc/rancher/k3s/k3s.yaml
+sudo kubectl --kubeconfig="$K" -n argocd get application hermes-umi hindsight-umi -o json \
+  | jq '.items[] | {name:.metadata.name, source:.spec.source, sources:.spec.sources, automated:.spec.syncPolicy.automated}'
+sudo kubectl --kubeconfig="$K" -n services get pvc hermes-data-truenas -o json \
+  | jq '{phase:.status.phase,volumeName:.spec.volumeName,uid:.metadata.uid}'
+sudo kubectl --kubeconfig="$K" -n hindsight get pvc hindsight-api-model-cache data-hindsight-postgresql-0 -o json \
+  | jq '.items[] | {name:.metadata.name,phase:.status.phase,volumeName:.spec.volumeName,uid:.metadata.uid}'
+```
+Do not proceed to scale pods or reenable Argo until actual mount and application data safety plan is reviewed.
 
 ## Deliberate single-PV cutover (human execution only)
 
