@@ -16,6 +16,7 @@ MOCK='''#!/usr/bin/env python3
 import os,json,sys
 from pathlib import Path
 args=sys.argv[1:]
+if args and args[0].startswith('--kubeconfig='): args=args[1:]
 if args and args[0].startswith('--request-timeout='): args=args[1:]
 if args[:2] == ['-n','argocd'] and args[2:4] == ['get','application']:
  print(json.dumps({'spec':{'syncPolicy':{'automated':{'enabled':os.environ.get('AUTO')=='1'}}}}));sys.exit(0)
@@ -57,12 +58,13 @@ def fixture(volume, temp):
             'spec':{'accessModes':['ReadWriteOnce'],'resources':{'requests':{'storage':size}},
                     'volumeMode':'Filesystem','storageClassName':sc,'volumeName':pv}}
     p=temp/'oldpv.json'; q=temp/'oldpvc.json';p.write_text(json.dumps(oldpv));q.write_text(json.dumps(oldpvc))
+    config=temp/'k3s.yaml';config.write_text('fake test kubeconfig\n')
     mockdir=temp/'bin';mockdir.mkdir()
     script=mockdir/'kubectl';script.write_text(MOCK);script.chmod(0o755)
     for command in ('iscsiadm','findmnt'):
         stub=mockdir/command;stub.write_text('#!/bin/bash\nexit 21\n');stub.chmod(0o755)
     env=dict(os.environ,PV_JSON=str(p),PVC_JSON=str(q),PV=pv,PVC=pvc,NAMESPACE=ns,
-             UMI_REBIND_ROOT=str(temp/'work'),PATH=str(mockdir)+':'+os.environ['PATH'])
+             UMI_REBIND_ROOT=str(temp/'work'),UMI_REBIND_KUBECONFIG=str(config),PATH=str(mockdir)+':'+os.environ['PATH'])
     return p,q,env
 
 def run(volume,mode,env):
