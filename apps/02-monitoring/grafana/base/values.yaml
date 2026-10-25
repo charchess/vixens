@@ -7,7 +7,7 @@ deploymentStrategy:
 # Persistence
 persistence:
   enabled: true
-  storageClassName: truenas-iscsi-retain
+  existingClaim: grafana-canonical-target
   size: 10Gi
   annotations:
     argocd.argoproj.io/sync-wave: "10"

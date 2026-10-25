@@ -24,4 +24,3 @@ patches:
 resources:
   - ../../base
   - pvc-canonical-target.yaml
-  - canonical-target-bind-job.yaml
