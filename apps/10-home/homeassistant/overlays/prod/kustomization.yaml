@@ -9,7 +9,6 @@ resources:
   - ingress.yaml
   - ingressroute-udp.yaml
   - pvc-canonical-target.yaml
-  - canonical-target-bind-job.yaml
 components:
   - ../../../../_shared/components/sync-wave/wave-6
   - ../../../../_shared/components/goldilocks/enabled
@@ -17,6 +16,7 @@ components:
   - ../../../../_shared/components/poddisruptionbudget/1
   - ../../../../_shared/components/scheduling/prefer-i915
 patches:
+  - path: patch-canonical-target-cutover.yaml
   - path: patch-openbao-env.yaml
   - target:
       kind: PersistentVolumeClaim
