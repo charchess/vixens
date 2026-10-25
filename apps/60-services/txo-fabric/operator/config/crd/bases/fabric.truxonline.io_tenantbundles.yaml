@@ -213,6 +213,46 @@ spec:
                                 profiles/<agentKey> directory as the runtime's single /opt/data home.
                                 It is a brownfield cutover switch: no profile copy or flattening occurs.
                               type: boolean
+                            migration:
+                              description: |-
+                                Migration stages a distinct replacement claim. Omitted preserves existing
+                                PVC and runtime behavior exactly.
+                              properties:
+                                cutover:
+                                  description: |-
+                                    Cutover remains false during prepare/copy. It is intentionally not acted
+                                    upon until copy-job verification is implemented; this prevents empty-target
+                                    mounts in controller versions that only support staging.
+                                  type: boolean
+                                targetClaimSuffix:
+                                  description: |-
+                                    TargetClaimSuffix is appended to the deterministic source PVC name. It is
+                                    immutable and prevents the replacement claim from colliding with the source.
+                                  maxLength: 32
+                                  pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                                  type: string
+                                  x-kubernetes-validations:
+                                  - message: targetClaimSuffix is immutable
+                                    rule: self == oldSelf
+                                targetStorageClassName:
+                                  description: |-
+                                    TargetStorageClassName is the explicit canonical RWO class for the distinct
+                                    replacement claim. It is immutable once declared.
+                                  maxLength: 253
+                                  minLength: 1
+                                  type: string
+                                  x-kubernetes-validations:
+                                  - message: targetStorageClassName is immutable
+                                    rule: self == oldSelf
+                              required:
+                              - targetClaimSuffix
+                              - targetStorageClassName
+                              type: object
+                              x-kubernetes-validations:
+                              - message: storage migration requires targetStorageClassName
+                                  and targetClaimSuffix
+                                rule: self.targetStorageClassName != ” && self.targetClaimSuffix
+                                  != ”
                             retentionPolicy:
                               default: Retain
                               description: |-
