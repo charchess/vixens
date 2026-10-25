@@ -4,6 +4,8 @@ kind: Kustomization
 resources:
   - ../../base
   - external-secret.yaml
+  - pvc-canonical-target.yaml
+  - canonical-target-bind-job.yaml
 components:
   - ../../../../_shared/components/sync-wave/wave-9
   - ../../../../_shared/components/goldilocks/enabled
