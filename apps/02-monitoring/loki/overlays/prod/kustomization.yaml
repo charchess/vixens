@@ -6,6 +6,8 @@ commonLabels:
   environment: prod
 resources:
   - ../../base
+  - pvc-canonical-target.yaml
+  - canonical-target-bind-job.yaml
 components:
   - ../../../../_shared/components/sync-wave/wave-7
   - ../../../../_shared/components/goldilocks/enabled
