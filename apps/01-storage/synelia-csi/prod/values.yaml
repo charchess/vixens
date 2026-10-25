@@ -8,7 +8,8 @@ kubeletDir: /var/lib/kubelet
 logLevel: 2
 
 truenas:
-  url: wss://nas.truxonline.com/api/current
+  # TrueNAS API is on WSS/8443; HTTPS/443 is Traefik, not the appliance API.
+  url: wss://nas.truxonline.com:8443/api/current
   defaultPool: tank
   nfsServer: nas.truxonline.com
   iscsiPortal: "192.168.111.69:3260"
