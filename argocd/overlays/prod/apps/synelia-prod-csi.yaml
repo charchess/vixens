@@ -1,7 +1,6 @@
 ---
-# #4205: Source-only production staging. This Application is intentionally not
-# referenced by argocd/overlays/prod/kustomization.yaml. Enabling that reference
-# is a separate explicit owner decision after disposable physical canaries.
+# #4205: Official production Synelia CSI. It is intentionally parallel to
+# democratic-csi; it must not adopt or mutate legacy PVs.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -31,6 +30,9 @@ spec:
     server: https://kubernetes.default.svc
     namespace: synelia-prod-csi
   syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
