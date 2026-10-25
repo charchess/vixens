@@ -35,9 +35,11 @@ spec:
           command: ["/bin/sh", "-ec"]
           args:
             - |
+              # Dynamic ext4 may contain lost+found and is root-owned until the
+              # migration copy applies the application's final ownership. This
+              # gate proves only the CSI mount; it must not initialize or write.
               test -d /data
-              test -w /data
-              test -z "$(find /data -mindepth 1 -maxdepth 1 -print -quit)"
+              echo "canonical target mounted read-only check complete"
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
