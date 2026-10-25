@@ -8,6 +8,7 @@ labels:
 resources:
   - ../../base
   - pvc.yaml
+  - pvc-canonical-target.yaml
   - report-exporter-configmap.yaml
   - victoriametrics-egress.yaml
 patches:
