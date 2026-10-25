@@ -172,3 +172,58 @@ Une modification d'un nom ou des garanties d'un contrat public est un changement
 **Critères pour valider le design avant de lancer une migration** : schéma de références et états précis, graphe des autorisations, preuves requises, matrice de compatibilité des contrats, étude d'impact des overlays, tests de rendu multi-cibles, plan de migration/rollback, séparation claire cible/environnement/domaine, risques de sûreté des données, et preuve par un prototype jetable.
 
 **Rappel :** étude seulement ; pas de nouveaux tags, pas de nouveau pipeline, pas de retrait d'overlays, pas de modification de stockage ou de clusters et pas de promotion automatique créée par ce document. Les [arbitrages `layer` / `domain` en cours](https://github.com/charchess/vixens/pull/4197) demeurent un chantier documentaire séparé.
+
+
+## 9. Revue du workflow actuel et des noms — à reprendre **pendant la segmentation** (#3959)
+
+**Orientation de conception, pas une décision de renommage.** L'analyse des workflows réels (`auto-tag-dev.yaml`, `promote-prod.yaml`, `mark-prod-working.yaml` et `WORKFLOW.md`) confirme que le **processus** actuel est une base saine ; ce sont surtout les **sémantiques des références** qui méritent d'être rendues plus explicites lors du découpage Core / Infra / Fabric / Perso.
+
+### Ce qu'il faut conserver
+
+- **Trunk-based** : `main` reste la branche de développement unique ; pas de branches permanentes par environnement.
+- **Identité immuable** : versionner un snapshot exact et vérifier la provenance des images, charts et futurs SHAs/BOM de couches.
+- **Promotion de production explicite**, sur la release précise et ses preuves, jamais déduite d'un merge ou d'une CI verte.
+- **Marqueur de dernier état connu-bon indépendant** de la cible couramment déployée : `prod-working` garde cette fonction manuelle ; ne pas le déplacer automatiquement après une promotion.
+- **Rollback contrôlé** à un ensemble de sources et de données compatibles, pas seulement à un tag Git.
+
+### Ce qui est ambigu dans la convention actuelle
+
+| Référence existante | Ambiguïté observée | Question pour la cible |
+|---|---|---|
+| `dev-vYYYY.MM.PR` | Snapshot créé automatiquement *avant* validation fonctionnelle dev : `dev` ne signifie pas « qualifié » | Une release doit-elle être nommée indépendamment de l'environnement ? |
+| `dev-latest` | Alias mutable « dernier tag » alors que l'ArgoCD dev suit déjà `main` | Faut-il garder deux pointeurs qui expriment pratiquement la même intention ? |
+| `prod-vYYYY.MM.PR` | Même contenu Git que son `dev-v*` source, avec une autre identité de tag | Faut-il une **identité immuable unique de release**, avec historique de qualification séparé ? |
+| `prod-stable` | Nom suggérant « stable » alors qu'il désigne la **révision sélectionnée pour prod**, qui peut ne pas encore être fonctionnellement confirmée | Un nom `deploy/prod` ou un fichier de pin de release rendrait-il la distinction plus nette ? |
+| `prod-working` | Rôle utile, mais le nom est moins précis que « known-good » | Conserver le mécanisme manuel, éventuellement le nommer `known-good/prod` ? |
+
+Le suffixe `YYYY.MM.PR` est pratique pour retrouver la PR, **mais n'est pas un numéro d'ordre des mises en production** : le numéro dépend de la **création** de la PR, pas du merge. Ne pas ordonner `dev → test → staging → prod` à partir du nom des tags ; utiliser les révisions/BOM et **preuves de qualification**.
+
+**Point technique à auditer, sans présumer d'un incident :** `auto-tag-dev.yaml` force-déplace `dev-latest` et ne déclare pas de groupe `concurrency` dans le workflow consulté. Deux exécutions concurrentes peuvent en principe terminer dans l'ordre inverse des merges. Lors d'une éventuelle refonte, vérifier la sérialisation, la condition de non-régression du pointeur et la vérification de l'état distant. Les alias mutables ArgoCD impliquent également une politique explicite de résolution/cache et de traçabilité du SHA effectif.
+
+### Préférence de conception à challenger
+
+**Séparer les quatre étapes** :
+
+```text
+Release / BOM immuable
+  → qualifications avec preuves par environnement/cible
+  → autorisation de promotion
+  → sélection / déploiement de la release
+  → observation réelle / qualification known-good
+```
+
+**Hypothèse de nommage**, non prescrite : `release/v…` pour l'identité immuable ; `deploy/dev|test|staging|prod` pour la sélection ; `known-good/prod` pour un marqueur approuvé manuellement. **Un alias Git mutable n'est pas obligatoirement la source de vérité d'ArgoCD** : comparer sérieusement avec des manifestes de pins/BOM déclaratifs qui résolvent les SHAs exacts.
+
+La qualification d'une même release doit pouvoir avancer `dev → test → staging → prod` **sans reconstruire ni renommer l'artefact** ; deux environnements peuvent être sur le **même** snapshot. Il faudra décider comment représenter les preuves physiques, l'approbation, l'état réellement déployé et les dérogations rollback/hotfix. Pour les promotions automatique(s) éventuelles, **prod conserve une autorisation humaine explicite** par défaut, le `known-good` reste manuel.
+
+### Moment où reprendre ce sujet
+
+**La revue doit faire partie des critères d'architecture et des gates de la segmentation #3959, avant la première bascule effective vers des dépôts distincts et avant de figer le contrat CI multi-repos #3960.** En particulier :
+
+1. Fixer ce qui constitue l'**identité immuable complète** d'une release quand Core/Infra/Fabric/Perso vivent dans des repositories différents (BOM de SHAs + digests) ;
+2. Séparer les **qualifications** des **pointeurs de déploiement**, et définir les autorisations `dev → test → staging → prod` ;
+3. Comparer tags mutables suivis par ArgoCD, pins déclaratifs et snapshots immuables côté orchestrateur ; documenter l'atomicité, les caches et la reprise après incident ;
+4. Exiger que le catalogue de dépendances #3588 et les gates #3960 prouvent la **compatibilité des contrats** pour la BOM exacte et la cible, avec preuves physiques si nécessaires ;
+5. Préparer une migration **rétrocompatible** depuis `dev-v*`, `dev-latest`, `prod-v*`, `prod-stable`, `prod-working`, sans effacer l'historique, casser le bootstrap, désactiver les protections ou perdre les possibilités de rollback.
+
+**Hors périmètre maintenant** : renommer/déplacer/créer des tags, changer les GitHub Actions, basculer ArgoCD, modifier les politiques de promotion ou déclarer cette préférence comme décision acceptée. La présente note est un **point de revue obligatoire dans l'étude de segmentation**, pas un feu vert pour l'implémenter.
