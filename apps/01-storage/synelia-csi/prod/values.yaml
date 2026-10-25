@@ -1,7 +1,7 @@
 ---
-# Official truenas/truenas-csi v1.4.0 — production staging only.
-# This file is inert until the separately declared, default-off Argo Application
-# is explicitly enabled. It never adopts democratic-csi volumes.
+# Official truenas/truenas-csi v1.4.0 — production parallel deployment.
+# It must never adopt democratic-csi volumes. StorageClass names follow the
+# durable Synelia storage contract (no environment suffix).
 fullnameOverride: synelia-prod-csi
 driverName: synelia.prod.csi.truenas.io
 kubeletDir: /var/lib/kubelet
@@ -47,7 +47,7 @@ controller:
     vixens.io/no-long-connections: "true"
     vixens.io/nometrics: "true"
     vixens.io/service-binding: "false"
-    vixens.io/sizing-rationale: "Default-off production staging CSI controller; six containers; canary-only"
+    vixens.io/sizing-rationale: "Parallel production CSI controller; six containers"
   resources:
     requests:
       cpu: 100m
@@ -65,7 +65,7 @@ node:
     vixens.io/no-long-connections: "true"
     vixens.io/nometrics: "true"
     vixens.io/service-binding: "false"
-    vixens.io/sizing-rationale: "Default-off privileged Talos CSI node; canary-only"
+    vixens.io/sizing-rationale: "Privileged Talos CSI node"
   resources:
     requests:
       cpu: 100m
@@ -74,15 +74,15 @@ node:
       cpu: 250m
       memory: 384Mi
 
-# Snapshot support stays off until a dedicated physical validation establishes
-# version compatibility and ownership with the existing snapshot controller.
+# Snapshot support remains separately gated until its physical TrueNAS 27 proof.
 volumeSnapshotClass:
   enabled: false
 
-# New classes are non-default and use isolated staging parents. Retain avoids
-# an automatic backend delete if a future canary needs forensic rollback.
+# Durable public StorageClass contract. All names are non-default. Retain is
+# mandatory for durable state; Delete is reserved for explicit disposable use.
+# Parents are disjoint from legacy democratic-csi trees (nfs/vols, iscsi/vols).
 storageClasses:
-  - name: synelia-prod-nfs-canary-retain
+  - name: synelia-nfs-retain
     isDefault: false
     reclaimPolicy: Retain
     volumeBindingMode: Immediate
@@ -92,9 +92,21 @@ storageClasses:
     parameters:
       protocol: nfs
       pool: tank
-      datasetPath: k8s/vixens/synelia-prod-staging/nfs
+      datasetPath: k8s/vixens/synelia-test/nfs
       compression: LZ4
-  - name: synelia-prod-iscsi-canary-retain
+  - name: synelia-nfs-delete
+    isDefault: false
+    reclaimPolicy: Delete
+    volumeBindingMode: Immediate
+    allowVolumeExpansion: true
+    mountOptions:
+      - nfsvers=4.1
+    parameters:
+      protocol: nfs
+      pool: tank
+      datasetPath: k8s/vixens/synelia-test/nfs
+      compression: LZ4
+  - name: synelia-iscsi-retain
     isDefault: false
     reclaimPolicy: Retain
     volumeBindingMode: WaitForFirstConsumer
@@ -102,6 +114,28 @@ storageClasses:
     parameters:
       protocol: iscsi
       pool: tank
-      datasetPath: k8s/vixens/synelia-prod-staging/iscsi
+      datasetPath: k8s/vixens/synelia-test/iscsi
+      fsType: ext4
+      compression: LZ4
+  - name: synelia-iscsi-stateful-retain
+    isDefault: false
+    reclaimPolicy: Retain
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      protocol: iscsi
+      pool: tank
+      datasetPath: k8s/vixens/synelia/stateful/iscsi
+      fsType: ext4
+      compression: LZ4
+  - name: synelia-iscsi-delete
+    isDefault: false
+    reclaimPolicy: Delete
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      protocol: iscsi
+      pool: tank
+      datasetPath: k8s/vixens/synelia-test/iscsi
       fsType: ext4
       compression: LZ4

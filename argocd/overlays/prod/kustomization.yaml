@@ -34,9 +34,9 @@ resources:
   # Disabled by owner: apps/truenas-csi-secrets-umi.yaml
   # Disabled by owner: apps/truenas-csi-iscsi-umi.yaml
   # Disabled by owner: apps/truenas-csi-nfs-umi.yaml
-  # #4205: official production Synelia CSI staging is source-only; activation
-  # requires an explicit owner decision after disposable physical canaries.
-  # Disabled by owner: apps/synelia-prod-csi.yaml
+  # #4205: official Synelia CSI, activated by owner decision. The driver
+  # remains parallel; it must never adopt or mutate democratic-csi PVs.
+  - apps/synelia-prod-csi.yaml
   - apps/local-path-provisioner.yaml
   - apps/keda.yaml
   - apps/keda-http-addon.yaml
