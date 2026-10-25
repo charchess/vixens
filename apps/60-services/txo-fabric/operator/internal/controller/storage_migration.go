@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,16 +25,20 @@ func expectedMigrationRWOClass(agent *fabricv1alpha1.AgentIdentity) string {
 	return "storage-rwo-retain"
 }
 
+func runtimeActivePVCName(agent *fabricv1alpha1.AgentIdentity) string {
+	if migration := agent.Spec.Runtime.Storage.Migration; migration != nil && migration.Cutover {
+		return runtimeMigrationTargetPVCName(agent.Spec.AgentKey, migration.TargetClaimSuffix)
+	}
+	return runtimePVCName(agent.Spec.AgentKey)
+}
+
 // ensureRuntimeMigrationTargetPVC implements the non-destructive prepare gate.
-// Cutover is deliberately rejected until a later controller revision verifies a
-// GitOps-owned copy Job bound to the exact source/target PVC UIDs.
+// A cutover additionally requires a Bound target plus a GitOps-owned completed
+// copy Job whose labels bind the exact source and target PVC UIDs.
 func (r *AgentIdentityReconciler) ensureRuntimeMigrationTargetPVC(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace string) error {
 	migration := agent.Spec.Runtime.Storage.Migration
 	if migration == nil {
 		return nil
-	}
-	if migration.Cutover {
-		return fmt.Errorf("AgentIdentity %q requests storage migration cutover before verified copy-job support is available", agent.Name)
 	}
 	if migration.TargetStorageClassName != expectedMigrationRWOClass(agent) {
 		return fmt.Errorf("AgentIdentity %q migration target storageClass %q does not match required %q", agent.Name, migration.TargetStorageClassName, expectedMigrationRWOClass(agent))
@@ -68,7 +73,13 @@ func (r *AgentIdentityReconciler) ensureRuntimeMigrationTargetPVC(ctx context.Co
 		if err := r.setRuntimePVCOwnership(agent, &target); err != nil {
 			return err
 		}
-		return r.Create(ctx, &target)
+		if err := r.Create(ctx, &target); err != nil {
+			return err
+		}
+		if migration.Cutover {
+			return fmt.Errorf("migration target PVC %s/%s was created; wait for Bound copy evidence before cutover", namespace, targetName)
+		}
+		return nil
 	}
 	if err != nil {
 		return err
@@ -79,5 +90,27 @@ func (r *AgentIdentityReconciler) ensureRuntimeMigrationTargetPVC(ctx context.Co
 	if target.Labels["fabric.truxonline.io/storage-migration-source-uid"] != string(source.UID) {
 		return fmt.Errorf("migration target PVC %s/%s is not bound to source PVC UID %q", namespace, targetName, source.UID)
 	}
-	return nil
+	if !migration.Cutover {
+		return nil
+	}
+	if target.Status.Phase != corev1.ClaimBound {
+		return fmt.Errorf("migration target PVC %s/%s is not Bound", namespace, targetName)
+	}
+	if migration.CopyJobName == "" {
+		return fmt.Errorf("AgentIdentity %q requests storage migration cutover without copyJobName", agent.Name)
+	}
+	var job batchv1.Job
+	if err := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: migration.CopyJobName}, &job); err != nil {
+		return fmt.Errorf("read storage migration copy Job %s/%s: %w", namespace, migration.CopyJobName, err)
+	}
+	labels := job.GetLabels()
+	if labels["fabric.truxonline.io/storage-migration-source-uid"] != string(source.UID) || labels["fabric.truxonline.io/storage-migration-target-uid"] != string(target.UID) {
+		return fmt.Errorf("storage migration copy Job %s/%s does not bind exact source/target PVC UIDs", namespace, job.Name)
+	}
+	for _, condition := range job.Status.Conditions {
+		if condition.Type == batchv1.JobComplete && condition.Status == corev1.ConditionTrue {
+			return nil
+		}
+	}
+	return fmt.Errorf("storage migration copy Job %s/%s has not completed successfully", namespace, job.Name)
 }

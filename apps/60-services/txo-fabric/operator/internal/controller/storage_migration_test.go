@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -46,6 +47,35 @@ func TestRuntimeMigrationPrepareCreatesDistinctCanonicalTarget(t *testing.T) {
 	}
 }
 
+func TestRuntimeMigrationCutoverRequiresVerifiedJobAndSelectsTarget(t *testing.T) {
+	ctx := context.Background()
+	tenant := configuredAgentStorageTenant()
+	agent := testStorageIdentity(tenant.Name, "canary", StorageRetentionRetain)
+	agent.Spec.Runtime.Storage.Migration = &fabricv1alpha1.AgentRuntimeStorageMigrationBinding{TargetStorageClassName: "storage-rwo-retain", TargetClaimSuffix: "synelia", CopyJobName: "copy-canary", Cutover: true}
+	profile := testRuntimeProfile()
+	ns := tenantNamespace(tenant.Name)
+	source := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimePVCName(agent.Spec.AgentKey), Namespace: ns, UID: types.UID("source-uid")}}
+	target := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimeMigrationTargetPVCName(agent.Spec.AgentKey, "synelia"), Namespace: ns, UID: types.UID("target-uid"), Labels: map[string]string{"fabric.truxonline.io/storage-migration-source-uid": "source-uid"}}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound}, Spec: corev1.PersistentVolumeClaimSpec{StorageClassName: stringPtr("storage-rwo-retain")}}
+	job := &batchv1.Job{ObjectMeta: metav1.ObjectMeta{Name: "copy-canary", Namespace: ns, Labels: map[string]string{"fabric.truxonline.io/storage-migration-source-uid": "source-uid", "fabric.truxonline.io/storage-migration-target-uid": "target-uid"}}, Status: batchv1.JobStatus{Conditions: []batchv1.JobCondition{{Type: batchv1.JobComplete, Status: corev1.ConditionTrue}}}}
+	scheme := testScheme(t)
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(source, target, job).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	if err := r.ensureRuntimeMigrationTargetPVC(ctx, agent, tenant, profile, ns); err != nil {
+		t.Fatal(err)
+	}
+	if got := runtimeActivePVCName(agent); got != target.Name {
+		t.Fatalf("cutover claim=%q, want %q", got, target.Name)
+	}
+
+	job.Labels["fabric.truxonline.io/storage-migration-target-uid"] = "wrong"
+	if err := c.Update(ctx, job); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ensureRuntimeMigrationTargetPVC(ctx, agent, tenant, profile, ns); err == nil || !strings.Contains(err.Error(), "exact source/target PVC UIDs") {
+		t.Fatalf("UID mismatch accepted: %v", err)
+	}
+}
+
 func TestRuntimeMigrationPrepareFailsClosed(t *testing.T) {
 	ctx := context.Background()
 	tenant := configuredAgentStorageTenant()
@@ -63,7 +93,7 @@ func TestRuntimeMigrationPrepareFailsClosed(t *testing.T) {
 		contains  string
 	}{
 		{"wrong-class", &fabricv1alpha1.AgentRuntimeStorageMigrationBinding{TargetStorageClassName: "storage-rwo-delete", TargetClaimSuffix: "synelia"}, "does not match required"},
-		{"cutover-without-copy-evidence", &fabricv1alpha1.AgentRuntimeStorageMigrationBinding{TargetStorageClassName: "storage-rwo-retain", TargetClaimSuffix: "synelia", Cutover: true}, "before verified copy-job"},
+		{"cutover-before-target-bound", &fabricv1alpha1.AgentRuntimeStorageMigrationBinding{TargetStorageClassName: "storage-rwo-retain", TargetClaimSuffix: "synelia", Cutover: true}, "was created; wait for Bound"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -23,9 +23,15 @@ type AgentRuntimeStorageMigrationBinding struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="targetClaimSuffix is immutable"
 	TargetClaimSuffix string `json:"targetClaimSuffix"`
 
-	// Cutover remains false during prepare/copy. It is intentionally not acted
-	// upon until copy-job verification is implemented; this prevents empty-target
-	// mounts in controller versions that only support staging.
+	// CopyJobName identifies the GitOps-owned, non-destructive copy Job that
+	// carries source/target PVC UID evidence. It is required before cutover.
+	// +optional
+	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
+	CopyJobName string `json:"copyJobName,omitempty"`
+
+	// Cutover remains false during prepare/copy. It may become true only after
+	// the named copy Job completes with exact source/target PVC UID evidence.
 	// +optional
 	Cutover bool `json:"cutover,omitempty"`
 }
