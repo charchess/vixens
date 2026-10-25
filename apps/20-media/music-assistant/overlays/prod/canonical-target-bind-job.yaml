@@ -1,0 +1,45 @@
+---
+# Pre-created suspended non-writing consumer for the WaitForFirstConsumer claim.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: music-assistant-config-canonical-target-bind
+  namespace: media
+  labels:
+    app: music-assistant
+    vixens.io/storage-migration: music-assistant-canonical-target
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  suspend: true
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: music-assistant
+        vixens.io/storage-migration: music-assistant-canonical-target
+        vixens.io/backup-profile: relaxed
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: powder
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: bind
+          image: busybox:1.38.0
+          command: ["/bin/sh", "-ec"]
+          args: ["test -d /data; echo canonical Music Assistant target mounted"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts: [{name: target, mountPath: /data}]
+      volumes:
+        - name: target
+          persistentVolumeClaim: {claimName: music-assistant-config-canonical-target}

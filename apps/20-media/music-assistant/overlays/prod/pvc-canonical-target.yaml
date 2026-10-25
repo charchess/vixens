@@ -1,0 +1,15 @@
+---
+# Replacement for the legacy retained XFS volume. Source remains untouched until verified cutover.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: music-assistant-config-canonical-target
+  namespace: media
+  annotations:
+    argocd.argoproj.io/sync-wave: "11"
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: storage-rwo-retain
+  resources:
+    requests:
+      storage: 10Gi
