@@ -160,6 +160,10 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "PVCReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}
+	if err := r.ensureRuntimeMigrationTargetPVC(ctx, &agent, &tenant, &profile, namespace); err != nil {
+		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "StorageMigrationPrepareFailed", err.Error())
+		return ctrl.Result{}, err
+	}
 	modelAccessSecretUID, modelAccessRevision, err := r.ensureModelAccessWithBackend(ctx, &agent, &tenant, namespace, modelBackend)
 	if err != nil {
 		r.setStatus(ctx, &agent, "AuthBlocked", "ModelAccessReady", metav1.ConditionFalse, "GatewayCredentialReconcileFailed", err.Error())
