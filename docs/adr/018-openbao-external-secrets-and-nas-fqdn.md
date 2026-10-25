@@ -23,7 +23,7 @@ A stable NAS FQDN keeps manifests portable across NAS restoration or address cha
 
 - Argo CD prunes the obsolete `infisical-operator` Applications and their supporting manifests after this change reaches the tracked revision.
 - Existing filenames containing `infisical` may remain temporarily where they are only historical names for ExternalSecret manifests; runtime objects must use External Secrets/OpenBao, not `InfisicalSecret` resources.
-- `192.168.111.69` references are legacy Synology/documentation or separately scoped endpoints and are not rewritten by this decision.
+- `192.168.111.69` is the current TrueNAS storage/OpenBao interface. Cilium policies that must use a CIDR rather than the canonical FQDN are pinned to this address; the retired `192.168.200.244` must not be restored.
 
 ## Validation
 
