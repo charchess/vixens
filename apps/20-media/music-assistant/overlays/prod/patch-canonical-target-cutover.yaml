@@ -1,0 +1,16 @@
+---
+# Cutover after verified offline NAS-local copy. Powder has proven the official
+# iSCSI mount path; poison remains a separate node-local investigation.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: music-assistant
+spec:
+  template:
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: powder
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: music-assistant-config-canonical-target
