@@ -12,6 +12,7 @@ APP = ROOT / "argocd/overlays/prod/apps/synelia-prod-csi.yaml"
 ROOT_KUSTOMIZATION = ROOT / "argocd/overlays/prod/kustomization.yaml"
 ESO = ROOT / "apps/01-storage/synelia-csi/prod/externalsecret.yaml"
 NAMESPACE = ROOT / "apps/01-storage/synelia-csi/prod/namespace.yaml"
+NETWORK_POLICY = ROOT / "apps/01-storage/synelia-csi/prod/networkpolicy.yaml"
 EXPECTED = {
     "synelia-nfs-retain",
     "synelia-nfs-delete",
@@ -45,6 +46,11 @@ class SyneliaProdCSIContractTest(unittest.TestCase):
         eso = yaml.safe_load(ESO.read_text())
         self.assertEqual(eso["kind"], "ExternalSecret")
         self.assertEqual(eso["spec"]["data"][0]["remoteRef"]["key"], "vixens/prod/apps/01-storage/synelia-csi/api")
+        values = yaml.safe_load(VALUES.read_text())
+        self.assertEqual(values["truenas"]["url"], "wss://nas.truxonline.com:8443/api/current")
+        policy = NETWORK_POLICY.read_text()
+        self.assertIn('port: "8443"', policy)
+        self.assertNotIn('port: "443"', policy)
         namespace = yaml.safe_load(NAMESPACE.read_text())
         labels = namespace["metadata"]["labels"]
         self.assertEqual(
