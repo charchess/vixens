@@ -29,43 +29,41 @@ def verify_classes(values: dict) -> None:
     classes = values["storageClasses"]
     names = [sc["name"] for sc in classes]
     expected = {
-        "synelia-iscsi-delete",
-        "synelia-iscsi-retain",
-        "synelia-iscsi-stateful-retain",
-        "synelia-nfs-delete",
-        "synelia-nfs-retain",
+        "storage-rwo-delete",
+        "storage-rwo-retain",
+        "storage-rwx-delete",
+        "storage-rwx-retain",
     }
     if len(names) != len(set(names)) or set(names) != expected:
         raise AssertionError(f"Unexpected classes or class collision: {names}")
     for sc in classes:
         name = sc["name"]
-        if "umi" in name.lower():
-            raise AssertionError(f"Environment suffix forbidden in StorageClass: {name}")
+        if not name.startswith("storage-rw"):
+            raise AssertionError(f"Provider-specific class forbidden: {name}")
         if sc.get("isDefault") is not False:
             raise AssertionError(f"Default class not permitted: {name}")
         if sc["reclaimPolicy"] != name.rsplit("-", 1)[-1].capitalize():
             raise AssertionError(f"Wrong reclaim policy: {name}")
-        if sc["parameters"].get("protocol") not in ("nfs", "iscsi"):
-            raise AssertionError(f"Unexpected protocol: {name}")
-        if sc["parameters"]["pool"] != "tank":
-            raise AssertionError(f"Unexpected pool: {name}")
+        protocol = sc["parameters"].get("protocol")
         parent = sc["parameters"]["datasetPath"]
-        if name == "synelia-iscsi-stateful-retain":
-            if parent != "k8s/vixens/synelia/stateful/iscsi":
-                raise AssertionError(f"Stateful class must use its dedicated durable parent: {parent}")
-            if (sc["parameters"]["protocol"] != "iscsi"
-                    or sc["reclaimPolicy"] != "Retain"
+        if name.startswith("storage-rwo-"):
+            if (protocol != "iscsi"
                     or sc["volumeBindingMode"] != "WaitForFirstConsumer"
                     or sc["parameters"].get("fsType") != "ext4"):
-                raise AssertionError("Durable Synelia class must be iSCSI RWO-ready, ext4, Retain")
-        elif not parent.startswith("k8s/vixens/synelia-test/"):
-            raise AssertionError(f"Unsafe disposable parent: {parent}")
-        if "umi" in parent.lower():
-            raise AssertionError(f"Environment suffix forbidden in Synelia dataset path: {parent}")
-        if any(old in parent for old in ("nfs/vols", "iscsi/vols")):
-            raise AssertionError(f"Legacy dataset collision: {parent}")
-        if parent.endswith("/" + sc["parameters"]["protocol"]) is False:
-            raise AssertionError(f"Protocol path mismatch: {name}")
+                raise AssertionError(f"RWO contract must bind iSCSI/ext4 safely: {name}")
+            expected_parent = "k8s/vixens/synelia-test/iscsi"
+        elif name.startswith("storage-rwx-"):
+            if (protocol != "nfs"
+                    or sc["volumeBindingMode"] != "Immediate"
+                    or "nfsvers=4.1" not in sc.get("mountOptions", [])):
+                raise AssertionError(f"RWX contract must bind NFSv4.1: {name}")
+            expected_parent = "k8s/vixens/synelia-test/nfs"
+        else:
+            raise AssertionError(f"Unexpected access contract: {name}")
+        if sc["parameters"].get("pool") != "tank" or parent != expected_parent:
+            raise AssertionError(f"Unexpected backend binding: {name}")
+        if "umi" in parent.lower() or any(old in parent for old in ("nfs/vols", "iscsi/vols")):
+            raise AssertionError(f"Legacy or environment-specific dataset collision: {parent}")
 
 
 
@@ -237,20 +235,20 @@ class SyneliaCSISourceTests(unittest.TestCase):
         with self.assertRaises(AssertionError):
             verify_classes(mutated)
 
-    def test_durable_stateful_retained_class_fail_closed(self):
+    def test_rwo_retained_contract_fail_closed(self):
         classes = self.values["storageClasses"]
         names = [s["name"] for s in classes]
-        index = names.index("synelia-iscsi-stateful-retain")
+        index = names.index("storage-rwo-retain")
         sc = classes[index]
         self.assertEqual(sc["reclaimPolicy"], "Retain")
         self.assertIs(sc["isDefault"], False)
         self.assertTrue(sc["allowVolumeExpansion"])
-        self.assertEqual(sc["parameters"]["datasetPath"], "k8s/vixens/synelia/stateful/iscsi")
-        self.assertNotIn("synelia-test", sc["parameters"]["datasetPath"])
+        self.assertEqual(sc["parameters"]["datasetPath"], "k8s/vixens/synelia-test/iscsi")
+        self.assertEqual(sc["parameters"]["protocol"], "iscsi")
+        self.assertEqual(sc["parameters"]["fsType"], "ext4")
+        self.assertEqual(sc["volumeBindingMode"], "WaitForFirstConsumer")
         for change, new_value in (
-            ("datasetPath", "k8s/vixens/synelia-test/iscsi"),
             ("datasetPath", "k8s/vixens/iscsi/vols"),
-            ("datasetPath", "k8s/vixens/synelia/stateful/nfs"),
             ("reclaimPolicy", "Delete"),
             ("isDefault", True),
             ("protocol", "nfs"),

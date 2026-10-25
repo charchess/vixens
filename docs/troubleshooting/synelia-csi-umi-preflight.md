@@ -1,4 +1,9 @@
-# #4193 — Synelia official TrueNAS CSI (UMI, preflight + rollback)
+# #4193 — Synelia official TrueNAS CSI (UMI, historical preflight + rollback)
+
+> **Historical staging record.** The initial UMI validation described below used
+> `synelia-*` class names. ADR-043 supersedes those names for all new claims with
+> the provider-neutral `storage-rwo|rwx-{retain,delete}` contracts. Existing
+> staging PVs remain on their historical classes and are not renamed or adopted.
 
 **Status:** live UMI physical validation remains incomplete. The first manual Argo Sync failed due to missing Cilium API, corrected by merged PR #4199. The subsequent manual Sync partially created the new cluster-scoped CSI driver and four StorageClasses, but failed because namespace `synelia-csi` was not found. This increment explicitly declares a first-wave Synelia namespace. Review, merge, refresh Argo and verify the desired resources **before** another separately initiated manual Sync. No TrueNAS volume provisioning or legacy PV adoption is established.
 

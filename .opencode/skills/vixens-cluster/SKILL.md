@@ -170,9 +170,11 @@ kubectl get policyreport -n $NS -o json | jq -r '.items[] | select(.scope.name =
 kubectl get pvc -A -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,STATUS:.status.phase,SIZE:.spec.resources.requests.storage,STORAGECLASS:.spec.storageClassName'
 ```
 
-### legacy CSI
-- StorageClass: `synelia-iscsi-retain` (prod), `synelia-iscsi-delete` (dev)
-- CSI namespace: `legacy-csi`
+### Storage contracts (new claims)
+- `storage-rwo-retain` / `storage-rwo-delete`: single-writer persistent volume
+- `storage-rwx-retain` / `storage-rwx-delete`: shared persistent volume
+- CSI namespace/driver selection is an implementation concern; preserve a bound
+  PVC's historical StorageClass until its individually verified migration.
 
 ### Check legacy CSI Health
 ```bash

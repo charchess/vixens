@@ -14,11 +14,10 @@ ESO = ROOT / "apps/01-storage/synelia-csi/prod/externalsecret.yaml"
 NAMESPACE = ROOT / "apps/01-storage/synelia-csi/prod/namespace.yaml"
 NETWORK_POLICY = ROOT / "apps/01-storage/synelia-csi/prod/networkpolicy.yaml"
 EXPECTED = {
-    "synelia-nfs-retain",
-    "synelia-nfs-delete",
-    "synelia-iscsi-retain",
-    "synelia-iscsi-stateful-retain",
-    "synelia-iscsi-delete",
+    "storage-rwx-retain",
+    "storage-rwx-delete",
+    "storage-rwo-retain",
+    "storage-rwo-delete",
 }
 
 
@@ -30,13 +29,21 @@ class SyneliaProdCSIContractTest(unittest.TestCase):
         self.assertTrue(all(item["isDefault"] is False for item in classes))
         for item in classes:
             name = item["name"]
+            self.assertTrue(name.startswith("storage-rw"))
             self.assertEqual(item["reclaimPolicy"], name.rsplit("-", 1)[1].capitalize())
             parent = item["parameters"]["datasetPath"]
             self.assertNotIn("/vols", parent)
             self.assertNotIn("prod-staging", parent)
-        stateful = next(item for item in classes if item["name"] == "synelia-iscsi-stateful-retain")
-        self.assertEqual(stateful["parameters"]["datasetPath"], "k8s/vixens/synelia/stateful/iscsi")
-        self.assertEqual(stateful["volumeBindingMode"], "WaitForFirstConsumer")
+            if name.startswith("storage-rwo-"):
+                self.assertEqual(item["parameters"]["protocol"], "iscsi")
+                self.assertEqual(item["parameters"]["fsType"], "ext4")
+                self.assertEqual(item["volumeBindingMode"], "WaitForFirstConsumer")
+                self.assertEqual(parent, "k8s/vixens/synelia-test/iscsi")
+            else:
+                self.assertEqual(item["parameters"]["protocol"], "nfs")
+                self.assertIn("nfsvers=4.1", item["mountOptions"])
+                self.assertEqual(item["volumeBindingMode"], "Immediate")
+                self.assertEqual(parent, "k8s/vixens/synelia-test/nfs")
 
     def test_activation_and_credential_boundary(self) -> None:
         app = yaml.safe_load(APP.read_text())

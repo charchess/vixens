@@ -115,8 +115,14 @@ reasoning or the declared Git contract.
 
 ## Storage and durability
 
-Persistence and backup are workload-specific. StorageClasses, reclaim semantics,
-backup components and restore procedures must be taken from current manifests and
+Persistence and backup are workload-specific. Core exposes the non-default,
+provider-neutral StorageClass contracts `storage-rwo-retain`, `storage-rwo-delete`,
+`storage-rwx-retain` and `storage-rwx-delete` (ADR-043). Applications select these
+contracts rather than a CSI driver, protocol, NAS endpoint or backing path. Existing
+bound PVs retain their historical StorageClass and require an explicit data migration;
+creating a new class never renames or adopts them.
+
+Backup components and restore procedures must be taken from current manifests and
 the application's active documentation/runbook.
 
 Do not assume every stateful application uses Litestream, Config-Syncer, one NAS,

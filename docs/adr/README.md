@@ -71,6 +71,7 @@ A retrospective ADR records the accepted implementation. It must not make an unr
 - [ADR-018: OpenBao / External Secrets and NAS FQDN](018-openbao-external-secrets-and-nas-fqdn.md) — current secret architecture; this number is a documented historical collision.
 - [ADR-021: Netbird Native Manifests](021-netbird-native-manifests.md) — current Netbird deployment architecture.
 - [ADR-025: Local Path Provisioner](025-local-path-provisioner.md)
+- [ADR-043: Provider-neutral Kubernetes storage contracts](043-provider-neutral-storage-contracts.md) — four non-default `storage-rwo|rwx-{retain,delete}` contracts; provider details stay in Core.
 - [ADR-028: Retire DataAngel Restore Init from Production Workloads](028-retire-dataangel-prod-zfs.md)
 
 ### TXO Fabric / AIaaS
