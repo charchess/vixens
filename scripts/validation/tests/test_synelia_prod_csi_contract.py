@@ -11,6 +11,7 @@ VALUES = ROOT / "apps/01-storage/synelia-csi/prod/values.yaml"
 APP = ROOT / "argocd/overlays/prod/apps/synelia-prod-csi.yaml"
 ROOT_KUSTOMIZATION = ROOT / "argocd/overlays/prod/kustomization.yaml"
 ESO = ROOT / "apps/01-storage/synelia-csi/prod/externalsecret.yaml"
+NAMESPACE = ROOT / "apps/01-storage/synelia-csi/prod/namespace.yaml"
 EXPECTED = {
     "synelia-nfs-retain",
     "synelia-nfs-delete",
@@ -44,6 +45,20 @@ class SyneliaProdCSIContractTest(unittest.TestCase):
         eso = yaml.safe_load(ESO.read_text())
         self.assertEqual(eso["kind"], "ExternalSecret")
         self.assertEqual(eso["spec"]["data"][0]["remoteRef"]["key"], "vixens/prod/apps/01-storage/synelia-csi/api")
+        namespace = yaml.safe_load(NAMESPACE.read_text())
+        labels = namespace["metadata"]["labels"]
+        self.assertEqual(
+            {name: labels[name] for name in (
+                "pod-security.kubernetes.io/enforce",
+                "pod-security.kubernetes.io/audit",
+                "pod-security.kubernetes.io/warn",
+            )},
+            {
+                "pod-security.kubernetes.io/enforce": "privileged",
+                "pod-security.kubernetes.io/audit": "privileged",
+                "pod-security.kubernetes.io/warn": "privileged",
+            },
+        )
 
 
 if __name__ == "__main__":

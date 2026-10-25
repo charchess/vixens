@@ -7,6 +7,11 @@ metadata:
   name: synelia-prod-csi
   labels:
     app.kubernetes.io/part-of: synelia-prod-csi
+    # CSI node plugins require host mounts, host namespaces and privileged mode.
+    # This exception is confined to the dedicated CSI namespace.
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
     argocd.argoproj.io/sync-options: Prune=false
