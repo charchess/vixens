@@ -9,7 +9,9 @@ metadata:
     app: homeassistant
     vixens.io/storage-migration: homeassistant-canonical-target
   annotations:
-    argocd.argoproj.io/sync-wave: "6"
+    # WaitForFirstConsumer must share the claim's wave or Argo waits on a
+    # Pending claim before it can create the consumer that binds it.
+    argocd.argoproj.io/sync-wave: "5"
 spec:
   suspend: true
   backoffLimit: 0
