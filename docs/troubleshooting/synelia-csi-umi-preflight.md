@@ -191,6 +191,76 @@ The official driver uses `csi.truenas.io` semantics with its own volume identity
 
 For Hermes, #4185 must first identify and preserve the original 80Gi LUN, backup/snapshot, IQN/extent/target, and establish offline ext4 integrity under explicit human authorization. Preferred future cutover: isolated ZFS snapshot/clone + independently verified single-writer copy/restore into a **new** volume, file-level checksums and application-specific consistency gates, with originals retained and a separately reviewed rollback. If feasible static import is later proven against the exact v1.4.0 driver, record an independent proof on disposable volumes before even considering a stateful volume.
 
+## Existing Hermes LUN recovery: isolated retained destination (#4185)
+
+**Operator evidence (2026-10-25):** the old 80Gi Bound/Retain Hermes PV
+and PVC still reference `org.democratic-csi.truenas-iscsi`; the old
+controller is failing and its VolumeAttachment remains `attached=false`.
+The original TrueNAS ZVOL, target #2, extent #2 and LUN0 were identified,
+then its iSCSI session was recovered on UMI. An independently cloned
+pre-incident snapshot was prepared. The original filesystem was mounted on
+UMI at `/mnt/hermes-4185-source-ro` using `ro,noload,nodev,nosuid,noexec`;
+the kernel confirmed `ro,norecovery`, and all 13 existing `/profiles`
+directories are visible. This is **not** proof of file-level integrity or
+ext4 journal safety. A read-only fsck of the recovery clone reported
+uncorrected bitmap errors, and the old live ext4 had earlier EIO / JBD2
+journal-abort events.
+
+**Observed Synelia success:** a separate 1Gi disposable Synelia iSCSI
+test PVC was attached with `synelia.csi.truenas.io` and a 1MiB write +
+SHA256 readback passed; the two existing Hindsight attachments stayed true.
+This proves provisioning for new volumes, **not import compatibility**.
+
+**Compatibility reasoning:** the pinned upstream driver's
+`ControllerPublishVolume` can look up an existing TrueNAS ZVOL by dataset
+path and reconstruct its iSCSI target/extent/LUN. See
+https://github.com/truenas/truenas-csi/blob/v1.4.0/pkg/driver/controller.go
+and `pkg/driver/driver.go`. However the historical PV uses a
+`democratic-csi` identity/handle, so it cannot simply be re-labeled to
+Synelia. Import would require a new static PV/PVC with the ZFS dataset
+path as the Synelia CSI handle, strict RWO exclusivity, and a safe plan for
+the damaged original ext4. **Static import has not been tested and is not
+the chosen recovery method.**
+
+**New opt-in generic StorageClass:** `synelia-iscsi-stateful-retain`
+uses `Retain`, `WaitForFirstConsumer`, ext4, `pool=tank`,
+`datasetPath=k8s/vixens/synelia/stateful/iscsi`. Unlike the existing
+`synelia-{nfs,iscsi}-{retain,delete}` classes, this parent is **not**
+under the disposable `synelia-test` tree and does not overlap any old
+`democratic-csi` managed path. It is not default, and no PVC is
+automatically created by installing the class. No special hAIrem behavior.
+
+**Physical gate for the separately authorized data copy:**
+
+1. Confirm Argo desired state contains the new class and UMI/manual-only sync
+   remains in effect. Sync only `synelia-csi-umi` after PR review/merge,
+   without prune or force. Verify all old PVs/attachments remain unchanged.
+2. Record original source `findmnt` options: **ro + norecovery**; do not
+   unmount/remount it RW or run `fsck` on the original. If the original
+   experiences read errors, stop, investigate, and consider the recovery
+   snapshot clone. Do not blindly skip unreadable files.
+3. Provision a separate 80Gi-or-greater **Retain** PVC in `services`
+   using this new class, with an explicitly named new destination PVC.
+   Require its PV to have `spec.csi.driver=synelia.csi.truenas.io` and
+   `Retain`. Never reuse the old PV name, handle or ZVOL.
+4. Transfer **files**, not the raw 80Gi ext4 disk image, from the
+   already-mounted read-only source via a tightly scoped, temporary
+   recovery Pod on UMI. Preserve numerical UIDs/GIDs, modes, hardlinks,
+   symlinks, timestamps, ACLs and xattrs using an appropriately tested
+   file-copy tool. Avoid following symlinks or copying external mounts.
+   Never grant the copy Pod a Kubernetes API token.
+5. Verify a complete zero-error copy, sampled/full checksums, inode/file
+   counts, directory identity and 13 profiles; report unreadable entries
+   explicitly, not as success. Do not run Hermes on the new PVC until
+   recovery copy acceptance is established.
+6. Only then switch the Hermes Deployment's PVC through separately reviewed
+   GitOps, with automated reconciles still guarded. Keep the old PV/PVC,
+   original ZVOL, clone and snapshots under Retain for explicit rollback.
+
+**Non-goals:** no old driver deletion, no raw volumeHandle rewrite, no
+retroactive `VolumeAttachment` status patch, no ext4 journal repair on
+the original, no prod deployment, no automatic cleanup of the test PVC.
+
 ## Rollback boundary
 
 Before physical cutover (this PR's intended scope), stop using new test PVCs, disable/delete only the **new** Argo Application via reviewed Git change; preserve any already created Retain PVs, inspect all CSI finalizers and ZFS resources first. Do not delete old CSI or touch legacy PV/PVCs. Do not uninstall/delete a CSI while *any* PVC it provisioned remains needed; export a fresh inventory first. Keep ESO key until dependent test volumes have been safely detached, then rotate/revoke using OpenBao Infra and documented operator approval. Restoring `hairem-hub-umi` Argo auto-sync and Hermes repair belongs to #4185, not this deployment.
