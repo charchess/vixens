@@ -22,10 +22,10 @@ spec:
         valueFiles:
           - $values/apps/01-storage/synelia-csi/prod/values.yaml
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: main
+      targetRevision: prod-stable
       ref: values
     - repoURL: https://github.com/charchess/vixens.git
-      targetRevision: main
+      targetRevision: prod-stable
       path: apps/01-storage/synelia-csi/prod
   destination:
     server: https://kubernetes.default.svc
