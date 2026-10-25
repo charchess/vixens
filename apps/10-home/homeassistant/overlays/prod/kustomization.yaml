@@ -8,6 +8,8 @@ resources:
   - ../../base/optional-crds
   - ingress.yaml
   - ingressroute-udp.yaml
+  - pvc-canonical-target.yaml
+  - canonical-target-bind-job.yaml
 components:
   - ../../../../_shared/components/sync-wave/wave-6
   - ../../../../_shared/components/goldilocks/enabled
