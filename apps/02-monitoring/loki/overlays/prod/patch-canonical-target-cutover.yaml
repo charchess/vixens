@@ -1,0 +1,17 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: loki
+  annotations:
+    argocd.argoproj.io/sync-options: Force=true,Replace=true
+spec:
+  volumeClaimTemplates: []
+  template:
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: powder
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: loki-storage-canonical-target
