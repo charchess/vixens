@@ -17,7 +17,7 @@ specs:
           - 192.168.111.69/32
         toPorts:
           - ports:
-              - port: "443"
+              - port: "8443"
                 protocol: TCP
               - port: "22"
                 protocol: TCP
@@ -51,7 +51,7 @@ specs:
           - 192.168.111.69/32
         toPorts:
           - ports:
-              - port: "443"
+              - port: "8443"
                 protocol: TCP
               - port: "22"
                 protocol: TCP
