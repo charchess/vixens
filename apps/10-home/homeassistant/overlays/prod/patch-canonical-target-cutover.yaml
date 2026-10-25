@@ -1,0 +1,17 @@
+---
+# #3959 cutover after an offline, verified NAS-local copy.  Pin temporarily to
+# powder, the node that proved the canonical iSCSI mount; poison remains under
+# separate node-local iSCSI investigation.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homeassistant
+spec:
+  template:
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: powder
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: homeassistant-config-canonical-target
