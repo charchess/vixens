@@ -3,8 +3,9 @@ kind: Kustomization
 resources:
   - ../../base
   - pvc-canonical-target.yaml
-  - canonical-target-bind-job.yaml
 components:
   - ../../../../_shared/components/sync-wave/wave-9
   - ../../../../_shared/components/goldilocks/enabled
   - ../../../../_shared/components/poddisruptionbudget/0
+patches:
+  - path: patch-canonical-target-cutover.yaml

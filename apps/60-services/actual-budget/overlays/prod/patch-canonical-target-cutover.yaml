@@ -1,0 +1,15 @@
+---
+# Cutover after verified offline NAS-local copy; powder has proved official CSI mounts.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: actual-budget
+spec:
+  template:
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: powder
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: actual-budget-data-canonical-target
