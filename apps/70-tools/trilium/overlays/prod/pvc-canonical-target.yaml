@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trilium-data-canonical-target
+  namespace: tools
+  annotations:
+    argocd.argoproj.io/sync-wave: "9"
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: storage-rwo-retain
+  resources:
+    requests:
+      storage: 10Gi
