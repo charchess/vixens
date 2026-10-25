@@ -1,0 +1,49 @@
+---
+# Non-writing mount gate. It is deliberately suspended in Git until source detachment is verified.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: homeassistant-config-canonical-target-bind
+  namespace: homeassistant
+  labels:
+    app: homeassistant
+    vixens.io/storage-migration: homeassistant-canonical-target
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  suspend: true
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: homeassistant
+        vixens.io/storage-migration: homeassistant-canonical-target
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: powder
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: bind
+          image: busybox:1.38.0
+          command: ["/bin/sh", "-ec"]
+          args: ["test -d /data; echo canonical Home Assistant target mounted"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: target
+              mountPath: /data
+      volumes:
+        - name: target
+          persistentVolumeClaim:
+            claimName: homeassistant-config-canonical-target

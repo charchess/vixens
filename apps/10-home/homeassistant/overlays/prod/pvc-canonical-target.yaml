@@ -1,0 +1,16 @@
+---
+# Replacement claim for #3959; the legacy claim remains retained until cutover verification.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: homeassistant-config-canonical-target
+  namespace: homeassistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: storage-rwo-retain
+  resources:
+    requests:
+      storage: 250Gi
