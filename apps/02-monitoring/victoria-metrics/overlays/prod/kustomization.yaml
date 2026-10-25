@@ -13,6 +13,7 @@ resources:
   - ssa-vmsingle.yaml
   - ssa-vmalert.yaml
   - ssa-vmalertmanager.yaml
+  - pvc-vmsingle-canonical-target.yaml
 patches:
   - path: patch-external-secret-env.yaml
     target:
