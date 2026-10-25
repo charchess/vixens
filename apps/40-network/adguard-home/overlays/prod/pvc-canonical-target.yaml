@@ -6,6 +6,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: adguard-data-canonical-target
   annotations:
+    # Keep this WFFC PVC in the exact wave of its first consumer Job. An earlier
+    # wave deadlocks Argo because a Pending WFFC claim is not Healthy yet.
+    argocd.argoproj.io/sync-wave: "5"
     argocd.argoproj.io/sync-options: Prune=false,Delete=false
 spec:
   accessModes:
