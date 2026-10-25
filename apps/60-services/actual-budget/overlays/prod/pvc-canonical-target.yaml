@@ -1,0 +1,16 @@
+---
+# #3959 replacement for the retained legacy XFS volume.  The source claim is
+# preserved until the copy and application verification gates succeed.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: actual-budget-data-canonical-target
+  namespace: finance
+  annotations:
+    argocd.argoproj.io/sync-wave: "9"
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: storage-rwo-retain
+  resources:
+    requests:
+      storage: 5Gi

@@ -1,0 +1,46 @@
+---
+# Pre-created suspended non-writing consumer for the WaitForFirstConsumer target.
+# It is reconciled before the PVC and only unsuspended after source absence.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: actual-budget-data-canonical-target-bind
+  namespace: finance
+  labels:
+    app.kubernetes.io/name: actual-budget
+    vixens.io/storage-migration: actual-budget-canonical-target
+  annotations:
+    argocd.argoproj.io/sync-wave: "8"
+spec:
+  suspend: true
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: actual-budget
+        vixens.io/storage-migration: actual-budget-canonical-target
+        vixens.io/backup-profile: relaxed
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: powder
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: bind
+          image: busybox:1.38.0
+          command: ["/bin/sh", "-ec"]
+          args: ["test -d /data; echo canonical Actual target mounted"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts: [{name: target, mountPath: /data}]
+      volumes:
+        - name: target
+          persistentVolumeClaim: {claimName: actual-budget-data-canonical-target}
