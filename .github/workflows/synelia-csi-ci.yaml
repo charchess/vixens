@@ -46,13 +46,12 @@ jobs:
           assert len(drivers) == 1
           assert drivers[0]["metadata"]["name"] == "synelia.csi.truenas.io"
           assert {x["metadata"]["name"] for x in classes} == {
-              "synelia-nfs-retain", "synelia-nfs-delete",
-              "synelia-iscsi-retain", "synelia-iscsi-delete",
-              "synelia-iscsi-stateful-retain",
+              "storage-rwx-retain", "storage-rwx-delete",
+              "storage-rwo-retain", "storage-rwo-delete",
           }
           for sc in classes:
               name = sc["metadata"]["name"]
-              assert "umi" not in name.lower(), name
+              assert name.startswith("storage-rw"), name
               assert "umi" not in sc["parameters"]["datasetPath"].lower(), name
               assert sc["provisioner"] == "synelia.csi.truenas.io", name
               assert sc["metadata"]["annotations"][
@@ -60,14 +59,16 @@ jobs:
               ] == "false", name
               assert sc["reclaimPolicy"] == name.rsplit("-", 1)[-1].capitalize()
               parent = sc["parameters"]["datasetPath"]
-              if name == "synelia-iscsi-stateful-retain":
-                  assert parent == "k8s/vixens/synelia/stateful/iscsi", name
+              if name.startswith("storage-rwo-"):
+                  assert parent == "k8s/vixens/synelia-test/iscsi", name
                   assert sc["parameters"]["protocol"] == "iscsi", name
                   assert sc["parameters"]["fsType"] == "ext4", name
-                  assert sc["reclaimPolicy"] == "Retain", name
                   assert sc["volumeBindingMode"] == "WaitForFirstConsumer", name
               else:
-                  assert parent.startswith("k8s/vixens/synelia-test/"), name
+                  assert parent == "k8s/vixens/synelia-test/nfs", name
+                  assert sc["parameters"]["protocol"] == "nfs", name
+                  assert "nfsvers=4.1" in sc["mountOptions"], name
+                  assert sc["volumeBindingMode"] == "Immediate", name
           assert not [x for x in docs if x["kind"] == "Secret"], (
               "the chart must not materialize a plaintext credential Secret"
           )
@@ -118,18 +119,16 @@ jobs:
           assert "192.168.200.244" not in rendered + companion + app
           assert "kind: Secret" not in rendered + companion + app
           for storage_class in (
-              "synelia-nfs-retain",
-              "synelia-nfs-delete",
-              "synelia-iscsi-retain",
-              "synelia-iscsi-stateful-retain",
-              "synelia-iscsi-delete",
+              "storage-rwx-retain",
+              "storage-rwx-delete",
+              "storage-rwo-retain",
+              "storage-rwo-delete",
           ):
               assert storage_class in rendered
           assert "storageclass.kubernetes.io/is-default-class: \"false\"" in rendered
           for parent in (
               "k8s/vixens/synelia-test/nfs",
               "k8s/vixens/synelia-test/iscsi",
-              "k8s/vixens/synelia/stateful/iscsi",
           ):
               assert parent in rendered
           assert "app: synelia-prod-csi-controller" in companion

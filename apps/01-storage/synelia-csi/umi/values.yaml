@@ -81,10 +81,12 @@ node:
 volumeSnapshotClass:
   enabled: false
 
-# Unique names + isolated test parents: never overlap democratic-csi datasets.
-# Retain for stateful/manual investigation; Delete only for disposable PVCs.
+# Public storage contract (ADR-043): all names are non-default and deliberately
+# provider-neutral. Applications select access/reclaim guarantees rather than a
+# CSI implementation or protocol. Legacy Synelia staging classes remain bound to
+# their existing PVs only; no workload is migrated by this class declaration.
 storageClasses:
-  - name: synelia-nfs-retain
+  - name: storage-rwx-retain
     isDefault: false
     reclaimPolicy: Retain
     volumeBindingMode: Immediate
@@ -96,7 +98,7 @@ storageClasses:
       pool: tank
       datasetPath: k8s/vixens/synelia-test/nfs
       compression: LZ4
-  - name: synelia-nfs-delete
+  - name: storage-rwx-delete
     isDefault: false
     reclaimPolicy: Delete
     volumeBindingMode: Immediate
@@ -108,7 +110,7 @@ storageClasses:
       pool: tank
       datasetPath: k8s/vixens/synelia-test/nfs
       compression: LZ4
-  - name: synelia-iscsi-retain
+  - name: storage-rwo-retain
     isDefault: false
     reclaimPolicy: Retain
     volumeBindingMode: WaitForFirstConsumer
@@ -119,22 +121,7 @@ storageClasses:
       datasetPath: k8s/vixens/synelia-test/iscsi
       fsType: ext4
       compression: LZ4
-  # Dedicated stateful parent: keep retained application data outside the
-  # disposable Synelia test tree and legacy democratic-csi ZVOL parents.
-  # #4185 Hermes recovery destination remains inert until a separately
-  # authorized PVC is created; generic to any stateful UMI workload.
-  - name: synelia-iscsi-stateful-retain
-    isDefault: false
-    reclaimPolicy: Retain
-    volumeBindingMode: WaitForFirstConsumer
-    allowVolumeExpansion: true
-    parameters:
-      protocol: iscsi
-      pool: tank
-      datasetPath: k8s/vixens/synelia/stateful/iscsi
-      fsType: ext4
-      compression: LZ4
-  - name: synelia-iscsi-delete
+  - name: storage-rwo-delete
     isDefault: false
     reclaimPolicy: Delete
     volumeBindingMode: WaitForFirstConsumer

@@ -79,11 +79,13 @@ node:
 volumeSnapshotClass:
   enabled: false
 
-# Durable public StorageClass contract. All names are non-default. Retain is
-# mandatory for durable state; Delete is reserved for explicit disposable use.
-# Parents are disjoint from legacy democratic-csi trees (nfs/vols, iscsi/vols).
+# Public storage contract (ADR-043). All names are non-default and deliberately
+# provider-neutral: applications select access/reclaim guarantees, not TrueNAS,
+# iSCSI, NFS, a ZFS path or a historical driver identity. Retain is mandatory for
+# durable state; Delete is reserved for explicitly disposable data. The official
+# driver parents remain disjoint from legacy democratic-csi trees.
 storageClasses:
-  - name: synelia-nfs-retain
+  - name: storage-rwx-retain
     isDefault: false
     reclaimPolicy: Retain
     volumeBindingMode: Immediate
@@ -95,7 +97,7 @@ storageClasses:
       pool: tank
       datasetPath: k8s/vixens/synelia-test/nfs
       compression: LZ4
-  - name: synelia-nfs-delete
+  - name: storage-rwx-delete
     isDefault: false
     reclaimPolicy: Delete
     volumeBindingMode: Immediate
@@ -107,7 +109,7 @@ storageClasses:
       pool: tank
       datasetPath: k8s/vixens/synelia-test/nfs
       compression: LZ4
-  - name: synelia-iscsi-retain
+  - name: storage-rwo-retain
     isDefault: false
     reclaimPolicy: Retain
     volumeBindingMode: WaitForFirstConsumer
@@ -118,18 +120,7 @@ storageClasses:
       datasetPath: k8s/vixens/synelia-test/iscsi
       fsType: ext4
       compression: LZ4
-  - name: synelia-iscsi-stateful-retain
-    isDefault: false
-    reclaimPolicy: Retain
-    volumeBindingMode: WaitForFirstConsumer
-    allowVolumeExpansion: true
-    parameters:
-      protocol: iscsi
-      pool: tank
-      datasetPath: k8s/vixens/synelia/stateful/iscsi
-      fsType: ext4
-      compression: LZ4
-  - name: synelia-iscsi-delete
+  - name: storage-rwo-delete
     isDefault: false
     reclaimPolicy: Delete
     volumeBindingMode: WaitForFirstConsumer
