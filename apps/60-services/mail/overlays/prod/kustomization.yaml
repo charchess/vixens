@@ -4,5 +4,6 @@ kind: Kustomization
 namespace: mail
 resources:
   - ../../base
+  - canonical-target-bind-jobs.yaml
 commonLabels:
   environment: prod
