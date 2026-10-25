@@ -1,0 +1,17 @@
+---
+# #4213 cutover after verified offline copy. Powder is intentionally selected
+# until the node-local official iSCSI record creation failure on poison is fixed.
+# The historical adguard-data PVC/PV stays retained as rollback source.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adguard-home
+spec:
+  template:
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: powder
+      volumes:
+        - name: adguard-data
+          persistentVolumeClaim:
+            claimName: adguard-data-canonical-target

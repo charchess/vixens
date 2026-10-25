@@ -5,7 +5,6 @@ resources:
   - ../../base
   - ingress.yaml
   - pvc-canonical-target.yaml
-  - canonical-target-bind-job.yaml
 components:
   - ../../../../_shared/components/sync-wave/wave-5
   - ../../../../_shared/components/goldilocks/enabled
@@ -19,4 +18,5 @@ patches:
     target:
       kind: Deployment
       name: adguard-home
+  - path: patch-canonical-target-cutover.yaml
   - path: resources-patch.yaml
