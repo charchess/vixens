@@ -1,0 +1,16 @@
+---
+# #4213: production replacement target only. The historical adguard-data claim
+# remains the live source and is deliberately not renamed, rebound, or deleted.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: adguard-data-canonical-target
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: storage-rwo-retain
+  resources:
+    requests:
+      storage: 5Gi
