@@ -31,6 +31,7 @@ def verify_classes(values: dict) -> None:
     expected = {
         "synelia-iscsi-delete",
         "synelia-iscsi-retain",
+        "synelia-iscsi-stateful-retain",
         "synelia-nfs-delete",
         "synelia-nfs-retain",
     }
@@ -49,8 +50,16 @@ def verify_classes(values: dict) -> None:
         if sc["parameters"]["pool"] != "tank":
             raise AssertionError(f"Unexpected pool: {name}")
         parent = sc["parameters"]["datasetPath"]
-        if not parent.startswith("k8s/vixens/synelia-test/"):
-            raise AssertionError(f"Unsafe parent: {parent}")
+        if name == "synelia-iscsi-stateful-retain":
+            if parent != "k8s/vixens/synelia/stateful/iscsi":
+                raise AssertionError(f"Stateful class must use its dedicated durable parent: {parent}")
+            if (sc["parameters"]["protocol"] != "iscsi"
+                    or sc["reclaimPolicy"] != "Retain"
+                    or sc["volumeBindingMode"] != "WaitForFirstConsumer"
+                    or sc["parameters"].get("fsType") != "ext4"):
+                raise AssertionError("Durable Synelia class must be iSCSI RWO-ready, ext4, Retain")
+        elif not parent.startswith("k8s/vixens/synelia-test/"):
+            raise AssertionError(f"Unsafe disposable parent: {parent}")
         if "umi" in parent.lower():
             raise AssertionError(f"Environment suffix forbidden in Synelia dataset path: {parent}")
         if any(old in parent for old in ("nfs/vols", "iscsi/vols")):
@@ -227,6 +236,33 @@ class SyneliaCSISourceTests(unittest.TestCase):
         mutated["storageClasses"][0]["reclaimPolicy"] = "Delete"
         with self.assertRaises(AssertionError):
             verify_classes(mutated)
+
+    def test_durable_stateful_retained_class_fail_closed(self):
+        classes = self.values["storageClasses"]
+        names = [s["name"] for s in classes]
+        index = names.index("synelia-iscsi-stateful-retain")
+        sc = classes[index]
+        self.assertEqual(sc["reclaimPolicy"], "Retain")
+        self.assertIs(sc["isDefault"], False)
+        self.assertTrue(sc["allowVolumeExpansion"])
+        self.assertEqual(sc["parameters"]["datasetPath"], "k8s/vixens/synelia/stateful/iscsi")
+        self.assertNotIn("synelia-test", sc["parameters"]["datasetPath"])
+        for change, new_value in (
+            ("datasetPath", "k8s/vixens/synelia-test/iscsi"),
+            ("datasetPath", "k8s/vixens/iscsi/vols"),
+            ("datasetPath", "k8s/vixens/synelia/stateful/nfs"),
+            ("reclaimPolicy", "Delete"),
+            ("isDefault", True),
+            ("protocol", "nfs"),
+        ):
+            altered = deepcopy(self.values)
+            candidate = altered["storageClasses"][index]
+            if change in candidate["parameters"]:
+                candidate["parameters"][change] = new_value
+            else:
+                candidate[change] = new_value
+            with self.subTest(change=change, value=new_value), self.assertRaises(AssertionError):
+                verify_classes(altered)
 
     def test_tls_and_openbao_infra_secret_contract(self):
         cfg = self.values["truenas"]
