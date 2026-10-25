@@ -40,7 +40,11 @@ vmsingle:
     revisionHistoryLimitCount: 3
     retentionPeriod: "30d"
     storage:
-      storageClassName: truenas-iscsi-retain
+      # Cutover target: the pre-provisioned/copy-verified canonical CSI PV.
+      # `volumeName` ensures the operator recreates its historical claim name
+      # against this retained PV rather than dynamically provisioning legacy CSI.
+      storageClassName: storage-rwo-retain
+      volumeName: pvc-9c9e484e-37f5-49b7-8929-8b050df21ac4
       resources:
         requests:
           storage: 10Gi
