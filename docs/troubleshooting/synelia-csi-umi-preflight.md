@@ -261,6 +261,58 @@ automatically created by installing the class. No special hAIrem behavior.
 retroactive `VolumeAttachment` status patch, no ext4 journal repair on
 the original, no prod deployment, no automatic cleanup of the test PVC.
 
+### Hermes UMI manual-only Argo gate before data cutover (#4185; 2026-10-25)
+
+**Operator's explicit integrity decision:** the existing 80Gi historical Hermes
+source is mounted on UMI as ext4 `ro,norecovery`; 13 profiles were observed.
+The owner reports a successful `cp -a -x` / `sync -f` with exit 0 and has
+accepted **sampling-based content validation**, declining a full-tree diff for
+time reasons. Full bitwise verification and completeness of copied xattrs/ACLs
+remain **unproven**, and this risk must be carried into runtime acceptance.
+Original zvol, retained legacy PV/PVC, snapshot/clone and Hindsight iSCSI
+attachments must stay untouched for rollback.
+
+**Important race discovered on source inspection:** the current dev Argo
+Application `hermes-umi` has `syncPolicy.automated.prune=true,selfHeal=true`
+and follows `main`. Merging a new Deployment claim reference without a
+prior gate could immediately restart Hermes on a volume still mounted by
+the temporary `services/hermes-4185-copy` recovery Pod. RWO does not
+mean exclusive access between Pods on the same node, so competing writers
+cannot be treated as safe.
+
+1. In a **separate first PR**, omit `automated` from only the
+   `argocd/overlays/dev/apps/hermes-umi.yaml` Argo Application.
+   Root App-of-Apps applies that child Application change without altering
+   the Hermes Deployment or any existing PVC. After review/merge verify
+   **on UMI live**: `kubectl -n argocd get application hermes-umi -o
+   jsonpath='{.spec.syncPolicy.automated}{"\\n"}'` is empty and no sync operation is
+   active. Stop if the real app remains automated. Avoid forced sync/prune.
+2. In a **separate, reviewed dev-only cutover PR**, declare existing
+   `services/hermes-data-synelia-recovery` PVC at 80Gi using
+   `synelia-iscsi-stateful-retain` and explicit
+   `volumeName=pvc-66d68670-a146-4ae3-87f6-421860f4554e`, to
+   **fail closed** if this actual recovered PV identity is absent.
+   Add `Prune=false,Delete=false` on the destination PVC. Change only
+   the UMI/dev Deployment `data` claim reference to this PVC, leaving
+   the base/old `hermes-data-truenas` 80Gi PVC and any prod source untouched.
+   **Never** patch or replace the legacy CSI PV, or allow creation of a
+   second empty fallback volume under the same logical recovery claim.
+3. **Before manual one-shot `hermes-umi` sync**, verify old/new PVC UID,
+   bound PV name, new PV driver/path/Retain, actual content sampled, and
+   healthy needed secrets (e.g. `hermes-peer-api-keys`). Finish the recovery
+   verification Pod and ensure it is not writing/mounting the RWO target
+   simultaneously with Hermes. Keep historical source mounted strictly RO;
+   perform no ext4 repair on it.
+4. After a **no-prune, no-force manual sync**, verify pod volumes,
+   init-container completion and Hermes gateway readiness with the intended
+   profiles and workspace intact. Do not announce recovery solely because
+   Deployment reports Available; validate intended Hermes user operations.
+   Only after signoff consider restoring App auto-sync in another reviewed PR.
+5. If this cutover fails, keep both old and new PVC/PV and ZVOL protected;
+   pause reconciliation, inspect read-only evidence before any rollback.
+   Do not revert to old PV blindly while its CSI external-attacher is failing.
+   Explicitly plan a safe data-recovery rollback.
+
 ## Rollback boundary
 
 Before physical cutover (this PR's intended scope), stop using new test PVCs, disable/delete only the **new** Argo Application via reviewed Git change; preserve any already created Retain PVs, inspect all CSI finalizers and ZFS resources first. Do not delete old CSI or touch legacy PV/PVCs. Do not uninstall/delete a CSI while *any* PVC it provisioned remains needed; export a fresh inventory first. Keep ESO key until dependent test volumes have been safely detached, then rotate/revoke using OpenBao Infra and documented operator approval. Restoring `hairem-hub-umi` Argo auto-sync and Hermes repair belongs to #4185, not this deployment.
