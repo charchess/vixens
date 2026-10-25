@@ -1,0 +1,37 @@
+---
+# #4205: Source-only production staging. This Application is intentionally not
+# referenced by argocd/overlays/prod/kustomization.yaml. Enabling that reference
+# is a separate explicit owner decision after disposable physical canaries.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: synelia-prod-csi
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    vixens.io/domain: core
+spec:
+  project: default
+  sources:
+    - repoURL: https://raw.githubusercontent.com/truenas/truenas-csi/master/charts
+      chart: truenas-csi
+      targetRevision: 1.4.0
+      helm:
+        releaseName: synelia-prod-csi
+        valueFiles:
+          - $values/apps/01-storage/synelia-csi/prod/values.yaml
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: prod-stable
+      ref: values
+    - repoURL: https://github.com/charchess/vixens.git
+      targetRevision: prod-stable
+      path: apps/01-storage/synelia-csi/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: synelia-prod-csi
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - FailOnSharedResource=true

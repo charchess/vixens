@@ -6,6 +6,8 @@ on:
     paths:
       - 'apps/01-storage/synelia-csi/**'
       - 'argocd/overlays/dev/apps/synelia-csi-umi.yaml'
+      - 'argocd/overlays/prod/apps/synelia-prod-csi.yaml'
+      - 'argocd/overlays/prod/kustomization.yaml'
       - '.github/workflows/synelia-csi-ci.yaml'
 
 permissions:
@@ -87,3 +89,44 @@ jobs:
           kustomize build apps/01-storage/synelia-csi/overlays/dev \
             > /tmp/synelia-csi-policy.yaml
           kubeconform -strict -ignore-missing-schemas -summary /tmp/synelia-csi-policy.yaml
+
+      - name: Assert default-off production staging invariants
+        run: |
+          helm template synelia-prod-csi /tmp/synelia-csi-1.4.0.tgz \
+            --namespace synelia-prod-csi \
+            -f apps/01-storage/synelia-csi/prod/values.yaml \
+            > /tmp/synelia-prod-csi-render.yaml
+          kustomize build apps/01-storage/synelia-csi/prod \
+            > /tmp/synelia-prod-csi-companion.yaml
+          kubeconform -strict -ignore-missing-schemas -summary \
+            /tmp/synelia-prod-csi-render.yaml /tmp/synelia-prod-csi-companion.yaml
+          python3 - <<'PY'
+          from pathlib import Path
+
+          rendered = Path("/tmp/synelia-prod-csi-render.yaml").read_text(encoding="utf-8")
+          companion = Path("/tmp/synelia-prod-csi-companion.yaml").read_text(encoding="utf-8")
+          root = Path("argocd/overlays/prod/kustomization.yaml").read_text(encoding="utf-8")
+          app = Path("argocd/overlays/prod/apps/synelia-prod-csi.yaml").read_text(encoding="utf-8")
+
+          assert "  - apps/synelia-prod-csi.yaml" not in root
+          assert "# Disabled by owner: apps/synelia-prod-csi.yaml" in root
+          assert "synelia.prod.csi.truenas.io" in rendered
+          assert "ghcr.io/truenas/truenas-csi:v1.4.0" in rendered
+          assert "org.democratic-csi" not in rendered + companion + app
+          assert "192.168.200.244" not in rendered + companion + app
+          assert "kind: Secret" not in rendered + companion + app
+          for storage_class in (
+              "synelia-prod-nfs-canary-retain",
+              "synelia-prod-iscsi-canary-retain",
+          ):
+              assert storage_class in rendered
+          assert "storageclass.kubernetes.io/is-default-class: \"false\"" in rendered
+          for parent in (
+              "k8s/vixens/synelia-prod-staging/nfs",
+              "k8s/vixens/synelia-prod-staging/iscsi",
+          ):
+              assert parent in rendered
+          assert "app: synelia-prod-csi-controller" in companion
+          assert "app: synelia-prod-csi-node" in companion
+          print("PASS: default-off production Synelia staging remains isolated from legacy CSI")
+          PY

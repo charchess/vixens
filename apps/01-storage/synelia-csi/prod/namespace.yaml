@@ -1,0 +1,12 @@
+---
+# Source-only production staging namespace. It is created only if the explicit
+# Argo application activation gate is opened; no existing CSI namespace is used.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: synelia-prod-csi
+  labels:
+    app.kubernetes.io/part-of: synelia-prod-csi
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-options: Prune=false
