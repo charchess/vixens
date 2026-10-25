@@ -1,0 +1,107 @@
+---
+# Official truenas/truenas-csi v1.4.0 — production staging only.
+# This file is inert until the separately declared, default-off Argo Application
+# is explicitly enabled. It never adopts democratic-csi volumes.
+fullnameOverride: synelia-prod-csi
+driverName: synelia.prod.csi.truenas.io
+kubeletDir: /var/lib/kubelet
+logLevel: 2
+
+truenas:
+  url: wss://nas.truxonline.com/api/current
+  defaultPool: tank
+  nfsServer: nas.truxonline.com
+  iscsiPortal: "192.168.111.69:3260"
+  existingSecret: synelia-prod-csi-credentials
+  existingSecretKey: api-key
+  insecureSkipTLS: false
+
+image:
+  driver:
+    repository: ghcr.io/truenas/truenas-csi
+    tag: v1.4.0
+    pullPolicy: IfNotPresent
+  csiProvisioner:
+    tag: v6.1.1
+  csiAttacher:
+    tag: v4.11.0
+  csiSnapshotter:
+    tag: v8.5.0
+  csiResizer:
+    tag: v2.1.0
+  nodeDriverRegistrar:
+    tag: v2.16.0
+  livenessProbe:
+    tag: v2.18.0
+
+controller:
+  replicas: 1
+  timeout: 60s
+  defaultFSType: ext4
+  priorityClassName: system-cluster-critical
+  podLabels:
+    vixens.io/backup-profile: relaxed
+    vixens.io/single-replica: "true"
+  podAnnotations:
+    vixens.io/explicitly-allow-root: "true"
+    vixens.io/no-long-connections: "true"
+    vixens.io/nometrics: "true"
+    vixens.io/service-binding: "false"
+    vixens.io/sizing-rationale: "Default-off production staging CSI controller; six containers; canary-only"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 384Mi
+
+node:
+  priorityClassName: system-node-critical
+  podLabels:
+    vixens.io/single-replica: "true"
+  podAnnotations:
+    vixens.io/explicitly-allow-root: "true"
+    vixens.io/no-long-connections: "true"
+    vixens.io/nometrics: "true"
+    vixens.io/service-binding: "false"
+    vixens.io/sizing-rationale: "Default-off privileged Talos CSI node; canary-only"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 384Mi
+
+# Snapshot support stays off until a dedicated physical validation establishes
+# version compatibility and ownership with the existing snapshot controller.
+volumeSnapshotClass:
+  enabled: false
+
+# New classes are non-default and use isolated staging parents. Retain avoids
+# an automatic backend delete if a future canary needs forensic rollback.
+storageClasses:
+  - name: synelia-prod-nfs-canary-retain
+    isDefault: false
+    reclaimPolicy: Retain
+    volumeBindingMode: Immediate
+    allowVolumeExpansion: true
+    mountOptions:
+      - nfsvers=4.1
+    parameters:
+      protocol: nfs
+      pool: tank
+      datasetPath: k8s/vixens/synelia-prod-staging/nfs
+      compression: LZ4
+  - name: synelia-prod-iscsi-canary-retain
+    isDefault: false
+    reclaimPolicy: Retain
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      protocol: iscsi
+      pool: tank
+      datasetPath: k8s/vixens/synelia-prod-staging/iscsi
+      fsType: ext4
+      compression: LZ4

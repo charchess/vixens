@@ -1,0 +1,65 @@
+---
+# Production Cilium policy for the official CSI staging release. The node
+# component is privileged/hostNetwork; this policy documents desired Pod egress
+# but does not replace Talos host-path and NAS initiator restrictions.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: synelia-prod-csi-controller-egress
+  namespace: synelia-prod-csi
+spec:
+  endpointSelector:
+    matchLabels:
+      app: synelia-prod-csi-controller
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver
+    - toCIDR:
+        - 192.168.111.69/32
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: synelia-prod-csi-node-egress
+  namespace: synelia-prod-csi
+spec:
+  endpointSelector:
+    matchLabels:
+      app: synelia-prod-csi-node
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver
+    - toCIDR:
+        - 192.168.111.69/32
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "2049"
+              protocol: TCP
+            - port: "3260"
+              protocol: TCP

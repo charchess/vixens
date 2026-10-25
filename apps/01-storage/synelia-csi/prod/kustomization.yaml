@@ -1,0 +1,9 @@
+---
+# Companion resources for the default-off official production CSI staging app.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: synelia-prod-csi
+resources:
+  - namespace.yaml
+  - externalsecret.yaml
+  - networkpolicy.yaml
