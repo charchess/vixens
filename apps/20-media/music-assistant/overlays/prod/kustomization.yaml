@@ -14,6 +14,7 @@ components:
   - ../../../../_shared/components/poddisruptionbudget/1
 
 patches:
+  - path: delete-legacy-pvc.yaml
   - path: patch-canonical-target-cutover.yaml
   - target:
       kind: Deployment
