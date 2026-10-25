@@ -119,6 +119,21 @@ storageClasses:
       datasetPath: k8s/vixens/synelia-test/iscsi
       fsType: ext4
       compression: LZ4
+  # Dedicated stateful parent: keep retained application data outside the
+  # disposable Synelia test tree and legacy democratic-csi ZVOL parents.
+  # #4185 Hermes recovery destination remains inert until a separately
+  # authorized PVC is created; generic to any stateful UMI workload.
+  - name: synelia-iscsi-stateful-retain
+    isDefault: false
+    reclaimPolicy: Retain
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      protocol: iscsi
+      pool: tank
+      datasetPath: k8s/vixens/synelia/stateful/iscsi
+      fsType: ext4
+      compression: LZ4
   - name: synelia-iscsi-delete
     isDefault: false
     reclaimPolicy: Delete
