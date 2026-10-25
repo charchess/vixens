@@ -17,10 +17,11 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: services
+  # Incident #4185: hold the existing Hermes workload while the verified
+  # Synelia recovery PVC is staged. A later reviewed, manual cutover must not
+  # race the temporary data-copy Pod or silently prune retained legacy state.
+  # Restore automation only after physical startup and rollback validation.
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
     retry:
       limit: 3
       backoff:
