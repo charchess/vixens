@@ -66,7 +66,7 @@ func main() {
 		panic(fmt.Errorf("create restricted initiator group: %w", err))
 	}
 	group := client.ISCSITargetGroup{Portal: portal.ID, Initiator: initiator.ID}
-	target, err := c.CreateISCSITargetWithGroup(ctx, name, "temporary migration bridge", group)
+	target, err := c.CreateISCSITargetWithGroup(ctx, name, "temporary migration bridge "+name, group)
 	if err != nil {
 		_ = c.DeleteISCSIInitiator(ctx, initiator.ID)
 		panic(fmt.Errorf("create temporary target: %w", err))
