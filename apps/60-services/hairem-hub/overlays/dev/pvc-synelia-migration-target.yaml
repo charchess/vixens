@@ -1,0 +1,20 @@
+---
+# Stage only: this claim is deliberately not referenced by a workload until
+# the quiesced copy and verification evidence have completed.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hairem-files-synelia
+  namespace: services
+  labels:
+    app.kubernetes.io/part-of: hairem-hub
+    storage.truxonline.com/migration-source: hairem-files-truenas
+  annotations:
+    storage.truxonline.com/migration-state: staged
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: synelia-nfs-retain
+  resources:
+    requests:
+      storage: 20Gi
