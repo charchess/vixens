@@ -7,7 +7,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // the target while the runtime remains on the original claim; a later controller
 // revision will add separately verified copy/cutover evidence before honoring
 // Cutover.
-// +kubebuilder:validation:XValidation:rule="self.targetStorageClassName != ” && self.targetClaimSuffix != ”",message="storage migration requires targetStorageClassName and targetClaimSuffix"
+// +kubebuilder:validation:XValidation:rule="self.targetStorageClassName != '' && self.targetClaimSuffix != ''",message="storage migration requires targetStorageClassName and targetClaimSuffix"
 type AgentRuntimeStorageMigrationBinding struct {
 	// TargetStorageClassName is the explicit canonical RWO class for the distinct
 	// replacement claim. It is immutable once declared.
