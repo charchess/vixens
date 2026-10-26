@@ -10,6 +10,7 @@ from __future__ import annotations
 from copy import deepcopy
 from pathlib import Path
 import unittest
+from urllib.parse import urlparse
 
 import yaml
 
@@ -264,7 +265,11 @@ class SyneliaCSISourceTests(unittest.TestCase):
 
     def test_tls_and_openbao_infra_secret_contract(self):
         cfg = self.values["truenas"]
-        self.assertTrue(cfg["url"].startswith("wss://nas.truxonline.com/"))
+        endpoint = urlparse(cfg["url"])
+        self.assertEqual(endpoint.scheme, "wss")
+        self.assertEqual(endpoint.hostname, "nas.truxonline.com")
+        self.assertEqual(endpoint.port, 8443)
+        self.assertEqual(endpoint.path, "/api/current")
         self.assertIs(cfg["insecureSkipTLS"], False)
         self.assertEqual(cfg["existingSecret"], "synelia-csi-credentials")
         self.assertEqual(cfg["existingSecretKey"], "api-key")
