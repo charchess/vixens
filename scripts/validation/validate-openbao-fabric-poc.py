@@ -127,8 +127,9 @@ def check_render(docs: list[dict], *, selected: bool = False, allow_migration: b
     spec = sts["spec"]
     pod = spec["template"]["spec"]
     match = spec["selector"]["matchLabels"]
-    if spec.get("replicas") != 1 or spec.get("serviceName") != "openbao-fabric":
-        errors.append("exactly one replica and private Service required")
+    expected_replicas = 0 if migration is not None else 1
+    if spec.get("replicas") != expected_replicas or spec.get("serviceName") != "openbao-fabric":
+        errors.append("OpenBao replicas must match the explicit migration phase and private Service")
     if spec.get("persistentVolumeClaimRetentionPolicy") != {"whenDeleted": "Retain", "whenScaled": "Retain"}:
         errors.append("PVC template Retain lifecycle required")
     claims = spec.get("volumeClaimTemplates", [])
