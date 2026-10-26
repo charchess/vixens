@@ -11,8 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -65,6 +65,9 @@ func (r *SharedWorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	for _, scope := range desiredWorkspaceScopes(&bundle) {
 		if err := r.ensureWorkspacePVC(ctx, &bundle, &profile, scope); err != nil {
+			return ctrl.Result{}, err
+		}
+		if err := r.ensureWorkspaceMigrationTargetPVC(ctx, &bundle, &profile, scope); err != nil {
 			return ctrl.Result{}, err
 		}
 	}
@@ -140,6 +143,43 @@ func (r *SharedWorkspaceReconciler) ensureWorkspacePVC(ctx context.Context, bund
 		return nil
 	})
 	return err
+}
+
+func workspaceMigrationTargetPVCName(scope workspaceScope, suffix string) string {
+	return workspacePVCName(scope) + "-" + suffix
+}
+
+func (r *SharedWorkspaceReconciler) ensureWorkspaceMigrationTargetPVC(ctx context.Context, bundle *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.SharedWorkspaceProfile, scope workspaceScope) error {
+	migration := bundle.Spec.Workspace.Migration
+	if migration == nil {
+		return nil
+	}
+	sourceName := workspacePVCName(scope)
+	var source corev1.PersistentVolumeClaim
+	if err := r.Get(ctx, client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: sourceName}, &source); err != nil {
+		return fmt.Errorf("read workspace migration source PVC %s/%s: %w", tenantNamespace(bundle.Name), sourceName, err)
+	}
+	targetName := workspaceMigrationTargetPVCName(scope, migration.TargetClaimSuffix)
+	key := client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: targetName}
+	var target corev1.PersistentVolumeClaim
+	err := r.Get(ctx, key, &target)
+	if apierrors.IsNotFound(err) {
+		labels := workspaceLabels(bundle, scope)
+		labels["fabric.truxonline.io/storage-migration-source-uid"] = string(source.UID)
+		labels["fabric.truxonline.io/storage-migration-target"] = "true"
+		target = corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: targetName, Namespace: key.Namespace, Labels: labels}, Spec: corev1.PersistentVolumeClaimSpec{AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteMany}, StorageClassName: stringPtr(migration.TargetStorageClassName), Resources: corev1.VolumeResourceRequirements{Requests: corev1.ResourceList{corev1.ResourceStorage: profile.Spec.Size}}}}
+		return r.Create(ctx, &target)
+	}
+	if err != nil {
+		return err
+	}
+	if valueOrEmpty(target.Spec.StorageClassName) != migration.TargetStorageClassName {
+		return fmt.Errorf("workspace migration target PVC %s/%s uses immutable storageClass %q, expected %q", key.Namespace, targetName, valueOrEmpty(target.Spec.StorageClassName), migration.TargetStorageClassName)
+	}
+	if target.Labels["fabric.truxonline.io/storage-migration-source-uid"] != string(source.UID) {
+		return fmt.Errorf("workspace migration target PVC %s/%s is not bound to source PVC UID %q", key.Namespace, targetName, source.UID)
+	}
+	return nil
 }
 
 func workspaceLabels(bundle *fabricv1alpha1.TenantBundle, scope workspaceScope) map[string]string {

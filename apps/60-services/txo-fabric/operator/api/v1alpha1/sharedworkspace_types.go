@@ -88,6 +88,27 @@ type NamedWorkspaceScopeSpec struct {
 // TenantWorkspaceSpec declares tenant-owned shared storage. Business files and
 // shared skills remain separate trust domains and therefore receive different PVCs
 // and mount roots even when backed by the same platform storage profile.
+// TenantWorkspaceMigrationBinding stages replacement RWX PVCs without mutating
+// an existing shared workspace claim's immutable StorageClassName. Cutover stays
+// false while data is copied and independently verified.
+type TenantWorkspaceMigrationBinding struct {
+	// TargetStorageClassName is the explicit replacement RWX storage class.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="targetStorageClassName is immutable"
+	TargetStorageClassName string `json:"targetStorageClassName"`
+
+	// TargetClaimSuffix makes every replacement scope PVC deterministic and distinct.
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
+	// +kubebuilder:validation:MaxLength=32
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="targetClaimSuffix is immutable"
+	TargetClaimSuffix string `json:"targetClaimSuffix"`
+
+	// Cutover selects prepared replacement claims for all tenant workspace mounts.
+	// +optional
+	Cutover bool `json:"cutover,omitempty"`
+}
+
 type TenantWorkspaceSpec struct {
 	// ProfileRef selects platform-owned RWX storage implementation policy.
 	// +kubebuilder:validation:MinLength=1
@@ -101,6 +122,11 @@ type TenantWorkspaceSpec struct {
 	// +kubebuilder:validation:Enum=Retain;Delete
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="retentionPolicy is immutable"
 	RetentionPolicy string `json:"retentionPolicy,omitempty"`
+
+	// Migration stages deterministic replacement RWX claims. Omitted preserves
+	// existing workspace PVCs and mount behavior.
+	// +optional
+	Migration *TenantWorkspaceMigrationBinding `json:"migration,omitempty"`
 
 	// Organization declares tenant-wide file and skill-library scopes.
 	// +optional
