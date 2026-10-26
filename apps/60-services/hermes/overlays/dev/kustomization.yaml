@@ -29,6 +29,24 @@ patches:
               - name: data
                 persistentVolumeClaim:
                   claimName: hermes-data-synelia-recovery
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: hermes
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: hermes
+        namespace: services
+      spec:
+        template:
+          spec:
+            volumes:
+              - name: hairem-files
+                persistentVolumeClaim:
+                  claimName: hairem-files-synelia
 
 commonLabels:
   environment: dev
