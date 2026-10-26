@@ -27,6 +27,7 @@ TLS_NAMES = {
     ("Issuer", "openbao-fabric-ca-issuer"),
     ("Certificate", "openbao-fabric-tls"),
 }
+MIGRATION_PVC = ("PersistentVolumeClaim", "data-openbao-fabric-0-synelia")
 SERVICE_DNS = [
     "openbao-fabric",
     "openbao-fabric.txo-fabric-system",
@@ -51,12 +52,12 @@ def parse_yaml(path: pathlib.Path) -> list[dict]:
     return docs
 
 
-def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
+def check_render(docs: list[dict], *, selected: bool = False, allow_migration: bool = False) -> list[str]:
     errors: list[str] = []
     # The base component must contain only these eight sources. A historic
     # Infra ExternalSecret elsewhere in TXO compositions is not a new
     # Fabric consumer; source-only diff guard separately forbids new Infra use.
-    expected = FABRIC_NAMES | TLS_NAMES
+    expected = FABRIC_NAMES | TLS_NAMES | ({MIGRATION_PVC} if allow_migration else set())
     fabric = [
         d for d in docs if (
             d.get("metadata", {}).get("labels", {}).get("app.kubernetes.io/name") == "openbao-fabric"
@@ -69,6 +70,14 @@ def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
     if not selected and len(docs) != len(expected):
         return ["unexpected additional client/Secret/resource in private base/overlay"]
 
+    migration = next((d for d in fabric if (d.get("kind"), d.get("metadata", {}).get("name")) == MIGRATION_PVC), None)
+    if migration is not None:
+        spec = migration.get("spec", {})
+        if (spec.get("accessModes") != ["ReadWriteOnce"] or
+                spec.get("storageClassName") != "storage-rwo-retain" or
+                spec.get("resources", {}).get("requests", {}).get("storage") != "5Gi" or
+                spec.get("volumeName") or spec.get("dataSource") or spec.get("dataSourceRef")):
+            errors.append("migration PVC must be a fresh 5Gi RWO storage-rwo-retain target")
     if any(d["metadata"].get("namespace") != "txo-fabric-system" for d in fabric):
         errors.append("wrong Fabric namespace")
     if any(not all(d["metadata"].get("labels", {}).get(k) == v for k, v in LABELS.items()) for d in fabric):
@@ -277,7 +286,10 @@ def main() -> int:
     for name in ("base", "dev", "prod", "txo-dev", "txo-prod"):
         try:
             docs = parse_yaml(getattr(args, name.replace("-", "_")))
-            errors.extend(f"{name}: {e}" for e in check_render(docs, selected=name.startswith("txo-")))
+            errors.extend(f"{name}: {e}" for e in check_render(
+                docs, selected=name.startswith("txo-"),
+                allow_migration=name in {"prod", "txo-prod"},
+            ))
             if name == "txo-prod":
                 errors.extend(f"{name}: {e}" for e in check_prod_gates(docs))
         except (OSError, ValueError, yaml.YAMLError, TypeError, KeyError) as exc:

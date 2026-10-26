@@ -36,6 +36,14 @@ class FoundationGuardTests(unittest.TestCase):
         f = "apps/60-services/txo-fabric/openbao-fabric/runtime/deployment.yaml"
         self.assertTrue(guard.assert_file_safe(f, "kind: Deployment\n"))
 
+    def test_exact_storage_migration_target_is_the_only_additional_manifest(self):
+        f = "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/migration/synelia-target-pvc.yaml"
+        self.assertEqual(guard.assert_file_safe(f, "kind: PersistentVolumeClaim\n"), [])
+        self.assertTrue(guard.assert_file_safe(
+            "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/migration/other.yaml",
+            "kind: PersistentVolumeClaim\n",
+        ))
+
     def test_forged_admin_policy_or_all_tenant_wildcard_refused(self):
         f = "apps/60-services/txo-fabric/openbao-fabric/policies/tenant.hcl.example"
         self.assertTrue(guard.assert_file_safe(

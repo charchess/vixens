@@ -21,7 +21,14 @@ INFRA_README = INFRA_CONTRACT_PREFIX + "README.md"
 INFRA_EVIDENCE_RUNBOOK = "docs/runbooks/00-infra/openbao-transit-seal-evidence.md"
 LEGACY_INFRA_STORE = "apps/00-infra/openbao/base/cluster-secret-store.yaml"
 ALLOWED_FILES = (".md", ".example")
-POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "base/certificate.yaml", "transit-staged/kustomization.yaml", "transit-staged/serviceaccount.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml"}
+POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "base/certificate.yaml", "transit-staged/kustomization.yaml", "transit-staged/serviceaccount.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml", "overlays/prod/migration/synelia-target-pvc.yaml"}
+MIGRATION_STAGE_PATHS = {
+    "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/kustomization.yaml",
+    "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/migration/synelia-target-pvc.yaml",
+    "scripts/validation/validate-openbao-fabric-source.py",
+    "scripts/validation/validate-openbao-fabric-poc.py",
+    "scripts/validation/test_openbao_fabric_source.py",
+}
 # Sensitive material MUST never appear in new source, even commented examples.
 ASSIGNMENT = re.compile(
     r"""(?ix)
@@ -282,7 +289,11 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
         problems.append("ADR-041 missing from repository")
     if not any(p.startswith(FABRIC_PREFIX) or p.startswith(INFRA_CONTRACT_PREFIX) for p in changed):
         problems.append("OpenBao Fabric or Infra Transit source contract directory missing")
-    if not any(p.startswith(INFRA_CONTRACT_PREFIX) for p in changed):
+    # A storage-only migration stage is not an Infra Transit seal change. Permit
+    # only the exact source/PVC/validator surface; all other Fabric changes still
+    # require an accompanying Infra-contract review.
+    if (not any(p.startswith(INFRA_CONTRACT_PREFIX) for p in changed)
+            and not set(changed).issubset(MIGRATION_STAGE_PATHS)):
         problems.append("Infra Transit source contract directory missing")
     for required in (INFRA_POLICY, INFRA_README, INFRA_EVIDENCE_RUNBOOK):
         if not (ROOT / required).is_file():
