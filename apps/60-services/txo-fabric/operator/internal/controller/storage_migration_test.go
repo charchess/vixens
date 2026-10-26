@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,6 +66,16 @@ func TestRuntimeMigrationCutoverRequiresVerifiedJobAndSelectsTarget(t *testing.T
 	}
 	if got := runtimeActivePVCName(agent); got != target.Name {
 		t.Fatalf("cutover claim=%q, want %q", got, target.Name)
+	}
+	if err := r.ensureDeploymentRuntime(ctx, agent, tenant, profile, ns, "", "", effectiveToolsetPolicy{}, integrationResolution{}); err != nil {
+		t.Fatalf("reconcile cutover deployment: %v", err)
+	}
+	var deployment appsv1.Deployment
+	if err := c.Get(ctx, types.NamespacedName{Namespace: ns, Name: runtimeName(agent.Spec.AgentKey)}, &deployment); err != nil {
+		t.Fatal(err)
+	}
+	if got := deployment.Spec.Template.Spec.Volumes[0].PersistentVolumeClaim.ClaimName; got != target.Name {
+		t.Fatalf("deployment data claim=%q, want migrated %q", got, target.Name)
 	}
 
 	job.Labels["fabric.truxonline.io/storage-migration-target-uid"] = "wrong"
