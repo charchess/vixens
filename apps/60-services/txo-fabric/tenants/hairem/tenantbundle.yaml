@@ -49,6 +49,8 @@ spec:
     migration:
       targetStorageClassName: storage-rwx-retain
       targetClaimSuffix: synelia
+      # All four RWX scopes copied from offline legacy datasets and rsync-verified.
+      cutover: true
     groups:
       - name: admin
         collaborative: true
