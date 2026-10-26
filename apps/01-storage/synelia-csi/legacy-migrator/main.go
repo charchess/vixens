@@ -38,9 +38,14 @@ func main() {
 		panic("ALLOWED_INITIATORS must contain Kubernetes node IQNs")
 	}
 
+	tlsConfig, err := client.NewTLSConfig(false, "")
+	if err != nil {
+		panic(fmt.Errorf("configure TrueNAS TLS: %w", err))
+	}
 	c := client.New(client.Config{
 		URL:                required("TRUENAS_URL"),
 		APIKey:             required("TRUENAS_API_KEY"),
+		TLSConfig:          tlsConfig,
 		InsecureSkipVerify: false,
 		CallTimeout:        30 * time.Second,
 	})
