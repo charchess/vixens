@@ -21,11 +21,11 @@ INFRA_README = INFRA_CONTRACT_PREFIX + "README.md"
 INFRA_EVIDENCE_RUNBOOK = "docs/runbooks/00-infra/openbao-transit-seal-evidence.md"
 LEGACY_INFRA_STORE = "apps/00-infra/openbao/base/cluster-secret-store.yaml"
 ALLOWED_FILES = (".md", ".example")
-POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "base/certificate.yaml", "transit-staged/kustomization.yaml", "transit-staged/serviceaccount.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml", "overlays/prod/migration/synelia-target-pvc.yaml", "overlays/prod/migration/quiesce-statefulset.yaml"}
+POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "base/certificate.yaml", "transit-staged/kustomization.yaml", "transit-staged/serviceaccount.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml", "overlays/prod/migration/synelia-target-pvc.yaml", "overlays/prod/migration/synelia-cutover-statefulset.yaml"}
 MIGRATION_STAGE_PATHS = {
     "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/kustomization.yaml",
     "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/migration/synelia-target-pvc.yaml",
-    "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/migration/quiesce-statefulset.yaml",
+    "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/migration/synelia-cutover-statefulset.yaml",
     "scripts/validation/validate-openbao-fabric-source.py",
     "scripts/validation/validate-openbao-fabric-poc.py",
     "scripts/validation/test_openbao_fabric_source.py",

@@ -127,13 +127,21 @@ def check_render(docs: list[dict], *, selected: bool = False, allow_migration: b
     spec = sts["spec"]
     pod = spec["template"]["spec"]
     match = spec["selector"]["matchLabels"]
-    expected_replicas = 0 if migration is not None else 1
+    volumes_by_name = {volume.get("name"): volume for volume in pod.get("volumes", [])}
+    direct_synelia_cutover = migration is not None and not spec.get("volumeClaimTemplates") and (
+        volumes_by_name.get("data", {}).get("persistentVolumeClaim", {}).get("claimName")
+        == "data-openbao-fabric-0-synelia"
+    )
+    expected_replicas = 1 if direct_synelia_cutover or migration is None else 0
     if spec.get("replicas") != expected_replicas or spec.get("serviceName") != "openbao-fabric":
         errors.append("OpenBao replicas must match the explicit migration phase and private Service")
     if spec.get("persistentVolumeClaimRetentionPolicy") != {"whenDeleted": "Retain", "whenScaled": "Retain"}:
         errors.append("PVC template Retain lifecycle required")
     claims = spec.get("volumeClaimTemplates", [])
-    if len(claims) != 1:
+    if direct_synelia_cutover:
+        if claims or volumes_by_name.get("data") != {"name": "data", "persistentVolumeClaim": {"claimName": "data-openbao-fabric-0-synelia"}}:
+            errors.append("cutover must use only the copied Synelia PVC as data")
+    elif len(claims) != 1:
         errors.append("exactly one claim template required")
     else:
         c = claims[0]
@@ -210,12 +218,15 @@ def check_render(docs: list[dict], *, selected: bool = False, allow_migration: b
         } or not all(m.get("readOnly") is True for m in c.get("volumeMounts", [])
                      if m.get("name") in {"config", "tls"}):
             errors.append("wrong Raft/config/scratch/TLS volume mounts or not read-only")
-    volumes = {vol.get("name"): vol for vol in pod.get("volumes", [])}
-    if volumes != {
+    volumes = volumes_by_name
+    expected_volumes = {
         "config": {"name": "config", "configMap": {"name": "openbao-fabric-config"}},
         "scratch": {"name": "scratch", "emptyDir": {"sizeLimit": "32Mi"}},
         "tls": {"name": "tls", "secret": {"secretName": "openbao-fabric-tls", "defaultMode": 0o440}},
-    }:
+    }
+    if direct_synelia_cutover:
+        expected_volumes["data"] = {"name": "data", "persistentVolumeClaim": {"claimName": "data-openbao-fabric-0-synelia"}}
+    if volumes != expected_volumes:
         errors.append("only the exact read-only cert-manager TLS Secret reference is allowed")
 
     service = by_kind["Service"]["spec"]
