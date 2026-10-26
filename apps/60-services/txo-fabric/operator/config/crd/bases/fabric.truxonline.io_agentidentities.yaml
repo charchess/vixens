@@ -218,11 +218,17 @@ spec:
                           Migration stages a distinct replacement claim. Omitted preserves existing
                           PVC and runtime behavior exactly.
                         properties:
+                          copyJobName:
+                            description: |-
+                              CopyJobName identifies the GitOps-owned, non-destructive copy Job that
+                              carries source/target PVC UID evidence. It is required before cutover.
+                            maxLength: 63
+                            pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                            type: string
                           cutover:
                             description: |-
-                              Cutover remains false during prepare/copy. It is intentionally not acted
-                              upon until copy-job verification is implemented; this prevents empty-target
-                              mounts in controller versions that only support staging.
+                              Cutover remains false during prepare/copy. It may become true only after
+                              the named copy Job completes with exact source/target PVC UID evidence.
                             type: boolean
                           targetClaimSuffix:
                             description: |-
