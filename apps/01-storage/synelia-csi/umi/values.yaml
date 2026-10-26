@@ -96,7 +96,7 @@ storageClasses:
     parameters:
       protocol: nfs
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/nfs
+      datasetPath: k8s/vixens/nfs
       compression: LZ4
   - name: storage-rwx-delete
     isDefault: false
@@ -108,7 +108,7 @@ storageClasses:
     parameters:
       protocol: nfs
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/nfs
+      datasetPath: k8s/vixens/nfs
       compression: LZ4
   - name: storage-rwo-retain
     isDefault: false
@@ -118,7 +118,7 @@ storageClasses:
     parameters:
       protocol: iscsi
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/iscsi
+      datasetPath: k8s/vixens/iscsi
       fsType: ext4
       compression: LZ4
   - name: storage-rwo-delete
@@ -129,6 +129,6 @@ storageClasses:
     parameters:
       protocol: iscsi
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/iscsi
+      datasetPath: k8s/vixens/iscsi
       fsType: ext4
       compression: LZ4

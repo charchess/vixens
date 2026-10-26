@@ -38,12 +38,12 @@ class SyneliaProdCSIContractTest(unittest.TestCase):
                 self.assertEqual(item["parameters"]["protocol"], "iscsi")
                 self.assertEqual(item["parameters"]["fsType"], "ext4")
                 self.assertEqual(item["volumeBindingMode"], "WaitForFirstConsumer")
-                self.assertEqual(parent, "k8s/vixens/synelia-test/iscsi")
+                self.assertEqual(parent, "k8s/vixens/iscsi")
             else:
                 self.assertEqual(item["parameters"]["protocol"], "nfs")
                 self.assertIn("nfsvers=4.1", item["mountOptions"])
                 self.assertEqual(item["volumeBindingMode"], "Immediate")
-                self.assertEqual(parent, "k8s/vixens/synelia-test/nfs")
+                self.assertEqual(parent, "k8s/vixens/nfs")
 
     def test_activation_and_credential_boundary(self) -> None:
         app = yaml.safe_load(APP.read_text())

@@ -51,13 +51,13 @@ def verify_classes(values: dict) -> None:
                     or sc["volumeBindingMode"] != "WaitForFirstConsumer"
                     or sc["parameters"].get("fsType") != "ext4"):
                 raise AssertionError(f"RWO contract must bind iSCSI/ext4 safely: {name}")
-            expected_parent = "k8s/vixens/synelia-test/iscsi"
+            expected_parent = "k8s/vixens/iscsi"
         elif name.startswith("storage-rwx-"):
             if (protocol != "nfs"
                     or sc["volumeBindingMode"] != "Immediate"
                     or "nfsvers=4.1" not in sc.get("mountOptions", [])):
                 raise AssertionError(f"RWX contract must bind NFSv4.1: {name}")
-            expected_parent = "k8s/vixens/synelia-test/nfs"
+            expected_parent = "k8s/vixens/nfs"
         else:
             raise AssertionError(f"Unexpected access contract: {name}")
         if sc["parameters"].get("pool") != "tank" or parent != expected_parent:
@@ -243,7 +243,7 @@ class SyneliaCSISourceTests(unittest.TestCase):
         self.assertEqual(sc["reclaimPolicy"], "Retain")
         self.assertIs(sc["isDefault"], False)
         self.assertTrue(sc["allowVolumeExpansion"])
-        self.assertEqual(sc["parameters"]["datasetPath"], "k8s/vixens/synelia-test/iscsi")
+        self.assertEqual(sc["parameters"]["datasetPath"], "k8s/vixens/iscsi")
         self.assertEqual(sc["parameters"]["protocol"], "iscsi")
         self.assertEqual(sc["parameters"]["fsType"], "ext4")
         self.assertEqual(sc["volumeBindingMode"], "WaitForFirstConsumer")
