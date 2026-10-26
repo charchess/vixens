@@ -7,7 +7,7 @@ kubeletDir: /var/lib/kubelet
 logLevel: 2
 
 truenas:
-  url: wss://nas.truxonline.com/api/current
+  url: wss://nas.truxonline.com:8443/api/current
   defaultPool: tank
   nfsServer: nas.truxonline.com
   iscsiPortal: "192.168.111.69:3260"
