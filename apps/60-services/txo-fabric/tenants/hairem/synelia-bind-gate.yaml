@@ -1,0 +1,49 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hairem-synelia-bind-gate
+  namespace: tenant-hairem
+  annotations:
+    argocd.argoproj.io/sync-wave: "8"
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: bind
+          image: busybox:1.38.0
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              test -d /targets/agt00003
+              test -d /targets/agt00008
+              test -d /targets/agt00010
+              test -d /targets/agt00011
+              printf "Synelia target bind gate complete\n"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - {name: agt00003, mountPath: /targets/agt00003, readOnly: true}
+            - {name: agt00008, mountPath: /targets/agt00008, readOnly: true}
+            - {name: agt00010, mountPath: /targets/agt00010, readOnly: true}
+            - {name: agt00011, mountPath: /targets/agt00011, readOnly: true}
+      volumes:
+        - name: agt00003
+          persistentVolumeClaim: {claimName: hermes-usr000001-agt00003-data-synelia, readOnly: true}
+        - name: agt00008
+          persistentVolumeClaim: {claimName: hermes-usr000001-agt00008-data-synelia, readOnly: true}
+        - name: agt00010
+          persistentVolumeClaim: {claimName: hermes-usr000001-agt00010-data-synelia, readOnly: true}
+        - name: agt00011
+          persistentVolumeClaim: {claimName: hermes-usr000001-agt00011-data-synelia, readOnly: true}
