@@ -17,10 +17,12 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
-      # Prepare only: creates a distinct canonical target; source remains mounted.
+      # Cutover follows a verified detached TrueNAS block-copy and read-only mount proof.
       migration:
         targetStorageClassName: storage-rwo-retain
         targetClaimSuffix: synelia
+        copyJobName: storage-migration-copy-usr000001-agt00001
+        cutover: true
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
