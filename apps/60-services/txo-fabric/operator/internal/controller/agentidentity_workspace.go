@@ -68,9 +68,12 @@ func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabri
 	mounts := make([]corev1.VolumeMount, 0, len(scopes))
 	for _, scope := range scopes {
 		name := workspacePVCName(scope)
+		if workspace.Migration != nil && workspace.Migration.Cutover {
+			name = workspaceMigrationTargetPVCName(scope, workspace.Migration.TargetClaimSuffix)
+		}
 		mountPath := workspaceMountPath(scope)
 		volumes = append(volumes, corev1.Volume{
-			Name: name,
+			Name:         name,
 			VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: name}},
 		})
 		mounts = append(mounts, corev1.VolumeMount{Name: name, MountPath: mountPath, ReadOnly: scope.ReadOnly})

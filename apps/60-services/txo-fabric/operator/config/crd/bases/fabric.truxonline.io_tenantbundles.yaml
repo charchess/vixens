@@ -659,6 +659,37 @@ spec:
                     x-kubernetes-list-map-keys:
                     - name
                     x-kubernetes-list-type: map
+                  migration:
+                    description: |-
+                      Migration stages deterministic replacement RWX claims. Omitted preserves
+                      existing workspace PVCs and mount behavior.
+                    properties:
+                      cutover:
+                        description: Cutover selects prepared replacement claims for
+                          all tenant workspace mounts.
+                        type: boolean
+                      targetClaimSuffix:
+                        description: TargetClaimSuffix makes every replacement scope
+                          PVC deterministic and distinct.
+                        maxLength: 32
+                        pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                        type: string
+                        x-kubernetes-validations:
+                        - message: targetClaimSuffix is immutable
+                          rule: self == oldSelf
+                      targetStorageClassName:
+                        description: TargetStorageClassName is the explicit replacement
+                          RWX storage class.
+                        maxLength: 253
+                        minLength: 1
+                        type: string
+                        x-kubernetes-validations:
+                        - message: targetStorageClassName is immutable
+                          rule: self == oldSelf
+                    required:
+                    - targetClaimSuffix
+                    - targetStorageClassName
+                    type: object
                   organization:
                     description: Organization declares tenant-wide file and skill-library
                       scopes.

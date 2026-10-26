@@ -209,3 +209,45 @@ func workspaceTestTenant() *fabricv1alpha1.TenantBundle {
 		},
 	}
 }
+
+func TestSharedWorkspaceMigrationStagesDistinctTargetsAndCutoverMounts(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := workspaceTestTenant()
+	tenant.Spec.Workspace.Migration = &fabricv1alpha1.TenantWorkspaceMigrationBinding{TargetStorageClassName: "storage-rwx-retain", TargetClaimSuffix: "synelia"}
+	profile := &fabricv1alpha1.SharedWorkspaceProfile{ObjectMeta: metav1.ObjectMeta{Name: "shared-nfs"}, Spec: fabricv1alpha1.SharedWorkspaceProfileSpec{StorageClassName: "truenas-nfs-retain", Size: resource.MustParse("5Gi")}}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile).Build()
+	r := &SharedWorkspaceReconciler{Client: c, Scheme: scheme}
+	if _, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: tenant.Name}}); err != nil {
+		t.Fatal(err)
+	}
+	var source, target corev1.PersistentVolumeClaim
+	key := types.NamespacedName{Name: "ws-group-sales-rw", Namespace: "tenant-fabric-smoke"}
+	if err := c.Get(ctx, key, &source); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Name: "ws-group-sales-rw-synelia", Namespace: key.Namespace}, &target); err != nil {
+		t.Fatal(err)
+	}
+	if target.Spec.StorageClassName == nil || *target.Spec.StorageClassName != "storage-rwx-retain" {
+		t.Fatalf("target class=%#v", target.Spec.StorageClassName)
+	}
+	if target.Labels["fabric.truxonline.io/storage-migration-source-uid"] != string(source.UID) {
+		t.Fatalf("target labels=%#v source=%q", target.Labels, source.UID)
+	}
+	tenant.Spec.Workspace.Migration.Cutover = true
+	agent := &fabricv1alpha1.AgentIdentity{Spec: fabricv1alpha1.AgentIdentitySpec{Access: fabricv1alpha1.AgentAccessSpec{Groups: []string{"sales"}}}}
+	volumes, _, err := resolvedWorkspaceVolumes(agent, tenant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, volume := range volumes {
+		if volume.PersistentVolumeClaim != nil && volume.PersistentVolumeClaim.ClaimName == "ws-group-sales-rw-synelia" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("cutover did not select Synelia target: %#v", volumes)
+	}
+}
