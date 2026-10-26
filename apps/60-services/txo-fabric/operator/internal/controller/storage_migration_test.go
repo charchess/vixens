@@ -76,6 +76,27 @@ func TestRuntimeMigrationCutoverRequiresVerifiedJobAndSelectsTarget(t *testing.T
 	}
 }
 
+func TestRuntimeMigrationRejectsCutoverWithoutCopyJobName(t *testing.T) {
+	ctx := context.Background()
+	tenant := configuredAgentStorageTenant()
+	agent := testStorageIdentity(tenant.Name, "canary", StorageRetentionRetain)
+	agent.Spec.Runtime.Storage.Migration = &fabricv1alpha1.AgentRuntimeStorageMigrationBinding{
+		TargetStorageClassName: "storage-rwo-retain", TargetClaimSuffix: "synelia", Cutover: true,
+	}
+	profile := testRuntimeProfile()
+	ns := tenantNamespace(tenant.Name)
+	source := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimePVCName(agent.Spec.AgentKey), Namespace: ns, UID: types.UID("source-uid")}}
+	target := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimeMigrationTargetPVCName(agent.Spec.AgentKey, "synelia"), Namespace: ns, UID: types.UID("target-uid"), Labels: map[string]string{"fabric.truxonline.io/storage-migration-source-uid": "source-uid"}}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound}, Spec: corev1.PersistentVolumeClaimSpec{StorageClassName: stringPtr("storage-rwo-retain")}}
+	scheme := testScheme(t)
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(source, target).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+
+	err := r.ensureRuntimeMigrationTargetPVC(ctx, agent, tenant, profile, ns)
+	if err == nil || !strings.Contains(err.Error(), "without copyJobName") {
+		t.Fatalf("cutover without copy job was accepted: %v", err)
+	}
+}
+
 func TestRuntimeMigrationPrepareFailsClosed(t *testing.T) {
 	ctx := context.Background()
 	tenant := configuredAgentStorageTenant()
