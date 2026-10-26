@@ -83,7 +83,8 @@ volumeSnapshotClass:
 # provider-neutral: applications select access/reclaim guarantees, not TrueNAS,
 # iSCSI, NFS, a ZFS path or a historical driver identity. Retain is mandatory for
 # durable state; Delete is reserved for explicitly disposable data. The official
-# driver parents remain disjoint from legacy democratic-csi trees.
+# driver parents are the canonical Vixens ZFS parents; the CSI creates its own
+# per-claim children alongside the legacy `vols` subtree during migration.
 storageClasses:
   - name: storage-rwx-retain
     isDefault: false
@@ -95,7 +96,7 @@ storageClasses:
     parameters:
       protocol: nfs
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/nfs
+      datasetPath: k8s/vixens/nfs
       compression: LZ4
   - name: storage-rwx-delete
     isDefault: false
@@ -107,7 +108,7 @@ storageClasses:
     parameters:
       protocol: nfs
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/nfs
+      datasetPath: k8s/vixens/nfs
       compression: LZ4
   - name: storage-rwo-retain
     isDefault: false
@@ -117,7 +118,7 @@ storageClasses:
     parameters:
       protocol: iscsi
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/iscsi
+      datasetPath: k8s/vixens/iscsi
       fsType: ext4
       compression: LZ4
   - name: storage-rwo-delete
@@ -128,6 +129,6 @@ storageClasses:
     parameters:
       protocol: iscsi
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/iscsi
+      datasetPath: k8s/vixens/iscsi
       fsType: ext4
       compression: LZ4
