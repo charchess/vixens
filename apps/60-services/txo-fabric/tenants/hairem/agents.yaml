@@ -17,12 +17,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
-      # Cutover follows a verified detached TrueNAS block-copy and read-only mount proof.
+      # Prepare only until a UID-bound completed copy Job proves the detached block-copy.
       migration:
         targetStorageClassName: storage-rwo-retain
         targetClaimSuffix: synelia
-        copyJobName: storage-migration-copy-usr000001-agt00001
-        cutover: true
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -51,12 +49,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
-      # Cutover follows a verified detached TrueNAS block-copy and read-only mount proof.
+      # Prepare only until a UID-bound completed copy Job proves the detached block-copy.
       migration:
         targetStorageClassName: storage-rwo-retain
         targetClaimSuffix: synelia
-        copyJobName: storage-migration-copy-usr000001-agt00001
-        cutover: true
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
