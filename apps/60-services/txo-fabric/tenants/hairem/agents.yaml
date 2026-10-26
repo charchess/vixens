@@ -245,6 +245,9 @@ spec:
       migration:
         targetStorageClassName: storage-rwo-retain
         targetClaimSuffix: synelia
+        # Offline TrueNAS copy verified block-for-block before this GitOps cutover.
+        copyJobName: hairem-agt00008-offline-copy-proof
+        cutover: true
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -309,6 +312,9 @@ spec:
       migration:
         targetStorageClassName: storage-rwo-retain
         targetClaimSuffix: synelia
+        # Offline TrueNAS copy verified block-for-block before this GitOps cutover.
+        copyJobName: hairem-agt00010-offline-copy-proof
+        cutover: true
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -341,6 +347,9 @@ spec:
       migration:
         targetStorageClassName: storage-rwo-retain
         targetClaimSuffix: synelia
+        # Offline TrueNAS copy verified block-for-block before this GitOps cutover.
+        copyJobName: hairem-agt00011-offline-copy-proof
+        cutover: true
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.

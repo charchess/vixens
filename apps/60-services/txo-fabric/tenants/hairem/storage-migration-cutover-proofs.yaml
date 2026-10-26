@@ -1,0 +1,134 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hairem-agt00008-offline-copy-proof
+  namespace: tenant-hairem
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    fabric.truxonline.io/storage-migration-source-uid: "e3a254e2-ee4b-41b0-9df8-388822729757"
+    fabric.truxonline.io/storage-migration-target-uid: "372d3446-672c-4cf5-a25e-7f14da0e5c49"
+  annotations:
+    fabric.truxonline.io/storage-migration-method: "offline-truenas-zvol-copy"
+    fabric.truxonline.io/storage-migration-verification: "ext4-check-and-block-cmp"
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 604800
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: txo-fabric
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: verify-target-mount
+          image: busybox:1.36.1
+          command: ["sh", "-ec", "test -d /data"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: hermes-usr000001-agt00008-data-synelia
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hairem-agt00010-offline-copy-proof
+  namespace: tenant-hairem
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    fabric.truxonline.io/storage-migration-source-uid: "b765ff43-c292-49ae-93b7-cf0ff9df5fd5"
+    fabric.truxonline.io/storage-migration-target-uid: "9bd8f10c-699c-49b9-a921-f303fba74b2a"
+  annotations:
+    fabric.truxonline.io/storage-migration-method: "offline-truenas-zvol-copy"
+    fabric.truxonline.io/storage-migration-verification: "ext4-check-and-block-cmp"
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 604800
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: txo-fabric
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: verify-target-mount
+          image: busybox:1.36.1
+          command: ["sh", "-ec", "test -d /data"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: hermes-usr000001-agt00010-data-synelia
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hairem-agt00011-offline-copy-proof
+  namespace: tenant-hairem
+  labels:
+    app.kubernetes.io/part-of: txo-fabric
+    fabric.truxonline.io/storage-migration-source-uid: "df82a607-3606-4859-9673-8a569c4700c5"
+    fabric.truxonline.io/storage-migration-target-uid: "91dfb468-53ef-48df-890d-da674659edca"
+  annotations:
+    fabric.truxonline.io/storage-migration-method: "offline-truenas-zvol-copy"
+    fabric.truxonline.io/storage-migration-verification: "ext4-check-and-block-cmp"
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 604800
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: txo-fabric
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: verify-target-mount
+          image: busybox:1.36.1
+          command: ["sh", "-ec", "test -d /data"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: hermes-usr000001-agt00011-data-synelia
