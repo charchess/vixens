@@ -6,6 +6,7 @@ namespace: services
 
 resources:
   - ../../base
+  - pvc-synelia-migration-target.yaml
 
 commonLabels:
   environment: dev
