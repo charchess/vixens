@@ -257,8 +257,8 @@ spec:
                               x-kubernetes-validations:
                               - message: storage migration requires targetStorageClassName
                                   and targetClaimSuffix
-                                rule: self.targetStorageClassName != ” && self.targetClaimSuffix
-                                  != ”
+                                rule: self.targetStorageClassName != "" && self.targetClaimSuffix
+                                  != ""
                             retentionPolicy:
                               default: Retain
                               description: |-
