@@ -104,6 +104,13 @@ type TenantWorkspaceMigrationBinding struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="targetClaimSuffix is immutable"
 	TargetClaimSuffix string `json:"targetClaimSuffix"`
 
+	// CopyJobPrefix derives one immutable GitOps-owned evidence Job per source claim:
+	// <copyJobPrefix>-<source-claim-name>. Every Job must complete and bind exact
+	// source/target PVC UIDs before an AgentIdentity may mount migrated storage.
+	// +optional
+	// +kubebuilder:validation:Pattern=`^$|^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
+	CopyJobPrefix string `json:"copyJobPrefix,omitempty"`
+
 	// Cutover selects prepared replacement claims for all tenant workspace mounts.
 	// +optional
 	Cutover bool `json:"cutover,omitempty"`
