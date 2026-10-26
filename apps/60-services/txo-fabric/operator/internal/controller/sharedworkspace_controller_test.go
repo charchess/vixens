@@ -251,3 +251,16 @@ func TestSharedWorkspaceMigrationStagesDistinctTargetsAndCutoverMounts(t *testin
 		t.Fatalf("cutover did not select Synelia target: %#v", volumes)
 	}
 }
+
+func TestWorkspaceCutoverRequiresCopyEvidencePrefix(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := workspaceTestTenant()
+	tenant.Spec.Workspace.Migration = &fabricv1alpha1.TenantWorkspaceMigrationBinding{TargetStorageClassName: "storage-rwx-retain", TargetClaimSuffix: "synelia", Cutover: true}
+	agent := &fabricv1alpha1.AgentIdentity{ObjectMeta: metav1.ObjectMeta{Name: "agent"}, Spec: fabricv1alpha1.AgentIdentitySpec{Access: fabricv1alpha1.AgentAccessSpec{Groups: []string{"sales"}}}}
+	r := &AgentIdentityReconciler{Client: fake.NewClientBuilder().WithScheme(scheme).Build(), Scheme: scheme}
+	err := r.ensureWorkspaceMigrationEvidence(ctx, agent, tenant)
+	if err == nil || !strings.Contains(err.Error(), "without copyJobPrefix") {
+		t.Fatalf("workspace cutover without immutable proof prefix accepted: %v", err)
+	}
+}
