@@ -45,6 +45,10 @@ spec:
   workspace:
     profileRef: shared-nfs
     retentionPolicy: Retain
+    # Stage distinct Synelia RWX targets; legacy Democratic NFS claims remain active until verified copy/cutover.
+    migration:
+      targetStorageClassName: storage-rwx-retain
+      targetClaimSuffix: synelia
     groups:
       - name: admin
         collaborative: true
