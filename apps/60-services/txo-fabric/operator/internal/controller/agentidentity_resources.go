@@ -13,6 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -169,6 +170,12 @@ func (r *AgentIdentityReconciler) ensureDeploymentWithIntegrations(ctx context.C
 }
 
 func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution, functional ...effectiveFunctionalProfile) error {
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		return r.ensureDeploymentRuntimeOnce(ctx, agent, tenant, profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrations, functional...)
+	})
+}
+
+func (r *AgentIdentityReconciler) ensureDeploymentRuntimeOnce(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution, functional ...effectiveFunctionalProfile) error {
 	var role effectiveFunctionalProfile
 	if len(functional) > 0 {
 		role = functional[0]
