@@ -24,7 +24,9 @@ metadata:
     app.kubernetes.io/part-of: hindsight-storage-migration
 spec:
   serviceName: hindsight-postgresql-synelia-verify
-  replicas: 1
+  # The chart-owned PostgreSQL takes this verified PVC at final cutover.
+  # Keep this staging StatefulSet dormant so it cannot contend for the RWO PV.
+  replicas: 0
   selector:
     matchLabels:
       app.kubernetes.io/name: hindsight-postgresql-synelia-verify
