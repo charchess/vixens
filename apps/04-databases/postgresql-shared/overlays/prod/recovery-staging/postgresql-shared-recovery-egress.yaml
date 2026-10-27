@@ -13,6 +13,15 @@ spec:
   endpointSelector:
     matchLabels:
       cnpg.io/cluster: postgresql-shared-recovery
+  ingress:
+    # CloudNativePG operator reads the instance TLS status endpoint.
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: cnpg-system
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
   egress:
     - toEndpoints:
         - matchLabels:
