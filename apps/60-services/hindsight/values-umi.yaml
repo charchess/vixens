@@ -1,0 +1,161 @@
+---
+# Legacy Hindsight ownership bridge. The running chart Application still uses this
+# source path; keep its current claim names and classes unchanged until the
+# PostgreSQL + model-cache copy/restore cutover is proven. Removing this file
+# leaves the live Application source Unknown and makes storage recovery unsafe.
+# hAIrem / UMI laboratory configuration
+# Hindsight 0.9.1
+#
+# Objectif de cette première phase :
+# - API + Control Plane
+# - PostgreSQL/pgvector local
+# - embeddings/reranking multilingues CPU
+# - PAS encore de LLM
+#
+# La configuration production sera différente :
+# - PostgreSQL externe
+# - stockage bloc
+# - PGroonga
+# - LLM externe sur machine GPU
+# - secrets via Infisical
+
+version: "0.9.2"
+
+existingSecret: "hindsight-runtime"
+
+api:
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  # Le reranker CPU charge son cache après une restauration de PVC ; 30 s
+  # déclenchait la liveness avant que l'API n'ouvre :8888.
+  livenessProbe:
+    initialDelaySeconds: 180
+
+  persistence:
+    modelCache:
+      enabled: true
+      size: 5Gi
+      storageClass: truenas-iscsi-delete
+      accessModes:
+        - ReadWriteOnce
+
+  env:
+    HINDSIGHT_API_WORKER_ID: "hindsight-api-umi"
+    # ------------------------------------------------------------
+    # LLM — OpenRouter / per-operation routing
+    # ------------------------------------------------------------
+    # The runtime secret `hindsight-runtime` supplies HINDSIGHT_API_LLM_API_KEY.
+    # Never put an OpenRouter credential in this GitOps values file.
+    HINDSIGHT_API_LLM_PROVIDER: "openrouter"
+    HINDSIGHT_API_LLM_MODEL: "openai/gpt-oss-20b"
+    HINDSIGHT_API_LLM_MAX_CONCURRENT: "3"
+    HINDSIGHT_API_LLM_MAX_RETRIES: "3"
+    HINDSIGHT_API_LLM_INITIAL_BACKOFF: "1.0"
+    HINDSIGHT_API_LLM_MAX_BACKOFF: "30.0"
+    HINDSIGHT_API_LLM_TIMEOUT: "120"
+    HINDSIGHT_API_LLM_STRICT_SCHEMA: "true"
+    HINDSIGHT_API_LLM_PROMPT_CACHE_ENABLED: "true"
+
+    # Retain and consolidation favor deterministic structured extraction.
+    HINDSIGHT_API_RETAIN_LLM_MODEL: "openai/gpt-oss-20b"
+    HINDSIGHT_API_RETAIN_LLM_MAX_CONCURRENT: "1"
+    HINDSIGHT_API_RETAIN_LLM_REASONING_EFFORT: "low"
+    HINDSIGHT_API_LLM_TEMPERATURE_RETAIN: "0.1"
+    HINDSIGHT_API_CONSOLIDATION_LLM_MODEL: "openai/gpt-oss-20b"
+    HINDSIGHT_API_CONSOLIDATION_LLM_MAX_CONCURRENT: "1"
+    HINDSIGHT_API_CONSOLIDATION_LLM_REASONING_EFFORT: "low"
+    HINDSIGHT_API_LLM_TEMPERATURE_CONSOLIDATION: "0.0"
+
+    # Reflect is the deliberative path: higher-capacity model, bounded parallelism.
+    HINDSIGHT_API_REFLECT_LLM_MODEL: "openai/gpt-oss-120b"
+    HINDSIGHT_API_REFLECT_LLM_MAX_CONCURRENT: "1"
+    HINDSIGHT_API_REFLECT_LLM_REASONING_EFFORT: "high"
+    HINDSIGHT_API_LLM_TEMPERATURE_REFLECT: "0.2"
+    HINDSIGHT_API_REFLECT_PROMPT_CACHE_ENABLED: "true"
+
+    # ------------------------------------------------------------
+    # Embeddings — OpenRouter / BAAI BGE-M3
+    # ------------------------------------------------------------
+    HINDSIGHT_API_EMBEDDINGS_PROVIDER: "openrouter"
+    HINDSIGHT_API_EMBEDDINGS_OPENROUTER_MODEL: "baai/bge-m3"
+    HINDSIGHT_API_EMBEDDINGS_OPENAI_BATCH_SIZE: "32"
+    # BGE-M3 accepts 8194 tokens; leave a small safety margin for tokenization.
+    HINDSIGHT_API_EMBEDDINGS_MAX_INPUT_TOKENS: "8000"
+
+    # BGE-M3 is not E5: do not add query:/passage: prefixes.
+    # Do not set dimensions: Hindsight verifies the provider's native 1024-D output.
+
+    # ------------------------------------------------------------
+    # Reranker — local CPU
+    # ------------------------------------------------------------
+    HINDSIGHT_API_RERANKER_PROVIDER: "local"
+    HINDSIGHT_API_RERANKER_LOCAL_MODEL: "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+    HINDSIGHT_API_RERANKER_LOCAL_FORCE_CPU: "true"
+    HINDSIGHT_API_RERANKER_LOCAL_MAX_CONCURRENT: "2"
+    HINDSIGHT_API_RERANKER_LOCAL_BUCKET_BATCHING: "true"
+
+    # Baseline : évite de faire passer 300 candidats au cross-encoder CPU.
+    HINDSIGHT_API_RERANKER_MAX_CANDIDATES: "100"
+
+    # ------------------------------------------------------------
+    # Search / API
+    # ------------------------------------------------------------
+    HINDSIGHT_API_TEXT_SEARCH_EXTENSION: "native"
+    HINDSIGHT_API_TEXT_SEARCH_EXTENSION_NATIVE_LANGUAGE: "simple"
+
+    HINDSIGHT_API_ENABLE_BANK_CONFIG_API: "true"
+    HINDSIGHT_API_MCP_ENABLED: "true"
+    HINDSIGHT_API_LOG_LEVEL: "info"
+controlPlane:
+  enabled: true
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+postgresql:
+  enabled: true
+
+  auth:
+    username: hindsight
+    database: hindsight
+
+  persistence:
+    enabled: true
+    size: 8Gi
+    storageClass: truenas-iscsi-retain
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+# Pas d'Ingress dans le labo.
+# Accès via kubectl port-forward.
+ingress:
+  enabled: false
+
+worker:
+  enabled: false
+
+tei:
+  reranker:
+    enabled: false
+  embedding:
+    enabled: false
