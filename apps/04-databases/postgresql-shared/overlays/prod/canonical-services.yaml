@@ -1,0 +1,57 @@
+---
+# Compatibility services preserve the established client DNS and immutable
+# ClusterIPs while directing all PostgreSQL traffic to the restored Synelia
+# cluster. They replace CNPG services owned by the retired legacy Cluster.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-shared-r
+  namespace: databases
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  clusterIP: 10.106.78.152
+  ports:
+    - name: postgres
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
+  selector:
+    cnpg.io/cluster: postgresql-shared-recovery
+    cnpg.io/podRole: instance
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-shared-ro
+  namespace: databases
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  clusterIP: 10.102.229.157
+  ports:
+    - name: postgres
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
+  selector:
+    cnpg.io/cluster: postgresql-shared-recovery
+    cnpg.io/instanceRole: replica
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-shared-rw
+  namespace: databases
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  clusterIP: 10.106.118.246
+  ports:
+    - name: postgres
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
+  selector:
+    cnpg.io/cluster: postgresql-shared-recovery
+    cnpg.io/instanceRole: primary

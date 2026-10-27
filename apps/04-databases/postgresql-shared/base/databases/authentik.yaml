@@ -2,13 +2,13 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: DatabaseRole
 metadata:
-  name: authentik
+  name: authentik-recovery
   namespace: databases
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
   cluster:
-    name: postgresql-shared
+    name: postgresql-shared-recovery
   name: authentik
   comment: Authentik application role
   login: true
@@ -27,13 +27,13 @@ spec:
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
-  name: authentik
+  name: authentik-recovery
   namespace: databases
   annotations:
     argocd.argoproj.io/sync-wave: "3"
 spec:
   cluster:
-    name: postgresql-shared
+    name: postgresql-shared-recovery
   name: authentik
   owner: authentik
   ensure: present
