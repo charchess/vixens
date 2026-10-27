@@ -46,6 +46,9 @@ class ChannelGateTests(unittest.TestCase):
             if args[0] == "diff":
                 if "--diff-filter=MD" in args:
                     return str(guard.PROFILES / (OLD + ".yaml")) if destructive else ""
+                if "--unified=0" in args:
+                    path = args[-1]
+                    return "-  releaseRef: old\n+  releaseRef: new" if path in changes else ""
                 return "\n".join(changes)
             if args[0] == "ls-tree":
                 return "" if bootstrap else args[-1]
@@ -82,6 +85,19 @@ class ChannelGateTests(unittest.TestCase):
         with patch.object(guard, "git", side_effect=self.fake_git(("hermes-stable",), bootstrap=True)):
             with self.assertRaisesRegex(ValueError, "all three"):
                 guard.gate("origin/main", "Hermes-Channel-Bootstrap: true", "User")
+
+    def test_storage_policy_change_is_not_a_release_promotion(self):
+        changed = str(guard.PROFILES / "hermes-stable.yaml")
+        def runner(*args):
+            if args[0] == "diff":
+                if "--diff-filter=MD" in args or "--unified=0" in args:
+                    return ""
+                return changed
+            if args[0] == "ls-tree":
+                return args[-1]
+            raise AssertionError(args)
+        with patch.object(guard, "git", side_effect=runner):
+            self.assertEqual(guard.gate("origin/main", "", "User"), [])
 
     def test_edge_bot_can_nominate_but_canary_bot_cannot(self):
         with patch.object(guard, "git", side_effect=self.fake_git(("hermes-edge",))):

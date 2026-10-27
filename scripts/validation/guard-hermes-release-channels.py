@@ -73,6 +73,17 @@ def already_exists(base: str, channel: str) -> bool:
     return bool(git("ls-tree", "-r", "--name-only", base, "--", str(PROFILES / f"{channel}.yaml")))
 
 
+def release_pointer_changed(base: str, channel: str) -> bool:
+    """Only a releaseRef mutation is a channel promotion.
+
+    Profiles also carry ordinary runtime policy such as storageClassName. Those
+    changes must not demand fabricated channel-promotion evidence.
+    """
+    path = str(PROFILES / f"{channel}.yaml")
+    diff = git("diff", "--unified=0", f"{base}...HEAD", "--", path)
+    return bool(re.search(r"(?m)^[+-]  releaseRef:\s*\S+\s*$", diff))
+
+
 def ensure_release_immutable(base: str) -> None:
     edited = git("diff", "--name-only", "--diff-filter=MD", f"{base}...HEAD", "--", str(PROFILES))
     for item in edited.splitlines():
@@ -84,7 +95,11 @@ def ensure_release_immutable(base: str) -> None:
 def gate(base: str, body: str, author_type: str) -> list[str]:
     ensure_release_immutable(base)
     changed = set(git("diff", "--name-only", f"{base}...HEAD").splitlines())
-    gated = [channel for channel in CHANNELS if str(PROFILES / f"{channel}.yaml") in changed]
+    gated = [
+        channel for channel in CHANNELS
+        if str(PROFILES / f"{channel}.yaml") in changed
+        and (not already_exists(base, channel) or release_pointer_changed(base, channel))
+    ]
     if not gated:
         return []
 
