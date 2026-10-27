@@ -1,7 +1,6 @@
 ---
-# Deliberately excluded from the production Kustomization until the recovery
-# execution gate is approved. It restores into a distinct Cluster/PVC identity
-# and cannot replace postgresql-shared or its legacy Democratic CSI claim.
+# Restores into a distinct Cluster/PVC identity and cannot replace
+# postgresql-shared or its retained legacy Democratic CSI claim.
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -19,8 +18,11 @@ spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:17.11-system-trixie
   bootstrap:
     recovery:
-      backup:
-        name: postgresql-shared-daily-20261023020000
+      # Pin the last successful base backup through the CNPG-I plugin source.
+      # A backup name alone does not supply the ObjectStore credentials.
+      source: postgresql-shared-backup-source
+      recoveryTarget:
+        backupID: 20261023T020005
       database: txo_platform
       owner: txo_platform
   storage:
@@ -38,6 +40,13 @@ spec:
       - key: node-role.kubernetes.io/control-plane
         operator: Exists
         effect: NoSchedule
+  externalClusters:
+    - name: postgresql-shared-backup-source
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: postgresql-shared-backup
+          serverName: postgresql-shared
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
