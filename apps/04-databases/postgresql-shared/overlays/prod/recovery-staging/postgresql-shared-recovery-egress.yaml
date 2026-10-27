@@ -24,8 +24,10 @@ spec:
               protocol: UDP
             - port: "53"
               protocol: TCP
-    - toFQDNs:
-        - matchName: nas.truxonline.com
+    # The object store resolves to the private NAS address. Use its explicit
+    # /32 because Cilium classifies this RFC1918 destination outside FQDN egress.
+    - toCIDR:
+        - 192.168.111.69/32
       toPorts:
         - ports:
             - port: "30157"
