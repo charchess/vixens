@@ -15,6 +15,7 @@ resources:
   # legacy cluster/PV.
   - recovery-staging/postgresql-shared-recovery.yaml
   - recovery-staging/postgresql-shared-recovery-egress.yaml
+  - canonical-services.yaml
 patches:
   - path: backup-patch.yaml
   - target:
