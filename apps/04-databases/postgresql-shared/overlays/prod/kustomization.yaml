@@ -14,6 +14,7 @@ resources:
   # restores the last known-good backup to canonical CSI without touching the
   # legacy cluster/PV.
   - recovery-staging/postgresql-shared-recovery.yaml
+  - recovery-staging/postgresql-shared-recovery-egress.yaml
 patches:
   - path: backup-patch.yaml
   - target:
