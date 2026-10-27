@@ -5,3 +5,4 @@ namespace: hindsight
 resources:
   - targets.yaml
   - postgresql-verify.yaml
+  - postgresql-base-restore.yaml

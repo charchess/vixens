@@ -1,0 +1,49 @@
+---
+# Streams a pg_dump custom archive directly into the isolated Synelia target.
+# No archive is placed on the 8Gi target PVC, so restoration never competes with
+# database data for capacity. The source is read-only; only the target is reset.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hindsight-postgresql-synelia-base-restore
+  labels:
+    app.kubernetes.io/part-of: hindsight-storage-migration
+  annotations:
+    storage.truxonline.com/migration-kind: logical-base-restore
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 604800
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: hindsight-storage-migration
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: logical-restore
+          image: ankane/pgvector:latest
+          imagePullPolicy: IfNotPresent
+          command: [bash, -o, pipefail, -ec]
+          args:
+            - |
+              export PGPASSWORD=hindsight
+              source=hindsight-postgresql
+              target=hindsight-postgresql-synelia-verify
+              pg_isready -h "$source" -U hindsight -d hindsight
+              pg_isready -h "$target" -U hindsight -d hindsight
+              # pg_dump takes a transactionally consistent source snapshot. A
+              # non-zero exit from either side of the pipeline fails this Job.
+              pg_dump -h "$source" -U hindsight -d hindsight \
+                --format=custom --no-owner --no-privileges | \
+                pg_restore -h "$target" -U hindsight -d hindsight \
+                  --clean --if-exists --exit-on-error --no-owner --no-privileges
+              # Verify the target opens and its expected extensions exist.
+              psql -h "$target" -U hindsight -d hindsight -v ON_ERROR_STOP=1 -Atc \
+                "select extname || ':' || extversion from pg_extension where extname in ('vector','pg_trgm') order by extname" | \
+                grep -Fx 'pg_trgm:1.6'
+              psql -h "$target" -U hindsight -d hindsight -v ON_ERROR_STOP=1 -Atc \
+                "select extname || ':' || extversion from pg_extension where extname in ('vector','pg_trgm') order by extname" | \
+                grep -Fx 'vector:0.5.1'
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "2", memory: 2Gi}
