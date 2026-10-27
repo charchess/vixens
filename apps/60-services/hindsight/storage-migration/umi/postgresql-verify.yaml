@@ -1,0 +1,66 @@
+---
+# An isolated target database. The production Hindsight Service deliberately
+# remains pointed at hindsight-postgresql until restore and cutover evidence is
+# accepted. PGDATA is a subdirectory so transfer artifacts can live at /transfer.
+apiVersion: v1
+kind: Service
+metadata:
+  name: hindsight-postgresql-synelia-verify
+  labels:
+    app.kubernetes.io/part-of: hindsight-storage-migration
+spec:
+  selector:
+    app.kubernetes.io/name: hindsight-postgresql-synelia-verify
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: hindsight-postgresql-synelia-verify
+  labels:
+    app.kubernetes.io/part-of: hindsight-storage-migration
+spec:
+  serviceName: hindsight-postgresql-synelia-verify
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hindsight-postgresql-synelia-verify
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: hindsight-postgresql-synelia-verify
+        app.kubernetes.io/part-of: hindsight-storage-migration
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: postgresql
+          # Match the live Hindsight PostgreSQL image for extension compatibility.
+          image: ankane/pgvector:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgresql
+              containerPort: 5432
+          env:
+            - {name: POSTGRES_USER, value: hindsight}
+            - {name: POSTGRES_PASSWORD, value: hindsight}
+            - {name: POSTGRES_DB, value: hindsight}
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: "1", memory: 1Gi}
+          readinessProbe:
+            exec: {command: [sh, -ec, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            exec: {command: [sh, -ec, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: hindsight-postgresql-synelia}

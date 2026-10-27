@@ -4,3 +4,4 @@ kind: Kustomization
 namespace: hindsight
 resources:
   - targets.yaml
+  - postgresql-verify.yaml
