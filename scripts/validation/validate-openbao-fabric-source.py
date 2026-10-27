@@ -22,6 +22,92 @@ INFRA_EVIDENCE_RUNBOOK = "docs/runbooks/00-infra/openbao-transit-seal-evidence.m
 LEGACY_INFRA_STORE = "apps/00-infra/openbao/base/cluster-secret-store.yaml"
 ALLOWED_FILES = (".md", ".example")
 POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "base/certificate.yaml", "transit-staged/kustomization.yaml", "transit-staged/serviceaccount.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml", "overlays/prod/migration/synelia-target-pvc.yaml", "overlays/prod/migration/synelia-cutover-statefulset.yaml"}
+# One-time, exact desired-state retirement of Democratic CSI. Keep this
+# allow-list closed: any new path needs an explicit review rather than inheriting
+# the OpenBao/Fabric exception.
+DEMOCRATIC_CSI_RETIREMENT_PATHS = frozenset({
+    '.github/workflows/synelia-csi-ci.yaml',
+    'apps/00-infra/crowdsec/values/common.yaml',
+    'apps/00-infra/crowdsec/values/prod.yaml',
+    'apps/00-infra/snapshot-controller/base/snapshot-class.yaml',
+    'apps/01-storage/synelia-csi/prod/values.yaml',
+    'apps/01-storage/synelia-csi/umi/values.yaml',
+    'apps/01-storage/truenas-csi/README.md',
+    'apps/01-storage/truenas-csi/bootstrap/base/kustomization.yaml',
+    'apps/01-storage/truenas-csi/bootstrap/base/namespace.yaml',
+    'apps/01-storage/truenas-csi/bootstrap/overlays/dev/kustomization.yaml',
+    'apps/01-storage/truenas-csi/bootstrap/overlays/prod/cilium-networkpolicy.yaml',
+    'apps/01-storage/truenas-csi/bootstrap/overlays/prod/externalsecret-iscsi-config.yaml',
+    'apps/01-storage/truenas-csi/bootstrap/overlays/prod/externalsecret-nfs-config.yaml',
+    'apps/01-storage/truenas-csi/bootstrap/overlays/prod/kustomization.yaml',
+    'apps/01-storage/truenas-csi/openbao/base/kustomization.yaml',
+    'apps/01-storage/truenas-csi/openbao/base/truenas-csi-externalsecrets.yaml',
+    'apps/01-storage/truenas-csi/openbao/overlays/umi/kustomization.yaml',
+    'apps/01-storage/truenas-csi/secret-templates/.gitignore',
+    'apps/01-storage/truenas-csi/secret-templates/truenas-iscsi-driver-config.example.yaml',
+    'apps/01-storage/truenas-csi/secret-templates/truenas-nfs-driver-config.example.yaml',
+    'apps/01-storage/truenas-csi/values/iscsi-prod.yaml',
+    'apps/01-storage/truenas-csi/values/iscsi-umi.yaml',
+    'apps/01-storage/truenas-csi/values/nfs-prod.yaml',
+    'apps/01-storage/truenas-csi/values/nfs-umi.yaml',
+    'apps/02-monitoring/loki/base/statefulset.yaml',
+    'apps/02-monitoring/prometheus/base/values.yaml',
+    'apps/04-databases/mariadb-shared/base/statefulset.yaml',
+    'apps/04-databases/mongodb-shared/base/statefulset.yaml',
+    'apps/04-databases/postgresql-shared/base/cluster.yaml',
+    'apps/10-home/homeassistant/base/pvc.yaml',
+    'apps/10-home/homeassistant/overlays/dev/kustomization.yaml',
+    'apps/10-home/homeassistant/overlays/prod/kustomization.yaml',
+    'apps/20-media/frigate/base/pvc.yaml',
+    'apps/20-media/frigate/overlays/dev/pvc-patch.yaml',
+    'apps/20-media/frigate/overlays/prod/pvc-patch.yaml',
+    'apps/20-media/hydrus-client/base/pvc.yaml',
+    'apps/20-media/jellyfin/base/pvc.yaml',
+    'apps/20-media/jellyfin/overlays/prod/pvc-patch.yaml',
+    'apps/20-media/music-assistant/base/pvc.yaml',
+    'apps/40-network/adguard-home/base/pvc.yaml',
+    'apps/40-network/netbird/base/pvc-data.yaml',
+    'apps/40-network/netbird/base/pvc-router-data.yaml',
+    'apps/60-services/actual-budget/base/pvc.yaml',
+    'apps/60-services/mail/base/mailserver-statefulset.yaml',
+    'apps/60-services/sakapuss/overlays/prod/pvc-storageclass.yaml',
+    'apps/60-services/txo-fabric/openbao-fabric/base/statefulset.yaml',
+    'apps/60-services/txo-fabric/operator/config/profiles/cliproxyapi-standard.yaml',
+    'apps/60-services/txo-fabric/operator/config/profiles/hermes-canary.yaml',
+    'apps/60-services/txo-fabric/operator/config/profiles/hermes-default.yaml',
+    'apps/60-services/txo-fabric/operator/config/profiles/hermes-dev.yaml',
+    'apps/60-services/txo-fabric/operator/config/profiles/hermes-edge.yaml',
+    'apps/60-services/txo-fabric/operator/config/profiles/hermes-stable.yaml',
+    'apps/60-services/txo-fabric/operator/config/profiles/hermes-upgrade-canary.yaml',
+    'apps/60-services/txo-fabric/operator/config/profiles/workspace-shared.yaml',
+    'apps/60-services/txo-fabric/operator/internal/controller/adoption_test.go',
+    'apps/60-services/txo-fabric/operator/internal/controller/agent_storage_policy_test.go',
+    'apps/60-services/txo-fabric/operator/internal/controller/reconcile_test.go',
+    'apps/60-services/txo-fabric/operator/internal/controller/sharedworkspace_controller_test.go',
+    'apps/60-services/txo-fabric/operator/internal/controller/tenantbundle_ai_credential_broker_test.go',
+    'apps/60-services/txo-fabric/tenants/hairem/tenantbundle.yaml',
+    'apps/60-services/txo-fabric/tenants/indiba/tenantbundle.yaml',
+    'apps/70-tools/penpot/base/pvc.yaml',
+    'apps/70-tools/trilium/base/pvc.yaml',
+    'apps/99-test/bookshelf/base/pvc.yaml',
+    'argocd/overlays/dev/apps/truenas-csi-iscsi-umi.yaml',
+    'argocd/overlays/dev/apps/truenas-csi-nfs-umi.yaml',
+    'argocd/overlays/dev/apps/truenas-csi-secrets-umi.yaml',
+    'argocd/overlays/dev/kustomization.yaml',
+    'argocd/overlays/prod/apps/truenas-csi-iscsi-umi.yaml',
+    'argocd/overlays/prod/apps/truenas-csi-iscsi.yaml',
+    'argocd/overlays/prod/apps/truenas-csi-nfs-umi.yaml',
+    'argocd/overlays/prod/apps/truenas-csi-nfs.yaml',
+    'argocd/overlays/prod/apps/truenas-csi-secrets-umi.yaml',
+    'argocd/overlays/prod/apps/truenas-csi-secrets.yaml',
+    'argocd/overlays/prod/kustomization.yaml',
+    'scripts/validation/test_openbao_fabric_source.py',
+    'scripts/validation/tests/test_hermes_4185_manual_gate.py',
+    'scripts/validation/tests/test_hermes_4185_recovery_cutover.py',
+    'scripts/validation/validate-openbao-fabric-poc.py',
+    'scripts/validation/validate-openbao-fabric-source.py',
+})
+
 MIGRATION_STAGE_PATHS = {
     "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/kustomization.yaml",
     "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/migration/synelia-target-pvc.yaml",
@@ -293,8 +379,12 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
     # A storage-only migration stage is not an Infra Transit seal change. Permit
     # only the exact source/PVC/validator surface; all other Fabric changes still
     # require an accompanying Infra-contract review.
+    retirement_changeset = set(changed).issubset(
+        MIGRATION_STAGE_PATHS | DEMOCRATIC_CSI_RETIREMENT_PATHS
+    )
     if (not any(p.startswith(INFRA_CONTRACT_PREFIX) for p in changed)
-            and not set(changed).issubset(MIGRATION_STAGE_PATHS)):
+            and not set(changed).issubset(MIGRATION_STAGE_PATHS)
+            and not retirement_changeset):
         problems.append("Infra Transit source contract directory missing")
     for required in (INFRA_POLICY, INFRA_README, INFRA_EVIDENCE_RUNBOOK):
         if not (ROOT / required).is_file():
@@ -311,6 +401,7 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
     for path in changed:
         allowed_infra_contract = path.startswith(INFRA_CONTRACT_PREFIX)
         if (path.startswith(tuple(protected)) and not allowed_infra_contract and
+                not retirement_changeset and
                 path not in {"apps/60-services/txo-fabric/overlays/dev/kustomization.yaml", "apps/60-services/txo-fabric/overlays/prod/kustomization.yaml"}):
             problems.append(f"protected live GitOps/consumer path changed: {path}")
         full = ROOT / path
