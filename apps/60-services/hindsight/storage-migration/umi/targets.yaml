@@ -39,8 +39,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: hindsight-postgresql-synelia-stage
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
 spec:
   backoffLimit: 0
   ttlSecondsAfterFinished: 604800
@@ -69,8 +67,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: hindsight-api-model-cache-synelia-stage
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
 spec:
   backoffLimit: 0
   ttlSecondsAfterFinished: 604800
