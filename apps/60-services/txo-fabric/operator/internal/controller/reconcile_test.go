@@ -160,7 +160,7 @@ func TestOperatorContractReconcilesWithTenantLocalAgentKey(t *testing.T) {
 	if err := c.Get(ctx, types.NamespacedName{Name: "hermes-tina-data", Namespace: ns.Name}, &pvc); err != nil {
 		t.Fatalf("runtime PVC not reconciled: %v", err)
 	}
-	if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != "truenas-iscsi-delete" {
+	if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != "storage-rwo-delete" {
 		t.Fatalf("unexpected storage class: %#v", pvc.Spec.StorageClassName)
 	}
 
@@ -484,7 +484,7 @@ func testRuntimeProfile() *fabricv1alpha1.AgentRuntimeProfile {
 			// Existing deployed runtime is the legacy derived Hermes image; opt-in
 			// official-image bootstrap tests override this fixture explicitly.
 			Image:   "ghcr.io/charchess/txo-fabric-hermes:main-ab881f643cbc",
-			Storage: fabricv1alpha1.RuntimeStorageSpec{Size: resource.MustParse("2Gi"), StorageClassName: "truenas-iscsi-delete"},
+			Storage: fabricv1alpha1.RuntimeStorageSpec{Size: resource.MustParse("2Gi"), StorageClassName: "storage-rwo-delete"},
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("100m"), corev1.ResourceMemory: resource.MustParse("256Mi")},
 				Limits:   corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("1"), corev1.ResourceMemory: resource.MustParse("2Gi")},

@@ -132,3 +132,25 @@ storageClasses:
       datasetPath: k8s/vixens/iscsi
       fsType: ext4
       compression: LZ4
+  - name: storage-rwo-xfs-retain
+    isDefault: false
+    reclaimPolicy: Retain
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      protocol: iscsi
+      pool: tank
+      datasetPath: k8s/vixens/iscsi
+      fsType: xfs
+      compression: LZ4
+  - name: storage-rwo-xfs-delete
+    isDefault: false
+    reclaimPolicy: Delete
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      protocol: iscsi
+      pool: tank
+      datasetPath: k8s/vixens/iscsi
+      fsType: xfs
+      compression: LZ4

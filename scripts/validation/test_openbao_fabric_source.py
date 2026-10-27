@@ -600,7 +600,7 @@ class PrivatePOCTests(unittest.TestCase):
     def test_delete_storage_or_multiple_replicas_denied(self):
         manifests = copy.deepcopy(self.fixture())
         sts = next(d for d in manifests if d["kind"] == "StatefulSet")
-        sts["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"] = "truenas-iscsi-delete"
+        sts["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"] = "storage-rwo-delete"
         self.assertTrue(poc.check_render(manifests))
         manifests = copy.deepcopy(self.fixture())
         sts = next(d for d in manifests if d["kind"] == "StatefulSet")

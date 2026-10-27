@@ -146,10 +146,10 @@ def check_render(docs: list[dict], *, selected: bool = False, allow_migration: b
     else:
         c = claims[0]
         if (c["metadata"].get("name") != "data" or
-            c["spec"].get("storageClassName") != "truenas-iscsi-retain" or
+            c["spec"].get("storageClassName") != "storage-rwo-retain" or
             c["spec"].get("accessModes") != ["ReadWriteOnce"] or
             c["spec"].get("resources", {}).get("requests", {}).get("storage") != "5Gi"):
-            errors.append("PVC must be 5Gi RWO truenas-iscsi-retain")
+            errors.append("PVC must be 5Gi RWO storage-rwo-retain")
     if not all(spec["template"]["metadata"]["labels"].get(k) == v for k, v in match.items()):
         errors.append("StatefulSet pod selector mismatch")
     if pod.get("automountServiceAccountToken") is not False or "serviceAccountName" in pod:

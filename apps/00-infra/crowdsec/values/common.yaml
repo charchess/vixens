@@ -45,7 +45,7 @@ lapi:
     # Without this, the LAPI re-registers with CAPI on every restart → duplicate machine entries
     config:
       enabled: true
-      storageClassName: truenas-iscsi-retain
+      storageClassName: storage-rwo-retain
       accessModes:
         - ReadWriteOnce
       size: 1Gi

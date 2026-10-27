@@ -15,7 +15,7 @@ patches:
     patch: |-
       - op: replace
         path: /spec/storageClassName
-        value: truenas-iscsi-xfs-retain
+        value: storage-rwo-xfs-retain
   - target:
       kind: Deployment
       name: homeassistant

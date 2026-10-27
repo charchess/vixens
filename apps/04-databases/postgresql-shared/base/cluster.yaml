@@ -26,7 +26,7 @@ spec:
       effective_cache_size: 512MB
   storage:
     size: 200Gi
-    storageClass: truenas-iscsi-retain
+    storageClass: storage-rwo-retain
   resources:
     requests:
       cpu: 500m

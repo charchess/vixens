@@ -70,7 +70,7 @@ class HermesManualGateTests(unittest.TestCase):
         self.assertEqual(claims, ["hermes-data-truenas"])
         legacy = yaml.safe_load(LEGACY_PVC.read_text(encoding="utf-8"))
         self.assertEqual(legacy["metadata"]["name"], "hermes-data-truenas")
-        self.assertEqual(legacy["spec"]["storageClassName"], "truenas-iscsi-retain")
+        self.assertEqual(legacy["spec"]["storageClassName"], "storage-rwo-retain")
         self.assertEqual(legacy["spec"]["resources"]["requests"]["storage"], "80Gi")
 
 

@@ -6,7 +6,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: truenas-iscsi-retain
+  storageClassName: storage-rwo-retain
   resources:
     requests:
       storage: 2Gi
@@ -18,7 +18,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: truenas-iscsi-retain
+  storageClassName: storage-rwo-retain
   resources:
     requests:
       storage: 10Gi
