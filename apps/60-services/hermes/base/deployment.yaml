@@ -134,8 +134,8 @@ spec:
 
         - name: data
           persistentVolumeClaim:
-            claimName: hermes-data-truenas
+            claimName: hermes-data-synelia-recovery
 
         - name: hairem-files
           persistentVolumeClaim:
-            claimName: hairem-files-truenas
+            claimName: hairem-files-synelia

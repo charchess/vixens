@@ -2,12 +2,12 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: hermes-data-truenas
+  name: hermes-data-synelia-recovery
   namespace: services
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: truenas-iscsi-retain
+  storageClassName: synelia-iscsi-stateful-retain
   resources:
     requests:
       # Persona profiles, durable memories, and staged migrations share this RWO volume.
