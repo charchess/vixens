@@ -394,7 +394,7 @@ spec:
       volumes:
         - name: hairem-files
           persistentVolumeClaim:
-            claimName: hairem-files-truenas
+            claimName: hairem-files-synelia
         - name: filebrowser-database
           emptyDir: {}
         - name: silverbullet-caddy-config

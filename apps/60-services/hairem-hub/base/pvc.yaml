@@ -2,12 +2,12 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: hairem-files-truenas
+  name: hairem-files-synelia
   namespace: services
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: truenas-nfs-retain
+  storageClassName: synelia-nfs-retain
   resources:
     requests:
       storage: 20Gi
