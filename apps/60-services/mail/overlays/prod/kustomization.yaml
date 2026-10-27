@@ -4,7 +4,8 @@ kind: Kustomization
 namespace: mail
 resources:
   - ../../base
-  - canonical-target-bind-jobs.yaml
   - pvc-canonical-targets.yaml
 commonLabels:
   environment: prod
+patchesStrategicMerge:
+  - patch-mailserver-synelia.yaml

@@ -9,8 +9,8 @@ metadata:
     app.kubernetes.io/component: importer
     app.kubernetes.io/part-of: truxonline-mail
 spec:
-  # The wrapper only succeeds after a read-only IMAP convergence check.
-  suspend: false
+  # The wrapper remains paused until private post-cutover validation completes.
+  suspend: true
   schedule: "*/10 * * * *"
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 300
