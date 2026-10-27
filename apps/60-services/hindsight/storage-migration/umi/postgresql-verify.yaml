@@ -54,11 +54,16 @@ spec:
           readinessProbe:
             exec: {command: [sh, -ec, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']}
             initialDelaySeconds: 10
+            timeoutSeconds: 5
             periodSeconds: 5
+          # CREATE INDEX during pg_restore can legitimately delay probes. Keep
+          # the isolated target alive for ten minutes before treating it dead.
           livenessProbe:
             exec: {command: [sh, -ec, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']}
             initialDelaySeconds: 30
+            timeoutSeconds: 5
             periodSeconds: 10
+            failureThreshold: 60
           volumeMounts:
             - {name: data, mountPath: /var/lib/postgresql/data}
       volumes:
