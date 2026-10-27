@@ -32,6 +32,8 @@ def verify_classes(values: dict) -> None:
     expected = {
         "storage-rwo-delete",
         "storage-rwo-retain",
+        "storage-rwo-xfs-delete",
+        "storage-rwo-xfs-retain",
         "storage-rwx-delete",
         "storage-rwx-retain",
     }
@@ -48,10 +50,13 @@ def verify_classes(values: dict) -> None:
         protocol = sc["parameters"].get("protocol")
         parent = sc["parameters"]["datasetPath"]
         if name.startswith("storage-rwo-"):
+            expected_fs = "xfs" if name.startswith("storage-rwo-xfs-") else "ext4"
             if (protocol != "iscsi"
                     or sc["volumeBindingMode"] != "WaitForFirstConsumer"
-                    or sc["parameters"].get("fsType") != "ext4"):
-                raise AssertionError(f"RWO contract must bind iSCSI/ext4 safely: {name}")
+                    or sc["parameters"].get("fsType") != expected_fs):
+                raise AssertionError(
+                    f"RWO contract must bind iSCSI/{expected_fs} safely: {name}"
+                )
             expected_parent = "k8s/vixens/iscsi"
         elif name.startswith("storage-rwx-"):
             if (protocol != "nfs"
@@ -198,17 +203,11 @@ class SyneliaCSISourceTests(unittest.TestCase):
 
     def test_classes_isolated_not_default_and_reclaim_compatible(self):
         verify_classes(self.values)
-        # A regression would fail if someone reused a legacy class name.
-        legacy_nfs = read_one(
-            "apps/01-storage/truenas-csi/values/nfs-umi.yaml"
-        )["storageClasses"]
-        legacy_iscsi = read_one(
-            "apps/01-storage/truenas-csi/values/iscsi-umi.yaml"
-        )["storageClasses"]
-        legacy_names = {s["name"] for s in legacy_nfs + legacy_iscsi}
-        self.assertFalse(
-            legacy_names.intersection({s["name"] for s in self.values["storageClasses"]})
-        )
+        # The retired driver must never reappear as a provisioner or a class name.
+        rendered = yaml.safe_dump(self.values).lower()
+        self.assertNotIn("democratic-csi", rendered)
+        self.assertNotIn("truenas-iscsi", rendered)
+        self.assertNotIn("truenas-nfs", rendered)
 
     def test_safety_regressions_fail_closed(self):
         mutated = deepcopy(self.values)
