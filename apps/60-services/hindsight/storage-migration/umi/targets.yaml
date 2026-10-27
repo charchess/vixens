@@ -1,0 +1,96 @@
+---
+# Staged targets only. No active Hindsight workload consumes them until the
+# PostgreSQL logical dump/restore and cache cutover evidence is complete.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hindsight-postgresql-synelia
+  labels:
+    app.kubernetes.io/part-of: hindsight-storage-migration
+    storage.truxonline.com/migration-source: data-hindsight-postgresql-0
+  annotations:
+    storage.truxonline.com/migration-state: staged
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: synelia-iscsi-retain
+  resources:
+    requests:
+      storage: 8Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hindsight-api-model-cache-synelia
+  labels:
+    app.kubernetes.io/part-of: hindsight-storage-migration
+    storage.truxonline.com/migration-source: hindsight-api-model-cache
+  annotations:
+    storage.truxonline.com/migration-state: staged
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: synelia-iscsi-retain
+  resources:
+    requests:
+      storage: 5Gi
+---
+# WaitForFirstConsumer requires an actual scheduler placement. These jobs only
+# bind and mount the new claims; they do not copy or mutate legacy data.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hindsight-postgresql-synelia-stage
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 604800
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: mount-check
+          image: busybox:1.36.1
+          command: [sh, -ec, 'test -d /target']
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: target, mountPath: /target}
+      volumes:
+        - name: target
+          persistentVolumeClaim: {claimName: hindsight-postgresql-synelia}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hindsight-api-model-cache-synelia-stage
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 604800
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: mount-check
+          image: busybox:1.36.1
+          command: [sh, -ec, 'test -d /target']
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: target, mountPath: /target}
+      volumes:
+        - name: target
+          persistentVolumeClaim: {claimName: hindsight-api-model-cache-synelia}

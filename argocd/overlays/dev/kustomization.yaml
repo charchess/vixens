@@ -34,6 +34,7 @@ resources:
   - apps/trivy.yaml
   - apps/argocd.yaml
   - apps/hermes-umi.yaml
+  - apps/hindsight-storage-migration-umi.yaml
   - apps/txo-fabric.yaml
   - apps/whoami.yaml
   - apps/frigate.yaml
