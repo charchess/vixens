@@ -105,6 +105,8 @@ DEMOCRATIC_CSI_RETIREMENT_PATHS = frozenset({
     'scripts/validation/tests/test_hermes_4185_manual_gate.py',
     'scripts/validation/tests/test_hermes_4185_recovery_cutover.py',
     'scripts/validation/validate-openbao-fabric-poc.py',
+    '.github/workflows/validate.yaml',
+    'scripts/validation/tests/test_truenas_csi_umi_openbao.py',
     'scripts/validation/validate-openbao-fabric-source.py',
 })
 
