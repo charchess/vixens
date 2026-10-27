@@ -12,7 +12,7 @@ spec:
     - toEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: databases
-            cnpg.io/cluster: postgresql-shared
+            cnpg.io/cluster: postgresql-shared-recovery
       toPorts:
         - ports:
             - port: "5432"
