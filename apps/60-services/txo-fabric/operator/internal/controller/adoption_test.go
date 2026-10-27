@@ -31,7 +31,7 @@ func TestAgentReconcileAdoptsExistingPVCWithoutRecreating(t *testing.T) {
 	}
 	namespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "tenant-hairem-sandbox"}}
 	legacyUID := types.UID("legacy-pvc-uid")
-	storageClass := "truenas-iscsi-delete"
+	storageClass := "storage-rwo-delete"
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "hermes-tina-data",

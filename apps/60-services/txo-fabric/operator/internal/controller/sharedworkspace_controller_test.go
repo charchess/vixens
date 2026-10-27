@@ -22,7 +22,7 @@ func TestSharedWorkspaceReconcilesIsolatedRWXPVCs(t *testing.T) {
 	profile := &fabricv1alpha1.SharedWorkspaceProfile{
 		ObjectMeta: metav1.ObjectMeta{Name: "shared-nfs"},
 		Spec: fabricv1alpha1.SharedWorkspaceProfileSpec{
-			StorageClassName: "truenas-nfs-retain",
+			StorageClassName: "storage-rwx-retain",
 			Size:             resource.MustParse("5Gi"),
 		},
 	}
@@ -55,7 +55,7 @@ func TestSharedWorkspaceReconcilesIsolatedRWXPVCs(t *testing.T) {
 		if len(pvc.Spec.AccessModes) != 1 || pvc.Spec.AccessModes[0] != corev1.ReadWriteMany {
 			t.Fatalf("PVC %s accessModes = %#v, want RWX", name, pvc.Spec.AccessModes)
 		}
-		if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != "truenas-nfs-retain" {
+		if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != "storage-rwx-retain" {
 			t.Fatalf("PVC %s storageClass = %#v", name, pvc.Spec.StorageClassName)
 		}
 		if pvc.Labels[LabelWorkspaceDomain] != want.domain || pvc.Labels[LabelWorkspaceScope] != want.scope || pvc.Labels[LabelWorkspaceKey] != want.key || pvc.Labels[LabelWorkspaceMode] != want.mode {
@@ -215,7 +215,7 @@ func TestSharedWorkspaceMigrationStagesDistinctTargetsAndCutoverMounts(t *testin
 	scheme := testScheme(t)
 	tenant := workspaceTestTenant()
 	tenant.Spec.Workspace.Migration = &fabricv1alpha1.TenantWorkspaceMigrationBinding{TargetStorageClassName: "storage-rwx-retain", TargetClaimSuffix: "synelia"}
-	profile := &fabricv1alpha1.SharedWorkspaceProfile{ObjectMeta: metav1.ObjectMeta{Name: "shared-nfs"}, Spec: fabricv1alpha1.SharedWorkspaceProfileSpec{StorageClassName: "truenas-nfs-retain", Size: resource.MustParse("5Gi")}}
+	profile := &fabricv1alpha1.SharedWorkspaceProfile{ObjectMeta: metav1.ObjectMeta{Name: "shared-nfs"}, Spec: fabricv1alpha1.SharedWorkspaceProfileSpec{StorageClassName: "storage-rwx-retain", Size: resource.MustParse("5Gi")}}
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile).Build()
 	r := &SharedWorkspaceReconciler{Client: c, Scheme: scheme}
 	if _, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: tenant.Name}}); err != nil {

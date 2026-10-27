@@ -14,7 +14,7 @@ spec:
   releaseRef: hermes-2026-09-24-fca358f12efd-33060387a98b
   storage:
     size: 2Gi
-    storageClassName: truenas-iscsi-delete
+    storageClassName: storage-rwo-delete
   resources:
     requests:
       cpu: 100m

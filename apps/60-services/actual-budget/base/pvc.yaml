@@ -8,7 +8,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "9"
 spec:
   accessModes: [ReadWriteOnce]
-  storageClassName: truenas-iscsi-xfs-retain
+  storageClassName: storage-rwo-xfs-retain
   resources:
     requests:
       storage: 5Gi

@@ -32,8 +32,8 @@ spec:
   # Private Hermes agent storage is tenant-owned, not release-channel-owned.
   # Existing PVCs are not recreated when this policy is introduced.
   agentStorage:
-    retainedStorageClassName: truenas-iscsi-retain
-    disposableStorageClassName: truenas-iscsi-delete
+    retainedStorageClassName: storage-rwo-retain
+    disposableStorageClassName: storage-rwo-delete
   persistence:
     postgresql:
       mode: Shared

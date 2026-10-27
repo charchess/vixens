@@ -15,8 +15,8 @@ import (
 func configuredAgentStorageTenant() *fabricv1alpha1.TenantBundle {
 	tenant := testTenant()
 	tenant.Spec.AgentStorage = &fabricv1alpha1.TenantAgentStorageSpec{
-		RetainedStorageClassName: "truenas-iscsi-retain",
-		DisposableStorageClassName: "truenas-iscsi-delete",
+		RetainedStorageClassName: "storage-rwo-retain",
+		DisposableStorageClassName: "storage-rwo-delete",
 	}
 	return tenant
 }
@@ -26,7 +26,7 @@ func TestNewRetainedAgentPVCUsesTenantStorageNotHermesProfile(t *testing.T) {
 	tenant := configuredAgentStorageTenant()
 	agent := testStorageIdentity(tenant.Name, "spark", StorageRetentionRetain)
 	profile := testRuntimeProfile()
-	profile.Spec.Storage.StorageClassName = "truenas-iscsi-delete" // obsolete release profile class
+	profile.Spec.Storage.StorageClassName = "storage-rwo-delete" // obsolete release profile class
 	ns := tenantNamespace(tenant.Name)
 	scheme := testScheme(t)
 	c := fake.NewClientBuilder().WithScheme(scheme).Build()
@@ -36,7 +36,7 @@ func TestNewRetainedAgentPVCUsesTenantStorageNotHermesProfile(t *testing.T) {
 	var original corev1.PersistentVolumeClaim
 	key := types.NamespacedName{Namespace: ns, Name: runtimePVCName(agent.Spec.AgentKey)}
 	if err := c.Get(ctx, key, &original); err != nil { t.Fatal(err) }
-	if original.Spec.StorageClassName == nil || *original.Spec.StorageClassName != "truenas-iscsi-retain" {
+	if original.Spec.StorageClassName == nil || *original.Spec.StorageClassName != "storage-rwo-retain" {
 		t.Fatalf("durable PVC must be born with Retain StorageClass, got %#v", original.Spec.StorageClassName)
 	}
 	if owner := metav1.GetControllerOf(&original); owner != nil { t.Fatalf("Retain PVC must not carry GC owner: %#v", owner) }
@@ -49,7 +49,7 @@ func TestNewRetainedAgentPVCUsesTenantStorageNotHermesProfile(t *testing.T) {
 		if err := r.ensurePVC(ctx, agent, tenant, profile, ns); err != nil { t.Fatal(err) }
 		var current corev1.PersistentVolumeClaim
 		if err := c.Get(ctx, key, &current); err != nil { t.Fatal(err) }
-		if *current.Spec.StorageClassName != "truenas-iscsi-retain" || current.UID != original.UID {
+		if *current.Spec.StorageClassName != "storage-rwo-retain" || current.UID != original.UID {
 			t.Fatalf("Hermes release/channel changed PVC: %+v", current)
 		}
 	}
@@ -60,7 +60,7 @@ func TestDisposableAgentPVCDirectlyUsesDeleteClass(t *testing.T) {
 	tenant := configuredAgentStorageTenant()
 	agent := testStorageIdentity(tenant.Name, "probe", StorageRetentionDelete)
 	profile := testRuntimeProfile()
-	profile.Spec.Storage.StorageClassName = "truenas-iscsi-retain"
+	profile.Spec.Storage.StorageClassName = "storage-rwo-retain"
 	ns := tenantNamespace(tenant.Name)
 	scheme := testScheme(t)
 	c := fake.NewClientBuilder().WithScheme(scheme).Build()
@@ -68,7 +68,7 @@ func TestDisposableAgentPVCDirectlyUsesDeleteClass(t *testing.T) {
 	if err := r.ensurePVC(ctx,agent,tenant,profile,ns);err!=nil{t.Fatal(err)}
 	var pvc corev1.PersistentVolumeClaim
 	if err:=c.Get(ctx,types.NamespacedName{Namespace:ns,Name:runtimePVCName(agent.Spec.AgentKey)},&pvc);err!=nil{t.Fatal(err)}
-	if pvc.Spec.StorageClassName==nil || *pvc.Spec.StorageClassName!="truenas-iscsi-delete"{t.Fatalf("disposable PVC storage=%#v",pvc.Spec.StorageClassName)}
+	if pvc.Spec.StorageClassName==nil || *pvc.Spec.StorageClassName!="storage-rwo-delete"{t.Fatalf("disposable PVC storage=%#v",pvc.Spec.StorageClassName)}
 	if owner:=metav1.GetControllerOf(&pvc);owner==nil || owner.UID!=agent.UID {t.Fatalf("disposable PVC needs GC owner: %#v",pvc.OwnerReferences)}
 }
 
@@ -77,14 +77,14 @@ func TestExistingBrownfieldRetainPVCStaysBoundAndPromotesPV(t *testing.T) {
 	tenant:=configuredAgentStorageTenant()
 	agent:=testStorageIdentity(tenant.Name,"spark",StorageRetentionRetain)
 	profile:=testRuntimeProfile()
-	profile.Spec.Storage.StorageClassName="truenas-iscsi-delete"
+	profile.Spec.Storage.StorageClassName="storage-rwo-delete"
 	ns:=tenantNamespace(tenant.Name)
 	uid:=types.UID("legacy-uid")
 	name:=runtimePVCName(agent.Spec.AgentKey)
 	pvc:=&corev1.PersistentVolumeClaim{
 		ObjectMeta:metav1.ObjectMeta{Name:name,Namespace:ns,UID:uid},
 		Spec:corev1.PersistentVolumeClaimSpec{
-			StorageClassName:stringPtr("truenas-iscsi-delete"),
+			StorageClassName:stringPtr("storage-rwo-delete"),
 			VolumeName:"old-pv",
 		},
 	}
@@ -101,7 +101,7 @@ func TestExistingBrownfieldRetainPVCStaysBoundAndPromotesPV(t *testing.T) {
 	if err:=r.ensurePVC(ctx,agent,tenant,profile,ns);err!=nil{t.Fatal(err)}
 	var current corev1.PersistentVolumeClaim
 	if err:=c.Get(ctx,types.NamespacedName{Namespace:ns,Name:name},&current);err!=nil{t.Fatal(err)}
-	if current.UID!=uid || *current.Spec.StorageClassName!="truenas-iscsi-delete" || current.Spec.VolumeName!="old-pv"{
+	if current.UID!=uid || *current.Spec.StorageClassName!="storage-rwo-delete" || current.Spec.VolumeName!="old-pv"{
 		t.Fatalf("legacy retained PVC mutated: %#v",current)
 	}
 	var bound corev1.PersistentVolume
@@ -136,7 +136,7 @@ func TestDisposableExistingWrongClassFailsClosed(t *testing.T){
 	ns:=tenantNamespace(tenant.Name)
 	pvc:=&corev1.PersistentVolumeClaim{
 		ObjectMeta:metav1.ObjectMeta{Name:runtimePVCName(agent.Spec.AgentKey),Namespace:ns},
-		Spec:corev1.PersistentVolumeClaimSpec{StorageClassName:stringPtr("truenas-iscsi-retain")},
+		Spec:corev1.PersistentVolumeClaimSpec{StorageClassName:stringPtr("storage-rwo-retain")},
 	}
 	scheme:=testScheme(t)
 	c:=fake.NewClientBuilder().WithScheme(scheme).WithObjects(pvc).Build()
@@ -149,9 +149,9 @@ func TestAgentStoragePolicyValidationAndLegacyFallback(t *testing.T){
 	agent:=testStorageIdentity(tenant.Name,"x",StorageRetentionRetain)
 	profile:=testRuntimeProfile()
 	profile.Spec.Storage.StorageClassName="legacy-default"
-	if got,err:=desiredAgentPVCStorageClass(agent,tenant,profile);err!=nil || got!="truenas-iscsi-retain"{t.Fatalf("Retain resolution: %s %v",got,err)}
+	if got,err:=desiredAgentPVCStorageClass(agent,tenant,profile);err!=nil || got!="storage-rwo-retain"{t.Fatalf("Retain resolution: %s %v",got,err)}
 	agent.Spec.Runtime.Storage.RetentionPolicy=StorageRetentionDelete
-	if got,err:=desiredAgentPVCStorageClass(agent,tenant,profile);err!=nil || got!="truenas-iscsi-delete"{t.Fatalf("Delete resolution: %s %v",got,err)}
+	if got,err:=desiredAgentPVCStorageClass(agent,tenant,profile);err!=nil || got!="storage-rwo-delete"{t.Fatalf("Delete resolution: %s %v",got,err)}
 	tenant.Spec.AgentStorage.DisposableStorageClassName=""
 	if _,err:=desiredAgentPVCStorageClass(agent,tenant,profile);err==nil{t.Fatal("incomplete tenant policy accepted")}
 	tenant.Spec.AgentStorage.DisposableStorageClassName=tenant.Spec.AgentStorage.RetainedStorageClassName

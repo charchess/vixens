@@ -108,10 +108,10 @@ spec:
     - metadata: {name: mail-data}
       spec:
         accessModes: [ReadWriteOnce]
-        storageClassName: truenas-iscsi-xfs-retain
+        storageClassName: storage-rwo-xfs-retain
         resources: {requests: {storage: 25Gi}}
     - metadata: {name: mail-state}
       spec:
         accessModes: [ReadWriteOnce]
-        storageClassName: truenas-iscsi-xfs-retain
+        storageClassName: storage-rwo-xfs-retain
         resources: {requests: {storage: 2Gi}}

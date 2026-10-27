@@ -4,4 +4,4 @@ kind: PersistentVolumeClaim
 metadata:
   name: jellyfin-config-pvc
 spec:
-  storageClassName: truenas-iscsi-retain
+  storageClassName: storage-rwo-retain

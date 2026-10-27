@@ -102,7 +102,7 @@ class HermesRecoveryCutoverTests(unittest.TestCase):
         )
         old = read(BASE / "pvc.yaml")
         self.assertEqual(old["metadata"]["name"], "hermes-data-truenas")
-        self.assertEqual(old["spec"]["storageClassName"], "truenas-iscsi-retain")
+        self.assertEqual(old["spec"]["storageClassName"], "storage-rwo-retain")
 
 
 if __name__ == "__main__":

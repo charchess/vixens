@@ -11,7 +11,7 @@ spec:
   image: ghcr.io/charchess/txo-fabric-hermes:main-ab881f643cbc
   storage:
     size: 2Gi
-    storageClassName: truenas-iscsi-delete
+    storageClassName: storage-rwo-delete
   resources:
     requests:
       cpu: 100m

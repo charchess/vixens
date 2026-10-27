@@ -22,5 +22,5 @@ spec:
   sizingLabel: V-small
   authStorage:
     size: 1Gi
-    storageClassName: truenas-iscsi-delete
+    storageClassName: storage-rwo-delete
   usageQueueRetentionSeconds: 900

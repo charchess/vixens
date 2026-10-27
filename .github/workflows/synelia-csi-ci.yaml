@@ -48,6 +48,7 @@ jobs:
           assert {x["metadata"]["name"] for x in classes} == {
               "storage-rwx-retain", "storage-rwx-delete",
               "storage-rwo-retain", "storage-rwo-delete",
+              "storage-rwo-xfs-retain", "storage-rwo-xfs-delete",
           }
           for sc in classes:
               name = sc["metadata"]["name"]
@@ -62,7 +63,8 @@ jobs:
               if name.startswith("storage-rwo-"):
                   assert parent == "k8s/vixens/iscsi", name
                   assert sc["parameters"]["protocol"] == "iscsi", name
-                  assert sc["parameters"]["fsType"] == "ext4", name
+                  expected_fs = "xfs" if "-xfs-" in name else "ext4"
+                  assert sc["parameters"]["fsType"] == expected_fs, name
                   assert sc["volumeBindingMode"] == "WaitForFirstConsumer", name
               else:
                   assert parent == "k8s/vixens/nfs", name
@@ -123,6 +125,8 @@ jobs:
               "storage-rwx-delete",
               "storage-rwo-retain",
               "storage-rwo-delete",
+              "storage-rwo-xfs-retain",
+              "storage-rwo-xfs-delete",
           ):
               assert storage_class in rendered
           assert "storageclass.kubernetes.io/is-default-class: \"false\"" in rendered

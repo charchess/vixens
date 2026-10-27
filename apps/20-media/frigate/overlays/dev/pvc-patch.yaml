@@ -7,11 +7,11 @@ kind: PersistentVolumeClaim
 metadata:
   name: frigate-config-pvc
 spec:
-  storageClassName: truenas-iscsi-retain
+  storageClassName: storage-rwo-retain
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: frigate-cache-pvc
 spec:
-  storageClassName: truenas-iscsi-retain
+  storageClassName: storage-rwo-retain
