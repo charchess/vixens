@@ -1,0 +1,32 @@
+---
+# Recovery is a distinct CNPG cluster identity. Restrict its only external
+# dependency to the object-store endpoint and DNS needed to resolve it.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: postgresql-shared-recovery-objectstore-egress
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: postgresql-shared-recovery
+    app.kubernetes.io/component: storage-migration
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: postgresql-shared-recovery
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    - toFQDNs:
+        - matchName: nas.truxonline.com
+      toPorts:
+        - ports:
+            - port: "30157"
+              protocol: TCP
