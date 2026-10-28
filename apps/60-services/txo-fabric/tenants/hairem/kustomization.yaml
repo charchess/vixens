@@ -4,4 +4,3 @@ kind: Kustomization
 resources:
   - tenantbundle.yaml
   - agents.yaml
-  - storage-migration-cutover-proofs.yaml
