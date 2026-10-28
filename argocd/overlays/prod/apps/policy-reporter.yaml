@@ -126,7 +126,6 @@ spec:
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
       path: apps/00-infra/policy-reporter/overlays/prod
-      kustomize: {}
   destination:
     server: https://kubernetes.default.svc
     namespace: policy-reporter
