@@ -25,6 +25,11 @@ spec:
   workspace:
     profileRef: shared-nfs
     retentionPolicy: Retain
+    # Prepare distinct Synelia RWX targets. Existing Democratic claims remain mounted;
+    # cutover is deliberately absent until offline copy evidence is GitOps-owned.
+    migration:
+      targetStorageClassName: storage-rwx-retain
+      targetClaimSuffix: synelia
     groups:
       - name: sales
         collaborative: true
