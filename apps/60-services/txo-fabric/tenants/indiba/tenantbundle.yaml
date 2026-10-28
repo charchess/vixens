@@ -30,6 +30,7 @@ spec:
     migration:
       targetStorageClassName: storage-rwx-retain
       targetClaimSuffix: synelia
+      copyJobPrefix: indiba-rwx-copy
     groups:
       - name: sales
         collaborative: true
