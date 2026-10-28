@@ -14,7 +14,7 @@ metadata:
 spec:
   suspend: false
   backoffLimit: 0
-  ttlSecondsAfterFinished: 604800
+  ttlSecondsAfterFinished: 3600
   template:
     metadata:
       labels:
@@ -76,7 +76,7 @@ metadata:
 spec:
   suspend: false
   backoffLimit: 0
-  ttlSecondsAfterFinished: 604800
+  ttlSecondsAfterFinished: 3600
   template:
     metadata:
       labels:
@@ -138,7 +138,7 @@ metadata:
 spec:
   suspend: false
   backoffLimit: 0
-  ttlSecondsAfterFinished: 604800
+  ttlSecondsAfterFinished: 3600
   template:
     metadata:
       labels:
@@ -200,7 +200,7 @@ metadata:
 spec:
   suspend: false
   backoffLimit: 0
-  ttlSecondsAfterFinished: 604800
+  ttlSecondsAfterFinished: 3600
   template:
     metadata:
       labels:
