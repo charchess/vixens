@@ -77,6 +77,16 @@ func (r *AgentIdentityReconciler) ensureWorkspaceMigrationEvidence(ctx context.C
 		jobName := migration.CopyJobPrefix + "-" + sourceName
 		var job batchv1.Job
 		if err := r.Get(ctx, types.NamespacedName{Namespace: ns, Name: jobName}, &job); err != nil {
+			attested := false
+			for _, evidence := range tenant.Status.WorkspaceMigration {
+				if evidence.SourceClaimName == sourceName && evidence.TargetClaimName == targetName && evidence.SourcePVCUID == string(source.UID) && evidence.TargetPVCUID == string(target.UID) && evidence.JobName == jobName && evidence.JobUID != "" && evidence.Phase == fabricv1alpha1.WorkspaceMigrationSucceeded && evidence.VerificationResult == "Succeeded" {
+					attested = true
+					break
+				}
+			}
+			if attested {
+				continue
+			}
 			return fmt.Errorf("read workspace copy Job %s/%s: %w", ns, jobName, err)
 		}
 		if job.Labels["fabric.truxonline.io/storage-migration-source-uid"] != string(source.UID) || job.Labels["fabric.truxonline.io/storage-migration-target-uid"] != string(target.UID) {
