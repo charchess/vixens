@@ -10,6 +10,10 @@ metadata:
     fabric.truxonline.io/storage-migration-source-uid: "7a7af1a5-8bde-4283-b4e1-24a5b88a8bb8"
     fabric.truxonline.io/storage-migration-target-uid: "02d05352-006a-4db5-a053-d3c64d8a18c0"
   annotations:
+    # Keep intentionally suspended TTL-recreated jobs after the operator wave:
+    # Argo otherwise waits on their expected Suspended health before delivering
+    # the controller that consumes the durable UID-bound attestations.
+    argocd.argoproj.io/sync-wave: "10"
     vixens.io/activation-gate: explicit-snapshot-and-unsuspend-required
 spec:
   suspend: true
@@ -72,6 +76,10 @@ metadata:
     fabric.truxonline.io/storage-migration-source-uid: "5debb0a9-2f44-492c-abb4-bc4c0a63232c"
     fabric.truxonline.io/storage-migration-target-uid: "0e0243a4-501b-43f7-b2ed-e50b4896949e"
   annotations:
+    # Keep intentionally suspended TTL-recreated jobs after the operator wave:
+    # Argo otherwise waits on their expected Suspended health before delivering
+    # the controller that consumes the durable UID-bound attestations.
+    argocd.argoproj.io/sync-wave: "10"
     vixens.io/activation-gate: explicit-snapshot-and-unsuspend-required
 spec:
   suspend: true
@@ -134,6 +142,10 @@ metadata:
     fabric.truxonline.io/storage-migration-source-uid: "3de7f0e5-a96b-4242-84b6-24d3809406b6"
     fabric.truxonline.io/storage-migration-target-uid: "ab62ee7b-6511-4961-a010-0f1cc19ace38"
   annotations:
+    # Keep intentionally suspended TTL-recreated jobs after the operator wave:
+    # Argo otherwise waits on their expected Suspended health before delivering
+    # the controller that consumes the durable UID-bound attestations.
+    argocd.argoproj.io/sync-wave: "10"
     vixens.io/activation-gate: explicit-snapshot-and-unsuspend-required
 spec:
   suspend: true
@@ -196,6 +208,10 @@ metadata:
     fabric.truxonline.io/storage-migration-source-uid: "03d7b961-c76e-4412-bf63-6b5eb1b67754"
     fabric.truxonline.io/storage-migration-target-uid: "8667f218-e1a2-40f6-8365-6185b80d79cd"
   annotations:
+    # Keep intentionally suspended TTL-recreated jobs after the operator wave:
+    # Argo otherwise waits on their expected Suspended health before delivering
+    # the controller that consumes the durable UID-bound attestations.
+    argocd.argoproj.io/sync-wave: "10"
     vixens.io/activation-gate: explicit-snapshot-and-unsuspend-required
 spec:
   suspend: true
