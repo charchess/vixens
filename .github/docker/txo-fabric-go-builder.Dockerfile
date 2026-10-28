@@ -1,6 +1,6 @@
 # This is a deliberately static, reviewed mirror of the exact upstream Go
 # builder used by the TXO Fabric operator. Do not replace the digest with a tag.
-FROM mirror.gcr.io/library/golang@sha256:b76020929b709ddb6202afc05410a0faefae20ae05e27ad548b3870092688a69
+FROM mirror.gcr.io/library/golang@sha256:2669ec97bbb6e54602952b4171211116e3fe90e5f9c47619920c74554b3d7d09
 
 LABEL org.opencontainers.image.source="https://github.com/charchess/vixens"
 LABEL org.opencontainers.image.description="Pinned TXO Fabric Go builder mirror"
