@@ -100,7 +100,25 @@ func (r *AgentIdentityReconciler) ensureRuntimeMigrationTargetPVC(ctx context.Co
 		return fmt.Errorf("AgentIdentity %q requests storage migration cutover without copyJobName", agent.Name)
 	}
 	var job batchv1.Job
-	if err := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: migration.CopyJobName}, &job); err != nil {
+	err = r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: migration.CopyJobName}, &job)
+	if apierrors.IsNotFound(err) {
+		// TTL cleanup is permitted for copy Jobs, but cannot erase proof required
+		// by a later reconcile. GitOps retains one UID-bound ConfigMap attestation.
+		proofName := migration.CopyJobName + "-proof"
+		if len(proofName) > 63 {
+			return fmt.Errorf("storage migration copy Job name %q is too long for its durable proof", migration.CopyJobName)
+		}
+		var proof corev1.ConfigMap
+		if proofErr := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: proofName}, &proof); proofErr != nil {
+			return fmt.Errorf("read storage migration copy Job %s/%s and durable proof %s/%s: %w", namespace, migration.CopyJobName, namespace, proofName, proofErr)
+		}
+		labels := proof.GetLabels()
+		if labels["fabric.truxonline.io/storage-migration-source-uid"] != string(source.UID) || labels["fabric.truxonline.io/storage-migration-target-uid"] != string(target.UID) || proof.Data["verified"] != "true" {
+			return fmt.Errorf("storage migration durable proof %s/%s is not an exact verified source/target UID attestation", namespace, proofName)
+		}
+		return nil
+	}
+	if err != nil {
 		return fmt.Errorf("read storage migration copy Job %s/%s: %w", namespace, migration.CopyJobName, err)
 	}
 	labels := job.GetLabels()
