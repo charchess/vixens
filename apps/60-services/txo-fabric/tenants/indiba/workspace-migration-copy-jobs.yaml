@@ -12,7 +12,7 @@ metadata:
   annotations:
     vixens.io/activation-gate: explicit-snapshot-and-unsuspend-required
 spec:
-  suspend: false
+  suspend: true
   backoffLimit: 0
   ttlSecondsAfterFinished: 3600
   template:
@@ -74,7 +74,7 @@ metadata:
   annotations:
     vixens.io/activation-gate: explicit-snapshot-and-unsuspend-required
 spec:
-  suspend: false
+  suspend: true
   backoffLimit: 0
   ttlSecondsAfterFinished: 3600
   template:
@@ -136,7 +136,7 @@ metadata:
   annotations:
     vixens.io/activation-gate: explicit-snapshot-and-unsuspend-required
 spec:
-  suspend: false
+  suspend: true
   backoffLimit: 0
   ttlSecondsAfterFinished: 3600
   template:
@@ -198,7 +198,7 @@ metadata:
   annotations:
     vixens.io/activation-gate: explicit-snapshot-and-unsuspend-required
 spec:
-  suspend: false
+  suspend: true
   backoffLimit: 0
   ttlSecondsAfterFinished: 3600
   template:
