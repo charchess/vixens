@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - tenantbundle.yaml
   - agents.yaml
+  - workspace-migration-copy-jobs.yaml
