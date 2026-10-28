@@ -75,19 +75,19 @@ func (r *AgentIdentityReconciler) ensureWorkspaceMigrationEvidence(ctx context.C
 			return fmt.Errorf("workspace target PVC %s/%s is not Bound", ns, targetName)
 		}
 		jobName := migration.CopyJobPrefix + "-" + sourceName
+		attestation, attested := workspaceMigrationAttestation(tenant, sourceName, targetName, string(source.UID), string(target.UID), jobName)
 		var job batchv1.Job
 		if err := r.Get(ctx, types.NamespacedName{Namespace: ns, Name: jobName}, &job); err != nil {
-			attested := false
-			for _, evidence := range tenant.Status.WorkspaceMigration {
-				if evidence.SourceClaimName == sourceName && evidence.TargetClaimName == targetName && evidence.SourcePVCUID == string(source.UID) && evidence.TargetPVCUID == string(target.UID) && evidence.JobName == jobName && evidence.JobUID != "" && evidence.Phase == fabricv1alpha1.WorkspaceMigrationSucceeded && evidence.VerificationResult == "Succeeded" {
-					attested = true
-					break
-				}
-			}
 			if attested {
 				continue
 			}
 			return fmt.Errorf("read workspace copy Job %s/%s: %w", ns, jobName, err)
+		}
+		// TTL cleanup can remove the completed executor while Argo recreates the
+		// declared Job in its safe suspended form. That replacement has a new UID
+		// and is not copy evidence; accept only the immutable, exact attestation.
+		if attested && job.Spec.Suspend != nil && *job.Spec.Suspend && string(job.UID) != attestation.JobUID {
+			continue
 		}
 		if job.Labels["fabric.truxonline.io/storage-migration-source-uid"] != string(source.UID) || job.Labels["fabric.truxonline.io/storage-migration-target-uid"] != string(target.UID) {
 			return fmt.Errorf("workspace copy Job %s/%s does not bind exact source/target PVC UIDs", ns, jobName)
@@ -103,6 +103,15 @@ func (r *AgentIdentityReconciler) ensureWorkspaceMigrationEvidence(ctx context.C
 		}
 	}
 	return nil
+}
+
+func workspaceMigrationAttestation(tenant *fabricv1alpha1.TenantBundle, sourceName, targetName, sourceUID, targetUID, jobName string) (fabricv1alpha1.WorkspaceMigrationAttestationStatus, bool) {
+	for _, evidence := range tenant.Status.WorkspaceMigration {
+		if evidence.SourceClaimName == sourceName && evidence.TargetClaimName == targetName && evidence.SourcePVCUID == sourceUID && evidence.TargetPVCUID == targetUID && evidence.JobName == jobName && evidence.JobUID != "" && evidence.Phase == fabricv1alpha1.WorkspaceMigrationSucceeded && evidence.VerificationResult == "Succeeded" {
+			return evidence, true
+		}
+	}
+	return fabricv1alpha1.WorkspaceMigrationAttestationStatus{}, false
 }
 
 func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) ([]corev1.Volume, []corev1.VolumeMount, error) {

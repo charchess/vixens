@@ -7,6 +7,7 @@ import (
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -298,5 +299,25 @@ func TestWorkspaceCutoverRejectsDurableAttestationWithRecreatedPVC(t *testing.T)
 	r := &AgentIdentityReconciler{Client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(source, target).Build(), Scheme: scheme}
 	if err := r.ensureWorkspaceMigrationEvidence(ctx, agent, tenant); err == nil {
 		t.Fatal("recreated source PVC was accepted by durable evidence")
+	}
+}
+
+func TestWorkspaceCutoverAcceptsAttestationWhenTTLJobIsRecreatedSuspended(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := workspaceTestTenant()
+	tenant.Spec.Workspace.Organization = fabricv1alpha1.WorkspaceScopeSpec{}
+	tenant.Spec.Workspace.Groups = []fabricv1alpha1.NamedWorkspaceScopeSpec{{Name: "sales", Reference: true}}
+	tenant.Spec.Workspace.Migration = &fabricv1alpha1.TenantWorkspaceMigrationBinding{TargetStorageClassName: "storage-rwx-retain", TargetClaimSuffix: "synelia", CopyJobPrefix: "copy", Cutover: true}
+	ns := tenantNamespace(tenant.Name)
+	source := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "ws-group-sales-ref", Namespace: ns, UID: "source-uid"}}
+	target := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "ws-group-sales-ref-synelia", Namespace: ns, UID: "target-uid"}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound}}
+	tenant.Status.WorkspaceMigration = []fabricv1alpha1.WorkspaceMigrationAttestationStatus{{SourceClaimName: source.Name, SourcePVCUID: string(source.UID), TargetClaimName: target.Name, TargetPVCUID: string(target.UID), JobName: "copy-" + source.Name, JobUID: "completed-job-uid", Phase: fabricv1alpha1.WorkspaceMigrationSucceeded, VerificationResult: "Succeeded"}}
+	suspended := true
+	recreated := &batchv1.Job{ObjectMeta: metav1.ObjectMeta{Name: "copy-" + source.Name, Namespace: ns, UID: "recreated-job-uid"}, Spec: batchv1.JobSpec{Suspend: &suspended}}
+	agent := &fabricv1alpha1.AgentIdentity{ObjectMeta: metav1.ObjectMeta{Name: "agent"}, Spec: fabricv1alpha1.AgentIdentitySpec{Access: fabricv1alpha1.AgentAccessSpec{Groups: []string{"sales"}}}}
+	r := &AgentIdentityReconciler{Client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(source, target, recreated).Build(), Scheme: scheme}
+	if err := r.ensureWorkspaceMigrationEvidence(ctx, agent, tenant); err != nil {
+		t.Fatalf("recreated suspended TTL Job rejected despite exact durable evidence: %v", err)
 	}
 }
