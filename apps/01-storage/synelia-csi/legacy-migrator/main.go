@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -41,6 +42,10 @@ func main() {
 		panic("MIGRATION_NAME must start with vixens-migrate-")
 	}
 	portalAddress := required("ISCSI_PORTAL_ADDRESS")
+	portalHost, _, err := net.SplitHostPort(portalAddress)
+	if err != nil {
+		panic(fmt.Errorf("ISCSI_PORTAL_ADDRESS must be host:port: %w", err))
+	}
 	initiators := strings.Fields(required("ALLOWED_INITIATORS"))
 	if len(initiators) == 0 {
 		panic("ALLOWED_INITIATORS must contain Kubernetes node IQNs")
@@ -72,9 +77,12 @@ func main() {
 		panic(fmt.Errorf("snapshot canonical target: %w", err))
 	}
 
-	portal, err := c.GetISCSIPortalByAddress(ctx, portalAddress)
+	portal, err := c.GetISCSIPortalByAddress(ctx, portalHost)
 	if err != nil {
 		panic(fmt.Errorf("find configured iSCSI portal: %w", err))
+	}
+	if portal == nil {
+		panic(fmt.Errorf("no configured iSCSI portal listens on %s", portalHost))
 	}
 	initiator, err := c.CreateISCSIInitiator(ctx, &client.ISCSIInitiatorCreateOptions{
 		Initiators: initiators,
