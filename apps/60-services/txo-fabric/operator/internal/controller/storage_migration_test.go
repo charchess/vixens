@@ -137,3 +137,28 @@ func TestRuntimeMigrationPrepareFailsClosed(t *testing.T) {
 		})
 	}
 }
+
+func TestRuntimeMigrationCutoverAcceptsExactDurableProofAfterJobTTL(t *testing.T) {
+	ctx := context.Background()
+	tenant := configuredAgentStorageTenant()
+	agent := testStorageIdentity(tenant.Name, "canary", StorageRetentionRetain)
+	agent.Spec.Runtime.Storage.Migration = &fabricv1alpha1.AgentRuntimeStorageMigrationBinding{TargetStorageClassName: "storage-rwo-retain", TargetClaimSuffix: "synelia", CopyJobName: "copy-canary", Cutover: true}
+	profile := testRuntimeProfile()
+	ns := tenantNamespace(tenant.Name)
+	source := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimePVCName(agent.Spec.AgentKey), Namespace: ns, UID: types.UID("source-uid")}}
+	target := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimeMigrationTargetPVCName(agent.Spec.AgentKey, "synelia"), Namespace: ns, UID: types.UID("target-uid"), Labels: map[string]string{"fabric.truxonline.io/storage-migration-source-uid": "source-uid"}}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound}, Spec: corev1.PersistentVolumeClaimSpec{StorageClassName: stringPtr("storage-rwo-retain")}}
+	proof := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "copy-canary-proof", Namespace: ns, Labels: map[string]string{"fabric.truxonline.io/storage-migration-source-uid": "source-uid", "fabric.truxonline.io/storage-migration-target-uid": "target-uid"}}, Data: map[string]string{"verified": "true"}}
+	scheme := testScheme(t)
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(source, target, proof).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	if err := r.ensureRuntimeMigrationTargetPVC(ctx, agent, tenant, profile, ns); err != nil {
+		t.Fatalf("durable exact proof should permit cutover after Job TTL: %v", err)
+	}
+	proof.Data["verified"] = "false"
+	if err := c.Update(ctx, proof); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ensureRuntimeMigrationTargetPVC(ctx, agent, tenant, profile, ns); err == nil || !strings.Contains(err.Error(), "durable proof") {
+		t.Fatalf("unverified durable proof was accepted: %v", err)
+	}
+}
