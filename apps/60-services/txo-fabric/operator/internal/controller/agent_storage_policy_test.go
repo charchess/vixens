@@ -159,3 +159,11 @@ func TestAgentStoragePolicyValidationAndLegacyFallback(t *testing.T){
 	tenant.Spec.AgentStorage=nil
 	if got,err:=desiredAgentPVCStorageClass(agent,tenant,profile);err!=nil || got!="legacy-default"{t.Fatalf("legacy tenant fallback broken: %s %v",got,err)}
 }
+
+func TestDeclaredRWOMigrationPermitsImmutableLegacySource(t *testing.T){
+	ctx:=context.Background(); tenant:=configuredAgentStorageTenant(); agent:=testStorageIdentity(tenant.Name,"migrate",StorageRetentionRetain); profile:=testRuntimeProfile(); ns:=tenantNamespace(tenant.Name)
+	agent.Spec.Runtime.Storage.Migration=&fabricv1alpha1.AgentRuntimeStorageMigrationBinding{TargetStorageClassName:"storage-rwo-retain",TargetClaimSuffix:"synelia"}
+	pvc:=&corev1.PersistentVolumeClaim{ObjectMeta:metav1.ObjectMeta{Name:runtimePVCName(agent.Spec.AgentKey),Namespace:ns,UID:types.UID("legacy")},Spec:corev1.PersistentVolumeClaimSpec{StorageClassName:stringPtr("truenas-iscsi-delete")}}
+	scheme:=testScheme(t); c:=fake.NewClientBuilder().WithScheme(scheme).WithObjects(pvc).Build(); r:=&AgentIdentityReconciler{Client:c,Scheme:scheme}
+	if err:=r.ensurePVC(ctx,agent,tenant,profile,ns);err!=nil{t.Fatalf("declared migration source rejected: %v",err)}
+}

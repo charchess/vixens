@@ -76,7 +76,10 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 		legacyRetained := tenant.Spec.AgentStorage != nil &&
 			storageRetentionPolicy(agent) == StorageRetentionRetain &&
 			actualClass == profile.Spec.Storage.StorageClassName
-		if !legacyRetained {
+		migrationSource := agent.Spec.Runtime.Storage.Migration != nil &&
+			agent.Spec.Runtime.Storage.Migration.TargetStorageClassName == storageClass &&
+			agent.Spec.Runtime.Storage.Migration.TargetClaimSuffix != ""
+		if !legacyRetained && !migrationSource {
 			return fmt.Errorf("PVC %s/%s uses immutable storageClass %q; agent storage policy requires %q", namespace, name, actualClass, storageClass)
 		}
 	}
