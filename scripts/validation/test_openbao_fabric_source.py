@@ -450,6 +450,12 @@ class PrivatePOCTests(unittest.TestCase):
     def test_exact_private_poc(self):
         self.assertEqual(poc.check_render(self.fixture()), [])
 
+    def test_only_recovered_pvc_may_disable_argo_prune_delete(self):
+        claim = yaml.safe_load((POC_FILE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/migration/synelia-target-pvc.yaml").read_text())
+        self.assertNotIn("unsafe Argo sync-option annotation in Fabric resource", poc.check_render(self.fixture() + [claim]))
+        forged = copy.deepcopy(claim); forged["metadata"]["name"] = "other"
+        self.assertTrue(poc.check_render(self.fixture() + [forged]))
+
     def test_image_proven_nonroot_identity_and_immutable_hardening(self):
         manifests = self.fixture()
         sts = next(d for d in manifests if d["kind"] == "StatefulSet")
