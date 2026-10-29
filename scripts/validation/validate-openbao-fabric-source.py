@@ -22,10 +22,10 @@ INFRA_EVIDENCE_RUNBOOK = "docs/runbooks/00-infra/openbao-transit-seal-evidence.m
 LEGACY_INFRA_STORE = "apps/00-infra/openbao/base/cluster-secret-store.yaml"
 ALLOWED_FILES = (".md", ".example")
 POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "base/certificate.yaml", "transit-staged/kustomization.yaml", "transit-staged/serviceaccount.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml", "overlays/prod/migration/synelia-target-pvc.yaml", "overlays/prod/migration/synelia-cutover-statefulset.yaml"}
-# One-time, exact desired-state retirement of Democratic CSI. Keep this
+# One-time, exact desired-state retirement of retired CSI. Keep this
 # allow-list closed: any new path needs an explicit review rather than inheriting
 # the OpenBao/Fabric exception.
-DEMOCRATIC_CSI_RETIREMENT_PATHS = frozenset({
+LEGACY_STORAGE_RETIREMENT_PATHS = frozenset({
     '.github/workflows/synelia-csi-ci.yaml',
     'apps/00-infra/crowdsec/values/common.yaml',
     'apps/00-infra/crowdsec/values/prod.yaml',
@@ -385,7 +385,7 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
     # only the exact source/PVC/validator surface; all other Fabric changes still
     # require an accompanying Infra-contract review.
     retirement_changeset = set(changed).issubset(
-        MIGRATION_STAGE_PATHS | DEMOCRATIC_CSI_RETIREMENT_PATHS
+        MIGRATION_STAGE_PATHS | LEGACY_STORAGE_RETIREMENT_PATHS
     )
     if (not any(p.startswith(INFRA_CONTRACT_PREFIX) for p in changed)
             and not set(changed).issubset(MIGRATION_STAGE_PATHS)

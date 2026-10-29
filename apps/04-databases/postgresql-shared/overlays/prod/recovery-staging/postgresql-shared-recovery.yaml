@@ -1,6 +1,6 @@
 ---
 # Restores into a distinct Cluster/PVC identity and cannot replace
-# postgresql-shared or its retained legacy Democratic CSI claim.
+# postgresql-shared or its retained legacy retired CSI claim.
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/name: postgresql-shared-recovery
     app.kubernetes.io/component: storage-migration
   annotations:
-    vixens.io/storage-migration: democratic-csi-to-synelia
+    vixens.io/storage-migration: retired-csi-to-synelia
     vixens.io/recovery-source: postgresql-shared-daily-20261023020000
 spec:
   instances: 1

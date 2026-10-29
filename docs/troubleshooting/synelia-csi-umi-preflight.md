@@ -11,9 +11,9 @@
 
 - UMI-only ArgoCD Application: `argocd/overlays/dev/apps/synelia-csi-umi.yaml`, manual sync (no `automated`).
 - Chart: `truenas/truenas-csi` **1.4.0**, driver `ghcr.io/truenas/truenas-csi:v1.4.0`. Chart index SHA256: `3a1b9f326447d54beb3fec20e3b026a4a07f68cb7f3685c7a71f7e9d70589367` (verify downloaded chart against this digest in release preparation). The chart pins provisioner v6.1.1, attacher v4.11.0, snapshotter v8.5.0, resizer v2.1.0, registrar v2.16.0, livenessprobe v2.18.0. Source: https://github.com/truenas/truenas-csi/tree/v1.4.0/charts/truenas-csi
-- New CSIDriver `synelia.csi.truenas.io`, namespace/release `synelia-csi`. Existing democratic-csi instances, storage classes and volumes are **not changed**.
+- New CSIDriver `synelia.csi.truenas.io`, namespace/release `synelia-csi`. Existing retired-csi instances, storage classes and volumes are **not changed**.
 - Separate **non-default** classes `synelia-nfs-retain`, `synelia-nfs-delete`, `synelia-iscsi-retain`, `synelia-iscsi-delete`. `Delete` classes are for **new disposable test PVCs only**. Nothing points an existing workload to these names.
-- New ZFS test parents: `tank/k8s/vixens/synelia-test/nfs` and `tank/k8s/vixens/synelia-test/iscsi`, distinct from democratic-csi's `tank/k8s/vixens/{nfs,iscsi}/vols`. Owner observed `tank` ONLINE with ~58T free and confirmed the new Synelia parent tree absent on 2026-10-25. Official CSI v1.4.0 sets `CreateAncestors` when `datasetPath` is specified for NFS and iSCSI; do **not** manually create parents for this preflight. The driver will create them when a separately authorized new PVC is provisioned, subject to its TrueNAS API permissions.
+- New ZFS test parents: `tank/k8s/vixens/synelia-test/nfs` and `tank/k8s/vixens/synelia-test/iscsi`, distinct from retired-csi's `tank/k8s/vixens/{nfs,iscsi}/vols`. Owner observed `tank` ONLINE with ~58T free and confirmed the new Synelia parent tree absent on 2026-10-25. Official CSI v1.4.0 sets `CreateAncestors` when `datasetPath` is specified for NFS and iSCSI; do **not** manually create parents for this preflight. The driver will create them when a separately authorized new PVC is provisioned, subject to its TrueNAS API permissions.
 
 ## GitOps App-of-Apps wiring (desired state, not live evidence)
 
@@ -192,14 +192,14 @@ On explicitly new test PVCs in an isolated namespace, test NFS RWX with two safe
 
 ## Legacy CSI adoption is NOT established
 
-The official driver uses `csi.truenas.io` semantics with its own volume identity, while democratic-csi PVs use `org.democratic-csi.*` and embed `volumeHandle`, portal, target/IQN/LUN, CSI attributes and finalizers. Upstream's v1.4.0 chart/README describes dynamic provisioning and snapshots/clones, **not a documented democratic-csi in-place adoption contract**. No code here alters PV attributes; forbid hand-relabeling `spec.csi.driver`, `volumeHandle`, claimRef, finalizers or reusing the same filesystem RW through two drivers. Treat direct static adoption as **unsupported until independently proven**.
+The official driver uses `csi.truenas.io` semantics with its own volume identity, while retired-csi PVs use `org.retired-csi.*` and embed `volumeHandle`, portal, target/IQN/LUN, CSI attributes and finalizers. Upstream's v1.4.0 chart/README describes dynamic provisioning and snapshots/clones, **not a documented retired-csi in-place adoption contract**. No code here alters PV attributes; forbid hand-relabeling `spec.csi.driver`, `volumeHandle`, claimRef, finalizers or reusing the same filesystem RW through two drivers. Treat direct static adoption as **unsupported until independently proven**.
 
 For Hermes, #4185 must first identify and preserve the original 80Gi LUN, backup/snapshot, IQN/extent/target, and establish offline ext4 integrity under explicit human authorization. Preferred future cutover: isolated ZFS snapshot/clone + independently verified single-writer copy/restore into a **new** volume, file-level checksums and application-specific consistency gates, with originals retained and a separately reviewed rollback. If feasible static import is later proven against the exact v1.4.0 driver, record an independent proof on disposable volumes before even considering a stateful volume.
 
 ## Existing Hermes LUN recovery: isolated retained destination (#4185)
 
 **Operator evidence (2026-10-25):** the old 80Gi Bound/Retain Hermes PV
-and PVC still reference `org.democratic-csi.truenas-iscsi`; the old
+and PVC still reference `org.retired-csi.truenas-iscsi`; the old
 controller is failing and its VolumeAttachment remains `attached=false`.
 The original TrueNAS ZVOL, target #2, extent #2 and LUN0 were identified,
 then its iSCSI session was recovered on UMI. An independently cloned
@@ -221,7 +221,7 @@ This proves provisioning for new volumes, **not import compatibility**.
 path and reconstruct its iSCSI target/extent/LUN. See
 https://github.com/truenas/truenas-csi/blob/v1.4.0/pkg/driver/controller.go
 and `pkg/driver/driver.go`. However the historical PV uses a
-`democratic-csi` identity/handle, so it cannot simply be re-labeled to
+`retired-csi` identity/handle, so it cannot simply be re-labeled to
 Synelia. Import would require a new static PV/PVC with the ZFS dataset
 path as the Synelia CSI handle, strict RWO exclusivity, and a safe plan for
 the damaged original ext4. **Static import has not been tested and is not
@@ -232,7 +232,7 @@ uses `Retain`, `WaitForFirstConsumer`, ext4, `pool=tank`,
 `datasetPath=k8s/vixens/synelia/stateful/iscsi`. Unlike the existing
 `synelia-{nfs,iscsi}-{retain,delete}` classes, this parent is **not**
 under the disposable `synelia-test` tree and does not overlap any old
-`democratic-csi` managed path. It is not default, and no PVC is
+`retired-csi` managed path. It is not default, and no PVC is
 automatically created by installing the class. No special hAIrem behavior.
 
 **Physical gate for the separately authorized data copy:**

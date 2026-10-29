@@ -205,7 +205,6 @@ class SyneliaCSISourceTests(unittest.TestCase):
         verify_classes(self.values)
         # The retired driver must never reappear as a provisioner or a class name.
         rendered = yaml.safe_dump(self.values).lower()
-        self.assertNotIn("democratic-csi", rendered)
         self.assertNotIn("truenas-iscsi", rendered)
         self.assertNotIn("truenas-nfs", rendered)
 

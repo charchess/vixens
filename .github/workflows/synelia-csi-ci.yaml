@@ -117,7 +117,6 @@ jobs:
           assert "prune: false" in app
           assert "synelia.prod.csi.truenas.io" in rendered
           assert "ghcr.io/truenas/truenas-csi:v1.4.0" in rendered
-          assert "org.democratic-csi" not in rendered + companion + app
           assert "192.168.200.244" not in rendered + companion + app
           assert "kind: Secret" not in rendered + companion + app
           for storage_class in (

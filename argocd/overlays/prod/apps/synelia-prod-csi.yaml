@@ -1,6 +1,6 @@
 ---
 # #4205: Official production Synelia CSI. It is intentionally parallel to
-# democratic-csi; it must not adopt or mutate legacy PVs.
+# retired-csi; it must not adopt or mutate legacy PVs.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

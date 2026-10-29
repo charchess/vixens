@@ -1,6 +1,6 @@
 ---
 # Official truenas/truenas-csi v1.4.0 — production parallel deployment.
-# It must never adopt democratic-csi volumes. StorageClass names follow the
+# It must never adopt retired-csi volumes. StorageClass names follow the
 # durable Synelia storage contract (no environment suffix).
 fullnameOverride: synelia-prod-csi
 driverName: synelia.prod.csi.truenas.io
