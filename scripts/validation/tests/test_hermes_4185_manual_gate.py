@@ -60,18 +60,18 @@ class HermesManualGateTests(unittest.TestCase):
                 with self.assertRaises(AssertionError):
                     safe_hermes_manual_gate(app)
 
-    def test_phase_one_does_not_switch_pvc_or_touch_legacy_claim(self):
+    def test_manual_gate_preserves_active_synelia_claim(self):
         deployment = yaml.safe_load(DEPLOYMENT.read_text(encoding="utf-8"))
         claims = [
             volume["persistentVolumeClaim"]["claimName"]
             for volume in deployment["spec"]["template"]["spec"]["volumes"]
             if volume["name"] == "data"
         ]
-        self.assertEqual(claims, ["hermes-data-truenas"])
-        legacy = yaml.safe_load(LEGACY_PVC.read_text(encoding="utf-8"))
-        self.assertEqual(legacy["metadata"]["name"], "hermes-data-truenas")
-        self.assertEqual(legacy["spec"]["storageClassName"], "storage-rwo-retain")
-        self.assertEqual(legacy["spec"]["resources"]["requests"]["storage"], "80Gi")
+        self.assertEqual(claims, ["hermes-data-synelia-recovery"])
+        active = yaml.safe_load(LEGACY_PVC.read_text(encoding="utf-8"))
+        self.assertEqual(active["metadata"]["name"], "hermes-data-synelia-recovery")
+        self.assertEqual(active["spec"]["storageClassName"], "synelia-iscsi-stateful-retain")
+        self.assertEqual(active["spec"]["resources"]["requests"]["storage"], "80Gi")
 
 
 if __name__ == "__main__":

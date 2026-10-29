@@ -121,8 +121,17 @@ def check_render(docs: list[dict], *, selected: bool = False, allow_migration: b
         errors.append("Infra/ESO/Hermes data in new Fabric component")
     for item in fabric:
         anns = item["metadata"].get("annotations", {})
-        if any(x in str(anns).lower() for x in ("prune", "delete", "force", "sync-options")):
-            errors.append("destructive/sync-option annotation in Fabric resource")
+        sync = anns.get("argocd.argoproj.io/sync-options", "")
+        protected_recovered_pvc = (
+            item.get("kind") == "PersistentVolumeClaim"
+            and item["metadata"].get("name") == "data-openbao-fabric-0-synelia"
+            and set(sync.split(",")) == {"Prune=false", "Delete=false"}
+        )
+        if sync and not protected_recovered_pvc:
+            errors.append("unsafe Argo sync-option annotation in Fabric resource")
+        other = {k: v for k, v in anns.items() if k != "argocd.argoproj.io/sync-options"}
+        if any(x in str(other).lower() for x in ("prune", "delete", "force", "sync-options")):
+            errors.append("destructive annotation in Fabric resource")
     sts = by_kind["StatefulSet"]
     spec = sts["spec"]
     pod = spec["template"]["spec"]

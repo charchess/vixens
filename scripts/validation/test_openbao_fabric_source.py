@@ -44,6 +44,14 @@ class FoundationGuardTests(unittest.TestCase):
             "kind: PersistentVolumeClaim\n",
         ))
 
+    def test_recovered_openbao_claim_is_protected_from_argo_prune_and_delete(self):
+        claim = yaml.safe_load((MODULE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/migration/synelia-target-pvc.yaml").read_text())
+        self.assertEqual(claim["kind"], "PersistentVolumeClaim")
+        self.assertEqual(claim["metadata"]["name"], "data-openbao-fabric-0-synelia")
+        self.assertEqual(claim["spec"]["storageClassName"], "storage-rwo-retain")
+        self.assertEqual(set(claim["metadata"]["annotations"]["argocd.argoproj.io/sync-options"].split(",")), {"Prune=false", "Delete=false"})
+        self.assertTrue(claim["metadata"]["labels"]["storage.truxonline.io/migration-source-uid"])
+
     def test_forged_admin_policy_or_all_tenant_wildcard_refused(self):
         f = "apps/60-services/txo-fabric/openbao-fabric/policies/tenant.hcl.example"
         self.assertTrue(guard.assert_file_safe(
@@ -441,6 +449,12 @@ class PrivatePOCTests(unittest.TestCase):
 
     def test_exact_private_poc(self):
         self.assertEqual(poc.check_render(self.fixture()), [])
+
+    def test_only_recovered_pvc_may_disable_argo_prune_delete(self):
+        claim = yaml.safe_load((POC_FILE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/migration/synelia-target-pvc.yaml").read_text())
+        self.assertNotIn("unsafe Argo sync-option annotation in Fabric resource", poc.check_render(self.fixture() + [claim]))
+        forged = copy.deepcopy(claim); forged["metadata"]["name"] = "other"
+        self.assertTrue(poc.check_render(self.fixture() + [forged]))
 
     def test_image_proven_nonroot_identity_and_immutable_hardening(self):
         manifests = self.fixture()

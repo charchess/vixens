@@ -162,3 +162,31 @@ func TestRuntimeMigrationCutoverAcceptsExactDurableProofAfterJobTTL(t *testing.T
 		t.Fatalf("unverified durable proof was accepted: %v", err)
 	}
 }
+
+func TestRuntimeMigrationLegacyRecoveryPersistsTargetIdentity(t *testing.T) {
+	ctx := context.Background()
+	tenant := configuredAgentStorageTenant()
+	agent := testStorageIdentity(tenant.Name, "legacy-recovery", StorageRetentionRetain)
+	agent.Spec.Runtime.Storage.Migration = &fabricv1alpha1.AgentRuntimeStorageMigrationBinding{TargetStorageClassName: "storage-rwo-retain", TargetClaimSuffix: "synelia", CopyJobName: "expired-copy", Cutover: true}
+	profile := testRuntimeProfile()
+	ns := tenantNamespace(tenant.Name)
+	labels := agentLabels(agent, tenant)
+	labels["fabric.truxonline.io/storage-migration-source-uid"] = "retired-source-uid"
+	target := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimeMigrationTargetPVCName(agent.Spec.AgentKey, "synelia"), Namespace: ns, UID: types.UID("canonical-target-uid"), Labels: labels}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound}, Spec: corev1.PersistentVolumeClaimSpec{StorageClassName: stringPtr("storage-rwo-retain")}}
+	scheme := testScheme(t)
+	c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(agent).WithObjects(agent, target).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	if err := r.ensureRuntimeMigrationTargetPVC(ctx, agent, tenant, profile, ns); err != nil {
+		t.Fatalf("legacy recovery rejected: %v", err)
+	}
+	var stored fabricv1alpha1.AgentIdentity
+	if err := c.Get(ctx, types.NamespacedName{Name: agent.Name}, &stored); err != nil {
+		t.Fatal(err)
+	}
+	if stored.Status.RuntimeStorageMigration == nil || stored.Status.RuntimeStorageMigration.TargetPVCUID != string(target.UID) || stored.Status.RuntimeStorageMigration.Phase != "LegacyRecovered" {
+		t.Fatalf("missing exact legacy attestation: %#v", stored.Status.RuntimeStorageMigration)
+	}
+	if err := r.ensureRuntimeMigrationTargetPVC(ctx, &stored, tenant, profile, ns); err != nil {
+		t.Fatalf("repeated recovery was not idempotent: %v", err)
+	}
+}

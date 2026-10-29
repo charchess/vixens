@@ -64,6 +64,12 @@ func (r *SharedWorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	for _, scope := range desiredWorkspaceScopes(&bundle) {
+		if migration := bundle.Spec.Workspace.Migration; migration != nil && migration.Cutover {
+			if err := r.ensureWorkspaceMigrationTargetPVC(ctx, &bundle, &profile, scope); err != nil {
+				return ctrl.Result{}, err
+			}
+			continue
+		}
 		if err := r.ensureWorkspacePVC(ctx, &bundle, &profile, scope); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -156,14 +162,18 @@ func (r *SharedWorkspaceReconciler) ensureWorkspaceMigrationTargetPVC(ctx contex
 	}
 	sourceName := workspacePVCName(scope)
 	var source corev1.PersistentVolumeClaim
-	if err := r.Get(ctx, client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: sourceName}, &source); err != nil {
-		return fmt.Errorf("read workspace migration source PVC %s/%s: %w", tenantNamespace(bundle.Name), sourceName, err)
+	sourceErr := r.Get(ctx, client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: sourceName}, &source)
+	if sourceErr != nil && !apierrors.IsNotFound(sourceErr) {
+		return fmt.Errorf("read workspace migration source PVC %s/%s: %w", tenantNamespace(bundle.Name), sourceName, sourceErr)
 	}
 	targetName := workspaceMigrationTargetPVCName(scope, migration.TargetClaimSuffix)
 	key := client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: targetName}
 	var target corev1.PersistentVolumeClaim
 	err := r.Get(ctx, key, &target)
 	if apierrors.IsNotFound(err) {
+		if sourceErr != nil {
+			return fmt.Errorf("workspace target PVC %s/%s is absent and source is retired", key.Namespace, targetName)
+		}
 		labels := workspaceLabels(bundle, scope)
 		labels["fabric.truxonline.io/storage-migration-source-uid"] = string(source.UID)
 		labels["fabric.truxonline.io/storage-migration-target"] = "true"
@@ -175,6 +185,23 @@ func (r *SharedWorkspaceReconciler) ensureWorkspaceMigrationTargetPVC(ctx contex
 	}
 	if valueOrEmpty(target.Spec.StorageClassName) != migration.TargetStorageClassName {
 		return fmt.Errorf("workspace migration target PVC %s/%s uses immutable storageClass %q, expected %q", key.Namespace, targetName, valueOrEmpty(target.Spec.StorageClassName), migration.TargetStorageClassName)
+	}
+	if migration.Cutover && apierrors.IsNotFound(sourceErr) {
+		if target.Status.Phase != corev1.ClaimBound {
+			return fmt.Errorf("finalized workspace target PVC %s/%s is not Bound", key.Namespace, targetName)
+		}
+		for label, expected := range workspaceLabels(bundle, scope) {
+			if target.Labels[label] != expected {
+				return fmt.Errorf("finalized workspace target PVC %s/%s has mismatched %s label", key.Namespace, targetName, label)
+			}
+		}
+		if target.Labels["fabric.truxonline.io/storage-migration-source-uid"] == "" {
+			return fmt.Errorf("finalized workspace target PVC %s/%s has no historical source UID", key.Namespace, targetName)
+		}
+		return nil
+	}
+	if sourceErr != nil {
+		return fmt.Errorf("read workspace migration source PVC %s/%s: %w", key.Namespace, sourceName, sourceErr)
 	}
 	if target.Labels["fabric.truxonline.io/storage-migration-source-uid"] != string(source.UID) {
 		return fmt.Errorf("workspace migration target PVC %s/%s is not bound to source PVC UID %q", key.Namespace, targetName, source.UID)

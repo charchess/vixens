@@ -133,12 +133,13 @@ type AIGatewayMigrationStatus struct {
 }
 
 // WorkspaceMigrationPhase is the durable evidence phase for one shared workspace copy.
-// +kubebuilder:validation:Enum=Pending;Succeeded;Failed;EvidenceMissing;EvidenceConflict
+// +kubebuilder:validation:Enum=Pending;Succeeded;LegacyRecovered;Failed;EvidenceMissing;EvidenceConflict
 type WorkspaceMigrationPhase string
 
 const (
 	WorkspaceMigrationPending          WorkspaceMigrationPhase = "Pending"
 	WorkspaceMigrationSucceeded        WorkspaceMigrationPhase = "Succeeded"
+	WorkspaceMigrationLegacyRecovered  WorkspaceMigrationPhase = "LegacyRecovered"
 	WorkspaceMigrationFailed           WorkspaceMigrationPhase = "Failed"
 	WorkspaceMigrationEvidenceMissing  WorkspaceMigrationPhase = "EvidenceMissing"
 	WorkspaceMigrationEvidenceConflict WorkspaceMigrationPhase = "EvidenceConflict"
@@ -146,13 +147,29 @@ const (
 
 // WorkspaceMigrationAttestationStatus persists exact UID-bound copy evidence
 // after the short-lived Kubernetes Job has expired.
+// RuntimeStorageMigrationAttestationStatus persists exact runtime copy evidence after transient Jobs expire.
+type RuntimeStorageMigrationAttestationStatus struct {
+	SourceClaimName string `json:"sourceClaimName"`
+	SourcePVCUID    string `json:"sourcePVCUID"`
+	TargetClaimName string `json:"targetClaimName"`
+	TargetPVCUID    string `json:"targetPVCUID"`
+	CopyJobName     string `json:"copyJobName,omitempty"`
+	CopyJobUID      string `json:"copyJobUID,omitempty"`
+	// +kubebuilder:validation:Enum=Succeeded;LegacyRecovered;EvidenceConflict
+	Phase string `json:"phase"`
+	// +kubebuilder:validation:Enum=Job;LegacyTargetBinding
+	EvidenceSource     string `json:"evidenceSource"`
+	VerificationResult string `json:"verificationResult"`
+}
+
 type WorkspaceMigrationAttestationStatus struct {
 	SourceClaimName    string                  `json:"sourceClaimName"`
 	SourcePVCUID       string                  `json:"sourcePVCUID"`
 	TargetClaimName    string                  `json:"targetClaimName"`
 	TargetPVCUID       string                  `json:"targetPVCUID"`
-	JobName            string                  `json:"jobName"`
-	JobUID             string                  `json:"jobUID"`
+	JobName            string                  `json:"jobName,omitempty"`
+	JobUID             string                  `json:"jobUID,omitempty"`
+	EvidenceSource     string                  `json:"evidenceSource,omitempty"`
 	Phase              WorkspaceMigrationPhase `json:"phase"`
 	VerificationResult string                  `json:"verificationResult"`
 }
