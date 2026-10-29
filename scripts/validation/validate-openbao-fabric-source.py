@@ -26,6 +26,12 @@ POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.
 # allow-list closed: any new path needs an explicit review rather than inheriting
 # the OpenBao/Fabric exception.
 LEGACY_STORAGE_RETIREMENT_PATHS = frozenset({
+    'apps/00-infra/kyverno/base/policies/policy-exception-csi-probes.yaml',
+    'apps/01-storage/nfs-storage/README.md',
+    'apps/04-databases/postgresql-shared/overlays/prod/recovery-staging/postgresql-shared-recovery.yaml',
+    'docs/adr/043-provider-neutral-storage-contracts.md',
+    'docs/reports/TXO-FABRIC-STORAGE-RESILIENCE-ROADMAP.md',
+    'docs/troubleshooting/synelia-csi-umi-preflight.md',
     '.github/workflows/synelia-csi-ci.yaml',
     'apps/60-services/txo-fabric/operator/config/profiles/workspace-shared.yaml',
     'argocd/overlays/prod/apps/synelia-prod-csi.yaml',
