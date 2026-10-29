@@ -237,6 +237,13 @@ func TestReconcileAICredentialBrokerSeparatesTenantCredentialState(t *testing.T)
 	}
 }
 
+func TestAICredentialBrokerAuthPVCUsesSyneliaCanonicalClaim(t *testing.T) {
+	const want = "txo-ai-credential-broker-auth-synelia"
+	if tenantAICredentialBrokerAuthPVCName != want {
+		t.Fatalf("credential broker OAuth state PVC=%q want canonical Synelia claim %q", tenantAICredentialBrokerAuthPVCName, want)
+	}
+}
+
 func TestParkAICredentialBrokerComputePreservesOAuthState(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)
