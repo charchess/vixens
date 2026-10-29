@@ -133,12 +133,13 @@ type AIGatewayMigrationStatus struct {
 }
 
 // WorkspaceMigrationPhase is the durable evidence phase for one shared workspace copy.
-// +kubebuilder:validation:Enum=Pending;Succeeded;Failed;EvidenceMissing;EvidenceConflict
+// +kubebuilder:validation:Enum=Pending;Succeeded;LegacyRecovered;Failed;EvidenceMissing;EvidenceConflict
 type WorkspaceMigrationPhase string
 
 const (
 	WorkspaceMigrationPending          WorkspaceMigrationPhase = "Pending"
 	WorkspaceMigrationSucceeded        WorkspaceMigrationPhase = "Succeeded"
+	WorkspaceMigrationLegacyRecovered  WorkspaceMigrationPhase = "LegacyRecovered"
 	WorkspaceMigrationFailed           WorkspaceMigrationPhase = "Failed"
 	WorkspaceMigrationEvidenceMissing  WorkspaceMigrationPhase = "EvidenceMissing"
 	WorkspaceMigrationEvidenceConflict WorkspaceMigrationPhase = "EvidenceConflict"
@@ -166,8 +167,9 @@ type WorkspaceMigrationAttestationStatus struct {
 	SourcePVCUID       string                  `json:"sourcePVCUID"`
 	TargetClaimName    string                  `json:"targetClaimName"`
 	TargetPVCUID       string                  `json:"targetPVCUID"`
-	JobName            string                  `json:"jobName"`
-	JobUID             string                  `json:"jobUID"`
+	JobName            string                  `json:"jobName,omitempty"`
+	JobUID             string                  `json:"jobUID,omitempty"`
+	EvidenceSource     string                  `json:"evidenceSource,omitempty"`
 	Phase              WorkspaceMigrationPhase `json:"phase"`
 	VerificationResult string                  `json:"verificationResult"`
 }

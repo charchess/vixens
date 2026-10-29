@@ -8,6 +8,7 @@ import (
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -20,9 +21,6 @@ func (r *AgentIdentityReconciler) ensureWorkspaceMigrationEvidence(ctx context.C
 		return nil
 	}
 	migration := workspace.Migration
-	if migration.CopyJobPrefix == "" {
-		return fmt.Errorf("TenantBundle %q requests workspace cutover without copyJobPrefix", tenant.Name)
-	}
 	_, _, err := resolvedWorkspaceVolumes(agent, tenant)
 	if err != nil {
 		return err
@@ -65,8 +63,9 @@ func (r *AgentIdentityReconciler) ensureWorkspaceMigrationEvidence(ctx context.C
 		sourceName := workspacePVCName(scope)
 		targetName := workspaceMigrationTargetPVCName(scope, migration.TargetClaimSuffix)
 		var source, target corev1.PersistentVolumeClaim
-		if err := r.Get(ctx, types.NamespacedName{Namespace: ns, Name: sourceName}, &source); err != nil {
-			return fmt.Errorf("read workspace source PVC %s/%s: %w", ns, sourceName, err)
+		sourceErr := r.Get(ctx, types.NamespacedName{Namespace: ns, Name: sourceName}, &source)
+		if sourceErr != nil && !apierrors.IsNotFound(sourceErr) {
+			return fmt.Errorf("read workspace source PVC %s/%s: %w", ns, sourceName, sourceErr)
 		}
 		if err := r.Get(ctx, types.NamespacedName{Namespace: ns, Name: targetName}, &target); err != nil {
 			return fmt.Errorf("read workspace target PVC %s/%s: %w", ns, targetName, err)
@@ -74,8 +73,24 @@ func (r *AgentIdentityReconciler) ensureWorkspaceMigrationEvidence(ctx context.C
 		if target.Status.Phase != corev1.ClaimBound {
 			return fmt.Errorf("workspace target PVC %s/%s is not Bound", ns, targetName)
 		}
-		jobName := migration.CopyJobPrefix + "-" + sourceName
-		attestation, attested := workspaceMigrationAttestation(tenant, sourceName, targetName, string(source.UID), string(target.UID), jobName)
+		sourceUID := string(source.UID)
+		if apierrors.IsNotFound(sourceErr) {
+			sourceUID = target.Labels["fabric.truxonline.io/storage-migration-source-uid"]
+		}
+		jobName := ""
+		if migration.CopyJobPrefix != "" {
+			jobName = migration.CopyJobPrefix + "-" + sourceName
+		}
+		attestation, attested := workspaceMigrationAttestation(tenant, sourceName, targetName, sourceUID, string(target.UID), jobName)
+		if apierrors.IsNotFound(sourceErr) {
+			if attested {
+				continue
+			}
+			return fmt.Errorf("workspace source PVC %s/%s is retired without durable target attestation", ns, sourceName)
+		}
+		if migration.CopyJobPrefix == "" {
+			return fmt.Errorf("TenantBundle %q requests workspace cutover without copyJobPrefix or legacy attestation", tenant.Name)
+		}
 		var job batchv1.Job
 		if err := r.Get(ctx, types.NamespacedName{Namespace: ns, Name: jobName}, &job); err != nil {
 			if attested {
@@ -107,7 +122,7 @@ func (r *AgentIdentityReconciler) ensureWorkspaceMigrationEvidence(ctx context.C
 
 func workspaceMigrationAttestation(tenant *fabricv1alpha1.TenantBundle, sourceName, targetName, sourceUID, targetUID, jobName string) (fabricv1alpha1.WorkspaceMigrationAttestationStatus, bool) {
 	for _, evidence := range tenant.Status.WorkspaceMigration {
-		if evidence.SourceClaimName == sourceName && evidence.TargetClaimName == targetName && evidence.SourcePVCUID == sourceUID && evidence.TargetPVCUID == targetUID && evidence.JobName == jobName && evidence.JobUID != "" && evidence.Phase == fabricv1alpha1.WorkspaceMigrationSucceeded && evidence.VerificationResult == "Succeeded" {
+		if evidence.SourceClaimName == sourceName && evidence.TargetClaimName == targetName && evidence.SourcePVCUID == sourceUID && evidence.TargetPVCUID == targetUID && evidence.VerificationResult == "Succeeded" && ((evidence.EvidenceSource == "LegacyTargetBinding" && evidence.Phase == fabricv1alpha1.WorkspaceMigrationLegacyRecovered) || (evidence.JobName == jobName && evidence.JobUID != "" && evidence.Phase == fabricv1alpha1.WorkspaceMigrationSucceeded)) {
 			return evidence, true
 		}
 	}

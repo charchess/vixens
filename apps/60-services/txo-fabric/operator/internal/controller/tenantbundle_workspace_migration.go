@@ -8,16 +8,50 @@ import (
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // observeWorkspaceMigrationAttestations persists only a completed Job with exact live PVC UID bindings.
 func (r *TenantBundleReconciler) observeWorkspaceMigrationAttestations(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) error {
 	w := bundle.Spec.Workspace
-	if w == nil || w.Migration == nil || w.Migration.CopyJobPrefix == "" {
+	if w == nil || w.Migration == nil {
 		return nil
 	}
 	ns := tenantNamespace(bundle.Name)
+	// A final cutover can outlive both sources and one-shot copy Jobs. Recover
+	// only deterministic Bound targets that retain their exact historical source UID.
+	if w.Migration.Cutover && w.Migration.CopyJobPrefix == "" {
+		seen := map[string]bool{}
+		for _, e := range bundle.Status.WorkspaceMigration {
+			seen[e.SourceClaimName] = true
+		}
+		for _, scope := range desiredWorkspaceScopes(bundle) {
+			sourceName := workspacePVCName(scope)
+			targetName := workspaceMigrationTargetPVCName(scope, w.Migration.TargetClaimSuffix)
+			if seen[sourceName] {
+				continue
+			}
+			var source, target corev1.PersistentVolumeClaim
+			sourceErr := r.Get(ctx, client.ObjectKey{Namespace: ns, Name: sourceName}, &source)
+			if !apierrors.IsNotFound(sourceErr) || r.Get(ctx, client.ObjectKey{Namespace: ns, Name: targetName}, &target) != nil || target.Status.Phase != corev1.ClaimBound || valueOrEmpty(target.Spec.StorageClassName) != w.Migration.TargetStorageClassName {
+				continue
+			}
+			for label, expected := range workspaceLabels(bundle, scope) {
+				if target.Labels[label] != expected {
+					goto nextScope
+				}
+			}
+			if uid := target.Labels["fabric.truxonline.io/storage-migration-source-uid"]; uid != "" {
+				bundle.Status.WorkspaceMigration = append(bundle.Status.WorkspaceMigration, fabricv1alpha1.WorkspaceMigrationAttestationStatus{SourceClaimName: sourceName, SourcePVCUID: uid, TargetClaimName: targetName, TargetPVCUID: string(target.UID), Phase: fabricv1alpha1.WorkspaceMigrationLegacyRecovered, EvidenceSource: "LegacyTargetBinding", VerificationResult: "Succeeded"})
+			}
+		nextScope:
+		}
+		return nil
+	}
+	if w.Migration.CopyJobPrefix == "" {
+		return nil
+	}
 	var jobs batchv1.JobList
 	if err := r.List(ctx, &jobs, client.InNamespace(ns)); err != nil {
 		return fmt.Errorf("list workspace copy Jobs: %w", err)

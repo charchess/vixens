@@ -1020,6 +1020,8 @@ spec:
                   shared workspace copies.
                 items:
                   properties:
+                    evidenceSource:
+                      type: string
                     jobName:
                       type: string
                     jobUID:
@@ -1030,6 +1032,7 @@ spec:
                       enum:
                       - Pending
                       - Succeeded
+                      - LegacyRecovered
                       - Failed
                       - EvidenceMissing
                       - EvidenceConflict
@@ -1045,8 +1048,6 @@ spec:
                     verificationResult:
                       type: string
                   required:
-                  - jobName
-                  - jobUID
                   - phase
                   - sourceClaimName
                   - sourcePVCUID
