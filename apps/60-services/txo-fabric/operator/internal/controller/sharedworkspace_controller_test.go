@@ -321,3 +321,21 @@ func TestWorkspaceCutoverAcceptsAttestationWhenTTLJobIsRecreatedSuspended(t *tes
 		t.Fatalf("recreated suspended TTL Job rejected despite exact durable evidence: %v", err)
 	}
 }
+
+func TestWorkspaceCutoverAcceptsEmptyReplacementWithExactAttestation(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := workspaceTestTenant()
+	tenant.Spec.Workspace.Organization = fabricv1alpha1.WorkspaceScopeSpec{}
+	tenant.Spec.Workspace.Groups = []fabricv1alpha1.NamedWorkspaceScopeSpec{{Name: "sales", Reference: true}}
+	tenant.Spec.Workspace.Migration = &fabricv1alpha1.TenantWorkspaceMigrationBinding{TargetStorageClassName: "storage-rwx-retain", TargetClaimSuffix: "synelia", CopyJobPrefix: "copy", Cutover: true}
+	ns := tenantNamespace(tenant.Name)
+	source := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "ws-group-sales-ref", Namespace: ns, UID: "replacement-source-uid"}}
+	target := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "ws-group-sales-ref-synelia", Namespace: ns, UID: "target-uid", Labels: map[string]string{"fabric.truxonline.io/storage-migration-source-uid": "historical-source-uid"}}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound}}
+	tenant.Status.WorkspaceMigration = []fabricv1alpha1.WorkspaceMigrationAttestationStatus{{SourceClaimName: source.Name, SourcePVCUID: "historical-source-uid", TargetClaimName: target.Name, TargetPVCUID: string(target.UID), JobName: "copy-" + source.Name, JobUID: "expired-job-uid", Phase: fabricv1alpha1.WorkspaceMigrationSucceeded, VerificationResult: "Succeeded"}}
+	agent := &fabricv1alpha1.AgentIdentity{ObjectMeta: metav1.ObjectMeta{Name: "agent"}, Spec: fabricv1alpha1.AgentIdentitySpec{Access: fabricv1alpha1.AgentAccessSpec{Groups: []string{"sales"}}}}
+	r := &AgentIdentityReconciler{Client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(source, target).Build(), Scheme: scheme}
+	if err := r.ensureWorkspaceMigrationEvidence(ctx, agent, tenant); err != nil {
+		t.Fatalf("empty replacement with exact durable evidence rejected: %v", err)
+	}
+}
