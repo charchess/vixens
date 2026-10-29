@@ -40,7 +40,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: openfga
-          image: docker.io/openfga/openfga@sha256:9cf9a20af32a40434cd3a788c429879439ee9ea9abf65c9c200ee17cd43f769e
+          image: docker.io/openfga/openfga@sha256:b852071314f1fda1194d341a6ebac0a4f619b3cd87a6626d2ccc7048af4ec671
           imagePullPolicy: IfNotPresent
           args: ["run"]
           ports:

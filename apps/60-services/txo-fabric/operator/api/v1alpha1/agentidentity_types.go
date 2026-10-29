@@ -203,6 +203,10 @@ type AgentIdentityStatus struct {
 	// +optional
 	Memory MemoryBindingStatus `json:"memory,omitempty"`
 
+	// RuntimeStorageMigration retains immutable UID-bound evidence after a runtime storage cutover.
+	// +optional
+	RuntimeStorageMigration *RuntimeStorageMigrationAttestationStatus `json:"runtimeStorageMigration,omitempty"`
+
 	// +optional
 	// +listType=map
 	// +listMapKey=type

@@ -464,6 +464,44 @@ spec:
                       Hermes toolset policy.
                     type: string
                 type: object
+              runtimeStorageMigration:
+                description: RuntimeStorageMigration retains immutable UID-bound evidence
+                  after a runtime storage cutover.
+                properties:
+                  copyJobName:
+                    type: string
+                  copyJobUID:
+                    type: string
+                  evidenceSource:
+                    enum:
+                    - Job
+                    - LegacyTargetBinding
+                    type: string
+                  phase:
+                    enum:
+                    - Succeeded
+                    - LegacyRecovered
+                    - EvidenceConflict
+                    type: string
+                  sourceClaimName:
+                    type: string
+                  sourcePVCUID:
+                    type: string
+                  targetClaimName:
+                    type: string
+                  targetPVCUID:
+                    type: string
+                  verificationResult:
+                    type: string
+                required:
+                - evidenceSource
+                - phase
+                - sourceClaimName
+                - sourcePVCUID
+                - targetClaimName
+                - targetPVCUID
+                - verificationResult
+                type: object
             type: object
         type: object
     served: true

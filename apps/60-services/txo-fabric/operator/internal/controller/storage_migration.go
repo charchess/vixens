@@ -51,14 +51,18 @@ func (r *AgentIdentityReconciler) ensureRuntimeMigrationTargetPVC(ctx context.Co
 	}
 
 	var source corev1.PersistentVolumeClaim
-	if err := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: sourceName}, &source); err != nil {
-		return fmt.Errorf("read migration source PVC %s/%s: %w", namespace, sourceName, err)
+	sourceErr := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: sourceName}, &source)
+	if sourceErr != nil && !apierrors.IsNotFound(sourceErr) {
+		return fmt.Errorf("read migration source PVC %s/%s: %w", namespace, sourceName, sourceErr)
 	}
 
 	key := types.NamespacedName{Namespace: namespace, Name: targetName}
 	var target corev1.PersistentVolumeClaim
 	err := r.Get(ctx, key, &target)
 	if apierrors.IsNotFound(err) {
+		if sourceErr != nil {
+			return fmt.Errorf("migration target PVC %s/%s is absent and source PVC %s/%s is retired", namespace, targetName, namespace, sourceName)
+		}
 		labels := agentLabels(agent, tenant)
 		labels[LabelStorageRetention] = storageRetentionPolicy(agent)
 		labels["fabric.truxonline.io/storage-migration-source-uid"] = string(source.UID)
@@ -86,6 +90,24 @@ func (r *AgentIdentityReconciler) ensureRuntimeMigrationTargetPVC(ctx context.Co
 	}
 	if valueOrEmpty(target.Spec.StorageClassName) != migration.TargetStorageClassName {
 		return fmt.Errorf("migration target PVC %s/%s uses immutable storageClass %q, expected %q", namespace, targetName, valueOrEmpty(target.Spec.StorageClassName), migration.TargetStorageClassName)
+	}
+	if migration.Cutover && apierrors.IsNotFound(sourceErr) {
+		if target.Status.Phase != corev1.ClaimBound {
+			return fmt.Errorf("finalized migration target PVC %s/%s is not Bound", namespace, targetName)
+		}
+		for key, expected := range agentLabels(agent, tenant) {
+			if target.Labels[key] != expected {
+				return fmt.Errorf("finalized migration target PVC %s/%s has mismatched %s label", namespace, targetName, key)
+			}
+		}
+		legacyUID := target.Labels["fabric.truxonline.io/storage-migration-source-uid"]
+		if legacyUID == "" {
+			return fmt.Errorf("finalized migration target PVC %s/%s has no historical source UID", namespace, targetName)
+		}
+		return r.recordRuntimeMigrationAttestation(ctx, agent, fabricv1alpha1.RuntimeStorageMigrationAttestationStatus{SourceClaimName: sourceName, SourcePVCUID: legacyUID, TargetClaimName: targetName, TargetPVCUID: string(target.UID), CopyJobName: migration.CopyJobName, Phase: "LegacyRecovered", EvidenceSource: "LegacyTargetBinding", VerificationResult: "Succeeded"})
+	}
+	if sourceErr != nil {
+		return fmt.Errorf("read migration source PVC %s/%s: %w", namespace, sourceName, sourceErr)
 	}
 	if target.Labels["fabric.truxonline.io/storage-migration-source-uid"] != string(source.UID) {
 		return fmt.Errorf("migration target PVC %s/%s is not bound to source PVC UID %q", namespace, targetName, source.UID)
@@ -116,7 +138,7 @@ func (r *AgentIdentityReconciler) ensureRuntimeMigrationTargetPVC(ctx context.Co
 		if labels["fabric.truxonline.io/storage-migration-source-uid"] != string(source.UID) || labels["fabric.truxonline.io/storage-migration-target-uid"] != string(target.UID) || proof.Data["verified"] != "true" {
 			return fmt.Errorf("storage migration durable proof %s/%s is not an exact verified source/target UID attestation", namespace, proofName)
 		}
-		return nil
+		return r.recordRuntimeMigrationAttestation(ctx, agent, fabricv1alpha1.RuntimeStorageMigrationAttestationStatus{SourceClaimName: sourceName, SourcePVCUID: string(source.UID), TargetClaimName: targetName, TargetPVCUID: string(target.UID), CopyJobName: migration.CopyJobName, Phase: "Succeeded", EvidenceSource: "Job", VerificationResult: "Succeeded"})
 	}
 	if err != nil {
 		return fmt.Errorf("read storage migration copy Job %s/%s: %w", namespace, migration.CopyJobName, err)
@@ -127,8 +149,28 @@ func (r *AgentIdentityReconciler) ensureRuntimeMigrationTargetPVC(ctx context.Co
 	}
 	for _, condition := range job.Status.Conditions {
 		if condition.Type == batchv1.JobComplete && condition.Status == corev1.ConditionTrue {
-			return nil
+			return r.recordRuntimeMigrationAttestation(ctx, agent, fabricv1alpha1.RuntimeStorageMigrationAttestationStatus{SourceClaimName: sourceName, SourcePVCUID: string(source.UID), TargetClaimName: targetName, TargetPVCUID: string(target.UID), CopyJobName: migration.CopyJobName, CopyJobUID: string(job.UID), Phase: "Succeeded", EvidenceSource: "Job", VerificationResult: "Succeeded"})
 		}
 	}
 	return fmt.Errorf("storage migration copy Job %s/%s has not completed successfully", namespace, job.Name)
+}
+
+func (r *AgentIdentityReconciler) recordRuntimeMigrationAttestation(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, want fabricv1alpha1.RuntimeStorageMigrationAttestationStatus) error {
+	got := agent.Status.RuntimeStorageMigration
+	if got != nil {
+		if got.TargetClaimName != want.TargetClaimName || got.TargetPVCUID != want.TargetPVCUID || got.SourceClaimName != want.SourceClaimName || got.SourcePVCUID != want.SourcePVCUID {
+			return fmt.Errorf("runtime storage migration attestation conflicts with immutable active volume identity")
+		}
+		return nil
+	}
+	agent.Status.RuntimeStorageMigration = &want
+	if err := r.Status().Update(ctx, agent); err != nil {
+		// Direct unit helpers intentionally use detached objects; a real reconcile
+		// always fetched AgentIdentity first, so other errors remain fatal.
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
