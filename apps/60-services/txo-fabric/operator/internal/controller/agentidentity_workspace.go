@@ -73,16 +73,25 @@ func (r *AgentIdentityReconciler) ensureWorkspaceMigrationEvidence(ctx context.C
 		if target.Status.Phase != corev1.ClaimBound {
 			return fmt.Errorf("workspace target PVC %s/%s is not Bound", ns, targetName)
 		}
+		// A source that has no PV is an empty controller-created replacement, not
+		// migration evidence. It is retired only when the Bound target carries a
+		// different immutable historical source UID; live Bound sources remain
+		// subject to exact UID proof.
+		retiredSource := apierrors.IsNotFound(sourceErr)
+		historicalSourceUID := target.Labels["fabric.truxonline.io/storage-migration-source-uid"]
+		if !retiredSource && source.Spec.VolumeName == "" && historicalSourceUID != "" && historicalSourceUID != string(source.UID) {
+			retiredSource = true
+		}
 		sourceUID := string(source.UID)
-		if apierrors.IsNotFound(sourceErr) {
-			sourceUID = target.Labels["fabric.truxonline.io/storage-migration-source-uid"]
+		if retiredSource {
+			sourceUID = historicalSourceUID
 		}
 		jobName := ""
 		if migration.CopyJobPrefix != "" {
 			jobName = migration.CopyJobPrefix + "-" + sourceName
 		}
 		attestation, attested := workspaceMigrationAttestation(tenant, sourceName, targetName, sourceUID, string(target.UID), jobName)
-		if apierrors.IsNotFound(sourceErr) {
+		if retiredSource {
 			if attested {
 				continue
 			}
