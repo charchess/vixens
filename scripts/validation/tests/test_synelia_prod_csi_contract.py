@@ -18,6 +18,8 @@ EXPECTED = {
     "storage-rwx-delete",
     "storage-rwo-retain",
     "storage-rwo-delete",
+    "storage-rwo-xfs-retain",
+    "storage-rwo-xfs-delete",
 }
 
 
@@ -36,7 +38,8 @@ class SyneliaProdCSIContractTest(unittest.TestCase):
             self.assertNotIn("prod-staging", parent)
             if name.startswith("storage-rwo-"):
                 self.assertEqual(item["parameters"]["protocol"], "iscsi")
-                self.assertEqual(item["parameters"]["fsType"], "ext4")
+                expected_fs = "xfs" if name.startswith("storage-rwo-xfs-") else "ext4"
+                self.assertEqual(item["parameters"]["fsType"], expected_fs)
                 self.assertEqual(item["volumeBindingMode"], "WaitForFirstConsumer")
                 self.assertEqual(parent, "k8s/vixens/iscsi")
             else:
