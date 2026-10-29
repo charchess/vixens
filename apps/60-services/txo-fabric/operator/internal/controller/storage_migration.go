@@ -91,6 +91,13 @@ func (r *AgentIdentityReconciler) ensureRuntimeMigrationTargetPVC(ctx context.Co
 	if err != nil {
 		return err
 	}
+	// A controller-created replacement claim can appear without a phase update
+	// while the cache catches up. It has no PV; accept it only where the Bound
+	// target retains a different historical source UID.
+	if !retiredSource && sourceErr == nil && source.Spec.VolumeName == "" && target.Status.Phase == corev1.ClaimBound {
+		legacyUID := target.Labels["fabric.truxonline.io/storage-migration-source-uid"]
+		retiredSource = legacyUID != "" && legacyUID != string(source.UID)
+	}
 	if valueOrEmpty(target.Spec.StorageClassName) != migration.TargetStorageClassName {
 		return fmt.Errorf("migration target PVC %s/%s uses immutable storageClass %q, expected %q", namespace, targetName, valueOrEmpty(target.Spec.StorageClassName), migration.TargetStorageClassName)
 	}

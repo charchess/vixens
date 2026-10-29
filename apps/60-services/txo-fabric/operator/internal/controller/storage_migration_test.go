@@ -217,3 +217,22 @@ func TestRuntimeMigrationPendingHistoricalSourceRecoversCanonicalTarget(t *testi
 		t.Fatalf("Pending artifact was mutated: %#v %v", source, err)
 	}
 }
+
+func TestRuntimeMigrationEmptyReplacementSourceRecoversCanonicalTarget(t *testing.T) {
+	ctx := context.Background()
+	tenant := configuredAgentStorageTenant()
+	agent := testStorageIdentity(tenant.Name, "empty-replacement", StorageRetentionRetain)
+	agent.Spec.Runtime.Storage.Migration = &fabricv1alpha1.AgentRuntimeStorageMigrationBinding{TargetStorageClassName: "storage-rwo-retain", TargetClaimSuffix: "synelia", CopyJobName: "expired-copy", Cutover: true}
+	profile := testRuntimeProfile()
+	ns := tenantNamespace(tenant.Name)
+	labels := agentLabels(agent, tenant)
+	labels["fabric.truxonline.io/storage-migration-source-uid"] = "historical-source-uid"
+	target := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimeMigrationTargetPVCName(agent.Spec.AgentKey, "synelia"), Namespace: ns, UID: types.UID("canonical-target-uid"), Labels: labels}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound}, Spec: corev1.PersistentVolumeClaimSpec{StorageClassName: stringPtr("storage-rwo-retain")}}
+	empty := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimePVCName(agent.Spec.AgentKey), Namespace: ns, UID: types.UID("replacement-source-uid")}}
+	scheme := testScheme(t)
+	c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(agent).WithObjects(agent, target, empty).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	if err := r.ensureRuntimeMigrationTargetPVC(ctx, agent, tenant, profile, ns); err != nil {
+		t.Fatalf("empty replacement source rejected canonical target: %v", err)
+	}
+}
