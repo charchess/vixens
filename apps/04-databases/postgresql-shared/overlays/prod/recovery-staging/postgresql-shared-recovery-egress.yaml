@@ -1,0 +1,43 @@
+---
+# Recovery is a distinct CNPG cluster identity. Restrict its only external
+# dependency to the object-store endpoint and DNS needed to resolve it.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: postgresql-shared-recovery-objectstore-egress
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: postgresql-shared-recovery
+    app.kubernetes.io/component: storage-migration
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: postgresql-shared-recovery
+  ingress:
+    # CloudNativePG operator reads the instance TLS status endpoint.
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: cnpg-system
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    # The object store resolves to the private NAS address. Use its explicit
+    # /32 because Cilium classifies this RFC1918 destination outside FQDN egress.
+    - toCIDR:
+        - 192.168.111.69/32
+      toPorts:
+        - ports:
+            - port: "30157"
+              protocol: TCP

@@ -17,6 +17,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only until a UID-bound completed copy Job proves the detached block-copy.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -45,6 +49,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only until a UID-bound completed copy Job proves the detached block-copy.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -73,6 +81,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -101,6 +113,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -129,6 +145,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -157,6 +177,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -185,6 +209,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -213,6 +241,13 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
+        # Offline TrueNAS copy verified block-for-block before this GitOps cutover.
+        copyJobName: hairem-agt00008-offline-copy-proof
+        cutover: true
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -241,6 +276,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -269,6 +308,13 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
+        # Offline TrueNAS copy verified block-for-block before this GitOps cutover.
+        copyJobName: hairem-agt00010-offline-copy-proof
+        cutover: true
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -297,6 +343,13 @@ spec:
     profileRef: hermes-edge
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
+        # Offline TrueNAS copy verified block-for-block before this GitOps cutover.
+        copyJobName: hairem-agt00011-offline-copy-proof
+        cutover: true
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -325,6 +378,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.
@@ -353,6 +410,10 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
   access:
     # Explicit chat intent for the existing pinned Authentik IAM group,
     # NOT an OpenFGA tuple nor a workspace membership assertion.

@@ -17,6 +17,14 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
+        # Exact UID-bound Job completed after source→target rsync and dry-run
+        # verification. Cutover restarts only Sam on the canonical retained claim.
+        copyJobName: indiba-rwo-copy-hermes-usr000001-agt00001-data
+        cutover: true
   access:
     userRef: edfoley
     groups:
@@ -41,6 +49,14 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
+        # Exact UID-bound Job completed after source→target rsync and dry-run
+        # verification; source PVC and snapshots stay retained for rollback.
+        copyJobName: indiba-rwo-copy-hermes-usr000001-agt00002-data
+        cutover: true
   access:
     userRef: edfoley
     groups:
@@ -65,6 +81,14 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
+        # Exact UID-bound Job completed after source→target rsync and dry-run
+        # verification; source PVC and snapshots stay retained for rollback.
+        copyJobName: indiba-rwo-copy-hermes-usr000001-agt00003-data
+        cutover: true
   access:
     userRef: edfoley
     groups:
@@ -89,6 +113,14 @@ spec:
     profileRef: hermes-default
     storage:
       retentionPolicy: Retain
+      # Prepare only: creates a distinct canonical target; source remains mounted.
+      migration:
+        targetStorageClassName: storage-rwo-retain
+        targetClaimSuffix: synelia
+        # Exact UID-bound Job completed after source→target rsync and dry-run
+        # verification; source PVC and snapshots stay retained for rollback.
+        copyJobName: indiba-rwo-copy-hermes-usr000001-agt00004-data
+        cutover: true
   access:
     userRef: edfoley
     groups:

@@ -265,6 +265,12 @@ type TenantBundleStatus struct {
 	// +listMapKey=attempt
 	AIGatewayMigration []AIGatewayMigrationStatus `json:"aiGatewayMigration,omitempty"`
 
+	// WorkspaceMigration retains UID-bound evidence for completed shared workspace copies.
+	// +optional
+	// +listType=map
+	// +listMapKey=sourceClaimName
+	WorkspaceMigration []WorkspaceMigrationAttestationStatus `json:"workspaceMigration,omitempty"`
+
 	// +optional
 	AICredentialBroker *ComponentStatus `json:"aiCredentialBroker,omitempty"`
 

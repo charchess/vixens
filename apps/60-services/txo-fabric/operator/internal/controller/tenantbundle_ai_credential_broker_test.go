@@ -30,7 +30,7 @@ func aiCredentialBrokerTestProfile() *fabricv1alpha1.AICredentialBrokerProfile {
 			SizingLabel:       "V-small",
 			AuthStorage: fabricv1alpha1.AICredentialBrokerAuthStorageSpec{
 				Size:             resource.MustParse("1Gi"),
-				StorageClassName: "truenas-iscsi-delete",
+				StorageClassName: "storage-rwo-delete",
 			},
 			UsageQueueRetentionSeconds: 900,
 		},
@@ -101,7 +101,7 @@ func TestReconcileAICredentialBrokerCreatesTenantScopedCPAWithoutProviderSecrets
 	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: tenantAICredentialBrokerAuthPVCName}, &pvc); err != nil {
 		t.Fatal(err)
 	}
-	if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != "truenas-iscsi-delete" {
+	if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != "storage-rwo-delete" {
 		t.Fatalf("auth PVC storage class=%v", pvc.Spec.StorageClassName)
 	}
 	if got := pvc.Spec.Resources.Requests[corev1.ResourceStorage]; got.Cmp(resource.MustParse("1Gi")) != 0 {
@@ -234,6 +234,13 @@ func TestReconcileAICredentialBrokerSeparatesTenantCredentialState(t *testing.T)
 	}
 	if hairemPVC.Namespace == indibaPVC.Namespace {
 		t.Fatal("tenant OAuth state PVCs are not namespace-isolated")
+	}
+}
+
+func TestAICredentialBrokerAuthPVCUsesSyneliaCanonicalClaim(t *testing.T) {
+	const want = "txo-ai-credential-broker-auth-synelia"
+	if tenantAICredentialBrokerAuthPVCName != want {
+		t.Fatalf("credential broker OAuth state PVC=%q want canonical Synelia claim %q", tenantAICredentialBrokerAuthPVCName, want)
 	}
 }
 

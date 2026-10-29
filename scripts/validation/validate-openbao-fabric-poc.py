@@ -27,6 +27,7 @@ TLS_NAMES = {
     ("Issuer", "openbao-fabric-ca-issuer"),
     ("Certificate", "openbao-fabric-tls"),
 }
+MIGRATION_PVC = ("PersistentVolumeClaim", "data-openbao-fabric-0-synelia")
 SERVICE_DNS = [
     "openbao-fabric",
     "openbao-fabric.txo-fabric-system",
@@ -51,12 +52,12 @@ def parse_yaml(path: pathlib.Path) -> list[dict]:
     return docs
 
 
-def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
+def check_render(docs: list[dict], *, selected: bool = False, allow_migration: bool = False) -> list[str]:
     errors: list[str] = []
     # The base component must contain only these eight sources. A historic
     # Infra ExternalSecret elsewhere in TXO compositions is not a new
     # Fabric consumer; source-only diff guard separately forbids new Infra use.
-    expected = FABRIC_NAMES | TLS_NAMES
+    expected = FABRIC_NAMES | TLS_NAMES | ({MIGRATION_PVC} if allow_migration else set())
     fabric = [
         d for d in docs if (
             d.get("metadata", {}).get("labels", {}).get("app.kubernetes.io/name") == "openbao-fabric"
@@ -69,6 +70,14 @@ def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
     if not selected and len(docs) != len(expected):
         return ["unexpected additional client/Secret/resource in private base/overlay"]
 
+    migration = next((d for d in fabric if (d.get("kind"), d.get("metadata", {}).get("name")) == MIGRATION_PVC), None)
+    if migration is not None:
+        spec = migration.get("spec", {})
+        if (spec.get("accessModes") != ["ReadWriteOnce"] or
+                spec.get("storageClassName") != "storage-rwo-retain" or
+                spec.get("resources", {}).get("requests", {}).get("storage") != "5Gi" or
+                spec.get("volumeName") or spec.get("dataSource") or spec.get("dataSourceRef")):
+            errors.append("migration PVC must be a fresh 5Gi RWO storage-rwo-retain target")
     if any(d["metadata"].get("namespace") != "txo-fabric-system" for d in fabric):
         errors.append("wrong Fabric namespace")
     if any(not all(d["metadata"].get("labels", {}).get(k) == v for k, v in LABELS.items()) for d in fabric):
@@ -112,26 +121,44 @@ def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
         errors.append("Infra/ESO/Hermes data in new Fabric component")
     for item in fabric:
         anns = item["metadata"].get("annotations", {})
-        if any(x in str(anns).lower() for x in ("prune", "delete", "force", "sync-options")):
-            errors.append("destructive/sync-option annotation in Fabric resource")
+        sync = anns.get("argocd.argoproj.io/sync-options", "")
+        protected_recovered_pvc = (
+            item.get("kind") == "PersistentVolumeClaim"
+            and item["metadata"].get("name") == "data-openbao-fabric-0-synelia"
+            and set(sync.split(",")) == {"Prune=false", "Delete=false"}
+        )
+        if sync and not protected_recovered_pvc:
+            errors.append("unsafe Argo sync-option annotation in Fabric resource")
+        other = {k: v for k, v in anns.items() if k != "argocd.argoproj.io/sync-options"}
+        if any(x in str(other).lower() for x in ("prune", "delete", "force", "sync-options")):
+            errors.append("destructive annotation in Fabric resource")
     sts = by_kind["StatefulSet"]
     spec = sts["spec"]
     pod = spec["template"]["spec"]
     match = spec["selector"]["matchLabels"]
-    if spec.get("replicas") != 1 or spec.get("serviceName") != "openbao-fabric":
-        errors.append("exactly one replica and private Service required")
+    volumes_by_name = {volume.get("name"): volume for volume in pod.get("volumes", [])}
+    direct_synelia_cutover = migration is not None and not spec.get("volumeClaimTemplates") and (
+        volumes_by_name.get("data", {}).get("persistentVolumeClaim", {}).get("claimName")
+        == "data-openbao-fabric-0-synelia"
+    )
+    expected_replicas = 1 if direct_synelia_cutover or migration is None else 0
+    if spec.get("replicas") != expected_replicas or spec.get("serviceName") != "openbao-fabric":
+        errors.append("OpenBao replicas must match the explicit migration phase and private Service")
     if spec.get("persistentVolumeClaimRetentionPolicy") != {"whenDeleted": "Retain", "whenScaled": "Retain"}:
         errors.append("PVC template Retain lifecycle required")
     claims = spec.get("volumeClaimTemplates", [])
-    if len(claims) != 1:
+    if direct_synelia_cutover:
+        if claims or volumes_by_name.get("data") != {"name": "data", "persistentVolumeClaim": {"claimName": "data-openbao-fabric-0-synelia"}}:
+            errors.append("cutover must use only the copied Synelia PVC as data")
+    elif len(claims) != 1:
         errors.append("exactly one claim template required")
     else:
         c = claims[0]
         if (c["metadata"].get("name") != "data" or
-            c["spec"].get("storageClassName") != "truenas-iscsi-retain" or
+            c["spec"].get("storageClassName") != "storage-rwo-retain" or
             c["spec"].get("accessModes") != ["ReadWriteOnce"] or
             c["spec"].get("resources", {}).get("requests", {}).get("storage") != "5Gi"):
-            errors.append("PVC must be 5Gi RWO truenas-iscsi-retain")
+            errors.append("PVC must be 5Gi RWO storage-rwo-retain")
     if not all(spec["template"]["metadata"]["labels"].get(k) == v for k, v in match.items()):
         errors.append("StatefulSet pod selector mismatch")
     if pod.get("automountServiceAccountToken") is not False or "serviceAccountName" in pod:
@@ -200,12 +227,15 @@ def check_render(docs: list[dict], *, selected: bool = False) -> list[str]:
         } or not all(m.get("readOnly") is True for m in c.get("volumeMounts", [])
                      if m.get("name") in {"config", "tls"}):
             errors.append("wrong Raft/config/scratch/TLS volume mounts or not read-only")
-    volumes = {vol.get("name"): vol for vol in pod.get("volumes", [])}
-    if volumes != {
+    volumes = volumes_by_name
+    expected_volumes = {
         "config": {"name": "config", "configMap": {"name": "openbao-fabric-config"}},
         "scratch": {"name": "scratch", "emptyDir": {"sizeLimit": "32Mi"}},
         "tls": {"name": "tls", "secret": {"secretName": "openbao-fabric-tls", "defaultMode": 0o440}},
-    }:
+    }
+    if direct_synelia_cutover:
+        expected_volumes["data"] = {"name": "data", "persistentVolumeClaim": {"claimName": "data-openbao-fabric-0-synelia"}}
+    if volumes != expected_volumes:
         errors.append("only the exact read-only cert-manager TLS Secret reference is allowed")
 
     service = by_kind["Service"]["spec"]
@@ -277,7 +307,10 @@ def main() -> int:
     for name in ("base", "dev", "prod", "txo-dev", "txo-prod"):
         try:
             docs = parse_yaml(getattr(args, name.replace("-", "_")))
-            errors.extend(f"{name}: {e}" for e in check_render(docs, selected=name.startswith("txo-")))
+            errors.extend(f"{name}: {e}" for e in check_render(
+                docs, selected=name.startswith("txo-"),
+                allow_migration=name in {"prod", "txo-prod"},
+            ))
             if name == "txo-prod":
                 errors.extend(f"{name}: {e}" for e in check_prod_gates(docs))
         except (OSError, ValueError, yaml.YAMLError, TypeError, KeyError) as exc:

@@ -18,7 +18,7 @@ make a future provider change appear to require application changes.
 Issue #3959 established the required platform direction: upper layers consume a
 small explicit catalogue of capabilities rather than NAS paths, protocols, provider
 names, or historical CSI identities. The official CSI driver is now physically
-validated in parallel with `democratic-csi`; existing PVs retain their original CSI
+validated in parallel with `retired-csi`; existing PVs retain their original CSI
 identity and cannot be adopted by changing a class name.
 
 ## Decision
@@ -32,11 +32,19 @@ platform can satisfy them:
 | `storage-rwo-delete` | single-writer RWO | `Delete` |
 | `storage-rwx-retain` | shared RWX | `Retain` |
 | `storage-rwx-delete` | shared RWX | `Delete` |
+| `storage-rwo-xfs-retain` | single-writer RWO, XFS filesystem | `Retain` |
+| `storage-rwo-xfs-delete` | single-writer RWO, XFS filesystem | `Delete` |
+
+The XFS pair is a deliberate filesystem-qualified RWO extension, not a replacement
+for the ext4 default RWO contracts. It remains published because active consumers
+(Home Assistant, Trilium, AdGuard Home, Actual Budget, mail storage, Music Assistant
+and Frigate) explicitly request it. A later removal requires migration of every
+consumer; it must not be silently aliased to ext4.
 
 For the current official TrueNAS CSI implementation, `storage-rwo-*` is realised
 through iSCSI with `WaitForFirstConsumer`; `storage-rwx-*` is realised through NFS
-with immediate binding. Those are implementation bindings, not application-facing
-names. All four classes must remain non-default, support expansion only when the
+with immediate binding. The XFS pair is also iSCSI with `WaitForFirstConsumer`.
+Those are implementation bindings, not application-facing names. All six classes must remain non-default, support expansion only when the
 underlying driver configuration does, and use isolated driver-managed parents.
 
 `Retain` is the contract for durable state. `Delete` is limited to explicitly
@@ -45,7 +53,7 @@ reprovisionable/disposable data. A workload must not encode `synelia`, `truenas`
 
 No existing PV, PVC, CSI `volumeHandle`, volume attachment, zvol, dataset, target,
 extent, NFS export, or workload is renamed, rebound, adopted, or migrated by this
-decision. Historical `democratic-csi` and Synelia staging classes remain for the
+decision. Historical `retired-csi` and Synelia staging classes remain for the
 PVs already bound to them. Each consumer migration creates a separately reviewed
 replacement claim and follows an exclusive, verified data-copy and rollback gate.
 
@@ -88,7 +96,7 @@ instances. They do not define a reusable Kubernetes storage guarantee.
 
 Rejected. A StorageClass is not a textual alias for a bound PV. Changing CSI
 identity, handles, IQNs, or claim bindings risks data loss and has no supported
-adoption contract between `democratic-csi` and the official driver.
+adoption contract between `retired-csi` and the official driver.
 
 ## References
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 from copy import deepcopy
 from pathlib import Path
 import unittest
+from urllib.parse import urlparse
 
 import yaml
 
@@ -31,6 +32,8 @@ def verify_classes(values: dict) -> None:
     expected = {
         "storage-rwo-delete",
         "storage-rwo-retain",
+        "storage-rwo-xfs-delete",
+        "storage-rwo-xfs-retain",
         "storage-rwx-delete",
         "storage-rwx-retain",
     }
@@ -47,17 +50,20 @@ def verify_classes(values: dict) -> None:
         protocol = sc["parameters"].get("protocol")
         parent = sc["parameters"]["datasetPath"]
         if name.startswith("storage-rwo-"):
+            expected_fs = "xfs" if name.startswith("storage-rwo-xfs-") else "ext4"
             if (protocol != "iscsi"
                     or sc["volumeBindingMode"] != "WaitForFirstConsumer"
-                    or sc["parameters"].get("fsType") != "ext4"):
-                raise AssertionError(f"RWO contract must bind iSCSI/ext4 safely: {name}")
-            expected_parent = "k8s/vixens/synelia-test/iscsi"
+                    or sc["parameters"].get("fsType") != expected_fs):
+                raise AssertionError(
+                    f"RWO contract must bind iSCSI/{expected_fs} safely: {name}"
+                )
+            expected_parent = "k8s/vixens/iscsi"
         elif name.startswith("storage-rwx-"):
             if (protocol != "nfs"
                     or sc["volumeBindingMode"] != "Immediate"
                     or "nfsvers=4.1" not in sc.get("mountOptions", [])):
                 raise AssertionError(f"RWX contract must bind NFSv4.1: {name}")
-            expected_parent = "k8s/vixens/synelia-test/nfs"
+            expected_parent = "k8s/vixens/nfs"
         else:
             raise AssertionError(f"Unexpected access contract: {name}")
         if sc["parameters"].get("pool") != "tank" or parent != expected_parent:
@@ -197,17 +203,10 @@ class SyneliaCSISourceTests(unittest.TestCase):
 
     def test_classes_isolated_not_default_and_reclaim_compatible(self):
         verify_classes(self.values)
-        # A regression would fail if someone reused a legacy class name.
-        legacy_nfs = read_one(
-            "apps/01-storage/truenas-csi/values/nfs-umi.yaml"
-        )["storageClasses"]
-        legacy_iscsi = read_one(
-            "apps/01-storage/truenas-csi/values/iscsi-umi.yaml"
-        )["storageClasses"]
-        legacy_names = {s["name"] for s in legacy_nfs + legacy_iscsi}
-        self.assertFalse(
-            legacy_names.intersection({s["name"] for s in self.values["storageClasses"]})
-        )
+        # The retired driver must never reappear as a provisioner or a class name.
+        rendered = yaml.safe_dump(self.values).lower()
+        self.assertNotIn("truenas-iscsi", rendered)
+        self.assertNotIn("truenas-nfs", rendered)
 
     def test_safety_regressions_fail_closed(self):
         mutated = deepcopy(self.values)
@@ -243,7 +242,7 @@ class SyneliaCSISourceTests(unittest.TestCase):
         self.assertEqual(sc["reclaimPolicy"], "Retain")
         self.assertIs(sc["isDefault"], False)
         self.assertTrue(sc["allowVolumeExpansion"])
-        self.assertEqual(sc["parameters"]["datasetPath"], "k8s/vixens/synelia-test/iscsi")
+        self.assertEqual(sc["parameters"]["datasetPath"], "k8s/vixens/iscsi")
         self.assertEqual(sc["parameters"]["protocol"], "iscsi")
         self.assertEqual(sc["parameters"]["fsType"], "ext4")
         self.assertEqual(sc["volumeBindingMode"], "WaitForFirstConsumer")
@@ -264,7 +263,11 @@ class SyneliaCSISourceTests(unittest.TestCase):
 
     def test_tls_and_openbao_infra_secret_contract(self):
         cfg = self.values["truenas"]
-        self.assertTrue(cfg["url"].startswith("wss://nas.truxonline.com/"))
+        endpoint = urlparse(cfg["url"])
+        self.assertEqual(endpoint.scheme, "wss")
+        self.assertEqual(endpoint.hostname, "nas.truxonline.com")
+        self.assertEqual(endpoint.port, 8443)
+        self.assertEqual(endpoint.path, "/api/current")
         self.assertIs(cfg["insecureSkipTLS"], False)
         self.assertEqual(cfg["existingSecret"], "synelia-csi-credentials")
         self.assertEqual(cfg["existingSecretKey"], "api-key")

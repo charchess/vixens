@@ -121,6 +121,11 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{Requeue: true}, nil
 	}
 
+	if err := r.observeWorkspaceMigrationAttestations(ctx, &bundle); err != nil {
+		r.setFailedStatus(ctx, &bundle, "WorkspaceMigrationEvidenceObserveFailed", err.Error())
+		return ctrl.Result{}, err
+	}
+
 	namespaceName := tenantNamespace(bundle.Name)
 	if err := r.ensureNamespace(ctx, &bundle, namespaceName); err != nil {
 		r.setFailedStatus(ctx, &bundle, "NamespaceReconcileFailed", err.Error())

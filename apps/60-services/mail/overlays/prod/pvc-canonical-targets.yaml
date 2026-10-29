@@ -1,0 +1,30 @@
+---
+# Stage 2: replacement claims for the mail migration. Their only consumer is
+# the stage-1 bind gate, which remains suspended until source detachment.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mail-data-canonical-target
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: storage-rwo-retain
+  resources:
+    requests:
+      storage: 25Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mail-state-canonical-target
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: storage-rwo-retain
+  resources:
+    requests:
+      storage: 2Gi

@@ -13,6 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -75,7 +76,10 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 		legacyRetained := tenant.Spec.AgentStorage != nil &&
 			storageRetentionPolicy(agent) == StorageRetentionRetain &&
 			actualClass == profile.Spec.Storage.StorageClassName
-		if !legacyRetained {
+		migrationSource := agent.Spec.Runtime.Storage.Migration != nil &&
+			agent.Spec.Runtime.Storage.Migration.TargetStorageClassName == storageClass &&
+			agent.Spec.Runtime.Storage.Migration.TargetClaimSuffix != ""
+		if !legacyRetained && !migrationSource {
 			return fmt.Errorf("PVC %s/%s uses immutable storageClass %q; agent storage policy requires %q", namespace, name, actualClass, storageClass)
 		}
 	}
@@ -169,6 +173,12 @@ func (r *AgentIdentityReconciler) ensureDeploymentWithIntegrations(ctx context.C
 }
 
 func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution, functional ...effectiveFunctionalProfile) error {
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		return r.ensureDeploymentRuntimeOnce(ctx, agent, tenant, profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrations, functional...)
+	})
+}
+
+func (r *AgentIdentityReconciler) ensureDeploymentRuntimeOnce(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.AgentRuntimeProfile, namespace, modelAccessSecretUID, modelAccessRevision string, toolPolicy effectiveToolsetPolicy, integrations integrationResolution, functional ...effectiveFunctionalProfile) error {
 	var role effectiveFunctionalProfile
 	if len(functional) > 0 {
 		role = functional[0]
@@ -202,7 +212,7 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, a
 	managedPolicyMount := corev1.VolumeMount{Name: managedPolicyVolumeName, MountPath: managedPolicyMountPath, ReadOnly: true}
 	hermesMounts := append([]corev1.VolumeMount{runtimeDataMount, managedPolicyMount}, workspaceMounts...)
 	volumes := []corev1.Volume{
-		{Name: "data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: runtimePVCName(agent.Spec.AgentKey)}}},
+		{Name: "data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: runtimeActivePVCName(agent)}}},
 		{Name: managedPolicyVolumeName, VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
 			LocalObjectReference: corev1.LocalObjectReference{Name: managedToolsetPolicyName(agent.Spec.AgentKey)},
 		}}},
@@ -213,7 +223,7 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntime(ctx context.Context, a
 			Name: integration.VolumeName,
 			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
 				SecretName: integration.CredentialName,
-				Items: []corev1.KeyToPath{{Key: integrationCredentialKey, Path: integrationCredentialKey}},
+				Items:      []corev1.KeyToPath{{Key: integrationCredentialKey, Path: integrationCredentialKey}},
 			}},
 		})
 		hermesMounts = append(hermesMounts, corev1.VolumeMount{
@@ -421,8 +431,8 @@ func (r *AgentIdentityReconciler) ensureEgressPolicy(ctx context.Context, agent 
 				},
 				{
 					To: []networkingv1.NetworkPolicyPeer{{PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
-						LabelManaged:    "true",
-						LabelTenantName: tenant.Name,
+						LabelManaged:                  "true",
+						LabelTenantName:               tenant.Name,
 						"app.kubernetes.io/component": "tenant-ai-gateway",
 					}}}},
 					Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(4000)}},
@@ -431,7 +441,7 @@ func (r *AgentIdentityReconciler) ensureEgressPolicy(ctx context.Context, agent 
 		}
 		if tenant.Spec.Memory.Hindsight != nil {
 			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-				To: []networkingv1.NetworkPolicyPeer{{PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hindsight"}}}},
+				To:    []networkingv1.NetworkPolicyPeer{{PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{LabelName: "hindsight"}}}},
 				Ports: []networkingv1.NetworkPolicyPort{{Protocol: protocolPtr(corev1.ProtocolTCP), Port: intOrStringPtr(8888)}},
 			})
 		}

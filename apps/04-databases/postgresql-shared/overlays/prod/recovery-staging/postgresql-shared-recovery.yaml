@@ -1,0 +1,54 @@
+---
+# Restores into a distinct Cluster/PVC identity and cannot replace
+# postgresql-shared or its retained legacy retired CSI claim.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgresql-shared-recovery
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: postgresql-shared-recovery
+    app.kubernetes.io/component: storage-migration
+  annotations:
+    vixens.io/storage-migration: retired-csi-to-synelia
+    vixens.io/recovery-source: postgresql-shared-daily-20261023020000
+spec:
+  instances: 1
+  priorityClassName: vixens-critical
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.11-system-trixie
+  bootstrap:
+    recovery:
+      # Pin the last successful base backup through the CNPG-I plugin source.
+      # A backup name alone does not supply the ObjectStore credentials.
+      source: postgresql-shared-backup-source
+      recoveryTarget:
+        backupID: 20261023T020005
+      database: txo_platform
+      owner: txo_platform
+  storage:
+    size: 200Gi
+    storageClass: storage-rwo-retain
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  affinity:
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+  externalClusters:
+    - name: postgresql-shared-backup-source
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: postgresql-shared-backup
+          serverName: postgresql-shared
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: postgresql-shared-backup

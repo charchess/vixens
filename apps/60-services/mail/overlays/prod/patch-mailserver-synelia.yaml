@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mailserver
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-options: Force=true,Replace=true
+spec:
+  volumeClaimTemplates: null
+  template:
+    spec:
+      volumes:
+        - name: mail-data
+          persistentVolumeClaim:
+            claimName: mail-data-canonical-target
+        - name: mail-state
+          persistentVolumeClaim:
+            claimName: mail-state-canonical-target

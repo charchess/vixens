@@ -10,6 +10,12 @@ resources:
   - backup-s3-secret-patch.yaml
   - backup-objectstore.yaml
   - backup-scheduled.yaml
+  # Deliberately separate from the source cluster: a future promoted release
+  # restores the last known-good backup to canonical CSI without touching the
+  # legacy cluster/PV.
+  - recovery-staging/postgresql-shared-recovery.yaml
+  - recovery-staging/postgresql-shared-recovery-egress.yaml
+  - canonical-services.yaml
 patches:
   - path: backup-patch.yaml
   - target:

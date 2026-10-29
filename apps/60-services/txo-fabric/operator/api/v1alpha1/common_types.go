@@ -132,6 +132,31 @@ type AIGatewayMigrationStatus struct {
 	Phase AIGatewayMigrationPhase `json:"phase"`
 }
 
+// WorkspaceMigrationPhase is the durable evidence phase for one shared workspace copy.
+// +kubebuilder:validation:Enum=Pending;Succeeded;Failed;EvidenceMissing;EvidenceConflict
+type WorkspaceMigrationPhase string
+
+const (
+	WorkspaceMigrationPending          WorkspaceMigrationPhase = "Pending"
+	WorkspaceMigrationSucceeded        WorkspaceMigrationPhase = "Succeeded"
+	WorkspaceMigrationFailed           WorkspaceMigrationPhase = "Failed"
+	WorkspaceMigrationEvidenceMissing  WorkspaceMigrationPhase = "EvidenceMissing"
+	WorkspaceMigrationEvidenceConflict WorkspaceMigrationPhase = "EvidenceConflict"
+)
+
+// WorkspaceMigrationAttestationStatus persists exact UID-bound copy evidence
+// after the short-lived Kubernetes Job has expired.
+type WorkspaceMigrationAttestationStatus struct {
+	SourceClaimName    string                  `json:"sourceClaimName"`
+	SourcePVCUID       string                  `json:"sourcePVCUID"`
+	TargetClaimName    string                  `json:"targetClaimName"`
+	TargetPVCUID       string                  `json:"targetPVCUID"`
+	JobName            string                  `json:"jobName"`
+	JobUID             string                  `json:"jobUID"`
+	Phase              WorkspaceMigrationPhase `json:"phase"`
+	VerificationResult string                  `json:"verificationResult"`
+}
+
 type TenantAICredentialBrokerSpec struct {
 	// ProfileRef selects the tenant-local OAuth/subscription credential broker profile.
 	// +optional

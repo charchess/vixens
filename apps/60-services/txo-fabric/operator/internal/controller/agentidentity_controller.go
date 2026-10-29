@@ -30,6 +30,7 @@ type AgentIdentityReconciler struct {
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities/finalizers,verbs=update
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles;agentruntimeprofiles;hermesruntimereleases;agentfunctionalprofiles;integrationconnections;integrationbindings,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=namespaces;persistentvolumeclaims;configmaps;services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=persistentvolumes,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
@@ -160,6 +161,10 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "PVCReconcileFailed", err.Error())
 		return ctrl.Result{}, err
 	}
+	if err := r.ensureRuntimeMigrationTargetPVC(ctx, &agent, &tenant, &profile, namespace); err != nil {
+		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "StorageMigrationPrepareFailed", err.Error())
+		return ctrl.Result{}, err
+	}
 	modelAccessSecretUID, modelAccessRevision, err := r.ensureModelAccessWithBackend(ctx, &agent, &tenant, namespace, modelBackend)
 	if err != nil {
 		r.setStatus(ctx, &agent, "AuthBlocked", "ModelAccessReady", metav1.ConditionFalse, "GatewayCredentialReconcileFailed", err.Error())
@@ -205,6 +210,10 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	// read back by this reconciler.
 	privateAPICredentialReady, privateAPICredentialErr := r.ensurePrivateHermesAPICredential(ctx, &agent, &tenant, namespace)
 
+	if err := r.ensureWorkspaceMigrationEvidence(ctx, &agent, &tenant); err != nil {
+		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "WorkspaceMigrationPrepareFailed", err.Error())
+		return ctrl.Result{}, err
+	}
 	if err := r.ensureDeploymentWithIntegrations(ctx, &agent, &tenant, &profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrationAccess, functional); err != nil {
 		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "DeploymentReconcileFailed", err.Error())
 		return ctrl.Result{}, err

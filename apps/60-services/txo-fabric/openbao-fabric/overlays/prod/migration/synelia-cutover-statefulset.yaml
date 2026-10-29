@@ -1,0 +1,11 @@
+---
+# The source has a verified ZFS snapshot and remains retained for rollback.
+# The target is a separately provisioned, copied Synelia PVC.
+- op: remove
+  path: /spec/volumeClaimTemplates
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: data
+    persistentVolumeClaim:
+      claimName: data-openbao-fabric-0-synelia

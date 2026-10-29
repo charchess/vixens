@@ -16,7 +16,7 @@ spec:
   image: ghcr.io/charchess/txo-fabric-hermes:main-ab881f643cbc
   storage:
     size: 2Gi
-    storageClassName: truenas-iscsi-retain
+    storageClassName: storage-rwo-retain
   resources:
     requests:
       cpu: 100m

@@ -10,7 +10,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: truenas-iscsi-xfs-retain
+  storageClassName: storage-rwo-xfs-retain
   resources:
     requests:
       storage: 10Gi

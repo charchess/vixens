@@ -1,6 +1,6 @@
 ---
 # Official truenas/truenas-csi v1.4.0 — production parallel deployment.
-# It must never adopt democratic-csi volumes. StorageClass names follow the
+# It must never adopt retired-csi volumes. StorageClass names follow the
 # durable Synelia storage contract (no environment suffix).
 fullnameOverride: synelia-prod-csi
 driverName: synelia.prod.csi.truenas.io
@@ -83,7 +83,8 @@ volumeSnapshotClass:
 # provider-neutral: applications select access/reclaim guarantees, not TrueNAS,
 # iSCSI, NFS, a ZFS path or a historical driver identity. Retain is mandatory for
 # durable state; Delete is reserved for explicitly disposable data. The official
-# driver parents remain disjoint from legacy democratic-csi trees.
+# driver parents are the canonical Vixens ZFS parents; the CSI creates its own
+# per-claim children alongside the legacy `vols` subtree during migration.
 storageClasses:
   - name: storage-rwx-retain
     isDefault: false
@@ -95,7 +96,7 @@ storageClasses:
     parameters:
       protocol: nfs
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/nfs
+      datasetPath: k8s/vixens/nfs
       compression: LZ4
   - name: storage-rwx-delete
     isDefault: false
@@ -107,7 +108,7 @@ storageClasses:
     parameters:
       protocol: nfs
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/nfs
+      datasetPath: k8s/vixens/nfs
       compression: LZ4
   - name: storage-rwo-retain
     isDefault: false
@@ -117,7 +118,7 @@ storageClasses:
     parameters:
       protocol: iscsi
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/iscsi
+      datasetPath: k8s/vixens/iscsi
       fsType: ext4
       compression: LZ4
   - name: storage-rwo-delete
@@ -128,6 +129,28 @@ storageClasses:
     parameters:
       protocol: iscsi
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/iscsi
+      datasetPath: k8s/vixens/iscsi
       fsType: ext4
+      compression: LZ4
+  - name: storage-rwo-xfs-retain
+    isDefault: false
+    reclaimPolicy: Retain
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      protocol: iscsi
+      pool: tank
+      datasetPath: k8s/vixens/iscsi
+      fsType: xfs
+      compression: LZ4
+  - name: storage-rwo-xfs-delete
+    isDefault: false
+    reclaimPolicy: Delete
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      protocol: iscsi
+      pool: tank
+      datasetPath: k8s/vixens/iscsi
+      fsType: xfs
       compression: LZ4

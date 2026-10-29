@@ -7,7 +7,7 @@ kubeletDir: /var/lib/kubelet
 logLevel: 2
 
 truenas:
-  url: wss://nas.truxonline.com/api/current
+  url: wss://nas.truxonline.com:8443/api/current
   defaultPool: tank
   nfsServer: nas.truxonline.com
   iscsiPortal: "192.168.111.69:3260"
@@ -96,7 +96,7 @@ storageClasses:
     parameters:
       protocol: nfs
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/nfs
+      datasetPath: k8s/vixens/nfs
       compression: LZ4
   - name: storage-rwx-delete
     isDefault: false
@@ -108,7 +108,7 @@ storageClasses:
     parameters:
       protocol: nfs
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/nfs
+      datasetPath: k8s/vixens/nfs
       compression: LZ4
   - name: storage-rwo-retain
     isDefault: false
@@ -118,7 +118,7 @@ storageClasses:
     parameters:
       protocol: iscsi
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/iscsi
+      datasetPath: k8s/vixens/iscsi
       fsType: ext4
       compression: LZ4
   - name: storage-rwo-delete
@@ -129,6 +129,28 @@ storageClasses:
     parameters:
       protocol: iscsi
       pool: tank
-      datasetPath: k8s/vixens/synelia-test/iscsi
+      datasetPath: k8s/vixens/iscsi
       fsType: ext4
+      compression: LZ4
+  - name: storage-rwo-xfs-retain
+    isDefault: false
+    reclaimPolicy: Retain
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      protocol: iscsi
+      pool: tank
+      datasetPath: k8s/vixens/iscsi
+      fsType: xfs
+      compression: LZ4
+  - name: storage-rwo-xfs-delete
+    isDefault: false
+    reclaimPolicy: Delete
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      protocol: iscsi
+      pool: tank
+      datasetPath: k8s/vixens/iscsi
+      fsType: xfs
       compression: LZ4

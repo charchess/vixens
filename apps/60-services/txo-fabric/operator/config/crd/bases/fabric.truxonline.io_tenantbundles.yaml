@@ -213,6 +213,52 @@ spec:
                                 profiles/<agentKey> directory as the runtime's single /opt/data home.
                                 It is a brownfield cutover switch: no profile copy or flattening occurs.
                               type: boolean
+                            migration:
+                              description: |-
+                                Migration stages a distinct replacement claim. Omitted preserves existing
+                                PVC and runtime behavior exactly.
+                              properties:
+                                copyJobName:
+                                  description: |-
+                                    CopyJobName identifies the GitOps-owned, non-destructive copy Job that
+                                    carries source/target PVC UID evidence. It is required before cutover.
+                                  maxLength: 63
+                                  pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                                  type: string
+                                cutover:
+                                  description: |-
+                                    Cutover remains false during prepare/copy. It may become true only after
+                                    the named copy Job completes with exact source/target PVC UID evidence.
+                                  type: boolean
+                                targetClaimSuffix:
+                                  description: |-
+                                    TargetClaimSuffix is appended to the deterministic source PVC name. It is
+                                    immutable and prevents the replacement claim from colliding with the source.
+                                  maxLength: 32
+                                  pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                                  type: string
+                                  x-kubernetes-validations:
+                                  - message: targetClaimSuffix is immutable
+                                    rule: self == oldSelf
+                                targetStorageClassName:
+                                  description: |-
+                                    TargetStorageClassName is the explicit canonical RWO class for the distinct
+                                    replacement claim. It is immutable once declared.
+                                  maxLength: 253
+                                  minLength: 1
+                                  type: string
+                                  x-kubernetes-validations:
+                                  - message: targetStorageClassName is immutable
+                                    rule: self == oldSelf
+                              required:
+                              - targetClaimSuffix
+                              - targetStorageClassName
+                              type: object
+                              x-kubernetes-validations:
+                              - message: storage migration requires targetStorageClassName
+                                  and targetClaimSuffix
+                                rule: self.targetStorageClassName != "" && self.targetClaimSuffix
+                                  != ""
                             retentionPolicy:
                               default: Retain
                               description: |-
@@ -613,6 +659,44 @@ spec:
                     x-kubernetes-list-map-keys:
                     - name
                     x-kubernetes-list-type: map
+                  migration:
+                    description: |-
+                      Migration stages deterministic replacement RWX claims. Omitted preserves
+                      existing workspace PVCs and mount behavior.
+                    properties:
+                      copyJobPrefix:
+                        description: |-
+                          CopyJobPrefix derives one immutable GitOps-owned evidence Job per source claim:
+                          <copyJobPrefix>-<source-claim-name>. Every Job must complete and bind exact
+                          source/target PVC UIDs before an AgentIdentity may mount migrated storage.
+                        pattern: ^$|^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                        type: string
+                      cutover:
+                        description: Cutover selects prepared replacement claims for
+                          all tenant workspace mounts.
+                        type: boolean
+                      targetClaimSuffix:
+                        description: TargetClaimSuffix makes every replacement scope
+                          PVC deterministic and distinct.
+                        maxLength: 32
+                        pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                        type: string
+                        x-kubernetes-validations:
+                        - message: targetClaimSuffix is immutable
+                          rule: self == oldSelf
+                      targetStorageClassName:
+                        description: TargetStorageClassName is the explicit replacement
+                          RWX storage class.
+                        maxLength: 253
+                        minLength: 1
+                        type: string
+                        x-kubernetes-validations:
+                        - message: targetStorageClassName is immutable
+                          rule: self == oldSelf
+                    required:
+                    - targetClaimSuffix
+                    - targetStorageClassName
+                    type: object
                   organization:
                     description: Organization declares tenant-wide file and skill-library
                       scopes.
@@ -931,6 +1015,52 @@ spec:
                 - Failed
                 - Deleting
                 type: string
+              workspaceMigration:
+                description: WorkspaceMigration retains UID-bound evidence for completed
+                  shared workspace copies.
+                items:
+                  description: |-
+                    WorkspaceMigrationAttestationStatus persists exact UID-bound copy evidence
+                    after the short-lived Kubernetes Job has expired.
+                  properties:
+                    jobName:
+                      type: string
+                    jobUID:
+                      type: string
+                    phase:
+                      description: WorkspaceMigrationPhase is the durable evidence
+                        phase for one shared workspace copy.
+                      enum:
+                      - Pending
+                      - Succeeded
+                      - Failed
+                      - EvidenceMissing
+                      - EvidenceConflict
+                      type: string
+                    sourceClaimName:
+                      type: string
+                    sourcePVCUID:
+                      type: string
+                    targetClaimName:
+                      type: string
+                    targetPVCUID:
+                      type: string
+                    verificationResult:
+                      type: string
+                  required:
+                  - jobName
+                  - jobUID
+                  - phase
+                  - sourceClaimName
+                  - sourcePVCUID
+                  - targetClaimName
+                  - targetPVCUID
+                  - verificationResult
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - sourceClaimName
+                x-kubernetes-list-type: map
             type: object
         type: object
     served: true

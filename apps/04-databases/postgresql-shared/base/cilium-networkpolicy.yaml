@@ -11,7 +11,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      cnpg.io/cluster: postgresql-shared
+      cnpg.io/cluster: postgresql-shared-recovery
   ingress:
     # PostgreSQL depuis tous les pods du cluster (multi-namespace)
     # fromEndpoints: [{}] cassé dans Cilium 1.18.3 → fromEntities: cluster
@@ -25,7 +25,7 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: databases
-            cnpg.io/cluster: postgresql-shared
+            cnpg.io/cluster: postgresql-shared-recovery
       toPorts:
         - ports:
             - port: "5432"
@@ -46,11 +46,4 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: monitoring
-  egress:
-    # postgresql-shared → world (NAS/MinIO at nas.truxonline.com:30157 for WAL archiving via barman)
-    - toEntities:
-        - world
-    # postgresql-shared → CNPG operator barman API + intra-cluster replication
-    - toEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: databases
+  # Egress is intentionally declared only in the dedicated recovery policy.

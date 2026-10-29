@@ -22,9 +22,6 @@ resources:
   - apps/cert-manager-webhook-gandi.yaml
   - apps/cert-manager-config.yaml
   - apps/snapshot-controller.yaml
-  - apps/truenas-csi-secrets-umi.yaml
-  - apps/truenas-csi-iscsi-umi.yaml
-  - apps/truenas-csi-nfs-umi.yaml
   - apps/synelia-csi-umi.yaml
   - apps/local-path-provisioner.yaml
   - apps/nfs-storage.yaml

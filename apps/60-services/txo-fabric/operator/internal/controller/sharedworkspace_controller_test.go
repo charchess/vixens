@@ -7,6 +7,7 @@ import (
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,7 +23,7 @@ func TestSharedWorkspaceReconcilesIsolatedRWXPVCs(t *testing.T) {
 	profile := &fabricv1alpha1.SharedWorkspaceProfile{
 		ObjectMeta: metav1.ObjectMeta{Name: "shared-nfs"},
 		Spec: fabricv1alpha1.SharedWorkspaceProfileSpec{
-			StorageClassName: "truenas-nfs-retain",
+			StorageClassName: "storage-rwx-retain",
 			Size:             resource.MustParse("5Gi"),
 		},
 	}
@@ -55,7 +56,7 @@ func TestSharedWorkspaceReconcilesIsolatedRWXPVCs(t *testing.T) {
 		if len(pvc.Spec.AccessModes) != 1 || pvc.Spec.AccessModes[0] != corev1.ReadWriteMany {
 			t.Fatalf("PVC %s accessModes = %#v, want RWX", name, pvc.Spec.AccessModes)
 		}
-		if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != "truenas-nfs-retain" {
+		if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != "storage-rwx-retain" {
 			t.Fatalf("PVC %s storageClass = %#v", name, pvc.Spec.StorageClassName)
 		}
 		if pvc.Labels[LabelWorkspaceDomain] != want.domain || pvc.Labels[LabelWorkspaceScope] != want.scope || pvc.Labels[LabelWorkspaceKey] != want.key || pvc.Labels[LabelWorkspaceMode] != want.mode {
@@ -207,5 +208,116 @@ func workspaceTestTenant() *fabricv1alpha1.TenantBundle {
 				},
 			},
 		},
+	}
+}
+
+func TestSharedWorkspaceMigrationStagesDistinctTargetsAndCutoverMounts(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := workspaceTestTenant()
+	tenant.Spec.Workspace.Migration = &fabricv1alpha1.TenantWorkspaceMigrationBinding{TargetStorageClassName: "storage-rwx-retain", TargetClaimSuffix: "synelia"}
+	profile := &fabricv1alpha1.SharedWorkspaceProfile{ObjectMeta: metav1.ObjectMeta{Name: "shared-nfs"}, Spec: fabricv1alpha1.SharedWorkspaceProfileSpec{StorageClassName: "storage-rwx-retain", Size: resource.MustParse("5Gi")}}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile).Build()
+	r := &SharedWorkspaceReconciler{Client: c, Scheme: scheme}
+	if _, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: tenant.Name}}); err != nil {
+		t.Fatal(err)
+	}
+	var source, target corev1.PersistentVolumeClaim
+	key := types.NamespacedName{Name: "ws-group-sales-rw", Namespace: "tenant-fabric-smoke"}
+	if err := c.Get(ctx, key, &source); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Get(ctx, types.NamespacedName{Name: "ws-group-sales-rw-synelia", Namespace: key.Namespace}, &target); err != nil {
+		t.Fatal(err)
+	}
+	if target.Spec.StorageClassName == nil || *target.Spec.StorageClassName != "storage-rwx-retain" {
+		t.Fatalf("target class=%#v", target.Spec.StorageClassName)
+	}
+	if target.Labels["fabric.truxonline.io/storage-migration-source-uid"] != string(source.UID) {
+		t.Fatalf("target labels=%#v source=%q", target.Labels, source.UID)
+	}
+	tenant.Spec.Workspace.Migration.Cutover = true
+	agent := &fabricv1alpha1.AgentIdentity{Spec: fabricv1alpha1.AgentIdentitySpec{Access: fabricv1alpha1.AgentAccessSpec{Groups: []string{"sales"}}}}
+	volumes, _, err := resolvedWorkspaceVolumes(agent, tenant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, volume := range volumes {
+		if volume.PersistentVolumeClaim != nil && volume.PersistentVolumeClaim.ClaimName == "ws-group-sales-rw-synelia" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("cutover did not select Synelia target: %#v", volumes)
+	}
+}
+
+func TestWorkspaceCutoverRequiresCopyEvidencePrefix(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := workspaceTestTenant()
+	tenant.Spec.Workspace.Migration = &fabricv1alpha1.TenantWorkspaceMigrationBinding{TargetStorageClassName: "storage-rwx-retain", TargetClaimSuffix: "synelia", Cutover: true}
+	agent := &fabricv1alpha1.AgentIdentity{ObjectMeta: metav1.ObjectMeta{Name: "agent"}, Spec: fabricv1alpha1.AgentIdentitySpec{Access: fabricv1alpha1.AgentAccessSpec{Groups: []string{"sales"}}}}
+	r := &AgentIdentityReconciler{Client: fake.NewClientBuilder().WithScheme(scheme).Build(), Scheme: scheme}
+	err := r.ensureWorkspaceMigrationEvidence(ctx, agent, tenant)
+	if err == nil || !strings.Contains(err.Error(), "without copyJobPrefix") {
+		t.Fatalf("workspace cutover without immutable proof prefix accepted: %v", err)
+	}
+}
+
+func TestWorkspaceCutoverAcceptsDurableAttestationAfterJobTTL(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := workspaceTestTenant()
+	tenant.Spec.Workspace.Organization = fabricv1alpha1.WorkspaceScopeSpec{}
+	tenant.Spec.Workspace.Groups = []fabricv1alpha1.NamedWorkspaceScopeSpec{{Name: "sales", Reference: true}}
+	tenant.Spec.Workspace.Migration = &fabricv1alpha1.TenantWorkspaceMigrationBinding{TargetStorageClassName: "storage-rwx-retain", TargetClaimSuffix: "synelia", CopyJobPrefix: "copy", Cutover: true}
+	ns := tenantNamespace(tenant.Name)
+	source := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "ws-group-sales-ref", Namespace: ns, UID: "source-uid"}}
+	target := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "ws-group-sales-ref-synelia", Namespace: ns, UID: "target-uid"}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound}}
+	tenant.Status.WorkspaceMigration = []fabricv1alpha1.WorkspaceMigrationAttestationStatus{{SourceClaimName: source.Name, SourcePVCUID: string(source.UID), TargetClaimName: target.Name, TargetPVCUID: string(target.UID), JobName: "copy-" + source.Name, JobUID: "expired-job-uid", Phase: fabricv1alpha1.WorkspaceMigrationSucceeded, VerificationResult: "Succeeded"}}
+	agent := &fabricv1alpha1.AgentIdentity{ObjectMeta: metav1.ObjectMeta{Name: "agent"}, Spec: fabricv1alpha1.AgentIdentitySpec{Access: fabricv1alpha1.AgentAccessSpec{Groups: []string{"sales"}}}}
+	r := &AgentIdentityReconciler{Client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(source, target).Build(), Scheme: scheme}
+	if err := r.ensureWorkspaceMigrationEvidence(ctx, agent, tenant); err != nil {
+		t.Fatalf("TTL-expired job with exact durable evidence rejected: %v", err)
+	}
+}
+
+func TestWorkspaceCutoverRejectsDurableAttestationWithRecreatedPVC(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := workspaceTestTenant()
+	tenant.Spec.Workspace.Organization = fabricv1alpha1.WorkspaceScopeSpec{}
+	tenant.Spec.Workspace.Groups = []fabricv1alpha1.NamedWorkspaceScopeSpec{{Name: "sales", Reference: true}}
+	tenant.Spec.Workspace.Migration = &fabricv1alpha1.TenantWorkspaceMigrationBinding{TargetStorageClassName: "storage-rwx-retain", TargetClaimSuffix: "synelia", CopyJobPrefix: "copy", Cutover: true}
+	ns := tenantNamespace(tenant.Name)
+	source := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "ws-group-sales-ref", Namespace: ns, UID: "recreated-source-uid"}}
+	target := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "ws-group-sales-ref-synelia", Namespace: ns, UID: "target-uid"}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound}}
+	tenant.Status.WorkspaceMigration = []fabricv1alpha1.WorkspaceMigrationAttestationStatus{{SourceClaimName: source.Name, SourcePVCUID: "old-source-uid", TargetClaimName: target.Name, TargetPVCUID: string(target.UID), JobName: "copy-" + source.Name, JobUID: "expired-job-uid", Phase: fabricv1alpha1.WorkspaceMigrationSucceeded, VerificationResult: "Succeeded"}}
+	agent := &fabricv1alpha1.AgentIdentity{ObjectMeta: metav1.ObjectMeta{Name: "agent"}, Spec: fabricv1alpha1.AgentIdentitySpec{Access: fabricv1alpha1.AgentAccessSpec{Groups: []string{"sales"}}}}
+	r := &AgentIdentityReconciler{Client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(source, target).Build(), Scheme: scheme}
+	if err := r.ensureWorkspaceMigrationEvidence(ctx, agent, tenant); err == nil {
+		t.Fatal("recreated source PVC was accepted by durable evidence")
+	}
+}
+
+func TestWorkspaceCutoverAcceptsAttestationWhenTTLJobIsRecreatedSuspended(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := workspaceTestTenant()
+	tenant.Spec.Workspace.Organization = fabricv1alpha1.WorkspaceScopeSpec{}
+	tenant.Spec.Workspace.Groups = []fabricv1alpha1.NamedWorkspaceScopeSpec{{Name: "sales", Reference: true}}
+	tenant.Spec.Workspace.Migration = &fabricv1alpha1.TenantWorkspaceMigrationBinding{TargetStorageClassName: "storage-rwx-retain", TargetClaimSuffix: "synelia", CopyJobPrefix: "copy", Cutover: true}
+	ns := tenantNamespace(tenant.Name)
+	source := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "ws-group-sales-ref", Namespace: ns, UID: "source-uid"}}
+	target := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "ws-group-sales-ref-synelia", Namespace: ns, UID: "target-uid"}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound}}
+	tenant.Status.WorkspaceMigration = []fabricv1alpha1.WorkspaceMigrationAttestationStatus{{SourceClaimName: source.Name, SourcePVCUID: string(source.UID), TargetClaimName: target.Name, TargetPVCUID: string(target.UID), JobName: "copy-" + source.Name, JobUID: "completed-job-uid", Phase: fabricv1alpha1.WorkspaceMigrationSucceeded, VerificationResult: "Succeeded"}}
+	suspended := true
+	recreated := &batchv1.Job{ObjectMeta: metav1.ObjectMeta{Name: "copy-" + source.Name, Namespace: ns, UID: "recreated-job-uid"}, Spec: batchv1.JobSpec{Suspend: &suspended}}
+	agent := &fabricv1alpha1.AgentIdentity{ObjectMeta: metav1.ObjectMeta{Name: "agent"}, Spec: fabricv1alpha1.AgentIdentitySpec{Access: fabricv1alpha1.AgentAccessSpec{Groups: []string{"sales"}}}}
+	r := &AgentIdentityReconciler{Client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(source, target, recreated).Build(), Scheme: scheme}
+	if err := r.ensureWorkspaceMigrationEvidence(ctx, agent, tenant); err != nil {
+		t.Fatalf("recreated suspended TTL Job rejected despite exact durable evidence: %v", err)
 	}
 }

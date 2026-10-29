@@ -89,7 +89,7 @@ Storage health requires explicit signals such as writeability, filesystem health
 
 ### 3.6 Storage products are implementation choices
 
-TrueNAS, democratic-csi, ext4, XFS, multipath, Ceph/RBD or another future backend are not the TXO Fabric contract.
+TrueNAS, retired-csi, ext4, XFS, multipath, Ceph/RBD or another future backend are not the TXO Fabric contract.
 
 The Fabric contract is durability, isolation, bounded blast radius, recoverability and observable health.
 
@@ -157,7 +157,7 @@ A failure in Storage domain A should affect only its bounded population, not the
 
 ### 6.1 Current practical baseline
 
-The current ext4 + iSCSI + TrueNAS/democratic-csi stack remains an acceptable development baseline while resilience work is incremental.
+The current ext4 + iSCSI + TrueNAS/retired-csi stack remains an acceptable development baseline while resilience work is incremental.
 
 Changing filesystem is not, by itself, a fix for transport loss.
 
@@ -432,7 +432,7 @@ Use existing issues rather than creating competing implementations:
 
 This document does not:
 
-- require an immediate migration away from TrueNAS/democratic-csi;
+- require an immediate migration away from TrueNAS/retired-csi;
 - declare ext4, XFS, Btrfs, ZFS or any distributed storage product the final answer;
 - promise 500,000-agent capacity;
 - replace application-specific backup requirements;

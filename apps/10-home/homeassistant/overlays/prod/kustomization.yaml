@@ -16,11 +16,12 @@ components:
   - ../../../../_shared/components/poddisruptionbudget/1
   - ../../../../_shared/components/scheduling/prefer-i915
 patches:
+  - path: delete-legacy-pvc.yaml
   - path: patch-canonical-target-cutover.yaml
   - path: patch-openbao-env.yaml
   - target:
       kind: PersistentVolumeClaim
       name: homeassistant-config
-    patch: "- op: replace\n  path: /spec/storageClassName\n  value: truenas-iscsi-xfs-retain\n- op: replace\n  path: /spec/resources/requests/storage\n  value: 250Gi"
+    patch: "- op: replace\n  path: /spec/storageClassName\n  value: storage-rwo-xfs-retain\n- op: replace\n  path: /spec/resources/requests/storage\n  value: 250Gi"
   - path: resources-patch.yaml
   - path: anti-affinity-frigate.yaml

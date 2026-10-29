@@ -19,7 +19,7 @@ spec:
     # Existing beta PVC StorageClass is immutable. Reuse that class across
     # release channels; each AgentIdentity's Retain policy protects the PV.
     size: 2Gi
-    storageClassName: truenas-iscsi-delete
+    storageClassName: storage-rwo-delete
   resources:
     requests:
       cpu: 100m

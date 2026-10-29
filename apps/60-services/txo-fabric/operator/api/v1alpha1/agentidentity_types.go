@@ -2,6 +2,40 @@ package v1alpha1
 
 import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+// AgentRuntimeStorageMigrationBinding stages a distinct replacement PVC. It never
+// changes the original claim's immutable StorageClassName. The controller creates
+// the target while the runtime remains on the original claim; a later controller
+// revision will add separately verified copy/cutover evidence before honoring
+// Cutover.
+// +kubebuilder:validation:XValidation:rule="self.targetStorageClassName != \"\" && self.targetClaimSuffix != \"\"",message="storage migration requires targetStorageClassName and targetClaimSuffix"
+type AgentRuntimeStorageMigrationBinding struct {
+	// TargetStorageClassName is the explicit canonical RWO class for the distinct
+	// replacement claim. It is immutable once declared.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="targetStorageClassName is immutable"
+	TargetStorageClassName string `json:"targetStorageClassName"`
+
+	// TargetClaimSuffix is appended to the deterministic source PVC name. It is
+	// immutable and prevents the replacement claim from colliding with the source.
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
+	// +kubebuilder:validation:MaxLength=32
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="targetClaimSuffix is immutable"
+	TargetClaimSuffix string `json:"targetClaimSuffix"`
+
+	// CopyJobName identifies the GitOps-owned, non-destructive copy Job that
+	// carries source/target PVC UID evidence. It is required before cutover.
+	// +optional
+	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
+	CopyJobName string `json:"copyJobName,omitempty"`
+
+	// Cutover remains false during prepare/copy. It may become true only after
+	// the named copy Job completes with exact source/target PVC UID evidence.
+	// +optional
+	Cutover bool `json:"cutover,omitempty"`
+}
+
 // +kubebuilder:validation:XValidation:rule="!has(self.adoptLegacyProfile) || !self.adoptLegacyProfile || self.retentionPolicy == 'Retain'",message="adoptLegacyProfile requires retentionPolicy Retain"
 // +kubebuilder:validation:XValidation:rule="!has(oldSelf.adoptLegacyProfile) || (has(self.adoptLegacyProfile) && self.adoptLegacyProfile == oldSelf.adoptLegacyProfile)",message="adoptLegacyProfile cannot be changed once declared"
 type AgentRuntimeStorageBinding struct {
@@ -18,6 +52,11 @@ type AgentRuntimeStorageBinding struct {
 	// It is a brownfield cutover switch: no profile copy or flattening occurs.
 	// +optional
 	AdoptLegacyProfile bool `json:"adoptLegacyProfile,omitempty"`
+
+	// Migration stages a distinct replacement claim. Omitted preserves existing
+	// PVC and runtime behavior exactly.
+	// +optional
+	Migration *AgentRuntimeStorageMigrationBinding `json:"migration,omitempty"`
 }
 
 type AgentRuntimeCapabilityBinding struct {

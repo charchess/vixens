@@ -1,0 +1,84 @@
+---
+# Stage 1 only: suspended mount gates must reconcile before the
+# WaitForFirstConsumer replacement claims are introduced in a later revision.
+# They are non-writing and may not be unsuspended until the legacy claims have
+# no consumers or VolumeAttachments.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mail-data-canonical-target-bind
+  namespace: mail
+  labels:
+    app.kubernetes.io/name: mail-storage-migration
+    vixens.io/storage-migration: mail-canonical-target
+spec:
+  suspend: true
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mail-storage-migration
+        vixens.io/storage-migration: mail-canonical-target
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: bind
+          image: busybox:1.38.0
+          command: ["/bin/sh", "-ec"]
+          args: ["test -d /target; echo canonical Maildir target mounted"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          volumeMounts:
+            - {name: target, mountPath: /target}
+      volumes:
+        - name: target
+          persistentVolumeClaim: {claimName: mail-data-canonical-target}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mail-state-canonical-target-bind
+  namespace: mail
+  labels:
+    app.kubernetes.io/name: mail-storage-migration
+    vixens.io/storage-migration: mail-canonical-target
+spec:
+  suspend: true
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mail-storage-migration
+        vixens.io/storage-migration: mail-canonical-target
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: bind
+          image: busybox:1.38.0
+          command: ["/bin/sh", "-ec"]
+          args: ["test -d /target; echo canonical mail-state target mounted"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          volumeMounts:
+            - {name: target, mountPath: /target}
+      volumes:
+        - name: target
+          persistentVolumeClaim: {claimName: mail-state-canonical-target}

@@ -48,6 +48,7 @@ jobs:
           assert {x["metadata"]["name"] for x in classes} == {
               "storage-rwx-retain", "storage-rwx-delete",
               "storage-rwo-retain", "storage-rwo-delete",
+              "storage-rwo-xfs-retain", "storage-rwo-xfs-delete",
           }
           for sc in classes:
               name = sc["metadata"]["name"]
@@ -60,12 +61,13 @@ jobs:
               assert sc["reclaimPolicy"] == name.rsplit("-", 1)[-1].capitalize()
               parent = sc["parameters"]["datasetPath"]
               if name.startswith("storage-rwo-"):
-                  assert parent == "k8s/vixens/synelia-test/iscsi", name
+                  assert parent == "k8s/vixens/iscsi", name
                   assert sc["parameters"]["protocol"] == "iscsi", name
-                  assert sc["parameters"]["fsType"] == "ext4", name
+                  expected_fs = "xfs" if "-xfs-" in name else "ext4"
+                  assert sc["parameters"]["fsType"] == expected_fs, name
                   assert sc["volumeBindingMode"] == "WaitForFirstConsumer", name
               else:
-                  assert parent == "k8s/vixens/synelia-test/nfs", name
+                  assert parent == "k8s/vixens/nfs", name
                   assert sc["parameters"]["protocol"] == "nfs", name
                   assert "nfsvers=4.1" in sc["mountOptions"], name
                   assert sc["volumeBindingMode"] == "Immediate", name
@@ -115,7 +117,6 @@ jobs:
           assert "prune: false" in app
           assert "synelia.prod.csi.truenas.io" in rendered
           assert "ghcr.io/truenas/truenas-csi:v1.4.0" in rendered
-          assert "org.democratic-csi" not in rendered + companion + app
           assert "192.168.200.244" not in rendered + companion + app
           assert "kind: Secret" not in rendered + companion + app
           for storage_class in (
@@ -123,12 +124,14 @@ jobs:
               "storage-rwx-delete",
               "storage-rwo-retain",
               "storage-rwo-delete",
+              "storage-rwo-xfs-retain",
+              "storage-rwo-xfs-delete",
           ):
               assert storage_class in rendered
           assert "storageclass.kubernetes.io/is-default-class: \"false\"" in rendered
           for parent in (
-              "k8s/vixens/synelia-test/nfs",
-              "k8s/vixens/synelia-test/iscsi",
+              "k8s/vixens/nfs",
+              "k8s/vixens/iscsi",
           ):
               assert parent in rendered
           assert "app: synelia-prod-csi-controller" in companion

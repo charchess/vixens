@@ -369,11 +369,10 @@ jobs:
 
           echo "✅ All kustomize builds and K8s validations passed"
 
-      - name: Regression — UMI CSI canonical OpenBao store
-        run: python3 -m unittest discover -s scripts/validation/tests -p 'test_truenas_csi_umi_openbao.py' -v
-
       - name: Regression — official Synelia CSI safety gates
         run: python3 -m unittest discover -s scripts/validation/tests -p 'test_synelia_csi_source.py' -v
+      - name: Regression — Hermes active Synelia recovery contract
+        run: python3 -m unittest discover -s scripts/validation/tests -p 'test_hermes_4185_*.py' -v
 
   # 4️⃣ Secret Scanning (gitleaks)
   secret-scan:

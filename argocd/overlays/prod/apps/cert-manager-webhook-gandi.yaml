@@ -33,7 +33,6 @@ spec:
     - repoURL: https://github.com/charchess/vixens.git
       targetRevision: prod-stable
       path: apps/00-infra/cert-manager-webhook-gandi/overlays/prod
-      kustomize: {}
   # SINTEF chart v0.5.2 ignores topologySpreadConstraints in values.
   # Injected at Deployment admission by mutate-pod-annotations Rule 10.
   ignoreDifferences:
