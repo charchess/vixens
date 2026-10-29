@@ -1019,9 +1019,6 @@ spec:
                 description: WorkspaceMigration retains UID-bound evidence for completed
                   shared workspace copies.
                 items:
-                  description: |-
-                    WorkspaceMigrationAttestationStatus persists exact UID-bound copy evidence
-                    after the short-lived Kubernetes Job has expired.
                   properties:
                     jobName:
                       type: string

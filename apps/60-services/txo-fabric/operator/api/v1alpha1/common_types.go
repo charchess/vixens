@@ -146,6 +146,21 @@ const (
 
 // WorkspaceMigrationAttestationStatus persists exact UID-bound copy evidence
 // after the short-lived Kubernetes Job has expired.
+// RuntimeStorageMigrationAttestationStatus persists exact runtime copy evidence after transient Jobs expire.
+type RuntimeStorageMigrationAttestationStatus struct {
+	SourceClaimName string `json:"sourceClaimName"`
+	SourcePVCUID    string `json:"sourcePVCUID"`
+	TargetClaimName string `json:"targetClaimName"`
+	TargetPVCUID    string `json:"targetPVCUID"`
+	CopyJobName     string `json:"copyJobName,omitempty"`
+	CopyJobUID      string `json:"copyJobUID,omitempty"`
+	// +kubebuilder:validation:Enum=Succeeded;LegacyRecovered;EvidenceConflict
+	Phase string `json:"phase"`
+	// +kubebuilder:validation:Enum=Job;LegacyTargetBinding
+	EvidenceSource     string `json:"evidenceSource"`
+	VerificationResult string `json:"verificationResult"`
+}
+
 type WorkspaceMigrationAttestationStatus struct {
 	SourceClaimName    string                  `json:"sourceClaimName"`
 	SourcePVCUID       string                  `json:"sourcePVCUID"`
