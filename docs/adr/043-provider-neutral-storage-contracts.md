@@ -32,11 +32,19 @@ platform can satisfy them:
 | `storage-rwo-delete` | single-writer RWO | `Delete` |
 | `storage-rwx-retain` | shared RWX | `Retain` |
 | `storage-rwx-delete` | shared RWX | `Delete` |
+| `storage-rwo-xfs-retain` | single-writer RWO, XFS filesystem | `Retain` |
+| `storage-rwo-xfs-delete` | single-writer RWO, XFS filesystem | `Delete` |
+
+The XFS pair is a deliberate filesystem-qualified RWO extension, not a replacement
+for the ext4 default RWO contracts. It remains published because active consumers
+(Home Assistant, Trilium, AdGuard Home, Actual Budget, mail storage, Music Assistant
+and Frigate) explicitly request it. A later removal requires migration of every
+consumer; it must not be silently aliased to ext4.
 
 For the current official TrueNAS CSI implementation, `storage-rwo-*` is realised
 through iSCSI with `WaitForFirstConsumer`; `storage-rwx-*` is realised through NFS
-with immediate binding. Those are implementation bindings, not application-facing
-names. All four classes must remain non-default, support expansion only when the
+with immediate binding. The XFS pair is also iSCSI with `WaitForFirstConsumer`.
+Those are implementation bindings, not application-facing names. All six classes must remain non-default, support expansion only when the
 underlying driver configuration does, and use isolated driver-managed parents.
 
 `Retain` is the contract for durable state. `Delete` is limited to explicitly
