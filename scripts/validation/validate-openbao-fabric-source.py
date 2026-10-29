@@ -22,11 +22,20 @@ INFRA_EVIDENCE_RUNBOOK = "docs/runbooks/00-infra/openbao-transit-seal-evidence.m
 LEGACY_INFRA_STORE = "apps/00-infra/openbao/base/cluster-secret-store.yaml"
 ALLOWED_FILES = (".md", ".example")
 POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.yaml", "base/service.yaml", "base/networkpolicy.yaml", "base/certificate.yaml", "transit-staged/kustomization.yaml", "transit-staged/serviceaccount.yaml", "overlays/dev/kustomization.yaml", "overlays/prod/kustomization.yaml", "overlays/prod/migration/synelia-target-pvc.yaml", "overlays/prod/migration/synelia-cutover-statefulset.yaml"}
-# One-time, exact desired-state retirement of Democratic CSI. Keep this
+# One-time, exact desired-state retirement of retired CSI. Keep this
 # allow-list closed: any new path needs an explicit review rather than inheriting
 # the OpenBao/Fabric exception.
-DEMOCRATIC_CSI_RETIREMENT_PATHS = frozenset({
+LEGACY_STORAGE_RETIREMENT_PATHS = frozenset({
+    'apps/00-infra/kyverno/base/policies/policy-exception-csi-probes.yaml',
+    'apps/01-storage/nfs-storage/README.md',
+    'apps/04-databases/postgresql-shared/overlays/prod/recovery-staging/postgresql-shared-recovery.yaml',
+    'docs/adr/043-provider-neutral-storage-contracts.md',
+    'docs/reports/TXO-FABRIC-STORAGE-RESILIENCE-ROADMAP.md',
+    'docs/troubleshooting/synelia-csi-umi-preflight.md',
     '.github/workflows/synelia-csi-ci.yaml',
+    'apps/60-services/txo-fabric/operator/config/profiles/workspace-shared.yaml',
+    'argocd/overlays/prod/apps/synelia-prod-csi.yaml',
+    'argocd/overlays/prod/kustomization.yaml',
     'apps/00-infra/crowdsec/values/common.yaml',
     'apps/00-infra/crowdsec/values/prod.yaml',
     'apps/00-infra/snapshot-controller/base/snapshot-class.yaml',
@@ -379,13 +388,14 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
     expected_adr = "docs/adr/041-separate-openbao-fabric-secret-plane.md"
     if not (ROOT / expected_adr).is_file():
         problems.append("ADR-041 missing from repository")
-    if not any(p.startswith(FABRIC_PREFIX) or p.startswith(INFRA_CONTRACT_PREFIX) for p in changed):
+    if (not any(p.startswith(FABRIC_PREFIX) or p.startswith(INFRA_CONTRACT_PREFIX) for p in changed)
+            and not set(changed).issubset(MIGRATION_STAGE_PATHS | LEGACY_STORAGE_RETIREMENT_PATHS)):
         problems.append("OpenBao Fabric or Infra Transit source contract directory missing")
     # A storage-only migration stage is not an Infra Transit seal change. Permit
     # only the exact source/PVC/validator surface; all other Fabric changes still
     # require an accompanying Infra-contract review.
     retirement_changeset = set(changed).issubset(
-        MIGRATION_STAGE_PATHS | DEMOCRATIC_CSI_RETIREMENT_PATHS
+        MIGRATION_STAGE_PATHS | LEGACY_STORAGE_RETIREMENT_PATHS
     )
     if (not any(p.startswith(INFRA_CONTRACT_PREFIX) for p in changed)
             and not set(changed).issubset(MIGRATION_STAGE_PATHS)

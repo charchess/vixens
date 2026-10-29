@@ -5,7 +5,7 @@ metadata:
   name: truenas-csi-probe-exception
   namespace: kyverno
   annotations:
-    vixens.io/exception-reason: "CSI sidecars (csi-provisioner, csi-attacher, csi-resizer, csi-snapshotter, csi-node-driver-registrar, democratic-csi-plugin) are distroless Go binaries communicating via Unix socket. No HTTP/TCP health endpoint available. No exec tools in image."
+    vixens.io/exception-reason: "CSI sidecars (csi-provisioner, csi-attacher, csi-resizer, csi-snapshotter, csi-node-driver-registrar, retired-csi-plugin) are distroless Go binaries communicating via Unix socket. No HTTP/TCP health endpoint available. No exec tools in image."
 spec:
   exceptions:
     - policyName: require-probes

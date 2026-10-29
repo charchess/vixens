@@ -18,7 +18,7 @@ make a future provider change appear to require application changes.
 Issue #3959 established the required platform direction: upper layers consume a
 small explicit catalogue of capabilities rather than NAS paths, protocols, provider
 names, or historical CSI identities. The official CSI driver is now physically
-validated in parallel with `democratic-csi`; existing PVs retain their original CSI
+validated in parallel with `retired-csi`; existing PVs retain their original CSI
 identity and cannot be adopted by changing a class name.
 
 ## Decision
@@ -45,7 +45,7 @@ reprovisionable/disposable data. A workload must not encode `synelia`, `truenas`
 
 No existing PV, PVC, CSI `volumeHandle`, volume attachment, zvol, dataset, target,
 extent, NFS export, or workload is renamed, rebound, adopted, or migrated by this
-decision. Historical `democratic-csi` and Synelia staging classes remain for the
+decision. Historical `retired-csi` and Synelia staging classes remain for the
 PVs already bound to them. Each consumer migration creates a separately reviewed
 replacement claim and follows an exclusive, verified data-copy and rollback gate.
 
@@ -88,7 +88,7 @@ instances. They do not define a reusable Kubernetes storage guarantee.
 
 Rejected. A StorageClass is not a textual alias for a bound PV. Changing CSI
 identity, handles, IQNs, or claim bindings risks data loss and has no supported
-adoption contract between `democratic-csi` and the official driver.
+adoption contract between `retired-csi` and the official driver.
 
 ## References
 
