@@ -27,6 +27,9 @@ POC_YAML = {"base/kustomization.yaml", "base/configmap.yaml", "base/statefulset.
 # the OpenBao/Fabric exception.
 LEGACY_STORAGE_RETIREMENT_PATHS = frozenset({
     '.github/workflows/synelia-csi-ci.yaml',
+    'apps/60-services/txo-fabric/operator/config/profiles/workspace-shared.yaml',
+    'argocd/overlays/prod/apps/synelia-prod-csi.yaml',
+    'argocd/overlays/prod/kustomization.yaml',
     'apps/00-infra/crowdsec/values/common.yaml',
     'apps/00-infra/crowdsec/values/prod.yaml',
     'apps/00-infra/snapshot-controller/base/snapshot-class.yaml',
