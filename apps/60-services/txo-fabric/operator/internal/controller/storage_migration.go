@@ -56,11 +56,14 @@ func (r *AgentIdentityReconciler) ensureRuntimeMigrationTargetPVC(ctx context.Co
 		return fmt.Errorf("read migration source PVC %s/%s: %w", namespace, sourceName, sourceErr)
 	}
 
+	// A Pending source during cutover is a controller-created empty artifact,
+	// never migration evidence. Treat it exactly like a retired source.
+	retiredSource := apierrors.IsNotFound(sourceErr) || (sourceErr == nil && source.Status.Phase == corev1.ClaimPending)
 	key := types.NamespacedName{Namespace: namespace, Name: targetName}
 	var target corev1.PersistentVolumeClaim
 	err := r.Get(ctx, key, &target)
 	if apierrors.IsNotFound(err) {
-		if sourceErr != nil {
+		if retiredSource {
 			return fmt.Errorf("migration target PVC %s/%s is absent and source PVC %s/%s is retired", namespace, targetName, namespace, sourceName)
 		}
 		labels := agentLabels(agent, tenant)
@@ -91,7 +94,7 @@ func (r *AgentIdentityReconciler) ensureRuntimeMigrationTargetPVC(ctx context.Co
 	if valueOrEmpty(target.Spec.StorageClassName) != migration.TargetStorageClassName {
 		return fmt.Errorf("migration target PVC %s/%s uses immutable storageClass %q, expected %q", namespace, targetName, valueOrEmpty(target.Spec.StorageClassName), migration.TargetStorageClassName)
 	}
-	if migration.Cutover && apierrors.IsNotFound(sourceErr) {
+	if migration.Cutover && retiredSource {
 		if target.Status.Phase != corev1.ClaimBound {
 			return fmt.Errorf("finalized migration target PVC %s/%s is not Bound", namespace, targetName)
 		}
