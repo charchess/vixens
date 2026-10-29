@@ -5,3 +5,4 @@ resources:
   - tenantbundle.yaml
   - agents.yaml
   - workspace-migration-copy-jobs.yaml
+  - rwo-migration-proofs.yaml
