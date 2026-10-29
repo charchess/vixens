@@ -388,7 +388,8 @@ def validate(base: str, head: str, prod_render: pathlib.Path) -> list[str]:
     expected_adr = "docs/adr/041-separate-openbao-fabric-secret-plane.md"
     if not (ROOT / expected_adr).is_file():
         problems.append("ADR-041 missing from repository")
-    if not any(p.startswith(FABRIC_PREFIX) or p.startswith(INFRA_CONTRACT_PREFIX) for p in changed):
+    if (not any(p.startswith(FABRIC_PREFIX) or p.startswith(INFRA_CONTRACT_PREFIX) for p in changed)
+            and not set(changed).issubset(MIGRATION_STAGE_PATHS | LEGACY_STORAGE_RETIREMENT_PATHS)):
         problems.append("OpenBao Fabric or Infra Transit source contract directory missing")
     # A storage-only migration stage is not an Infra Transit seal change. Permit
     # only the exact source/PVC/validator surface; all other Fabric changes still
