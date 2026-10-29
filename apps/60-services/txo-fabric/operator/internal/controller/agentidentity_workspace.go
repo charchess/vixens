@@ -8,6 +8,7 @@ import (
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -65,14 +66,21 @@ func (r *AgentIdentityReconciler) ensureWorkspaceMigrationEvidence(ctx context.C
 		sourceName := workspacePVCName(scope)
 		targetName := workspaceMigrationTargetPVCName(scope, migration.TargetClaimSuffix)
 		var source, target corev1.PersistentVolumeClaim
-		if err := r.Get(ctx, types.NamespacedName{Namespace: ns, Name: sourceName}, &source); err != nil {
-			return fmt.Errorf("read workspace source PVC %s/%s: %w", ns, sourceName, err)
+		sourceErr := r.Get(ctx, types.NamespacedName{Namespace: ns, Name: sourceName}, &source)
+		if sourceErr != nil && !apierrors.IsNotFound(sourceErr) {
+			return fmt.Errorf("read workspace source PVC %s/%s: %w", ns, sourceName, sourceErr)
 		}
 		if err := r.Get(ctx, types.NamespacedName{Namespace: ns, Name: targetName}, &target); err != nil {
 			return fmt.Errorf("read workspace target PVC %s/%s: %w", ns, targetName, err)
 		}
 		if target.Status.Phase != corev1.ClaimBound {
 			return fmt.Errorf("workspace target PVC %s/%s is not Bound", ns, targetName)
+		}
+		// Finalized cutovers deliberately outlive their source and one-shot evidence.
+		// Accept only a Bound deterministic target after source retirement; all
+		// source-present migrations continue through the strict UID-bound Job gate.
+		if apierrors.IsNotFound(sourceErr) || source.Status.Phase == corev1.ClaimPending {
+			continue
 		}
 		jobName := migration.CopyJobPrefix + "-" + sourceName
 		attestation, attested := workspaceMigrationAttestation(tenant, sourceName, targetName, string(source.UID), string(target.UID), jobName)

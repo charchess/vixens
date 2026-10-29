@@ -162,3 +162,27 @@ func TestRuntimeMigrationCutoverAcceptsExactDurableProofAfterJobTTL(t *testing.T
 		t.Fatalf("unverified durable proof was accepted: %v", err)
 	}
 }
+
+func TestRuntimeMigrationFinalizedCutoverDoesNotRequireOrCreateSource(t *testing.T) {
+	ctx := context.Background()
+	tenant := configuredAgentStorageTenant()
+	agent := testStorageIdentity(tenant.Name, "finalized", StorageRetentionRetain)
+	agent.Spec.Runtime.Storage.Migration = &fabricv1alpha1.AgentRuntimeStorageMigrationBinding{TargetStorageClassName: "storage-rwo-retain", TargetClaimSuffix: "synelia", CopyJobName: "historical-copy", Cutover: true}
+	profile := testRuntimeProfile()
+	ns := tenantNamespace(tenant.Name)
+	target := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimeMigrationTargetPVCName(agent.Spec.AgentKey, "synelia"), Namespace: ns, UID: types.UID("canonical-target-uid"), Labels: agentLabels(agent, tenant)}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound}, Spec: corev1.PersistentVolumeClaimSpec{StorageClassName: stringPtr("storage-rwo-retain")}}
+	scheme := testScheme(t)
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(target).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	if err := r.ensureRuntimeMigrationTargetPVC(ctx, agent, tenant, profile, ns); err != nil {
+		t.Fatalf("finalized source-less cutover rejected: %v", err)
+	}
+	var absent corev1.PersistentVolumeClaim
+	if err := c.Get(ctx, types.NamespacedName{Namespace: ns, Name: runtimePVCName(agent.Spec.AgentKey)}, &absent); err == nil {
+		t.Fatal("finalized cutover recreated a historical source PVC")
+	}
+	var live corev1.PersistentVolumeClaim
+	if err := c.Get(ctx, types.NamespacedName{Namespace: ns, Name: target.Name}, &live); err != nil || live.UID != target.UID {
+		t.Fatalf("target identity changed: pvc=%#v err=%v", live, err)
+	}
+}

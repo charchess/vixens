@@ -64,6 +64,13 @@ func (r *SharedWorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	for _, scope := range desiredWorkspaceScopes(&bundle) {
+		migration := bundle.Spec.Workspace.Migration
+		if migration != nil && migration.Cutover {
+			if err := r.ensureWorkspaceMigrationTargetPVC(ctx, &bundle, &profile, scope); err != nil {
+				return ctrl.Result{}, err
+			}
+			continue
+		}
 		if err := r.ensureWorkspacePVC(ctx, &bundle, &profile, scope); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -155,12 +162,23 @@ func (r *SharedWorkspaceReconciler) ensureWorkspaceMigrationTargetPVC(ctx contex
 		return nil
 	}
 	sourceName := workspacePVCName(scope)
+	targetName := workspaceMigrationTargetPVCName(scope, migration.TargetClaimSuffix)
+	key := client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: targetName}
+	// A cutover target is terminal once it is Bound and its old source has been
+	// retired (or is only the harmless Pending claim recreated by an old reconcile).
+	// Resolve it before touching the source so final reconciliation never recreates data.
+	var finalizedTarget corev1.PersistentVolumeClaim
+	if err := r.Get(ctx, key, &finalizedTarget); err == nil && migration.Cutover && finalizedTarget.Status.Phase == corev1.ClaimBound && valueOrEmpty(finalizedTarget.Spec.StorageClassName) == migration.TargetStorageClassName {
+		var source corev1.PersistentVolumeClaim
+		sourceErr := r.Get(ctx, client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: sourceName}, &source)
+		if apierrors.IsNotFound(sourceErr) || (sourceErr == nil && source.Status.Phase == corev1.ClaimPending) {
+			return nil
+		}
+	}
 	var source corev1.PersistentVolumeClaim
 	if err := r.Get(ctx, client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: sourceName}, &source); err != nil {
 		return fmt.Errorf("read workspace migration source PVC %s/%s: %w", tenantNamespace(bundle.Name), sourceName, err)
 	}
-	targetName := workspaceMigrationTargetPVCName(scope, migration.TargetClaimSuffix)
-	key := client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: targetName}
 	var target corev1.PersistentVolumeClaim
 	err := r.Get(ctx, key, &target)
 	if apierrors.IsNotFound(err) {

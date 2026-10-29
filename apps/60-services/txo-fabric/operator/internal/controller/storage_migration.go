@@ -50,15 +50,14 @@ func (r *AgentIdentityReconciler) ensureRuntimeMigrationTargetPVC(ctx context.Co
 		return fmt.Errorf("AgentIdentity %q migration target PVC must differ from source PVC", agent.Name)
 	}
 
-	var source corev1.PersistentVolumeClaim
-	if err := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: sourceName}, &source); err != nil {
-		return fmt.Errorf("read migration source PVC %s/%s: %w", namespace, sourceName, err)
-	}
-
 	key := types.NamespacedName{Namespace: namespace, Name: targetName}
 	var target corev1.PersistentVolumeClaim
 	err := r.Get(ctx, key, &target)
 	if apierrors.IsNotFound(err) {
+		var source corev1.PersistentVolumeClaim
+		if err := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: sourceName}, &source); err != nil {
+			return fmt.Errorf("read migration source PVC %s/%s: %w", namespace, sourceName, err)
+		}
 		labels := agentLabels(agent, tenant)
 		labels[LabelStorageRetention] = storageRetentionPolicy(agent)
 		labels["fabric.truxonline.io/storage-migration-source-uid"] = string(source.UID)
@@ -86,6 +85,17 @@ func (r *AgentIdentityReconciler) ensureRuntimeMigrationTargetPVC(ctx context.Co
 	}
 	if valueOrEmpty(target.Spec.StorageClassName) != migration.TargetStorageClassName {
 		return fmt.Errorf("migration target PVC %s/%s uses immutable storageClass %q, expected %q", namespace, targetName, valueOrEmpty(target.Spec.StorageClassName), migration.TargetStorageClassName)
+	}
+	var source corev1.PersistentVolumeClaim
+	sourceErr := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: sourceName}, &source)
+	// A Bound canonical target becomes the terminal runtime storage after cutover.
+	// Historical sources may have been retired; a missing or unbound source must not
+	// be recreated or used to invalidate the immutable target identity.
+	if migration.Cutover && target.Status.Phase == corev1.ClaimBound && (apierrors.IsNotFound(sourceErr) || (sourceErr == nil && source.Status.Phase == corev1.ClaimPending)) {
+		return nil
+	}
+	if sourceErr != nil {
+		return fmt.Errorf("read migration source PVC %s/%s: %w", namespace, sourceName, sourceErr)
 	}
 	if target.Labels["fabric.truxonline.io/storage-migration-source-uid"] != string(source.UID) {
 		return fmt.Errorf("migration target PVC %s/%s is not bound to source PVC UID %q", namespace, targetName, source.UID)
