@@ -34,7 +34,8 @@ func (r *TenantBundleReconciler) observeWorkspaceMigrationAttestations(ctx conte
 			}
 			var source, target corev1.PersistentVolumeClaim
 			sourceErr := r.Get(ctx, client.ObjectKey{Namespace: ns, Name: sourceName}, &source)
-			if !apierrors.IsNotFound(sourceErr) || r.Get(ctx, client.ObjectKey{Namespace: ns, Name: targetName}, &target) != nil || target.Status.Phase != corev1.ClaimBound || valueOrEmpty(target.Spec.StorageClassName) != w.Migration.TargetStorageClassName {
+			retiredSource := apierrors.IsNotFound(sourceErr) || (sourceErr == nil && source.Status.Phase == corev1.ClaimPending && source.Spec.VolumeName == "")
+			if !retiredSource || r.Get(ctx, client.ObjectKey{Namespace: ns, Name: targetName}, &target) != nil || target.Status.Phase != corev1.ClaimBound || valueOrEmpty(target.Spec.StorageClassName) != w.Migration.TargetStorageClassName {
 				continue
 			}
 			for label, expected := range workspaceLabels(bundle, scope) {

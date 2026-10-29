@@ -34,3 +34,25 @@ func TestObserveWorkspaceMigrationAttestationsPersistsOnlyExactCompletedJob(t *t
 		t.Fatalf("attestation=%#v", got)
 	}
 }
+
+func TestObserveWorkspaceMigrationAttestationsRecoversPendingEmptySource(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := workspaceTestTenant()
+	tenant.Spec.Workspace.Migration = &fabricv1alpha1.TenantWorkspaceMigrationBinding{TargetStorageClassName: "storage-rwx-retain", TargetClaimSuffix: "synelia", Cutover: true}
+	ns := tenantNamespace(tenant.Name)
+	scope := desiredWorkspaceScopes(tenant)[0]
+	sourceName := workspacePVCName(scope)
+	targetName := workspaceMigrationTargetPVCName(scope, "synelia")
+	source := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: sourceName, Namespace: ns, UID: types.UID("replacement-source-uid")}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimPending}}
+	labels := workspaceLabels(tenant, scope)
+	labels["fabric.truxonline.io/storage-migration-source-uid"] = "historical-source-uid"
+	target := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: targetName, Namespace: ns, UID: types.UID("target-uid"), Labels: labels}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound}, Spec: corev1.PersistentVolumeClaimSpec{StorageClassName: stringPtr("storage-rwx-retain")}}
+	r := &TenantBundleReconciler{Client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(source, target).Build(), Scheme: scheme}
+	if err := r.observeWorkspaceMigrationAttestations(ctx, tenant); err != nil {
+		t.Fatal(err)
+	}
+	if len(tenant.Status.WorkspaceMigration) != 1 || tenant.Status.WorkspaceMigration[0].SourcePVCUID != "historical-source-uid" {
+		t.Fatalf("attestations=%#v", tenant.Status.WorkspaceMigration)
+	}
+}
