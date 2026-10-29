@@ -23,7 +23,7 @@ const (
 	defaultAICredentialBrokerProfileName = "cliproxyapi-standard"
 	tenantAICredentialBrokerName         = "txo-ai-credential-broker"
 	tenantAICredentialBrokerSecretName   = "txo-ai-credential-broker-runtime"
-	tenantAICredentialBrokerAuthPVCName  = "txo-ai-credential-broker-auth"
+	tenantAICredentialBrokerAuthPVCName  = "txo-ai-credential-broker-auth-synelia"
 )
 
 type aiCredentialBrokerResult struct {
