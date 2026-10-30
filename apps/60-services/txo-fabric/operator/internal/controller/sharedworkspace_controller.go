@@ -166,6 +166,11 @@ func (r *SharedWorkspaceReconciler) ensureWorkspaceMigrationTargetPVC(ctx contex
 	if sourceErr != nil && !apierrors.IsNotFound(sourceErr) {
 		return fmt.Errorf("read workspace migration source PVC %s/%s: %w", tenantNamespace(bundle.Name), sourceName, sourceErr)
 	}
+	// A Pending source during cutover is a historical controller-created empty
+	// replacement, not migration evidence. Treat it as retired so the Bound
+	// target remains the active workspace and the historical source is never
+	// recreated or re-adopted.
+	retiredSource := apierrors.IsNotFound(sourceErr) || (sourceErr == nil && source.Status.Phase == corev1.ClaimPending)
 	targetName := workspaceMigrationTargetPVCName(scope, migration.TargetClaimSuffix)
 	key := client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: targetName}
 	var target corev1.PersistentVolumeClaim
@@ -186,7 +191,7 @@ func (r *SharedWorkspaceReconciler) ensureWorkspaceMigrationTargetPVC(ctx contex
 	if valueOrEmpty(target.Spec.StorageClassName) != migration.TargetStorageClassName {
 		return fmt.Errorf("workspace migration target PVC %s/%s uses immutable storageClass %q, expected %q", key.Namespace, targetName, valueOrEmpty(target.Spec.StorageClassName), migration.TargetStorageClassName)
 	}
-	if migration.Cutover && apierrors.IsNotFound(sourceErr) {
+	if migration.Cutover && retiredSource {
 		if target.Status.Phase != corev1.ClaimBound {
 			return fmt.Errorf("finalized workspace target PVC %s/%s is not Bound", key.Namespace, targetName)
 		}

@@ -339,3 +339,34 @@ func TestWorkspaceCutoverAcceptsEmptyReplacementWithExactAttestation(t *testing.
 		t.Fatalf("empty replacement with exact durable evidence rejected: %v", err)
 	}
 }
+
+func TestSharedWorkspaceFinalizedCutoverAcceptsPendingHistoricalReplacement(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := workspaceTestTenant()
+	tenant.Spec.Workspace.Organization = fabricv1alpha1.WorkspaceScopeSpec{}
+	tenant.Spec.Workspace.Groups = []fabricv1alpha1.NamedWorkspaceScopeSpec{{Name: "sales", Collaborative: true}}
+	tenant.Spec.Workspace.Migration = &fabricv1alpha1.TenantWorkspaceMigrationBinding{TargetStorageClassName: "storage-rwx-retain", TargetClaimSuffix: "synelia", Cutover: true}
+	profile := &fabricv1alpha1.SharedWorkspaceProfile{ObjectMeta: metav1.ObjectMeta{Name: "shared-nfs"}, Spec: fabricv1alpha1.SharedWorkspaceProfileSpec{StorageClassName: "storage-rwx-retain", Size: resource.MustParse("5Gi")}}
+	scope := workspaceScope{Domain: "shared", Scope: "group", Key: "sales", Mode: "collaborative"}
+	ns := tenantNamespace(tenant.Name)
+	source := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: workspacePVCName(scope), Namespace: ns, UID: "replacement-uid"}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimPending}}
+	labels := workspaceLabels(tenant, scope)
+	labels["fabric.truxonline.io/storage-migration-source-uid"] = "historical-source-uid"
+	labels["fabric.truxonline.io/storage-migration-target"] = "true"
+	target := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: workspaceMigrationTargetPVCName(scope, "synelia"), Namespace: ns, UID: "target-uid", Labels: labels}, Spec: corev1.PersistentVolumeClaimSpec{StorageClassName: stringPtr("storage-rwx-retain")}, Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound}}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile, source, target).Build()
+	r := &SharedWorkspaceReconciler{Client: c, Scheme: scheme}
+	for range 2 {
+		if err := r.ensureWorkspaceMigrationTargetPVC(ctx, tenant, profile, scope); err != nil {
+			t.Fatalf("finalized cutover rejected: %v", err)
+		}
+	}
+	var got corev1.PersistentVolumeClaim
+	if err := c.Get(ctx, types.NamespacedName{Namespace: ns, Name: target.Name}, &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.Status.Phase != corev1.ClaimBound || got.Labels["fabric.truxonline.io/storage-migration-source-uid"] != "historical-source-uid" {
+		t.Fatalf("target changed during finalized reconcile: %#v", got)
+	}
+}
