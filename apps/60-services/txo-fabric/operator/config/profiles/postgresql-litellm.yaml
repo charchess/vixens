@@ -12,7 +12,9 @@ spec:
   topology: SharedCluster
   shared:
     clusterRef:
-      name: postgresql-shared
+      # The canonical service name remains postgresql-shared-rw, but its
+      # backing CNPG cluster is the recovered production primary.
+      name: postgresql-shared-recovery
       namespace: databases
     databaseNamePrefix: txo_
     roleNamePrefix: txo_
