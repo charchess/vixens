@@ -12,8 +12,11 @@ spec:
   requiredExtensions:
     - vector
   shared:
+    # Production canonical services resolve to the restored CNPG cluster;
+    # keep the profile aligned with the recovery cluster without changing the
+    # stable postgresql-shared-rw service contract used by consumers.
     clusterRef:
-      name: postgresql-shared
+      name: postgresql-shared-recovery
       namespace: databases
     databaseNamePrefix: txo_
     roleNamePrefix: txo_
