@@ -157,17 +157,11 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		fmt.Sprintf("Hermes toolset policy is reconciled (profile=%s revision=%s enabled=%v denied=%v)", profile.Name, toolPolicy.Revision, toolPolicy.Enabled, toolPolicy.Denied),
 	)
 
-	// Cutover resolution is terminal: never reconcile a retired source before
-	// validating the immutable canonical target.
-	if err := r.ensureRuntimeMigrationTargetPVC(ctx, &agent, &tenant, &profile, namespace); err != nil {
-		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "StorageMigrationPrepareFailed", err.Error())
+	// Agent runtimes are disposable; always reconcile their canonical PVC.
+	// Workspace shared volumes have a separate, stateful lifecycle.
+	if err := r.ensurePVC(ctx, &agent, &tenant, &profile, namespace); err != nil {
+		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "PVCReconcileFailed", err.Error())
 		return ctrl.Result{}, err
-	}
-	if migration := agent.Spec.Runtime.Storage.Migration; migration == nil || !migration.Cutover {
-		if err := r.ensurePVC(ctx, &agent, &tenant, &profile, namespace); err != nil {
-			r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "PVCReconcileFailed", err.Error())
-			return ctrl.Result{}, err
-		}
 	}
 	modelAccessSecretUID, modelAccessRevision, err := r.ensureModelAccessWithBackend(ctx, &agent, &tenant, namespace, modelBackend)
 	if err != nil {
