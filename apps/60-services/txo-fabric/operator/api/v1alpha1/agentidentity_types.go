@@ -56,6 +56,7 @@ type ActiveVolumeBinding struct {
 
 // +kubebuilder:validation:XValidation:rule="!has(self.adoptLegacyProfile) || !self.adoptLegacyProfile || self.retentionPolicy == 'Retain'",message="adoptLegacyProfile requires retentionPolicy Retain"
 // +kubebuilder:validation:XValidation:rule="!has(oldSelf.adoptLegacyProfile) || (has(self.adoptLegacyProfile) && self.adoptLegacyProfile == oldSelf.adoptLegacyProfile)",message="adoptLegacyProfile cannot be changed once declared"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.activeVolume) || (has(self.activeVolume) && self.activeVolume == oldSelf.activeVolume)",message="activeVolume cannot be removed or changed"
 type AgentRuntimeStorageBinding struct {
 	// RetentionPolicy controls what happens to the Hermes runtime PVC when the
 	// AgentIdentity is deleted. Retain is the safe default for durable customer
