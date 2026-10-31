@@ -215,8 +215,8 @@ spec:
                         type: boolean
                       migration:
                         description: |-
-                          Migration stages a distinct replacement claim. Omitted preserves existing
-                          PVC and runtime behavior exactly.
+                          Migration is legacy API compatibility only. Agent runtimes are disposable;
+                          the controller always uses the canonical PVC and ignores this field.
                         properties:
                           copyJobName:
                             description: |-

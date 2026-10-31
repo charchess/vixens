@@ -76,10 +76,7 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 		legacyRetained := tenant.Spec.AgentStorage != nil &&
 			storageRetentionPolicy(agent) == StorageRetentionRetain &&
 			actualClass == profile.Spec.Storage.StorageClassName
-		migrationSource := agent.Spec.Runtime.Storage.Migration != nil &&
-			agent.Spec.Runtime.Storage.Migration.TargetStorageClassName == storageClass &&
-			agent.Spec.Runtime.Storage.Migration.TargetClaimSuffix != ""
-		if !legacyRetained && !migrationSource {
+		if !legacyRetained {
 			return fmt.Errorf("PVC %s/%s uses immutable storageClass %q; agent storage policy requires %q", namespace, name, actualClass, storageClass)
 		}
 	}
@@ -212,7 +209,7 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntimeOnce(ctx context.Contex
 	managedPolicyMount := corev1.VolumeMount{Name: managedPolicyVolumeName, MountPath: managedPolicyMountPath, ReadOnly: true}
 	hermesMounts := append([]corev1.VolumeMount{runtimeDataMount, managedPolicyMount}, workspaceMounts...)
 	volumes := []corev1.Volume{
-		{Name: "data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: runtimeActivePVCName(agent)}}},
+		{Name: "data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: runtimePVCName(agent.Spec.AgentKey)}}},
 		{Name: managedPolicyVolumeName, VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
 			LocalObjectReference: corev1.LocalObjectReference{Name: managedToolsetPolicyName(agent.Spec.AgentKey)},
 		}}},
