@@ -1315,12 +1315,14 @@ func TestAIGatewayMigrationRunsOnlyExactImmutableHairemRecovery(t *testing.T) {
 	}}
 	profile := aiGatewayTestProfile()
 	postgresql := aiGatewayPostgreSQLTestProfile()
-	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
-	base := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(tenant).WithObjects(tenant).Build()
+	names := resolveAIGatewayPostgreSQLNames(tenant, postgresql)
+	databaseSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: names.Secret, Namespace: postgresql.Spec.Shared.ClusterRef.Namespace, UID: "database-uid"}}
+	runtimeSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: tenantAIGatewayRuntimeSecretName, Namespace: tenantNamespace(tenant.Name)}}
+	base := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(tenant, &batchv1.Job{}).WithObjects(tenant, profile, postgresql, databaseSecret, runtimeSecret).Build()
 	c := &migrationUIDAssigningClient{Client: base}
 	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
 
-	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, databaseSecret)
 	if err != nil || ready || reason != "MigrationPending" {
 		t.Fatalf("exact immutable recovery must create its only pending attempt: ready=%v reason=%q err=%v", ready, reason, err)
 	}
@@ -1333,6 +1335,40 @@ func TestAIGatewayMigrationRunsOnlyExactImmutableHairemRecovery(t *testing.T) {
 	}
 	if len(jobs.Items) != 1 || !aiGatewayMigrationEvidenceJobOwnedBy(&jobs.Items[0], tenant) {
 		t.Fatalf("recovery must create exactly one owner-bound Job: %#v", jobs.Items)
+	}
+	job := jobs.Items[0]
+	job.Status.Conditions = []batchv1.JobCondition{{Type: batchv1.JobComplete, Status: corev1.ConditionTrue}}
+	if err := c.Status().Update(ctx, &job); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: tenant.Name}}); err != nil {
+		t.Fatal(err)
+	}
+	var persisted fabricv1alpha1.TenantBundle
+	if err := c.Get(ctx, client.ObjectKeyFromObject(tenant), &persisted); err != nil {
+		t.Fatal(err)
+	}
+	if len(persisted.Status.AIGatewayMigration) != 1 || persisted.Status.AIGatewayMigration[0].Phase != fabricv1alpha1.AIGatewayMigrationSucceeded {
+		t.Fatalf("recovery terminal result was not persisted before TTL cleanup: %#v", persisted.Status.AIGatewayMigration)
+	}
+	if err := c.Delete(ctx, &job); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: persisted.Name}}); err != nil {
+		t.Fatal(err)
+	}
+	var afterTTL fabricv1alpha1.TenantBundle
+	if err := c.Get(ctx, client.ObjectKeyFromObject(&persisted), &afterTTL); err != nil {
+		t.Fatal(err)
+	}
+	if len(afterTTL.Status.AIGatewayMigration) != 1 || afterTTL.Status.AIGatewayMigration[0].Phase != fabricv1alpha1.AIGatewayMigrationSucceeded {
+		t.Fatalf("TTL-cleaned recovery terminal result was not retained: %#v", afterTTL.Status.AIGatewayMigration)
+	}
+	if err := c.List(ctx, &jobs, client.InNamespace(tenantNamespace(tenant.Name)), migrationJobSelector(tenant)); err != nil {
+		t.Fatal(err)
+	}
+	if len(jobs.Items) != 0 {
+		t.Fatalf("TTL cleanup must not recreate a termal recovery Job: %#v", jobs.Items)
 	}
 }
 
