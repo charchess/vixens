@@ -159,14 +159,23 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	// Cutover resolution is terminal: never reconcile a retired source before
 	// validating the immutable canonical target.
-	if err := r.ensureRuntimeMigrationTargetPVC(ctx, &agent, &tenant, &profile, namespace); err != nil {
-		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "StorageMigrationPrepareFailed", err.Error())
-		return ctrl.Result{}, err
-	}
-	if migration := agent.Spec.Runtime.Storage.Migration; migration == nil || !migration.Cutover {
-		if err := r.ensurePVC(ctx, &agent, &tenant, &profile, namespace); err != nil {
-			r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "PVCReconcileFailed", err.Error())
+	if agent.Spec.Runtime.Storage.ActiveVolume != nil {
+		// A finalized claim is read-only validated before any Deployment is touched.
+		// Never reconcile a historical source or recreate an empty replacement.
+		if err := r.ensureRuntimeActiveVolume(ctx, &agent, &tenant, namespace); err != nil {
+			r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "ActiveVolumeBindingInvalid", err.Error())
 			return ctrl.Result{}, err
+		}
+	} else {
+		if err := r.ensureRuntimeMigrationTargetPVC(ctx, &agent, &tenant, &profile, namespace); err != nil {
+			r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "StorageMigrationPrepareFailed", err.Error())
+			return ctrl.Result{}, err
+		}
+		if migration := agent.Spec.Runtime.Storage.Migration; migration == nil || !migration.Cutover {
+			if err := r.ensurePVC(ctx, &agent, &tenant, &profile, namespace); err != nil {
+				r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "PVCReconcileFailed", err.Error())
+				return ctrl.Result{}, err
+			}
 		}
 	}
 	modelAccessSecretUID, modelAccessRevision, err := r.ensureModelAccessWithBackend(ctx, &agent, &tenant, namespace, modelBackend)
@@ -314,7 +323,7 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	agent.Status.ObservedGeneration = agent.Generation
 	agent.Status.Namespace = namespace
 	agent.Status.Runtime.DeploymentName = deployment.Name
-	agent.Status.Runtime.PVCName = runtimePVCName(agent.Spec.AgentKey)
+	agent.Status.Runtime.PVCName = runtimeActivePVCName(&agent)
 	agent.Status.Runtime.HumanEndpoint = humanAccess.PublicURL
 	agent.Status.Runtime.ToolsetPolicyRevision = toolPolicy.Revision
 	agent.Status.Runtime.EnabledToolsets = append([]string(nil), toolPolicy.Enabled...)
