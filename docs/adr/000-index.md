@@ -54,7 +54,7 @@ Planning projects are `vixens core`, `vixens roadmap`, and `vixens perso`.
 | [041](041-separate-openbao-fabric-secret-plane.md) | Distinct OpenBao Infra recovery authority and OpenBao Fabric runtime secret plane | Accepted (source contracts only; rollout pending) | AIaaS | vixens roadmap |
 | [042](042-tenant-declarative-agent-population.md) | Declare tenant agent populations in TenantBundle | Accepted | AIaaS | vixens roadmap |
 | [043](043-provider-neutral-storage-contracts.md) | Provider-neutral Kubernetes storage contracts | Accepted | Core | vixens core |
-| [044](044-fabric-durable-active-volume-bindings.md) | Fabric durable active-volume bindings | Accepted | AIaaS | vixens roadmap |
+| [044](044-fabric-durable-active-volume-bindings.md) | Simple post-migration Fabric storage | Accepted | AIaaS | vixens roadmap |
 
 ## Proposed decisions (not yet authoritative)
 
