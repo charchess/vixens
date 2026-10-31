@@ -116,6 +116,16 @@ type TenantWorkspaceMigrationBinding struct {
 	Cutover bool `json:"cutover,omitempty"`
 }
 
+// WorkspaceActiveVolumeBinding fixes one canonical tenant scope to its verified
+// active claim. ScopePVCName is the stable, unsuffixed logical scope key; Volume
+// is the observed physical identity and is not derived from migration history.
+// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="workspace active binding is immutable"
+type WorkspaceActiveVolumeBinding struct {
+	// +kubebuilder:validation:MinLength=1
+	ScopePVCName string `json:"scopePvcName"`
+	Volume ActiveVolumeBinding `json:"volume"`
+}
+
 type TenantWorkspaceSpec struct {
 	// ProfileRef selects platform-owned RWX storage implementation policy.
 	// +kubebuilder:validation:MinLength=1
@@ -134,6 +144,16 @@ type TenantWorkspaceSpec struct {
 	// existing workspace PVCs and mount behavior.
 	// +optional
 	Migration *TenantWorkspaceMigrationBinding `json:"migration,omitempty"`
+
+	// ActiveVolumes pins every currently declared shared/skills workspace scope
+	// to a real Bound PVC/PV. An incomplete map must fail closed; no implicit
+	// scope provisioning or change in user/group grants is permitted.
+	// +optional
+	// +kubebuilder:validation:MaxItems=512
+	// +listType=map
+	// +listMapKey=scopePvcName
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="activeVolumes cannot be removed or modified"
+	ActiveVolumes []WorkspaceActiveVolumeBinding `json:"activeVolumes,omitempty"`
 
 	// Organization declares tenant-wide file and skill-library scopes.
 	// +optional
