@@ -1560,6 +1560,29 @@ func TestAIGatewayMigrationRecoveryTransitionRetainsExactTerminalEvidenceAfterTT
 	}
 }
 
+func TestRecoveryTransitionExclusivePathEndsOnlyAfterExactTerminalSuccessor(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		successor []fabricv1alpha1.AIGatewayMigrationStatus
+		want      bool
+	}{
+		{name: "no successor", want: true},
+		{name: "pending successor", successor: []fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 1, JobName: "successor", JobUID: "successor-uid", Phase: fabricv1alpha1.AIGatewayMigrationPending}}, want: true},
+		{name: "terminal successor", successor: []fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 1, JobName: "successor", JobUID: "successor-uid", Phase: fabricv1alpha1.AIGatewayMigrationSucceeded}}, want: false},
+		{name: "wrong successor ordinal", successor: []fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 2, JobName: "wrong", JobUID: "wrong-uid", Phase: fabricv1alpha1.AIGatewayMigrationSucceeded}}, want: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tenant := aiGatewayTestTenant("indiba", "TEN00002")
+			transition := recoveryTransition("recovery-exclusive-"+tc.name, tenant.Spec.TenantID, 0, "lost-uid")
+			tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{MigrationRetry: 1, MigrationRecoveryTransitions: []fabricv1alpha1.AIGatewayMigrationRecoveryTransition{transition}}
+			tenant.Status.AIGatewayMigration = append([]fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 0, JobName: "lost", JobUID: "lost-uid", Phase: fabricv1alpha1.AIGatewayMigrationEvidenceMissing}}, tc.successor...)
+			if got := legacyAIGatewayRecoveryRequiresExclusiveMigrationReconcile(tenant); got != tc.want {
+				t.Fatalf("exclusive recovery path=%v want %v", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestAIGatewayMigrationRecoveryTransitionRejectsDuplicatedMatchingRequests(t *testing.T) {
 	ctx := context.Background()
 	scheme := postgresqlTestScheme(t)

@@ -57,6 +57,29 @@ func legacyAIGatewayRecoveryMayProceedWhileAuthorizationDenied(bundle *fabricv1a
 	return legacyMigrationRecoveryEligible(bundle, bundle.Spec.AIGateway.MigrationRetry)
 }
 
+// legacyAIGatewayRecoveryRequiresExclusiveMigrationReconcile keeps the narrow
+// pre-authorization path only while its exact successor has no durable terminal
+// evidence. Once the reviewed successor is terminal, normal reconciliation may
+// converge existing runtime resources while the authorization gate remains false.
+func legacyAIGatewayRecoveryRequiresExclusiveMigrationReconcile(bundle *fabricv1alpha1.TenantBundle) bool {
+	if transition := aiGatewayMigrationRecoveryTransitionEvidence(bundle); transition != nil {
+		successor := transition.ExpectedAttempt + 1
+		for _, evidence := range bundle.Status.AIGatewayMigration {
+			if evidence.Attempt == successor {
+				return !terminalAIGatewayMigrationPhase(evidence.Phase)
+			}
+		}
+		return true
+	}
+	if immutableHairemLegacyRecoveryEligible(bundle) {
+		return true
+	}
+	if immutableHairemLegacyRecoveryEvidence(bundle) {
+		return !terminalAIGatewayMigrationPhase(bundle.Status.AIGatewayMigration[0].Phase)
+	}
+	return false
+}
+
 func openFGARolloutEnabledFor(bundle *fabricv1alpha1.TenantBundle) bool {
 	if bundle == nil || os.Getenv("TXO_FABRIC_OPENFGA_STORES_ENABLED") != "true" {
 		return false
@@ -99,7 +122,7 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	hadPostgreSQL := previousStatus.Persistence.PostgreSQL != nil
 	hadHindsight := previousStatus.Memory.Hindsight != nil
 
-	if aiGatewayMigrationRecoveryTransitionEvidence(&bundle) != nil || immutableHairemLegacyRecoveryEligible(&bundle) || immutableHairemLegacyRecoveryEvidence(&bundle) {
+	if legacyAIGatewayRecoveryRequiresExclusiveMigrationReconcile(&bundle) {
 		ready, reason, message, err := r.reconcileImmutableHairemLegacyMigration(ctx, &bundle)
 		bundle.Status.Phase = "Degraded"
 		status := metav1.ConditionFalse
