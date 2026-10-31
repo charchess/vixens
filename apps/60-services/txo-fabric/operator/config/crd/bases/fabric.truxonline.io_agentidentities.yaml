@@ -207,17 +207,11 @@ spec:
                     description: Storage defines lifecycle intent for the identity's
                       runtime workspace.
                     properties:
-                      adoptLegacyProfile:
-                        description: |-
-                          AdoptLegacyProfile non-destructively presents an existing retained
-                          profiles/<agentKey> directory as the runtime's single /opt/data home.
-                          It is a brownfield cutover switch: no profile copy or flattening occurs.
-                        type: boolean
                       activeVolume:
                         description: |-
-                          ActiveVolume pins the exact finalized PVC and PV identity.
-                          This binding is not migration copy authorization and cannot
-                          be removed or changed after adoption.
+                          ActiveVolume is a finalized, immutable PVC/PV binding. When set,
+                          normal reconciliation never re-enters the migration copy path or
+                          provisions an empty replacement claim. Must be pinned from live evidence.
                         properties:
                           accessMode:
                             enum:
@@ -252,6 +246,12 @@ spec:
                         x-kubernetes-validations:
                         - message: activeVolume is immutable once pinned
                           rule: self == oldSelf
+                      adoptLegacyProfile:
+                        description: |-
+                          AdoptLegacyProfile non-destructively presents an existing retained
+                          profiles/<agentKey> directory as the runtime's single /opt/data home.
+                          It is a brownfield cutover switch: no profile copy or flattening occurs.
+                        type: boolean
                       migration:
                         description: |-
                           Migration stages a distinct replacement claim. Omitted preserves existing

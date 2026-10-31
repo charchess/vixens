@@ -207,6 +207,45 @@ spec:
                           description: Storage defines lifecycle intent for the identity's
                             runtime workspace.
                           properties:
+                            activeVolume:
+                              description: |-
+                                ActiveVolume is a finalized, immutable PVC/PV binding. When set,
+                                normal reconciliation never re-enters the migration copy path or
+                                provisions an empty replacement claim. Must be pinned from live evidence.
+                              properties:
+                                accessMode:
+                                  enum:
+                                  - ReadWriteOnce
+                                  - ReadWriteMany
+                                  type: string
+                                claimName:
+                                  minLength: 1
+                                  type: string
+                                pvcUid:
+                                  minLength: 1
+                                  type: string
+                                retentionPolicy:
+                                  enum:
+                                  - Retain
+                                  - Delete
+                                  type: string
+                                storageClassName:
+                                  minLength: 1
+                                  type: string
+                                volumeName:
+                                  minLength: 1
+                                  type: string
+                              required:
+                              - accessMode
+                              - claimName
+                              - pvcUid
+                              - retentionPolicy
+                              - storageClassName
+                              - volumeName
+                              type: object
+                              x-kubernetes-validations:
+                              - message: activeVolume is immutable once pinned
+                                rule: self == oldSelf
                             adoptLegacyProfile:
                               description: |-
                                 AdoptLegacyProfile non-destructively presents an existing retained
@@ -280,6 +319,9 @@ spec:
                           - message: adoptLegacyProfile cannot be changed once declared
                             rule: '!has(oldSelf.adoptLegacyProfile) || (has(self.adoptLegacyProfile)
                               && self.adoptLegacyProfile == oldSelf.adoptLegacyProfile)'
+                          - message: activeVolume cannot be removed or changed
+                            rule: '!has(oldSelf.activeVolume) || (has(self.activeVolume)
+                              && self.activeVolume == oldSelf.activeVolume)'
                       type: object
                   required:
                   - agentKey
