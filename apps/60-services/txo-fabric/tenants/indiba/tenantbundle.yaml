@@ -35,8 +35,15 @@ spec:
   workspace:
     profileRef: shared-nfs
     retentionPolicy: Retain
-    # This is an existing physical claim-name suffix, not a migration step.
+    # Migration remains temporarily for the OLD operator until its image pin
+    # is reviewed; the NEW controller ignores this block.
     claimSuffix: synelia
+    # UID-bound copy evidence is persisted before selecting Synelia targets.
+    migration:
+      targetStorageClassName: storage-rwx-retain
+      targetClaimSuffix: synelia
+      copyJobPrefix: indiba-rwx-copy
+      cutover: true
     groups:
       - name: sales
         collaborative: true
