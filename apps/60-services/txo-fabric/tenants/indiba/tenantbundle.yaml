@@ -35,12 +35,8 @@ spec:
   workspace:
     profileRef: shared-nfs
     retentionPolicy: Retain
-    # UID-bound copy evidence is persisted before selecting Synelia targets.
-    migration:
-      targetStorageClassName: storage-rwx-retain
-      targetClaimSuffix: synelia
-      copyJobPrefix: indiba-rwx-copy
-      cutover: true
+    # This is an existing physical claim-name suffix, not a migration step.
+    claimSuffix: synelia
     groups:
       - name: sales
         collaborative: true
