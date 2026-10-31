@@ -732,6 +732,10 @@ func migrationJobPhase(job *batchv1.Job) fabricv1alpha1.AIGatewayMigrationPhase 
 	return fabricv1alpha1.AIGatewayMigrationPending
 }
 
+func terminalAIGatewayMigrationPhase(phase fabricv1alpha1.AIGatewayMigrationPhase) bool {
+	return phase == fabricv1alpha1.AIGatewayMigrationSucceeded || phase == fabricv1alpha1.AIGatewayMigrationFailed
+}
+
 func (r *TenantBundleReconciler) observeAIGatewayMigrationEvidence(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (fabricv1alpha1.AIGatewayMigrationStatus, bool, error) {
 	var latest fabricv1alpha1.AIGatewayMigrationStatus
 	seen := make(map[int32]struct{}, len(bundle.Status.AIGatewayMigration))
@@ -747,14 +751,34 @@ func (r *TenantBundleReconciler) observeAIGatewayMigrationEvidence(ctx context.C
 		seen[evidence.Attempt] = struct{}{}
 		var job batchv1.Job
 		err := r.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(bundle.Name), Name: evidence.JobName}, &job)
-		if apierrors.IsNotFound(err) || (err == nil && (!aiGatewayMigrationEvidenceJobOwnedBy(&job, bundle) || string(job.UID) != evidence.JobUID)) {
-			evidence.Phase = fabricv1alpha1.AIGatewayMigrationEvidenceMissing
-			return latest, true, nil
-		}
-		if err != nil {
+		if apierrors.IsNotFound(err) {
+			// TTL cleanup may remove an exact Job only after a prior observation
+			// persisted its terminal, UID-bound outcome. A missing Pending Job has
+			// no such proof and remains fail-closed.
+			if !terminalAIGatewayMigrationPhase(evidence.Phase) {
+				evidence.Phase = fabricv1alpha1.AIGatewayMigrationEvidenceMissing
+				return latest, true, nil
+			}
+		} else if err != nil {
 			return latest, false, err
+		} else {
+			if !aiGatewayMigrationEvidenceJobOwnedBy(&job, bundle) || string(job.UID) != evidence.JobUID {
+				evidence.Phase = fabricv1alpha1.AIGatewayMigrationEvidenceMissing
+				return latest, true, nil
+			}
+			observedPhase := migrationJobPhase(&job)
+			if terminalAIGatewayMigrationPhase(observedPhase) && evidence.Phase != observedPhase {
+				// Persist the terminal condition while the exact UID-bound Job is
+				// still present. TTL cleanup is then allowed to remove only this
+				// already-attested executor.
+				evidence.Phase = observedPhase
+				if err := r.Status().Update(ctx, bundle); err != nil {
+					return latest, false, fmt.Errorf("persist terminal migration evidence before TTL cleanup: %w", err)
+				}
+			} else {
+				evidence.Phase = observedPhase
+			}
 		}
-		evidence.Phase = migrationJobPhase(&job)
 		if evidence.Attempt > latest.Attempt || (len(seen) == 1 && evidence.Attempt == 0) {
 			latest = *evidence
 		}
