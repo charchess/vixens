@@ -43,11 +43,14 @@ type TenantBundleReconciler struct {
 }
 
 // legacyAIGatewayRecoveryMayProceedWhileAuthorizationDenied is deliberately
-// narrower than authorization readiness: it permits only the reviewed,
-// immutable, no-history legacy schema recovery to reach its existing
-// owner-bound migration path. It never makes an identity, membership, tuple,
-// grant, BFF, or browser surface available.
+// narrower than authorization readiness: it permits only an explicitly admitted
+// EvidenceMissing recovery transition to reach its existing owner-bound
+// migration path. It never makes an identity, membership, tuple, grant, BFF,
+// or browser surface available.
 func legacyAIGatewayRecoveryMayProceedWhileAuthorizationDenied(bundle *fabricv1alpha1.TenantBundle) bool {
+	if aiGatewayMigrationRecoveryTransitionEvidence(bundle) != nil {
+		return true
+	}
 	if bundle == nil || len(bundle.Status.AIGatewayMigration) != 0 || bundle.Spec.AIGateway == nil {
 		return false
 	}
@@ -96,7 +99,7 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	hadPostgreSQL := previousStatus.Persistence.PostgreSQL != nil
 	hadHindsight := previousStatus.Memory.Hindsight != nil
 
-	if immutableHairemLegacyRecoveryEligible(&bundle) || immutableHairemLegacyRecoveryEvidence(&bundle) {
+	if aiGatewayMigrationRecoveryTransitionEvidence(&bundle) != nil || immutableHairemLegacyRecoveryEligible(&bundle) || immutableHairemLegacyRecoveryEvidence(&bundle) {
 		ready, reason, message, err := r.reconcileImmutableHairemLegacyMigration(ctx, &bundle)
 		bundle.Status.Phase = "Degraded"
 		status := metav1.ConditionFalse

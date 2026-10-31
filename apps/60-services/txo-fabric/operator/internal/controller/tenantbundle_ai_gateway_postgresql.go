@@ -480,7 +480,7 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrationNetworkPolicy(
 // prerequisite must already exist; this path creates only the existing
 // migration NetworkPolicy, recovery marker, Job, and UID-backed status evidence.
 func (r *TenantBundleReconciler) reconcileImmutableHairemLegacyMigration(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (bool, string, string, error) {
-	if !immutableHairemLegacyRecoveryEligible(bundle) && !immutableHairemLegacyRecoveryEvidence(bundle) {
+	if aiGatewayMigrationRecoveryTransitionEvidence(bundle) == nil && !immutableHairemLegacyRecoveryEligible(bundle) && !immutableHairemLegacyRecoveryEvidence(bundle) {
 		return false, "MigrationEvidenceMissing", "immutable legacy recovery is not eligible", nil
 	}
 	var gatewayProfile fabricv1alpha1.AIGatewayProfile
@@ -518,6 +518,20 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrations(
 	retry := int32(0)
 	if bundle.Spec.AIGateway != nil {
 		retry = bundle.Spec.AIGateway.MigrationRetry
+	}
+
+	// A recovery transition is the sole exception for a retained historical
+	// EvidenceMissing record. It preserves that record and appends exactly its
+	// successor only after the controller-owned marker is durably consumed.
+	if transition := aiGatewayMigrationRecoveryTransitionToCreate(bundle); transition != nil {
+		consumed, err := r.consumeAIGatewayMigrationRecoveryTransition(ctx, bundle, transition)
+		if err != nil {
+			return false, "ReconcileError", "", err
+		}
+		if !consumed {
+			return false, "MigrationEvidenceMissing", "recovery transition was already consumed or its marker is invalid", nil
+		}
+		return r.createAIGatewayMigration(ctx, bundle, gatewayProfile, postgresqlProfile, databaseSecret, transition.ExpectedAttempt+1)
 	}
 
 	if len(bundle.Status.AIGatewayMigration) == 0 {
@@ -711,6 +725,91 @@ func (r *TenantBundleReconciler) consumeLegacyAIGatewayMigrationRecovery(ctx con
 	return true, nil
 }
 
+func aiGatewayMigrationRecoveryTransitionToCreate(bundle *fabricv1alpha1.TenantBundle) *fabricv1alpha1.AIGatewayMigrationRecoveryTransition {
+	transition := aiGatewayMigrationRecoveryTransitionEvidence(bundle)
+	if transition == nil || len(bundle.Status.AIGatewayMigration) != 1 || bundle.Spec.AIGateway.MigrationRetry != transition.ExpectedAttempt+1 {
+		return nil
+	}
+	return transition
+}
+
+// aiGatewayMigrationRecoveryTransitionEvidence admits only a declared request
+// that matches the exact retained EvidenceMissing status entry and its tenant.
+// It intentionally performs no inference from old conditions or legacy fields.
+func aiGatewayMigrationRecoveryTransitionEvidence(bundle *fabricv1alpha1.TenantBundle) *fabricv1alpha1.AIGatewayMigrationRecoveryTransition {
+	if bundle == nil || bundle.Spec.AIGateway == nil {
+		return nil
+	}
+	var matched *fabricv1alpha1.AIGatewayMigrationRecoveryTransition
+	for i := range bundle.Spec.AIGateway.MigrationRecoveryTransitions {
+		transition := &bundle.Spec.AIGateway.MigrationRecoveryTransitions[i]
+		if transition.ID == "" || transition.TenantID != bundle.Spec.TenantID || transition.ExpectedJobUID == "" {
+			continue
+		}
+		for _, evidence := range bundle.Status.AIGatewayMigration {
+			if evidence.Attempt == transition.ExpectedAttempt && evidence.JobUID == transition.ExpectedJobUID && evidence.Phase == fabricv1alpha1.AIGatewayMigrationEvidenceMissing {
+				if matched != nil {
+					return nil
+				}
+				matched = transition
+			}
+		}
+	}
+	return matched
+}
+
+func aiGatewayMigrationRecoveryTransitionMarkerName(bundle *fabricv1alpha1.TenantBundle, transition *fabricv1alpha1.AIGatewayMigrationRecoveryTransition) string {
+	if bundle == nil || transition == nil {
+		return ""
+	}
+	material := string(bundle.UID) + ":" + bundle.Spec.TenantID + ":" + transition.ID + ":" + strconv.FormatInt(int64(transition.ExpectedAttempt), 10) + ":" + transition.ExpectedJobUID
+	sum := sha256.Sum256([]byte(material))
+	return boundedDNSName("txo-ai-gateway-recovery-transition-" + hex.EncodeToString(sum[:8]))
+}
+
+func aiGatewayMigrationRecoveryTransitionMarkerOwnedBy(marker *corev1.ConfigMap, bundle *fabricv1alpha1.TenantBundle, transition *fabricv1alpha1.AIGatewayMigrationRecoveryTransition) bool {
+	if marker == nil || bundle == nil || transition == nil || !aiGatewayMigrationRecoveryMarkerOwnedBy(marker, bundle) {
+		return false
+	}
+	return marker.Data["id"] == transition.ID && marker.Data["tenantID"] == bundle.Spec.TenantID && marker.Data["expectedAttempt"] == strconv.FormatInt(int64(transition.ExpectedAttempt), 10) && marker.Data["expectedJobUID"] == transition.ExpectedJobUID
+}
+
+// consumeAIGatewayMigrationRecoveryTransition writes irreversible, exact
+// controller-owned admission evidence before a successor Job can be created.
+func (r *TenantBundleReconciler) consumeAIGatewayMigrationRecoveryTransition(ctx context.Context, bundle *fabricv1alpha1.TenantBundle, transition *fabricv1alpha1.AIGatewayMigrationRecoveryTransition) (bool, error) {
+	key := types.NamespacedName{Namespace: tenantNamespace(bundle.Name), Name: aiGatewayMigrationRecoveryTransitionMarkerName(bundle, transition)}
+	var existing corev1.ConfigMap
+	if err := r.Get(ctx, key, &existing); err == nil {
+		return false, nil
+	} else if !apierrors.IsNotFound(err) {
+		return false, err
+	}
+	labels := aiGatewayRuntimeLabels(bundle)
+	labels["fabric.truxonline.io/ai-gateway-resource"] = "migration-recovery-transition"
+	marker := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: key.Name, Namespace: key.Namespace, Labels: labels}, Data: map[string]string{"id": transition.ID, "tenantID": bundle.Spec.TenantID, "expectedAttempt": strconv.FormatInt(int64(transition.ExpectedAttempt), 10), "expectedJobUID": transition.ExpectedJobUID}}
+	if err := controllerutil.SetControllerReference(bundle, marker, r.Scheme); err != nil {
+		return false, err
+	}
+	if err := r.Create(ctx, marker); err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *TenantBundleReconciler) recoveryTransitionMarkerIsExact(ctx context.Context, bundle *fabricv1alpha1.TenantBundle, transition *fabricv1alpha1.AIGatewayMigrationRecoveryTransition) (bool, error) {
+	var marker corev1.ConfigMap
+	if err := r.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(bundle.Name), Name: aiGatewayMigrationRecoveryTransitionMarkerName(bundle, transition)}, &marker); err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return aiGatewayMigrationRecoveryTransitionMarkerOwnedBy(&marker, bundle, transition), nil
+}
+
 func migrationHistoryExists(bundle *fabricv1alpha1.TenantBundle) bool {
 	for _, condition := range bundle.Status.Conditions {
 		if condition.Type == "AIGatewayReady" && strings.HasPrefix(condition.Reason, "Migration") {
@@ -738,6 +837,16 @@ func terminalAIGatewayMigrationPhase(phase fabricv1alpha1.AIGatewayMigrationPhas
 
 func (r *TenantBundleReconciler) observeAIGatewayMigrationEvidence(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (fabricv1alpha1.AIGatewayMigrationStatus, bool, error) {
 	var latest fabricv1alpha1.AIGatewayMigrationStatus
+	transition := aiGatewayMigrationRecoveryTransitionEvidence(bundle)
+	if transition != nil {
+		exact, err := r.recoveryTransitionMarkerIsExact(ctx, bundle, transition)
+		if err != nil {
+			return latest, false, err
+		}
+		if !exact {
+			return latest, true, nil
+		}
+	}
 	seen := make(map[int32]struct{}, len(bundle.Status.AIGatewayMigration))
 	for i := range bundle.Status.AIGatewayMigration {
 		evidence := &bundle.Status.AIGatewayMigration[i]
@@ -749,6 +858,14 @@ func (r *TenantBundleReconciler) observeAIGatewayMigrationEvidence(ctx context.C
 			return latest, true, nil
 		}
 		seen[evidence.Attempt] = struct{}{}
+		if transition != nil && evidence.Attempt == transition.ExpectedAttempt && evidence.JobUID == transition.ExpectedJobUID && evidence.Phase == fabricv1alpha1.AIGatewayMigrationEvidenceMissing {
+			// The explicitly admitted historical absence is immutable evidence, not
+			// a live executor; only its appended successor may be observed.
+			if evidence.Attempt > latest.Attempt || (len(seen) == 1 && evidence.Attempt == 0) {
+				latest = *evidence
+			}
+			continue
+		}
 		var job batchv1.Job
 		err := r.Get(ctx, types.NamespacedName{Namespace: tenantNamespace(bundle.Name), Name: evidence.JobName}, &job)
 		if apierrors.IsNotFound(err) {
@@ -787,7 +904,9 @@ func (r *TenantBundleReconciler) observeAIGatewayMigrationEvidence(ctx context.C
 	// its historical attempt 0 was irretrievably absent. Any other gap remains
 	// fail-closed; the live Job owner and UID were validated above.
 	firstAttempt := int32(0)
-	if immutableHairemLegacyRecoveryEvidence(bundle) && latest.Attempt == 1 {
+	if transition != nil && latest.Attempt >= transition.ExpectedAttempt {
+		firstAttempt = transition.ExpectedAttempt
+	} else if immutableHairemLegacyRecoveryEvidence(bundle) && latest.Attempt == 1 {
 		firstAttempt = 1
 	}
 	for attempt := firstAttempt; attempt <= latest.Attempt; attempt++ {

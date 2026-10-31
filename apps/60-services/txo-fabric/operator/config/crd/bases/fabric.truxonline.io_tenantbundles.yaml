@@ -351,6 +351,55 @@ spec:
                     format: int64
                     minimum: 1
                     type: integer
+                  migrationRecoveryTransitions:
+                    description: |-
+                      MigrationRecoveryTransitions are reviewed, immutable recovery admissions
+                      for a specific retained EvidenceMissing migration record. Entries are
+                      append-only: each request names the tenant, exact prior attempt and UID,
+                      and one unique identifier; it cannot repair or replace historical status.
+                    items:
+                      description: |-
+                        AIGatewayMigrationRecoveryTransition admits one successor to an exact
+                        historical EvidenceMissing record. All values are declarative review inputs;
+                        the controller validates them against the TenantBundle and records its own
+                        owner/UID-bound consumption marker before creating the successor Job.
+                      properties:
+                        expectedAttempt:
+                          description: ExpectedAttempt identifies the retained EvidenceMissing
+                            record.
+                          format: int32
+                          minimum: 0
+                          type: integer
+                        expectedJobUID:
+                          description: ExpectedJobUID binds the request to the historical
+                            Job identity.
+                          maxLength: 253
+                          minLength: 1
+                          type: string
+                        id:
+                          description: ID is a unique immutable recovery identifier
+                            within this TenantBundle.
+                          maxLength: 63
+                          minLength: 1
+                          pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                          type: string
+                        tenantId:
+                          description: TenantID must equal the containing TenantBundle
+                            spec.tenantId.
+                          maxLength: 253
+                          minLength: 1
+                          type: string
+                      required:
+                      - expectedAttempt
+                      - expectedJobUID
+                      - id
+                      - tenantId
+                      type: object
+                    maxItems: 16
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - id
+                    x-kubernetes-list-type: map
                   migrationRetry:
                     default: 0
                     description: |-
@@ -379,6 +428,11 @@ spec:
                 - message: migrationRecovery and migrationRecoveryFailedGeneration
                     must be declared together
                   rule: has(self.migrationRecovery) == has(self.migrationRecoveryFailedGeneration)
+                - message: migrationRecoveryTransitions is append-only
+                  rule: '!has(oldSelf.migrationRecoveryTransitions) || (has(self.migrationRecoveryTransitions)
+                    && self.migrationRecoveryTransitions.size() >= oldSelf.migrationRecoveryTransitions.size()
+                    && oldSelf.migrationRecoveryTransitions.all(old, self.migrationRecoveryTransitions.exists(current,
+                    current == old)))'
               displayName:
                 description: DisplayName is the human-readable tenant name.
                 maxLength: 253
