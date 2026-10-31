@@ -64,16 +64,7 @@ func (r *SharedWorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	for _, scope := range desiredWorkspaceScopes(&bundle) {
-		if migration := bundle.Spec.Workspace.Migration; migration != nil && migration.Cutover {
-			if err := r.ensureWorkspaceMigrationTargetPVC(ctx, &bundle, &profile, scope); err != nil {
-				return ctrl.Result{}, err
-			}
-			continue
-		}
 		if err := r.ensureWorkspacePVC(ctx, &bundle, &profile, scope); err != nil {
-			return ctrl.Result{}, err
-		}
-		if err := r.ensureWorkspaceMigrationTargetPVC(ctx, &bundle, &profile, scope); err != nil {
 			return ctrl.Result{}, err
 		}
 	}
@@ -116,6 +107,9 @@ func (r *SharedWorkspaceReconciler) reconcileWorkspaceRelease(ctx context.Contex
 }
 
 func (r *SharedWorkspaceReconciler) ensureWorkspacePVC(ctx context.Context, bundle *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.SharedWorkspaceProfile, scope workspaceScope) error {
+	if bundle.Spec.Workspace.ClaimSuffix != "" {
+		return verifyExistingWorkspacePVC(ctx, r.Client, bundle, profile, scope)
+	}
 	name := workspacePVCName(scope)
 	key := client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: name}
 	var pvc corev1.PersistentVolumeClaim
@@ -151,67 +145,50 @@ func (r *SharedWorkspaceReconciler) ensureWorkspacePVC(ctx context.Context, bund
 	return err
 }
 
-func workspaceMigrationTargetPVCName(scope workspaceScope, suffix string) string {
-	return workspacePVCName(scope) + "-" + suffix
-}
-
-func (r *SharedWorkspaceReconciler) ensureWorkspaceMigrationTargetPVC(ctx context.Context, bundle *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.SharedWorkspaceProfile, scope workspaceScope) error {
-	migration := bundle.Spec.Workspace.Migration
-	if migration == nil {
-		return nil
+// Existing suffixed claims are physical business data. Never create, adopt,
+// re-label or overwrite them when the selected claim is missing or wrong.
+func verifyExistingWorkspacePVC(ctx context.Context, reader client.Reader, bundle *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.SharedWorkspaceProfile, scope workspaceScope) error {
+	name := workspaceClaimName(scope, bundle.Spec.Workspace)
+	ns := tenantNamespace(bundle.Name)
+	var pvc corev1.PersistentVolumeClaim
+	if err := reader.Get(ctx, client.ObjectKey{Namespace: ns, Name: name}, &pvc); err != nil {
+		return fmt.Errorf("read active workspace PVC %s/%s: %w", ns, name, err)
 	}
-	sourceName := workspacePVCName(scope)
-	var source corev1.PersistentVolumeClaim
-	sourceErr := r.Get(ctx, client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: sourceName}, &source)
-	if sourceErr != nil && !apierrors.IsNotFound(sourceErr) {
-		return fmt.Errorf("read workspace migration source PVC %s/%s: %w", tenantNamespace(bundle.Name), sourceName, sourceErr)
+	if pvc.UID == "" || pvc.Status.Phase != corev1.ClaimBound || !pvc.DeletionTimestamp.IsZero() ||
+		pvc.Spec.VolumeName == "" || valueOrEmpty(pvc.Spec.StorageClassName) != profile.Spec.StorageClassName ||
+		len(pvc.Spec.AccessModes) != 1 || pvc.Spec.AccessModes[0] != corev1.ReadWriteMany {
+		return fmt.Errorf("active workspace PVC %s/%s is not a valid Bound RWX claim", ns, name)
 	}
-	// A Pending source during cutover is a historical controller-created empty
-	// replacement, not migration evidence. Treat it as retired so the Bound
-	// target remains the active workspace and the historical source is never
-	// recreated or re-adopted.
-	retiredSource := apierrors.IsNotFound(sourceErr) || (sourceErr == nil && source.Status.Phase == corev1.ClaimPending)
-	targetName := workspaceMigrationTargetPVCName(scope, migration.TargetClaimSuffix)
-	key := client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: targetName}
-	var target corev1.PersistentVolumeClaim
-	err := r.Get(ctx, key, &target)
-	if apierrors.IsNotFound(err) {
-		if sourceErr != nil {
-			return fmt.Errorf("workspace target PVC %s/%s is absent and source is retired", key.Namespace, targetName)
+	for k, expected := range workspaceLabels(bundle, scope) {
+		if pvc.Labels[k] != expected {
+			return fmt.Errorf("active workspace PVC %s/%s has mismatched tenant/scope label %q", ns, name, k)
 		}
-		labels := workspaceLabels(bundle, scope)
-		labels["fabric.truxonline.io/storage-migration-source-uid"] = string(source.UID)
-		labels["fabric.truxonline.io/storage-migration-target"] = "true"
-		target = corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: targetName, Namespace: key.Namespace, Labels: labels}, Spec: corev1.PersistentVolumeClaimSpec{AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteMany}, StorageClassName: stringPtr(migration.TargetStorageClassName), Resources: corev1.VolumeResourceRequirements{Requests: corev1.ResourceList{corev1.ResourceStorage: profile.Spec.Size}}}}
-		return r.Create(ctx, &target)
 	}
-	if err != nil {
-		return err
+	var pv corev1.PersistentVolume
+	if err := reader.Get(ctx, client.ObjectKey{Name: pvc.Spec.VolumeName}, &pv); err != nil {
+		return fmt.Errorf("read active workspace PV %q: %w", pvc.Spec.VolumeName, err)
 	}
-	if valueOrEmpty(target.Spec.StorageClassName) != migration.TargetStorageClassName {
-		return fmt.Errorf("workspace migration target PVC %s/%s uses immutable storageClass %q, expected %q", key.Namespace, targetName, valueOrEmpty(target.Spec.StorageClassName), migration.TargetStorageClassName)
+	if pv.Spec.ClaimRef == nil || pv.Spec.ClaimRef.Namespace != ns || pv.Spec.ClaimRef.Name != name ||
+		pv.Spec.ClaimRef.UID != pvc.UID || pv.Status.Phase != corev1.VolumeBound {
+		return fmt.Errorf("active workspace PV %q has wrong claimRef or binding", pv.Name)
 	}
-	if migration.Cutover && retiredSource {
-		if target.Status.Phase != corev1.ClaimBound {
-			return fmt.Errorf("finalized workspace target PVC %s/%s is not Bound", key.Namespace, targetName)
-		}
-		for label, expected := range workspaceLabels(bundle, scope) {
-			if target.Labels[label] != expected {
-				return fmt.Errorf("finalized workspace target PVC %s/%s has mismatched %s label", key.Namespace, targetName, label)
-			}
-		}
-		if target.Labels["fabric.truxonline.io/storage-migration-source-uid"] == "" {
-			return fmt.Errorf("finalized workspace target PVC %s/%s has no historical source UID", key.Namespace, targetName)
-		}
-		return nil
+	reclaim := corev1.PersistentVolumeReclaimRetain
+	if workspaceRetentionPolicy(bundle.Spec.Workspace) == fabricv1alpha1.WorkspaceRetentionDelete {
+		reclaim = corev1.PersistentVolumeReclaimDelete
 	}
-	if sourceErr != nil {
-		return fmt.Errorf("read workspace migration source PVC %s/%s: %w", key.Namespace, sourceName, sourceErr)
-	}
-	if target.Labels["fabric.truxonline.io/storage-migration-source-uid"] != string(source.UID) {
-		return fmt.Errorf("workspace migration target PVC %s/%s is not bound to source PVC UID %q", key.Namespace, targetName, source.UID)
+	if pv.Spec.PersistentVolumeReclaimPolicy != reclaim {
+		return fmt.Errorf("active workspace PV %q has unexpected reclaim policy", pv.Name)
 	}
 	return nil
+}
+
+// Suffix belongs to the actual stable PVC name, not to CSI migration state.
+func workspaceClaimName(scope workspaceScope, workspace *fabricv1alpha1.TenantWorkspaceSpec) string {
+	name := workspacePVCName(scope)
+	if workspace != nil && workspace.ClaimSuffix != "" {
+		return name + "-" + workspace.ClaimSuffix
+	}
+	return name
 }
 
 func workspaceLabels(bundle *fabricv1alpha1.TenantBundle, scope workspaceScope) map[string]string {

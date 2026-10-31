@@ -130,8 +130,14 @@ type TenantWorkspaceSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="retentionPolicy is immutable"
 	RetentionPolicy string `json:"retentionPolicy,omitempty"`
 
-	// Migration stages deterministic replacement RWX claims. Omitted preserves
-	// existing workspace PVCs and mount behavior.
+	// ClaimSuffix selects existing physical shared-workspace PVCs by name.
+	// Nonempty means read-only adoption: never provision a missing claim.
+	// +optional
+	// +kubebuilder:validation:MaxLength=32
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
+	ClaimSuffix string `json:"claimSuffix,omitempty"`
+
+	// Migration is deprecated stored-CR compatibility, not active reconciliation.
 	// +optional
 	Migration *TenantWorkspaceMigrationBinding `json:"migration,omitempty"`
 

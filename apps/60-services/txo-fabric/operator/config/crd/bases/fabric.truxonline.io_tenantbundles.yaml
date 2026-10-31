@@ -639,6 +639,13 @@ spec:
                   Workspace declares tenant-owned shared business-data scopes. It is independent
                   from every AgentIdentity private /opt/data workspace.
                 properties:
+                  claimSuffix:
+                    description: |-
+                      ClaimSuffix selects existing physical shared-workspace PVCs by name.
+                      Nonempty means read-only adoption: never provision a missing claim.
+                    maxLength: 32
+                    pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                    type: string
                   groups:
                     description: Groups declares team file and skill-library scopes
                       that can be bound to agents.
@@ -674,9 +681,8 @@ spec:
                     - name
                     x-kubernetes-list-type: map
                   migration:
-                    description: |-
-                      Migration stages deterministic replacement RWX claims. Omitted preserves
-                      existing workspace PVCs and mount behavior.
+                    description: Migration is deprecated stored-CR compatibility,
+                      not active reconciliation.
                     properties:
                       copyJobPrefix:
                         description: |-

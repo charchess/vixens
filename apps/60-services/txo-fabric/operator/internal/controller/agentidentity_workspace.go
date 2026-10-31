@@ -6,136 +6,27 @@ import (
 	"path"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// ensureWorkspaceMigrationEvidence is the fail-closed cutover gate. The resolver
-// can select a target only after each workspace mounted by this agent has a Bound
-// target and a completed UID-bound, GitOps-declared copy evidence Job.
-func (r *AgentIdentityReconciler) ensureWorkspaceMigrationEvidence(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) error {
+// A selected existing RWX claim must be valid before any agent Deployment
+// receives its mount. Default unsuffixed provisioning needs no extra gate.
+func (r *AgentIdentityReconciler) ensureWorkspaceActiveClaims(ctx context.Context, tenant *fabricv1alpha1.TenantBundle) error {
 	workspace := tenant.Spec.Workspace
-	if workspace == nil || workspace.Migration == nil || !workspace.Migration.Cutover {
+	if workspace == nil || workspace.ClaimSuffix == "" {
 		return nil
 	}
-	migration := workspace.Migration
-	_, _, err := resolvedWorkspaceVolumes(agent, tenant)
-	if err != nil {
-		return err
+	var profile fabricv1alpha1.SharedWorkspaceProfile
+	if err := r.Get(ctx, types.NamespacedName{Name: workspace.ProfileRef}, &profile); err != nil {
+		return fmt.Errorf("read active workspace profile %q: %w", workspace.ProfileRef, err)
 	}
-	// Reconstruct only the exact scopes this agent consumes; use the canonical
-	// resolver names so proof cannot be redirected by an arbitrary Job name.
-	groups := map[string]fabricv1alpha1.NamedWorkspaceScopeSpec{}
-	for _, g := range workspace.Groups {
-		groups[g.Name] = g
-	}
-	users := map[string]fabricv1alpha1.NamedWorkspaceScopeSpec{}
-	for _, u := range workspace.Users {
-		users[u.Name] = u
-	}
-	scopes := []workspaceScope{}
-	appendModes := func(domain, scope, key string, ref, collab bool) {
-		if ref {
-			scopes = append(scopes, workspaceScope{Domain: domain, Scope: scope, Key: key, Mode: "reference", ReadOnly: true})
-		}
-		if collab {
-			scopes = append(scopes, workspaceScope{Domain: domain, Scope: scope, Key: key, Mode: "collaborative"})
-		}
-	}
-	appendScope := func(scope, key string, ref, collab, sref, scollab bool) {
-		appendModes("shared", scope, key, ref, collab)
-		appendModes("skills", scope, key, sref, scollab)
-	}
-	o := workspace.Organization
-	appendScope("organization", "organization", o.Reference, o.Collaborative, o.SkillsReference, o.SkillsCollaborative)
-	for _, name := range agent.Spec.Access.Groups {
-		if g, ok := groups[name]; ok {
-			appendScope("group", g.Name, g.Reference, g.Collaborative, g.SkillsReference, g.SkillsCollaborative)
-		}
-	}
-	if u, ok := users[agent.Spec.Access.UserRef]; agent.Spec.Access.UserRef != "" && ok {
-		appendScope("user", u.Name, u.Reference, u.Collaborative, u.SkillsReference, u.SkillsCollaborative)
-	}
-	ns := tenantNamespace(tenant.Name)
-	for _, scope := range scopes {
-		sourceName := workspacePVCName(scope)
-		targetName := workspaceMigrationTargetPVCName(scope, migration.TargetClaimSuffix)
-		var source, target corev1.PersistentVolumeClaim
-		sourceErr := r.Get(ctx, types.NamespacedName{Namespace: ns, Name: sourceName}, &source)
-		if sourceErr != nil && !apierrors.IsNotFound(sourceErr) {
-			return fmt.Errorf("read workspace source PVC %s/%s: %w", ns, sourceName, sourceErr)
-		}
-		if err := r.Get(ctx, types.NamespacedName{Namespace: ns, Name: targetName}, &target); err != nil {
-			return fmt.Errorf("read workspace target PVC %s/%s: %w", ns, targetName, err)
-		}
-		if target.Status.Phase != corev1.ClaimBound {
-			return fmt.Errorf("workspace target PVC %s/%s is not Bound", ns, targetName)
-		}
-		// A source that has no PV is an empty controller-created replacement, not
-		// migration evidence. It is retired only when the Bound target carries a
-		// different immutable historical source UID; live Bound sources remain
-		// subject to exact UID proof.
-		retiredSource := apierrors.IsNotFound(sourceErr)
-		historicalSourceUID := target.Labels["fabric.truxonline.io/storage-migration-source-uid"]
-		if !retiredSource && source.Spec.VolumeName == "" && historicalSourceUID != "" && historicalSourceUID != string(source.UID) {
-			retiredSource = true
-		}
-		sourceUID := string(source.UID)
-		if retiredSource {
-			sourceUID = historicalSourceUID
-		}
-		jobName := ""
-		if migration.CopyJobPrefix != "" {
-			jobName = migration.CopyJobPrefix + "-" + sourceName
-		}
-		attestation, attested := workspaceMigrationAttestation(tenant, sourceName, targetName, sourceUID, string(target.UID), jobName)
-		if retiredSource {
-			if attested {
-				continue
-			}
-			return fmt.Errorf("workspace source PVC %s/%s is retired without durable target attestation", ns, sourceName)
-		}
-		if migration.CopyJobPrefix == "" {
-			return fmt.Errorf("TenantBundle %q requests workspace cutover without copyJobPrefix or legacy attestation", tenant.Name)
-		}
-		var job batchv1.Job
-		if err := r.Get(ctx, types.NamespacedName{Namespace: ns, Name: jobName}, &job); err != nil {
-			if attested {
-				continue
-			}
-			return fmt.Errorf("read workspace copy Job %s/%s: %w", ns, jobName, err)
-		}
-		// TTL cleanup can remove the completed executor while Argo recreates the
-		// declared Job in its safe suspended form. That replacement has a new UID
-		// and is not copy evidence; accept only the immutable, exact attestation.
-		if attested && job.Spec.Suspend != nil && *job.Spec.Suspend && string(job.UID) != attestation.JobUID {
-			continue
-		}
-		if job.Labels["fabric.truxonline.io/storage-migration-source-uid"] != string(source.UID) || job.Labels["fabric.truxonline.io/storage-migration-target-uid"] != string(target.UID) {
-			return fmt.Errorf("workspace copy Job %s/%s does not bind exact source/target PVC UIDs", ns, jobName)
-		}
-		complete := false
-		for _, c := range job.Status.Conditions {
-			if c.Type == batchv1.JobComplete && c.Status == corev1.ConditionTrue {
-				complete = true
-			}
-		}
-		if !complete {
-			return fmt.Errorf("workspace copy Job %s/%s has not completed successfully", ns, jobName)
+	for _, scope := range desiredWorkspaceScopes(tenant) {
+		if err := verifyExistingWorkspacePVC(ctx, r.Client, tenant, &profile, scope); err != nil {
+			return err
 		}
 	}
 	return nil
-}
-
-func workspaceMigrationAttestation(tenant *fabricv1alpha1.TenantBundle, sourceName, targetName, sourceUID, targetUID, jobName string) (fabricv1alpha1.WorkspaceMigrationAttestationStatus, bool) {
-	for _, evidence := range tenant.Status.WorkspaceMigration {
-		if evidence.SourceClaimName == sourceName && evidence.TargetClaimName == targetName && evidence.SourcePVCUID == sourceUID && evidence.TargetPVCUID == targetUID && evidence.VerificationResult == "Succeeded" && ((evidence.EvidenceSource == "LegacyTargetBinding" && evidence.Phase == fabricv1alpha1.WorkspaceMigrationLegacyRecovered) || (evidence.JobName == jobName && evidence.JobUID != "" && evidence.Phase == fabricv1alpha1.WorkspaceMigrationSucceeded)) {
-			return evidence, true
-		}
-	}
-	return fabricv1alpha1.WorkspaceMigrationAttestationStatus{}, false
 }
 
 func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) ([]corev1.Volume, []corev1.VolumeMount, error) {
@@ -197,10 +88,7 @@ func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabri
 	volumes := make([]corev1.Volume, 0, len(scopes))
 	mounts := make([]corev1.VolumeMount, 0, len(scopes))
 	for _, scope := range scopes {
-		name := workspacePVCName(scope)
-		if workspace.Migration != nil && workspace.Migration.Cutover {
-			name = workspaceMigrationTargetPVCName(scope, workspace.Migration.TargetClaimSuffix)
-		}
+		name := workspaceClaimName(scope, workspace)
 		mountPath := workspaceMountPath(scope)
 		volumes = append(volumes, corev1.Volume{
 			Name:         name,

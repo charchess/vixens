@@ -54,7 +54,7 @@ Planning projects are `vixens core`, `vixens roadmap`, and `vixens perso`.
 | [041](041-separate-openbao-fabric-secret-plane.md) | Distinct OpenBao Infra recovery authority and OpenBao Fabric runtime secret plane | Accepted (source contracts only; rollout pending) | AIaaS | vixens roadmap |
 | [042](042-tenant-declarative-agent-population.md) | Declare tenant agent populations in TenantBundle | Accepted | AIaaS | vixens roadmap |
 | [043](043-provider-neutral-storage-contracts.md) | Provider-neutral Kubernetes storage contracts | Accepted | Core | vixens core |
-| [044](044-fabric-durable-active-volume-bindings.md) | Fabric durable active-volume bindings | Accepted | AIaaS | vixens roadmap |
+| [044](044-fabric-durable-active-volume-bindings.md) | Simple post-migration Fabric storage | Accepted | AIaaS | vixens roadmap |
 
 ## Proposed decisions (not yet authoritative)
 
@@ -88,7 +88,7 @@ These anomalies predate ADR-030 and are preserved so existing links/history rema
 - **‡ Renovate Discord header collision:** `019-renovate-discord-approval-workflow.md` is the repository file identity, but its historical document header says `ADR-013`. The separate `013-layered-configuration-disaster-recovery.md` also exists. The file is cataloged here by its stable path and is not renumbered retroactively.
 - **§ Infisical restored-file mismatch:** `011-infisical-secrets-management.md` is the stable repository path, while its restored historical header says `ADR 007`. It is superseded and retained only as history.
 
-No new ADR may reuse an allocated number. The next ADR after this catalog is **044** unless another PR allocates it first.
+No new ADR may reuse an allocated number. The next ADR after this catalog is **045** unless another PR allocates it first.
 
 ## Project view
 
