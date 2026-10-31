@@ -215,8 +215,8 @@ spec:
                         type: boolean
                       migration:
                         description: |-
-                          Migration is retained for stored-CR compatibility only.
-                          Agent runtimes are disposable and this field is ignored.
+                          Migration is legacy API compatibility only. Agent runtimes are disposable;
+                          the controller always uses the canonical PVC and ignores this field.
                         properties:
                           copyJobName:
                             description: |-
