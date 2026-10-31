@@ -214,8 +214,8 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	// read back by this reconciler.
 	privateAPICredentialReady, privateAPICredentialErr := r.ensurePrivateHermesAPICredential(ctx, &agent, &tenant, namespace)
 
-	if err := r.ensureWorkspaceMigrationEvidence(ctx, &agent, &tenant); err != nil {
-		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "WorkspaceMigrationPrepareFailed", err.Error())
+	if err := r.ensureWorkspaceActiveClaims(ctx, &tenant); err != nil {
+		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "WorkspaceClaimInvalid", err.Error())
 		return ctrl.Result{}, err
 	}
 	if err := r.ensureDeploymentWithIntegrations(ctx, &agent, &tenant, &profile, namespace, modelAccessSecretUID, modelAccessRevision, toolPolicy, integrationAccess, functional); err != nil {
