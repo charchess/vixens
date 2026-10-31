@@ -215,8 +215,8 @@ spec:
                         type: boolean
                       migration:
                         description: |-
-                          Migration stages a distinct replacement claim. Omitted preserves existing
-                          PVC and runtime behavior exactly.
+                          Migration is retained for stored-CR compatibility only.
+                          Agent runtimes are disposable and this field is ignored.
                         properties:
                           copyJobName:
                             description: |-
