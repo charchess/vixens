@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"reflect"
 	"strings"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
@@ -31,6 +32,11 @@ type trustedHumanOIDCProof struct {
 
 type authoritativeHumanAccountReader interface {
 	SnapshotUserAccount(context.Context, string) (authentik.UserAccountSnapshot, error)
+}
+
+type authoritativeVerifiedHumanEnrollmentSource interface {
+	authoritativeHumanAccountReader
+	authoritativeIAMGroupReader
 }
 
 func allocateOpaqueFabricUserID() (string, error) {
@@ -58,25 +64,55 @@ func decodeRetainedIdentityBindings(raw string) ([]authentik.IdentityBinding, er
 	return bindings, nil
 }
 
-// globalEnrollmentIntent accepts precisely one explicit reviewed mapping from a
-// server-verified global OIDC proof to the existing tenant issuer-pinned subject.
-// Global issuer/subject values select this mapping only; they are never ledger
-// fields and cannot authorize legacy enrollment paths.
-func globalEnrollmentIntent(intents []fabricv1alpha1.HumanEnrollmentIntent, proof trustedHumanOIDCProof) (fabricv1alpha1.HumanEnrollmentIntent, bool) {
-	if proof.authentikUUID == "" || proof.globalIssuer == "" || proof.globalSubject == "" {
-		return fabricv1alpha1.HumanEnrollmentIntent{}, false
+// verifiedEnrollmentGroupSnapshots accepts a verified UUID only when it is a
+// current member of at least one exact tenant-declared IAM group. Group names
+// and immutable UUID pins come solely from the tenant-owned, UID-bound ledger;
+// no browser value, static human identity, or CRD allowlist selects a group.
+func (r *TenantBundleReconciler) verifiedEnrollmentGroupSnapshots(
+	ctx context.Context, bundle *fabricv1alpha1.TenantBundle, uuid string, source authoritativeVerifiedHumanEnrollmentSource,
+) (map[string]authentik.GroupMembership, error) {
+	if source == nil || uuid == "" {
+		return nil, errors.New("verified Fabric enrollment group source unavailable")
 	}
-	var matched fabricv1alpha1.HumanEnrollmentIntent
-	matches := 0
-	for _, intent := range intents {
-		if intent.AuthentikUserUUID == proof.authentikUUID &&
-			intent.GlobalOIDCIssuer == proof.globalIssuer &&
-			intent.GlobalOIDCSubject == proof.globalSubject {
-			matched = intent
-			matches++
+	pins, err := r.readOpenFGAIAMGroupPins(ctx, bundle)
+	if err != nil {
+		return nil, err
+	}
+	names, err := checkedIAMGroupNames(bundle)
+	if err != nil || len(pins) != len(names) {
+		return nil, errors.New("verified Fabric enrollment group pins unavailable")
+	}
+	snapshots := make(map[string]authentik.GroupMembership, len(names))
+	member := false
+	for _, name := range names {
+		snapshot, err := source.SnapshotGroupMembership(ctx, name)
+		if err != nil || snapshot.Name != name || snapshot.ActiveAuthentikUserUUIDs == nil ||
+			pins[name] == "" || pins[name] != snapshot.AuthentikGroupUUID {
+			return nil, errors.New("verified Fabric enrollment group changed or unavailable")
+		}
+		for _, candidate := range snapshot.ActiveAuthentikUserUUIDs {
+			if candidate == uuid {
+				member = true
+			}
+		}
+		snapshots[name] = snapshot
+	}
+	if !member {
+		return nil, errors.New("verified active Authentik account is outside tenant IAM groups")
+	}
+	return snapshots, nil
+}
+
+func enrollmentGroupSnapshotsUnchanged(
+	ctx context.Context, snapshots map[string]authentik.GroupMembership, source authoritativeVerifiedHumanEnrollmentSource,
+) error {
+	for name, previous := range snapshots {
+		current, err := source.SnapshotGroupMembership(ctx, name)
+		if err != nil || !reflect.DeepEqual(current, previous) {
+			return errors.New("verified Fabric enrollment group changed during enrollment")
 		}
 	}
-	return matched, matches == 1
+	return nil
 }
 
 // enrollHumanFromVerifiedIdentity is a STAGED privileged write primitive;
@@ -96,7 +132,7 @@ func globalEnrollmentIntent(intents []fabricv1alpha1.HumanEnrollmentIntent, proo
 // silently rebound (account replacement requires a reviewed migration).
 func (r *TenantBundleReconciler) enrollHumanFromVerifiedIdentity(
 	ctx context.Context, bundle *fabricv1alpha1.TenantBundle,
-	proof trustedHumanOIDCProof, source authoritativeHumanAccountReader,
+	proof trustedHumanOIDCProof, source authoritativeVerifiedHumanEnrollmentSource,
 ) (string, error) {
 	if source == nil || bundle == nil || !bundle.DeletionTimestamp.IsZero() ||
 		bundle.Spec.HumanAccess == nil || bundle.Spec.HumanAccess.Web == nil {
@@ -106,12 +142,13 @@ func (r *TenantBundleReconciler) enrollHumanFromVerifiedIdentity(
 		return "", err
 	}
 	tenantIssuer := bundle.Spec.HumanAccess.Web.OIDC.Issuer
-	_, allowed := globalEnrollmentIntent(bundle.Spec.HumanAccess.EnrollmentIntents, proof)
-	if !allowed || proof.tenantIssuer != tenantIssuer || proof.tenantSubject == "" {
-		return "", errors.New("verified global and tenant identities have no explicit Fabric enrollment intent")
+	if proof.globalIssuer == "" || proof.globalSubject == "" || proof.authentikUUID == "" ||
+		proof.tenantIssuer != tenantIssuer || proof.tenantSubject == "" {
+		return "", errors.New("verified global and tenant OIDC proofs are incomplete or tenant-mismatched")
 	}
-	// The global proof selects a reviewed intent only. The tenant tuple comes
-	// exclusively from the separately verified tenant issuer proof.
+	// The private bridge validates both OIDC proofs before constructing this
+	// internal value. The global proof is transport-only; only the separately
+	// verified tenant issuer/subject can enter the tenant ledger.
 	claim := authentik.IdentityBinding{
 		TenantID: bundle.Spec.TenantID, Issuer: proof.tenantIssuer,
 		OIDCSubject: proof.tenantSubject, AuthentikUserUUID: proof.authentikUUID,
@@ -128,6 +165,10 @@ func (r *TenantBundleReconciler) enrollHumanFromVerifiedIdentity(
 	}
 	if account.UUID != proof.authentikUUID || !account.Active {
 		return "", errors.New("AuthentiK account inactive or inconsistent")
+	}
+	groupSnapshots, err := r.verifiedEnrollmentGroupSnapshots(ctx, bundle, proof.authentikUUID, source)
+	if err != nil {
+		return "", err
 	}
 
 	// Validate the retained tenantUID/store/model against its *live* model
@@ -172,7 +213,13 @@ func (r *TenantBundleReconciler) enrollHumanFromVerifiedIdentity(
 				return "", errors.New("identity replacement requires explicit Fabric migration")
 			}
 			// Idempotent: a repeated trusted login does not modify the ledger
-			// or rotate a stable Fabric user ID.
+			// or rotate a stable Fabric user ID, but must still observe a fresh
+			// active account and stable declared-group snapshot.
+			after, err := source.SnapshotUserAccount(ctx, proof.authentikUUID)
+			if err != nil || after.UUID != proof.authentikUUID || !after.Active ||
+				enrollmentGroupSnapshotsUnchanged(ctx, groupSnapshots, source) != nil {
+				return "", errors.New("Authentik account or group changed during enrollment")
+			}
 			return previous.FabricUserID, nil
 		}
 	}
@@ -221,10 +268,11 @@ func (r *TenantBundleReconciler) enrollHumanFromVerifiedIdentity(
 		return "", errors.New("Fabric human enrollment binding changed after write")
 	}
 	after, err := source.SnapshotUserAccount(ctx, proof.authentikUUID)
-	if err != nil || after.UUID != proof.authentikUUID || !after.Active {
+	if err != nil || after.UUID != proof.authentikUUID || !after.Active ||
+		enrollmentGroupSnapshotsUnchanged(ctx, groupSnapshots, source) != nil {
 		// A persisted association alone is never a grant. The future BFF
 		// must always recheck live active status + fresh FGA authorization.
-		return "", errors.New("Authentik user disabled or changed during enrollment")
+		return "", errors.New("Authentik user disabled or group changed during enrollment")
 	}
 	return allocated, nil
 }
