@@ -17,7 +17,18 @@ import (
 // target and a completed UID-bound, GitOps-declared copy evidence Job.
 func (r *AgentIdentityReconciler) ensureWorkspaceMigrationEvidence(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) error {
 	workspace := tenant.Spec.Workspace
-	if workspace == nil || workspace.Migration == nil || !workspace.Migration.Cutover {
+	if workspace == nil {
+		return nil
+	}
+	if len(workspace.ActiveVolumes) > 0 {
+		// Scope authorization stays in resolvedWorkspaceVolumes; identity
+		// validation is a read-only gate before mounting any RWX PVC.
+		if _, _, err := resolvedWorkspaceVolumes(agent, tenant); err != nil {
+			return err
+		}
+		return validateWorkspaceActiveVolumes(ctx, r.Client, tenant)
+	}
+	if workspace.Migration == nil || !workspace.Migration.Cutover {
 		return nil
 	}
 	migration := workspace.Migration
@@ -194,11 +205,17 @@ func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabri
 		appendScope("user", user.Name, user.Reference, user.Collaborative, user.SkillsReference, user.SkillsCollaborative)
 	}
 
+	bindings, err := activeWorkspaceBindings(tenant)
+	if err != nil {
+		return nil, nil, err
+	}
 	volumes := make([]corev1.Volume, 0, len(scopes))
 	mounts := make([]corev1.VolumeMount, 0, len(scopes))
 	for _, scope := range scopes {
 		name := workspacePVCName(scope)
-		if workspace.Migration != nil && workspace.Migration.Cutover {
+		if bindings != nil {
+			name = bindings[name].ClaimName
+		} else if workspace.Migration != nil && workspace.Migration.Cutover {
 			name = workspaceMigrationTargetPVCName(scope, workspace.Migration.TargetClaimSuffix)
 		}
 		mountPath := workspaceMountPath(scope)
