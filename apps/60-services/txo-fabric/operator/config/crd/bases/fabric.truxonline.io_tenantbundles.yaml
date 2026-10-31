@@ -673,10 +673,17 @@ spec:
                     x-kubernetes-list-map-keys:
                     - name
                     x-kubernetes-list-type: map
+                  claimSuffix:
+                    description: |-
+                      ClaimSuffix selects existing physical workspace PVC names.
+                      When set, Fabric never creates a substitute claim.
+                    maxLength: 32
+                    pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
+                    type: string
                   migration:
                     description: |-
-                      Migration stages deterministic replacement RWX claims. Omitted preserves
-                      existing workspace PVCs and mount behavior.
+                      Migration is obsolete, retained solely for stored-CR
+                      compatibility, and ignored for steady-state reconciliation.
                     properties:
                       copyJobPrefix:
                         description: |-
