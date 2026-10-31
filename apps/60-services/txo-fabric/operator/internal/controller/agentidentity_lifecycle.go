@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -61,7 +62,18 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: managedToolsetPolicyName(agent.Spec.AgentKey), Namespace: namespace}},
 	}
 	if storageRetentionPolicy(agent) == StorageRetentionDelete {
-		objects = append(objects, &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimePVCName(agent.Spec.AgentKey), Namespace: namespace}})
+		if binding := agent.Spec.Runtime.Storage.ActiveVolume; binding != nil {
+			// Never delete a recreated same-named PVC during finalization.
+			var live corev1.PersistentVolumeClaim
+			err := r.Get(ctx, types.NamespacedName{Name: binding.ClaimName, Namespace: namespace}, &live)
+			if err != nil && !apierrors.IsNotFound(err) {
+				return ctrl.Result{}, err
+			}
+			if err == nil && string(live.UID) != binding.PVCUID {
+				return ctrl.Result{}, fmt.Errorf("refuse to delete replaced pinned active PVC %s/%s", namespace, binding.ClaimName)
+			}
+		}
+		objects = append(objects, &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: runtimeActivePVCName(agent), Namespace: namespace}})
 	}
 
 	pending := false
@@ -111,7 +123,7 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 
 func (r *AgentIdentityReconciler) retainRuntimePVC(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, namespace string) error {
 	var pvc corev1.PersistentVolumeClaim
-	key := types.NamespacedName{Name: runtimePVCName(agent.Spec.AgentKey), Namespace: namespace}
+	key := types.NamespacedName{Name: runtimeActivePVCName(agent), Namespace: namespace}
 	if err := r.Get(ctx, key, &pvc); err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil
@@ -225,7 +237,7 @@ func (r *AgentIdentityReconciler) requestsForRuntimePVC(ctx context.Context, obj
 		return nil
 	}
 	tenant, key := pvc.Labels[LabelTenantName], pvc.Labels[LabelAgent]
-	if tenant == "" || key == "" || pvc.Namespace != tenantNamespace(tenant) || pvc.Name != runtimePVCName(key) {
+	if tenant == "" || key == "" || pvc.Namespace != tenantNamespace(tenant) {
 		return nil
 	}
 	var agents fabricv1alpha1.AgentIdentityList
@@ -234,7 +246,7 @@ func (r *AgentIdentityReconciler) requestsForRuntimePVC(ctx context.Context, obj
 	}
 	for i := range agents.Items {
 		agent := &agents.Items[i]
-		if agent.Spec.TenantRef.Name == tenant && agent.Spec.AgentKey == key {
+		if agent.Spec.TenantRef.Name == tenant && agent.Spec.AgentKey == key && runtimeActivePVCName(agent) == pvc.Name {
 			return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: agent.Name}}}
 		}
 	}
