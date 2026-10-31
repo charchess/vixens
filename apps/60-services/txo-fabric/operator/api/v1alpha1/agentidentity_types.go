@@ -53,8 +53,8 @@ type AgentRuntimeStorageBinding struct {
 	// +optional
 	AdoptLegacyProfile bool `json:"adoptLegacyProfile,omitempty"`
 
-	// Migration stages a distinct replacement claim. Omitted preserves existing
-	// PVC and runtime behavior exactly.
+	// Migration is legacy API compatibility only. Agent runtimes are disposable;
+	// the controller always uses the canonical PVC and ignores this field.
 	// +optional
 	Migration *AgentRuntimeStorageMigrationBinding `json:"migration,omitempty"`
 }
