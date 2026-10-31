@@ -63,6 +63,14 @@ func (r *SharedWorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, fmt.Errorf("SharedWorkspaceProfile %q has empty storageClassName", profile.Name)
 	}
 
+	if len(bundle.Spec.Workspace.ActiveVolumes) > 0 {
+		// Finalized workspaces are read-only validated. There is no PVC create,
+		// copy Job lookup, label adoption, or historical-source fallback.
+		if err := validateWorkspaceActiveVolumes(ctx, r.Client, &bundle); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, nil
+	}
 	for _, scope := range desiredWorkspaceScopes(&bundle) {
 		if migration := bundle.Spec.Workspace.Migration; migration != nil && migration.Cutover {
 			if err := r.ensureWorkspaceMigrationTargetPVC(ctx, &bundle, &profile, scope); err != nil {
