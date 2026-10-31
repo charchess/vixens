@@ -69,6 +69,7 @@ type TenantMemorySpec struct {
 // +kubebuilder:validation:XValidation:rule="!has(oldSelf.migrationRecovery) || (has(self.migrationRecovery) && self.migrationRecovery == oldSelf.migrationRecovery)",message="migrationRecovery cannot be changed or removed once declared"
 // +kubebuilder:validation:XValidation:rule="!has(oldSelf.migrationRecoveryFailedGeneration) || (has(self.migrationRecoveryFailedGeneration) && self.migrationRecoveryFailedGeneration == oldSelf.migrationRecoveryFailedGeneration)",message="migrationRecoveryFailedGeneration cannot be changed or removed once declared"
 // +kubebuilder:validation:XValidation:rule="has(self.migrationRecovery) == has(self.migrationRecoveryFailedGeneration)",message="migrationRecovery and migrationRecoveryFailedGeneration must be declared together"
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.migrationRecoveryTransitions) || (has(self.migrationRecoveryTransitions) && self.migrationRecoveryTransitions.size() >= oldSelf.migrationRecoveryTransitions.size() && oldSelf.migrationRecoveryTransitions.all(old, self.migrationRecoveryTransitions.exists(current, current == old)))",message="migrationRecoveryTransitions is append-only"
 type TenantAIGatewaySpec struct {
 	// ProfileRef selects the tenant-facing LiteLLM gateway profile.
 	// +optional
@@ -100,6 +101,42 @@ type TenantAIGatewaySpec struct {
 	// +optional
 	// +kubebuilder:validation:Minimum=1
 	MigrationRecoveryFailedGeneration int64 `json:"migrationRecoveryFailedGeneration,omitempty"`
+
+	// MigrationRecoveryTransitions are reviewed, immutable recovery admissions
+	// for a specific retained EvidenceMissing migration record. Entries are
+	// append-only: each request names the tenant, exact prior attempt and UID,
+	// and one unique identifier; it cannot repair or replace historical status.
+	// +optional
+	// +kubebuilder:validation:MaxItems=16
+	// +listType=map
+	// +listMapKey=id
+	MigrationRecoveryTransitions []AIGatewayMigrationRecoveryTransition `json:"migrationRecoveryTransitions,omitempty"`
+}
+
+// AIGatewayMigrationRecoveryTransition admits one successor to an exact
+// historical EvidenceMissing record. All values are declarative review inputs;
+// the controller validates them against the TenantBundle and records its own
+// owner/UID-bound consumption marker before creating the successor Job.
+type AIGatewayMigrationRecoveryTransition struct {
+	// ID is a unique immutable recovery identifier within this TenantBundle.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`
+	ID string `json:"id"`
+
+	// TenantID must equal the containing TenantBundle spec.tenantId.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	TenantID string `json:"tenantId"`
+
+	// ExpectedAttempt identifies the retained EvidenceMissing record.
+	// +kubebuilder:validation:Minimum=0
+	ExpectedAttempt int32 `json:"expectedAttempt"`
+
+	// ExpectedJobUID binds the request to the historical Job identity.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	ExpectedJobUID string `json:"expectedJobUID"`
 }
 
 // AIGatewayMigrationPhase is the evidence-derived phase of one retained
