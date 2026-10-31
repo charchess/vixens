@@ -10,7 +10,10 @@ spec:
         vixens.io/sizing.authentik-server: V-2xlarge
         vixens.io/sizing.config-syncer: V-nano
       annotations:
-        # authentik-server V-2xlarge(4Gi) + config-syncer V-nano(256Mi) = 4352Mi
+        # Keep VPA at the canonical V-2xlarge floor; otherwise it overrides T-shirt sizing with a low historical recommendation.
+        # authentik-server V-2xlarge(500m, 4Gi) + config-syncer V-nano(256Mi) = 4352Mi
+        vixens.io/vpa.min-cpu: "500m"
+        vixens.io/vpa.min-memory: "4Gi"
         vixens.io/vpa.max-memory: "4352Mi"
     spec:
       priorityClassName: vixens-critical
