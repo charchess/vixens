@@ -834,7 +834,7 @@ func TestAIGatewayMigrationTerminalStateUsesOnlyJobConditions(t *testing.T) {
 	job := migrationEvidenceJob(tenant, name, "migration-uid")
 	job.Status.Failed = 1
 	tenant.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 0, JobName: name, JobUID: "migration-uid", Phase: fabricv1alpha1.AIGatewayMigrationPending}}
-	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, job).Build()
+	c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(tenant).WithObjects(tenant, job).Build()
 	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
 
 	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
@@ -848,6 +848,71 @@ func TestAIGatewayMigrationTerminalStateUsesOnlyJobConditions(t *testing.T) {
 	ready, reason, _, err = r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
 	if err != nil || ready || reason != "MigrationFailed" || tenant.Status.AIGatewayMigration[0].Phase != fabricv1alpha1.AIGatewayMigrationFailed {
 		t.Fatalf("JobFailed=True must be retained as failed evidence: ready=%v reason=%q phase=%q err=%v", ready, reason, tenant.Status.AIGatewayMigration[0].Phase, err)
+	}
+}
+
+func TestAIGatewayMigrationRetainsTerminalEvidenceAcrossTTLCleanup(t *testing.T) {
+	ctx := context.Background()
+	for _, tc := range []struct {
+		name      string
+		condition batchv1.JobCondition
+		phase     fabricv1alpha1.AIGatewayMigrationPhase
+		reason    string
+		ready     bool
+	}{
+		{name: "succeeded", condition: batchv1.JobCondition{Type: batchv1.JobComplete, Status: corev1.ConditionTrue}, phase: fabricv1alpha1.AIGatewayMigrationSucceeded, reason: "MigrationReady", ready: true},
+		{name: "failed", condition: batchv1.JobCondition{Type: batchv1.JobFailed, Status: corev1.ConditionTrue}, phase: fabricv1alpha1.AIGatewayMigrationFailed, reason: "MigrationFailed", ready: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			scheme := postgresqlTestScheme(t)
+			tenant := aiGatewayTestTenant("hairem", "TEN00001")
+			profile := aiGatewayTestProfile()
+			postgresql := aiGatewayPostgreSQLTestProfile()
+			secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+			name := aiGatewayMigrationName(profile, secret, 0)
+			job := migrationEvidenceJob(tenant, name, "migration-uid", tc.condition)
+			tenant.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 0, JobName: name, JobUID: "migration-uid", Phase: fabricv1alpha1.AIGatewayMigrationPending}}
+			c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(tenant).WithObjects(tenant, job).Build()
+			r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+			ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+			if err != nil || ready != tc.ready || reason != tc.reason {
+				t.Fatalf("terminal observation ready=%v reason=%q err=%v", ready, reason, err)
+			}
+			var persisted fabricv1alpha1.TenantBundle
+			if err := c.Get(ctx, client.ObjectKeyFromObject(tenant), &persisted); err != nil {
+				t.Fatal(err)
+			}
+			if len(persisted.Status.AIGatewayMigration) != 1 || persisted.Status.AIGatewayMigration[0].Phase != tc.phase {
+				t.Fatalf("terminal outcome was not persisted before cleanup: %#v", persisted.Status.AIGatewayMigration)
+			}
+			if err := c.Delete(ctx, job); err != nil {
+				t.Fatal(err)
+			}
+
+			ready, reason, _, err = r.ensureAIGatewayMigrations(ctx, &persisted, profile, postgresql, secret)
+			if err != nil || ready != tc.ready || reason != tc.reason {
+				t.Fatalf("TTL-cleaned terminal evidence ready=%v reason=%q err=%v", ready, reason, err)
+			}
+		})
+	}
+}
+
+func TestAIGatewayMigrationMissingPendingJobFailsClosed(t *testing.T) {
+	ctx := context.Background()
+	scheme := postgresqlTestScheme(t)
+	tenant := aiGatewayTestTenant("hairem", "TEN00001")
+	profile := aiGatewayTestProfile()
+	postgresql := aiGatewayPostgreSQLTestProfile()
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{UID: "database-uid"}}
+	name := aiGatewayMigrationName(profile, secret, 0)
+	tenant.Status.AIGatewayMigration = []fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 0, JobName: name, JobUID: "missing-uid", Phase: fabricv1alpha1.AIGatewayMigrationPending}}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant).Build()
+	r := &TenantBundleReconciler{Client: c, Scheme: scheme}
+
+	ready, reason, _, err := r.ensureAIGatewayMigrations(ctx, tenant, profile, postgresql, secret)
+	if err != nil || ready || reason != "MigrationEvidenceMissing" || tenant.Status.AIGatewayMigration[0].Phase != fabricv1alpha1.AIGatewayMigrationEvidenceMissing {
+		t.Fatalf("missing Pending Job must fail closed: ready=%v reason=%q phase=%q err=%v", ready, reason, tenant.Status.AIGatewayMigration[0].Phase, err)
 	}
 }
 
