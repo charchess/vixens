@@ -443,46 +443,6 @@ spec:
                   HumanAccess declares tenant-owned IAM/transport policy for authenticated
                   human interaction with explicitly opted-in AgentIdentity resources.
                 properties:
-                  enrollmentIntents:
-                    description: |-
-                      EnrollmentIntents is the explicit, reviewed, one-time allowlist for
-                      verified human enrollment. Removing an entry never removes a retained
-                      ledger identity or an Authentik account; it only prevents new enrollment.
-                    items:
-                      description: |-
-                        HumanEnrollmentIntent pins one pre-existing Authentik identity that may be
-                        enrolled after a server-side, signed OIDC proof. It is not an account,
-                        password, group membership, authorization grant, or browser-supplied value.
-                        The immutable UUID and global OIDC tuple must match exactly; the tenant subject is supplied only by a separately verified tenant OIDC proof.
-                      properties:
-                        authentikUserUUID:
-                          description: AuthentikUserUUID is the immutable UUID of
-                            an existing Authentik account.
-                          pattern: ^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$
-                          type: string
-                        globalOidcIssuer:
-                          description: |-
-                            GlobalOIDCIssuer is the exact issuer of the separate platform-global OIDC
-                            client whose signed proof may select this reviewed tenant mapping. It is
-                            proof-only and is never persisted as the tenant ledger issuer.
-                          maxLength: 2048
-                          minLength: 8
-                          type: string
-                        globalOidcSubject:
-                          description: |-
-                            GlobalOIDCSubject is the opaque signed sub from GlobalOIDCIssuer. It is
-                            proof-only and is never used as the tenant ledger subject.
-                          maxLength: 2048
-                          minLength: 1
-                          type: string
-                      required:
-                      - authentikUserUUID
-                      type: object
-                    maxItems: 32
-                    type: array
-                    x-kubernetes-list-map-keys:
-                    - authentikUserUUID
-                    x-kubernetes-list-type: map
                   web:
                     description: |-
                       Web configures the first v0 human transport. Additional channels belong

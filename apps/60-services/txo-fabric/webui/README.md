@@ -381,40 +381,43 @@ unit test. See #3988, #3990, #3992 and ADR-039.
 
 ## Signed Authentik identity proof (staged #3996)
 
-The source-only `server/oidc-identity.mjs` verifier is the first trust-boundary
-primitive for future **automatic verified human enrollment**. It is **not** a
-running OIDC login flow or an enrolled human. A privileged Fabric BFF must:
+The source-level `server/oidc-identity.mjs` verifier is the trust-boundary
+primitive for a **private, verified-group enrollment** path. It is not a public
+API, a browser grant or production activation. A privileged Fabric BFF must:
 
-1. Resolve the tenant slug, expected HTTPS issuer and audience from its
+1. Resolve the tenant slug, exact HTTPS tenant issuer and audience from its
    **server-owned TenantBundle**, never from request JSON, Host or headers.
 2. Own OAuth authorization-code/PKCE, state, nonce and a single-use login
    transaction; exchange the code server-side. Only pass the resulting **ID
    token** and the transaction's server-stored expected nonce to the verifier.
 3. Require the Authentik provider to publish a dedicated, signed
    `txo_fabric_user_uuid` ID-token claim from Authentik's immutable
-   `request.user.uuid` (via a reviewed OAuth2 scope mapping). The operator now generates the custom
-   `txo_fabric_identity` scope mapping (#4025); its live publishing and
-   exact signed-token behavior must still be validated before activation. Do not infer an Authentik UUID from hashed
-   `sub`, username, email, groups or workspace `userRef`.
-4. Use the returned immutable proof (exact issuer, opaque OIDC subject and
-   Authentik UUID) only inside an authenticated Fabric-owned enrollment
-   backend. It must check the live Authentik account status and immutable
-   tenant binding, allocate/reuse a stable Fabric user ID, persist via CAS into
-   the retained private ledger, and handle revocation/re-enrollment safely.
-   No browser may choose a Fabric user ID or write the ledger.
-5. Resolve the fresh canonical identity from that ledger and enforce IAM
-   freshness, active membership and OpenFGA Check before marking a principal
-   verified or authorizing any chat operation. This verifier returns **no**
-   `principal.verified` field, Fabric ID, grant, cookie or session.
+   `request.user.uuid` (via a reviewed OAuth2 scope mapping). The operator
+   generates the custom `txo_fabric_identity` scope mapping (#4025); its live
+   publishing and exact signed-token behavior must still be validated before
+   activation. Do not infer an Authentik UUID from hashed `sub`, username,
+   email, groups or workspace `userRef`.
+4. Deliver only the authenticated six-field bridge assertion—tenant key,
+   tenant issuer, tenant subject, UUID, global issuer and global subject—to
+   Fabric. The operator rejects a mismatched tenant issuer, inactive account,
+   unavailable source, changed group or UUID-pin mismatch. It enrolls only a
+   current member of the tenant-declared IAM group set and persists no global
+   proof value in the tenant ledger. No username, email, UUID or opaque subject
+   is declared in `TenantBundle` Git; no browser may choose a Fabric user ID or
+   write the ledger.
+5. Treat the resulting ledger binding as non-authorizing. Resolve the fresh
+   canonical identity and enforce IAM freshness, active membership and OpenFGA
+   Check before marking a principal verified or authorizing chat. This verifier
+   returns **no** `principal.verified` field, Fabric ID, grant, cookie or
+   session.
 
 The verifier uses an exact tenant issuer, the provider's discovery document and
 same-provider JWKS, RS256 signature checking, a strict audience and nonce,
 short enrollment-time validity, bounded HTTP replies and no redirects.
 `test/oidc-identity.test.mjs` covers forged claims, mismatched tenants,
 expired tokens, changed group/account identifiers and key/discovery failures.
-This code has **no runtime wiring, GitOps rollout flag change or production
-promotion**. Runtime callback, scope mapping, durable identity enrollment,
-account lifecycle, freshness/revocation and physical A/B/C checks remain open
+This code has **no GitOps rollout flag change or production promotion**.
+Physical activation, durable revocation and A/B/C runtime checks remain open
 under #3996 and ADR-039.
 
 ## Single-use Authentik OIDC login coordinator (staged #3996)

@@ -164,3 +164,38 @@ func TestPrivateBFFIdentityUsesExistingTenantIssuerPinnedUUIDOnly(t *testing.T) 
 func typesNamespacedName(name string) types.NamespacedName {
 	return types.NamespacedName{Name:name}
 }
+
+func TestPrivateBFFEnrollmentRequiresSignedSixFieldsAndFreshDeclaredGroup(t *testing.T) {
+	ctx := context.Background()
+	r, source, proof := setupEnrollment(t)
+	r.AuthentikMembershipClient = source
+	now := time.Date(2026, 10, 11, 20, 0, 0, 0, time.UTC)
+
+	id, err := r.EnrollPrivateBFFIdentity(ctx, "indiba", proof.tenantIssuer, proof.tenantSubject,
+		proof.authentikUUID, proof.globalIssuer, proof.globalSubject, now)
+	if err != nil || id == "" {
+		t.Fatalf("signed six-field proof for active declared member denied: %q %v", id, err)
+	}
+
+	for _, mutate := range []func(*trustedHumanOIDCProof){
+		func(p *trustedHumanOIDCProof) { p.globalIssuer = "" },
+		func(p *trustedHumanOIDCProof) { p.globalSubject = "" },
+		func(p *trustedHumanOIDCProof) { p.tenantIssuer = "https://authentik.truxonline.com/application/o/foreign/" },
+		func(p *trustedHumanOIDCProof) { p.tenantSubject = "" },
+		func(p *trustedHumanOIDCProof) { p.authentikUUID = "" },
+	} {
+		modified := proof
+		mutate(&modified)
+		if got, err := r.EnrollPrivateBFFIdentity(ctx, "indiba", modified.tenantIssuer, modified.tenantSubject,
+			modified.authentikUUID, modified.globalIssuer, modified.globalSubject, now); err == nil || got != "" {
+			t.Fatalf("incomplete or tenant-mismatched bridge proof enrolled: %#v", modified)
+		}
+	}
+
+	group := authentikGroupName("indiba", "sales")
+	source.groups[group] = makeIAMGroup(group, identityLedgerGroupUUID)
+	if got, err := r.EnrollPrivateBFFIdentity(ctx, "indiba", proof.tenantIssuer, proof.tenantSubject,
+		proof.authentikUUID, proof.globalIssuer, proof.globalSubject, now); err == nil || got != "" {
+		t.Fatal("active account removed from declared tenant group enrolled")
+	}
+}

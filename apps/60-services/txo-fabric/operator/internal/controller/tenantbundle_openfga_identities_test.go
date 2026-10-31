@@ -30,11 +30,6 @@ func humanIdentityTenant(name, id, uid, group string) *fabricv1alpha1.TenantBund
 				Issuer: "https://authentik.truxonline.com/application/o/txo-fabric-" + name + "/",
 			},
 		},
-		EnrollmentIntents: []fabricv1alpha1.HumanEnrollmentIntent{{
-			AuthentikUserUUID: identityLedgerUserUUID,
-			GlobalOIDCIssuer:  "https://authentik.truxonline.com/application/o/txo-fabric-webui/",
-			GlobalOIDCSubject: "opaque-global-sub-not-uuid",
-		}},
 	}
 	return bundle
 }
