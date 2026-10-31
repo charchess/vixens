@@ -146,8 +146,9 @@ func (r *TenantBundleReconciler) enrollHumanFromVerifiedIdentity(
 		proof.tenantIssuer != tenantIssuer || proof.tenantSubject == "" {
 		return "", errors.New("verified global and tenant OIDC proofs are incomplete or tenant-mismatched")
 	}
-	// The global proof selects a reviewed intent only. The tenant tuple comes
-	// exclusively from the separately verified tenant issuer proof.
+	// The private bridge validates both OIDC proofs before constructing this
+	// internal value. The global proof is transport-only; only the separately
+	// verified tenant issuer/subject can enter the tenant ledger.
 	claim := authentik.IdentityBinding{
 		TenantID: bundle.Spec.TenantID, Issuer: proof.tenantIssuer,
 		OIDCSubject: proof.tenantSubject, AuthentikUserUUID: proof.authentikUUID,

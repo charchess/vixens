@@ -270,38 +270,41 @@ create grants or turn on the OpenFGA rollout flag. Verify the real Authentik
 blueprint application and signed claim in a controlled runtime recipe before
 considering enrollment safe; no production promotion is implied.
 
-### Private verified-human enrollment and immutable account preflight (staged #3996)
+### Private verified-human enrollment and immutable account/group preflight (staged #3996)
 
-Two new **source-only, uncalled** components extend the tenant-owned identity
-registry: `internal/authentik/accounts.go` reads the immutable Authentik user
-UUID using the private read-only API, with complete paginated responses and a
-double-read of `is_active`. The operator's private
-`enrollHumanFromVerifiedIdentity` method accepts an issuer, opaque OIDC
-`sub` and immutable UUID **only after** those values have been cryptographically
-verified by the future privileged Fabric BFF's login transaction. It checks
-the live Authentik account, reads the trusted retained tenant UID + store +
-model, and CAS-writes a newly allocated random `usr...` identity or
-idempotently returns the existing Fabric user ID. The method refuses
-rebinding a UUID to a different sub (or vice versa), foreign tenant/issuer,
-deleted tenant, disabled/ambiguous user and altered model or ledger. A
-Kubernetes `Conflict` is returned for caller-controlled revalidation and
-retry; another writer is never overwritten.
+The source-only operator exposes a **private bridge-only** enrollment primitive.
+`EnrollPrivateBFFIdentity` accepts exactly the authenticated bridge assertion:
+tenant key, tenant issuer, tenant subject, immutable Authentik UUID, global
+issuer and global subject. The bridge is responsible for validating both signed
+OIDC proofs, their issuer/audience/nonce/expiry, the one-shot transaction and
+UUID equality before invoking this primitive. `TenantBundle` declares none of
+the human identity values: no username, email, UUID or opaque OIDC subject.
 
-This is deliberately **not** a publicly callable enrollment API or an
-authorization decision. The future BFF must finish authorization-code/PKCE,
-state/nonce single-use validation, signed Authentik token verification,
-service authentication for BFF→Fabric, account lifecycle/deactivation
-and fresh OpenFGA `Check` before using the result to authenticate a human.
-A disabled user discovered after a CAS write leaves a historical binding
-but the operation fails and **cannot grant rights**. Persistent revocation
-and synchronization are separate, still unfinished P0 work.
+Fabric reloads the canonical tenant and accepts the assertion only when the
+tenant issuer is exact, the immutable account is active, and that UUID is a
+current member of at least one tenant-declared IAM group. The group name is
+derived from the tenant declaration and must match its retained tenant-UID-bound
+immutable Authentik group UUID pin. Account and complete group snapshots are
+rechecked after the CAS write (and on idempotent replay); source unavailability,
+a group replacement, a membership change or account deactivation fail closed.
+The ledger is still validated against its retained tenant UID, OpenFGA store and
+model before allocating a random `usr...` identity or returning the existing
+stable Fabric user ID. UUID/sub rebinding, foreign tenant/issuer, deleted
+tenants, altered models/ledgers and Kubernetes CAS conflicts are refused.
 
-In particular, a raw Go `trustedHumanOIDCProof` is only a **privileged
-internal input**; it is not by itself cryptographic evidence. No browser,
-tenant pod, REST request or `TenantBundle` field may create one. Until a
-securely authenticated transport is built, this method remains uncalled.
-`TXO_FABRIC_OPENFGA_STORES_ENABLED` is still disabled in GitOps; no
-production promotion or live account/authorization smoke is implied.
+This is neither public ingress nor an authorization grant. Browser login,
+TokenReview/HMAC bridge authentication, PKCE/state/nonce replay protection and
+signed OIDC verification remain bridge responsibilities. A successful ledger
+write does not authorize chat, agent access, tenant administration or OpenFGA
+membership: the normal freshness, membership projection and Check gates remain
+separate. `TXO_FABRIC_OPENFGA_STORES_ENABLED` remains disabled in GitOps; no
+production promotion, live account mutation or authorization smoke is implied.
+
+A raw Go `trustedHumanOIDCProof` is a privileged internal transport value, not
+cryptographic evidence. No browser, tenant pod, REST request or `TenantBundle`
+field may create one. This source-only contract exists for the private bridge;
+its physical activation still requires a separately reviewed candidate and
+runtime proof.
 
 ## Source-only guarded Authentik → OpenFGA membership readiness (#3996, Prompt 03)
 
