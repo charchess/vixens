@@ -673,6 +673,70 @@ spec:
                     x-kubernetes-list-map-keys:
                     - name
                     x-kubernetes-list-type: map
+                  activeVolumes:
+                    description: |-
+                      ActiveVolumes pins every declared workspace scope to its
+                      observed immutable physical PVC/PV identity. Incomplete
+                      maps fail closed; they are not new copy authorization.
+                    items:
+                      description: WorkspaceActiveVolumeBinding pins one logical scope.
+                      properties:
+                        scopePvcName:
+                          minLength: 1
+                          type: string
+                        volume:
+                          description: |-
+                            ActiveVolumeBinding pins one already-verified stateful
+                            PVC to its immutable physical identity.
+                          properties:
+                            accessMode:
+                              enum:
+                              - ReadWriteOnce
+                              - ReadWriteMany
+                              type: string
+                            claimName:
+                              minLength: 1
+                              type: string
+                            pvcUid:
+                              minLength: 1
+                              type: string
+                            retentionPolicy:
+                              enum:
+                              - Retain
+                              - Delete
+                              type: string
+                            storageClassName:
+                              minLength: 1
+                              type: string
+                            volumeName:
+                              minLength: 1
+                              type: string
+                          required:
+                          - accessMode
+                          - claimName
+                          - pvcUid
+                          - retentionPolicy
+                          - storageClassName
+                          - volumeName
+                          type: object
+                          x-kubernetes-validations:
+                          - message: activeVolume is immutable once pinned
+                            rule: self == oldSelf
+                      required:
+                      - scopePvcName
+                      - volume
+                      type: object
+                      x-kubernetes-validations:
+                      - message: workspace active binding is immutable
+                        rule: self == oldSelf
+                    maxItems: 512
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - scopePvcName
+                    x-kubernetes-list-type: map
+                    x-kubernetes-validations:
+                    - message: activeVolumes cannot be removed or modified
+                      rule: self == oldSelf
                   migration:
                     description: |-
                       Migration stages deterministic replacement RWX claims. Omitted preserves
