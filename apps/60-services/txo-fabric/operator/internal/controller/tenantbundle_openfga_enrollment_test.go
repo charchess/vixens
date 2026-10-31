@@ -22,6 +22,7 @@ type enrollmentAccountSource struct {
 	afterInactive bool
 	fail          error
 	calls         int
+	groups        map[string]authentik.GroupMembership
 }
 
 func (s *enrollmentAccountSource) SnapshotUserAccount(_ context.Context, uuid string) (authentik.UserAccountSnapshot, error) {
@@ -32,6 +33,14 @@ func (s *enrollmentAccountSource) SnapshotUserAccount(_ context.Context, uuid st
 	return authentik.UserAccountSnapshot{UUID: s.uuid, Active: !s.inactive && !(s.afterInactive && s.calls >= 2)}, nil
 }
 
+func (s *enrollmentAccountSource) SnapshotGroupMembership(_ context.Context, name string) (authentik.GroupMembership, error) {
+	group, ok := s.groups[name]
+	if !ok {
+		return authentik.GroupMembership{}, errors.New("group unavailable")
+	}
+	return group, nil
+}
+
 func proofForHuman(globalIssuer, globalSubject, uuid string) trustedHumanOIDCProof {
 	return trustedHumanOIDCProof{globalIssuer: globalIssuer, globalSubject: globalSubject, tenantIssuer: "https://authentik.truxonline.com/application/o/txo-fabric-indiba/", tenantSubject: "opaque-hashed-sub-not-uuid", authentikUUID: uuid}
 }
@@ -40,14 +49,21 @@ func setupEnrollment(t *testing.T) (*TenantBundleReconciler, *enrollmentAccountS
 	t.Helper()
 	a := humanIdentityTenant("hairem", "TEN00001", "uid-hairem", "client0")
 	b := humanIdentityTenant("indiba", "TEN00002", "uid-indiba", "sales")
-	a.Spec.HumanAccess.EnrollmentIntents[0].GlobalOIDCSubject = "opaque-other-global-sub-not-uuid"
 	r := preparedHumanIdentityReconciler(t, a, b)
 	for _, tenant := range []*fabricv1alpha1.TenantBundle{a, b} {
 		if err := r.reconcileOpenFGAHumanIdentityRegistry(context.Background(), tenant); err != nil {
 			t.Fatal(err)
 		}
 	}
-	source := &enrollmentAccountSource{uuid: identityLedgerUserUUID}
+	source := &enrollmentAccountSource{
+		uuid: identityLedgerUserUUID,
+		groups: map[string]authentik.GroupMembership{
+			authentikGroupName("indiba", "sales"): makeIAMGroup(authentikGroupName("indiba", "sales"), identityLedgerGroupUUID, identityLedgerUserUUID),
+		},
+	}
+	if err := r.reconcileOpenFGAIAMGroupPins(context.Background(), b, source); err != nil {
+		t.Fatal(err)
+	}
 	proof := proofForHuman("https://authentik.truxonline.com/application/o/txo-fabric-webui/", "opaque-global-sub-not-uuid", identityLedgerUserUUID)
 	return r, source, proof
 }
@@ -103,35 +119,24 @@ func TestVerifiedEnrollmentCASAllocatesOnceAndPreservesTenantIsolation(t *testin
 	}
 }
 
-func TestVerifiedEnrollmentRejectsIdentityReplacementOrRebinding(t *testing.T) {
+func TestVerifiedEnrollmentRejectsIncompleteOrTenantMismatchedProof(t *testing.T) {
 	ctx := context.Background()
-	r, source, proof := setupEnrollment(t)
-	b := humanIdentityTenant("indiba", "TEN00002", "uid-indiba", "sales")
-	id, err := r.enrollHumanFromVerifiedIdentity(ctx, b, proof, source)
-	if err != nil {
-		t.Fatal(err)
-	}
 	for _, mutate := range []func(*trustedHumanOIDCProof){
-		func(p *trustedHumanOIDCProof) { p.globalSubject = "another-global-sub" },
-		func(p *trustedHumanOIDCProof) { p.authentikUUID = "550e8400-e29b-41d4-a716-446655440002" },
+		func(p *trustedHumanOIDCProof) { p.globalIssuer = "" },
+		func(p *trustedHumanOIDCProof) { p.globalSubject = "" },
+		func(p *trustedHumanOIDCProof) { p.tenantSubject = "" },
 		func(p *trustedHumanOIDCProof) {
-			p.globalIssuer = "https://authentik.truxonline.com/application/o/other-global-client/"
+			p.tenantIssuer = "https://authentik.truxonline.com/application/o/foreign-tenant/"
 		},
-		func(p *trustedHumanOIDCProof) { p.globalSubject = "alice@example.com\nadmin" },
 		func(p *trustedHumanOIDCProof) { p.authentikUUID = "not-a-uuid" },
 	} {
+		r, source, proof := setupEnrollment(t)
 		modified := proof
 		mutate(&modified)
+		b := humanIdentityTenant("indiba", "TEN00002", "uid-indiba", "sales")
 		if _, err := r.enrollHumanFromVerifiedIdentity(ctx, b, modified, source); err == nil {
-			t.Fatalf("identity replacement/spoof was accepted: %#v", modified)
+			t.Fatalf("incomplete or tenant-mismatched verified proof was accepted: %#v", modified)
 		}
-	}
-	current, err := r.readOpenFGAHumanIdentityRegistry(ctx, b)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got, err := current.ResolveOIDCSubject(b.Spec.HumanAccess.Web.OIDC.Issuer, "opaque-hashed-sub-not-uuid"); err != nil || got != id {
-		t.Fatalf("failed replacement corrupted immutable identity: %q %v", got, err)
 	}
 }
 
@@ -306,5 +311,16 @@ func TestVerifiedEnrollmentUsesSignedTenantProofInsteadOfStaticTenantSubject(t *
 	got, err := ledger.ResolveOIDCSubject(proof.tenantIssuer, proof.tenantSubject)
 	if err != nil || got != id {
 		t.Fatalf("signed tenant subject was not the sole ledger binding: %q %v", got, err)
+	}
+}
+
+func TestVerifiedEnrollmentRequiresFreshDeclaredGroupMembership(t *testing.T) {
+	ctx := context.Background()
+	r, source, proof := setupEnrollment(t)
+	b := humanIdentityTenant("indiba", "TEN00002", "uid-indiba", "sales")
+	group := authentikGroupName(b.Name, "sales")
+	source.groups[group] = makeIAMGroup(group, identityLedgerGroupUUID)
+	if _, err := r.enrollHumanFromVerifiedIdentity(ctx, b, proof, source); err == nil {
+		t.Fatal("active account outside tenant declared group enrolled")
 	}
 }

@@ -16,7 +16,9 @@ import (
 // This method never accepts a browser identity, creates an Authentik account,
 // changes group membership, or grants chat. It only invokes the CAS-protected
 // ledger primitive after reloading the canonical TenantBundle and authoritative
-// Authentik account reader. Group/OpenFGA chat authorization remains the normal
+// Authentik account/group reader. The signed six-field bridge assertion is the
+// only proof input; no username, email, opaque subject, or UUID is declared in
+// TenantBundle Git. Group/OpenFGA chat authorization remains the normal
 // reconciliation path after enrollment.
 func (r *TenantBundleReconciler) EnrollPrivateBFFIdentity(
 	ctx context.Context, tenantKey, tenantIssuer, tenantSubject, uuid, globalIssuer, globalSubject string, now time.Time,
@@ -39,7 +41,7 @@ func (r *TenantBundleReconciler) EnrollPrivateBFFIdentity(
 	if err != nil {
 		return "", errPrivateIdentityUnavailable
 	}
-	accounts, ok := source.(authoritativeHumanAccountReader)
+	accounts, ok := source.(authoritativeVerifiedHumanEnrollmentSource)
 	if !ok {
 		return "", errPrivateIdentityUnavailable
 	}
@@ -69,7 +71,7 @@ func (r *TenantBundleReconciler) VerifyPrivateBFFActiveHuman(
 	if err != nil {
 		return errPrivateIdentityUnavailable
 	}
-	accounts, ok := source.(authoritativeHumanAccountReader)
+	accounts, ok := source.(authoritativeVerifiedHumanEnrollmentSource)
 	if !ok {
 		return errPrivateIdentityUnavailable
 	}
