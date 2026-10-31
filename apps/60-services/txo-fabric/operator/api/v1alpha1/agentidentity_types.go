@@ -36,6 +36,24 @@ type AgentRuntimeStorageMigrationBinding struct {
 	Cutover bool `json:"cutover,omitempty"`
 }
 
+// ActiveVolumeBinding pins one already-verified stateful PVC to its immutable
+// physical identity. It is a desired-state binding, NOT copy authorization.
+// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="activeVolume is immutable once pinned"
+type ActiveVolumeBinding struct {
+	// +kubebuilder:validation:MinLength=1
+	ClaimName string `json:"claimName"`
+	// +kubebuilder:validation:MinLength=1
+	PVCUID string `json:"pvcUid"`
+	// +kubebuilder:validation:MinLength=1
+	VolumeName string `json:"volumeName"`
+	// +kubebuilder:validation:MinLength=1
+	StorageClassName string `json:"storageClassName"`
+	// +kubebuilder:validation:Enum=ReadWriteOnce;ReadWriteMany
+	AccessMode string `json:"accessMode"`
+	// +kubebuilder:validation:Enum=Retain;Delete
+	RetentionPolicy string `json:"retentionPolicy"`
+}
+
 // +kubebuilder:validation:XValidation:rule="!has(self.adoptLegacyProfile) || !self.adoptLegacyProfile || self.retentionPolicy == 'Retain'",message="adoptLegacyProfile requires retentionPolicy Retain"
 // +kubebuilder:validation:XValidation:rule="!has(oldSelf.adoptLegacyProfile) || (has(self.adoptLegacyProfile) && self.adoptLegacyProfile == oldSelf.adoptLegacyProfile)",message="adoptLegacyProfile cannot be changed once declared"
 type AgentRuntimeStorageBinding struct {
@@ -57,6 +75,12 @@ type AgentRuntimeStorageBinding struct {
 	// PVC and runtime behavior exactly.
 	// +optional
 	Migration *AgentRuntimeStorageMigrationBinding `json:"migration,omitempty"`
+
+	// ActiveVolume is a finalized, immutable PVC/PV binding. When set,
+	// normal reconciliation never re-enters the migration copy path or
+	// provisions an empty replacement claim. Must be pinned from live evidence.
+	// +optional
+	ActiveVolume *ActiveVolumeBinding `json:"activeVolume,omitempty"`
 }
 
 type AgentRuntimeCapabilityBinding struct {
