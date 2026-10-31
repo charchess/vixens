@@ -26,6 +26,9 @@ func expectedMigrationRWOClass(agent *fabricv1alpha1.AgentIdentity) string {
 }
 
 func runtimeActivePVCName(agent *fabricv1alpha1.AgentIdentity) string {
+	if binding := agent.Spec.Runtime.Storage.ActiveVolume; binding != nil {
+		return binding.ClaimName
+	}
 	if migration := agent.Spec.Runtime.Storage.Migration; migration != nil && migration.Cutover {
 		return runtimeMigrationTargetPVCName(agent.Spec.AgentKey, migration.TargetClaimSuffix)
 	}
