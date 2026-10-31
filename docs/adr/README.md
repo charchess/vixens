@@ -85,6 +85,7 @@ A retrospective ADR records the accepted implementation. It must not make an unr
 - [ADR-037: Separate agent-extensible skills from platform-governed executable capabilities](037-skills-vs-platform-governed-executable-capabilities.md)
 - [ADR-041: Separate OpenBao Fabric runtime authority from Infra](041-separate-openbao-fabric-secret-plane.md) — accepted architectural split; source-only contracts, no production instance yet.
 - [ADR-042: Declare tenant agent populations in TenantBundle](042-tenant-declarative-agent-population.md) — tenant-level desired population, strict no-implicit-adoption lifecycle.
+- [ADR-044: Fabric durable active-volume bindings](044-fabric-durable-active-volume-bindings.md) — finalized RWO/RWX volumes use explicit provider-neutral PVC identity bindings; migration evidence is audit/cutover-only.
 
 Future Fabric decisions are added only after their owning implementation/acceptance establishes a durable contract. Unsettled candidates remain in their owning issues rather than appearing here as premature Accepted architecture.
 
