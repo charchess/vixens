@@ -17,3 +17,12 @@ spec:
         vixens.io/vpa.max-memory: "4352Mi"
     spec:
       priorityClassName: vixens-critical
+      containers:
+        - name: authentik-server
+          # Authentik health delegates to the local Gunicorn socket and routinely approaches five seconds under normal DB/outpost work.
+          startupProbe:
+            timeoutSeconds: 15
+          livenessProbe:
+            timeoutSeconds: 15
+          readinessProbe:
+            timeoutSeconds: 10
