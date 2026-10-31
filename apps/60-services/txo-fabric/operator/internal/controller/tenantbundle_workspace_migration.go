@@ -15,7 +15,9 @@ import (
 // observeWorkspaceMigrationAttestations persists only a completed Job with exact live PVC UID bindings.
 func (r *TenantBundleReconciler) observeWorkspaceMigrationAttestations(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) error {
 	w := bundle.Spec.Workspace
-	if w == nil || w.Migration == nil {
+	if w == nil || len(w.ActiveVolumes) > 0 || w.Migration == nil {
+		// Historical copy/status records are audit-only once active bindings
+		// are pinned. Never synthesize fresh LegacyRecovered attestations.
 		return nil
 	}
 	ns := tenantNamespace(bundle.Name)
