@@ -10,6 +10,16 @@ spec:
   displayName: Indiba
   isolation:
     profile: Shared
+  aiGateway:
+    profileRef: litellm-standard
+    # One reviewed successor to the exact retained EvidenceMissing attempt 0.
+    # The controller records a UID/owner-bound marker before creating attempt 1.
+    migrationRetry: 1
+    migrationRecoveryTransitions:
+      - id: indiba-evidence-missing-20261031
+        tenantId: TEN00002
+        expectedAttempt: 0
+        expectedJobUID: 0f206d1b-e4d4-480c-9dcc-e5a7047c2d6c
   # Private Hermes agent storage is tenant-owned, not release-channel-owned.
   # Existing PVCs are not recreated when this policy is introduced.
   agentStorage:

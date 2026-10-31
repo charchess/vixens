@@ -25,10 +25,17 @@ spec:
     profileRef: litellm-standard
     # One reviewed recovery transition for a pre-evidence historical failure.
     # It creates a fresh owner-bound attempt 1; it is not a recurring job.
-    migrationRetry: 1
+    migrationRetry: 2
     migrationRecovery: legacy-evidence-20261016
     # Exact historical generation that recorded MigrationFailed; immutable.
     migrationRecoveryFailedGeneration: 9
+    # One reviewed successor to the exact retained EvidenceMissing attempt 1.
+    # The controller records a UID/owner-bound marker before creating attempt 2.
+    migrationRecoveryTransitions:
+      - id: hairem-evidence-missing-20261031
+        tenantId: TEN00001
+        expectedAttempt: 1
+        expectedJobUID: 68f2ff67-6884-4d95-82c2-9c50b5ddc7ed
   # Private Hermes agent storage is tenant-owned, not release-channel-owned.
   # Existing PVCs are not recreated when this policy is introduced.
   agentStorage:
