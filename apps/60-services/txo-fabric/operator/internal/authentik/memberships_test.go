@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 type roundTripFunc func(*http.Request)(*http.Response,error)
@@ -184,6 +185,7 @@ func TestPlatformIAMReaderDefaultTransportRejectsUnapprovedDestination(t *testin
 	if !ok || transport.Proxy!=nil || transport.TLSClientConfig==nil {
 		t.Fatal("default transport must use pinned TLS without egress proxy")
 	}
+	if reader.httpClient.Timeout!=15*time.Second {t.Fatalf("IAM reader timeout=%s, want 15s",reader.httpClient.Timeout)}
 	_,err=transport.DialContext(context.Background(),"tcp","arbitrary.external.example:443")
 	if err==nil {t.Fatal("IAM reader allowed arbitrary HTTP destination")}
 }

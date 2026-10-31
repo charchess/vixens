@@ -71,7 +71,7 @@ func NewClient(token string, transport http.RoundTripper) (*Client, error) {
 		}
 	}
 	return &Client{token:token,httpClient:&http.Client{
-		Transport:transport,Timeout:4*time.Second,
+		Transport:transport,Timeout:15*time.Second,
 		CheckRedirect:func(*http.Request,[]*http.Request)error{return http.ErrUseLastResponse},
 	}},nil
 }
