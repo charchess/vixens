@@ -130,7 +130,16 @@ type TenantWorkspaceSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="retentionPolicy is immutable"
 	RetentionPolicy string `json:"retentionPolicy,omitempty"`
 
-	// ClaimSuffix selects existing physical shared-workspace PVCs by name.
+	// ClaimNames selects specific, pre-existing PVCs for declared workspace scopes.
+	// Keys are canonical scope PVC names (for example ws-group-admin-rw).
+	// Unlisted scopes are provisioned normally; listed PVCs must already exist
+	// and are validated read-only, never created or relabeled by Fabric.
+	// This is a generic existing-claim reference, not a migration lifecycle.
+	// +optional
+	// +kubebuilder:validation:MaxProperties=128
+	ClaimNames map[string]string `json:"claimNames,omitempty"`
+
+	// ClaimSuffix is deprecated rollout compatibility for the former global suffix.
 	// Nonempty means read-only adoption: never provision a missing claim.
 	// +optional
 	// +kubebuilder:validation:MaxLength=32
