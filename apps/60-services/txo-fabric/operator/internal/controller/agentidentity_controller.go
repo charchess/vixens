@@ -28,7 +28,7 @@ type AgentIdentityReconciler struct {
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=fabric.truxonline.io,resources=agentidentities/finalizers,verbs=update
-// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles;agentruntimeprofiles;hermesruntimereleases;agentfunctionalprofiles;integrationconnections;integrationbindings,verbs=get;list;watch
+// +kubebuilder:rbac:groups=fabric.truxonline.io,resources=tenantbundles;agentruntimeprofiles;sharedworkspaceprofiles;hermesruntimereleases;agentfunctionalprofiles;integrationconnections;integrationbindings,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=namespaces;persistentvolumeclaims;configmaps;services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=persistentvolumes,verbs=get;update;patch
@@ -156,6 +156,19 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		"ManagedToolsetsReady",
 		fmt.Sprintf("Hermes toolset policy is reconciled (profile=%s revision=%s enabled=%v denied=%v)", profile.Name, toolPolicy.Revision, toolPolicy.Enabled, toolPolicy.Denied),
 	)
+
+	// Stop serving an existing runtime if a declared native workspace mount
+	// is missing, unbound or owned by a different tenant/scope. Waiting for
+	// dynamic CSI provisioning never authorizes an empty fallback claim.
+	if err := r.ensureNativeWorkspaceClaimsReady(ctx, &agent, &tenant); err != nil {
+		if withdrawErr := r.withdrawInvalidFunctionalRuntime(ctx, &agent, &tenant, namespace); withdrawErr != nil {
+			r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "WorkspaceWithdrawalFailed", withdrawErr.Error())
+			return ctrl.Result{}, withdrawErr
+		}
+		agent.Status.Runtime.HumanEndpoint = ""
+		r.setStatus(ctx, &agent, "Degraded", "RuntimeReady", metav1.ConditionFalse, "WorkspaceClaimInvalid", err.Error())
+		return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
+	}
 
 	// Agent runtimes are disposable; always reconcile their canonical PVC.
 	// Workspace shared volumes have a separate, stateful lifecycle.
