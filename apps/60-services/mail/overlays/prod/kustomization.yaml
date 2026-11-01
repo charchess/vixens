@@ -8,4 +8,4 @@ resources:
 commonLabels:
   environment: prod
 patchesStrategicMerge:
-  - patch-mailserver-synelia.yaml
+  - patch-storage.yaml

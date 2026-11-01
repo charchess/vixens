@@ -15,7 +15,7 @@ components:
 
 patches:
   - path: delete-legacy-pvc.yaml
-  - path: patch-canonical-target-cutover.yaml
+  - path: patch-storage.yaml
   - target:
       kind: Deployment
       name: music-assistant
