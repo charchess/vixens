@@ -206,7 +206,7 @@ func TestAgentDeletePolicyDeletesPVC(t *testing.T) {
 		},
 	}
 	pvc := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{
-		Name: "hermes-probe-data", Namespace: "tenant-fabric-smoke",
+		Name: "hermes-probe-data", Namespace: "tenant-fabric-smoke", UID: types.UID("owned-disposable-uid"),
 		Labels: map[string]string{
 			LabelPartOf: "txo-fabric", LabelAgent: "probe", LabelInstance: "probe",
 			LabelTenantName: "fabric-smoke", LabelStorageRetention: StorageRetentionDelete,
