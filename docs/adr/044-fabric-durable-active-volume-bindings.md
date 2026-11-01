@@ -3,7 +3,7 @@
 **Date:** 2026-11-01 (restored native provisioning)
 **Status:** Accepted — replaces the previous per-volume binding proposal
 **Scope:** AIaaS
-**Related issues:** #4375, #4384, #4385, #4386, #4357
+**Related issues:** #4375, #4384, #4385, #4386, #4413, #4357
 
 ## Context
 
@@ -31,7 +31,16 @@ or physical PVC/PV resources may be deleted without separate authorization.
    evidence. No copy Job, historical source or migration status is consulted
    to mount steady-state agent or workspace claims. A Bound PVC or a source
    provenance label is **not** evidence that bytes were copied.
-4. **Audit and compatibility:** historical status/CRD fields may remain
+4. **Runtime mount admission:** an AgentIdentity may mount only its
+   declared canonical workspace scopes after checking the actual Bound PVC
+   tenant/scope identity, profile StorageClass/RWX and the PV's exact
+   namespace/name/UID claimRef plus reclaim policy. Pending or foreign claims
+   are not alternate sources; they block the mount until normal dynamic
+   provisioning converges. If an existing claim becomes invalid, the serving
+   Deployment and human entry are withdrawn without deleting durable PVCs.
+   PVC/PV/profile changes requeue the affected tenant agents for validation.
+   These checks do not prove any file-copy or data-integrity outcome.
+5. **Audit and compatibility:** historical status/CRD fields may remain
    readable temporarily to avoid pruning legacy objects. They are not
    active runtime authorization. Removal from stored API schemas and
    physical retirement require their own compatibility/rollback review.
@@ -64,7 +73,8 @@ physical reconfiguration.
 
 - [ADR-043](043-provider-neutral-storage-contracts.md)
 - #4384 — disposable RWO simplification
-- #4385 — historical RWX selection
+- #4385 — native RWX scope and ownership protection
+- #4413 — fail-closed agent PVC/PV verification before mounts
 - #4398 — fresh tenant bootstrap
 - #4400 — one-time canonical-name transition
 - #4386 — migration-only source cleanup
