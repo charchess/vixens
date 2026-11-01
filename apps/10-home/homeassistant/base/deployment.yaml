@@ -29,7 +29,7 @@ spec:
         vixens.io/backup-profile: "standard"
       annotations:
         reloader.stakater.com/auto: "true"
-        checksum/homeassistant-python-requirements: "80f50c3aaca85a71a09974dc18cb1cf585dcaff9661f8b1572951e925aa1c03e"
+        checksum/homeassistant-python-requirements: "968c121c5b560375a8b978dbf97792007df15c2c419331d0bea819f8e11a7c71"
         vixens.io/fast-start: "true"
         dataangel.io/metrics-port: "9090"
         dataangel.io/restore-timeout: "90m"
@@ -120,9 +120,10 @@ spec:
                 echo "Home Assistant runtime Python requirements already satisfied."
               else
                 echo "Installing/upgrading Home Assistant runtime Python requirements..."
-                # pip --target leaves older dist-info behind.  Remove only the
-                # Roomba+ Prime package being upgraded so metadata is unambiguous.
+                # pip --target leaves older dist-info behind. Remove only the
+                # upgraded runtime packages so metadata and imports are unambiguous.
                 rm -rf "$TARGET"/roombapy_prime "$TARGET"/roombapy_prime-*.dist-info
+                rm -rf "$TARGET"/aiotruenas "$TARGET"/aiotruenas-*.dist-info
                 python -m pip install \
                   --no-cache-dir \
                   --upgrade \

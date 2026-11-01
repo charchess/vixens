@@ -4,7 +4,7 @@
 # Roomba+ requires both the classic local-MQTT library and the Prime/cloud library.
 hass-web-proxy-lib==0.0.8
 roombapy==2.0.2
-roombapy-prime[map]==0.7.1
+roombapy-prime[map]==0.8.2
 
 # BPS / scientific stack
 aiofiles>=23.1.0
@@ -17,5 +17,5 @@ shapely>=2.0.2
 # as UID 1000 and cannot install it later into its immutable site-packages.
 vtherm_api>=0.7.0
 
-# TrueNAS SCALE integration
-aiotruenas>=1.6.1
+# TrueNAS SCALE integration 2.13.0 requires aiotruenas>=1.7.0.
+aiotruenas>=1.7.0
