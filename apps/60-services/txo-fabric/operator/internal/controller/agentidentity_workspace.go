@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"path"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) ([]corev1.Volume, []corev1.VolumeMount, error) {
@@ -76,6 +78,80 @@ func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabri
 		mounts = append(mounts, corev1.VolumeMount{Name: name, MountPath: mountPath, ReadOnly: scope.ReadOnly})
 	}
 	return volumes, mounts, nil
+}
+
+
+// ensureNativeWorkspaceClaimsReady checks the actual PVC/PV behind every
+// authorized mount. Deterministic names alone never authorize access to
+// preexisting business data. SharedWorkspaceReconciler owns provisioning;
+// this gate never creates/adopts/patches or deletes PVCs.
+func (r *AgentIdentityReconciler) ensureNativeWorkspaceClaimsReady(
+	ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle,
+) error {
+	volumes, _, err := resolvedWorkspaceVolumes(agent, tenant)
+	if err != nil {
+		return err
+	}
+	if len(volumes) == 0 {
+		return nil
+	}
+	var profile fabricv1alpha1.SharedWorkspaceProfile
+	if err := r.Get(ctx, types.NamespacedName{Name: tenant.Spec.Workspace.ProfileRef}, &profile); err != nil {
+		return fmt.Errorf("workspace profile for tenant %q unavailable: %w", tenant.Name, err)
+	}
+	if profile.Spec.StorageClassName == "" {
+		return fmt.Errorf("workspace profile %q does not declare a storage class", profile.Name)
+	}
+	scopes := make(map[string]workspaceScope)
+	for _, scope := range desiredWorkspaceScopes(tenant) {
+		scopes[workspacePVCName(scope)] = scope
+	}
+	namespace := tenantNamespace(tenant.Name)
+	for _, volume := range volumes {
+		if volume.PersistentVolumeClaim == nil {
+			return fmt.Errorf("workspace volume %q has no PVC reference", volume.Name)
+		}
+		name := volume.PersistentVolumeClaim.ClaimName
+		scope, ok := scopes[name]
+		if !ok {
+			return fmt.Errorf("workspace claim %q is not declared for tenant %q", name, tenant.Name)
+		}
+		var pvc corev1.PersistentVolumeClaim
+		if err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &pvc); err != nil {
+			return fmt.Errorf("workspace PVC %s/%s not ready: %w", namespace, name, err)
+		}
+		if pvc.UID == "" || pvc.Status.Phase != corev1.ClaimBound || pvc.Spec.VolumeName == "" {
+			return fmt.Errorf("workspace PVC %s/%s lacks a bound UID/PV identity", namespace, name)
+		}
+		if pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != profile.Spec.StorageClassName {
+			return fmt.Errorf("workspace PVC %s/%s has an unexpected storage class", namespace, name)
+		}
+		if len(pvc.Spec.AccessModes) != 1 || pvc.Spec.AccessModes[0] != corev1.ReadWriteMany {
+			return fmt.Errorf("workspace PVC %s/%s is not exclusively ReadWriteMany", namespace, name)
+		}
+		for label, expected := range workspaceLabels(tenant, scope) {
+			if pvc.Labels[label] != expected {
+				return fmt.Errorf("workspace PVC %s/%s lacks exact ownership label %q", namespace, name, label)
+			}
+		}
+		var pv corev1.PersistentVolume
+		if err := r.Get(ctx, types.NamespacedName{Name: pvc.Spec.VolumeName}, &pv); err != nil {
+			return fmt.Errorf("workspace PV for %s/%s unavailable: %w", namespace, name, err)
+		}
+		ref := pv.Spec.ClaimRef
+		if ref == nil || ref.Namespace != namespace || ref.Name != name || ref.UID != pvc.UID ||
+			pv.Spec.StorageClassName != profile.Spec.StorageClassName {
+			return fmt.Errorf("workspace PV %q is not UID-bound to tenant claim %s/%s", pv.Name, namespace, name)
+		}
+		expectedReclaim := corev1.PersistentVolumeReclaimRetain
+		if workspaceRetentionPolicy(tenant.Spec.Workspace) == fabricv1alpha1.WorkspaceRetentionDelete {
+			expectedReclaim = corev1.PersistentVolumeReclaimDelete
+		}
+		if pv.Spec.PersistentVolumeReclaimPolicy != expectedReclaim {
+			return fmt.Errorf("workspace PV %q has unexpected reclaim policy", pv.Name)
+		}
+	}
+	return nil
 }
 
 func workspaceMountPath(scope workspaceScope) string {
