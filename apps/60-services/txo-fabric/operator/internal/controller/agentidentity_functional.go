@@ -12,6 +12,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -84,8 +85,15 @@ func (r *AgentIdentityReconciler) ownedAgentWithdrawalTarget(ctx context.Context
 		owner.Kind != "AgentIdentity" || owner.Name != agent.Name || owner.UID != agent.UID ||
 		current.GetNamespace() != namespace ||
 		current.GetLabels()[LabelAgent] != agent.Spec.AgentKey ||
+		current.GetLabels()[LabelInstance] != agent.Spec.AgentKey ||
 		current.GetLabels()[LabelPartOf] != "txo-fabric" {
 		return nil, fmt.Errorf("refusing to withdraw unowned or foreign resource %T %s/%s", target, namespace, target.GetName())
+	}
+	// The Cilium policy is owner/agent labelled but does not historically carry
+	// the full tenant label set; other resources must match the tenant exactly.
+	if _, cilium := current.(*unstructured.Unstructured); !cilium &&
+		current.GetLabels()[LabelTenantName] != agent.Spec.TenantRef.Name {
+		return nil, fmt.Errorf("refusing to withdraw resource %T %s/%s with invalid tenant label", target, namespace, target.GetName())
 	}
 	return current, nil
 }
