@@ -88,9 +88,8 @@ type NamedWorkspaceScopeSpec struct {
 // TenantWorkspaceSpec declares tenant-owned shared storage. Business files and
 // shared skills remain separate trust domains and therefore receive different PVCs
 // and mount roots even when backed by the same platform storage profile.
-// TenantWorkspaceMigrationBinding stages replacement RWX PVCs without mutating
-// an existing shared workspace claim's immutable StorageClassName. Cutover stays
-// false while data is copied and independently verified.
+// TenantWorkspaceMigrationBinding is a deprecated stored-object schema for
+// historical CSI migration records. No normal workspace reconciler reads it.
 type TenantWorkspaceMigrationBinding struct {
 	// TargetStorageClassName is the explicit replacement RWX storage class.
 	// +kubebuilder:validation:MinLength=1
@@ -130,8 +129,8 @@ type TenantWorkspaceSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="retentionPolicy is immutable"
 	RetentionPolicy string `json:"retentionPolicy,omitempty"`
 
-	// ClaimSuffix selects existing physical shared-workspace PVCs by name.
-	// Nonempty means read-only adoption: never provision a missing claim.
+	// ClaimSuffix is deprecated and ignored by native workspace reconciliation.
+	// Kept temporarily to decode historical CRs until CRD cleanup is reviewed.
 	// +optional
 	// +kubebuilder:validation:MaxLength=32
 	// +kubebuilder:validation:Pattern=`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`

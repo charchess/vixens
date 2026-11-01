@@ -1,6 +1,6 @@
-# ADR-044: simple post-migration Fabric storage
+# ADR-044: native workspace provisioning
 
-**Date:** 2026-10-31 (revised after maintainer clarification)
+**Date:** 2026-11-01 (restored native provisioning)
 **Status:** Accepted — replaces the previous per-volume binding proposal
 **Scope:** AIaaS
 **Related issues:** #4375, #4384, #4385, #4386, #4357
@@ -22,13 +22,10 @@ or physical PVC/PV resources may be deleted without separate authorization.
    Do not carry RWO migration/attestation/UID-pin state into the permanent
    controller. A disposable agent may restart with a new home; no automatic
    deletion of retained legacy storage is part of the refactor.
-2. **Tenant shared RWX:** keep already existing PVC **names**. For historical
-   physically suffixed claims, `spec.workspace.claimSuffix` selects their
-   literal name suffix, e.g. `synelia`. Empty is the normal, unsuffixed
-   provisioning path. A nonempty suffix is **read-only adoption**: verify
-   that each claimed tenant/group/user/organization scope has an existing
-   Bound RWX PVC, matching labels/class/retention and a PV bound to its exact
-   live PVC UID. Never create or relabel an absent selected PVC.
+2. **Tenant shared RWX:** the tenant declares workspace scopes, and the
+   operator creates canonical PVCs using the declared RWX storage profile.
+   New scopes use the same provisioning path on old and new tenants.
+   No claim suffix or manual PVC mapping is part of the product contract.
 3. **Migration/copy:** an actual future physical data migration is a
    separately reviewed operational operation with its own byte-verification
    evidence. No copy Job, historical source or migration status is consulted
@@ -39,9 +36,9 @@ or physical PVC/PV resources may be deleted without separate authorization.
    active runtime authorization. Removal from stored API schemas and
    physical retirement require their own compatibility/rollback review.
 
-No product contract contains a CSI driver name, zvol, NAS address or
-transport-specific policy. An existing PVC name with a `-synelia` suffix
-is a stable physical resource name and is **not renamed**.
+No product contract contains CSI driver names, NAS addresses, physical PVC
+suffixes or transport-specific policies. Historical physical volume identities
+are managed separately from the permanent product contract.
 
 ## Tradeoffs and risks
 
@@ -49,13 +46,9 @@ is a stable physical resource name and is **not renamed**.
   canonical claim. This is accepted for disposable AgentIdentity instances;
   other services, workspace data and retained PVCs are not declared
   disposable by implication.
-- A simple RWX claim-name selector is intentionally not a new permanent
-  UID registry. Controllers verify the **current** PVC/PV UID binding and
-  tenant ownership on each reconcile. Independent restoration/replacement
-  of the real physical volume must still be reviewed operationally.
-- Existing RWX scopes cannot safely start without the chosen target PVC.
-  This is a deliberate fail-closed condition, not an invitation to create
-  an empty replacement claim.
+- The historical RWX PVCs still carry data under physical names with a
+  suffix. #4400 tracks the separate operational transition to the canonical
+  names. This is not a reason to introduce a permanent controller exception.
 - Migration evidence retained in GitHub issues / read-only audits must not
   be used to synthesize a successful copy from a target label or Bound phase.
 
@@ -71,6 +64,8 @@ physical reconfiguration.
 
 - [ADR-043](043-provider-neutral-storage-contracts.md)
 - #4384 — disposable RWO simplification
-- #4385 — existing RWX claim selection
+- #4385 — historical RWX selection
+- #4398 — fresh tenant bootstrap
+- #4400 — one-time canonical-name transition
 - #4386 — migration-only source cleanup
 - #4357 — physical verification still outstanding
