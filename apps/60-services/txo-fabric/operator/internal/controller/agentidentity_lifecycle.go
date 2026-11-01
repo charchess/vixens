@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"reflect"
+	"strings"
 	"time"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
@@ -241,6 +242,83 @@ func (r *AgentIdentityReconciler) requestsForRuntimePVC(ctx context.Context, obj
 	return nil
 }
 
+
+// A workspace PVC/PV can be replaced or re-labelled after an agent is
+// deployed. Route events by namespace/claimRef, never mutable ownership
+// labels; otherwise stripping a forged label would hide the event.
+func (r *AgentIdentityReconciler) requestsForNativeWorkspaceNamespace(ctx context.Context, namespace string) []reconcile.Request {
+	if !strings.HasPrefix(namespace, "tenant-") {
+		return nil
+	}
+	tenant := strings.TrimPrefix(namespace, "tenant-")
+	if tenant == "" {
+		return nil
+	}
+	var agents fabricv1alpha1.AgentIdentityList
+	if err := r.List(ctx, &agents); err != nil {
+		return nil
+	}
+	requests := make([]reconcile.Request, 0)
+	for i := range agents.Items {
+		if agents.Items[i].Spec.TenantRef.Name == tenant {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{Name: agents.Items[i].Name},
+			})
+		}
+	}
+	return requests
+}
+
+func (r *AgentIdentityReconciler) requestsForNativeWorkspacePVC(ctx context.Context, obj client.Object) []reconcile.Request {
+	pvc, ok := obj.(*corev1.PersistentVolumeClaim)
+	if !ok || (!strings.HasPrefix(pvc.Name, "ws-") && !strings.HasPrefix(pvc.Name, "skills-")) {
+		return nil
+	}
+	return r.requestsForNativeWorkspaceNamespace(ctx, pvc.Namespace)
+}
+
+func (r *AgentIdentityReconciler) requestsForNativeWorkspacePV(ctx context.Context, obj client.Object) []reconcile.Request {
+	pv, ok := obj.(*corev1.PersistentVolume)
+	if !ok || pv.Spec.ClaimRef == nil {
+		return nil
+	}
+	name := pv.Spec.ClaimRef.Name
+	if !strings.HasPrefix(name, "ws-") && !strings.HasPrefix(name, "skills-") {
+		return nil
+	}
+	return r.requestsForNativeWorkspaceNamespace(ctx, pv.Spec.ClaimRef.Namespace)
+}
+
+func (r *AgentIdentityReconciler) requestsForNativeWorkspaceProfile(ctx context.Context, obj client.Object) []reconcile.Request {
+	profile, ok := obj.(*fabricv1alpha1.SharedWorkspaceProfile)
+	if !ok {
+		return nil
+	}
+	var tenants fabricv1alpha1.TenantBundleList
+	if err := r.List(ctx, &tenants); err != nil {
+		return nil
+	}
+	attached := make(map[string]bool)
+	for i := range tenants.Items {
+		if workspace := tenants.Items[i].Spec.Workspace; workspace != nil && workspace.ProfileRef == profile.Name {
+			attached[tenants.Items[i].Name] = true
+		}
+	}
+	var agents fabricv1alpha1.AgentIdentityList
+	if err := r.List(ctx, &agents); err != nil {
+		return nil
+	}
+	requests := make([]reconcile.Request, 0)
+	for i := range agents.Items {
+		if attached[agents.Items[i].Spec.TenantRef.Name] {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{Name: agents.Items[i].Name},
+			})
+		}
+	}
+	return requests
+}
+
 func (r *AgentIdentityReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if r.APIReader == nil {
 		r.APIReader = mgr.GetAPIReader()
@@ -250,6 +328,9 @@ func (r *AgentIdentityReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.PersistentVolumeClaim{}).
 		Watches(&corev1.PersistentVolumeClaim{}, handler.EnqueueRequestsFromMapFunc(r.requestsForRuntimePVC)).
+		Watches(&corev1.PersistentVolumeClaim{}, handler.EnqueueRequestsFromMapFunc(r.requestsForNativeWorkspacePVC)).
+		Watches(&corev1.PersistentVolume{}, handler.EnqueueRequestsFromMapFunc(r.requestsForNativeWorkspacePV)).
+		Watches(&fabricv1alpha1.SharedWorkspaceProfile{}, handler.EnqueueRequestsFromMapFunc(r.requestsForNativeWorkspaceProfile)).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.Service{}).
 		Owns(&networkingv1.Ingress{}).
