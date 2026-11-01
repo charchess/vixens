@@ -3,11 +3,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../base
-  - migration/synelia-target-pvc.yaml
+  - storage/retained-pvc.yaml
 patches:
   - target:
       group: apps
       version: v1
       kind: StatefulSet
       name: openbao-fabric
-    path: migration/synelia-cutover-statefulset.yaml
+    path: storage/retained-statefulset-volume.yaml
