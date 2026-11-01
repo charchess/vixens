@@ -383,6 +383,12 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if integrationAccess.HasBindings || humanAccess.Enabled {
 		return ctrl.Result{RequeueAfter: integrationRefreshInterval}, nil
 	}
+	// PV claimRef drift can remove the old tenant from a changed PV event.
+	// Re-check native workspace ownership periodically even for private agents
+	// without human/integration refresh, rather than trusting only watch events.
+	if tenant.Spec.Workspace != nil {
+		return ctrl.Result{RequeueAfter: 5 * time.Minute}, nil
+	}
 	return ctrl.Result{}, nil
 }
 
