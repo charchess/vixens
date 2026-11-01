@@ -10,18 +10,27 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// A selected existing RWX claim must be valid before any agent Deployment
-// receives its mount. Default unsuffixed provisioning needs no extra gate.
+// Explicitly selected existing claims must be valid before agent rollout;
+// normally managed scopes keep the ordinary PVC provisioning lifecycle.
 func (r *AgentIdentityReconciler) ensureWorkspaceActiveClaims(ctx context.Context, tenant *fabricv1alpha1.TenantBundle) error {
 	workspace := tenant.Spec.Workspace
-	if workspace == nil || workspace.ClaimSuffix == "" {
+	if workspace == nil {
+		return nil
+	}
+	if err := validateWorkspaceClaimNames(tenant); err != nil {
+		return err
+	}
+	if len(workspace.ClaimNames) == 0 {
 		return nil
 	}
 	var profile fabricv1alpha1.SharedWorkspaceProfile
 	if err := r.Get(ctx, types.NamespacedName{Name: workspace.ProfileRef}, &profile); err != nil {
-		return fmt.Errorf("read active workspace profile %q: %w", workspace.ProfileRef, err)
+		return fmt.Errorf("read existing workspace profile %q: %w", workspace.ProfileRef, err)
 	}
 	for _, scope := range desiredWorkspaceScopes(tenant) {
+		if _, existing := workspace.ClaimNames[workspacePVCName(scope)]; !existing {
+			continue
+		}
 		if err := verifyExistingWorkspacePVC(ctx, r.Client, tenant, &profile, scope); err != nil {
 			return err
 		}
@@ -31,6 +40,9 @@ func (r *AgentIdentityReconciler) ensureWorkspaceActiveClaims(ctx context.Contex
 
 func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) ([]corev1.Volume, []corev1.VolumeMount, error) {
 	workspace := tenant.Spec.Workspace
+	if err := validateWorkspaceClaimNames(tenant); err != nil {
+		return nil, nil, err
+	}
 	if workspace == nil {
 		if agent.Spec.Access.UserRef != "" || len(agent.Spec.Access.Groups) > 0 {
 			return nil, nil, fmt.Errorf("AgentIdentity %q declares workspace access but TenantBundle %q has no workspace capability", agent.Name, tenant.Name)
