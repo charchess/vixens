@@ -349,6 +349,9 @@ func TestExplicitRWXClaimDoesNotBlockNewManagedScope(t *testing.T) {
 	claims := map[string]bool{}
 	for _, v := range volumes {
 		claims[v.PersistentVolumeClaim.ClaimName] = true
+		if v.Name == existing.Name {
+			t.Fatal("pod volume identity must be canonical, not the physical existing PVC name")
+		}
 	}
 	if !claims[existing.Name] || !claims[added.Name] {
 		t.Fatalf("incorrect mixed mounts: %#v", claims)
