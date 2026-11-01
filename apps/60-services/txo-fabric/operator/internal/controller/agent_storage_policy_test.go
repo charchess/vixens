@@ -95,6 +95,11 @@ func TestExistingBrownfieldRetainPVCStaysBoundAndPromotesPV(t *testing.T) {
 			PersistentVolumeReclaimPolicy:corev1.PersistentVolumeReclaimDelete,
 		},
 	}
+	pvc.Labels = agentLabels(agent, tenant)
+	pvc.Labels[LabelStorageRetention] = StorageRetentionRetain
+	pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
+	pvc.Status.Phase = corev1.ClaimBound
+	pv.Spec.StorageClassName = "storage-rwo-delete"
 	scheme:=testScheme(t)
 	c:=fake.NewClientBuilder().WithScheme(scheme).WithObjects(pvc,pv).Build()
 	r:=&AgentIdentityReconciler{Client:c,APIReader:c,Scheme:scheme}
@@ -118,6 +123,9 @@ func TestUnexpectedExistingStorageClassFailsClosedWithoutPVCCreation(t *testing.
 		ObjectMeta:metav1.ObjectMeta{Name:runtimePVCName(agent.Spec.AgentKey),Namespace:tenantNamespace(tenant.Name),UID:types.UID("foreign-uid")},
 		Spec:corev1.PersistentVolumeClaimSpec{StorageClassName:stringPtr("unapproved-class")},
 	}
+	pvc.Labels = agentLabels(agent, tenant)
+	pvc.Labels[LabelStorageRetention] = StorageRetentionRetain
+	pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
 	scheme:=testScheme(t)
 	c:=fake.NewClientBuilder().WithScheme(scheme).WithObjects(pvc).Build()
 	r:=&AgentIdentityReconciler{Client:c,Scheme:scheme}
