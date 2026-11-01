@@ -107,9 +107,6 @@ func (r *SharedWorkspaceReconciler) reconcileWorkspaceRelease(ctx context.Contex
 }
 
 func (r *SharedWorkspaceReconciler) ensureWorkspacePVC(ctx context.Context, bundle *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.SharedWorkspaceProfile, scope workspaceScope) error {
-	if bundle.Spec.Workspace.ClaimSuffix != "" {
-		return verifyExistingWorkspacePVC(ctx, r.Client, bundle, profile, scope)
-	}
 	name := workspacePVCName(scope)
 	key := client.ObjectKey{Namespace: tenantNamespace(bundle.Name), Name: name}
 	var pvc corev1.PersistentVolumeClaim
@@ -138,57 +135,18 @@ func (r *SharedWorkspaceReconciler) ensureWorkspacePVC(ctx context.Context, bund
 	if len(pvc.Spec.AccessModes) != 1 || pvc.Spec.AccessModes[0] != corev1.ReadWriteMany {
 		return fmt.Errorf("shared workspace PVC %s/%s must use ReadWriteMany", key.Namespace, name)
 	}
+	// An existing canonical PVC in the tenant namespace must not be silently
+	// reassigned from another tenant, scope or retention policy.
+	for label, expected := range workspaceLabels(bundle, scope) {
+		if actual := pvc.Labels[label]; actual != "" && actual != expected {
+			return fmt.Errorf("shared workspace PVC %s/%s has conflicting label %q: %q", key.Namespace, name, label, actual)
+		}
+	}
 	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, &pvc, func() error {
 		pvc.Labels = mergeStringMap(pvc.Labels, workspaceLabels(bundle, scope))
 		return nil
 	})
 	return err
-}
-
-// Existing suffixed claims are physical business data. Never create, adopt,
-// re-label or overwrite them when the selected claim is missing or wrong.
-func verifyExistingWorkspacePVC(ctx context.Context, reader client.Reader, bundle *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.SharedWorkspaceProfile, scope workspaceScope) error {
-	name := workspaceClaimName(scope, bundle.Spec.Workspace)
-	ns := tenantNamespace(bundle.Name)
-	var pvc corev1.PersistentVolumeClaim
-	if err := reader.Get(ctx, client.ObjectKey{Namespace: ns, Name: name}, &pvc); err != nil {
-		return fmt.Errorf("read active workspace PVC %s/%s: %w", ns, name, err)
-	}
-	if pvc.UID == "" || pvc.Status.Phase != corev1.ClaimBound || !pvc.DeletionTimestamp.IsZero() ||
-		pvc.Spec.VolumeName == "" || valueOrEmpty(pvc.Spec.StorageClassName) != profile.Spec.StorageClassName ||
-		len(pvc.Spec.AccessModes) != 1 || pvc.Spec.AccessModes[0] != corev1.ReadWriteMany {
-		return fmt.Errorf("active workspace PVC %s/%s is not a valid Bound RWX claim", ns, name)
-	}
-	for k, expected := range workspaceLabels(bundle, scope) {
-		if pvc.Labels[k] != expected {
-			return fmt.Errorf("active workspace PVC %s/%s has mismatched tenant/scope label %q", ns, name, k)
-		}
-	}
-	var pv corev1.PersistentVolume
-	if err := reader.Get(ctx, client.ObjectKey{Name: pvc.Spec.VolumeName}, &pv); err != nil {
-		return fmt.Errorf("read active workspace PV %q: %w", pvc.Spec.VolumeName, err)
-	}
-	if pv.Spec.ClaimRef == nil || pv.Spec.ClaimRef.Namespace != ns || pv.Spec.ClaimRef.Name != name ||
-		pv.Spec.ClaimRef.UID != pvc.UID || pv.Status.Phase != corev1.VolumeBound {
-		return fmt.Errorf("active workspace PV %q has wrong claimRef or binding", pv.Name)
-	}
-	reclaim := corev1.PersistentVolumeReclaimRetain
-	if workspaceRetentionPolicy(bundle.Spec.Workspace) == fabricv1alpha1.WorkspaceRetentionDelete {
-		reclaim = corev1.PersistentVolumeReclaimDelete
-	}
-	if pv.Spec.PersistentVolumeReclaimPolicy != reclaim {
-		return fmt.Errorf("active workspace PV %q has unexpected reclaim policy", pv.Name)
-	}
-	return nil
-}
-
-// Suffix belongs to the actual stable PVC name, not to CSI migration state.
-func workspaceClaimName(scope workspaceScope, workspace *fabricv1alpha1.TenantWorkspaceSpec) string {
-	name := workspacePVCName(scope)
-	if workspace != nil && workspace.ClaimSuffix != "" {
-		return name + "-" + workspace.ClaimSuffix
-	}
-	return name
 }
 
 func workspaceLabels(bundle *fabricv1alpha1.TenantBundle, scope workspaceScope) map[string]string {
