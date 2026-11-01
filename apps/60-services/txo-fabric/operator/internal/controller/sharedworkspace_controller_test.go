@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -316,6 +317,13 @@ func TestNativeWorkspaceRejectsInvalidExistingCanonicalPVC(t *testing.T) {
 		name string
 		mutate func(*corev1.PersistentVolumeClaim)
 	}{
+		{name: "unlabeled", mutate: func(p *corev1.PersistentVolumeClaim) { p.Labels = nil }},
+		{name: "missing-tenant-id", mutate: func(p *corev1.PersistentVolumeClaim) { delete(p.Labels, LabelTenantID) }},
+		{name: "missing-tenant-name", mutate: func(p *corev1.PersistentVolumeClaim) { delete(p.Labels, LabelTenantName) }},
+		{name: "missing-scope-key", mutate: func(p *corev1.PersistentVolumeClaim) { delete(p.Labels, LabelWorkspaceKey) }},
+		{name: "missing-domain", mutate: func(p *corev1.PersistentVolumeClaim) { delete(p.Labels, LabelWorkspaceDomain) }},
+		{name: "missing-retention", mutate: func(p *corev1.PersistentVolumeClaim) { delete(p.Labels, LabelWorkspaceRetention) }},
+		{name: "foreign-tenant-id", mutate: func(p *corev1.PersistentVolumeClaim) { p.Labels[LabelTenantID] = "TEN99999" }},
 		{name: "foreign-tenant", mutate: func(p *corev1.PersistentVolumeClaim) { p.Labels[LabelTenantName] = "other-tenant" }},
 		{name: "foreign-scope", mutate: func(p *corev1.PersistentVolumeClaim) { p.Labels[LabelWorkspaceScope] = "group" }},
 		{name: "foreign-retention", mutate: func(p *corev1.PersistentVolumeClaim) { p.Labels[LabelWorkspaceRetention] = fabricv1alpha1.WorkspaceRetentionDelete }},
@@ -349,8 +357,8 @@ func TestNativeWorkspaceRejectsInvalidExistingCanonicalPVC(t *testing.T) {
 				t.Fatal(err)
 			}
 			if after.Spec.StorageClassName == nil || *after.Spec.StorageClassName != *pvc.Spec.StorageClassName ||
-				after.Labels[LabelTenantName] != pvc.Labels[LabelTenantName] {
-				t.Fatal("invalid canonical PVC was relabeled or mutated")
+				!reflect.DeepEqual(after.Labels, pvc.Labels) || after.UID != pvc.UID {
+				t.Fatal("invalid canonical PVC was relabeled, adopted, or mutated")
 			}
 		})
 	}

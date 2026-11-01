@@ -135,11 +135,12 @@ func (r *SharedWorkspaceReconciler) ensureWorkspacePVC(ctx context.Context, bund
 	if len(pvc.Spec.AccessModes) != 1 || pvc.Spec.AccessModes[0] != corev1.ReadWriteMany {
 		return fmt.Errorf("shared workspace PVC %s/%s must use ReadWriteMany", key.Namespace, name)
 	}
-	// An existing canonical PVC in the tenant namespace must not be silently
-	// reassigned from another tenant, scope or retention policy.
+	// A pre-existing PVC with a canonical name is not proof of ownership.
+	// Require the complete tenant/scope identity, including every label:
+	// silently completing missing labels could adopt unrelated business data.
 	for label, expected := range workspaceLabels(bundle, scope) {
-		if actual := pvc.Labels[label]; actual != "" && actual != expected {
-			return fmt.Errorf("shared workspace PVC %s/%s has conflicting label %q: %q", key.Namespace, name, label, actual)
+		if actual := pvc.Labels[label]; actual != expected {
+			return fmt.Errorf("shared workspace PVC %s/%s has missing or conflicting label %q: got %q, expected %q", key.Namespace, name, label, actual, expected)
 		}
 	}
 	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, &pvc, func() error {
