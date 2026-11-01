@@ -45,7 +45,7 @@ func invalidDependencyRuntimeFixture(t *testing.T) (*fabricv1alpha1.TenantBundle
 }
 
 func TestInvalidAgentDependenciesWithdrawExistingRuntime(t *testing.T) {
-	cases := []string{"missing-tenant", "missing-profile", "unsupported-runtime", "duplicate-agent-key"}
+	cases := []string{"missing-tenant", "missing-profile", "unsupported-runtime", "duplicate-agent-key", "missing-ai-gateway-backend"}
 	for _, scenario := range cases {
 		t.Run(scenario, func(t *testing.T) {
 			tenant, agent, profile, ns, deployment, service, pvc := invalidDependencyRuntimeFixture(t)
@@ -57,6 +57,10 @@ func TestInvalidAgentDependenciesWithdrawExistingRuntime(t *testing.T) {
 				objects = append(objects, tenant)
 			case "unsupported-runtime":
 				profile.Spec.Engine = "Unsupported"
+				objects = append(objects, tenant, profile)
+			case "missing-ai-gateway-backend":
+				// No tenant AI gateway profile/Secret; the previous agent must
+				// stop serving rather than fall back to the old model backend.
 				objects = append(objects, tenant, profile)
 			case "duplicate-agent-key":
 				other := agent.DeepCopy()
