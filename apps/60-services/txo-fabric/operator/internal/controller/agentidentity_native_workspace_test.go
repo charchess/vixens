@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 func nativeWorkspaceGateFixture() (*fabricv1alpha1.TenantBundle, *fabricv1alpha1.AgentIdentity, *fabricv1alpha1.SharedWorkspaceProfile, *corev1.PersistentVolumeClaim, *corev1.PersistentVolume) {
@@ -120,6 +121,44 @@ func TestNativeWorkspaceMountGateWaitsForProvisioning(t *testing.T) {
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 	if err := r.ensureNativeWorkspaceClaimsReady(context.Background(), agent, tenant); err == nil {
 		t.Fatal("missing newly declared claim must not mount an empty fallback")
+	}
+}
+
+func TestNativeWorkspaceEventsRequeueOnlyAffectedTenant(t *testing.T) {
+	ctx := context.Background()
+	tenant, agent, profile, pvc, pv := nativeWorkspaceGateFixture()
+	another := tenant.DeepCopy()
+	another.Name = "other"
+	another.Spec.TenantID = "TEN90003"
+	another.Spec.Workspace.ProfileRef = "other-profile"
+	otherAgent := agent.DeepCopy()
+	otherAgent.Name = "other-agent"
+	otherAgent.Spec.TenantRef.Name = another.Name
+	scheme := testScheme(t)
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, another, agent, otherAgent).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	// Even if a malicious edit stripped identity labels, the namespace and
+	// canonical claim name still route the revalidation event.
+	pvc.Labels = nil
+	for _, tc := range []struct {
+		name string
+		reqs []reconcile.Request
+	}{
+		{"PVC", r.requestsForNativeWorkspacePVC(ctx, pvc)},
+		{"PV", r.requestsForNativeWorkspacePV(ctx, pv)},
+		{"profile", r.requestsForNativeWorkspaceProfile(ctx, profile)},
+	} {
+		if len(tc.reqs) != 1 || tc.reqs[0].NamespacedName.Name != agent.Name {
+			t.Fatalf("%s event leaked or missed tenant requeue: %#v", tc.name, tc.reqs)
+		}
+	}
+	pvc.Namespace = "non-tenant-namespace"
+	if got := r.requestsForNativeWorkspacePVC(ctx, pvc); len(got) != 0 {
+		t.Fatalf("unrelated namespace requeued agents: %#v", got)
+	}
+	pv.Spec.ClaimRef.Namespace = "tenant-other"
+	if got := r.requestsForNativeWorkspacePV(ctx, pv); len(got) != 1 || got[0].NamespacedName.Name != otherAgent.Name {
+		t.Fatalf("foreign tenant PV requeue was not isolated: %#v", got)
 	}
 }
 
