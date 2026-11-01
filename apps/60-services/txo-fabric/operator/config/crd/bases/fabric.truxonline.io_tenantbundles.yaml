@@ -639,9 +639,20 @@ spec:
                   Workspace declares tenant-owned shared business-data scopes. It is independent
                   from every AgentIdentity private /opt/data workspace.
                 properties:
+                  claimNames:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      ClaimNames selects specific, pre-existing PVCs for declared workspace scopes.
+                      Keys are canonical scope PVC names (for example ws-group-admin-rw).
+                      Unlisted scopes are provisioned normally; listed PVCs must already exist
+                      and are validated read-only, never created or relabeled by Fabric.
+                      This is a generic existing-claim reference, not a migration lifecycle.
+                    maxProperties: 128
+                    type: object
                   claimSuffix:
                     description: |-
-                      ClaimSuffix selects existing physical shared-workspace PVCs by name.
+                      ClaimSuffix is deprecated rollout compatibility for the former global suffix.
                       Nonempty means read-only adoption: never provision a missing claim.
                     maxLength: 32
                     pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
