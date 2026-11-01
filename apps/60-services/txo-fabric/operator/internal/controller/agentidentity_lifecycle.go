@@ -96,9 +96,14 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 			if err := verifyAgentDeletionOwnership(current, agent, &tenant); err != nil {
 				return ctrl.Result{}, err
 			}
+			if current.GetUID() == "" {
+				return ctrl.Result{}, fmt.Errorf("refusing to delete resource %T %s/%s without UID", current, current.GetNamespace(), current.GetName())
+			}
 			pending = true
 			if current.GetDeletionTimestamp().IsZero() {
-				if err := r.Delete(ctx, current); err != nil && !apierrors.IsNotFound(err) {
+				// UID precondition closes the GET/delete replacement window.
+				uid := current.GetUID()
+				if err := r.Delete(ctx, current, client.Preconditions{UID: &uid}); err != nil && !apierrors.IsNotFound(err) {
 					return ctrl.Result{}, err
 				}
 			}
