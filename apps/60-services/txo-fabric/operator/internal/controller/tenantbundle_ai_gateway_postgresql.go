@@ -480,7 +480,7 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrationNetworkPolicy(
 // All prerequisites must already exist and the transition remains fail-closed.
 func (r *TenantBundleReconciler) reconcileAdmittedAIGatewayRecovery(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (bool, string, string, error) {
 	if aiGatewayMigrationRecoveryTransitionEvidence(bundle) == nil {
-		return false, "MigrationEvidenceMissing", "immutable legacy recovery is not eligible", nil
+		return false, "MigrationEvidenceMissing", "no exact UID-bound recovery transition is eligible", nil
 	}
 	var gatewayProfile fabricv1alpha1.AIGatewayProfile
 	if err := r.Get(ctx, types.NamespacedName{Name: tenantAIGatewayProfileName(bundle)}, &gatewayProfile); err != nil {
