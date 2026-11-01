@@ -218,7 +218,8 @@ func activeWorkspaceTestFixture() (*fabricv1alpha1.TenantBundle, *fabricv1alpha1
 	tenant.Spec.Workspace.Organization = fabricv1alpha1.WorkspaceScopeSpec{Reference: true}
 	tenant.Spec.Workspace.Groups = nil
 	tenant.Spec.Workspace.Users = nil
-	tenant.Spec.Workspace.ClaimSuffix = "synelia"
+	tenant.Spec.Workspace.ClaimSuffix = "synelia" // staged older-operator compatibility only
+	tenant.Spec.Workspace.ClaimNames = map[string]string{"ws-org-ref": "ws-org-ref-synelia"}
 	profile := &fabricv1alpha1.SharedWorkspaceProfile{
 		ObjectMeta: metav1.ObjectMeta{Name: "shared-nfs"},
 		Spec: fabricv1alpha1.SharedWorkspaceProfileSpec{StorageClassName: "storage-rwx-retain"},
@@ -303,6 +304,93 @@ func TestActiveWorkspaceRejectsMissingOrForeignOrInvalidClaims(t *testing.T) {
 				if err := c.Get(context.Background(), types.NamespacedName{Name: pvc.Name, Namespace: pvc.Namespace}, &recreated); err == nil {
 					t.Fatal("recreated missing stateful active PVC")
 				}
+			}
+		})
+	}
+}
+
+func TestExplicitRWXClaimDoesNotBlockNewManagedScope(t *testing.T) {
+	ctx := context.Background()
+	tenant, profile, existing, pv := activeWorkspaceTestFixture()
+	tenant.Spec.Workspace.Groups = []fabricv1alpha1.NamedWorkspaceScopeSpec{
+		{Name: "newteam", Collaborative: true},
+	}
+	scheme := testScheme(t)
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile, existing, pv).Build()
+	r := &SharedWorkspaceReconciler{Client: c, Scheme: scheme}
+	for i := 0; i < 2; i++ {
+		if _, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: tenant.Name}}); err != nil {
+			t.Fatalf("reconcile %d: %v", i, err)
+		}
+	}
+	var stillExisting corev1.PersistentVolumeClaim
+	if err := c.Get(ctx, client.ObjectKey{Namespace: existing.Namespace, Name: existing.Name}, &stillExisting); err != nil || stillExisting.UID != existing.UID {
+		t.Fatalf("existing RWX claim replaced: %v", err)
+	}
+	var added corev1.PersistentVolumeClaim
+	if err := c.Get(ctx, client.ObjectKey{Namespace: existing.Namespace, Name: "ws-group-newteam-rw"}, &added); err != nil {
+		t.Fatalf("new team should be auto-provisioned: %v", err)
+	}
+	if added.Spec.StorageClassName == nil || *added.Spec.StorageClassName != profile.Spec.StorageClassName {
+		t.Fatalf("new team has wrong storage class: %+v", added.Spec.StorageClassName)
+	}
+	var unexpected corev1.PersistentVolumeClaim
+	if err := c.Get(ctx, client.ObjectKey{Namespace: existing.Namespace, Name: "ws-group-newteam-rw-synelia"}, &unexpected); err == nil {
+		t.Fatal("new team must never inherit an old tenant-wide suffix")
+	}
+	agent := &fabricv1alpha1.AgentIdentity{Spec: fabricv1alpha1.AgentIdentitySpec{
+		TenantRef: fabricv1alpha1.ObjectReference{Name: tenant.Name},
+		AgentKey: "probe", Access: fabricv1alpha1.AgentAccessSpec{Groups: []string{"newteam"}},
+	}}
+	volumes, _, err := resolvedWorkspaceVolumes(agent, tenant)
+	if err != nil || len(volumes) != 2 {
+		t.Fatalf("expected existing and new mounts: %v, %#v", err, volumes)
+	}
+	claims := map[string]bool{}
+	for _, v := range volumes {
+		claims[v.PersistentVolumeClaim.ClaimName] = true
+	}
+	if !claims[existing.Name] || !claims[added.Name] {
+		t.Fatalf("incorrect mixed mounts: %#v", claims)
+	}
+	agentReconciler := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	if err := agentReconciler.ensureWorkspaceActiveClaims(ctx, tenant); err != nil {
+		t.Fatalf("new managed scope should not need preexisting PV: %v", err)
+	}
+}
+
+func TestWorkspaceClaimReferencesRejectUndeclaredDuplicateAndIncompleteLegacy(t *testing.T) {
+	cases := []struct {
+		name   string
+		mutate func(*fabricv1alpha1.TenantBundle)
+	}{
+		{name: "undeclared", mutate: func(t *fabricv1alpha1.TenantBundle) {
+			t.Spec.Workspace.ClaimNames["ws-group-ghost-rw"] = "ws-group-ghost-rw-synelia"
+		}},
+		{name: "duplicate", mutate: func(t *fabricv1alpha1.TenantBundle) {
+			t.Spec.Workspace.Groups = []fabricv1alpha1.NamedWorkspaceScopeSpec{{Name: "newteam", Collaborative: true}}
+			t.Spec.Workspace.ClaimNames["ws-group-newteam-rw"] = t.Spec.Workspace.ClaimNames["ws-org-ref"]
+		}},
+		{name: "invalid-target", mutate: func(t *fabricv1alpha1.TenantBundle) {
+			t.Spec.Workspace.ClaimNames["ws-org-ref"] = "Not-a-K8s-PVC"
+		}},
+		{name: "legacy-without-refs", mutate: func(t *fabricv1alpha1.TenantBundle) {
+			t.Spec.Workspace.ClaimNames = nil
+		}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tenant, profile, pvc, pv := activeWorkspaceTestFixture()
+			tc.mutate(tenant)
+			scheme := testScheme(t)
+			c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile, pvc, pv).Build()
+			reconciler := &SharedWorkspaceReconciler{Client: c, Scheme: scheme}
+			if _, err := reconciler.Reconcile(context.Background(), ctrl.Request{NamespacedName: types.NamespacedName{Name: tenant.Name}}); err == nil {
+				t.Fatal("invalid claim mapping was accepted")
+			}
+			agent := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+			if err := agent.ensureWorkspaceActiveClaims(context.Background(), tenant); err == nil {
+				t.Fatal("agent accepted invalid claim mapping")
 			}
 		})
 	}
