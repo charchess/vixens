@@ -641,8 +641,8 @@ spec:
                 properties:
                   claimSuffix:
                     description: |-
-                      ClaimSuffix selects existing physical shared-workspace PVCs by name.
-                      Nonempty means read-only adoption: never provision a missing claim.
+                      ClaimSuffix is deprecated and ignored by native workspace reconciliation.
+                      Kept temporarily to decode historical CRs until CRD cleanup is reviewed.
                     maxLength: 32
                     pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
                     type: string
