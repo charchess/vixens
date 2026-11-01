@@ -1440,7 +1440,7 @@ func TestRecoveryTransitionExclusivePathEndsOnlyAfterExactTerminalSuccessor(t *t
 			transition := recoveryTransition("recovery-exclusive-"+tc.name, tenant.Spec.TenantID, 0, "lost-uid")
 			tenant.Spec.AIGateway = &fabricv1alpha1.TenantAIGatewaySpec{MigrationRetry: 1, MigrationRecoveryTransitions: []fabricv1alpha1.AIGatewayMigrationRecoveryTransition{transition}}
 			tenant.Status.AIGatewayMigration = append([]fabricv1alpha1.AIGatewayMigrationStatus{{Attempt: 0, JobName: "lost", JobUID: "lost-uid", Phase: fabricv1alpha1.AIGatewayMigrationEvidenceMissing}}, tc.successor...)
-			if got := legacyAIGatewayRecoveryRequiresExclusiveMigrationReconcile(tenant); got != tc.want {
+			if got := admittedAIGatewayRecoveryRequiresExclusiveReconcile(tenant); got != tc.want {
 				t.Fatalf("exclusive recovery path=%v want %v", got, tc.want)
 			}
 		})
