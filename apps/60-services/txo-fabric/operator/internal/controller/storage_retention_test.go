@@ -61,6 +61,11 @@ func TestRetainedPVCPromotesBoundPVReclaimPolicy(t *testing.T) {
 		},
 	}
 
+	pvc.Labels = agentLabels(agent, tenant)
+	pvc.Labels[LabelStorageRetention] = StorageRetentionRetain
+	pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
+	pvc.Status.Phase = corev1.ClaimBound
+	pv.Spec.StorageClassName = profile.Spec.Storage.StorageClassName
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(pvc, pv).Build()
 	r := &AgentIdentityReconciler{Client: c, APIReader: c, Scheme: scheme}
 
@@ -262,6 +267,9 @@ func TestRetainedPVCIsReadoptedBySameTenantAgentKey(t *testing.T) {
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{StorageClassName: stringPtr(profile.Spec.Storage.StorageClassName)},
 	}
+	pvc.Labels = agentLabels(agent, tenant)
+	pvc.Labels[LabelStorageRetention] = StorageRetentionRetain
+	pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(pvc).Build()
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 
