@@ -16,7 +16,5 @@ resources:
   - mailserver-traefik-ingress-policy.yaml
   - gmail-import-cronjob.yaml
   - gmail-import-egress-policy.yaml
-  - external-secret-migration.yaml
-  - migration-egress-policy.yaml
   - mailserver-ldap-egress-policy.yaml
   - mail-tls-certificate.yaml
