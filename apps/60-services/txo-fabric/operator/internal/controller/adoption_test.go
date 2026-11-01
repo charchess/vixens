@@ -66,6 +66,11 @@ func TestAgentReconcileAdoptsExistingPVCWithoutRecreating(t *testing.T) {
 		Data: map[string][]byte{modelAccessSecretKey: []byte("test-adoption-key")},
 	}
 
+	// A legacy claim may be reused only when its tenant and agent identity
+	// were already recorded; canonical name alone never authorizes adoption.
+	pvc.Labels = agentLabels(agent, tenant)
+	pvc.Labels[LabelStorageRetention] = StorageRetentionRetain
+	pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
 	c := fake.NewClientBuilder().WithScheme(scheme).
 		WithStatusSubresource(&fabricv1alpha1.TenantBundle{}, &fabricv1alpha1.AgentIdentity{}).
 		WithObjects(tenant, profile, agent, namespace, pvc, gatewayProfile, gatewayRuntimeSecret, modelSecret).
