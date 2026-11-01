@@ -96,6 +96,38 @@ func TestAgentDeleteFailsClosedForForeignOrUnownedResources(t *testing.T) {
 	}
 }
 
+func TestAgentRetainFinalizerRefusesUnverifiedHistoricalClaim(t *testing.T) {
+	for _, scenario := range []string{"missing-labels", "foreign-owner"} {
+		t.Run(scenario, func(t *testing.T) {
+			agent, tenant, ns, labels, owners := deletionOwnershipFixture(t)
+			agent.Spec.Runtime.Storage.RetentionPolicy = StorageRetentionRetain
+			labels[LabelStorageRetention] = StorageRetentionRetain
+			if scenario == "missing-labels" {
+				labels = map[string]string{}
+			} else {
+				owners[0].UID = "another-agent-uid"
+			}
+			pvc := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{
+				Name: runtimePVCName(agent.Spec.AgentKey), Namespace: ns, UID: types.UID("historic-pvc-uid"),
+				Labels: labels, OwnerReferences: owners,
+			}}
+			scheme := testScheme(t)
+			c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent, tenant, pvc).Build()
+			r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+			if _, err := r.reconcileDelete(context.Background(), agent); err == nil {
+				t.Fatal("unverified retained PVC was relabelled during agent deletion")
+			}
+			var kept corev1.PersistentVolumeClaim
+			if err := c.Get(context.Background(), client.ObjectKeyFromObject(pvc), &kept); err != nil {
+				t.Fatalf("unverified retained claim disappeared: %v", err)
+			}
+			if kept.UID != pvc.UID || kept.Labels[LabelTenantName] != pvc.Labels[LabelTenantName] {
+				t.Fatal("unverified retained claim identity or labels changed")
+			}
+		})
+	}
+}
+
 func TestAgentDeleteOwnedHumanResourcesIsIdempotent(t *testing.T) {
 	agent, _, ns, labels, owners := deletionOwnershipFixture(t)
 	service := &corev1.Service{ObjectMeta: metav1.ObjectMeta{
