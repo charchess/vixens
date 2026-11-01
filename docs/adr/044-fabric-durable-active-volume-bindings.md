@@ -1,6 +1,6 @@
 # ADR-044: native workspace provisioning
 
-**Date:** 2026-10-31 (revised after maintainer clarification)
+**Date:** 2026-11-01 (restored native provisioning)
 **Status:** Accepted — replaces the previous per-volume binding proposal
 **Scope:** AIaaS
 **Related issues:** #4375, #4384, #4385, #4386, #4357
@@ -36,9 +36,9 @@ or physical PVC/PV resources may be deleted without separate authorization.
    active runtime authorization. Removal from stored API schemas and
    physical retirement require their own compatibility/rollback review.
 
-No product contract contains a CSI driver name, zvol, NAS address or
-transport-specific policy. An existing PVC name with a `-synelia` suffix
-is a stable physical resource name and is **not renamed**.
+No product contract contains CSI driver names, NAS addresses, physical PVC
+suffixes or transport-specific policies. Historical physical volume identities
+are managed separately from the permanent product contract.
 
 ## Tradeoffs and risks
 
@@ -64,6 +64,8 @@ physical reconfiguration.
 
 - [ADR-043](043-provider-neutral-storage-contracts.md)
 - #4384 — disposable RWO simplification
-- #4385 — existing RWX claim selection
+- #4385 — historical RWX selection
+- #4398 — fresh tenant bootstrap
+- #4400 — one-time canonical-name transition
 - #4386 — migration-only source cleanup
 - #4357 — physical verification still outstanding
