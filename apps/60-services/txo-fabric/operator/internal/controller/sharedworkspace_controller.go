@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -63,6 +64,9 @@ func (r *SharedWorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, fmt.Errorf("SharedWorkspaceProfile %q has empty storageClassName", profile.Name)
 	}
 
+	if err := validateWorkspaceClaimNames(&bundle); err != nil {
+		return ctrl.Result{}, err
+	}
 	for _, scope := range desiredWorkspaceScopes(&bundle) {
 		if err := r.ensureWorkspacePVC(ctx, &bundle, &profile, scope); err != nil {
 			return ctrl.Result{}, err
@@ -107,7 +111,7 @@ func (r *SharedWorkspaceReconciler) reconcileWorkspaceRelease(ctx context.Contex
 }
 
 func (r *SharedWorkspaceReconciler) ensureWorkspacePVC(ctx context.Context, bundle *fabricv1alpha1.TenantBundle, profile *fabricv1alpha1.SharedWorkspaceProfile, scope workspaceScope) error {
-	if bundle.Spec.Workspace.ClaimSuffix != "" {
+	if _, existing := bundle.Spec.Workspace.ClaimNames[workspacePVCName(scope)]; existing {
 		return verifyExistingWorkspacePVC(ctx, r.Client, bundle, profile, scope)
 	}
 	name := workspacePVCName(scope)
@@ -182,13 +186,51 @@ func verifyExistingWorkspacePVC(ctx context.Context, reader client.Reader, bundl
 	return nil
 }
 
-// Suffix belongs to the actual stable PVC name, not to CSI migration state.
+// ClaimNames selects a concrete PVC for an existing scope. All unspecified
+// scopes use canonical names and ordinary auto-provisioning.
 func workspaceClaimName(scope workspaceScope, workspace *fabricv1alpha1.TenantWorkspaceSpec) string {
 	name := workspacePVCName(scope)
-	if workspace != nil && workspace.ClaimSuffix != "" {
-		return name + "-" + workspace.ClaimSuffix
+	if workspace != nil {
+		if selected, ok := workspace.ClaimNames[name]; ok {
+			return selected
+		}
 	}
 	return name
+}
+
+// Validate references before any PVC creation or agent rollout. Deprecated
+// claimSuffix must not silently fall back to an empty workspace.
+func validateWorkspaceClaimNames(bundle *fabricv1alpha1.TenantBundle) error {
+	workspace := bundle.Spec.Workspace
+	if workspace == nil {
+		return nil
+	}
+	if workspace.ClaimSuffix != "" && len(workspace.ClaimNames) == 0 {
+		return fmt.Errorf("tenant %q declares legacy workspace claimSuffix without explicit claimNames", bundle.Name)
+	}
+	declared := make(map[string]struct{})
+	for _, scope := range desiredWorkspaceScopes(bundle) {
+		declared[workspacePVCName(scope)] = struct{}{}
+	}
+	selected := make(map[string]string)
+	for canonical, actual := range workspace.ClaimNames {
+		if _, ok := declared[canonical]; !ok {
+			return fmt.Errorf("tenant %q references undeclared workspace scope %q", bundle.Name, canonical)
+		}
+		if problems := validation.IsDNS1123Subdomain(actual); len(problems) != 0 {
+			return fmt.Errorf("tenant %q workspace PVC %q has invalid name: %v", bundle.Name, actual, problems)
+		}
+		if prior, duplicate := selected[actual]; duplicate {
+			return fmt.Errorf("tenant %q workspace scopes %q and %q select the same PVC %q", bundle.Name, prior, canonical, actual)
+		}
+		if canonical != actual {
+			if _, collides := declared[actual]; collides {
+				return fmt.Errorf("tenant %q workspace PVC %q collides with another declared scope", bundle.Name, actual)
+			}
+		}
+		selected[actual] = canonical
+	}
+	return nil
 }
 
 func workspaceLabels(bundle *fabricv1alpha1.TenantBundle, scope workspaceScope) map[string]string {
