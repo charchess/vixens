@@ -100,14 +100,13 @@ func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabri
 	volumes := make([]corev1.Volume, 0, len(scopes))
 	mounts := make([]corev1.VolumeMount, 0, len(scopes))
 	for _, scope := range scopes {
-		volumeName := workspacePVCName(scope)
-		claimName := workspaceClaimName(scope, workspace)
+		name := workspaceClaimName(scope, workspace)
 		mountPath := workspaceMountPath(scope)
 		volumes = append(volumes, corev1.Volume{
-			Name:         volumeName,
-			VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: claimName}},
+			Name:         name,
+			VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: name}},
 		})
-		mounts = append(mounts, corev1.VolumeMount{Name: volumeName, MountPath: mountPath, ReadOnly: scope.ReadOnly})
+		mounts = append(mounts, corev1.VolumeMount{Name: name, MountPath: mountPath, ReadOnly: scope.ReadOnly})
 	}
 	return volumes, mounts, nil
 }
