@@ -99,11 +99,11 @@ func TestAgentDeleteFailsClosedForForeignOrUnownedResources(t *testing.T) {
 func TestAgentDeleteOwnedHumanResourcesIsIdempotent(t *testing.T) {
 	agent, _, ns, labels, owners := deletionOwnershipFixture(t)
 	service := &corev1.Service{ObjectMeta: metav1.ObjectMeta{
-		Name: humanAccessResourceName(agent.Spec.AgentKey), Namespace: ns,
+		Name: humanAccessResourceName(agent.Spec.AgentKey), Namespace: ns, UID: types.UID("owned-service-uid"),
 		Labels: labels, OwnerReferences: owners,
 	}}
 	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{
-		Name: modelAccessSecretName(agent.Spec.AgentKey), Namespace: ns,
+		Name: modelAccessSecretName(agent.Spec.AgentKey), Namespace: ns, UID: types.UID("owned-secret-uid"),
 		Labels: labels, OwnerReferences: owners,
 	}}
 	scheme := testScheme(t)
