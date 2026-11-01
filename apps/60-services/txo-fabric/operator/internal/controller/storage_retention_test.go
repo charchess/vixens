@@ -205,7 +205,17 @@ func TestAgentDeletePolicyDeletesPVC(t *testing.T) {
 			}},
 		},
 	}
-	pvc := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "hermes-probe-data", Namespace: "tenant-fabric-smoke"}}
+	pvc := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{
+		Name: "hermes-probe-data", Namespace: "tenant-fabric-smoke",
+		Labels: map[string]string{
+			LabelPartOf: "txo-fabric", LabelAgent: "probe", LabelInstance: "probe",
+			LabelTenantName: "fabric-smoke", LabelStorageRetention: StorageRetentionDelete,
+		},
+		OwnerReferences: []metav1.OwnerReference{{
+			APIVersion: fabricv1alpha1.GroupVersion.String(), Kind: "AgentIdentity",
+			Name: agent.Name, UID: agent.UID, Controller: func() *bool { v := true; return &v }(),
+		}},
+	}}
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent, pvc).Build()
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 
