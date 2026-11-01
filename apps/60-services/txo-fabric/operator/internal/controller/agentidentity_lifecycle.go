@@ -163,7 +163,21 @@ func (r *AgentIdentityReconciler) retainRuntimePVC(ctx context.Context, agent *f
 		}
 		return err
 	}
-
+	// Retain is not permission to adopt or mutate another owner's claim:
+	// a deleted AgentIdentity may have shared its deterministic PVC name.
+	labels := pvc.Labels
+	if pvc.UID == "" || labels[LabelPartOf] != "txo-fabric" ||
+		labels[LabelInstance] != agent.Spec.AgentKey ||
+		labels[LabelAgent] != agent.Spec.AgentKey ||
+		labels[LabelTenantName] != agent.Spec.TenantRef.Name ||
+		labels[LabelStorageRetention] != StorageRetentionRetain {
+		return fmt.Errorf("refusing to retain or relabel unverified PVC %s/%s", namespace, pvc.Name)
+	}
+	if owner := metav1.GetControllerOf(&pvc); owner != nil &&
+		(owner.APIVersion != fabricv1alpha1.GroupVersion.String() ||
+			owner.Kind != "AgentIdentity" || owner.Name != agent.Name || owner.UID != agent.UID) {
+		return fmt.Errorf("refusing to retain PVC %s/%s controlled by a different identity", namespace, pvc.Name)
+	}
 	if err := r.ensureRetainedPersistentVolume(ctx, agent, &pvc); err != nil {
 		return err
 	}
