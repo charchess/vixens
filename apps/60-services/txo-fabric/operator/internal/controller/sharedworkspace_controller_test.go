@@ -211,98 +211,146 @@ func workspaceTestTenant() *fabricv1alpha1.TenantBundle {
 	}
 }
 
-// Existing tenant workspaces are stateful, unlike disposable agent runtimes.
-// Selecting an already-created physical claim must never provision a new one.
-func activeWorkspaceTestFixture() (*fabricv1alpha1.TenantBundle, *fabricv1alpha1.SharedWorkspaceProfile, *corev1.PersistentVolumeClaim, *corev1.PersistentVolume) {
+// A TenantBundle workspace declaration is sufficient to provision canonical
+// RWX claims on a completely empty cluster; no import or manual PVC is needed.
+func TestNativeWorkspaceProvisionsCanonicalClaimsForNewTenants(t *testing.T) {
+	for _, name := range []string{"fabric-smoke", "third-tenant", "hairem", "indiba"} {
+		t.Run(name, func(t *testing.T) {
+			ctx := context.Background()
+			tenant := workspaceTestTenant()
+			tenant.Name = name
+			profile := &fabricv1alpha1.SharedWorkspaceProfile{
+				ObjectMeta: metav1.ObjectMeta{Name: "shared-nfs"},
+				Spec: fabricv1alpha1.SharedWorkspaceProfileSpec{
+					StorageClassName: "storage-rwx-retain",
+					Size: resource.MustParse("5Gi"),
+				},
+			}
+			scheme := testScheme(t)
+			c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile).Build()
+			r := &SharedWorkspaceReconciler{Client: c, Scheme: scheme}
+			for i := 0; i < 2; i++ {
+				if _, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: tenant.Name}}); err != nil {
+					t.Fatalf("native reconcile %d: %v", i+1, err)
+				}
+			}
+			for _, scope := range desiredWorkspaceScopes(tenant) {
+				claimName := workspacePVCName(scope)
+				var pvc corev1.PersistentVolumeClaim
+				if err := c.Get(ctx, client.ObjectKey{Name: claimName, Namespace: tenantNamespace(tenant.Name)}, &pvc); err != nil {
+					t.Fatalf("canonical workspace %q not created: %v", claimName, err)
+				}
+				if pvc.Labels[LabelTenantName] != tenant.Name ||
+					pvc.Spec.StorageClassName == nil || *pvc.Spec.StorageClassName != profile.Spec.StorageClassName {
+					t.Fatalf("workspace %q not tenant-owned with canonical class: %#v", claimName, pvc)
+				}
+			}
+			agent := &fabricv1alpha1.AgentIdentity{Spec: fabricv1alpha1.AgentIdentitySpec{
+				TenantRef: fabricv1alpha1.ObjectReference{Name: tenant.Name},
+				AgentKey: "probe",
+				Access: fabricv1alpha1.AgentAccessSpec{Groups: []string{"sales"}, UserRef: "bertrand"},
+			}}
+			volumes, _, err := resolvedWorkspaceVolumes(agent, tenant)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, volume := range volumes {
+				if strings.Contains(volume.PersistentVolumeClaim.ClaimName, "synelia") {
+					t.Fatal("native workspace generated historical CSI claim name")
+				}
+			}
+		})
+	}
+}
+
+// A newly declared scope must be created by the existing PVC provisioner
+// without replacing claims from a previous successful reconcile.
+func TestNativeWorkspaceAddsNewScopeWithoutReplacingOldClaim(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
 	tenant := workspaceTestTenant()
-	tenant.Spec.Workspace.Organization = fabricv1alpha1.WorkspaceScopeSpec{Reference: true}
 	tenant.Spec.Workspace.Groups = nil
 	tenant.Spec.Workspace.Users = nil
-	tenant.Spec.Workspace.ClaimSuffix = "synelia"
 	profile := &fabricv1alpha1.SharedWorkspaceProfile{
 		ObjectMeta: metav1.ObjectMeta{Name: "shared-nfs"},
 		Spec: fabricv1alpha1.SharedWorkspaceProfileSpec{StorageClassName: "storage-rwx-retain"},
 	}
-	scope := desiredWorkspaceScopes(tenant)[0]
-	name := workspaceClaimName(scope, tenant.Spec.Workspace)
-	pvc := &corev1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: tenantNamespace(tenant.Name), UID: types.UID("active-rwx-uid"), Labels: workspaceLabels(tenant, scope)},
-		Spec: corev1.PersistentVolumeClaimSpec{
-			StorageClassName: stringPtr("storage-rwx-retain"),
-			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteMany},
-			VolumeName: "active-rwx-pv",
-		},
-		Status: corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound},
-	}
-	pv := &corev1.PersistentVolume{
-		ObjectMeta: metav1.ObjectMeta{Name: "active-rwx-pv"},
-		Spec: corev1.PersistentVolumeSpec{
-			ClaimRef: &corev1.ObjectReference{Namespace: pvc.Namespace, Name: pvc.Name, UID: pvc.UID},
-			PersistentVolumeReclaimPolicy: corev1.PersistentVolumeReclaimRetain,
-		},
-		Status: corev1.PersistentVolumeStatus{Phase: corev1.VolumeBound},
-	}
-	return tenant, profile, pvc, pv
-}
-
-func TestActiveWorkspaceUsesExistingClaimWithoutMigration(t *testing.T) {
-	ctx := context.Background()
-	tenant, profile, pvc, pv := activeWorkspaceTestFixture()
-	scheme := testScheme(t)
-	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile, pvc, pv).Build()
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile).Build()
 	r := &SharedWorkspaceReconciler{Client: c, Scheme: scheme}
+	req := ctrl.Request{NamespacedName: types.NamespacedName{Name: tenant.Name}}
+	if _, err := r.Reconcile(ctx, req); err != nil {
+		t.Fatal(err)
+	}
+	var existing corev1.PersistentVolumeClaim
+	key := client.ObjectKey{Name: "ws-org-rw", Namespace: tenantNamespace(tenant.Name)}
+	if err := c.Get(ctx, key, &existing); err != nil {
+		t.Fatal(err)
+	}
+	existing.UID = types.UID("original-claim-uid")
+	if err := c.Update(ctx, &existing); err != nil {
+		t.Fatal(err)
+	}
+	tenant.Spec.Workspace.Groups = []fabricv1alpha1.NamedWorkspaceScopeSpec{
+		{Name: "newteam", Collaborative: true},
+	}
+	if err := c.Update(ctx, tenant); err != nil {
+		t.Fatal(err)
+	}
 	for i := 0; i < 2; i++ {
-		if _, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: tenant.Name}}); err != nil {
-			t.Fatalf("reconcile #%d: %v", i+1, err)
+		if _, err := r.Reconcile(ctx, req); err != nil {
+			t.Fatalf("reconcile after new group: %v", err)
 		}
 	}
-	var after corev1.PersistentVolumeClaim
-	if err := c.Get(ctx, types.NamespacedName{Namespace: pvc.Namespace, Name: pvc.Name}, &after); err != nil || after.UID != pvc.UID {
-		t.Fatalf("active PVC was changed: %#v, %v", after, err)
+	var oldAfter corev1.PersistentVolumeClaim
+	if err := c.Get(ctx, key, &oldAfter); err != nil || oldAfter.UID != existing.UID {
+		t.Fatalf("previous claim was replaced: %v, %#v", err, oldAfter)
 	}
-	var source corev1.PersistentVolumeClaim
-	if err := c.Get(ctx, types.NamespacedName{Name: "ws-org-ref", Namespace: pvc.Namespace}, &source); err == nil {
-		t.Fatal("historical source PVC was created")
-	}
-	agent := &fabricv1alpha1.AgentIdentity{Spec: fabricv1alpha1.AgentIdentitySpec{TenantRef: fabricv1alpha1.ObjectReference{Name: tenant.Name}, AgentKey: "probe"}}
-	volumes, mounts, err := resolvedWorkspaceVolumes(agent, tenant)
-	if err != nil || len(volumes) != 1 || len(mounts) != 1 || volumes[0].PersistentVolumeClaim.ClaimName != pvc.Name {
-		t.Fatalf("workspace mount did not choose existing PVC: %+v %+v %v", volumes, mounts, err)
+	var newPVC corev1.PersistentVolumeClaim
+	if err := c.Get(ctx, client.ObjectKey{Name: "ws-group-newteam-rw", Namespace: tenantNamespace(tenant.Name)}, &newPVC); err != nil {
+		t.Fatalf("new scope should be provisioned automatically: %v", err)
 	}
 }
 
-func TestActiveWorkspaceRejectsMissingOrForeignOrInvalidClaims(t *testing.T) {
+func TestNativeWorkspaceRejectsInvalidExistingCanonicalPVC(t *testing.T) {
 	cases := []struct {
 		name string
-		mutate func(*corev1.PersistentVolumeClaim, *corev1.PersistentVolume)
-		missing bool
+		mutate func(*corev1.PersistentVolumeClaim)
 	}{
-		{name: "missing-claim", missing: true},
-		{name: "unbound", mutate: func(p *corev1.PersistentVolumeClaim, _ *corev1.PersistentVolume) { p.Status.Phase = corev1.ClaimPending }},
-		{name: "wrong-tenant", mutate: func(p *corev1.PersistentVolumeClaim, _ *corev1.PersistentVolume) { p.Labels[LabelTenantName] = "foreign-tenant" }},
-		{name: "wrong-scope", mutate: func(p *corev1.PersistentVolumeClaim, _ *corev1.PersistentVolume) { p.Labels[LabelWorkspaceScope] = "user" }},
-		{name: "wrong-uid", mutate: func(p *corev1.PersistentVolumeClaim, _ *corev1.PersistentVolume) { p.UID = types.UID("replaced-uid") }},
-		{name: "wrong-class", mutate: func(p *corev1.PersistentVolumeClaim, _ *corev1.PersistentVolume) { p.Spec.StorageClassName = stringPtr("other") }},
-		{name: "wrong-access", mutate: func(p *corev1.PersistentVolumeClaim, _ *corev1.PersistentVolume) { p.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce} }},
-		{name: "wrong-retention", mutate: func(_ *corev1.PersistentVolumeClaim, p *corev1.PersistentVolume) { p.Spec.PersistentVolumeReclaimPolicy = corev1.PersistentVolumeReclaimDelete }},
+		{name: "foreign-tenant", mutate: func(p *corev1.PersistentVolumeClaim) { p.Labels[LabelTenantName] = "other-tenant" }},
+		{name: "foreign-scope", mutate: func(p *corev1.PersistentVolumeClaim) { p.Labels[LabelWorkspaceScope] = "group" }},
+		{name: "foreign-retention", mutate: func(p *corev1.PersistentVolumeClaim) { p.Labels[LabelWorkspaceRetention] = fabricv1alpha1.WorkspaceRetentionDelete }},
+		{name: "wrong-class", mutate: func(p *corev1.PersistentVolumeClaim) { p.Spec.StorageClassName = stringPtr("foreign-class") }},
+		{name: "not-rwx", mutate: func(p *corev1.PersistentVolumeClaim) { p.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce} }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			tenant, profile, pvc, pv := activeWorkspaceTestFixture()
-			if tc.mutate != nil { tc.mutate(pvc, pv) }
+			tenant := workspaceTestTenant()
+			tenant.Spec.Workspace.Organization = fabricv1alpha1.WorkspaceScopeSpec{Reference: true}
+			tenant.Spec.Workspace.Groups = nil
+			tenant.Spec.Workspace.Users = nil
+			scope := desiredWorkspaceScopes(tenant)[0]
+			pvc := &corev1.PersistentVolumeClaim{
+				ObjectMeta: metav1.ObjectMeta{Name: workspacePVCName(scope), Namespace: tenantNamespace(tenant.Name), Labels: workspaceLabels(tenant, scope)},
+				Spec: corev1.PersistentVolumeClaimSpec{
+					StorageClassName: stringPtr("storage-rwx-retain"),
+					AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteMany},
+				},
+			}
+			tc.mutate(pvc)
+			profile := &fabricv1alpha1.SharedWorkspaceProfile{ObjectMeta: metav1.ObjectMeta{Name: "shared-nfs"}, Spec: fabricv1alpha1.SharedWorkspaceProfileSpec{StorageClassName: "storage-rwx-retain"}}
 			scheme := testScheme(t)
-			objects := []client.Object{tenant, profile, pv}
-			if !tc.missing { objects = append(objects, pvc) }
-			c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(objects...).Build()
+			c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile, pvc).Build()
 			r := &SharedWorkspaceReconciler{Client: c, Scheme: scheme}
 			if _, err := r.Reconcile(context.Background(), ctrl.Request{NamespacedName: types.NamespacedName{Name: tenant.Name}}); err == nil {
-				t.Fatal("invalid active workspace was accepted")
+				t.Fatal("invalid canonical PVC was silently adopted")
 			}
-			if tc.missing {
-				var recreated corev1.PersistentVolumeClaim
-				if err := c.Get(context.Background(), types.NamespacedName{Name: pvc.Name, Namespace: pvc.Namespace}, &recreated); err == nil {
-					t.Fatal("recreated missing stateful active PVC")
-				}
+			var after corev1.PersistentVolumeClaim
+			if err := c.Get(context.Background(), client.ObjectKey{Name: pvc.Name, Namespace: pvc.Namespace}, &after); err != nil {
+				t.Fatal(err)
+			}
+			if after.Spec.StorageClassName == nil || *after.Spec.StorageClassName != *pvc.Spec.StorageClassName ||
+				after.Labels[LabelTenantName] != pvc.Labels[LabelTenantName] {
+				t.Fatal("invalid canonical PVC was relabeled or mutated")
 			}
 		})
 	}
