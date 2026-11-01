@@ -46,13 +46,9 @@ is a stable physical resource name and is **not renamed**.
   canonical claim. This is accepted for disposable AgentIdentity instances;
   other services, workspace data and retained PVCs are not declared
   disposable by implication.
-- A simple RWX claim-name selector is intentionally not a new permanent
-  UID registry. Controllers verify the **current** PVC/PV UID binding and
-  tenant ownership on each reconcile. Independent restoration/replacement
-  of the real physical volume must still be reviewed operationally.
-- Existing RWX scopes cannot safely start without the chosen target PVC.
-  This is a deliberate fail-closed condition, not an invitation to create
-  an empty replacement claim.
+- The historical RWX PVCs still carry data under physical names with a
+  suffix. #4400 tracks the separate operational transition to the canonical
+  names. This is not a reason to introduce a permanent controller exception.
 - Migration evidence retained in GitHub issues / read-only audits must not
   be used to synthesize a successful copy from a target label or Bound phase.
 
