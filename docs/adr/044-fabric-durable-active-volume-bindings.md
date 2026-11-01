@@ -22,13 +22,10 @@ or physical PVC/PV resources may be deleted without separate authorization.
    Do not carry RWO migration/attestation/UID-pin state into the permanent
    controller. A disposable agent may restart with a new home; no automatic
    deletion of retained legacy storage is part of the refactor.
-2. **Tenant shared RWX:** keep already existing PVC **names**. For historical
-   physically suffixed claims, `spec.workspace.claimSuffix` selects their
-   literal name suffix, e.g. `synelia`. Empty is the normal, unsuffixed
-   provisioning path. A nonempty suffix is **read-only adoption**: verify
-   that each claimed tenant/group/user/organization scope has an existing
-   Bound RWX PVC, matching labels/class/retention and a PV bound to its exact
-   live PVC UID. Never create or relabel an absent selected PVC.
+2. **Tenant shared RWX:** the tenant declares workspace scopes, and the
+   operator creates canonical PVCs using the declared RWX storage profile.
+   New scopes use the same provisioning path on old and new tenants.
+   No claim suffix or manual PVC mapping is part of the product contract.
 3. **Migration/copy:** an actual future physical data migration is a
    separately reviewed operational operation with its own byte-verification
    evidence. No copy Job, historical source or migration status is consulted
