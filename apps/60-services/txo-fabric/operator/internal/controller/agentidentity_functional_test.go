@@ -207,9 +207,12 @@ func TestInvalidFunctionalProfileReconcileDeniesPreviouslyRunningAgent(t *testin
 	agent.Spec.Functional.ProfileRef = "missing-approved-sales"
 	agent.Status.Runtime.HumanEndpoint = "https://stale.invalid"
 	ns := &corev1.Namespace{ObjectMeta:metav1.ObjectMeta{Name:"tenant-indiba"}}
+	controller := true
 	dep := &appsv1.Deployment{ObjectMeta:metav1.ObjectMeta{
 		Name:runtimeName(agent.Spec.AgentKey),Namespace:ns.Name,
-		Labels:map[string]string{LabelInstance:agent.Spec.AgentKey,LabelTenantName:"indiba"},
+		Labels:agentLabels(agent, tenant),
+		OwnerReferences: []metav1.OwnerReference{{APIVersion: fabricv1alpha1.GroupVersion.String(),
+			Kind: "AgentIdentity", Name: agent.Name, UID: agent.UID, Controller: &controller}},
 	}}
 	scheme := testScheme(t)
 	c := fake.NewClientBuilder().WithScheme(scheme).
