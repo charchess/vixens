@@ -475,12 +475,11 @@ func (r *TenantBundleReconciler) ensureAIGatewayMigrationNetworkPolicy(
 	return err
 }
 
-// reconcileImmutableHairemLegacyMigration runs the one historical recovery without
-// reconciling AI gateway runtime, identity, IAM, or browser resources. Every
-// prerequisite must already exist; this path creates only the existing
-// migration NetworkPolicy, recovery marker, Job, and UID-backed status evidence.
-func (r *TenantBundleReconciler) reconcileImmutableHairemLegacyMigration(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (bool, string, string, error) {
-	if aiGatewayMigrationRecoveryTransitionEvidence(bundle) == nil && !immutableHairemLegacyRecoveryEligible(bundle) && !immutableHairemLegacyRecoveryEvidence(bundle) {
+// reconcileAdmittedAIGatewayRecovery handles an exact, reviewed, tenant-bound
+// recovery transition without reconciling IAM, browser or runtime resources.
+// All prerequisites must already exist and the transition remains fail-closed.
+func (r *TenantBundleReconciler) reconcileAdmittedAIGatewayRecovery(ctx context.Context, bundle *fabricv1alpha1.TenantBundle) (bool, string, string, error) {
+	if aiGatewayMigrationRecoveryTransitionEvidence(bundle) == nil {
 		return false, "MigrationEvidenceMissing", "immutable legacy recovery is not eligible", nil
 	}
 	var gatewayProfile fabricv1alpha1.AIGatewayProfile
@@ -621,51 +620,9 @@ func migrationJobSelector(bundle *fabricv1alpha1.TenantBundle) client.MatchingLa
 	}
 }
 
-// immutableHairemLegacyRecoveryEligible recognizes only the one retained
-// legacy failure whose immutable recovery tuple was admitted before the
-// controller recorded the condition at the current generation. It is not a
-// general retry mechanism: any changed tenant, tuple, generation, condition,
-// or retained evidence stays fail-closed.
-func immutableHairemLegacyRecoveryEligible(bundle *fabricv1alpha1.TenantBundle) bool {
-	if bundle == nil || bundle.Name != "hairem" || bundle.Spec.TenantID != "TEN00001" || bundle.Generation != 12 || bundle.Spec.AIGateway == nil || len(bundle.Status.AIGatewayMigration) != 0 {
-		return false
-	}
-	gateway := bundle.Spec.AIGateway
-	if gateway.MigrationRetry != 1 || gateway.MigrationRecovery != "legacy-evidence-20261016" || gateway.MigrationRecoveryFailedGeneration != 9 {
-		return false
-	}
-	for _, condition := range bundle.Status.Conditions {
-		if condition.Type == "AIGatewayReady" && condition.Status == metav1.ConditionFalse && condition.Reason == "MigrationFailed" && condition.ObservedGeneration == 9 {
-			return true
-		}
-	}
-	return false
-}
-
-// legacyMigrationRecoveryEligible permits a single explicitly declared recovery
-// only when the retained MigrationFailed condition predates the spec generation
-// which introduced the immutable recovery identifier. Once reconciliation has
-// observed that generation, loss of Job/status evidence remains fail-closed.
-// immutableHairemLegacyRecoveryEvidence admits only the UID-bound attempt
-// created by the exact immutable legacy tuple back into the pre-IAM path so
-// its terminal Job condition can be persisted. It never creates another Job;
-// ensureAIGatewayMigrations validates the live owner and UID fail-closed.
-func immutableHairemLegacyRecoveryEvidence(bundle *fabricv1alpha1.TenantBundle) bool {
-	if bundle == nil || bundle.Name != "hairem" || bundle.Spec.TenantID != "TEN00001" || bundle.Generation != 12 || bundle.Spec.AIGateway == nil {
-		return false
-	}
-	gateway := bundle.Spec.AIGateway
-	if gateway.MigrationRetry != 1 || gateway.MigrationRecovery != "legacy-evidence-20261016" || gateway.MigrationRecoveryFailedGeneration != 9 || len(bundle.Status.AIGatewayMigration) != 1 {
-		return false
-	}
-	evidence := bundle.Status.AIGatewayMigration[0]
-	return evidence.Attempt == 1 && evidence.JobName != "" && evidence.JobUID != "" && (evidence.Phase == fabricv1alpha1.AIGatewayMigrationPending || evidence.Phase == fabricv1alpha1.AIGatewayMigrationSucceeded || evidence.Phase == fabricv1alpha1.AIGatewayMigrationFailed)
-}
-
+// legacyMigrationRecoveryEligible retains the generic historic retry contract
+// for authorized reconciles; it does not bypass tenant IAM authorization.
 func legacyMigrationRecoveryEligible(bundle *fabricv1alpha1.TenantBundle, retry int32) bool {
-	if retry == 1 && immutableHairemLegacyRecoveryEligible(bundle) {
-		return true
-	}
 	if retry != 1 || bundle.Spec.AIGateway == nil || bundle.Spec.AIGateway.MigrationRecovery == "" || bundle.Spec.AIGateway.MigrationRecoveryFailedGeneration < 1 {
 		return false
 	}
@@ -900,14 +857,11 @@ func (r *TenantBundleReconciler) observeAIGatewayMigrationEvidence(ctx context.C
 			latest = *evidence
 		}
 	}
-	// The exact immutable hAIrem recovery starts at reviewed attempt 1 because
-	// its historical attempt 0 was irretrievably absent. Any other gap remains
-	// fail-closed; the live Job owner and UID were validated above.
+	// An explicit generic recovery transition may preserve the exact missing
+	// prior attempt; otherwise all ordinals start at zero and gaps fail closed.
 	firstAttempt := int32(0)
 	if transition != nil && latest.Attempt >= transition.ExpectedAttempt {
 		firstAttempt = transition.ExpectedAttempt
-	} else if immutableHairemLegacyRecoveryEvidence(bundle) && latest.Attempt == 1 {
-		firstAttempt = 1
 	}
 	for attempt := firstAttempt; attempt <= latest.Attempt; attempt++ {
 		if _, ok := seen[attempt]; !ok {
