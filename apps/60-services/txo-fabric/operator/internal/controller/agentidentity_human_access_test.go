@@ -22,6 +22,7 @@ func TestHumanAccessReconcilesStableAuthenticatedDashboard(t *testing.T) {
 	tenant := humanAccessTestTenant()
 	profile := testRuntimeProfile()
 	agent := humanAccessTestAgent()
+	agent.UID = types.UID("hairem-sandbox-tesla-uid")
 
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent).Build()
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
