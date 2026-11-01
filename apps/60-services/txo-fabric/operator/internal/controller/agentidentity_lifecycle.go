@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -90,9 +91,19 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 		}
 		key := client.ObjectKeyFromObject(obj)
 		if err := r.Get(ctx, key, current); err == nil {
+			// A deterministic name is never deletion authority. In particular,
+			// an unowned RetentionDelete PVC must survive a colliding AgentIdentity.
+			if err := verifyAgentDeletionOwnership(current, agent, &tenant); err != nil {
+				return ctrl.Result{}, err
+			}
+			if current.GetUID() == "" {
+				return ctrl.Result{}, fmt.Errorf("refusing to delete resource %T %s/%s without UID", current, current.GetNamespace(), current.GetName())
+			}
 			pending = true
 			if current.GetDeletionTimestamp().IsZero() {
-				if err := r.Delete(ctx, current); err != nil && !apierrors.IsNotFound(err) {
+				// UID precondition closes the GET/delete replacement window.
+				uid := current.GetUID()
+				if err := r.Delete(ctx, current, client.Preconditions{UID: &uid}); err != nil && !apierrors.IsNotFound(err) {
 					return ctrl.Result{}, err
 				}
 			}
@@ -110,6 +121,39 @@ func (r *AgentIdentityReconciler) reconcileDelete(ctx context.Context, agent *fa
 	return ctrl.Result{}, nil
 }
 
+// verifyAgentDeletionOwnership protects every stateful or access resource
+// named by the finalizer. Only objects with an exact controller owner UID
+// and matching ownership labels may be deleted; names alone are insufficient.
+func verifyAgentDeletionOwnership(obj client.Object, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) error {
+	owner := metav1.GetControllerOf(obj)
+	if owner == nil || owner.APIVersion != fabricv1alpha1.GroupVersion.String() ||
+		owner.Kind != "AgentIdentity" || owner.Name != agent.Name || owner.UID == "" || owner.UID != agent.UID {
+		return fmt.Errorf("refusing to delete unowned or foreign resource %T %s/%s for AgentIdentity %q UID %q", obj, obj.GetNamespace(), obj.GetName(), agent.Name, agent.UID)
+	}
+	labels := obj.GetLabels()
+	for label, expected := range map[string]string{
+		LabelPartOf: "txo-fabric",
+		LabelAgent: agent.Spec.AgentKey,
+		LabelInstance: agent.Spec.AgentKey,
+	} {
+		if labels[label] != expected {
+			return fmt.Errorf("refusing to delete resource %T %s/%s with invalid ownership label %q", obj, obj.GetNamespace(), obj.GetName(), label)
+		}
+	}
+	if _, isCilium := obj.(*unstructured.Unstructured); !isCilium {
+		if labels[LabelTenantName] != agent.Spec.TenantRef.Name {
+			return fmt.Errorf("refusing to delete resource %T %s/%s with foreign tenant label", obj, obj.GetNamespace(), obj.GetName())
+		}
+		if tenant != nil && tenant.Spec.TenantID != "" && labels[LabelTenantID] != tenant.Spec.TenantID {
+			return fmt.Errorf("refusing to delete resource %T %s/%s with foreign tenant ID", obj, obj.GetNamespace(), obj.GetName())
+		}
+	}
+	if _, isPVC := obj.(*corev1.PersistentVolumeClaim); isPVC && labels[LabelStorageRetention] != StorageRetentionDelete {
+		return fmt.Errorf("refusing to delete PVC %s/%s without explicit Delete retention", obj.GetNamespace(), obj.GetName())
+	}
+	return nil
+}
+
 func (r *AgentIdentityReconciler) retainRuntimePVC(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, namespace string) error {
 	var pvc corev1.PersistentVolumeClaim
 	key := types.NamespacedName{Name: runtimePVCName(agent.Spec.AgentKey), Namespace: namespace}
@@ -119,7 +163,21 @@ func (r *AgentIdentityReconciler) retainRuntimePVC(ctx context.Context, agent *f
 		}
 		return err
 	}
-
+	// Retain is not permission to adopt or mutate another owner's claim:
+	// a deleted AgentIdentity may have shared its deterministic PVC name.
+	labels := pvc.Labels
+	if pvc.UID == "" || labels[LabelPartOf] != "txo-fabric" ||
+		labels[LabelInstance] != agent.Spec.AgentKey ||
+		labels[LabelAgent] != agent.Spec.AgentKey ||
+		labels[LabelTenantName] != agent.Spec.TenantRef.Name ||
+		labels[LabelStorageRetention] != StorageRetentionRetain {
+		return fmt.Errorf("refusing to retain or relabel unverified PVC %s/%s", namespace, pvc.Name)
+	}
+	if owner := metav1.GetControllerOf(&pvc); owner != nil &&
+		(owner.APIVersion != fabricv1alpha1.GroupVersion.String() ||
+			owner.Kind != "AgentIdentity" || owner.Name != agent.Name || owner.UID != agent.UID) {
+		return fmt.Errorf("refusing to retain PVC %s/%s controlled by a different identity", namespace, pvc.Name)
+	}
 	if err := r.ensureRetainedPersistentVolume(ctx, agent, &pvc); err != nil {
 		return err
 	}

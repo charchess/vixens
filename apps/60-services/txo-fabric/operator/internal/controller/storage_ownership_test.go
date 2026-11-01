@@ -58,6 +58,9 @@ func TestRetainedPVCExistingOwnerRemovedBeforeAgentDeletion(t *testing.T) {
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{StorageClassName: stringPtr(profile.Spec.Storage.StorageClassName)},
 	}
+	owned.Labels = agentLabels(agent, tenant)
+	owned.Labels[LabelStorageRetention] = StorageRetentionRetain
+	owned.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(owned).Build()
 	r := &AgentIdentityReconciler{Client:c, Scheme:scheme}
 	if err:=r.ensurePVC(ctx, agent, tenant, profile, ns); err!=nil { t.Fatal(err) }

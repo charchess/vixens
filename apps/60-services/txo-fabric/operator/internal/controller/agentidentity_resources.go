@@ -67,37 +67,67 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	if err != nil {
 		return err
 	}
+	// Canonical name alone is not proof that a pre-existing RWO PVC belongs
+	// to this agent. In particular, never retroactively label an unrelated
+	// or unlabelled volume as Fabric-managed.
+	for label, expected := range agentLabels(agent, tenant) {
+		if pvc.Labels[label] != expected {
+			return fmt.Errorf("PVC %s/%s has missing or conflicting ownership label %q", namespace, name, label)
+		}
+	}
+	if pvc.Labels[LabelStorageRetention] != storageRetentionPolicy(agent) {
+		return fmt.Errorf("PVC %s/%s has missing or conflicting retention label", namespace, name)
+	}
+	if len(pvc.Spec.AccessModes) != 1 || pvc.Spec.AccessModes[0] != corev1.ReadWriteOnce {
+		return fmt.Errorf("PVC %s/%s must use ReadWriteOnce", namespace, name)
+	}
+	if owner := metav1.GetControllerOf(&pvc); owner != nil &&
+		(owner.APIVersion != fabricv1alpha1.GroupVersion.String() || owner.Kind != "AgentIdentity" ||
+			owner.Name != agent.Name || owner.UID == "" || owner.UID != agent.UID) {
+		return fmt.Errorf("PVC %s/%s is controlled by a different AgentIdentity", namespace, name)
+	}
 	actualClass := valueOrEmpty(pvc.Spec.StorageClassName)
 	if actualClass != storageClass {
-		// Safe brownfield compatibility only: legacy retained PVCs were
-		// provisioned from their original runtime profile class. They must
-		// keep their UID/class and promote the concrete PV to Retain. A fresh
-		// PVC always uses tenant agentStorage; Delete PVC mismatches fail closed.
+		// A brownfield Retain class may differ only when the exact prior
+		// claim/PV UID binding exists; there is no implicit CSI fallback.
 		legacyRetained := tenant.Spec.AgentStorage != nil &&
 			storageRetentionPolicy(agent) == StorageRetentionRetain &&
-			actualClass == profile.Spec.Storage.StorageClassName
+			actualClass == profile.Spec.Storage.StorageClassName &&
+			pvc.UID != "" && pvc.Spec.VolumeName != ""
 		if !legacyRetained {
 			return fmt.Errorf("PVC %s/%s uses immutable storageClass %q; agent storage policy requires %q", namespace, name, actualClass, storageClass)
 		}
 	}
-	if tenantName := pvc.Labels[LabelTenantName]; tenantName != "" && tenantName != tenant.Name {
-		return fmt.Errorf("PVC %s/%s belongs to tenant %q, not %q", namespace, name, tenantName, tenant.Name)
+	if pvc.Spec.VolumeName != "" {
+		if pvc.UID == "" || pvc.Status.Phase != corev1.ClaimBound {
+			return fmt.Errorf("PVC %s/%s has an unverified bound PV identity", namespace, name)
+		}
+		reader := client.Reader(r.Client)
+		if r.APIReader != nil {
+			reader = r.APIReader
+		}
+		var boundPV corev1.PersistentVolume
+		if err := reader.Get(ctx, types.NamespacedName{Name: pvc.Spec.VolumeName}, &boundPV); err != nil {
+			return fmt.Errorf("read PV for PVC %s/%s: %w", namespace, name, err)
+		}
+		ref := boundPV.Spec.ClaimRef
+		if ref == nil || ref.Namespace != namespace || ref.Name != name || ref.UID != pvc.UID ||
+			boundPV.Spec.StorageClassName != actualClass {
+			return fmt.Errorf("PVC %s/%s has a foreign or incomplete PV claimRef", namespace, name)
+		}
+	} else if pvc.Status.Phase == corev1.ClaimBound {
+		return fmt.Errorf("PVC %s/%s is Bound without a PV name", namespace, name)
 	}
-	if agentKey := pvc.Labels[LabelAgent]; agentKey != "" && agentKey != agent.Spec.AgentKey {
-		return fmt.Errorf("PVC %s/%s belongs to agentKey %q, not %q", namespace, name, agentKey, agent.Spec.AgentKey)
-	}
-	if owner := metav1.GetControllerOf(&pvc); owner != nil && owner.UID != agent.UID {
-		return fmt.Errorf("PVC %s/%s is controlled by %s %q and cannot be adopted", namespace, name, owner.Kind, owner.Name)
+	// Verify and protect existing Retain PV *before* mutating PVC metadata.
+	if err := r.ensureRetainedPersistentVolume(ctx, agent, &pvc); err != nil {
+		return err
 	}
 	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, &pvc, func() error {
 		pvc.Labels = mergeStringMap(pvc.Labels, agentLabels(agent, tenant))
 		pvc.Labels[LabelStorageRetention] = storageRetentionPolicy(agent)
 		return r.setRuntimePVCOwnership(agent, &pvc)
 	})
-	if err != nil {
-		return err
-	}
-	return r.ensureRetainedPersistentVolume(ctx, agent, &pvc)
+	return err
 }
 
 // setRuntimePVCOwnership is called on creation AND while the agent is alive.

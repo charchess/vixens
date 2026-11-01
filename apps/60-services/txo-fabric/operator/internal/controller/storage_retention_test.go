@@ -61,6 +61,11 @@ func TestRetainedPVCPromotesBoundPVReclaimPolicy(t *testing.T) {
 		},
 	}
 
+	pvc.Labels = agentLabels(agent, tenant)
+	pvc.Labels[LabelStorageRetention] = StorageRetentionRetain
+	pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
+	pvc.Status.Phase = corev1.ClaimBound
+	pv.Spec.StorageClassName = profile.Spec.Storage.StorageClassName
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(pvc, pv).Build()
 	r := &AgentIdentityReconciler{Client: c, APIReader: c, Scheme: scheme}
 
@@ -134,6 +139,10 @@ func TestAgentDeleteRetainsPVCAndRemovesOwnerReference(t *testing.T) {
 			Name:      "hermes-tina-data",
 			Namespace: "tenant-hairem-sandbox",
 			UID:       types.UID("pvc-uid"),
+			Labels: map[string]string{
+				LabelPartOf: "txo-fabric", LabelInstance: "tina", LabelAgent: "tina",
+				LabelTenantName: "hairem-sandbox", LabelStorageRetention: StorageRetentionRetain,
+			},
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion: "fabric.truxonline.io/v1alpha1",
 				Kind:       "AgentIdentity",
@@ -205,7 +214,17 @@ func TestAgentDeletePolicyDeletesPVC(t *testing.T) {
 			}},
 		},
 	}
-	pvc := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "hermes-probe-data", Namespace: "tenant-fabric-smoke"}}
+	pvc := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{
+		Name: "hermes-probe-data", Namespace: "tenant-fabric-smoke", UID: types.UID("owned-disposable-uid"),
+		Labels: map[string]string{
+			LabelPartOf: "txo-fabric", LabelAgent: "probe", LabelInstance: "probe",
+			LabelTenantName: "fabric-smoke", LabelStorageRetention: StorageRetentionDelete,
+		},
+		OwnerReferences: []metav1.OwnerReference{{
+			APIVersion: fabricv1alpha1.GroupVersion.String(), Kind: "AgentIdentity",
+			Name: agent.Name, UID: agent.UID, Controller: func() *bool { v := true; return &v }(),
+		}},
+	}}
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(agent, pvc).Build()
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 
@@ -248,6 +267,9 @@ func TestRetainedPVCIsReadoptedBySameTenantAgentKey(t *testing.T) {
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{StorageClassName: stringPtr(profile.Spec.Storage.StorageClassName)},
 	}
+	pvc.Labels = agentLabels(agent, tenant)
+	pvc.Labels[LabelStorageRetention] = StorageRetentionRetain
+	pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(pvc).Build()
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 
