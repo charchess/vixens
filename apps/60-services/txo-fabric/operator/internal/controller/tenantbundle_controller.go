@@ -42,42 +42,28 @@ type TenantBundleReconciler struct {
 	AuthorizationNow func() time.Time
 }
 
-// legacyAIGatewayRecoveryMayProceedWhileAuthorizationDenied is deliberately
-// narrower than authorization readiness: it permits only an explicitly admitted
-// EvidenceMissing recovery transition to reach its existing owner-bound
-// migration path. It never makes an identity, membership, tuple, grant, BFF,
-// or browser surface available.
-func legacyAIGatewayRecoveryMayProceedWhileAuthorizationDenied(bundle *fabricv1alpha1.TenantBundle) bool {
-	if aiGatewayMigrationRecoveryTransitionEvidence(bundle) != nil {
-		return true
-	}
-	if bundle == nil || len(bundle.Status.AIGatewayMigration) != 0 || bundle.Spec.AIGateway == nil {
-		return false
-	}
-	return legacyMigrationRecoveryEligible(bundle, bundle.Spec.AIGateway.MigrationRetry)
+// admittedAIGatewayRecoveryMayProceedWhileAuthorizationDenied permits only
+// an exact, tenant- and UID-bound recovery transition to reconcile schema Jobs.
+// It never enables identities, memberships, grants, BFF or browser access.
+func admittedAIGatewayRecoveryMayProceedWhileAuthorizationDenied(bundle *fabricv1alpha1.TenantBundle) bool {
+	return aiGatewayMigrationRecoveryTransitionEvidence(bundle) != nil
 }
 
-// legacyAIGatewayRecoveryRequiresExclusiveMigrationReconcile keeps the narrow
-// pre-authorization path only while its exact successor has no durable terminal
-// evidence. Once the reviewed successor is terminal, normal reconciliation may
-// converge existing runtime resources while the authorization gate remains false.
-func legacyAIGatewayRecoveryRequiresExclusiveMigrationReconcile(bundle *fabricv1alpha1.TenantBundle) bool {
-	if transition := aiGatewayMigrationRecoveryTransitionEvidence(bundle); transition != nil {
-		successor := transition.ExpectedAttempt + 1
-		for _, evidence := range bundle.Status.AIGatewayMigration {
-			if evidence.Attempt == successor {
-				return !terminalAIGatewayMigrationPhase(evidence.Phase)
-			}
+// admittedAIGatewayRecoveryRequiresExclusiveReconcile runs a reviewed
+// transition independently of IAM only until its actual successor is terminal.
+// Every other retry follows ordinary authorization and evidence checks.
+func admittedAIGatewayRecoveryRequiresExclusiveReconcile(bundle *fabricv1alpha1.TenantBundle) bool {
+	transition := aiGatewayMigrationRecoveryTransitionEvidence(bundle)
+	if transition == nil {
+		return false
+	}
+	successor := transition.ExpectedAttempt + 1
+	for _, evidence := range bundle.Status.AIGatewayMigration {
+		if evidence.Attempt == successor {
+			return !terminalAIGatewayMigrationPhase(evidence.Phase)
 		}
-		return true
 	}
-	if immutableHairemLegacyRecoveryEligible(bundle) {
-		return true
-	}
-	if immutableHairemLegacyRecoveryEvidence(bundle) {
-		return !terminalAIGatewayMigrationPhase(bundle.Status.AIGatewayMigration[0].Phase)
-	}
-	return false
+	return true
 }
 
 func openFGARolloutEnabledFor(bundle *fabricv1alpha1.TenantBundle) bool {
@@ -122,8 +108,8 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	hadPostgreSQL := previousStatus.Persistence.PostgreSQL != nil
 	hadHindsight := previousStatus.Memory.Hindsight != nil
 
-	if legacyAIGatewayRecoveryRequiresExclusiveMigrationReconcile(&bundle) {
-		ready, reason, message, err := r.reconcileImmutableHairemLegacyMigration(ctx, &bundle)
+	if admittedAIGatewayRecoveryRequiresExclusiveReconcile(&bundle) {
+		ready, reason, message, err := r.reconcileAdmittedAIGatewayRecovery(ctx, &bundle)
 		bundle.Status.Phase = "Degraded"
 		status := metav1.ConditionFalse
 		if ready {
@@ -243,7 +229,7 @@ func (r *TenantBundleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			bundle.Status.Phase = "Degraded"
 			setCondition(&bundle.Status.Conditions, bundle.Generation, "OpenFGAAuthorizationReady", metav1.ConditionFalse, "IdentityLedgerInvalid", "tenant canonical human identity ledger is missing, conflicting or invalid")
 			setCondition(&bundle.Status.Conditions, bundle.Generation, "Ready", metav1.ConditionFalse, "OpenFGAIdentityReconcileFailed", "tenant canonical human identity ledger is not reconciled")
-			if !legacyAIGatewayRecoveryMayProceedWhileAuthorizationDenied(&bundle) {
+			if !admittedAIGatewayRecoveryMayProceedWhileAuthorizationDenied(&bundle) {
 				if !reflect.DeepEqual(previousStatus, bundle.Status) {
 					_ = r.Status().Update(ctx, &bundle)
 				}
