@@ -36,8 +36,8 @@ class FoundationGuardTests(unittest.TestCase):
         f = "apps/60-services/txo-fabric/openbao-fabric/runtime/deployment.yaml"
         self.assertTrue(guard.assert_file_safe(f, "kind: Deployment\n"))
 
-    def test_exact_storage_migration_target_is_the_only_additional_manifest(self):
-        f = "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/migration/synelia-target-pvc.yaml"
+    def test_exact_retained_storage_claim_is_the_only_additional_manifest(self):
+        f = "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/storage/retained-pvc.yaml"
         self.assertEqual(guard.assert_file_safe(f, "kind: PersistentVolumeClaim\n"), [])
         self.assertTrue(guard.assert_file_safe(
             "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/migration/other.yaml",
@@ -45,12 +45,33 @@ class FoundationGuardTests(unittest.TestCase):
         ))
 
     def test_recovered_openbao_claim_is_protected_from_argo_prune_and_delete(self):
-        claim = yaml.safe_load((MODULE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/migration/synelia-target-pvc.yaml").read_text())
+        claim = yaml.safe_load((MODULE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/storage/retained-pvc.yaml").read_text())
         self.assertEqual(claim["kind"], "PersistentVolumeClaim")
         self.assertEqual(claim["metadata"]["name"], "data-openbao-fabric-0-synelia")
         self.assertEqual(claim["spec"]["storageClassName"], "storage-rwo-retain")
         self.assertEqual(set(claim["metadata"]["annotations"]["argocd.argoproj.io/sync-options"].split(",")), {"Prune=false", "Delete=false"})
         self.assertTrue(claim["metadata"]["labels"]["storage.truxonline.io/migration-source-uid"])
+
+    def test_prod_volume_patch_selects_exact_retained_claim(self):
+        prod = MODULE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/overlays/prod"
+        config = yaml.safe_load((prod / "kustomization.yaml").read_text())
+        self.assertIn("storage/retained-pvc.yaml", config["resources"])
+        self.assertNotIn("migration/synelia-target-pvc.yaml", config["resources"])
+        self.assertEqual(len(config["patches"]), 1)
+        patch = config["patches"][0]
+        self.assertEqual(patch["target"]["kind"], "StatefulSet")
+        self.assertEqual(patch["target"]["name"], "openbao-fabric")
+        self.assertEqual(patch["path"], "storage/retained-statefulset-volume.yaml")
+        operations = yaml.safe_load((prod / patch["path"]).read_text())
+        self.assertEqual([o["op"] for o in operations], ["remove", "add"])
+        self.assertEqual(operations[0]["path"], "/spec/volumeClaimTemplates")
+        self.assertEqual(operations[1]["value"]["persistentVolumeClaim"]["claimName"],
+                         "data-openbao-fabric-0-synelia")
+        claim = yaml.safe_load((prod / "storage/retained-pvc.yaml").read_text())
+        self.assertEqual(claim["metadata"]["name"],
+                         operations[1]["value"]["persistentVolumeClaim"]["claimName"])
+        options = set(claim["metadata"]["annotations"]["argocd.argoproj.io/sync-options"].split(","))
+        self.assertEqual(options, {"Prune=false", "Delete=false"})
 
     def test_forged_admin_policy_or_all_tenant_wildcard_refused(self):
         f = "apps/60-services/txo-fabric/openbao-fabric/policies/tenant.hcl.example"
@@ -451,7 +472,7 @@ class PrivatePOCTests(unittest.TestCase):
         self.assertEqual(poc.check_render(self.fixture()), [])
 
     def test_only_recovered_pvc_may_disable_argo_prune_delete(self):
-        claim = yaml.safe_load((POC_FILE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/migration/synelia-target-pvc.yaml").read_text())
+        claim = yaml.safe_load((POC_FILE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/overlays/prod/storage/retained-pvc.yaml").read_text())
         self.assertNotIn("unsafe Argo sync-option annotation in Fabric resource", poc.check_render(self.fixture() + [claim]))
         forged = copy.deepcopy(claim); forged["metadata"]["name"] = "other"
         self.assertTrue(poc.check_render(self.fixture() + [forged]))
