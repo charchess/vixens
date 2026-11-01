@@ -17,7 +17,7 @@ components:
   - ../../../../_shared/components/scheduling/prefer-i915
 patches:
   - path: delete-legacy-pvc.yaml
-  - path: patch-canonical-target-cutover.yaml
+  - path: patch-storage.yaml
   - path: patch-openbao-env.yaml
   - target:
       kind: PersistentVolumeClaim
