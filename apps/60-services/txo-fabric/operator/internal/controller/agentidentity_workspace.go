@@ -1,33 +1,12 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"path"
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
-
-// A selected existing RWX claim must be valid before any agent Deployment
-// receives its mount. Default unsuffixed provisioning needs no extra gate.
-func (r *AgentIdentityReconciler) ensureWorkspaceActiveClaims(ctx context.Context, tenant *fabricv1alpha1.TenantBundle) error {
-	workspace := tenant.Spec.Workspace
-	if workspace == nil || workspace.ClaimSuffix == "" {
-		return nil
-	}
-	var profile fabricv1alpha1.SharedWorkspaceProfile
-	if err := r.Get(ctx, types.NamespacedName{Name: workspace.ProfileRef}, &profile); err != nil {
-		return fmt.Errorf("read active workspace profile %q: %w", workspace.ProfileRef, err)
-	}
-	for _, scope := range desiredWorkspaceScopes(tenant) {
-		if err := verifyExistingWorkspacePVC(ctx, r.Client, tenant, &profile, scope); err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
 func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle) ([]corev1.Volume, []corev1.VolumeMount, error) {
 	workspace := tenant.Spec.Workspace
@@ -88,7 +67,7 @@ func resolvedWorkspaceVolumes(agent *fabricv1alpha1.AgentIdentity, tenant *fabri
 	volumes := make([]corev1.Volume, 0, len(scopes))
 	mounts := make([]corev1.VolumeMount, 0, len(scopes))
 	for _, scope := range scopes {
-		name := workspaceClaimName(scope, workspace)
+		name := workspacePVCName(scope)
 		mountPath := workspaceMountPath(scope)
 		volumes = append(volumes, corev1.Volume{
 			Name:         name,
