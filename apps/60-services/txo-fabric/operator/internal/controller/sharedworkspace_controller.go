@@ -217,7 +217,7 @@ func validateWorkspaceClaimNames(bundle *fabricv1alpha1.TenantBundle) error {
 		if _, ok := declared[canonical]; !ok {
 			return fmt.Errorf("tenant %q references undeclared workspace scope %q", bundle.Name, canonical)
 		}
-		if problems := validation.IsDNS1123Subdomain(actual); len(problems) != 0 {
+		if problems := validation.IsDNS1123Label(actual); len(problems) != 0 {
 			return fmt.Errorf("tenant %q workspace PVC %q has invalid name: %v", bundle.Name, actual, problems)
 		}
 		if prior, duplicate := selected[actual]; duplicate {
