@@ -55,6 +55,13 @@ spec:
     # Migration remains temporarily for the OLD operator until its image pin
     # is reviewed; the NEW controller ignores this block.
     claimSuffix: synelia
+    # Explicit references preserve the existing physical PVCs; new scopes
+    # without a claimNames entry are provisioned automatically.
+    claimNames:
+      ws-group-admin-rw: ws-group-admin-rw-synelia
+      skills-group-admin-rw: skills-group-admin-rw-synelia
+      ws-user-charchess-rw: ws-user-charchess-rw-synelia
+      skills-user-charchess-rw: skills-user-charchess-rw-synelia
     # Stage distinct Synelia RWX targets; legacy Retired NFS claims remain active until verified copy/cutover.
     migration:
       targetStorageClassName: storage-rwx-retain
