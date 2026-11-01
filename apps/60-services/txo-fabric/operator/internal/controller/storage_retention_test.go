@@ -134,6 +134,10 @@ func TestAgentDeleteRetainsPVCAndRemovesOwnerReference(t *testing.T) {
 			Name:      "hermes-tina-data",
 			Namespace: "tenant-hairem-sandbox",
 			UID:       types.UID("pvc-uid"),
+			Labels: map[string]string{
+				LabelPartOf: "txo-fabric", LabelInstance: "tina", LabelAgent: "tina",
+				LabelTenantName: "hairem-sandbox", LabelStorageRetention: StorageRetentionRetain,
+			},
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion: "fabric.truxonline.io/v1alpha1",
 				Kind:       "AgentIdentity",
