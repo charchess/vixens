@@ -38,6 +38,13 @@ spec:
     # Migration remains temporarily for the OLD operator until its image pin
     # is reviewed; the NEW controller ignores this block.
     claimSuffix: synelia
+    # Explicit references preserve the existing physical PVCs; new scopes
+    # without a claimNames entry are provisioned automatically.
+    claimNames:
+      ws-group-sales-rw: ws-group-sales-rw-synelia
+      skills-group-sales-rw: skills-group-sales-rw-synelia
+      ws-user-edfoley-rw: ws-user-edfoley-rw-synelia
+      skills-user-edfoley-rw: skills-user-edfoley-rw-synelia
     # UID-bound copy evidence is persisted before selecting Synelia targets.
     migration:
       targetStorageClassName: storage-rwx-retain
