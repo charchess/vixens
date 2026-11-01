@@ -52,15 +52,6 @@ spec:
   workspace:
     profileRef: shared-nfs
     retentionPolicy: Retain
-    # Migration remains temporarily for the OLD operator until its image pin
-    # is reviewed; the NEW controller ignores this block.
-    claimSuffix: synelia
-    # Stage distinct Synelia RWX targets; legacy Retired NFS claims remain active until verified copy/cutover.
-    migration:
-      targetStorageClassName: storage-rwx-retain
-      targetClaimSuffix: synelia
-      # All four RWX scopes copied from offline legacy datasets and rsync-verified.
-      cutover: true
     groups:
       - name: admin
         collaborative: true
