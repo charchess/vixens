@@ -3,7 +3,7 @@
 **Date:** 2026-11-01 (restored native provisioning)
 **Status:** Accepted — replaces the previous per-volume binding proposal
 **Scope:** AIaaS
-**Related issues:** #4375, #4384, #4385, #4386, #4413, #4357
+**Related issues:** #4375, #4384, #4385, #4386, #4413, #4418, #4419, #4420, #4357
 
 ## Context
 
@@ -40,7 +40,21 @@ or physical PVC/PV resources may be deleted without separate authorization.
    Deployment and human entry are withdrawn without deleting durable PVCs.
    PVC/PV/profile changes requeue the affected tenant agents for validation.
    These checks do not prove any file-copy or data-integrity outcome.
-5. **Audit and compatibility:** historical status/CRD fields may remain
+5. **RWO identity:** a new agent PVC is provisioned from the native
+   tenant storage policy. An existing RWO PVC is not adopted on name alone:
+   prior exact tenant ID/name, agent identity, retention and access-mode
+   labels must already exist. A Bound PV must match the exact namespace,
+   claim name, UID and storage class. Historical profile StorageClass
+   compatibility is limited to an identity-proven, bound Retain PVC.
+6. **Destruction and revocation:** the AgentIdentity finalizer may delete
+   only resources with the exact controller owner Kind/name/UID and
+   applicable tenant/agent ownership labels; a disposable RWO PVC also
+   requires explicit Delete retention. Retain PVCs are preserved. When
+   a previously running agent loses a required tenant, profile, unique
+   identity or model backend, withdraw its Deployment and human access
+   with the same UID-bound identity checks. Foreign same-name resources
+   remain untouched and produce a visible fail-closed error.
+7. **Audit and compatibility:** historical status/CRD fields may remain
    readable temporarily to avoid pruning legacy objects. They are not
    active runtime authorization. Removal from stored API schemas and
    physical retirement require their own compatibility/rollback review.
@@ -75,6 +89,9 @@ physical reconfiguration.
 - #4384 — disposable RWO simplification
 - #4385 — native RWX scope and ownership protection
 - #4413 — fail-closed agent PVC/PV verification before mounts
+- #4418 — ownership-bound AgentIdentity finalizer cleanup
+- #4419 — provenance-bound private RWO claim adoption
+- #4420 — revoke stale serving runtimes after dependency loss
 - #4398 — fresh tenant bootstrap
 - #4400 — one-time canonical-name transition
 - #4386 — migration-only source cleanup
