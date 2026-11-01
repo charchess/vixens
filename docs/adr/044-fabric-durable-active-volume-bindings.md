@@ -1,4 +1,4 @@
-# ADR-044: simple post-migration Fabric storage
+# ADR-044: native workspace provisioning
 
 **Date:** 2026-10-31 (revised after maintainer clarification)
 **Status:** Accepted — replaces the previous per-volume binding proposal
