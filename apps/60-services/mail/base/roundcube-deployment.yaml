@@ -23,7 +23,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       initContainers:
         - name: init-roundcube-session-state
-          image: roundcube/roundcubemail@sha256:a6ef4cff166b5e2056238bb400ca84210bd796c83d859495ab67e60101ff2c55
+          image: roundcube/roundcubemail@sha256:e440257796672b039072bfb09c678984141559f8ff0ddff804bf21e7261d2b65
           command: [sh, -ec]
           args: ["install -d -o 33 -g 33 -m 2775 /var/roundcube/db /tmp/roundcube-temp; rm -f /var/roundcube/db/sqlite.db /var/roundcube/db/sqlite.db-shm /var/roundcube/db/sqlite.db-wal; install -o 33 -g 33 -m 0660 /dev/null /var/roundcube/db/sqlite.db"]
           securityContext:
@@ -41,7 +41,7 @@ spec:
               drop: ["ALL"]
               add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
             seccompProfile: {type: RuntimeDefault}
-          image: roundcube/roundcubemail@sha256:a6ef4cff166b5e2056238bb400ca84210bd796c83d859495ab67e60101ff2c55
+          image: roundcube/roundcubemail@sha256:e440257796672b039072bfb09c678984141559f8ff0ddff804bf21e7261d2b65
           ports: [{name: http, containerPort: 80}]
           envFrom: [{secretRef: {name: mail-roundcube-runtime}}]
           volumeMounts:
