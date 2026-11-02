@@ -75,9 +75,16 @@ func TestInvalidAgentDependenciesWithdrawExistingRuntime(t *testing.T) {
 				WithObjects(objects...).Build()
 			r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
 			for i := 0; i < 2; i++ {
-				if _, err := r.Reconcile(context.Background(), ctrl.Request{
+				_, err := r.Reconcile(context.Background(), ctrl.Request{
 					NamespacedName: types.NamespacedName{Name: agent.Name},
-				}); err != nil {
+				})
+				if scenario == "missing-ai-gateway-backend" {
+					// Backend resolution is an error and must remain visible to callers;
+					// withdrawal still has to complete before it is returned.
+					if err == nil || !apierrors.IsNotFound(err) {
+						t.Fatalf("expected missing AI gateway backend error on reconcile %d, got %v", i, err)
+					}
+				} else if err != nil {
 					t.Fatalf("invalid dependency reconcile %d: %v", i, err)
 				}
 			}
