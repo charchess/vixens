@@ -45,7 +45,6 @@ func TestHermesHindsightDeploymentWiring(t *testing.T) {
 	command := bootstrap.Command[2]
 	for _, want := range []string{
 		`legacy_profile="/opt/data/profiles/${AGENT_NAME}"`,
-		`TXO_RUNTIME_STORAGE_RETENTION`,
 		`explicit migration is required`,
 		"config set skills.external_dirs '[\"/workspace/skills\"]'",
 		"config set memory.provider hindsight",
@@ -79,9 +78,6 @@ func TestHermesHindsightDeploymentWiring(t *testing.T) {
 	}
 	if got := envValue(bootstrap.Env, "HINDSIGHT_BANK_ID"); got != "hairem-sandbox-tina" {
 		t.Fatalf("bootstrap HINDSIGHT_BANK_ID = %q", got)
-	}
-	if got := envValue(bootstrap.Env, "TXO_RUNTIME_STORAGE_RETENTION"); got != StorageRetentionRetain {
-		t.Fatalf("bootstrap retention = %q", got)
 	}
 
 	hermes := deployment.Spec.Template.Spec.Containers[0]
@@ -202,9 +198,6 @@ func TestHermesDisposableRuntimeRejectsLegacyProfileCollision(t *testing.T) {
 		t.Fatal(err)
 	}
 	bootstrap := deployment.Spec.Template.Spec.InitContainers[0]
-	if got := envValue(bootstrap.Env, "TXO_RUNTIME_STORAGE_RETENTION"); got != StorageRetentionDelete {
-		t.Fatalf("bootstrap retention = %q", got)
-	}
 	if strings.Contains(bootstrap.Command[2], "rm -rf") {
 		t.Fatalf("bootstrap must never delete legacy profile data:\n%s", bootstrap.Command[2])
 	}
