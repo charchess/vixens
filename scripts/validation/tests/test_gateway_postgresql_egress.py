@@ -11,7 +11,6 @@ GATEWAY = Path(__file__).resolve().parents[3] / "apps/60-services/txo-fabric/gat
 
 class GatewayPostgresqlEgressTests(unittest.TestCase):
     def test_policies_target_declared_database_cluster_without_widening(self):
-        database = yaml.safe_load((GATEWAY / "database.yaml").read_text())
         # Both Database and DatabaseRole point to the same canonical shared CNPG cluster.
         docs = list(yaml.safe_load_all((GATEWAY / "database.yaml").read_text()))
         clusters = {doc["spec"]["cluster"]["name"] for doc in docs
