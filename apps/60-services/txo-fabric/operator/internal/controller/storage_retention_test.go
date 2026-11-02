@@ -82,6 +82,51 @@ func TestRetainedPVCPromotesBoundPVReclaimPolicy(t *testing.T) {
 	}
 }
 
+func TestRetainedPVPromotionRejectsUnverifiedClaimUID(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		pvcUID types.UID
+		pvUID types.UID
+	}{
+		{name: "missing pvc uid", pvcUID: "", pvUID: "claim-uid"},
+		{name: "missing pv claimRef uid", pvcUID: "claim-uid", pvUID: ""},
+		{name: "foreign pv claimRef uid", pvcUID: "claim-uid", pvUID: "foreign-uid"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			scheme := testScheme(t)
+			agent := &fabricv1alpha1.AgentIdentity{Spec: fabricv1alpha1.AgentIdentitySpec{
+				Runtime: fabricv1alpha1.AgentRuntimeBinding{
+					Storage: fabricv1alpha1.AgentRuntimeStorageBinding{RetentionPolicy: StorageRetentionRetain},
+				},
+			}}
+			pvc := &corev1.PersistentVolumeClaim{
+				ObjectMeta: metav1.ObjectMeta{Name: "hermes-probe-data", Namespace: "tenant-probe", UID: tc.pvcUID},
+				Spec: corev1.PersistentVolumeClaimSpec{VolumeName: "pv-probe"},
+			}
+			pv := &corev1.PersistentVolume{
+				ObjectMeta: metav1.ObjectMeta{Name: "pv-probe"},
+				Spec: corev1.PersistentVolumeSpec{
+					ClaimRef: &corev1.ObjectReference{Namespace: pvc.Namespace, Name: pvc.Name, UID: tc.pvUID},
+					PersistentVolumeReclaimPolicy: corev1.PersistentVolumeReclaimDelete,
+				},
+			}
+			c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(pv).Build()
+			r := &AgentIdentityReconciler{Client: c, APIReader: c, Scheme: scheme}
+			if err := r.ensureRetainedPersistentVolume(ctx, agent, pvc); err == nil {
+				t.Fatal("unverified claim UID must block PV reclaim policy mutation")
+			}
+			var after corev1.PersistentVolume
+			if err := c.Get(ctx, types.NamespacedName{Name: pv.Name}, &after); err != nil {
+				t.Fatal(err)
+			}
+			if after.Spec.PersistentVolumeReclaimPolicy != corev1.PersistentVolumeReclaimDelete {
+				t.Fatalf("PV reclaim mutated despite unverified UID: %q", after.Spec.PersistentVolumeReclaimPolicy)
+			}
+		})
+	}
+}
+
 func TestDeletePolicyDoesNotDemoteRetainedPV(t *testing.T) {
 	ctx := context.Background()
 	scheme := testScheme(t)

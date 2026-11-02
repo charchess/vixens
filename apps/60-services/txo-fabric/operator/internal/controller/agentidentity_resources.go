@@ -166,7 +166,7 @@ func (r *AgentIdentityReconciler) ensureRetainedPersistentVolume(ctx context.Con
 	if pv.Spec.ClaimRef == nil ||
 		pv.Spec.ClaimRef.Namespace != pvc.Namespace ||
 		pv.Spec.ClaimRef.Name != pvc.Name ||
-		(pvc.UID != "" && pv.Spec.ClaimRef.UID != "" && pv.Spec.ClaimRef.UID != pvc.UID) {
+		pvc.UID == "" || pv.Spec.ClaimRef.UID == "" || pv.Spec.ClaimRef.UID != pvc.UID {
 		return fmt.Errorf("bound PV %q claimRef does not match retained PVC %s/%s", pv.Name, pvc.Namespace, pvc.Name)
 	}
 	if pv.Spec.PersistentVolumeReclaimPolicy == corev1.PersistentVolumeReclaimRetain {
