@@ -1,6 +1,9 @@
 ---
-# The source has a verified ZFS snapshot and remains retained for rollback.
-# The target is a separately provisioned, copied Synelia PVC.
+# Compatibility binding for the existing retained OpenBao Fabric data claim.
+# This is a physical PVC identity, not a normal clean-cluster provisioning rule.
+# Do not replace with the base volumeClaimTemplate on an existing cluster:
+# that would select data-openbao-fabric-0 instead of this retained claim.
+# Snapshot/copy integrity and restore capability require separate physical proof (#4406).
 - op: remove
   path: /spec/volumeClaimTemplates
 - op: add
