@@ -1,6 +1,6 @@
 # TXO Fabric — Wave 2 native-contract inventory (source checkpoint)
 
-**Scope:** issue #4386; source-only audit of the active declarations on `main` at 2026-11-02. This is a classification and follow-up gate, **not** evidence of live state, data-copy integrity, or a clean-cluster test. Source-of-truth issues: #4387, #4398, #4406, #4357.
+**Scope:** issue #4386; source-only inventory refreshed after merged PRs #4429, #4431, #4433, #4434, #4436 and #4437 on 2026-11-02. This is a classification and follow-up gate, **not** evidence of live state, data-copy integrity, or a clean-cluster test. Source-of-truth issues: #4387, #4398, #4406, #4357.
 
 | Surface / source | Observed active contract | Classification | Safe next action / gate |
 |---|---|---|---|
@@ -11,8 +11,19 @@
 | `tenants/indiba/tenantbundle.yaml` / `aiGateway` | `migrationRetry: 1`, transition `indiba-evidence-missing-20261031` with historical Job UID | **Incident-specific recovery authorization embedded in active desired state** | Same #4387 gate; do not infer terminal recovery from successful CI |
 | `operator/internal/controller/tenantbundle_ai_gateway_postgresql.go` | Exact UID-bound transition validation and `MigrationEvidenceMissing` fail-closed paths, terminal migration evidence | **Mixed: durable migration lifecycle + exceptional recovery compatibility** | #4387 classify individual branches, preserve replay prevention and retained status. Do not remove the one-shot schema migration contract |
 | `openbao-fabric/overlays/prod/kustomization.yaml` | Renders neutral `storage/retained-pvc.yaml` and `storage/retained-statefulset-volume.yaml`; old `migration/synelia-*` filenames no longer active | **Already retired source naming** | #4406 must update stale description; do not redo PR #4417 |
-| `openbao-fabric/overlays/prod/storage/retained-pvc.yaml` | Physical PVC `data-openbao-fabric-0-synelia`, class `storage-rwo-retain`, `Prune=false,Delete=false`, and historical `migration-source-{pvc,uid}` labels | **Stateful physical identity + migration audit metadata** | Keep PVC name, class, retention and pruning safeguards. Before removing annotations/labels, determine consumers, compare render and verify data/restore status read-only (#4406) |
+| `openbao-fabric/overlays/prod/storage/retained-pvc.yaml` | Physical PVC `data-openbao-fabric-0-synelia`, class `storage-rwo-retain`, `Prune=false,Delete=false`; migration-source provenance labels already retired in #4429 | **Stateful physical identity + migration audit metadata** | Keep PVC name, class, retention and pruning safeguards. Do not remove protective annotations or rename the physical claim. The native base StatefulSet uses an independently verified volumeClaimTemplate (#4436); switching the existing production overlay to the base would change the claim name and may mount empty storage (#4406) |
 | Historical issue/runbook records of old CSI, copy Jobs, PV, snapshots, zvols | Historical provenance rather than ordinary reconciliation authority | **Audit history / rollback evidence** | Preserve in issues/runbooks; do not revive retired controller gates or delete live storage |
+
+## Merged native source cleanup checkpoint
+
+| Area | Verified source result | Still not proven |
+|---|---|---|
+| CSI migration inputs | #4434 removed ignored runtime/workspace migration Go bindings and CRD spec schemas; #4433 guards new tenant YAML declarations | Kubernetes stored-object compatibility under future CR updates beyond schema pruning |
+| Hermes bootstrap | #4431 removed destructive historical profile cleanup and its unused retention environment variable | A runtime upgrade from an adopted named profile to a flat root |
+| Native Hermes mount | #4437 added Retain/Delete, double-reconcile regression for canonical PVC with flat `/opt/data` | An existing CR specifying `adoptLegacyProfile: true` still changes the actual subPath; never silently drop its data mapping |
+| OpenBao native-vs-retained | #4436 tested a new-cluster native volumeClaimTemplate and explicit retained production claim identity; #4429 removed historical provenance labels | A production overlay transition without empty-data substitution; the physical claim `data-openbao-fabric-0-synelia` is deliberately still active |
+
+**Explicit unresolved compatibility:** `adoptLegacyProfile` is not dead code. `agentidentity_resources.go` reads it to mount `profiles/<agentKey>` as the home on a retained PVC. Removing its API/CEL/controller/test behavior without a reviewed, data-preserving transition could silently redirect an existing agent onto another directory. This is a real blocker to *complete* history retirement, not a reason to restore CSI copy Jobs. Legacy audit `status.runtimeStorageMigration` and `status.workspaceMigration` are stored history, not native reconcile gates; follow ADR-044 for status compatibility.
 
 ## Required closure evidence
 
