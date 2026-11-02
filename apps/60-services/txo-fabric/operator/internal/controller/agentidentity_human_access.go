@@ -138,7 +138,20 @@ func (r *AgentIdentityReconciler) ensureHumanAccessResources(
 			&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: name + "-ingress", Namespace: namespace}},
 			humanOIDCEgressPolicyObject(agent.Spec.AgentKey, namespace),
 		} {
-			if err := r.Delete(ctx, obj); err != nil && !apierrors.IsNotFound(err) {
+			current, err := r.ownedAgentWithdrawalTarget(ctx, agent, namespace, obj)
+			if err != nil {
+				return err
+			}
+			if current == nil || !current.GetDeletionTimestamp().IsZero() {
+				continue
+			}
+			if current.GetUID() != "" {
+				uid := current.GetUID()
+				err = r.Delete(ctx, current, client.Preconditions{UID: &uid})
+			} else {
+				err = r.Delete(ctx, current)
+			}
+			if err != nil && !apierrors.IsNotFound(err) {
 				return err
 			}
 		}

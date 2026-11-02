@@ -8,6 +8,11 @@ import (
 
 	fabricv1alpha1 "github.com/charchess/vixens/apps/60-services/txo-fabric/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -61,22 +66,70 @@ func requireFunctionalPromptCompatibility(role effectiveFunctionalProfile, runti
 // A previously authorized profile can disappear or be retargeted. Stop the
 // existing Hermes runtime and revoke its human route; never silently start
 // with broader default instructions or delete the retained private PVC.
+// ownedAgentWithdrawalTarget ensures every target is still controlled by the
+// exact AgentIdentity UID. An agentKey collision must never revoke the other
+// identity's runtime or public route.
+func (r *AgentIdentityReconciler) ownedAgentWithdrawalTarget(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, namespace string, target client.Object) (client.Object, error) {
+	current, ok := target.DeepCopyObject().(client.Object)
+	if !ok {
+		return nil, fmt.Errorf("unsupported AgentIdentity withdrawal object %T", target)
+	}
+	if err := r.Get(ctx, client.ObjectKeyFromObject(target), current); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	owner := metav1.GetControllerOf(current)
+	if agent.UID == "" || owner == nil || owner.APIVersion != fabricv1alpha1.GroupVersion.String() ||
+		owner.Kind != "AgentIdentity" || owner.Name != agent.Name || owner.UID != agent.UID ||
+		current.GetNamespace() != namespace ||
+		current.GetLabels()[LabelAgent] != agent.Spec.AgentKey ||
+		current.GetLabels()[LabelInstance] != agent.Spec.AgentKey ||
+		current.GetLabels()[LabelPartOf] != "txo-fabric" {
+		return nil, fmt.Errorf("refusing to withdraw unowned or foreign resource %T %s/%s", target, namespace, target.GetName())
+	}
+	// The Cilium policy is owner/agent labelled but does not historically carry
+	// the full tenant label set; other resources must match the tenant exactly.
+	if _, cilium := current.(*unstructured.Unstructured); !cilium &&
+		current.GetLabels()[LabelTenantName] != agent.Spec.TenantRef.Name {
+		return nil, fmt.Errorf("refusing to withdraw resource %T %s/%s with invalid tenant label", target, namespace, target.GetName())
+	}
+	return current, nil
+}
+
 func (r *AgentIdentityReconciler) withdrawInvalidFunctionalRuntime(ctx context.Context, agent *fabricv1alpha1.AgentIdentity, tenant *fabricv1alpha1.TenantBundle, namespace string) error {
+	name := humanAccessResourceName(agent.Spec.AgentKey)
+	// Preflight every object before any deletion: a conflicting agentKey may
+	// select another agent's service or deployment by name.
+	objects := []client.Object{
+		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}},
+		&networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}},
+		&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}},
+		&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: name + "-ingress", Namespace: namespace}},
+		humanOIDCEgressPolicyObject(agent.Spec.AgentKey, namespace),
+	}
+	var deployment client.Object
+	for i, obj := range objects {
+		current, err := r.ownedAgentWithdrawalTarget(ctx, agent, namespace, obj)
+		if err != nil {
+			return err
+		}
+		if i == 0 {
+			deployment = current
+		}
+	}
 	if err := r.ensureHumanAccessResources(ctx, agent, tenant, namespace, humanAccessResolution{}); err != nil {
 		return err
 	}
-	var dep appsv1.Deployment
-	key := types.NamespacedName{Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace}
-	if err := r.Get(ctx, key, &dep); err != nil {
-		return client.IgnoreNotFound(err)
-	}
-	if dep.Labels[LabelInstance] != agent.Spec.AgentKey || dep.Labels[LabelTenantName] != tenant.Name {
-		return fmt.Errorf("refusing to withdraw unmanaged deployment %s/%s", namespace, dep.Name)
-	}
-	if !dep.DeletionTimestamp.IsZero() {
+	if deployment == nil || !deployment.GetDeletionTimestamp().IsZero() {
 		return nil
 	}
-	return r.Delete(ctx, &dep)
+	if deployment.GetUID() != "" {
+		uid := deployment.GetUID()
+		return client.IgnoreNotFound(r.Delete(ctx, deployment, client.Preconditions{UID: &uid}))
+	}
+	return client.IgnoreNotFound(r.Delete(ctx, deployment))
 }
 
 // A single tenant profile update fans out only to the agents whose declared

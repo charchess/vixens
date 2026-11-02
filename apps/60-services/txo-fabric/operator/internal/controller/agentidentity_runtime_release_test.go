@@ -144,14 +144,18 @@ func TestInvalidRuntimeReleaseWithdrawsServingPodWithoutDeletingPVC(t *testing.T
 	profile.Spec.Image = ""
 	agent := testAgentIdentity()
 	agent.Name = "indiba-canary"
+	agent.UID = types.UID("indiba-canary-uid")
 	agent.Spec.TenantRef.Name = "indiba"
 	agent.Finalizers = []string{AgentFinalizer}
 	agent.Status.Runtime.HumanEndpoint = "https://stale.invalid"
 	namespace := tenantNamespace(tenant.Name)
 	ns := &corev1.Namespace{ObjectMeta:metav1.ObjectMeta{Name:namespace}}
+	controller := true
 	dep := &appsv1.Deployment{ObjectMeta:metav1.ObjectMeta{
 		Name:runtimeName(agent.Spec.AgentKey),Namespace:namespace,
-		Labels:map[string]string{LabelInstance:agent.Spec.AgentKey,LabelTenantName:tenant.Name},
+		Labels:agentLabels(agent, tenant),
+		OwnerReferences: []metav1.OwnerReference{{APIVersion: fabricv1alpha1.GroupVersion.String(),
+			Kind: "AgentIdentity", Name: agent.Name, UID: agent.UID, Controller: &controller}},
 	}}
 	pvc := &corev1.PersistentVolumeClaim{ObjectMeta:metav1.ObjectMeta{
 		Name:runtimePVCName(agent.Spec.AgentKey),Namespace:namespace,UID:types.UID("retained-pvc")},

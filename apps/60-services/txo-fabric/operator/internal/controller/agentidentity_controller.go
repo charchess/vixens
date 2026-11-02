@@ -57,6 +57,14 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	var tenant fabricv1alpha1.TenantBundle
 	if err := r.Get(ctx, types.NamespacedName{Name: agent.Spec.TenantRef.Name}, &tenant); err != nil {
 		if apierrors.IsNotFound(err) {
+			// The tenant may disappear while an old Deployment is still serving.
+			// Its immutable reference still identifies the namespace for withdrawal.
+			previousTenant := &fabricv1alpha1.TenantBundle{ObjectMeta: metav1.ObjectMeta{Name: agent.Spec.TenantRef.Name}}
+			if withdrawalErr := r.withdrawInvalidFunctionalRuntime(ctx, &agent, previousTenant, tenantNamespace(agent.Spec.TenantRef.Name)); withdrawalErr != nil {
+				r.setStatus(ctx, &agent, "Degraded", "TenantResolved", metav1.ConditionFalse, "TenantWithdrawalFailed", withdrawalErr.Error())
+				return ctrl.Result{}, withdrawalErr
+			}
+			agent.Status.Runtime.HumanEndpoint = ""
 			r.setStatus(ctx, &agent, "Pending", "TenantResolved", metav1.ConditionFalse, "TenantNotFound", fmt.Sprintf("TenantBundle %q does not exist", agent.Spec.TenantRef.Name))
 			return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
 		}
@@ -68,6 +76,11 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 	if conflict != "" {
+		if withdrawalErr := r.withdrawInvalidFunctionalRuntime(ctx, &agent, &tenant, tenantNamespace(tenant.Name)); withdrawalErr != nil {
+			r.setStatus(ctx, &agent, "Degraded", "IdentityUnique", metav1.ConditionFalse, "DuplicateIdentityWithdrawalFailed", withdrawalErr.Error())
+			return ctrl.Result{}, withdrawalErr
+		}
+		agent.Status.Runtime.HumanEndpoint = ""
 		r.setStatus(ctx, &agent, "Failed", "IdentityUnique", metav1.ConditionFalse, "DuplicateAgentKey", fmt.Sprintf("agentKey %q is already claimed by AgentIdentity %q in tenant %q", agent.Spec.AgentKey, conflict, tenant.Name))
 		return ctrl.Result{}, nil
 	}
@@ -87,6 +100,11 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	var profile fabricv1alpha1.AgentRuntimeProfile
 	if err := r.Get(ctx, types.NamespacedName{Name: profileName}, &profile); err != nil {
 		if apierrors.IsNotFound(err) {
+			if withdrawalErr := r.withdrawInvalidFunctionalRuntime(ctx, &agent, &tenant, namespace); withdrawalErr != nil {
+				r.setStatus(ctx, &agent, "Degraded", "RuntimeProfileResolved", metav1.ConditionFalse, "ProfileWithdrawalFailed", withdrawalErr.Error())
+				return ctrl.Result{}, withdrawalErr
+			}
+			agent.Status.Runtime.HumanEndpoint = ""
 			r.setStatus(ctx, &agent, "Pending", "RuntimeProfileResolved", metav1.ConditionFalse, "RuntimeProfileNotFound", fmt.Sprintf("AgentRuntimeProfile %q does not exist", profileName))
 			return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
 		}
@@ -94,6 +112,11 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 	if profile.Spec.Engine != "" && profile.Spec.Engine != "Hermes" {
 		err := fmt.Errorf("runtime engine %q is not supported by this controller version", profile.Spec.Engine)
+		if withdrawalErr := r.withdrawInvalidFunctionalRuntime(ctx, &agent, &tenant, namespace); withdrawalErr != nil {
+			r.setStatus(ctx, &agent, "Degraded", "RuntimeProfileResolved", metav1.ConditionFalse, "ProfileWithdrawalFailed", withdrawalErr.Error())
+			return ctrl.Result{}, withdrawalErr
+		}
+		agent.Status.Runtime.HumanEndpoint = ""
 		r.setStatus(ctx, &agent, "Failed", "RuntimeProfileResolved", metav1.ConditionFalse, "UnsupportedRuntimeEngine", err.Error())
 		return ctrl.Result{}, nil
 	}
@@ -135,6 +158,11 @@ func (r *AgentIdentityReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	modelBackend, err := r.resolveModelAccessBackend(ctx, &tenant)
 	if err != nil {
+		if withdrawalErr := r.withdrawInvalidFunctionalRuntime(ctx, &agent, &tenant, namespace); withdrawalErr != nil {
+			r.setStatus(ctx, &agent, "Degraded", "ModelAccessReady", metav1.ConditionFalse, "GatewayWithdrawalFailed", withdrawalErr.Error())
+			return ctrl.Result{}, withdrawalErr
+		}
+		agent.Status.Runtime.HumanEndpoint = ""
 		r.setStatus(ctx, &agent, "AuthBlocked", "ModelAccessReady", metav1.ConditionFalse, "GatewayBackendResolutionFailed", err.Error())
 		return ctrl.Result{}, err
 	}

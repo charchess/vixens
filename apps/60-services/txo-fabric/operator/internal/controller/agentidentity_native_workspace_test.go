@@ -21,7 +21,7 @@ func nativeWorkspaceGateFixture() (*fabricv1alpha1.TenantBundle, *fabricv1alpha1
 	tenant.Spec.Workspace.Users = nil
 	tenant.Spec.Workspace.Organization = fabricv1alpha1.WorkspaceScopeSpec{Reference: true}
 	agent := &fabricv1alpha1.AgentIdentity{
-		ObjectMeta: metav1.ObjectMeta{Name: "customer-agent"},
+		ObjectMeta: metav1.ObjectMeta{Name: "customer-agent", UID: types.UID("customer-agent-uid")},
 		Spec: fabricv1alpha1.AgentIdentitySpec{TenantRef: fabricv1alpha1.ObjectReference{Name: tenant.Name}, AgentKey: "probe"},
 	}
 	profile := &fabricv1alpha1.SharedWorkspaceProfile{
@@ -167,11 +167,17 @@ func TestNativeWorkspaceInvalidClaimWithdrawalPreservesPersistentData(t *testing
 	tenant, agent, profile, pvc, pv := nativeWorkspaceGateFixture()
 	delete(pvc.Labels, LabelTenantName)
 	namespace := tenantNamespace(tenant.Name)
+	controller := true
+	owner := []metav1.OwnerReference{{APIVersion: fabricv1alpha1.GroupVersion.String(),
+		Kind: "AgentIdentity", Name: agent.Name, UID: agent.UID, Controller: &controller}}
 	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{
 		Name: runtimeName(agent.Spec.AgentKey), Namespace: namespace,
-		Labels: map[string]string{LabelInstance: agent.Spec.AgentKey, LabelTenantName: tenant.Name},
+		Labels: agentLabels(agent, tenant), OwnerReferences: owner,
 	}}
-	service := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: humanAccessResourceName(agent.Spec.AgentKey), Namespace: namespace}}
+	service := &corev1.Service{ObjectMeta: metav1.ObjectMeta{
+		Name: humanAccessResourceName(agent.Spec.AgentKey), Namespace: namespace,
+		Labels: agentLabels(agent, tenant), OwnerReferences: owner,
+	}}
 	scheme := testScheme(t)
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tenant, profile, pvc, pv, deployment, service).Build()
 	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
