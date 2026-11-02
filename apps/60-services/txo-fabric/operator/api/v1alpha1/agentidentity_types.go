@@ -18,7 +18,6 @@ type AgentRuntimeStorageBinding struct {
 	// It is a brownfield cutover switch: no profile copy or flattening occurs.
 	// +optional
 	AdoptLegacyProfile bool `json:"adoptLegacyProfile,omitempty"`
-
 }
 
 type AgentRuntimeCapabilityBinding struct {
