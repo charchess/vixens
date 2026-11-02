@@ -304,12 +304,8 @@ if [ "${TXO_LEGACY_PROFILE_ADOPTION}" = "true" ]; then
     exit 78
   fi
 elif [ -d "${legacy_profile}" ]; then
-  if [ "${TXO_RUNTIME_STORAGE_RETENTION}" = "Delete" ]; then
-    rm -rf -- "${legacy_profile}"
-  else
-    echo "refusing to discard retained Hermes profile ${legacy_profile}; explicit migration is required" >&2
-    exit 78
-  fi
+  echo "refusing to replace existing Hermes profile ${legacy_profile}; explicit migration is required" >&2
+  exit 78
 fi
 
 # The init container runs as root for retained-PVC migration checks, but the
@@ -325,7 +321,6 @@ fi
 						{Name: "HERMES_MANAGED_DIR", Value: managedPolicyMountPath},
 						{Name: "HERMES_DISABLE_LAZY_INSTALLS", Value: "1"},
 						{Name: "AGENT_NAME", Value: agent.Spec.AgentKey},
-						{Name: "TXO_RUNTIME_STORAGE_RETENTION", Value: storageRetentionPolicy(agent)},
 						{Name: "TXO_LEGACY_PROFILE_ADOPTION", Value: fmt.Sprintf("%t", agent.Spec.Runtime.Storage.AdoptLegacyProfile)},
 						{Name: "TXO_TOOLSET_POLICY_REVISION", Value: toolPolicy.Revision},
 					},
