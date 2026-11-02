@@ -47,7 +47,7 @@ spec:
               kubernetes.io/metadata.name: databases
           podSelector:
             matchLabels:
-              cnpg.io/cluster: postgresql-shared-recovery
+              cnpg.io/cluster: postgresql-shared
       ports:
         - {protocol: TCP, port: 5432}
     - to:
