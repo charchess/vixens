@@ -47,6 +47,9 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	var pvc corev1.PersistentVolumeClaim
 	err = r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &pvc)
 	if apierrors.IsNotFound(err) {
+		if agent.Spec.Runtime.Storage.AdoptLegacyProfile {
+			return fmt.Errorf("legacy Hermes profile adoption requires a pre-existing retained PVC %s/%s; refusing to create an empty replacement", namespace, name)
+		}
 		labels := agentLabels(agent, tenant)
 		labels[LabelStorageRetention] = storageRetentionPolicy(agent)
 		pvc = corev1.PersistentVolumeClaim{
@@ -66,6 +69,9 @@ func (r *AgentIdentityReconciler) ensurePVC(ctx context.Context, agent *fabricv1
 	}
 	if err != nil {
 		return err
+	}
+	if agent.Spec.Runtime.Storage.AdoptLegacyProfile && storageRetentionPolicy(agent) != StorageRetentionRetain {
+		return fmt.Errorf("legacy Hermes profile adoption requires retained runtime storage")
 	}
 	// Canonical name alone is not proof that a pre-existing RWO PVC belongs
 	// to this agent. In particular, never retroactively label an unrelated

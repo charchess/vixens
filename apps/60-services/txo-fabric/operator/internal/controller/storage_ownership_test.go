@@ -116,3 +116,54 @@ func TestUnownedRetainedPVCBindingEventRequeuesOnlyMatchingIdentity(t *testing.T
 	pvc.Labels[LabelPartOf]="not-fabric"
 	if got:=r.requestsForRuntimePVC(ctx,pvc);len(got)!=0 {t.Fatalf("foreign PVC triggered enqueue: %#v",got)}
 }
+
+
+func TestLegacyProfileAdoptionCannotProvisionAnEmptyPVC(t *testing.T) {
+	for _, policy := range []string{StorageRetentionRetain, StorageRetentionDelete} {
+		t.Run(policy, func(t *testing.T) {
+			ctx := context.Background()
+			scheme := testScheme(t)
+			tenant := testTenant()
+			profile := testRuntimeProfile()
+			agent := testStorageIdentity(tenant.Name, "spark", policy)
+			agent.Spec.Runtime.Storage.AdoptLegacyProfile = true
+			ns := tenantNamespace(tenant.Name)
+			c := fake.NewClientBuilder().WithScheme(scheme).Build()
+			r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+			if err := r.ensurePVC(ctx, agent, tenant, profile, ns); err == nil {
+				t.Fatal("legacy layout must not provision a new empty PVC")
+			}
+			var pvc corev1.PersistentVolumeClaim
+			if err := c.Get(ctx, types.NamespacedName{
+				Name: runtimePVCName(agent.Spec.AgentKey), Namespace: ns,
+			}, &pvc); err == nil {
+				t.Fatal("legacy layout created an empty replacement PVC")
+			}
+		})
+	}
+}
+
+func TestNativeProfileStillProvisionsCanonicalPVCWithoutHistoricalInput(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	tenant := testTenant()
+	profile := testRuntimeProfile()
+	agent := testStorageIdentity(tenant.Name, "spark", StorageRetentionRetain)
+	ns := tenantNamespace(tenant.Name)
+	c := fake.NewClientBuilder().WithScheme(scheme).Build()
+	r := &AgentIdentityReconciler{Client: c, Scheme: scheme}
+	for i := 0; i < 2; i++ {
+		if err := r.ensurePVC(ctx, agent, tenant, profile, ns); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var pvc corev1.PersistentVolumeClaim
+	if err := c.Get(ctx, types.NamespacedName{
+		Name: runtimePVCName(agent.Spec.AgentKey), Namespace: ns,
+	}, &pvc); err != nil {
+		t.Fatalf("native PVC not provisioned: %v", err)
+	}
+	if owner := metav1.GetControllerOf(&pvc); owner != nil {
+		t.Fatalf("retained PVC unexpectedly acquired a GC owner: %#v", owner)
+	}
+}
