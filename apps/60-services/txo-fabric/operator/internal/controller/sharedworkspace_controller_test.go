@@ -363,3 +363,58 @@ func TestNativeWorkspaceRejectsInvalidExistingCanonicalPVC(t *testing.T) {
 		})
 	}
 }
+
+
+// Native workspace reconciliation must isolate tenant-owned PVCs even when
+// several tenants with overlapping workspace scope keys reconcile on one cluster.
+func TestNativeWorkspaceConcurrentTenantsRemainIsolatedAndIdempotent(t *testing.T) {
+	ctx := context.Background()
+	scheme := testScheme(t)
+	profile := &fabricv1alpha1.SharedWorkspaceProfile{
+		ObjectMeta: metav1.ObjectMeta{Name: "shared-nfs"},
+		Spec: fabricv1alpha1.SharedWorkspaceProfileSpec{
+			StorageClassName: "storage-rwx-retain",
+			Size: resource.MustParse("5Gi"),
+		},
+	}
+	names := []string{"hairem", "indiba", "unrelated-tenant"}
+	objects := []client.Object{profile}
+	for _, name := range names {
+		tenant := workspaceTestTenant()
+		tenant.Name = name
+		tenant.Spec.TenantID = "TEN-" + name
+		objects = append(objects, tenant)
+	}
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(objects...).Build()
+	r := &SharedWorkspaceReconciler{Client: c, Scheme: scheme}
+	identities := make(map[string]types.UID)
+	for pass := 0; pass < 2; pass++ {
+		for _, name := range names {
+			req := ctrl.Request{NamespacedName: types.NamespacedName{Name: name}}
+			if _, err := r.Reconcile(ctx, req); err != nil {
+				t.Fatalf("tenant %s pass %d: %v", name, pass, err)
+			}
+			for _, scope := range desiredWorkspaceScopes(workspaceTestTenant()) {
+				key := client.ObjectKey{Namespace: tenantNamespace(name), Name: workspacePVCName(scope)}
+				var pvc corev1.PersistentVolumeClaim
+				if err := c.Get(ctx, key, &pvc); err != nil {
+					t.Fatalf("tenant %s canonical claim %s: %v", name, key.Name, err)
+				}
+				if pvc.Labels[LabelTenantName] != name ||
+					pvc.Labels[LabelTenantID] != "TEN-"+name ||
+					pvc.Spec.StorageClassName == nil ||
+					*pvc.Spec.StorageClassName != "storage-rwx-retain" {
+					t.Fatalf("tenant %s claim %s leaked identity or class: %#v", name, key.Name, pvc)
+				}
+				if pvc.Spec.AccessModes[0] != corev1.ReadWriteMany {
+					t.Fatalf("tenant %s claim %s is not RWX", name, key.Name)
+				}
+				if pass == 0 {
+					identities[key.String()] = pvc.UID
+				} else if pvc.UID != identities[key.String()] {
+					t.Fatalf("tenant %s claim %s replaced between reconciles", name, key.Name)
+				}
+			}
+		}
+	}
+}
