@@ -298,7 +298,7 @@ func (r *AgentIdentityReconciler) ensureDeploymentRuntimeOnce(ctx context.Contex
 					Image:           profile.Spec.Image,
 					ImagePullPolicy: corev1.PullIfNotPresent,
 					Command: []string{"/bin/sh", "-lc", `legacy_profile="/opt/data/profiles/${AGENT_NAME}"
-if [ "${TXO_LEGACY_PROFILE_ADOPTION}" = "true" ]; then
+if [ "${HERMES_HOME}" != "/opt/data" ]; then
   if [ ! -d "${HERMES_HOME}" ]; then
     echo "requested legacy Hermes profile ${AGENT_NAME} is absent from retained runtime storage" >&2
     exit 78
@@ -321,7 +321,6 @@ fi
 						{Name: "HERMES_MANAGED_DIR", Value: managedPolicyMountPath},
 						{Name: "HERMES_DISABLE_LAZY_INSTALLS", Value: "1"},
 						{Name: "AGENT_NAME", Value: agent.Spec.AgentKey},
-						{Name: "TXO_LEGACY_PROFILE_ADOPTION", Value: fmt.Sprintf("%t", agent.Spec.Runtime.Storage.AdoptLegacyProfile)},
 						{Name: "TXO_TOOLSET_POLICY_REVISION", Value: toolPolicy.Revision},
 					},
 					VolumeMounts: []corev1.VolumeMount{bootstrapDataMount, managedPolicyMount},

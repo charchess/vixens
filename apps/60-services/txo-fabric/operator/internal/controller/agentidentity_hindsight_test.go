@@ -147,9 +147,8 @@ func TestHermesNativePVCMountIsFlatAndIdempotentForRetentionPolicies(t *testing.
 					t.Fatalf("%s HERMES_HOME = %q", container.Name, got)
 				}
 			}
-			if envVar(pod.InitContainers[0].Env, "TXO_LEGACY_PROFILE_ADOPTION") == nil ||
-				envValue(pod.InitContainers[0].Env, "TXO_LEGACY_PROFILE_ADOPTION") != "false" {
-				t.Fatal("native bootstrap unexpectedly opts into legacy adoption")
+			if envVar(pod.InitContainers[0].Env, "TXO_LEGACY_PROFILE_ADOPTION") != nil {
+				t.Fatal("native bootstrap retains a redundant historical adoption flag")
 			}
 			if strings.Contains(pod.InitContainers[0].Command[2], "rm -rf") {
 				t.Fatal("native bootstrap must never delete historical data")
@@ -195,8 +194,11 @@ func TestHermesRetainedRuntimeCanAdoptLegacyNamedProfile(t *testing.T) {
 	if got := envValue(bootstrap.Env, "HERMES_HOME"); got != "/mnt/txo-data/profiles/tina" {
 		t.Fatalf("bootstrap HERMES_HOME = %q", got)
 	}
-	if got := envValue(bootstrap.Env, "TXO_LEGACY_PROFILE_ADOPTION"); got != "true" {
-		t.Fatalf("legacy adoption env = %q", got)
+	if envVar(bootstrap.Env, "TXO_LEGACY_PROFILE_ADOPTION") != nil {
+		t.Fatal("bootstrap must not carry a second legacy-adoption flag")
+	}
+	if !strings.Contains(bootstrap.Command[2], `if [ "${HERMES_HOME}" != "/opt/data" ]; then`) {
+		t.Fatal("bootstrap must validate adopted home using its effective mount")
 	}
 	if !strings.Contains(bootstrap.Command[2], "requested legacy Hermes profile") {
 		t.Fatalf("bootstrap does not fail closed for a missing adopted profile:\n%s", bootstrap.Command[2])
