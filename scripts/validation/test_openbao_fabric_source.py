@@ -44,6 +44,21 @@ class FoundationGuardTests(unittest.TestCase):
             "kind: PersistentVolumeClaim\n",
         ))
 
+    def test_fresh_overlay_selects_base_without_retained_prod_claim(self):
+        root = MODULE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric"
+        fresh = yaml.safe_load((root / "overlays/fresh/kustomization.yaml").read_text())
+        self.assertEqual(fresh["kind"], "Kustomization")
+        self.assertEqual(fresh["resources"], ["../../base"])
+        self.assertNotIn("patches", fresh)
+        self.assertNotIn("patchesStrategicMerge", fresh)
+        self.assertNotIn("patchesJson6902", fresh)
+        self.assertNotIn("data-openbao-fabric-0-synelia",
+                         (root / "overlays/fresh/kustomization.yaml").read_text())
+        prod = yaml.safe_load((root / "overlays/prod/kustomization.yaml").read_text())
+        self.assertIn("storage/retained-pvc.yaml", prod["resources"])
+        self.assertTrue(any(p.get("path") == "storage/retained-statefulset-volume.yaml"
+                            for p in prod.get("patches", [])))
+
     def test_fresh_cluster_base_has_native_retained_volume_template(self):
         base = MODULE.parents[2] / "apps/60-services/txo-fabric/openbao-fabric/base"
         resources = yaml.safe_load((base / "kustomization.yaml").read_text())["resources"]
